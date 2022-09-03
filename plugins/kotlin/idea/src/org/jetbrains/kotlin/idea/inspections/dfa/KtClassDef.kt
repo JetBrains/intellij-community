@@ -4,10 +4,7 @@ package org.jetbrains.kotlin.idea.inspections.dfa
 import com.intellij.codeInspection.dataFlow.TypeConstraint
 import com.intellij.codeInspection.dataFlow.TypeConstraints
 import com.intellij.openapi.project.Project
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiEnumConstant
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -15,11 +12,12 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.resolveClassByFqName
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
+import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.load.kotlin.toSourceElement
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getAllSuperClassifiers
@@ -29,7 +27,7 @@ import java.util.*
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
-class KtClassDef(val cls: ClassDescriptor, val context: KtElement) : TypeConstraints.ClassDef {
+class KtClassDef(val cls: ClassDescriptor) : TypeConstraints.ClassDef {
     override fun isInheritor(superClassQualifiedName: String): Boolean =
         cls.getAllSuperClassifiers().any { superClass ->
           superClass is ClassDescriptor && correctFqName(superClass.fqNameUnsafe) == superClassQualifiedName
@@ -56,17 +54,12 @@ class KtClassDef(val cls: ClassDescriptor, val context: KtElement) : TypeConstra
     override fun isAbstract(): Boolean = cls.modality == Modality.ABSTRACT
 
     override fun getEnumConstant(ordinal: Int): PsiEnumConstant? {
-        var psiClass = (cls.toSourceElement as? PsiSourceElement)?.psi
-        if (psiClass is KtClass) {
-            psiClass = psiClass.toLightClass()
-        }
-        if (psiClass is PsiClass) {
-            var cur = 0
-            for (field in psiClass.fields) {
-                if (field is PsiEnumConstant) {
-                    if (cur == ordinal) return field
-                    cur++
-                }
+        val psiClass = (cls.toSourceElement as? PsiSourceElement)?.psi.asPsiClass() ?: return null
+        var cur = 0
+        for (field in psiClass.fields) {
+            if (field is PsiEnumConstant) {
+                if (cur == ordinal) return field
+                cur++
             }
         }
         return null
@@ -75,10 +68,11 @@ class KtClassDef(val cls: ClassDescriptor, val context: KtElement) : TypeConstra
     override fun getQualifiedName(): String = correctFqName(cls.fqNameUnsafe)
 
     override fun superTypes(): Stream<TypeConstraints.ClassDef> =
-        cls.getAllSuperClassifiers().filterIsInstance<ClassDescriptor>().map { cd -> KtClassDef(cd, context) }.asStream()
+        cls.getAllSuperClassifiers().filterIsInstance<ClassDescriptor>().map(::KtClassDef).asStream()
 
-    override fun toPsiType(project: Project): PsiType =
-        JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(qualifiedName, context.resolveScope)
+    override fun toPsiType(project: Project): PsiType? =
+        DescriptorToSourceUtilsIde.getAnyDeclaration(project, cls).asPsiClass()
+            ?.let { JavaPsiFacade.getElementFactory(project).createType(it) }
 
     override fun equals(other: Any?): Boolean {
         return other is KtClassDef && other.cls.typeConstructor == cls.typeConstructor
@@ -95,7 +89,7 @@ class KtClassDef(val cls: ClassDescriptor, val context: KtElement) : TypeConstra
         fun getClassConstraint(context: KtElement, name: FqNameUnsafe): TypeConstraint.Exact {
             val descriptor = context.findModuleDescriptor().resolveClassByFqName(name.toSafe(), NoLookupLocation.FROM_IDE)
             return if (descriptor == null) TypeConstraints.unresolved(name.asString())
-            else TypeConstraints.exactClass(KtClassDef(descriptor, context))
+            else TypeConstraints.exactClass(KtClassDef(descriptor))
         }
 
         fun fromJvmClassName(context: KtElement, jvmClassName: String): TypeConstraints.ClassDef? {
@@ -104,7 +98,7 @@ class KtClassDef(val cls: ClassDescriptor, val context: KtElement) : TypeConstra
                 fqName = JavaToKotlinClassMap.mapJavaToKotlin(fqName)?.asSingleFqName() ?: fqName
             }
             val descriptor = context.findModuleDescriptor().resolveClassByFqName(fqName, NoLookupLocation.FROM_IDE)
-            return if (descriptor == null) null else KtClassDef(descriptor, context)
+            return if (descriptor == null) null else KtClassDef(descriptor)
 
         }
 
@@ -118,4 +112,10 @@ class KtClassDef(val cls: ClassDescriptor, val context: KtElement) : TypeConstra
             }
         }
     }
+}
+
+private fun PsiElement?.asPsiClass(): PsiClass? = when (this) {
+    is PsiClass -> this
+    is KtClassOrObject -> toLightClass()
+    else -> null
 }

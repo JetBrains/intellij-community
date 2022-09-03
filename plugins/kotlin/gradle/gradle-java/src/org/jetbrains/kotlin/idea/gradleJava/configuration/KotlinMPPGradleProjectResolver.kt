@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.UnsafeTestSourceSetHeuristicApi
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.predictedProductionSourceSetName
 import org.jetbrains.kotlin.idea.gradle.ui.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
-import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.createKotlinMppPopulateModuleDependenciesContext
+import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.*
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.getCompilations
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDependenciesByCompilations
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDependenciesBySourceSetVisibilityGraph
@@ -611,6 +611,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 resolverCtx = resolverCtx
             ) ?: return
             populateModuleDependenciesByCompilations(context)
+            populateModuleDependenciesByPlatformPropagation(context)
             populateModuleDependenciesBySourceSetVisibilityGraph(context)
         }
 

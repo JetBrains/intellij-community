@@ -1,19 +1,19 @@
-package org.jetbrains.deft.codegen.ijws.fields
+package com.intellij.workspaceModel.codegen.fields
 
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
-import deft.storage.codegen.*
-import deft.storage.codegen.field.javaType
+import com.intellij.workspaceModel.codegen.*
+import com.intellij.workspaceModel.codegen.fields.javaType
 import org.jetbrains.deft.annotations.Child
-import org.jetbrains.deft.codegen.ijws.classes.`else`
-import org.jetbrains.deft.codegen.ijws.classes.`for`
-import org.jetbrains.deft.codegen.ijws.classes.`if`
-import org.jetbrains.deft.codegen.ijws.getRefType
-import org.jetbrains.deft.codegen.utils.*
-import org.jetbrains.deft.impl.TList
-import org.jetbrains.deft.impl.TOptional
-import org.jetbrains.deft.impl.TRef
-import org.jetbrains.deft.impl.fields.ExtField
+import com.intellij.workspaceModel.codegen.classes.`else`
+import com.intellij.workspaceModel.codegen.classes.`for`
+import com.intellij.workspaceModel.codegen.classes.`if`
+import com.intellij.workspaceModel.codegen.getRefType
+import com.intellij.workspaceModel.codegen.utils.*
+import com.intellij.workspaceModel.codegen.deft.TList
+import com.intellij.workspaceModel.codegen.deft.TOptional
+import com.intellij.workspaceModel.codegen.deft.TRef
+import com.intellij.workspaceModel.codegen.deft.ExtField
 
 val ExtField<*, *>.wsCode: String
   get() = lines {

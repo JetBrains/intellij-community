@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
 import com.intellij.lang.LanguageExtension
 import com.intellij.navigation.ItemPresentation
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -367,6 +368,11 @@ class AnalyzeEPUsageAction : AnAction() {
     val elementAtCaret = file.findElementAt(editor.caretModel.offset) ?: return
     analyze(elementAtCaret, file, editor, false)
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
 }
 
 class AnalyzeEPUsageIgnoreSafeClassesAction : AnAction() {
@@ -375,6 +381,10 @@ class AnalyzeEPUsageIgnoreSafeClassesAction : AnAction() {
     val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
     val elementAtCaret = file.findElementAt(editor.caretModel.offset) ?: return
     analyze(elementAtCaret, file, editor, true)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }
 

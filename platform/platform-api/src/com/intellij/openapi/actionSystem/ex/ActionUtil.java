@@ -17,6 +17,9 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,6 +41,7 @@ import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public final class ActionUtil {
@@ -147,6 +151,10 @@ public final class ActionUtil {
             action.update(e);
           }
         }
+        //to be removed when ActionGroup#canBePerformed is dropped
+        e.getPresentation().setPerformGroup(
+          action instanceof ActionGroup && e.getPresentation().isPopupGroup() &&
+          (e.getPresentation().isPerformGroup() || ((ActionGroup)action).canBePerformed(e.getDataContext())));
       };
       boolean isLikeUpdate = !beforeActionPerformed && Registry.is("actionSystem.update.actions.async");
       try (AccessToken ignore = SlowOperations.allowSlowOperations(isLikeUpdate ? SlowOperations.ACTION_UPDATE
@@ -248,7 +256,29 @@ public final class ActionUtil {
   }
 
   public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e) {
-    performDumbAwareWithCallbacks(action, e, () -> action.actionPerformed(e));
+    performDumbAwareWithCallbacks(action, e, () -> doPerformActionOrShowPopup(action, e, null));
+  }
+
+  @ApiStatus.Internal
+  public static void doPerformActionOrShowPopup(@NotNull AnAction action, @NotNull AnActionEvent e, @Nullable Consumer<? super JBPopup> popupShow) {
+    if (action instanceof ActionGroup && !e.getPresentation().isPerformGroup()) {
+      DataContext dataContext = e.getDataContext();
+      ActionGroup group = (ActionGroup)action;
+      String place = ActionPlaces.getActionGroupPopupPlace(e.getPlace());
+      ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
+        e.getPresentation().getText(), group, dataContext,
+        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+        false, null, -1, null, place);
+      if (popupShow != null) {
+        popupShow.accept(popup);
+      }
+      else {
+        popup.showInBestPositionFor(dataContext);
+      }
+    }
+    else {
+      action.actionPerformed(e);
+    }
   }
 
   public static void performDumbAwareWithCallbacks(@NotNull AnAction action,
@@ -294,11 +324,11 @@ public final class ActionUtil {
    * @deprecated use {@link #performActionDumbAwareWithCallbacks(AnAction, AnActionEvent)} or
    * {@link AnAction#actionPerformed(AnActionEvent)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void performActionDumbAware(@NotNull AnAction action, @NotNull AnActionEvent event) {
     Project project = event.getProject();
     try {
-      action.actionPerformed(event);
+      doPerformActionOrShowPopup(action, event, null);
     }
     catch (IndexNotReadyException ex) {
       LOG.info(ex);

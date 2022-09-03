@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package storage.codegen.patcher
+package com.intellij.workspaceModel.codegen.patcher
 
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
@@ -8,10 +8,10 @@ import com.intellij.workspaceModel.deft.api.annotations.Ignore
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.annotations.Open
-import org.jetbrains.deft.codegen.model.*
-import org.jetbrains.deft.codegen.model.KtAnnotation
-import org.jetbrains.deft.codegen.model.KtConstructor
-import org.jetbrains.deft.codegen.model.KtFile
+import com.intellij.workspaceModel.codegen.deft.model.*
+import com.intellij.workspaceModel.codegen.deft.model.KtAnnotation
+import com.intellij.workspaceModel.codegen.deft.model.KtConstructor
+import com.intellij.workspaceModel.codegen.deft.model.KtFile
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset

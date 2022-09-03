@@ -55,7 +55,10 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -1322,6 +1325,11 @@ public final class PluginManagerConfigurable
                                         return String.format("%s (%s)", descriptor.getName(), descriptor.getVersion());
                                       }, "\n");
         CopyPasteManager.getInstance().setContents(new TextTransferable(text));
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override

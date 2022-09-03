@@ -42,6 +42,7 @@ import com.intellij.ui.content.*
 import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.docking.DockManager
+import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor
 import com.intellij.util.ObjectUtils
 import com.intellij.util.SmartList
 import com.intellij.util.ui.EmptyIcon
@@ -271,6 +272,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     content.setPreferredFocusedComponent(descriptor.preferredFocusComputable)
     content.putUserData(RunContentDescriptor.DESCRIPTOR_KEY, descriptor)
     content.putUserData(EXECUTOR_KEY, executor)
+    content.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_GUEST, true)
     content.displayName = descriptor.displayName
     descriptor.setAttachedContent(content)
     val toolWindow = getToolWindowManager().getToolWindow(toolWindowId)

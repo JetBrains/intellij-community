@@ -14,27 +14,31 @@ import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public final class ExternalDiffTool {
@@ -52,12 +56,40 @@ public final class ExternalDiffTool {
     if (isDefault()) return true;
 
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    return diffProducers.stream()
-      .map(DiffRequestProducer::getName)
-      .filter(filePath -> !FileUtilRt.getExtension(filePath).equals("tmp"))
-      .map(filePath -> fileTypeManager.getFileTypeByFileName(filePath))
-      .distinct()
-      .anyMatch(fileType -> ExternalDiffSettings.findDiffTool(fileType) != null);
+    return JBIterable.from(diffProducers)
+             .map(DiffRequestProducer::getName)
+             .filter(filePath -> !FileUtilRt.getExtension(filePath).equals("tmp"))
+             .map(filePath -> fileTypeManager.getFileTypeByFileName(filePath))
+             .unique()
+             .map(fileType -> ExternalDiffSettings.findDiffTool(fileType))
+             .filter(Conditions.notNull())
+             .first() != null;
+  }
+
+  public static boolean checkNotTooManyRequests(@Nullable Project project, @NotNull List<? extends DiffRequestProducer> diffProducers) {
+    if (diffProducers.size() <= Registry.intValue("diff.external.tool.file.limit")) return true;
+    new Notification("Diff Changes Loading Error",
+                     DiffBundle.message("can.t.show.diff.in.external.tool.too.many.files", diffProducers.size()),
+                     NotificationType.WARNING).notify(project);
+    return false;
+  }
+
+  @Nullable
+  private static ExternalDiffSettings.ExternalTool getExternalToolFor(@NotNull ContentDiffRequest request) {
+    ExternalDiffSettings.ExternalTool diffTool = JBIterable.from(request.getContents())
+      .map(content -> content.getContentType())
+      .filter(Conditions.notNull())
+      .unique()
+      .sort(Comparator.comparing(fileType -> fileType != UnknownFileType.INSTANCE ? -1 : 1))
+      .map(fileType -> ExternalDiffSettings.findDiffTool(fileType))
+      .filter(Conditions.notNull())
+      .first();
+    if (diffTool != null) return diffTool;
+
+    if (isDefault()) {
+      return ExternalDiffSettings.findDefaultDiffTool();
+    }
+    return null;
   }
 
   public static boolean showIfNeeded(@Nullable Project project,
@@ -66,14 +98,17 @@ public final class ExternalDiffTool {
     return show(project, hints, indicator -> {
       List<? extends DiffRequestProducer> producers = loadProducersFromChain(chain);
       if (!wantShowExternalToolFor(producers)) return null;
+      if (!checkNotTooManyRequests(project, producers)) return null;
       return collectRequests(project, producers, indicator);
     });
   }
 
-  public static void show(@Nullable Project project,
-                          @NotNull List<? extends DiffRequestProducer> requestProducers,
-                          @NotNull DiffDialogHints hints) {
-    show(project, hints, indicator -> {
+  public static boolean showIfNeeded(@Nullable Project project,
+                                     @NotNull List<? extends DiffRequestProducer> requestProducers,
+                                     @NotNull DiffDialogHints hints) {
+    return show(project, hints, indicator -> {
+      if (!wantShowExternalToolFor(requestProducers)) return null;
+      if (!checkNotTooManyRequests(project, requestProducers)) return null;
       return collectRequests(project, requestProducers, indicator);
     });
   }
@@ -120,13 +155,7 @@ public final class ExternalDiffTool {
     throws IOException, ExecutionException {
     if (!canShow(request)) return false;
 
-    List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
-    ExternalDiffSettings.ExternalTool externalTool = StreamEx.of(contents)
-      .map(content -> content.getContentType())
-      .nonNull()
-      .map(fileType -> ExternalDiffSettings.findDiffTool(fileType))
-      .nonNull()
-      .findFirst().orElse(null);
+    ExternalDiffSettings.ExternalTool externalTool = getExternalToolFor(((ContentDiffRequest)request));
     if (externalTool == null) return false;
 
     showRequest(project, request, externalTool);

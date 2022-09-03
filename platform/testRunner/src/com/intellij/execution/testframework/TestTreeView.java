@@ -80,6 +80,11 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public Object getData(@NotNull final String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;

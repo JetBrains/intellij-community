@@ -23,8 +23,6 @@ public class WhatsNewTriggerTest extends BareTestFixtureTestCase {
 
   @Before
   public void setUp() throws Exception {
-    assertTrue(UpdateSettings.getInstance().isShowWhatsNewEditor());  // if the default changes, the test must be updated accordingly
-
     Path tempUpdateData = tempDir.newFile("updates.xml").toPath();
     Files.writeString(
       tempUpdateData,

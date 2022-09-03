@@ -61,7 +61,7 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  * @see com.intellij.openapi.actionSystem.ActionPlaces
  * @see com.intellij.openapi.project.DumbAwareAction
  */
-public abstract class AnAction implements PossiblyDumbAware {
+public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadAware {
   private static final Logger LOG = Logger.getInstance(AnAction.class);
 
   public static final Key<List<AnAction>> ACTIONS_KEY = Key.create("AnAction.shortcutSet");
@@ -227,7 +227,8 @@ public abstract class AnAction implements PossiblyDumbAware {
   public final void copyFrom(@NotNull AnAction sourceAction) {
     Presentation sourcePresentation = sourceAction.getTemplatePresentation();
     Presentation presentation = getTemplatePresentation();
-    presentation.copyFrom(sourcePresentation);
+    boolean allFlags = this instanceof ActionGroup && sourceAction instanceof ActionGroup;
+    presentation.copyFrom(sourcePresentation, null, allFlags);
     copyShortcutFrom(sourceAction);
   }
 
@@ -256,14 +257,6 @@ public abstract class AnAction implements PossiblyDumbAware {
    */
   public boolean useSmallerFontForTextInToolbar() {
     return false;
-  }
-
-  /**
-   * Specifies the thread and the way {@link AnAction#update(AnActionEvent)} shall be called.
-   */
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return this instanceof UpdateInBackground && ((UpdateInBackground)this).isUpdateInBackground() ?
-           ActionUpdateThread.BGT : ActionUpdateThread.OLD_EDT;
   }
 
   /**

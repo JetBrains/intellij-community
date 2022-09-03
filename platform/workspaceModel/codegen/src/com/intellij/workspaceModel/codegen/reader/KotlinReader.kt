@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package storage.codegen.patcher
+package com.intellij.workspaceModel.codegen.patcher
 
-import org.jetbrains.deft.codegen.model.*
+import com.intellij.workspaceModel.codegen.deft.model.*
 import java.util.*
 
 // todo: replace by real kotlin parser

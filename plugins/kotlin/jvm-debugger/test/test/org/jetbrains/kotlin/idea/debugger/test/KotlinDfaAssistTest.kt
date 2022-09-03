@@ -42,6 +42,7 @@ class KotlinDfaAssistTest : DfaAssistTest() {
                if (y || x/*TRUE*/) {}
                var z: Boolean
                z = x/*TRUE*/
+               var b = true
             }""") { vm, frame -> frame.addVariable("x", MockBooleanValue(vm, true)) }
     }
 

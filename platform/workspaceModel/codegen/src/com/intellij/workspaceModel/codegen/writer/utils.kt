@@ -1,6 +1,6 @@
-package deft.storage.codegen
+package com.intellij.workspaceModel.codegen
 
-import org.jetbrains.deft.impl.fields.Field
+import com.intellij.workspaceModel.codegen.deft.Field
 
 fun <T> Collection<T>.lines(f: T.() -> String = { "$this" }): String =
   mapNotNull { f(it).takeIf { item -> item.isNotBlank() } }.joinToString("\n")

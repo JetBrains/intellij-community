@@ -16,6 +16,7 @@
 
 package com.intellij.ide;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThreadAware;
 import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * paste logic. Transferable to paste can be retrieved from passed {@code dataContext} using
  * {@link com.intellij.openapi.editor.actions.PasteAction#TRANSFERABLE_PROVIDER} key.
  */
-public interface PasteProvider {
+public interface PasteProvider extends ActionUpdateThreadAware {
   void performPaste(@NotNull DataContext dataContext);
 
   /**

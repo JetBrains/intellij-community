@@ -16,6 +16,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.ui.*
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleColoredComponent
@@ -25,8 +26,6 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.TopGap
-import com.intellij.ui.dsl.builder.components.DslLabel
-import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
@@ -277,10 +276,6 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
     private val testMergeButton = JButton(DiffBundle.message("settings.external.diff.test.merge")).apply {
       addActionListener { showTestMerge() }
     }
-    private val argumentPatternDescription = DslLabel(DslLabelType.COMMENT).apply {
-      maxLineLength = DEFAULT_COMMENT_WIDTH
-      text = createDescription(ExternalToolGroup.DIFF_TOOL)
-    }
 
     constructor(externalTool: ExternalTool) : this(externalTool.name, true) {
       isAutocompleteToolName = false
@@ -301,6 +296,8 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
     }
 
     override fun createCenterPanel(): JComponent = panel {
+      lateinit var argumentPatternDescription: JEditorPane;
+
       row(DiffBundle.message("settings.external.tool.tree.add.dialog.field.group")) {
         cell(groupField).horizontalAlign(HorizontalAlign.FILL)
       }.visible(!isEditMode)
@@ -343,7 +340,9 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
             }
           })
       }
-      row { cell(argumentPatternDescription) }
+      row {
+        argumentPatternDescription = comment(createDescription(ExternalToolGroup.DIFF_TOOL), DEFAULT_COMMENT_WIDTH).component
+      }
       row {
         val isMergeGroup = isMergeTrustExitCode.isVisible
         cell(testDiffButton).visible(!isMergeGroup)
@@ -383,6 +382,7 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
       return isNodeExist != null
     }
 
+    @NlsContexts.DetailedDescription
     private fun createDescription(toolGroup: ExternalToolGroup): String {
       val title = DiffBundle.message("settings.external.tools.parameters.description")
       val argumentPattern = when (toolGroup) {

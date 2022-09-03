@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -23,6 +24,11 @@ class ServiceViewDeleteProvider implements DeleteProvider {
 
   ServiceViewDeleteProvider(@NotNull ServiceView serviceView) {
     myServiceView = serviceView;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

@@ -196,9 +196,7 @@ abstract class EditorTabPreviewBase(protected val project: Project,
       if (diffProducers == null || diffProducers.isEmpty) return false
 
       val producers = diffProducers.explicitSelection
-      if (!ExternalDiffTool.wantShowExternalToolFor(producers)) return false
-      ExternalDiffTool.show(project, producers, DiffDialogHints.DEFAULT)
-      return true
+      return ExternalDiffTool.showIfNeeded(project, producers, DiffDialogHints.DEFAULT)
     }
   }
 }

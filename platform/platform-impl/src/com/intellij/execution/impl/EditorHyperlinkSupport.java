@@ -212,7 +212,7 @@ public class EditorHyperlinkSupport {
   }
 
   public void createHyperlink(@NotNull RangeHighlighter highlighter, @NotNull HyperlinkInfo hyperlinkInfo) {
-    associateHyperlink(highlighter, hyperlinkInfo, null);
+    associateHyperlink(highlighter, hyperlinkInfo, null, true);
   }
 
   @NotNull
@@ -241,15 +241,22 @@ public class EditorHyperlinkSupport {
           if (highlightAttributes != null) {
             ex.setTextAttributes(highlightAttributes);
           }
+          associateHyperlink(ex, hyperlinkInfo, followedHyperlinkAttributes, false);
         });
-    associateHyperlink(highlighter, hyperlinkInfo, followedHyperlinkAttributes);
     return highlighter;
   }
 
   private static void associateHyperlink(@NotNull RangeHighlighter highlighter,
-                                        @NotNull HyperlinkInfo hyperlinkInfo,
-                                        @Nullable TextAttributes followedHyperlinkAttributes) {
-    highlighter.putUserData(HYPERLINK, new HyperlinkInfoTextAttributes(hyperlinkInfo, followedHyperlinkAttributes));
+                                         @NotNull HyperlinkInfo hyperlinkInfo,
+                                         @Nullable TextAttributes followedHyperlinkAttributes,
+                                         boolean fireChanged) {
+    HyperlinkInfoTextAttributes attributes = new HyperlinkInfoTextAttributes(hyperlinkInfo, followedHyperlinkAttributes);
+    if (fireChanged) {
+      ((RangeHighlighterEx)highlighter).putUserDataAndFireChanged(HYPERLINK, attributes);
+    }
+    else {
+      highlighter.putUserData(HYPERLINK, attributes);
+    }
   }
 
   @Nullable

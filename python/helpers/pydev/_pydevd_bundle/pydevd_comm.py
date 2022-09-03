@@ -440,6 +440,10 @@ def start_client(host, port):
     pydevd_log(1, "Connecting to ", host, ":", str(port))
 
     s = socket(AF_INET, SOCK_STREAM)
+    # Set inheritable for Python >= 3.4. See https://docs.python.org/3/library/os.html#fd-inheritance.
+    # It fixes issues: PY-37960 and PY-14980, also https://github.com/tornadoweb/tornado/issues/2243
+    if hasattr(s, 'set_inheritable'):
+        s.set_inheritable(True)
 
     #  Set TCP keepalive on an open socket.
     #  It activates after 1 second (TCP_KEEPIDLE,) of idleness,

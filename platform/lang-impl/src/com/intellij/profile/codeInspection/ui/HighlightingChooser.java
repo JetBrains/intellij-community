@@ -45,7 +45,7 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
     final var attributes = ColorSettingsUtil.getErrorTextAttributes();
     String displayName = key.getExternalName();
     for (Pair<TextAttributesKey, @Nls String> pair: attributes) {
-      if (key.equals(pair.first)) {
+      if (key.toString().equals(pair.first.toString())) {
         displayName = pair.second;
         break;
       }
@@ -105,7 +105,9 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
 
   @Override
   public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    return createComboBoxButton(presentation);
+    final ComboBoxButton button = createComboBoxButton(presentation);
+    button.setMinimumSize(new Dimension(100, 0));
+    return button;
   }
 }
 

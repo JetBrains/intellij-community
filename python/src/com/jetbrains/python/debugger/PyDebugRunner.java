@@ -14,7 +14,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.HostPort;
 import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.target.local.LocalTargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -498,7 +498,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     configureDebugParameters(project, pyState, debuggerScript, false);
 
     // TODO [Targets API] This workaround is required until Cython extensions are uploaded using Targets API
-    boolean isLocalTarget = targetEnvironmentRequest instanceof LocalTargetEnvironment;
+    boolean isLocalTarget = targetEnvironmentRequest instanceof LocalTargetEnvironmentRequest;
     configureDebugEnvironment(project, new TargetEnvironmentController(debuggerScript.getEnvs(), targetEnvironmentRequest), runProfile,
                               isLocalTarget);
 
@@ -669,6 +669,11 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
   }
 
+  /**
+   * To be deprecated.
+   * <p>
+   * The part of the legacy implementation based on {@link GeneralCommandLine}.
+   */
   public static void disableBuiltinBreakpoint(@Nullable Sdk sdk, Map<String, String> env) {
     if (sdk != null) {
       final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);

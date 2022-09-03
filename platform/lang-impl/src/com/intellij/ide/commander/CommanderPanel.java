@@ -533,6 +533,11 @@ public class CommanderPanel extends JPanel {
 
   private final class MyDeleteElementProvider implements DeleteProvider {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void deleteElement(@NotNull final DataContext dataContext) {
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {

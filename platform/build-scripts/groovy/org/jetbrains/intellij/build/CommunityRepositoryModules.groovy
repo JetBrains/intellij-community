@@ -166,6 +166,7 @@ final class CommunityRepositoryModules {
       withModule("intellij.devkit.intelliLang")
       withModule("intellij.devkit.uiDesigner")
       withModule("intellij.devkit.workspaceModel")
+      withModule("intellij.platform.workspaceModel.codegen")
       withModule("intellij.java.devkit")
       withModule("intellij.groovy.devkit")
       withModule("intellij.devkit.jps")
@@ -253,6 +254,9 @@ final class CommunityRepositoryModules {
       withModule("intellij.protoeditor.go")
       withModule("intellij.protoeditor.jvm")
       withModule("intellij.protoeditor.python")
+    },
+    plugin("intellij.serial.monitor") {
+      withProjectLibrary("io.github.java.native.jssc", LibraryPackMode.STANDALONE_SEPARATE)
     }
   )
 

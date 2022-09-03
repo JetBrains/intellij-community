@@ -650,6 +650,11 @@ public final class DynamicToolWindowWrapper {
       else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         return new DeleteProvider() {
           @Override
+          public @NotNull ActionUpdateThread getActionUpdateThread() {
+            return ActionUpdateThread.EDT;
+          }
+
+          @Override
           public void deleteElement(@NotNull DataContext dataContext) {
             deleteRow();
           }

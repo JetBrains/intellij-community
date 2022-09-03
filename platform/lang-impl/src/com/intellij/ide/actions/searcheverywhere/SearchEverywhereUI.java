@@ -122,13 +122,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private final HintHelper myHintHelper;
   private final SearchEverywhereMlService myMlService;
 
-  public SearchEverywhereUI(@Nullable Project project,
-                            Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
+  public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors) {
     this(project, contributors, s -> null);
   }
 
-  public SearchEverywhereUI(@Nullable Project project,
-                            Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors,
+  public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors,
                             @NotNull Function<? super String, String> shortcutSupplier) {
     super(project);
     myListFactory = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")

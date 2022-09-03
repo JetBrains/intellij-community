@@ -99,15 +99,19 @@ public final class JavaParametersUtil {
     if (virtualFile == null) return null;
     Module classModule = psiClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(psiClass) : null;
     if (classModule == null) classModule = module;
-    ModuleFileIndex fileIndex = ModuleRootManager.getInstance(classModule).getFileIndex();
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(classModule);
+    final ModuleFileIndex fileIndex = rootManager.getFileIndex();
     if (fileIndex.isInSourceContent(virtualFile)) {
       return !fileIndex.isInTestSourceContent(virtualFile);
     }
-    final List<OrderEntry> entriesForFile = fileIndex.getOrderEntriesForFile(virtualFile);
-    for (OrderEntry entry : entriesForFile) {
+    // the mainClass is located in libraries
+    for (OrderEntry entry : fileIndex.getOrderEntriesForFile(virtualFile)) {
       if (entry instanceof ExportableOrderEntry && ((ExportableOrderEntry)entry).getScope() == DependencyScope.TEST) {
         return false;
       }
+    }
+    if (rootManager.getSourceRoots(false).length == 0) {
+      return false; // there are no 'non-test' sources in the module
     }
     return true;
   }

@@ -1,4 +1,4 @@
-package org.jetbrains.deft.codegen.utils
+package com.intellij.workspaceModel.codegen.utils
 
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity

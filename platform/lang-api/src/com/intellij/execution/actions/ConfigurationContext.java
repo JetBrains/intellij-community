@@ -97,10 +97,14 @@ public class ConfigurationContext {
     return new ConfigurationContext(location);
   }
 
-  private ConfigurationContext(final DataContext dataContext, Location<PsiElement> location, Module module, boolean multipleSelection, String place) {
+  private ConfigurationContext(@NotNull DataContext dataContext,
+                               @Nullable Location<PsiElement> location,
+                               @Nullable Module module,
+                               boolean multipleSelection,
+                               String place) {
     RunConfiguration configuration = RunConfiguration.DATA_KEY.getData(dataContext);
     if (configuration == null) {
-      ExecutionEnvironment environment = dataContext.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
+      ExecutionEnvironment environment = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(dataContext);
       if (environment != null) {
         myConfiguration = environment.getRunnerAndConfigurationSettings();
         if (myConfiguration != null) {
@@ -164,11 +168,11 @@ public class ConfigurationContext {
   }
 
   private @Nullable Object getDefaultData(@NotNull String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) return myLocation.getProject();
+    if (CommonDataKeys.PROJECT.is(dataId)) return myLocation == null ? null : myLocation.getProject();
     if (PlatformCoreDataKeys.MODULE.is(dataId)) return myModule;
     if (Location.DATA_KEY.is(dataId)) return myLocation;
     if (CommonDataKeys.EDITOR.is(dataId)) return myEditor;
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) return myLocation.getPsiElement();
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) return myLocation == null ? null : myLocation.getPsiElement();
     return null;
   }
 

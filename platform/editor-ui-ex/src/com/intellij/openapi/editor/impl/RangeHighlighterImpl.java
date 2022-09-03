@@ -56,7 +56,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   static final byte FONT_STYLE_CHANGED_MASK = 64;
   static final byte FOREGROUND_COLOR_CHANGED_MASK = -128;
 
-  @MagicConstant(intValues = {AFTER_END_OF_LINE_MASK, ERROR_STRIPE_IS_THIN_MASK, TARGET_AREA_IS_EXACT_MASK, IN_BATCH_CHANGE_MASK, 
+  @MagicConstant(intValues = {AFTER_END_OF_LINE_MASK, ERROR_STRIPE_IS_THIN_MASK, TARGET_AREA_IS_EXACT_MASK, IN_BATCH_CHANGE_MASK,
     CHANGED_MASK, RENDERERS_CHANGED_MASK, FONT_STYLE_CHANGED_MASK, FOREGROUND_COLOR_CHANGED_MASK})
   private @interface FlagConstant {}
 
@@ -148,6 +148,12 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   @Override
   public boolean isVisibleIfFolded() {
     return VISIBLE_IF_FOLDED.isIn(this);
+  }
+
+  @Override
+  public <T> void putUserDataAndFireChanged(@NotNull Key<T> key, @Nullable T value) {
+    putUserData(key, value);
+    fireChanged(false, false, false);
   }
 
   private static int getFontStyle(TextAttributes textAttributes) {

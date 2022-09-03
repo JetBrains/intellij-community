@@ -1,9 +1,9 @@
 @file:Suppress("unused")
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
-fun commonMainResolved() = GlobalScope.launch(Dispatchers.Main) {
+fun commonMainResolved() = MainScope().launch(Dispatchers.Main) {
 
 }

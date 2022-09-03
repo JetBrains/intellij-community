@@ -35,6 +35,10 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     myElement = SmartPointerManager.createPointer(element);
     myOrigin = origin;
     copyFrom(origin);
+    if (!(myOrigin instanceof ActionGroup)) {
+      getTemplatePresentation().setPerformGroup(true);
+      getTemplatePresentation().setPopupGroup(true);
+    }
   }
 
   @Override
@@ -90,9 +94,6 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     Icon icon = wrapped.getPresentation().getIcon();
     if (icon != null) {
       e.getPresentation().setIcon(icon);
-    }
-    if (!(myOrigin instanceof ActionGroup)) {
-      e.getPresentation().setPerformGroup(true);
     }
   }
 

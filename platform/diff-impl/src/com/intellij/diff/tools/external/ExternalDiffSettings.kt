@@ -98,6 +98,16 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
       get() = FileTypeManager.getInstance()
 
     @JvmStatic
+    fun findDefaultDiffTool(): ExternalTool? {
+      val diffToolName = instance.defaultToolConfiguration.diffToolName
+
+      if (diffToolName == ExternalToolConfiguration.BUILTIN_TOOL) return null
+      val diffTools = instance.externalTools[ExternalToolGroup.DIFF_TOOL] ?: return null
+
+      return findTool(diffTools, diffToolName)
+    }
+
+    @JvmStatic
     fun findDiffTool(fileType: FileType): ExternalTool? {
       val diffToolName = findToolConfiguration(fileType)?.diffToolName
                          ?: instance.defaultToolConfiguration.diffToolName

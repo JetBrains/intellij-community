@@ -15,6 +15,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
@@ -180,6 +181,10 @@ private fun hasConsoleKey(element: PsiElement): Boolean {
   if (psiFile.virtualFile == null) return false
   val inConsole = element.containingFile.virtualFile.getUserData(PythonConsoleView.CONSOLE_KEY)
   return inConsole != null && inConsole
+}
+
+fun isConsoleView(file: VirtualFile): Boolean {
+  return file.getUserData(PythonConsoleView.CONSOLE_KEY) == true
 }
 
 fun getPythonConsoleData(element: ASTNode?): PythonConsoleData? {

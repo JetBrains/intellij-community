@@ -618,6 +618,11 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       List<ShelvedChangeList> shelvedListsToDelete = TreeUtil.collectSelectedObjectsOfType(myTree, ShelvedChangeList.class);
       List<ShelvedChangeList> shelvedListsFromChanges = getShelvedLists(dataContext);

@@ -16,8 +16,7 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -45,24 +44,13 @@ public abstract class ActionProcessor {
                             @NotNull AnAction action,
                             @NotNull AnActionEvent event) {
     inputEvent.consume();
-
-    if (action instanceof ActionGroup && !event.getPresentation().isPerformGroup()) {
-      DataContext ctx = event.getDataContext();
-      ActionGroup group = (ActionGroup)action;
-      String groupId = ActionManager.getInstance().getId(action);
-      ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-        group.getTemplatePresentation().getText(), group, ctx,
-        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-        false, null, -1, null, ActionPlaces.getActionGroupPopupPlace(groupId));
+    ActionUtil.doPerformActionOrShowPopup(action, event, popup -> {
       if (inputEvent instanceof MouseEvent) {
         popup.show(new RelativePoint((MouseEvent)inputEvent));
       }
       else {
-        popup.showInBestPositionFor(ctx);
+        popup.showInBestPositionFor(event.getDataContext());
       }
-    }
-    else {
-      action.actionPerformed(event);
-    }
+    });
   }
 }

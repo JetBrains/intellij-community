@@ -27,7 +27,6 @@ public class ClassFile {
   private short myAccessFlags;
   private ConstantPoolInfo myThisClass;
   private ConstantPoolInfo mySuperClass;
-  private ConstantPoolInfo myInterfaces[];
   private FieldInfo myFields[];
   private MethodInfo myMethods[];
   private AttributeInfo myAttributes[];
@@ -48,12 +47,10 @@ public class ClassFile {
   private void readInterfaces(DataInputStream stream) throws IOException {
     int count = stream.readShort();
     if (count != 0) {
-      myInterfaces = new ConstantPoolInfo[count];
       for (int i = 0; i < count; i++) {
         int index = stream.readShort();
         if ((index < 1) || (index > myConstantPool.length - 1))
           throw new InvalidClassException("Wrong count for constant pool");
-        myInterfaces[i] = myConstantPool[index];
       }
     }
   }

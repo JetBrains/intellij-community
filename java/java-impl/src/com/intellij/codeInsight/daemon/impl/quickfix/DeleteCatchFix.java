@@ -90,8 +90,9 @@ public class DeleteCatchFix implements IntentionActionWithFixAllOption {
           boolean mayCompleteNormally = ControlFlowUtils.codeBlockMayCompleteNormally(tryBlock);
           if (!mayCompleteNormally) {
             PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(tryStatement.getNextSibling());
-            PsiElement lastElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(((PsiCodeBlock)tryParent).getRBrace());
-            if (nextElement != null && lastElement != null) {
+            PsiJavaToken rBrace = ((PsiCodeBlock)tryParent).getRBrace();
+            PsiElement lastElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(rBrace);
+            if (nextElement != null && lastElement != null && nextElement != rBrace) {
               tryParent.deleteChildRange(nextElement, lastElement);
             }
           }

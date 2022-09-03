@@ -177,6 +177,11 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     return !getSelectedNodeDescriptors().isEmpty();
   }

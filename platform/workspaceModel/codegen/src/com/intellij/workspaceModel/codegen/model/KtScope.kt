@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.deft.codegen.model
+package com.intellij.workspaceModel.codegen.deft.model
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager

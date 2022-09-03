@@ -1,6 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.modules
 
 import com.intellij.ide.CopyProvider
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -129,6 +130,8 @@ internal class ModulesTree(
 
         CopyPasteManager.getInstance().setContents(StringSelection(dataToCopy))
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun isCopyEnabled(dataContext: DataContext) = true
 

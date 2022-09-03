@@ -79,7 +79,7 @@ final class ActionUpdater {
 
   private boolean myAllowPartialExpand = true;
   private boolean myPreCacheSlowDataKeys;
-  private boolean myForceAsync;
+  private ActionUpdateThread myForcedUpdateThread;
   private final Function<? super AnActionEvent, ? extends AnActionEvent> myEventTransform;
   private final Consumer<? super Runnable> myLaterInvocator;
   private final int myTestDelayMillis;
@@ -111,7 +111,7 @@ final class ActionUpdater {
     myEventTransform = eventTransform;
     myLaterInvocator = laterInvocator;
     myPreCacheSlowDataKeys = Utils.isAsyncDataContext(dataContext) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
-    myForceAsync = Registry.is("actionSystem.update.actions.async.unsafe");
+    myForcedUpdateThread = Registry.is("actionSystem.update.actions.async.unsafe") ? ActionUpdateThread.BGT : null;
     myRealUpdateStrategy = new UpdateStrategy(
       action -> updateActionReal(action),
       group -> callAction(group, Op.getChildren, () -> doGetChildren(group, createActionEvent(orDefault(group, myUpdatedPresentations.get(group))))));
@@ -162,15 +162,18 @@ final class ActionUpdater {
   }
 
   private <T> T callAction(@NotNull AnAction action, @NotNull Op operation, @NotNull Supplier<? extends T> call) {
-    ActionUpdateThread updateThread = action.getActionUpdateThread();
     String operationName = action.getClass().getSimpleName() + "#" + operation + " (" + action.getClass().getName() + ", " + myPlace + ")";
-    // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
-    boolean canAsync = Utils.isAsyncDataContext(myDataContext) && operation != Op.beforeActionPerformedUpdate;
-    boolean shallAsync = myForceAsync || canAsync && updateThread == ActionUpdateThread.BGT;
+    return callAction(operationName, action.getActionUpdateThread(), call);
+  }
+
+  <T> T callAction(@NotNull String operationName, @NotNull ActionUpdateThread updateThreadOrig, @NotNull Supplier<? extends T> call) {
+    ActionUpdateThread updateThread = myForcedUpdateThread != null ? myForcedUpdateThread : updateThreadOrig;
+    boolean canAsync = Utils.isAsyncDataContext(myDataContext);
+    boolean shallAsync = updateThread == ActionUpdateThread.BGT;
     boolean isEDT = EDT.isCurrentThreadEdt();
     boolean shallEDT = !(canAsync && shallAsync);
     if (isEDT && !shallEDT && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
-      LOG.error("Calling on EDT " + operationName + (myForceAsync ? "(forceAsync=true)" : "(actionUpdateThread=" + updateThread + ")"));
+      LOG.error("Calling on EDT " + operationName + "(" + (myForcedUpdateThread != null ? "forced-" : "") + updateThread + ")");
     }
     if (myAllowPartialExpand) {
       ProgressManager.checkCanceled();
@@ -194,7 +197,7 @@ final class ActionUpdater {
   }
 
   /** @noinspection AssignmentToStaticFieldFromInstanceMethod*/
-  <T> T computeOnEdt(@NotNull String operationName, @NotNull Supplier<? extends T> call, boolean noRulesInEDT) {
+  private <T> T computeOnEdt(@NotNull String operationName, @NotNull Supplier<? extends T> call, boolean noRulesInEDT) {
     long start0 = System.nanoTime();
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
     ConcurrentList<String> warns = ContainerUtil.createConcurrentList();
@@ -470,8 +473,8 @@ final class ActionUpdater {
     if (myAllowPartialExpand) {
       ProgressManager.checkCanceled();
     }
-    boolean prevForceAsync = myForceAsync;
-    myForceAsync |= group instanceof UpdateInBackground.Recursive;
+    ActionUpdateThread prevForceAsync = myForcedUpdateThread;
+    myForcedUpdateThread = group instanceof ActionUpdateThreadAware.Recursive ? group.getActionUpdateThread() : prevForceAsync;
     Presentation presentation = update(group, strategy);
     if (presentation == null || !presentation.isVisible()) { // don't process invisible groups
       return Collections.emptyList();
@@ -479,7 +482,7 @@ final class ActionUpdater {
 
     List<AnAction> children = getGroupChildren(group, strategy);
     List<AnAction> result = ContainerUtil.concat(children, child -> expandGroupChild(child, hideDisabled, strategy));
-    myForceAsync = prevForceAsync;
+    myForcedUpdateThread = prevForceAsync;
     return group.postProcessVisibleChildren(result, asUpdateSession(strategy));
   }
 
@@ -503,63 +506,54 @@ final class ActionUpdater {
     if (presentation == null) {
       return Collections.emptyList();
     }
-
-    if (!presentation.isVisible() || (!presentation.isEnabled() && hideDisabled)) { // don't create invisible items in the menu
+    else if (!presentation.isVisible() || hideDisabled && !presentation.isEnabled()) {
       return Collections.emptyList();
     }
-    if (child instanceof ActionGroup) {
-      ActionGroup actionGroup = (ActionGroup)child;
+    else if (!(child instanceof ActionGroup)) {
+      return Collections.singletonList(child);
+    }
+    ActionGroup group = (ActionGroup)child;
 
-      boolean isPopup = presentation.isPopupGroup();
-      boolean hasEnabled = false, hasVisible = false;
+    boolean isPopup = presentation.isPopupGroup();
+    boolean canBePerformed = presentation.isPerformGroup();
+    boolean performOnly = isPopup && canBePerformed && (
+      Boolean.TRUE.equals(presentation.getClientProperty(ActionMenu.SUPPRESS_SUBMENU)) ||
+      child instanceof AlwaysPerformingActionGroup);
+    boolean hideEmpty = isPopup && group.hideIfNoVisibleChildren();
+    boolean checkChildren = isPopup && (canBePerformed || hideDisabled || hideEmpty) &&
+                            !(performOnly || child instanceof AlwaysVisibleActionGroup);
 
-      if (child instanceof AlwaysVisibleActionGroup) {
-        hasEnabled = hasVisible = true;
+    boolean hasEnabled = false, hasVisible = false;
+    if (checkChildren) {
+      JBIterable<AnAction> childrenIterable = iterateGroupChildren(group, strategy);
+      for (AnAction action : childrenIterable.take(100)) {
+        if (action instanceof Separator) continue;
+        Presentation p = update(action, strategy);
+        if (p == null) continue;
+        hasVisible |= p.isVisible();
+        hasEnabled |= p.isEnabled();
+        // stop early if all the required flags are collected
+        if (hasVisible && (hasEnabled || !hideDisabled)) break;
       }
-      else if (hideDisabled || isPopup) {
-        JBIterable<AnAction> childrenIterable = iterateGroupChildren(actionGroup, strategy);
-        for (AnAction action : childrenIterable.take(100)) {
-          if (action instanceof Separator) continue;
-          Presentation p = update(action, strategy);
-          if (p == null) continue;
-          hasVisible |= p.isVisible();
-          hasEnabled |= p.isEnabled();
-          // stop early if all the required flags are collected
-          if (hasEnabled && hasVisible) break;
-          if (hideDisabled && hasEnabled && !isPopup) break;
-          if (isPopup && hasVisible && !hideDisabled) break;
-        }
+      performOnly = canBePerformed && !hasVisible;
+    }
+    if (isPopup) {
+      presentation.putClientProperty(SUPPRESS_SUBMENU_IMPL, performOnly ? true : null);
+      if (checkChildren && !performOnly && !hasVisible && group.disableIfNoVisibleChildren()) {
+        presentation.setEnabled(false);
       }
-
-      if (hideDisabled && !hasEnabled) {
-        return Collections.emptyList();
-      }
-      if (isPopup) {
-        boolean canBePerformed = presentation.isPerformGroup();
-        boolean performOnly = canBePerformed && (
-          !hasVisible || Boolean.TRUE.equals(presentation.getClientProperty(ActionMenu.SUPPRESS_SUBMENU)) ||
-          actionGroup instanceof AlwaysPerformingActionGroup);
-        presentation.putClientProperty(SUPPRESS_SUBMENU_IMPL, performOnly ? true : null);
-
-        if (!hasVisible && actionGroup.disableIfNoVisibleChildren()) {
-          if (actionGroup.hideIfNoVisibleChildren()) {
-            return Collections.emptyList();
-          }
-          if (!canBePerformed) {
-            presentation.setEnabled(false);
-          }
-        }
-
-        if (hideDisabled && !(child instanceof CompactActionGroup)) {
-          return Collections.singletonList(new EmptyAction.DelegatingCompactActionGroup((ActionGroup)child));
-        }
-        return Collections.singletonList(child);
-      }
-
-      return doExpandActionGroup((ActionGroup)child, hideDisabled || actionGroup instanceof CompactActionGroup, strategy);
     }
 
-    return Collections.singletonList(child);
+    if (checkChildren && (!hasEnabled && hideDisabled || !hasVisible && hideEmpty)) {
+      return Collections.emptyList();
+    }
+    else if (isPopup) {
+      return Collections.singletonList(!hideDisabled || child instanceof CompactActionGroup ? group :
+                                       new EmptyAction.DelegatingCompactActionGroup(group));
+    }
+    else {
+      return doExpandActionGroup(group, hideDisabled || child instanceof CompactActionGroup, strategy);
+    }
   }
 
   private Presentation orDefault(AnAction action, Presentation presentation) {
@@ -667,15 +661,7 @@ final class ActionUpdater {
   static boolean doUpdate(@NotNull AnAction action, @NotNull AnActionEvent e) {
     if (ApplicationManager.getApplication().isDisposed()) return false;
     try {
-      boolean result = !ActionUtil.performDumbAwareUpdate(action, e, false);
-      if (result) {
-        Presentation presentation = e.getPresentation();
-        // to be removed when ActionGroup#canBePerformed is dropped
-        presentation.setPerformGroup(
-          action instanceof ActionGroup && presentation.isPopupGroup() &&
-          (presentation.isPerformGroup() || doCanBePerformed((ActionGroup)action, e.getDataContext())));
-      }
-      return result;
+      return !ActionUtil.performDumbAwareUpdate(action, e, false);
     }
     catch (Throwable ex) {
       handleException(Op.update, action, e, ex);
@@ -690,16 +676,6 @@ final class ActionUpdater {
     catch (Throwable ex) {
       handleException(Op.getChildren, group, e, ex);
       return AnAction.EMPTY_ARRAY;
-    }
-  }
-
-  private static boolean doCanBePerformed(@NotNull ActionGroup group, @NotNull DataContext context) {
-    try {
-      return group.canBePerformed(context);
-    }
-    catch (Throwable ex) {
-      handleException(Op.canBePerformed, group, null, ex);
-      return true;
     }
   }
 
@@ -735,7 +711,7 @@ final class ActionUpdater {
     }
   }
 
-  private enum Op { update, beforeActionPerformedUpdate, getChildren, canBePerformed }
+  private enum Op { update, getChildren }
 
   private static class UpdateStrategy {
     final NullableFunction<? super AnAction, Presentation> update;
@@ -784,8 +760,10 @@ final class ActionUpdater {
     }
 
     @Override
-    public <T> @NotNull T computeOnEdt(@NotNull String operationName, @NotNull Supplier<? extends T> supplier) {
-      return updater.computeOnEdt(operationName, supplier, true);
+    public <T> @NotNull T compute(@NotNull String operationName,
+                                  @NotNull ActionUpdateThread updateThread,
+                                  @NotNull Supplier<? extends T> supplier) {
+      return updater.callAction(operationName, updateThread, supplier);
     }
   }
 }

@@ -4,7 +4,6 @@ package com.intellij.debugger.actions;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
@@ -26,7 +25,6 @@ import java.util.List;
 
 @ApiStatus.Experimental
 public class ShowCollectionHistoryAction extends XFetchValueActionBase {
-
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (!Registry.is("debugger.collection.watchpoints.enabled")) {
@@ -35,9 +33,6 @@ public class ShowCollectionHistoryAction extends XFetchValueActionBase {
       return;
     }
     super.update(e);
-    if (getNode(e) != null) {
-      e.getPresentation().setText(ActionsBundle.messagePointer("action.Debugger.ShowCollectionHistory.text"));
-    }
   }
 
   @NotNull

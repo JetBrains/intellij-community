@@ -71,7 +71,13 @@ public class CopyPasteDelegator implements CopyPasteSupport {
     return myEditable;
   }
 
-  class MyEditable implements CutProvider, CopyProvider, PasteProvider, UpdateInBackground {
+  class MyEditable implements CutProvider, CopyProvider, PasteProvider, ActionUpdateThreadAware {
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
     @Override
     public void performCopy(@NotNull DataContext dataContext) {
       PsiElement[] elements = validate(getSelectedElements(dataContext));

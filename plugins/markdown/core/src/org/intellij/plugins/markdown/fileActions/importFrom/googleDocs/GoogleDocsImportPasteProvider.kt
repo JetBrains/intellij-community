@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.fileActions.importFrom.googleDocs
 
 import com.intellij.ide.PasteProvider
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
@@ -12,6 +13,8 @@ import org.intellij.plugins.markdown.fileActions.utils.GoogleDocsImportUtils.imp
 import org.intellij.plugins.markdown.google.utils.GoogleAccountsUtils.chooseAccount
 
 class GoogleDocsImportPasteProvider : PasteProvider {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun performPaste(dataContext: DataContext) {
     val copiedLink = ClipboardUtil.getTextInClipboard() ?: return

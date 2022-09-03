@@ -120,7 +120,7 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
         PsiAnnotation annotation = PsiTreeUtil.getParentOfType(referenceElement, PsiAnnotation.class, true, PsiStatement.class, PsiMember.class);
         if (annotation != null) {
           String annotationName = annotation.getQualifiedName();
-          if (JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE.equals(annotationName) && annotation.getAttributes().size() == 1) {
+          if (JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ENUM_SOURCE.equals(annotationName) && annotation.getAttributes().size() == 1) {
             return true;
           }
         }

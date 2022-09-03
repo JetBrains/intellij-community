@@ -90,7 +90,7 @@ public class ConstantPoolInfo {
         break;
       case ASCIZ:
       case UNICODE:
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         int len = stream.readShort();
         while (len > 0) {
           char c = (char) (stream.readByte());

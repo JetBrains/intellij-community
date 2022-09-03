@@ -17,7 +17,7 @@ class KotlinCallableReferenceInstruction(val expr: KtCallableReferenceExpression
     override fun accept(interpreter: DataFlowInterpreter, stateBefore: DfaMemoryState): Array<DfaInstructionState> {
         val qualifier = stateBefore.pop()
         JavaDfaHelpers.dropLocality(qualifier, stateBefore)
-        val dfType = expr.getKotlinType().toDfType(expr)
+        val dfType = expr.getKotlinType().toDfType()
         pushResult(interpreter, stateBefore, dfType)
         return nextStates(interpreter, stateBefore)
     }

@@ -83,7 +83,7 @@ class NativePsiAndKtLightElementEqualityProviderTest : LightJavaCodeInsightFixtu
                     val contributor = it.createContributor(event)
                     Disposer.register(disposable, contributor)
                     contributor
-                }.keysToMap { null }
+                }
             )
 
             Disposer.register(disposable, ui)

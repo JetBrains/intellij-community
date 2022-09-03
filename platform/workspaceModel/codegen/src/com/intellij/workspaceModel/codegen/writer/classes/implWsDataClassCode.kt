@@ -1,30 +1,30 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.deft.codegen.ijws.classes
+package com.intellij.workspaceModel.codegen.classes
 
 import com.intellij.workspaceModel.codegen.InterfaceTraverser
 import com.intellij.workspaceModel.codegen.InterfaceVisitor
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import deft.storage.codegen.field.javaType
-import deft.storage.codegen.implFieldName
-import deft.storage.codegen.javaFullName
-import deft.storage.codegen.javaImplBuilderName
-import deft.storage.codegen.javaImplName
+import com.intellij.workspaceModel.codegen.fields.javaType
+import com.intellij.workspaceModel.codegen.implFieldName
+import com.intellij.workspaceModel.codegen.javaFullName
+import com.intellij.workspaceModel.codegen.javaImplBuilderName
+import com.intellij.workspaceModel.codegen.javaImplName
 import org.jetbrains.deft.Obj
-import org.jetbrains.deft.codegen.ijws.fields.implWsDataFieldCode
-import org.jetbrains.deft.codegen.ijws.fields.implWsDataFieldInitializedCode
-import org.jetbrains.deft.codegen.ijws.isRefType
-import org.jetbrains.deft.codegen.ijws.sups
-import org.jetbrains.deft.codegen.model.DefType
-import org.jetbrains.deft.codegen.model.WsEntityWithPersistentId
-import org.jetbrains.deft.codegen.utils.LinesBuilder
-import org.jetbrains.deft.codegen.utils.fqn
-import org.jetbrains.deft.codegen.utils.lines
-import org.jetbrains.deft.impl.ObjType
-import org.jetbrains.deft.impl.TOptional
-import org.jetbrains.deft.impl.ValueType
-import org.jetbrains.deft.impl.fields.Field
+import com.intellij.workspaceModel.codegen.fields.implWsDataFieldCode
+import com.intellij.workspaceModel.codegen.fields.implWsDataFieldInitializedCode
+import com.intellij.workspaceModel.codegen.isRefType
+import com.intellij.workspaceModel.codegen.sups
+import com.intellij.workspaceModel.codegen.deft.model.DefType
+import com.intellij.workspaceModel.codegen.deft.model.WsEntityWithPersistentId
+import com.intellij.workspaceModel.codegen.utils.LinesBuilder
+import com.intellij.workspaceModel.codegen.utils.fqn
+import com.intellij.workspaceModel.codegen.utils.lines
+import com.intellij.workspaceModel.codegen.deft.ObjType
+import com.intellij.workspaceModel.codegen.deft.TOptional
+import com.intellij.workspaceModel.codegen.deft.ValueType
+import com.intellij.workspaceModel.codegen.deft.Field
 import org.jetbrains.kotlin.utils.addToStdlib.popLast
 
 /**

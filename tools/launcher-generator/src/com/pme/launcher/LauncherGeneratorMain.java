@@ -122,7 +122,7 @@ public class LauncherGeneratorMain {
     int minorVersion = Integer.parseInt(matcher.group(1));
     int bugfixVersion = matcher.group(3) != null ? Integer.parseInt(matcher.group(3)) : 0;
     String buildNumber = getChild(appInfoRoot, "build").getAttributeValue("number");
-    String versionString = "" + majorVersion + "." + minorVersion + "." + bugfixVersion + "." + buildNumber;
+    String versionString = majorVersion + "." + minorVersion + "." + bugfixVersion + "." + buildNumber;
 
     int year = new GregorianCalendar().get(Calendar.YEAR);
 

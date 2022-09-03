@@ -19,10 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public final class ScopeToolState {
   private static final Logger LOG = Logger.getInstance(ScopeToolState.class);
@@ -51,7 +48,6 @@ public final class ScopeToolState {
     myToolWrapper = toolWrapper;
     myEnabled = enabled;
     myLevel = level;
-    myEditorAttributesKey = toolWrapper.getEditorAttributesKeyExternalName();
   }
 
   @NotNull
@@ -95,17 +91,33 @@ public final class ScopeToolState {
   }
 
   public @Nullable TextAttributesKey getEditorAttributesKey() {
+    final TextAttributesKey forcedKey = getForcedEditorAttributesKey();
+    if (forcedKey != null) return forcedKey;
     if (myEditorAttributesKey == null) {
       return null;
     }
     return TextAttributesKey.find(myEditorAttributesKey);
   }
-  
-  public @Nullable String getTextAttributesKeyExternalName() {
-    return myEditorAttributesKey;
+
+  public @Nullable String getEditorAttributesKeyString() {
+    final String forcedKey = getForcedEditorAttributesKeyString();
+    return forcedKey != null ? forcedKey : myEditorAttributesKey;
   }
 
-  public void setEditorAttributesKey(String textAttributesKey) {
+  public @Nullable TextAttributesKey getForcedEditorAttributesKey() {
+    final String forcedKey = getForcedEditorAttributesKeyString();
+    if (forcedKey == null) {
+      return null;
+    }
+    return TextAttributesKey.find(forcedKey);
+  }
+
+  public @Nullable String getForcedEditorAttributesKeyString() {
+    return myToolWrapper.getForcedEditorAttributesKey();
+  }
+
+  public void setEditorAttributesKey(@Nullable String textAttributesKey) {
+    if (getForcedEditorAttributesKeyString() != null) return;
     myEditorAttributesKey = textAttributesKey;
   }
 
@@ -128,6 +140,7 @@ public final class ScopeToolState {
   public boolean equalTo(@NotNull ScopeToolState state2) {
     if (isEnabled() != state2.isEnabled()) return false;
     if (getLevel() != state2.getLevel()) return false;
+    if (!Objects.equals(getEditorAttributesKeyString(), state2.getEditorAttributesKeyString())) return false;
     InspectionToolWrapper<?, ?> toolWrapper = getTool();
     InspectionToolWrapper<?, ?> toolWrapper2 = state2.getTool();
     if (!toolWrapper.isInitialized() && !toolWrapper2.isInitialized()) return true;

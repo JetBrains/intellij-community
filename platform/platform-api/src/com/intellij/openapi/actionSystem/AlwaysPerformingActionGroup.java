@@ -16,13 +16,11 @@
 package com.intellij.openapi.actionSystem;
 
 /**
- * Markup interface to ignore the visible children count and always call "actionPerformed".
- * In menus {@link Presentation#isPerformGroup()} and {@link ActionGroup#canBePerformed(DataContext)}
- * is combined with visible children count to decide whether to show "... >" submenu or an ordinary menu item.
- *
+ * Marker interface to ignore the visible children count and always call "actionPerformed".
+ * In menus an ordinary menu item is shown for a group that sets {@link Presentation#isPerformGroup()} to true
+ * and also has no visible children.
+ * <p>
  * Note: not supported by {@link com.intellij.ide.ui.customization.CustomisedActionGroup}.
- *
- * @author gregsh
  *
  * @deprecated Use {@link com.intellij.openapi.actionSystem.impl.ActionMenu#SUPPRESS_SUBMENU} instead.
  */

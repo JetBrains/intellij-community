@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
@@ -32,18 +31,19 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullabilityFlexible
+import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 
-internal fun KotlinType?.toDfType(context: KtElement): DfType {
+internal fun KotlinType?.toDfType(): DfType {
     if (this == null) return DfType.TOP
     if (canBeNull()) {
-        var notNullableType = makeNotNullable().toDfTypeNotNullable(context)
+        var notNullableType = makeNotNullable().toDfTypeNotNullable()
         if (notNullableType is DfPrimitiveType) {
             val cls = this.constructor.declarationDescriptor as? ClassDescriptor
             val boxedType: DfType
             if (cls != null) {
-                boxedType = TypeConstraints.exactClass(KtClassDef(cls, context)).asDfType()
+                boxedType = TypeConstraints.exactClass(KtClassDef(cls)).asDfType()
             } else {
                 boxedType = DfTypes.OBJECT_OR_NULL
             }
@@ -61,13 +61,13 @@ internal fun KotlinType?.toDfType(context: KtElement): DfType {
             }
         }
     }
-    return toDfTypeNotNullable(context)
+    return toDfTypeNotNullable()
 }
 
-private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
+private fun KotlinType.toDfTypeNotNullable(): DfType {
     return when (val descriptor = this.constructor.declarationDescriptor) {
         is TypeAliasDescriptor -> {
-            descriptor.expandedType.toDfType(context)
+            descriptor.expandedType.toDfType()
         }
         is ClassDescriptor -> when (descriptor.fqNameUnsafe) {
             FqNames._boolean -> DfTypes.BOOLEAN
@@ -79,20 +79,20 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
             FqNames._float -> DfTypes.FLOAT
             FqNames._double -> DfTypes.DOUBLE
             FqNames.array -> {
-                val elementType = getArrayElementType(context)?.constructor?.declarationDescriptor as? ClassDescriptor ?: return DfType.TOP
-                elementType.getTypeConstraint(context).arrayOf().asDfType().meet(DfTypes.NOT_NULL_OBJECT)
+                val elementType = getArrayElementType()?.constructor?.declarationDescriptor as? ClassDescriptor ?: return DfType.TOP
+                elementType.getTypeConstraint().arrayOf().asDfType().meet(DfTypes.NOT_NULL_OBJECT)
             }
 
             FqNames.any -> DfTypes.NOT_NULL_OBJECT
-            else -> descriptor.getTypeConstraint(context).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
+            else -> descriptor.getTypeConstraint().asDfType().meet(DfTypes.NOT_NULL_OBJECT)
         }
 
-        is TypeParameterDescriptor -> descriptor.upperBounds.map { type -> type.toDfType(context) }.fold(DfType.TOP, DfType::meet)
+        is TypeParameterDescriptor -> descriptor.upperBounds.map { type -> type.toDfType() }.fold(DfType.TOP, DfType::meet)
         else -> DfType.TOP
     }
 }
 
-private fun ClassDescriptor.getTypeConstraint(context: KtElement): TypeConstraint {
+private fun ClassDescriptor.getTypeConstraint(): TypeConstraint {
     val fqNameUnsafe = fqNameUnsafe
     if (fqNameUnsafe.shortNameOrSpecial().isSpecial) {
         val source = source
@@ -104,7 +104,7 @@ private fun ClassDescriptor.getTypeConstraint(context: KtElement): TypeConstrain
                     .map { entry ->
                         val classDescriptor = entry.typeReference?.getAbbreviatedTypeOrType(bindingContext)
                             ?.constructor?.declarationDescriptor as? ClassDescriptor
-                        if (classDescriptor == null) null else KtClassDef(classDescriptor, psi)
+                        if (classDescriptor == null) null else KtClassDef(classDescriptor)
                     }
                 return if (superTypes.contains(null))
                     TypeConstraints.TOP
@@ -123,7 +123,7 @@ private fun ClassDescriptor.getTypeConstraint(context: KtElement): TypeConstrain
         "kotlin.FloatArray" -> TypeConstraints.exact(PsiType.FLOAT.createArrayType())
         "kotlin.DoubleArray" -> TypeConstraints.exact(PsiType.DOUBLE.createArrayType())
         else -> {
-            val classDef = KtClassDef(this, context)
+            val classDef = KtClassDef(this)
             if (kind == ClassKind.OBJECT && classDef.isFinal) {
                 TypeConstraints.singleton(classDef)
             } else {
@@ -190,9 +190,9 @@ internal fun KtExpression.getKotlinType(): KotlinType? {
 /**
  * JVM-patched array element type (e.g. Int? for Array<Int>)
  */
-internal fun KotlinType.getArrayElementType(context: KtElement): KotlinType? {
+internal fun KotlinType.getArrayElementType(): KotlinType? {
     if (!KotlinBuiltIns.isArrayOrPrimitiveArray(this)) return null
-    val type = context.builtIns.getArrayElementType(this)
+    val type = builtIns.getArrayElementType(this)
     if (KotlinBuiltIns.isArray(this) && KotlinBuiltIns.isPrimitiveType(type)) {
         return type.makeNullable()
     }

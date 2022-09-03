@@ -5,14 +5,15 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabDescriptor;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -113,9 +114,7 @@ public final class EditorConfigActionUtil {
 
   public static void showEditorConfigFiles(@NotNull Project project, @NotNull AnActionEvent event) {
     SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(project);
-    String searchProviderID = Registry.is("search.everywhere.group.contributors.by.type")
-                              ? SearchEverywhereTabDescriptor.PROJECT.getId()
-                              : SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
+    String searchProviderID = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
     if (seManager.isShown()) {
       if (!searchProviderID.equals(seManager.getSelectedTabID())) {
         seManager.setSelectedTabID(searchProviderID);

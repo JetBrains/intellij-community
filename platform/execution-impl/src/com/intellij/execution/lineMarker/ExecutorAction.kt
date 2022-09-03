@@ -15,6 +15,10 @@ class ExecutorAction private constructor(val origin: AnAction,
   ActionGroup(), ActionWithDelegate<AnAction> {
   init {
     copyFrom(origin)
+    if (origin !is ActionGroup) {
+      templatePresentation.isPerformGroup = true
+      templatePresentation.isPopupGroup = true
+    }
   }
 
   override fun getActionUpdateThread() = origin.actionUpdateThread
@@ -78,9 +82,6 @@ class ExecutorAction private constructor(val origin: AnAction,
 
   override fun update(e: AnActionEvent) {
     origin.update(wrapEvent(e, order))
-    if (origin !is ActionGroup) {
-      e.presentation.isPerformGroup = true
-    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {

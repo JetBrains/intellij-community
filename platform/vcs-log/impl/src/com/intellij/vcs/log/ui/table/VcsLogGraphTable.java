@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.table;
 import com.google.common.primitives.Ints;
 import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -553,6 +554,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     CopyPasteManager.getInstance().setContents(new StringSelection(sb.toString()));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

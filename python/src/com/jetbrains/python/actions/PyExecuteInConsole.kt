@@ -88,7 +88,7 @@ private fun executeCodeInConsole(project: Project,
   }
   else {
     if (!executeInStartingConsole.apply(virtualFile)) {
-      startNewConsoleInstance(project, virtualFile, executeInConsole, config, newConsoleListener)
+      startNewConsoleInstance(project, virtualFile, executeInConsole, config, newConsoleListener, isRequestFocus = requestFocusToConsole)
     }
   }
 }
@@ -175,7 +175,8 @@ private fun startNewConsoleInstance(project: Project,
                                     virtualFile: VirtualFile?,
                                     executeInConsole: Consumer<ExecutionConsole>?,
                                     config: PythonRunConfiguration?,
-                                    listener: PydevConsoleRunner.ConsoleListener?) {
+                                    listener: PydevConsoleRunner.ConsoleListener?,
+                                    isRequestFocus: Boolean = false) {
   val consoleRunnerFactory = PythonConsoleRunnerFactory.getInstance()
   val runner = if (executeInConsole == null || config == null) {
     consoleRunnerFactory.createConsoleRunner(project, null)
@@ -195,7 +196,7 @@ private fun startNewConsoleInstance(project: Project,
   virtualFile?.let {
     PyExecuteConsoleCustomizer.instance.notifyRunnerStart(it, runner)
   }
-  runner.run(false)
+  runner.run(isRequestFocus)
 }
 
 private fun showConsole(project: Project,

@@ -41,6 +41,10 @@ import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
 internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
 
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = e.project != null && isSettingsSyncEnabledByKey()
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val remoteCommunicator = SettingsSyncMain.getInstance().getRemoteCommunicator()
     if (remoteCommunicator !is CloudConfigServerCommunicator) {

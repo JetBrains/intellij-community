@@ -23,6 +23,7 @@ import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.workspaceModel.storage.referrersx
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -516,7 +517,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
 
     override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
         // TODO verify logic
-        val mutablePreviousSet = HashSet(prev)
+        val mutablePreviousSet = if (prev is ObjectOpenHashSet<PersistentEntityId<*>>) prev.clone() else HashSet(prev)
         for (item in dependencies) {
             when (item) {
                 is ModuleDependencyItem.Exportable ->  {

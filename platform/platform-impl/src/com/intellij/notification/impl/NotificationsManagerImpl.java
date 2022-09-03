@@ -76,12 +76,15 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
   private static final Logger LOG = Logger.getInstance(NotificationsManagerImpl.class);
 
-  private @Nullable List<Notification> myEarlyNotifications = new ArrayList<>();
+  private @Nullable List<Pair<Notification, @Nullable Project>> myEarlyNotifications = new ArrayList<>();
 
   public NotificationsManagerImpl() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosed(@NotNull Project project) {
+        if (myEarlyNotifications != null) {
+          myEarlyNotifications.removeIf(pair -> project.equals(pair.second));
+        }
         for (Notification notification : getNotificationsOfType(Notification.class, project)) {
           notification.hideBalloon();
         }
@@ -155,10 +158,10 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   @ApiStatus.Internal
   public void dispatchEarlyNotifications() {
     if (myEarlyNotifications != null) {
-      List<Notification> copy = myEarlyNotifications;
+      List<Pair<Notification, @Nullable Project>> copy = myEarlyNotifications;
       myEarlyNotifications = null;
       if (LOG.isDebugEnabled()) LOG.debug("dispatching early notifications: " + copy);
-      copy.forEach(early -> showNotification(early, null));
+      copy.forEach(early -> showNotification(early.first, early.second));
     }
   }
 
@@ -167,7 +170,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     if (LOG.isDebugEnabled()) LOG.debug("incoming: " + notification + ", project=" + project);
 
     if (myEarlyNotifications != null) {
-      myEarlyNotifications.add(notification);
+      myEarlyNotifications.add(new Pair<>(notification, project));
       return;
     }
 

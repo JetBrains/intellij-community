@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.deft.codegen.patcher
+package com.intellij.workspaceModel.codegen.patcher
 
-import deft.storage.codegen.generatedApiCode
-import deft.storage.codegen.generatedExtensionCode
-import org.jetbrains.deft.codegen.model.*
-import org.jetbrains.deft.codegen.utils.Imports
-import storage.codegen.patcher.KotlinWriter
+import com.intellij.workspaceModel.codegen.generatedApiCode
+import com.intellij.workspaceModel.codegen.generatedExtensionCode
+import com.intellij.workspaceModel.codegen.deft.model.*
+import com.intellij.workspaceModel.codegen.utils.Imports
+import com.intellij.workspaceModel.codegen.patcher.KotlinWriter
 
 
 fun KtFile.rewrite(): String? {

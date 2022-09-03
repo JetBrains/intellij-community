@@ -20,9 +20,7 @@ import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionPro
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.GridBagConstraintBuilder;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.TextTransferable;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -162,11 +160,12 @@ public final class ExistingTemplatesComponent {
     myToolbar = optionsToolbar.getComponent();
 
     panel = new JPanel(new GridBagLayout());
-    final var constraints = new GridBagConstraintBuilder();
-    panel.add(myToolbar, constraints.growX().fillX().get());
+    final var constraints = new GridBag()
+      .setDefaultWeightX(1.0);
+    panel.add(myToolbar, constraints.nextLine().fillCellHorizontally());
     final var scrollPane = new JBScrollPane(patternTree);
     scrollPane.setBorder(JBUI.Borders.empty());
-    panel.add(scrollPane, constraints.newLine().growXY().fillXY().get());
+    panel.add(scrollPane, constraints.nextLine().weighty(1.0).fillCell());
     panel.setBorder(JBUI.Borders.empty());
   }
 

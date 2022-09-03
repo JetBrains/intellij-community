@@ -54,7 +54,7 @@ public class FixedFileInfo extends Bin.Structure {
   public void read(DataInput stream) throws IOException {
     super.read(stream);
     long signature = getValue("dwSignature");
-    assert signature == 0xFEEF04BDl : "Incorrect signature; expected " +0xFEEF04BDl + ", found " + signature;
+    assert signature == 0xFEEF04BDL : "Incorrect signature; expected " + 0xFEEF04BDL + ", found " + signature;
   }
 
   public void setFileVersion(int mostSignificantVersion, int leastSignificantVersion) {

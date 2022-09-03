@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.configurationStore.SchemeDataHolder;
@@ -692,8 +693,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return getTools(shortName, element != null ? element.getProject() : null).getAttributesKey(element);
   }
 
-  public void setEditorAttributesKey(@NotNull String shortName, @NotNull String externalName, String scopeName, @Nullable Project project) {
-    getTools(shortName, project).setEditorAttributesKey(externalName, scopeName);
+  public void setEditorAttributesKey(@NotNull String shortName, @Nullable String keyName, String scopeName, @Nullable Project project) {
+    final ToolsImpl tools = getTools(shortName, project);
+    if (tools.isForcedEditorAttributesKey(keyName, scopeName)) return;
+    final var level = tools.getLevel(scopeName, project);
+    final var severityKey = SeverityRegistrar.getSeverityRegistrar(project).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
+    tools.setEditorAttributesKey(severityKey.toString().equals(keyName) ? null : keyName, scopeName);
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
   
@@ -884,9 +889,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
   }
 
-  public void setEditorAttributeKey(@NotNull List<? extends HighlightDisplayKey> keys, @NotNull TextAttributesKey attributesKey, String scopeName, Project project) {
+  public void setEditorAttributesKey(@NotNull List<? extends HighlightDisplayKey> keys, @Nullable TextAttributesKey attributesKey, String scopeName, Project project) {
     for (HighlightDisplayKey key : keys) {
-      setEditorAttributesKey(key.toString(), attributesKey.toString(), scopeName, project);
+      setEditorAttributesKey(key.toString(), attributesKey == null ? null : attributesKey.toString(), scopeName, project);
     }
   }
 

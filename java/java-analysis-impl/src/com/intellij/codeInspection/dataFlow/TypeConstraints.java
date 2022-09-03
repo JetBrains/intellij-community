@@ -467,7 +467,7 @@ public final class TypeConstraints {
       return name != null && (JAVA_LANG_STRING.equals(name) || TypeConversionUtil.isPrimitiveWrapper(name));
     }
 
-    @NotNull
+    @Nullable
     @Override
     public PsiType getPsiType(Project project) {
       return myClass.toPsiType(project);
@@ -751,9 +751,9 @@ public final class TypeConstraints {
 
     /**
      * @param project current project
-     * @return a PsiType that corresponds to this class
+     * @return a PsiType that corresponds to this class; null if the type cannot be created
      */
-    @NotNull PsiType toPsiType(@NotNull Project project);
+    @Nullable PsiType toPsiType(@NotNull Project project);
   }
 
   @FunctionalInterface

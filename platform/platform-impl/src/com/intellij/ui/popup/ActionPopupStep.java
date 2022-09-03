@@ -251,7 +251,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   public void updateStepItems(@NotNull JComponent component) {
-    DataContext dataContext = myContext.get();
+    DataContext dataContext = Utils.wrapDataContext(myContext.get());
     PresentationFactory presentationFactory = myPresentationFactory != null ? myPresentationFactory : new PresentationFactory();
     List<PopupFactoryImpl.ActionItem> values = getValues();
     Utils.updateComponentActions(
