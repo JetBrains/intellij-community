@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.EditorCopyPasteHelper.CopyPasteOptions;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorTextInsertHandler;
@@ -16,6 +17,7 @@ import com.intellij.openapi.editor.actions.BasePasteHandler;
 import com.intellij.openapi.editor.actions.PasteAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl;
+import com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl.CopyPasteOptionsTransferableData;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
@@ -212,12 +214,17 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       indentOptions = CodeInsightSettings.INDENT_BLOCK;
     }
 
+    CopyPasteOptions copyPasteOptions = CopyPasteOptionsTransferableData.valueFromTransferable(content);
+    boolean isInsertingEntireLineAboveCaret = copyPasteOptions.isEntireLineFromEmptySelection() &&
+                                              !selectionModel.hasSelection();
+
     final String _text = text;
     final TextRange pastedRange = ApplicationManager.getApplication().runWriteAction((Computable<TextRange>)() -> {
       if (!project.isDisposed()) {
         ((UndoManagerImpl)UndoManager.getInstance(project)).addDocumentAsAffected(editor.getDocument());
       }
-      return EditorCopyPasteHelperImpl.insertStringAtCaret(editor, _text);
+      return isInsertingEntireLineAboveCaret ? EditorCopyPasteHelperImpl.insertEntireLineAboveCaret(editor, _text)
+                                             : EditorCopyPasteHelperImpl.insertStringAtCaret(editor, _text);
     });
     final RangeMarker bounds = document.createRangeMarker(pastedRange);
 
@@ -249,8 +256,10 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
 
     if (bounds.isValid()) {
-      caretModel.moveToOffset(bounds.getEndOffset());
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      if (!isInsertingEntireLineAboveCaret) {
+        caretModel.moveToOffset(bounds.getEndOffset());
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      }
       editor.putUserData(EditorEx.LAST_PASTED_REGION, TextRange.create(bounds));
     }
     // Don't dispose the 'bounds' RangeMarker because the processors

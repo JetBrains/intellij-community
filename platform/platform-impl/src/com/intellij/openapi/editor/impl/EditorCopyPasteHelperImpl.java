@@ -6,6 +6,7 @@ import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.BasePasteHandler;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,8 +16,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -24,12 +29,12 @@ import java.util.List;
 
 public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
   @Override
-  public @Nullable Transferable getSelectionTransferable(@NotNull Editor editor) {
+  public @Nullable Transferable getSelectionTransferable(@NotNull Editor editor, @NotNull CopyPasteOptions options) {
     if (editor.getContentComponent() instanceof JPasswordField) return null;
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<TextBlockTransferableData> extraData = new ArrayList<>();
-    String s = editor.getCaretModel().supportsMultipleCarets() ? getSelectedTextForClipboard(editor, extraData)
+    String s = editor.getCaretModel().supportsMultipleCarets() ? getSelectedTextForClipboard(editor, options, extraData)
                                                                : editor.getSelectionModel().getSelectedText();
     if (StringUtil.isEmpty(s)) return null;
 
@@ -38,7 +43,13 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
                                                            : new StringSelection(s);
   }
 
+  @SuppressWarnings("unused")  // external usages
   public static String getSelectedTextForClipboard(@NotNull Editor editor,
+                                                   @NotNull Collection<? super TextBlockTransferableData> extraDataCollector) {
+    return getSelectedTextForClipboard(editor, CopyPasteOptions.DEFAULT, extraDataCollector);
+  }
+
+  public static String getSelectedTextForClipboard(@NotNull Editor editor, @NotNull CopyPasteOptions options,
                                                    @NotNull Collection<? super TextBlockTransferableData> extraDataCollector) {
     final StringBuilder buf = new StringBuilder();
     String separator = "";
@@ -56,6 +67,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       separator = "\n";
     }
     extraDataCollector.add(new CaretStateTransferableData(startOffsets, endOffsets));
+    extraDataCollector.add(new CopyPasteOptionsTransferableData(options));
     return buf.toString();
   }
 
@@ -94,12 +106,17 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       else {
         caretData = CaretStateTransferableData.getFrom(content);
       }
+      CopyPasteOptions copyPasteOptions = CopyPasteOptionsTransferableData.valueFromTransferable(content);
+      boolean isInsertingEntireLineAboveCaret = copyPasteOptions.isEntireLineFromEmptySelection() &&
+                                                !editor.getSelectionModel().hasSelection(true);
+
       final TextRange[] ranges = new TextRange[caretCount];
       final Iterator<String> segments = new ClipboardTextPerCaretSplitter().split(text, caretData, caretCount).iterator();
       final int[] index = {0};
       caretModel.runForEachCaret(caret -> {
         String normalizedText = normalizeText(editor, segments.next());
-        ranges[index[0]++] = insertStringAtCaret(editor, normalizedText);
+        ranges[index[0]++] = isInsertingEntireLineAboveCaret ? insertEntireLineAboveCaret(editor, normalizedText)
+                                                             : insertStringAtCaret(editor, normalizedText);
       });
       return ranges;
     }
@@ -108,6 +125,14 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       TextRange textRange = insertStringAtCaret(editor, normalizedText);
       return new TextRange[]{textRange};
     }
+  }
+
+  public static @NotNull TextRange insertEntireLineAboveCaret(@NotNull Editor editor, @NotNull String text) {
+    int caretOffset = editor.getCaretModel().getOffset();
+    int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, caretOffset);
+    editor.getDocument().insertString(lineStartOffset, text);
+    EditorModificationUtilEx.scrollToCaret(editor);
+    return TextRange.from(lineStartOffset, text.length());
   }
 
   public static @NotNull TextRange insertStringAtCaret(@NotNull Editor editor, @NotNull String text) {
@@ -131,5 +156,36 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       }
     }
     return text;
+  }
+
+  public static class CopyPasteOptionsTransferableData implements TextBlockTransferableData, Serializable {
+    private static final DataFlavor FLAVOR = new DataFlavor(CopyPasteOptionsTransferableData.class,
+                                                            "Copy/paste options");
+
+    public final @NotNull CopyPasteOptions options;
+
+    public CopyPasteOptionsTransferableData(@NotNull CopyPasteOptions options) {
+      this.options = options;
+    }
+
+    @Override
+    public @Nullable DataFlavor getFlavor() {
+      return FLAVOR;
+    }
+
+
+    public static @NotNull CopyPasteOptions valueFromTransferable(@NotNull Transferable transferable) {
+      CopyPasteOptionsTransferableData transferableData = fromTransferable(transferable);
+      return transferableData == null ? CopyPasteOptions.DEFAULT : transferableData.options;
+    }
+
+    public static @Nullable CopyPasteOptionsTransferableData fromTransferable(@NotNull Transferable transferable) {
+      try {
+        return transferable.isDataFlavorSupported(FLAVOR) ? (CopyPasteOptionsTransferableData)transferable.getTransferData(FLAVOR) : null;
+      }
+      catch (IOException | UnsupportedFlavorException e) {
+        return null;
+      }
+    }
   }
 }

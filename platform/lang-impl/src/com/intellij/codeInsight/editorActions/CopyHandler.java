@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCopyPasteHelper.CopyPasteOptions;
 import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -51,27 +52,28 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
       return;
     }
 
-    CopyAction.copyToClipboard(editor, e -> getSelection(e, project, file));
+    CopyAction.copyToClipboard(editor, this);
   }
 
   @Override
-  public @Nullable Transferable getSelection(@NotNull Editor editor) {
+  public @Nullable Transferable getSelection(@NotNull Editor editor, @NotNull CopyPasteOptions options) {
     Project project = editor.getProject();
     if (project == null) return null;
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;
-    return getSelection(editor, project, file);
+    return getSelection(editor, project, file, options);
   }
 
   /**
    * @return transferable, or null if copy action was cancelled by a user
    */
-  private static @Nullable Transferable getSelection(@NotNull Editor editor, @NotNull Project project, @NotNull PsiFile file) {
+  private static @Nullable Transferable getSelection(@NotNull Editor editor, @NotNull Project project, @NotNull PsiFile file,
+                                                     @NotNull CopyPasteOptions options) {
     TypingActionsExtension typingActionsExtension = TypingActionsExtension.findForContext(project, editor);
     try {
       typingActionsExtension.startCopy(project, editor);
       return ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> ReadAction.compute(() -> getSelectionAction(editor, project, file)),
+        () -> ReadAction.compute(() -> getSelectionAction(editor, project, file, options)),
         ActionsBundle.message("action.EditorCopy.text"), true, project);
     }
     finally {
@@ -79,7 +81,8 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
     }
   }
 
-  private static @NotNull Transferable getSelectionAction(@NotNull Editor editor, @NotNull Project project, @NotNull PsiFile file) {
+  private static @NotNull Transferable getSelectionAction(@NotNull Editor editor, @NotNull Project project, @NotNull PsiFile file,
+                                                          @NotNull CopyPasteOptions options) {
     SelectionModel selectionModel = editor.getSelectionModel();
     final int[] startOffsets = selectionModel.getBlockSelectionStarts();
     final int[] endOffsets = selectionModel.getBlockSelectionEnds();
@@ -104,7 +107,7 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
     });
 
     String text = editor.getCaretModel().supportsMultipleCarets()
-                  ? EditorCopyPasteHelperImpl.getSelectedTextForClipboard(editor, transferableDataList)
+                  ? EditorCopyPasteHelperImpl.getSelectedTextForClipboard(editor, options, transferableDataList)
                   : selectionModel.getSelectedText();
     String rawText = TextBlockTransferable.convertLineSeparators(text, "\n", transferableDataList);
     String escapedText = null;

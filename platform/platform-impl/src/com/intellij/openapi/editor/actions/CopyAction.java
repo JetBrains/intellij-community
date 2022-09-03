@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
+import com.intellij.openapi.editor.EditorCopyPasteHelper.CopyPasteOptions;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -40,7 +41,8 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
   public static void copyToClipboard(@NotNull Editor editor, @NotNull TransferableProvider transferableProvider) {
     SelectionModel selectionModel = editor.getSelectionModel();
 
-    if (!selectionModel.hasSelection(true)) {
+    boolean isEntireLineFromEmptySelection = !selectionModel.hasSelection(true);
+    if (isEntireLineFromEmptySelection) {
       if (isSkipCopyPasteForEmptySelection()) {
         return;
       }
@@ -57,7 +59,8 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
       }
     }
 
-    Transferable transferable = transferableProvider.getSelection(editor);
+    CopyPasteOptions copyPasteOptions = new CopyPasteOptions(isEntireLineFromEmptySelection);
+    Transferable transferable = transferableProvider.getSelection(editor, copyPasteOptions);
     if (transferable == null) {
       return;
     }
@@ -77,13 +80,13 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
   }
 
   public interface TransferableProvider {
-    @Nullable Transferable getSelection(@NotNull Editor editor);
+    @Nullable Transferable getSelection(@NotNull Editor editor, @NotNull CopyPasteOptions options);
   }
 
   public static @Nullable Transferable getSelection(@NotNull Editor editor) {
     AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_COPY);
     if (!(action instanceof EditorAction)) return null;
     TransferableProvider provider = ((EditorAction)action).getHandlerOfType(TransferableProvider.class);
-    return provider == null ? null : provider.getSelection(editor);
+    return provider == null ? null : provider.getSelection(editor, CopyPasteOptions.DEFAULT);
   }
 }

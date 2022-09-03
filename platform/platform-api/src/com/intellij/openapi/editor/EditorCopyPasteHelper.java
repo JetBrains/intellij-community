@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
+import java.io.Serializable;
 
 /**
  * Support for data transfer between editor and clipboard.
@@ -26,11 +27,11 @@ public abstract class EditorCopyPasteHelper {
    * Copies text selected in editor to clipboard.
    */
   public void copySelectionToClipboard(@NotNull Editor editor) {
-    Transferable transferable = getSelectionTransferable(editor);
+    Transferable transferable = getSelectionTransferable(editor, CopyPasteOptions.DEFAULT);
     if (transferable != null) CopyPasteManager.getInstance().setContents(transferable);
   }
 
-  public abstract @Nullable Transferable getSelectionTransferable(@NotNull Editor editor);
+  public abstract @Nullable Transferable getSelectionTransferable(@NotNull Editor editor, @NotNull CopyPasteOptions options);
 
   /**
    * Pastes from clipboard into editor at caret(s) position.
@@ -49,6 +50,10 @@ public abstract class EditorCopyPasteHelper {
    * @throws TooLargeContentException if content is too large to be pasted in editor
    */
   public abstract TextRange @Nullable [] pasteTransferable(@NotNull Editor editor, @NotNull Transferable content) throws TooLargeContentException;
+
+  public record CopyPasteOptions(boolean isEntireLineFromEmptySelection) implements Serializable {
+    public static final @NotNull CopyPasteOptions DEFAULT = new CopyPasteOptions(false);
+  }
 
   public static class TooLargeContentException extends RuntimeException {
     private final int contentLength;
