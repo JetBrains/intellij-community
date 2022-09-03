@@ -12,106 +12,68 @@ import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.ConcurrentLinkedQueue
+
+internal val Collection<DistributionFileEntry>.includedModules: Sequence<String>
+  get() = asSequence().mapNotNull { (it as? ModuleOutputEntry)?.moduleName }.distinct()
 
 /**
  * Provides mapping between files in the product distribution and modules and libraries in the project configuration. The generated JSON file
  * contains array of [DistributionFileEntry].
  */
-class ProjectStructureMapping {
-  private val entries: MutableCollection<DistributionFileEntry>
-
-  constructor() {
-    entries = ConcurrentLinkedQueue()
+internal fun buildJarContentReport(entries: Collection<DistributionFileEntry>, out: OutputStream?, buildPaths: BuildPaths) {
+  val writer = JsonFactory().createGenerator(out).setPrettyPrinter(IntelliJDefaultPrettyPrinter())
+  val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
+  val fileToPresentablePath = HashMap<Path, String>()
+  for (entry in entries) {
+    val presentablePath = fileToPresentablePath.computeIfAbsent(entry.path) { shortenAndNormalizePath(it, buildPaths) }
+    fileToEntry.computeIfAbsent(presentablePath) { mutableListOf() }.add(entry)
   }
-
-  constructor(entries: Collection<DistributionFileEntry>) {
-    this.entries = Collections.unmodifiableCollection(entries)
+  writer.writeStartArray()
+  for ((filePath, fileEntries) in fileToEntry) {
+    writer.writeStartObject()
+    writer.writeStringField("name", filePath)
+    writeProjectLibs(fileEntries, writer, buildPaths)
+    writeModules(writer = writer, fileEntries = fileEntries, buildPaths = buildPaths)
+    writer.writeEndObject()
   }
+  writer.writeEndArray()
+  writer.close()
+}
 
-  companion object {
-    fun writeReport(entries: Collection<DistributionFileEntry>, file: Path, buildPaths: BuildPaths, extraRoot: Path?) {
-      Files.createDirectories(file.parent)
-      val allEntries = entries.toMutableList()
-      // sort - stable result
-      allEntries.sortedBy { it.path }
-      Files.newOutputStream(file).use { out ->
-        val writer = JsonFactory().createGenerator(out).setPrettyPrinter(IntelliJDefaultPrettyPrinter())
-        writer.use {
-          writer.writeStartArray()
-          for (entry in allEntries) {
-            writer.writeStartObject()
-            writer.writeStringField("path", shortenAndNormalizePath(entry.path, buildPaths, extraRoot))
-            writer.writeStringField("type", entry.type)
-            when (entry) {
-              is ModuleLibraryFileEntry -> {
-                writer.writeStringField("module", entry.moduleName)
-                writer.writeStringField("libraryFile", shortenAndNormalizePath(entry.libraryFile!!, buildPaths, extraRoot))
-                writer.writeNumberField("size", entry.size)
-              }
-              is ModuleOutputEntry -> {
-                writer.writeStringField("module", entry.moduleName)
-                writer.writeNumberField("size", entry.size)
-              }
-              is ModuleTestOutputEntry -> {
-                writer.writeStringField("module", entry.moduleName)
-              }
-              is ProjectLibraryEntry -> {
-                writer.writeStringField("library", entry.data.libraryName)
-                writer.writeStringField("libraryFile", shortenAndNormalizePath(entry.libraryFile!!, buildPaths, extraRoot))
-                writer.writeNumberField("size", entry.size)
-              }
-            }
-            writer.writeEndObject()
-          }
-          writer.writeEndArray()
-        }
-      }
-    }
-
-    fun writeReport(entries: Collection<DistributionFileEntry>, file: Path, buildPaths: BuildPaths) {
-      writeReport(entries, file, buildPaths, null)
-    }
-
-    fun buildJarContentReport(entries: Collection<DistributionFileEntry>, out: OutputStream?, buildPaths: BuildPaths) {
-      val writer = JsonFactory().createGenerator(out).setPrettyPrinter(IntelliJDefaultPrettyPrinter())
-      val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
-      val fileToPresentablePath = HashMap<Path, String>()
-      for (entry in entries) {
-        val presentablePath = fileToPresentablePath.computeIfAbsent(entry.path) { shortenAndNormalizePath(it, buildPaths) }
-        fileToEntry.computeIfAbsent(presentablePath) { ArrayList() }.add(entry)
-      }
+fun writeProjectStructureReport(entries: Collection<DistributionFileEntry>, file: Path, buildPaths: BuildPaths, extraRoot: Path? = null) {
+  Files.createDirectories(file.parent)
+  Files.newOutputStream(file).use { out ->
+    val writer = JsonFactory().createGenerator(out).setPrettyPrinter(IntelliJDefaultPrettyPrinter())
+    writer.use {
       writer.writeStartArray()
-      for ((filePath, fileEntries) in fileToEntry) {
+      for (entry in entries) {
         writer.writeStartObject()
-        writer.writeStringField("name", filePath)
-        writeProjectLibs(fileEntries, writer, buildPaths)
-        writeModules(writer, fileEntries, buildPaths)
+        writer.writeStringField("path", shortenAndNormalizePath(entry.path, buildPaths, extraRoot))
+        writer.writeStringField("type", entry.type)
+        when (entry) {
+          is ModuleLibraryFileEntry -> {
+            writer.writeStringField("module", entry.moduleName)
+            writer.writeStringField("libraryFile", shortenAndNormalizePath(entry.libraryFile!!, buildPaths, extraRoot))
+            writer.writeNumberField("size", entry.size)
+          }
+          is ModuleOutputEntry -> {
+            writer.writeStringField("module", entry.moduleName)
+            writer.writeNumberField("size", entry.size)
+          }
+          is ModuleTestOutputEntry -> {
+            writer.writeStringField("module", entry.moduleName)
+          }
+          is ProjectLibraryEntry -> {
+            writer.writeStringField("library", entry.data.libraryName)
+            writer.writeStringField("libraryFile", shortenAndNormalizePath(entry.libraryFile!!, buildPaths, extraRoot))
+            writer.writeNumberField("size", entry.size)
+          }
+          else -> throw UnsupportedOperationException("${entry.type} is not supported")
+        }
         writer.writeEndObject()
       }
       writer.writeEndArray()
-      writer.close()
     }
-  }
-
-  fun addEntry(entry: DistributionFileEntry) {
-    entries.add(entry)
-  }
-
-  val includedModules: Set<String>
-    get() {
-      val result = LinkedHashSet<String>()
-      for (entry in entries) {
-        if (entry is ModuleOutputEntry) {
-          result.add(entry.moduleName)
-        }
-      }
-      return result
-    }
-
-  @JvmOverloads
-  fun generateJsonFile(file: Path, buildPaths: BuildPaths, extraRoot: Path? = null) {
-    writeReport(entries, file, buildPaths, extraRoot)
   }
 }
 
@@ -136,9 +98,7 @@ private fun shortenPath(file: Path, buildPaths: BuildPaths, extraRoot: Path?): S
 private val INDENTER = DefaultIndenter("  ", "\n")
 
 private class IntelliJDefaultPrettyPrinter : DefaultPrettyPrinter() {
-  override fun createInstance(): DefaultPrettyPrinter {
-    return IntelliJDefaultPrettyPrinter()
-  }
+  override fun createInstance(): DefaultPrettyPrinter = IntelliJDefaultPrettyPrinter()
 
   init {
     _objectFieldValueSeparatorWithSpaces = ": "
@@ -170,7 +130,7 @@ private fun writeModules(writer: JsonGenerator, fileEntries: List<DistributionFi
     val moduleName = entry.moduleName
     writer.writeStringField("name", moduleName)
     writer.writeNumberField("size", entry.size)
-    writeModuleLibraries(fileEntries, moduleName, writer, buildPaths)
+    writeModuleLibraries(fileEntries = fileEntries, moduleName = moduleName, writer = writer, buildPaths = buildPaths)
     writer.writeEndObject()
   }
   if (opened) {
@@ -209,7 +169,7 @@ private fun writeProjectLibs(entries: List<DistributionFileEntry>, writer: JsonG
   }
   for (entry in entries) {
     if (entry is ProjectLibraryEntry) {
-      map.computeIfAbsent(entry.data) { ArrayList() }.add(entry)
+      map.computeIfAbsent(entry.data) { mutableListOf() }.add(entry)
     }
   }
 

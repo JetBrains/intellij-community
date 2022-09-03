@@ -12,10 +12,7 @@ import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.impl.BaseLayout.Companion.APP_JAR
-import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.tasks.*
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -69,7 +66,7 @@ private val libsThatUsedInJps = java.util.Set.of(
 
 class JarPackager private constructor(private val context: BuildContext) {
   private val jarDescriptors = LinkedHashMap<Path, JarDescriptor>()
-  private val projectStructureMapping = ConcurrentLinkedQueue<DistributionFileEntry>()
+  private val projectStructureMapping = ConcurrentLinkedQueue<LibraryFileEntry>()
   private val libToMetadata = HashMap<JpsLibrary, ProjectLibraryData>()
 
   companion object {
@@ -182,7 +179,7 @@ class JarPackager private constructor(private val context: BuildContext) {
                                                              sourceList = sourceList)
       }
 
-      val entries = ArrayList<Triple<Path, String, List<Source>>>(packager.jarDescriptors.size)
+      val entries = ArrayList<BuildJarDescriptor>(packager.jarDescriptors.size)
       val isReorderingEnabled = !context.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)
       for (descriptor in packager.jarDescriptors.values) {
         var pathInClassLog = ""
@@ -200,19 +197,22 @@ class JarPackager private constructor(private val context: BuildContext) {
             }
           }
         }
-        entries.add(Triple(descriptor.jarFile, pathInClassLog, descriptor.sources))
+        entries.add(BuildJarDescriptor(file = descriptor.jarFile, sources = descriptor.sources, relativePath = pathInClassLog))
       }
 
       buildJars(entries, dryRun)
 
+      val list = mutableListOf<DistributionFileEntry>()
       for (item in packager.jarDescriptors.values) {
         for (moduleName in (item.includedModules ?: emptyList())) {
           val size = moduleNameToSize.get(moduleName)
                      ?: throw IllegalStateException("Size is not set for $moduleName (moduleNameToSize=$moduleNameToSize)")
-          packager.projectStructureMapping.add(ModuleOutputEntry(path = item.jarFile, moduleName, size))
+          list.add(ModuleOutputEntry(path = item.jarFile, moduleName = moduleName, size = size))
         }
       }
-      return packager.projectStructureMapping
+      // sort because projectStructureMapping is a concurrent collection
+      return list +
+             packager.projectStructureMapping.sortedWith { a, b -> compareValuesBy(a, b, { it.path }, { it.type }, { it.libraryFile }) }
     }
   }
 
@@ -238,7 +238,7 @@ class JarPackager private constructor(private val context: BuildContext) {
   private fun filesToSourceWithMappings(uberJarFile: Path, libraryToMerge: Map<JpsLibrary, List<Path>>) {
     val sources = getJarDescriptorSources(uberJarFile)
     for ((key, value) in libraryToMerge) {
-      filesToSourceWithMapping(sources, value, key, uberJarFile)
+      filesToSourceWithMapping(to = sources, files = value, library = key, targetFile = uberJarFile)
     }
   }
 
@@ -248,9 +248,9 @@ class JarPackager private constructor(private val context: BuildContext) {
                                                           moduleOutputPatcher: ModuleOutputPatcher,
                                                           layout: BaseLayout,
                                                           moduleNameToSize: MutableMap<String, Int>,
-                                                          sourceList: MutableList<Source>) {
-    val searchableOptionsDir = context.searchableOptionDir
+                                                          sourceList: MutableList<Source>): List<DistributionFileEntry> {
     Span.current().addEvent("include module outputs", Attributes.of(AttributeKey.stringArrayKey("modules"), java.util.List.copyOf(modules)))
+    val searchableOptionsDir = context.searchableOptionDir
     for (moduleName in modules) {
       addModuleSources(moduleName = moduleName,
                        moduleNameToSize = moduleNameToSize,
@@ -261,24 +261,25 @@ class JarPackager private constructor(private val context: BuildContext) {
                        extraExcludes = layout.moduleExcludes.get(moduleName),
                        sourceList = sourceList)
     }
+
+    val list = mutableListOf<DistributionFileEntry>()
     for (libraryName in layout.projectLibrariesToUnpack.get(jarPath)) {
       val library = context.project.libraryCollection.findLibrary(libraryName)
-      if (library == null) {
-        context.messages.error("Project library \'$libraryName\' from $jarPath should be unpacked but it isn\'t found")
-        continue
+      check(library != null) {
+        "Project library \'$libraryName\' from $jarPath should be unpacked but it isn\'t found"
       }
 
-      for (ioFile in library.getFiles(JpsOrderRootType.COMPILED)) {
-        val file = ioFile.toPath()
-        sourceList.add(ZipSource(file = file) { size: Int ->
+      for (file in library.getPaths(JpsOrderRootType.COMPILED)) {
+        sourceList.add(ZipSource(file = file) { size ->
           val libraryData = ProjectLibraryData(libraryName = library.name,
                                                outPath = null,
                                                packMode = LibraryPackMode.MERGED,
                                                reason = "explicitUnpack")
-          projectStructureMapping.add(ProjectLibraryEntry(jarFile, libraryData, file, size))
+          projectStructureMapping.add(ProjectLibraryEntry(path = jarFile, data = libraryData, libraryFile = file, size = size))
         })
       }
     }
+    return list
   }
 
   private fun packProjectLibraries(jarToModuleNames: Map<String, List<String>>,
@@ -313,7 +314,7 @@ class JarPackager private constructor(private val context: BuildContext) {
         var libOutputDir = outputDir
         if (outPath != null) {
           libOutputDir = if (outPath.endsWith(".jar")) {
-            addLibrary(library, outputDir.resolve(outPath), files)
+            addLibrary(library = library, targetFile = outputDir.resolve(outPath), files = files)
             continue
           }
           else {
@@ -321,7 +322,7 @@ class JarPackager private constructor(private val context: BuildContext) {
           }
         }
         if (packMode == LibraryPackMode.STANDALONE_MERGED) {
-          addLibrary(library, libOutputDir.resolve(libNameToMergedJarFileName(libName)), files)
+          addLibrary(library = library, targetFile = libOutputDir.resolve(libNameToMergedJarFileName(libName)), files = files)
         }
         else {
           for (file in files) {
@@ -329,13 +330,13 @@ class JarPackager private constructor(private val context: BuildContext) {
             if (packMode == LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME) {
               fileName = removeVersionFromJar(fileName)
             }
-            addLibrary(library, libOutputDir.resolve(fileName), listOf(file))
+            addLibrary(library = library, targetFile = libOutputDir.resolve(fileName), files = listOf(file))
           }
         }
       }
     }
     for ((targetFilename, value) in jarToModuleNames) {
-      if (targetFilename.contains("/")) {
+      if (targetFilename.contains('/')) {
         continue
       }
       for (moduleName in value) {
@@ -408,9 +409,7 @@ class JarPackager private constructor(private val context: BuildContext) {
   }
 
   private fun filesToSourceWithMapping(to: MutableList<Source>, files: List<Path>, library: JpsLibrary, targetFile: Path) {
-    val moduleName = (library.createReference().parentReference as? JpsModuleReference)
-      ?.moduleName
-
+    val moduleName = (library.createReference().parentReference as? JpsModuleReference)?.moduleName
     for (file in files) {
       to.add(ZipSource(file) { size ->
         val libraryEntry = moduleName?.let {

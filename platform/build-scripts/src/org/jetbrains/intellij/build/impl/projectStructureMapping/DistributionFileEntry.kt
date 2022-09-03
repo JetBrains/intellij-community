@@ -4,10 +4,7 @@ package org.jetbrains.intellij.build.impl.projectStructureMapping
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import java.nio.file.Path
 
-/**
- * Base class for entries in [ProjectStructureMapping].
- */
-interface DistributionFileEntry {
+sealed interface DistributionFileEntry {
   /**
    * Path to a file in IDE distribution
    */
@@ -19,7 +16,7 @@ interface DistributionFileEntry {
   val type: String
 }
 
-interface LibraryFileEntry {
+interface LibraryFileEntry : DistributionFileEntry {
   val libraryFile: Path?
   val size: Int
 }
@@ -27,10 +24,10 @@ interface LibraryFileEntry {
 /**
  * Represents a file in module-level library
  */
-class ModuleLibraryFileEntry(override val path: Path,
-                             val moduleName: String,
-                             override val libraryFile: Path?,
-                             override val size: Int) : DistributionFileEntry, LibraryFileEntry {
+internal class ModuleLibraryFileEntry(override val path: Path,
+                                      @JvmField val moduleName: String,
+                                      override val libraryFile: Path?,
+                                      override val size: Int) : DistributionFileEntry, LibraryFileEntry {
   override val type: String
     get() = "module-library-file"
 }
@@ -38,7 +35,7 @@ class ModuleLibraryFileEntry(override val path: Path,
 /**
  * Represents test classes of a module
  */
-class ModuleTestOutputEntry(override val path: Path, val moduleName: String) : DistributionFileEntry {
+internal class ModuleTestOutputEntry(override val path: Path, @JvmField val moduleName: String) : DistributionFileEntry {
   override val type: String
     get() = "module-test-output"
 }
@@ -46,10 +43,12 @@ class ModuleTestOutputEntry(override val path: Path, val moduleName: String) : D
 /**
  * Represents a project-level library
  */
-class ProjectLibraryEntry(override val path: Path,
-                          val data: ProjectLibraryData,
-                          override val libraryFile: Path?,
-                          override val size: Int) : DistributionFileEntry, LibraryFileEntry {
+internal class ProjectLibraryEntry(
+  override val path: Path,
+  @JvmField val data: ProjectLibraryData,
+  override val libraryFile: Path?,
+  override val size: Int
+) : DistributionFileEntry, LibraryFileEntry {
   override val type: String
     get() = "project-library"
 
@@ -59,10 +58,12 @@ class ProjectLibraryEntry(override val path: Path,
 /**
  * Represents production classes of a module
  */
-class ModuleOutputEntry @JvmOverloads constructor(override val path: Path,
-                                                  val moduleName: String,
-                                                  val size: Int,
-                                                  val reason: String? = null) : DistributionFileEntry {
+class ModuleOutputEntry(
+  override val path: Path,
+  @JvmField val moduleName: String,
+  @JvmField val size: Int,
+  @JvmField val reason: String? = null
+) : DistributionFileEntry {
   override val type: String
     get() = "module-output"
 }

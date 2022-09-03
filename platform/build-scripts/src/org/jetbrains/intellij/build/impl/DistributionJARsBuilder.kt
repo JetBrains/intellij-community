@@ -66,7 +66,7 @@ class DistributionJARsBuilder {
     this.state = state
   }
 
-  suspend fun buildJARs(context: BuildContext, isUpdateFromSources: Boolean = false): ProjectStructureMapping = coroutineScope {
+  suspend fun buildJARs(context: BuildContext, isUpdateFromSources: Boolean = false): List<DistributionFileEntry> = coroutineScope {
     validateModuleStructure(context)
     createPrebuildSvgIconsJob(context)
     createBuildBrokenPluginListJob(context)
@@ -133,23 +133,21 @@ class DistributionJARsBuilder {
       }
     }
 
-    val projectStructureMapping = ProjectStructureMapping(entries)
     coroutineScope {
       launch(Dispatchers.IO) {
         spanBuilder("generate content report").useWithScope2 {
           Files.createDirectories(context.paths.artifactDir)
-          ProjectStructureMapping.writeReport(entries = entries,
-                                              file = context.paths.artifactDir.resolve("content-mapping.json"),
-                                              buildPaths = context.paths)
+          writeProjectStructureReport(entries = entries,
+                                      file = context.paths.artifactDir.resolve("content-mapping.json"),
+                                      buildPaths = context.paths)
           Files.newOutputStream(context.paths.artifactDir.resolve("content.json")).use {
-            ProjectStructureMapping.buildJarContentReport(entries, it, context.paths)
+            buildJarContentReport(entries = entries, out = it, buildPaths = context.paths)
           }
         }
       }
-      createBuildThirdPartyLibraryListJob(projectStructureMapping, context)
+      createBuildThirdPartyLibraryListJob(entries, context)
     }
-
-    projectStructureMapping
+    entries
   }
 
   /**
@@ -237,7 +235,7 @@ class DistributionJARsBuilder {
     for (entry in (nonPluginsEntries + pluginsEntries)) {
       when (entry) {
         is ModuleOutputEntry -> classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)).toString())
-        is LibraryFileEntry -> classPath.add((entry as LibraryFileEntry).libraryFile.toString())
+        is LibraryFileEntry -> classPath.add(entry.libraryFile.toString())
         else -> throw UnsupportedOperationException("Entry $entry is not supported")
       }
     }
@@ -779,7 +777,7 @@ private suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildCon
             })
     sources.sort()
     // path in class log - empty, do not reorder, doesn't matter
-    buildJars(listOf(Triple(antTargetFile, "", sources)), false)
+    buildJars(descriptors = listOf(BuildJarDescriptor(file = antTargetFile, sources = sources)), dryRun = false)
     result
   }
 }
@@ -806,12 +804,12 @@ private fun CoroutineScope.createBuildBrokenPluginListJob(context: BuildContext)
   }
 }
 
-private fun CoroutineScope.createBuildThirdPartyLibraryListJob(projectStructureMapping: ProjectStructureMapping, context: BuildContext): Job? {
+private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: List<DistributionFileEntry>, context: BuildContext): Job? {
   return createSkippableJob(spanBuilder("generate table of licenses for used third-party libraries"),
                              BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP, context) {
     val generator = LibraryLicensesListGenerator.create(project = context.project,
                                                         licensesList = context.productProperties.allLibraryLicenses,
-                                                        usedModulesNames = projectStructureMapping.includedModules)
+                                                        usedModulesNames = entries.includedModules.toHashSet())
     generator.generateHtml(getThirdPartyLibrariesHtmlFilePath(context))
     generator.generateJson(getThirdPartyLibrariesJsonFilePath(context))
   }

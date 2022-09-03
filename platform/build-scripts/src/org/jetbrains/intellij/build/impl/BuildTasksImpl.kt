@@ -29,7 +29,9 @@ import org.jetbrains.intellij.build.impl.JarPackager.Companion.getLibraryName
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
 import org.jetbrains.intellij.build.impl.productInfo.generateMultiPlatformProductJson
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.includedModules
+import org.jetbrains.intellij.build.impl.projectStructureMapping.writeProjectStructureReport
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.writeNewFile
 import org.jetbrains.intellij.build.io.zip
@@ -56,8 +58,8 @@ import java.util.function.Predicate
 import java.util.stream.Collectors
 
 class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
-  override suspend fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path, includeLibraries: Boolean) {
-    zipSourcesOfModules(modules, targetFile, includeLibraries, context)
+  override suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean) {
+    zipSourcesOfModules(modules = modules, targetFile = targetFile, includeLibraries = includeLibraries, context = context)
   }
 
   override suspend fun compileModulesFromProduct() {
@@ -106,7 +108,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
       Files.createDirectories(context.paths.tempDir)
       Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
     }
-    ProjectStructureMapping.writeReport(
+    writeProjectStructureReport(
       entries = DistributionJARsBuilder(context).generateProjectStructureMapping(context, pluginLayoutRoot),
       file = targetFile,
       buildPaths = context.paths
@@ -140,11 +142,11 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     coroutineScope {
       createMavenArtifactJob(context, builderState)
 
-      val projectStructureMapping = DistributionJARsBuilder(builderState).buildJARs(context)
+      val entries = DistributionJARsBuilder(builderState).buildJARs(context)
       layoutShared(context)
       checkClassFiles(context.paths.distAllDir, context)
       if (context.productProperties.buildSourcesArchive) {
-        buildSourcesArchive(projectStructureMapping, context)
+        buildSourcesArchive(entries, context)
       }
       buildOsSpecificDistributions(context)
     }
@@ -436,22 +438,22 @@ private fun checkProjectLibraries(names: Collection<String>, fieldName: String, 
   }
 }
 
-private suspend fun buildSourcesArchive(projectStructureMapping: ProjectStructureMapping, context: BuildContext) {
+private suspend fun buildSourcesArchive(entries: List<DistributionFileEntry>, context: BuildContext) {
   val productProperties = context.productProperties
   val archiveName = "${productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)}-sources.zip"
-  val modulesFromCommunity = projectStructureMapping.includedModules.filter { moduleName ->
+  val modulesFromCommunity = entries.includedModules.filter { moduleName ->
     productProperties.includeIntoSourcesArchiveFilter.test(context.findRequiredModule(moduleName), context)
-  }
+  }.toList()
   zipSourcesOfModules(modules = modulesFromCommunity,
                       targetFile = context.paths.artifactDir.resolve(archiveName),
                       includeLibraries = true,
                       context = context)
 }
 
-suspend fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path, includeLibraries: Boolean, context: BuildContext) {
+suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean, context: BuildContext) {
   context.executeStep(spanBuilder("build module sources archives")
                         .setAttribute("path", context.paths.buildOutputDir.toString())
-                        .setAttribute(AttributeKey.stringArrayKey("modules"), java.util.List.copyOf(modules)),
+                        .setAttribute(AttributeKey.stringArrayKey("modules"), modules),
                       BuildOptions.SOURCES_ARCHIVE_STEP) {
     withContext(Dispatchers.IO) {
       Files.createDirectories(targetFile.parent)
@@ -459,7 +461,7 @@ suspend fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path, i
     }
     val includedLibraries = LinkedHashSet<JpsLibrary>()
     if (includeLibraries) {
-      val debugMapping = ArrayList<String>()
+      val debugMapping = mutableListOf<String>()
       for (moduleName in modules) {
         val module = context.findRequiredModule(moduleName)
         if (moduleName.startsWith("intellij.platform.") && context.findModule("$moduleName.impl") != null) {
@@ -546,7 +548,7 @@ private inline fun filterSourceFilesOnly(name: String, context: BuildContext, co
   return sourceFiles
 }
 
-private suspend fun buildAdditionalArtifacts(projectStructureMapping: ProjectStructureMapping, context: BuildContext) {
+private suspend fun buildAdditionalArtifacts(entries: List<DistributionFileEntry>, context: BuildContext) {
   val productProperties = context.productProperties
   if (productProperties.generateLibraryLicensesTable && !context.isStepSkipped(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP)) {
     val artifactNamePrefix = productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
@@ -561,7 +563,7 @@ private suspend fun buildAdditionalArtifacts(projectStructureMapping: ProjectStr
   }
 
   if (productProperties.buildSourcesArchive) {
-    buildSourcesArchive(projectStructureMapping, context)
+    buildSourcesArchive(entries, context)
   }
 }
 
@@ -633,8 +635,8 @@ suspend fun buildDistributions(context: BuildContext) {
         spanBuilder("build platform and plugin JARs").useWithScope2 {
           val distributionJARsBuilder = DistributionJARsBuilder(distributionState)
           if (context.shouldBuildDistributions()) {
-            val projectStructureMapping = distributionJARsBuilder.buildJARs(context)
-            buildAdditionalArtifacts(projectStructureMapping, context)
+            val entries = distributionJARsBuilder.buildJARs(context)
+            buildAdditionalArtifacts(entries, context)
           }
           else {
             Span.current().addEvent("skip building product distributions because " +

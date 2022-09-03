@@ -6,8 +6,8 @@ package org.jetbrains.intellij.build.tasks
 import com.intellij.diagnostic.telemetry.use
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.tracer
 import java.nio.file.Path
@@ -84,32 +84,37 @@ fun createZipSource(file: Path, sizeConsumer: IntConsumer?): ZipSource {
   return ZipSource(file = file, sizeConsumer = sizeConsumer)
 }
 
-suspend fun buildJars(descriptors: List<Triple<Path, String, List<Source>>>, dryRun: Boolean) {
+data class BuildJarDescriptor(@JvmField val file: Path,
+                              @JvmField val sources: List<Source>,
+                              @JvmField val relativePath: String = "")
+
+suspend fun buildJars(descriptors: List<BuildJarDescriptor>, dryRun: Boolean) {
   val uniqueFiles = HashMap<Path, List<Source>>()
   for (descriptor in descriptors) {
-    val existing = uniqueFiles.putIfAbsent(descriptor.first, descriptor.third)
+    val existing = uniqueFiles.putIfAbsent(descriptor.file, descriptor.sources)
     check(existing == null) {
-      "File ${descriptor.first} is already associated." +
+      "File ${descriptor.file} is already associated." +
       "\nPrevious:\n  ${existing!!.joinToString(separator = "\n  ")}" +
-      "\nCurrent:\n  ${descriptor.third.joinToString(separator = "\n  ")}"
+      "\nCurrent:\n  ${descriptor.sources.joinToString(separator = "\n  ")}"
     }
   }
 
-  coroutineScope {
+  withContext(Dispatchers.IO) {
     for (item in descriptors) {
-      launch(Dispatchers.IO) {
-        val file = item.first
+      launch {
+        val file = item.file
+        val forbidNativeFiles = file.fileName.toString() == "app.jar"
         tracer.spanBuilder("build jar")
           .setAttribute(DO_NOT_EXPORT_TO_CONSOLE, true)
           .setAttribute("jar", file.toString())
-          .setAttribute(AttributeKey.stringArrayKey("sources"), item.third.map { item.toString() })
+          .setAttribute(AttributeKey.stringArrayKey("sources"), item.sources.map(Source::toString))
           .use {
-            buildJar(file, item.third, dryRun = dryRun)
+            buildJar(targetFile = file, sources = item.sources, dryRun = dryRun, forbidNativeFiles = forbidNativeFiles)
           }
 
         // app.jar is combined later with other JARs and then re-ordered
-        if (!dryRun && item.second.isNotEmpty() && item.second != "lib/app.jar") {
-          reorderJar(relativePath = item.second, file = file)
+        if (!dryRun && item.relativePath.isNotEmpty() && item.relativePath != "lib/app.jar") {
+          reorderJar(relativePath = item.relativePath, file = file)
         }
       }
     }
@@ -117,7 +122,11 @@ suspend fun buildJars(descriptors: List<Triple<Path, String, List<Source>>>, dry
 }
 
 @JvmOverloads
-fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false, dryRun: Boolean = false) {
+fun buildJar(targetFile: Path,
+             sources: List<Source>,
+             compress: Boolean = false,
+             dryRun: Boolean = false,
+             forbidNativeFiles: Boolean = false) {
   if (dryRun) {
     for (source in sources) {
       source.sizeConsumer?.accept(0)
@@ -125,7 +134,6 @@ fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false,
     return
   }
 
-  val forbidNativeFiles = targetFile.fileName.toString() == "app.jar"
   val packageIndexBuilder = if (!compress) PackageIndexBuilder() else null
   writeNewFile(targetFile) { outChannel ->
     ZipFileWriter(outChannel, if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use { zipCreator ->
