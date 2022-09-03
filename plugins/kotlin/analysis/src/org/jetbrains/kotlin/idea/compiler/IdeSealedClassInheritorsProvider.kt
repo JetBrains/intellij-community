@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.compiler
 
+import com.intellij.lang.Language
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaDirectoryService
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.containingPackage
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.implementedDescriptors
 import org.jetbrains.kotlin.idea.caches.resolve.IdeaResolverForProject.Companion.PLATFORM_ANALYSIS_SETTINGS
@@ -67,7 +69,9 @@ object IdeSealedClassInheritorsProvider : SealedClassInheritorsProvider() {
         }
 
         val lightClass = sealedKtClass.toLightClass() ?: sealedKtClass.toFakeLightClass()
-        val searchParameters = SearchParameters(lightClass, searchScope, false, true, false)
+        val searchParameters = object : SearchParameters(lightClass, searchScope, false, true, false) {
+            override fun shouldSearchInLanguage(language: Language): Boolean = language == KotlinLanguage.INSTANCE
+        }
 
         val resolutionFacade = getResolutionFacade(moduleDescriptor, project) ?: return emptyList()
 

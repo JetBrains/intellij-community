@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-public class AddToFavoritesAction extends AnAction implements DumbAware, UpdateInBackground {
+public class AddToFavoritesAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(AddToFavoritesAction.class);
 
   private final String myFavoritesListName;
@@ -41,6 +41,11 @@ public class AddToFavoritesAction extends AnAction implements DumbAware, UpdateI
     //noinspection HardCodedStringLiteral
     getTemplatePresentation().setText(choosenList, false);
     myFavoritesListName = choosenList;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

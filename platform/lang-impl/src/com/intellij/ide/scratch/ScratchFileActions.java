@@ -68,7 +68,7 @@ public final class ScratchFileActions {
   }
 
 
-  public static class NewFileAction extends DumbAwareAction implements UpdateInBackground {
+  public static class NewFileAction extends DumbAwareAction {
     private static final Icon ICON = LayeredIcon.create(AllIcons.FileTypes.Text, AllIcons.Actions.Scratch);
 
     private static final String ACTION_ID = "NewScratchFile";
@@ -81,6 +81,11 @@ public final class ScratchFileActions {
 
     public NewFileAction() {
       getTemplatePresentation().setIcon(ICON);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -167,7 +172,12 @@ public final class ScratchFileActions {
     }
   }
 
-  public static class NewBufferAction extends DumbAwareAction implements UpdateInBackground {
+  public static class NewBufferAction extends DumbAwareAction {
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -293,7 +303,12 @@ public final class ScratchFileActions {
     checkLanguageAndTryToFixText(project, context, dataContext);
   }
 
-  public static class ChangeLanguageAction extends DumbAwareAction implements UpdateInBackground {
+  public static class ChangeLanguageAction extends DumbAwareAction {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
@@ -374,7 +389,12 @@ public final class ScratchFileActions {
     }
   }
 
-  public static class ShowFilesPopupAction extends DumbAwareAction implements UpdateInBackground {
+  public static class ShowFilesPopupAction extends DumbAwareAction {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(e.getProject() != null);
@@ -428,9 +448,14 @@ public final class ScratchFileActions {
     }
   }
 
-  public static class ExportToScratchAction extends DumbAwareAction implements UpdateInBackground {
+  public static class ExportToScratchAction extends DumbAwareAction {
     {
       setEnabledInModalContext(true);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

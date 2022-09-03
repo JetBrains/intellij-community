@@ -40,15 +40,16 @@ public final class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> 
         return new Result(appliedPatch.status);
       }
 
-      if (appliedPatch.status == ApplyPatchStatus.SUCCESS ||
-          (appliedPatch.status == ApplyPatchStatus.PARTIAL && baseContents == null)) {
+      if (appliedPatch.status == ApplyPatchStatus.SUCCESS) {
         VcsFacade.getInstance().runHeavyModificationTask(project, document, () -> document.setText(appliedPatch.patchedText));
         FileDocumentManager.getInstance().saveDocument(document);
         return new Result(appliedPatch.status);
       }
     }
 
-    return new Result(ApplyPatchStatus.FAILURE) {
+    ApplyPatchStatus status = appliedPatch != null ? appliedPatch.status : ApplyPatchStatus.FAILURE;
+    assert status == ApplyPatchStatus.PARTIAL || status == ApplyPatchStatus.FAILURE;
+    return new Result(status) {
       @Override
       public ApplyPatchForBaseRevisionTexts getMergeData() {
         return ApplyPatchForBaseRevisionTexts.create(project, fileToPatch, pathBeforeRename, myPatch,

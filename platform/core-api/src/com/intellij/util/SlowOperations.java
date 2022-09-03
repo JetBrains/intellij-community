@@ -52,7 +52,8 @@ public final class SlowOperations {
    *   </li>
    *   <li>
    *     {@code AnAction#update}, {@code ActionGroup#getChildren}, and {@code ActionGroup#canBePerformed} should be either fast
-   *     or moved to background thread using {@link com.intellij.openapi.actionSystem.ActionUpdateThread#BGT} marker interface.
+   *     or moved to background thread by returning {@link com.intellij.openapi.actionSystem.ActionUpdateThread#BGT} in
+   *     {@code AnAction#getActionUpdateThread}.
    *   </li>
    *   <li>
    *     {@code AnAction#actionPerformed} shall be explicitly coded not to block the UI thread.

@@ -81,6 +81,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     updateAutoscroll();
     updatePreview();
   }, 50, stateForComponent(this), this);
+
   private final SingleAlarm myUpdateAlarm = new SingleAlarm(() -> {
     ToolWindow window = getCurrentToolWindow();
     if (window == null) return;
@@ -241,7 +242,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     myPreview.close();
   }
 
-  public Content getCurrentContent() {
+  private @Nullable Content getCurrentContent() {
     ToolWindow window = getCurrentToolWindow();
     if (window == null) return null;
     ContentManager manager = window.getContentManagerIfCreated();
@@ -249,7 +250,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     return manager.getContent(this);
   }
 
-  public ToolWindow getCurrentToolWindow() {
+  private ToolWindow getCurrentToolWindow() {
     return ProblemsView.getToolWindow(getProject());
   }
 
@@ -325,7 +326,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     return myPreview.editor();
   }
 
-  public @Nullable TreeExpander getTreeExpander() {
+  @Nullable TreeExpander getTreeExpander() {
     return myTreeExpander;
   }
 
@@ -339,7 +340,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     updatePreview();
   }
 
-  public void selectionChangedTo(boolean selected) {
+  void selectionChangedTo(boolean selected) {
     if (selected) {
       myTreeModel.setComparator(createComparator());
       updatePreview();
@@ -437,12 +438,12 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   }
 
   @Nullable
-  public Option getAutoscrollToSource() {
+  Option getAutoscrollToSource() {
     return isNotNullAndSelected(getShowPreview()) ? null : myAutoscrollToSource;
   }
 
   @Nullable
-  public Option getOpenInPreviewTab() {
+  Option getOpenInPreviewTab() {
     return isNotNullAndSelected(getShowPreview()) ? null : myOpenInPreviewTab;
   }
 
@@ -451,22 +452,23 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     return myShowPreview;
   }
 
-  @Nullable Option getGroupByToolId() {
+  @Nullable
+  Option getGroupByToolId() {
     return this instanceof HighlightingPanel ? myGroupByToolId : null;
   }
 
   @Nullable
-  public Option getSortFoldersFirst() {
+  Option getSortFoldersFirst() {
     return null; // TODO:malenkov - support file hierarchy & mySortFoldersFirst;
   }
 
   @Nullable
-  public Option getSortBySeverity() {
+  Option getSortBySeverity() {
     return this instanceof HighlightingPanel ? mySortBySeverity : null;
   }
 
   @Nullable
-  public Option getSortByName() {
+  Option getSortByName() {
     return mySortByName;
   }
 

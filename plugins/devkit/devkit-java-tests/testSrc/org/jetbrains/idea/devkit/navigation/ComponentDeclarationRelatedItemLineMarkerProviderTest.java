@@ -2,11 +2,9 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.ui.ColorUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
@@ -25,46 +23,35 @@ public class ComponentDeclarationRelatedItemLineMarkerProviderTest extends Light
   }
 
   public void testComponentSingleDeclaration() {
-    VirtualFile pluginXmlFile = myFixture.copyFileToProject("pluginComponentSingleDeclaration.xml");
+    myFixture.copyFileToProject("pluginComponentSingleDeclaration.xml");
 
     GutterMark gutter = myFixture.findGutter("MyComponent.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
-                                                  "<html><body>" +
-                                                  buildTooltipText(pluginXmlFile, 45, "MyComponent") +
-                                                  "</body></html>",
+                                                  buildTooltipText("MyComponent"),
                                                   DevKitIcons.Gutter.Plugin, "component");
   }
 
   public void testComponentMultipleDeclarations() {
-    VirtualFile pluginXmlFile = myFixture.copyFileToProject("pluginComponentMultipleDeclarations.xml");
+    myFixture.copyFileToProject("pluginComponentMultipleDeclarations.xml");
 
     GutterMark gutter = myFixture.findGutter("MyComponent.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
-                                                  "<html><body>" +
-                                                  buildTooltipText(pluginXmlFile, 141, "ActualImplementation") +
-                                                  buildTooltipText(pluginXmlFile, 45, "MyComponent") +
-                                                  "</body></html>",
+                                                  buildTooltipText("ActualImplementation", "MyComponent"),
                                                   DevKitIcons.Gutter.Plugin, "component");
   }
 
   public void testComponentInterfaceMultipleDeclarations() {
-    VirtualFile pluginXmlFile = myFixture.copyFileToProject("pluginComponentInterfaceMultipleDeclarations.xml");
+    myFixture.copyFileToProject("pluginComponentInterfaceMultipleDeclarations.xml");
 
     GutterMark gutter = myFixture.findGutter("MyComponentInterface.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
-                                                  "<html><body>" +
-                                                  buildTooltipText(pluginXmlFile, 208, "MyComponent") +
-                                                  buildTooltipText(pluginXmlFile, 45, "AnotherComponent") +
-                                                  "</body></html>",
+                                                  buildTooltipText("AnotherComponent", "MyComponent"),
                                                   DevKitIcons.Gutter.Plugin, "component");
   }
 
-  private String buildTooltipText(VirtualFile pluginXmlFile, int expectedTagPosition, String componentFqn) {
-    String pluginXmlPath = pluginXmlFile.getPath();
-
-    String color = ColorUtil.toHex(UIUtil.getInactiveTextColor());
-    return "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + pluginXmlPath
-           + ":" + expectedTagPosition + "\">" + componentFqn + "</a> component in " + pluginXmlFile.getName() +
-           " <font color=\"" + color + "\">[" + getModule().getName() + "]</font><br>";
+  private static String buildTooltipText(String... componentFqns) {
+    return "<html><body>" +
+           StringUtil.join(componentFqns, s -> "&nbsp;&nbsp;&nbsp;&nbsp;" + s + "<br>", "") +
+           "</body></html>";
   }
 }

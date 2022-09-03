@@ -108,8 +108,10 @@ internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget
   }
 }
 
-internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponentAction, DumbAware, UpdateInBackground {
+internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponentAction, DumbAware {
   private val spinningIcon = SpinningProgressIcon()
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     if (!e.presentation.isEnabled) return
@@ -310,7 +312,9 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
   }
 }
 
-class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware, UpdateInBackground {
+class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     ExecutionManagerImpl.getInstance(e.project ?: return)

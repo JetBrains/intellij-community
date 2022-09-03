@@ -35,7 +35,7 @@ open class GetFromVersionControlAction : DumbAwareAction() {
     }
     else {
       presentation.icon =
-        if (ExperimentalUI.isNewUI() && (ActionPlaces.MAIN_TOOLBAR == e.place)) IconManager.getInstance().getIcon("expui/vcs/vcs.svg", AllIcons::class.java)
+        if (ExperimentalUI.isNewUI() && (ActionPlaces.PROJECT_WIDGET_POPUP == e.place)) IconManager.getInstance().getIcon("expui/vcs/vcs.svg", AllIcons::class.java)
         else null
     }
   }

@@ -47,6 +47,6 @@ public class KotlinFunctionLiteralSurrounder extends KotlinStatementsSurrounder 
 
     @Override
     public String getTemplateDescription() {
-        return "{ }";
+        return "run { }";
     }
 }

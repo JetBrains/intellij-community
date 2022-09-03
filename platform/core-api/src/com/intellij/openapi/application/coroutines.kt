@@ -1,12 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:ApiStatus.Experimental
-
 package com.intellij.openapi.application
 
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asContextElement
-import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
 /**

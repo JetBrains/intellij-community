@@ -5,13 +5,15 @@ final class Aaa implements Aa {}
 final class Aab implements Aa {}
 final class Ab implements A {}
 
-public class Test {
+class Test {
   void test(A a) {
-    switch (a<caret>) {
+    switch (a) {
       case Aaa x -> {
       }
       case Aab x -> {
       }
+        case Ab ab -> {
+        }
     }
   }
 }

@@ -30,9 +30,14 @@ import java.util.Map;
 import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_MODULE_INFO_TEMPLATE_NAME;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_CLASS;
 
-public class CreateModuleInfoAction extends CreateFromTemplateActionBase implements UpdateInBackground {
+public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
   public CreateModuleInfoAction() {
     super(JavaBundle.messagePointer("action.create.new.module-info.title"), JavaBundle.messagePointer("action.create.new.module-info.description"), AllIcons.FileTypes.Java);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

@@ -1,5 +1,6 @@
 package com.intellij.ide.starter.ide
 
+import com.intellij.ide.starter.build.tool.BuildToolProvider
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.command.MarshallableCommand
@@ -13,13 +14,10 @@ import com.intellij.ide.starter.system.SystemInfo
 import com.intellij.ide.starter.utils.logOutput
 import org.kodein.di.factory
 import org.kodein.di.newInstance
-import org.w3c.dom.Element
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
-import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Path
-import java.util.stream.IntStream
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
@@ -33,7 +31,7 @@ data class IDETestContext(
   val testCase: TestCase,
   val testName: String,
   private val _resolvedProjectHome: Path?,
-  val patchVMOptions: VMOptions.() -> VMOptions,
+  var patchVMOptions: VMOptions.() -> VMOptions,
   val ciServer: CIServer,
   var profilerType: ProfilerType = ProfilerType.NONE
 ) {
@@ -44,17 +42,14 @@ data class IDETestContext(
   val resolvedProjectHome: Path
     get() = checkNotNull(_resolvedProjectHome) { "Project is not found for the test $testName" }
 
-  val localMavenRepo: Path
-    get() = paths.tempDir.resolve(".m3").resolve("repository")
-
-  val localGradleRepo: Path
-    get() = paths.tempDir.resolve("gradle")
-
   val pluginConfigurator: PluginConfigurator by di.newInstance { factory<IDETestContext, PluginConfigurator>().invoke(this@IDETestContext) }
 
-  fun addVMOptionsPatch(patchVMOptions: VMOptions.() -> VMOptions) = copy(
-    patchVMOptions = this.patchVMOptions.andThen(patchVMOptions)
-  )
+  val buildTools: BuildToolProvider by di.newInstance { factory<IDETestContext, BuildToolProvider>().invoke(this@IDETestContext) }
+
+  fun addVMOptionsPatch(patchVMOptions: VMOptions.() -> VMOptions): IDETestContext {
+    this.patchVMOptions = this.patchVMOptions.andThen(patchVMOptions)
+    return this
+  }
 
   fun addLockFileForUITest(fileName: String): IDETestContext =
     addVMOptionsPatch {
@@ -63,7 +58,7 @@ data class IDETestContext(
 
   fun disableJcef(): IDETestContext =
     addVMOptionsPatch {
-      // Disable JCEF (IDEA-243147). Otherwise tests will fail with LOG.error
+      // Disable JCEF (IDEA-243147). Otherwise, tests will fail with LOG.error
       addSystemProperty("ide.browser.jcef.enabled", false)
     }
 
@@ -78,20 +73,10 @@ data class IDETestContext(
         .withXmx(sizeMb)
     }
 
-  fun useNewMavenLocalRepository(): IDETestContext {
-    localMavenRepo.toFile().mkdirs()
-    return addVMOptionsPatch { addSystemProperty("idea.force.m2.home", localMavenRepo.toString()) }
-  }
-
   fun disableGitLogIndexing(): IDETestContext =
     addVMOptionsPatch {
       addSystemProperty("vcs.log.index.git", false)
     }
-
-  fun useNewGradleLocalCache(): IDETestContext {
-    localGradleRepo.toFile().mkdirs()
-    return addVMOptionsPatch { addSystemProperty("gradle.user.home", localGradleRepo.toString()) }
-  }
 
   fun executeAfterProjectOpening(executeAfterProjectOpening: Boolean = true) = addVMOptionsPatch {
     addSystemProperty("performance.execute.script.after.project.opened", executeAfterProjectOpening)
@@ -245,40 +230,12 @@ data class IDETestContext(
     return removeIdeaProjectDirectory().removeAllImlFilesInProject()
   }
 
-  fun removeMavenConfigFiles(): IDETestContext {
-    logOutput("Removing Maven config files in $resolvedProjectHome ...")
-
-    resolvedProjectHome.toFile().walkTopDown()
-      .forEach {
-        if (it.isFile && it.name == "pom.xml") {
-          it.delete()
-          logOutput("File ${it.path} is deleted")
-        }
-      }
-
-    return this
-  }
-
   fun disableAutoSetupJavaProject() = addVMOptionsPatch {
     addSystemProperty("idea.java.project.setup.disabled", true)
   }
 
   fun disablePackageSearchBuildFiles() = addVMOptionsPatch {
     addSystemProperty("idea.pkgs.disableLoading", true)
-  }
-
-  fun removeGradleConfigFiles(): IDETestContext {
-    logOutput("Removing Gradle config files in $resolvedProjectHome ...")
-
-    resolvedProjectHome.toFile().walkTopDown()
-      .forEach {
-        if (it.isFile && (it.extension == "gradle" || (it.name in listOf("gradlew", "gradlew.bat", "gradle.properties")))) {
-          it.delete()
-          logOutput("File ${it.path} is deleted")
-        }
-      }
-
-    return this
   }
 
   fun removeIdeaProjectDirectory(): IDETestContext {
@@ -308,30 +265,6 @@ data class IDETestContext(
         }
       }
 
-    return this
-  }
-
-  fun addPropertyToGradleProperties(property: String, value: String): IDETestContext {
-    val projectDir = resolvedProjectHome
-    val gradleProperties = projectDir.resolve("gradle.properties")
-    val lineWithTheSameProperty = gradleProperties.readLines().singleOrNull { it.contains(property) }
-    if (lineWithTheSameProperty != null) {
-      if (lineWithTheSameProperty.contains(value)) {
-        return this
-      }
-      val newValue = lineWithTheSameProperty.substringAfter("$property=") + " $value"
-      val tempFile = File.createTempFile("newContent", ".txt").toPath()
-      gradleProperties.forEachLine { line ->
-        tempFile.appendText(when {
-                              line.contains(property) -> "$property=$newValue" + System.getProperty("line.separator")
-                              else -> line + System.getProperty("line.separator")
-                            })
-      }
-      gradleProperties.writeText(tempFile.readText())
-    }
-    else {
-      gradleProperties.appendLines(listOf("$property=$value"))
-    }
     return this
   }
 
@@ -378,25 +311,6 @@ data class IDETestContext(
     )
   }
 
-  fun configureSpringCheck(): IDETestContext {
-    val miscXml = resolvedProjectHome.resolve(".idea").resolve("misc.xml")
-    if (!miscXml.exists()) {
-      return this
-    }
-
-    val finalConfig = StringBuilder(miscXml.readText().length)
-    miscXml.useLines { lines ->
-      lines.forEach { line ->
-        finalConfig.append(line.replace("  <component name=\"FrameworkDetectionExcludesConfiguration\">",
-                                        "  <component name=\"FrameworkDetectionExcludesConfiguration\">\n" +
-                                        "    <type id=\"Spring\" />"))
-        finalConfig.append("\n")
-      }
-    }
-    miscXml.writeText(finalConfig)
-    return this
-  }
-
   fun setProviderMemoryOnlyOnLinux(): IDETestContext {
     if (SystemInfo.isLinux) {
       val optionsConfig = paths.configDir.resolve("options")
@@ -408,45 +322,6 @@ data class IDETestContext(
     <option name="PROVIDER" value="MEMORY_ONLY" />
   </component>
 </application>""")
-    }
-    return this
-  }
-
-  fun setGradleJvmInProject(useJavaHomeAsGradleJvm: Boolean = true): IDETestContext {
-    if (_resolvedProjectHome != null) {
-      val ideaDir = resolvedProjectHome.resolve(".idea")
-      val gradleXml = ideaDir.resolve("gradle.xml")
-
-      if (gradleXml.toFile().exists()) {
-        val xmlDoc = DocumentBuilderFactory.newDefaultInstance().newDocumentBuilder().parse(gradleXml.toFile())
-        xmlDoc.documentElement.normalize()
-
-        val gradleSettings = xmlDoc.getElementsByTagName("GradleProjectSettings")
-        if (gradleSettings.length == 1) {
-          val options = (gradleSettings.item(0) as Element).getElementsByTagName("option")
-          IntStream
-            .range(0, options.length)
-            .mapToObj { i -> options.item(i) as Element }
-            .filter { it.getAttribute("name") == "gradleJvm" }
-            .findAny()
-            .ifPresent { node -> gradleSettings.item(0).removeChild(node) }
-
-          if (useJavaHomeAsGradleJvm) {
-            val option = xmlDoc.createElement("option")
-            option.setAttribute("name", "gradleJvm")
-            option.setAttribute("value", "#JAVA_HOME")
-            gradleSettings.item(0).appendChild(option)
-          }
-
-          val source = DOMSource(xmlDoc)
-          val outputStream = FileOutputStream(gradleXml.toFile())
-          val result = StreamResult(outputStream)
-          val transformerFactory = TransformerFactory.newInstance()
-          val transformer = transformerFactory.newTransformer()
-          transformer.transform(source, result)
-          outputStream.close()
-        }
-      }
     }
     return this
   }

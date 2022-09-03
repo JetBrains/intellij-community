@@ -1223,14 +1223,19 @@ public class UsageViewImpl implements UsageViewEx {
     associatedProgress = indicator;
   }
 
-  private final class ShowSettings extends AnAction implements UpdateInBackground {
-    private ShowSettings() {
+  private final class ShowSettings extends AnAction {
+    ShowSettings() {
       super(UsageViewBundle.message("action.text.usage.view.settings"), null, AllIcons.General.GearPlain);
       ConfigurableUsageTarget target = getConfigurableTarget(myTargets);
       KeyboardShortcut shortcut = target == null ? UsageViewUtil.getShowUsagesWithSettingsShortcut() : target.getShortcut();
       if (shortcut != null) {
         registerCustomShortcutSet(new CustomShortcutSet(shortcut), getComponent());
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

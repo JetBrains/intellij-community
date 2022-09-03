@@ -16,12 +16,12 @@ import org.jetbrains.annotations.NonNls
 class ExecutorAction private constructor(val origin: AnAction,
                                          val executor: Executor,
                                          val order: Int) :
-  ActionGroup(), ActionWithDelegate<AnAction>, UpdateInBackground {
+  ActionGroup(), ActionWithDelegate<AnAction> {
   init {
     copyFrom(origin)
   }
 
-  override fun isUpdateInBackground() = UpdateInBackground.isUpdateInBackground(origin)
+  override fun getActionUpdateThread() = origin.actionUpdateThread
 
   companion object {
     @JvmStatic

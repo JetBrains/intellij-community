@@ -3,17 +3,14 @@ package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
@@ -62,17 +59,15 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
   }
 
   private void assertSingleEPDeclaration(String filePath, String epFqn) {
-    PsiFile file = myFixture.configureByFile("plugin.xml");
-    String path = file.getVirtualFile().getPath();
-    Module module = ModuleUtilCore.findModuleForPsiElement(file);
-    assertNotNull(module);
-    String color = ColorUtil.toHex(UIUtil.getInactiveTextColor());
-    int expectedTagPosition = file.getText().indexOf("<extensionPoint name=\"" + StringUtil.substringAfterLast(epFqn, ".") + "\"");
-    String expectedTooltip = "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + path
-                             + ":" + expectedTagPosition + "\">" + epFqn + "</a> extension point declaration in plugin.xml " +
-                             "<font color=\"" + color + "\">[" + module.getName() + "]</font><br></body></html>";
+    VirtualFile pluginXmlFile = myFixture.copyFileToProject("plugin.xml");
+    PsiFile pluginPsiFile = getPsiManager().findFile(pluginXmlFile);
+    assertNotNull(pluginPsiFile);
+
+    int expectedTagPosition = pluginPsiFile.getText().indexOf("<extensionPoint name=\"" + StringUtil.substringAfterLast(epFqn, ".") + "\"");
+    assertFalse(expectedTagPosition == -1);
 
     final GutterMark gutter = myFixture.findGutter(filePath);
-    DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, DevKitIcons.Gutter.Plugin, "extensionPoint");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter, "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;" + epFqn + "<br></body></html>",
+                                                  DevKitIcons.Gutter.Plugin, "extensionPoint");
   }
 }

@@ -25,9 +25,11 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
     message("vcs.add.to.ignore.file.action.group.text", ignoreFileType.ignoreLanguage.filename),
     message("vcs.add.to.ignore.file.action.group.description", ignoreFileType.ignoreLanguage.filename),
     ignoreFileType.icon
-  ), DumbAware, UpdateInBackground {
+  ), DumbAware {
 
   private var actions: Collection<AnAction> = emptyList()
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val selectedFiles = getSelectedFiles(e)

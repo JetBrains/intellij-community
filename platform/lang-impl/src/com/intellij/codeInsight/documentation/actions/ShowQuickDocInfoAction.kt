@@ -19,7 +19,6 @@ open class ShowQuickDocInfoAction : AnAction(),
                                     ActionToIgnore,
                                     DumbAware,
                                     PopupAction,
-                                    UpdateInBackground,
                                     PerformWithDocumentsCommitted {
 
   init {
@@ -27,6 +26,8 @@ open class ShowQuickDocInfoAction : AnAction(),
     @Suppress("LeakingThis")
     setInjectedContext(true)
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     if (isDocumentationV2Enabled()) {

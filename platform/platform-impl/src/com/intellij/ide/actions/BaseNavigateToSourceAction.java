@@ -10,12 +10,17 @@ import com.intellij.util.OpenSourceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseNavigateToSourceAction extends DumbAwareAction implements UpdateInBackground {
+public abstract class BaseNavigateToSourceAction extends DumbAwareAction {
   private final boolean myFocusEditor;
 
   protected BaseNavigateToSourceAction(boolean focusEditor) {
     myFocusEditor = focusEditor;
     setInjectedContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

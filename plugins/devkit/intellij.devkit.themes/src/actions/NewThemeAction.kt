@@ -28,10 +28,11 @@ import java.util.*
 import javax.swing.JComponent
 
 //TODO better undo support
-class NewThemeAction : AnAction(), UpdateInBackground {
+class NewThemeAction : AnAction() {
   private val THEME_JSON_TEMPLATE = "ThemeJson.json"
   private val THEME_PROVIDER_EP_NAME = UIThemeProvider.EP_NAME.name
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   @Suppress("UsePropertyAccessSyntax") // IdeView#getOrChooseDirectory is not a getter
   override fun actionPerformed(e: AnActionEvent) {

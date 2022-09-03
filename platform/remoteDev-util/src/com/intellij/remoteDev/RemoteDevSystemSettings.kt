@@ -3,7 +3,9 @@ package com.intellij.remoteDev
 import java.net.URI
 
 object RemoteDevSystemSettings {
-  private val osRegistryConfigProvider = OsRegistryConfigProvider("RemoteDev")
+  const val sectionName = "RemoteDev"
+
+  private val osRegistryConfigProvider = OsRegistryConfigProvider(sectionName)
 
   private const val productCodePlaceholder = "<PRODUCT_CODE>"
   private const val productsInfoUrlKey = "productsInfoUrl"

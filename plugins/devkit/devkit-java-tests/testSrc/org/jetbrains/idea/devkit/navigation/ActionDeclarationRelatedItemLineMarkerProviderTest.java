@@ -7,14 +7,12 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
@@ -39,25 +37,20 @@ public class ActionDeclarationRelatedItemLineMarkerProviderTest extends JavaCode
   }
 
   public void testActionSingleDeclaration() {
-    VirtualFile pluginXmlFile = myFixture.copyFileToProject("pluginActionSingleDeclaration.xml");
+    myFixture.copyFileToProject("pluginActionSingleDeclaration.xml");
 
     GutterMark gutter = myFixture.findGutter("MyAction.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
-                                                  "<html><body>" +
-                                                  buildTooltipText(pluginXmlFile, 30, "singleDeclaration", "action") +
-                                                  "</body></html>",
+                                                  buildTooltipText("singleDeclaration") ,
                                                   DevKitIcons.Gutter.Plugin, "action");
   }
 
   public void testActionMultipleDeclarations() {
-    VirtualFile pluginXmlFile = myFixture.copyFileToProject("pluginActionMultipleDeclarations.xml");
+    myFixture.copyFileToProject("pluginActionMultipleDeclarations.xml");
 
     GutterMark gutter = myFixture.findGutter("MyAction.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
-                                                  "<html><body>" +
-                                                  buildTooltipText(pluginXmlFile, 140, "secondDeclaration", "action") +
-                                                  buildTooltipText(pluginXmlFile, 30, "firstDeclaration", "action") +
-                                                  "</body></html>",
+                                                  buildTooltipText("firstDeclaration", "secondDeclaration"),
                                                   DevKitIcons.Gutter.Plugin, "action");
 
     List<GotoRelatedItem> relatedItems = NavigationUtil.collectRelatedItems(myFixture.findClass("MyAction"), null);
@@ -69,23 +62,17 @@ public class ActionDeclarationRelatedItemLineMarkerProviderTest extends JavaCode
   }
 
   public void testActionGroupMultipleDeclarations() {
-    VirtualFile pluginXmlFile = myFixture.copyFileToProject("pluginActionGroupMultipleDeclarations.xml");
+     myFixture.copyFileToProject("pluginActionGroupMultipleDeclarations.xml");
 
     GutterMark gutter = myFixture.findGutter("MyActionGroup.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
-                                                  "<html><body>" +
-                                                  buildTooltipText(pluginXmlFile, 112, "secondDeclaration", "action group") +
-                                                  buildTooltipText(pluginXmlFile, 30, "firstDeclaration", "action group") +
-                                                  "</body></html>",
+                                                  buildTooltipText("firstDeclaration", "secondDeclaration"),
                                                   DevKitIcons.Gutter.Plugin, "group");
   }
 
-  private String buildTooltipText(VirtualFile pluginXmlFile, int expectedTagPosition, String actionId, String actionType) {
-    String pluginXmlPath = pluginXmlFile.getPath();
-
-    String color = ColorUtil.toHex(UIUtil.getInactiveTextColor());
-    return "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + pluginXmlPath
-           + ":" + expectedTagPosition + "\">" + actionId + "</a> " + actionType + " in " + pluginXmlFile.getName() +
-           " <font color=\"" + color + "\">[" + getModule().getName() + "]</font><br>";
+  private static String buildTooltipText(String... actionIds) {
+    return "<html><body>" +
+           StringUtil.join(actionIds, s -> "&nbsp;&nbsp;&nbsp;&nbsp;" + s + "<br>", "") +
+           "</body></html>";
   }
 }

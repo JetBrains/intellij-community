@@ -17,12 +17,12 @@
 
     <group id="JavaNewProjectOrModuleGroup">
       <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction">
-        <override-text place="MainToolbar"/>
+        <override-text place="ProjectWidgetPopup"/>
         <add-to-group group-id="ProjectWidget.Actions" anchor="first"/>
       </action>
       <action id="ImportProject" class="com.intellij.ide.actions.ImportProjectAction"/>
       <action id="ProjectFromVersionControl" class="com.intellij.openapi.wm.impl.welcomeScreen.ProjectFromVersionControlAction">
-        <override-text place="MainToolbar"/>
+        <override-text place="ProjectWidgetPopup"/>
         <add-to-group group-id="ProjectWidget.Actions"/>
       </action>>
       <separator/>

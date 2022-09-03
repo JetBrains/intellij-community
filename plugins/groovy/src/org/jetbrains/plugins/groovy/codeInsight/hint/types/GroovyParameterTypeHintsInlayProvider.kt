@@ -45,14 +45,8 @@ class GroovyParameterTypeHintsInlayProvider : InlayHintsProvider<GroovyParameter
     return null
   }
 
-  override val previewText: String
-    get() = "def foo(a) {}\n" +
-            "foo(1)\n\n\n" +
-            "def bar(a, b) {\n" +
-            "  a.add(b)\n" +
-            "}\n" +
-            "bar([1], 1)\n" +
-            "bar(['q'], 'q')"
+  override val previewText: String?
+    get() = null
 
   override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
     override val cases: List<ImmediateConfigurable.Case> = listOf(

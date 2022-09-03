@@ -367,9 +367,14 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     chain.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, createDiffActions());
   }
 
-  private class MyShowDiffAction extends DumbAwareAction implements UpdateInBackground {
+  private class MyShowDiffAction extends DumbAwareAction {
     MyShowDiffAction() {
       ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

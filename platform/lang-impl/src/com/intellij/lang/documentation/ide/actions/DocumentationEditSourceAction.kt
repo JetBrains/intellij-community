@@ -3,17 +3,19 @@ package com.intellij.lang.documentation.ide.actions
 
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.model.Pointer
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.concurrent.Callable
 
-internal class DocumentationEditSourceAction : AnAction(), UpdateInBackground {
+internal class DocumentationEditSourceAction : AnAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   private fun targetPointer(dc: DataContext): Pointer<out DocumentationTarget>? = documentationBrowser(dc)?.targetPointer
 

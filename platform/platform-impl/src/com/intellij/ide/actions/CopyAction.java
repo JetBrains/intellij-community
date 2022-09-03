@@ -9,10 +9,15 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 
-public class CopyAction extends AnAction implements DumbAware, LightEditCompatible, UpdateInBackground {
+public class CopyAction extends AnAction implements DumbAware, LightEditCompatible {
 
   public CopyAction() {
     setEnabledInModalContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

@@ -81,6 +81,7 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
             this.id = getEntityData().createEntityId()
             
             index(this, "excludedRoots", this.excludedRoots.toHashSet())
+            indexLibraryRoots(roots)
             val __sdk = _sdk
             if (__sdk != null && __sdk is ModifiableWorkspaceEntityBase<*>) {
                 builder.addEntity(__sdk)
@@ -167,6 +168,17 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                 error("Field LibraryEntity#excludedRoots should be initialized")
             }
         }
+        private fun indexLibraryRoots(libraryRoots: List<LibraryRoot>) {
+            val jarDirectories = mutableSetOf<VirtualFileUrl>()
+            val libraryRootList = libraryRoots.map {
+              if (it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF) {
+                jarDirectories.add(it.url)
+              }
+              it.url
+            }.toHashSet()
+            index(this, "roots", libraryRootList)
+            indexJarDirectories(this, jarDirectories)
+        }
     
         
         override var name: String
@@ -203,15 +215,7 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                 
                 val _diff = diff
                 if (_diff != null) {
-                    val jarDirectories = mutableSetOf<VirtualFileUrl>()
-                    val libraryRootList = value.map {
-                        if (it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF) {
-                            jarDirectories.add(it.url)
-                        }
-                        it.url
-                    }.toHashSet()
-                    index(this, "roots", libraryRootList)
-                    indexJarDirectories(this, jarDirectories)
+                    indexLibraryRoots(value)
                 }
         
                 changedProperty.add("roots")

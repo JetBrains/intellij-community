@@ -4,9 +4,9 @@ package org.jetbrains.idea.devkit.actions;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.ide.actions.CreateTemplateInPackageAction;
 import com.intellij.ide.actions.JavaCreateTemplateInPackageAction;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -22,7 +22,7 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-public class NewActionAction extends CreateElementActionBase implements UpdateInBackground, DescriptorUtil.Patcher {
+public class NewActionAction extends CreateElementActionBase implements DescriptorUtil.Patcher {
   private static class Holder {
     // length == 1 is important to make MyInputValidator close the dialog when
     // module selection is canceled. That's some weird interface actually...
@@ -31,6 +31,11 @@ public class NewActionAction extends CreateElementActionBase implements UpdateIn
 
   private NewActionDialog myDialog;
   private XmlFile pluginDescriptorToPatch;
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   protected final PsiElement @NotNull [] invokeDialog(@NotNull Project project, @NotNull PsiDirectory directory) {

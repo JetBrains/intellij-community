@@ -191,6 +191,7 @@ class BuildOptions {
    * with new versions of snapcraft.
    */
   var snapDockerImage: String = System.getProperty("intellij.build.snap.docker.image", "snapcore/snapcraft:stable")
+  var snapDockerBuildTimeoutMin: Long = System.getProperty("intellij.build.snap.timeoutMin", "20").toLong()
 
   /**
    * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.

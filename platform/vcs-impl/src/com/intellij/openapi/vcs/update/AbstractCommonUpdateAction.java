@@ -10,8 +10,8 @@ import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -51,7 +51,7 @@ import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.UPDATE_ACTIVITY;
 import static com.intellij.util.ui.UIUtil.BR;
 
-public abstract class AbstractCommonUpdateAction extends AbstractVcsAction implements UpdateInBackground {
+public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
   private final static Logger LOG = Logger.getInstance(AbstractCommonUpdateAction.class);
 
   private final boolean myAlwaysVisible;
@@ -63,6 +63,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     myActionInfo = actionInfo;
     myScopeInfo = scopeInfo;
     myAlwaysVisible = alwaysVisible;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private @NlsActions.ActionText String getCompleteActionName(VcsContext dataContext) {

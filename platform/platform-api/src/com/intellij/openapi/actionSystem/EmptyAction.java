@@ -84,7 +84,7 @@ public final class EmptyAction extends AnAction {
   }
 
   public static class MyDelegatingAction extends AnAction
-    implements ActionWithDelegate<AnAction>, UpdateInBackground, PerformWithDocumentsCommitted {
+    implements ActionWithDelegate<AnAction>, PerformWithDocumentsCommitted {
     @NotNull private final AnAction myDelegate;
 
     public MyDelegatingAction(@NotNull AnAction action) {
@@ -109,8 +109,8 @@ public final class EmptyAction extends AnAction {
     }
 
     @Override
-    public boolean isUpdateInBackground() {
-      return UpdateInBackground.isUpdateInBackground(myDelegate);
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return myDelegate.getActionUpdateThread();
     }
 
     @Override
@@ -131,7 +131,7 @@ public final class EmptyAction extends AnAction {
   }
 
   public static class MyDelegatingActionGroup extends ActionGroup
-    implements UpdateInBackground, PerformWithDocumentsCommitted {
+    implements PerformWithDocumentsCommitted {
     @NotNull private final ActionGroup myDelegate;
 
     public MyDelegatingActionGroup(@NotNull ActionGroup action) {
@@ -176,8 +176,8 @@ public final class EmptyAction extends AnAction {
     }
 
     @Override
-    public boolean isUpdateInBackground() {
-      return UpdateInBackground.isUpdateInBackground(myDelegate);
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return myDelegate.getActionUpdateThread();
     }
 
     @Override

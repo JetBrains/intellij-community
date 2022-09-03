@@ -32,8 +32,13 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class GenerateMainAction extends AnAction implements UpdateInBackground {
+public class GenerateMainAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(GenerateMainAction.class);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

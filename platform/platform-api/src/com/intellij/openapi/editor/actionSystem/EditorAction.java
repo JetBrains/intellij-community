@@ -21,7 +21,7 @@ import java.awt.event.KeyEvent;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 
-public abstract class EditorAction extends AnAction implements DumbAware, UpdateInBackground, LightEditCompatible {
+public abstract class EditorAction extends AnAction implements DumbAware, LightEditCompatible {
   private static final Logger LOG = Logger.getInstance(EditorAction.class);
 
   private EditorActionHandler myHandler;
@@ -30,6 +30,11 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
   protected EditorAction(EditorActionHandler defaultHandler) {
     myHandler = defaultHandler;
     setEnabledInModalContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   public synchronized final EditorActionHandler setupHandler(@NotNull EditorActionHandler newHandler) {

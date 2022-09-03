@@ -27,7 +27,7 @@ import java.util.Arrays;
 /**
  * @author Dmitry Avdeev
  */
-public class LineMarkerActionWrapper extends ActionGroup implements PriorityAction, ActionWithDelegate<AnAction>, UpdateInBackground {
+public class LineMarkerActionWrapper extends ActionGroup implements PriorityAction, ActionWithDelegate<AnAction> {
   private static final Logger LOG = Logger.getInstance(LineMarkerActionWrapper.class);
   public static final Key<Pair<PsiElement, MyDataContext>> LOCATION_WRAPPER = Key.create("LOCATION_WRAPPER");
 
@@ -41,8 +41,8 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
   }
 
   @Override
-  public boolean isUpdateInBackground() {
-    return UpdateInBackground.isUpdateInBackground(myOrigin);
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return myOrigin.getActionUpdateThread();
   }
 
   @Override

@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.java.indexing.JavaIndexingBundle;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadAction;
@@ -78,7 +79,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       return;
     }
 
-    Iterable<PsiClass> cached = getOrComputeSubClasses(project, baseClass, searchScope, parameters.isIncludeAnonymous());
+    Iterable<PsiClass> cached = getOrComputeSubClasses(project, baseClass, searchScope, parameters);
 
     for (final PsiClass subClass : cached) {
       ProgressManager.checkCanceled();
@@ -97,9 +98,11 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
   private static Iterable<@NotNull PsiClass> getOrComputeSubClasses(@NotNull Project project,
                                                                     @NotNull PsiClass baseClass,
                                                                     @NotNull SearchScope searchScopeForNonPhysical,
-                                                                    boolean includeAnonymous) {
+                                                                    @NotNull ClassInheritorsSearch.SearchParameters parameters) {
     HighlightingCaches caches = HighlightingCaches.getInstance(project);
-    ConcurrentMap<PsiClass, Iterable<PsiClass>> map = includeAnonymous ? caches.ALL_SUB_CLASSES : caches.ALL_SUB_CLASSES_NO_ANONYMOUS;
+    ConcurrentMap<PsiClass, Iterable<PsiClass>> map = parameters.isIncludeAnonymous()
+                                                      ? caches.ALL_SUB_CLASSES
+                                                      : caches.ALL_SUB_CLASSES_NO_ANONYMOUS;
     Iterable<PsiClass> cached = map.get(baseClass);
     if (cached == null) {
       // returns lazy collection of subclasses. Each call to next() leads to calculation of next batch of subclasses.
@@ -110,14 +113,20 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
       boolean isPhysical = ReadAction.compute(baseClass::isPhysical);
       SearchScope scopeToUse = isPhysical ? GlobalSearchScope.allScope(project) : searchScopeForNonPhysical;
-      LazyConcurrentCollection.MoreElementsGenerator<PsiAnchor, PsiClass> generator = (candidate, processor) ->
-        DirectClassInheritorsSearch.search(candidate, scopeToUse, includeAnonymous).allowParallelProcessing().forEach(subClass -> {
-          ProgressManager.checkCanceled();
-          @NotNull PsiAnchor pointer = ReadAction.compute(() -> PsiAnchor.create(subClass));
-          // append found result to subClasses as early as possible to allow other waiting threads to continue
-          processor.accept(pointer);
-          return true;
-        });
+      LazyConcurrentCollection.MoreElementsGenerator<PsiAnchor, PsiClass> generator = (candidate, processor) -> DirectClassInheritorsSearch
+          .search(new DirectClassInheritorsSearch.SearchParameters(candidate, scopeToUse, parameters.isIncludeAnonymous(), true) {
+            @Override
+            public boolean shouldSearchInLanguage(@NotNull Language language) {
+              return parameters.shouldSearchInLanguage(language);
+            }
+          })
+          .allowParallelProcessing().forEach(subClass -> {
+            ProgressManager.checkCanceled();
+            @NotNull PsiAnchor pointer = ReadAction.compute(() -> PsiAnchor.create(subClass));
+            // append found result to subClasses as early as possible to allow other waiting threads to continue
+            processor.accept(pointer);
+            return true;
+          });
 
       PsiAnchor seed = ReadAction.compute(() -> PsiAnchor.create(baseClass));
       // lazy collection: store underlying queue as PsiAnchors, generate new elements by running direct inheritors

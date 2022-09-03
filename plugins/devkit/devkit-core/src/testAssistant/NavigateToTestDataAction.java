@@ -27,7 +27,12 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class NavigateToTestDataAction extends AnAction implements TestTreeViewAction, UpdateInBackground {
+public class NavigateToTestDataAction extends AnAction implements TestTreeViewAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

@@ -30,8 +30,13 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see MultiCaretCodeInsightActionHandler
  */
-public abstract class MultiCaretCodeInsightAction extends AnAction implements UpdateInBackground, PerformWithDocumentsCommitted {
+public abstract class MultiCaretCodeInsightAction extends AnAction implements PerformWithDocumentsCommitted {
   private static final Logger LOG = Logger.getInstance(MultiCaretCodeInsightAction.class);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

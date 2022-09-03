@@ -18,13 +18,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-public class GenerateComponentExternalizationAction extends AnAction implements UpdateInBackground, PerformWithDocumentsCommitted {
+public class GenerateComponentExternalizationAction extends AnAction implements PerformWithDocumentsCommitted {
   private static final Logger LOG = Logger.getInstance(GenerateComponentExternalizationAction.class);
 
   @NonNls private final static String BASE_COMPONENT = "com.intellij.openapi.components.BaseComponent";
   @NonNls private final static String PERSISTENCE_STATE_COMPONENT = "com.intellij.openapi.components.PersistentStateComponent";
   @NonNls private final static String STATE = "com.intellij.openapi.components.State";
   @NonNls private final static String STORAGE = "com.intellij.openapi.components.Storage";
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

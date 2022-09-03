@@ -13,15 +13,16 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Key
 import com.intellij.ui.BalloonImpl
 import com.intellij.util.Alarm
-import java.util.*
 
 private const val POPUP_TIMEOUT_MS = 5000
 
 @Service(Service.Level.PROJECT)
 class ZoomIndicatorManager(project: Project) {
   companion object {
+    val SUPPRESS_ZOOM_INDICATOR = Key.create<Boolean>("SUPPRESS_ZOOM_INDICATOR")
     val isEnabled: Boolean
       get() = AdvancedSettings.getBoolean("editor.show.zoom.indicator")
   }

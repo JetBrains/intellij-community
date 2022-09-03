@@ -27,7 +27,7 @@ public class KotlinParenthesesSurrounder extends KotlinExpressionSurrounder {
         KtParenthesizedExpression parenthesizedExpression = (KtParenthesizedExpression) KtPsiFactoryKt
                 .KtPsiFactory(expression).createExpression("(a)");
         KtExpression expressionWithoutParentheses = parenthesizedExpression.getExpression();
-        assert expressionWithoutParentheses != null : "JetExpression should exists for " + parenthesizedExpression.getText() + " expression";
+        assert expressionWithoutParentheses != null : "KtExpression should exists for " + parenthesizedExpression.getText() + " expression";
         expressionWithoutParentheses.replace(expression);
 
         expression = (KtExpression) expression.replace(parenthesizedExpression);

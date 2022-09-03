@@ -88,7 +88,7 @@ public class UrlFilter implements Filter, DumbAware {
         }
       }
       String filePath = url.substring(LocalFileSystem.PROTOCOL_PREFIX.length(), filePathEndIndex);
-      return new FileUrlHyperlinkInfo(filePath, documentLine, documentColumn, url);
+      return new FileUrlHyperlinkInfo(myProject, filePath, documentLine, documentColumn, url, true);
     }
     return null;
   }
@@ -105,11 +105,16 @@ public class UrlFilter implements Filter, DumbAware {
     }
   }
 
-  private class FileUrlHyperlinkInfo extends LazyFileHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
+  public static class FileUrlHyperlinkInfo extends LazyFileHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
     private @NotNull final String myUrl;
 
-    FileUrlHyperlinkInfo(@NotNull String filePath, int documentLine, int documentColumn, @NotNull String url) {
-      super(UrlFilter.this.myProject, filePath, documentLine, documentColumn);
+    public FileUrlHyperlinkInfo(@NotNull Project project,
+                                @NotNull String filePath,
+                                int documentLine,
+                                int documentColumn,
+                                @NotNull String url,
+                                boolean useBrowser) {
+      super(project, filePath, documentLine, documentColumn, useBrowser);
       myUrl = url;
     }
 

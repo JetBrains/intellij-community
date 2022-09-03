@@ -3,15 +3,12 @@ package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitIcons;
 
@@ -26,20 +23,16 @@ public abstract class ExtensionPluginDescriptorDeclarationRelatedItemLineMarkerP
   }
 
   protected void doTestExtension(@NotNull String file, @NotNull String xmlDeclarationText) {
-    PsiFile pluginXmlFile = myFixture.configureByFile("plugin.xml");
-    String pluginXmlPath = pluginXmlFile.getVirtualFile().getPath();
+    VirtualFile pluginXmlFile = myFixture.copyFileToProject("plugin.xml");
+    PsiFile pluginPsiFile = getPsiManager().findFile(pluginXmlFile);
+    assertNotNull(pluginPsiFile);
 
-    Module module = ModuleUtilCore.findModuleForPsiElement(pluginXmlFile);
-    assertNotNull(module);
-
-    String color = ColorUtil.toHex(UIUtil.getInactiveTextColor());
-    int expectedTagPosition = pluginXmlFile.getText().indexOf(xmlDeclarationText);
-    String expectedTooltip = "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + pluginXmlPath
-                             + ":" + expectedTagPosition + "\">com.intellij.myEp</a> declaration in plugin.xml " +
-                             "<font color=\"" + color + "\">[" + module.getName() + "]</font><br></body></html>";
+    int expectedTagPosition = pluginPsiFile.getText().indexOf(xmlDeclarationText);
+    assertFalse(expectedTagPosition == -1);
 
     GutterMark gutter = myFixture.findGutter(file);
-    DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, DevKitIcons.Gutter.Plugin, "myEp");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter, "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;com.intellij.myEp<br></body></html>",
+                                                  DevKitIcons.Gutter.Plugin, "myEp");
   }
 
   protected void doTestInvalidExtension(@NotNull String file) {

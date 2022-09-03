@@ -283,7 +283,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  public static class ExecutorAction extends AnAction implements DumbAware, UpdateInBackground {
+  public static class ExecutorAction extends AnAction implements DumbAware {
     private static final Key<RunCurrentFileInfo> CURRENT_FILE_RUN_CONFIGS_KEY = Key.create("CURRENT_FILE_RUN_CONFIGS");
 
     protected final Executor myExecutor;
@@ -291,6 +291,11 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     protected ExecutorAction(@NotNull Executor executor) {
       super(executor.getStartActionText(), executor.getDescription(), IconLoader.createLazy(() -> executor.getIcon()));
       myExecutor = executor;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     private boolean canRun(@NotNull Project project, @NotNull List<SettingsAndEffectiveTarget> pairs) {
@@ -717,7 +722,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   }
 
   @ApiStatus.Internal
-  public static class ExecutorGroupActionGroup extends ActionGroup implements DumbAware, UpdateInBackground {
+  public static class ExecutorGroupActionGroup extends ActionGroup implements DumbAware {
     protected final ExecutorGroup<?> myExecutorGroup;
     private final Function<? super Executor, ? extends AnAction> myChildConverter;
 
@@ -736,6 +741,11 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         result[i] = myChildConverter.apply(childExecutors.get(i));
       }
       return result;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

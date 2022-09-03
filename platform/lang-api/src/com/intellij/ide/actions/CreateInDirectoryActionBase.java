@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 /**
  * The base abstract class for actions which create new file elements in IDE view
  */
-public abstract class CreateInDirectoryActionBase extends AnAction implements UpdateInBackground {
+public abstract class CreateInDirectoryActionBase extends AnAction {
   protected CreateInDirectoryActionBase() {
   }
 
@@ -29,6 +29,11 @@ public abstract class CreateInDirectoryActionBase extends AnAction implements Up
                                         @NotNull Supplier<@NlsActions.ActionDescription String> dynamicDescription,
                                         Icon icon) {
     super(dynamicText, dynamicDescription, icon);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

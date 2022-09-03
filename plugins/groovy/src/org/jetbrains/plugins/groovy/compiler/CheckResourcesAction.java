@@ -3,10 +3,10 @@ package org.jetbrains.plugins.groovy.compiler;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.compiler.impl.ProjectCompileScope;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.ModuleManager;
@@ -37,7 +37,12 @@ public abstract class CheckResourcesAction extends AnAction {
     CompilerManager.getInstance(project).make(scope, callback);
   }
 
-  public static class Group extends DefaultActionGroup implements UpdateInBackground {
+  public static class Group extends DefaultActionGroup {
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {

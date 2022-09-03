@@ -71,7 +71,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
     return RefactoringBundle.message("refactor.this.title");
   }
 
-  private static class MyGroup extends ActionGroup implements UpdateInBackground {
+  private static class MyGroup extends ActionGroup {
     final ActionGroup delegate;
     final ActionManager actionManager;
 
@@ -83,8 +83,8 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
     }
 
     @Override
-    public boolean isUpdateInBackground() {
-      return UpdateInBackground.isUpdateInBackground(delegate);
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return delegate.getActionUpdateThread();
     }
 
     @Override

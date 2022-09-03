@@ -34,10 +34,15 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-public class ExternalJavaDocAction extends AnAction implements UpdateInBackground {
+public class ExternalJavaDocAction extends AnAction {
 
   public ExternalJavaDocAction() {
     setInjectedContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

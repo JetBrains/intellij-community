@@ -14,9 +14,9 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -38,7 +38,7 @@ import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.g
 /**
  * @author konstantin.aleev
  */
-public abstract class ExecutorAction extends DumbAwareAction implements UpdateInBackground {
+public abstract class ExecutorAction extends DumbAwareAction {
   private static final Key<List<RunDashboardRunConfigurationNode>> RUNNABLE_LEAVES_KEY =
     Key.create("RUNNABLE_LEAVES_KEY");
 
@@ -47,6 +47,11 @@ public abstract class ExecutorAction extends DumbAwareAction implements UpdateIn
 
   protected ExecutorAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

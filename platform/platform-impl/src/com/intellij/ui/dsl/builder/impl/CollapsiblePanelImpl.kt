@@ -16,7 +16,7 @@ internal class CollapsiblePanelImpl(dialogPanelConfig: DialogPanelConfig,
                                     init: Panel.() -> Unit) :
   PanelImpl(dialogPanelConfig, IntelliJSpacingConfiguration(), parent), CollapsiblePanel {
 
-  private val collapsibleTitledSeparator = CollapsibleTitledSeparator(title)
+  private val collapsibleTitledSeparator = CollapsibleTitledSeparatorImpl(title)
 
   override var expanded by collapsibleTitledSeparator::expanded
 

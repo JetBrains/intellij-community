@@ -2,6 +2,7 @@ package org.jetbrains.deft.codegen.ijws.classes
 
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import deft.storage.codegen.*
@@ -15,9 +16,9 @@ import org.jetbrains.deft.impl.ObjType
 import org.jetbrains.deft.impl.TList
 import org.jetbrains.deft.impl.TRef
 import org.jetbrains.deft.impl.fields.ExtField
-import kotlin.reflect.KMutableProperty1
 import java.util.*
 import kotlin.reflect.KClass
+import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
 
 fun ObjType<*, *>.implWsEntityBuilderCode(): String {
@@ -45,6 +46,9 @@ ${
         list(structure.vfuFields) {
           val suffix = if (type is TList<*>) ".toHashSet()" else ""
           "index(this, \"$javaName\", this.$javaName$suffix)"
+        }
+        if (name == LibraryEntity::class.simpleName) {
+          line("indexLibraryRoots(${LibraryEntity::roots.name})")
         }
         listBuilder(structure.allRefsFields.filter { it.type.isRefTypeWithoutList() && it.type.getRefType().child }) {
           val tmpFieldName = "_${it.implFieldName}"
@@ -188,6 +192,20 @@ ${
         line("val _diff = diff")
         list(structure.allFields.noPersistentId().noOptional().noDefaultValue()) { lineBuilder, field ->
           lineBuilder.implWsBuilderIsInitializedCode(field)
+        }
+      }
+      
+      if (name == LibraryEntity::class.simpleName) {
+        section("private fun indexLibraryRoots(libraryRoots: List<LibraryRoot>)") {
+          line("val jarDirectories = mutableSetOf<VirtualFileUrl>()")
+          line("val libraryRootList = libraryRoots.map {")
+          line("  if (it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF) {")
+          line("    jarDirectories.add(it.url)")
+          line("  }")
+          line("  it.url")
+          line("}.toHashSet()")
+          line("index(this, \"roots\", libraryRootList)")
+          line("indexJarDirectories(this, jarDirectories)")
         }
       }
     }

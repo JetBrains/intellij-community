@@ -20,7 +20,10 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.tabs.impl.TabLabel
 import java.awt.datatransfer.StringSelection
 
-abstract class CopyPathProvider : AnAction(), UpdateInBackground {
+abstract class CopyPathProvider : AnAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     val dataContext = e.dataContext
     val editor = CommonDataKeys.EDITOR.getData(dataContext)

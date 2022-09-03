@@ -1,14 +1,19 @@
-// "Create missing branches: 'B', and 'C'" "true"
+// "Create missing branches: 'AA', 'AB', and 'AC'" "true"
 abstract sealed class A {}
-final class B extends A {}
-final class C extends A {}
+final class AA extends A {}
+sealed class AB extends A {}
+non-sealed class AC extends A {}
+final class ABA extends AB {}
+non-sealed class ABC extends AB {}
 
 class Test {
   void test(A a) {
     switch (a) {
-        case B b -> {
+        case AA aa -> {
         }
-        case C c -> {
+        case AB ab -> {
+        }
+        case AC ac -> {
         }
     }
   }

@@ -9,9 +9,14 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class CutAction extends DumbAwareAction implements UpdateInBackground, LightEditCompatible {
+public class CutAction extends DumbAwareAction implements LightEditCompatible {
   public CutAction() {
     setEnabledInModalContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

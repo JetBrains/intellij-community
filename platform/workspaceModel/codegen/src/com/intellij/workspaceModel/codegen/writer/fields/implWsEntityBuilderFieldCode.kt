@@ -356,15 +356,7 @@ private fun ValueType<*>.addVirtualFileIndex(field: Field<*, *>): String {
     "LibraryRoot" -> """
                     val _diff = diff
                     if (_diff != null) {
-                        val jarDirectories = mutableSetOf<VirtualFileUrl>()
-                        val libraryRootList = value.map {
-                            if (it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF) {
-                                jarDirectories.add(it.url)
-                            }
-                            it.url
-                        }.toHashSet()
-                        index(this, "${field.javaName}", libraryRootList)
-                        indexJarDirectories(this, jarDirectories)
+                        indexLibraryRoots(value)
                     }
         """
     else -> ""

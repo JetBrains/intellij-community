@@ -35,7 +35,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.function.Predicate;
 
-public abstract class BaseRefactoringAction extends AnAction implements UpdateInBackground {
+public abstract class BaseRefactoringAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   protected abstract boolean isAvailableInEditorOnly();
 

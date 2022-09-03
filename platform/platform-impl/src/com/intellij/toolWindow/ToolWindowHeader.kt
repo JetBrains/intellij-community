@@ -350,8 +350,10 @@ abstract class ToolWindowHeader internal constructor(
     return Dimension(size.width, height)
   }
 
-  private inner class ShowOptionsAction : DumbAwareAction(), UpdateInBackground {
+  private inner class ShowOptionsAction : DumbAwareAction() {
     val myPopupState = PopupState.forPopupMenu()
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = true
@@ -377,7 +379,10 @@ abstract class ToolWindowHeader internal constructor(
     }
   }
 
-  private inner class HideAction : DumbAwareAction(), UpdateInBackground {
+  private inner class HideAction : DumbAwareAction() {
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = true
     }

@@ -317,7 +317,8 @@ public class SwitchBlockHighlightingModel {
   }
 
   void checkEnumCompleteness(@NotNull PsiClass selectorClass, @NotNull List<String> enumElements, @NotNull List<HighlightInfo> results) {
-    Set<String> missingConstants = StreamEx.of(selectorClass.getFields()).select(PsiEnumConstant.class).map(PsiField::getName).toSet();
+    LinkedHashSet<String> missingConstants =
+      StreamEx.of(selectorClass.getFields()).select(PsiEnumConstant.class).map(PsiField::getName).toCollection(LinkedHashSet::new);
     if (!enumElements.isEmpty()) {
       enumElements.forEach(missingConstants::remove);
       if (missingConstants.isEmpty()) return;
@@ -843,7 +844,7 @@ public class SwitchBlockHighlightingModel {
       }
       HighlightInfo info = createCompletenessInfoForSwitch(!elements.isEmpty());
       List<String> allNames = collectLabelElementNames(elements, missingClasses, patternClasses);
-      Set<String> missingCases = ContainerUtil.map2Set(missingClasses, PsiClass::getQualifiedName);
+      Set<String> missingCases = ContainerUtil.map2LinkedSet(missingClasses, PsiClass::getQualifiedName);
       IntentionAction fix = getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, allNames);
       QuickFixAction.registerQuickFixAction(info, fix);
       return info;
@@ -853,7 +854,7 @@ public class SwitchBlockHighlightingModel {
     private static List<String> collectLabelElementNames(@NotNull List<PsiCaseLabelElement> elements,
                                                          @NotNull Set<PsiClass> missingClasses,
                                                          @NotNull LinkedHashMap<PsiClass, PsiPattern> patternClasses) {
-      List<String> result = elements.isEmpty() ? new ArrayList<>() : ContainerUtil.map(elements, PsiElement::getText);
+      List<String> result = new ArrayList<>(ContainerUtil.map(elements, PsiElement::getText));
       for (PsiClass aClass : missingClasses) {
         String className = aClass.getQualifiedName();
         PsiPattern pattern = patternClasses.get(aClass);
@@ -877,10 +878,13 @@ public class SwitchBlockHighlightingModel {
     private static Collection<PsiClass> getPermittedClasses(@NotNull PsiClass psiClass) {
       PsiReferenceList permitsList = psiClass.getPermitsList();
       if (permitsList == null) {
+        TreeSet<PsiClass> result = new TreeSet<>(Comparator.comparing(aClass -> aClass.getName()));
         GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiClass.getContainingFile());
-        return new ArrayList<>(DirectClassInheritorsSearch.search(psiClass, fileScope).findAll());
+        result.addAll(DirectClassInheritorsSearch.search(psiClass, fileScope).findAll());
+        return result;
       }
-      return Stream.of(permitsList.getReferencedTypes()).map(type -> type.resolve()).filter(Objects::nonNull).collect(Collectors.toSet());
+      return Stream.of(permitsList.getReferencedTypes()).map(type -> type.resolve()).filter(Objects::nonNull)
+        .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     @Nullable

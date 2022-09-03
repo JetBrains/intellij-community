@@ -21,11 +21,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public abstract class AbstractDelombokAction extends AnAction implements UpdateInBackground {
+public abstract class AbstractDelombokAction extends AnAction {
   private DelombokHandler myHandler;
 
   protected AbstractDelombokAction() {
     //default constructor
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   protected abstract DelombokHandler createHandler();

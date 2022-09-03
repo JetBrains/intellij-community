@@ -4,10 +4,12 @@ package org.intellij.plugins.markdown.settings
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.processOpenedProjects
 import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 
 internal class MarkdownLafListener: LafManagerListener {
+
   override fun lookAndFeelChanged(source: LafManager) {
     if (!LoadingState.APP_STARTED.isOccurred) {
       return
@@ -15,10 +17,11 @@ internal class MarkdownLafListener: LafManagerListener {
 
     CodeFenceGeneratingProvider.notifyLaFChanged()
     processOpenedProjects { project ->
-      val settings = MarkdownSettings.getInstance(project)
-      val publisher = project.messageBus.syncPublisher(MarkdownSettings.ChangeListener.TOPIC)
-      publisher.beforeSettingsChanged(settings)
-      publisher.settingsChanged(settings)
+      project.serviceIfCreated<MarkdownSettings>()?.let { settings ->
+        val publisher = project.messageBus.syncPublisher(MarkdownSettings.ChangeListener.TOPIC)
+        publisher.beforeSettingsChanged(settings)
+        publisher.settingsChanged(settings)
+      }
     }
   }
 }
