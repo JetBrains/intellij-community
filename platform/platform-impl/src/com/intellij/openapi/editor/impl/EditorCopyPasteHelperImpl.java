@@ -110,7 +110,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     }
   }
 
-  private static @NotNull TextRange insertStringAtCaret(@NotNull Editor editor, @NotNull String text) {
+  public static @NotNull TextRange insertStringAtCaret(@NotNull Editor editor, @NotNull String text) {
     int caretOffset = editor.getSelectionModel().getSelectionStart();
     int newOffset = EditorModificationUtilEx.insertStringAtCaret(editor, text, false, true);
     return new TextRange(caretOffset, newOffset);

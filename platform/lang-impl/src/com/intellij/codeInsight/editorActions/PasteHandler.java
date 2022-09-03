@@ -15,10 +15,12 @@ import com.intellij.openapi.editor.actionSystem.EditorTextInsertHandler;
 import com.intellij.openapi.editor.actions.BasePasteHandler;
 import com.intellij.openapi.editor.actions.PasteAction;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -211,24 +213,13 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
 
     final String _text = text;
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      EditorModificationUtilEx.insertStringAtCaret(editor, _text, false, true);
+    final TextRange pastedRange = ApplicationManager.getApplication().runWriteAction((Computable<TextRange>)() -> {
       if (!project.isDisposed()) {
         ((UndoManagerImpl)UndoManager.getInstance(project)).addDocumentAsAffected(editor.getDocument());
       }
+      return EditorCopyPasteHelperImpl.insertStringAtCaret(editor, _text);
     });
-
-    int length = text.length();
-    int offset = caretModel.getOffset() - length;
-    if (offset < 0) {
-      length += offset;
-      offset = 0;
-    }
-    final RangeMarker bounds = document.createRangeMarker(offset, offset + length);
-
-    caretModel.moveToOffset(bounds.getEndOffset());
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    selectionModel.removeSelection();
+    final RangeMarker bounds = document.createRangeMarker(pastedRange);
 
     // `skipIndentation` is additionally used as marker for changed pasted test
     // Any value, except `null` is a signal that the text was transformed.
@@ -260,7 +251,6 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     if (bounds.isValid()) {
       caretModel.moveToOffset(bounds.getEndOffset());
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      selectionModel.removeSelection();
       editor.putUserData(EditorEx.LAST_PASTED_REGION, TextRange.create(bounds));
     }
     // Don't dispose the 'bounds' RangeMarker because the processors
