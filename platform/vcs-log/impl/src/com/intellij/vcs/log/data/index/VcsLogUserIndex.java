@@ -20,7 +20,7 @@ import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.VcsUserKeyDescriptor;
-import com.intellij.vcs.log.impl.FatalErrorHandler;
+import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -48,12 +48,12 @@ public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShort
   public VcsLogUserIndex(@NotNull StorageId storageId,
                          @Nullable StorageLockContext storageLockContext,
                          @NotNull VcsUserRegistry userRegistry,
-                         @NotNull FatalErrorHandler consumer,
+                         @NotNull VcsLogErrorHandler errorHandler,
                          @NotNull Disposable disposableParent) throws IOException {
     super(storageId, USERS, new UserIndexer(createUsersEnumerator(storageId, storageLockContext, userRegistry)),
-          VoidDataExternalizer.INSTANCE, storageLockContext, consumer, disposableParent);
+          VoidDataExternalizer.INSTANCE, storageLockContext, errorHandler, disposableParent);
     myUserIndexer = (UserIndexer)myIndexer;
-    ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> consumer.consume(this, e));
+    ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
   }
 
   @Override

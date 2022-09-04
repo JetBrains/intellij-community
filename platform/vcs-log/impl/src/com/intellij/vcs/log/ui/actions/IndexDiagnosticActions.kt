@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.Consumer
@@ -18,17 +19,12 @@ import com.intellij.vcs.log.VcsLog
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.data.index.IndexDiagnostic.getDiffFor
 import com.intellij.vcs.log.data.index.IndexDataGetter
+import com.intellij.vcs.log.data.index.IndexDiagnostic.getDiffFor
+import com.intellij.vcs.log.data.index.IndexDiagnostic.getFirstCommits
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
-import com.intellij.vcs.log.graph.api.LiteLinearGraph
-import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
-import com.intellij.vcs.log.graph.utils.BfsWalk
-import com.intellij.vcs.log.graph.utils.IntHashSetFlags
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
-import it.unimi.dsi.fastutil.ints.IntArrayList
 import java.util.*
 import java.util.function.Supplier
 
@@ -66,19 +62,14 @@ abstract class IndexDiagnosticActionBase(dynamicText: Supplier<@NlsActions.Actio
 
   private fun runCheck(project: Project,
                        dataGetter: IndexDataGetter,
-                       commitsListToCheck: List<Int>,
-                       details: List<VcsFullCommitDetails>) {
-    val report = StringBuilder()
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(Runnable {
-      for ((commitId, commitDetails) in commitsListToCheck.zip(details)) {
-        dataGetter.getDiffFor(commitId, commitDetails)?.let { commitReport ->
-          report.append(commitReport).append("\n")
-        }
-      }
+                       commitsList: List<Int>,
+                       detailsList: List<VcsFullCommitDetails>) {
+    val report = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
+      return@ThrowableComputable dataGetter.getDiffFor(commitsList, detailsList)
     }, VcsLogBundle.message("vcs.log.index.diagnostic.progress.title"), false, project)
     if (report.isBlank()) {
       VcsBalloonProblemNotifier.showOverVersionControlView(project, VcsLogBundle.message("vcs.log.index.diagnostic.success.message",
-                                                                                         commitsListToCheck.size),
+                                                                                         commitsList.size),
                                                            MessageType.INFO)
       return
     }
@@ -145,33 +136,6 @@ class CheckOldCommits : IndexDiagnosticActionBase(VcsLogBundle.messagePointer("v
     val dataPack = logManager.dataManager.dataPack
     if (!dataPack.isFull) return emptyList()
 
-    val rootsToCheck = indexedRoots.toMutableSet()
-    val commitsToCheck = IntArrayList()
-
-    @Suppress("UNCHECKED_CAST") val permanentGraphInfo = dataPack.permanentGraph as? PermanentGraphInfo<Int> ?: return emptyList()
-    val graph = LinearGraphUtils.asLiteLinearGraph(permanentGraphInfo.linearGraph)
-    for (node in graph.nodesCount() - 1 downTo 0) {
-      if (!graph.getNodes(node, LiteLinearGraph.NodeFilter.DOWN).isEmpty()) continue
-
-      val root = logManager.dataManager.getCommitId(permanentGraphInfo.permanentCommitsInfo.getCommitId(node))?.root
-      if (!rootsToCheck.remove(root)) continue
-
-      // initial commit may not have files (in case of shallow clone), or it may have too many files
-      // checking next commits instead
-      BfsWalk(node, graph, IntHashSetFlags(COMMITS_TO_CHECK), false).walk { nextNode ->
-        if (nextNode != node && graph.getNodes(nextNode, LiteLinearGraph.NodeFilter.DOWN).size == 1) {
-          // skipping merge commits since they can have too many changes
-          commitsToCheck.add(permanentGraphInfo.permanentCommitsInfo.getCommitId(nextNode))
-        }
-        return@walk commitsToCheck.size < COMMITS_TO_CHECK
-      }
-      if (rootsToCheck.isEmpty()) break
-    }
-
-    return commitsToCheck
-  }
-
-  companion object {
-    const val COMMITS_TO_CHECK = 10
+    return dataPack.getFirstCommits(logManager.dataManager.storage, indexedRoots)
   }
 }

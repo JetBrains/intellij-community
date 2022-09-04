@@ -5,7 +5,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType.*
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle.message
-import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.layout.*
@@ -13,7 +13,11 @@ import org.jetbrains.annotations.Nls
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.jvm.jvmName
 
-class ExternalSystemGroupConfigurable(private val project: Project) : BoundConfigurable(message("settings.build.tools.display.name"), "Settings_Build_Tools") {
+class ExternalSystemGroupConfigurable(private val project: Project) : BoundSearchableConfigurable(
+  message("settings.build.tools.display.name"),
+  "Settings_Build_Tools",
+  "build.tools"
+) {
 
   override fun createPanel() = panel {
     val settings = ExternalSystemProjectTrackerSettings.getInstance(project)

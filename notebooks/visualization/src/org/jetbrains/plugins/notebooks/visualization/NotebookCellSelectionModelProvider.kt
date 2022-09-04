@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.lang.LanguageExtension
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
 interface NotebookCellSelectionModelProvider {
   fun create(editor: Editor): NotebookCellSelectionModel
@@ -11,7 +13,10 @@ interface NotebookCellSelectionModelProvider {
 }
 
 val Editor.cellSelectionModel: NotebookCellSelectionModel?
-  get() = key.get(this) ?: install(this)
+  @RequiresEdt get() {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    return key.get(this) ?: install(this)
+  }
 
 val Editor.hasCellSelectionModelSupport: Boolean
   get() = key.get(this) != null || getProvider(this) != null

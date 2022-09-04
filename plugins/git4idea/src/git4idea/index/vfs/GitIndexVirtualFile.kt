@@ -124,7 +124,7 @@ class GitIndexVirtualFile(private val project: Project,
 
   companion object {
     private val LOG = Logger.getInstance(GitIndexVirtualFile::class.java)
-    const val SEPARATOR = ':'
+    private const val SEPARATOR = ':'
 
     private fun encode(project: Project, root: VirtualFile, filePath: FilePath): String {
       return StringUtil.escapeChar(project.locationHash, SEPARATOR) + SEPARATOR +

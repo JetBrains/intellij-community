@@ -11,7 +11,10 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.LicensingFacade
-import com.intellij.ui.components.*
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.util.ui.JBEmptyBorder
@@ -29,8 +32,8 @@ class KotlinRejectersFeedbackDialog(
   private val forTest: Boolean
 ) : DialogWrapper(project) {
 
-  /** Increase the additional number when onboarding feedback format is changed */
-  private val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 0
+  /** Increase the additional number when feedback format is changed */
+  private val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 2
 
   private val TICKET_TITLE_ZENDESK = "Kotlin Rejecters Disable Plugin Feedback"
   private val FEEDBACK_TYPE_ZENDESK = "Kotlin Rejecters Disable Plugin Feedback"
@@ -45,15 +48,15 @@ class KotlinRejectersFeedbackDialog(
 
   private val propertyGraph = PropertyGraph()
 
-  private val developedUsingKotlin = propertyGraph.property(
-    KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.2.label"))
-
   private val checkBoxSlowsDownIDEProperty = propertyGraph.property(false)
   private val checkBoxBreaksCodeAnalysisProperty = propertyGraph.property(false)
   private val checkBoxMakeNoiseNotificationProperty = propertyGraph.property(false)
   private val checkBoxUsuallyDeactivatePluginsProperty = propertyGraph.property(false)
   private val checkBoxOtherProperty = propertyGraph.property(false)
   private val textFieldOtherProblemProperty = propertyGraph.property("")
+
+  private val currentlyUseKotlin = propertyGraph.property(
+    KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.1.label"))
 
   private val textAreaDetailExplainProperty = propertyGraph.property("")
 
@@ -101,7 +104,7 @@ class KotlinRejectersFeedbackDialog(
       appendLine(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.zendesk.description"))
       appendLine()
       appendLine(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.zendesk.question.1"))
-      appendLine(developedUsingKotlin.get())
+      appendLine(currentlyUseKotlin.get())
       appendLine()
       appendLine(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.zendesk.question.2"))
       appendLine(createReasonDisablingKotlinList())
@@ -113,16 +116,16 @@ class KotlinRejectersFeedbackDialog(
 
   private fun createReasonDisablingKotlinList(): String {
     val resultReasonsList = mutableListOf<String>()
-    if (checkBoxSlowsDownIDEProperty.get()) {
+    if (checkBoxUsuallyDeactivatePluginsProperty.get()) {
       resultReasonsList.add(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.zendesk.reason.1.label"))
     }
-    if (checkBoxBreaksCodeAnalysisProperty.get()) {
+    if (checkBoxSlowsDownIDEProperty.get()) {
       resultReasonsList.add(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.zendesk.reason.2.label"))
     }
-    if (checkBoxMakeNoiseNotificationProperty.get()) {
+    if (checkBoxBreaksCodeAnalysisProperty.get()) {
       resultReasonsList.add(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.zendesk.reason.3.label"))
     }
-    if (checkBoxUsuallyDeactivatePluginsProperty.get()) {
+    if (checkBoxMakeNoiseNotificationProperty.get()) {
       resultReasonsList.add(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.zendesk.reason.4.label"))
     }
     if (checkBoxOtherProperty.get()) {
@@ -135,7 +138,7 @@ class KotlinRejectersFeedbackDialog(
     val collectedData = buildJsonObject {
       put(FEEDBACK_REPORT_ID_KEY, "kotlin_rejecters_disabled_plugin")
       put("format_version", FEEDBACK_JSON_VERSION)
-      put("developed_on_kotlin", developedUsingKotlin.get())
+      put("developed_on_kotlin", currentlyUseKotlin.get())
       putJsonArray("problems") {
         if (checkBoxSlowsDownIDEProperty.get()) {
           add(createReasonJsonObject(SLOW_DOWN_IDE))
@@ -180,46 +183,28 @@ class KotlinRejectersFeedbackDialog(
         label(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.description"))
       }.bottomGap(BottomGap.MEDIUM)
 
-      buttonsGroup {
-        row {
-          val firstQuestionLabel = JBLabel(
-            KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.title")).apply {
-            font = JBFont.h4()
-          }
-          radioButton(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.1.label"),
-                      KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.1.label"))
-            .label(firstQuestionLabel, LabelPosition.TOP)
-        }.topGap(TopGap.MEDIUM)
-        row {
-          radioButton(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.2.label"),
-                      KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.2.label"))
-        }
-        row {
-          radioButton(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.3.label"),
-                      KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.3.label"))
-        }.bottomGap(BottomGap.MEDIUM)
-      }.bind({ developedUsingKotlin.get() }, { developedUsingKotlin.set(it) })
 
       row {
-        val secondQuestionLabel = JBLabel(
-          KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.title")).apply {
+        label(
+          KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.title")).applyToComponent {
           font = JBFont.h4()
         }
-        checkBox(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.1.label"))
-          .bindSelected(checkBoxSlowsDownIDEProperty)
-          .label(secondQuestionLabel, LabelPosition.TOP)
-      }.topGap(TopGap.MEDIUM)
+      }.bottomGap(BottomGap.NONE)
       row {
-        checkBox(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.2.label"))
+        checkBox(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.1.label"))
+          .bindSelected(checkBoxUsuallyDeactivatePluginsProperty)
+      }
+      row {
+        checkBox(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.2.label"))
+          .bindSelected(checkBoxSlowsDownIDEProperty)
+      }
+      row {
+        checkBox(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.3.label"))
           .bindSelected(checkBoxBreaksCodeAnalysisProperty)
       }
       row {
-        checkBox(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.3.label"))
+        checkBox(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.4.label"))
           .bindSelected(checkBoxMakeNoiseNotificationProperty)
-      }
-      row {
-        checkBox(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.4.label"))
-          .bindSelected(checkBoxUsuallyDeactivatePluginsProperty)
       }
 
       row {
@@ -230,11 +215,11 @@ class KotlinRejectersFeedbackDialog(
         textField()
           .bindText(textFieldOtherProblemProperty)
           .columns(textFieldOtherColumnSize)
-          .errorOnApply(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.5.required")) {
+          .errorOnApply(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.5.required")) {
             checkBoxOtherProperty.get() && it.text.isBlank()
           }
           .applyToComponent {
-            emptyText.text = KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.5.placeholder")
+            emptyText.text = KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.5.placeholder")
             textFieldOtherProblemProperty.afterChange {
               if (it.isNotBlank()) {
                 checkBoxOtherProperty.set(true)
@@ -243,21 +228,43 @@ class KotlinRejectersFeedbackDialog(
                 checkBoxOtherProperty.set(false)
               }
             }
-            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
-                              Predicate<JBTextField> { textField -> textField.text.isEmpty() })
+            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, Predicate<JBTextField> { it.text.isEmpty() })
           }
       }.bottomGap(BottomGap.MEDIUM)
 
+
       row {
-        val textareaLabel = JBLabel(
-          KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.textarea.label")).apply {
+        label(
+          KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.title")).applyToComponent {
           font = JBFont.h4()
         }
+      }.bottomGap(BottomGap.NONE)
+      buttonsGroup {
+        row {
+          radioButton(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.1.label"),
+                      KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.1.label"))
+        }
+        row {
+          radioButton(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.2.label"),
+                      KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.2.label"))
+        }
+        row {
+          radioButton(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.3.label"),
+                      KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.3.label"))
+        }.bottomGap(BottomGap.MEDIUM)
+      }.bind({ currentlyUseKotlin.get() }, { currentlyUseKotlin.set(it) })
+
+
+      row {
+        label(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.textarea.label")).applyToComponent {
+          font = JBFont.h4()
+        }
+      }.bottomGap(BottomGap.NONE)
+      row {
         textArea()
           .bindText(textAreaDetailExplainProperty)
           .rows(textAreaRowSize)
           .columns(textAreaOverallFeedbackColumnSize)
-          .label(textareaLabel, LabelPosition.TOP)
           .applyToComponent {
             wrapStyleWord = true
             lineWrap = true
@@ -275,11 +282,12 @@ class KotlinRejectersFeedbackDialog(
               }
             })
           }
-      }.bottomGap(BottomGap.MEDIUM).topGap(TopGap.SMALL)
+      }.bottomGap(BottomGap.MEDIUM)
 
       row {
         checkBox(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.checkbox.email"))
-          .bindSelected(checkBoxEmailProperty).applyToComponent {
+          .bindSelected(checkBoxEmailProperty)
+          .applyToComponent {
             checkBoxEmail = this
           }
       }.topGap(TopGap.MEDIUM)

@@ -1198,7 +1198,7 @@ public class GitBranchPopupActions {
     }
   }
 
-  private static class MyDelegateWithShortcutText extends EmptyAction.MyDelegatingAction implements PopupElementWithAdditionalInfo {
+  private static class MyDelegateWithShortcutText extends AnActionWrapper implements PopupElementWithAdditionalInfo {
     private MyDelegateWithShortcutText(@NotNull AnAction action) {
       super(action);
     }

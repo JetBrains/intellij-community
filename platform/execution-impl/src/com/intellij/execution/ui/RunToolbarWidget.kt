@@ -278,24 +278,11 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
     }
   }
 
-  private class DelegateAction(val string: Supplier<@Nls String>, val delegate: AnAction) : AnAction() {
-    override fun isDumbAware() = delegate.isDumbAware
-
-    init {
-      shortcutSet = delegate.shortcutSet
-    }
+  private class DelegateAction(val string: Supplier<@Nls String>, delegate: AnAction) : AnActionWrapper(delegate) {
 
     override fun update(e: AnActionEvent) {
-      delegate.update(e)
+      super.update(e)
       e.presentation.text = string.get()
-    }
-
-    override fun beforeActionPerformedUpdate(e: AnActionEvent) {
-      delegate.beforeActionPerformedUpdate(e)
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      delegate.actionPerformed(e)
     }
   }
 

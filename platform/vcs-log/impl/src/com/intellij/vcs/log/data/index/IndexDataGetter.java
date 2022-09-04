@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -18,7 +18,7 @@ import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.history.EdgeData;
 import com.intellij.vcs.log.history.FileHistoryData;
 import com.intellij.vcs.log.history.VcsDirectoryRenamesProvider;
-import com.intellij.vcs.log.impl.FatalErrorHandler;
+import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.util.IntCollectionUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
@@ -41,19 +41,19 @@ public final class IndexDataGetter {
   @NotNull private final Set<? extends VirtualFile> myRoots;
   @NotNull private final VcsLogPersistentIndex.IndexStorage myIndexStorage;
   @NotNull private final VcsLogStorage myLogStorage;
-  @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
+  @NotNull private final VcsLogErrorHandler myErrorHandler;
   @NotNull private final VcsDirectoryRenamesProvider myDirectoryRenamesProvider;
 
   public IndexDataGetter(@NotNull Project project,
                          @NotNull Set<? extends VirtualFile> roots,
                          @NotNull VcsLogPersistentIndex.IndexStorage indexStorage,
                          @NotNull VcsLogStorage logStorage,
-                         @NotNull FatalErrorHandler fatalErrorsConsumer) {
+                         @NotNull VcsLogErrorHandler errorHandler) {
     myProject = project;
     myRoots = roots;
     myIndexStorage = indexStorage;
     myLogStorage = logStorage;
-    myFatalErrorsConsumer = fatalErrorsConsumer;
+    myErrorHandler = errorHandler;
 
     myDirectoryRenamesProvider = VcsDirectoryRenamesProvider.getInstance(myProject);
   }
@@ -253,7 +253,7 @@ public final class IndexDataGetter {
       }
     }
     catch (IOException e) {
-      myFatalErrorsConsumer.consume(this, e);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
       return false;
     }
     return true;
@@ -447,7 +447,7 @@ public final class IndexDataGetter {
     }
     catch (IOException | StorageException | CorruptedDataException e) {
       myIndexStorage.markCorrupted();
-      myFatalErrorsConsumer.consume(this, e);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }
     catch (RuntimeException e) {
       processRuntimeException(e);
@@ -459,7 +459,7 @@ public final class IndexDataGetter {
     if (e instanceof ProcessCanceledException) throw e;
     myIndexStorage.markCorrupted();
     if (e.getCause() instanceof IOException || e.getCause() instanceof StorageException) {
-      myFatalErrorsConsumer.consume(this, e);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }
     else {
       throw new RuntimeException(e);

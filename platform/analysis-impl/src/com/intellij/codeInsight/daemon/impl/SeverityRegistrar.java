@@ -384,7 +384,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return Collections.unmodifiableCollection(myMap.values());
   }
   @NotNull
-  static Collection<HighlightInfoType> standardSeverities() {
+  public static Collection<HighlightInfoType> standardSeverities() {
     return STANDARD_SEVERITIES.values();
   }
 }

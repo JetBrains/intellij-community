@@ -5,6 +5,7 @@ import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.internal.statistic.devkit.toolwindow.eventLogToolWindowsId
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.project.DumbAwareAction
@@ -13,12 +14,15 @@ import com.intellij.openapi.project.DumbAwareAction
  * Opens a toolwindow with feature usage statistics event log
  */
 internal class OpenStatisticsEventLogAction : DumbAwareAction() {
+
   override fun actionPerformed(event: AnActionEvent) {
     val action = ActionManager.getInstance().getAction(ActivateToolWindowAction.getActionIdForToolWindow(eventLogToolWindowsId))
     if (action != null) {
       performActionDumbAwareWithCallbacks(action, event)
     }
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
     super.update(event)

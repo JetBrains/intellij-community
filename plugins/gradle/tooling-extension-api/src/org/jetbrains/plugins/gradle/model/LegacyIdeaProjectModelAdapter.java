@@ -55,4 +55,9 @@ public class LegacyIdeaProjectModelAdapter implements Build {
   public Collection<Project> getProjects() {
     return myProjectModels;
   }
+
+  @Override
+  public BuildIdentifier getParentBuildIdentifier() {
+    return null;
+  }
 }

@@ -101,6 +101,13 @@ public final class SimpleDataContext extends CustomizedDataContext {
     }
 
     @NotNull
+    public <T> Builder addNull(@NotNull DataKey<? super T> dataKey) {
+      if (myMap == null) myMap = new HashMap<>();
+      myMap.put(dataKey.getName(), EXPLICIT_NULL);
+      return this;
+    }
+
+    @NotNull
     public Builder addAll(@NotNull DataContext dataContext, DataKey<?> @NotNull ... keys) {
       for (DataKey<?> key : keys) {
         //noinspection unchecked

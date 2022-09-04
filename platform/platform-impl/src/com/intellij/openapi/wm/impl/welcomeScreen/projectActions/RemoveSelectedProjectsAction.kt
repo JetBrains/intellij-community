@@ -32,7 +32,7 @@ internal class RemoveSelectedProjectsAction : RecentProjectsWelcomeScreenActionB
       when (item) {
         is ProjectsGroupItem -> recentProjectsManager.removeGroup(item.group)
         is RecentProjectItem -> recentProjectsManager.removePath(item.projectPath)
-        is CloneableProjectItem -> cloneableProjectsService.removeCloneProject(item.cloneableProject)
+        is CloneableProjectItem -> cloneableProjectsService.removeCloneableProject(item.cloneableProject)
         is RootItem -> {}
       }
     }

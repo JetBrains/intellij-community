@@ -8,6 +8,7 @@ import com.intellij.ide.bookmark.BookmarksListProviderService
 import com.intellij.ide.bookmark.FileBookmark
 import com.intellij.ide.bookmark.ui.tree.FileNode
 import com.intellij.ide.bookmark.ui.tree.GroupNode
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DoNotAskOption
@@ -15,10 +16,12 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 
 internal class NodeDeleteAction : DumbAwareAction(messagePointer("button.delete")) {
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = false
     val project = event.project ?: return
-    val nodes = event.bookmarksView?.selectedNodes ?: return
+    val nodes = event.bookmarkNodes ?: return
     val provider = BookmarksListProviderService.findProvider(project) { it.canDelete(nodes) } ?: return
     provider.deleteActionText?.let { event.presentation.text = it }
     event.presentation.isEnabledAndVisible = true
@@ -27,7 +30,7 @@ internal class NodeDeleteAction : DumbAwareAction(messagePointer("button.delete"
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
     val view = event.bookmarksView ?: return
-    val nodes = view.selectedNodes ?: return
+    val nodes = event.bookmarkNodes ?: return
     val bookmarksViewState = event.bookmarksViewState
     val shouldDelete = when {
       bookmarksViewState == null -> true

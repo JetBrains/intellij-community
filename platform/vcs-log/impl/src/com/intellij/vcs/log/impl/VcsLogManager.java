@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -23,7 +23,6 @@ import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStatusBarProgress;
-import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.*;
@@ -46,7 +45,7 @@ public class VcsLogManager implements Disposable {
 
   @NotNull private final Project myProject;
   @NotNull private final VcsLogTabsProperties myUiProperties;
-  @Nullable private final Consumer<? super Throwable> myRecreateMainLogHandler;
+  @Nullable private final PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> myRecreateMainLogHandler;
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogColorManagerImpl myColorManager;
@@ -63,13 +62,12 @@ public class VcsLogManager implements Disposable {
                        @NotNull VcsLogTabsProperties uiProperties,
                        @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                        boolean scheduleRefreshImmediately,
-                       @Nullable Consumer<? super Throwable> recreateHandler) {
+                       @Nullable PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> recreateHandler) {
     myProject = project;
     myUiProperties = uiProperties;
     myRecreateMainLogHandler = recreateHandler;
 
-    MyFatalErrorsHandler fatalErrorsHandler = new MyFatalErrorsHandler();
-    myLogData = new VcsLogData(myProject, logProviders, fatalErrorsHandler, this);
+    myLogData = new VcsLogData(myProject, logProviders, new MyErrorHandler(), this);
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
 
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
@@ -289,34 +287,34 @@ public class VcsLogManager implements Disposable {
     return myDisposed;
   }
 
-  private class MyFatalErrorsHandler implements FatalErrorHandler {
+  private class MyErrorHandler implements VcsLogErrorHandler {
     private final @NotNull IntSet myErrors = IntSets.synchronize(new IntOpenHashSet());
     private final @NotNull AtomicBoolean myIsBroken = new AtomicBoolean(false);
 
     @Override
-    public void consume(@Nullable Object source, @NotNull Throwable e) {
+    public void handleError(@Nullable Source source, @NotNull Throwable throwable) {
       if (myIsBroken.compareAndSet(false, true)) {
         if (myRecreateMainLogHandler != null) {
-          ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(e));
+          ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(source, throwable));
         }
         else {
-          LOG.error(e);
+          LOG.error(throwable);
         }
 
-        if (source instanceof VcsLogStorage) {
+        if (source == Source.Storage) {
           ((VcsLogModifiableIndex)myLogData.getIndex()).markCorrupted();
         }
       }
       else {
-        int errorHashCode = ThrowableInterner.computeTraceHashCode(e);
+        int errorHashCode = ThrowableInterner.computeTraceHashCode(throwable);
         if (myErrors.add(errorHashCode)) {
-          LOG.debug("Vcs Log storage is broken and is being recreated", e);
+          LOG.debug("Vcs Log storage is broken and is being recreated", throwable);
         }
       }
     }
 
     @Override
-    public void displayFatalErrorMessage(@Nls @NotNull String message) {
+    public void displayMessage(@Nls @NotNull String message) {
       VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
     }
   }

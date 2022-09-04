@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -54,7 +55,7 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
       PsiType type = lExpression.getType();
       if (type == null || type == PsiType.NULL) {
         PsiExpression rExpression = getRExpression();
-        if (rExpression != null) {
+        if (rExpression != null && !PsiPolyExpressionUtil.isPolyExpression(rExpression)) {
           return rExpression.getType();
         }
       }

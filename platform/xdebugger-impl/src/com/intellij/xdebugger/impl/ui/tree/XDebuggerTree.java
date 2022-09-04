@@ -420,9 +420,12 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     return e.getData(XDEBUGGER_TREE_KEY);
   }
 
-  @Nullable
-  public static XDebuggerTree getTree(DataContext context) {
+  public static @Nullable XDebuggerTree getTree(@NotNull DataContext context) {
     return XDEBUGGER_TREE_KEY.getData(context);
+  }
+
+  public static @NotNull List<XValueNodeImpl> getSelectedNodes(@NotNull DataContext context) {
+    return ContainerUtil.notNullize(SELECTED_NODES.getData(context));
   }
 
   public void invokeLater(Runnable runnable) {

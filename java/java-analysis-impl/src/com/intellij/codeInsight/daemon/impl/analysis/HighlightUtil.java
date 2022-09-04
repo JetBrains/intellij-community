@@ -3167,9 +3167,8 @@ public final class HighlightUtil {
     PsiElement memberName = reference.getReferenceNameElement();
     if (!(qualifier instanceof PsiJavaCodeReferenceElement) || memberName == null) return false;
 
-    PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)qualifier;
-    if (psiReference.getTypeParameterCount() > 0) return false;
-    PsiClass clazz = tryCast(psiReference.resolve(), PsiClass.class);
+    PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)qualifier;
+    PsiClass clazz = tryCast(referenceElement.resolve(), PsiClass.class);
     if (clazz == null) return false;
 
     if (newExpression.getArgumentList() == null) {
@@ -3180,7 +3179,14 @@ public final class HighlightUtil {
       PsiMethod[] methods = clazz.findMethodsByName(memberName.getText(), true);
       if (methods.length == 0) return false;
       for (PsiMethod method : methods) {
-        if (method.hasModifierProperty(PsiModifier.STATIC)) return true;
+        if (method.hasModifierProperty(PsiModifier.STATIC)) {
+          PsiClass containingClass = method.getContainingClass();
+          assert containingClass != null;
+          if (!containingClass.isInterface() || containingClass == clazz) {
+            // a static method in an interface is not resolvable from its subclasses
+            return true;
+          }
+        }
       }
     }
     return false;

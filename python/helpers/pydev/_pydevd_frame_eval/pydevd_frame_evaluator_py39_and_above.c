@@ -7,6 +7,12 @@
             "_pydevd_frame_eval/internal_pycore.h",
             "_pydevd_frame_eval/release_mem.h"
         ],
+        "extra_compile_args": [
+            "--target=arm64-apple-macos11"
+        ],
+        "extra_link_args": [
+            "--target=arm64-apple-macos11"
+        ],
         "include_dirs": [
             "_pydevd_frame_eval",
             "./_pydevd_frame_eval"

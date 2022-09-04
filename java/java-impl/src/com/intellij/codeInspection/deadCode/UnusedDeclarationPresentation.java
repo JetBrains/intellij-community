@@ -14,6 +14,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -429,6 +430,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
               (myFixedElements.containsKey(refElement) ||
               isExcluded(refEntity) ||
               isSuppressed(refElement))) && refElement.isValid() && getFilter().accepts(refElement)) {
+          PsiElement psiElement = refElement.getPsiElement();
+          if (psiElement != null && psiElement.getLanguage() != JavaLanguage.INSTANCE) return;
           if (skipEntryPoints(refElement)) return;
           registerContentEntry(refEntity, RefJavaUtil.getInstance().getPackageName(refEntity));
         }

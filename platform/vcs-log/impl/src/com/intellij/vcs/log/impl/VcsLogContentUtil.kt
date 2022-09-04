@@ -104,7 +104,7 @@ object VcsLogContentUtil {
     return cm.contents.find { VcsLogContentProvider.TAB_NAME == it.tabName }
   }
 
-  internal fun selectMainLog(cm: ContentManager): Boolean {
+  private fun selectMainLog(cm: ContentManager): Boolean {
     val mainContent = findMainLog(cm) ?: return false
     cm.setSelectedContent(mainContent)
     return true

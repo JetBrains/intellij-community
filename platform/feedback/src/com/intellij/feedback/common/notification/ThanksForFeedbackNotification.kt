@@ -5,7 +5,7 @@ import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 
-class ThanksForFeedbackNotification : Notification(
+open class ThanksForFeedbackNotification : Notification(
   "Feedback In IDE",
   CommonFeedbackBundle.message("notification.thanks.feedback.title"),
   CommonFeedbackBundle.message("notification.thanks.feedback.content"),

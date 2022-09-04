@@ -47,6 +47,7 @@ public class FileEditorProviderManagerImpl extends FileEditorProviderManager
     // Collect all possible editors
     List<FileEditorProvider> sharedProviders = new ArrayList<>();
     boolean hideDefaultEditor = false;
+    boolean hasHighPriorityEditors = false;
     for (final FileEditorProvider provider : FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getExtensionList()) {
       if (SlowOperations.allowSlowOperations(() -> ReadAction.compute(() -> {
         if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
@@ -66,6 +67,7 @@ public class FileEditorProviderManagerImpl extends FileEditorProviderManager
       }))) {
         sharedProviders.add(provider);
         hideDefaultEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
+        hasHighPriorityEditors |= provider.getPolicy() == FileEditorPolicy.HIDE_OTHER_EDITORS;
         if (provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR && !DumbService.isDumbAware(provider)) {
           String message = "HIDE_DEFAULT_EDITOR is supported only for DumbAware providers; " + provider.getClass() + " is not DumbAware.";
           LOG.error(PluginException.createByClass(message, null, provider.getClass()));
@@ -76,6 +78,10 @@ public class FileEditorProviderManagerImpl extends FileEditorProviderManager
     // Throw out default editors provider if necessary
     if (hideDefaultEditor) {
       ContainerUtil.retainAll(sharedProviders, provider -> !(provider instanceof DefaultPlatformFileEditorProvider));
+    }
+
+    if (hasHighPriorityEditors) {
+      ContainerUtil.retainAll(sharedProviders, provider -> provider.getPolicy() == FileEditorPolicy.HIDE_OTHER_EDITORS);
     }
 
     // Sort editors according policies

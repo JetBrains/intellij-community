@@ -170,7 +170,7 @@ class CheckOutputThread(PyDBDaemonThread):
     def _on_run(self):
         while not self.killReceived:
             time.sleep(0.3)
-            if not self.py_db.has_threads_alive() and self.py_db.writer.empty():
+            if (not self.py_db.has_threads_alive() or self.py_db.wait_output_checker_thread) and self.py_db.writer.empty():
                 try:
                     pydev_log.debug("No threads alive, finishing debug session")
                     self.py_db.finish_debugging_session()
@@ -500,6 +500,9 @@ class PyDB(object):
 
         # If True, pydevd will stop on assertion errors in tests.
         self.stop_on_failed_tests = False
+
+        # If True, pydevd finished all work and only waits output_checker_thread
+        self.wait_output_checker_thread = False
 
     def get_thread_local_trace_func(self):
         try:
@@ -2176,6 +2179,15 @@ def main():
 
         if setup['cmd-line']:
             debugger.wait_for_commands(globals)
+
+        # CheckOutputThread is not a daemon, so need to wait for its completion
+        if debugger.output_checker_thread is not None:
+            debugger.wait_output_checker_thread = True
+
+            try:
+                debugger.output_checker_thread.join()
+            except:
+                pass
 
 if __name__ == '__main__':
     main()

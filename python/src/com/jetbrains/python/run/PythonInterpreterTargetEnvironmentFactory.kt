@@ -43,6 +43,12 @@ interface PythonInterpreterTargetEnvironmentFactory {
    */
   fun asTargetWithMappedLocalVfs(envConfig: TargetEnvironmentConfiguration): TargetWithMappedLocalVfs? = null
 
+
+  /**
+   * See [isPackageManagementSupported]
+   */
+  fun packageManagementSupported(evConfiguration: TargetEnvironmentConfiguration): Boolean? = null
+
   companion object {
     const val UNKNOWN_INTERPRETER_VERSION = "unknown interpreter"
 
@@ -100,5 +106,15 @@ interface PythonInterpreterTargetEnvironmentFactory {
     fun getTargetWithMappedLocalVfs(targetEnvironmentConfiguration: TargetEnvironmentConfiguration) = EP_NAME.extensionList.asSequence().mapNotNull {
       it.asTargetWithMappedLocalVfs(targetEnvironmentConfiguration)
     }.firstOrNull()
+
+    /**
+     * Null means this sdk is not target based. In other case value means if user can install package in this SDK
+     */
+    @JvmStatic
+    fun isPackageManagementSupported(sdk: Sdk): Boolean? = (sdk.sdkAdditionalData as? PyTargetAwareAdditionalData)
+      ?.targetEnvironmentConfiguration
+      ?.let { targetEnvironmentConfiguration ->
+        EP_NAME.extensionList.firstNotNullOfOrNull { it.packageManagementSupported(targetEnvironmentConfiguration) }
+      }
   }
 }

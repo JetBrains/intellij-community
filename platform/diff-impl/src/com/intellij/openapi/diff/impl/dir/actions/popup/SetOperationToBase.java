@@ -17,6 +17,7 @@ package com.intellij.openapi.diff.impl.dir.actions.popup;
 
 import com.intellij.ide.diff.DirDiffElement;
 import com.intellij.ide.diff.DirDiffOperation;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.impl.dir.DirDiffElementImpl;
 import com.intellij.openapi.diff.impl.dir.DirDiffPanel;
@@ -39,7 +40,8 @@ public abstract class SetOperationToBase extends DumbAwareAction {
     for (DirDiffElementImpl element : model.getSelectedElements()) {
       if (isEnabledFor(element)) {
         element.setOperation(getOperation(element));
-      } else {
+      }
+      else {
         element.setOperation(DirDiffOperation.NONE);
       }
     }
@@ -62,6 +64,11 @@ public abstract class SetOperationToBase extends DumbAwareAction {
       }
     }
     e.getPresentation().setEnabled(false);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   protected abstract boolean isEnabledFor(DirDiffElement element);

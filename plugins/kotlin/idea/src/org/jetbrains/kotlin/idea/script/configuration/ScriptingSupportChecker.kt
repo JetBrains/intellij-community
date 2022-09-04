@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.script.configuration
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.scratch.ScratchUtil
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
@@ -29,9 +31,14 @@ class ScriptingSupportChecker: EditorNotificationProvider {
             return EditorNotificationProvider.CONST_NULL
         }
 
+        val providers = ScriptingSupportCheckerProvider.CHECKER_PROVIDERS.getExtensionList(project)
         // if script file is under source root
         val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
-        if (projectFileIndex.isUnderSourceRootOfType(file, KOTLIN_AWARE_SOURCE_ROOT_TYPES)) {
+        if (projectFileIndex.isUnderSourceRootOfType(
+                file,
+                KOTLIN_AWARE_SOURCE_ROOT_TYPES
+            ) && providers.none { it.isSupportedUnderSourceRoot(file) }
+        ) {
             return Function {
                 EditorNotificationPanel(it).apply {
                     text = KotlinBundle.message("kotlin.script.in.project.sources")
@@ -47,7 +54,7 @@ class ScriptingSupportChecker: EditorNotificationProvider {
             }
         }
 
-        if (!file.supportedScriptExtensions()) {
+        if (providers.none { it.isSupportedScriptExtension(file) }) {
             return Function {
                 EditorNotificationPanel(it).apply {
                     text = KotlinBundle.message("kotlin.script.in.beta.stage")
@@ -65,8 +72,8 @@ class ScriptingSupportChecker: EditorNotificationProvider {
 
         return EditorNotificationProvider.CONST_NULL
     }
-}
 
+}
 
 private fun EditorNotificationPanel.addHideAction(
     file: VirtualFile,

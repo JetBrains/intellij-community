@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidatio
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -31,6 +32,8 @@ class AddGroupToTestSchemeAction constructor(private val recorderId: String = St
   : DumbAwareAction(ActionsBundle.messagePointer("action.AddGroupToTestSchemeAction.text"),
                     ActionsBundle.messagePointer("action.AddGroupToTestSchemeAction.description"),
                     AllIcons.General.Add) {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled(recorderId)

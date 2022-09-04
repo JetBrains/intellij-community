@@ -25,6 +25,7 @@ import com.intellij.openapi.project.impl.ProjectUiFrameManager
 import com.intellij.openapi.project.impl.createNewProjectFrame
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
@@ -49,6 +50,7 @@ import java.awt.AWTEvent
 import java.awt.Toolkit
 import java.awt.event.WindowEvent
 import java.awt.image.BufferedImage
+import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
@@ -346,6 +348,14 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
+  fun setLastOpenedProject(path: String) {
+    state.lastOpenedProject = path
+  }
+
+  fun getLastOpenedProject(): String? {
+    return state.lastOpenedProject
+  }
+
   init {
     Toolkit.getDefaultToolkit().addAWTEventListener(
       { e ->
@@ -372,7 +382,9 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
       val path = manager.getProjectPath(project)
       if (path != null) {
+        manager.findAndRemoveNewlyClonedProject(path)
         manager.markPathRecent(path, project)
+        manager.setLastOpenedProject(path)
       }
       manager.updateLastProjectPath()
       updateSystemDockMenu()
@@ -669,6 +681,26 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       if (workspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
         takeASelfie(frameHelper, workspaceId)
       }
+    }
+  }
+
+  /**
+   * Finding a project that has just been cloned.
+   * Skip a project with a similar path for [markPathRecent] to work correctly
+   *
+   * @param projectPath path to file that opens project (may differ with directory specified during cloning)
+   */
+  private fun findAndRemoveNewlyClonedProject(projectPath: String) {
+    if (state.additionalInfo.containsKey(projectPath)) {
+      return
+    }
+
+    var file: File? = File(projectPath)
+    while (file != null) {
+      val projectMetaInfo = state.additionalInfo.remove(projectPath)
+      if (projectMetaInfo != null) break
+
+      file = FileUtil.getParentFile(file)
     }
   }
 

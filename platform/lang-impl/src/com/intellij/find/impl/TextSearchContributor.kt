@@ -30,9 +30,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.reference.SoftReference
-import com.intellij.usages.Usage
 import com.intellij.usages.UsageInfo2UsageAdapter
-import com.intellij.usages.UsageInfoAdapter
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.util.CommonProcessors
 import com.intellij.util.PlatformUtils
@@ -43,8 +41,11 @@ import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import javax.swing.ListCellRenderer
 
-class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhereContributor<UsageInfo2UsageAdapter>,
-                                                        SearchFieldActionsContributor, DumbAware, ScopeSupporting, Disposable {
+internal class TextSearchContributor(
+  val event: AnActionEvent
+) : WeightedSearchEverywhereContributor<SearchEverywhereItem>,
+    SearchFieldActionsContributor,
+    DumbAware, ScopeSupporting, Disposable {
 
   private val project = event.getRequiredData(CommonDataKeys.PROJECT)
   private val model = FindManager.getInstance(project).findInProjectModel
@@ -86,34 +87,41 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
 
   override fun fetchWeightedElements(pattern: String,
                                      indicator: ProgressIndicator,
-                                     consumer: Processor<in FoundItemDescriptor<UsageInfo2UsageAdapter>>) {
+                                     consumer: Processor<in FoundItemDescriptor<SearchEverywhereItem>>) {
     FindModel.initStringToFind(model, pattern)
 
     val presentation = FindInProjectUtil.setupProcessPresentation(project, UsageViewPresentation())
-    val progressIndicator = indicator as? ProgressIndicatorEx ?: ProgressIndicatorBase()
 
-    val recentUsageRef = ThreadLocal<Reference<Usage>>()
-    FindInProjectUtil.findUsages(model, project, progressIndicator, presentation, emptySet()) {
+    val scope = GlobalSearchScope.projectScope(project) // TODO use scope from model ?
+    val recentItemRef = ThreadLocal<Reference<SearchEverywhereItem>>()
+    FindInProjectUtil.findUsages(model, project, indicator, presentation, emptySet()) {
       val usage = UsageInfo2UsageAdapter.CONVERTER.`fun`(it) as UsageInfo2UsageAdapter
-      progressIndicator.checkCanceled()
+      indicator.checkCanceled()
 
-      val recent = SoftReference.dereference(recentUsageRef.get())
-      val merged = (recent as? UsageInfoAdapter)?.merge(usage)
-      if (merged == null || !merged) {
-        recentUsageRef.set(WeakReference(usage))
-        consumer.process(FoundItemDescriptor<UsageInfo2UsageAdapter>(usage, 0))
+      val recentItem = SoftReference.dereference(recentItemRef.get())
+      val newItem = if (recentItem != null && recentItem.usage.merge(usage)) {
+        // recompute merged presentation
+        recentItem.withPresentation(usagePresentation(project, scope, recentItem.usage))
       }
+      else {
+        SearchEverywhereItem(usage, usagePresentation(project, scope, usage)).also {
+          consumer.process(FoundItemDescriptor(it, 0))
+        }
+      }
+      recentItemRef.set(WeakReference(newItem))
 
       true
     }
   }
 
-  override fun getElementsRenderer(): ListCellRenderer<in UsageInfo2UsageAdapter> = TextSearchRenderer(GlobalSearchScope.allScope(project))
+  override fun getElementsRenderer(): ListCellRenderer<in SearchEverywhereItem> = TextSearchRenderer()
 
-  override fun processSelectedItem(selected: UsageInfo2UsageAdapter, modifiers: Int, searchText: String): Boolean {
-    if (!selected.canNavigate()) return false
+  override fun processSelectedItem(selected: SearchEverywhereItem, modifiers: Int, searchText: String): Boolean {
+    // TODO async navigation
+    val info = selected.usage
+    if (!info.canNavigate()) return false
 
-    selected.navigate(true)
+    info.navigate(true)
     return true
   }
 
@@ -129,7 +137,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
     return listOf(CaseSensitiveAction(case, onChanged), WordAction(word, onChanged), RegexpAction(regexp, onChanged))
   }
 
-  override fun getDataForItem(element: UsageInfo2UsageAdapter, dataId: String): UsageInfo2UsageAdapter? = null
+  override fun getDataForItem(element: SearchEverywhereItem, dataId: String): Any? = null
 
   private fun getInitialSelectedScope(scopeDescriptors: List<ScopeDescriptor>): ScopeDescriptor {
     val scope = SE_TEXT_SELECTED_SCOPE.get(project) ?: return ScopeDescriptor(projectScope)
@@ -194,7 +202,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
 
     private fun enabled() = AdvancedSettings.getBoolean(ADVANCED_OPTION_ID)
 
-    class Factory : SearchEverywhereContributorFactory<UsageInfo2UsageAdapter> {
+    class Factory : SearchEverywhereContributorFactory<SearchEverywhereItem> {
       override fun isAvailable() = enabled()
       override fun createContributor(event: AnActionEvent) = TextSearchContributor(event)
     }

@@ -29,7 +29,7 @@ import com.intellij.vcs.log.data.SingleTaskController;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.data.VcsLogStorageImpl;
-import com.intellij.vcs.log.impl.FatalErrorHandler;
+import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.HeavyAwareExecutor;
 import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
 import com.intellij.vcs.log.impl.VcsLogIndexer;
@@ -59,7 +59,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   public static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
 
   @NotNull private final Project myProject;
-  @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
+  @NotNull private final VcsLogErrorHandler myErrorHandler;
   @NotNull private final VcsLogProgress myProgress;
   @NotNull private final Map<VirtualFile, VcsLogIndexer> myIndexers;
   @NotNull private final VcsLogStorage myStorage;
@@ -87,12 +87,12 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                @NotNull VcsLogStorage storage,
                                @NotNull VcsLogProgress progress,
                                @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                               @NotNull FatalErrorHandler fatalErrorsConsumer,
+                               @NotNull VcsLogErrorHandler errorHandler,
                                @NotNull Disposable disposableParent) {
     myStorage = storage;
     myProject = project;
     myProgress = progress;
-    myFatalErrorsConsumer = fatalErrorsConsumer;
+    myErrorHandler = errorHandler;
     myBigRepositoriesList = VcsLogBigRepositoriesList.getInstance();
     myIndexCollector = VcsLogIndexCollector.getInstance(myProject);
 
@@ -103,9 +103,9 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
     myIndexStorageId = new StorageId(myProject.getName(), INDEX, calcIndexId(myProject, myIndexers),
                                      VcsLogStorageImpl.VERSION + VERSION);
-    myIndexStorage = createIndexStorage(myIndexStorageId, fatalErrorsConsumer, userRegistry);
+    myIndexStorage = createIndexStorage(myIndexStorageId, errorHandler, userRegistry);
     if (myIndexStorage != null) {
-      myDataGetter = new IndexDataGetter(myProject, myRoots, myIndexStorage, myStorage, myFatalErrorsConsumer);
+      myDataGetter = new IndexDataGetter(myProject, myRoots, myIndexStorage, myStorage, myErrorHandler);
     }
     else {
       myDataGetter = null;
@@ -128,10 +128,10 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     return Math.max(1, Registry.intValue("vcs.log.index.limit.minutes"));
   }
 
-  protected IndexStorage createIndexStorage(@NotNull StorageId indexStorageId, @NotNull FatalErrorHandler fatalErrorHandler,
+  protected IndexStorage createIndexStorage(@NotNull StorageId indexStorageId, @NotNull VcsLogErrorHandler errorHandler,
                                             @NotNull VcsUserRegistry registry) {
     try {
-      return IOUtil.openCleanOrResetBroken(() -> new IndexStorage(indexStorageId, myStorage, registry, myRoots, fatalErrorHandler, this),
+      return IOUtil.openCleanOrResetBroken(() -> new IndexStorage(indexStorageId, myStorage, registry, myRoots, errorHandler, this),
                                            () -> {
                                              if (!indexStorageId.cleanupAllStorageFiles()) {
                                                LOG.error("Could not clean up storage files in " + indexStorageId.getProjectStorageDir());
@@ -139,7 +139,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                            });
     }
     catch (IOException e) {
-      myFatalErrorsConsumer.consume(this, e);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }
     return null;
   }
@@ -203,7 +203,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       myIndexStorage.commits.put(index);
     }
     catch (IOException e) {
-      myFatalErrorsConsumer.consume(this, e);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }
   }
 
@@ -221,7 +221,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       }
     }
     catch (StorageException e) {
-      myFatalErrorsConsumer.consume(this, e);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }
   }
 
@@ -236,7 +236,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       return myIndexStorage == null || myIndexStorage.commits.contains(commit);
     }
     catch (IOException e) {
-      myFatalErrorsConsumer.consume(this, e);
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }
     return false;
   }
@@ -324,7 +324,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                  @NotNull VcsLogStorage storage,
                  @NotNull VcsUserRegistry userRegistry,
                  @NotNull Set<VirtualFile> roots,
-                 @NotNull FatalErrorHandler fatalErrorHandler,
+                 @NotNull VcsLogErrorHandler errorHandler,
                  @NotNull Disposable parentDisposable)
       throws IOException {
       Disposer.register(parentDisposable, this);
@@ -343,9 +343,9 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                            storageLockContext);
         Disposer.register(this, () -> catchAndWarn(messages::close));
 
-        trigrams = new VcsLogMessagesTrigramIndex(indexStorageId, storageLockContext, fatalErrorHandler, this);
-        users = new VcsLogUserIndex(indexStorageId, storageLockContext, userRegistry, fatalErrorHandler, this);
-        paths = new VcsLogPathsIndex(indexStorageId, storage, roots, storageLockContext, fatalErrorHandler, this);
+        trigrams = new VcsLogMessagesTrigramIndex(indexStorageId, storageLockContext, errorHandler, this);
+        users = new VcsLogUserIndex(indexStorageId, storageLockContext, userRegistry, errorHandler, this);
+        paths = new VcsLogPathsIndex(indexStorageId, storage, roots, storageLockContext, errorHandler, this);
 
         Path parentsStorage = indexStorageId.getStorageFile(PARENTS);
         parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,

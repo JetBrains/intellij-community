@@ -72,6 +72,10 @@ class KotlinSourceSetInfo @PropertyMapping("kotlinComponent") constructor(val ko
     var lazyDependencyClasspath: Lazy<List<String>> = lazy { emptyList() }
     var isTestModule: Boolean = false
     var sourceSetIdsByName: MutableMap<String, String> = LinkedHashMap()
+
+    /**
+     * Note: This includes *all* dependsOn source sets (whole transtive closure)!
+     */
     var dependsOn: List<String> = emptyList()
     var additionalVisible: Set<String> = emptySet()
     var externalSystemRunTasks: Collection<ExternalSystemRunTask> = emptyList()

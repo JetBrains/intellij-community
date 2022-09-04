@@ -7,9 +7,10 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.ConvertCompactConstructorToCanonicalAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.java.parser.DeclarationParser;
+import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -18,6 +19,10 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.DummyHolderFactory;
+import com.intellij.psi.impl.source.JavaDummyElement;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.JavaPsiRecordUtil;
@@ -57,7 +62,7 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
 
   @Nullable
   public static PsiClass tryMakeRecord(@NotNull PsiElement element) {
-    // We use java.util.Objects for code generation but it's absent before Java 7
+    // We use java.util.Objects for code generation, but it's absent before Java 7
     if (!PsiUtil.isLanguageLevel7OrHigher(element)) return null;
     PsiJavaFile maybeRecord = (PsiJavaFile)PsiFileFactory.getInstance(element.getProject())
       .createFileFromText("Dummy.java", JavaLanguage.INSTANCE, element.getText(), false, false);
@@ -84,11 +89,22 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
     if (recordClass == null || !recordClass.isRecord()) return;
 
     String recordClassText = generateText(recordClass);
-    PsiJavaFile psiFile =
-      (PsiJavaFile)PsiFileFactory.getInstance(project).createFileFromText("Dummy.java", JavaFileType.INSTANCE, recordClassText);
-    PsiClass converted = psiFile.getClasses()[0];
+    JavaDummyElement dummyElement = new JavaDummyElement(
+      recordClassText, builder -> JavaParser.INSTANCE.getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS),
+      LanguageLevel.JDK_16);
+    DummyHolder holder = DummyHolderFactory.createHolder(file.getManager(), dummyElement, recordClass);
+    PsiClass converted = (PsiClass)Objects.requireNonNull(SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode()));
     postProcessAnnotations(recordClass, converted);
+    PsiClass result = replace(project, file, startElement, converted);
+    CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
+  }
+
+  private static @NotNull PsiClass replace(@NotNull Project project,
+                                           @NotNull PsiFile file,
+                                           @NotNull PsiElement startElement,
+                                           @NotNull PsiClass converted) {
     if (startElement instanceof PsiErrorElement) {
+      // Older Java version: try to extract part of code which looks like a record
       TextRange range = startElement.getTextRange();
       Document document = file.getViewProvider().getDocument();
       if (document != null) {
@@ -96,12 +112,11 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
         PsiDocumentManager.getInstance(project).commitDocument(document);
         PsiClass pastedClass = PsiTreeUtil.getParentOfType(file.findElementAt(range.getStartOffset()), PsiClass.class);
         if (pastedClass != null) {
-          CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(pastedClass));
-          return;
+          return pastedClass;
         }
       }
     }
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(startElement.replace(converted));
+    return (PsiClass)startElement.replace(converted);
   }
 
   @NotNull

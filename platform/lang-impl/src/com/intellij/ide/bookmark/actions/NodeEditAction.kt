@@ -3,15 +3,18 @@ package com.intellij.ide.bookmark.actions
 
 import com.intellij.CommonBundle.messagePointer
 import com.intellij.ide.bookmark.BookmarksListProviderService
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
 internal class NodeEditAction : DumbAwareAction(messagePointer("button.edit")) {
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabled = false
     val project = event.project ?: return
-    val node = event.bookmarksView?.selectedNode ?: return
+    val node = event.bookmarkNodes?.singleOrNull() ?: return
     val provider = BookmarksListProviderService.findProvider(project) { it.canEdit(node) } ?: return
     provider.editActionText?.let { event.presentation.text = it }
     event.presentation.isEnabled = true
@@ -20,7 +23,7 @@ internal class NodeEditAction : DumbAwareAction(messagePointer("button.edit")) {
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
     val view = event.bookmarksView ?: return
-    val node = view.selectedNode ?: return
+    val node = event.bookmarkNodes?.singleOrNull() ?: return
     BookmarksListProviderService.findProvider(project) { it.canEdit(node) }?.performEdit(node, view.tree)
   }
 

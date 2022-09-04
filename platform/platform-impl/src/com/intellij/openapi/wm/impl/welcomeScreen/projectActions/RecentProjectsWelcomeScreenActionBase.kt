@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.DumbAwareAction
@@ -15,6 +16,10 @@ import javax.swing.tree.DefaultTreeModel
  * @author Konstantin Bulenkov
  */
 abstract class RecentProjectsWelcomeScreenActionBase : DumbAwareAction(), LightEditCompatible {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   companion object {
     @JvmStatic
     fun getDataModel(event: AnActionEvent): DefaultTreeModel? {

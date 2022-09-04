@@ -19,6 +19,7 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.ignore.FileGroupInfo;
 import org.jetbrains.idea.svn.ignore.SvnPropertyService;
 import org.jetbrains.idea.svn.properties.PropertyValue;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -124,6 +125,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     renameFileInCommand(tree.mySourceDir, "newName");
     refreshChanges();
+    Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", tree.mySourceDir.isValid());
 
     final Change change = assertRename(tree.mySourceDir);
     assertMove(tree.myS1File);
@@ -153,6 +155,7 @@ public class SvnRollbackTest extends SvnTestCase {
     editFileInCommand(innerFile, "some content");
     renameFileInCommand(tree.mySourceDir, "newName");
     refreshChanges();
+    Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", tree.mySourceDir.isValid());
 
     final Change change = assertRename(tree.mySourceDir);
     assertMove(tree.myS1File);
@@ -201,6 +204,8 @@ public class SvnRollbackTest extends SvnTestCase {
     assertDoesntExist(wasU);
     assertDoesntExist(wasU2);
     refreshChanges();
+    Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", inner2.isValid());
+    Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", tree.mySourceDir.isValid());
 
     final Change change = assertRename(tree.mySourceDir);
     assertMove(tree.myS1File);
@@ -245,6 +250,8 @@ public class SvnRollbackTest extends SvnTestCase {
     final File fileAfter = virtualToIoFile(innerFile);
     renameFileInCommand(tree.mySourceDir, "newName");
     refreshChanges();
+    Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", inner.isValid());
+    Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", tree.mySourceDir.isValid());
 
     final Change change = assertRename(tree.mySourceDir);
     assertMove(tree.myS1File);
@@ -327,6 +334,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final File wasUnvFile = virtualToIoFile(unvFile);
     renameFileInCommand(tree.mySourceDir, "renamed");
     refreshChanges();
+    Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", tree.mySourceDir.isValid());
 
     final Change dirChange = assertRename(tree.mySourceDir);
     final Change s1Change = assertMove(tree.myS1File);
@@ -360,6 +368,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     renameFileInCommand(tree.mySourceDir, "renamed");
     refreshChanges();
+    Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", tree.mySourceDir.isValid());
 
     final Change dirChange = assertRename(tree.mySourceDir);
     assertMove(tree.myS1File);
@@ -395,6 +404,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     renameFileInCommand(tree.mySourceDir, "renamed");
     refreshChanges();
+    Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", tree.mySourceDir.isValid());
 
     final Change dirChange = assertRename(tree.mySourceDir);
     assertMove(tree.myS1File);
@@ -419,6 +429,7 @@ public class SvnRollbackTest extends SvnTestCase {
     editFileInCommand(tree.myS1File, editedText);
     renameFileInCommand(tree.mySourceDir, "renamed");
     refreshChanges();
+    Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", tree.mySourceDir.isValid());
 
     final Change dirChange = assertRename(tree.mySourceDir);
     final Change s1Change = assertMove(tree.myS1File);
@@ -437,6 +448,7 @@ public class SvnRollbackTest extends SvnTestCase {
     editFileInCommand(tree.myS2File, "s2 edited");
     renameFileInCommand(tree.mySourceDir, "renamed");
     refreshChanges();
+    Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", tree.mySourceDir.isValid());
 
     final Change dirChange = assertRename(tree.mySourceDir);
     final Change s1Change = assertMove(tree.myS1File);

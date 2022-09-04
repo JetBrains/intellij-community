@@ -6,13 +6,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.data.VcsLogStorageImpl
-import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
-import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.util.StorageId
+import com.intellij.vcs.log.impl.VcsProjectLogErrorHandler.Companion.invalidateCaches
+import com.intellij.vcs.log.impl.VcsProjectLogErrorHandler.Companion.storageIds
 import com.intellij.vcs.log.util.VcsLogUtil
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.ExecutionException
@@ -36,25 +33,11 @@ class InvalidateVcsLogCaches : DumbAwareAction(actionText(VcsLogBundle.message("
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val logManager = VcsProjectLog.getInstance(project).logManager
-    val storageIds = logManager?.storageIds()
-    if (storageIds.isNullOrEmpty()) return
+    val projectLog = VcsProjectLog.getInstance(project)
+    val logManager = projectLog.logManager ?: return
 
+    val invalidateCachesFuture = projectLog.invalidateCaches(logManager) ?: return
     val vcsName = VcsLogUtil.getVcsDisplayName(project, logManager)
-
-    val invalidateCachesFuture = VcsProjectLog.getInstance(project).runOnDisposedLog {
-      for (storageId in storageIds) {
-        try {
-          val storageDir = storageId.projectStorageDir
-          val deleted = FileUtil.deleteWithRenaming(storageDir)
-          if (deleted) thisLogger().info("Deleted $storageDir")
-          else thisLogger().error("Could not delete $storageDir")
-        }
-        catch (t: Throwable) {
-          thisLogger().error(t)
-        }
-      }
-    } ?: return
     ProgressManager.getInstance().runProcessWithProgressSynchronously(Runnable {
       try {
         invalidateCachesFuture.get()
@@ -70,12 +53,6 @@ class InvalidateVcsLogCaches : DumbAwareAction(actionText(VcsLogBundle.message("
   companion object {
     private fun actionText(vcsName: String): @Nls String {
       return VcsLogBundle.message("vcs.log.invalidate.caches.text", vcsName)
-    }
-
-    private fun VcsLogManager.storageIds(): List<StorageId> {
-      return listOfNotNull((dataManager.index as? VcsLogPersistentIndex)?.indexStorageId,
-                           (dataManager.storage as? VcsLogStorageImpl)?.refsStorageId,
-                           (dataManager.storage as? VcsLogStorageImpl)?.hashesStorageId)
     }
   }
 }

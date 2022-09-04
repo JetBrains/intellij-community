@@ -282,6 +282,7 @@ public class JUnit5Runner {
                    ((AssertionFailedError)ex).isExpectedDefined()) {
             attrs.put("expected", ((AssertionFailedError)ex).getExpected().getStringRepresentation());
             attrs.put("actual", ((AssertionFailedError)ex).getActual().getStringRepresentation());
+            attrs.put("type", "comparisonFailure");
           }
           else {
             Class<? extends Throwable> aClass = ex.getClass();
@@ -292,6 +293,7 @@ public class JUnit5Runner {
 
                 attrs.put("expected", expected);
                 attrs.put("actual", actual);
+                attrs.put("type", "comparisonFailure");
               }
               catch (Throwable e) {
                 e.printStackTrace(myPrintStream);

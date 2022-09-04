@@ -6,6 +6,7 @@ import com.intellij.diff.DiffManager
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.chains.SimpleDiffRequestProducer
 import com.intellij.diff.requests.DiffRequest
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
@@ -16,8 +17,12 @@ import git4idea.index.*
 import git4idea.index.vfs.GitIndexVirtualFile
 import git4idea.index.vfs.filePath
 
-abstract class GitStageCompareWithVersionAction(val currentVersion: ContentVersion,
-                                                val compareWithVersion: ContentVersion) : DumbAwareAction() {
+abstract class GitStageCompareWithVersionAction(private val currentVersion: ContentVersion,
+                                                private val compareWithVersion: ContentVersion) : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun update(e: AnActionEvent) {
     val project = e.project
     val file = e.getData(CommonDataKeys.VIRTUAL_FILE)

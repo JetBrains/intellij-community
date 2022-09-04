@@ -5,7 +5,8 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.AsyncDataContext
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -109,7 +110,7 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
       }
       else {
         finalRunnable = Runnable {
-          ActionPopupStep.performAction({ createDataContext(project, repository) }, ACTION_PLACE, action, 0, null)
+          ActionUtil.invokeAction(action, createDataContext(project, repository), ACTION_PLACE, null, null)
         }
       }
     }
@@ -199,14 +200,11 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
     }
 
     private fun createDataContext(project: Project, repository: GitRepository, branch: GitBranch? = null): DataContext =
-      object : AsyncDataContext {
-        override fun getData(dataId: String): Any? = when {
-          CommonDataKeys.PROJECT.`is`(dataId) -> project
-          GitBranchActionsUtil.REPOSITORIES_KEY.`is`(dataId) -> listOf(repository)
-          GitBranchActionsUtil.BRANCHES_KEY.`is`(dataId) -> branch?.let(::listOf)
-          else -> null
-        }
-      }
+      SimpleDataContext.builder()
+        .add(CommonDataKeys.PROJECT, project)
+        .add(GitBranchActionsUtil.REPOSITORIES_KEY, listOf(repository))
+        .add(GitBranchActionsUtil.BRANCHES_KEY, branch?.let(::listOf))
+        .build()
 
     /**
      * Adds weight to match offset. Degree of match is increased with the earlier the pattern was found in the name.

@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.dir.actions.popup;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.dir.DirDiffElementImpl;
@@ -33,12 +34,17 @@ public class CompareNewFilesWithEachOtherAction extends DumbAwareAction {
       if (target != null) {
         e.getPresentation().setEnabled(true);
         e.getPresentation().setDescription(DiffBundle.message("compare.0.with.1", target.first.getSourcePresentableName(),
-                                                      target.second.getTargetPresentableName()));
+                                                              target.second.getTargetPresentableName()));
         return;
       }
     }
     e.getPresentation().setDescription(DiffBundle.message("compare.selected.new.files"));
     e.getPresentation().setEnabled(false);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private static Couple<DirDiffElementImpl> getSelectedSourceAndTarget(DirDiffTableModel model) {

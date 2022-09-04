@@ -71,7 +71,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
 
   /**
    * There are some restrictions for records:
-   * https://docs.oracle.com/javase/specs/jls/se15/preview/specs/records-jls.html.
+   * <a href="https://docs.oracle.com/javase/specs/jls/se15/preview/specs/records-jls.html">see the specification</a>.
    */
   public static RecordCandidate getClassDefinition(@NotNull PsiClass psiClass,
                                                    boolean suggestAccessorsRenaming,

@@ -149,7 +149,7 @@ final class ActionUpdater {
   }
 
   private <T> T callAction(@NotNull AnAction action, @NotNull Op operation, @NotNull Supplier<? extends T> call) {
-    String operationName = Utils.operationName(action, operation.name() + "@" + myPlace);
+    String operationName = Utils.operationName(action, operation.name(), myPlace);
     return callAction(operationName, action.getActionUpdateThread(), call);
   }
 
@@ -159,7 +159,8 @@ final class ActionUpdater {
     boolean shallAsync = updateThread == ActionUpdateThread.BGT;
     boolean isEDT = EDT.isCurrentThreadEdt();
     boolean shallEDT = !(canAsync && shallAsync);
-    if (isEDT && !shallEDT && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
+    if (isEDT && !shallEDT && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM) &&
+        !ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error("Calling on EDT " + operationName + " that requires " + updateThread +
                 (myForcedUpdateThread != null ? " (forced)" : ""));
     }
@@ -303,7 +304,12 @@ final class ActionUpdater {
   private CancellablePromise<List<AnAction>> doExpandActionGroupAsync(ActionGroup group, boolean hideDisabled) {
     ClientId clientId = ClientId.getCurrent();
     ComponentManager disposableParent = Objects.requireNonNull(
-      myProject != null ? ClientSessionsManager.getProjectSession(myProject, clientId) : ClientSessionsManager.getAppSession(clientId));
+      myProject != null
+      ? myProject.isDefault()
+        ? myProject
+        : ClientSessionsManager.getProjectSession(myProject, clientId)
+      : ClientSessionsManager.getAppSession(clientId));
+
 
     ProgressIndicator parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     ProgressIndicator indicator = parentIndicator == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(parentIndicator);
@@ -319,9 +325,8 @@ final class ActionUpdater {
     promise.onProcessed(__ -> {
       long edtWaitMillis = TimeUnit.NANOSECONDS.toMillis(myEDTWaitNanos);
       if (myLaterInvocator == null && (myEDTCallsCount > 500 || edtWaitMillis > 3000)) {
-        boolean noFqn = group.getClass() == DefaultActionGroup.class;
-        LOG.warn(edtWaitMillis + " ms total to grab EDT " + myEDTCallsCount + " times at '" + myPlace + "' to expand " +
-                 group.getClass().getSimpleName() + (noFqn ? "" : " (" + group.getClass().getName() + ")") + ". Use `ActionUpdateThread.BGT`.");
+        LOG.warn(edtWaitMillis + " ms total to grab EDT " + myEDTCallsCount + " times to expand " +
+                 Utils.operationName(group, null, myPlace) + ". Use `ActionUpdateThread.BGT`.");
       }
     });
 
@@ -627,10 +632,11 @@ final class ActionUpdater {
   private static void handleException(@NotNull Op op, @NotNull AnAction action, @Nullable AnActionEvent event, @NotNull Throwable ex) {
     if (ex instanceof ProcessCanceledException) throw (ProcessCanceledException)ex;
     String id = ActionManager.getInstance().getId(action);
+    String place = event == null ? null : event.getPlace();
     String text = event == null ? null : event.getPresentation().getText();
-    String message = op.name() + " failed for " + (action instanceof ActionGroup ? "ActionGroup" : "AnAction") +
-                     "(" + action.getClass().getName() + (id != null ? ", id=" + id : "") + ")" +
-                     (StringUtil.isNotEmpty(text) ? " with text=" + event.getPresentation().getText() : "");
+    String message = Utils.operationName(action, op.name(), place) +
+                     (id != null ? ", actionId=" + id : "") +
+                     (StringUtil.isNotEmpty(text) ? ", text='" + text + "'" : "");
     LOG.error(message, ex);
   }
 

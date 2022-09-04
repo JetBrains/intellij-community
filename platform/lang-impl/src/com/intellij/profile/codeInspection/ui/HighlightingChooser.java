@@ -3,8 +3,11 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.ColorSettingsUtil;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -33,11 +36,14 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.Collection;
 import java.util.function.Consumer;
 
 public abstract class HighlightingChooser extends ComboBoxAction implements DumbAware {
   private HighlightPopup myPopup = null;
+  private final SeverityRegistrar mySeverityRegistrar;
 
+  public HighlightingChooser(@NotNull SeverityRegistrar severityRegistrar) { mySeverityRegistrar = severityRegistrar; }
 
   abstract void onKeyChosen(@NotNull TextAttributesKey key);
 
@@ -68,6 +74,14 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
 
     for (Pair<TextAttributesKey, @Nls String> pair : ColorSettingsUtil.getErrorTextAttributes()) {
       group.add(new HighlightAction(stripColorOptionCategory(pair.second), pair.first, this::onKeyChosen));
+    }
+
+    final Collection<HighlightInfoType> standardSeverities = SeverityRegistrar.standardSeverities();
+    for (HighlightSeverity severity : mySeverityRegistrar.getAllSeverities()) {
+      final var highlightInfoType = mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
+      if (standardSeverities.contains(highlightInfoType)) continue;
+      final TextAttributesKey attributes = mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+      group.add(new HighlightAction(severity.getDisplayName(), attributes, this::onKeyChosen));
     }
 
     group.addSeparator();

@@ -329,6 +329,13 @@ public final class PyPackageUtil {
   }
 
   public static boolean packageManagementEnabled(@Nullable Sdk sdk) {
+    if (sdk == null) {
+      return false;
+    }
+    Boolean supported = PythonInterpreterTargetEnvironmentFactory.isPackageManagementSupported(sdk);
+    if (supported != null) {
+      return supported;
+    }
     if (!PythonSdkUtil.isRemote(sdk)) {
       return true;
     }

@@ -3,12 +3,15 @@ package com.intellij.lang.documentation.ide.actions
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.showFontSizePopup
 
 internal class AdjustFontSizeAction : AnAction(CodeInsightBundle.message("javadoc.adjust.font.size")), ActionToIgnore, DumbAware {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = documentationBrowser(e.dataContext) != null

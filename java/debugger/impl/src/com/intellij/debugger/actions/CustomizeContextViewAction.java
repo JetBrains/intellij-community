@@ -5,6 +5,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.settings.JavaDebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -86,6 +87,11 @@ public class CustomizeContextViewAction extends XDebuggerTreeActionBase {
     int getSelectedIndex() {
       return myTabbedPane.getSelectedIndex();
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

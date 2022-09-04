@@ -2,9 +2,8 @@
 package com.intellij.feedback.common
 
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
-import com.intellij.feedback.common.notification.RequestFeedbackNotification
-import com.intellij.feedback.kotlinRejecters.bundle.KotlinRejectersFeedbackBundle
 import com.intellij.feedback.kotlinRejecters.dialog.KotlinRejectersFeedbackDialog
+import com.intellij.feedback.kotlinRejecters.notification.KotlinRejectersFeedbackNotification
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.feedback.kotlinRejecters.state.KotlinRejectersInfoService
 import com.intellij.notification.NotificationAction
@@ -19,28 +18,25 @@ import kotlinx.datetime.todayAt
 class OpenApplicationFeedbackShower : AppLifecycleListener {
 
   companion object {
-    val LAST_DATE_COLLECT_FEEDBACK = LocalDate(2022, 7, 19)
-    const val MAX_NUMBER_NOTIFICATION_SHOWED = 3
+    val LAST_DATE_COLLECT_FEEDBACK = LocalDate(2022, 8, 26)
+    const val MAX_NUMBER_NOTIFICATION_SHOWED = 1
 
     fun showNotification(project: Project?, forTest: Boolean) {
-      val notification = RequestFeedbackNotification(
-        KotlinRejectersFeedbackBundle.message("notification.kotlin.feedback.request.feedback.title"),
-        KotlinRejectersFeedbackBundle.message("notification.kotlin.feedback.request.feedback.content")
-      )
+      val notification = KotlinRejectersFeedbackNotification()
       notification.addAction(
         NotificationAction.createSimpleExpiring(CommonFeedbackBundle.message("notification.request.feedback.action.respond.text")) {
           val dialog = KotlinRejectersFeedbackDialog(project, forTest)
           dialog.show()
         }
-        )
-        notification.notify(project)
-        notification.addAction(
-          NotificationAction.createSimpleExpiring(CommonFeedbackBundle.message("notification.request.feedback.action.dont.show.text")) {
-            if (!forTest) {
-              IdleFeedbackTypeResolver.isFeedbackNotificationDisabled = true
-            }
+      )
+      notification.addAction(
+        NotificationAction.createSimpleExpiring(CommonFeedbackBundle.message("notification.request.feedback.action.dont.show.text")) {
+          if (!forTest) {
+            IdleFeedbackTypeResolver.isFeedbackNotificationDisabled = true
           }
-        )
+        }
+      )
+      notification.notify(project)
     }
   }
 
@@ -53,7 +49,7 @@ class OpenApplicationFeedbackShower : AppLifecycleListener {
     if (!kotlinRejectersInfoState.feedbackSent && kotlinRejectersInfoState.showNotificationAfterRestart &&
         LAST_DATE_COLLECT_FEEDBACK >= Clock.System.todayAt(TimeZone.currentSystemDefault()) &&
         !IdleFeedbackTypeResolver.isFeedbackNotificationDisabled &&
-        kotlinRejectersInfoState.numberNotificationShowed <= MAX_NUMBER_NOTIFICATION_SHOWED) {
+        kotlinRejectersInfoState.numberNotificationShowed < MAX_NUMBER_NOTIFICATION_SHOWED) {
       val project = ProjectManagerEx.getInstance().openProjects.firstOrNull()
       kotlinRejectersInfoState.numberNotificationShowed += 1
       showNotification(project, false)

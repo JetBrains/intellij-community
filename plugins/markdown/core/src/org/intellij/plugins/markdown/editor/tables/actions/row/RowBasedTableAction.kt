@@ -1,9 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables.actions.row
 
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -15,12 +14,16 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 
 /**
  * Same as [org.intellij.plugins.markdown.editor.tables.actions.column.ColumnBasedTableAction].
+ *
+ * By default, table actions are intended to be updated on BGT.
  */
 internal abstract class RowBasedTableAction(private val considerSeparatorRow: Boolean = false): AnAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val editor = event.getRequiredData(CommonDataKeys.EDITOR)
     val file = event.getRequiredData(CommonDataKeys.PSI_FILE)
-    val tableAndRow = findTableAndRow(event, file, editor)
+    val offset = event.getRequiredData(CommonDataKeys.CARET).offset
+    val document = editor.document
+    val tableAndRow = findTableAndRow(event, file, document, offset)
     requireNotNull(tableAndRow)
     val (table, row) = tableAndRow
     performAction(editor, table, row)
@@ -31,11 +34,13 @@ internal abstract class RowBasedTableAction(private val considerSeparatorRow: Bo
     val project = event.getData(CommonDataKeys.PROJECT)
     val editor = event.getData(CommonDataKeys.EDITOR)
     val file = event.getData(CommonDataKeys.PSI_FILE)
-    if (project == null || editor == null || file == null) {
+    val offset = event.getData(CommonDataKeys.CARET)?.offset
+    if (project == null || editor == null || file == null || offset == null) {
       event.presentation.isEnabledAndVisible = false
       return
     }
-    val tableAndRow = findTableAndRow(event, file, editor)
+    val document = editor.document
+    val tableAndRow = findTableAndRow(event, file, document, offset)
     event.presentation.isEnabledAndVisible = tableAndRow != null
     if (tableAndRow != null) {
       val (table, row) = tableAndRow
@@ -45,31 +50,36 @@ internal abstract class RowBasedTableAction(private val considerSeparatorRow: Bo
     }
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   protected abstract fun performAction(editor: Editor, table: MarkdownTable, rowElement: PsiElement)
 
   protected open fun update(event: AnActionEvent, table: MarkdownTable?, rowElement: PsiElement?) = Unit
 
-  private fun findTableAndRow(event: AnActionEvent, file: PsiFile, editor: Editor): Pair<MarkdownTable, PsiElement>? {
+  private fun findTableAndRow(event: AnActionEvent, file: PsiFile, document: Document, offset: Int): Pair<MarkdownTable, PsiElement>? {
     return when {
-      considerSeparatorRow -> findTableAndRow(event, file, editor, ::findRowOrSeparator)
-      else -> findTableAndRow(event, file, editor, ::findRow)
+      considerSeparatorRow -> findTableAndRow(event, file, document, offset, ::findRowOrSeparator)
+      else -> findTableAndRow(event, file, document, offset, ::findRow)
     }
   }
 
-  protected open fun findRowOrSeparator(file: PsiFile, editor: Editor): PsiElement? {
-    return TableUtils.findRowOrSeparator(file, editor.caretModel.currentCaret.offset)
+  protected open fun findRowOrSeparator(file: PsiFile, document: Document, offset: Int): PsiElement? {
+    return TableUtils.findRowOrSeparator(file, offset)
   }
 
-  protected open fun findRow(file: PsiFile, editor: Editor): PsiElement? {
-    return TableUtils.findRow(file, editor.caretModel.currentCaret.offset)
+  protected open fun findRow(file: PsiFile, document: Document, offset: Int): PsiElement? {
+    return TableUtils.findRow(file, offset)
   }
 
   companion object {
     fun findTableAndRow(
       event: AnActionEvent,
       file: PsiFile,
-      editor: Editor,
-      rowGetter: (PsiFile, Editor) -> PsiElement?
+      document: Document,
+      offset: Int,
+      rowGetter: (PsiFile, Document, Int) -> PsiElement?
     ): Pair<MarkdownTable, PsiElement>? {
       val elementFromEvent = event.getData(TableActionKeys.ELEMENT)?.get()
       if (elementFromEvent != null) {
@@ -78,7 +88,7 @@ internal abstract class RowBasedTableAction(private val considerSeparatorRow: Bo
           return table to elementFromEvent
         }
       }
-      val row = rowGetter(file, editor)?.takeIf { it.isValid }
+      val row = rowGetter(file, document, offset)?.takeIf { it.isValid }
       val table = row?.let(::obtainParentTable)?.takeIf { it.isValid }
       return when {
         table != null -> table to row
@@ -91,12 +101,6 @@ internal abstract class RowBasedTableAction(private val considerSeparatorRow: Bo
         is MarkdownTableRow -> element.parentTable
         is MarkdownTableSeparatorRow -> element.parentTable
         else -> null
-      }
-    }
-
-    fun findTableAndRow(event: AnActionEvent, file: PsiFile, editor: Editor): Pair<MarkdownTable, PsiElement>? {
-      return findTableAndRow(event, file, editor) { fileToSearch, editorToSearch ->
-        TableUtils.findRowOrSeparator(fileToSearch, editorToSearch.caretModel.currentCaret.offset)
       }
     }
   }

@@ -4,6 +4,7 @@ package com.intellij.debugger.memory.action;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.memory.ui.InstancesWindow;
 import com.intellij.debugger.memory.ui.JavaReferenceInfo;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,6 +20,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class ShowInstancesByClassAction extends DebuggerTreeAction {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     final ObjectReference ref = getObjectReference(node);

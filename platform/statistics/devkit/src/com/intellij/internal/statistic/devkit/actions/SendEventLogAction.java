@@ -5,13 +5,17 @@ import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.internal.statistic.StatisticsBundle;
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType;
-import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo;
+import com.intellij.internal.statistic.eventLog.EventLogInternalSendConfig;
+import com.intellij.internal.statistic.eventLog.LogEventRecordRequest;
+import com.intellij.internal.statistic.eventLog.LogEventSerializer;
 import com.intellij.internal.statistic.eventLog.connection.*;
 import com.intellij.internal.statistic.eventLog.filters.LogEventCompositeFilter;
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
 import com.intellij.internal.statistic.eventLog.filters.LogEventSnapshotBuildFilter;
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AppUIExecutor;
@@ -42,11 +46,18 @@ import java.util.List;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
-public class SendEventLogAction extends AnAction {
+final class SendEventLogAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     String recorderId = StringUtil.trim(Registry.stringValue("usage.statistics.test.action.recorder.id"));
-    e.getPresentation().setEnabled(StatisticsRecorderUtil.isTestModeEnabled(recorderId));
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null &&
+                                             StatisticsRecorderUtil.isTestModeEnabled(recorderId));
   }
 
   @Override

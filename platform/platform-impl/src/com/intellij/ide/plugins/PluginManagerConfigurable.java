@@ -1865,10 +1865,6 @@ public final class PluginManagerConfigurable
     myLaterSearchQuery = option;
     myShowMarketplaceTab = false;
     myForceShowInstalledTabForTag = true;
-    if (myInstalledTab != null) {
-      myInstalledTab.clearSearchPanel(option);
-      myInstalledTab.showSearchPanel(option);
-    }
     if (myTabHeaderComponent != null) {
       updateSelectionTab(INSTALLED_TAB);
     }

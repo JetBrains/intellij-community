@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,13 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -55,7 +52,6 @@ import java.util.function.Supplier;
 
 import static com.intellij.vcs.log.VcsLogProvider.LOG_PROVIDER_EP;
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
-import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
 import static java.util.Objects.requireNonNull;
 
 @Service(Service.Level.PROJECT)
@@ -65,16 +61,15 @@ public final class VcsProjectLog implements Disposable {
   public static final Topic<ProjectLogListener> VCS_PROJECT_LOG_CHANGED = new Topic<>(ProjectLogListener.class,
                                                                                       Topic.BroadcastDirection.NONE,
                                                                                       true);
-  private static final int RECREATE_LOG_TRIES = 5;
   @NotNull private final Project myProject;
   @NotNull private final VcsLogTabsProperties myUiProperties;
   @NotNull private final VcsLogTabsManager myTabsManager;
+  @NotNull private final VcsProjectLogErrorHandler myErrorHandler;
 
   @NotNull private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
   @NotNull private final Disposable myDisposable = Disposer.newDisposable();
   @NotNull private final ExecutorService myExecutor;
   @NotNull private final AtomicBoolean myDisposeStarted = new AtomicBoolean(false);
-  private int myRecreatedLogCount = 0;
 
   public VcsProjectLog(@NotNull Project project) {
     myProject = project;
@@ -82,6 +77,7 @@ public final class VcsProjectLog implements Disposable {
     VcsLogProjectTabsProperties uiProperties = myProject.getService(VcsLogProjectTabsProperties.class);
     myUiProperties = uiProperties;
     myTabsManager = new VcsLogTabsManager(project, uiProperties, this);
+    myErrorHandler = new VcsProjectLogErrorHandler(this);
 
     myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Vcs Log Initialization/Dispose", 1);
     myProject.getMessageBus().connect(myDisposable).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
@@ -186,7 +182,7 @@ public final class VcsProjectLog implements Disposable {
       }
       if (recreate) {
         try {
-          if (!myDisposeStarted.get()) {
+          if (!isDisposing()) {
             beforeCreateLog.run();
           }
         }
@@ -200,30 +196,8 @@ public final class VcsProjectLog implements Disposable {
     });
   }
 
-  @RequiresEdt
-  private void recreateOnError(@NotNull Throwable t) {
-    if (myDisposeStarted.get()) return;
-
-    myRecreatedLogCount++;
-    String logMessage = "Recreating Vcs Log after storage corruption. Recreated count " + myRecreatedLogCount;
-    if (myRecreatedLogCount % RECREATE_LOG_TRIES == 0) {
-      LOG.error(logMessage, t);
-
-      VcsLogManager manager = getLogManager();
-      if (manager != null && manager.isLogVisible()) {
-        String balloonMessage = VcsLogBundle.message("vcs.log.recreated.due.to.corruption",
-                                                     VcsLogUtil.getVcsDisplayName(myProject, manager),
-                                                     myRecreatedLogCount,
-                                                     LOG_CACHE,
-                                                     ApplicationNamesInfo.getInstance().getFullProductName());
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, balloonMessage, MessageType.ERROR);
-      }
-    }
-    else {
-      LOG.debug(logMessage, t);
-    }
-
-    disposeLog(true);
+  boolean isDisposing() {
+    return myDisposeStarted.get();
   }
 
   /**
@@ -249,7 +223,7 @@ public final class VcsProjectLog implements Disposable {
   @Nullable
   @RequiresBackgroundThread
   private VcsLogManager createLog(boolean forceInit) {
-    if (myDisposeStarted.get()) return null;
+    if (isDisposing()) return null;
     Map<VirtualFile, VcsLogProvider> logProviders = getLogProviders(myProject);
     if (!logProviders.isEmpty()) {
       VcsLogManager logManager = myLogManager.getValue(logProviders);
@@ -385,7 +359,7 @@ public final class VcsProjectLog implements Disposable {
       if (myValue == null) {
         LOG.debug("Creating Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders));
         VcsLogManager value = new VcsLogManager(myProject, myUiProperties, logProviders, false,
-                                                VcsProjectLog.this::recreateOnError);
+                                                (s, t) -> myErrorHandler.recreateOnError(s, t));
         myValue = value;
         ApplicationManager.getApplication().invokeAndWait(() -> {
           myProject.getMessageBus().syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);

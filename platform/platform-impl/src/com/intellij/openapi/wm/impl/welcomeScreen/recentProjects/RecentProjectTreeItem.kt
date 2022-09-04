@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction
@@ -42,7 +43,8 @@ sealed interface RecentProjectTreeItem {
 data class RecentProjectItem(
   val projectPath: @SystemIndependent String,
   @NlsSafe val projectName: String,
-  @NlsSafe val displayName: String
+  @NlsSafe val displayName: String,
+  val projectGroup: ProjectGroup?
 ) : RecentProjectTreeItem {
   override fun displayName(): String = displayName
 
@@ -57,12 +59,12 @@ data class RecentProjectItem(
       val exitCode = Messages.showYesNoDialog(
         IdeBundle.message("message.the.path.0.does.not.exist.maybe.on.remote", FileUtil.toSystemDependentName(projectPath)),
         IdeBundle.message("dialog.title.reopen.project"),
-        CommonBundle.getOkButtonText(),
         IdeBundle.message("button.remove.from.list"),
+        CommonBundle.getCancelButtonText(),
         Messages.getErrorIcon()
       )
 
-      if (exitCode == Messages.NO) {
+      if (exitCode == Messages.YES) {
         RecentProjectsManager.getInstance().removePath(projectPath)
       }
 
@@ -80,6 +82,10 @@ data class RecentProjectItem(
       .withRunConfigurators()
 
     RecentProjectsManagerBase.instanceEx.openProject(file, options)
+
+    for (extension in ProjectDetector.EXTENSION_POINT_NAME.extensions) {
+      extension.logRecentProjectOpened(projectGroup)
+    }
   }
 
   fun searchName(): String {
@@ -123,10 +129,19 @@ class RootItem(private val collectors: List<() -> List<RecentProjectTreeItem>>) 
 
 object ProjectCollectors {
   @JvmField
-  val recentProjectsCollector: () -> List<RecentProjectTreeItem> = { RecentProjectListActionProvider.getInstance().collectProjects() }
+  val recentProjectsCollector: () -> List<RecentProjectTreeItem> = {
+    RecentProjectListActionProvider.getInstance().collectProjects()
+  }
 
   @JvmField
-  val cloneableProjectsCollector: () -> List<RecentProjectTreeItem> = { CloneableProjectsService.getInstance().collectCloneableProjects() }
+  val recentProjectsWithoutOpenedCollector: () -> List<RecentProjectTreeItem> = {
+    RecentProjectListActionProvider.getInstance().collectProjects(false)
+  }
+
+  @JvmField
+  val cloneableProjectsCollector: () -> List<RecentProjectTreeItem> = {
+    CloneableProjectsService.getInstance().collectCloneableProjects()
+  }
 
   @JvmField
   val all = listOf(cloneableProjectsCollector, recentProjectsCollector)

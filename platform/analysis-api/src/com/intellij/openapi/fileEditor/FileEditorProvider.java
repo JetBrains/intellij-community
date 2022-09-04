@@ -80,6 +80,7 @@ public interface FileEditorProvider {
    * @return a policy that specifies how an editor created via this provider should be opened.
    * @see FileEditorPolicy#NONE
    * @see FileEditorPolicy#HIDE_DEFAULT_EDITOR
+   * @see FileEditorPolicy#HIDE_OTHER_EDITORS
    * @see FileEditorPolicy#PLACE_BEFORE_DEFAULT_EDITOR
    * @see FileEditorPolicy#PLACE_AFTER_DEFAULT_EDITOR
    */

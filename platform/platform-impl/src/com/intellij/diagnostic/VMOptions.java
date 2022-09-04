@@ -13,7 +13,6 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SmartList;
-import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -287,7 +286,7 @@ public final class VMOptions {
   @ApiStatus.Internal
   public static @NotNull String getFileName() {
     String fileName = ApplicationNamesInfo.getInstance().getScriptName();
-    if (!SystemInfo.isMac && CpuArch.isIntel64()) fileName += "64";
+    if (!SystemInfo.isMac) fileName += "64";
     if (SystemInfo.isWindows) fileName += ".exe";
     fileName += ".vmoptions";
     return fileName;

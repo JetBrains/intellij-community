@@ -15,6 +15,7 @@ import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -73,10 +74,13 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
     }
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     super.update(e)
-    val isTestMode = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
-    e.presentation.isEnabled = isTestMode && !FusStatesRecorder.isRecordingInProgress()
+    e.presentation.isEnabled = e.project != null
+                               && StatisticsRecorderUtil.isTestModeEnabled(recorderId)
+                               && !FusStatesRecorder.isRecordingInProgress()
   }
 
   companion object {

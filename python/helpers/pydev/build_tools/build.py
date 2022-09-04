@@ -1,4 +1,4 @@
-'''
+"""
 Helper to build pydevd.
 
 It should:
@@ -6,14 +6,17 @@ It should:
     * compile cython deps (properly setting up the environment first).
 
 Note that it's used in the CI to build the cython deps based on the PYDEVD_USE_CYTHON environment variable.
-'''
+"""
 from __future__ import print_function
 
+import glob
 import os
 import subprocess
 import sys
+import tempfile
 
-from generate_code import remove_if_exists, root_dir, is_python_64bit, generate_dont_trace_files, generate_cython_module
+from generate_code import remove_if_exists, root_dir, is_python_64bit, \
+    generate_dont_trace_files, generate_cython_module
 
 # noinspection SpellCheckingInspection
 BINARY_DIRS = '_pydevd_bundle', '_pydevd_frame_eval'
@@ -35,6 +38,7 @@ def consume(it):
             next(it)
     except StopIteration:
         pass
+
 
 def get_environment_from_batch_command(env_cmd, initial=None):
     """
@@ -105,17 +109,16 @@ def build():
 
     os.chdir(root_dir)
 
-    env=None
+    env = None
     if sys.platform == 'win32':
         # "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
         # set MSSdk=1
         # set DISTUTILS_USE_SDK=1
         # set VS100COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 9.0\Common7\Tools
 
-
         env = os.environ.copy()
         if sys.version_info[:2] in ((2, 7), (3, 6), (3, 7), (3, 8), (3, 9), (3, 10)):
-            import setuptools # We have to import it first for the compiler to be found
+            import setuptools  # We have to import it first for the compiler to be found.
             from distutils import msvc9compiler
 
             if sys.version_info[:2] == (2, 7):
@@ -147,13 +150,64 @@ def build():
             additional_args.append(arg)
             break
     else:
-        additional_args.append('--force-cython')  # Build always forces cython!
+        additional_args.append('--force-cython')  # Build always forces Cython!
 
+    if sys.platform.startswith('darwin'):
+        macos_cross_compile(additional_args, env)
+    else:
+        args = [
+            sys.executable,
+            os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'),
+            'build_ext',
+            '--inplace',
+        ] + additional_args
+
+        print('Calling args: %s' % (args,))
+        subprocess.check_call(args, env=env,)
+
+
+def macos_cross_compile(additional_args, env):
+    # Cross-compilation for x86 and M1.
+    tempdir = tempfile.mkdtemp()
     args = [
-        sys.executable, os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'), 'build_ext', '--inplace',
-    ]+additional_args
+               sys.executable,
+               os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'),
+               'build_ext',
+               '--inplace',
+               '--build-lib=%s/lib.x86' % tempdir,
+               '--build-temp=%s/temp.x86' % tempdir,
+               '--target=x86_64-apple-macos10.12',
+           ] + additional_args
     print('Calling args: %s' % (args,))
-    subprocess.check_call(args, env=env,)
+    subprocess.check_call(args, env=env, )
+    args = [
+               sys.executable,
+               os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'),
+               'build_ext',
+               '--inplace',
+               '--build-lib=%s/lib.arm64' % tempdir,
+               '--build-temp=%s/temp.arm64' % tempdir,
+               '--target=arm64-apple-macos11',
+           ] + additional_args
+    print('Calling args: %s' % (args,))
+    subprocess.check_call(args, env=env, )
+    # See: https://developer.apple.com/documentation/apple-silicon/building-a-universal-macos-binary.
+    for ext_dir_x86, ext_dir_arm64 in zip(glob.glob('%s/lib.x86/*' % tempdir),
+                                          glob.glob('%s/lib.arm64/*' % tempdir)):
+        for shared_lib_x86, shared_lib_arm64 in zip(
+                glob.glob('%s/*' % ext_dir_x86), glob.glob('%s/*' % ext_dir_arm64)):
+            args = [
+                'lipo',
+                '-create',
+                '-output',
+                '%s/%s/%s' % (root_dir, os.path.basename(ext_dir_x86),
+                              os.path.basename(shared_lib_x86)),
+                shared_lib_x86,
+                shared_lib_arm64,
+            ]
+
+            print('Building universal binary: %s' % (args,))
+            subprocess.check_call(args, env=env, )
 
 
 if __name__ == '__main__':
@@ -169,4 +223,7 @@ if __name__ == '__main__':
             generate_cython_module()
         build()
     else:
-        raise RuntimeError('Unexpected value for PYDEVD_USE_CYTHON: %s (accepted: YES, NO)' % (use_cython,))
+        raise RuntimeError(
+            'Unexpected value for PYDEVD_USE_CYTHON: %s (accepted: YES, NO)'
+            % (use_cython,)
+        )

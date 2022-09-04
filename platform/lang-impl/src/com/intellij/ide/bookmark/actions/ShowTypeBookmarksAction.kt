@@ -12,6 +12,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNodeCache
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.NAVIGATABLE
 import com.intellij.openapi.actionSystem.DataProvider
@@ -32,6 +33,8 @@ import javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION
 
 internal class ShowTypeBookmarksAction : DumbAwareAction(BookmarkBundle.messagePointer("show.type.bookmarks.action.text")) {
   private val popupState = PopupState.forPopup()
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   private val BookmarksManager.typeBookmarks
     get() = BookmarkType.values().mapNotNull { getBookmark(it)?.run { it to this } }.ifEmpty { null }

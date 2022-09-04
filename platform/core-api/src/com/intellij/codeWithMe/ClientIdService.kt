@@ -4,6 +4,7 @@ package com.intellij.codeWithMe
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import org.jetbrains.annotations.ApiStatus
 
 interface ClientIdService {
   companion object {
@@ -21,5 +22,6 @@ interface ClientIdService {
 
   fun isValid(clientId: ClientId?): Boolean
 
+  @Deprecated("Use create a per-client service that implements disposable to get proper disposable associated with the client id")
   fun toDisposable(clientId: ClientId?): Disposable
 }

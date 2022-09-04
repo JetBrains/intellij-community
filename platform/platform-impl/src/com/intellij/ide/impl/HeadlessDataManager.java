@@ -3,6 +3,7 @@ package com.intellij.ide.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Disposer;
@@ -21,8 +22,7 @@ import java.util.function.Supplier;
 
 public class HeadlessDataManager extends DataManagerImpl {
 
-  // Extending `CustomizedDataContext` would turn async update in all tests. We are not ready.
-  private static final class HeadlessContext implements DataContext, UserDataHolder {
+  private static final class HeadlessContext extends CustomizedDataContext implements UserDataHolder {
     private final DataProvider myProvider;
     private final DataContext myParent;
     private Map<Key<?>, Object> myUserData;
@@ -33,15 +33,12 @@ public class HeadlessDataManager extends DataManagerImpl {
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      return DataManager.getInstance().getCustomizedData(dataId, getParent(), this::getCustomData);
-    }
-
-    @NotNull DataContext getParent() {
+    public @NotNull DataContext getParent() {
       return myParent == null ? EMPTY_CONTEXT : myParent;
     }
 
-    @Nullable Object getCustomData(@NotNull String dataId) {
+    @Override
+    public @Nullable Object getRawCustomData(@NotNull String dataId) {
       return myProvider == null ? null : myProvider.getData(dataId);
     }
 

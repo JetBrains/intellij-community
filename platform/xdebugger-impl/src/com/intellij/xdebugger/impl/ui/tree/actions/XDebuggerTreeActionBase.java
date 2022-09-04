@@ -18,15 +18,13 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreePath;
-import java.util.Collections;
 import java.util.List;
 
 public abstract class XDebuggerTreeActionBase extends AnAction {
@@ -53,28 +51,12 @@ public abstract class XDebuggerTreeActionBase extends AnAction {
     return node.getName() != null;
   }
 
-  @NotNull
-  public static List<XValueNodeImpl> getSelectedNodes(DataContext dataContext) {
-    XDebuggerTree tree = XDebuggerTree.getTree(dataContext);
-    if (tree == null) return Collections.emptyList();
-
-    TreePath[] paths = tree.getSelectionPaths();
-    if (paths == null || paths.length == 0) {
-      return Collections.emptyList();
-    }
-    return StreamEx.of(paths).map(TreePath::getLastPathComponent).select(XValueNodeImpl.class).toList();
+  public static @NotNull List<XValueNodeImpl> getSelectedNodes(@NotNull DataContext dataContext) {
+    return XDebuggerTree.getSelectedNodes(dataContext);
   }
 
-  @Nullable
-  public static XValueNodeImpl getSelectedNode(final DataContext dataContext) {
-    XDebuggerTree tree = XDebuggerTree.getTree(dataContext);
-    if (tree == null) return null;
-
-    TreePath path = tree.getSelectionPath();
-    if (path == null) return null;
-
-    Object node = path.getLastPathComponent();
-    return node instanceof XValueNodeImpl ? (XValueNodeImpl)node : null;
+  public static @Nullable XValueNodeImpl getSelectedNode(@NotNull DataContext dataContext) {
+    return ContainerUtil.getFirstItem(getSelectedNodes(dataContext));
   }
 
   @Nullable

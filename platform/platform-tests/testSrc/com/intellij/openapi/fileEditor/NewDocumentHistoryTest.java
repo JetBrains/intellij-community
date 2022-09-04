@@ -45,11 +45,11 @@ public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
     assertEquals(2, editors.length);
     assertEquals("Text", manager.getSelectedEditor(file).getName());
     manager.setSelectedEditor(file, "mock");
-    assertEquals(FileEditorManagerTest.MyFileEditorProvider.NAME, manager.getSelectedEditor(file).getName());
+    assertEquals(FileEditorManagerTest.MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, manager.getSelectedEditor(file).getName());
     manager.closeAllFiles();
 
     myHistory.back();
-    assertEquals(FileEditorManagerTest.MyFileEditorProvider.NAME, manager.getSelectedEditor(file).getName());
+    assertEquals(FileEditorManagerTest.MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, manager.getSelectedEditor(file).getName());
   }
 
   public void testSelectFileOnNavigation() {

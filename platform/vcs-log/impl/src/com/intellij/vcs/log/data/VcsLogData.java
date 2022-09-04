@@ -17,10 +17,11 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.index.IndexDiagnosticRunner;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex;
-import com.intellij.vcs.log.impl.FatalErrorHandler;
+import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
 import com.intellij.vcs.log.impl.VcsLogSharedSettings;
 import com.intellij.vcs.log.util.PersistentUtil;
@@ -67,8 +68,9 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull private final VcsLogRefresherImpl myRefresher;
   @NotNull private final List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
+  @NotNull private final VcsLogErrorHandler myErrorHandler;
   @NotNull private final VcsLogModifiableIndex myIndex;
+  @NotNull private final IndexDiagnosticRunner myIndexDiagnosticRunner;
 
   @NotNull private final Object myLock = new Object();
   @NotNull private State myState = State.CREATED;
@@ -76,19 +78,19 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   public VcsLogData(@NotNull Project project,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                    @NotNull FatalErrorHandler fatalErrorsConsumer,
+                    @NotNull VcsLogErrorHandler errorHandler,
                     @NotNull Disposable parentDisposable) {
     myProject = project;
     myLogProviders = logProviders;
     myUserRegistry = (VcsUserRegistryImpl)project.getService(VcsUserRegistry.class);
-    myFatalErrorsConsumer = fatalErrorsConsumer;
+    myErrorHandler = errorHandler;
 
     VcsLogProgress progress = new VcsLogProgress(this);
 
     if (VcsLogCachesInvalidator.getInstance().isValid()) {
       myStorage = createStorage();
       if (VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
-        myIndex = new VcsLogPersistentIndex(myProject, myStorage, progress, logProviders, myFatalErrorsConsumer, this);
+        myIndex = new VcsLogPersistentIndex(myProject, myStorage, progress, logProviders, myErrorHandler, this);
       }
       else {
         LOG.info("Vcs log index is turned off for project " + myProject.getName());
@@ -102,8 +104,8 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
       // so use memory storage (probably leading to out of memory at some point) + no index
 
       LOG.error("Could not delete caches at " + PersistentUtil.LOG_CACHE);
-      myFatalErrorsConsumer.displayFatalErrorMessage(VcsLogBundle.message("vcs.log.fatal.error.message", PersistentUtil.LOG_CACHE,
-                                                                          ApplicationNamesInfo.getInstance().getFullProductName()));
+      myErrorHandler.displayMessage(VcsLogBundle.message("vcs.log.fatal.error.message", PersistentUtil.LOG_CACHE,
+                                                         ApplicationNamesInfo.getInstance().getFullProductName()));
       myStorage = new InMemoryStorage();
       myIndex = new EmptyIndex();
     }
@@ -118,6 +120,9 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
     myUserResolver = new MyVcsLogUserResolver();
+
+    myIndexDiagnosticRunner = new IndexDiagnosticRunner(myIndex, myStorage, myLogProviders.keySet(),
+                                                        this::getDataPack, myDetailsGetter, myErrorHandler, this);
 
     Disposer.register(parentDisposable, this);
     Disposer.register(this, () -> {
@@ -134,7 +139,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   private VcsLogStorage createStorage() {
     VcsLogStorage vcsLogStorage;
     try {
-      vcsLogStorage = new VcsLogStorageImpl(myProject, myLogProviders, myFatalErrorsConsumer, this);
+      vcsLogStorage = new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);
     }
     catch (IOException e) {
       vcsLogStorage = new InMemoryStorage();
@@ -232,6 +237,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
         listener.onDataPackChange(dataPack);
       }
     }, o -> myDisposableFlag.isDisposed());
+    myIndexDiagnosticRunner.onDataPackChange();
   }
 
   public void addDataPackChangeListener(@NotNull final DataPackChangeListener listener) {

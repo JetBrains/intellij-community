@@ -79,7 +79,10 @@ public class DataManagerImpl extends DataManager {
     try {
       depth[0]++;
       Object data = provider.getData(dataId);
-      if (data != null) return DataValidators.validOrNull(data, dataId, provider);
+      if (data != null) {
+        return data == CustomizedDataContext.EXPLICIT_NULL ? data :
+               DataValidators.validOrNull(data, dataId, provider);
+      }
       return ruleType == null ? null : getDataFromRulesInner(dataId, ruleType, alreadyComputedIds, provider);
     }
     finally {
@@ -107,8 +110,13 @@ public class DataManagerImpl extends DataManager {
       depth[0]++;
       Set<String> ids = alreadyComputedIds == null ? new HashSet<>() : alreadyComputedIds;
       ids.add(dataId);
-      Object data = rule.getData(id -> getDataFromProviderInner(id, ruleType, ids, provider));
-      return data == null ? null : DataValidators.validOrNull(data, dataId, rule);
+      Object data = rule.getData(id -> {
+        Object o = getDataFromProviderInner(id, ruleType, ids, provider);
+        return o == CustomizedDataContext.EXPLICIT_NULL ? null : o;
+      });
+      return data == null ? null :
+             data == CustomizedDataContext.EXPLICIT_NULL ? data :
+             DataValidators.validOrNull(data, dataId, rule);
     }
     finally {
       depth[0]--;
@@ -143,11 +151,12 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public @Nullable Object getCustomizedData(@NotNull String dataId, @NotNull DataContext dataContext, @NotNull DataProvider provider) {
-    return getDataFromProviderAndRules(dataId, GetDataRuleType.CONTEXT, id -> {
-      Object result = getDataFromProviderAndRules(id, GetDataRuleType.PROVIDER, provider);
-      if (result != null) return result;
+    Object data = getDataFromProviderAndRules(dataId, GetDataRuleType.CONTEXT, id -> {
+      Object o = getDataFromProviderAndRules(id, GetDataRuleType.PROVIDER, provider);
+      if (o != null) return o;
       return dataContext.getData(id);
     });
+    return data == CustomizedDataContext.EXPLICIT_NULL ? null : data;
   }
 
   private static @Nullable GetDataRule getDataRule(@NotNull String dataId, @NotNull GetDataRuleType ruleType) {
@@ -200,7 +209,10 @@ public class DataManagerImpl extends DataManager {
     for (GetDataRule rule : rules) {
       try {
         Object data = rule.getData(provider);
-        if (data != null) return DataValidators.validOrNull(data, dataId, rule);
+        if (data != null) {
+          return data == CustomizedDataContext.EXPLICIT_NULL ? data :
+                 DataValidators.validOrNull(data, dataId, rule);
+        }
       }
       catch (IndexNotReadyException ignore) {
       }
@@ -215,7 +227,8 @@ public class DataManagerImpl extends DataManager {
       try {
         Object data = provider.getData(dataId);
         if (data != null) {
-          return DataValidators.validOrNull(data, dataId, provider);
+          return data == CustomizedDataContext.EXPLICIT_NULL ? data :
+                 DataValidators.validOrNull(data, dataId, provider);
         }
       }
       catch (IndexNotReadyException ignore) {

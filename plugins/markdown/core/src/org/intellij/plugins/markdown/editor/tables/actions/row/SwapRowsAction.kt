@@ -4,6 +4,7 @@ package org.intellij.plugins.markdown.editor.tables.actions.row
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -35,8 +36,8 @@ internal abstract class SwapRowsAction(private val swapWithAbove: Boolean): RowB
     return row.siblings(forward = !swapWithAbove, withSelf = false).filterIsInstance<MarkdownTableRow>().find { !it.isHeaderRow }
   }
 
-  override fun findRow(file: PsiFile, editor: Editor): PsiElement? {
-    return super.findRow(file, editor).takeUnless { (it as? MarkdownTableRow)?.isHeaderRow == true }
+  override fun findRow(file: PsiFile, document: Document, offset: Int): PsiElement? {
+    return super.findRow(file, document, offset).takeUnless { (it as? MarkdownTableRow)?.isHeaderRow == true }
   }
 
   class SwapWithAbove: SwapRowsAction(swapWithAbove = true)

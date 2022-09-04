@@ -231,12 +231,12 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 }
 
 internal class FilteringBranchesTree(
-  project: Project,
+  val project: Project,
   val component: BranchesTreeComponent,
   private val uiController: BranchesDashboardController,
   rootNode: BranchTreeNode = BranchTreeNode(BranchNodeDescriptor(NodeType.ROOT)),
   disposable: Disposable
-) : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(project, component, rootNode) {
+) : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(component, rootNode) {
 
   private val expandedPaths = HashSet<TreePath>()
 

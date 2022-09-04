@@ -2,7 +2,6 @@
 package com.intellij.java.ift.lesson.essential
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature
-import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
 import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
@@ -15,11 +14,9 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.java.ift.JavaProjectUtil
-import com.intellij.java.ift.lesson.run.highlightRunGutters
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
@@ -48,6 +45,7 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.tree.TreeVisitor
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.XDebuggerManager
@@ -104,6 +102,9 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
   private var hideToolStripesPreference = false
   private var showNavigationBarPreference = true
 
+  @NlsSafe
+  private var jdkAtStart: String = "undefined"
+
   val sample: LessonSample = parseLessonSample("""
     import java.util.Arrays;
     import java.util.List;
@@ -126,6 +127,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareRuntimeTask {
+      jdkAtStart = getCurrentJdkVersionString(project)
       useDelay = true
       invokeActionForFocusContext(getActionById("Stop"))
       configurations().forEach { runManager().removeConfiguration(it) }
@@ -245,10 +247,8 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       })
     }
 
-    val currentJdk = JavaProjectUtil.getEffectiveJdk(project)
-
     @Suppress("HardCodedStringLiteral")
-    val currentJdkVersion: @NlsSafe String = currentJdk?.let { JavaSdk.getInstance().getVersionString(it) } ?: "none"
+    val currentJdkVersion: @NlsSafe String = getCurrentJdkVersionString(project)
 
     val module = ModuleManager.getInstance(project).modules.first()
 
@@ -258,13 +258,14 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     primaryLanguage.onboardingFeedbackData = object : OnboardingFeedbackData("IDEA Onboarding Tour Feedback", lessonEndInfo) {
       override val feedbackReportId = "idea_onboarding_tour"
 
-      override val additionalFeedbackFormatVersion: Int = 0
+      override val additionalFeedbackFormatVersion: Int = 1
 
       private val jdkVersions: List<String>? by lazy {
         if (jdkVersionsFuture.isDone) jdkVersionsFuture.get() else null
       }
 
       override val addAdditionalSystemData: JsonObjectBuilder.() -> Unit = {
+        put("jdk_at_start", jdkAtStart)
         put("current_jdk", currentJdkVersion)
         put("language_level", currentLanguageLevel)
         put("found_jdk", buildJsonArray {
@@ -278,6 +279,9 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
         row(JavaLessonsBundle.message("java.onboarding.feedback.system.found.jdks")) {
           val versions: @NlsSafe String = jdkVersions?.joinToString("\n") ?: "none"
           cell(MultiLineLabel(versions))
+        }
+        row(JavaLessonsBundle.message("java.onboarding.feedback.system.jdk.at.start")) {
+          label(jdkAtStart)
         }
         row(JavaLessonsBundle.message("java.onboarding.feedback.system.current.jdk")) {
           label(currentJdkVersion)
@@ -293,6 +297,9 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     }
   }
 
+  private fun getCurrentJdkVersionString(project: Project): String {
+    return JavaProjectUtil.getEffectiveJdk(project)?.let { JavaSdk.getInstance().getVersionString(it) } ?: "none"
+  }
 
   private fun getCallBackActionId(@Suppress("SameParameterValue") actionId: String): Int {
     val action = getActionById(actionId)
@@ -376,39 +383,25 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
   }
 
   private fun LessonContext.runTasks() {
-    task {
-      highlightRunGutters(2, highlightInside = true, usePulsation = true)
-    }
-
-    val runItem = ExecutionBundle.message("default.runner.start.action.text").dropMnemonic() + " '$demoConfigurationName.main()'"
-
-    task {
-      text(JavaLessonsBundle.message("java.onboarding.context.menu"))
-      triggerAndFullHighlight().component { ui: ActionMenuItem ->
-        ui.text == runItem
-      }
-      restoreIfModified(sample)
-    }
-
-    task {
-      text(JavaLessonsBundle.message("java.onboarding.run.sample", strong(runItem), action("RunClass")))
-      checkToolWindowState("Run", true)
-      timerCheck {
-        configurations().isNotEmpty()
-      }
-      restoreIfModified(sample)
-      rehighlightPreviousUi = true
-    }
-
     highlightRunToolbar()
 
     task {
-      text(JavaLessonsBundle.message("java.onboarding.temporary.configuration.description",
-                                     icon(AllIcons.Actions.Execute),
-                                     icon(AllIcons.Actions.StartDebugger),
-                                     icon(AllIcons.Actions.Profile),
-                                     icon(AllIcons.General.RunWithCoverage)))
-      proceedLink()
+      val runOptionsText = if (PlatformUtils.isIdeaUltimate()) {
+        JavaLessonsBundle.message("java.onboarding.run.options.ultimate",
+                                  icon(AllIcons.Actions.Execute),
+                                  icon(AllIcons.Actions.StartDebugger),
+                                  icon(AllIcons.Actions.Profile),
+                                  icon(AllIcons.General.RunWithCoverage))
+      }
+      else {
+        JavaLessonsBundle.message("java.onboarding.run.options.community",
+                                  icon(AllIcons.Actions.Execute),
+                                  icon(AllIcons.Actions.StartDebugger),
+                                  icon(AllIcons.General.RunWithCoverage))
+      }
+      text(JavaLessonsBundle.message("java.onboarding.temporary.configuration.description") + " $runOptionsText")
+      text(JavaLessonsBundle.message("java.onboarding.run.sample", icon(AllIcons.Actions.Execute), action("Run")))
+      checkToolWindowState("Run", true)
       restoreIfModified(sample)
     }
   }
@@ -650,9 +643,12 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       restoreIfModifiedOrMoved()
     }
 
-    actionTask("EditorToggleCase") {
+    task {
+      text(JavaLessonsBundle.message("java.onboarding.apply.action", strong(toggleCase), LessonUtil.rawEnter()))
+      stateCheck {
+        editor.document.text.contains("\"average")
+      }
       restoreByUi(delayMillis = defaultRestoreDelay)
-      JavaLessonsBundle.message("java.onboarding.apply.action", strong(toggleCase), LessonUtil.rawEnter())
     }
 
     text(JavaLessonsBundle.message("java.onboarding.case.changed"))

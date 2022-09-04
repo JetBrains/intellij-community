@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.editor.tables.actions.row
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -19,7 +20,8 @@ internal class RemoveCurrentRowAction: RowBasedTableAction(considerSeparatorRow 
     }
   }
 
-  override fun findRow(file: PsiFile, editor: Editor): PsiElement? {
-    return super.findRow(file, editor)?.takeUnless { (it as? MarkdownTableRow)?.isHeaderRow == true }
+  override fun findRow(file: PsiFile, document: Document, offset: Int): PsiElement? {
+    val row = super.findRow(file, document, offset)
+    return row?.takeUnless { (it as? MarkdownTableRow)?.isHeaderRow == true }
   }
 }

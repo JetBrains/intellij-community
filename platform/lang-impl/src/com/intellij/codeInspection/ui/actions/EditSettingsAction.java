@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,11 +36,6 @@ public class EditSettingsAction extends InspectionViewActionBase {
                                        ? InspectionsBundle.message("inspection.action.edit.settings")
                                        : InspectionsBundle.message("inspection.tool.window.dialog.no.options", getSingleTool(view).getDisplayName()));
     return enabled;
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
   }
 
   @Override

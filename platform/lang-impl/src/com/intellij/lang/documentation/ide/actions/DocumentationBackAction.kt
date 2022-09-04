@@ -2,10 +2,13 @@
 package com.intellij.lang.documentation.ide.actions
 
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
 internal class DocumentationBackAction : AnAction(), ActionToIgnore {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = documentationHistory(e.dataContext)?.canBackward() == true
