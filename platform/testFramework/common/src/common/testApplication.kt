@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyBean.Companion.addKeysFromPlugins
@@ -107,14 +108,19 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   val loadedModuleFuture = PluginManagerCore.getInitPluginFuture()
 
   val rwLockHolder = RwLockHolder()
+  val awtBusyThread = AppScheduledExecutorService.getPeriodicTasksThread()
   EdtInvocationManager.invokeAndWaitIfNeeded {
     // Instantiate `AppDelayQueue` which starts "periodic tasks thread" which we'll mark busy to prevent this EDT from dying.
     // That thread was chosen because we know for sure it's running. Needed for EDT not to exit suddenly
-    AWTAutoShutdown.getInstance().notifyThreadBusy(AppScheduledExecutorService.getPeriodicTasksThread())
+    AWTAutoShutdown.getInstance().notifyThreadBusy(awtBusyThread)
     rwLockHolder.initialize(Thread.currentThread())
   }
 
   val app = ApplicationImpl(isHeadless, rwLockHolder)
+
+  Disposer.register(app) {
+    AWTAutoShutdown.getInstance().notifyThreadFree(awtBusyThread)
+  }
 
   if (SystemProperties.getBooleanProperty("tests.assertOnMissedCache", true)) {
     RecursionManager.assertOnMissedCache(app)
