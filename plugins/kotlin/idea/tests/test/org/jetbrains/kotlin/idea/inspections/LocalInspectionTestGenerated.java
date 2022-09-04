@@ -9840,11 +9840,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantUnitExpression/redundant1.kt");
         }
 
-        @TestMetadata("redundant4.kt")
-        public void testRedundant4() throws Exception {
-            runTest("testData/inspectionsLocal/redundantUnitExpression/redundant4.kt");
-        }
-
         @TestMetadata("redundant5.kt")
         public void testRedundant5() throws Exception {
             runTest("testData/inspectionsLocal/redundantUnitExpression/redundant5.kt");
@@ -9863,6 +9858,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("returnAsNullableUnit.kt")
         public void testReturnAsNullableUnit() throws Exception {
             runTest("testData/inspectionsLocal/redundantUnitExpression/returnAsNullableUnit.kt");
+        }
+
+        @TestMetadata("returnValueOfElse.kt")
+        public void testReturnValueOfElse() throws Exception {
+            runTest("testData/inspectionsLocal/redundantUnitExpression/returnValueOfElse.kt");
+        }
+
+        @TestMetadata("returnValueOfIf.kt")
+        public void testReturnValueOfIf() throws Exception {
+            runTest("testData/inspectionsLocal/redundantUnitExpression/returnValueOfIf.kt");
+        }
+
+        @TestMetadata("returnValueOfWhen.kt")
+        public void testReturnValueOfWhen() throws Exception {
+            runTest("testData/inspectionsLocal/redundantUnitExpression/returnValueOfWhen.kt");
         }
 
         @TestMetadata("unitReturnType.kt")
