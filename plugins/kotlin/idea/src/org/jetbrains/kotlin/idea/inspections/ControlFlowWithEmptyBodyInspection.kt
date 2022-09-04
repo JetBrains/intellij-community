@@ -24,17 +24,17 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
             val thenBranch = expression.then
             val elseBranch = expression.`else`
 
-            val thenEmpty = thenBranch.isEmptyBodyOrNull()
-            val elseEmpty = elseBranch.isEmptyBodyOrNull()
+            val thenIsEmpty = thenBranch.isEmptyBodyOrNull()
+            val elseIsEmpty = elseBranch.isEmptyBodyOrNull()
 
             val isUsedAsExpression by lazy { expression.isUsedAsExpression(expression.analyze(BodyResolveMode.PARTIAL_WITH_CFA)) }
 
             expression.ifKeyword
-                .takeIf { thenEmpty && (elseEmpty || thenBranch.hasNoComments()) && !isUsedAsExpression }
+                .takeIf { thenIsEmpty && (elseIsEmpty || thenBranch.hasNoComments()) && !isUsedAsExpression }
                 ?.let { holder.registerProblem(expression, it) }
 
             expression.elseKeyword
-                ?.takeIf { elseEmpty && (thenEmpty || elseBranch.hasNoComments()) && !isUsedAsExpression }
+                ?.takeIf { elseIsEmpty && (thenIsEmpty || elseBranch.hasNoComments()) && !isUsedAsExpression }
                 ?.let { holder.registerProblem(expression, it) }
         }
 
@@ -52,7 +52,7 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
         override fun visitWhileExpression(expression: KtWhileExpression) {
             val keyword = expression.allChildren.firstOrNull { it.node.elementType == KtTokens.WHILE_KEYWORD } ?: return
             val body = expression.body
-            if (body?.hasComments() != true && body.isEmptyBodyOrNull()) {
+            if (body.hasNoComments() && body.isEmptyBodyOrNull()) {
                 holder.registerProblem(expression, keyword)
             }
         }
@@ -60,7 +60,7 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
         override fun visitDoWhileExpression(expression: KtDoWhileExpression) {
             val keyword = expression.allChildren.firstOrNull { it.node.elementType == KtTokens.DO_KEYWORD } ?: return
             val body = expression.body
-            if (body?.hasComments() != true && body.isEmptyBodyOrNull()) {
+            if (body.hasNoComments() && body.isEmptyBodyOrNull()) {
                 holder.registerProblem(expression, keyword)
             }
         }
