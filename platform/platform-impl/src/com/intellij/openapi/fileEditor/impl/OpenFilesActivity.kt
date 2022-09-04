@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
 
 internal suspend fun restoreOpenedFiles(fileEditorManager: FileEditorManagerImpl, editorSplitters: EditorsSplitters, project: Project) {
   val hasOpenFiles = withContext(ModalityState.any().asContextElement()) {
-    editorSplitters.restoreEditors()
+    editorSplitters.restoreEditors(requestFocus = true)
 
     withContext(Dispatchers.EDT) {
       fileEditorManager.initDockableContentFactory()
