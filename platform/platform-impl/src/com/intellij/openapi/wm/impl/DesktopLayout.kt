@@ -58,6 +58,7 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
   }
 
   fun getInfo(id: String) = idToInfo.get(id)
+  fun getInfos() = idToInfo.toMap()
 
   internal fun addInfo(id: String, info: WindowInfoImpl) {
     val old = idToInfo.put(id, info)

@@ -151,6 +151,11 @@ abstract class ProductProperties {
   var versionCheckerConfig: Map<String, String>? = null
 
   /**
+   * Strings which are forbidden as a part of resulting class file path
+   */
+  var forbiddenClassFileSubPaths: List<String> = emptyList()
+
+  /**
    * Paths to properties files the content of which should be appended to idea.properties file
    */
   var additionalIDEPropertiesFilePaths: List<Path> = emptyList()

@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.nj2k.postProcessing
 
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.suggested.range
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
-import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.idea.quickfix.QuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.asKotlinIntentionActionsFactory
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade

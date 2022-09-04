@@ -461,7 +461,7 @@ class DistributionJARsBuilder {
           val relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
           val result = injectAppInfo(moduleOutDir.resolve(relativePath), context.applicationInfo.appInfoXml)
           moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
-        null
+          null
         }
       ))
 Android Studio: do not patch ApplicationNamesInfo yet */
@@ -470,7 +470,8 @@ Android Studio: do not patch ApplicationNamesInfo yet */
         scramble(context)
       }
 
-      context.bootClassPathJarNames = generateClasspath(context.paths.distAllDir, context.productProperties.productLayout.mainJarName, antTargetFile)
+      context.bootClassPathJarNames = generateClasspath(context.paths.distAllDir, context.productProperties.productLayout.mainJarName,
+                                                        antTargetFile)
       result
     }
     val entries = ForkJoinTask.invokeAll(listOfNotNull(
@@ -668,37 +669,37 @@ Android Studio: do not patch ApplicationNamesInfo yet */
         SUPPORTED_DISTRIBUTIONS
       }
 
-       ForkJoinTask.invokeAll(platforms.mapNotNull { (osFamily, arch) ->
-          if (!context.shouldBuildDistributionForOS(osFamily.osId)) {
-            return@mapNotNull null
-          }
+      ForkJoinTask.invokeAll(platforms.mapNotNull { (osFamily, arch) ->
+        if (!context.shouldBuildDistributionForOS(osFamily.osId)) {
+          return@mapNotNull null
+        }
 
-          val osSpecificPlugins = pluginLayouts.filter { satisfiesBundlingRequirements(it, osFamily, arch, context) }
-          if (osSpecificPlugins.isEmpty()) {
-            return@mapNotNull null
-          }
+        val osSpecificPlugins = pluginLayouts.filter { satisfiesBundlingRequirements(it, osFamily, arch, context) }
+        if (osSpecificPlugins.isEmpty()) {
+          return@mapNotNull null
+        }
 
-          val outDir = if (isUpdateFromSources) {
-            context.paths.distAllDir.resolve("plugins")
-          }
-          else {
-            getOsAndArchSpecificDistDirectory(osFamily, arch, context).resolve("plugins")
-          }
+        val outDir = if (isUpdateFromSources) {
+          context.paths.distAllDir.resolve("plugins")
+        }
+        else {
+          getOsAndArchSpecificDistDirectory(osFamily, arch, context).resolve("plugins")
+        }
 
-          createTask(
-            spanBuilder("build bundled plugins")
-              .setAttribute("os", osFamily.osName)
-              .setAttribute("arch", arch.name)
-              .setAttribute("count", osSpecificPlugins.size.toLong())
-              .setAttribute("outDir", outDir.toString())
-          ) {
-            buildPlugins(moduleOutputPatcher = ModuleOutputPatcher(),
-                         plugins = osSpecificPlugins, targetDirectory = outDir,
-                         state = state,
-                         context = context,
-                         buildPlatformTask = buildPlatformTask)
-          }
-        }).flatMap { it.rawResult }
+        createTask(
+          spanBuilder("build bundled plugins")
+            .setAttribute("os", osFamily.osName)
+            .setAttribute("arch", arch.name)
+            .setAttribute("count", osSpecificPlugins.size.toLong())
+            .setAttribute("outDir", outDir.toString())
+        ) {
+          buildPlugins(moduleOutputPatcher = ModuleOutputPatcher(),
+                       plugins = osSpecificPlugins, targetDirectory = outDir,
+                       state = state,
+                       context = context,
+                       buildPlatformTask = buildPlatformTask)
+        }
+      }).flatMap { it.rawResult }
     }
   }
 
@@ -792,15 +793,16 @@ Android Studio: do not patch ApplicationNamesInfo yet */
                               targetDir: Path,
                               moduleOutputPatcher: ModuleOutputPatcher,
                               context: BuildContext): PluginRepositorySpec {
-    val directory = getActualPluginDirectoryName(helpPlugin, context)
+    val directory = helpPlugin.directoryName
     val destFile = targetDir.resolve("$directory.zip")
     spanBuilder("build help plugin").setAttribute("dir", directory).useWithScope {
       buildPlugins(moduleOutputPatcher = moduleOutputPatcher,
                    plugins = listOf(helpPlugin),
-                   targetDirectory = pluginsToPublishDir,
+                   targetDirectory = pluginsToPublishDir.resolve(directory),
                    state = state,
                    context = context,
                    buildPlatformTask = null)
+
       zip(targetFile = destFile, dirs = mapOf(pluginsToPublishDir.resolve(directory) to ""), compress = true)
       null
     }
@@ -1003,7 +1005,7 @@ fun buildLib(moduleOutputPatcher: ModuleOutputPatcher, platform: PlatformLayout,
   val scrambleTool = context.proprietaryBuildTools.scrambleTool ?: return libDirMappings
   val libDir = context.paths.distAllDir.resolve("lib")
   for (forbiddenJarName in scrambleTool.getNamesOfJarsRequiredToBeScrambled()) {
-    check (!Files.exists(libDir.resolve(forbiddenJarName))) {
+    check(!Files.exists(libDir.resolve(forbiddenJarName))) {
       "The following JAR cannot be included into the product 'lib' directory, it need to be scrambled with the main jar: $forbiddenJarName"
     }
   }

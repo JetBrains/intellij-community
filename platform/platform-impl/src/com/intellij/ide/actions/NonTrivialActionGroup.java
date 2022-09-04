@@ -22,7 +22,7 @@ public class NonTrivialActionGroup extends DefaultActionGroup implements DumbAwa
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
+  public final @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
   }
 

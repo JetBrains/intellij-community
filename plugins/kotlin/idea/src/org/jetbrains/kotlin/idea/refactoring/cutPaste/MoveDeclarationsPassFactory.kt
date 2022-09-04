@@ -12,7 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
-import org.jetbrains.kotlin.idea.core.util.range
+import com.intellij.refactoring.suggested.range
 
 class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
 

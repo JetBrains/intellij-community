@@ -5,8 +5,8 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
+import javax.swing.JScrollPane
 import javax.swing.border.Border
 
 fun getBordersForOptions(optionsPanel: JComponent): Border {
@@ -15,6 +15,6 @@ fun getBordersForOptions(optionsPanel: JComponent): Border {
 }
 
 fun addScrollPaneIfNecessary(optionsPanel: JComponent): JComponent {
-  return if (UIUtil.hasScrollPane(optionsPanel)) optionsPanel
+  return if (optionsPanel is JScrollPane) optionsPanel
   else ScrollPaneFactory.createScrollPane(optionsPanel, SideBorder.NONE)
 }

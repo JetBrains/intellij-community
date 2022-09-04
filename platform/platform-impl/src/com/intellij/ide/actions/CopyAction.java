@@ -58,11 +58,10 @@ public class CopyAction extends AnAction implements DumbAware, LightEditCompatib
       consumer.accept(provider);
     }
     else {
-      Utils.getOrCreateUpdateSession(event).compute(
-        provider.getClass().getName() + "#update", updateThread, () -> {
-          consumer.accept(provider);
-          return true;
-        });
+      Utils.getOrCreateUpdateSession(event).compute(provider, "update", updateThread, () -> {
+        consumer.accept(provider);
+        return null;
+      });
     }
   }
 }

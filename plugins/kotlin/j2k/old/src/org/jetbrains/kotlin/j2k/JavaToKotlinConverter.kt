@@ -12,9 +12,9 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.DummyHolder
+import com.intellij.refactoring.suggested.range
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.j2k.ast.Element
 import org.jetbrains.kotlin.j2k.usageProcessing.ExternalCodeProcessor

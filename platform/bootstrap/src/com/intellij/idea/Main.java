@@ -63,6 +63,7 @@ public final class Main {
   private static boolean isCommandLine;
   private static boolean hasGraphics = true;
   private static boolean isLightEdit;
+  private static boolean isRemoteDevHost;
 
   private Main() { }
 
@@ -105,8 +106,7 @@ public final class Main {
     }
 
     startupTimings.put("classloader init", System.nanoTime());
-    PathClassLoader newClassLoader = BootstrapClassLoaderUtil
-      .initClassLoader(args.length > 0 && (CWM_HOST_COMMAND.equals(args[0]) || CWM_HOST_NO_LOBBY_COMMAND.equals(args[0])));
+    PathClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader(isRemoteDevHost);
     Thread.currentThread().setContextClassLoader(newClassLoader);
 
     startupTimings.put("MainRunner search", System.nanoTime());
@@ -160,6 +160,7 @@ public final class Main {
   public static void setFlags(String @NotNull [] args) {
     isHeadless = isHeadless(args);
     isCommandLine = isHeadless || (args.length > 0 && GUI_COMMANDS.contains(args[0]));
+    isRemoteDevHost = args.length > 0 && (CWM_HOST_COMMAND.equals(args[0]) || CWM_HOST_NO_LOBBY_COMMAND.equals(args[0]));
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
@@ -264,8 +265,7 @@ public final class Main {
     stream.println(title);
     stream.println(message);
 
-    boolean headless = !hasGraphics || isCommandLine() || GraphicsEnvironment.isHeadless();
-    if (headless) return;
+    if (!hasGraphics || isCommandLine() || GraphicsEnvironment.isHeadless() || isRemoteDevHost) return;
 
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());

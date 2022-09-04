@@ -3,6 +3,7 @@ package com.intellij.toolWindow;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
@@ -24,7 +25,7 @@ public abstract class ToolWindowManagerTestCase extends LightPlatformCodeInsight
     Project project = getProject();
     manager = new ToolWindowManagerImpl(project) {
       @Override
-      protected void fireStateChanged() {
+      protected void fireStateChanged(ToolWindowManagerListener.ToolWindowManagerEventType changeType) {
       }
     };
     ServiceContainerUtil.replaceService(project, ToolWindowManager.class, manager, getTestRootDisposable());

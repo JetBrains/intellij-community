@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen.projectActions;
 
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem;
@@ -21,10 +22,15 @@ public class RevealProjectDirAction extends DumbAwareAction implements LightEdit
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    RecentProjectItem item = (RecentProjectItem) RecentProjectsWelcomeScreenActionBase.getSelectedItem(e);
+    RecentProjectItem item = (RecentProjectItem)RecentProjectsWelcomeScreenActionBase.getSelectedItem(e);
     assert item != null;
     String path = item.getProjectPath();
     RevealFileAction.selectDirectory(new File(path));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

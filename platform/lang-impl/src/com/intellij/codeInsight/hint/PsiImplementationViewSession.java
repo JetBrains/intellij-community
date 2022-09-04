@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -10,9 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -224,21 +221,7 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
 
   @Nullable
   public static Editor getEditor(@NotNull DataContext dataContext) {
-    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-
-    if (editor == null) {
-      final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
-      if (file != null) {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile != null) {
-          final FileEditor fileEditor = FileEditorManager.getInstance(file.getProject()).getSelectedEditor(virtualFile);
-          if (fileEditor instanceof TextEditor) {
-            editor = ((TextEditor)fileEditor).getEditor();
-          }
-        }
-      }
-    }
-    return editor;
+    return CommonDataKeys.EDITOR.getData(dataContext);
   }
 
   @Nullable

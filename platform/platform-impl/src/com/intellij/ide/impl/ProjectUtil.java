@@ -3,6 +3,7 @@ package com.intellij.ide.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.configurationStore.StoreUtil;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
@@ -470,7 +471,7 @@ public final class ProjectUtil extends ProjectUtilCore {
   }
 
   public static boolean isRemotePath(@NotNull String path) {
-    return path.contains("://") || path.contains("\\\\");
+    return (path.contains("://") || path.contains("\\\\")) && !WslPath.isWslUncPath(path);
   }
 
   public static @Nullable Project findProject(@NotNull Path file) {

@@ -33,8 +33,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 class InjectedSelfElementInfo extends SmartPointerElementInfo {
   @NotNull
@@ -134,19 +134,19 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = documentManager.getDocument(hostFile);
+    InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(getProject());
     if (document != null && documentManager.isUncommited(document)) {
-      for (DocumentWindow documentWindow : InjectedLanguageManager.getInstance(getProject()).getCachedInjectedDocumentsInRange(hostFile, rangeInHostFile)) {
-        PsiFile injected = documentManager.getPsiFile(documentWindow);
-        if (injected != null) {
-          visitor.visit(injected, Collections.emptyList());
-        }
+      List<DocumentWindow> documents = injectionManager.getCachedInjectedDocumentsInRange(hostFile, rangeInHostFile);
+      Set<PsiFile> injectedFiles = ContainerUtil.map2SetNotNull(documents, d -> documentManager.getPsiFile(d));
+      for (PsiFile injectedFile : injectedFiles) {
+        visitor.visit(injectedFile, ContainerUtil.emptyList());
       }
     }
     else {
-      List<Pair<PsiElement,TextRange>> injected = InjectedLanguageManager.getInstance(getProject()).getInjectedPsiFiles(hostContext);
+      List<Pair<PsiElement, TextRange>> injected = injectionManager.getInjectedPsiFiles(hostContext);
       if (injected != null) {
-        for (Pair<PsiElement, TextRange> pair : injected) {
-          PsiFile injectedFile = pair.first.getContainingFile();
+        Set<PsiFile> injectedFiles = ContainerUtil.map2SetNotNull(injected, pair -> pair.first.getContainingFile());
+        for (PsiFile injectedFile : injectedFiles) {
           visitor.visit(injectedFile, ContainerUtil.emptyList());
         }
       }

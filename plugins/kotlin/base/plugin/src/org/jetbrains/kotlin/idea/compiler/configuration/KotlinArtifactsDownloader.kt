@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_JPS_
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.OLD_KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.LazyZipUnpacker
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactDownloader.DownloadContext
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -139,17 +140,38 @@ object KotlinArtifactsDownloader {
         check(isUnitTestMode() || !EventQueue.isDispatchThread()) {
             "Don't call downloadMavenArtifact on UI thread"
         }
+
+        val excludedDeps =
+            if (artifactId == KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID && IdeKotlinVersion.get(version) < IdeKotlinVersion.get("1.7.20")) {
+                listOf( // Not existing deps of kotlin-annotation-processing KTI-878
+                    "$KOTLIN_MAVEN_GROUP_ID:util",
+                    "$KOTLIN_MAVEN_GROUP_ID:cli",
+                    "$KOTLIN_MAVEN_GROUP_ID:backend",
+                    "$KOTLIN_MAVEN_GROUP_ID:frontend",
+                    "$KOTLIN_MAVEN_GROUP_ID:frontend.java",
+                    "$KOTLIN_MAVEN_GROUP_ID:plugin-api",
+                    "$KOTLIN_MAVEN_GROUP_ID:backend.jvm.entrypoint",
+                )
+            } else {
+                emptyList()
+            }
+
         val prop = RepositoryLibraryProperties(
-            "$KOTLIN_MAVEN_GROUP_ID:$artifactId:$version",
-            if (artifactIsPom) ArtifactKind.POM.extension else ArtifactKind.ARTIFACT.extension,
-            /* includeTransitiveDependencies = */ true,
+            JpsMavenRepositoryLibraryDescriptor(
+                KOTLIN_MAVEN_GROUP_ID,
+                artifactId,
+                version,
+                if (artifactIsPom) ArtifactKind.POM.extension else ArtifactKind.ARTIFACT.extension,
+                true,
+                excludedDeps,
+            )
         )
 
         val repos = getMavenRepos(project) + additionalMavenRepos
-        val downloadedArtifacts =
-            JarRepositoryManager.loadDependenciesSync(project, prop, false, false, null, repos, indicator)
 
-        return downloadedArtifacts.map { File(it.file.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project)).presentableUrl) }
+        return JarRepositoryManager.loadDependenciesSync(project, prop, false, false, null, repos, indicator)
+            .map { File(it.file.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project)).presentableUrl).canonicalFile }
+            .distinct()
     }
 
     private fun getAllIneOneOldFormatLazyDistUnpacker(version: IdeKotlinVersion) =

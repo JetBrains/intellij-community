@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.addKeyboardAction
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -22,6 +23,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.ui.*
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.render.RenderingHelper
@@ -347,7 +349,7 @@ class RecentProjectFilteringTree(
         get() = RecentProjectsManagerBase.instanceEx
 
       private val projectNameLabel = JLabel()
-      private val projectPathLabel = JLabel().apply {
+      private val projectPathLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("").apply {
         foreground = UIUtil.getInactiveTextColor()
       }
       private val projectIconLabel = JLabel().apply {
@@ -361,12 +363,12 @@ class RecentProjectFilteringTree(
                                ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
                                ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
       }
-      private val projectNamePanel = JBUI.Panels.simplePanel().apply {
+      private val projectNamePanel = JPanel(VerticalLayout(4)).apply {
         isOpaque = false
         border = JBUI.Borders.empty(4)
 
-        add(projectNameLabel, BorderLayout.NORTH)
-        add(projectPathLabel, BorderLayout.SOUTH)
+        add(projectNameLabel)
+        add(projectPathLabel)
       }
 
       init {
@@ -456,15 +458,15 @@ class RecentProjectFilteringTree(
       private val projectNameLabel = JLabel().apply {
         foreground = UIUtil.getInactiveTextColor()
       }
-      private val projectPathLabel = JLabel().apply {
+      private val projectPathLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("").apply {
         foreground = UIUtil.getInactiveTextColor()
       }
-      private val projectNamePanel = JBUI.Panels.simplePanel().apply {
+      private val projectNamePanel = JPanel(VerticalLayout(4)).apply {
         isOpaque = false
         border = JBUI.Borders.empty(4)
 
-        add(projectNameLabel, BorderLayout.NORTH)
-        add(projectPathLabel, BorderLayout.SOUTH)
+        add(projectNameLabel)
+        add(projectPathLabel)
       }
       private val projectIconLabel = JLabel().apply {
         border = JBUI.Borders.empty(8, 0, 0, 8)

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -21,6 +22,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SelectedBlockHistoryAction extends DumbAwareAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   private static boolean isEnabled(@Nullable Project project, @Nullable VcsSelection selection) {
     if (project == null || selection == null) return false;
@@ -44,7 +50,7 @@ public class SelectedBlockHistoryAction extends DumbAwareAction {
     final Project project = event.getProject();
     assert project != null;
 
-    final VcsSelection selection = VcsSelectionUtil.getSelection(event);
+    final VcsSelection selection = VcsSelectionUtil.getSelection(this, event);
     assert selection != null;
 
     final VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
@@ -81,7 +87,7 @@ public class SelectedBlockHistoryAction extends DumbAwareAction {
     }
 
     Project project = event.getData(CommonDataKeys.PROJECT);
-    VcsSelection selection = VcsSelectionUtil.getSelection(event);
+    VcsSelection selection = VcsSelectionUtil.getSelection(this, event);
 
     presentation.setEnabled(isEnabled(project, selection));
     if (selection != null) {

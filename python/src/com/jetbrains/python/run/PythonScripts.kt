@@ -227,7 +227,12 @@ fun TargetEnvironmentRequest.ensureProjectAndModuleDirsAreOnTarget(project: Proj
   }
   for(module in modules) {
     ModuleRootManager.getInstance(module).contentRoots.forEach {
-      addPathToVolume(it.toNioPath())
+      try {
+        addPathToVolume(it.toNioPath())
+      }
+      catch (_: UnsupportedOperationException) {
+        // VirtualFile.toNioPath throws UOE if VirtualFile has no associated path which is common case for JupyterRemoteVirtualFile
+      }
     }
   }
   project.basePath?.let { addPathToVolume(Path.of(it)) }

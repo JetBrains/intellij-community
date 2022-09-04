@@ -449,7 +449,7 @@ public final class Utils {
     }
   }
 
-  public static @NotNull String operationName(@NotNull AnAction action, @Nullable String op, @Nullable String place) {
+  public static @NotNull String operationName(@NotNull Object action, @Nullable String op, @Nullable String place) {
     Class<?> c = action.getClass();
     StringBuilder sb = new StringBuilder(200);
     if (StringUtil.isNotEmpty(op)) sb.append("#").append(op);

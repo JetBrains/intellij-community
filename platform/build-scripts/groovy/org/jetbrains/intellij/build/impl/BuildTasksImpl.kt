@@ -146,7 +146,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     checkProductProperties(context)
     val projectStructureMapping = DistributionJARsBuilder(compileModulesForDistribution(context)).buildJARs(context)
     layoutShared(context)
-    checkClassVersion(context.paths.distAllDir, context)
+    checkClassFiles(context.paths.distAllDir, context)
     if (context.productProperties.buildSourcesArchive) {
       buildSourcesArchive(projectStructureMapping, context)
     }
@@ -980,6 +980,7 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
   val dependenciesFile = copyDependenciesFile(context)
   crossPlatformZip(
     macX64DistDir = distDirs.first { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.x64 }.outDir,
+    macArm64DistDir = distDirs.first { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.aarch64 }.outDir,
     linuxX64DistDir = distDirs.first { it.os == OsFamily.LINUX && it.arch == JvmArchitecture.x64 }.outDir,
     winX64DistDir = distDirs.first { it.os == OsFamily.WINDOWS && it.arch == JvmArchitecture.x64 }.outDir,
     targetFile = targetFile,
@@ -995,14 +996,24 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
   checkInArchive(context, targetFile, "")
   context.notifyArtifactBuilt(targetFile)
 
-  checkClassVersion(targetFile, context)
+  checkClassFiles(targetFile, context)
   return targetFile
 }
 
-private fun checkClassVersion( targetFile: Path, context: BuildContext) {
-  val checkerConfig = context.productProperties.versionCheckerConfig ?: return
-  if (!context.options.buildStepsToSkip.contains(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) {
-    ClassVersionChecker.checkVersions(checkerConfig, context.messages, targetFile)
+private fun checkClassFiles(targetFile: Path, context: BuildContext) {
+  val versionCheckerConfig =
+    if (context.options.buildStepsToSkip.contains(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) emptyMap()
+    else context.productProperties.versionCheckerConfig ?: emptyMap()
+
+  val forbiddenSubPaths =
+    if (context.options.validateClassFileSubpaths) context.productProperties.forbiddenClassFileSubPaths
+    else emptyList()
+
+  val classFileCheckRequired =
+    (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty())
+
+  if (classFileCheckRequired) {
+    ClassFileChecker.checkClassFiles(versionCheckerConfig, forbiddenSubPaths, context.messages, targetFile)
   }
 }
 
@@ -1033,6 +1044,7 @@ internal fun getLinuxFrameClass(context: BuildContext): String {
 }
 
 private fun crossPlatformZip(macX64DistDir: Path,
+                             macArm64DistDir: Path,
                              linuxX64DistDir: Path,
                              winX64DistDir: Path,
                              targetFile: Path,
@@ -1117,7 +1129,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
         }
       }
 
-      val commonFilter: (String) -> Boolean = { relPath ->
+      val commonFilter: (String) -> Boolean = { relPath: String ->
         !relPath.startsWith("bin/fsnotifier") &&
         !relPath.startsWith("bin/repair") &&
         !relPath.startsWith("bin/restart") &&
@@ -1134,6 +1146,11 @@ private fun crossPlatformZip(macX64DistDir: Path,
       out.dir(macX64DistDir, "", fileFilter = { _, relPath ->
         commonFilter.invoke(relPath) &&
         filterFileIfAlreadyInZip(relPath, macX64DistDir.resolve(relPath), zipFiles)
+      }, entryCustomizer = entryCustomizer)
+
+      out.dir(macArm64DistDir, "", fileFilter = { _, relPath ->
+        commonFilter.invoke(relPath) &&
+        filterFileIfAlreadyInZip(relPath, macArm64DistDir.resolve(relPath), zipFiles)
       }, entryCustomizer = entryCustomizer)
 
       out.dir(linuxX64DistDir, "", fileFilter = { _, relPath ->

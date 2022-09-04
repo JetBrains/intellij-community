@@ -8,11 +8,15 @@ import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradle.configuration.mpp.DistinctIdKotlinDependenciesPreprocessor
 import org.jetbrains.kotlin.idea.gradle.configuration.mpp.KotlinDependenciesPreprocessor
 import org.jetbrains.kotlin.idea.gradle.configuration.mpp.plus
+import org.jetbrains.kotlin.idea.gradle.configuration.utils.createSourceSetVisibilityGraph
+import org.jetbrains.kotlin.idea.gradle.configuration.utils.transitiveClosure
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.CompilationWithDependencies
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.modifyDependenciesOnMppModules
 import org.jetbrains.kotlin.idea.gradleJava.configuration.getMppModel
 import org.jetbrains.kotlin.idea.gradleJava.configuration.klib.KotlinNativeLibrariesDependencySubstitutor
-import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
+import org.jetbrains.kotlin.idea.gradleTooling.getCompilations
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
@@ -35,8 +39,10 @@ data class KotlinMppPopulateModuleDependenciesContext(
     val dependenciesPreprocessor: KotlinDependenciesPreprocessor,
     val sourceSetMap: Map<ModuleId, IntelliJPair<DataNode<GradleSourceSetData>, ExternalSourceSet>>,
     val artifactsMap: Map<ArtifactPath, ModuleId>,
-    val processedModuleIds: MutableSet<ModuleId> = mutableSetOf()
-)
+    val processedModuleIds: MutableSet<ModuleId> = mutableSetOf(),
+) {
+    val sourceSetVisibilityGraph = createSourceSetVisibilityGraph(mppModel).transitiveClosure
+}
 
 fun createKotlinMppPopulateModuleDependenciesContext(
     gradleModule: IdeaModule,
@@ -81,16 +87,4 @@ internal fun KotlinMppPopulateModuleDependenciesContext.getCompilationsWithDepen
 ): List<CompilationWithDependencies> {
     return mppModel.getCompilations(sourceSet).map { compilation -> CompilationWithDependencies(compilation, getDependencies(compilation)) }
 }
-
-internal fun KotlinCompilation.dependsOnSourceSet(mppModel: KotlinMPPGradleModel, sourceSet: KotlinSourceSet): Boolean {
-    return declaredSourceSets.any { containedSourceSet -> sourceSet.isOrDependsOnSourceSet(mppModel, containedSourceSet) }
-}
-
-internal fun KotlinSourceSet.isOrDependsOnSourceSet(mppModel: KotlinMPPGradleModel, sourceSet: KotlinSourceSet): Boolean {
-    if (this == sourceSet) return true
-    return this.declaredDependsOnSourceSets
-        .map { dependencySourceSetName -> mppModel.sourceSetsByName.getValue(dependencySourceSetName) }
-        .any { dependencySourceSet -> dependencySourceSet.isOrDependsOnSourceSet(mppModel, sourceSet) }
-}
-
 

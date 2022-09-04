@@ -14,9 +14,11 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.java.ift.JavaProjectUtil
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
@@ -323,7 +325,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       text(JavaLessonsBundle.message("java.onboarding.toggle.breakpoint.2"))
     }
 
-    highlightButtonById("Debug")
+    highlightButtonById("Debug", highlightInside = false, usePulsation = false)
 
     actionTask("Debug") {
       showBalloonOnHighlightingComponent(JavaLessonsBundle.message("java.onboarding.balloon.start.debugging"))
@@ -334,22 +336,23 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       JavaLessonsBundle.message("java.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
 
-    highlightDebugActionsToolbar()
+    highlightDebugActionsToolbar(highlightInside = false, usePulsation = false)
 
     task {
       rehighlightPreviousUi = true
-      text(JavaLessonsBundle.message("java.onboarding.balloon.about.debug.panel",
-                                     strong(UIBundle.message("tool.window.name.debug")),
-                                     if (UIExperiment.isNewDebuggerUIEnabled()) 0 else 1,
-                                     strong(LessonsBundle.message("debug.workflow.lesson.name"))))
-      proceedLink()
+      gotItStep(Balloon.Position.above, 400,
+                JavaLessonsBundle.message("java.onboarding.balloon.about.debug.panel",
+                                          strong(UIBundle.message("tool.window.name.debug")),
+                                          if (UIExperiment.isNewDebuggerUIEnabled()) 0 else 1,
+                                          strong(LessonsBundle.message("debug.workflow.lesson.name"))))
       restoreIfModified(sample)
     }
 
-    highlightButtonById("Stop")
+    highlightButtonById("Stop", highlightInside = false, usePulsation = false)
     task {
-      showBalloonOnHighlightingComponent(
-        JavaLessonsBundle.message("java.onboarding.balloon.stop.debugging")) { list -> list.minByOrNull { it.locationOnScreen.y } }
+      val position = if (UIExperiment.isNewDebuggerUIEnabled()) Balloon.Position.above else Balloon.Position.atRight
+      showBalloonOnHighlightingComponent(JavaLessonsBundle.message("java.onboarding.balloon.stop.debugging"),
+                                         position) { list -> list.maxByOrNull { it.locationOnScreen.y } }
       text(JavaLessonsBundle.message("java.onboarding.stop.debugging", icon(AllIcons.Actions.Suspend)))
       restoreIfModified(sample)
       stateCheck {
@@ -383,7 +386,13 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
   }
 
   private fun LessonContext.runTasks() {
-    highlightRunToolbar()
+    highlightRunToolbar(highlightInside = false, usePulsation = false)
+
+    task {
+      triggerUI {
+        clearPreviousHighlights = false
+      }.component { ui: ActionButton -> ActionManager.getInstance().getId(ui.action) == "Run" }
+    }
 
     task {
       val runOptionsText = if (PlatformUtils.isIdeaUltimate()) {
@@ -401,6 +410,8 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       }
       text(JavaLessonsBundle.message("java.onboarding.temporary.configuration.description") + " $runOptionsText")
       text(JavaLessonsBundle.message("java.onboarding.run.sample", icon(AllIcons.Actions.Execute), action("Run")))
+      text(JavaLessonsBundle.message("java.onboarding.run.sample.balloon", icon(AllIcons.Actions.Execute), action("Run")),
+           LearningBalloonConfig(Balloon.Position.below, 0))
       checkToolWindowState("Run", true)
       restoreIfModified(sample)
     }
@@ -408,7 +419,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
 
   private fun LessonContext.openLearnToolwindow() {
     task {
-      triggerAndFullHighlight { usePulsation = true }.component { stripe: StripeButton ->
+      triggerAndBorderHighlight().component { stripe: StripeButton ->
         stripe.windowInfo.id == "Learn"
       }
     }
@@ -461,7 +472,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     }
 
     task {
-      triggerAndFullHighlight { usePulsation = true }.component { stripe: StripeButton ->
+      triggerAndBorderHighlight().component { stripe: StripeButton ->
         stripe.windowInfo.id == "Project"
       }
     }
@@ -504,7 +515,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     }
 
     fun isDemoFilePath(path: TreePath) =
-      path.pathCount >= 4 && path.getPathComponent(3).isToStringContains(demoFileName)
+      path.pathCount >= 4 && path.getPathComponent(3).isToStringContains(demoConfigurationName)
 
     task {
       text(JavaLessonsBundle.message("java.onboarding.balloon.source.directory", strong(demoFileDirectory)),

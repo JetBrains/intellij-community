@@ -58,6 +58,8 @@ internal class UISettings {
   val tooltipBorderColor: Color = JBColor.namedColor("Tooltip.Learning.borderColor", 0x1071E8, 0x0E62CF)
   val tooltipButtonBackgroundColor: Color = JBColor.namedColor("Tooltip.Learning.spanBackground", 0x0D5CBD, 0x0250B0)
   val tooltipButtonForegroundColor: Color = JBColor.namedColor("Tooltip.Learning.spanForeground", 0xF5F5F5)
+  val tooltipShortcutBackgroundColor: Color = JBColor.namedColor("Tooltip.Learning.spanBackground", 0x0D5CBD, 0x0250B0)
+  val tooltipShortcutTextColor: Color = JBColor.namedColor("Tooltip.Learning.spanForeground", 0xF5F5F5)
   val tooltipTextColor: Color = JBColor.namedColor("Tooltip.Learning.foreground", 0xF5F5F5)
 
   val activeTaskNumberColor: Color = JBColor.namedColor("Lesson.stepNumberForeground", 0x808080, 0xFEFEFE)

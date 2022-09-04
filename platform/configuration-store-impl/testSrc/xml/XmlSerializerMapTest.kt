@@ -353,8 +353,9 @@ internal class XmlSerializerMapTest {
 
   @Test
   fun `pluginFeatureService serialization`() {
-    val state = PluginFeatureService.State()
-    state.features.put("foo", PluginFeatureService.FeaturePluginList())
+    val state = PluginFeatureService.State(
+      mapOf("foo" to PluginFeatureService.FeaturePluginList())
+    )
 
     testSerializer(
       """

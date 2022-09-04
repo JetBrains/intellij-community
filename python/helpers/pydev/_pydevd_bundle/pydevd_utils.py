@@ -643,3 +643,10 @@ def is_in_unittests_debugging_mode():
     debugger = get_global_debugger()
     if debugger:
         return debugger.stop_on_failed_tests
+
+def is_current_thread_main_thread():
+    if hasattr(threading, 'main_thread'):
+        return threading.current_thread() is threading.main_thread()
+    else:
+        return isinstance(threading.current_thread(), threading._MainThread)
+

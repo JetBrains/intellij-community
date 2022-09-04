@@ -467,7 +467,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-21692
   public void testSumResult() {
-    doTest("int | Literal[0]",
+    doTest("int",
            "expr = sum([1, 2, 3])");
   }
 
@@ -1400,6 +1400,14 @@ public class Py3TypeTest extends PyTestCase {
     assertExpressionType("dict[str, Any]", expr);
     PyExpression dict = myFixture.findElementByText("{'foo': self.foo}", PyExpression.class);
     assertExpressionType("dict[str, Any]", dict);
+  }
+
+  // PY-52656 Requires PY-53896 or patching Typeshed
+  public void testDictValuesType() {
+    doTest("int",
+           "d = {'foo': 42}\n" +
+           "for expr in d.values():\n" +
+           "    pass");
   }
 
   private void doTest(final String expectedType, final String text) {

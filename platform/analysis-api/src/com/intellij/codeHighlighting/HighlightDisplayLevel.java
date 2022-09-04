@@ -46,7 +46,7 @@ public class HighlightDisplayLevel {
   private static final TextAttributesKey DO_NOT_SHOW_KEY = TextAttributesKey.createTextAttributesKey("DO_NOT_SHOW");
   public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, EmptyIcon.ICON_0);
   
-  public static final HighlightDisplayLevel TEXT_ATTRIBUTES = new HighlightDisplayLevel(HighlightSeverity.TEXT_ATTRIBUTES, EmptyIcon.ICON_0);
+  public static final HighlightDisplayLevel CONSIDERATION_ATTRIBUTES = new HighlightDisplayLevel(HighlightSeverity.TEXT_ATTRIBUTES, EmptyIcon.ICON_0);
 
   /**
    * @deprecated use {@link #WEAK_WARNING} instead

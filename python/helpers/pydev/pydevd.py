@@ -57,7 +57,7 @@ from _pydevd_bundle.pydevd_trace_dispatch import (
 from _pydevd_frame_eval.pydevd_frame_eval_main import (
     frame_eval_func, dummy_trace_dispatch, show_frame_eval_warning)
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
-from _pydevd_bundle.pydevd_utils import save_main_module
+from _pydevd_bundle.pydevd_utils import save_main_module, is_current_thread_main_thread
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads, wrap_asyncio
 from pydevd_file_utils import get_fullname, rPath, get_package_dir
@@ -703,8 +703,9 @@ class PyDB(object):
     def init_matplotlib_in_debug_console(self):
         # import hook and patches for matplotlib support in debug console
         from _pydev_bundle.pydev_import_hook import import_hook_manager
-        for module in dict_keys(self.mpl_modules_for_patching):
-            import_hook_manager.add_module_name(module, self.mpl_modules_for_patching.pop(module))
+        if is_current_thread_main_thread():
+            for module in dict_keys(self.mpl_modules_for_patching):
+                import_hook_manager.add_module_name(module, self.mpl_modules_for_patching.pop(module))
 
     def init_matplotlib_support(self):
         # prepare debugger for integration with matplotlib GUI event loop
@@ -731,11 +732,12 @@ class PyDB(object):
 
     def _activate_mpl_if_needed(self):
         if len(self.mpl_modules_for_patching) > 0:
-            for module in dict_keys(self.mpl_modules_for_patching):
-                if module in sys.modules:
-                    activate_function = self.mpl_modules_for_patching.pop(module)
-                    activate_function()
-                    self.mpl_in_use = True
+            if is_current_thread_main_thread():
+                for module in dict_keys(self.mpl_modules_for_patching):
+                    if module in sys.modules:
+                        activate_function = self.mpl_modules_for_patching.pop(module)
+                        activate_function()
+                        self.mpl_in_use = True
 
     def _call_mpl_hook(self):
         try:

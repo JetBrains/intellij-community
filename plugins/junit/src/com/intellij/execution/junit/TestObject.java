@@ -662,13 +662,16 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   private String myRunner;
+  private static final Object LOCK = ObjectUtils.sentinel("JUnitRunner");
 
   @NotNull
-  protected synchronized String getRunner() {
-    if (myRunner == null) {
-      myRunner = ReadAction.nonBlocking(this::getRunnerInner).executeSynchronously();
+  protected String getRunner() {
+    synchronized (LOCK) {
+      if (myRunner == null) {
+        myRunner = ReadAction.nonBlocking(this::getRunnerInner).executeSynchronously();
+      }
+      return myRunner;
     }
-    return myRunner;
   }
 
   @NotNull

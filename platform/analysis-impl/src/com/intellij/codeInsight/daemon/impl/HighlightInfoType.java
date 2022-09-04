@@ -36,7 +36,7 @@ public interface HighlightInfoType {
   @Deprecated HighlightInfoType INFO = new HighlightInfoTypeImpl(HighlightSeverity.INFO, CodeInsightColors.INFO_ATTRIBUTES);
   HighlightInfoType WEAK_WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WEAK_WARNING, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
   HighlightInfoType INFORMATION = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.INFORMATION_ATTRIBUTES);
-  HighlightInfoType TEXT_ATTRIBUTES = new HighlightInfoTypeImpl(HighlightSeverity.TEXT_ATTRIBUTES, CodeInsightColors.INFORMATION_ATTRIBUTES);
+  HighlightInfoType TEXT_ATTRIBUTES = new HighlightInfoTypeImpl(HighlightSeverity.TEXT_ATTRIBUTES, CodeInsightColors.CONSIDERATION_ATTRIBUTES);
 
   HighlightInfoType WRONG_REF = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
 

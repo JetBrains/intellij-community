@@ -50,10 +50,6 @@ internal class RunToolbarMainSlotActive : SegmentedCustomAction(),
       }
     }
 
-    val a = JPanel()
-    MigLayout("ins 0, fill, gap 0", "[200]")
-    a.add(JLabel(), "pushx")
-
     presentation.description = e.runToolbarData()?.let {
       RunToolbarData.prepareDescription(presentation.text,
                                         ActionsBundle.message("action.RunToolbarShowHidePopupAction.click.to.show.popup.text"))

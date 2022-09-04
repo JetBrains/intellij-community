@@ -416,7 +416,7 @@ public final class ToolsImpl implements Tools {
 
   private static boolean isAvailableInBatch(ScopeToolState state) {
     HighlightDisplayLevel level = state.getLevel();
-    return !(HighlightDisplayLevel.DO_NOT_SHOW.equals(level) || HighlightDisplayLevel.TEXT_ATTRIBUTES.equals(level));
+    return !(HighlightDisplayLevel.DO_NOT_SHOW.equals(level) || HighlightDisplayLevel.CONSIDERATION_ATTRIBUTES.equals(level));
   }
 
   @Nullable

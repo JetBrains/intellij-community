@@ -64,7 +64,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     map.put(HighlightSeverity.INFO.getName(), HighlightInfoType.INFO);
     map.put(HighlightSeverity.WEAK_WARNING.getName(), HighlightInfoType.WEAK_WARNING);
     map.put(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING.getName(), HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER);
-    map.put(HighlightDisplayLevel.TEXT_ATTRIBUTES.getName(), HighlightInfoType.TEXT_ATTRIBUTES);
+    map.put(HighlightDisplayLevel.CONSIDERATION_ATTRIBUTES.getName(), HighlightInfoType.TEXT_ATTRIBUTES);
     map.put(HighlightDisplayLevel.DO_NOT_SHOW.getName(), HighlightInfoType.INFORMATION);
     STANDARD_SEVERITIES = new ConcurrentHashMap<>(map);
   }

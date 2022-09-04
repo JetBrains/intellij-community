@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
@@ -184,19 +183,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     toolWindowFocusWatcher = ToolWindowFocusWatcher(toolWindow = this, component = decorator)
     contentManager.addContentManagerListener(object : ContentManagerListener {
       override fun selectionChanged(event: ContentManagerEvent) {
-        val toolbar = this@ToolWindowImpl.decorator?.headerToolbar ?: return
-        val cm = event.source as ContentManager
-        // 1. run invokeLater to support add-then-initialize case (Documentation TW)
-        // 2. use preferred focused component if present (Documentation TW)
-        // 3. avoid using toolbars as they can be hidden (Find TW)
-        invokeLater(ModalityState.any()) {
-          val selectedContent = cm.selectedContent
-          val target = (selectedContent?.preferredFocusableComponent
-                        ?: selectedContent?.component
-                        ?: toolbar.component)
-          val adjusted = ActionToolbar.findToolbarBy(target)?.component?.parent as? JComponent ?: target
-          toolbar.targetComponent = adjusted
-        }
+        this@ToolWindowImpl.decorator?.headerToolbar?.updateActionsImmediately()
       }
     })
 

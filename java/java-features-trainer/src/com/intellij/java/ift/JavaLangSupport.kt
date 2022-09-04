@@ -29,7 +29,7 @@ internal class JavaLangSupport : JavaBasedLangSupport() {
 
   override val scratchFileName: String = "Learning.java"
 
-  override val sampleFilePath: String = "src/Sample.java"
+  override val sampleFilePath: String = "$sourcesDirectoryPath/Sample.java"
 
   override val langCourseFeedback
     get() = getFeedbackLink(this, false)
@@ -41,7 +41,7 @@ internal class JavaLangSupport : JavaBasedLangSupport() {
 
     task {
       if (isSdkConfigured(project)) return@task
-      triggerAndFullHighlight { usePulsation = true }.component { ui: HyperlinkLabel ->
+      triggerAndBorderHighlight().component { ui: HyperlinkLabel ->
         ui.text == setupSdkText
       }
     }

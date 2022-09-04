@@ -10,32 +10,32 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.SimpleModificationTracker
 import kotlinx.serialization.Serializable
+import java.util.concurrent.locks.ReentrantReadWriteLock
 
 @Service(Service.Level.APP)
 @State(name = "PluginFeatureService", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 class PluginFeatureService : SerializablePersistentStateComponent<PluginFeatureService.State>(State()) {
+
   companion object {
     @JvmStatic
     val instance: PluginFeatureService
       get() = ApplicationManager.getApplication().getService(PluginFeatureService::class.java)
   }
 
+  private val readWriteLock = ReentrantReadWriteLock()
   private val tracker = SimpleModificationTracker()
 
   @Serializable
-  data class FeaturePluginList(val featureMap: MutableMap<String, FeaturePluginData> = HashMap())
+  data class FeaturePluginList(
+    val featureMap: Map<String, FeaturePluginData> = emptyMap(),
+  )
 
   @Serializable
-  data class State(val features: MutableMap<String, FeaturePluginList> = HashMap())
+  data class State(
+    val features: Map<String, FeaturePluginList> = emptyMap(),
+  )
 
   override fun getStateModificationCount() = tracker.modificationCount
-
-  private fun getOrCreateFeature(featureType: String): FeaturePluginList {
-    return state.features.computeIfAbsent(featureType) {
-      tracker.incModificationCount()
-      FeaturePluginList()
-    }
-  }
 
   fun <T> collectFeatureMapping(
     featureType: String,
@@ -43,24 +43,47 @@ class PluginFeatureService : SerializablePersistentStateComponent<PluginFeatureS
     idMapping: (T) -> String,
     displayNameMapping: (T) -> String,
   ) {
-    val pluginList = getOrCreateFeature(featureType)
-    var changed = false
-    ep.processWithPluginDescriptor { ext, descriptor ->
-      val pluginData = FeaturePluginData(
-        displayNameMapping(ext),
-        PluginData(descriptor),
-      )
-      if (pluginList.featureMap.put(idMapping(ext), pluginData) != pluginData) {
-        changed = true
-      }
-    }
+    readWriteLock.writeLock().lock()
+    try {
+      var featureList = state.features.get(featureType)
+                        ?: FeaturePluginList()
 
-    if (changed) {
+      // fold
+      ep.processWithPluginDescriptor { ext, descriptor ->
+        val pluginData = FeaturePluginData(
+          displayNameMapping(ext),
+          PluginData(descriptor),
+        )
+
+        val id = idMapping(ext)
+        featureList = FeaturePluginList(featureList.featureMap + (id to pluginData))
+      }
+
+      loadState(State(state.features + (featureType to featureList)))
+    }
+    finally {
       tracker.incModificationCount()
+      readWriteLock.writeLock().unlock()
     }
   }
 
-  fun getPluginForFeature(featureType: String, implementationName: String): FeaturePluginData? {
-    return state.features.get(featureType)?.featureMap?.get(implementationName)
+  fun getPluginForFeature(
+    featureType: String,
+    implementationName: String,
+  ): FeaturePluginData? {
+    return if (readWriteLock.readLock().tryLock()) {
+      try {
+        state.features
+          .get(featureType)
+          ?.featureMap
+          ?.get(implementationName)
+      }
+      finally {
+        readWriteLock.readLock().unlock()
+      }
+    }
+    else {
+      null
+    }
   }
 }

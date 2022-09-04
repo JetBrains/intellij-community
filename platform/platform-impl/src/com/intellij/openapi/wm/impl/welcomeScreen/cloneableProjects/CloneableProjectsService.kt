@@ -71,6 +71,14 @@ class CloneableProjectsService {
     }
   }
 
+  fun cloneCount(): Int {
+    return cloneableProjects.size
+  }
+
+  fun isCloneActive(): Boolean {
+    return !cloneableProjects.isEmpty()
+  }
+
   fun cancelClone(cloneableProject: CloneableProject) {
     cloneableProject.progressIndicator.cancel()
   }

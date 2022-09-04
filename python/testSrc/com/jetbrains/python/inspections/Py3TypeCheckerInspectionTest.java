@@ -917,4 +917,9 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testTypingRequiredTypeSpecificationsMultiFile() {
     doMultiFileTest();
   }
+
+  // PY-52648 Requires PY-53896 or patching Typeshed
+  public void testListLiteralPassedToIter() {
+    doTestByText("iter([1, 2, 3])");
+  }
 }

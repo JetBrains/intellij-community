@@ -1,8 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcsUtil;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -18,17 +21,21 @@ public final class VcsSelectionUtil {
   private VcsSelectionUtil() {
   }
 
-  @Nullable
-  public static VcsSelection getSelection(@NotNull AnActionEvent e) {
+  public static @Nullable VcsSelection getSelection(@NotNull AnAction action, @NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor == null) return null;
 
-    SelectionModel selectionModel = editor.getSelectionModel();
-    if (selectionModel.hasSelection() && !EditorUtil.contextMenuInvokedOutsideOfSelection(e)) {
-      return new VcsSelection(editor.getDocument(),
-                              new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()),
-                              VcsBundle.message("action.name.show.history.for.selection"));
-    }
+    VcsSelection atCaret = Utils.getOrCreateUpdateSession(e)
+      .compute(action, "getSelection", ActionUpdateThread.EDT, () -> {
+        SelectionModel selectionModel = editor.getSelectionModel();
+        if (selectionModel.hasSelection() && !EditorUtil.contextMenuInvokedOutsideOfSelection(e)) {
+          return new VcsSelection(editor.getDocument(),
+                                  new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()),
+                                  VcsBundle.message("action.name.show.history.for.selection"));
+        }
+        return null;
+      });
+    if (atCaret != null) return atCaret;
 
     for (VcsSelectionProvider provider : VcsSelectionProvider.EP_NAME.getExtensionList()) {
       try {

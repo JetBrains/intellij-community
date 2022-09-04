@@ -14,6 +14,7 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import icons.PlatformDebuggerImplIcons
 import java.awt.event.MouseEvent
+import java.util.Collections
 
 class XDebuggerPinToTopAction : XDebuggerTreeActionBase() {
 
@@ -28,6 +29,7 @@ class XDebuggerPinToTopAction : XDebuggerTreeActionBase() {
                     SimpleDataContext.builder()
                       .add(XDebuggerTree.XDEBUGGER_TREE_KEY, node.tree)
                       .add(CommonDataKeys.PROJECT, node.tree.project)
+                      .add(XDebuggerTree.SELECTED_NODES, Collections.singletonList(node))
                       .build()
                 )
             )

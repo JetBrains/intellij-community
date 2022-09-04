@@ -33,9 +33,7 @@ internal object RecentProjectPanelComponentFactory {
       subscribe(CloneableProjectsService.TOPIC, object : CloneProjectListener {
         override fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) {
           filteringTree.updateTree()
-          
-          val cloneableProjects = CloneableProjectsService.getInstance().collectCloneableProjects()
-          WelcomeScreenCloneCollector.cloneAdded(cloneableProjects.size)
+          WelcomeScreenCloneCollector.cloneAdded(CloneableProjectsService.getInstance().cloneCount())
         }
 
         override fun onCloneRemoved() {

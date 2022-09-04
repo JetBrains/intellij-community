@@ -29,15 +29,14 @@ class WindowDeactivationManager {
         onWindowDeactivated.run()
       }
     }
-    Frame.getFrames().filter { it is IdeFrame && it.project == project}.forEach {
-      it.addWindowFocusListener(focusListener)
-      Disposer.register(disposable) {
-        it.removeWindowFocusListener(focusListener)
-      }
-    }
 
     window.addWindowListener(object : WindowAdapter() {
+      var wasOpened = false
+
       override fun windowDeactivated(e: WindowEvent) {
+        if (!wasOpened) {
+          return
+        }
         // At the moment of deactivation there is just "temporary" focus owner (main frame),
         // true focus owner (Search Everywhere popup etc.) appears later so the check should be postponed too
         ApplicationManager.getApplication().invokeLater({
@@ -45,6 +44,20 @@ class WindowDeactivationManager {
           if (SwingUtilities.isDescendingFrom(focusOwner, window)) return@invokeLater
           onWindowDeactivated.run()
         }, ModalityState.current())
+      }
+
+      override fun windowOpened(e: WindowEvent?) {
+        // Currently, in WSLg environment dialog showing generates focus events corresponding to dialog getting focus,
+        // then losing it to main frame, then getting it again immediately. As a workaround, we track focus/activation events only after
+        // 'window opened' event is received.
+        wasOpened = true
+
+        Frame.getFrames().filter { it is IdeFrame && it.project == project}.forEach {
+          it.addWindowFocusListener(focusListener)
+          Disposer.register(disposable) {
+            it.removeWindowFocusListener(focusListener)
+          }
+        }
       }
     })
   }
