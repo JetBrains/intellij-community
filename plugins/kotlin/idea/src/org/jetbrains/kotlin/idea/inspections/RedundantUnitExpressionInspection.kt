@@ -53,7 +53,8 @@ class RedundantUnitExpressionInspection : AbstractKotlinInspection(), CleanupLoc
 
             if (parent is KtBlockExpression) {
                 if (referenceExpression == parent.lastBlockStatementOrThis()) {
-                    val prev = referenceExpression.previousStatement() ?: return true
+                    val parentIfOrWhen = parent.getParentIfOrWhen()
+                    val prev = referenceExpression.previousStatement() ?: return parentIfOrWhen == null
                     if (prev.isUnitLiteral) return true
                     if (prev is KtDeclaration && isDynamicCall(parent)) return false
                     val context = prev.analyze(BodyResolveMode.PARTIAL)
@@ -64,11 +65,7 @@ class RedundantUnitExpressionInspection : AbstractKotlinInspection(), CleanupLoc
 
                     if (prev !is KtDeclaration) return false
                     if (prev !is KtFunction) return true
-                    return parent.getParentOfTypesAndPredicate(
-                        true,
-                        KtIfExpression::class.java,
-                        KtWhenExpression::class.java
-                    ) { true } == null
+                    return parentIfOrWhen == null
                 }
 
                 return true
@@ -78,6 +75,9 @@ class RedundantUnitExpressionInspection : AbstractKotlinInspection(), CleanupLoc
         }
     }
 }
+
+private fun KtExpression.getParentIfOrWhen(): KtExpression? =
+    getParentOfTypesAndPredicate(true, KtIfExpression::class.java, KtWhenExpression::class.java) { true }
 
 private fun isDynamicCall(parent: KtBlockExpression): Boolean = parent.getStrictParentOfType<KtFunctionLiteral>()
     ?.findLambdaReturnType()
