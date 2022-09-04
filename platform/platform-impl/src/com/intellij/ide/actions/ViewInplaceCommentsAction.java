@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
@@ -37,5 +38,10 @@ public class ViewInplaceCommentsAction extends DumbAwareToggleAction {
       //noinspection deprecation
       TreeUtil.invalidateCacheAndRepaint(tree.getUI());
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

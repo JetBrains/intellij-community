@@ -11,6 +11,7 @@ import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.ListSelection;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -81,6 +82,11 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
 
     presentation.setVisible(project != null);
     presentation.setEnabled(project != null && file != null && isEnabled(getRepositoryManager(project).getRepositoryForFileQuick(file)));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private boolean isEnabled(@Nullable T repository) {

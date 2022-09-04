@@ -49,7 +49,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -338,45 +337,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       mySuggestRegexHintForEmptyResults = true;
       myDialog.show();
 
-      WindowAdapter focusListener = new WindowAdapter() {
-        @Override
-        public void windowGainedFocus(WindowEvent e) {
-          closeIfPossible();
-        }
-      };
-
-      dialogWindow.addWindowListener(new WindowAdapter() {
-        private boolean wasOpened = false;
-
-        @Override
-        public void windowDeactivated(WindowEvent e) {
-          if (!wasOpened) {
-            return;
-          }
-          // At the moment of deactivation there is just "temporary" focus owner (main frame),
-          // true focus owner (Search Everywhere popup etc.) appears later so the check should be postponed too
-          ApplicationManager.getApplication().invokeLater(() -> {
-            Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
-            if (focusOwner == null || SwingUtilities.isDescendingFrom(focusOwner, FindPopupPanel.this)) return;
-            Window w = ComponentUtil.getWindow(focusOwner);
-            if (w != null && w.getOwner() != dialogWindow) {
-              closeIfPossible();
-            }
-          }, ModalityState.current());
-        }
-
-        @Override
-        public void windowOpened(WindowEvent e) {
-          wasOpened = true;
-          Arrays.stream(Frame.getFrames())
-            .filter(f -> f != null && f.getOwner() != dialogWindow
-                         && f instanceof IdeFrame && ((IdeFrame)f).getProject() == myProject)
-            .forEach(win -> {
-              win.addWindowFocusListener(focusListener);
-              Disposer.register(myDisposable, () -> win.removeWindowFocusListener(focusListener));
-            });
-        }
-      });
+      myDialog.setOnDeactivationAction(() -> closeIfPossible());
 
       JRootPane rootPane = getRootPane();
       if (rootPane != null) {

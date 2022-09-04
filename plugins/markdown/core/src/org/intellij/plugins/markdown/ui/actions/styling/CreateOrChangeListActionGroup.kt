@@ -1,9 +1,6 @@
 package org.intellij.plugins.markdown.ui.actions.styling
 
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Caret
@@ -37,7 +34,11 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
   OrderedList(),
   CheckmarkList()
 ) {
-  override fun isPopup(): Boolean = true
+  init {
+    templatePresentation.isPopupGroup = true
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   class OrderedList: CreateListImpl(
     text = messagePointer("markdown.create.list.popup.ordered.action.text"),
@@ -116,7 +117,7 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
     override fun isSelected(event: AnActionEvent): Boolean {
       val file = event.getData(CommonDataKeys.PSI_FILE) as? MarkdownFile ?: return false
       val editor = event.getData(CommonDataKeys.EDITOR) ?: return false
-      val caretOffset = editor.caretModel.currentCaret.offset
+      val caretOffset = event.getData(CommonDataKeys.CARET)?.offset ?: return false
       val document = editor.document
       val list = findList(file, document, caretOffset) ?: return false
       val marker = list.items.firstOrNull()?.markerElement ?: return false
@@ -135,6 +136,10 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
       }
       originalMarker.replace(marker)
       return originalChild
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
     }
 
     private fun replaceList(list: MarkdownList): MarkdownList {

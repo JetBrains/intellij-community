@@ -119,9 +119,11 @@ public class MalformedFormatStringInspection extends BaseInspection {
 
   private class MalformedFormatStringVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      
+    public void visitCallExpression(@NotNull PsiCallExpression expression) {
+      PsiExpressionList list = expression.getArgumentList();
+      if (list == null) {
+        return;
+      }
       FormatDecode.FormatArgument formatArgument = FormatDecode.FormatArgument.extract(expression, methodNames, classNames);
       if (formatArgument == null) {
         return;
@@ -134,7 +136,7 @@ public class MalformedFormatStringInspection extends BaseInspection {
 
       int formatArgumentIndex = formatArgument.getIndex();
 
-      PsiExpression[] arguments = expression.getArgumentList().getExpressions();
+      PsiExpression[] arguments = list.getExpressions();
 
       int argumentCount = arguments.length - formatArgumentIndex;
       final FormatDecode.Validator[] validators;
@@ -169,7 +171,12 @@ public class MalformedFormatStringInspection extends BaseInspection {
         }
       }
       if (validators.length != argumentCount) {
-        registerMethodCallError(expression, validators, Integer.valueOf(argumentCount));
+        PsiElement anchor = expression instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement() :
+                            expression instanceof PsiNewExpression ? ((PsiNewExpression)expression).getClassReference() :
+                            null;
+        if (anchor != null) {
+          registerError(anchor, validators, Integer.valueOf(argumentCount));
+        }
         return;
       }
       for (int i = 0; i < validators.length; i++) {

@@ -4,6 +4,7 @@ package com.intellij.ui.mouse
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.project.DumbAwareAction
@@ -200,5 +201,9 @@ internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction() {
 
     override fun dispose() {
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

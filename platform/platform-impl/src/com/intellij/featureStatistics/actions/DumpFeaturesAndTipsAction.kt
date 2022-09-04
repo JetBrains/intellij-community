@@ -4,6 +4,7 @@ package com.intellij.featureStatistics.actions
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry
 import com.intellij.ide.util.TipAndTrickBean
 import com.intellij.ide.util.TipUIUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ide.CopyPasteManager
@@ -66,5 +67,9 @@ class DumpFeaturesAndTipsAction : AnAction(), DumbAware {
     private fun handleEmpty(value: String?) = value ?: EMPTY_VALUE
 
     private fun tipFileProblem() = if (tipFileExists) "" else FILE_NOT_FOUND
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

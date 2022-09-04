@@ -8,11 +8,15 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiNamedElement
+import org.jetbrains.annotations.ApiStatus
 
-internal class SearchEverywhereClassFeaturesProvider : SearchEverywhereElementFeaturesProvider(ClassSearchEverywhereContributor::class.java) {
+@ApiStatus.Internal
+@IntellijInternalApi
+class SearchEverywhereClassFeaturesProvider : SearchEverywhereElementFeaturesProvider(ClassSearchEverywhereContributor::class.java) {
   companion object {
-    internal val IS_DEPRECATED = EventFields.Boolean("isDeprecated")
+    val IS_DEPRECATED = EventFields.Boolean("isDeprecated")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {

@@ -1,11 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dependency.analyzer
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.externalSystem.dependency.analyzer.*
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
-import com.intellij.openapi.externalSystem.model.project.*
+import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.dependencies.ArtifactDependencyNode
 import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode
 import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencyNode
@@ -61,6 +63,8 @@ class ToolbarDependencyAnalyzerAction : DependencyAnalyzerAction() {
   override fun setSelectedState(view: DependencyAnalyzerView, e: AnActionEvent) {
     viewAction.setSelectedState(view, e)
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
 
 class ProjectViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<Module>() {
@@ -84,4 +88,6 @@ class ProjectViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<Mod
   }
 
   override fun getDependencyScope(e: AnActionEvent, selectedData: Module) = null
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }

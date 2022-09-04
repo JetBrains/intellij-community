@@ -17,6 +17,7 @@
 package org.intellij.plugins.xpathView.search;
 
 import com.intellij.find.FindSettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -41,6 +42,11 @@ public class FindByXPathAction extends AnAction {
     public void update(@NotNull AnActionEvent e) {
         final Project project = e.getProject();
         e.getPresentation().setEnabled(project != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

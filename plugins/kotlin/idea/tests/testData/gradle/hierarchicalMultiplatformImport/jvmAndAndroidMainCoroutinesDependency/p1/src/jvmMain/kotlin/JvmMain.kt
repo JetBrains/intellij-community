@@ -1,9 +1,9 @@
 @file:Suppress("unused")
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-fun jvmMain() = MainScope().launch(Dispatchers.IO) {
+fun jvmMain() = GlobalScope.launch(Dispatchers.IO) {
 
 }

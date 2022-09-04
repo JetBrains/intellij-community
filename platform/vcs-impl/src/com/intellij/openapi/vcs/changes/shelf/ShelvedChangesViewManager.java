@@ -889,6 +889,11 @@ public class ShelvedChangesViewManager implements Disposable {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         DiffPreview previewSplitter = ObjectUtils.chooseNotNull(mySplitterDiffPreview, myEditorDiffPreview);
         DiffPreview.setPreviewVisible(previewSplitter, state);

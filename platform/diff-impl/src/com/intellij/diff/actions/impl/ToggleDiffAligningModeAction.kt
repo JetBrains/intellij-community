@@ -6,6 +6,7 @@ import com.intellij.diff.tools.util.DiffDataKeys.DIFF_VIEWER
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.util.DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF
 import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
 
@@ -22,6 +23,10 @@ class ToggleDiffAligningModeAction : DumbAwareToggleAction() {
     }
 
     super.update(e)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {

@@ -8,6 +8,7 @@ import com.intellij.ide.projectWizard.NewProjectWizard;
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -28,6 +29,11 @@ public class NewProjectAction extends AnAction implements DumbAware, NewProjectO
   public void update(@NotNull AnActionEvent e) {
     updateActionIcon(e);
     updateActionText(this, e);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static void updateActionIcon(@NotNull AnActionEvent e) {

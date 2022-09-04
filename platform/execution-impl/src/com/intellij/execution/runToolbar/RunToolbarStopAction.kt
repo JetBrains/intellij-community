@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.ExecutionBundle
@@ -6,12 +6,15 @@ import com.intellij.execution.KillableProcess
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.project.DumbAware
 
-class RunToolbarStopAction : AnAction(AllIcons.Actions.Suspend), DumbAware, RTBarAction {
+internal class RunToolbarStopAction : AnAction(AllIcons.Actions.Suspend),
+                                      DumbAware,
+                                      RTBarAction {
   override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.RIGHT_STABLE
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -26,15 +29,19 @@ class RunToolbarStopAction : AnAction(AllIcons.Actions.Suspend), DumbAware, RTBa
     return state == RunToolbarMainSlotState.PROCESS
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.environment()?.let {
+    val presentation = e.presentation
+    presentation.isEnabledAndVisible = e.environment()?.let {
       it.contentToReuse?.processHandler?.let {
-        if(it.isProcessTerminating) {
-          e.presentation.icon = AllIcons.Debugger.KillProcess
-          e.presentation.description = ExecutionBundle.message("action.terminating.process.progress.kill.description")
-        } else {
-          e.presentation.icon = templatePresentation.icon
-          e.presentation.description = templatePresentation.description
+        if (it.isProcessTerminating) {
+          presentation.icon = AllIcons.Debugger.KillProcess
+          presentation.description = ExecutionBundle.message("action.terminating.process.progress.kill.description")
+        }
+        else {
+          presentation.icon = templatePresentation.icon
+          presentation.description = templatePresentation.description
         }
         true
       }
@@ -42,7 +49,7 @@ class RunToolbarStopAction : AnAction(AllIcons.Actions.Suspend), DumbAware, RTBa
 
     if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
       e.mainState()?.let {
-        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+        presentation.isEnabledAndVisible = presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
       }
     }
   }

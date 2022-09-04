@@ -21,7 +21,7 @@ public class JavaUsageSimilarityFeaturesProvider implements UsageSimilarityFeatu
   public @NotNull Bag getFeatures(@NotNull PsiElement usage) {
     PsiElement statement = getContainingStatement(usage);
     if (statement != null) {
-      final Bag usageProperties = new JavaSimilarityPropertiesExtractor(statement).getFeatures();
+      final Bag usageProperties = new JavaSimilarityFeaturesExtractor(statement).getFeatures();
       if (Registry.is("similarity.find.usages.parent.statement.condition.feature")) {
         usageProperties.addAll(getParentStatementFeatures(statement));
       }
@@ -60,13 +60,13 @@ public class JavaUsageSimilarityFeaturesProvider implements UsageSimilarityFeatu
     if (parentControlStatement instanceof PsiConditionalLoopStatement) {
       final PsiExpression conditionExpression = ((PsiConditionalLoopStatement)parentControlStatement).getCondition();
       if (conditionExpression != null) {
-        return new JavaSimilarityPropertiesExtractor(conditionExpression).getFeatures();
+        return new JavaSimilarityFeaturesExtractor(conditionExpression).getFeatures();
       }
     }
     if (parentControlStatement instanceof PsiIfStatement) {
       final PsiExpression conditionExpression = ((PsiIfStatement)parentControlStatement).getCondition();
       if (conditionExpression != null) {
-        return new JavaSimilarityPropertiesExtractor(conditionExpression).getFeatures();
+        return new JavaSimilarityFeaturesExtractor(conditionExpression).getFeatures();
       }
     }
     return Bag.EMPTY_BAG;

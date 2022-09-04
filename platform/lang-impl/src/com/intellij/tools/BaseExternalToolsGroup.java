@@ -33,6 +33,11 @@ public abstract class BaseExternalToolsGroup<T extends Tool> extends SimpleActio
     presentation.setVisible(getChildrenCount() > 0);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   protected void updateGroups(boolean registerActions) {
     List<ToolsGroup<T>> groups = getToolsGroups();
     for (ToolsGroup group : groups) {

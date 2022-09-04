@@ -115,9 +115,12 @@ class KotlinGradleSourceSetDataService : AbstractProjectDataService<GradleSource
             GradleProjectImportHandler.getInstances(project).forEach { it.importBySourceSet(kotlinFacet, sourceSetNode) }
         }
 
-        val isBuildDelegatedToGradle = GradleProjectSettings.isDelegatedBuildEnabled(project, projectData?.linkedExternalProjectPath)
-        if (maxCompilerVersion != null && !isBuildDelegatedToGradle) {
-            KotlinJpsPluginSettings.updateAndDownloadOrDropVersion(project, maxCompilerVersion.rawVersion)
+        if (maxCompilerVersion != null) {
+            KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(
+                project,
+                maxCompilerVersion.rawVersion,
+                isDelegatedToExtBuild = GradleProjectSettings.isDelegatedBuildEnabled(project, projectData?.linkedExternalProjectPath)
+            )
         }
     }
 }

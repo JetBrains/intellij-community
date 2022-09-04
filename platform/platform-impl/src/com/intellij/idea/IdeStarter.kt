@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -92,6 +93,7 @@ open class IdeStarter : ApplicationStarter {
     }
   }
 
+  @OptIn(IntellijInternalApi::class)
   protected open fun openProjectIfNeeded(args: List<String>, app: ApplicationEx, lifecyclePublisher: AppLifecycleListener): CompletableFuture<*> {
     val frameInitActivity = startActivity("frame initialization")
     frameInitActivity.runChild("app frame created callback") {

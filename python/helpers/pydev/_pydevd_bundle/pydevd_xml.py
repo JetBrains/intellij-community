@@ -335,7 +335,7 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
         value = _get_default_var_string_representation(v, _type, typeName, format)
 
     try:
-        name = quote(name, '/>_= ')  # TODO: Fix PY-5834 without using quote
+        name = _do_quote(name)  # TODO: Fix PY-5834 without using quote
     except:
         pass
 
@@ -351,20 +351,9 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
         value = value[0:MAXIMUM_VARIABLE_REPRESENTATION_SIZE]
         value += '...'
 
-    # fix to work with unicode values
-    try:
-        if not IS_PY3K:
-            if value.__class__ == unicode:  # @UndefinedVariable
-                value = value.encode('utf-8')
-        else:
-            if value.__class__ == bytes:
-                value = value.encode('utf-8')
-    except TypeError:  # in java, unicode is a function
-        pass
-
     if is_pandas_container(type_qualifier, typeName, v) and var_custom_string_repr is None:
         value = pandas_to_str(v, typeName, value, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
-    xml_value = ' value="%s"' % (make_valid_xml_value(quote(value, '/>_= ')))
+    xml_value = ' value="%s"' % (make_valid_xml_value(_do_quote(value)))
 
     xml_shape = ''
     try:
@@ -391,3 +380,31 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
 
     return ''.join((xml, xml_qualifier, xml_value, xml_container, xml_shape, xml_type_renderer_id, additional_in_xml, ' />\n'))
 
+
+def _do_quote(elem):
+    """ Quote the elem safely,
+    e.g. encoding it first if necessary and decoding again after quoting.
+
+    Note that strings in Python 2 are 'str' or 'unicode' types,
+    'quote' function works only with 'str' and 'unicode' in ASCII types.
+    In Python 3 all strings are unicode and have 'str' type,
+    'quote' function works well with 'str' and 'bytes' types.
+
+    :param elem: name or value of variable
+    :type elem: str, unicode, bytes
+    :return: elem in UTF-8
+    :rtype: unicode, str
+    """
+    if not IS_PY3K:
+        if elem.__class__.__name__ == 'unicode':
+            # unicode to str
+            result = elem.encode('utf-8')
+            result = quote(result, '/>_= ')
+            # str to unicode in UTF-8
+            result = result.decode('utf-8')
+        else:
+            result = quote(elem, '/>_= ')
+    else:
+        result = quote(elem, '/>_= ')
+
+    return result

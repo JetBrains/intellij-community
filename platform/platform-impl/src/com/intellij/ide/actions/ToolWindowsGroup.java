@@ -26,6 +26,11 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     Project project = getEventProject(e);
     if (project == null) return EMPTY_ARRAY;

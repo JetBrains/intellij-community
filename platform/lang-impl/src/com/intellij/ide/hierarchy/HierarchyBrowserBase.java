@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.CommonActionsManager;
@@ -182,7 +182,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
         }
       }
     }
-    return list.toArray(new HierarchyNodeDescriptor[0]);
+    return list.toArray(HierarchyNodeDescriptor.EMPTY_ARRAY);
   }
 
   protected PsiElement @NotNull [] getSelectedElements() {
@@ -249,6 +249,9 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
       if (tree != null) {
         return new DefaultTreeExpander(tree);
       }
+    }
+    if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
+      return getSelectedDescriptors();
     }
     return super.getData(dataId);
   }

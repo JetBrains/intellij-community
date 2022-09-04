@@ -3,14 +3,14 @@ package git4idea.actions
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.actions.VcsQuickActionsToolbarPopup
 import com.intellij.util.IconUtil
 import git4idea.GitVcs
-import git4idea.i18n.GitBundle
-import git4idea.repo.GitRepositoryManager
 import java.awt.Dimension
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -26,6 +26,7 @@ class GitQuickActionsToolbarService {
   fun initializationComplete() {
     gitMappingInitialized = true
   }
+
   companion object {
     fun getInstance(project: Project): GitQuickActionsToolbarService = project.getService(GitQuickActionsToolbarService::class.java)
   }
@@ -51,11 +52,8 @@ internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
       presentation.isEnabledAndVisible = false
       return
     }
-    else {
-      presentation.isEnabledAndVisible = true
-    }
 
-
+    presentation.isEnabledAndVisible = true
     presentation.icon = AllIcons.Actions.More.toSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
   }
 

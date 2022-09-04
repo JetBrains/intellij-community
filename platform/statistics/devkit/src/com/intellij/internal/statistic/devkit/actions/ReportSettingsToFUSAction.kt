@@ -2,10 +2,14 @@
 package com.intellij.internal.statistic.devkit.actions
 
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
-class ReportSettingsToFUSAction : DumbAwareAction() {
+internal class ReportSettingsToFUSAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     for (tracker in FeatureUsageStateEventTracker.EP_NAME.extensions) {
       tracker.reportNow()

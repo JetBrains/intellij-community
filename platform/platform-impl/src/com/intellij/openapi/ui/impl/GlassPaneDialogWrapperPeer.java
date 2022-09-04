@@ -308,6 +308,11 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     return DialogWrapperPeerImpl.isHeadlessEnv();
   }
 
+  @Override
+  public void setOnDeactivationAction(@NotNull Disposable disposable, @NotNull Runnable onDialogDeactivated) {
+    throw new UnsupportedOperationException("Not implemented in " + getClass().getCanonicalName());
+  }
+
   //[kirillk] for now it only deals with the TaskWindow under Mac OS X: modal dialogs are shown behind JBPopup
   //hopefully this whole code will go away
   private void hidePopupsIfNeeded() {

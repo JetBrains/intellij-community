@@ -35,7 +35,7 @@ private const val RECENT_TW_TAG = "recentWindows"
 @ApiStatus.Internal
 @State(name = "ToolWindowManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 class ToolWindowManagerStateImpl(private val project: Project) : ToolWindowManagerState {
-  private val isNewUi get() = ExperimentalUI.isNewUI()
+  private val isNewUi = ExperimentalUI.isNewUI()
 
   override var layout = DesktopLayout()
   override var noStateLoaded = false

@@ -19,17 +19,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import icons.XpathIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AssociationsGroup extends ActionGroup {
-
-    public AssociationsGroup() {
-        getTemplatePresentation().setIcon(XpathIcons.Association);
-    }
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
@@ -64,7 +59,12 @@ public class AssociationsGroup extends ActionGroup {
         e.getPresentation().setEnabled(isEnabled(e));
     }
 
-    private static boolean isEnabled(@Nullable AnActionEvent e) {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  private static boolean isEnabled(@Nullable AnActionEvent e) {
         if (e == null) return false;
         final PsiFile psiFile = getPsiFile(e);
         if (psiFile == null) return false;

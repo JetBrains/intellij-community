@@ -27,6 +27,8 @@ public class StreamPostfixTemplate extends StringBasedPostfixTemplate {
   private static final Condition<PsiElement> IS_SUPPORTED_ARRAY = element -> {
     if (!(element instanceof PsiExpression)) return false;
 
+    if (element instanceof PsiAssignmentExpression && element.getParent() instanceof PsiExpressionStatement) return false;
+
     PsiType type = ((PsiExpression)element).getType();
     if (!(type instanceof PsiArrayType)) return false;
 

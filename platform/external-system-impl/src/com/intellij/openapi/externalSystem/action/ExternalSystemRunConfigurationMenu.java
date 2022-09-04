@@ -7,10 +7,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Constraints;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
@@ -70,6 +67,11 @@ public final class ExternalSystemRunConfigurationMenu extends DefaultActionGroup
     super.update(e);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static class ExecuteExternalSystemRunConfigurationAction extends AnAction {
     private final Executor myExecutor;
     private final boolean myEnabled;
@@ -102,6 +104,11 @@ public final class ExternalSystemRunConfigurationMenu extends DefaultActionGroup
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myEnabled);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }

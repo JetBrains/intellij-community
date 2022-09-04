@@ -47,6 +47,7 @@ open class GHOpenInBrowserActionGroup
     e.presentation.isEnabledAndVisible = !data.isNullOrEmpty()
     e.presentation.isPerformGroup = data?.size == 1
     e.presentation.isPopupGroup = true
+    e.presentation.isDisableGroupIfEmpty = false
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
@@ -60,8 +61,6 @@ open class GHOpenInBrowserActionGroup
   override fun actionPerformed(e: AnActionEvent) {
     getData(e.dataContext)?.let { GithubOpenInBrowserAction(it.first()) }?.actionPerformed(e)
   }
-
-  override fun disableIfNoVisibleChildren(): Boolean = false
 
   protected open fun getData(dataContext: DataContext): List<Data>? {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return null

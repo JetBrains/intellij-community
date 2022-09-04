@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.customization.CustomizationConfigurable;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -18,5 +19,10 @@ public class CustomizeUIAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     ShowSettingsUtil.getInstance().showSettingsDialog(e.getData(CommonDataKeys.PROJECT), CustomizationConfigurable.class);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

@@ -100,7 +100,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       VcsConfiguration.getInstance(project).apply {
         REFORMAT_BEFORE_PROJECT_COMMIT = false
         LAST_COMMIT_MESSAGE = lastCommitMessage
-        myLastCommitMessages = mutableListOf(lastCommitMessage)
+        setRecentMessages(listOf(lastCommitMessage))
       }
 
       val commitWorkflowHandler: AbstractCommitWorkflowHandler<*, *> = ChangesViewManager.getInstanceEx(project).commitWorkflowHandler

@@ -11,6 +11,7 @@ import com.intellij.ide.structureView.impl.StructureViewComposite;
 import com.intellij.ide.util.FileStructurePopup;
 import com.intellij.ide.util.StructureViewCompositeModel;
 import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -103,6 +104,11 @@ public class ViewStructureAction extends DumbAwareAction {
                       (!Boolean.TRUE.equals(EditorTextField.SUPPLEMENTARY_KEY.get(editor))) &&
                       fileEditor.getStructureViewBuilder() != null;
     e.getPresentation().setEnabled(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @NotNull

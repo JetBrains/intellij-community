@@ -114,14 +114,12 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
     };
     ActionGroup settingsGroup = new ActionGroup(DvcsBundle.message("action.BranchActionGroupPopup.settings.text"), true) {
+      {
+        getTemplatePresentation().setHideGroupIfEmpty(true);
+      }
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         return mySettingsActions.toArray(AnAction.EMPTY_ARRAY);
-      }
-
-      @Override
-      public boolean hideIfNoVisibleChildren() {
-        return true;
       }
     };
     settingsGroup.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);

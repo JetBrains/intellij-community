@@ -263,7 +263,7 @@ public final class ActionsTreeUtil {
     path.add(groupName);
 
     ActionManager actionManager = ActionManager.getInstance();
-    Group group = new Group(groupName, actionManager.getId(actionGroup), null);
+    Group group = new Group(groupName, actionManager.getId(actionGroup), actionGroup.getTemplatePresentation().getIcon());
     List<AnAction> children = ContainerUtil.newArrayList(getActions(actionGroup, actionManager));
 
     for (ActionUrl actionUrl : actionUrls) {
@@ -719,6 +719,11 @@ public final class ActionsTreeUtil {
   @Nls
   public static String getExperimentalToolbar(){
     return KeyMapBundle.message("experimental.toolbar.title");
+  }
+
+  @Nls
+  public static String getExperimentalToolbarXamarin(){
+    return KeyMapBundle.message("experimental.toolbar.xamarin.title");
   }
 
   @Nls

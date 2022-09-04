@@ -28,6 +28,11 @@ public class OpenAlienProjectAction extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     for (@NlsSafe String path : myProjectPaths) {

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
 import org.intellij.lang.annotations.JdkConstants;
@@ -76,6 +77,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   private boolean myWorksInInjected;
   private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
   private List<Supplier<@Nls String>> mySynonyms = Collections.emptyList();
+
+  private Boolean myUpdateNotOverridden;
 
   /**
    * Creates a new action with its text, description and icon set to {@code null}.
@@ -164,6 +167,34 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     presentation.setText(dynamicText);
     presentation.setDescription(dynamicDescription);
     presentation.setIcon(icon);
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    if (PossiblyDumbAware.super.isDumbAware()) {
+      return true;
+    }
+    return updateNotOverridden();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    if (this instanceof UpdateInBackground && ((UpdateInBackground)this).isUpdateInBackground()) {
+      return ActionUpdateThread.BGT;
+    }
+    if (updateNotOverridden()) {
+      return ActionUpdateThread.BGT;
+    }
+    return ActionUpdateThreadAware.super.getActionUpdateThread();
+  }
+
+  private boolean updateNotOverridden() {
+    if (myUpdateNotOverridden != null) {
+      return myUpdateNotOverridden;
+    }
+    Class<?> declaringClass = ReflectionUtil.getMethodDeclaringClass(getClass(), "update", AnActionEvent.class);
+    myUpdateNotOverridden = AnAction.class.equals(declaringClass);
+    return myUpdateNotOverridden;
   }
 
   /**
@@ -306,6 +337,11 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
       presentation = createTemplatePresentation();
       LOG.assertTrue(presentation.isTemplate(), "Not a template presentation");
       myTemplatePresentation = presentation;
+      if (this instanceof ActionGroup) { // init group flags from deprecated methods
+        //myTemplatePresentation.setPopupGroup(((ActionGroup)this).isPopup());
+        myTemplatePresentation.setHideGroupIfEmpty(((ActionGroup)this).hideIfNoVisibleChildren());
+        myTemplatePresentation.setDisableGroupIfEmpty(((ActionGroup)this).disableIfNoVisibleChildren());
+      }
     }
     return presentation;
   }

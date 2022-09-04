@@ -273,12 +273,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void update() {
-    // the following code mirrors the ActionUpdater#updateActionReal code
-    boolean wasPopup = myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup();
-    myPresentation.setPopupGroup(myAction instanceof ActionGroup && (myPresentation.isPopupGroup() || wasPopup));
     AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);
     ActionUtil.performDumbAwareUpdate(myAction, e, false);
-    ActionUpdater.assertActionGroupPopupStateIsNotChanged(myAction, myPlace, wasPopup, myPresentation);
     updateToolTipText();
     updateIcon();
   }

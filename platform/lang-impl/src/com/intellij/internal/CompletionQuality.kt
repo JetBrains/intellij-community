@@ -16,6 +16,7 @@ import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -356,11 +357,13 @@ internal class CompletionQualityStatsAction : AnAction() {
         catch (e: Throwable) {
           LOG.error(e)
         }
-      }, ModalityState.NON_MODAL)
+                                                        }, ModalityState.NON_MODAL)
 
       return Pair(result, total)
     }
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.project != null

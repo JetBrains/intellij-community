@@ -2,6 +2,7 @@
 package com.intellij.ide
 
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.ui.IdeUICustomization
@@ -16,6 +17,10 @@ class IdeDependentActionGroup : DefaultActionGroup() {
     if (actionText != null) {
       e.presentation.text = actionText
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun isDumbAware(): Boolean {

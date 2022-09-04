@@ -42,7 +42,7 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
       for (toolList in profile.myTools.values) {
         val tools = myTools[toolList.shortName]!!
         val defaultState = toolList.defaultState
-        tools.setDefaultState(copyToolSettings(defaultState.tool), defaultState.isEnabled, defaultState.level, defaultState.editorAttributesKeyString)
+        tools.setDefaultState(copyToolSettings(defaultState.tool), defaultState.isEnabled, defaultState.level, defaultState.editorAttributesExternalName)
         tools.removeAllScopes()
         val nonDefaultToolStates = toolList.nonDefaultTools
         if (nonDefaultToolStates != null) {
@@ -55,7 +55,7 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
             else {
               tools.addTool(scope, toolWrapper, state.isEnabled, state.level)
             }
-            state.editorAttributesKey?.externalName?.let { tool.setEditorAttributesKey(it) }
+            state.editorAttributesKey?.externalName?.let { tool.setEditorAttributesExternalName(it) }
           }
         }
         tools.isEnabled = toolList.isEnabled

@@ -2,6 +2,7 @@
 
 package com.intellij.internal
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.DialogBuilder
@@ -14,7 +15,10 @@ import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 
-class ShowPoweredProgressAction : AnAction("Show Powered Progress") {
+internal class ShowPoweredProgressAction : AnAction("Show Powered Progress") {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     val builder = DialogBuilder()
     builder.addAction(object : AbstractAction("Restart Indicators") {

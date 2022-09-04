@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -97,6 +98,11 @@ public class ShowBaseRevisionAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     boolean isEnabled = AbstractShowDiffAction.isEnabled(e.getDataContext(), false);
     e.getPresentation().setEnabled(isEnabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   static class NotificationPanel extends JPanel {

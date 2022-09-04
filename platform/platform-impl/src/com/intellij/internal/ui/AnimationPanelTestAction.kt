@@ -3,6 +3,7 @@ package com.intellij.internal.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.application.ex.ClipboardUtil
@@ -45,7 +46,7 @@ import javax.swing.border.CompoundBorder
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 
-class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
+internal class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
 
   private class DemoPanel(val disposable: Disposable, val bezier: () -> Easing) : BorderLayoutPanel() {
 
@@ -677,6 +678,8 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
     }
 
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     object : DialogWrapper(e.project) {

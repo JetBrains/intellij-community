@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -17,6 +18,11 @@ public class ToggleDetailsAction extends ShowDiffPreviewAction {
     ChangesViewManager changesViewManager = getChangesViewManager(project);
     if (changesViewManager == null) return;
     e.getPresentation().setEnabledAndVisible(changesViewManager.isDiffPreviewAvailable());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

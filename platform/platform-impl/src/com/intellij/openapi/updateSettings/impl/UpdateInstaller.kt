@@ -43,7 +43,7 @@ internal object UpdateInstaller {
 
     val files = mutableListOf<File>()
     val product = ApplicationInfo.getInstance().build.productCode
-    val jdk = getJdkSuffix()
+    val jdk = getRuntimeSuffix()
     val share = 1.0 / (chain.size - 1)
 
     for (i in 1 until chain.size) {
@@ -192,8 +192,8 @@ internal object UpdateInstaller {
 
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
 
-  private fun getJdkSuffix(): String = when {
-    SystemInfo.isLinux && !Files.isDirectory(Path.of(PathManager.getHomePath(), "jbr")) -> "-no-jbr"
+  private fun getRuntimeSuffix(): String = when {
+    SystemInfo.isUnix && !SystemInfo.isMac && !Files.isDirectory(Path.of(PathManager.getHomePath(), "jbr")) -> "-no-jbr"
     (SystemInfo.isMac || SystemInfo.isLinux) && CpuArch.isArm64() -> "-jbr11-aarch64"
     else -> "-jbr11"
   }

@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -207,6 +208,7 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
     lastIds = filteredIds
     isActive = filtered.size > 1
     super.actionsUpdated(forced, if (isActive) filtered else newVisibleActions)
+    ApplicationManager.getApplication().messageBus.syncPublisher(ToolbarActionsUpdatedListener.TOPIC).actionsUpdated()
   }
 
   protected open fun traceState(lastIds: List<String>, filteredIds: List<String>, ides: List<String>) {

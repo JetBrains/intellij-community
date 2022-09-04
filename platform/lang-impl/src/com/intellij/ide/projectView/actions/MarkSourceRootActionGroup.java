@@ -16,6 +16,7 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
@@ -38,5 +39,10 @@ public class MarkSourceRootActionGroup extends ActionGroup {
       actions.add(new MarkSourceRootAction(type));
     }
     return actions.toArray(AnAction.EMPTY_ARRAY);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

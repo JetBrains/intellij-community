@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.debugger.containerview;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -50,6 +51,11 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
   private static TreePath @Nullable [] getSelectedPaths(DataContext dataContext) {
     XDebuggerTree tree = XDebuggerTree.getTree(dataContext);
     return tree == null ? null : tree.getSelectionPaths();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

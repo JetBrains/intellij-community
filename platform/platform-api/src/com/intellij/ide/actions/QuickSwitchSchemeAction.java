@@ -41,6 +41,11 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     DefaultActionGroup group = new DefaultActionGroup();

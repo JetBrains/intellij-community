@@ -28,6 +28,11 @@ public interface JBAccountInfoService {
   @Nullable
   JBAccountInfoService.JBAData getUserData();
 
+  @Nullable
+  default String getAuthToken() {
+    return null;
+  }
+
   void invokeJBALogin(@Nullable Consumer<? super String> userIdConsumer, @Nullable Runnable onFailure);
 
   @Nullable

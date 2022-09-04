@@ -20,3 +20,10 @@ public class PrintFormatAnnotation {
     execute3("SELECT %s FROM %d", "SELECT %d FROM %s", "s", 2);
   }
 }
+class X {
+  X(@PrintFormat String format, Object... args) {}
+
+  void test() {
+    new <warning descr="Too few arguments for format string (found: 0, expected: 1)">X</warning>("Hello %s");
+  }
+}

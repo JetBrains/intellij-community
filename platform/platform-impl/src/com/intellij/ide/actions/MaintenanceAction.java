@@ -4,10 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import org.jetbrains.annotations.NotNull;
@@ -23,5 +20,10 @@ final class MaintenanceAction extends AnAction implements DumbAware, LightEditCo
     JBPopupFactory.getInstance().
       createActionGroupPopup(IdeBundle.message("popup.title.maintenance"), group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true).
       showInFocusCenter();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

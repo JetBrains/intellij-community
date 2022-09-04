@@ -15,16 +15,19 @@ import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.PotemkinProgress;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,17 +39,22 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
+import java.util.function.LongSupplier;
 
-public class ActionUpdatesBenchmarkAction extends DumbAwareAction {
+@ApiStatus.Internal
+@IntellijInternalApi
+public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
+
 
   private static final Logger LOG = Logger.getInstance(ActionUpdatesBenchmarkAction.class);
 
   private static final long MIN_REPORTED_UPDATE_MILLIS = 5;
   private static final long MIN_REPORTED_NO_CHECK_CANCELED_MILLIS = 20;
 
-  /** @noinspection StaticNonFinalField */
-  public static Consumer<? super String> ourMissingKeysConsumer;
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -158,8 +166,10 @@ public class ActionUpdatesBenchmarkAction extends DumbAwareAction {
                                             @NotNull Component component,
                                             @NotNull MyRunner activityRunner) {
     ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
+    boolean isDumb = DumbService.isDumb(project);
     List<Pair<Integer, String>> results = new ArrayList<>();
-    List<Pair<String, String>> results2 = new ArrayList<>();
+    int[] actionUpdateThreadCounts = new int[ActionUpdateThread.values().length];
+    List<String> oldEdtActionNames = new ArrayList<>();
 
     DataContext rawContext = DataManager.getInstance().getDataContext(component);
 
@@ -180,6 +190,17 @@ public class ActionUpdatesBenchmarkAction extends DumbAwareAction {
       }
     });
     LOG.info(TimeoutUtil.getDurationMillis(startPrecache) + " ms to pre-cache data-context");
+    Set<String> nonUniqueClasses = new HashSet<>();
+    {
+      Set<String> visited = new HashSet<>();
+      for (String id : actionManager.getActionIds()) {
+        AnAction action = actionManager.getAction(id);
+        if (action == null) continue;
+        if (action.getClass() == DefaultActionGroup.class) continue;
+        String className = action.getClass().getName();
+        if (!visited.add(className)) nonUniqueClasses.add(className);
+      }
+    }
 
     int count = 0;
     long startActions = System.nanoTime();
@@ -187,48 +208,52 @@ public class ActionUpdatesBenchmarkAction extends DumbAwareAction {
       AnAction action = actionManager.getAction(id);
       if (action == null) continue;
       if (action.getClass() == DefaultActionGroup.class) continue;
+      if (isDumb && !DumbService.isDumbAware(action)) continue;
+      ActionUpdateThread updateThread = action.getActionUpdateThread();
+      String className = action.getClass().getName();
+      String actionIdIfNeeded = nonUniqueClasses.contains(className) ? " (" + id + ")" : "";
+      String actionName = className + actionIdIfNeeded;
       ProgressManager.checkCanceled();
+      actionUpdateThreadCounts[updateThread.ordinal()] ++;
+      if (updateThread == ActionUpdateThread.OLD_EDT) {
+        oldEdtActionNames.add(actionName);
+      }
       AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.MAIN_MENU, wrappedContext);
-      ReadAction.run(() -> {
-        HashSet<String> ruleKeys = new HashSet<String>();
-        long elapsed;
-        String actionName = action.getClass().getName();
-        try {
-          ourMissingKeysConsumer = ruleKeys::add;
-          elapsed = activityRunner.run(actionName, id, () -> ActionUtil.performDumbAwareUpdate(action, event, true));
-        }
-        finally {
-          ourMissingKeysConsumer = null;
-        }
-        if (elapsed > 0) {
-          results.add(Pair.create((int)elapsed, actionName));
-        }
-        ActionUpdateThread updateThread = action.getActionUpdateThread();
-        if (updateThread == ActionUpdateThread.OLD_EDT) {
-          if (ruleKeys.isEmpty()) {
-            if (event.getPresentation().isEnabled()) {
-              results2.add(Pair.create("UI only?", actionName));
-            }
-          }
-          else {
-            results2.add(Pair.create(ContainerUtil.sorted(ruleKeys).toString(), actionName));
-          }
-        }
-      });
+      runAndMeasure(results, actionName,
+                    () -> activityRunner.run(actionName, id, () -> ActionUtil.performDumbAwareUpdate(action, event, true)));
       count++;
+      if (!(action instanceof ActionGroup)) continue;
+      String childrenActionName = className + ".getChildren(" + (event.getPresentation().isEnabled() ? "+" : "-") + ")" + actionIdIfNeeded;
+      runAndMeasure(results, childrenActionName,
+                    () -> activityRunner.run(actionName, id, () -> ((ActionGroup)action).getChildren(event)));
     }
     long elapsedActions = TimeoutUtil.getDurationMillis(startActions);
-    LOG.info(elapsedActions + " ms total to update " + count + " actions");
+    LOG.info(elapsedActions + " ms total to update " + count + " registered actions");
     results.sort(Comparator.comparingInt(o -> -o.first));
     for (Pair<Integer, String> result : results) {
       if (result.first < MIN_REPORTED_UPDATE_MILLIS) break;
       LOG.info(result.first + " ms - " + result.second);
     }
-    LOG.info("---- slow data usage for " + results2.size() + " actions ---- ");
-    results2.sort(Pair.comparingByFirst());
-    for (Pair<String, String> pair : results2) {
-      LOG.info(pair.first + " - " + pair.second);
+    StringBuilder sb = new StringBuilder();
+    sb.append("---- action-update-thread stats ----\n");
+    sb.append(StringUtil.join(ActionUpdateThread.values(), t -> actionUpdateThreadCounts[t.ordinal()] + ":" + t.name(), ", "));
+    sb.append("... see the list of registered OLD_EDT actions below:");
+    oldEdtActionNames.sort(String::compareTo);
+    for (String name : oldEdtActionNames) {
+      sb.append("\n").append(name);
     }
+    LOG.info(sb.toString());
+  }
+
+  private static void runAndMeasure(@NotNull List<Pair<Integer, String>> results,
+                                    @NotNull String actionName,
+                                    @NotNull LongSupplier runnable) {
+    ReadAction.run(() -> {
+      long elapsed = runnable.getAsLong();
+      if (elapsed > 0) {
+        results.add(Pair.create((int)elapsed, actionName));
+      }
+    });
   }
 
   private static class TraceData {

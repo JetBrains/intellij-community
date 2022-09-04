@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.externalSystem.dependency.analyzer.*
@@ -63,6 +64,8 @@ class NavigatorDependencyAnalyzerAction : DependencyAnalyzerAction() {
   override fun setSelectedState(view: DependencyAnalyzerView, e: AnActionEvent) {
     viewAction.setSelectedState(view, e)
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
 
 class ProjectViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<Module>() {
@@ -77,6 +80,8 @@ class ProjectViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<Mod
     }
     return null
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun getModule(e: AnActionEvent, selectedData: Module): Module {
     return selectedData

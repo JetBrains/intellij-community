@@ -99,4 +99,9 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
     p.setVisible(visible);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
 }

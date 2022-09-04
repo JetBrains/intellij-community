@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.ui.actions.scrolling
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
@@ -20,6 +21,10 @@ class AutoScrollAction : ToggleAction(), DumbAware {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabled = MarkdownActionUtil.findSplitEditor(e) is MarkdownEditorWithPreview
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {

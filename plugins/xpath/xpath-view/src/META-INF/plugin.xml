@@ -231,7 +231,7 @@
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="RefactoringMenu" />
     </group>
 
-    <group id="XPathView.XSLT.Associations" popup="true"
+    <group id="XPathView.XSLT.Associations" popup="true" icon="XpathIcons.Association"
            class="org.intellij.lang.xpath.xslt.associations.impl.AssociationsGroup">
       <add-to-group group-id="XPathView.EditorPopup" anchor="last"
                     relative-to-action="XPathView.Actions.ShowPathDescription" />

@@ -182,7 +182,7 @@ private fun startNewConsoleInstance(project: Project,
     consoleRunnerFactory.createConsoleRunner(project, null)
   }
   else {
-    consoleRunnerFactory.createConsoleRunnerWithFile(project, null, config)
+    consoleRunnerFactory.createConsoleRunnerWithFile(project, config)
   }
   runner.addConsoleListener { consoleView ->
     if (consoleView is PyCodeExecutor) {

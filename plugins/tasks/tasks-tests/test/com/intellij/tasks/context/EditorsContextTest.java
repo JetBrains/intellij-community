@@ -19,7 +19,7 @@ public class EditorsContextTest extends FileEditorManagerTestCase {
     VirtualFile file = getFile("/foo.txt");
     myManager.openFile(file, /* focusEditor = */ false);
     DockManager dockManager = DockManager.getInstance(getProject());
-    assertThat(dockManager.getContainers()).hasSize(1);
+    assertThat(dockManager.getContainers()).withFailMessage(dockManager.getContainers().toString()).hasSize(1);
     myManager.initDockableContentFactory();
 
     myManager.openFileInNewWindow(file);

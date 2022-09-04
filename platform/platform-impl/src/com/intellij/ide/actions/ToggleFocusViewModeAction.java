@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.EditorFactory;
@@ -24,5 +25,10 @@ public class ToggleFocusViewModeAction extends ToggleAction {
 
     EditorFactory.getInstance().refreshAllEditors();
     DaemonCodeAnalyzer.getInstance(project).restart();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

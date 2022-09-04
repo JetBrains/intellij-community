@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
@@ -32,12 +33,13 @@ public class ProjectGroupActionGroup extends DefaultActionGroup implements DumbA
     super(group.getName(), children);
     myGroup = group;
   }
+
   @Override
-  public boolean isPopup() {
-    return !myGroup.isExpanded();
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setPopupGroup(!myGroup.isExpanded());
   }
 
-  public ProjectGroup getGroup() {
+  public @NotNull ProjectGroup getGroup() {
     return myGroup;
   }
 }

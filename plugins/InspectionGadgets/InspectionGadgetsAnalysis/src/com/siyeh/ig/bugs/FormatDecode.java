@@ -504,18 +504,20 @@ public final class FormatDecode {
       return myExpression;
     }
     
-    public static FormatArgument extract(PsiMethodCallExpression expression, List<String> methodNames, List<String> classNames) {
+    public static FormatArgument extract(@NotNull PsiCallExpression expression, List<String> methodNames, List<String> classNames) {
       final PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList == null) return null;
       PsiExpression[] arguments = argumentList.getExpressions();
 
       final PsiExpression formatArgument;
       int formatArgumentIndex;
-      if (FormatUtils.STRING_FORMATTED.matches(expression)) {
-        formatArgument = expression.getMethodExpression().getQualifierExpression();
+      if (expression instanceof PsiMethodCallExpression && FormatUtils.STRING_FORMATTED.matches(expression)) {
+        formatArgument = ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression();
         formatArgumentIndex = 0;
       }
       else {
-        if (!FormatUtils.isFormatCall(expression, methodNames, classNames)) {
+        if (!(expression instanceof PsiMethodCallExpression) ||
+            !FormatUtils.isFormatCall((PsiMethodCallExpression)expression, methodNames, classNames)) {
           return fromPrintFormatAnnotation(expression);
         }
 
@@ -533,9 +535,9 @@ public final class FormatDecode {
       return new FormatArgument(formatArgumentIndex, formatArgument);
     }
 
-    private static FormatArgument fromPrintFormatAnnotation(@NotNull PsiMethodCallExpression call) {
+    private static FormatArgument fromPrintFormatAnnotation(@NotNull PsiCallExpression call) {
       PsiExpressionList argList = call.getArgumentList();
-      if (argList.isEmpty()) return null;
+      if (argList == null || argList.isEmpty()) return null;
       PsiMethod method = call.resolveMethod();
       if (method == null) return null;
       PsiParameter[] parameters = method.getParameterList().getParameters();

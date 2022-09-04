@@ -14,6 +14,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -377,6 +378,11 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     Project project = getEventProject(e);
     e.getPresentation().setEnabled(project != null && !project.isDefault());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static class MyContentIterator implements ContentIterator {

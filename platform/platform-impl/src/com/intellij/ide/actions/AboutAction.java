@@ -3,10 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -20,6 +17,11 @@ public class AboutAction extends AnAction implements DumbAware, LightEditCompati
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(!ActionPlaces.isMacSystemMenuAction(e));
     e.getPresentation().setDescription(ActionsBundle.message("action.About.description.specialized", ApplicationNamesInfo.getInstance().getFullProductName()));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

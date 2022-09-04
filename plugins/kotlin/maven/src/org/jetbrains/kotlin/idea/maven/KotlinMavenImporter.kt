@@ -2,8 +2,6 @@
 
 package org.jetbrains.kotlin.idea.maven
 
-import com.intellij.icons.AllIcons
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.PersistentStateComponent
@@ -12,9 +10,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -29,7 +24,6 @@ import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.resolved
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -39,10 +33,10 @@ import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.compilerRunner.ArgumentUtils
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.framework.detectLibraryKind
@@ -76,7 +70,6 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
 
         const val KOTLIN_PLUGIN_SOURCE_DIRS_CONFIG = "sourceDirs"
 
-        private val NOTIFICATION_KEY = Key<Boolean>("NOTIFICATION_KEY")
         private val KOTLIN_JVM_TARGET_6_NOTIFICATION_DISPLAYED = Key<Boolean>("KOTLIN_JVM_TARGET_6_NOTIFICATION_DISPLAYED")
         private val KOTLIN_JPS_VERSION_ACCUMULATOR = Key<IdeKotlinVersion>("KOTLIN_JPS_VERSION_ACCUMULATOR")
     }
@@ -88,7 +81,6 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         modifiableModelsProvider: IdeModifiableModelsProvider
     ) {
         KotlinJpsPluginSettings.getInstance(module.project)?.dropExplicitVersion()
-        module.project.putUserData(NOTIFICATION_KEY, null)
         module.project.putUserData(KOTLIN_JVM_TARGET_6_NOTIFICATION_DISPLAYED, null)
         module.project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
     }
@@ -108,9 +100,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             contributeSourceDirectories(mavenProject, module, rootModel)
         }
 
-        if (MavenRunner.getInstance(module.project).settings.isDelegateBuildToMaven ||
-            !KotlinJpsPluginSettings.isUnbundledJpsExperimentalFeatureEnabled(module.project)
-        ) {
+        if (!KotlinJpsPluginSettings.isUnbundledJpsExperimentalFeatureEnabled(module.project)) {
             return
         }
         val mavenPlugin = mavenProject.findKotlinMavenPlugin() ?: return
@@ -127,23 +117,12 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
     ) {
         super.postProcess(module, mavenProject, changes, modifiableModelsProvider)
         module.project.getUserData(KOTLIN_JPS_VERSION_ACCUMULATOR)?.let { version ->
-            val message = KotlinMavenBundle.message("checking.kotlin.jps.availability.in.maven.repos")
-            ProgressManager.getInstance().run(
-                object : Task.Backgroundable(module.project, message, true) {
-                    override fun run(indicator: ProgressIndicator) {
-                        val success = KotlinJpsPluginSettings.updateAndDownloadOrDropVersion(
-                            module.project,
-                            version.rawVersion,
-                            indicator,
-                            showNotification = project.getUserData(NOTIFICATION_KEY) != true,
-                        )
-
-                        if (!success) {
-                            project.putUserData(NOTIFICATION_KEY, true)
-                        }
-                    }
-                }
+            KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(
+                module.project,
+                version.rawVersion,
+                isDelegatedToExtBuild = MavenRunner.getInstance(module.project).settings.isDelegateBuildToMaven
             )
+
             module.project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
         }
 
@@ -249,10 +228,6 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
                 arguments.classpath = configuration?.getChild("classpath")?.text
                 arguments.jdkHome = configuration?.getChild("jdkHome")?.text
                 arguments.javaParameters = configuration?.getChild("javaParameters")?.text?.toBoolean() ?: false
-
-                check(PluginManagerCore.getBuildNumber().baselineVersion in setOf(222, 221, 213, 212)) {
-                    "This commit should be present only in 222, 221, 213, 212 platforms"
-                }
 
                 val jvmTarget = configuration?.getChild("jvmTarget")?.text ?: mavenProject.properties["kotlin.compiler.jvmTarget"]?.toString()
                 if (jvmTarget == JvmTarget.JVM_1_6.description &&

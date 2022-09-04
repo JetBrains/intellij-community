@@ -100,6 +100,11 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     e.getPresentation().setEnabledAndVisible(isEnabled);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static void updateShortcut() {
     if (getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID).getShortcuts().length == 0) {
       if (!ourDoubleCtrlRegistered) {

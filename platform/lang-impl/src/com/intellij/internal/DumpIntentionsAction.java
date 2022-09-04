@@ -5,9 +5,9 @@ package com.intellij.internal;
 import com.intellij.codeInsight.intention.impl.config.IntentionActionMetaData;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
@@ -24,15 +24,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class DumpIntentionsAction extends AnAction implements DumbAware {
-  public DumpIntentionsAction() {
+final class DumpIntentionsAction extends AnAction implements DumbAware {
+  DumpIntentionsAction() {
     super(ActionsBundle.messagePointer("action.DumpIntentionsAction.text"));
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    VirtualFile file =
-      FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), event.getData(CommonDataKeys.PROJECT), null);
+    VirtualFile file = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(),
+                                              event.getProject(),
+                                              null);
     if (file == null) {
       return;
     }
@@ -82,6 +88,6 @@ public final class DumpIntentionsAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 }

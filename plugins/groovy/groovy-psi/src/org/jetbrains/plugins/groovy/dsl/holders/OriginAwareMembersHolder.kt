@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl.holders
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -25,6 +26,9 @@ class OriginAwareMembersHolder(private val GDSLOrigin: VirtualFile,
   private fun <T> doWithReporting(invocationTarget: PsiFile, defaultValue: T, runnable: ThrowableComputable<out T, out Throwable>): T {
     try {
       return runnable.compute()
+    }
+    catch (pce: ProcessCanceledException) {
+      throw pce
     }
     catch (e: Exception) {
       if (shouldReportErrors(invocationTarget)) {

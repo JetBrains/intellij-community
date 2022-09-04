@@ -58,7 +58,10 @@ import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -801,7 +804,7 @@ public class SingleInspectionProfilePanel extends JPanel {
               final NamedScope scope = node.getDefaultDescriptor().getScope();
               final boolean doUpdate = myProfile.getEditorAttributesKey(node.getKey(), scope, project) != key;
               if (doUpdate) {
-                myProfile.setEditorAttributesKey(node.getKey().toString(), key.toString(), null, project);
+                myProfile.setEditorAttributesKey(node.getKey().toString(), key.getExternalName(), null, project);
                 toUpdate.add(node);
               }
             }

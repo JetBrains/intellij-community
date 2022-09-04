@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
+import com.intellij.execution.runToolbar.FixWidthSegmentedActionToolbarComponent.Companion.RUN_CONFIG_SCALED_WIDTH
 import com.intellij.execution.runToolbar.components.MouseListenerHelper
 import com.intellij.execution.runToolbar.components.TrimmedMiddleLabel
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -143,7 +144,7 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
 
       override fun getPreferredSize(): Dimension {
         val d = super.getPreferredSize()
-        d.width = FixWidthSegmentedActionToolbarComponent.RUN_CONFIG_WIDTH
+        d.width = RUN_CONFIG_SCALED_WIDTH
         return d
       }
     }

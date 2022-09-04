@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ActiveWindowsWatcher;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -50,5 +51,10 @@ public abstract class AbstractTraverseWindowAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

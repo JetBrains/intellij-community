@@ -3,6 +3,7 @@ package com.intellij.diagnostic
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -28,6 +29,10 @@ internal class AnalyzePluginStartupPerformanceAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.project != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }
 

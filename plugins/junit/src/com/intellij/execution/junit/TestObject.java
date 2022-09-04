@@ -79,7 +79,6 @@ import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.stream.Stream;
 
 public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> implements PossiblyDumbAware {
   private static final String LAUNCHER_MODULE_NAME = "org.junit.platform.launcher";
@@ -315,7 +314,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     DumbService dumbService = DumbService.getInstance(project);
-    PsiClass classFromCommon = dumbService.computeWithAlternativeResolveEnabled(() -> ReadAction.nonBlocking(() -> psiFacade.findClass("org.junit.platform.commons.JUnitException", globalSearchScope)).executeSynchronously());
+    PsiClass classFromCommon = ReadAction.nonBlocking(() -> dumbService.computeWithAlternativeResolveEnabled(() -> psiFacade.findClass("org.junit.platform.commons.JUnitException", globalSearchScope))).executeSynchronously();
 
     String launcherVersion = getVersion(classFromCommon);
     if (launcherVersion == null) {
@@ -325,7 +324,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     boolean isModularized = ensureOnModulePath &&
                             JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_9) &&
-                            ReadAction.nonBlocking(() -> FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, globalSearchScope).length > 0).executeSynchronously() &&
+                            ReadAction.nonBlocking(() -> FilenameIndex.getVirtualFilesByName(PsiJavaModule.MODULE_INFO_FILE, globalSearchScope).size() > 0).executeSynchronously() &&
                             VersionComparatorUtil.compare(launcherVersion, "1.5.0") >= 0;
 
     if (isModularized) { //for modularized junit ensure launcher is included in the module graph
@@ -401,8 +400,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   /**
    * junit 4.12+ must be on the classpath for vintage engine to work correctly.
    * Don't add engine when it will fail to detect tests anyway.
-   * 
-   * Reflection is needed for the case when no sources is attached
+   * <p> 
+   * Reflection is needed for the case when no sources are attached
    */
   private boolean isAcceptableVintageVersion() {
     ClassLoader loader = TestClassCollector.createUsersClassLoader(myConfiguration);
@@ -520,7 +519,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   /**
    * Dependencies for full & forked per module configurations are downloaded; 
-   * 
+   * <p> 
    * Dependencies for forked configurations are stored to be added later in {@link #appendDownloadedDependenciesForForkedConfigurations(JavaParameters, Module)}
    */
   @Override
@@ -758,14 +757,18 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (!files.isEmpty() && ReferencesSearch.search(testEngine, GlobalSearchScope.filesScope(project, files)).anyMatch(ref -> isCustomEngineProvided(testEngine, ref))) {
       return true;
     }
+    PsiManager psiManager = PsiManager.getInstance(project);
     GlobalSearchScope scope = GlobalSearchScope.getScopeRestrictedByFileTypes(globalSearchScope, SPIFileType.INSTANCE);
-    return Stream.of(FilenameIndex.getFilesByName(project, JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, scope))
-                 .flatMap(f -> PsiTreeUtil.findChildrenOfType(f, SPIClassProviderReferenceElement.class).stream())
-                 .map(r -> r.resolve())
-                 .filter(e -> e instanceof PsiClass)
-                 .map(e -> (PsiClass)e)
-                 .filter(c -> isCustomJunit5TestEngineName(c.getQualifiedName()))
-                 .anyMatch(c -> InheritanceUtil.isInheritorOrSelf(c, testEngine, true));
+    return FilenameIndex.getVirtualFilesByName(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, scope)
+      .stream()
+      .map(f -> psiManager.findFile(f))
+      .filter(Objects::nonNull)
+      .flatMap(f -> PsiTreeUtil.findChildrenOfType(f, SPIClassProviderReferenceElement.class).stream())
+      .map(r -> r.resolve())
+      .filter(e -> e instanceof PsiClass)
+      .map(e -> (PsiClass)e)
+      .filter(c -> isCustomJunit5TestEngineName(c.getQualifiedName()))
+      .anyMatch(c -> InheritanceUtil.isInheritorOrSelf(c, testEngine, true));
   }
 
   private static boolean isCustomEngineProvided(PsiClass testEngine, @NotNull PsiReference ref) {

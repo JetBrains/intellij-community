@@ -50,10 +50,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
@@ -492,7 +490,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
       @Override
       protected @NotNull Icon getFallbackIcon(boolean enabled) {
-        return enabled ? AllIcons.Toolbar.Unknown : IconLoader.getDisabledIcon(AllIcons.Toolbar.Unknown);
+        Presentation p = getAction().getTemplatePresentation();
+        Icon icon = Objects.requireNonNullElse(p.getIcon(), AllIcons.Toolbar.Unknown);
+        if (enabled) return icon;
+        if (p.getDisabledIcon() != null) return p.getDisabledIcon();
+        return IconLoader.getDisabledIcon(icon);
       }
     };
 

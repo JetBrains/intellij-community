@@ -55,7 +55,13 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
         e.getPresentation().setIcon(AllIcons.Duplicates.SendToTheRight);
     }
 
+
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+  @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         if (e == null) return AnAction.EMPTY_ARRAY;
         DefaultActionGroup group = new DefaultActionGroup();

@@ -125,22 +125,9 @@ final class ActionUpdater {
     // clone the presentation to avoid partially changing the cached one if update is interrupted
     Presentation presentation = myPresentationFactory.getPresentation(action).clone();
     if (!ActionPlaces.isShortcutPlace(myPlace)) presentation.setEnabledAndVisible(true);
-    boolean wasPopup = action instanceof ActionGroup && ((ActionGroup)action).isPopup(myPlace);
-    presentation.setPopupGroup(action instanceof ActionGroup && (presentation.isPopupGroup() || wasPopup));
     Supplier<Boolean> doUpdate = () -> doUpdate(action, createActionEvent(presentation));
     boolean success = callAction(action, Op.update, doUpdate);
-    if (success) assertActionGroupPopupStateIsNotChanged(action, myPlace, wasPopup, presentation);
     return success ? presentation : null;
-  }
-
-  static void assertActionGroupPopupStateIsNotChanged(@NotNull AnAction action, @NotNull String place,
-                                                      boolean wasPopup, @NotNull Presentation presentation) {
-    if (action instanceof ActionGroup && wasPopup != ((ActionGroup)action).isPopup(place)) {
-      presentation.setPopupGroup(!wasPopup); // keep the old logic for a while
-      String operationName = action.getClass().getSimpleName() + "#" + Op.update + " (" + action.getClass().getName() + ")";
-      LOG.warn("Calling `setPopup()` in " + operationName + ". " +
-               "Please use `event.getPresentation().setPopupGroup()` instead.");
-    }
   }
 
   void applyPresentationChanges() {
@@ -162,7 +149,7 @@ final class ActionUpdater {
   }
 
   private <T> T callAction(@NotNull AnAction action, @NotNull Op operation, @NotNull Supplier<? extends T> call) {
-    String operationName = action.getClass().getSimpleName() + "#" + operation + " (" + action.getClass().getName() + ", " + myPlace + ")";
+    String operationName = Utils.operationName(action, operation.name() + "@" + myPlace);
     return callAction(operationName, action.getActionUpdateThread(), call);
   }
 
@@ -173,7 +160,8 @@ final class ActionUpdater {
     boolean isEDT = EDT.isCurrentThreadEdt();
     boolean shallEDT = !(canAsync && shallAsync);
     if (isEDT && !shallEDT && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
-      LOG.error("Calling on EDT " + operationName + "(" + (myForcedUpdateThread != null ? "forced-" : "") + updateThread + ")");
+      LOG.error("Calling on EDT " + operationName + " that requires " + updateThread +
+                (myForcedUpdateThread != null ? " (forced)" : ""));
     }
     if (myAllowPartialExpand) {
       ProgressManager.checkCanceled();
@@ -497,7 +485,7 @@ final class ActionUpdater {
     });
   }
 
-  private List<AnAction> expandGroupChild(AnAction child, boolean hideDisabled, UpdateStrategy strategy) {
+  private List<AnAction> expandGroupChild(AnAction child, boolean hideDisabledBase, UpdateStrategy strategy) {
     Application application = ApplicationManager.getApplication();
     if (application == null || application.isDisposed()) {
       return Collections.emptyList();
@@ -506,7 +494,7 @@ final class ActionUpdater {
     if (presentation == null) {
       return Collections.emptyList();
     }
-    else if (!presentation.isVisible() || hideDisabled && !presentation.isEnabled()) {
+    else if (!presentation.isVisible() || hideDisabledBase && !presentation.isEnabled()) {
       return Collections.emptyList();
     }
     else if (!(child instanceof ActionGroup)) {
@@ -519,9 +507,11 @@ final class ActionUpdater {
     boolean performOnly = isPopup && canBePerformed && (
       Boolean.TRUE.equals(presentation.getClientProperty(ActionMenu.SUPPRESS_SUBMENU)) ||
       child instanceof AlwaysPerformingActionGroup);
-    boolean hideEmpty = isPopup && group.hideIfNoVisibleChildren();
-    boolean checkChildren = isPopup && (canBePerformed || hideDisabled || hideEmpty) &&
-                            !(performOnly || child instanceof AlwaysVisibleActionGroup);
+    boolean skipChecks = performOnly || child instanceof AlwaysVisibleActionGroup;
+    boolean hideDisabled = isPopup && !skipChecks && hideDisabledBase;
+    boolean hideEmpty = isPopup && !skipChecks && (presentation.isHideGroupIfEmpty() || group.hideIfNoVisibleChildren());
+    boolean disableEmpty = isPopup && !skipChecks && (presentation.isDisableGroupIfEmpty() && group.disableIfNoVisibleChildren());
+    boolean checkChildren = isPopup && !skipChecks && (canBePerformed || hideDisabled || hideEmpty || disableEmpty);
 
     boolean hasEnabled = false, hasVisible = false;
     if (checkChildren) {
@@ -539,20 +529,20 @@ final class ActionUpdater {
     }
     if (isPopup) {
       presentation.putClientProperty(SUPPRESS_SUBMENU_IMPL, performOnly ? true : null);
-      if (checkChildren && !performOnly && !hasVisible && group.disableIfNoVisibleChildren()) {
+      if (!performOnly && !hasVisible && disableEmpty) {
         presentation.setEnabled(false);
       }
     }
 
-    if (checkChildren && (!hasEnabled && hideDisabled || !hasVisible && hideEmpty)) {
+    if (!hasEnabled && hideDisabled || !hasVisible && hideEmpty) {
       return Collections.emptyList();
     }
     else if (isPopup) {
-      return Collections.singletonList(!hideDisabled || child instanceof CompactActionGroup ? group :
-                                       new EmptyAction.DelegatingCompactActionGroup(group));
+      return Collections.singletonList(!hideDisabledBase || child instanceof CompactActionGroup ? group :
+                                       new Compact(group));
     }
     else {
-      return doExpandActionGroup(group, hideDisabled || child instanceof CompactActionGroup, strategy);
+      return doExpandActionGroup(group, hideDisabledBase || child instanceof CompactActionGroup, strategy);
     }
   }
 
@@ -764,6 +754,13 @@ final class ActionUpdater {
                                   @NotNull ActionUpdateThread updateThread,
                                   @NotNull Supplier<? extends T> supplier) {
       return updater.callAction(operationName, updateThread, supplier);
+    }
+  }
+
+  private static class Compact extends ActionGroupWrapper implements CompactActionGroup {
+
+    Compact(@NotNull ActionGroup action) {
+      super(action);
     }
   }
 }

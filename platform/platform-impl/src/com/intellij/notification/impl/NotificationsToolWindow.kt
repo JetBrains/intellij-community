@@ -1631,6 +1631,10 @@ class ClearAllNotificationsAction : DumbAwareAction(IdeBundle.message("clear.all
     e.presentation.isEnabled = NotificationsToolWindowFactory.getNotifications(e.project).isNotEmpty()
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     NotificationsToolWindowFactory.clearAll(e.project)
   }

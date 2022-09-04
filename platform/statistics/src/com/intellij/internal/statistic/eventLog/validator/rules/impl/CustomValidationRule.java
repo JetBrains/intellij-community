@@ -76,16 +76,20 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
 
   @NotNull
   protected static ValidationResultType acceptWhenReportedByJetBrainsPlugin(@NotNull EventContext context) {
+    return isReportedByJetBrainsPlugin(context) ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
+  }
+
+  protected static boolean isReportedByJetBrainsPlugin(@NotNull EventContext context) {
     final Object pluginType = context.eventData.get("plugin_type");
     final PluginType type = pluginType != null ? PluginInfoDetectorKt.findPluginTypeByValue(pluginType.toString()) : null;
     if (type == null || !type.isDevelopedByJetBrains()) {
-      return ValidationResultType.REJECTED;
+      return false;
     }
 
     if (type.isPlatformOrJvm() || type == PluginType.FROM_SOURCES || hasPluginField(context)) {
-      return ValidationResultType.ACCEPTED;
+      return true;
     }
-    return ValidationResultType.REJECTED;
+    return false;
   }
 
   protected static boolean hasPluginField(@NotNull EventContext context) {

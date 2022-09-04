@@ -33,9 +33,8 @@ public abstract class ComputableActionGroup extends ActionGroup implements DumbA
     super(Presentation.NULL_STRING, popup);
   }
 
-  @Override
-  public boolean hideIfNoVisibleChildren() {
-    return true;
+  {
+    getTemplatePresentation().setHideGroupIfEmpty(true);
   }
 
   @Override

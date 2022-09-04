@@ -38,11 +38,6 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  @Override
   protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(GroovyBundle.message("new.class.dialog.title"))

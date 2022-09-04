@@ -251,7 +251,7 @@ object UpdateChecker {
     try {
       indicator?.text = IdeBundle.message("updates.checking.platform")
       val productData = loadProductData(indicator)
-      if (ExternalUpdateManager.ACTUAL != null || productData == null) {
+      if (productData == null || !settings.isCheckNeeded || ExternalUpdateManager.ACTUAL != null) {
         PlatformUpdates.Empty
       }
       else {

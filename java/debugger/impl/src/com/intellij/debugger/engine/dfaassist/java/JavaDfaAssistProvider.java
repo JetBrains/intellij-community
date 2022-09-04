@@ -87,7 +87,7 @@ public class JavaDfaAssistProvider implements DfaAssistProvider {
     if (anchor instanceof PsiWhileStatement || anchor instanceof PsiDoWhileStatement) {
       return anchor;
     }
-    if (anchor instanceof PsiSwitchLabeledRuleStatement) {
+    if (anchor instanceof PsiSwitchLabelStatementBase) {
       return null; // unsupported yet
     }
     PsiElement e = anchor;

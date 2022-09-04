@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -239,6 +240,11 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       ShowSettingsUtil.getInstance().showSettingsDialog(e.getProject(), GutterIconsConfigurable.class);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }

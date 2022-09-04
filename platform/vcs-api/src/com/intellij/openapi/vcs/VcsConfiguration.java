@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
@@ -22,6 +23,7 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 @State(name = "VcsManagerConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class VcsConfiguration implements PersistentStateComponent<VcsConfiguration> {
@@ -167,44 +169,56 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public void saveCommitMessage(final String comment) {
     LAST_COMMIT_MESSAGE = comment;
     if (comment == null || comment.length() == 0) return;
-    myLastCommitMessages.remove(comment);
-    addCommitMessage(comment);
+
+    updateRecentMessages(recentMessages -> {
+      recentMessages.remove(comment);
+      addCommitMessage(recentMessages, comment);
+    });
   }
 
-  private void addCommitMessage(@NotNull String comment) {
-    if (myLastCommitMessages.size() >= MAX_STORED_MESSAGES) {
-      myLastCommitMessages.remove(0);
+  private static void addCommitMessage(@NotNull ArrayList<String> recentMessages, @NotNull String comment) {
+    if (recentMessages.size() >= MAX_STORED_MESSAGES) {
+      recentMessages.remove(0);
     }
-    myLastCommitMessages.add(comment);
+    recentMessages.add(comment);
   }
 
   public String getLastNonEmptyCommitMessage() {
-    if (myLastCommitMessages.isEmpty()) {
-      return null;
-    }
-    else {
-      return myLastCommitMessages.get(myLastCommitMessages.size() - 1);
-    }
+    return ContainerUtil.getLastItem(myLastCommitMessages);
   }
 
   @NotNull
+  @CalledInAny
   public ArrayList<String> getRecentMessages() {
     return new ArrayList<>(myLastCommitMessages);
+  }
+
+  public void setRecentMessages(List<String> messages) {
+    myLastCommitMessages = new ArrayList<>(messages);
+  }
+
+  private void updateRecentMessages(@NotNull Consumer<ArrayList<String>> modification) {
+    ArrayList<String> messages = getRecentMessages();
+    modification.accept(messages);
+    setRecentMessages(messages);
   }
 
   public void replaceMessage(@NotNull String oldMessage, @NotNull String newMessage) {
     if (oldMessage.equals(LAST_COMMIT_MESSAGE)) {
       LAST_COMMIT_MESSAGE = newMessage;
     }
-    int index = myLastCommitMessages.indexOf(oldMessage);
-    if (index >= 0) {
-      myLastCommitMessages.remove(index);
-      myLastCommitMessages.add(index, newMessage);
-    }
-    else {
-      LOG.debug("Couldn't find message [" + oldMessage + "] in the messages history");
-      addCommitMessage(newMessage);
-    }
+
+    updateRecentMessages(recentMessages -> {
+      int index = recentMessages.indexOf(oldMessage);
+      if (index >= 0) {
+        recentMessages.remove(index);
+        recentMessages.add(index, newMessage);
+      }
+      else {
+        LOG.debug("Couldn't find message [" + oldMessage + "] in the messages history");
+        addCommitMessage(recentMessages, newMessage);
+      }
+    });
   }
 
   /**

@@ -16,11 +16,8 @@ import git4idea.repo.GitRepositoryManager
 internal abstract class GitSingleCommitActionGroup() : ActionGroup(), DumbAware {
   constructor(actionText: @NlsActions.ActionText String, isPopup: Boolean) : this() {
     templatePresentation.text = actionText
-    setPopup(isPopup)
-  }
-
-  override fun hideIfNoVisibleChildren(): Boolean {
-    return true
+    templatePresentation.isPopupGroup = isPopup
+    templatePresentation.isHideGroupIfEmpty = true
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {

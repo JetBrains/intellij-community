@@ -16,6 +16,7 @@ class BookmarksViewState : BaseState() {
 
   var groupLineBookmarks by property(true)
   var rewriteBookmarkType by property(false)
+  var askBeforeDeletingLists by property(true)
   var autoscrollFromSource by property(false)
   var autoscrollToSource by property(false)
   var showPreview by property(false)

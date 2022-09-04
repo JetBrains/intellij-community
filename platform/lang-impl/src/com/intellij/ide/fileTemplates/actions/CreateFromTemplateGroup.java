@@ -45,6 +45,11 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e){
     if (e == null) return EMPTY_ARRAY;
     Project project = e.getProject();

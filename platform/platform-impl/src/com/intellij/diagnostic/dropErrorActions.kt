@@ -2,6 +2,7 @@
 package com.intellij.diagnostic
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Attachment
@@ -19,6 +20,7 @@ private fun randomString() = "random exception text ${random.nextLong()}"
 
 @Suppress("HardCodedStringLiteral")
 internal class DropAnErrorAction : DumbAwareAction("Drop an Error", "Hold down SHIFT for a sequence of exceptions", null) {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   override fun actionPerformed(e: AnActionEvent) {
     if (e.modifiers and SHIFT_MASK == 0) {
       Logger.getInstance(TEST_LOGGER).error(TEST_MESSAGE, Exception(randomString()))
@@ -36,6 +38,7 @@ internal class DropAnErrorAction : DumbAwareAction("Drop an Error", "Hold down S
 
 @Suppress("HardCodedStringLiteral")
 internal class DropAnErrorWithAttachmentsAction : DumbAwareAction("Drop an Error with Attachments", "Hold down SHIFT for multiple attachments", null) {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   override fun actionPerformed(e: AnActionEvent) {
     val attachments = if (e.modifiers and SHIFT_MASK == 0) {
       arrayOf(Attachment("attachment.txt", "content"))
@@ -49,6 +52,7 @@ internal class DropAnErrorWithAttachmentsAction : DumbAwareAction("Drop an Error
 
 @Suppress("HardCodedStringLiteral")
 internal class DropPluginErrorAction : DumbAwareAction("Drop an Error in a Random Plugin", "Hold down SHIFT for 3rd-party plugins only", null) {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   override fun actionPerformed(e: AnActionEvent) {
     var plugins = PluginManagerCore.getPlugins()
     if (e.modifiers and SHIFT_MASK != 0) {
@@ -63,6 +67,7 @@ internal class DropPluginErrorAction : DumbAwareAction("Drop an Error in a Rando
 
 @Suppress("HardCodedStringLiteral")
 internal class DropAnOutOfMemoryErrorAction : DumbAwareAction("Drop an OutOfMemoryError", "Hold down SHIFT for OOME in Metaspace", null) {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   override fun actionPerformed(e: AnActionEvent) {
     if (e.modifiers and SHIFT_MASK == 0) {
       val array = arrayOfNulls<Any>(Integer.MAX_VALUE)

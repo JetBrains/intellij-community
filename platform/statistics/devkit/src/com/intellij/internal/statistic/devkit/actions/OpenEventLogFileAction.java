@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -21,7 +22,8 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.internal.statistic.devkit.StatisticsDevKitUtil.STATISTICS_NOTIFICATION_GROUP_ID;
 
-public class OpenEventLogFileAction extends DumbAwareAction {
+public final class OpenEventLogFileAction extends DumbAwareAction {
+
   private final String myRecorderId;
 
   public OpenEventLogFileAction(String recorderId) {
@@ -29,6 +31,16 @@ public class OpenEventLogFileAction extends DumbAwareAction {
           ActionsBundle.message("group.OpenEventLogFileAction.description"),
           AllIcons.FileTypes.Text);
     myRecorderId = recorderId;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 
   @Override
@@ -41,17 +53,16 @@ public class OpenEventLogFileAction extends DumbAwareAction {
     final EventLogFile logFile = StatisticsEventLogProviderUtil.getEventLogProvider(myRecorderId).getActiveLogFile();
     final VirtualFile logVFile = logFile != null ? LocalFileSystem.getInstance().refreshAndFindFileByIoFile(logFile.getFile()) : null;
     if (logVFile == null) {
-      showNotification(project, NotificationType.WARNING, StatisticsBundle.message("stats.there.is.no.active.event.log"));
+      showNotification(project, StatisticsBundle.message("stats.there.is.no.active.event.log"));
       return;
     }
     FileEditorManager.getInstance(project).openFile(logVFile, true);
   }
 
-  protected void showNotification(@NotNull Project project,
-                                  @NotNull NotificationType type,
-                                  @NotNull String message) {
+  private static void showNotification(@NotNull Project project,
+                                       @NotNull String message) {
     String title = StatisticsBundle.message("stats.feature.usage.statistics");
-    new Notification(STATISTICS_NOTIFICATION_GROUP_ID, title, message, type)
+    new Notification(STATISTICS_NOTIFICATION_GROUP_ID, title, message, NotificationType.WARNING)
       .addAction(NotificationAction.createSimple(
         StatisticsBundle.message("stats.enable.data.sharing"),
         () -> new SingleConfigurableEditor(project, new ConsentConfigurable()).show()))

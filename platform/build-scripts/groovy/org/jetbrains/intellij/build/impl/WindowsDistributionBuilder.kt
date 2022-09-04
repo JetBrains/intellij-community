@@ -259,7 +259,7 @@ internal class WindowsDistributionBuilder(
       val appInfoForLauncher = generateApplicationInfoForLauncher(patchedApplicationInfo, icoFilesDirectory)
       @Suppress("SpellCheckingInspection")
       Files.writeString(launcherPropertiesPath, """
-        IDS_JDK_ONLY=$context.productProperties.toolsJarRequired
+        IDS_JDK_ONLY=${context.productProperties.toolsJarRequired}
         IDS_JDK_ENV_VAR=${envVarBaseName}_JDK
         IDS_APP_TITLE=$productName Launcher
         IDS_VM_OPTIONS_PATH=%APPDATA%\\\\${context.applicationInfo.shortCompanyName}\\\\${context.systemSelector}

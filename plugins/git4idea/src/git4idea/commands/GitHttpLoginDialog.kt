@@ -2,6 +2,7 @@
 package git4idea.commands
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
@@ -178,5 +179,9 @@ class TestGitHttpLoginDialogAction : AnAction() {
         Messages.showMessageDialog(e.project, "Regular login", "Git login test", null)
       }
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

@@ -206,7 +206,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
 
     prepareRuntimeTask {
       VcsConfiguration.getInstance(project).apply {
-        myLastCommitMessages = mutableListOf()
+        setRecentMessages(emptyList())
       }
     }
 

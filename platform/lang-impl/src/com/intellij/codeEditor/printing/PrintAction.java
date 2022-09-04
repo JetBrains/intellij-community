@@ -17,6 +17,7 @@
 package com.intellij.codeEditor.printing;
 
 import com.intellij.ide.actions.PrintActionHandler;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
@@ -34,5 +35,10 @@ public class PrintAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     PrintActionHandler handler = PrintActionHandler.getHandler(e.getDataContext());
     e.getPresentation().setEnabled(handler != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

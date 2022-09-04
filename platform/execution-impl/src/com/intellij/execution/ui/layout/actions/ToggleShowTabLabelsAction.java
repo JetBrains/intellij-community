@@ -3,13 +3,19 @@ package com.intellij.execution.ui.layout.actions;
 
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class ToggleShowTabLabelsAction extends DumbAwareToggleAction {
+final class ToggleShowTabLabelsAction extends DumbAwareToggleAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {

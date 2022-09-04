@@ -401,6 +401,7 @@
     <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionContextProvider" />
     <applicationService serviceImplementation="com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionThemeInfoProvider" />
 
+    <projectService serviceImplementation="com.intellij.codeInsight.actions.AsyncActionExecutionService" />
     <config.inlaySettingsProvider implementation="com.intellij.codeInsight.codeVision.settings.CodeVisionInlaySettingProvider" />
 
     <projectService serviceImplementation="com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionCacheService" />

@@ -101,6 +101,8 @@ public class TextContentTest extends BasePlatformTestCase {
 
     assertEquals("| c|", unknownOffsets(joined.markUnknown(new TextRange(0, 1))));
     assertEquals("c|", unknownOffsets(joined.excludeRange(new TextRange(0, 1))));
+    
+    assertEquals(joined, TextContent.joinWithWhitespace(' ', List.of(f1, f2)));
   }
 
   public static String unknownOffsets(TextContent text) {

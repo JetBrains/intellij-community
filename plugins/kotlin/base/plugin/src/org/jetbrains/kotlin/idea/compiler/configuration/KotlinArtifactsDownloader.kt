@@ -63,13 +63,13 @@ object KotlinArtifactsDownloader {
         val context = LazyKotlinJpsPluginClasspathDownloader.Context(project, indicator)
         val jpsPluginClasspath = LazyKotlinJpsPluginClasspathDownloader(jpsVersion).lazyDownload(context)
         if (jpsPluginClasspath.isEmpty()) {
-            onError(failedToDownloadMavenArtifact(project, KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID, jpsVersion))
+            onError(failedToDownloadUnbundledJpsMavenArtifact(project, KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID, jpsVersion))
             return false
         }
 
         val unpackedDist = lazyDownloadAndUnpackKotlincDist(project, jpsVersion, indicator)
         if (unpackedDist == null) {
-            onError(failedToDownloadMavenArtifact(project, KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID, jpsVersion))
+            onError(failedToDownloadUnbundledJpsMavenArtifact(project, KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID, jpsVersion))
             return false
         }
 
@@ -171,9 +171,22 @@ object KotlinArtifactsDownloader {
         RemoteRepositoriesConfiguration.getInstance(project).repositories
 
     @Nls
-    fun failedToDownloadMavenArtifact(project: Project, artifactId: String, version: String) = KotlinBasePluginBundle.message(
-        "failed.to.download.maven.artifact",
-        "$KOTLIN_MAVEN_GROUP_ID:$artifactId:$version",
-        getMavenRepos(project).joinToString("\n") { it.url }
-    )
+    fun failedToDownloadUnbundledJpsMavenArtifact(project: Project, artifactId: String, version: String): String {
+        require(artifactId == KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID || artifactId == KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID) {
+            "$artifactId should be either $KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID or $KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID"
+        }
+        val suggestions = listOf(KotlinBasePluginBundle.message("you.can.use.kotlin.compiler.which.is.bundled.into.your.ide")) +
+                FailedToDownloadJpsMavenArtifactSuggestedSolutionsContributor.getAllContributors(project).mapNotNull { it.getSuggestion() }
+        val suggestion = if (suggestions.size == 1) {
+            @Suppress("HardCodedStringLiteral") // Suppress because it's false positive
+            suggestions.single()
+        } else {
+            KotlinBasePluginBundle.message("suggested.solutions", suggestions.joinToString("\n") { "- $it" })
+        }
+        return KotlinBasePluginBundle.message(
+            "failed.to.download.unbundled.jps.maven.artifact",
+            "$KOTLIN_MAVEN_GROUP_ID:$artifactId:$version",
+            getMavenRepos(project).joinToString("\n") { it.url }.prependIndent()
+        ) + "\n\n" + suggestion
+    }
 }

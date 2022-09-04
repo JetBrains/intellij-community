@@ -3,6 +3,7 @@ package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -112,7 +113,6 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    super.update(e);
     boolean enabled = isEnabled(e);
     e.getPresentation().setEnabled(enabled);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
@@ -121,6 +121,11 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     else {
       e.getPresentation().setVisible(true);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   protected boolean isEnabled(AnActionEvent e) {

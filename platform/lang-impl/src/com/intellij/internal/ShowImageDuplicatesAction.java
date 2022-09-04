@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,7 +22,8 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowImageDuplicatesAction extends AnAction {
+final class ShowImageDuplicatesAction extends AnAction {
+
   //FileTypeManager.getInstance().getFileTypeByExtension("png").getAllPossibleExtensions() ?
   private static final List<String> IMAGE_EXTENSIONS = Arrays.asList("png", "jpg", "jpeg", "gif", "tiff", "bmp");
 
@@ -96,13 +98,18 @@ public class ShowImageDuplicatesAction extends AnAction {
       final int size = realDuplicates.get(key).size();
       if (size == 1) {
         realDuplicates.remove(key);
-      } else {
-        count+=size;
+      }
+      else {
+        count += size;
       }
     }
 
     ApplicationManager.getApplication().invokeLater(() -> new ImageDuplicateResultsDialog(project, images, realDuplicates).show());
+  }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

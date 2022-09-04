@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.eclipse.export;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -57,6 +58,11 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setEnabled(e.getProject() != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

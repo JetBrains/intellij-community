@@ -45,4 +45,9 @@ public class ExportToHTMLAction extends AnAction {
       }
     }
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }

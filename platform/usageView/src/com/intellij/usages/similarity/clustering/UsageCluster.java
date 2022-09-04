@@ -1,64 +1,76 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.similarity.clustering;
 
-import com.intellij.usages.UsageGroup;
-import com.intellij.usages.similarity.usageAdapter.SimilarityUsage;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
+/**
+ * This class represents the set of similar usages found during "Find usages" run.
+ * {@link ClusteringSearchSession} defines which usages are considered similar and puts it the same {@link UsageCluster}.
+ */
 public class UsageCluster {
 
-  private final int myIndex;
-  private final Set<SimilarityUsage> myUsages = new CopyOnWriteArraySet<>();
+  private final Set<SimilarUsage> myUsages;
 
-  public UsageCluster(int index) {
-    this.myIndex = index;
+  public UsageCluster() {
+    this.myUsages = Collections.synchronizedSet(new LinkedHashSet<>());
   }
 
-  public int getIndex() {
-    return myIndex;
+  public UsageCluster(Set<SimilarUsage> usages) {
+    this.myUsages = usages;
   }
 
-  public synchronized void addUsage(@NotNull SimilarityUsage usage) {
+  public void addUsage(@NotNull SimilarUsage usage) {
     myUsages.add(usage);
   }
 
-  public @NotNull Set<SimilarityUsage> getUsages() {
+  public Set<SimilarUsage> getUsages() {
     return myUsages;
   }
 
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof UsageCluster)) return false;
-
-    return myIndex == ((UsageCluster)o).myIndex;
-  }
-
-  @NotNull
-  public Set<SimilarityUsage> getUsageFilteredByGroup(@NotNull Collection<@NotNull Collection<? extends UsageGroup>> groups) {
-    return getUsages().stream().filter(e -> belongsToGroup(e, groups)).collect(Collectors.toSet());
-  }
-
-  public static boolean belongsToGroup(@NotNull SimilarityUsage info,
-                                       @NotNull Collection<@NotNull Collection<? extends UsageGroup>> selectedGroupPaths) {
-    for (Collection<? extends UsageGroup> selectedGroupPath : selectedGroupPaths) {
-      if (ContainerUtil.intersection(selectedGroupPath, info.getUsageGroupData()).size() == selectedGroupPath.size()) {
-        return true;
+  public boolean contains(@Nullable UsageInfo usageInfo) {
+    synchronized (myUsages) {
+      for (SimilarUsage usage : myUsages) {
+        if (usage instanceof UsageInfo2UsageAdapter && ((UsageInfo2UsageAdapter)usage).getUsageInfo().equals(usageInfo)) {
+          return true;
+        }
       }
     }
     return false;
   }
 
+  /**
+   * Returns the set of usages in this cluster which are selected in the tree.
+   * {@link UsageView#getSelectedUsages()}
+   * @param selectedUsages - a set of usages selected in tree (for selected group node in usage tree it returns all underlying usages)
+   * @return filtered set of usages
+   */
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  public @NotNull Set<SimilarUsage> getOnlySelectedUsages(Set<Usage> selectedUsages) {
+    synchronized (myUsages) {
+      return myUsages.stream().filter(e -> e.isValid() && selectedUsages.contains(e)).collect(Collectors.toSet());
+    }
+  }
+
   @Override
   public String toString() {
-    return "{" +
-           "id=" + myIndex + "\n" +
-           ", myUsages=" + myUsages.stream().map(usage -> usage.toString()).collect(Collectors.joining(",\n")) +
-           "}\n";
+    synchronized (myUsages) {
+      return "{\n" +
+             myUsages.stream().map(usage -> usage.toString()).collect(Collectors.joining(",\n")) +
+             "}\n";
+    }
   }
 }

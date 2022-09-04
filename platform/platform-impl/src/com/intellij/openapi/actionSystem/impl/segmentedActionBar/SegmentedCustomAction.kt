@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAwareAction
@@ -12,8 +12,8 @@ import java.beans.PropertyChangeListener
 import javax.swing.JPanel
 
 abstract class SegmentedCustomAction : DumbAwareAction(), CustomComponentAction {
-  override fun actionPerformed(e: AnActionEvent) {
-  }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun createCustomComponent(presentation: Presentation, place: String): SegmentedCustomPanel {
     return SegmentedCustomPanel(presentation)

@@ -58,6 +58,11 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
     perform(project);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   public void perform(Project project) {
     new DialogWrapper(project, true) {
       {

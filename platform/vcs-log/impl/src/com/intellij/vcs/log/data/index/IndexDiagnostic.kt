@@ -48,9 +48,10 @@ object IndexDiagnostic {
     val textFilter = details.subject.takeIf { it.length > 3 }?.let {
       VcsLogFilterObject.fromPattern(it, false, true)
     }
-    val pathsFilter = VcsLogFilterObject.fromPaths(details.parents.indices.flatMapTo(mutableSetOf()) { parentIndex ->
+    val paths = details.parents.indices.flatMapTo(mutableSetOf()) { parentIndex ->
       ChangesUtil.getPaths(details.getChanges(parentIndex))
-    }.take(FILTERED_PATHS_LIMIT))
+    }.take(FILTERED_PATHS_LIMIT)
+    val pathsFilter = if (paths.isNotEmpty()) { VcsLogFilterObject.fromPaths(paths) } else null
 
     val sb = StringBuilder()
     for (filter in listOfNotNull(authorFilter, textFilter, pathsFilter)) {

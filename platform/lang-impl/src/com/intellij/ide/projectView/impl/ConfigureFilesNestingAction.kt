@@ -2,12 +2,17 @@
 package com.intellij.ide.projectView.impl
 
 import com.intellij.ide.projectView.ProjectView
-import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 
 internal class ConfigureFilesNestingAction : DumbAwareAction() {
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = isFileNestingAllowed(event)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   private fun isFileNestingAllowed(event: AnActionEvent): Boolean {

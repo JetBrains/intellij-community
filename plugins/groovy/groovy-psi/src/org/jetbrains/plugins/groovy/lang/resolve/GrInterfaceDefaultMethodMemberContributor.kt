@@ -15,6 +15,9 @@ class GrInterfaceDefaultMethodMemberContributor : NonCodeMembersContributor() {
                                       processor: PsiScopeProcessor,
                                       place: PsiElement,
                                       state: ResolveState) {
+    if (!processor.shouldProcessMethods()) {
+      return
+    }
     val qualifier = place.castSafelyTo<GrReferenceExpression>()?.qualifier ?: return
     if (qualifier.lastChild.elementType != GroovyTokenTypes.kSUPER) return
     val name = processor.getName(state) ?: return

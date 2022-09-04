@@ -293,11 +293,12 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     }
   }
 
-  class FilterGroup : DefaultActionGroup(), Toggleable, DumbAware {
+  class FilterGroup : ActionGroup(), Toggleable, DumbAware {
     init {
       isPopup = false
       templatePresentation.text = VcsBundle.message("action.filter.filter.by.text")
       templatePresentation.icon = AllIcons.General.Filter
+      templatePresentation.isDisableGroupIfEmpty = false
     }
 
     override fun update(e: AnActionEvent) {
@@ -315,13 +316,16 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       val filterer = e?.getData(DATA_KEY) ?: return AnAction.EMPTY_ARRAY
 
-      return arrayOf<AnAction>(Separator(VcsBundle.message("action.filter.separator.text"))) + listOf(MovesOnlyFilter, NonImportantFilter)
-        .filter { it.isAvailable(filterer) }
-        .map { ToggleFilterAction(filterer, it) }
-        .toTypedArray()
+      return arrayOf<AnAction>(Separator(VcsBundle.message("action.filter.separator.text"))) +
+             listOf(MovesOnlyFilter, NonImportantFilter)
+               .filter { it.isAvailable(filterer) }
+               .map { ToggleFilterAction(filterer, it) }
+               .toTypedArray()
     }
 
-    override fun disableIfNoVisibleChildren(): Boolean = false
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
   }
 
   private class ToggleFilterAction(val filterer: ChangesFilterer, val filter: Filter)

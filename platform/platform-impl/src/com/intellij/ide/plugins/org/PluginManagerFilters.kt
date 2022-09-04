@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.org
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -70,6 +71,10 @@ private class PluginManagerConfigurableForOrgStateRule : BaseState() {
 private abstract class PluginManagerFiltersConfigureDebugActionBase : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   protected abstract fun updateState(state: PluginManagerConfigurableForOrgState)

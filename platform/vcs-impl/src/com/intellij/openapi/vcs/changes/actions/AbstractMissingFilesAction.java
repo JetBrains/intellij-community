@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -25,6 +26,11 @@ public abstract class AbstractMissingFilesAction extends AnAction implements Dum
     List<FilePath> files = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
     boolean enabled = files != null && !files.isEmpty();
     e.getPresentation().setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

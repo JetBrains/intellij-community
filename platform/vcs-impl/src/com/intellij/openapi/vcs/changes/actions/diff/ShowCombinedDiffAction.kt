@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.actions.diff
 
 import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.tools.combined.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
@@ -22,6 +23,10 @@ class ShowCombinedDiffAction : DumbAwareAction() {
 
     e.presentation.isEnabledAndVisible = Registry.`is`("enable.combined.diff") &&
                                          project != null && changes != null && changes.size > 1
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {

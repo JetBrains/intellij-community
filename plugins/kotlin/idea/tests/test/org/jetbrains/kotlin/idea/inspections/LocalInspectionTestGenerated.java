@@ -6925,16 +6925,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("junit4Test.kt")
-        public void testJunit4Test() throws Exception {
-            runTest("testData/inspectionsLocal/mainFunctionReturnUnit/junit4Test.kt");
-        }
-
-        @TestMetadata("junit5Test.kt")
-        public void testJunit5Test() throws Exception {
-            runTest("testData/inspectionsLocal/mainFunctionReturnUnit/junit5Test.kt");
-        }
-
         @TestMetadata("notMain.kt")
         public void testNotMain() throws Exception {
             runTest("testData/inspectionsLocal/mainFunctionReturnUnit/notMain.kt");

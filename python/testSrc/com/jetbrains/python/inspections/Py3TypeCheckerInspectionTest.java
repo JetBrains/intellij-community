@@ -2,6 +2,7 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -867,5 +868,53 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-46661
   public void testTypedDictInReturnType() {
     doTest();
+  }
+
+  // PY-53611
+  public void testTypedDictRequiredNotRequiredKeys() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("from typing import TypedDict\n" +
+                                            "from typing_extensions import Required, NotRequired\n" +
+                                            "class WithTotalFalse(TypedDict, total=False):\n" +
+                                            "    x: Required[int]\n" +
+                                            "class WithTotalTrue(TypedDict, total=True):\n" +
+                                            "    x: NotRequired[int]\n" +
+                                            "class WithoutTotal(TypedDict):\n" +
+                                            "    x: NotRequired[int]\n" +
+                                            "class WithoutTotalWithExplicitRequired(TypedDict):\n" +
+                                            "    x: Required[int]\n" +
+                                            "    y: NotRequired[int]\n" +
+                                            "AlternativeSyntax = TypedDict(\"AlternativeSyntax\", {'x': NotRequired[int]})\n" +
+                                            "with_total_false: WithTotalFalse = <warning descr=\"TypedDict 'WithTotalFalse' has missing key: 'x'\">{}</warning>\n" +
+                                            "with_total_true: WithTotalTrue = {}\n" +
+                                            "without_total: WithoutTotal = {}\n" +
+                                            "without_total_with_explicit_required: WithoutTotalWithExplicitRequired = <warning descr=\"TypedDict 'WithoutTotalWithExplicitRequired' has missing key: 'x'\">{}</warning>\n" +
+                                            "alternative_syntax: AlternativeSyntax = {}\n"));
+  }
+
+  // PY-53611
+  public void testTypedDictRequiredNotRequiredEquivalence() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-53611
+  public void testTypedDictRequiredNotRequiredMixedWithAnnotated() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("from typing_extensions import TypedDict, Required, NotRequired, Annotated\n" +
+                                            "class A(TypedDict):\n" +
+                                            "    x: Annotated[NotRequired[int], 'Some constraint']\n" +
+                                            "def f(a: A):\n" +
+                                            "    pass\n" +
+                                            "f({})\n" +
+                                            "class B(TypedDict, total=False):\n" +
+                                            "    x: Annotated[Required[int], 'Some constraint']\n" +
+                                            "def g(b: B):\n" +
+                                            "    pass\n" +
+                                            "g(<warning descr=\"TypedDict 'B' has missing key: 'x'\">{}</warning>)\n"));
+  }
+
+  // PY-53611
+  public void testTypingRequiredTypeSpecificationsMultiFile() {
+    doMultiFileTest();
   }
 }

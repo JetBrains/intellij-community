@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -24,6 +25,10 @@ class SwitchFileBasedIndexStorageAction : DumbAwareAction() {
     ComboBoxPopup(popupContext, activeStorage, Consumer {
       restartIndexesWithStorage(it)
     }).showInBestPositionFor(e.dataContext)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   private fun restartIndexesWithStorage(indexStorage: IndexStorageDescriptor) {

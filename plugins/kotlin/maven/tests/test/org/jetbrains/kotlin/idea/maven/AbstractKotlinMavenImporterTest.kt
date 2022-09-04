@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.packaging.impl.artifacts.ArtifactUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
@@ -113,6 +114,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertModules("project")
             assertImporterStatePresent()
             assertSources("project", "src/main/java")
+            assertFalse(ArtifactUtil.areResourceFilesFromSourceRootsCopiedToOutput(getModule("project")))
         }
     }
 
@@ -669,9 +671,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                 )
             }
 
-            // TODO: should be reverted after KTI-724
-            assertNotEquals(kotlinMavenPluginVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
-            assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+            Assert.assertEquals(kotlinMavenPluginVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
 
             assertSources("project", "src/main/kotlin")
             assertTestSources("project", "src/test/java")
@@ -2182,11 +2182,9 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             assertModules("project", "module1", "module2")
             assertImporterStatePresent()
-            assertEquals(1, notifications.count { it.title == "Kotlin JPS plugin artifacts were not found" })
+            assertEquals("", notifications.asText())
             // The highest of available versions should be picked
-            // TODO: should be reverted after KTI-724
-            assertNotEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(myProject))
-            assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+            assertEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(myProject))
         }
     }
 
@@ -2199,7 +2197,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             }
 
             val notification = notifications.find { it.title == "Unsupported Kotlin JPS plugin version" }
-            assertNotNull(notifications.asText, notification)
+            assertNotNull(notifications.asText(), notification)
             assertEquals(
                 notification?.content,
                 "Version (${KotlinJpsPluginSettings.fallbackVersionForOutdatedCompiler}) of the Kotlin JPS plugin will be used<br>" +
@@ -2269,7 +2267,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             try {
                 val version = "1.1.0"
                 val notifications = catchNotifications(myProject) {
-                    doUnsupportedVersionTest(version, KotlinJpsPluginSettings.rawBundledVersion)
+                    doUnsupportedVersionTest(version, KotlinJpsPluginSettings.fallbackVersionForOutdatedCompiler)
                 }
 
                 assertNull(notifications.find { it.title == "Unsupported Kotlin JPS plugin version" })
@@ -2277,7 +2275,6 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                 MavenRunner.getInstance(myProject).settings.isDelegateBuildToMaven = isBuildDelegatedToMaven
             }
         }
-
     }
 
     class MultiModuleImport : AbstractKotlinMavenImporterTest() {
@@ -3381,7 +3378,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             val (facet, notifications) = doJvmTarget6Test(version = null)
             Assert.assertEquals("JVM 1.6", facet.targetPlatform!!.oldFashionedDescription)
             Assert.assertEquals("1.6", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
-            Assert.assertEquals("", notifications.asText)
+            Assert.assertEquals("", notifications.asText())
         }
 
         @Test
@@ -3398,30 +3395,20 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
     class JvmTarget6IsImported8 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJvmTarget6IsImported8() {
-            // Some version which cannot be downloaded (because it was never published) => explicit
+            // Some version won't be imported into JPS (because it's some milestone version which wasn't published to MC) => explicit
             // JPS version during import will be dropped => we will fall back to the bundled JPS =>
             // we have to load 1.6 jvmTarget as 1.8 KTIJ-21515
-            val (facet, notifications) = doJvmTarget6Test("1.6.135")
+            val (facet, notifications) = doJvmTarget6Test("1.6.20-RC")
 
             Assert.assertEquals("JVM 1.8", facet.targetPlatform!!.oldFashionedDescription)
             Assert.assertEquals("1.8", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
 
             Assert.assertEquals(
-                "Title: ''\n" +
-                        "Content: 'Kotlin version 1.7.0 is available'\n" +
-                        "-----\n" +
-                        "Title: 'Unsupported JVM target 1.6'\n" +
-                        "Content: 'Maven project uses JVM target 1.6 for Kotlin compilation, which is no longer supported. " +
-                        "It has been imported as JVM target 1.8. Consider migrating the project to JVM 1.8.'\n" +
-                        "-----\n" +
-                        "Title: 'Kotlin JPS plugin artifacts were not found'\n" +
-                        "Content: 'Version (${KotlinJpsPluginSettings.rawBundledVersion}) of the Kotlin JPS plugin will be used<br>The reason: " +
-                        "Failed to download Maven artifact (org.jetbrains.kotlin:kotlin-jps-plugin:1.6.135). " +
-                        "The search was performed in the following repos:\n" +
-                        "https://repo.maven.apache.org/maven2\n" +
-                        "https://repo1.maven.org/maven2\n" +
-                        "https://repository.jboss.org/nexus/content/repositories/public/'",
-                notifications.asText,
+                """
+                    Title: 'Unsupported JVM target 1.6'
+                    Content: 'Maven project uses JVM target 1.6 for Kotlin compilation, which is no longer supported. It has been imported as JVM target 1.8. Consider migrating the project to JVM 1.8.'
+                """.trimIndent(),
+                notifications.asText(),
             )
         }
     }

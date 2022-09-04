@@ -4,6 +4,7 @@ package com.intellij.notification.impl.actions;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
 import com.intellij.notification.Notification.CollapseActionsDirection;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,6 +40,11 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     new NotificationDialog(event.getProject()).show();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static final class NotificationDialog extends DialogWrapper {

@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.ui.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
@@ -26,6 +27,10 @@ internal abstract class ChangePreviewLayoutAction(
     super.update(event)
     val editor = MarkdownActionUtil.findSplitEditor(event) ?: return
     event.presentation.icon = layout.getIcon(editor)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   class EditorOnly: ChangePreviewLayoutAction(TextEditorWithPreview.Layout.SHOW_EDITOR)

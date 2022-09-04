@@ -14,7 +14,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorTextFieldCellRenderer;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +25,7 @@ public class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.Simpl
   public UsageCodeSnippetComponent(@NotNull PsiElement element) {
     super(element.getProject(), element.getLanguage(), false);
     setupEditor();
+    addUsagePreview(element);
   }
 
   private void setupEditor() {
@@ -50,14 +50,12 @@ public class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.Simpl
                                     rangeToHighlight.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX, HighlighterTargetArea.EXACT_RANGE);
   }
 
-  public void addUsagePreview(@NotNull UsageInfo usage) {
-    PsiElement element = usage.getElement();
-    if (element == null) return;
+  public void addUsagePreview(@NotNull PsiElement element) {
     PsiDocumentManager docManager = PsiDocumentManager.getInstance(element.getProject());
     Document doc = docManager.getDocument(element.getContainingFile());
     if (doc == null) return;
-    int usageStartLineNumber = doc.getLineNumber(usage.getElement().getTextRange().getStartOffset());
-    int usageEndLineNumber = doc.getLineNumber(usage.getElement().getTextRange().getEndOffset());
+    int usageStartLineNumber = doc.getLineNumber(element.getTextRange().getStartOffset());
+    int usageEndLineNumber = doc.getLineNumber(element.getTextRange().getEndOffset());
     final int contextStartLineNumber = Math.max(0, usageStartLineNumber - CONTEXT_LINE_NUMBER);
     int startOffset = doc.getLineStartOffset(contextStartLineNumber);
     int endOffset = doc.getLineEndOffset(Math.min(usageEndLineNumber + CONTEXT_LINE_NUMBER, doc.getLineCount() - 1));
@@ -71,14 +69,6 @@ public class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.Simpl
     setText(doc.getText(new TextRange(startOffset, endOffset)));
     getEditor().getGutterComponentEx().updateUI();
     highlightRange(element.getTextRange().shiftLeft(startOffset));
-  }
-
-  public static @NotNull UsageCodeSnippetComponent createUsageCodeSnippet(@NotNull UsageInfo usage) {
-    PsiElement element = usage.getElement();
-    assert element != null;
-    UsageCodeSnippetComponent usageCodeSnippetComponent = new UsageCodeSnippetComponent(element);
-    usageCodeSnippetComponent.addUsagePreview(usage);
-    return usageCodeSnippetComponent;
   }
 }
 

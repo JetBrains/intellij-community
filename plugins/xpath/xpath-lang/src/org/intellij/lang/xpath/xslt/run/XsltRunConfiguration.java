@@ -479,6 +479,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     public XsltRunConfiguration initFromFile(@NotNull XmlFile file) {
         assert XsltSupport.isXsltFile(file) : "Not an XSLT file: " + file.getName();
         mySuggestedName = file.getName();
+        setName(mySuggestedName);
 
         final VirtualFile virtualFile = file.getVirtualFile();
         assert virtualFile != null : "No VirtualFile for " + file.getName();

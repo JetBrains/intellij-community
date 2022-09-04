@@ -9,8 +9,9 @@ import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageInfo2UsageAdapter;
-import com.intellij.usages.similarity.usageAdapter.SimilarityUsage;
+import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,12 +29,13 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     setLayout(new VerticalLayout(0));
     TitlePanel titlePanel = new TitlePanel();
     titlePanel.getLabel().setHorizontalAlignment(SwingConstants.LEFT);
-    titlePanel.setText(UsageViewBundle.message("label.similar.usages"));
+    titlePanel.setText(UsageViewBundle.message("similar.usages.tab.title"));
     add(titlePanel);
+    setBackground(UIUtil.getTextFieldBackground());
     Disposer.register(parent, this);
   }
 
-  public void renderSimilarUsages(@NotNull Collection<SimilarityUsage> similarUsagesGroupUsages) {
+  public void renderSimilarUsages(@NotNull Collection<SimilarUsage> similarUsagesGroupUsages) {
     if (alreadyShown < similarUsagesGroupUsages.size() - 1) {
       similarUsagesGroupUsages.stream().skip(alreadyShown).limit(SNIPPET_LIMIT).forEach(usage -> {
         final UsageInfo info = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
@@ -48,7 +50,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
   private void renderUsage(@NotNull UsageInfo info) {
     PsiElement element = info.getElement();
     if (element == null) return;
-    final UsageCodeSnippetComponent codeSnippet = UsageCodeSnippetComponent.createUsageCodeSnippet(info);
+    final UsageCodeSnippetComponent codeSnippet = new UsageCodeSnippetComponent(info.getElement());
     Disposer.register(this, codeSnippet);
     Color color = codeSnippet.getEditor().getBackgroundColor();
     add(getHeaderPanelForUsage(myOriginalUsage, info, color));
@@ -67,7 +69,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     header.add(link);
     if (usageInfo == originalUsage) {
       final SimpleColoredComponent component = new SimpleColoredComponent();
-      component.append(UsageViewBundle.message("label.the.original.usage"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      component.append(UsageViewBundle.message("similar.usages.the.original.usage.label"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       header.add(component);
     }
     final Color color = new JBColor(Gray.xCD, Gray.x51);

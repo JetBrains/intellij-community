@@ -1,5 +1,6 @@
 package com.intellij.tasks.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +38,11 @@ public class ShowCertificateInfoAction extends AnAction {
     catch (Exception logged) {
       LOG.error(logged);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }
 

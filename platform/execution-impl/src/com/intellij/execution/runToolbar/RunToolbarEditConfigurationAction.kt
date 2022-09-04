@@ -1,13 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowManager
 
-class RunToolbarEditConfigurationAction : DumbAwareAction() {
+internal class RunToolbarEditConfigurationAction : DumbAwareAction() {
   companion object {
     const val ACTION_ID = "RunToolbarEditConfigurationAction"
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -15,10 +20,12 @@ class RunToolbarEditConfigurationAction : DumbAwareAction() {
   }
 }
 
-class RunToolbarShowToolWindowTab : DumbAwareAction() {
+internal class RunToolbarShowToolWindowTab : DumbAwareAction() {
   companion object {
     const val ACTION_ID = "RunToolbarShowToolWindowTab"
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible =
@@ -46,7 +53,8 @@ class RunToolbarShowToolWindowTab : DumbAwareAction() {
 }
 
 
-class RunToolbarRemoveSlotAction : DumbAwareAction() {
+internal class RunToolbarRemoveSlotAction : DumbAwareAction() {
+
   override fun actionPerformed(e: AnActionEvent) {
     e.project?.let { project ->
       e.id()?.let {
@@ -61,9 +69,14 @@ class RunToolbarRemoveSlotAction : DumbAwareAction() {
       e.runToolbarData() != slotManager.mainSlotData || (slotManager.slotsCount() != 0 && e.mainState() != RunToolbarMainSlotState.INFO)
     } ?: false
   }
+  
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
 
-class RunToolbarMoveToTopAction : DumbAwareAction() {
+internal class RunToolbarMoveToTopAction : DumbAwareAction() {
+
   override fun actionPerformed(e: AnActionEvent) {
     e.project?.let { project ->
       val manager = RunToolbarSlotManager.getInstance(project)
@@ -86,5 +99,9 @@ class RunToolbarMoveToTopAction : DumbAwareAction() {
       e.runToolbarData() != manager.mainSlotData
       || manager.getState().isSinglePlain()
     } ?: false
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

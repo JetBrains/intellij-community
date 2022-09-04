@@ -10,6 +10,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.impl.segmentedActionBar.ToolbarActionsUpdatedListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -17,6 +18,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
+import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -26,7 +28,9 @@ import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Graphics
 import java.util.concurrent.CompletableFuture
-import javax.swing.*
+import javax.swing.BorderFactory
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 @FunctionalInterface
 fun interface ExperimentalToolbarStateListener {
@@ -61,6 +65,14 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
         startUpdateActionGroups(extension)
       }
     }
+    ApplicationManager.getApplication().messageBus.connect(project).subscribe(ToolbarActionsUpdatedListener.TOPIC, ToolbarActionsUpdatedListener {
+      IdeRootPaneNorthExtension.EP_NAME.findExtension(NewToolbarRootPaneExtension::class.java, project)?.let { extension ->
+        application.invokeLater {
+          extension.panel.revalidate()
+          extension.panel.doLayout()
+        }
+      }
+    })
   }
 
   override fun dispose() {
@@ -102,8 +114,14 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
 
     val children = toolbarGroup.getChildren(null)
 
-    val leftGroup = children.firstOrNull { it.templateText.equals(ActionsBundle.message("group.LeftToolbarSideGroup.text")) }
-    val rightGroup = children.firstOrNull { it.templateText.equals(ActionsBundle.message("group.RightToolbarSideGroup.text")) }
+    val leftGroup = children.firstOrNull {
+      it.templateText.equals(ActionsBundle.message("group.LeftToolbarSideGroup.text")) || it.templateText.equals(
+        ActionsBundle.message("group.LeftToolbarSideGroupXamarin.text"))
+    }
+    val rightGroup = children.firstOrNull {
+      it.templateText.equals(ActionsBundle.message("group.RightToolbarSideGroup.text")) || it.templateText.equals(
+        ActionsBundle.message("group.RightToolbarSideGroupXamarin.text"))
+    }
     val restGroup = DefaultActionGroup(children.filter { it != leftGroup && it != rightGroup })
 
     val map = mutableMapOf<String, ActionGroup?>()
@@ -123,7 +141,7 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
     IdeActions.GROUP_EXPERIMENTAL_TOOLBAR
   }
   else {
-    IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_WITHOUT_RIGHT_PART
+    IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN
   }
 
   private class MyActionToolbarImpl(place: String,

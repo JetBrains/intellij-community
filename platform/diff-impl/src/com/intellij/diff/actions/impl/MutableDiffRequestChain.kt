@@ -15,6 +15,7 @@ import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeys.ThreeSideDiffColors
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.ThreeSide
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -140,6 +141,10 @@ internal class SwapDiffSidesAction : DumbAwareAction() {
     e.presentation.isEnabledAndVisible = helper.chain.baseContent == null
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val helper = MutableDiffRequestChain.createHelper(e.dataContext)!!
 
@@ -166,6 +171,10 @@ internal class SwapThreeWayColorModeAction : ComboBoxAction() {
     else {
       presentation.isEnabledAndVisible = false
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun createPopupActionGroup(button: JComponent?): DefaultActionGroup {

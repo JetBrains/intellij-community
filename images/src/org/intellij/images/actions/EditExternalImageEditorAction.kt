@@ -3,6 +3,7 @@ package org.intellij.images.actions
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.DumbAwareAction
@@ -27,6 +28,10 @@ class EditExternalImageEditorAction: DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     showDialog(e.project)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   class EditExternalImageEditorDialog(val project: Project?): DialogWrapper(project) {

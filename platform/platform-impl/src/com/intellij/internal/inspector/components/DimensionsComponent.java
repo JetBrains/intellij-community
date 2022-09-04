@@ -25,7 +25,7 @@ final class DimensionsComponent extends JComponent {
     myComponent = component;
     setOpaque(true);
     setBackground(JBColor.WHITE);
-    setBorder(JBUI.Borders.customLine(JBColor.border(), 1));
+    setBorder(JBUI.Borders.customLine(JBColor.border()));
 
     setFont(JBUI.Fonts.label(9));
 

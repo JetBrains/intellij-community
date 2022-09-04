@@ -100,6 +100,11 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
     presentation.setEnabled(contentManager != null && contentManager.getContentCount() > 1 && contentManager.isSingleSelection());
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   private void doNavigate(@Nullable ContentManager contentManager) {
     if (contentManager == null) return;
 

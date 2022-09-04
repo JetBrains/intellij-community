@@ -284,6 +284,8 @@
                 class="com.intellij.ide.bookmark.actions.GroupLineBookmarksToggleAction"/>
         <action id="BookmarksView.RewriteBookmarkType"
                 class="com.intellij.ide.bookmark.actions.RewriteBookmarkTypeToggleAction"/>
+        <action id="BookmarksView.AskBeforeDeletingLists"
+                class="com.intellij.ide.bookmark.actions.AskBeforeDeletingListsToggleAction"/>
         <separator/>
         <action id="BookmarksView.OpenInPreviewTab"
                 class="com.intellij.ide.bookmark.actions.OpenInPreviewTabToggleAction"/>
@@ -741,9 +743,14 @@
       </group>
     </group>
 
-    <group id="NewToolbarActionsWithoutRight">
-      <reference ref="LeftToolbarSideGroup"/>
-      <group id="RightToolbarSideGroupNoRunWidget">
+    <group id="NewToolbarActionsXamarin">
+      <group id="LeftToolbarSideGroupXamarin">
+        <reference id="Back"/>
+        <reference id="Forward"/>
+        <reference id="SegmentedVcsControlAction"/>
+        <reference id="SearchEverywhereNewToolbarAction"/>
+      </group>
+      <group id="RightToolbarSideGroupXamarin">
         <reference id="ToolbarRunGroup"/>
         <!-- 6px -->
         <reference id="SettingsEntryPoint"/>

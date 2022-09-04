@@ -50,8 +50,9 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
     ParametersList vm = javaParameters.getVMParametersList();
 
     if (PsiUtil.isIdeaProject(project)) {
-      if (!vm.hasProperty(SYSTEM_CL_PROPERTY)) {
+      if (!vm.hasProperty(SYSTEM_CL_PROPERTY) && !vm.getList().contains("--add-modules")) {
         // check that UrlClassLoader is available in the test module classpath
+        // if module-path is used, skip custom loader
         String qualifiedName = "com.intellij.util.lang.UrlClassLoader";
         if (loaderValid(project, module, qualifiedName)) {
           vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);

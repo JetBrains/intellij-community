@@ -123,7 +123,7 @@ public final class GradleProjectResolverUtil {
     boolean isFromIncludedBuild = !rootProjectPath.equals(mainBuildRootPath);
 
     boolean useIncludedBuildPathPrefix = isFromIncludedBuild && isIncludedBuildTaskRunningSupported;
-    String compositeBuildGradlePath = useIncludedBuildPathPrefix ? ":" + rootDir.getName() : "";
+    String compositeBuildGradlePath = useIncludedBuildPathPrefix ? ":" + getRootProject(gradleProject).getName() : "";
     GradleModuleDataKt.setCompositeBuildGradlePath(moduleData, compositeBuildGradlePath);
 
     String directoryToRunTask;
@@ -135,6 +135,15 @@ public final class GradleProjectResolverUtil {
     }
     GradleModuleDataKt.setDirectoryToRunTask(moduleData, directoryToRunTask);
     return projectDataNode.createChild(ProjectKeys.MODULE, moduleData);
+  }
+
+  @NotNull
+  private static GradleProject getRootProject(@NotNull GradleProject project) {
+    GradleProject result = project;
+    while (result.getParent() != null) {
+      result = result.getParent();
+    }
+    return result;
   }
 
   private static final Key<Boolean> IS_INCLUDED_BUILD_TASK_RUN_SUPPORTED = Key.create("is included build task running supported");

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -23,5 +24,10 @@ public class CopyCommitSubjectAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     String[] subjects = e.getData(VcsDataKeys.VCS_COMMIT_SUBJECTS);
     e.getPresentation().setEnabled(subjects != null && subjects.length > 0);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

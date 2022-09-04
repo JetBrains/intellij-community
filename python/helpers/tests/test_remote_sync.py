@@ -48,6 +48,35 @@ class RemoteSyncTest(HelpersTestCase):
         root3.zip
         """)
 
+    def test_project_root_excluded(self):
+        project_root = os.path.join(self.test_data_dir, 'project_root')
+        self.collect_sources(
+            ['root1', 'root2', 'project_root'],
+            project_roots={project_root}
+        )
+
+        expected_json = {'roots': [{'invalid_entries': [],
+                                    'path': 'root1',
+                                    'valid_entries': {
+                                        '__init__.py': {
+                                            'mtime': self.mtime('root1/__init__.py')}},
+                                    'zip_name': 'root1.zip'},
+                                   {'invalid_entries': [],
+                                    'path': 'root2',
+                                    'valid_entries': {
+                                        '__init__.py': {
+                                            'mtime': self.mtime('root2/__init__.py')}},
+                                    'zip_name': 'root2.zip'}],
+                         'skipped_roots': [project_root]}
+        self.assertJsonEquals(self.resolve_in_temp_dir('.state.json'),
+                              expected_json)
+
+        self.assertDirLayoutEquals(self.temp_dir, """
+        .state.json
+        root1.zip
+        root2.zip
+        """)
+
     def test_roots_with_identical_name(self):
         self.collect_sources(['root', 'dir/root'])
         self.assertDirLayoutEquals(self.temp_dir, """
@@ -525,7 +554,8 @@ class RemoteSyncTest(HelpersTestCase):
                                          universal_newlines=True)
         self.assertIn('usage: remote_sync.py', output)
 
-    def collect_sources(self, roots_inside_test_data, output_dir=None, state_json=None):
+    def collect_sources(self, roots_inside_test_data, output_dir=None, state_json=None,
+                        project_roots=()):
         if output_dir is None:
             output_dir = self.temp_dir
         self.assertTrue(
@@ -533,7 +563,8 @@ class RemoteSyncTest(HelpersTestCase):
             'Test data directory {} does not exist'.format(self.test_data_dir)
         )
         roots = [self.resolve_in_test_data(r) for r in roots_inside_test_data]
-        rsync = RemoteSync(roots, output_dir, state_json)
+        rsync = RemoteSync(roots, output_dir, state_json,
+                           [self.resolve_in_temp_dir(r) for r in project_roots])
         rsync._test_root = self.test_data_dir
         rsync.run()
 

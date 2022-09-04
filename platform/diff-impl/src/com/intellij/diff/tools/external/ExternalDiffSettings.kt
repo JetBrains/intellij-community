@@ -18,6 +18,10 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
     copyFrom(state)
   }
 
+  override fun noStateLoaded() {
+    isSettingsMigrated = true
+  }
+
   @get:OptionTag("MIGRATE_OLD_SETTINGS")
   var isSettingsMigrated by property(false)
 

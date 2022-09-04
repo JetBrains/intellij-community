@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.retype
 
 import com.intellij.codeInsight.lookup.LookupElement
@@ -6,6 +6,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.internal.performance.latencyMap
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -25,7 +26,8 @@ import com.intellij.psi.PsiElement
 import java.util.*
 
 
-class RetypeFileAction : AnAction() {
+internal class RetypeFileAction : AnAction() {
+
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.getData(CommonDataKeys.EDITOR) as? EditorImpl
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
@@ -87,16 +89,13 @@ class RetypeFileAction : AnAction() {
     return true
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     val editor = e.getData(CommonDataKeys.EDITOR)
     e.presentation.isEnabled = e.project != null
     val retypeSession = editor?.getUserData(RETYPE_SESSION_KEY)
-    if (retypeSession != null) {
-      e.presentation.text = "Stop Retyping"
-    }
-    else {
-      e.presentation.text = "Retype File(s)"
-    }
+    e.presentation.text = if (retypeSession != null) "Stop Retyping" else "Retype File(s)"
   }
 }
 

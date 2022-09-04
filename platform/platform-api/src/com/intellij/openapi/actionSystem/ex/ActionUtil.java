@@ -135,6 +135,13 @@ public final class ActionUtil {
     action.applyTextOverride(e);
     try {
       Runnable runnable = () -> {
+        // init group flags from deprecated methods
+        boolean isGroup = action instanceof ActionGroup;
+        boolean wasPopup = isGroup && ((ActionGroup)action).isPopup(e.getPlace());
+        boolean wasHideIfEmpty = isGroup && ((ActionGroup)action).hideIfNoVisibleChildren();
+        boolean wasDisableIfEmpty = isGroup && ((ActionGroup)action).disableIfNoVisibleChildren();
+        presentation.setPopupGroup(isGroup && (presentation.isPopupGroup() || wasPopup));
+
         e.setInjectedContext(action.isInInjectedContext());
         if (beforeActionPerformed) {
           action.beforeActionPerformedUpdate(e);
@@ -153,8 +160,11 @@ public final class ActionUtil {
         }
         //to be removed when ActionGroup#canBePerformed is dropped
         e.getPresentation().setPerformGroup(
-          action instanceof ActionGroup && e.getPresentation().isPopupGroup() &&
+          isGroup && e.getPresentation().isPopupGroup() &&
           (e.getPresentation().isPerformGroup() || ((ActionGroup)action).canBePerformed(e.getDataContext())));
+        if (isGroup) {
+          assertDeprecatedActionGroupFlagsNotChanged((ActionGroup)action, e, wasPopup, wasHideIfEmpty, wasDisableIfEmpty);
+        }
       };
       boolean isLikeUpdate = !beforeActionPerformed && Registry.is("actionSystem.update.actions.async");
       try (AccessToken ignore = SlowOperations.allowSlowOperations(isLikeUpdate ? SlowOperations.ACTION_UPDATE
@@ -184,6 +194,31 @@ public final class ActionUtil {
 
     return false;
   }
+
+  static void assertDeprecatedActionGroupFlagsNotChanged(@NotNull ActionGroup group, @NotNull AnActionEvent event,
+                                                         boolean wasPopup, boolean wasHideIfEmpty, boolean wasDisableIfEmpty) {
+    boolean warnPopup = wasPopup != group.isPopup(event.getPlace());
+    boolean warnHide = wasHideIfEmpty != group.hideIfNoVisibleChildren();
+    boolean warnDisable = wasDisableIfEmpty != group.disableIfNoVisibleChildren();
+    if (!(warnPopup || warnHide || warnDisable)) return;
+    String operationName = group.getClass().getSimpleName() + "#update (" + group.getClass().getName() + ")";
+    if (warnPopup) {
+      event.getPresentation().setPopupGroup(!wasPopup); // keep the old logic for a while
+      LOG.error("Calling `setPopup()` in " + operationName + ". " +
+               "Please use `event.getPresentation().setPopupGroup()` instead.");
+    }
+    if (warnHide) {
+      event.getPresentation().setHideGroupIfEmpty(!wasHideIfEmpty); // keep the old logic for a while
+      LOG.error("Changing `hideIfNoVisibleChildren()` result in " + operationName + ". " +
+               "Please use `event.getPresentation().setHideGroupIfEmpty()` instead.");
+    }
+    if (warnHide) {
+      event.getPresentation().setDisableGroupIfEmpty(!wasDisableIfEmpty); // keep the old logic for a while
+      LOG.error("Changing `disableIfNoVisibleChildren()` result in " + operationName + ". " +
+               "Please use `event.getPresentation().setHideGroupIfEmpty()` instead.");
+    }
+  }
+
 
   /**
    * Show a cancellable modal progress running the given computation under read action with the same {@link DumbService#isAlternativeResolveEnabled()}

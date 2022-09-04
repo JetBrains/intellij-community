@@ -471,10 +471,10 @@ public final class ArtifactUtil {
     return null;
   }
 
-  private static boolean areResourceFilesFromSourceRootsCopiedToOutput(@NotNull Module module) {
+  public static boolean areResourceFilesFromSourceRootsCopiedToOutput(@NotNull Module module) {
     for (OrderEnumerationHandler.Factory factory : OrderEnumerationHandler.EP_NAME.getExtensionList()) {
-      if (factory.isApplicable(module)) {
-        return factory.createHandler(module).areResourceFilesFromSourceRootsCopiedToOutput();
+      if (factory.isApplicable(module) && !factory.createHandler(module).areResourceFilesFromSourceRootsCopiedToOutput()) {
+        return false;
       }
     }
     return true;

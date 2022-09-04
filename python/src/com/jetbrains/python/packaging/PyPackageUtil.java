@@ -32,6 +32,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveResult;
 import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiPackageUtil;
@@ -43,8 +44,11 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.remote.PyCredentialsContribution;
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
+import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -557,11 +561,46 @@ public final class PyPackageUtil {
   @NotNull
   private static Set<VirtualFile> getPackagingAwareSdkRoots(@NotNull Sdk sdk) {
     final Set<VirtualFile> result = Sets.newHashSet(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+    var targetAdditionalData = PySdkExtKt.getTargetAdditionalData(sdk);
+    if (targetAdditionalData != null) {
+      // For targets that support VFS we are interested not only in local dirs, but also for VFS on target
+      // When user changes something on WSL FS for example, we still need to trigger path updates
+      for (var remoteSourceToVfs : getRemoteSourceToVfsMapping(targetAdditionalData).entrySet()) {
+        if (result.contains(remoteSourceToVfs.getKey())) {
+          result.add(remoteSourceToVfs.getValue());
+        }
+      }
+    }
     final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
     final VirtualFile skeletonsRoot = LocalFileSystem.getInstance().findFileByPath(skeletonsPath);
     result.removeIf(vf -> vf.equals(skeletonsRoot) ||
                           vf.equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory()) ||
                           PyTypeShed.INSTANCE.isInside(vf));
+    return result;
+  }
+
+  /**
+   * If target provides access to its FS using VFS, rerun all mappings in format [path-to-"remote_sources" -> vfs-on-target]
+   * i.e: "c:\remote_sources -> \\wsl$\..."
+   */
+  @NotNull
+  private static Map<@NotNull VirtualFile, @NotNull VirtualFile> getRemoteSourceToVfsMapping(@NotNull PyTargetAwareAdditionalData additionalData) {
+    var configuration = additionalData.getTargetEnvironmentConfiguration();
+    if (configuration == null) return Collections.emptyMap();
+    var vfsMapper = PythonInterpreterTargetEnvironmentFactory.getTargetWithMappedLocalVfs(configuration);
+    if (vfsMapper == null) return Collections.emptyMap();
+    var vfs = LocalFileSystem.getInstance();
+    var result = new HashMap<@NotNull VirtualFile, @NotNull VirtualFile>();
+    for (var remoteSourceAndVfs : ContainerUtil.map(additionalData.getPathMappings().getPathMappings(),
+                                                    m -> Pair.create(
+                                                      vfs.findFileByPath(m.getLocalRoot()),
+                                                      vfsMapper.getVfsFromTargetPath(m.getRemoteRoot())))) {
+      var remoteSourceDir = remoteSourceAndVfs.first;
+      var vfsDir = remoteSourceAndVfs.second;
+      if (remoteSourceDir != null && vfsDir != null) {
+        result.put(remoteSourceDir, vfsDir);
+      }
+    }
     return result;
   }
 }

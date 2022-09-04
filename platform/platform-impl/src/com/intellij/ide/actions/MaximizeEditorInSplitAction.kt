@@ -3,6 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -83,6 +84,8 @@ class MaximizeEditorInSplitAction : DumbAwareAction() {
     }
     presentation.isEnabled = false
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   companion object {
     val CURRENT_STATE_IS_MAXIMIZED_KEY = Key.create<Boolean>("CURRENT_STATE_IS_MAXIMIZED")

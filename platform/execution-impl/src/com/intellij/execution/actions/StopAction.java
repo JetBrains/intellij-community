@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.build.events.BuildEventsNls;
@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class StopAction extends DumbAwareAction {
+
   private WeakReference<JBPopup> myActivePopupRef = null;
 
   private static boolean isPlaceGlobal(@NotNull AnActionEvent e) {
@@ -42,14 +43,20 @@ public class StopAction extends DumbAwareAction {
            || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace());
   }
+
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(final @NotNull AnActionEvent e) {
     boolean enable = false;
     Icon icon = getActionIcon(e);
     String description = getTemplatePresentation().getDescription();
     Presentation presentation = e.getPresentation();
     if (isPlaceGlobal(e)) {
-      List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(e.getDataContext());
+      List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(e.getProject());
       int stopCount = stoppableDescriptors.size();
       enable = stopCount >= 1;
       if (stopCount > 1) {
@@ -93,15 +100,15 @@ public class StopAction extends DumbAwareAction {
     presentation.setDescription(description);
   }
 
-  protected Icon getActionIcon(@NotNull final AnActionEvent e) {
+  protected Icon getActionIcon(final @NotNull AnActionEvent e) {
     return getTemplatePresentation().getIcon();
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
-    List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(dataContext);
+    List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(project);
     int stopCount = stoppableDescriptors.size();
     if (isPlaceGlobal(e)) {
       if (stopCount == 1) {
@@ -140,15 +147,13 @@ public class StopAction extends DumbAwareAction {
 
       IPopupChooserBuilder<HandlerItem> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(items)
         .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
-          @Nullable
           @Override
-          public String getTextFor(HandlerItem item) {
+          public @Nullable String getTextFor(HandlerItem item) {
             return item.displayName;
           }
 
-          @Nullable
           @Override
-          public Icon getIconFor(HandlerItem item) {
+          public @Nullable Icon getIconFor(HandlerItem item) {
             return item.icon;
           }
 
@@ -197,8 +202,9 @@ public class StopAction extends DumbAwareAction {
     }
   }
 
-  @Nullable
-  private Pair<List<HandlerItem>, HandlerItem> getItemsList(Project project, List<? extends RunContentDescriptor> descriptors, RunContentDescriptor toSelect) {
+  private @Nullable Pair<List<HandlerItem>, HandlerItem> getItemsList(Project project,
+                                                                      List<? extends RunContentDescriptor> descriptors,
+                                                                      RunContentDescriptor toSelect) {
     if (descriptors.isEmpty()) {
       return null;
     }
@@ -224,13 +230,11 @@ public class StopAction extends DumbAwareAction {
     return Pair.create(items, selected);
   }
 
-  @BuildEventsNls.Title
-  protected String getDisplayName(final Project project, final RunContentDescriptor descriptor) {
+  protected @BuildEventsNls.Title String getDisplayName(final Project project, final RunContentDescriptor descriptor) {
     return descriptor.getDisplayName();
   }
 
-  @Nullable
-  static RunContentDescriptor getRecentlyStartedContentDescriptor(@NotNull DataContext dataContext) {
+  static @Nullable RunContentDescriptor getRecentlyStartedContentDescriptor(@NotNull DataContext dataContext) {
     final RunContentDescriptor contentDescriptor = LangDataKeys.RUN_CONTENT_DESCRIPTOR.getData(dataContext);
     if (contentDescriptor != null) {
       // toolwindow case
@@ -243,10 +247,10 @@ public class StopAction extends DumbAwareAction {
     }
   }
 
-  @NotNull
-  private static List<RunContentDescriptor> getActiveStoppableDescriptors(@NotNull DataContext dataContext) {
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    List<RunContentDescriptor> runningProcesses = project == null ? Collections.emptyList() : ExecutionManagerImpl.getAllDescriptors(project);
+  private static @NotNull List<RunContentDescriptor> getActiveStoppableDescriptors(@Nullable Project project) {
+    List<RunContentDescriptor> runningProcesses = project != null ?
+                                                  ExecutionManagerImpl.getAllDescriptors(project) :
+                                                  Collections.emptyList();
     if (runningProcesses.isEmpty()) {
       return Collections.emptyList();
     }

@@ -240,13 +240,35 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     return builder.getChanges();
   }
 
+  protected void undoFileMove() {
+    undo("VcsTestUtil MoveFile");
+  }
+
+  protected void undoFileRename() {
+    undo("VcsTestUtil RenameFile");
+  }
+
   protected void undo() {
+    undo(null);
+  }
+
+  /**
+   * @param expectedCommandName Typically - command name from {@link VcsTestUtil}, be wary of ellipsis
+   */
+  private void undo(@Nullable String expectedCommandName) {
     runInEdtAndWait(() -> {
       final TestDialog oldTestDialog = TestDialogManager.setTestDialog(TestDialog.OK);
       try {
         UndoManager undoManager = UndoManager.getInstance(myProject);
 
         assertTrue("undo is not available", undoManager.isUndoAvailable(null));
+
+        if (expectedCommandName != null) {
+          String undoText = undoManager.getUndoActionNameAndDescription(null).first;
+          assumeTrue("Unexpected VFS command on undo stack, suspecting IDEA-182560. Test aborted. Undo on stack: " + undoText,
+                     undoText != null && undoText.contains(expectedCommandName));
+        }
+
         undoManager.undo(null);
       }
       finally {

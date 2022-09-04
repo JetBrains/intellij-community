@@ -23,8 +23,6 @@ interface KotlinCompilation : KotlinComponent {
      */
     val declaredSourceSets: Collection<KotlinSourceSet>
 
-    val associateCompilations: Set<KotlinCompilationCoordinates>
-
     val output: KotlinCompilationOutput
 
     @Suppress("DEPRECATION_ERROR")

@@ -26,6 +26,8 @@ class KotlinScriptingSettings(private val project: Project) : PersistentStateCom
      */
     var suppressDefinitionsCheck = false
 
+    var showSupportWarning = true
+
     private var scriptDefinitions = linkedMapOf<KotlinScriptDefinitionKey, KotlinScriptDefinitionValue>()
 
     override fun getState(): Element {
@@ -36,6 +38,10 @@ class KotlinScriptingSettings(private val project: Project) : PersistentStateCom
                 KotlinScriptingSettings::suppressDefinitionsCheck.name,
                 suppressDefinitionsCheck.toString()
             )
+        }
+
+        if (!showSupportWarning) { // only non-default value should be stored to avoid unnecessary files under .idea/ dir
+            definitionsRootElement.setAttribute(SUPPORT_WARNING_ATTR, "false")
         }
 
         if (scriptDefinitions.isEmpty()) {
@@ -50,6 +56,8 @@ class KotlinScriptingSettings(private val project: Project) : PersistentStateCom
     }
 
     override fun loadState(state: Element) {
+        showSupportWarning = state.getAttributeValue(SUPPORT_WARNING_ATTR)?.toBoolean() ?: true
+
         state.getOptionTag(KotlinScriptingSettings::suppressDefinitionsCheck.name)?.let {
             suppressDefinitionsCheck = it
         }
@@ -170,6 +178,6 @@ class KotlinScriptingSettings(private val project: Project) : PersistentStateCom
         fun getInstance(project: Project): KotlinScriptingSettings = project.service()
 
         private const val SCRIPT_DEFINITION_TAG = "scriptDefinition"
-
+        private const val SUPPORT_WARNING_ATTR = "supportWarning"
     }
 }

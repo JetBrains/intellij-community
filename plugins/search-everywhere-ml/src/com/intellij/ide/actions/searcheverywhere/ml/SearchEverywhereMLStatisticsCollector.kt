@@ -14,6 +14,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.NonUrgentExecutor
@@ -94,6 +95,8 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
                              selectedItems: List<Any>,
                              mixedListInfo: SearchEverywhereMixedListInfo,
                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+    if (!isLoggingEnabled()) return
+
     val elements = elementsProvider.invoke()
     NonUrgentExecutor.getInstance().execute {
       val data = ArrayList<EventPair<*>>()
@@ -139,6 +142,9 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
       eventId.log(data)
     }
   }
+
+  private fun isLoggingEnabled() =
+    ApplicationManager.getApplication().isEAP && !Registry.`is`("search.everywhere.force.disable.logging.ml")
 
   private fun getElementsData(selectedElements: IntArray,
                               elements: List<SearchEverywhereFoundElementInfo>,
@@ -254,7 +260,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 28, RECORDER_CODE)
+    private val GROUP = EventLogGroup("mlse.log", 31, RECORDER_CODE)
     private val EMPTY_ARRAY = IntArray(0)
     private const val REPORTED_ITEMS_LIMIT = 100
 

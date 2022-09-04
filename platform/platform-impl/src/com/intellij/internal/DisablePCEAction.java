@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
@@ -21,8 +22,14 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public final class DisablePCEAction extends DumbAwareToggleAction {
+final class DisablePCEAction extends DumbAwareToggleAction {
+
   private static final String STATUS_BAR_WIDGET_ID = "PCEDisabledStatus";
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {

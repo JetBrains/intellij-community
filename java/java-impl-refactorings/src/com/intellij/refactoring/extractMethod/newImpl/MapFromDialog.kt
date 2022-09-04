@@ -2,35 +2,34 @@
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.CodeInsightUtil
-import com.intellij.codeInsight.generation.GenerateMembersUtil
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.*
-import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.psi.codeStyle.VariableKind
-import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl
 import com.intellij.psi.search.LocalSearchScope
+import com.intellij.refactoring.HelpID
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.InputVariables
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.annotations.Nls
-import java.util.*
 
 object MapFromDialog {
-  fun mapFromDialog(extractOptions: ExtractOptions, @NlsContexts.DialogTitle title: String, helpId: String): ExtractOptions? {
-    val dialog = createDialog(extractOptions, title, helpId)
+  fun mapFromDialog(extractOptions: ExtractOptions): ExtractOptions? {
+    val dialog = createDialog(extractOptions, RefactoringBundle.message("extract.method.title"), HelpID.EXTRACT_METHOD)
     val isOk = dialog.showAndGet()
-    if (isOk){
+    if (isOk) {
       return ExtractMethodPipeline.remap(extractOptions, dialog.chosenParameters, dialog.chosenMethodName,
-                                             dialog.isMakeStatic, dialog.visibility, dialog.isChainedConstructor, dialog.returnType)
-    } else {
+                                         dialog.isMakeStatic, dialog.visibility, dialog.isChainedConstructor, dialog.returnType)
+    }
+    else {
       return null
     }
   }
 
-  private fun createDialog(extractOptions: ExtractOptions, @NlsContexts.DialogTitle refactoringName: String, helpId: String): ExtractMethodDialog {
+  private fun createDialog(extractOptions: ExtractOptions,
+                           @NlsContexts.DialogTitle refactoringName: String,
+                           helpId: String): ExtractMethodDialog {
     val project = extractOptions.project
     val returnType = extractOptions.dataOutput.type
     val thrownExceptions = extractOptions.thrownExceptions.toTypedArray()

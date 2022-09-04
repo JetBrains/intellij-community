@@ -39,9 +39,6 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
     var prefix = "jbr_jcef-"
     val os = OsFamily.currentOs
     val arch = JvmArchitecture.currentJvmArch
-    if (os == OsFamily.LINUX && arch == JvmArchitecture.aarch64) {
-      prefix = "jbr-"
-    }
     if (System.getProperty("intellij.build.jbr.setupSdk", "false").toBoolean()) {
       // required as a runtime for debugger tests
       prefix = "jbrsdk-"

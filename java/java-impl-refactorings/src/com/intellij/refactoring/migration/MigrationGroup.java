@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.migration;
 
 import com.intellij.openapi.actionSystem.*;
@@ -34,5 +34,10 @@ public class MigrationGroup extends ActionGroup {
     Presentation presentation = event.getPresentation();
     Project project = event.getProject();
     presentation.setEnabledAndVisible(project != null && ActionPlaces.isMainMenuOrActionSearch(event.getPlace()));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

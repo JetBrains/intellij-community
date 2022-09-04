@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui
 
 import com.intellij.internal.statistic.eventLog.util.StringUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -24,8 +25,12 @@ import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 
-class JEditorPaneDemoAction : DumbAwareAction("HTML Rendering Playground") {
+internal class JEditorPaneDemoAction : DumbAwareAction("HTML Rendering Playground") {
+
   private val PREFERENCE_KEY = "HTML_RENDERING_PLAYGROUND"
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     object : DialogWrapper(e.project, null, true, IdeModalityType.IDE, false) {
       val myView = JEditorPane()

@@ -4,6 +4,7 @@ package com.intellij.ide.actions
 import com.intellij.diagnostic.DebugLogManager
 import com.intellij.diagnostic.DebugLogManager.DebugLogLevel
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -29,6 +30,8 @@ internal class DebugLogConfigureAction : DumbAwareAction() {
       logCustomizer.saveCategories(categories)
     }
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
 
 private const val TRACE_SUFFIX = ":trace"

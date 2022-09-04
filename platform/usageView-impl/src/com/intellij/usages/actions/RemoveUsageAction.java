@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -52,8 +53,12 @@ public class RemoveUsageAction extends AnAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static Usage @NotNull [] getUsages(AnActionEvent context) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     UsageView usageView = context.getData(UsageView.USAGE_VIEW_KEY);
     if (usageView == null) return Usage.EMPTY_ARRAY;
     Usage[] usages = context.getData(UsageView.USAGES_KEY);

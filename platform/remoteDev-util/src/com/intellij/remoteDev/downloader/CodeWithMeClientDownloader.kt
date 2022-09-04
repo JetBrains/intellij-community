@@ -52,6 +52,7 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
 import kotlin.math.min
@@ -128,7 +129,15 @@ object CodeWithMeClientDownloader {
     require(jreBuildParts[0].matches(Regex("^[0-9_.]+$"))) { "jreBuild format should be like 12_3_45b6789.0" }
     require(jreBuildParts[1].matches(Regex("^[0-9.]+$"))) { "jreBuild format should be like 12_3_45b6789.0" }
 
-    val jdkVersion = jreBuildParts[0]
+    /**
+     * After upgrade to JRE 17 Jetbrains Runtime Team made a couple of incompatible changes:
+     * 1. Java version began to contain dots in it's version
+     * 2. Root directory was renamed from 'jbr' to 'jbr_jcef_12.3.4b1235'
+     *
+     * We decided to maintain backward compatibility with old IDEs and
+     * rename archives and root directories back to old format.
+     */
+    val jdkVersion = jreBuildParts[0].replace(".", "_")
     val jdkBuild = jreBuildParts[1]
     val jreDownloadUrl = "${config.jreDownloadUrl}jbr_jcef-$jdkVersion-$platformString-b${jdkBuild}.tar.gz"
 
@@ -338,7 +347,7 @@ object CodeWithMeClientDownloader {
             }
           }
           catch (ex: IOException) {
-            future.complete(false)
+            future.completeExceptionally(ex)
             LOG.warn(ex)
             return@execute
           }
@@ -370,7 +379,7 @@ object CodeWithMeClientDownloader {
           future.complete(true)
         }
         catch (e: Throwable) {
-          future.complete(false)
+          future.completeExceptionally(e)
           LOG.warn(e)
         }
         finally {
@@ -385,24 +394,22 @@ object CodeWithMeClientDownloader {
       val guestSucceeded = guestData.downloadFuture.get()
       val jdkSucceeded = jdkData.downloadFuture.get()
 
-      if (guestSucceeded && jdkSucceeded) {
-        RemoteDevStatisticsCollector.onGuestDownloadFinished(activity, isSucceeded = true)
-        LOG.info("Download of guest and jdk succeeded")
-        return guestData.targetPath to jdkData.targetPath
-      }
-      else {
-        LOG.warn("Some of downloads failed: guestSucceeded=$guestSucceeded, jdkSucceeded=$jdkSucceeded")
-        RemoteDevStatisticsCollector.onGuestDownloadFinished(activity, isSucceeded = false)
-        return null
-      }
+      if (!guestSucceeded || !jdkSucceeded) error("Guest or jdk was not downloaded")
+
+      LOG.info("Download of guest and jdk succeeded")
+      return guestData.targetPath to jdkData.targetPath
     }
     catch(e: ProcessCanceledException) {
       LOG.info("Download was canceled")
       return null
     }
     catch (e: Throwable) {
+      RemoteDevStatisticsCollector.onGuestDownloadFinished(activity, isSucceeded = false)
       LOG.warn(e)
-      return null
+      if (e is ExecutionException) {
+        e.cause?.let { throw it }
+      }
+      throw e
     }
   }
 

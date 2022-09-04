@@ -10,6 +10,7 @@ import com.intellij.ide.actions.ImportSettingsFilenameFilter
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -50,6 +51,10 @@ open class ExportSettingsAction : AnAction(), DumbAware {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = true
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {

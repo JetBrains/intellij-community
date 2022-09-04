@@ -5,6 +5,7 @@ import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.lightEdit.LightEditService
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -26,6 +27,10 @@ open class SaveAllAction : AnAction(), DumbAware, LightEditCompatible {
       LightEditService.getInstance().saveNewDocuments()
     }
     SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(project = project, forceSavingAllSettings = true), forceExecuteImmediately = true)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -23,6 +24,10 @@ abstract class VcsShowToolWindowTabAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = getToolWindow(e.project) != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun actionPerformed(e: AnActionEvent) {

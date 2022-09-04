@@ -12,9 +12,6 @@ open class MoreActionGroup @JvmOverloads constructor(
   init {
     templatePresentation.icon = if (horizontal) AllIcons.Actions.More else AllIcons.Actions.MoreHorizontal
     templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+    templatePresentation.isHideGroupIfEmpty = true
   }
-
-  override fun isDumbAware() = true
-
-  override fun hideIfNoVisibleChildren() = true
 }
