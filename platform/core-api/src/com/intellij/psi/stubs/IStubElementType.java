@@ -15,7 +15,6 @@ import java.util.*;
 public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extends PsiElement> extends IElementType implements StubSerializer<StubT> {
   private static volatile boolean ourInitializedStubs;
   private static volatile Set<String> ourLazyExternalIds = Collections.emptySet();
-  private static final Logger LOG = Logger.getInstance(IStubElementType.class);
 
   public IStubElementType(@NotNull @NonNls String debugName, @Nullable Language language) {
     super(debugName, language);
@@ -26,9 +25,10 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
 
   public static void checkNotInstantiatedTooLate(@NotNull Class<?> aClass) {
     if (ourInitializedStubs) {
-      LOG.error("All stub element types should be created before index initialization is complete.\n" +
-                "Please add the " + aClass + " containing stub element type constants to \"stubElementTypeHolder\" extension.\n" +
-                "Registered extensions: " + StubElementTypeHolderEP.EP_NAME.getExtensionList());
+      Logger.getInstance(IStubElementType.class)
+        .error("All stub element types should be created before index initialization is complete.\n" +
+               "Please add the " + aClass + " containing stub element type constants to \"stubElementTypeHolder\" extension.\n" +
+               "Registered extensions: " + StubElementTypeHolderEP.EP_NAME.getExtensionList());
     }
   }
 
