@@ -287,53 +287,6 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     checkPackage("foo.bar.goo", false, goo2, goo1);
   }
 
-  public void testCreateDir() {
-    String path = mySrcDir1.getPath();
-    assertTrue(new File(path + "/dir1/dir2").mkdirs());
-    assertTrue(new File(path + "/CVS").mkdirs());
-    VirtualFileManager.getInstance().syncRefresh();
-  }
-
-  public void testDeleteDir() {
-    VirtualFile subdir1 = createChildDirectory(mySrcDir1, "subdir1");
-    VirtualFile subdir2 = createChildDirectory(subdir1, "subdir2");
-    createChildDirectory(subdir2, "subdir3");
-
-    VfsTestUtil.deleteFile(subdir1);
-  }
-
-  public void testMoveDir() {
-    VirtualFile subdir = createChildDirectory(mySrcDir2, "subdir1");
-    createChildDirectory(subdir, "subdir2");
-
-    move(subdir, mySrcDir1);
-  }
-
-  public void testRenameDir() {
-    VirtualFile subdir = createChildDirectory(mySrcDir2, "subdir1");
-    createChildDirectory(subdir, "subdir2");
-
-    rename(subdir, "abc.d");
-  }
-
-  public void testRenameRoot() {
-    LocalFileSystem.getInstance().refresh(false);
-    rename(myModule1Dir, "newName");
-  }
-
-  public void testMoveRoot() {
-    move(myModule1Dir, myModule3Dir);
-  }
-
-  public void testAddProjectDir() {
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-      VirtualFile newDir = createChildDirectory(myModule1Dir.getParent(), "newDir");
-      createChildDirectory(newDir, "subdir");
-
-      PsiTestUtil.addContentRoot(myModule, newDir);
-    });
-  }
-
   public void testChangeIgnoreList() {
     VirtualFile newDir = createChildDirectory(myModule1Dir, "newDir");
 
@@ -363,16 +316,6 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     assertTrue(myFileIndex.isUnderIgnored(ignoredFile));
     assertNull(myFileIndex.getContentRootForFile(ignoredFile, false));
     assertNull(myFileIndex.getModuleForFile(ignoredFile, false));
-  }
-
-  public void testAddModule() {
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-      VirtualFile newModuleContent = createChildDirectory(myRootVFile, "newModule");
-      createChildDirectory(newModuleContent, "subDir");
-      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-      Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", ModuleTypeId.JAVA_MODULE);
-      PsiTestUtil.addContentRoot(module, newModuleContent);
-    });
   }
 
   public void testModuleUnderIgnoredDir() {
