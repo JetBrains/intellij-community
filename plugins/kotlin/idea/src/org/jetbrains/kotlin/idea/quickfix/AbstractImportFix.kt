@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.HintAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
@@ -99,8 +100,17 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
         suggestions.value
     }
 
-    open fun fixSilently(editor: Editor): Boolean {
-        return false
+    protected fun doFixSilently(editor: Editor): Boolean {
+        assert(this is HintAction) { "doFixSilently is available for HintAction only" }
+
+        if (isOutdated()) return false
+        val element = element ?: return false
+        val project = element.project
+        val addImportAction = createActionWithAutoImportsFilter(project, editor, element)
+        return if (addImportAction.isUnambiguous()) {
+            addImportAction.execute()
+            true
+        } else false
     }
 
     protected fun suggestions() = suggestions.value
@@ -116,7 +126,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
         if (isOutdated()) return false
 
-        if (ApplicationManager.getApplication().isHeadlessEnvironment() || HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) return false
+        if (ApplicationManager.getApplication().isHeadlessEnvironment || HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) return false
 
         if (!suggestions.isInitialized() || suggestions().isEmpty()) return false
 
@@ -640,7 +650,7 @@ internal open class ArrayAccessorImportFix(
     }
 }
 
-internal class DelegateAccessorsImportFix(
+internal open class DelegateAccessorsImportFix(
     element: KtExpression,
     override val importNames: Collection<Name>,
     private val solveSeveralProblems: Boolean,
@@ -680,19 +690,33 @@ internal class DelegateAccessorsImportFix(
             }.plus(OperatorNameConventions.PROVIDE_DELEGATE).distinct()
         }
 
-        override fun createImportAction(diagnostic: Diagnostic) =
-            (diagnostic.psiElement as? KtExpression)?.let {
-                DelegateAccessorsImportFix(it, importNames(listOf(diagnostic)), false, diagnostic)
-            }
+        override fun createImportAction(diagnostic: Diagnostic): DelegateAccessorsImportFix? {
+            val expression = diagnostic.psiElement as? KtExpression ?: return null
+            val importNames = importNames(listOf(diagnostic))
+
+            val hintsEnabled = AbstractImportFixInfo.isHintsEnabled(diagnostic.psiFile)
+            return if (hintsEnabled) DelegateAccessorsImportFixWithHint(expression, importNames, false, diagnostic) else
+                DelegateAccessorsImportFix(expression, importNames, false, diagnostic)
+        }
 
 
         override fun createImportActionsForAllProblems(sameTypeDiagnostics: Collection<Diagnostic>): List<DelegateAccessorsImportFix> {
             val diagnostic = sameTypeDiagnostics.first()
             val element = diagnostic.psiElement
+            val expression = element as? KtExpression ?: return emptyList()
             val names = importNames(sameTypeDiagnostics)
-            return listOfNotNull((element as? KtExpression)?.let { DelegateAccessorsImportFix(it, names, true, diagnostic) })
+            return listOf(DelegateAccessorsImportFix(expression, names, true, diagnostic))
         }
     }
+}
+
+internal class DelegateAccessorsImportFixWithHint(
+    element: KtExpression,
+    importNames: Collection<Name>,
+    solveSeveralProblems: Boolean,
+    diagnostic: Diagnostic,
+) : DelegateAccessorsImportFix(element, importNames, solveSeveralProblems, diagnostic), HintAction {
+    override fun fixSilently(editor: Editor): Boolean = doFixSilently(editor)
 }
 
 internal class ComponentsImportFix(

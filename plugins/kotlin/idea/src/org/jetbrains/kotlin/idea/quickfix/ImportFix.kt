@@ -30,14 +30,6 @@ internal open class ImportFix(expression: KtSimpleNameExpression) : AbstractImpo
 }
 
 internal class ImportFixWithHint(expression: KtSimpleNameExpression): ImportFix(expression), HintAction {
-    override fun fixSilently(editor: Editor): Boolean {
-        if (isOutdated()) return false
-        val element = element ?: return false
-        val project = element.project
-        val addImportAction = createActionWithAutoImportsFilter(project, editor, element)
-        return if (addImportAction.isUnambiguous()) {
-            addImportAction.execute()
-            true
-        } else false
-    }
+    override fun fixSilently(editor: Editor): Boolean = doFixSilently(editor)
+
 }
