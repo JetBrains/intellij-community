@@ -163,3 +163,13 @@ class IDEAProjectFilesPostProcessor: ConfigurationHandler {
 
   class ProjectLayout(val ideaDirPath: String, val modulesMap: Map<String, String>)
 }
+
+class GenerateImlFilesSettings: ConfigurationHandler {
+  override fun onSuccessImport(project: Project,
+                               projectData: ProjectData?,
+                               modelsProvider: IdeModelsProvider,
+                               configuration: ConfigurationData) {
+    val generateImlFilesValue = configuration.find("generateImlFiles") as? Boolean ?: return
+    ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(!generateImlFilesValue)
+  }
+}

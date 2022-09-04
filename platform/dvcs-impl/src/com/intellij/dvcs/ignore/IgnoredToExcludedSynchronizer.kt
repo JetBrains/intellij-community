@@ -8,6 +8,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.projectView.actions.MarkExcludeRootAction
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
@@ -246,6 +247,9 @@ class IgnoredToExcludeNotificationProvider : EditorNotifications.Provider<Editor
 }
 
 internal class CheckIgnoredToExcludeAction : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.project != null

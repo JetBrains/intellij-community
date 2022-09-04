@@ -11,6 +11,7 @@ import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 
 public class ViewToolbarAction extends ToggleAction implements DumbAware {
+
   @Override
   public boolean isSelected(@NotNull AnActionEvent event) {
     return UISettings.getInstance().getShowMainToolbar();

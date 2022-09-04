@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -70,5 +71,10 @@ public class ToggleDockModeAction extends ToggleAction implements DumbAware {
     presentation.setEnabled(toolWindow.isAvailable()
       && toolWindow.getType() != ToolWindowType.FLOATING
       && toolWindow.getType() != ToolWindowType.WINDOWED);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

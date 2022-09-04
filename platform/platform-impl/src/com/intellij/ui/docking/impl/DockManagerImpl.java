@@ -424,7 +424,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     DockContainer container = getFactory(DockableEditorContainerFactory.TYPE).createContainer(null);
 
     DockWindow window = createWindowFor(getWindowDimensionKey(file), null, container, REOPEN_WINDOW.get(file, true));
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
       window.show(true);
     }
 

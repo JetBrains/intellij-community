@@ -167,13 +167,17 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   private void setHovered(boolean value) {
-    if (myTabs.isHoveredTab(this) == value) return;
+    if (isHovered() == value) return;
     if (value) {
       myTabs.setHovered(this);
     }
     else {
       myTabs.unHover(this);
     }
+  }
+
+  public boolean isHovered() {
+    return myTabs.isHoveredTab(this);
   }
 
   @Override

@@ -36,6 +36,7 @@ public final class DefaultPackageServiceConfig implements PackageSearchEndpointC
   }
 
   private CompletableFuture<PackageSearchEndpointUrls> reloadConfig() {
+    boolean isDispatchThreadOrReadAction =  ApplicationManager.getApplication().isDispatchThread() || ApplicationManager.getApplication().isReadAccessAllowed();
     return CompletableFuture.supplyAsync(() -> {
       Map<String, Object> config;
       try {
@@ -57,7 +58,7 @@ public final class DefaultPackageServiceConfig implements PackageSearchEndpointC
       String fulltextUrl = extract("fulltext", o);
       String suggestUrl = extract("suggest", o);
       return new PackageSearchEndpointUrls(fulltextUrl, suggestUrl);
-    }, ApplicationManager.getApplication().isDispatchThread() ? ProcessIOExecutorService.INSTANCE : SameThreadExecutor.INSTANCE);
+    }, isDispatchThreadOrReadAction ? ProcessIOExecutorService.INSTANCE : SameThreadExecutor.INSTANCE);
   }
 
   @Override

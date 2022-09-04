@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider
@@ -41,16 +41,13 @@ class ReaderModeHighlightingSettingsProvider : DefaultHighlightingSettingProvide
 class LigaturesReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     val scheme = editor.colorsScheme
-    val preferences = scheme.fontPreferences
-    scheme.fontPreferences =
-      FontPreferencesImpl().also {
-        preferences.copyTo(it)
-        it.setUseLigatures(if (readerMode) {
-          ReaderModeSettings.getInstance(project).showLigatures
-        } else {
-          (AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl).useLigatures()
-        })
+    scheme.isUseLigatures =
+      (if (readerMode) {
+        ReaderModeSettings.getInstance(project).showLigatures
       }
+      else {
+        (AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl).useLigatures()
+      })
   }
 }
 

@@ -2,6 +2,7 @@
 
 package org.jetbrains.idea.svn.diff;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -29,6 +30,11 @@ public class CompareWithBranchAction extends DumbAwareAction {
 
       comparer.run();
     }, message("compare.with.branch.popup.title"));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

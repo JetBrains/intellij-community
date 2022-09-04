@@ -123,7 +123,7 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
     }
 
     private static @NotNull PanelState getCurrentState() {
-      List<RecentProjectTreeItem> recentProjects = RecentProjectListActionProvider.getInstance().collectProjects(true);
+      List<RecentProjectTreeItem> recentProjects = RecentProjectListActionProvider.getInstance().collectProjects();
       return !recentProjects.isEmpty() || CloneableProjectsService.getInstance().isCloneActive()
              ? PanelState.NOT_EMPTY
              : PanelState.EMPTY;
@@ -136,6 +136,7 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
       RecentProjectFilteringTree recentProjectTree = RecentProjectPanelComponentFactory.createComponent(
         parentDisposable, ProjectCollectors.all
       );
+      recentProjectTree.selectLastOpenedProject();
       JComponent treeComponent = recentProjectTree.getComponent();
       JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(treeComponent, true);
       scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);

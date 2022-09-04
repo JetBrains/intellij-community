@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.tree
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.DumbAwareAction
@@ -31,6 +32,10 @@ internal class StartEditingAction : DumbAwareAction() {
     // update action presentation according to the selected node
     getEditableNode(path.lastPathComponent)?.updateAction(event.presentation)
     ?: getEditableTree(tree)?.updateAction(event.presentation, path)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun actionPerformed(event: AnActionEvent) {

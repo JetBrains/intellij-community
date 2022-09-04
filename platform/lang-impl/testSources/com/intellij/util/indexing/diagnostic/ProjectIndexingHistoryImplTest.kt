@@ -135,4 +135,31 @@ class ProjectIndexingHistoryImplTest {
     assertEquals(history.times.suspendedDuration, Duration.ofNanos(3))
     assertEquals(history.times.pushPropertiesDuration, Duration.ofNanos(2))
   }
+
+  @Test
+  fun `test many starts of suspension`() {
+    /*
+    Assertion failed: Two suspension starts, no stops. Events [
+    StageEvent(stage=Scanning, started=true, instant=2022-05-27T10:24:51.385020Z),
+    SuspensionEvent(started=true, instant=2022-05-27T10:24:51.442590Z),
+    SuspensionEvent(started=true, instant=2022-05-27T10:24:51.442949Z),
+    SuspensionEvent(started=true, instant=2022-05-27T10:24:51.443051Z),
+    SuspensionEvent(started=false, instant=2022-05-27T10:24:51.443158Z),
+    StageEvent(stage=Scanning, started=false, instant=2022-05-27T10:24:51.471022Z)]
+     */
+    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.FULL)
+    val instant = Instant.now()
+    history.startStage(ProjectIndexingHistoryImpl.Stage.Scanning, instant)
+    history.suspendStages(instant.plusNanos(1))
+    history.suspendStages(instant.plusNanos(2))
+    history.suspendStages(instant.plusNanos(3))
+    history.stopSuspendingStages(instant.plusNanos(4))
+    history.stopStage(ProjectIndexingHistoryImpl.Stage.Scanning, instant.plusNanos(5))
+    history.indexingFinished()
+
+    assertEquals(Duration.ZERO, history.times.indexingDuration)
+    assertEquals(Duration.ZERO, history.times.pushPropertiesDuration)
+    assertEquals(Duration.ofNanos(3), history.times.suspendedDuration)
+    assertEquals(Duration.ofNanos(2), history.times.scanFilesDuration)
+  }
 }

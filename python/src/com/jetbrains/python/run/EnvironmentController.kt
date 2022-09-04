@@ -5,6 +5,7 @@ import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
 import com.intellij.execution.target.value.getTargetEnvironmentValueForLocalPath
+import com.intellij.execution.target.value.joinToStringFunction
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
@@ -33,6 +34,8 @@ interface EnvironmentController {
    * puts the value to the environment variable with provided [name].
    */
   fun putTargetPathsValue(name: String, localPaths: Collection<String>)
+
+  fun putTargetPathsValue(name: String, localPaths: Collection<String>, separator: CharSequence)
 
   /**
    * Composes the value based on [targetPaths] by joining them using the path
@@ -65,7 +68,11 @@ class PlainEnvironmentController(private val envs: MutableMap<String, String>) :
   }
 
   override fun putTargetPathsValue(name: String, localPaths: Collection<String>) {
-    envs[name] = localPaths.joinToString(separator = File.pathSeparator)
+    putTargetPathsValue(name, localPaths, File.pathSeparator)
+  }
+
+  override fun putTargetPathsValue(name: String, localPaths: Collection<String>, separator: CharSequence) {
+    envs[name] = localPaths.joinToString(separator = separator)
   }
 
   override fun putResolvedTargetPathsValue(name: String, targetPaths: Collection<String>) {
@@ -96,9 +103,14 @@ class TargetEnvironmentController(private val envs: MutableMap<String, TargetEnv
   }
 
   override fun putTargetPathsValue(name: String, localPaths: Collection<String>) {
+    val pathSeparator = targetEnvironmentRequest.targetPlatform.platform.pathSeparator.toString()
+    putTargetPathsValue(name, localPaths, pathSeparator)
+  }
+
+  override fun putTargetPathsValue(name: String, localPaths: Collection<String>, separator: CharSequence) {
     envs[name] = localPaths
       .map { localPath -> targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath) }
-      .joinToPathValue(targetEnvironmentRequest.targetPlatform)
+      .joinToStringFunction(separator)
   }
 
   override fun putResolvedTargetPathsValue(name: String, targetPaths: Collection<String>) {

@@ -2,11 +2,16 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
+import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.updateSettings.impl.LabelTextReplacingUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -51,9 +56,12 @@ public class MavenImportingSettingsForm {
   private JCheckBox myStoreProjectFilesExternally;
   private JBTextField myVMOptionsForImporter;
   private ExternalSystemJdkComboBox myJdkForImporterComboBox;
+  private JLabel myImporterJdkWarning;
   private JCheckBox myAutoDetectCompilerCheckBox;
 
-  public MavenImportingSettingsForm(Project project) {
+  private final ComponentValidator myImporterJdkValidator;
+
+  public MavenImportingSettingsForm(Project project, @NotNull Disposable disposable) {
     myJdkForImporterComboBox.setProject(project);
     mySearchRecursivelyCheckBox.setVisible(project.isDefault());
     //TODO: remove this
@@ -79,6 +87,25 @@ public class MavenImportingSettingsForm {
     LabelTextReplacingUtil.replaceText(myPanel);
     myAutoDetectCompilerCheckBox.setVisible(Registry.is("maven.import.compiler.arguments", true));
     myJdkForImporterComboBox.setHighlightInternalJdk(false);
+    ActionListener validatorListener = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        validateImporterJDK();
+      }
+    };
+    myJdkForImporterComboBox.addActionListener(validatorListener);
+
+    myImporterJdkValidator = new ComponentValidator(disposable)
+      .withValidator(() -> {
+        if (JavaSdkVersionUtil.isAtLeast(myJdkForImporterComboBox.getSelectedJdk(), JavaSdkVersion.JDK_1_8)) {
+          return null;
+        } else {
+          return new ValidationInfo(MavenConfigurableBundle.message("maven.settings.importing.jdk.too.old.error"), myJdkForImporterComboBox);
+        }
+      })
+      .installOn(myJdkForImporterComboBox);
+
+    myImporterJdkWarning.setVisible(false);
   }
 
   private void createUIComponents() {
@@ -92,6 +119,7 @@ public class MavenImportingSettingsForm {
     if (useSeparateDir && StringUtil.isEmptyOrSpaces(mySeparateModulesDirChooser.getText())) {
       mySeparateModulesDirChooser.setText(FileUtil.toSystemDependentName(getDefaultModuleDir()));
     }
+    validateImporterJDK();
   }
 
   public String getDefaultModuleDir() {
@@ -191,5 +219,14 @@ public class MavenImportingSettingsForm {
 
   public JPanel getAdditionalSettingsPanel() {
     return myAdditionalSettingsPanel;
+  }
+
+  private void validateImporterJDK() {
+    myImporterJdkValidator.revalidate();
+    if (myImporterJdkValidator.getValidationInfo() == null) {
+      myImporterJdkWarning.setVisible(false);
+    } else {
+      myImporterJdkWarning.setVisible(true);
+    }
   }
 }

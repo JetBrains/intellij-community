@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
 import git4idea.commands.*;
@@ -28,10 +29,7 @@ import git4idea.ui.branch.GitMultiRootBranchConfig;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -235,11 +233,13 @@ public final class GitBranchUtil {
    *         or if the current Git root couldn't be determined.
    */
   @Nullable
+  @RequiresEdt
   public static GitRepository getCurrentRepository(@NotNull Project project) {
     return getRepositoryOrGuess(project, DvcsUtil.getSelectedFile(project));
   }
 
   @Nullable
+  @CalledInAny
   public static GitRepository getRepositoryOrGuess(@NotNull Project project, @Nullable VirtualFile file) {
     if (project.isDisposed()) return null;
     return DvcsUtil.guessRepositoryForFile(project, GitUtil.getRepositoryManager(project), file,

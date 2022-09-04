@@ -157,6 +157,14 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-29435
+  public void testNoInspectionDebug() {
+    doTestByText(
+      "if __debug__:\n" +
+      "    print('why not?')"
+    );
+  }
+
   // PY-29767
   public void testContinueInPositiveIterationWithExitPoint() {
     doTestByText(

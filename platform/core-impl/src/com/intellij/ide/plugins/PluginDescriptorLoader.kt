@@ -404,7 +404,13 @@ private fun loadDescriptorsFromDirs(
   val pool = ForkJoinPool.commonPool()
   var activity = StartUpMeasurer.startActivity("platform plugin collecting", ActivityCategory.DEFAULT)
 
-  val platformPrefix = PlatformUtils.getPlatformPrefix()
+  val platformPrefixProperty = PlatformUtils.getPlatformPrefix()
+  val platformPrefix = if (platformPrefixProperty == PlatformUtils.QODANA_PREFIX) {
+    System.getProperty("idea.parent.prefix", PlatformUtils.IDEA_PREFIX)
+  } else {
+    platformPrefixProperty
+  }
+
   val isInDevServerMode = java.lang.Boolean.getBoolean("idea.use.dev.build.server")
   val pathResolver = ClassPathXmlPathResolver(
     classLoader = classLoader,

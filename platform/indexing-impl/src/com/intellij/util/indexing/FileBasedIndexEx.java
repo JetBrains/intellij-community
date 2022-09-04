@@ -784,7 +784,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @ApiStatus.Internal
   @NotNull
   public static Iterator<VirtualFile> createLazyFileIterator(@Nullable IntSet result, @NotNull GlobalSearchScope scope) {
-    Set<VirtualFile> fileSet = new CompactVirtualFileSet(result == null ? ArrayUtil.EMPTY_INT_ARRAY : result.toIntArray()).freezed();
+    Set<VirtualFile> fileSet = new CompactVirtualFileSet(result == null ? IntSets.emptySet() : result).freezed();
     return fileSet.stream().filter(scope::contains).iterator();
   }
 

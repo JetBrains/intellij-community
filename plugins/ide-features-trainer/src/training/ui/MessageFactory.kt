@@ -103,7 +103,7 @@ internal object MessageFactory {
             textAndSplitFn = {
               val shortcutByActionId = KeymapUtil.getShortcutByActionId(text)
               if (shortcutByActionId != null) {
-                KeymapUtil.getKeyStrokeData(shortcutByActionId)
+                KeymapUtil.getKeyboardShortcutData(shortcutByActionId)
               }
               else {
                 KeymapUtil.getGotoActionData(text)

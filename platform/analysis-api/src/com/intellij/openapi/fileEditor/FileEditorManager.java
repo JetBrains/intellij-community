@@ -271,4 +271,11 @@ public abstract class FileEditorManager {
    * @param file refreshed file
    */
   public void updateFilePresentation(@NotNull VirtualFile file) { }
+
+  /**
+   * Updates the file color of the editor tabs representing the specified file.
+   *
+   * @param file refreshed file
+   */
+  public void updateFileColor(@NotNull VirtualFile file) { }
 }

@@ -54,6 +54,8 @@ internal object BranchesDashboardActions {
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> =
       BranchActionsBuilder(project, tree).build()?.getChildren(e) ?: AnAction.EMPTY_ARRAY
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }
 
   class MultipleLocalBranchActions : ActionGroup(), DumbAware {

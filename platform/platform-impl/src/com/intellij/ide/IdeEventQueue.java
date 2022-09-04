@@ -111,6 +111,7 @@ public final class IdeEventQueue extends EventQueue {
   private long myLastEventTime = System.currentTimeMillis();
   private final List<EventDispatcher> myDispatchers = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<EventDispatcher> myPostProcessors = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<EventDispatcher> myPreProcessors = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Set<Runnable> myReady = new HashSet<>();
   private final HoverService myHoverService = new HoverService();
   private boolean myKeyboardBusy;
@@ -312,6 +313,14 @@ public final class IdeEventQueue extends EventQueue {
     myPostProcessors.remove(dispatcher);
   }
 
+  public void addPreprocessor(@NotNull EventDispatcher dispatcher, @Nullable Disposable parent) {
+    _addProcessor(dispatcher, parent, myPreProcessors);
+  }
+
+  public void removePreprocessor(@NotNull EventDispatcher dispatcher) {
+    myPreProcessors.remove(dispatcher);
+  }
+
   private static void _addProcessor(@NotNull EventDispatcher dispatcher,
                                     @Nullable Disposable parent,
                                     @NotNull Collection<? super EventDispatcher> set) {
@@ -433,15 +442,17 @@ public final class IdeEventQueue extends EventQueue {
         }
 
         try {
+          runCustomProcessors(finalE1, myPreProcessors);
+
           performActivity(finalE1, () -> {
             if (progressManager != null) {
               progressManager.computePrioritized(() -> {
-                _dispatchEvent(myCurrentEvent);
+                _dispatchEvent(finalE1);
                 return null;
               });
             }
             else {
-              _dispatchEvent(myCurrentEvent);
+              _dispatchEvent(finalE1);
             }
           });
         }
@@ -456,9 +467,7 @@ public final class IdeEventQueue extends EventQueue {
             myCurrentSequencedEvent = null;
           }
 
-          for (EventDispatcher each : myPostProcessors) {
-            each.dispatch(finalE1);
-          }
+          runCustomProcessors(finalE1, myPostProcessors);
 
           if (finalE1 instanceof KeyEvent) {
             maybeReady();
@@ -493,6 +502,17 @@ public final class IdeEventQueue extends EventQueue {
       }
       if (eventWatcher != null) {
         eventWatcher.edtEventFinished(e, System.currentTimeMillis());
+      }
+    }
+  }
+
+  private void runCustomProcessors(@NotNull AWTEvent event, @NotNull List<EventDispatcher> processors) {
+    for (EventDispatcher each : processors) {
+      try {
+        each.dispatch(event);
+      }
+      catch (Throwable t) {
+        processException(t);
       }
     }
   }

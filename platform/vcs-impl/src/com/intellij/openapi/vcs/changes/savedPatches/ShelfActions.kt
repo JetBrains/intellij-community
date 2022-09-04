@@ -55,6 +55,19 @@ class DropShelfAction : ShelfAction(VcsBundle.messagePointer("shelf.drop.action"
   override fun perform(project: Project, shelves: List<ShelvedChangeList>) {
     ShelvedChangesViewManager.deleteShelves(project, shelves)
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    if (e.presentation.isEnabled) {
+      val shelfTree = e.getData(ShelvedChangesViewManager.SHELVED_CHANGES_TREE)
+      e.presentation.isEnabled = shelfTree == null || !shelfTree.isEditing
+    }
+  }
 }
 
 class ShelfOperationsGroup : SavedPatchesOperationsGroup() {

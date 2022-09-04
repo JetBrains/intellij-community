@@ -27,6 +27,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.commit.NonModalCommitUsagesCollector.logStateChanged
+import org.jetbrains.annotations.CalledInAny
 import java.util.*
 
 private const val TOGGLE_COMMIT_UI = "vcs.non.modal.commit.toggle.ui"
@@ -107,6 +108,7 @@ class CommitModeManager(private val project: Project) : Disposable {
     return CommitMode.ModalCommitMode
   }
 
+  @CalledInAny
   fun getCurrentCommitMode() = commitMode
 
   internal fun canSetNonModal(): Boolean {

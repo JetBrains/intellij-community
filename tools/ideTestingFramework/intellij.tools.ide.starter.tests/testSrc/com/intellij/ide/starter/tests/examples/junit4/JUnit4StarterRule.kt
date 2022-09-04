@@ -6,7 +6,6 @@ import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.process.killOutdatedProcessesOnUnix
 import com.intellij.ide.starter.runner.TestContainer
-import com.intellij.ide.starter.system.SystemInfo
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.logOutput
 import com.intellij.ide.starter.utils.withIndent
@@ -40,9 +39,7 @@ class JUnit4StarterRule(
       })
     }
 
-    if (!SystemInfo.isWindows) {
-      killOutdatedProcessesOnUnix()
-    }
+    killOutdatedProcessesOnUnix()
   }
 
   override fun close() {

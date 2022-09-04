@@ -2,6 +2,7 @@
 package com.intellij.ide.lightEdit.actions;
 
 import com.intellij.ide.lightEdit.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -26,6 +27,11 @@ public class LightEditReloadFileAction extends DumbAwareAction implements LightE
         editorManager.reloadFile(file);
       }
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

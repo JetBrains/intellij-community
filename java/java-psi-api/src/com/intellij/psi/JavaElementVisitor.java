@@ -68,6 +68,11 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitStatement(statement);
   }
 
+  public void visitDeconstructionList(PsiDeconstructionList deconstructionList) { visitElement(deconstructionList); }
+
+  public void visitDeconstructionPattern(PsiDeconstructionPattern deconstructionPattern) { visitPattern(deconstructionPattern); }
+
+
   public void visitDocComment(PsiDocComment comment) {
     visitComment(comment);
   }
@@ -224,6 +229,8 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
   public void visitPostfixExpression(PsiPostfixExpression expression) {
     visitUnaryExpression(expression);
   }
+
+  public void visitPatternGuard(PsiPatternGuard guard) { visitElement(guard); }
 
   public void visitPrefixExpression(PsiPrefixExpression expression) {
     visitUnaryExpression(expression);

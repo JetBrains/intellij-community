@@ -95,6 +95,8 @@ class RecentProjectFilteringTree(
       setExpandableItemsEnabled(false)
       UIUtil.setCursor(this, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
     }
+
+    searchModel.updateStructure()
   }
 
   fun updateTree() {
@@ -112,11 +114,6 @@ class RecentProjectFilteringTree(
   override fun getChildren(item: RecentProjectTreeItem): Iterable<RecentProjectTreeItem> = item.children()
 
   override fun createNode(item: RecentProjectTreeItem): DefaultMutableTreeNode = DefaultMutableTreeNode(item)
-
-  override fun rebuildTree() {
-    expandGroups()
-    setSelectionOnLastOpenedProject()
-  }
 
   override fun createSpeedSearch(searchTextField: SearchTextField): SpeedSearchSupply = object : FilteringSpeedSearch(searchTextField) {}
 
@@ -160,7 +157,7 @@ class RecentProjectFilteringTree(
     return RecentProjectPanel.FilePathChecker(treeUpdater, recentProjects.map { it.projectPath })
   }
 
-  private fun expandGroups() {
+  internal fun expandGroups() {
     for (child in root.children()) {
       val treeNode = child as DefaultMutableTreeNode
       val item = treeNode.userObject
@@ -174,7 +171,7 @@ class RecentProjectFilteringTree(
     }
   }
 
-  private fun setSelectionOnLastOpenedProject() {
+  fun selectLastOpenedProject() {
     val recentProjectsManager = RecentProjectsManagerBase.instanceEx
     val projectPath = recentProjectsManager.getLastOpenedProject() ?: return
 
@@ -487,11 +484,18 @@ class RecentProjectFilteringTree(
       private val projectProgressBar = JProgressBar().apply {
         isOpaque = false
       }
-      private val projectProgressBarPanel = JBUI.Panels.simplePanel().apply {
-        isOpaque = false
-        border = JBUI.Borders.empty(8)
-        preferredSize = JBUI.size(preferredSize).withWidth(PROGRESS_BAR_WIDTH)
+      private val projectProgressBarPanel = object : BorderLayoutPanel() {
+        init {
+          isOpaque = false
+          border = JBUI.Borders.empty(8)
+        }
 
+        override fun getPreferredSize(): Dimension {
+          val size = super.getPreferredSize()
+          size.width = PROGRESS_BAR_WIDTH
+          return size
+        }
+      }.apply {
         add(projectProgressLabel, BorderLayout.NORTH)
         add(projectProgressBar, BorderLayout.SOUTH)
       }

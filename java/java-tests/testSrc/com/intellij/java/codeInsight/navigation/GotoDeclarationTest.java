@@ -25,11 +25,41 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testContinue() { doTest(); }
+
   public void testContinueLabel() { doTest(); }
-  public void testBreak() {  doTest(); }
-  public void testBreak1() {  doTest(); }
-  public void testBreakLabel() {  doTest(); }
-  public void testAnonymous() {  doTest(); }
+
+  public void testBreak() { doTest(); }
+
+  public void testBreak1() { doTest(); }
+
+  public void testBreakLabel() { doTest(); }
+
+  public void testAnonymous() { doTest(); }
+
+  public void testFromGuardToDestructuringVariable() { doGotoTest(); }
+
+  public void testFromGuardToDestructuringPattern() { doGotoTest(); }
+
+  public void testFromArrowToDestructuringVariable() { doGotoTest(); }
+
+  public void testFromArrowToDestructuringPattern() { doGotoTest(); }
+
+  public void testFromStatementToDestructuringVariable() { doGotoTest(); }
+
+  public void testFromStatementToDestructuringPattern() { doGotoTest(); }
+
+  public void testFromIfToDestructuringVariable() { doGotoTest(); }
+
+  public void testFromIfToDestructuringPattern() { doGotoTest(); }
+
+  public void testToGuardedTypeTest() { doGotoTest(); }
+
+  private void doGotoTest() {
+    String name = getTestName(false);
+    configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
+    performAction();
+    checkResultByFile("/codeInsight/gotoDeclaration/" + name + "_after.java");
+  }
 
   private void performAction() {
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());

@@ -717,17 +717,17 @@ public final class FileSystemUtil {
         if (LOG.isDebugEnabled()) LOG.debug("statfs(" + path + "): error");
       }
       else {
-        long fs = Native.LONG_SIZE == 4 ? buf.getInt(0) : buf.getLong(0);
+        long fs = Native.LONG_SIZE == 4 ? ((long)buf.getInt(0)) & 0xFFFFFFFFL : buf.getLong(0);
         // Btrfs, XFS
-        if (fs == 0x9123683e || fs == 0x58465342) {
+        if (fs == 0x9123683EL || fs == 0x58465342L) {
           return FileAttributes.CaseSensitivity.SENSITIVE;
         }
         // VFAT
-        if (fs == 0x4d44) {
+        if (fs == 0x4D44L) {
           return FileAttributes.CaseSensitivity.INSENSITIVE;
         }
         // Ext*, F2FS
-        if ((fs == 0xef53 || fs == 0xf2f52010) && ourLibExt2FsPresent) {
+        if ((fs == 0xEF53L || fs == 0xF2F52010L) && ourLibExt2FsPresent) {
           LongByReference flags = new LongByReference();
           if (E2P.INSTANCE.fgetflags(path, flags) != 0) {
             if (LOG.isDebugEnabled()) LOG.debug("fgetflags(" + path + "): error");

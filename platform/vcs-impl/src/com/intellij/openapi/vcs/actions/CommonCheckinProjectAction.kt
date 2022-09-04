@@ -3,14 +3,15 @@ package com.intellij.openapi.vcs.actions
 
 import com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_POPUP
 import com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_TOOLBAR
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTENT_MANAGER
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangesViewManager
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import com.intellij.vcs.commit.CommitMode
@@ -19,7 +20,7 @@ import com.intellij.vcsUtil.VcsUtil.getFilePath
 
 private val LOCAL_CHANGES_ACTION_PLACES = setOf(CHANGES_VIEW_TOOLBAR, CHANGES_VIEW_POPUP)
 private fun AnActionEvent.isFromLocalChangesPlace() = place in LOCAL_CHANGES_ACTION_PLACES
-private fun AnActionEvent.isFromLocalChanges() = getData(CONTENT_MANAGER)?.selectedContent?.tabName == LOCAL_CHANGES
+private fun AnActionEvent.isFromLocalChanges() = getData(ChangesViewContentManager.CONTENT_TAB_NAME_KEY) == LOCAL_CHANGES
 
 private fun AnActionEvent.isToggleCommitEnabled(): Boolean {
   val commitMode = getProjectCommitMode()
@@ -49,6 +50,10 @@ class ToggleChangesViewCommitUiAction : DumbAwareToggleAction() {
 
   init {
     ActionUtil.copyFrom(this, IdeActions.ACTION_CHECKIN_PROJECT)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun update(e: AnActionEvent) {

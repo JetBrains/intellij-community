@@ -276,8 +276,8 @@ public class ChangesViewManager implements ChangesViewEx,
   @Override
   @Nullable
   public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
-    if (myToolWindowPanel == null) return null;
-    return myToolWindowPanel.getCommitWorkflowHandler();
+    ChangesViewToolWindowPanel toolWindowPanel = myToolWindowPanel;
+    return toolWindowPanel != null ? toolWindowPanel.getCommitWorkflowHandler() : null;
   }
 
   @Override

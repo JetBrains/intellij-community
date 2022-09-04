@@ -2,6 +2,7 @@
 
 package org.jetbrains.idea.svn.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -16,6 +17,11 @@ import static com.intellij.util.containers.ContainerUtil.immutableList;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class CleanupProjectAction extends AnAction implements DumbAware {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.storage.LookupStorage
 import com.intellij.completion.ml.util.idString
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -39,6 +40,8 @@ object MLCompletionFeaturesUtil {
     companion object {
       private val LOG = logger<CopyFeaturesToClipboard>()
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
       val editor = e.getData(CommonDataKeys.EDITOR)

@@ -74,6 +74,10 @@ internal class SwitcherIterateThroughItemsAction : DumbAwareAction() {
     event.presentation.isEnabledAndVisible = Switcher.SWITCHER_KEY.get(event.project) != null
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun actionPerformed(event: AnActionEvent) {
     Switcher.SWITCHER_KEY.get(event.project)?.go(forward(event))
   }
@@ -86,6 +90,10 @@ internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction() {
 
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = getCheckBox(event) != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun isSelected(event: AnActionEvent) = getCheckBox(event)?.isSelected ?: false
@@ -122,6 +130,10 @@ internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareA
 
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = getFileList(event) != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun actionPerformed(event: AnActionEvent) {

@@ -102,7 +102,8 @@ fun ZipArchiveOutputStream.dir(startDir: Path,
         entry.method = ZipEntry.STORED
         entry.lastModifiedTime = zeroTime
         entry.unixMode = Files.readAttributes(file, "unix:mode", LinkOption.NOFOLLOW_LINKS).get("mode") as Int
-        val data = (prefix + startDir.relativize(Files.readSymbolicLink(file))).toByteArray()
+        val path = Files.readSymbolicLink(file).let { if (it.isAbsolute) prefix + startDir.relativize(it) else it.toString() }
+        val data = path.toByteArray()
         entry.size = data.size.toLong()
         putArchiveEntry(entry)
         write(data)

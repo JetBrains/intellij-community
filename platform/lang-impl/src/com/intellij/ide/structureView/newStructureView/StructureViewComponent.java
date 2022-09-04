@@ -368,9 +368,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     DefaultActionGroup result = new DefaultActionGroup(IdeBundle.message("group.view.options"), null, AllIcons.Actions.GroupBy);
     result.setPopup(true);
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.sort"));
-    result.addAll(getSortActions());
+    result.addAll(sortActionsByName(getSortActions()));
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.filter"));
-    result.addAll(getFilterActions());
+    result.addAll(sortActionsByName(getFilterActions()));
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.group"));
     addGroupByActions(result);
     return result;
@@ -421,9 +421,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   protected void addGroupByActions(@NotNull DefaultActionGroup result) {
     Grouper[] groupers = myTreeModel.getGroupers();
+    List<AnAction> groupActions = new ArrayList<>();
     for (Grouper grouper : groupers) {
-      result.add(new TreeActionWrapper(grouper, this));
+      groupActions.add(new TreeActionWrapper(grouper, this));
     }
+    result.addAll(sortActionsByName(groupActions));
   }
 
   @NotNull
@@ -1019,6 +1021,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   @NotNull
   public static TreeElementWrapper createWrapper(@NotNull Project project, @NotNull TreeElement value, TreeModel treeModel) {
     return new MyNodeWrapper(project, value, treeModel);
+  }
+
+  @NotNull
+  private static List<AnAction> sortActionsByName(@NotNull List<AnAction> actions) {
+    actions.sort(Comparator.comparing(action -> action.getTemplateText()));
+    return actions;
   }
 
   private static class MyExpandListener extends TreeModelAdapter {

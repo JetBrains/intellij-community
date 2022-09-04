@@ -40,7 +40,6 @@ class BuildContextImpl : BuildContext {
   override val buildNumber: String
   override var xBootClassPathJarNames: List<String>
   override var bootClassPathJarNames: List<String>
-  override var classpathCustomizer: (MutableSet<String>) -> Unit = {}
 
   override val applicationInfo: ApplicationInfoProperties
   private val global: JpsGlobal

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.actions.internal
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -22,4 +23,5 @@ class LibraryToSourceDependencySupportToggleAction : ToggleAction(
         }
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }

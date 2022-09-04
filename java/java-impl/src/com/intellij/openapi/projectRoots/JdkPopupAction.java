@@ -52,6 +52,11 @@ public class JdkPopupAction extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final JComponent component;
     final boolean showInMiddle;

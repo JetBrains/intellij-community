@@ -3,11 +3,15 @@
 package org.jetbrains.kotlin.idea.migration
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.Project
 
 class CodeMigrationToggleAction : ToggleAction() {
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun isSelected(e: AnActionEvent): Boolean {
         val project = e.project ?: return false
         return isEnabled(project)

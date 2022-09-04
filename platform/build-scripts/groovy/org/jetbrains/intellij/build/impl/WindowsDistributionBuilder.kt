@@ -151,7 +151,9 @@ internal class WindowsDistributionBuilder(
       NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
 
       runProcess(listOf("diff", "-q", "-r", tempZip.toString(), tempExe.toString()), null, context.messages)
-      RepairUtilityBuilder.generateManifest(context, tempExe, exePath!!.fileName.toString())
+      if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
+        RepairUtilityBuilder.generateManifest(context, tempExe, OsFamily.WINDOWS, arch)
+      }
     }
     finally {
       NioFiles.deleteRecursively(tempZip)

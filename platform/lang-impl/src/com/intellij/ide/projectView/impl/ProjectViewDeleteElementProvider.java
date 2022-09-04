@@ -9,7 +9,6 @@ import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -25,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class ProjectViewDeleteElementProvider implements DeleteProvider, DumbAware {
+public abstract class ProjectViewDeleteElementProvider implements DeleteProvider {
 
   @Override
   public boolean canDeleteElement(@NotNull DataContext dataContext) {

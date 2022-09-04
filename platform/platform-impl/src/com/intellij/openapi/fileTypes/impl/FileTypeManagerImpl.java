@@ -521,11 +521,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
       }
 
-      PluginAdvertiserExtensionsStateService pluginAdvertiser = PluginAdvertiserExtensionsStateService.getInstance();
-      for (FileNameMatcher matcher : standardFileType.matchers) {
-        pluginAdvertiser.registerLocalPlugin(matcher, bean.getPluginDescriptor());
-      }
-
       myPendingAssociations.removeAllAssociations(bean);
       myPendingFileTypes.remove(fileTypeName);
 
@@ -1428,6 +1423,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     if (newFileType instanceof FileTypeIdentifiableByVirtualFile) {
       mySpecialFileTypes = ArrayUtil.append(mySpecialFileTypes, (FileTypeIdentifiableByVirtualFile)newFileType, FileTypeIdentifiableByVirtualFile.ARRAY_FACTORY);
+    }
+
+    PluginAdvertiserExtensionsStateService pluginAdvertiser = PluginAdvertiserExtensionsStateService.getInstance();
+    for (FileNameMatcher matcher : newMatchers) {
+      pluginAdvertiser.registerLocalPlugin(matcher, newPluginDescriptor);
     }
   }
 

@@ -9,6 +9,8 @@ import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
@@ -112,8 +114,16 @@ public final class DvcsUtil {
    * Returns the currently selected file, based on which VcsBranch or StatusBar components will identify the current repository root.
    */
   @Nullable
+  @RequiresEdt
   public static VirtualFile getSelectedFile(@NotNull Project project) {
     FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor();
+    return fileEditor == null ? null : fileEditor.getFile();
+  }
+
+  @Nullable
+  @CalledInAny
+  public static VirtualFile getSelectedFile(@NotNull DataContext dataProvider) {
+    FileEditor fileEditor = PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.getData(dataProvider);
     return fileEditor == null ? null : fileEditor.getFile();
   }
 
@@ -261,6 +271,7 @@ public final class DvcsUtil {
   }
 
   @Nullable
+  @RequiresEdt
   public static <T extends Repository> T guessCurrentRepositoryQuick(@NotNull Project project,
                                                                      @NotNull AbstractRepositoryManager<T> manager,
                                                                      @Nullable @NonNls String defaultRootPathValue) {

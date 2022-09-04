@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
@@ -43,6 +44,11 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
     final String systemIdName = systemId != null ? systemId.getReadableName() : "External";
     Presentation presentation = e.getPresentation();
     presentation.setText(ExternalSystemBundle.messagePointer("action.detach.external.project.text", systemIdName));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

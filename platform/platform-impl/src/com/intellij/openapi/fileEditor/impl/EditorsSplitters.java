@@ -75,6 +75,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import static com.intellij.openapi.fileEditor.impl.TabColorUtilKt.getForegroundColorForFile;
 import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
 
 @DirtyUI
@@ -436,13 +437,17 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       LOG.assertTrue(composite != null);
       int index = window.findCompositeIndex(composite);
       LOG.assertTrue(index != -1);
-      window.setForegroundAt(index, getManager().getFileColor(file));
-      TextAttributes attributes = getManager().isProblem(file) ? colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) : null;
+      FileEditorManagerImpl manager = getManager();
+      window.setForegroundAt(index, manager.getFileColor(file));
+      var resultAttributes = new TextAttributes();
+      resultAttributes.setForegroundColor(colorScheme.getColor(getForegroundColorForFile(manager.getProject(), file)));
+      TextAttributes attributes = manager.isProblem(file) ? colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) : null;
       if (composite.isPreview()) {
         var italic = new TextAttributes(null, null, null, null, Font.ITALIC);
         attributes = (attributes == null) ? italic : TextAttributes.merge(italic, attributes);
       }
-      window.setTextAttributes(index, attributes);
+      resultAttributes = TextAttributes.merge(resultAttributes, attributes);
+      window.setTextAttributes(index, resultAttributes);
     }
   }
 

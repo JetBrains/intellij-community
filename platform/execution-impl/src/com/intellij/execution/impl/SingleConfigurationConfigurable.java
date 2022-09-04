@@ -123,7 +123,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     RunnerAndConfigurationSettings snapshot = super.getSnapshot();
     snapshot.setName(getNameText());
     snapshot.setFolderName(getFolderName());
-    snapshot.getConfiguration().setAllowRunningInParallel(myIsAllowRunningInParallel);
+    if (hasParallelCheckBox()) {
+      snapshot.getConfiguration().setAllowRunningInParallel(myIsAllowRunningInParallel);
+    }
     RunnerAndConfigurationSettings original = getSettings();
     snapshot.setTemporary(original.isTemporary());
 
@@ -501,8 +503,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myIsAllowRunningInParallel = configuration.isAllowRunningInParallel();
       myIsAllowRunningInParallelCheckBox.setEnabled(isManagedRunConfiguration);
       myIsAllowRunningInParallelCheckBox.setSelected(myIsAllowRunningInParallel);
-      myIsAllowRunningInParallelCheckBox.setVisible(getEditor() instanceof ConfigurationSettingsEditorWrapper &&
-                                                    getSettings().getFactory().getSingletonPolicy().isPolicyConfigurable());
+      myIsAllowRunningInParallelCheckBox.setVisible(hasParallelCheckBox());
     }
 
     public final JComponent getWholePanel() {
@@ -551,6 +552,11 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myComponentPlace = new NonOpaquePanel();
       myJBScrollPane = wrapWithScrollPane(null);
     }
+  }
+
+  private boolean hasParallelCheckBox() {
+    return getEditor() instanceof ConfigurationSettingsEditorWrapper &&
+           getSettings().getFactory().getSingletonPolicy().isPolicyConfigurable();
   }
 
   interface ValidationListener {

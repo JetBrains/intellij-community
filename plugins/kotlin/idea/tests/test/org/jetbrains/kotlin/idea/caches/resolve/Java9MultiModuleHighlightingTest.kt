@@ -77,4 +77,10 @@ class Java9MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
         module("main").addDependency(a).addDependency(b).addDependency(c)
         checkHighlightingInProject()
     }
+
+    fun testAutomaticModuleFromManifest() {
+        val d = module("dependency")
+        module("automaticByManifest").addDependency(d)
+        checkHighlightingInProject()
+    }
 }

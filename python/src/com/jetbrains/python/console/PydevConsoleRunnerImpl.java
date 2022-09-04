@@ -69,6 +69,7 @@ import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.console.actions.ShowCommandQueueAction;
 import com.jetbrains.python.console.actions.ShowVarsAction;
@@ -582,8 +583,16 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                                                                      usePty);
 
     // The environment is now prepared and ide server port should be resolved, so let's start the server
-    // TODO check if binding to "localhost" properly works for Docker target on Linux host machine
-    String ideServerHost = "localhost";
+    ResolvedPortBinding resolvedServerPortBinding = targetEnvironment.getLocalPortBindings().get(ideServerPortBinding);
+    String ideServerHost;
+    if (resolvedServerPortBinding != null) {
+      ideServerHost = resolvedServerPortBinding.getLocalEndpoint().getHost();
+    }
+    else {
+      LOG.error("The resolution of the local port binding for \"" + ideServerPort + "\" port cannot be found in the prepared environment" +
+                ", falling back to \"localhost\" for the server socket binding on the local machine");
+      ideServerHost = "localhost";
+    }
     PydevConsoleCommunicationServer communicationServer = new PydevConsoleCommunicationServer(myProject, ideServerHost, ideServerPort);
     myPydevConsoleCommunication = communicationServer;
     try {
@@ -744,8 +753,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private void initAndRun(@NotNull Sdk sdk) throws ExecutionException {
     // Create Server process
     CommandLineProcess commandLineProcess;
-    if (Registry.get("python.use.targets.api").asBoolean()) {
+    boolean isUseTargetsAPI = Registry.is("python.use.targets.api");
+    if (isUseTargetsAPI) {
       commandLineProcess = createProcessUsingTargetsAPI(sdk);
+    }
+    else if (PyRunnerUtil.isTargetBased(sdk)) {
+      throw new ExecutionException(PySdkBundle.message("python.sdk.please.reconfigure.interpreter"));
     }
     else {
       commandLineProcess = createProcess(sdk);

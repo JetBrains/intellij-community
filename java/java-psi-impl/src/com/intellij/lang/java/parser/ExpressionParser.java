@@ -240,7 +240,7 @@ public class ExpressionParser {
           expression.done(toCreate);
           return expression;
         }
-        myParser.getPatternParser().parsePrimaryPattern(builder);
+        myParser.getPatternParser().parsePrimaryPattern(builder, false);
       } else {
         final PsiBuilder.Marker right = parseExpression(builder, ExprType.SHIFT, mode);
         if (right == null) {

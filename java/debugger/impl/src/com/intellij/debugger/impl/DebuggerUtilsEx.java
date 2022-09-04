@@ -226,16 +226,17 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return ClassFilter.EMPTY_ARRAY;
     }
 
-    ClassFilter[] filters = new ClassFilter[children.size()];
-    for (int i = 0, size = children.size(); i < size; i++) {
+    //do not leave null elements in the resulting array in case of read errors
+    List<ClassFilter> filters = new ArrayList<>(children.size());
+    for (Element child : children) {
       try {
-        filters[i] = create(children.get(i));
+        filters.add(create(child));
       }
       catch (InvalidDataException e) {
         LOG.error(e);
       }
     }
-    return filters;
+    return filters.toArray(ClassFilter.EMPTY_ARRAY);
   }
 
   public static void writeFilters(@NotNull Element parentNode, @NonNls String tagName, ClassFilter[] filters) throws WriteExternalException {

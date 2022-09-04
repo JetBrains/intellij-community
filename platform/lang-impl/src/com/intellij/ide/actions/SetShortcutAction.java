@@ -71,4 +71,9 @@ public class SetShortcutAction extends AnAction implements DumbAware {
     Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     presentation.setEnabled(action != null && component != null);
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
 }

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.AccessToken;
@@ -57,6 +58,11 @@ public class GithubSyncForkAction extends DumbAwareAction {
     super(GithubBundle.messagePointer("rebase.action"),
           GithubBundle.messagePointer("rebase.action.description"),
           AllIcons.Vcs.Vendors.Github);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

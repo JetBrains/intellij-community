@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.scratch.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
@@ -13,10 +14,11 @@ import org.jetbrains.kotlin.idea.scratch.ui.findScratchFileEditorWithPreview
 import javax.swing.Icon
 
 abstract class ScratchAction(@Nls message: String, icon: Icon) : AnAction(message, message, icon) {
-    override fun update(e: AnActionEvent) {
-        val scratchFile = e.currentScratchFile
 
-        e.presentation.isVisible = scratchFile != null
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+        e.presentation.isVisible = e.currentScratchFile != null
     }
 
     protected val AnActionEvent.currentScratchFile: ScratchFile?

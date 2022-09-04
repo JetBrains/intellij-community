@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgAbstractGlobalSingleRepoAction;
-import org.zmlx.hg4idea.action.HgActionUtil;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgMqUnAppliedPatchesPanel;
 
@@ -32,7 +31,7 @@ public final class HgShowUnAppliedPatchesAction extends HgAbstractGlobalSingleRe
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    HgRepository repository = HgActionUtil.getSelectedRepositoryFromEvent(e);
+    HgRepository repository = getSelectedRepositoryFromEvent(e.getDataContext());
     e.getPresentation().setEnabledAndVisible(repository != null && repository.getRepositoryConfig().isMqUsed());
   }
 

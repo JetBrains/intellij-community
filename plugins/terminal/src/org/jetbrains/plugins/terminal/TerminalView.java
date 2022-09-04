@@ -17,6 +17,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -52,6 +53,7 @@ import com.intellij.util.text.UniqueNameGenerator;
 import com.jediterm.terminal.RequestOrigin;
 import com.jediterm.terminal.ui.TerminalPanelListener;
 import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -272,6 +274,16 @@ public final class TerminalView implements Disposable {
     else {
       terminalWidget.moveDisposable(content);
     }
+
+    if (tabState != null && tabState.myTabName != null && tabState.myIsUserDefinedTabTitle) {
+      terminalWidget.getTerminalTitle().change(new Function1<>() {
+        @Override
+        public Unit invoke(TerminalTitle.State state) {
+          state.setUserDefinedTitle(tabState.myTabName);
+          return null;
+        }
+      });
+    }
     setupTerminalWidget(toolWindow, terminalWidget, tabState, content, true);
 
     content.setCloseable(true);
@@ -312,11 +324,13 @@ public final class TerminalView implements Disposable {
 
       @Override
       public void onTitleChanged(@NlsSafe String title) {
-        TerminalTitle terminalTitle = terminalWidget.getTerminalTitle();
-        terminalTitle.change(terminalTitleState -> {
-          terminalTitleState.setApplicationTitle(title);
-          return null;
-        });
+        if (AdvancedSettings.getBoolean("terminal.show.application.title")) {
+          TerminalTitle terminalTitle = terminalWidget.getTerminalTitle();
+          terminalTitle.change(terminalTitleState -> {
+            terminalTitleState.setApplicationTitle(title);
+            return null;
+          });
+        }
       }
     });
 

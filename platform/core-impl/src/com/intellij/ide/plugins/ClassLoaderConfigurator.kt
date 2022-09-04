@@ -11,6 +11,7 @@ import com.intellij.util.lang.ClassPath
 import com.intellij.util.lang.ResourceFile
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
@@ -431,6 +432,7 @@ private fun configureUsingIdeaClassloader(classPath: List<Path>, descriptor: Ide
   }
 }
 
+@VisibleForTesting
 fun sortDependenciesInPlace(dependencies: Array<IdeaPluginDescriptorImpl>) {
   if (dependencies.size <= 1) return
 

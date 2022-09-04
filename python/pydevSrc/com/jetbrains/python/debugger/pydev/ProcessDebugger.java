@@ -35,6 +35,7 @@ public interface ProcessDebugger {
   @Nullable
   String execTableCommand(String threadId, String frameId, String command, TableCommandType commandType) throws PyDebuggerException;
 
+  @Nullable
   XValueChildrenList loadFrame(String threadId, String frameId) throws PyDebuggerException;
 
   List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine)

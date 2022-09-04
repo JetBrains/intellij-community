@@ -120,7 +120,7 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
   private @Nullable Object getDataInner(@NotNull String dataId, boolean cacheable) {
     Component component = SoftReference.dereference(myRef);
     if (PlatformCoreDataKeys.IS_MODAL_CONTEXT.is(dataId)) {
-      return component == null ? null : IdeKeyEventDispatcher.isModalContext(component);
+      return component == null ? null : Utils.isModalContext(component);
     }
     if (PlatformCoreDataKeys.CONTEXT_COMPONENT.is(dataId)) {
       return component;

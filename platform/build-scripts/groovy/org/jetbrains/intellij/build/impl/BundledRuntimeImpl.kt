@@ -207,13 +207,16 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
   override fun executableFilesPatterns(os: OsFamily): List<String> {
     val pathPrefix = if (os == OsFamily.MACOS) "jbr/Contents/Home/" else "jbr/"
     @Suppress("SpellCheckingInspection")
-    return listOf(
+    val executableFilesPatterns = mutableListOf(
       pathPrefix + "bin/*",
       pathPrefix + "lib/jexec",
-      pathPrefix + "lib/jcef_helper",
       pathPrefix + "lib/jspawnhelper",
       pathPrefix + "lib/chrome-sandbox"
     )
+    if (os == OsFamily.LINUX) {
+      executableFilesPatterns += "jbr/lib/jcef_helper"
+    }
+    return executableFilesPatterns
   }
 }
 

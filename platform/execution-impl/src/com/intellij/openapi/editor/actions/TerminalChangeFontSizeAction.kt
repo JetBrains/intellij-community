@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.actions
 
 import com.intellij.application.options.EditorFontsConstants
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.project.DumbAwareAction
@@ -22,6 +23,10 @@ sealed class TerminalChangeFontSizeAction(text: Supplier<String?>, private val m
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = getTerminalWidget(e) != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   class IncreaseEditorFontSize : TerminalChangeFontSizeAction(EditorBundle.messagePointer("increase.editor.font"), 1f)

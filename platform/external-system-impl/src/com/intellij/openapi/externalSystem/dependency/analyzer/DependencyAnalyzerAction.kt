@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
@@ -27,6 +28,8 @@ abstract class DependencyAnalyzerAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = Registry.`is`("external.system.dependency.analyzer") && isEnabledAndVisible(e)
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   init {
     templatePresentation.icon = AllIcons.Actions.DependencyAnalyzer

@@ -43,6 +43,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.jetbrains.jdi.EventRequestManagerImpl;
 import com.jetbrains.jdi.LocationImpl;
 import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
@@ -333,6 +334,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
     enableRequestWithHandler(request, handler);
   }
 
+  private static EventRequest platformThreadsOnly(EventRequest eventRequest) {
+    if (eventRequest instanceof EventRequestManagerImpl.ThreadLifecycleEventRequestImpl) {
+      ((EventRequestManagerImpl.ThreadLifecycleEventRequestImpl)eventRequest).addPlatformThreadsOnlyFilter();
+    }
+    return eventRequest;
+  }
+
   private void processVMStartEvent(final SuspendContextImpl suspendContext, VMStartEvent event) {
     preprocessEvent(suspendContext, event.thread());
 
@@ -356,14 +364,14 @@ public class DebugProcessEvents extends DebugProcessImpl {
           myReturnValueWatcher = new MethodReturnValueWatcher(requestManager, this);
         }
 
-        enableNonSuspendingRequest(requestManager.createThreadStartRequest(),
+        enableNonSuspendingRequest(platformThreadsOnly(requestManager.createThreadStartRequest()),
                                    event -> {
                                      ThreadReference thread = ((ThreadStartEvent)event).thread();
                                      machineProxy.threadStarted(thread);
                                      myDebugProcessDispatcher.getMulticaster().threadStarted(this, thread);
                                    });
 
-        enableNonSuspendingRequest(requestManager.createThreadDeathRequest(),
+        enableNonSuspendingRequest(platformThreadsOnly(requestManager.createThreadDeathRequest()),
                                    event -> {
                                      ThreadReference thread = ((ThreadDeathEvent)event).thread();
                                      machineProxy.threadStopped(thread);

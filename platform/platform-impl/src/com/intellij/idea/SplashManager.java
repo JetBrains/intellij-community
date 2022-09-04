@@ -188,6 +188,7 @@ public final class SplashManager {
       Window w = ref.get();
       if (w != null) {
         ref.set(null);
+        StartUpMeasurer.addInstantEvent("splash hidden");
         w.setVisible(false);
         w.dispose();
       }

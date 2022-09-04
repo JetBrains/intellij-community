@@ -288,7 +288,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   /**
-   * Updates the state of the action. Default implementation does nothing.
+   * Updates the presentation of the action. Default implementation does nothing.
    * Override this method to provide the ability to dynamically change action's
    * state and(or) presentation depending on the context (For example
    * when your action state depends on the selection you can check for
@@ -307,26 +307,26 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * in absence of any of these events, please call {@code ActivityTracker.getInstance().inc()} to notify
    * action subsystem to update all toolbar actions when your subsystem's determines that its actions' visibility might be affected.
    *
-   * @param e Carries information on the invocation place and data available
+   * @see #getActionUpdateThread()
    */
   public void update(@NotNull AnActionEvent e) {
   }
 
   /**
-   * Same as {@link #update(AnActionEvent)} but is calls immediately before actionPerformed() as final check guard.
-   * Default implementation delegates to {@link #update(AnActionEvent)}.
+   * Updates the presentation of the action just before the {@link #actionPerformed(AnActionEvent)} method is called.
+   * The default implementation simply delegates to the {@link #update(AnActionEvent)} method.
+   * <p/>
+   * It is called on the UI thread with all data in the provided {@link DataContext} instance.
    *
-   * @param e Carries information on the invocation place and data available
+   * @see #actionPerformed(AnActionEvent)
    */
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
     update(e);
   }
 
   /**
-   * Returns a template presentation that will be used
-   * as a template for created presentations.
-   *
-   * @return template presentation
+   * Returns the template presentation of the action that is cloned each time
+   * a new presentation of the action is needed.
    */
   public final @NotNull Presentation getTemplatePresentation() {
     Presentation presentation = myTemplatePresentation;
@@ -349,9 +349,11 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   /**
-   * Implement this method to provide your action handler.
+   * Performs the action logic.
+   * <p/>
+   * It is called on the UI thread with all data in the provided {@link DataContext} instance.
    *
-   * @param e Carries information on the invocation place
+   * @see #beforeActionPerformedUpdate(AnActionEvent)
    */
   public abstract void actionPerformed(@NotNull AnActionEvent e);
 
@@ -405,10 +407,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     return this instanceof TransparentUpdate;
   }
 
-  /**
-   * @deprecated unused
-   */
-  @Deprecated
+  /** @deprecated unused */
+  @Deprecated(forRemoval = true)
   public boolean startInTransaction() {
     return false;
   }

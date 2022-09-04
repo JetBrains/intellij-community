@@ -2,6 +2,7 @@
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -39,6 +40,11 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
       e.getPresentation().setEnabledAndVisible(true);
     }
 
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

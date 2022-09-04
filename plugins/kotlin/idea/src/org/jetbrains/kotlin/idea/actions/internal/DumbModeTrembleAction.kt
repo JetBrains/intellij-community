@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.actions.internal
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -29,10 +30,12 @@ class DumbModeTrembleAction : DumbAwareAction() {
         }
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun update(e: AnActionEvent) {
         val project = e.project
         if (project == null) {
-            e.presentation.isEnabled = false
+            e.presentation.isEnabledAndVisible = false
             return
         }
 

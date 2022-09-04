@@ -378,7 +378,7 @@ public final class PyInterpreterInspection extends PyInspection {
       showPythonInterpreterSettings(project, myModule);
     }
 
-    public static void showPythonInterpreterSettings(@NotNull Project project, @NotNull Module module) {
+    public static void showPythonInterpreterSettings(@NotNull Project project, @Nullable Module module) {
       final var id = "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable";
       final var group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, true);
       if (ConfigurableVisitor.findById(id, Collections.singletonList(group)) != null) {
@@ -387,7 +387,7 @@ public final class PyInterpreterInspection extends PyInspection {
       }
 
       final ProjectSettingsService settingsService = ProjectSettingsService.getInstance(project);
-      if (justOneModuleInheritingSdk(project, module)) {
+      if (module == null || justOneModuleInheritingSdk(project, module)) {
         settingsService.openProjectSettings();
       }
       else {

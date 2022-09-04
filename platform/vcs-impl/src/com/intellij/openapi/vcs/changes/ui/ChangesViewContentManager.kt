@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -224,8 +225,14 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     @JvmField
     internal val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider>("CONTENT_PROVIDER_SUPPLIER")
 
+    /**
+     * Whether [Content] should be shown in [ToolWindowId.COMMIT] toolwindow.
+     */
     @JvmField
-    val IS_IN_COMMIT_TOOLWINDOW_KEY = Key.create<Boolean>("IS_IN_COMMIT_TOOLWINDOW_KEY")
+    val IS_IN_COMMIT_TOOLWINDOW_KEY = Key.create<Boolean>("ChangesViewContentManager.IS_IN_COMMIT_TOOLWINDOW_KEY")
+
+    @JvmField
+    val CONTENT_TAB_NAME_KEY = DataKey.create<@NonNls String>("ChangesViewContentManager.CONTENT_TAB_KEY")
 
     @JvmStatic
     fun getInstance(project: Project) = project.service<ChangesViewContentI>()

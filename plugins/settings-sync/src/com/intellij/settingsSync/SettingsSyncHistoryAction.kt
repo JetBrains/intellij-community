@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
@@ -27,6 +28,8 @@ class SettingsSyncHistoryAction : DumbAwareAction() {
     showExternalGitLogInToolwindow(project, toolWindow, GitVcs.getInstance(project), listOf(virtualFile),
                                    SettingsSyncBundle.message("history.tab.name"), "")
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project != null && isSettingsSyncEnabledByKey()

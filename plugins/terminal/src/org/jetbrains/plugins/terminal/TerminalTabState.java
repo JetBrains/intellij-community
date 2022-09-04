@@ -9,6 +9,9 @@ public class TerminalTabState {
   @Attribute("tabName")
   public @Nls String myTabName;
 
+  @Attribute("userDefinedTabTitle")
+  public boolean myIsUserDefinedTabTitle;
+
   @Attribute("currentWorkingDirectory")
   public @NlsSafe String myWorkingDirectory;
 

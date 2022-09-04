@@ -56,6 +56,9 @@
 
     <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager" preload="await"/>
 
+    <applicationService serviceInterface="com.intellij.util.net.ssl.InitialUntrustedCertificateStrategyProvider"
+                        serviceImplementation="com.intellij.util.net.ssl.DefaultInitialUntrustedCertificateStrategyProvider"/>
+
     <applicationService serviceInterface="com.intellij.util.net.ssl.OsCertificatesService"
                         serviceImplementation="com.intellij.util.net.ssl.OsCertificatesServiceImpl" />
 

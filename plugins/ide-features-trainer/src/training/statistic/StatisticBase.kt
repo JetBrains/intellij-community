@@ -306,7 +306,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private fun completedCount(): Int = CourseManager.instance.lessonsForModules.count { it.passed }
 
     private fun createInputEvent(actionId: String): FusInputEvent? {
-      val keyStroke = KeymapUtil.getShortcutByActionId(actionId) ?: return null
+      val keyStroke = KeymapUtil.getShortcutByActionId(actionId)?.firstKeyStroke ?: return null
       val inputEvent = KeyEvent(JOptionPane.getRootFrame(),
                                 KeyEvent.KEY_PRESSED,
                                 System.currentTimeMillis(),

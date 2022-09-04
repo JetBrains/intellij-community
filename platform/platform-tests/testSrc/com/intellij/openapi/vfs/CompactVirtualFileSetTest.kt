@@ -17,7 +17,7 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
 
   @Test
   fun `test empty set`() {
-    val set = CompactVirtualFileSet()
+    val set = VfsUtilCore.createCompactVirtualFileSet()
     assertTrue(set.isEmpty())
     assertFalse(set.iterator().hasNext())
   }
@@ -151,8 +151,8 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   }
 
   private fun doSimpleAddAllTest(sliceSize: Int) {
-    val set1 = CompactVirtualFileSet()
-    val set2 = CompactVirtualFileSet()
+    val set1 = VfsUtilCore.createCompactVirtualFileSet()
+    val set2 = VfsUtilCore.createCompactVirtualFileSet()
 
     val fileList1 = (0 until sliceSize).map { createFile() }
     val fileList2 = (0 until sliceSize).map { createFile() }
@@ -180,7 +180,7 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   }
 
   private fun doSimpleAddTest(size: Int) {
-    val set = CompactVirtualFileSet()
+    val set = VfsUtilCore.createCompactVirtualFileSet()
 
     val fileList = (0 until size).map { createFile() }
 
@@ -226,9 +226,9 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
     }
 
   private fun generateCVFSet(size: Int): CompactVirtualFileSet {
-    val set = CompactVirtualFileSet()
+    val set = VfsUtilCore.createCompactVirtualFileSet()
     repeat(size) { set.add(createFile()) }
-    return set
+    return set as CompactVirtualFileSet
   }
 
   private fun createFile(): VirtualFile =

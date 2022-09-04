@@ -19,23 +19,15 @@ fun buildMacZip(targetFile: Path,
                 macDist: Path,
                 extraFiles: Collection<Map.Entry<Path, String>>,
                 executableFilePatterns: List<String>,
-                compressionLevel: Int,
-                errorsConsumer: (String) -> Unit) {
+                compressionLevel: Int) {
   tracer.spanBuilder("build zip archive for macOS")
     .setAttribute("file", targetFile.toString())
     .setAttribute("zipRoot", zipRoot)
     .setAttribute(AttributeKey.stringArrayKey("executableFilePatterns"), executableFilePatterns)
     .use {
-      val fs = targetFile.fileSystem
-      val patterns = executableFilePatterns.map { fs.getPathMatcher("glob:$it") }
-
-      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, relativePath ->
-        when {
-          patterns.any { it.matches(Path.of(relativePath)) } -> entry.unixMode = executableFileUnixMode
-          PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions(file) -> {
-            errorsConsumer("Executable permissions of $relativePath won't be set in $targetFile. " +
-                           "Please make sure that executable file patterns are updated.")
-          }
+      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, _ ->
+        if (PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions(file)) {
+          entry.unixMode = executableFileUnixMode
         }
       }
 

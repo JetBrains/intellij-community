@@ -37,6 +37,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   private val REGULAR = SimpleAttributeSet()
   private val BOLD = SimpleAttributeSet()
   private val SHORTCUT = SimpleAttributeSet()
+  private val SHORTCUT_SEPARATOR = SimpleAttributeSet()
   private val ROBOTO = SimpleAttributeSet()
   private val CODE = SimpleAttributeSet()
   private val LINK = SimpleAttributeSet()
@@ -170,6 +171,9 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     StyleConstants.setFontSize(SHORTCUT, fontSize)
     StyleConstants.setBold(SHORTCUT, true)
 
+    StyleConstants.setFontFamily(SHORTCUT_SEPARATOR, fontFamily)
+    StyleConstants.setFontSize(SHORTCUT_SEPARATOR, fontSize)
+
     EditorColorsManager.getInstance().globalScheme.editorFontName
     StyleConstants.setFontFamily(CODE, EditorColorsManager.getInstance().globalScheme.editorFontName)
     StyleConstants.setFontSize(CODE, codeFontSize)
@@ -190,6 +194,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     StyleConstants.setForeground(REGULAR, textColor)
     StyleConstants.setForeground(BOLD, textColor)
     StyleConstants.setForeground(SHORTCUT, shortcutTextColor)
+    StyleConstants.setForeground(SHORTCUT_SEPARATOR, UISettings.getInstance().shortcutSeparatorColor)
     StyleConstants.setForeground(LINK, UISettings.getInstance().lessonLinkColor)
     StyleConstants.setForeground(CODE, codeForegroundColor)
   }
@@ -384,7 +389,21 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   }
 
   private fun appendShortcut(messagePart: MessagePart): RangeData? {
-    val range = appendClickableRange(messagePart.text, SHORTCUT)
+    val split = messagePart.split
+    val range = if (split != null) {
+      var start = 0
+      val startRange = insertOffset
+      for (part in split) {
+        appendClickableRange(messagePart.text.substring(start, part.first), SHORTCUT_SEPARATOR)
+        appendClickableRange(messagePart.text.substring(part.first, part.last + 1), SHORTCUT)
+        start = part.last + 1
+      }
+      appendClickableRange(messagePart.text.substring(start), SHORTCUT_SEPARATOR)
+      startRange .. insertOffset
+    } else {
+      appendClickableRange(messagePart.text, SHORTCUT)
+    }
+
     val actionId = messagePart.link ?: return null
     val clickRange = IntRange(range.first + 1, range.last - 1) // exclude around spaces
     return RangeData(clickRange) { p, h -> showShortcutBalloon(p, h, actionId) }
@@ -396,6 +415,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   }
 
   private fun appendClickableRange(clickable: String, attributeSet: SimpleAttributeSet): IntRange {
+    if (clickable.isEmpty()) return insertOffset .. insertOffset
     val startLink = insertOffset
     insertText(clickable, attributeSet)
     val endLink = insertOffset

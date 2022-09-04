@@ -414,7 +414,7 @@
     <group id="Diff.EditorGutterPopupMenu">
       <group id="Diff.EditorGutterPopupMenu.EditorSettings"/>
     </group>
-    <group id="Diff.Binary.Settings" popup="true" icon="AllIcons.General.GearPlain"/>
+    <group id="Diff.Binary.Settings" popup="true" icon="AllIcons.General.GearPlain" searchable="false"/>
 
     <action id="ScrollTreeToCenter" class="com.intellij.ide.actions.ScrollTreeToCenterAction" use-shortcut-of="EditorScrollToCenter"/>
 
@@ -628,6 +628,11 @@
             <group id="ViewStatusBarWidgetsGroup" class="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup" popup="true"/>
             <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
           </group>
+        </group>
+
+        <group id="MainToolbarPopupActions" searchable="false">
+          <reference id="ViewToolBar"/>
+          <action id="CustomizeUI" class="com.intellij.ide.actions.CustomizeUIAction"/>
         </group>
 
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction" icon="AllIcons.Actions.EditSource"/>

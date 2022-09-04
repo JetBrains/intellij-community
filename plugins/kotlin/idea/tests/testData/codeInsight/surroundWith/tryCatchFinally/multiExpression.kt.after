@@ -3,6 +3,7 @@ fun foo() {
         "aaa"
         "aaa"
     } catch (e: <selection>Exception</selection>) {
+        TODO("Not yet implemented")
     } finally {
     }
 }

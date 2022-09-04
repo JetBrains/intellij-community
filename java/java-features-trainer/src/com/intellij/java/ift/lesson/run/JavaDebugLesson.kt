@@ -6,6 +6,8 @@ import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.icons.AllIcons
 import com.intellij.java.ift.JavaLessonsBundle
+import com.intellij.notification.Notification
+import com.intellij.notification.Notifications
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.util.text.StringUtil
@@ -17,7 +19,6 @@ import training.learn.lesson.general.run.CommonDebugLesson
 import training.statistic.LessonStartingWay
 import training.ui.LearningUiManager
 import training.util.isToStringContains
-import javax.swing.JEditorPane
 
 class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
 
@@ -60,8 +61,14 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
     task("CompileDirty") {
       text(JavaLessonsBundle.message("java.debug.workflow.rebuild", action(it), icon(AllIcons.Actions.Compile)))
       if (isAlwaysHotSwap()) {
-        triggerUI().component { ui: JEditorPane ->
-          ui.text.contains(JavaDebuggerBundle.message("status.hot.swap.completed.stop"))
+        addFutureStep {
+          subscribeForMessageBus(Notifications.TOPIC, object : Notifications {
+            override fun notify(notification: Notification) {
+              if (notification.actions.singleOrNull()?.templateText == JavaDebuggerBundle.message("status.hot.swap.completed.stop")) {
+                completeStep()
+              }
+            }
+          })
         }
       }
       else {

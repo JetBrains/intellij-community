@@ -165,7 +165,7 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
 
       override fun getPreferredSize(): Dimension {
         val d = super.getPreferredSize()
-        d.width = FixWidthSegmentedActionToolbarComponent.RUN_CONFIG_SCALED_WIDTH
+        d.width = FixWidthSegmentedActionToolbarComponent.RUN_CONFIG_WIDTH
         return d
       }
     }

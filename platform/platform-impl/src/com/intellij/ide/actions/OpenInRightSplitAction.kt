@@ -53,6 +53,10 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
     e.presentation.isEnabledAndVisible = contextFile != null && !contextFile.isDirectory
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   companion object {
     private fun getVirtualFile(e: AnActionEvent): VirtualFile? = e.getData(CommonDataKeys.VIRTUAL_FILE)
 

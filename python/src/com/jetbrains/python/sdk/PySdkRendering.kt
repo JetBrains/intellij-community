@@ -134,13 +134,16 @@ private fun wrapIconWithWarningDecorator(icon: Icon): LayeredIcon =
     setIcon(AllIcons.Actions.Cancel, 1)
   }
 
-internal fun SimpleColoredComponent.customizeWithSdkValue(value: Any?, nullSdkName: @Nls String, nullSdkValue: Sdk?) {
+internal fun SimpleColoredComponent.customizeWithSdkValue(value: Any?,
+                                                          nullSdkName: @Nls String,
+                                                          nullSdkValue: Sdk?,
+                                                          actualSdkName: String? = null) {
   when (value) {
     is PySdkToInstall -> {
       value.renderInList(this)
     }
     is Sdk -> {
-      appendName(value, name(value))
+      appendName(value, name(value, actualSdkName ?: value.name))
       icon = icon(value)
     }
     is String -> append(value)

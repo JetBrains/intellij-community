@@ -33,13 +33,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     LOG.assertTrue(psi != null);
     UField uElement = getUastElement();
     LOG.assertTrue(uElement != null);
-    RefElement owner = RefMethodImpl.findParentRef(psi, uElement, myManager);
-    this.setOwner((WritableRefEntity)owner);
-    if (owner instanceof RefClass && ((RefClass)owner).isRecord()) {
-      // record fields are always implicitly written in constructor and read in hashCode() & equals()
-      setUsedForReading(true);
-      setUsedForWriting(true);
-    }
+    this.setOwner((WritableRefEntity)RefMethodImpl.findParentRef(psi, uElement, myManager));
   }
 
   @Deprecated
@@ -82,8 +76,13 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   }
 
   @Override
-  public boolean isUsedForReading() {
-    return checkFlag(USED_FOR_READING_MASK);
+  public synchronized boolean isUsedForReading() {
+    if (checkFlag(USED_FOR_READING_MASK)) {
+      return true;
+    }
+    RefClass ownerClass = getOwnerClass();
+    // record fields are always implicitly read in hashCode() & equals()
+    return ownerClass != null && ownerClass.isRecord();
   }
 
   private void setUsedForReading(boolean usedForReading) {
@@ -91,11 +90,16 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   }
 
   @Override
-  public boolean isUsedForWriting() {
-    return checkFlag(USED_FOR_WRITING_MASK);
+  public synchronized boolean isUsedForWriting() {
+    if (checkFlag(USED_FOR_WRITING_MASK)) {
+      return true;
+    }
+    RefClass ownerClass = getOwnerClass();
+    // record fields are always implicitly written in the constructor
+    return ownerClass != null && ownerClass.isRecord();
   }
 
-  private void setUsedForWriting(boolean usedForWriting) {
+  private synchronized void setUsedForWriting(boolean usedForWriting) {
     setFlag(false, ASSIGNED_ONLY_IN_INITIALIZER_MASK);
     setFlag(usedForWriting, USED_FOR_WRITING_MASK);
   }

@@ -235,9 +235,14 @@ public class FontEditorPreview implements PreviewPanel{
   public static class RestorePreviewTextAction extends DumbAwareAction {
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      PreviewTextModel textModel = ObjectUtils.doIfNotNull(editor, it->it.getUserData(TEXT_MODEL_KEY));
+      PreviewTextModel textModel = ObjectUtils.doIfNotNull(editor, it -> it.getUserData(TEXT_MODEL_KEY));
       e.getPresentation().setEnabledAndVisible(editor != null &&
                                                textModel != null &&
                                                !textModel.isDefault());
@@ -262,9 +267,14 @@ public class FontEditorPreview implements PreviewPanel{
   public static class ToggleBoldFontAction extends DumbAwareAction {
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      PreviewTextModel textModel = ObjectUtils.doIfNotNull(editor, it->it.getUserData(TEXT_MODEL_KEY));
+      PreviewTextModel textModel = ObjectUtils.doIfNotNull(editor, it -> it.getUserData(TEXT_MODEL_KEY));
       e.getPresentation().setEnabledAndVisible(textModel != null &&
                                                editor.getSelectionModel().hasSelection());
     }

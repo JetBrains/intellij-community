@@ -23,13 +23,11 @@ import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.MethodBreakpoint;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,6 +54,10 @@ public class ToggleMethodBreakpointAction extends AnAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -104,10 +106,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
       }
     }
     else {
-      Editor editor = event.getData(CommonDataKeys.EDITOR);
-      if(editor == null) {
-        editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-      }
+      Editor editor = getEditor(event);
       if (editor != null) {
         document = editor.getDocument();
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
@@ -122,6 +121,12 @@ public class ToggleMethodBreakpointAction extends AnAction {
     }
 
     return method != null ? new PlaceInDocument(document, method.getTextOffset()) : null;
+  }
+
+  @Nullable
+  static Editor getEditor(AnActionEvent event) {
+    @Nullable FileEditor editor = event.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR);
+    return editor instanceof TextEditor ? ((TextEditor)editor).getEditor() : null;
   }
 
   @Nullable

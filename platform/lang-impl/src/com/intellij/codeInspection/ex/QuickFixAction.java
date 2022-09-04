@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -73,16 +73,23 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
 
     e.getPresentation().setEnabledAndVisible(false);
 
-    final InspectionTree tree = view.getTree();
-    final InspectionToolWrapper<?,?> toolWrapper = tree.getSelectedToolWrapper(true);
-    if (!view.isSingleToolInSelection() || toolWrapper != myToolWrapper) {
+    Object[] selectedNodes = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+    if (selectedNodes == null) return;
+
+    final InspectionToolWrapper<?,?> toolWrapper = InspectionTree.findWrapper(selectedNodes);
+    if (toolWrapper == null || toolWrapper != myToolWrapper) {
       return;
     }
 
-    if (!isProblemDescriptorsAcceptable() && tree.getSelectedElements().length > 0 ||
-        isProblemDescriptorsAcceptable() && tree.getSelectedDescriptors().length > 0) {
+    if (!isProblemDescriptorsAcceptable() && InspectionTree.getSelectedRefElements(e).length > 0 ||
+        isProblemDescriptorsAcceptable() && view.getTree().getSelectedDescriptors(e).length > 0) {
       e.getPresentation().setEnabledAndVisible(true);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   protected boolean isProblemDescriptorsAcceptable() {

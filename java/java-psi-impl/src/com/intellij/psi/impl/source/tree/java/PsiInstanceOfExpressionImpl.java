@@ -13,7 +13,6 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,9 +36,15 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
       return (PsiTypeElement)findChildByRoleAsPsiElement(ChildRole.TYPE);
     }
     PsiPattern naked = JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern);
-    PsiTypeTestPattern typeTestPattern = ObjectUtils.tryCast(naked, PsiTypeTestPattern.class);
-    if (typeTestPattern == null) return null;
-    return typeTestPattern.getCheckType();
+    if (naked instanceof PsiTypeTestPattern) {
+      return ((PsiTypeTestPattern)naked).getCheckType();
+    }
+    else if (naked instanceof PsiDeconstructionPattern) {
+      return ((PsiDeconstructionPattern)naked).getTypeElement();
+    }
+    else {
+      return null;
+    }
   }
 
   @Override

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
+import com.intellij.util.SystemProperties;
 import org.apache.log4j.Level;
 import org.apache.log4j.Priority;
 import org.jetbrains.annotations.NotNull;
@@ -149,6 +150,8 @@ public class JulLogger extends Logger {
       }
     }
 
+    boolean logConsole = SystemProperties.getBooleanProperty("idea.log.console", true);
+
     java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
 
     RollingFileHandler fileHandler = new RollingFileHandler(logFilePath, limit, count, appendToFile, onRotate);
@@ -157,7 +160,7 @@ public class JulLogger extends Logger {
     fileHandler.setFormatter(layout);
     rootLogger.addHandler(fileHandler);
 
-    if (enableConsoleLogger) {
+    if (enableConsoleLogger && logConsole) {
       ConsoleHandler consoleHandler = new ConsoleHandler();
       consoleHandler.setFormatter(new IdeaLogRecordFormatter(layout, showDateInConsole));
       consoleHandler.setLevel(java.util.logging.Level.WARNING);

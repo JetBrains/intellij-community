@@ -95,10 +95,6 @@ public abstract class DebuggerAction extends AnAction {
     }
   }
 
-  public static boolean isContextView(AnActionEvent e) {
-    return false;
-  }
-
   public static Disposable installEditAction(final JTree tree, String actionName) {
     final DoubleClickListener listener = new DoubleClickListener() {
       @Override

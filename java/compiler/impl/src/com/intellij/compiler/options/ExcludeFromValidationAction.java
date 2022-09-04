@@ -3,6 +3,7 @@
 package com.intellij.compiler.options;
 
 import com.intellij.build.FileNavigatable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -52,10 +53,14 @@ public class ExcludeFromValidationAction extends AnAction {
     return Pair.create(configuration, file);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
+    Project project = e.getProject();
     final boolean applicable = getExcludedConfigurationAndFile(e, project) != null;
     e.getPresentation().setEnabledAndVisible(applicable);
   }

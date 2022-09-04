@@ -5,4 +5,5 @@ package com.intellij.psi;
  * Represents pattern which is used in {@code instanceof} expressions or switch case labels.
  */
 public interface PsiPattern extends PsiCaseLabelElement {
+  PsiPattern[] EMPTY = new PsiPattern[]{};
 }

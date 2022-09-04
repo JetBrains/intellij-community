@@ -47,7 +47,7 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
     override fun getAnchor(element: PsiElement): KtExpression? {
         var cur = element
         while (cur is PsiWhiteSpace || cur is PsiComment) {
-            cur = element.nextSibling
+            cur = cur.nextSibling
         }
         while (true) {
             val parent = cur.parent

@@ -14,6 +14,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.statistics.MavenImportCollector;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtilKt;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -21,6 +22,7 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public abstract class MavenProjectImporterBase implements MavenProjectImporter {
   protected final Project myProject;
@@ -81,10 +83,17 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
       try {
         List<MavenModuleImporter> toRun = ContainerUtil.filter(importers, it -> !it.isModuleDisposed() && !it.isAggregatorMainTestModule());
 
+        Map<Class<? extends MavenImporter>, MavenModuleImporter.CountAndTime> counters = new HashMap<>();
+
         toRun.forEach(importer -> importer.setModifiableModelsProvider(provider));
-        toRun.forEach(importer -> importer.preConfigFacets());
-        toRun.forEach(importer -> importer.configFacets(postTasks));
-        toRun.forEach(importer -> importer.postConfigFacets());
+        toRun.forEach(importer -> importer.preConfigFacets(counters));
+        toRun.forEach(importer -> importer.configFacets(postTasks, counters));
+        toRun.forEach(importer -> importer.postConfigFacets(counters));
+
+        for (Map.Entry<Class<? extends MavenImporter>, MavenModuleImporter.CountAndTime> each : counters.entrySet()) {
+          MavenImportCollector.IMPORTER_RUN.log(myProject, each.getKey(), each.getValue().count,
+                                                TimeUnit.NANOSECONDS.toMillis(each.getValue().timeNano));
+        }
       }
       finally {
         MavenUtil.invokeAndWaitWriteAction(myProject, () -> {

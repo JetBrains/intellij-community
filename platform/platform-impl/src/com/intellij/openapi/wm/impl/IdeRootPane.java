@@ -351,10 +351,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     toolBar.setTargetComponent(null);
     toolBar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
 
-    DefaultActionGroup menuGroup = new DefaultActionGroup();
-    menuGroup.add(new ViewToolbarAction());
-    menuGroup.add(new CustomizeUIAction());
-    PopupHandler.installPopupMenu(toolBar.getComponent(), menuGroup, "MainToolbarPopup");
+    PopupHandler.installPopupMenu(toolBar.getComponent(), "MainToolbarPopupActions", "MainToolbarPopup");
 
     return toolBar.getComponent();
   }

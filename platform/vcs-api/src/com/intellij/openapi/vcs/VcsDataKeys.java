@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -104,6 +105,7 @@ public interface VcsDataKeys {
 
   DataKey<String> PRESET_COMMIT_MESSAGE = DataKey.create("PRESET_COMMIT_MESSAGE");
   DataKey<CommitMessageI> COMMIT_MESSAGE_CONTROL = DataKey.create("COMMIT_MESSAGE_CONTROL");
+  DataKey<Document> COMMIT_MESSAGE_DOCUMENT = DataKey.create("COMMIT_MESSAGE_DOCUMENT");
   DataKey<CommitWorkflowHandler> COMMIT_WORKFLOW_HANDLER = DataKey.create("Vcs.CommitWorkflowHandler");
 
   DataKey<VcsHistorySession> HISTORY_SESSION = DataKey.create("VCS_HISTORY_SESSION");

@@ -4,6 +4,7 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -67,9 +68,14 @@ public final class ShowJavadocAction extends AnAction {
       Disposer.register(hint, component1);
       Disposer.register(hint, component2);
       Disposer.register(hint, disposable);
-      hint.show(new RelativePoint(inspector, new Point(0,0)));
+      hint.show(new RelativePoint(inspector, new Point(0, 0)));
       //component1.requestFocus();
     });
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

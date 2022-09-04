@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi
 
+
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.psi.*
@@ -314,5 +315,29 @@ class B {}""")
 
   private void runCommand(ThrowableRunnable block) {
     WriteCommandAction.writeCommandAction(project).run(block)
+  }
+
+  void "test record pattern"() {
+    def expression = (PsiInstanceOfExpression)PsiElementFactory.getInstance(project).createExpressionFromText("o instanceof Record(int a, boolean b) r", null)
+    def recordPattern = (PsiDeconstructionPattern)expression.pattern
+    assert recordPattern.patternVariable.name == "r"
+    def structurePattern = recordPattern.deconstructionList
+    assert structurePattern != null
+    def components = structurePattern.deconstructionComponents
+    def pattern = (PsiTypeTestPattern)components[1]
+    assert pattern.patternVariable.name == "b"
+  }
+
+  void "test record pattern rename"() {
+    def expression = (PsiInstanceOfExpression)PsiElementFactory.getInstance(project).createExpressionFromText("o instanceof Record(int a, boolean b) r", null)
+    def recordPattern = (PsiDeconstructionPattern)expression.pattern
+    recordPattern.patternVariable.setName("foo")
+    assert expression.text == "o instanceof Record(int a, boolean b) foo"
+  }
+
+  void "test record pattern type"() {
+    def expression = (PsiInstanceOfExpression)PsiElementFactory.getInstance(project).createExpressionFromText("o instanceof Record(int a, boolean b)", null)
+    def recordPattern = (PsiDeconstructionPattern)expression.pattern
+    assert recordPattern.typeElement.text == "Record"
   }
 }

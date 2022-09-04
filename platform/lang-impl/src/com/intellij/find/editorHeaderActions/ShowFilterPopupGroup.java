@@ -28,6 +28,11 @@ public class ShowFilterPopupGroup extends DefaultActionGroup implements Shortcut
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     SearchSession session = e.getData(SearchSession.KEY);
     if (session == null) {
