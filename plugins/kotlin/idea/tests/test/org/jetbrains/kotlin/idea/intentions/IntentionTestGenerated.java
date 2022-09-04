@@ -7183,6 +7183,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertPropertyInitializerToGetter/errorType.kt");
         }
 
+        @TestMetadata("hasReferenceToPrimaryCtorParameter.kt")
+        public void testHasReferenceToPrimaryCtorParameter() throws Exception {
+            runTest("testData/intentions/convertPropertyInitializerToGetter/hasReferenceToPrimaryCtorParameter.kt");
+        }
+
+        @TestMetadata("hasReferenceToPrimaryCtorProperty.kt")
+        public void testHasReferenceToPrimaryCtorProperty() throws Exception {
+            runTest("testData/intentions/convertPropertyInitializerToGetter/hasReferenceToPrimaryCtorProperty.kt");
+        }
+
         @TestMetadata("inapplicableIfExtensionProperty.kt")
         public void testInapplicableIfExtensionProperty() throws Exception {
             runTest("testData/intentions/convertPropertyInitializerToGetter/inapplicableIfExtensionProperty.kt");

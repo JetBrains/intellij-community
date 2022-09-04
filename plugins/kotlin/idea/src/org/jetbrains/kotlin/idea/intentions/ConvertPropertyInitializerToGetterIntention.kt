@@ -10,14 +10,14 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.types.isError
 
 class ConvertPropertyInitializerToGetterIntention : SelfTargetingRangeIntention<KtProperty>(
@@ -32,7 +32,20 @@ class ConvertPropertyInitializerToGetterIntention : SelfTargetingRangeIntention<
             element.hasJvmFieldAnnotation() ||
             element.hasModifier(KtTokens.CONST_KEYWORD)
         ) return null
+
+        if (element.hasReferenceToPrimaryCtorParameter()) return null
+
         return TextRange(nameIdentifier.startOffset, initializer.endOffset)
+    }
+
+    private fun KtProperty.hasReferenceToPrimaryCtorParameter(): Boolean {
+        val primaryCtorParameters = containingClass()?.primaryConstructor?.valueParameters.orEmpty()
+            .filterNot { it.hasValOrVar() }.associateBy { it.name }.ifEmpty { return false }
+
+        return initializer?.anyDescendantOfType<KtNameReferenceExpression> {
+            val parameter = primaryCtorParameters[it.text]
+            parameter != null && parameter == it.mainReference.resolve()
+        } == true
     }
 
     override fun skipProcessingFurtherElementsAfter(element: PsiElement): Boolean {
