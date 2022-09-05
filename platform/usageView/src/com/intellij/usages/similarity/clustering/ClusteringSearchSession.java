@@ -38,7 +38,7 @@ public class ClusteringSearchSession {
   }
 
   public @NotNull List<UsageCluster> getClusters() {
-    return myClusters;
+    return new ArrayList<>(myClusters);
   }
 
   @RequiresBackgroundThread
@@ -78,7 +78,7 @@ public class ClusteringSearchSession {
   public @NotNull List<UsageCluster> getClustersForSelectedUsages(@NotNull ProgressIndicator indicator,
                                                                   @NotNull Set<Usage> selectedUsages) {
     //create new ArrayList from clusters to avoid concurrent modification and do all the needed sorting and filtering in non-blocking way
-    return new ArrayList<>(getClusters()).stream()
+    return getClusters().stream()
       .map(cluster -> new UsageCluster(cluster.getOnlySelectedUsages(selectedUsages)))
       .filter(usageCluster -> !usageCluster.getUsages().isEmpty())
       .sorted((o1, o2) -> {

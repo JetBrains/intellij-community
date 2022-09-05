@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -47,7 +46,7 @@ public class ExportClusteringResultActionLink extends ActionLink {
   public ExportClusteringResultActionLink(@NotNull Project project, @NotNull ClusteringSearchSession session, @NotNull String fileName) {
     super(UsageViewBundle.message("similar.usages.internal.export.clustering.data"),
           (event) -> {
-            List<UsageCluster> clusters = new ArrayList<>(session.getClusters());
+            List<UsageCluster> clusters = session.getClusters();
             Task.Backgroundable loadMostCommonUsagePatternsTask = new Task.Backgroundable(project, UsageViewBundle.message(
               "similar.usages.internal.exporting.clustering.data.progress.title")) {
               @Override

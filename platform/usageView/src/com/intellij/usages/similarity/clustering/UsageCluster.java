@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,13 +22,13 @@ import java.util.stream.Collectors;
  */
 public class UsageCluster {
 
-  private final Set<SimilarUsage> myUsages;
+  private final @NotNull Set<SimilarUsage> myUsages;
 
   public UsageCluster() {
     this.myUsages = Collections.synchronizedSet(new LinkedHashSet<>());
   }
 
-  public UsageCluster(Set<SimilarUsage> usages) {
+  public UsageCluster(@NotNull Set<SimilarUsage> usages) {
     this.myUsages = usages;
   }
 
@@ -35,8 +36,8 @@ public class UsageCluster {
     myUsages.add(usage);
   }
 
-  public Set<SimilarUsage> getUsages() {
-    return myUsages;
+  public @NotNull Set<SimilarUsage> getUsages() {
+    return new HashSet<>(myUsages);
   }
 
   public boolean contains(@Nullable UsageInfo usageInfo) {
