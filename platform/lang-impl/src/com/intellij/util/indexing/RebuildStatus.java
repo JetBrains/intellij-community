@@ -4,6 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,5 +65,10 @@ public enum RebuildStatus {
 
   static void reset() {
     ourRebuildStatus.clear();
+  }
+
+  public static @Nullable RebuildStatus getStatus(ID<?, ?> indexId) {
+    AtomicReference<RebuildStatus> reference = ourRebuildStatus.get(indexId);
+    return reference == null ? null : reference.get();
   }
 }
