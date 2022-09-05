@@ -70,8 +70,18 @@ object CodeWithMeClientDownloader {
   private fun isJbrSymlink(file: Path): Boolean = file.name == "jbr" && isSymlink(file)
   private fun isSymlink(file: Path): Boolean = FileSystemUtil.getAttributes(file.toFile())?.isSymLink == true
 
-  val cwmGuestManifestFilter: (Path) -> Boolean = { !isJbrSymlink(it) && (!it.isDirectory() || isSymlink(it)) }
   val cwmJbrManifestFilter: (Path) -> Boolean = { !it.isDirectory() || isSymlink(it) }
+
+  fun getJetBrainsClientManifestFilter(clientBuildNumber: String): (Path) -> Boolean {
+    if (isClientWithBundledJre(clientBuildNumber)) {
+      return { !it.isDirectory() || isSymlink(it) }
+    } else {
+      return { !isJbrSymlink(it) && (!it.isDirectory() || isSymlink(it)) }
+    }
+  }
+
+  private const val minimumClientBuildWithBundledJre = "223.4374"
+  fun isClientWithBundledJre(clientBuildNumber: String) = VersionComparatorUtil.compare(clientBuildNumber, minimumClientBuildWithBundledJre) >= 0
 
   private data class DownloadableFileData(
     val fileName: String,
@@ -98,53 +108,71 @@ object CodeWithMeClientDownloader {
     else -> "JetBrainsClient"
   }
 
-  fun createSessionInfo(clientBuildVersion: String, jreBuild: String, unattendedMode: Boolean): CodeWithMeSessionInfoProvider {
+  fun createSessionInfo(clientBuildVersion: String, jreBuild: String?, unattendedMode: Boolean): CodeWithMeSessionInfoProvider {
     if ("SNAPSHOT" in clientBuildVersion) {
       LOG.warn(
         "Thin client download from sources may result in failure due to different sources on host and client, don't forget to update your locally built archive")
     }
 
+    val bundledJre = isClientWithBundledJre(clientBuildVersion)
+    val jreBuildToDownload = if (bundledJre) {
+      null
+    }
+    else {
+      jreBuild ?: error("JRE build number must be passed for client build number < $clientBuildVersion")
+    }
+
     val hostBuildNumber = buildNumberRegex.find(clientBuildVersion)!!.value
-    val platformSuffix = when {
+    val platformSuffix = if (jreBuildToDownload != null) when {
       SystemInfo.isLinux && CpuArch.isIntel64() -> "-no-jbr.tar.gz"
       SystemInfo.isLinux && CpuArch.isArm64() -> "-no-jbr-aarch64.tar.gz"
       SystemInfo.isWindows -> ".win.zip"
       SystemInfo.isMac && CpuArch.isIntel64() -> "-no-jdk.sit"
       SystemInfo.isMac && CpuArch.isArm64() -> "-no-jdk-aarch64.sit"
-      else -> error("Current platform is not supported")
-    }
+      else -> null
+    } else when {
+      SystemInfo.isLinux && CpuArch.isIntel64() -> ".tar.gz"
+      SystemInfo.isLinux && CpuArch.isArm64() -> "-aarch64.tar.gz"
+      SystemInfo.isWindows -> ".jbr.win.zip"
+      SystemInfo.isMac && CpuArch.isIntel64() -> ".sit"
+      SystemInfo.isMac && CpuArch.isArm64() -> "-aarch64.sit"
+      else -> null
+    } ?: error("Current platform is not supported: OS ${SystemInfo.OS_NAME} ARCH ${SystemInfo.OS_ARCH}")
 
     val clientDistributionName = getClientDistributionName(clientBuildVersion)
-
     val clientDownloadUrl = "${config.clientDownloadUrl.toString().trimEnd('/')}/$clientDistributionName-$hostBuildNumber$platformSuffix"
-
-    val platformString = when {
-      SystemInfo.isLinux -> "linux-x64"
-      SystemInfo.isWindows -> "windows-x64"
-      SystemInfo.isMac && CpuArch.isIntel64() -> "osx-x64"
-      SystemInfo.isMac && CpuArch.isArm64() -> "osx-aarch64"
-      else -> error("Current platform is not supported")
-    }
-
-    val jreBuildParts = jreBuild.split("b")
-    require(jreBuildParts.size == 2) { "jreBuild format should be like 12_3_45b6789.0: ${jreBuild}" }
-    require(jreBuildParts[0].matches(Regex("^[0-9_.]+$"))) { "jreBuild format should be like 12_3_45b6789.0: ${jreBuild}" }
-    require(jreBuildParts[1].matches(Regex("^[0-9.]+$"))) { "jreBuild format should be like 12_3_45b6789.0: ${jreBuild}" }
-
-    /**
-     * After upgrade to JRE 17 Jetbrains Runtime Team made a couple of incompatible changes:
-     * 1. Java version began to contain dots in it's version
-     * 2. Root directory was renamed from 'jbr' to 'jbr_jcef_12.3.4b1235'
-     *
-     * We decided to maintain backward compatibility with old IDEs and
-     * rename archives and root directories back to old format.
-     */
-    val jdkVersion = jreBuildParts[0].replace(".", "_")
-    val jdkBuild = jreBuildParts[1]
-    val jreDownloadUrl = "${config.jreDownloadUrl.toString().trimEnd('/')}/jbr_jcef-$jdkVersion-$platformString-b${jdkBuild}.tar.gz"
-
     val clientName = "$clientDistributionName-$hostBuildNumber"
-    val jreName = jreDownloadUrl.substringAfterLast('/').removeSuffix(".tar.gz")
+
+    val (jreName, jreDownloadUrl) = if (jreBuildToDownload != null) {
+      val platformString = when {
+        SystemInfo.isLinux -> "linux-x64"
+        SystemInfo.isWindows -> "windows-x64"
+        SystemInfo.isMac && CpuArch.isIntel64() -> "osx-x64"
+        SystemInfo.isMac && CpuArch.isArm64() -> "osx-aarch64"
+        else -> error("Current platform is not supported")
+      }
+
+      val jreBuildParts = jreBuildToDownload.split("b")
+      require(jreBuildParts.size == 2) { "jreBuild format should be like 12_3_45b6789.0: ${jreBuildToDownload}" }
+      require(jreBuildParts[0].matches(Regex("^[0-9_.]+$"))) { "jreBuild format should be like 12_3_45b6789.0: ${jreBuildToDownload}" }
+      require(jreBuildParts[1].matches(Regex("^[0-9.]+$"))) { "jreBuild format should be like 12_3_45b6789.0: ${jreBuildToDownload}" }
+
+      /**
+       * After upgrade to JRE 17 Jetbrains Runtime Team made a couple of incompatible changes:
+       * 1. Java version began to contain dots in it's version
+       * 2. Root directory was renamed from 'jbr' to 'jbr_jcef_12.3.4b1235'
+       *
+       * We decided to maintain backward compatibility with old IDEs and
+       * rename archives and root directories back to old format.
+       */
+      val jdkVersion = jreBuildParts[0].replace(".", "_")
+      val jdkBuild = jreBuildParts[1]
+      val jreDownloadUrl = "${config.jreDownloadUrl.toString().trimEnd('/')}/jbr_jcef-$jdkVersion-$platformString-b${jdkBuild}.tar.gz"
+
+      val jreName = jreDownloadUrl.substringAfterLast('/').removeSuffix(".tar.gz")
+
+      jreName to jreDownloadUrl
+    } else null to null
 
     val pgpPublicKeyUrl = if (unattendedMode) {
       RemoteDevSystemSettings.getPgpPublicKeyUrl().value
@@ -170,24 +198,29 @@ object CodeWithMeClientDownloader {
 
   @ApiStatus.Experimental
   fun downloadClientAndJdk(clientBuildVersion: String,
-                           progressIndicator: ProgressIndicator): Pair<Path, Path>? {
+                           progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
     require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
 
-    LOG.info("Downloading Thin Client jdk-build.txt")
-    val jdkBuildProgressIndicator = progressIndicator.createSubProgress(0.1)
-    jdkBuildProgressIndicator.text = RemoteDevUtilBundle.message("thinClientDownloader.checking")
+    val jdkBuild = if (isClientWithBundledJre(clientBuildVersion)) null else {
+      // Obsolete since 2022.3. Now the client has JRE bundled in
 
-    val clientDistributionName = getClientDistributionName(clientBuildVersion)
-    val clientJdkDownloadUrl = "${config.clientDownloadUrl}$clientDistributionName-$clientBuildVersion-jdk-build.txt"
-    LOG.info("Downloading from $clientJdkDownloadUrl")
+      LOG.info("Downloading Thin Client jdk-build.txt")
+      val jdkBuildProgressIndicator = progressIndicator.createSubProgress(0.1)
+      jdkBuildProgressIndicator.text = RemoteDevUtilBundle.message("thinClientDownloader.checking")
 
-    val tempFile = Files.createTempFile("jdk-build", "txt")
-    val jdkBuild = try {
-      downloadWithRetries(URI(clientJdkDownloadUrl), tempFile, EmptyProgressIndicator()).let {
-        tempFile.readText()
+      val clientDistributionName = getClientDistributionName(clientBuildVersion)
+      val clientJdkDownloadUrl = "${config.clientDownloadUrl}$clientDistributionName-$clientBuildVersion-jdk-build.txt"
+      LOG.info("Downloading from $clientJdkDownloadUrl")
+
+      val tempFile = Files.createTempFile("jdk-build", "txt")
+      try {
+        downloadWithRetries(URI(clientJdkDownloadUrl), tempFile, EmptyProgressIndicator()).let {
+          tempFile.readText()
+        }
       }
-    } finally {
-      Files.delete(tempFile)
+      finally {
+        Files.delete(tempFile)
+      }
     }
 
     val sessionInfo = createSessionInfo(clientBuildVersion, jdkBuild, true)
@@ -204,8 +237,8 @@ object CodeWithMeClientDownloader {
    *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
    */
   fun downloadClientAndJdk(clientBuildVersion: String,
-                           jreBuild: String,
-                           progressIndicator: ProgressIndicator): Pair<Path, Path>? {
+                           jreBuild: String?,
+                           progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
     require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
 
     val sessionInfo = createSessionInfo(clientBuildVersion, jreBuild, true)
@@ -216,7 +249,7 @@ object CodeWithMeClientDownloader {
    * @returns Pair(path/to/thin/client, path/to/jre)
    */
   fun downloadClientAndJdk(sessionInfoResponse: CodeWithMeSessionInfoProvider,
-                           progressIndicator: ProgressIndicator): Pair<Path, Path>? {
+                           progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
     require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
 
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
@@ -236,20 +269,24 @@ object CodeWithMeClientDownloader {
       url = URI(sessionInfoResponse.compatibleClientUrl),
       archivePath = tempDir.resolve(guestFileName),
       targetPath = config.clientCachesDir / (guestName + extractDirSuffix),
-      includeInManifest = cwmGuestManifestFilter
+      includeInManifest = getJetBrainsClientManifestFilter(sessionInfoResponse.hostBuildNumber),
     )
 
     val jdkFullName = sessionInfoResponse.compatibleJreName
-    val jdkFileName = "$jdkFullName.${archiveExtensionFromUrl(sessionInfoResponse.compatibleJreUrl)}"
-    val jdkData = DownloadableFileData(
-      fileName = jdkFileName,
-      url = URI(sessionInfoResponse.compatibleJreUrl),
-      archivePath = tempDir.resolve(jdkFileName),
-      targetPath = config.clientCachesDir / (jdkFullName + extractDirSuffix),
-      includeInManifest = cwmJbrManifestFilter
-    )
+    val jdkUrl = sessionInfoResponse.compatibleJreUrl
+    val jdkData = if (jdkFullName != null && jdkUrl != null) {
+      val jdkFileName = "$jdkFullName.${archiveExtensionFromUrl(jdkUrl)}"
+      DownloadableFileData(
+        fileName = jdkFileName,
+        url = URI(jdkUrl),
+        archivePath = tempDir.resolve(jdkFileName),
+        targetPath = config.clientCachesDir / (jdkFullName + extractDirSuffix),
+        includeInManifest = cwmJbrManifestFilter
+      )
+    }
+    else null
 
-    val dataList = arrayOf(jdkData, guestData)
+    val dataList = listOfNotNull(jdkData, guestData)
 
     val activity: StructuredIdeActivity? =
       if (dataList.isNotEmpty()) RemoteDevStatisticsCollector.onGuestDownloadStarted()
@@ -394,12 +431,12 @@ object CodeWithMeClientDownloader {
 
     try {
       val guestSucceeded = guestData.downloadFuture.get()
-      val jdkSucceeded = jdkData.downloadFuture.get()
+      val jdkSucceeded = jdkData?.downloadFuture?.get() ?: true
 
       if (!guestSucceeded || !jdkSucceeded) error("Guest or jdk was not downloaded")
 
       LOG.info("Download of guest and jdk succeeded")
-      return guestData.targetPath to jdkData.targetPath
+      return ExtractedJetBrainsClientData(clientDir = guestData.targetPath, jreDir = jdkData?.targetPath)
     }
     catch(e: ProcessCanceledException) {
       LOG.info("Download was canceled")
@@ -534,16 +571,19 @@ object CodeWithMeClientDownloader {
   /**
    * Launches client and returns process's lifetime (which will be terminated on process exit)
    */
-  fun runCwmGuestProcessFromDownload(lifetime: Lifetime,
-                                     url: String,
-                                     guestRoot: Path,
-                                     jdkRoot: Path): Lifetime {
-    val (executable, fullLauncherCmd) = findLauncherUnderCwmGuestRoot(guestRoot)
+  fun runCwmGuestProcessFromDownload(
+    lifetime: Lifetime,
+    url: String,
+    extractedJetBrainsClientData: ExtractedJetBrainsClientData
+  ): Lifetime {
+    val (executable, fullLauncherCmd) = findLauncherUnderCwmGuestRoot(extractedJetBrainsClientData.clientDir)
 
-    createSymlinkToJdkFromGuest(guestRoot, jdkRoot)
+    if (extractedJetBrainsClientData.jreDir != null) {
+      createSymlinkToJdkFromGuest(extractedJetBrainsClientData.clientDir, extractedJetBrainsClientData.jreDir)
+    }
 
     // Update mtime on JRE & CWM Guest roots. The cleanup process will use it later.
-    listOf(guestRoot, jdkRoot).forEach { path ->
+    listOfNotNull(extractedJetBrainsClientData.clientDir, extractedJetBrainsClientData.jreDir).forEach { path ->
       Files.setLastModifiedTime(path, FileTime.fromMillis(System.currentTimeMillis()))
     }
 
@@ -556,7 +596,7 @@ object CodeWithMeClientDownloader {
     if (SystemInfo.isWindows) {
       val hProcess = WindowsFileUtil.windowsShellExecute(
         executable = executable,
-        workingDirectory = guestRoot,
+        workingDirectory = extractedJetBrainsClientData.clientDir,
         parameters = parameters
       )
 
