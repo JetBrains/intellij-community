@@ -948,6 +948,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/class/kt-639.java");
         }
 
+        @TestMetadata("ktij-22007.java")
+        public void testKtij_22007() throws Exception {
+            runTest("testData/newJ2k/class/ktij-22007.java");
+        }
+
         @TestMetadata("notUtilityClass.java")
         public void testNotUtilityClass() throws Exception {
             runTest("testData/newJ2k/class/notUtilityClass.java");
