@@ -159,4 +159,8 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveToSubstituteOverride(myFixture)
     }
 
+    fun testResolveEnumEntrySuperType() {
+        checkResolveEnumEntrySuperType(myFixture)
+    }
+
 }
