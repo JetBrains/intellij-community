@@ -315,8 +315,8 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
     private static final int ELEMENT_BYTES = Short.BYTES;
 
     private final @NotNull FileChannel myFileChannel;
-    private long myElementsCount;
-    private long myModificationsCounter = 0L;
+    private volatile long myElementsCount;
+    private volatile long myModificationsCounter = 0L;
     private final @NotNull ByteBuffer myDataBuffer = ByteBuffer.allocate(ELEMENT_BYTES);
 
     private ForwardIndexFileController(@NotNull Path storage) throws StorageException {
@@ -344,7 +344,7 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
         myDataBuffer.clear();
         int bytesLeft = ELEMENT_BYTES;
         while (bytesLeft > 0) {
-          int result = myFileChannel.read(myDataBuffer, (long)index * ELEMENT_BYTES);
+          int result = myFileChannel.read(myDataBuffer, (long)index * ELEMENT_BYTES + myDataBuffer.position());
           if (result == -1 && bytesLeft == ELEMENT_BYTES)
             return 0; // read after EOF
           if (result == -1)
@@ -375,6 +375,7 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
       catch (IOException e) {
         throw new StorageException(e);
       }
+      //noinspection NonAtomicOperationOnVolatileField
       myModificationsCounter++;
     }
 
@@ -388,6 +389,7 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
           myFileChannel.write(zeroBuf, myElementsCount * ELEMENT_BYTES + zeroBuf.position());
           if (!zeroBuf.hasRemaining()) {
             zeroBuf.position(0);
+            //noinspection NonAtomicOperationOnVolatileField
             myElementsCount += zeroBufSize / ELEMENT_BYTES;
           }
         }
@@ -434,6 +436,7 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
       try {
         myFileChannel.truncate(0);
         myElementsCount = 0;
+        //noinspection NonAtomicOperationOnVolatileField
         myModificationsCounter++;
       }
       catch (IOException e) {
