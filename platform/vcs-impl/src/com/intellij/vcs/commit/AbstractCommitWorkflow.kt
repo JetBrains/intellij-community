@@ -140,10 +140,20 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   internal fun continueExecution(block: () -> Boolean) {
     check(isExecuting)
 
-    runCatching(block)
-      .onFailure { endExecution() }
-      .onSuccess { continueExecution -> if (!continueExecution) endExecution() }
-      .getOrThrow()
+    try {
+      val continueExecution = block()
+      if (!continueExecution) endExecution()
+    }
+    catch (e: ProcessCanceledException) {
+      endExecution()
+    }
+    catch (e: CancellationException) {
+      endExecution()
+    }
+    catch (e: Throwable) {
+      endExecution()
+      LOG.error(e)
+    }
   }
 
   @RequiresEdt
