@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.devServer
 
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.sun.net.httpserver.HttpContext
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
@@ -31,197 +31,192 @@ import kotlin.io.path.createDirectories
 import kotlin.system.exitProcess
 
 @Suppress("GrazieInspection")
-val skippedPluginModules = hashSetOf(
+internal val skippedPluginModules = hashSetOf(
   "intellij.cwm.plugin", // quiche downloading should be implemented as a maven lib
 )
 
-val LOG: Logger = LoggerFactory.getLogger(DevIdeaBuildServer::class.java)
+internal val LOG: Logger = LoggerFactory.getLogger(DevIdeaBuildServer::class.java)
 
-enum class DevIdeaBuildServerStatus(private val status: String) {
-  OK("OK"),
-  FAILED("FAILED"),
-  IN_PROGRESS("IN_PROGRESS"),
-  UNDEFINED("UNDEFINED");
-
-  companion object {
-    fun fromString(source: String): DevIdeaBuildServerStatus {
-      return values().single { it.status == source.trim() }
-    }
-  }
+enum class DevIdeaBuildServerStatus {
+  OK,
+  FAILED,
+  IN_PROGRESS,
+  UNDEFINED
 }
 
-class DevIdeaBuildServer {
-  companion object {
-    const val SERVER_PORT = 20854
-    private val buildQueueLock = Semaphore(1, true)
-    private val doneSignal = CountDownLatch(1)
+object DevIdeaBuildServer {
+  private const val SERVER_PORT = 20854
+  private val buildQueueLock = Semaphore(1, true)
+  private val doneSignal = CountDownLatch(1)
 
-    // <product / DevIdeaBuildServerStatus>
-    private var productBuildStatus = mutableMapOf<String, DevIdeaBuildServerStatus>()
+  // <product / DevIdeaBuildServerStatus>
+  private var productBuildStatus = HashMap<String, DevIdeaBuildServerStatus>()
 
-    @JvmStatic
-    fun main(args: Array<String>) {
-      initLog()
+  @JvmStatic
+  fun main(args: Array<String>) {
+    initLog()
+
+    try {
+      start()
+    }
+    catch (e: ConfigurationException) {
+      LOG.error(e.message)
+      exitProcess(1)
+    }
+  }
+
+  private fun initLog() {
+    val root = java.util.logging.Logger.getLogger("")
+    root.level = Level.INFO
+    val handlers = root.handlers
+    for (handler in handlers) {
+      root.removeHandler(handler)
+    }
+    root.addHandler(ConsoleHandler().apply {
+      formatter = object : Formatter() {
+        override fun format(record: LogRecord): String {
+          val timestamp = String.format("%1\$tT,%1\$tL", record.millis)
+          return "$timestamp ${record.message}\n" + (record.thrown?.let { thrown ->
+            StringWriter().also {
+              thrown.printStackTrace(PrintWriter(it))
+            }.toString()
+          } ?: "")
+        }
+      }
+    })
+  }
+
+  private fun start() {
+    val buildServer = BuildServer(homePath = getHomePath())
+
+    val httpServer = createHttpServer(buildServer)
+    LOG.info("Listening on ${httpServer.address.hostString}:${httpServer.address.port}")
+    LOG.info(
+      "Custom plugins: ${getAdditionalModules()?.joinToString() ?: "not set (use VM property `additional.modules` to specify additional module ids)"}")
+    LOG.info(
+      "Run IDE on module intellij.platform.bootstrap with VM properties -Didea.use.dev.build.server=true -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
+    httpServer.start()
+
+    // wait for ctrl-c
+    Runtime.getRuntime().addShutdownHook(Thread {
+      doneSignal.countDown()
+    })
+
+    try {
+      doneSignal.await()
+    }
+    catch (ignore: InterruptedException) {
+    }
+
+    LOG.info("Server stopping...")
+    httpServer.stop(10)
+    exitProcess(0)
+  }
+
+  private fun HttpExchange.getPlatformPrefix() = parseQuery(this.requestURI).get("platformPrefix")?.first() ?: "idea"
+
+  private fun createBuildEndpoint(httpServer: HttpServer, buildServer: BuildServer): HttpContext? {
+    return httpServer.createContext("/build") { exchange ->
+      val platformPrefix = exchange.getPlatformPrefix()
+
+      var statusMessage: String
+      var statusCode = HttpURLConnection.HTTP_OK
+      productBuildStatus.put(platformPrefix, DevIdeaBuildServerStatus.UNDEFINED)
 
       try {
-        start()
+        productBuildStatus.put(platformPrefix, DevIdeaBuildServerStatus.IN_PROGRESS)
+        buildQueueLock.acquire()
+
+        exchange.responseHeaders.add("Content-Type", "text/plain")
+        runBlocking(Dispatchers.Default) {
+          val ideBuilder = buildServer.checkOrCreateIdeBuilder(platformPrefix)
+          statusMessage = ideBuilder.pluginBuilder.buildChanged()
+        }
+        LOG.info(statusMessage)
       }
       catch (e: ConfigurationException) {
-        LOG.error(e.message)
-        exitProcess(1)
+        statusCode = HttpURLConnection.HTTP_BAD_REQUEST
+        productBuildStatus.put(platformPrefix, DevIdeaBuildServerStatus.FAILED)
+        statusMessage = e.message!!
       }
-    }
-
-    private fun initLog() {
-      val root = java.util.logging.Logger.getLogger("")
-      root.level = Level.INFO
-      val handlers = root.handlers
-      for (handler in handlers) {
-        root.removeHandler(handler)
+      catch (e: Throwable) {
+        productBuildStatus.put(platformPrefix, DevIdeaBuildServerStatus.FAILED)
+        exchange.sendResponseHeaders(HttpURLConnection.HTTP_UNAVAILABLE, -1)
+        LOG.error("Cannot handle build request", e)
+        return@createContext
       }
-      root.addHandler(ConsoleHandler().apply {
-        formatter = object : Formatter() {
-          override fun format(record: LogRecord): String {
-            val timestamp = String.format("%1\$tT,%1\$tL", record.millis)
-            return "$timestamp ${record.message}\n" + (record.thrown?.let { thrown ->
-              StringWriter().also {
-                thrown.printStackTrace(PrintWriter(it))
-              }.toString()
-            } ?: "")
-          }
-        }
-      })
-    }
+      finally {
+        buildQueueLock.release()
+      }
 
-    private fun start() {
-      val buildServer = BuildServer(homePath = getHomePath())
-
-      val httpServer = createHttpServer(buildServer)
-      LOG.info("Listening on ${httpServer.address.hostString}:${httpServer.address.port}")
-      LOG.info(
-        "Custom plugins: ${getAdditionalModules()?.joinToString() ?: "not set (use VM property `additional.modules` to specify additional module ids)"}")
-      LOG.info(
-        "Run IDE on module intellij.platform.bootstrap with VM properties -Didea.use.dev.build.server=true -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
-      httpServer.start()
-
-      // wait for ctrl-c
-      Runtime.getRuntime().addShutdownHook(Thread {
-        doneSignal.countDown()
+      productBuildStatus.put(platformPrefix, if (statusCode == HttpURLConnection.HTTP_OK) {
+        DevIdeaBuildServerStatus.OK
+      }
+      else {
+        DevIdeaBuildServerStatus.FAILED
       })
 
-      try {
-        doneSignal.await()
-      }
-      catch (ignore: InterruptedException) {
-      }
-
-      LOG.info("Server stopping...")
-      httpServer.stop(10)
-      exitProcess(0)
-    }
-
-    private fun HttpExchange.getPlatformPrefix() = parseQuery(this.requestURI).get("platformPrefix")?.first() ?: "idea"
-
-    private fun createBuildEndpoint(httpServer: HttpServer, buildServer: BuildServer): HttpContext? {
-      return httpServer.createContext("/build") { exchange ->
-        val platformPrefix = exchange.getPlatformPrefix()
-
-        var statusMessage: String
-        var statusCode = HttpURLConnection.HTTP_OK
-        productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.UNDEFINED
-
-        try {
-          productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.IN_PROGRESS
-          buildQueueLock.acquire()
-
-          exchange.responseHeaders.add("Content-Type", "text/plain")
-          runBlocking(Dispatchers.Default) {
-            val ideBuilder = buildServer.checkOrCreateIdeBuilder(platformPrefix)
-            statusMessage = ideBuilder.pluginBuilder.buildChanged()
-          }
-          LOG.info(statusMessage)
-        }
-        catch (e: ConfigurationException) {
-          statusCode = HttpURLConnection.HTTP_BAD_REQUEST
-          productBuildStatus.put(platformPrefix, DevIdeaBuildServerStatus.FAILED)
-          statusMessage = e.message!!
-        }
-        catch (e: Throwable) {
-          productBuildStatus.put(platformPrefix, DevIdeaBuildServerStatus.FAILED)
-          exchange.sendResponseHeaders(HttpURLConnection.HTTP_UNAVAILABLE, -1)
-          LOG.error("Cannot handle build request", e)
-          return@createContext
-        }
-        finally {
-          buildQueueLock.release()
-        }
-
-        productBuildStatus[platformPrefix] =
-          if (statusCode == HttpURLConnection.HTTP_OK) DevIdeaBuildServerStatus.OK
-          else DevIdeaBuildServerStatus.FAILED
-
-        val response = statusMessage.encodeToByteArray()
-        exchange.sendResponseHeaders(statusCode, response.size.toLong())
-        exchange.responseBody.apply {
-          this.write(response)
-          this.flush()
-          this.close()
-        }
+      val response = statusMessage.encodeToByteArray()
+      exchange.sendResponseHeaders(statusCode, response.size.toLong())
+      exchange.responseBody.apply {
+        this.write(response)
+        this.flush()
+        this.close()
       }
     }
+  }
 
-    private fun createStatusEndpoint(httpServer: HttpServer): HttpContext? {
-      return httpServer.createContext("/status") { exchange ->
-        val platformPrefix = exchange.getPlatformPrefix()
-        val buildStatus = productBuildStatus.getOrDefault(platformPrefix, DevIdeaBuildServerStatus.UNDEFINED)
+  private fun createStatusEndpoint(httpServer: HttpServer): HttpContext? {
+    return httpServer.createContext("/status") { exchange ->
+      val platformPrefix = exchange.getPlatformPrefix()
+      val buildStatus = productBuildStatus.getOrDefault(platformPrefix, DevIdeaBuildServerStatus.UNDEFINED)
 
-        exchange.responseHeaders.add("Content-Type", "text/plain")
-        val response = buildStatus.toString().encodeToByteArray()
-        exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.size.toLong())
-        exchange.responseBody.apply {
-          this.write(response)
-          this.flush()
-          this.close()
-        }
+      exchange.responseHeaders.add("Content-Type", "text/plain")
+      val response = buildStatus.toString().encodeToByteArray()
+      exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.size.toLong())
+      exchange.responseBody.apply {
+        this.write(response)
+        this.flush()
+        this.close()
       }
     }
+  }
 
-    private fun createStopEndpoint(httpServer: HttpServer): HttpContext? {
-      return httpServer.createContext("/stop") { exchange ->
+  private fun createStopEndpoint(httpServer: HttpServer): HttpContext? {
+    return httpServer.createContext("/stop") { exchange ->
 
-        exchange.responseHeaders.add("Content-Type", "text/plain")
-        val response = "".encodeToByteArray()
-        exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.size.toLong())
-        exchange.responseBody.apply {
-          this.write(response)
-          this.flush()
-          this.close()
-        }
-
-        doneSignal.countDown()
+      exchange.responseHeaders.add("Content-Type", "text/plain")
+      val response = "".encodeToByteArray()
+      exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.size.toLong())
+      exchange.responseBody.apply {
+        this.write(response)
+        this.flush()
+        this.close()
       }
+
+      doneSignal.countDown()
     }
+  }
 
-    private fun createHttpServer(buildServer: BuildServer): HttpServer {
-      val httpServer = HttpServer.create()
-      httpServer.bind(InetSocketAddress(InetAddress.getLoopbackAddress(), SERVER_PORT), 2)
+  private fun createHttpServer(buildServer: BuildServer): HttpServer {
+    val httpServer = HttpServer.create()
+    httpServer.bind(InetSocketAddress(InetAddress.getLoopbackAddress(), SERVER_PORT), 2)
 
-      createBuildEndpoint(httpServer, buildServer)
-      createStatusEndpoint(httpServer)
-      createStopEndpoint(httpServer)
+    createBuildEndpoint(httpServer, buildServer)
+    createStatusEndpoint(httpServer)
+    createStopEndpoint(httpServer)
 
-      // Serve requests in parallel. Though, there is no guarantee, that 2 requests will be served for different endpoints
-      httpServer.executor = Executors.newFixedThreadPool(2)
-      return httpServer
-    }
+    // Serve requests in parallel. Though, there is no guarantee, that 2 requests will be served for different endpoints
+    httpServer.executor = Executors.newFixedThreadPool(2)
+    return httpServer
+  }
 
-    private fun getHomePath(): Path {
-      return IdeaProjectLoaderUtil.guessUltimateHome(DevIdeaBuildServer::class.java)
-    }
+  private fun getHomePath(): Path {
+    return IdeaProjectLoaderUtil.guessUltimateHome(DevIdeaBuildServer::class.java)
   }
 }
 
-fun parseQuery(url: URI): Map<String, List<String?>> {
+private fun parseQuery(url: URI): Map<String, List<String?>> {
   val query = url.query ?: return emptyMap()
   return query.splitToSequence("&")
     .map {
@@ -233,10 +228,10 @@ fun parseQuery(url: URI): Map<String, List<String?>> {
     .groupBy(keySelector = { it.key }, valueTransform = { it.value })
 }
 
-fun clearDirContent(dir: Path) {
+internal fun clearDirContent(dir: Path) {
   if (Files.isDirectory(dir)) {
     // because of problem on Windows https://stackoverflow.com/a/55198379/2467248
-    FileUtil.delete(dir)
+    NioFiles.deleteRecursively(dir)
     dir.createDirectories()
   }
 }
