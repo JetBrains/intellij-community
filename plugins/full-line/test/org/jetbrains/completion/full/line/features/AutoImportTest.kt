@@ -1,29 +1,29 @@
 package org.jetbrains.completion.full.line.features
 
-import com.jetbrains.python.inspections.leunresolvedReference.PyUnresolvedReferencesInspection
+//import com.jetbrains.python.inspections.leunresolvedReference.PyUnresolvedReferencesInspection
 import org.jetbrains.completion.full.line.platform.FullLineLookupElement
 import org.jetbrains.completion.full.line.platform.tests.FullLineCompletionTestCase
 import org.jetbrains.completion.full.line.platform.tests.JavaProject
 import org.jetbrains.completion.full.line.platform.tests.PythonProject
 
-class PythonAutoImportTest : AutoImportTest(), PythonProject {
-  fun `test simple python`() {
-    myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
-    doTest(
-      "main.py",
-      "custom_lib = MyCustomLib",
-      "from pkg.lib import MyCustomLib"
-    )
-  }
-}
+//class PythonAutoImportTest : AutoImportTest(), PythonProject {
+//  fun `test simple python`() {
+//    myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
+//    doTest(
+//      "main.py",
+//      "custom_lib = MyCustomLib",
+//      "from pkg.lib import MyCustomLib"
+//    )
+//  }
+//}
 
-class JavaAutoImportTest : AutoImportTest(), JavaProject {
-  fun `test simple java`() = doTest(
-    "Main.java",
-    "CustomLib lib = new CustomLib()",
-    "import pkg.CustomLib;"
-  )
-}
+//class JavaAutoImportTest : AutoImportTest(), JavaProject {
+//  fun `test simple java`() = doTest(
+//    "Main.java",
+//    "CustomLib lib = new CustomLib()",
+//    "import pkg.CustomLib;"
+//  )
+//}
 
 //TODO: uncomment test when auto-import will be enabled in kotlin
 //class KotlinAutoImportTest : AutoImportTest(), KotlinProject {
