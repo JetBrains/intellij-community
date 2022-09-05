@@ -163,10 +163,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   @Override
-  public void setFont(EditorFontType key, Font font) {
-  }
-
-  @Override
   public abstract Object clone();
 
   public void copyTo(AbstractColorsScheme newScheme) {
