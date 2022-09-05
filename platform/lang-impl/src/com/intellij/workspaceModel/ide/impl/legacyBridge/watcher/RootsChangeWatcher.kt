@@ -23,14 +23,13 @@ import com.intellij.project.stateStore
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.indexing.EntityIndexingServiceEx
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener.Companion.shouldFireRootsChanged
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher.Companion.calculateAffectedEntities
-import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
@@ -278,6 +277,6 @@ private class EntityChangeStorage {
   }
 
   fun createIndexingInfo() = entities?.let {
-    ProjectRootsChangeListener.WorkspaceEventRescanningInfo(it.map { entity -> EntityChange.Added(entity) }, false)
+    EntityIndexingServiceEx.getInstanceEx().createWorkspaceEntitiesRootsChangedInfo(it)
   }
 }

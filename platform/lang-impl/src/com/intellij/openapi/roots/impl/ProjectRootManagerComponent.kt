@@ -33,15 +33,12 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.project.stateStore
 import com.intellij.util.ObjectUtils
-import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.EntityIndexingService
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener.WorkspaceEventRescanningInfo
 import kotlinx.coroutines.*
 import java.lang.Runnable
-import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
 private val LOG = logger<ProjectRootManagerComponent>()
@@ -127,6 +124,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   private fun registerListeners() {
     val connection = myProject.messageBus.connect(this)
     connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      @Deprecated("Deprecated in Java")
       override fun projectOpened(project: Project) {
         if (project === myProject) {
           addRootsToWatch()
@@ -228,20 +226,9 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     try {
       (DirectoryIndex.getInstance(myProject) as? DirectoryIndexImpl)?.reset()
 
-      var isFromWorkspaceOnly = ThreeState.UNSURE
-      for (info in indexingInfos) {
-        if (info is WorkspaceEventRescanningInfo && info.isFromWorkspaceModelEvent) {
-          if (isFromWorkspaceOnly == ThreeState.UNSURE) {
-            isFromWorkspaceOnly = ThreeState.YES
-          }
-        }
-        else {
-          isFromWorkspaceOnly = ThreeState.NO
-          break
-        }
-      }
+      val isFromWorkspaceOnly = EntityIndexingService.getInstance().isFromWorkspaceOnly(indexingInfos)
       myProject.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS)
-        .rootsChanged(ModuleRootEventImpl(myProject, fileTypes, indexingInfos, isFromWorkspaceOnly == ThreeState.YES))
+        .rootsChanged(ModuleRootEventImpl(myProject, fileTypes, indexingInfos, isFromWorkspaceOnly))
     }
     finally {
       isFiringEvent = false

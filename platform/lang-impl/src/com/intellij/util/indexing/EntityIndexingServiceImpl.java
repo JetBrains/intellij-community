@@ -9,6 +9,7 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
@@ -32,7 +33,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-class EntityIndexingServiceImpl implements EntityIndexingService {
+class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   private static final Logger LOG = Logger.getInstance(EntityIndexingServiceImpl.class);
   private static final RootChangesLogger ROOT_CHANGES_LOGGER = new RootChangesLogger();
 
@@ -240,5 +241,34 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
   @NotNull
   public BuildableRootsChangeRescanningInfo createBuildableInfo() {
     return new BuildableRootsChangeRescanningInfoImpl();
+  }
+
+  @Override
+  public @NotNull RootsChangeRescanningInfo createWorkspaceChangedEventInfo(@NotNull List<EntityChange<?>> changes) {
+    return new ProjectRootsChangeListener.WorkspaceEventRescanningInfo(changes, true);
+  }
+
+  @Override
+  public @NotNull RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(@NotNull List<WorkspaceEntity> entities) {
+    return new ProjectRootsChangeListener.WorkspaceEventRescanningInfo(
+      ContainerUtil.map(entities, entity -> new EntityChange.Added<>(entity)), false);
+  }
+
+  @Override
+  public boolean isFromWorkspaceOnly(@NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) {
+    var isFromWorkspaceOnly = ThreeState.UNSURE;
+    for (RootsChangeRescanningInfo info : indexingInfos) {
+      if (info instanceof ProjectRootsChangeListener.WorkspaceEventRescanningInfo &&
+          ((ProjectRootsChangeListener.WorkspaceEventRescanningInfo)info).isFromWorkspaceModelEvent()) {
+        if (isFromWorkspaceOnly == ThreeState.UNSURE) {
+          isFromWorkspaceOnly = ThreeState.YES;
+        }
+      }
+      else {
+        isFromWorkspaceOnly = ThreeState.NO;
+        break;
+      }
+    }
+    return isFromWorkspaceOnly == ThreeState.YES;
   }
 }
