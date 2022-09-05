@@ -359,6 +359,10 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
+  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<@NotNull Change> changes) {
+  }
+
+  @Override
   public boolean setReadOnly(@NotNull String name, boolean value) {
     throw new UnsupportedOperationException();
   }
