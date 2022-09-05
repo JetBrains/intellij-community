@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.JarUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.jrt.JrtFileSystem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.search.ProjectScope
@@ -12,11 +13,14 @@ import java.util.jar.Attributes
 
 private const val DIGIT_VERSION_PATTERN_PART = "(\\d+.\\d+|\\d+)"
 private val JAR_FILE_NAME_PATTERN = Regex("[\\w|\\-.]+-($DIGIT_VERSION_PATTERN_PART[\\w|.]*)jar")
+private val JRT_ROOT_FILE_NAME_PATTERN = Regex("[\\w|\\-.]+-($DIGIT_VERSION_PATTERN_PART[\\w|.]*)")
 
-private fun versionByJarManifest(file: VirtualFile): String? = JarUtil.getJarAttribute(
-  VfsUtilCore.virtualToIoFile(file),
-  Attributes.Name.IMPLEMENTATION_VERSION,
-)
+private fun versionByJarManifest(file: VirtualFile): String? {
+  return JarUtil.getJarAttribute(
+    VfsUtilCore.virtualToIoFile(file),
+    Attributes.Name.IMPLEMENTATION_VERSION,
+  )
+}
 
 private fun versionByJarFileName(fileName: String): String? {
   val fileNameMatcher = JAR_FILE_NAME_PATTERN.matchEntire(fileName) ?: return null
@@ -24,14 +28,26 @@ private fun versionByJarFileName(fileName: String): String? {
   return value.trimEnd('.')
 }
 
-private fun PsiElement.findCorrespondingVirtualFile(): VirtualFile? =
-  if (this is PsiPackage)
+private fun versionByJrtRootName(fileName: String): String? {
+  val fileNameMatcher = JRT_ROOT_FILE_NAME_PATTERN.matchEntire(fileName) ?: return null
+  val value = fileNameMatcher.groups[1]?.value ?: return null
+  return value.trimEnd('.')
+}
+
+private fun PsiElement.findCorrespondingVirtualFile(): VirtualFile? {
+  return if (this is PsiPackage)
     getDirectories(ProjectScope.getLibrariesScope(project)).firstOrNull()?.virtualFile
   else
     containingFile?.virtualFile
+}
 
 internal fun findJarVersion(elementFromJar: PsiElement): String? {
   val vFile = elementFromJar.findCorrespondingVirtualFile() ?: return null
+  if (vFile.fileSystem is JrtFileSystem) {
+    val fileName = (vFile.fileSystem as JrtFileSystem).getLocalByEntry(vFile)?.name ?: return null
+    return versionByJrtRootName(fileName)
+  }
+
   val jarFile = JarFileSystem.getInstance().getVirtualFileForJar(vFile) ?: return null
   val version = versionByJarManifest(jarFile) ?: versionByJarFileName(jarFile.name) ?: return null
   return version.takeIf(String::isNotEmpty)

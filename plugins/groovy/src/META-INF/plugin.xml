@@ -1326,6 +1326,9 @@
     <newProjectWizard.groovy.buildSystem implementation="org.jetbrains.plugins.groovy.config.wizard.IntelliJGroovyNewProjectWizard"/>
 
     <persistentFsConnectionListener implementation="org.jetbrains.plugins.groovy.bundled.BundledGroovyPersistentFsConnectionListener"/>
+
+    <internal.statistic.libraryUsageImportProcessor language="Groovy"
+                                                    implementationClass="org.jetbrains.plugins.groovy.stats.GroovyLibraryUsageImportProcessor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
