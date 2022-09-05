@@ -91,7 +91,7 @@ internal class RecentProjectFilteringTree(
 
     treeComponent.setUI(FullRendererComponentTreeUI())
     treeComponent.setExpandableItemsEnabled(false)
-    UIUtil.setCursor(treeComponent, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+    UIUtil.setCursor(treeComponent, TREE_CURSOR)
 
     searchModel.updateStructure()
   }
@@ -549,7 +549,7 @@ internal class RecentProjectFilteringTree(
           isEnabled = false
         }
         toolTipText = null
-        cursor = Cursor(Cursor.HAND_CURSOR)
+        cursor = TREE_CURSOR
 
         projectProgressBar.apply {
           val fraction = progressIndicator.fraction
@@ -648,6 +648,8 @@ internal class RecentProjectFilteringTree(
   }
 
   companion object {
+    private val TREE_CURSOR = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+
     private fun createActionEvent(tree: Tree, inputEvent: InputEvent? = null): AnActionEvent {
       val dataContext = DataManager.getInstance().getDataContext(tree)
       val actionPlace =
