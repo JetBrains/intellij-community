@@ -457,36 +457,33 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (e.isConsumed()) return;
     boolean skipPress = checkSkipPressForEvent(e);
     switch (e.getID()) {
-      case MouseEvent.MOUSE_PRESSED:
+      case MouseEvent.MOUSE_PRESSED -> {
         if (skipPress || !isEnabled()) return;
         myMouseDown = true;
         onMousePressed(e);
         ourGlobalMouseDown = true;
         repaint();
-        break;
-
-      case MouseEvent.MOUSE_RELEASED:
+      }
+      case MouseEvent.MOUSE_RELEASED -> {
         if (skipPress || !isEnabled()) return;
         onMouseReleased(e);
         if (myRollover) {
           performAction(e);
         }
         repaint();
-        break;
-
-      case MouseEvent.MOUSE_ENTERED:
+      }
+      case MouseEvent.MOUSE_ENTERED -> {
         if (!myMouseDown && ourGlobalMouseDown) break;
         myRollover = true;
         repaint();
         onMousePresenceChanged(true);
-        break;
-
-      case MouseEvent.MOUSE_EXITED:
+      }
+      case MouseEvent.MOUSE_EXITED -> {
         myRollover = false;
         if (!myMouseDown && ourGlobalMouseDown) break;
         repaint();
         onMousePresenceChanged(false);
-        break;
+      }
     }
   }
 

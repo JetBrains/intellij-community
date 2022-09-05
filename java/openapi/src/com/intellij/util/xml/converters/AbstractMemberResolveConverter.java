@@ -61,20 +61,12 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
     final PsiClass psiClass = getTargetClass(context);
     if (psiClass == null) return null;
     for (PropertyMemberType type : getMemberTypes(context)) {
-      switch (type) {
-        case FIELD:
-          final PsiField field = psiClass.findFieldByName(s, isLookDeep());
-          if (field != null) return field;
-          break;
-        case GETTER:
-          final PsiMethod getter = PropertyUtilBase.findPropertyGetter(psiClass, getPropertyName(s, context), false, isLookDeep());
-          if (getter != null) return getter;
-          break;
-        case SETTER:
-          final PsiMethod setter = PropertyUtilBase.findPropertySetter(psiClass, getPropertyName(s, context), false, isLookDeep());
-          if (setter != null) return setter;
-          break;
-      }
+      PsiMember member = switch (type) {
+        case FIELD -> psiClass.findFieldByName(s, isLookDeep());
+        case GETTER -> PropertyUtilBase.findPropertyGetter(psiClass, getPropertyName(s, context), false, isLookDeep());
+        case SETTER -> PropertyUtilBase.findPropertySetter(psiClass, getPropertyName(s, context), false, isLookDeep());
+      };
+      if (member != null) return member;
     }
     return null;
   }

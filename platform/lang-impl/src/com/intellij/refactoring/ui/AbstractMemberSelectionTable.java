@@ -292,27 +292,21 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
 
     @Override
     public String getColumnName(int column) {
-      switch (column) {
-        case CHECKED_COLUMN:
-          return " ";
-        case ABSTRACT_COLUMN:
-          return myTable.myAbstractColumnHeader;
-        case DISPLAY_NAME_COLUMN:
-          return getDisplayNameColumnHeader();
-        default:
-          throw new RuntimeException("Incorrect column index");
-      }
+      return switch (column) {
+        case CHECKED_COLUMN -> " ";
+        case ABSTRACT_COLUMN -> myTable.myAbstractColumnHeader;
+        case DISPLAY_NAME_COLUMN -> getDisplayNameColumnHeader();
+        default -> throw new RuntimeException("Incorrect column index");
+      };
     }
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      switch (columnIndex) {
-        case CHECKED_COLUMN:
-          return myTable.myMemberInfoModel.isMemberEnabled(myTable.myMemberInfos.get(rowIndex));
-        case ABSTRACT_COLUMN:
-          return myTable.isAbstractColumnEditable(rowIndex);
-      }
-      return false;
+      return switch (columnIndex) {
+        case CHECKED_COLUMN -> myTable.myMemberInfoModel.isMemberEnabled(myTable.myMemberInfos.get(rowIndex));
+        case ABSTRACT_COLUMN -> myTable.isAbstractColumnEditable(rowIndex);
+        default -> false;
+      };
     }
 
 

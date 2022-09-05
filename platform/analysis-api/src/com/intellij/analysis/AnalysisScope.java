@@ -214,21 +214,17 @@ public class AnalysisScope {
   protected VirtualFileSet createFilesSet() {
     VirtualFileSet fileSet = VfsUtilCore.createCompactVirtualFileSet();
     switch (myType) {
-      case FILE:
+      case FILE -> {
         fileSet.add(((PsiFileSystemItem)myElement).getVirtualFile());
         fileSet.freeze();
-        break;
-      case DIRECTORY:
-      case PROJECT:
-      case MODULES:
-      case MODULE:
-      case CUSTOM:
+      }
+      case DIRECTORY, PROJECT, MODULES, MODULE, CUSTOM -> {
         long timeStamp = System.currentTimeMillis();
         accept(createFileSearcher(fileSet));
         fileSet.freeze();
         LOG.info("Scanning scope took " + (System.currentTimeMillis() - timeStamp) + " ms");
-        break;
-      case VIRTUAL_FILES:
+      }
+      case VIRTUAL_FILES -> {
         ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
         for (VirtualFile vFile : myVFiles) {
           VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>() {
@@ -244,9 +240,8 @@ public class AnalysisScope {
           });
         }
         fileSet.freeze();
-        break;
-      default:
-        throw new IllegalStateException("Invalid type: "+myType+"; can't create file set off it");
+      }
+      default -> throw new IllegalStateException("Invalid type: " + myType + "; can't create file set off it");
     }
     return fileSet;
   }

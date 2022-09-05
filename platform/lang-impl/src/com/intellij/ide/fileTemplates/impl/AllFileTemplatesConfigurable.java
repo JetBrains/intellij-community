@@ -185,18 +185,13 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
   @Override
   public String getHelpTopic() {
     int index = myTabbedPane.getSelectedIndex();
-    switch (index) {
-      case 0:
-        return "fileTemplates.templates";
-      case 1:
-        return "fileTemplates.includes";
-      case 2:
-        return "fileTemplates.code";
-      case 3:
-        return "fileTemplates.j2ee";
-      default:
-        throw new IllegalStateException("wrong index: " + index);
-    }
+    return switch (index) {
+      case 0 -> "fileTemplates.templates";
+      case 1 -> "fileTemplates.includes";
+      case 2 -> "fileTemplates.code";
+      case 3 -> "fileTemplates.j2ee";
+      default -> throw new IllegalStateException("wrong index: " + index);
+    };
   }
 
   @Override

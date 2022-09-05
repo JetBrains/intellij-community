@@ -49,17 +49,9 @@ public class AlphaNumericTypeCommand extends TypeCommand {
           final char next = text.charAt(i + 1);
           boolean processed = true;
           switch (next) {
-            case 'n':
-              type(robot, KeyEvent.VK_ENTER, 0);
-              break;
-            case 't':
-              type(robot, KeyEvent.VK_TAB, 0);
-              break;
-            case 'r':
-              type(robot, KeyEvent.VK_ENTER, 0);
-              break;
-            default:
-              processed = false;
+            case 'n', 'r' -> type(robot, KeyEvent.VK_ENTER, 0);
+            case 't' -> type(robot, KeyEvent.VK_TAB, 0);
+            default -> processed = false;
           }
 
           if (processed) {

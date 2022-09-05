@@ -234,18 +234,10 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
 
     private void setDfaOption(@NotNull final Configuration.DfaOption dfaOption) {
       switch (dfaOption) {
-        case OFF:
-          myDfaOff.setSelected(true);
-          break;
-        case RESOLVE:
-          myAnalyzeReferences.setSelected(true);
-          break;
-        case ASSIGNMENTS:
-          myLookForAssignments.setSelected(true);
-          break;
-        case DFA:
-          myUseDfa.setSelected(true);
-          break;
+        case OFF -> myDfaOff.setSelected(true);
+        case RESOLVE -> myAnalyzeReferences.setSelected(true);
+        case ASSIGNMENTS -> myLookForAssignments.setSelected(true);
+        case DFA -> myUseDfa.setSelected(true);
       }
     }
   }
