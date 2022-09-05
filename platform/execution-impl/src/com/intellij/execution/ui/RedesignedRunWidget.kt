@@ -76,7 +76,7 @@ private data class RunToolbarData(val project: Project,
 private val runToolbarDataKey = Key.create<RunToolbarData>("run-toolbar-data")
 
 private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
-  override fun getActionUpdateThread(): ActionUpdateThread  = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread  = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent): Unit = error("Should not be invoked")
 
@@ -225,7 +225,7 @@ private class OtherRunOptions : TogglePopupAction(
     return createOtherRunnersSubgroup(selectedConfiguration, project)
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
 
 internal val excludeRunAndDebug: (Executor) -> Boolean = {
@@ -264,7 +264,7 @@ private class RunConfigurationSelector : TogglePopupAction(), CustomComponentAct
     runConfigAction.update(e)
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun displayTextInToolbar(): Boolean {
     return true
