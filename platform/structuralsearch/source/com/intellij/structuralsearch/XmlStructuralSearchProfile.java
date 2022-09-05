@@ -21,7 +21,6 @@ import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerUtil;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.xml.psi.XmlPsiBundle;
 import com.intellij.xml.util.HtmlUtil;
@@ -223,13 +222,8 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         elementParent.addRangeBefore(replacements[0], replacements[replacements.length - 1], elementToReplace);
       }
       else if (replacements.length == 1) {
-        Replacer.handleComments(elementToReplace, replacements[0], info);
-        try {
-          elementParent.addBefore(replacements[0], elementToReplace);
-        }
-        catch (IncorrectOperationException e) {
-          elementToReplace.replace(replacements[0]);
-        }
+        elementToReplace.replace(replacements[0]);
+        return;
       }
 
       final int matchSize = info.getMatchesCount();
