@@ -12,10 +12,6 @@ import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightCla
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory.getLightClassForDecompiledClassOrObject
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
-import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
@@ -27,6 +23,11 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
@@ -37,13 +38,14 @@ import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 
-class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<KtModule>(project) {
+class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaModuleInfo>(project) {
     override fun findClassOrObjectDeclarations(fqName: FqName, searchScope: GlobalSearchScope): Collection<KtClassOrObject> {
         return project.runReadActionInSmartMode {
             KotlinFullClassNameIndex.get(
@@ -88,11 +90,11 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<KtModul
         ),
     )
 
-    override fun KtFile.findModule(): KtModule = getKtModule(project)
+    override fun KtFile.findModule(): IdeaModuleInfo = getPlatformModuleInfo(JvmPlatforms.unspecifiedJvmPlatform) ?: moduleInfo
 
-    override fun facadeIsApplicable(module: KtModule, file: KtFile): Boolean = when (module) {
-        is KtSourceModule -> true
-        is KtLibraryModule -> true
+    override fun facadeIsApplicable(module: IdeaModuleInfo, file: KtFile): Boolean = when (module) {
+        is ModuleSourceInfo, is PlatformModuleInfo -> true
+        is LibrarySourceInfo -> file.isCompiled
         else -> false
     }
 
@@ -195,7 +197,7 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<KtModul
     }
 
     override fun getFakeLightClass(classOrObject: KtClassOrObject): KtFakeLightClass = KtDescriptorBasedFakeLightClass(classOrObject)
-    override val KtModule.contentSearchScope: GlobalSearchScope get() = this.contentScope
+    override val IdeaModuleInfo.contentSearchScope: GlobalSearchScope get() = this.contentScope
 
     override fun createInstanceOfLightFacade(facadeFqName: FqName, files: List<KtFile>): KtLightClassForFacade {
         return LightClassGenerationSupport.getInstance(project).createUltraLightClassForFacade(facadeFqName, files)
