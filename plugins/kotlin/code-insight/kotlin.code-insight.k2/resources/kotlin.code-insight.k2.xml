@@ -1,7 +1,12 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight">
   <extensions defaultExtensionNs="com.intellij">
 
-    <lang.psiStructureViewFactory language="kotlin"
-                                  implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.structureView.KotlinFirStructureViewFactory"/>
+    <lang.psiStructureViewFactory
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.structureView.KotlinFirStructureViewFactory"/>
+
+    <codeInsight.gotoSuper
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.KotlinGoToSuperDeclarationsHandler"/>
   </extensions>
 </idea-plugin>

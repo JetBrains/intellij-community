@@ -77,11 +77,16 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         super.tearDown()
     }
 
+    fun checkTextByExpectedPath(expectedSuffix: String, actual: String) {
+        val expectedPath = KotlinTestHelpers.getExpectedPath(mainPath, expectedSuffix)
+        KotlinTestHelpers.assertEqualsToPath(expectedPath, actual)
+    }
+
     fun JavaCodeInsightTestFixture.configureByMainPath(): PsiFile {
         return configureByFile(mainPath.toString())
     }
 
-    fun JavaCodeInsightTestFixture.checkResultByExpectedPath(expectedSuffix: String) {
+    fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedSuffix: String) {
         val expectedPath = KotlinTestHelpers.getExpectedPath(mainPath, expectedSuffix)
         try {
             checkResultByFile(expectedPath.toString(), /* ignoreTrailingWhitespaces = */ true)

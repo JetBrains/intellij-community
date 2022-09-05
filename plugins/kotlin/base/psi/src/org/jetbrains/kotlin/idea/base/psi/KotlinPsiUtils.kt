@@ -11,11 +11,13 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.castSafelyTo
 import com.intellij.util.text.CharArrayUtil
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
+import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
 import org.jetbrains.kotlin.util.takeWhileNotNull
 
 val KtClassOrObject.classIdIfNonLocal: ClassId?
@@ -25,6 +27,17 @@ val KtClassOrObject.classIdIfNonLocal: ClassId?
         val classesNames = parentsOfType<KtDeclaration>().map { it.name }.toList().asReversed()
         if (classesNames.any { it == null }) return null
         return ClassId(packageName, FqName(classesNames.joinToString(separator = ".")), /*local=*/false)
+    }
+
+val KtCallableDeclaration.callableIdIfNotLocal: CallableId?
+    get() {
+        val callableName = this.nameAsName ?: return null
+        if (isTopLevelInFileOrScript(this)) {
+            return CallableId(containingKtFile.packageFqName, callableName)
+        }
+
+        val classId = containingClassOrObject?.classIdIfNonLocal ?: return null
+        return CallableId(classId, callableName)
     }
 
 fun getElementAtOffsetIgnoreWhitespaceBefore(file: PsiFile, offset: Int): PsiElement? {
