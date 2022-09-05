@@ -79,7 +79,9 @@ public class WslFileWatcher extends PluggableFileWatcher {
 
   @Override
   public boolean isOperational() {
-    return myExecutable != null && (!ApplicationManager.getApplication().isUnitTestMode() || myTestStarted);
+    if (myExecutable == null) return false;
+    var app = ApplicationManager.getApplication();
+    return !(app.isCommandLine() || app.isUnitTestMode()) || myTestStarted;
   }
 
   @Override
