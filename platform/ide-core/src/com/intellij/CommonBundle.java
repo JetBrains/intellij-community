@@ -114,11 +114,6 @@ public final class CommonBundle extends DynamicBundle {
     return message("button.close");
   }
 
-  @Deprecated(forRemoval = true)
-  public static @Button String getNoForAllButtonText() {
-    return message("button.no.for.all");
-  }
-
   public static @Button String getApplyButtonText() {
     return message("button.apply");
   }
