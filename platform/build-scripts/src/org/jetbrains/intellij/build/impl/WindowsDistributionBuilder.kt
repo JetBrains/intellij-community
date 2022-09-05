@@ -46,12 +46,20 @@ internal class WindowsDistributionBuilder(
     val pty4jNativeDir = withContext(Dispatchers.IO) {
       Files.createDirectories(distBinDir)
 
-      val binWin = FileSet(context.paths.communityHomeDir.communityRoot.resolve("bin/win")).includeAll()
-      if (!context.includeBreakGenLibraries()) {
+      val sourceBinDir = context.paths.communityHomeDir.communityRoot.resolve("bin/win")
+
+      FileSet(sourceBinDir.resolve(arch.dirName))
+        .includeAll()
+        .copyToDir(distBinDir)
+
+      if (context.includeBreakGenLibraries()) {
+        // There's near zero chance that on x64 hardware arm64 library will be needed, but it's only 70 KiB.
+        // Contrary on arm64 hardware all three library versions could be used, so we copy them all.
         @Suppress("SpellCheckingInspection")
-        binWin.exclude("breakgen*")
+        FileSet(sourceBinDir)
+          .include("breakgen*.dll")
+          .copyToDir(distBinDir)
       }
-      binWin.copyToDir(distBinDir)
 
       val pty4jNativeDir = unpackPty4jNative(context, targetPath, "win")
       generateBuildTxt(context, targetPath)
@@ -67,7 +75,7 @@ internal class WindowsDistributionBuilder(
         generateScripts(distBinDir)
       }
       generateVMOptions(distBinDir)
-      buildWinLauncher(targetPath)
+      buildWinLauncher(targetPath, arch)
       customizer.copyAdditionalFiles(context, targetPath.toString())
 
       pty4jNativeDir
@@ -285,7 +293,7 @@ internal class WindowsDistributionBuilder(
     VmOptionsGenerator.writeVmOptions(distBinDir.resolve(fileName), vmOptions, "\r\n")
   }
 
-  private suspend fun buildWinLauncher(winDistPath: Path) {
+  private suspend fun buildWinLauncher(winDistPath: Path, arch: JvmArchitecture) {
     spanBuilder("build Windows executable").useWithScope2 {
       val executableBaseName = "${context.productProperties.baseFileName}64"
       val launcherPropertiesPath = context.paths.tempDir.resolve("launcher.properties")
@@ -319,7 +327,7 @@ internal class WindowsDistributionBuilder(
         """.trimIndent().trim())
 
       val communityHome = context.paths.communityHome
-      val inputPath = "${communityHome}/platform/build-scripts/resources/win/launcher/WinLauncher.exe"
+      val inputPath = "${communityHome}/platform/build-scripts/resources/win/launcher/${arch.dirName}/WinLauncher.exe"
       val outputPath = winDistPath.resolve("bin/${executableBaseName}.exe")
       val classpath = ArrayList<String>()
 
