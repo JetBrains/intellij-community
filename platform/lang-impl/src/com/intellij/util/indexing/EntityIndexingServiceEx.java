@@ -22,5 +22,5 @@ public interface EntityIndexingServiceEx extends EntityIndexingService {
   RootsChangeRescanningInfo createWorkspaceChangedEventInfo(@NotNull List<EntityChange<?>> changes);
 
   @NotNull
-  RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(@NotNull List<WorkspaceEntity> entities);
+  RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(List<WorkspaceEntity> entities);
 }
