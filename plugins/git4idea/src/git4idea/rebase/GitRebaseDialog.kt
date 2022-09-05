@@ -329,7 +329,9 @@ internal class GitRebaseDialog(private val project: Project,
       row {
         if (showRootField()) {
           cell(rootField)
-            .applyToComponent { rootField.columns(COLUMNS_SHORT) }
+            .columns(COLUMNS_SHORT)
+            .resizableColumn()
+            .horizontalAlign(HorizontalAlign.FILL)
         }
 
         cell(createCmdLabel())
