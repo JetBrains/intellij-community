@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.io.Decompressor
 import kotlinx.collections.immutable.persistentListOf
-import okhttp3.internal.immutableListOf
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
@@ -30,7 +29,7 @@ object KotlinPluginBuilder {
   private const val KOTLIN_COOP_DEV_VERSION = "1.7.255"
 
   @SuppressWarnings("SpellCheckingInspection")
-  val MODULES: List<String> = immutableListOf(
+  val MODULES: List<String> = persistentListOf(
     "kotlin.plugin.common",
     "kotlin.plugin.k1",
     "kotlin.plugin.k2",
@@ -181,7 +180,7 @@ object KotlinPluginBuilder {
   )
 
   @SuppressWarnings("SpellCheckingInspection")
-  private val LIBRARIES = immutableListOf(
+  private val LIBRARIES = persistentListOf(
     "kotlinc.analysis-api-providers",
     "kotlinc.analysis-project-structure",
     "kotlinc.high-level-api",
@@ -198,19 +197,19 @@ object KotlinPluginBuilder {
     "kotlinc.symbol-light-classes",
   )
 
-  private val GRADLE_TOOLING_MODULES = immutableListOf(
+  private val GRADLE_TOOLING_MODULES = persistentListOf(
     "kotlin.base.project-model",
     "kotlin.base.frontend-agnostic",
     "kotlin.gradle.gradle-tooling.impl",
   )
 
-  private val GRADLE_TOOLING_LIBRARIES = immutableListOf(
+  private val GRADLE_TOOLING_LIBRARIES = persistentListOf(
     "kotlin-gradle-plugin-idea",
     "kotlin-gradle-plugin-idea-proto",
     "kotlin-tooling-core",
   )
 
-  private val COMPILER_PLUGINS = immutableListOf(
+  private val COMPILER_PLUGINS = persistentListOf(
     "kotlinc.android-extensions-compiler-plugin",
     "kotlinc.allopen-compiler-plugin",
     "kotlinc.noarg-compiler-plugin",
