@@ -80,7 +80,7 @@ class CourseManager internal constructor() : Disposable {
     }
 
   val currentCourse: LearningCourse?
-    get() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.let { lang ->
+    get() = LangManager.getInstance().getLanguageId()?.let { lang ->
       COURSE_MODULES_EP.extensionList.find { lang.equals(it.language, ignoreCase = true) }?.instance
     }
 
