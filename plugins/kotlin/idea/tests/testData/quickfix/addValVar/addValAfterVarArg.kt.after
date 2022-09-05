@@ -1,4 +1,4 @@
-// "Add 'val'/'var' to parameter 'x'" "true"
+// "Add 'val' or 'var' to parameter 'x'" "true"
 class Foo(vararg val<caret> x: Int, val y: Int) {
 
 }
