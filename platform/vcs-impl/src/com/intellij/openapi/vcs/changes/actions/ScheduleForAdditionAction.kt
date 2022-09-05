@@ -4,10 +4,10 @@ package com.intellij.openapi.vcs.changes.actions
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -75,10 +75,10 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
         else -> ChangeListManager.getInstance(project).defaultChangeList
       }
 
-      val changeConsumer = browser?.let { Consumer { changes: List<Change> -> browser.viewer.includeChanges(changes) } }
+      val changesConsumer = browser?.let { Consumer { changes: List<Change> -> browser.viewer.includeChanges(changes) } }
 
       FileDocumentManager.getInstance().saveAllDocuments()
-      return addUnversionedFilesToVcs(project, targetChangeList, files, changeConsumer, additionalTask)
+      return addUnversionedFilesToVcs(project, targetChangeList, files, changesConsumer, additionalTask)
     }
 
     fun getUnversionedFiles(e: AnActionEvent, project: Project): JBIterable<VirtualFile> {
@@ -126,22 +126,16 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
                                  files: List<VirtualFile>,
                                  changesConsumer: Consumer<in List<Change>>?,
                                  additionalTask: PairConsumer<in ProgressIndicator, in MutableList<VcsException>>?): Boolean {
-      val exceptions: MutableList<VcsException> = ArrayList()
+      val exceptions = mutableListOf<VcsException>()
 
-      ProgressManager.getInstance().run(object : Task.Modal(project, VcsBundle.message("progress.title.adding.files.to.vcs"), true) {
-        override fun run(indicator: ProgressIndicator) {
-          val allProcessedFiles = performUnversionedFilesAddition(project, files, exceptions)
-          additionalTask?.consume(indicator, exceptions)
-          moveAddedChangesTo(project, list, allProcessedFiles, changesConsumer)
-        }
-      })
+      runModalTask(VcsBundle.message("progress.title.adding.files.to.vcs"), project, true) { indicator ->
+        val allProcessedFiles = performUnversionedFilesAddition(project, files, exceptions)
+        additionalTask?.consume(indicator, exceptions)
+        moveAddedChangesTo(project, list, allProcessedFiles, changesConsumer)
+      }
 
       if (!exceptions.isEmpty()) {
-        val message: @Nls StringBuilder = StringBuilder(VcsBundle.message("error.adding.files.prompt"))
-        for (ex in exceptions) {
-          message.append("\n").append(ex.message)
-        }
-        Messages.showErrorDialog(project, message.toString(), VcsBundle.message("error.adding.files.title"))
+        Messages.showErrorDialog(project, createErrorMessage(exceptions), VcsBundle.message("error.adding.files.title"))
       }
 
       return exceptions.isEmpty()
@@ -176,23 +170,29 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
       ChangeListManagerEx.getInstanceEx(project).waitForUpdate()
 
       ApplicationManager.getApplication().invokeAndWait {
-        var newChanges = changeListManager.defaultChangeList.changes.filter { change: Change ->
-          val path = ChangesUtil.getAfterPath(change)
-          path != null && allProcessedFiles.contains(path.virtualFile)
+        val newChanges = changeListManager.defaultChangeList.changes.filter { change: Change ->
+          val file = ChangesUtil.getAfterPath(change)?.virtualFile
+          file != null && allProcessedFiles.contains(file)
         }
 
         if (moveRequired && !newChanges.isEmpty()) {
           changeListManager.moveChangesTo(targetList!!, newChanges)
-        }
 
-        if (changesConsumer != null) {
-          if (moveRequired && !newChanges.isEmpty()) {
-            // newChanges contains ChangeListChange instances from active change list in case of partial changes
-            // so we obtain necessary changes again from required change list to pass to callback
-            val newList = changeListManager.getChangeList(targetList!!.id)
-            if (newList != null) newChanges = ArrayList(newList.changes.intersect(newChanges.toSet()))
+          if (changesConsumer != null) {
+            val newList = changeListManager.getChangeList(targetList.id)
+            if (newList != null) {
+              // 'newChanges' may contain ChangeListChange instances from the active changelist.
+              // We need to obtain changes again from the up-to-date changelist to pass to callback.
+              val movedChanges = newList.changes.intersect(newChanges.toSet())
+              changesConsumer.consume(movedChanges.toList())
+            }
+            else {
+              logger<ScheduleForAdditionAction>().warn("Changelist not found after moving new changes: $targetList")
+              changesConsumer.consume(newChanges)
+            }
           }
-
+        }
+        else if (changesConsumer != null) {
           changesConsumer.consume(newChanges)
         }
       }
@@ -220,7 +220,7 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
     private fun getUnversionedDescendantsRecursively(project: Project,
                                                      items: List<VirtualFile>): Set<VirtualFile> {
       val changeListManager = ChangeListManager.getInstance(project)
-      val result: MutableSet<VirtualFile> = HashSet()
+      val result = mutableSetOf<VirtualFile>()
 
       for (item in items) {
         VcsRootIterator.iterateVfUnderVcsRoot(project, item) { child: VirtualFile ->
@@ -240,7 +240,7 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
       if (!vcs.areDirectoriesVersionedItems()) return emptySet()
 
       val changeListManager = ChangeListManager.getInstance(project)
-      val result: MutableSet<VirtualFile> = HashSet()
+      val result = mutableSetOf<VirtualFile>()
 
       for (item in items) {
         var parent = item.parent
@@ -252,6 +252,14 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
       }
 
       return result
+    }
+
+    private fun createErrorMessage(exceptions: List<VcsException>): @Nls String {
+      val message: @Nls StringBuilder = StringBuilder(VcsBundle.message("error.adding.files.prompt"))
+      for (ex in exceptions) {
+        message.append("\n").append(ex.message)
+      }
+      return message.toString() // NON-NLS
     }
   }
 }
