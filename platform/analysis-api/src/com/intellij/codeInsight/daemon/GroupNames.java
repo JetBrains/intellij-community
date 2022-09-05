@@ -30,9 +30,6 @@ public interface GroupNames {
   /** @deprecated use groupKey="group.names.potentially.confusing.code.constructs" instead */
   @Deprecated(forRemoval = true)
   String CONFUSING_GROUP_NAME = "Potentially confusing code constructs";
-  /** @deprecated use groupKey="group.names.encapsulation.issues" instead */
-  @Deprecated(forRemoval = true)
-  String ENCAPSULATION_GROUP_NAME = "Encapsulation";
   /** @deprecated use groupKey="group.names.imports" instead */
   @Deprecated(forRemoval = true)
   String IMPORTS_GROUP_NAME = "Imports";

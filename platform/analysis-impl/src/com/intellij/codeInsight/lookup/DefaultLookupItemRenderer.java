@@ -29,15 +29,6 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<
     presentation.setTypeText(getText3(item), null);
   }
 
-  /**
-   * @deprecated use {@link #getRawIcon(LookupElement)}
-   */
-  @Nullable
-  @Deprecated(forRemoval = true)
-  public static Icon getRawIcon(final LookupElement item, boolean real) {
-    return getRawIcon(item);
-  }
-
   @Nullable
   public static Icon getRawIcon(final LookupElement item) {
     Icon icon = _getRawIcon(item);
