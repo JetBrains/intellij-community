@@ -75,12 +75,6 @@ public final class EditorWindow {
   private final EditorsSplitters myOwner;
 
   private boolean myIsDisposed;
-  /**
-   * @deprecated Use file opening methods taking {@link FileEditorOpenOptions} instead
-   * and pass the index through {@link FileEditorOpenOptions#withIndex(int)}.
-   */
-  @Deprecated(forRemoval = true)
-  public static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
   // Metadata to support editor tab drag&drop process: initial index
   public static final Key<Integer> DRAG_START_INDEX_KEY = KeyWithDefaultValue.create("drag start editor index", -1);
   // Metadata to support editor tab drag&drop process: hash of source container

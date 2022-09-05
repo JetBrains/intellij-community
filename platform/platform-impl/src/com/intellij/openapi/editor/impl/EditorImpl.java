@@ -4706,15 +4706,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public void setFont(EditorFontType key, Font font) {
-      if (myFontsMap == null) {
-        reinitFontsAndSettings();
-      }
-      myFontsMap.put(key, font);
-      reinitSettings();
-    }
-
-    @Override
     @Nullable
     public Object clone() {
       return null;

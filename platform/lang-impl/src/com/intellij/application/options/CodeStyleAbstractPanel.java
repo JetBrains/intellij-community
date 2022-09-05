@@ -630,11 +630,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     copyMenu.removeAll();
   }
 
-  @Deprecated(forRemoval = true)
-  public boolean isCopyFromMenuAvailable() {
-    return false;
-  }
-
   @Override
   public final void highlight(@NotNull JComponent component, @NotNull String searchString) {
     if (isNewSearchString(searchString) && isInsideThisPanel(component)) {

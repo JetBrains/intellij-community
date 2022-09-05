@@ -35,11 +35,6 @@ var isIgnoreIdeSuggestion: Boolean
   get() = propertiesComponent.isTrueValue(IGNORE_ULTIMATE_EDITION)
   set(value) = propertiesComponent.setValue(IGNORE_ULTIMATE_EDITION, value)
 
-@JvmField
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use `notificationGroup` property")
-val NOTIFICATION_GROUP = notificationGroup
-
 val notificationGroup: NotificationGroup
   get() = NotificationGroupManager.getInstance().getNotificationGroup("Plugins Suggestion")
 

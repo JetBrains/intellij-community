@@ -6,7 +6,6 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.graph.InboundSemiGraph
 import com.intellij.util.graph.impl.ShortestPathFinder
-import org.jetbrains.annotations.ApiStatus
 
 class UpdateStrategy @JvmOverloads constructor(
   private val currentBuild: BuildNumber,
@@ -14,19 +13,6 @@ class UpdateStrategy @JvmOverloads constructor(
   private val settings: UpdateSettings = UpdateSettings.getInstance(),
   private val customization: UpdateStrategyCustomization = UpdateStrategyCustomization.getInstance(),
 ) {
-
-  @Deprecated("Please use `UpdateStrategy(BuildNumber, Product, UpdateSettings)` instead")
-  @ApiStatus.ScheduledForRemoval
-  @Suppress("DEPRECATION")
-  constructor(
-    currentBuild: BuildNumber,
-    updates: UpdatesInfo,
-    settings: UpdateSettings = UpdateSettings.getInstance(),
-  ) : this(
-    currentBuild,
-    updates.product,
-    settings,
-  )
 
   fun checkForUpdates(): PlatformUpdates {
     if (product == null || product.channels.isEmpty()) {

@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
@@ -192,16 +191,6 @@ public class PluginGroups {
   public List<Group> getTree() {
     initIfNeeded();
     return myTree;
-  }
-
-  /**
-   * @deprecated Please use {@link #getFeaturedPluginDescriptions()} instead.
-   */
-  @Deprecated(forRemoval = true, since = "2020.2")
-  public Map<@NlsSafe String, @Nls String> getFeaturedPlugins() {
-    return myFeaturedPlugins.values()
-      .stream()
-      .collect(Collectors.toUnmodifiableMap(PluginGroupDescription::getName, PluginGroupDescription::toString));
   }
 
   public @NotNull Map<PluginId, PluginGroupDescription> getFeaturedPluginDescriptions() {

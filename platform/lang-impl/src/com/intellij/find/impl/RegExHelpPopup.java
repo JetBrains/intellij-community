@@ -74,14 +74,6 @@ public final class RegExHelpPopup extends JPanel {
     return createRegExLink(title, owner, (String)null);
   }
 
-  /**
-   * @deprecated Use {@link #createRegExLink(String, Component)}
-   */
-  @Deprecated(forRemoval = true)
-  public static LinkLabel createRegExLink(@NotNull @NlsContexts.LinkLabel String title, @Nullable Component owner, @SuppressWarnings("unused") @Nullable Logger logger) {
-    return createRegExLink(title, owner, (String)null);
-  }
-
   @NotNull
   public static LinkLabel<?> createRegExLink(@NotNull @NlsContexts.LinkLabel String title,
                                              @Nullable Component owner,

@@ -487,15 +487,6 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
   }
 
   /**
-   * @deprecated use {@link #getSelectedWithProvider()}
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider() {
-    FileEditorWithProvider info = getSelectedWithProvider();
-    return Pair.create(info.getFileEditor(), info.getProvider());
-  }
-
-  /**
    * @return component which represents set of file editors in the UI
    */
   public @NotNull JComponent getComponent() {

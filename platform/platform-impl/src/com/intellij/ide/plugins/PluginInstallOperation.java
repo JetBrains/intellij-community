@@ -54,20 +54,6 @@ public final class PluginInstallOperation {
   private boolean myShownErrors;
   private MarketplacePluginDownloadService myDownloadService;
 
-  /**
-   * @deprecated use {@link #PluginInstallOperation(List, Collection, PluginEnabler, ProgressIndicator)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
-                                @NotNull List<? extends IdeaPluginDescriptor> customReposPlugins,
-                                @NotNull PluginManagerMain.PluginEnabler pluginEnabler,
-                                @NotNull ProgressIndicator indicator) {
-    this(pluginsToInstall,
-         (Collection<PluginNode>)ContainerUtil.filterIsInstance(customReposPlugins, PluginNode.class),
-         pluginEnabler,
-         indicator);
-  }
-
   public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
                                 @NotNull Collection<PluginNode> customReposPlugins,
                                 @NotNull PluginEnabler pluginEnabler,

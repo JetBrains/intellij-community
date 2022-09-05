@@ -16,15 +16,6 @@ public abstract class OSProcessManager {
   }
 
   /**
-   * @deprecated Use {@link OSProcessUtil#killProcessTree(Process)} directly.
-   */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("MethodMayBeStatic")
-  public final boolean killProcessTree(@NotNull Process process) {
-    return OSProcessUtil.killProcessTree(process);
-  }
-
-  /**
    * @deprecated Use {@link OSProcessUtil#getProcessList()} and then {@link ProcessInfo#getCommandLine()} on items
    */
   @Deprecated

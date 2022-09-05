@@ -1546,9 +1546,7 @@ public final class DiffUtil {
 
   @NotNull
   private static List<DiffNotificationProvider> getNotificationProviders(@NotNull UserDataHolder holder) {
-    List<DiffNotificationProvider> providers = ContainerUtil.notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATION_PROVIDERS));
-    List<JComponent> components = ContainerUtil.notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATIONS));
-    return ContainerUtil.concat(providers, ContainerUtil.map(components, component -> (viewer) -> component));
+    return ContainerUtil.notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATION_PROVIDERS));
   }
 
   @NotNull

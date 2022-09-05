@@ -635,18 +635,4 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       LOG.info(e);
     }
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link HttpRequests#CONNECTION_TIMEOUT} */
-  @Deprecated(forRemoval = true)
-  public static final int CONNECTION_TIMEOUT = HttpRequests.CONNECTION_TIMEOUT;
-
-  /** @deprecated use {@link HttpRequests#READ_TIMEOUT} */
-  @Deprecated(forRemoval = true)
-  public static final int READ_TIMEOUT = HttpRequests.READ_TIMEOUT;
-
-  /** @deprecated use {@link HttpRequests#REDIRECT_LIMIT} */
-  @Deprecated(forRemoval = true)
-  public static final int REDIRECT_LIMIT = HttpRequests.REDIRECT_LIMIT;
-  //</editor-fold>
 }

@@ -35,12 +35,6 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   public static JBColor getTrackBackgroundDefault() {
     return new JBColor(LightColors.SLIGHTLY_GRAY, UIUtil.getListBackground());
   }
-
-  @Deprecated(forRemoval = true)
-  public static JBColor getTrackBorderColorDefault() {
-    return new JBColor(Gray._230, UIUtil.getListBackground());
-  }
-
   private JBColor getTrackBackground() {
     return jbColor(LightColors.SLIGHTLY_GRAY, UIUtil.getListBackground());
   }
