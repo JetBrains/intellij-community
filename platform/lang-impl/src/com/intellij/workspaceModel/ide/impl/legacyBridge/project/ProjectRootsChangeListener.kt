@@ -5,6 +5,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.util.indexing.EntityIndexingServiceEx
 import com.intellij.util.indexing.roots.IndexableEntityProvider
@@ -12,10 +14,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.CustomSourceRootPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleGroupPathEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 
 internal class ProjectRootsChangeListener(private val project: Project) {
   fun beforeChanged(event: VersionedStorageChange) {
