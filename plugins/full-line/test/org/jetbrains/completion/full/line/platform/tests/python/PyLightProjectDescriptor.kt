@@ -1,8 +1,6 @@
 package org.jetbrains.completion.full.line.platform.tests.python
 
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
-import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.psi.LanguageLevel
 
 class PyLightProjectDescriptor(
@@ -10,5 +8,5 @@ class PyLightProjectDescriptor(
     private val myLevel: LanguageLevel = LanguageLevel.getLatest(),
     private val myName: String? = null,
 ) : LightProjectDescriptor() {
-    override fun getSdk() = PythonMockSdk.create(myLevel)
+    override fun getSdk() = PythonMockSdk.create(myLevel, myName, dataPath)
 }
