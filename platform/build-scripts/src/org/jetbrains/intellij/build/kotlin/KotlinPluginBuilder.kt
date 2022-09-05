@@ -199,7 +199,6 @@ object KotlinPluginBuilder {
 
   private val GRADLE_TOOLING_MODULES = persistentListOf(
     "kotlin.base.project-model",
-    "kotlin.base.frontend-agnostic",
     "kotlin.gradle.gradle-tooling.impl",
   )
 
