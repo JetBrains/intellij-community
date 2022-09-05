@@ -104,4 +104,11 @@ public class IntentionPreviewUtils {
   public static @Nullable Editor getPreviewEditor() {
     return PREVIEW_EDITOR.get();
   }
+
+  /**
+   * @return true if intention preview is currently being computed in this thread
+   */
+  public static boolean isIntentionPreviewActive() {
+    return PREVIEW_EDITOR.get() != null;
+  }
 }
