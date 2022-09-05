@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -69,5 +70,10 @@ class RegisterInspectionFix implements IntentionAction {
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return IntentionPreviewInfo.EMPTY;
   }
 }

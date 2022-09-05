@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.CommandProcessor;
@@ -91,5 +92,10 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
     };
 
     CommandProcessor.getInstance().executeCommand(project, command, getName(), null);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    return IntentionPreviewInfo.EMPTY;
   }
 }

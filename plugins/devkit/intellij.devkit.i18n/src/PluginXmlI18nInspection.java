@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.i18n;
 
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.properties.PropertiesImplUtil;
@@ -344,6 +345,11 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
                                                                     StringUtil.unescapeXmlEntities(displayName),
                                                                     new UExpression[0]);
     }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return IntentionPreviewInfo.EMPTY;
+    }
   }
 
   private static final class ActionOrGroupQuickFixAction implements LocalQuickFix, BatchQuickFix {
@@ -492,6 +498,11 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
         }, tag.getFirstChild());
       }
     }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return IntentionPreviewInfo.EMPTY;
+    }
   }
 
 
@@ -561,6 +572,11 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
                                                                     new UExpression[0]);
       separator.getText().undefine();
       separator.getKey().setValue(key);
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return IntentionPreviewInfo.EMPTY;
     }
   }
 }
