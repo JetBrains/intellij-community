@@ -778,7 +778,7 @@ private suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildCon
             dirFilter = { !it.endsWith("src") },
             fileFilter = Predicate { file ->
               if (file.toString().endsWith(".jar")) {
-                sources.add(createZipSource(file) { result.add(ProjectLibraryEntry(antTargetFile, libraryData, file, it)) })
+                sources.add(ZipSource(file = file) { result.add(ProjectLibraryEntry(antTargetFile, libraryData, file, it)) })
                 false
               }
               else {
@@ -786,8 +786,7 @@ private suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildCon
               }
             })
     sources.sort()
-    // path in class log - empty, do not reorder, doesn't matter
-    buildJars(descriptors = listOf(BuildJarDescriptor(file = antTargetFile, sources = sources)), dryRun = false)
+    buildJar(targetFile = antTargetFile, sources = sources)
     result
   }
 }

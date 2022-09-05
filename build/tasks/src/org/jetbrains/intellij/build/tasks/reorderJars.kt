@@ -43,7 +43,7 @@ private val sourceToNames: Map<String, MutableList<String>> by lazy {
   sourceToNames
 }
 
-internal fun reorderJar(relativePath: String, file: Path) {
+fun reorderJar(relativePath: String, file: Path) {
   val orderedNames = sourceToNames.get(relativePath) ?: return
   tracer.spanBuilder("reorder jar")
     .setAttribute("relativePath", relativePath)
