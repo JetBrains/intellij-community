@@ -72,6 +72,18 @@ class Foo {
       System.out.println(s);
     }
   }
+
+  void test11(Object obj) {
+    if (obj instanceof Integer) {
+      System.out.println(42);
+    }
+  }
+
+  void test12(Object obj) {
+    if (obj instanceof Integer) {
+      System.out.println(42);
+    }
+  }
 }
 
 class Bar extends Foo {
@@ -136,15 +148,31 @@ class Bar extends Foo {
     }
   }
 
+  @Override
   void test9(Object obj) {
     if (obj instanceof CharSequence str && str.length() > 42) {
       System.out.println(str);
     }
   }
 
+  @Override
   void test10(Object obj) {
     if (obj instanceof String str && str.length() > 0) {
       System.out.println(str);
+    }
+  }
+
+  @Override
+  void test11(Object obj) {
+    if (obj instanceof String) {
+      System.out.println(42);
+    }
+  }
+
+  @Override
+  void test12(Object obj) {
+    if (obj instanceof Integer integer) {
+      System.out.println(42);
     }
   }
 }

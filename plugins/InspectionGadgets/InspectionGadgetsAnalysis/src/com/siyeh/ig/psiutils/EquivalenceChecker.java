@@ -887,6 +887,11 @@ public class EquivalenceChecker {
     if (!expressionsMatch(operand1, operand2).isExactMatch()) {
       return EXACT_MISMATCH;
     }
+    final PsiTypeElement typeElement1 = instanceOfExpression1.getCheckType();
+    final PsiTypeElement typeElement2 = instanceOfExpression2.getCheckType();
+    if (!typeElementsAreEquivalent(typeElement1, typeElement2).isExactMatch()) {
+      return EXACT_MISMATCH;
+    }
     PsiPrimaryPattern pattern1 = instanceOfExpression1.getPattern();
     PsiPrimaryPattern pattern2 = instanceOfExpression2.getPattern();
     return patternsMatch(pattern1, pattern2);
