@@ -58,20 +58,20 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     // 1. update SettingsSyncSettings first to apply changes in categories
     val settingsSyncFileState = snapshot.fileStates.find { it.file == "$OPTIONS_DIRECTORY/${SettingsSyncSettings.FILE_SPEC}" }
     if (settingsSyncFileState != null) {
-      updateSettings(listOf(settingsSyncFileState))
+      writeStatesToAppConfig(listOf(settingsSyncFileState))
     }
 
     // 2. update plugins
     val pluginsFileState = snapshot.fileStates.find { it.file == "$OPTIONS_DIRECTORY/${SettingsSyncPluginManager.FILE_SPEC}" }
     if (pluginsFileState != null) {
       val pluginManager = SettingsSyncPluginManager.getInstance()
-      updateSettings(listOf(pluginsFileState))
+      writeStatesToAppConfig(listOf(pluginsFileState))
       pluginManager.pushChangesToIde()
     }
 
     // 3. after that update the rest of changed settings
     val regularFileStates = snapshot.fileStates.filter { it != settingsSyncFileState && it != pluginsFileState }
-    updateSettings(regularFileStates)
+    writeStatesToAppConfig(regularFileStates)
 
     invokeLater { updateUI() }
   }
@@ -198,7 +198,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     }
   }
 
-  private fun updateSettings(fileStates: Collection<FileState>) {
+  private fun writeStatesToAppConfig(fileStates: Collection<FileState>) {
     val changedFileSpecs = ArrayList<String>()
     val deletedFileSpecs = ArrayList<String>()
     for (fileState in fileStates) {
