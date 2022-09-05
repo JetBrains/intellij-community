@@ -35,7 +35,7 @@ import kotlin.streams.toList
 class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditionAction() {
   override fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return false
-    if (!getUnversionedFiles(e, project).isEmpty()) return true
+    if (getUnversionedFiles(e, project).isNotEmpty) return true
 
     val changeStream = e.getData(VcsDataKeys.CHANGES).stream<Change>()
     if (!collectPathsFromChanges(project, changeStream).isEmpty()) return true

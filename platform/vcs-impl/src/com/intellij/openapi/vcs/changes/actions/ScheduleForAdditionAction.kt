@@ -22,11 +22,7 @@ import com.intellij.util.Consumer
 import com.intellij.util.IconUtil
 import com.intellij.util.PairConsumer
 import com.intellij.util.containers.JBIterable
-import com.intellij.util.containers.isEmpty
-import one.util.streamex.StreamEx
 import org.jetbrains.annotations.Nls
-import java.util.stream.Collectors
-import java.util.stream.Stream
 
 open class ScheduleForAdditionAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
@@ -48,14 +44,14 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val unversionedFiles = getUnversionedFiles(e, project).collect(Collectors.toList())
+    val unversionedFiles = getUnversionedFiles(e, project).toList()
 
     addUnversioned(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY))
   }
 
   protected open fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.project
-    return project != null && !getUnversionedFiles(e, project).isEmpty()
+    return project != null && getUnversionedFiles(e, project).isNotEmpty
   }
 
   companion object {
@@ -84,28 +80,27 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
       return addUnversionedFilesToVcs(project, targetChangeList, files, changeConsumer, additionalTask)
     }
 
-    fun getUnversionedFiles(e: AnActionEvent, project: Project): Stream<VirtualFile> {
+    fun getUnversionedFiles(e: AnActionEvent, project: Project): JBIterable<VirtualFile> {
       return getUnversionedFiles(e.dataContext, project)
     }
 
-    fun getUnversionedFiles(context: DataContext, project: Project): Stream<VirtualFile> {
+    fun getUnversionedFiles(context: DataContext, project: Project): JBIterable<VirtualFile> {
       val filePaths = JBIterable.from(context.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY))
 
       if (filePaths.isNotEmpty) {
-        return StreamEx.of(filePaths.map { obj: FilePath -> obj.virtualFile }.filterNotNull().iterator())
+        return filePaths.map { it.virtualFile }.filterNotNull()
       }
 
       // As an optimization, we assume that if {@link ChangesListView#UNVERSIONED_FILES_DATA_KEY} is empty, but {@link VcsDataKeys#CHANGES} is
       // not, then there will be either versioned (files from changes, hijacked files, locked files, switched files) or ignored files in
       // {@link VcsDataKeys#VIRTUAL_FILE_STREAM}. So there will be no files with {@link FileStatus#UNKNOWN} status, and we should not explicitly
       // check {@link VcsDataKeys#VIRTUAL_FILE_STREAM} files in this case.
-      if (!ArrayUtil.isEmpty(context.getData(VcsDataKeys.CHANGES))) return Stream.empty()
+      if (!ArrayUtil.isEmpty(context.getData(VcsDataKeys.CHANGES))) return JBIterable.empty()
 
       val vcsManager = ProjectLevelVcsManager.getInstance(project)
       val changeListManager = ChangeListManager.getInstance(project)
-      return StreamEx.of(JBIterable.from(context.getData(VcsDataKeys.VIRTUAL_FILES))
-                           .filter { file: VirtualFile -> isFileUnversioned(file, vcsManager, changeListManager) }
-                           .iterator())
+      return JBIterable.from(context.getData(VcsDataKeys.VIRTUAL_FILES))
+        .filter { file: VirtualFile -> isFileUnversioned(file, vcsManager, changeListManager) }
     }
 
     private fun isFileUnversioned(file: VirtualFile,
