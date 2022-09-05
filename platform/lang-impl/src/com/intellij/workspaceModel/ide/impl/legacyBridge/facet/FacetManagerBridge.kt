@@ -17,7 +17,6 @@ import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.ModuleSettingsContributor
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.legacyBridge.FacetBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -36,7 +35,12 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
   private fun isThisModule(moduleEntity: ModuleEntity) = moduleEntity.name == module.name
 
   override fun checkConsistency() {
-    model.checkConsistency(module.entityStorage.current.entities(FacetEntity::class.java).filter { isThisModule(it.module) }.toList())
+    val entityTypeToFacetContributor = WorkspaceFacetContributor.EP_NAME.extensions.associateBy { it.rootEntityType }
+    val facetRelatedEntities = entityTypeToFacetContributor.flatMap { module.entityStorage.current.entities(it.key) }.filter { entity ->
+      val facetContributor = entityTypeToFacetContributor[entity.getEntityInterface()]!!
+      isThisModule(facetContributor.getRelatedModuleEntity(entity))
+    }.toList()
+    model.checkConsistency(facetRelatedEntities, entityTypeToFacetContributor)
   }
 
   override fun facetConfigurationChanged(facet: Facet<*>) {
@@ -211,27 +215,40 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     return updatedFacet
   }
 
-  fun checkConsistency(facetEntities: List<FacetEntity>) {
-    val facetEntitiesSet = facetEntities.toSet()
-    for (entity in facetEntities) {
+  fun checkConsistency(facetRelatedEntities: List<WorkspaceEntity>,
+                       entityTypeToFacetContributor: Map<Class<WorkspaceEntity>, WorkspaceFacetContributor<WorkspaceEntity>>) {
+    val facetEntitiesSet = facetRelatedEntities.toSet()
+    for (entity in facetRelatedEntities) {
+      val facetContributor = entityTypeToFacetContributor[entity.getEntityInterface()]!!
       val facet = facetMapping().getDataByEntity(entity)
+      val facetName = facetContributor.getFacetName(entity)
       if (facet == null) {
-        throw IllegalStateException("No facet registered for $entity (name = ${entity.name})")
+        throw IllegalStateException("No facet registered for $entity (name = $facetName)")
       }
-      if (facet.name != entity.name) {
+      if (facet.name != facetName) {
         throw IllegalStateException("Different name")
       }
       val entityFromMapping = facetMapping().getEntities(facet).single() as FacetEntity
-      val facetsFromStorage = entityFromMapping.module.facets.toSet()
+      val moduleEntity = entityFromMapping.module
+      val facetsFromStorage = entityTypeToFacetContributor.values.filter { it.rootEntityType != FacetEntity::class.java }
+        .mapNotNull { it.getRootEntityByModuleEntity(moduleEntity) }
+        .toMutableSet()
+      facetsFromStorage.addAll(moduleEntity.facets.toSet())
       if (facetsFromStorage != facetEntitiesSet) {
         throw IllegalStateException("Different set of facets from $entity storage: expected $facetEntitiesSet but was $facetsFromStorage")
       }
     }
     val usedStore = moduleBridge.diff ?: moduleBridge.entityStorage.current
-    val mappedFacets = usedStore.resolve(moduleBridge.moduleEntityId)!!.facets.toSet()
-    val staleEntity = (mappedFacets - facetEntities).firstOrNull()
+    val resolvedModuleEntity = usedStore.resolve(moduleBridge.moduleEntityId)!!
+    val mappedFacets = entityTypeToFacetContributor.values.filter { it.rootEntityType != FacetEntity::class.java }
+      .mapNotNull { it.getRootEntityByModuleEntity(resolvedModuleEntity) }
+      .toMutableSet()
+    mappedFacets.addAll(resolvedModuleEntity.facets.toSet())
+    val staleEntity = (mappedFacets - facetRelatedEntities).firstOrNull()
     if (staleEntity != null) {
-      throw IllegalStateException("Stale entity $staleEntity (name = ${staleEntity.name}) in the mapping")
+      val facetContributor = entityTypeToFacetContributor[staleEntity.getEntityInterface()]!!
+      val facetName = facetContributor.getFacetName(staleEntity)
+      throw IllegalStateException("Stale entity $staleEntity (name = $facetName) in the mapping")
     }
   }
 
