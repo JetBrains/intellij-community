@@ -40,19 +40,9 @@ import javax.swing.JPanel
 import javax.swing.SwingConstants
 
 private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean): ActionToolbar {
-  val actionGroup = DefaultActionGroup()
-
-  actionGroup.add(RunConfigurationSelector())
-  actionGroup.addSeparator()
-  val topLevelRunActions = listOf(IdeActions.ACTION_DEFAULT_RUNNER, IdeActions.ACTION_DEFAULT_DEBUGGER).mapNotNull {
-    ActionManager.getInstance().getAction(it)
-  }
-  actionGroup.addAll(topLevelRunActions)
-  actionGroup.add(OtherRunOptions())
-
   return ActionManager.getInstance().createActionToolbar(
     ActionPlaces.MAIN_TOOLBAR,
-    actionGroup,
+    ActionManager.getInstance().getAction("RunToolbarMainActionGroup") as ActionGroup,
     true
   ).apply {
     targetComponent = null
@@ -112,6 +102,17 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
       component.repaint()
       component.putClientProperty(dataPropertyName, data)
     }
+  }
+}
+
+class RunToolbarTopLevelExecutorActionGroup : ActionGroup() {
+  override fun isPopup() = false
+
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+    val topLevelRunActions = listOf(IdeActions.ACTION_DEFAULT_RUNNER, IdeActions.ACTION_DEFAULT_DEBUGGER).mapNotNull {
+      ActionManager.getInstance().getAction(it)
+    }
+    return topLevelRunActions.toTypedArray()
   }
 }
 
@@ -216,7 +217,7 @@ private abstract class TogglePopupAction : ToggleAction {
   abstract fun getActionGroup(e: AnActionEvent): ActionGroup?
 }
 
-private class OtherRunOptions : TogglePopupAction(
+private class MoreRunToolbarActions : TogglePopupAction(
   IdeBundle.message("show.options.menu"), IdeBundle.message("show.options.menu"), AllIcons.Actions.More
 ), DumbAware {
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
@@ -243,7 +244,7 @@ private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationS
   return ActionGroup.EMPTY_GROUP
 }
 
-private class RunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware {
+private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware {
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (e.inputEvent.modifiersEx and InputEvent.SHIFT_DOWN_MASK != 0) {
       ActionManager.getInstance().getAction("editRunConfigurations").actionPerformed(e)
@@ -286,12 +287,6 @@ private fun createSeparator(): JComponent {
     it.preferredSize = JBUI.size(1, 30)
     it.background = JBColor.namedColor("MainToolbar.background", CustomFrameDecorations.titlePaneBackground())
   }
-}
-
-private fun isCurrentConfigurationRunning(project: Project): Boolean {
-  val selectedConfiguration: RunnerAndConfigurationSettings = RunManager.getInstance(project).selectedConfiguration ?: return false
-  val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { it === selectedConfiguration }
-  return !runningDescriptors.isEmpty()
 }
 
 private fun Color.addAlpha(alpha: Double): Color {
