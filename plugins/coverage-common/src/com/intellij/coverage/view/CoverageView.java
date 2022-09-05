@@ -403,7 +403,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private final class FlattenPackagesAction extends ToggleAction {
 
     private FlattenPackagesAction() {
-      super(IdeBundle.messagePointer("action.flatten.packages"), IdeBundle.messagePointer("action.flatten.packages"), AllIcons.ObjectBrowser.FlattenPackages);
+      super(IdeBundle.messagePointer("action.flatten.packages"), CoverageBundle.messagePointer("coverage.flatten.packages"), AllIcons.ObjectBrowser.FlattenPackages);
     }
 
     @Override
@@ -415,6 +415,11 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myStateBean.myFlattenPackages = state;
       resetModel();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 

@@ -375,6 +375,11 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
         }
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   private class SwitchEngineAction extends ComboBoxAction {
@@ -399,6 +404,11 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setVisible(collectEngines().size() > 1);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }
