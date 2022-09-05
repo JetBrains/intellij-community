@@ -22,7 +22,6 @@ import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
@@ -121,25 +120,12 @@ public abstract class MavenImporter {
     return null;
   }
 
-  /**
-   * @deprecated use {@link #resolve(Project, MavenProject, NativeMavenProjectHolder, MavenEmbedderWrapper, ResolveContext)}
-   */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused")
-  public void resolve(Project project,
-                      MavenProject mavenProject,
-                      NativeMavenProjectHolder nativeMavenProject,
-                      MavenEmbedderWrapper embedder)
-    throws MavenProcessCanceledException {
-  }
-
   public void resolve(Project project,
                       MavenProject mavenProject,
                       NativeMavenProjectHolder nativeMavenProject,
                       MavenEmbedderWrapper embedder,
                       ResolveContext context)
     throws MavenProcessCanceledException {
-    resolve(project, mavenProject, nativeMavenProject, embedder);
   }
 
   /**
@@ -187,27 +173,7 @@ public abstract class MavenImporter {
 
   @SuppressWarnings("BoundedWildcard")
   public void collectSourceRoots(MavenProject mavenProject, PairConsumer<String, JpsModuleSourceRootType<?>> result) {
-    List<String> sources = new ArrayList<>();
-    collectSourceFolders(mavenProject, sources);
-    for (String path : sources) {
-      result.consume(path, JavaSourceRootType.SOURCE);
-    }
-    List<String> testSources = new ArrayList<>();
-    collectTestFolders(mavenProject, testSources);
-    for (String path : testSources) {
-      result.consume(path, JavaSourceRootType.TEST_SOURCE);
-    }
   }
-
-  /** @deprecated override {@link #collectSourceRoots} instead */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused")
-  public void collectSourceFolders(MavenProject mavenProject, List<String> result) { }
-
-  /** @deprecated override {@link #collectSourceRoots} instead */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused")
-  public void collectTestFolders(MavenProject mavenProject, List<String> result) { }
 
   public void collectExcludedFolders(MavenProject mavenProject, List<String> result) { }
 

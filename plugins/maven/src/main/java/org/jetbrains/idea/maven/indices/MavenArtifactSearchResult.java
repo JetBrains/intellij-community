@@ -2,31 +2,16 @@
 package org.jetbrains.idea.maven.indices;
 
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
-
-import java.util.List;
 
 
 public class MavenArtifactSearchResult {
-  /**
-   *  @deprecated use getSearchResults instead
-   */
-  @Deprecated(forRemoval = true)
-  public List<MavenArtifactInfo> versions;
-
-  private  MavenRepositoryArtifactInfo myInfo;
+  private MavenRepositoryArtifactInfo myInfo;
 
 
   public MavenArtifactSearchResult(@NotNull MavenRepositoryArtifactInfo info) {
-    setVersions(info);
     this.myInfo = info;
-  }
-
-  private void setVersions(@NotNull MavenRepositoryArtifactInfo info) {
-    versions = ContainerUtil.map(info.getItems(), d -> new MavenArtifactInfo(d, d.getPackaging(), d.getClassifier()));
   }
 
   public MavenRepositoryArtifactInfo getSearchResults(){
