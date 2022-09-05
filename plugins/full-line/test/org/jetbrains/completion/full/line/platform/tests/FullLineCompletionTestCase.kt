@@ -4,6 +4,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import org.jetbrains.completion.full.line.platform.tests.python.PyLightProjectDescriptor
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.Language
+import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -45,7 +46,7 @@ fun ProjectDescriptorWrapper.getProjectDescriptor(basePath: String): LightProjec
 @Suppress("MemberVisibilityCanBePrivate")
 abstract class FullLineCompletionTestCase(private val mockCompletionProvider: Boolean = true) : BasePlatformTestCase() {
   // override `getBasePath` for better navigation in resources, in IDE
-  override fun getTestDataPath() = "src/test/resources/$basePath"
+  override fun getTestDataPath() = PluginPathManager.getPluginHome("full-line").resolve(basePath).path
 
   override fun getProjectDescriptor() = if (this is ProjectDescriptorWrapper) {
     (this as ProjectDescriptorWrapper).getProjectDescriptor(basePath)

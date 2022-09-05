@@ -194,6 +194,5 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.remoteControl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.fullLine" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.fullLine.languages.java" scope="RUNTIME" />
   </component>
 </module>
