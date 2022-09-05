@@ -12,14 +12,17 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.ui.jcef.JBCefApp;
+import com.intellij.util.CachedValueImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implements DumbAware {
-  private OpenFileInDefaultBrowserAction myDefaultBrowserAction;
+  private CachedValue<AnAction[]> myChildren;
 
   protected OpenInBrowserBaseGroupAction(boolean popup) {
     Presentation p = getTemplatePresentation();
@@ -32,6 +35,18 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+    CachedValue<AnAction[]> children = myChildren;
+    if (children == null) {
+      children = new CachedValueImpl<>(() -> {
+        AnAction[] actions = computeChildren();
+        return CachedValueProvider.Result.create(actions, WebBrowserManager.getInstance());
+      });
+      myChildren = children;
+    }
+    return children.getValue();
+  }
+
+  private AnAction @NotNull [] computeChildren() {
     List<WebBrowser> browsers = WebBrowserManager.getInstance().getBrowsers();
     boolean addDefaultBrowser = isPopup();
     boolean hasLocalBrowser = hasLocalBrowser();
@@ -45,12 +60,10 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     }
 
     if (addDefaultBrowser) {
-      if (myDefaultBrowserAction == null) {
-        myDefaultBrowserAction = new OpenFileInDefaultBrowserAction();
-        myDefaultBrowserAction.getTemplatePresentation().setText(IdeBundle.messagePointer("default"));
-        myDefaultBrowserAction.getTemplatePresentation().setIcon(AllIcons.Nodes.PpWeb);
-      }
-      actions[hasLocalBrowser ? 1 : 0] = myDefaultBrowserAction;
+      OpenFileInDefaultBrowserAction defaultBrowserAction = new OpenFileInDefaultBrowserAction();
+      defaultBrowserAction.getTemplatePresentation().setText(IdeBundle.messagePointer("default"));
+      defaultBrowserAction.getTemplatePresentation().setIcon(AllIcons.Nodes.PpWeb);
+      actions[hasLocalBrowser ? 1 : 0] = defaultBrowserAction;
     }
 
     for (int i = 0, size = browsers.size(); i < size; i++) {
