@@ -222,9 +222,9 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
   protected open fun getProjectDisplayName(project: Project): String? = null
 
-  fun getProjectIcon(path: String): Icon = projectIconHelper.getProjectIcon(path = path, generateFromName = false)
-
-  fun getProjectIcon(path: String, generateFromName: Boolean): Icon = projectIconHelper.getProjectIcon(path, generateFromName)
+  fun getProjectIcon(path: String, isProjectValid: Boolean): Icon {
+    return projectIconHelper.getProjectIcon(path, isProjectValid)
+  }
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun getRecentProjectsActions(addClearListItem: Boolean): Array<AnAction> {

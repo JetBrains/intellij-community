@@ -400,8 +400,8 @@ internal class RecentProjectFilteringTree(
           text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
         }
         projectIconLabel.apply {
-          icon = recentProjectsManager.getProjectIcon(item.projectPath, true)
-          disabledIcon = IconUtil.desaturate(icon)
+          icon = recentProjectsManager.getProjectIcon(item.projectPath, isProjectValid = true)
+          disabledIcon = recentProjectsManager.getProjectIcon(item.projectPath, isProjectValid = false)
           isEnabled = isPathValid
         }
         projectActions.apply {
@@ -566,7 +566,6 @@ internal class RecentProjectFilteringTree(
           }
         }
 
-        val projectIcon = recentProjectsManager.getProjectIcon(item.projectPath, true)
         when (cloneStatus) {
           CloneStatus.PROGRESS -> {
             projectProgressBarPanel.apply {
@@ -574,18 +573,18 @@ internal class RecentProjectFilteringTree(
               isEnabled = true
             }
             projectProgressLabel.text = taskInfo.actionTitle
-            projectIconLabel.icon = projectIcon
+            projectIconLabel.icon = recentProjectsManager.getProjectIcon(item.projectPath, isProjectValid = true)
             toolTipText = taskInfo.actionTooltipText
             projectActionButton.setContent(projectCancelButton)
           }
           CloneStatus.FAILURE -> {
             projectPathLabel.text = taskInfo.failedTitle
-            projectIconLabel.icon = IconUtil.desaturate(projectIcon)
+            projectIconLabel.icon = recentProjectsManager.getProjectIcon(item.projectPath, isProjectValid = false)
             projectActionButton.setContent(projectRemoveButton)
           }
           CloneStatus.CANCEL -> {
             projectPathLabel.text = taskInfo.canceledTitle
-            projectIconLabel.icon = IconUtil.desaturate(projectIcon)
+            projectIconLabel.icon = recentProjectsManager.getProjectIcon(item.projectPath, isProjectValid = false)
             projectActionButton.setContent(projectRemoveButton)
           }
           else -> {}

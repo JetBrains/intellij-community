@@ -26,7 +26,6 @@ import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
 import kotlin.io.path.extension
-import kotlin.io.path.nameWithoutExtension
 import kotlin.math.max
 
 private val LOG = logger<RecentProjectIconHelper>()
@@ -59,7 +58,8 @@ internal class RecentProjectIconHelper {
     fun createIcon(file: Path): Icon? {
       try {
         if ("svg" == file.extension.lowercase(Locale.ENGLISH)) {
-          return IconDeferrer.getInstance().defer(EmptyIcon.create(projectIconSize()), Pair(file.toAbsolutePath(), StartupUiUtil.isUnderDarcula())) {
+          return IconDeferrer.getInstance().defer(EmptyIcon.create(projectIconSize()),
+                                                  Pair(file.toAbsolutePath(), StartupUiUtil.isUnderDarcula())) {
             val icon = IconLoader.findIcon(file.toUri().toURL(), false) ?: return@defer null
             if (icon is ScaleContextAware) {
               icon.updateScaleContext(ScaleContext.create())
@@ -81,18 +81,18 @@ internal class RecentProjectIconHelper {
     }
 
     @JvmStatic
-    private val projectIcons = HashMap<String, MyIcon>()
+    private val projectIconsCache = HashMap<String, ProjectIcon>()
 
     @JvmStatic
     fun refreshProjectIcon(path: @SystemIndependent String) {
-      projectIcons.remove(path)
+      projectIconsCache.remove(path)
     }
 
     @JvmStatic
     fun projectIconSize() = JBUIScale.scale(Registry.intValue("ide.project.icon.size", 20))
 
     @JvmStatic
-    fun generateProjectIcon(path: @SystemIndependent String): Icon {
+    fun generateProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean): Icon {
       val projectManager = RecentProjectsManagerBase.getInstanceEx()
       val displayName = projectManager.getDisplayName(path)
       val name = when {
@@ -100,7 +100,17 @@ internal class RecentProjectIconHelper {
         displayName.contains(",") -> iconTextForCommaSeparatedName(displayName)
         else -> displayName
       }
-      return AvatarUtils.createRoundRectIcon(AvatarUtils.generateColoredAvatar(name, name, ProjectIconPalette), projectIconSize())
+
+      val coloredImage = AvatarUtils.generateColoredAvatar(name, name, ProjectIconPalette)
+      var generatedProjectIcon: Icon = AvatarUtils.createRoundRectIcon(coloredImage, projectIconSize())
+
+      if (!isProjectValid) {
+        generatedProjectIcon = IconUtil.desaturate(generatedProjectIcon)
+      }
+
+      projectIconsCache[path] = ProjectIcon(generatedProjectIcon, isProjectValid, projectIconSize())
+
+      return generatedProjectIcon
     }
 
     // Examples:
@@ -113,64 +123,62 @@ internal class RecentProjectIconHelper {
         .joinToString("")
         .uppercase(Locale.getDefault())
 
-    private fun calculateIcon(path: @SystemIndependent String, isDark: Boolean): Icon? {
-      val lookup = if (isDark) sequenceOf("icon_dark.svg", "icon.svg", "icon_dark.png", "icon.png") else sequenceOf("icon.svg", "icon.png")
+    private fun getCustomIcon(path: @SystemIndependent String, isProjectValid: Boolean): Icon? {
+      val lookup = sequenceOf("icon.svg", "icon.png")
       val file = lookup.map { getDotIdeaPath(path)?.resolve(it) }.filterNotNull().firstOrNull { it.exists() } ?: return null
 
       val fileInfo = file.basicAttributesIfExists() ?: return null
       val timestamp = fileInfo.lastModifiedTime().toMillis()
 
-      val recolor = isDark && !file.nameWithoutExtension.endsWith("_dark")
-      var iconWrapper = projectIcons[path]
-      if (iconWrapper != null && iconWrapper.timestamp == timestamp) {
+      var iconWrapper = projectIconsCache[path]
+      if (iconWrapper != null && isCachedIcon(iconWrapper, isProjectValid, timestamp)) {
         return iconWrapper.icon
       }
 
-      try {
-        var icon = createIcon(file) ?: return null
-        if (recolor) {
-          icon = IconLoader.getDarkIcon(icon, true)
-        }
-
-        iconWrapper = MyIcon(icon, timestamp, projectIconSize())
-
-        projectIcons[path] = iconWrapper
-        return iconWrapper.icon
+      var icon = createIcon(file) ?: return null
+      if (!isProjectValid) {
+        icon = IconUtil.desaturate(icon)
       }
-      catch (e: Exception) {
-        LOG.error(e)
+
+      iconWrapper = ProjectIcon(icon, isProjectValid, projectIconSize(), timestamp)
+      projectIconsCache[path] = iconWrapper
+
+      return iconWrapper.icon
+    }
+
+    private fun getGeneratedProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean): Icon {
+      val projectIcon = projectIconsCache[path]
+      if (projectIcon != null && isCachedIcon(projectIcon, isProjectValid)) {
+        return projectIcon.icon
       }
-      return null
+
+      return generateProjectIcon(path, isProjectValid)
+    }
+
+    private fun isCachedIcon(icon: ProjectIcon, isProjectValid: Boolean, timestamp: Long? = null): Boolean {
+      val isCached = icon.isProjectValid == isProjectValid && icon.lastUsedProjectIconSize == projectIconSize()
+      return if (timestamp == null) isCached else isCached && icon.timestamp == timestamp
     }
   }
 
-  fun getProjectIcon(path: @SystemIndependent String, generateFromName: Boolean = false): Icon {
-    val icon = projectIcons[path]
-    if (icon != null) {
-      if (icon.lastUsedProjectIconSize == projectIconSize()) {
-        return icon.icon
-      } else {
-        projectIcons.remove(path)
-      }
-    }
+  fun getProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean = true): Icon {
     if (!RecentProjectsManagerBase.isFileSystemPath(path)) {
       return EmptyIcon.create(projectIconSize())
     }
-    return IconDeferrer.getInstance().deferAutoUpdatable(EmptyIcon.create(projectIconSize()), Pair(path, false)) {
-      val calculateIcon = calculateIcon(path = it.first, isDark = it.second)
-      if (calculateIcon == null && generateFromName) {
-        generateProjectIcon(path)
-      }
-      else calculateIcon
-    }
-  }
 
-  fun getProjectOrAppIcon(path: @SystemIndependent String): Icon {
-    return getProjectIcon(path)
+    return IconDeferrer.getInstance().deferAutoUpdatable(EmptyIcon.create(projectIconSize()), Pair(path, isProjectValid)) {
+      return@deferAutoUpdatable getCustomIcon(path = it.first, isProjectValid = it.second)
+                                ?: getGeneratedProjectIcon(path = it.first, isProjectValid = it.second)
+    }
   }
 }
 
-private data class MyIcon(val icon: Icon, val timestamp: Long?, val lastUsedProjectIconSize: Int)
+private data class ProjectIcon(
+  val icon: Icon,
+  val isProjectValid: Boolean,
+  val lastUsedProjectIconSize: Int,
+  val timestamp: Long? = null
+)
 
 private object ProjectIconPalette : ColorPalette() {
   override val gradients: Array<kotlin.Pair<Color, Color>>
