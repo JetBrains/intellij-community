@@ -9,6 +9,7 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
