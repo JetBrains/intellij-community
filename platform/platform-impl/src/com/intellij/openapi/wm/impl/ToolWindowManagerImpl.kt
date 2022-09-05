@@ -1545,7 +1545,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     // if tool window isn't visible or only order number is changed then just remove/add stripe button
     if (!currentInfo.isVisible || (paneId == currentInfo.safeToolWindowPaneId && anchor == currentInfo.anchor) ||
         currentInfo.type == ToolWindowType.FLOATING || currentInfo.type == ToolWindowType.WINDOWED) {
-      doSetAnchor(entry, layoutInfo, paneId, anchor, order)
+      doSetAnchor(entry, layoutInfo, paneId, anchor, order, currentInfo)
     }
     else {
       val wasFocused = entry.toolWindow.isActive
@@ -1553,7 +1553,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       layoutInfo.isVisible = false
       toolWindowPane.removeDecorator(currentInfo, entry.toolWindow.decoratorComponent, /* dirtyMode = */ true, this)
 
-      doSetAnchor(entry, layoutInfo, paneId, anchor, order)
+      doSetAnchor(entry, layoutInfo, paneId, anchor, order, currentInfo)
 
       showToolWindowImpl(entry, layoutInfo, false)
       if (wasFocused) {
@@ -1562,8 +1562,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
   }
 
-  private fun doSetAnchor(entry: ToolWindowEntry, info: WindowInfoImpl, paneId: String, anchor: ToolWindowAnchor, order: Int) {
-    entry.removeStripeButton()
+  private fun doSetAnchor(entry: ToolWindowEntry, info: WindowInfoImpl, paneId: String, anchor: ToolWindowAnchor, order: Int, currentInfo: WindowInfo? = null) {
+    if (isNewUi && currentInfo != null) {
+      entry.removeStripeButton(currentInfo.anchor, currentInfo.isSplit)
+    } else {
+      entry.removeStripeButton()
+    }
+
     for (otherInfo in layoutState.setAnchor(info, paneId, anchor, order)) {
       idToEntry.get(otherInfo.id ?: continue)?.toolWindow?.setWindowInfoSilently(otherInfo.copy())
     }

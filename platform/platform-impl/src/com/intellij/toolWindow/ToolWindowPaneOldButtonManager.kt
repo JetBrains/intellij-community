@@ -195,7 +195,7 @@ internal class ToolWindowPaneOldButtonManager(paneId: String) : ToolWindowButton
         button.updateIcon(icon)
       }
 
-      override fun remove() {
+      override fun remove(anchor: ToolWindowAnchor, split: Boolean) {
         stripe.removeButton(this)
       }
     }

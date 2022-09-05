@@ -143,7 +143,7 @@ private class TestStripeButtonManager(override val id: String, override val wind
   override fun updateIcon(icon: Icon?) {
   }
 
-  override fun remove() {
+  override fun remove(anchor: ToolWindowAnchor, split: Boolean) {
   }
 
   override fun getComponent() = TODO("not implemented")
