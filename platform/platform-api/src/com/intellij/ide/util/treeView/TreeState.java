@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.navigation.NavigationItem;
@@ -19,6 +19,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,6 @@ import javax.swing.tree.TreePath;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -101,8 +101,10 @@ public final class TreeState implements JDOMExternalizable {
     }
   }
 
-  private final List<List<PathElement>> myExpandedPaths;
-  private final List<List<PathElement>> mySelectedPaths;
+  @XCollection(style = XCollection.Style.v2)
+  private final List<PathElement[]> myExpandedPaths;
+  @XCollection(style = XCollection.Style.v2)
+  private final List<PathElement[]> mySelectedPaths;
   private boolean myScrollToSelection;
 
   // xml deserialization
@@ -111,7 +113,7 @@ public final class TreeState implements JDOMExternalizable {
     this(new SmartList<>(), new SmartList<>());
   }
 
-  private TreeState(List<List<PathElement>> expandedPaths, List<List<PathElement>> selectedPaths) {
+  private TreeState(List<PathElement[]> expandedPaths, List<PathElement[]> selectedPaths) {
     myExpandedPaths = expandedPaths;
     mySelectedPaths = selectedPaths;
     myScrollToSelection = true;
@@ -127,12 +129,12 @@ public final class TreeState implements JDOMExternalizable {
     readExternal(element, mySelectedPaths, SELECT_TAG);
   }
 
-  private static void readExternal(@NotNull Element root, List<? super List<PathElement>> list, @NotNull String name) {
+  private static void readExternal(@NotNull Element root, List<PathElement[]> list, @NotNull String name) {
     list.clear();
     for (Element element : root.getChildren(name)) {
       for (Element child : element.getChildren(PATH_TAG)) {
         PathElement[] path = XmlSerializer.deserialize(child, PathElement[].class);
-        list.add(ContainerUtil.immutableList(path));
+        list.add(path);
       }
     }
   }
@@ -155,10 +157,10 @@ public final class TreeState implements JDOMExternalizable {
 
   @NotNull
   public static TreeState createOn(@NotNull JTree tree, boolean persistExpand, boolean persistSelect) {
-    List<List<PathElement>> expandedPaths = persistExpand
+    List<PathElement[]> expandedPaths = persistExpand
       ? createPaths(tree, TreeUtil.collectExpandedPaths(tree))
       : new ArrayList<>();
-    List<List<PathElement>> selectedPaths = persistSelect
+    List<PathElement[]> selectedPaths = persistSelect
       ? createPaths(tree, TreeUtil.collectSelectedPaths(tree))
       : new ArrayList<>();
     return new TreeState(expandedPaths, selectedPaths);
@@ -184,18 +186,18 @@ public final class TreeState implements JDOMExternalizable {
     writeExternal(element, mySelectedPaths, SELECT_TAG);
   }
 
-  private static void writeExternal(Element element, List<? extends List<PathElement>> list, String name) {
+  private static void writeExternal(Element element, List<PathElement[]> list, String name) {
     Element root = new Element(name);
-    for (List<PathElement> path : list) {
-      Element e = XmlSerializer.serialize(path.toArray());
+    for (PathElement[] path : list) {
+      Element e = XmlSerializer.serialize(path);
       e.setName(PATH_TAG);
       root.addContent(e);
     }
     element.addContent(root);
   }
 
-  private static @NotNull List<List<PathElement>> createPaths(@NotNull JTree tree, @NotNull List<? extends TreePath> paths) {
-    List<List<PathElement>> list = new ArrayList<>();
+  private static List<PathElement[]> createPaths(@NotNull JTree tree, @NotNull List<? extends TreePath> paths) {
+    List<PathElement[]> list = new ArrayList<>();
     for (TreePath o : paths) {
       if (o.getPathCount() > 1 || tree.isRootVisible()) {
         list.add(createPath(tree.getModel(), o));
@@ -204,8 +206,7 @@ public final class TreeState implements JDOMExternalizable {
     return list;
   }
 
-  @NotNull
-  private static List<PathElement> createPath(@NotNull TreeModel model, @NotNull TreePath treePath) {
+  private static PathElement[] createPath(@NotNull TreeModel model, @NotNull TreePath treePath) {
     Object prev = null;
     int count = treePath.getPathCount();
     PathElement[] result = new PathElement[count];
@@ -216,7 +217,7 @@ public final class TreeState implements JDOMExternalizable {
       result[i] = new PathElement(calcId(userObject), calcType(userObject), childIndex, userObject);
       prev = cur;
     }
-    return Arrays.asList(result);
+    return result;
   }
 
   @NotNull
@@ -273,23 +274,22 @@ public final class TreeState implements JDOMExternalizable {
 
   private void applyExpandedTo(@NotNull TreeFacade tree, @NotNull TreePath rootPath, @NotNull ProgressIndicator indicator) {
     indicator.checkCanceled();
-    if (rootPath.getPathCount() <= 0) return;
 
-    for (List<PathElement> path : myExpandedPaths) {
-      if (path.isEmpty()) continue;
+    for (PathElement[] path : myExpandedPaths) {
+      if (path.length == 0) continue;
       int index = rootPath.getPathCount() - 1;
-      if (!path.get(index).isMatchTo(rootPath.getPathComponent(index))) continue;
+      if (!path[index].isMatchTo(rootPath.getPathComponent(index))) continue;
       expandImpl(0, path, rootPath, tree, indicator);
     }
   }
 
   private void applySelectedTo(@NotNull JTree tree) {
     List<TreePath> selection = new ArrayList<>();
-    for (List<PathElement> path : mySelectedPaths) {
+    for (PathElement[] path : mySelectedPaths) {
       TreeModel model = tree.getModel();
       TreePath treePath = new TreePath(model.getRoot());
-      for (int i = 1; treePath != null && i < path.size(); i++) {
-        treePath = findMatchedChild(model, treePath, path.get(i));
+      for (int i = 1; treePath != null && i < path.length; i++) {
+        treePath = findMatchedChild(model, treePath, path[i]);
       }
       ContainerUtil.addIfNotNull(selection, treePath);
     }
@@ -330,7 +330,7 @@ public final class TreeState implements JDOMExternalizable {
   }
 
   private static void expandImpl(int positionInPath,
-                                 List<PathElement> path,
+                                 PathElement[] path,
                                  TreePath treePath,
                                  TreeFacade tree,
                                  ProgressIndicator indicator) {
@@ -339,7 +339,7 @@ public final class TreeState implements JDOMExternalizable {
       public void perform() {
         indicator.checkCanceled();
 
-        PathElement next = positionInPath == path.size() - 1 ? null : path.get(positionInPath + 1);
+        PathElement next = positionInPath == path.length - 1 ? null : path[positionInPath + 1];
         if (next == null) return;
 
         Object parent = treePath.getLastPathComponent();
@@ -493,9 +493,9 @@ public final class TreeState implements JDOMExternalizable {
   }
 
   private static final class Visitor implements TreeVisitor {
-    private final List<PathElement> elements;
+    private final PathElement[] elements;
 
-    Visitor(List<PathElement> elements) {
+    Visitor(PathElement[] elements) {
       this.elements = elements;
     }
 
@@ -503,9 +503,9 @@ public final class TreeState implements JDOMExternalizable {
     @Override
     public Action visit(@NotNull TreePath path) {
       int count = path.getPathCount();
-      if (count > elements.size()) return Action.SKIP_CHILDREN;
-      boolean matches = elements.get(count - 1).isMatchTo(path.getLastPathComponent());
-      return !matches ? Action.SKIP_CHILDREN : count < elements.size() ? Action.CONTINUE : Action.INTERRUPT;
+      if (count > elements.length) return Action.SKIP_CHILDREN;
+      boolean matches = elements[count - 1].isMatchTo(path.getLastPathComponent());
+      return !matches ? Action.SKIP_CHILDREN : (count < elements.length ? Action.CONTINUE : Action.INTERRUPT);
     }
   }
 }

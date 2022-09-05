@@ -7,6 +7,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -84,7 +85,6 @@ public final class ExistingTemplatesComponent {
     }
 
     patternTreeModel.reload();
-    TreeUtil.expandAll(patternTree);
     final TreeExpander treeExpander = new DefaultTreeExpander(patternTree);
 
     // Toolbar actions
@@ -182,6 +182,19 @@ public final class ExistingTemplatesComponent {
     scrollPane.setBorder(JBUI.Borders.empty());
     panel.add(scrollPane, constraints.nextLine().weighty(1.0).fillCell());
     panel.setBorder(JBUI.Borders.empty());
+  }
+
+  public TreeState getTreeState() {
+    return TreeState.createOn(patternTree, true, true);
+  }
+
+  public void setTreeState(TreeState treeState) {
+    if (treeState == null) {
+      TreeUtil.expandAll(patternTree);
+    }
+    else {
+      treeState.applyTo(patternTree);
+    }
   }
 
   private void reloadUserTemplates(ConfigurationManager configurationManager) {
@@ -283,14 +296,6 @@ public final class ExistingTemplatesComponent {
       result = newNode;
     }
     return result;
-  }
-
-  public void selectConfiguration(String name) {
-    final DefaultMutableTreeNode node = TreeUtil.findNode((DefaultMutableTreeNode)patternTreeModel.getRoot(), n -> {
-      final Object object = n.getUserObject();
-      return object instanceof Configuration && name.equals(((Configuration)object).getName());
-    });
-    TreeUtil.selectInTree(node, false, patternTree, false);
   }
 
   public DefaultMutableTreeNode getSelectedNode() {
