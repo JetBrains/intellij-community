@@ -136,7 +136,11 @@ internal fun KtPsiFactory.generateClassOrObject(
         } else {
             generatedClass.makeNotActual()
         }
-        generatedClass.removeModifier(KtTokens.DATA_KEYWORD)
+        if (generatedClass is KtClass) {
+            // Drop "data" keyword from "data class" only because "data class" can't be defined in common source
+            // Don't drop "data" keyword for objects because "data object" is possible to define in common source
+            generatedClass.removeModifier(KtTokens.DATA_KEYWORD)
+        }
     } else {
         if (generatedClass !is KtEnumEntry) {
             generatedClass.addModifier(KtTokens.ACTUAL_KEYWORD)
