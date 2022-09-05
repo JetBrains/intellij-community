@@ -4,8 +4,6 @@ package org.jetbrains.kotlin.idea.imports
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
-import org.jetbrains.kotlin.idea.refactoring.introduce.ExtractTestFiles
-import org.jetbrains.kotlin.idea.refactoring.introduce.checkExtract
 import org.jetbrains.kotlin.idea.test.*
 import java.io.File
 

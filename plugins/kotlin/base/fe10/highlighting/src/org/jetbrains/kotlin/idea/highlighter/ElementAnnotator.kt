@@ -69,13 +69,13 @@ internal class ElementAnnotator(
 
     fun registerDiagnosticsQuickFixes(
         diagnostics: List<Diagnostic>,
-        highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>
+        highlightInfoByDiagnostic: Map<Diagnostic, HighlightInfo>
     ) = diagnostics.groupBy { it.factory }
         .forEach { registerDiagnosticsSameFactoryQuickFixes(it.value, highlightInfoByDiagnostic) }
 
     private fun registerDiagnosticsSameFactoryQuickFixes(
         diagnostics: List<Diagnostic>,
-        highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>
+        highlightInfoByDiagnostic: Map<Diagnostic, HighlightInfo>
     ) {
         val presentationInfo = presentationInfo(diagnostics) ?: return
         val fixesMap = createFixesMap(diagnostics) ?: return
