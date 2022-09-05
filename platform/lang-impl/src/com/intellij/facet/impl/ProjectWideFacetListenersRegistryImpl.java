@@ -16,14 +16,12 @@ final class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListen
 
   @Override
   public <F extends Facet<?>> void registerListener(@NotNull FacetTypeId<F> typeId, @NotNull ProjectWideFacetListener<? extends F> listener) {
-    FacetEventsPublisherImpl facetEventsPublisher = (FacetEventsPublisherImpl)FacetEventsPublisher.getInstance(myProject);
-    facetEventsPublisher.registerListener(typeId, new ProjectWideFacetListenerWrapper<>(listener));
+    FacetEventsPublisher.getInstance(myProject).registerListener(typeId, new ProjectWideFacetListenerWrapper<>(listener));
   }
 
   @Override
   public <F extends Facet<?>> void unregisterListener(@NotNull FacetTypeId<F> typeId, @NotNull ProjectWideFacetListener<? extends F> listener) {
-    FacetEventsPublisherImpl facetEventsPublisher = (FacetEventsPublisherImpl)FacetEventsPublisher.getInstance(myProject);
-    facetEventsPublisher.unregisterListener(typeId, new ProjectWideFacetListenerWrapper<>(listener));
+    FacetEventsPublisher.getInstance(myProject).unregisterListener(typeId, new ProjectWideFacetListenerWrapper<>(listener));
   }
 
   @Override
@@ -40,14 +38,12 @@ final class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListen
 
   @Override
   public void registerListener(@NotNull final ProjectWideFacetListener<Facet> listener) {
-    FacetEventsPublisherImpl facetEventsPublisher = (FacetEventsPublisherImpl)FacetEventsPublisher.getInstance(myProject);
-    facetEventsPublisher.registerListener(null, new ProjectWideFacetListenerWrapper<>(listener));
+    FacetEventsPublisher.getInstance(myProject).registerListener(null, new ProjectWideFacetListenerWrapper<>(listener));
   }
 
   @Override
   public void unregisterListener(@NotNull final ProjectWideFacetListener<Facet> listener) {
-    FacetEventsPublisherImpl facetEventsPublisher = (FacetEventsPublisherImpl)FacetEventsPublisher.getInstance(myProject);
-    facetEventsPublisher.unregisterListener(null, new ProjectWideFacetListenerWrapper<>(listener));
+    FacetEventsPublisher.getInstance(myProject).unregisterListener(null, new ProjectWideFacetListenerWrapper<>(listener));
   }
 
   @Override

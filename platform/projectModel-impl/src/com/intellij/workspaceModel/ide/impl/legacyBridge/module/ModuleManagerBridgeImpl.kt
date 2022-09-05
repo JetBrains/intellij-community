@@ -292,8 +292,8 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
           // Remove Facet bridges to recreate them. String constant is taken from
           // com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.FACET_BRIDGE_MAPPING_ID
-          WorkspaceModel.getInstance(
-            project).updateProjectModelSilent { builder ->
+          WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
+            // TODO:: Fix fo external entities associated with facets
             moduleEntitiesToLoad.flatMap { it.facets }.forEach {
               builder.getMutableExternalMapping<Any>(
                 "intellij.facets.bridge").removeMapping(it)

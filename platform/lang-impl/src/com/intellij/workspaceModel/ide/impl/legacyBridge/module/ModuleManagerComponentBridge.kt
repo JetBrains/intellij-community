@@ -27,7 +27,6 @@ import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
-import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridgeImpl
@@ -100,10 +99,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
             //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
             rootsChangeListener.beforeChanged(event)
           }
-          //for (change in event.getChanges(FacetEntity::class.java)) {
-          //  LOG.debug { "Fire 'before' events for facet change $change" }
-          //  FacetEntityChangeListener.getInstance(project).processBeforeChange(change, event)
-          //}
           val moduleMap = event.storageBefore.moduleMap
           for (change in event.getChanges(ModuleEntity::class.java)) {
             if (change is EntityChange.Removed) {
@@ -119,9 +114,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         override fun changed(event: VersionedStorageChange) {
           val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
           val changes = event.getChanges(ModuleEntity::class.java)
-          //val facetChanges = event.getChanges(FacetEntity::class.java)
-          //val addedModulesNames = changes.filterIsInstance<EntityChange.Added<ModuleEntity>>().mapTo(HashSet()) { it.entity.name }
-          if (changes.isNotEmpty() || moduleLibraryChanges.isNotEmpty() /*|| facetChanges.isNotEmpty()*/) {
+          if (changes.isNotEmpty() || moduleLibraryChanges.isNotEmpty()) {
             executeOrQueueOnDispatchThread {
               LOG.debug("Process changed modules and facets")
               incModificationCount()
@@ -133,16 +126,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
                 }
               }
 
-              //for (change in facetChanges) {
-              //  when (change) {
-              //    is EntityChange.Removed -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore,
-              //                                                                                            addedModulesNames)
-              //    is EntityChange.Replaced -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore,
-              //                                                                                             addedModulesNames)
-              //    is EntityChange.Added -> Unit
-              //  }
-              //}
-
               val oldModuleNames = mutableMapOf<Module, String>()
               val unloadedModulesSet = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames
               for (change in changes) {
@@ -152,13 +135,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
               for (change in moduleLibraryChanges) {
                 if (change is EntityChange.Added) processModuleLibraryChange(change, event)
               }
-
-              //for (change in facetChanges) {
-              //  if (change is EntityChange.Added) {
-              //    FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
-              //  }
-              //}
-
               // After every change processed
               postProcessModules(oldModuleNames)
               incModificationCount()

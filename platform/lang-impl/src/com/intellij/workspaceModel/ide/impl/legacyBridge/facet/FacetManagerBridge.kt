@@ -222,13 +222,13 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
         throw IllegalStateException("Different name")
       }
       val entityFromMapping = facetMapping().getEntities(facet).single() as FacetEntity
-      val facetsFromStorage = entityFromMapping.module.facets?.toSet() ?: emptySet()
+      val facetsFromStorage = entityFromMapping.module.facets.toSet()
       if (facetsFromStorage != facetEntitiesSet) {
         throw IllegalStateException("Different set of facets from $entity storage: expected $facetEntitiesSet but was $facetsFromStorage")
       }
     }
-    val usedStore = (moduleBridge.diff as? MutableEntityStorage) ?: moduleBridge.entityStorage.current
-    val mappedFacets = usedStore.resolve(moduleBridge.moduleEntityId)!!.facets?.toSet() ?: emptySet()
+    val usedStore = moduleBridge.diff ?: moduleBridge.entityStorage.current
+    val mappedFacets = usedStore.resolve(moduleBridge.moduleEntityId)!!.facets.toSet()
     val staleEntity = (mappedFacets - facetEntities).firstOrNull()
     if (staleEntity != null) {
       throw IllegalStateException("Stale entity $staleEntity (name = ${staleEntity.name}) in the mapping")
@@ -262,7 +262,7 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
       return this.getExternalMapping(FACET_BRIDGE_MAPPING_ID)
     }
 
-    internal fun MutableEntityStorage.facetMapping(): ExternalEntityMapping<Facet<*>> {
+    fun MutableEntityStorage.facetMapping(): ExternalEntityMapping<Facet<*>> {
       return this.getExternalMapping(FACET_BRIDGE_MAPPING_ID)
     }
 

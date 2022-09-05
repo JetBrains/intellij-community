@@ -15,6 +15,7 @@ import org.jetbrains.idea.maven.project.MavenProject
 class ModuleSettingsImporter {
    fun configureSettingsForModule(project: Project, moduleEntity: ModuleEntity, mavenProject: MavenProject) {
      val entitySource = calculateEntitySource(project, moduleEntity)
+     // TODO:: Rework it
      ModuleSettingsContributor.EP_NAME.forEachExtensionSafe { settingsContributor ->
        settingsContributor.addSettings(project, moduleEntity, entitySource, MutableEntityStorage.create())
      }
