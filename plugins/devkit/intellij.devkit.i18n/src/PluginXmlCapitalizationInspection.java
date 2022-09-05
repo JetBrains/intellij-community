@@ -299,10 +299,10 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      GenericDomValue genericDomValue = DomUtil.findDomElement(descriptor.getPsiElement(), GenericDomValue.class);
-      if (genericDomValue == null) return;
+      DomElement domElement = DomUtil.getDomElement(descriptor.getPsiElement());
+      if (!(domElement instanceof GenericDomValue)) return;
 
-      ((GenericDomValue<?>)genericDomValue).setStringValue(NlsCapitalizationUtil.fixValue(myValue, myCapitalization));
+      ((GenericDomValue<?>)domElement).setStringValue(NlsCapitalizationUtil.fixValue(myValue, myCapitalization));
     }
   }
 }

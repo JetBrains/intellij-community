@@ -28,6 +28,13 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
     myFixture.checkResultByFile("pluginXmlPluginNameDomElementFix_after.xml");
   }
 
+  public void testSeparatorTextDomElementFix() {
+    myFixture.testHighlighting("pluginXmlSeparatorTextDomElementFix.xml");
+    IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize");
+    myFixture.checkPreviewAndLaunchAction(capitalizeIntention);
+    myFixture.checkResultByFile("pluginXmlSeparatorTextDomElementFix_after.xml");
+  }
+
   public void testActionDescriptionPropertyFix() {
     myFixture.testHighlighting("pluginXmlActionDescriptionPropertyFix.xml",
                                "ActionDescriptionFixBundle.properties");
