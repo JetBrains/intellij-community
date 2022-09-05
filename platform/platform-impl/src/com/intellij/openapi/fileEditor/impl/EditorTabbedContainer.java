@@ -707,13 +707,24 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     @Override
     protected void paintChildren(Graphics g) {
-      if (!isHideTabs() && !getTabsPosition().isSide() && ExperimentalUI.isNewUI()) {
-        TabLabel label = getSelectedLabel();
-        if (label != null) {
+      super.paintChildren(g);
+      if (!isHideTabs() && ExperimentalUI.isNewUI()) {
+        paintNewUIBorder(g);
+      }
+      drawBorder(g);
+    }
+
+    private void paintNewUIBorder(Graphics g) {
+      TabLabel label = getSelectedLabel();
+      if (label == null) return;
+
+      Color color = JBColor.namedColor("EditorTabs.underTabsBorderColor", myTabPainter.getTabTheme().getBorderColor());
+      Graphics2D g2d = (Graphics2D)g;
+      g2d.setColor(color);
+
+      switch (getTabsPosition()) {
+        case top -> {
           int h = label.getHeight();
-          Color color = JBColor.namedColor("EditorTabs.underTabsBorderColor", myTabPainter.getTabTheme().getBorderColor());
-          Graphics2D g2d = (Graphics2D)g;
-          g2d.setColor(color);
           if (TabLayout.showPinnedTabsSeparately()) {
             LinePainter2D.paint(g2d, 0, h, getWidth(), h);
             if (shouldPaintBottomBorder()) {
@@ -724,9 +735,19 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
             LinePainter2D.paint(g2d, 0, h, getWidth(), h);
           }
         }
+        case bottom -> {
+          int labelY = label.getY();
+          LinePainter2D.paint(g2d, 0, labelY, getWidth(), labelY);
+        }
+        case left -> {
+          int labelMaxX = (int)label.getBounds().getMaxX() - getBorderThickness();
+          LinePainter2D.paint(g2d, labelMaxX, 0, labelMaxX, getHeight());
+        }
+        case right -> {
+          int labelX = label.getX();
+          LinePainter2D.paint(g2d, labelX, 0, labelX, getHeight());
+        }
       }
-      super.paintChildren(g);
-      drawBorder(g);
     }
 
     @Override
