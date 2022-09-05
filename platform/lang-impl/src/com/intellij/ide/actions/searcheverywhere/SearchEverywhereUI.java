@@ -126,18 +126,26 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private final SearchFieldTypingListener mySearchTypingListener;
   private final HintHelper myHintHelper;
   private final SearchEverywhereMlService myMlService;
+  private final @Nullable SearchEverywhereSpellingCorrector mySpellingCorrector;
 
   public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors) {
     this(project, contributors, s -> null);
   }
 
   public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors,
-                            @NotNull Function<? super String, String> shortcutSupplier) {
+                           @NotNull Function<? super String, String> shortcutSupplier) {
+    this(project, contributors, shortcutSupplier, null);
+  }
+
+  public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors,
+                            @NotNull Function<? super String, String> shortcutSupplier,
+                            @Nullable SearchEverywhereSpellingCorrector spellingCorrector) {
     super(project);
     myListFactory = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
                     ? new MixedListFactory()
                     : new GroupedListFactory();
 
+    mySpellingCorrector = spellingCorrector;
 
     Runnable scopeChangedCallback = () -> {
       updateSearchFieldAdvertisement();
@@ -612,6 +620,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
     }
 
+    addSpellingCorrectionSuggestionIfAvailable(tabId, rawPattern);
+
     myHintHelper.setSearchInProgress(StringUtil.isNotEmpty(getSearchPattern()));
     mySearchProgressIndicator = mySearcher.search(contributorsMap, rawPattern);
   }
@@ -775,6 +785,15 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         })
         .submit(AppExecutorUtil.getAppExecutorService());
     }
+  }
+
+  private void addSpellingCorrectionSuggestionIfAvailable(@NotNull String tabId, @NotNull String query) {
+    if (mySpellingCorrector == null || !mySpellingCorrector.isAvailableInTab(tabId)) return;
+
+    final var correction = mySpellingCorrector.suggestCorrectionFor(query);
+    if (correction.getCorrection() == null) return;
+
+    myListModel.addElements(Collections.singletonList(new SearchEverywhereFoundElementInfo(correction, Integer.MAX_VALUE, new SearchEverywhereSpellingCorrectorContributor(mySearchField))));
   }
 
   private void registerAction(String actionID, Supplier<? extends AnAction> actionSupplier) {
@@ -1294,6 +1313,13 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
             }
           }
         }
+      }
+
+      // If the selected element is a spelling correction, but there are more elements in the list
+      // preselect the second element instead.
+      var selectedItem = myResultsList.getSelectedValue();
+      if (selectedItem instanceof SearchEverywhereSpellingCorrection && myListModel.getSize() > 1) {
+        myResultsList.setSelectedIndex(1);
       }
 
       myExternalSearchListeners.forEach(listener -> listener.elementsAdded(list));

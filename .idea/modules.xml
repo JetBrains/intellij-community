@@ -1009,6 +1009,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/remoteDev-util/intellij.remoteDev.util.iml" filepath="$PROJECT_DIR$/platform/remoteDev-util/intellij.remoteDev.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/repository-search/intellij.repository.search.iml" filepath="$PROJECT_DIR$/plugins/repository-search/intellij.repository.search.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/intellij.searchEverywhereMl.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/intellij.searchEverywhereMl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/typos/intellij.searchEverywhereMl.typos.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/typos/intellij.searchEverywhereMl.typos.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/vcs/intellij.searchEverywhereMl.vcs.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/vcs/intellij.searchEverywhereMl.vcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/yaml/intellij.searchEverywhereMl.yaml.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/yaml/intellij.searchEverywhereMl.yaml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.iml" filepath="$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.iml" />

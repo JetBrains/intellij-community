@@ -1,0 +1,11 @@
+<idea-plugin package="com.intellij.ide.actions.searcheverywhere.ml.typos">
+
+  <resource-bundle>messages.searchEverywhereMlTyposBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <backgroundPostStartupActivity implementation="com.intellij.ide.actions.searcheverywhere.ml.typos.ActionsLanguageModel$ModelStartupActivity"/>
+
+    <searchEverywhereSpellingCorrector
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.typos.SearchEverywhereSpellingCorrectorFactoryImpl" />
+  </extensions>
+</idea-plugin>
