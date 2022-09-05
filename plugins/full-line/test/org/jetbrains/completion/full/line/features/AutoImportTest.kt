@@ -1,6 +1,6 @@
 package org.jetbrains.completion.full.line.features
 
-import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
+import com.jetbrains.python.inspections.leunresolvedReference.PyUnresolvedReferencesInspection
 import org.jetbrains.completion.full.line.platform.FullLineLookupElement
 import org.jetbrains.completion.full.line.platform.tests.FullLineCompletionTestCase
 import org.jetbrains.completion.full.line.platform.tests.JavaProject
