@@ -38,13 +38,11 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.InplaceButton;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.docking.impl.DockManagerImpl;
-import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.util.ObjectUtils;
@@ -708,46 +706,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     @Override
     protected void paintChildren(Graphics g) {
       super.paintChildren(g);
-      if (!isHideTabs() && ExperimentalUI.isNewUI()) {
-        paintNewUIBorder(g);
-      }
       drawBorder(g);
-    }
-
-    private void paintNewUIBorder(Graphics g) {
-      TabLabel label = getSelectedLabel();
-      if (label == null) return;
-
-      Color color = JBColor.namedColor("EditorTabs.underTabsBorderColor", myTabPainter.getTabTheme().getBorderColor());
-      Graphics2D g2d = (Graphics2D)g;
-      g2d.setColor(color);
-
-      switch (getTabsPosition()) {
-        case top -> {
-          int h = label.getHeight();
-          if (TabLayout.showPinnedTabsSeparately()) {
-            LinePainter2D.paint(g2d, 0, h, getWidth(), h);
-            if (shouldPaintBottomBorder()) {
-              LinePainter2D.paint(g2d, 0, 2 * h, getWidth(), 2 * h);
-            }
-          }
-          else if (shouldPaintBottomBorder()) {
-            LinePainter2D.paint(g2d, 0, h, getWidth(), h);
-          }
-        }
-        case bottom -> {
-          int labelY = label.getY();
-          LinePainter2D.paint(g2d, 0, labelY, getWidth(), labelY);
-        }
-        case left -> {
-          int labelMaxX = (int)label.getBounds().getMaxX() - getBorderThickness();
-          LinePainter2D.paint(g2d, labelMaxX, 0, labelMaxX, getHeight());
-        }
-        case right -> {
-          int labelX = label.getX();
-          LinePainter2D.paint(g2d, labelX, 0, labelX, getHeight());
-        }
-      }
     }
 
     @Override
