@@ -87,15 +87,6 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
   }
 
   @Override
-  public void registerLibraryTable(@NotNull LibraryTable libraryTable) {
-    String tableLevel = libraryTable.getTableLevel();
-    final LibraryTable oldTable = myCustomLibraryTables.put(tableLevel, (LibraryTableBase)libraryTable);
-    if (oldTable != null) {
-      throw new IllegalArgumentException("Library table '" + tableLevel + "' already registered.");
-    }
-  }
-
-  @Override
   public @NotNull List<LibraryTable> getCustomLibraryTables() {
     return new SmartList<>(getCustomLibrariesMap().values());
   }
