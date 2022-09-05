@@ -15938,6 +15938,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeUnnecessaryParentheses/callInsideCallWithLambdaOnly.kt");
         }
 
+        @TestMetadata("condition.kt")
+        public void testCondition() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/condition.kt");
+        }
+
+        @TestMetadata("condition2.kt")
+        public void testCondition2() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/condition2.kt");
+        }
+
         @TestMetadata("elvisRhs.kt")
         public void testElvisRhs() throws Exception {
             runTest("testData/intentions/removeUnnecessaryParentheses/elvisRhs.kt");
