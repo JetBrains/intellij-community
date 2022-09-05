@@ -199,6 +199,15 @@ public class ComparisonFailureData {
       }
     }
 
+    if (assertion instanceof FileComparisonFailure) {
+      final FileComparisonFailure comparisonFailure = (FileComparisonFailure)assertion;
+      String actual = comparisonFailure.getActual();
+      String expected = comparisonFailure.getExpected();
+      if (actual != null && expected != null) {
+        return new ComparisonFailureData(expected, actual, comparisonFailure.getFilePath(), comparisonFailure.getActualFilePath());
+      }
+    }
+
     ComparisonFailureData commonAssertion = createCommonAssertion(assertion);
     if (commonAssertion != null) return commonAssertion;
 
