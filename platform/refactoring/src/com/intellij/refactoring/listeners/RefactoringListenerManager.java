@@ -26,14 +26,6 @@ public abstract class RefactoringListenerManager {
   @Deprecated(forRemoval = true)
   public abstract void addListenerProvider(RefactoringElementListenerProvider provider);
 
-  /**
-   * Unregisters previously registered provider of listeners.
-   *
-   * @deprecated use {@code com.intellij.refactoring.elementListenerProvider} extension point
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void removeListenerProvider(RefactoringElementListenerProvider provider);
-
   public static RefactoringListenerManager getInstance(Project project) {
     return project.getService(RefactoringListenerManager.class);
   }

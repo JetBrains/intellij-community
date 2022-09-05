@@ -65,16 +65,6 @@ public class PsiElement2UsageTargetAdapter
   }
 
   /**
-   * Consider to use {@link PsiElement2UsageTargetAdapter(PsiElement, FindUsagesOptions, boolean)} to avoid
-   * calling {@link #update()} that could lead to freeze. {@link #update()} should be called on bg thread.
-   *
-   */
-  @Deprecated(forRemoval = true)
-  public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, @NotNull FindUsagesOptions options) {
-    this(element, options, true);
-  }
-
-  /**
    * Consider to use {@link PsiElement2UsageTargetAdapter(PsiElement, boolean)} to avoid
    * calling {@link #update()} that could lead to freeze. {@link #update()} should be called on bg thread.
    *
