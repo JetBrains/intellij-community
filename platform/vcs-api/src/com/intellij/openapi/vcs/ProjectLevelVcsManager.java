@@ -141,13 +141,6 @@ public abstract class ProjectLevelVcsManager {
   public abstract @NotNull VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option,
                                                                              AbstractVcs vcs);
 
-  /**
-   * @param vcsActionName is used both in interface and as a key in settings.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract @NotNull VcsShowSettingOption getOrCreateCustomOption(@NotNull @NonNls String vcsActionName,
-                                                                        @NotNull AbstractVcs vcs);
-
   @RequiresEdt
   public abstract void showProjectOperationInfo(final UpdatedFiles updatedFiles, @Nls String displayActionName);
 

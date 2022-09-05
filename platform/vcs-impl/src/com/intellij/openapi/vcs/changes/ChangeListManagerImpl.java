@@ -1208,14 +1208,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   @Override
-  @Nullable
-  public AbstractVcs getVcsFor(@NotNull Change change) {
-    synchronized (myDataLock) {
-      return myWorker.getVcsFor(change);
-    }
-  }
-
-  @Override
   public void addUnversionedFiles(@Nullable final LocalChangeList list, @NotNull final List<? extends VirtualFile> files) {
     ScheduleForAdditionAction.addUnversionedFilesToVcs(myProject, list, files);
   }
@@ -1316,10 +1308,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   @Override
   public List<CommitExecutor> getRegisteredExecutors() {
     return Collections.unmodifiableList(myRegisteredCommitExecutors);
-  }
-
-  @Override
-  public void addFilesToIgnore(IgnoredFileBean @NotNull ... filesToIgnore) {
   }
 
   @Override

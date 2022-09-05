@@ -167,13 +167,6 @@ public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public abstract ThreeState haveChangesUnder(@NotNull VirtualFile vf);
 
-  /**
-   * @deprecated Use {@link com.intellij.openapi.vcs.ProjectLevelVcsManager#getVcsFor}
-   */
-  @Nullable
-  @Deprecated(forRemoval = true)
-  public abstract AbstractVcs getVcsFor(@NotNull Change change);
-
 
   /**
    * Prefer using {@link ChangeListListener#TOPIC}
@@ -222,12 +215,6 @@ public abstract class ChangeListManager implements ChangeListModification {
    */
   @Deprecated(forRemoval = true)
   public abstract void setFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles);
-
-  /**
-   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void addFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles);
 
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.

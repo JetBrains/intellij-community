@@ -107,19 +107,6 @@ public final class PatchWriter {
     CopyPasteManager.getInstance().setContents(new StringSelection(writer.toString()));
   }
 
-  /**
-   * @deprecated Use {@link #calculateBaseDirForWritingPatch}
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull VirtualFile calculateBaseForWritingPatch(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
-    File commonAncestor = ChangesUtil.findCommonAncestor(changes);
-    if (commonAncestor == null || ChangesUtil.getAffectedVcses(changes, project).size() != 1) {
-      return project.getBaseDir();
-    }
-    VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, VcsUtil.getFilePath(commonAncestor));
-    return vcsRoot == null ? project.getBaseDir() : vcsRoot;
-  }
-
   public static @NotNull Path calculateBaseDirForWritingPatch(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
     File commonAncestor = ChangesUtil.findCommonAncestor(changes);
     VirtualFile vcsRoot;

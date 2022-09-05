@@ -28,16 +28,6 @@ public interface VcsCacheableHistorySessionFactory<Cacheable extends Serializabl
 
   @Nullable
   default Cacheable getAdditionallyCachedData(T session) {
-    return getAddinionallyCachedData(session);
-  }
-
-  /**
-   * @deprecated implement {@link #getAdditionallyCachedData(VcsAbstractHistorySession)}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated(forRemoval = true)
-  @Nullable
-  default Cacheable getAddinionallyCachedData(T session) {
     return null;
   }
 }
