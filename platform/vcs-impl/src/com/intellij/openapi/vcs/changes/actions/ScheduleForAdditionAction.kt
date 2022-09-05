@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -126,12 +127,12 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
                                  changesConsumer: Consumer<in List<Change>>?,
                                  additionalTask: PairConsumer<in ProgressIndicator, in MutableList<VcsException>>?): Boolean {
       val exceptions: MutableList<VcsException> = ArrayList()
-      val allProcessedFiles: MutableSet<VirtualFile> = HashSet()
 
       ProgressManager.getInstance().run(object : Task.Modal(project, VcsBundle.message("progress.title.adding.files.to.vcs"), true) {
         override fun run(indicator: ProgressIndicator) {
-          allProcessedFiles.addAll(performUnversionedFilesAddition(project, files, exceptions))
+          val allProcessedFiles = performUnversionedFilesAddition(project, files, exceptions)
           additionalTask?.consume(indicator, exceptions)
+          moveAddedChangesTo(project, list, allProcessedFiles, changesConsumer)
         }
       })
 
@@ -142,10 +143,6 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
         }
         Messages.showErrorDialog(project, message.toString(), VcsBundle.message("error.adding.files.title"))
       }
-
-      VcsDirtyScopeManager.getInstance(project).filesDirty(allProcessedFiles, null)
-
-      moveAddedChangesTo(project, list, allProcessedFiles, changesConsumer)
 
       return exceptions.isEmpty()
     }
@@ -159,43 +156,45 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
         performUnversionedFilesAdditionForVcs(project, vcs, vcsFiles, allProcessedFiles, exceptions)
       }
 
+      VcsDirtyScopeManager.getInstance(project).filesDirty(allProcessedFiles, null)
+
       return allProcessedFiles
     }
 
     private fun moveAddedChangesTo(project: Project,
-                                   list: LocalChangeList?,
+                                   targetList: LocalChangeList?,
                                    allProcessedFiles: Set<VirtualFile>,
                                    changesConsumer: Consumer<in List<Change>>?) {
       val changeListManager = ChangeListManager.getInstance(project)
-      val moveRequired = list != null && !list.isDefault && !allProcessedFiles.isEmpty() && changeListManager.areChangeListsEnabled()
+      val moveRequired = targetList != null && !targetList.isDefault &&
+                         !allProcessedFiles.isEmpty() &&
+                         changeListManager.areChangeListsEnabled()
       val syncUpdateRequired = changesConsumer != null
 
-      if (moveRequired || syncUpdateRequired) {
-        // find the changes for the added files and move them to the necessary changelist
-        val updateMode = if (syncUpdateRequired) InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE else InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE
+      if (!moveRequired && !syncUpdateRequired) return
 
-        changeListManager.invokeAfterUpdate(
-          {
-            var newChanges = changeListManager.defaultChangeList.changes.filter { change: Change ->
-              val path = ChangesUtil.getAfterPath(change)
-              path != null && allProcessedFiles.contains(path.virtualFile)
-            }
+      ChangeListManagerEx.getInstanceEx(project).waitForUpdate()
 
-            if (moveRequired && !newChanges.isEmpty()) {
-              changeListManager.moveChangesTo(list!!, newChanges)
-            }
+      ApplicationManager.getApplication().invokeAndWait {
+        var newChanges = changeListManager.defaultChangeList.changes.filter { change: Change ->
+          val path = ChangesUtil.getAfterPath(change)
+          path != null && allProcessedFiles.contains(path.virtualFile)
+        }
 
-            if (changesConsumer != null) {
-              if (moveRequired && !newChanges.isEmpty()) {
-                // newChanges contains ChangeListChange instances from active change list in case of partial changes
-                // so we obtain necessary changes again from required change list to pass to callback
-                val newList = changeListManager.getChangeList(list!!.id)
-                if (newList != null) newChanges = ArrayList(newList.changes.intersect(newChanges.toSet()))
-              }
+        if (moveRequired && !newChanges.isEmpty()) {
+          changeListManager.moveChangesTo(targetList!!, newChanges)
+        }
 
-              changesConsumer.consume(newChanges)
-            }
-          }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null)
+        if (changesConsumer != null) {
+          if (moveRequired && !newChanges.isEmpty()) {
+            // newChanges contains ChangeListChange instances from active change list in case of partial changes
+            // so we obtain necessary changes again from required change list to pass to callback
+            val newList = changeListManager.getChangeList(targetList!!.id)
+            if (newList != null) newChanges = ArrayList(newList.changes.intersect(newChanges.toSet()))
+          }
+
+          changesConsumer.consume(newChanges)
+        }
       }
     }
 
