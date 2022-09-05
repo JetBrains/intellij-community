@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.diagnostic.IdeHeartbeatEventReporter;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.inspector.UiInspectorUtil;
@@ -94,12 +95,15 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     private final ActionGroup myGroup;
     private DataContext myContext;
     private final PresentationFactory myPresentationFactory;
+    @NotNull
+    private final MyPopupMenuListener myListener;
 
     MyMenu(@NotNull String place, @NotNull ActionGroup group, @Nullable PresentationFactory factory) {
       myPlace = place;
       myGroup = group;
       myPresentationFactory = factory != null ? factory : new MenuItemPresentationFactory();
-      addPopupMenuListener(new MyPopupMenuListener());
+      myListener = new MyPopupMenuListener();
+      addPopupMenuListener(myListener);
       BegMenuItemUI.registerMultiChoiceSupport(this, popupMenu -> {
         Utils.updateMenuItems(popupMenu, myContext, myPlace, myPresentationFactory);
       });
@@ -140,6 +144,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
           myConnection.subscribe(ApplicationActivationListener.TOPIC, ActionPopupMenuImpl.this);
         }
       }
+      myListener.targetComponent = component;
       super.show(component, x, y);
     }
 
@@ -187,6 +192,8 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     }
 
     private class MyPopupMenuListener implements PopupMenuListener {
+      Component targetComponent;
+
       @Override
       public void popupMenuCanceled(PopupMenuEvent e) {
         disposeMenu();
@@ -194,11 +201,13 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
       @Override
       public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+        HelpTooltip.enableTooltip(targetComponent);
         disposeMenu();
       }
 
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+        HelpTooltip.disableTooltip(targetComponent);
         if (getComponentCount() == 0) {
           updateChildren(null);
         }
