@@ -8,7 +8,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
-import com.intellij.util.MathUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,21 +18,21 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import static com.intellij.usages.similarity.clustering.Distance.*;
+
 
 /**
  * Does usage clustering during the find usage process. Clusters are used on find usages results presentation.
  */
 public class ClusteringSearchSession {
-  public static final double MAXIMUM_SIMILARITY = 1.0;
-  public static final double PRECISION = 1e-4;
   public static final AtomicInteger counter = new AtomicInteger();
   private final @NotNull List<@NotNull UsageCluster> myClusters;
-  private final double mySimilarityThreshold;
   private final int myUniqueId;
+  private final Distance myDistance;
 
   public ClusteringSearchSession() {
     myClusters = Collections.synchronizedList(new ArrayList<>());
-    mySimilarityThreshold = Registry.doubleValue("similarity.find.usages.groups.threshold");
+    myDistance = new Distance(Registry.doubleValue("similarity.find.usages.groups.threshold"));
     myUniqueId = counter.incrementAndGet();
   }
 
@@ -109,7 +108,7 @@ public class ClusteringSearchSession {
     double maxSimilarity = 0;
     synchronized (myClusters) {
       for (UsageCluster cluster : myClusters) {
-        double similarity = findMinimalSimilarity(cluster, features, mySimilarityThreshold);
+        double similarity = myDistance.findMinimalSimilarity(cluster, features);
         if (isCompleteMatch(similarity)) {
           return cluster;
         }
@@ -122,43 +121,11 @@ public class ClusteringSearchSession {
     return mostUsageCluster;
   }
 
-  private static boolean isCompleteMatch(double similarity) {
-    return MathUtil.equals(similarity, MAXIMUM_SIMILARITY, PRECISION);
-  }
-
-  private static boolean lessThen(double similarity1, double similarity2) {
-    return similarity1 < similarity2 && !MathUtil.equals(similarity1, similarity2, PRECISION);
-  }
-
-  private static double findMinimalSimilarity(@NotNull UsageCluster usageCluster, @NotNull Bag newUsageFeatures, double threshold) {
-    double min = MAXIMUM_SIMILARITY;
-    for (SimilarUsage usage : usageCluster.getUsages()) {
-      final double similarity = jaccardSimilarityWithThreshold(usage.getFeatures(), newUsageFeatures, threshold);
-      if (lessThen(similarity, min)) {
-        min = similarity;
-      }
-      if (lessThen(min, threshold)) {
-        return 0;
-      }
-    }
-    return min;
-  }
-
   public static @Nullable ClusteringSearchSession createClusteringSessionIfEnabled() {
     return isSimilarUsagesClusteringEnabled() ? new ClusteringSearchSession() : null;
   }
 
   public static boolean isSimilarUsagesClusteringEnabled() {
     return Registry.is("similarity.find.usages.enable") && ApplicationManager.getApplication().isInternal();
-  }
-
-  public static double jaccardSimilarityWithThreshold(@NotNull Bag bag1, @NotNull Bag bag2, double similarityThreshold) {
-    final int cardinality1 = bag1.getCardinality();
-    final int cardinality2 = bag2.getCardinality();
-    if (lessThen(Math.min(cardinality1, cardinality2), Math.max(cardinality1, cardinality2) * similarityThreshold)) {
-      return 0;
-    }
-    int intersectionSize = Bag.intersectionSize(bag1, bag2);
-    return intersectionSize / (double)(cardinality1 + cardinality2 - intersectionSize);
   }
 }
