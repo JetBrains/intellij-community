@@ -18,7 +18,7 @@ interface GrazieStateLifecycle {
 }
 
 @Service
-internal class GrazieInitializerManager {
+class GrazieInitializerManager {
   val publisher: GrazieStateLifecycle
     get() = ApplicationManager.getApplication().messageBus.syncPublisher(topic)
 
