@@ -4,12 +4,9 @@ package com.intellij.util.text;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.Strings;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 /**
  * Treats byte array as a sequence of chars in {@link StandardCharsets#US_ASCII} encoding
@@ -65,72 +62,5 @@ public final class ByteArrayCharSequence implements CharSequenceWithStringHash {
     for (int idx = start; idx < end; idx++) {
       dest[idx - start + pos] = (char)(myChars[idx + myStart] & 0xFF); 
     }
-  }
-
-  /**
-   * @deprecated use {@param name} instead because of JEP 254
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @NotNull
-  public static CharSequence convertToBytesIfAsciiString(@NotNull String name) {
-    return name;
-  }
-
-  /**
-   * @deprecated use {@param string} instead because of JEP 254
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @NotNull CharSequence convertToBytesIfPossible(@NotNull CharSequence string) {
-    if (JAVA_9) return string; // see JEP 254: Compact Strings
-    if (string.length() == 0) return "";
-    if (string instanceof ByteArrayCharSequence) return string;
-    byte[] bytes = toBytesIfPossible(string);
-    return bytes == null ? string : new ByteArrayCharSequence(bytes);
-  }
-
-  private static final boolean JAVA_9;
-  static {
-    boolean hasModuleClass;
-    try {
-      Class.class.getMethod("getModule");
-      hasModuleClass = true;
-    }
-    catch (Throwable t) {
-      hasModuleClass = false;
-    }
-    JAVA_9 = hasModuleClass;
-  }
-
-  private byte @NotNull [] getBytes() {
-    return myStart == 0 && myEnd == myChars.length ? myChars : Arrays.copyOfRange(myChars, myStart , myEnd);
-  }
-
-  private static byte @Nullable [] toBytesIfPossible(@NotNull CharSequence seq) {
-    if (seq instanceof ByteArrayCharSequence) {
-      return ((ByteArrayCharSequence)seq).getBytes();
-    }
-    byte[] bytes = new byte[seq.length()];
-    char[] chars = CharArrayUtil.fromSequenceWithoutCopying(seq);
-    if (chars == null) {
-      for (int i = 0; i < bytes.length; i++) {
-        char c = seq.charAt(i);
-        if ((c & 0xff00) != 0) {
-          return null;
-        }
-        bytes[i] = (byte)c;
-      }
-    }
-    else {
-      for (int i = 0; i < bytes.length; i++) {
-        char c = chars[i];
-        if ((c & 0xff00) != 0) {
-          return null;
-        }
-        bytes[i] = (byte)c;
-      }
-    }
-    return bytes;
   }
 }

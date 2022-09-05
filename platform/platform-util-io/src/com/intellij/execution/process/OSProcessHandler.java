@@ -2,7 +2,6 @@
 package com.intellij.execution.process;
 
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Application;
@@ -54,13 +53,6 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   public static @NotNull ModalityState getDefaultModality() {
     Application app = ApplicationManager.getApplication();
     return app == null ? ModalityState.NON_MODAL : app.getDefaultModalityState();
-  }
-
-  /** @deprecated use {@link #OSProcessHandler(Process, String)} (or any other constructor) */
-  @Deprecated(forRemoval = true)
-  public OSProcessHandler(@NotNull Process process) {
-    this(process, null);
-    PluginException.reportDeprecatedUsage("OSProcessHandler#OSProcessHandler(Process)", "Use `#OSProcessHandler(Process, String)` instead");
   }
 
   /**

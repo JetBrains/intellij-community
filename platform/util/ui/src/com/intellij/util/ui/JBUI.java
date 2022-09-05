@@ -1193,30 +1193,6 @@ public final class JBUI {
       public static @NotNull Color linkColor() {
         return Foreground.ENABLED;
       }
-
-      /**
-       * @deprecated use {@link Foreground#HOVERED} instead
-       */
-      @Deprecated(forRemoval = true)
-      public static @NotNull Color linkHoverColor() {
-        return Foreground.HOVERED;
-      }
-
-      /**
-       * @deprecated use {@link Foreground#PRESSED} instead
-       */
-      @Deprecated(forRemoval = true)
-      public static @NotNull Color linkPressedColor() {
-        return Foreground.PRESSED;
-      }
-
-      /**
-       * @deprecated use {@link Foreground#VISITED} instead
-       */
-      @Deprecated(forRemoval = true)
-      public static @NotNull Color linkVisitedColor() {
-        return Foreground.VISITED;
-      }
     }
 
     public static final class Tooltip {

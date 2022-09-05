@@ -186,10 +186,6 @@ public final class SystemInfo {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final boolean IS_AT_LEAST_JAVA9 = JavaVersion.current().feature >= 9;
 
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
@@ -222,16 +218,6 @@ public final class SystemInfo {
   @ApiStatus.ScheduledForRemoval
   public static final boolean is64Bit = CpuArch.CURRENT.width == 64;
 
-  /** @deprecated trivial and mostly outdated */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final boolean isMacIntel64 = isMac && CpuArch.isIntel64();
-
-  /** @deprecated always false */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final boolean isAppleJvm = false;
-
   /** @deprecated always true (Java 8 requires macOS 10.9+) */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
@@ -247,9 +233,5 @@ public final class SystemInfo {
   @ApiStatus.ScheduledForRemoval
   public static final boolean isWinVistaOrNewer = isWindows;
 
-  /** @deprecated always true */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final boolean areSymLinksSupported = isUnix || isWindows;
   //</editor-fold>
 }
