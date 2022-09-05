@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -16,7 +15,6 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser
-import com.intellij.openapi.vcs.impl.VcsRootIterator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Consumer
@@ -205,8 +203,8 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
                                                       exceptions: MutableList<in VcsException>) {
       val environment = vcs.checkinEnvironment ?: return
 
-      val descendants = runReadAction { getUnversionedDescendantsRecursively(project, items) }
-      val parents = runReadAction { getUnversionedParents(project, vcs, items) }
+      val descendants = getUnversionedDescendantsRecursively(project, vcs, items)
+      val parents = getUnversionedParents(project, vcs, items)
 
       // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
       // (inside the method) - so common add logic just needs to refresh statuses of parents
@@ -217,21 +215,26 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
       allProcessedFiles.addAll(parents)
     }
 
-    private fun getUnversionedDescendantsRecursively(project: Project,
-                                                     items: List<VirtualFile>): Set<VirtualFile> {
-      val changeListManager = ChangeListManager.getInstance(project)
-      val result = mutableSetOf<VirtualFile>()
+    private fun getUnversionedDescendantsRecursively(project: Project, vcs: AbstractVcs, items: List<VirtualFile>): Set<VirtualFile> {
+      val roots = items.toSet()
 
-      for (item in items) {
-        VcsRootIterator.iterateVfUnderVcsRoot(project, item) { child: VirtualFile ->
-          if (changeListManager.getStatus(child) === FileStatus.UNKNOWN) {
-            result.add(child)
-          }
-          true
+      val vcsManager = ProjectLevelVcsManager.getInstance(project)
+      val unversionedPaths = ChangeListManagerImpl.getInstanceImpl(project).unversionedFilesPaths
+
+      val result = mutableSetOf<VirtualFile>()
+      for (path in unversionedPaths) {
+        if (vcsManager.getVcsFor(path) != vcs) continue
+        val file = path.virtualFile ?: continue
+        if (hasAncestorIn(file, roots)) {
+          result += file
         }
       }
 
       return result
+    }
+
+    private fun hasAncestorIn(file: VirtualFile, roots: Set<VirtualFile>): Boolean {
+      return generateSequence(file) { it.parent }.any { roots.contains(it) }
     }
 
     private fun getUnversionedParents(project: Project,
