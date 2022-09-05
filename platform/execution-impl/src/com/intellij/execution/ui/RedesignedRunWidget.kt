@@ -26,7 +26,6 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
 import java.awt.*
@@ -36,8 +35,9 @@ import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
 import javax.swing.Icon
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.SwingConstants
+
+private const val TOOLBAR_HEIGHT = 30
 
 private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean): ActionToolbar {
   return ActionManager.getInstance().createActionToolbar(
@@ -50,9 +50,9 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
     layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     if (this is ActionToolbarImpl) {
       isOpaque = false
-      setMinimumButtonSize(JBUI.size(36, 30))
+      setMinimumButtonSize(JBUI.size(36, TOOLBAR_HEIGHT))
       setActionButtonBorder(JBUI.Borders.empty())
-      setSeparatorCreator { createSeparator() }
+      setSeparatorCreator { RunToolbarSeparator(isCurrentConfigurationRunning) }
       setCustomButtonLook(RunWidgetButtonLook(isCurrentConfigurationRunning))
       border = null
     }
@@ -119,10 +119,7 @@ class RunToolbarTopLevelExecutorActionGroup : ActionGroup() {
 private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () -> Boolean) : IdeaActionButtonLook() {
   override fun getStateBackground(component: JComponent, state: Int): Color {
 
-    val color = if (isCurrentConfigurationRunning())
-      JBColor.namedColor("Green5", 0x599E5E)
-    else
-      JBColor.namedColor("Blue5",0x3369D6)
+    val color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
 
     return when (state) {
       ActionButtonComponent.NORMAL -> color
@@ -272,7 +269,7 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return object : ActionButtonWithText(this, presentation, place, JBUI.size(90, 30)){
+    return object : ActionButtonWithText(this, presentation, place, JBUI.size(90, TOOLBAR_HEIGHT)){
       override fun getMargins(): Insets = JBInsets.create(0, 10)
       override fun iconTextSpace(): Int = JBUI.scale(6)
     }.also {
@@ -282,13 +279,24 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
   }
 }
 
-private fun createSeparator(): JComponent {
-  return JPanel().also {
-    it.preferredSize = JBUI.size(1, 30)
-    it.background = JBColor.namedColor("MainToolbar.background", CustomFrameDecorations.titlePaneBackground())
+
+private class RunToolbarSeparator(private val isCurrentConfigurationRunning: () -> Boolean) : JComponent() {
+  override fun paint(g: Graphics) {
+    super.paint(g)
+    g.color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
+    g.drawLine(0, 0, 0, JBUI.scale(TOOLBAR_HEIGHT))
+    g.color = Color.WHITE.addAlpha(0.4)
+    g.drawLine(0, JBUI.scale(5), 0, JBUI.scale(25))
   }
+
+  override fun getPreferredSize(): Dimension = Dimension(1, JBUI.scale(TOOLBAR_HEIGHT))
 }
 
 private fun Color.addAlpha(alpha: Double): Color {
   return JBColor.lazy { Color(red, green, blue, (255 * alpha).toInt()) }
 }
+
+private fun getRunWidgetBackgroundColor(isRunning: Boolean): JBColor = if (isRunning)
+  JBColor.namedColor("Green5", 0x599E5E)
+else
+  JBColor.namedColor("Blue5", 0x3369D6)
