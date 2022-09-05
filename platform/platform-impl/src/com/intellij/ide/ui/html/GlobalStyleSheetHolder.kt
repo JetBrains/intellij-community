@@ -12,14 +12,12 @@ import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
+import com.intellij.openapi.editor.impl.FontFamilyService
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.StyleSheet
@@ -83,7 +81,11 @@ object GlobalStyleSheetHolder {
         updateRequests
           .debounce(5.milliseconds)
           .collectLatest {
-            (ApplicationManager.getApplication() as ComponentManagerEx).getServiceAsync(EditorColorsManager::class.java).join()
+            val componentManager = ApplicationManager.getApplication() as ComponentManagerEx
+            listOf(
+              componentManager.getServiceAsync(EditorColorsManager::class.java),
+              componentManager.getServiceAsync(FontFamilyService::class.java),
+            ).awaitAll()
             withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
               updateGlobalStyleSheet()
             }
