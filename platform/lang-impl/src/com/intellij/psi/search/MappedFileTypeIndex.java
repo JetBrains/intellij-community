@@ -9,14 +9,17 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.containers.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.io.MeasurableIndexStore;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
+import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -27,17 +30,16 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.BitSet;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.IntConsumer;
 
 public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void, FileContent, Void>, FileTypeNameEnumerator,
                                                   MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(MappedFileTypeIndex.class);
+  private static final int INVERTED_INDEX_SIZE_THRESHOLD = SystemProperties.getIntProperty("mapped.file.type.index.threshold", 256);
 
   private static class FileDetails {
     public FileType myFileType;
@@ -191,7 +193,9 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
 
     myLock.readLock().lock();
     try {
-      mySnapshot.getFileIds(fileTypeId).forEach(id -> result.addValue(id, null));
+      for (IntIdsIterator it = mySnapshot.getFileIds(fileTypeId); it.hasNext();) {
+        result.addValue(it.next(), null);
+      }
     }
     finally {
       myLock.readLock().unlock();
@@ -252,7 +256,7 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
     try {
       int fileTypeId = getFileTypeId(fileType.getName());
       assert fileTypeId < Short.MAX_VALUE : "fileTypeId overflow";
-      return (short) fileTypeId;
+      return (short)fileTypeId;
     }
     catch (IOException e) {
       throw new StorageException(e);
@@ -345,10 +349,12 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
         int bytesLeft = ELEMENT_BYTES;
         while (bytesLeft > 0) {
           int result = myFileChannel.read(myDataBuffer, (long)index * ELEMENT_BYTES + myDataBuffer.position());
-          if (result == -1 && bytesLeft == ELEMENT_BYTES)
+          if (result == -1 && bytesLeft == ELEMENT_BYTES) {
             return 0; // read after EOF
-          if (result == -1)
+          }
+          if (result == -1) {
             throw new StorageException("forward file type index is corrupted");
+          }
           bytesLeft -= result;
         }
         myDataBuffer.flip();
@@ -380,8 +386,9 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
     }
 
     private void ensureSize(int indexAfterLastElement) throws StorageException {
-      if (myElementsCount >= indexAfterLastElement)
+      if (myElementsCount >= indexAfterLastElement) {
         return;
+      }
       try {
         final int zeroBufSize = 512;
         ByteBuffer zeroBuf = ByteBuffer.allocate(zeroBufSize);
@@ -410,7 +417,7 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
 
         final int bufferSize = 1024;
         final ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
-        for (int i = 0; i < myElementsCount;) {
+        for (int i = 0; i < myElementsCount; ) {
           if (isReadAction) {
             ProgressManager.checkCanceled();
           }
@@ -420,14 +427,16 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
             if (cur == -1) break; // EOF
           }
           buffer.flip();
-          if (buffer.limit() % ELEMENT_BYTES != 0)
+          if (buffer.limit() % ELEMENT_BYTES != 0) {
             throw new StorageException("forward index is corrupted");
+          }
           while (buffer.position() < buffer.limit()) {
             processor.process(i, buffer.getShort());
             i++;
           }
         }
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
         throw new StorageException(e);
       }
     }
@@ -468,10 +477,12 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
   }
 
   private static class MemorySnapshot implements MappedFileTypeIndex.IntShortIndex {
-    private final @NotNull Int2ObjectMap<BitSet> myInvertedIndex;
+
+    private final @NotNull Int2ObjectMap<RandomAccessIntContainer> myInvertedIndex;
     private final @NotNull ForwardIndexFileController myForwardIndex;
 
-    private MemorySnapshot(@NotNull Int2ObjectMap<BitSet> invertedIndex, @NotNull ForwardIndexFileController forwardIndex) {
+    private MemorySnapshot(@NotNull Int2ObjectMap<RandomAccessIntContainer> invertedIndex,
+                           @NotNull ForwardIndexFileController forwardIndex) {
       myInvertedIndex = invertedIndex;
       myForwardIndex = forwardIndex;
     }
@@ -480,19 +491,19 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
     public synchronized void setAssociation(int inputId, short data) throws StorageException {
       short indexedData = getIndexedData(inputId);
       if (indexedData != 0) {
-        BitSet indexedSet = myInvertedIndex.get(indexedData);
+        var indexedSet = myInvertedIndex.get(indexedData);
         assert indexedSet != null;
-        indexedSet.clear(inputId);
+        indexedSet.remove(inputId);
       }
       setForwardIndexData(myForwardIndex, inputId, data);
       if (data != 0) {
-        myInvertedIndex.computeIfAbsent(data, __ -> new BitSet()).set(inputId);
+        myInvertedIndex.computeIfAbsent(data, __ -> createContainerForInverseIndex()).add(inputId);
       }
     }
 
-    public synchronized @NotNull MappedFileTypeIndex.IntSeq getFileIds(int data) {
-      BitSet fileIds = myInvertedIndex.get(data);
-      return fileIds == null ? MappedFileTypeIndex.IntSeq.EMPTY : new MappedFileTypeIndex.IntSeq.FromBitSet(fileIds);
+    public synchronized @NotNull IntIdsIterator getFileIds(int data) {
+      RandomAccessIntContainer fileIds = myInvertedIndex.get(data);
+      return fileIds == null ? ValueContainerImpl.EMPTY_ITERATOR : fileIds.intIterator();
     }
 
     public synchronized short getIndexedData(int inputId) throws StorageException {
@@ -505,53 +516,38 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
     }
   }
 
+  private static RandomAccessIntContainer createContainerForInverseIndex() {
+    return new RAIntContainerThresholdImplementationSwitcher<>(
+      INVERTED_INDEX_SIZE_THRESHOLD,
+      () -> {
+        return new IntHashSetAsRAIntContainer(INVERTED_INDEX_SIZE_THRESHOLD, Hash.DEFAULT_LOAD_FACTOR);
+      },
+      (container) -> {
+        // calculate needed capacity so there are less memory allocations
+        int maxId = 0;
+        for (IntIdsIterator it = container.intIterator(); it.hasNext(); ) {
+          int id = it.next();
+          if (maxId < id) maxId = id;
+        }
+        return new BitSetAsRAIntContainer(maxId + 1);
+      }
+    );
+  }
+
   private static @NotNull MappedFileTypeIndex.MemorySnapshot loadIndexToMemory(@NotNull ForwardIndexFileController forwardIndex)
     throws StorageException {
-    Int2ObjectMap<BitSet> invertedIndex = new Int2ObjectOpenHashMap<>();
+    Int2ObjectMap<RandomAccessIntContainer> invertedIndex = new Int2ObjectOpenHashMap<>();
     forwardIndex.processEntries((inputId, data) -> {
       if (data != 0) {
         setForwardIndexData(forwardIndex, inputId, data);
-        invertedIndex.computeIfAbsent(data, __ -> new BitSet()).set(inputId);
+        invertedIndex.computeIfAbsent(data, __ -> createContainerForInverseIndex()).add(inputId);
       }
     });
     return new MappedFileTypeIndex.MemorySnapshot(invertedIndex, forwardIndex);
   }
 
   private static void setForwardIndexData(@NotNull ForwardIndexFileController forwardIndex, int inputId, short data)
-    throws StorageException
-  {
+    throws StorageException {
     forwardIndex.set(inputId, data);
-  }
-
-  private interface IntSeq {
-    void forEach(@NotNull IntConsumer consumer);
-
-    @NotNull MappedFileTypeIndex.IntSeq copy();
-
-    class FromBitSet implements MappedFileTypeIndex.IntSeq {
-      private final BitSet myBitSet;
-
-      private FromBitSet(@NotNull BitSet set) { myBitSet = set; }
-
-      @Override
-      public void forEach(@NotNull IntConsumer consumer) {
-        myBitSet.stream().forEach(consumer);
-      }
-
-      @Override
-      public @NotNull MappedFileTypeIndex.IntSeq copy() {
-        return new FromBitSet((BitSet)myBitSet.clone());
-      }
-    }
-
-    MappedFileTypeIndex.IntSeq EMPTY = new MappedFileTypeIndex.IntSeq() {
-      @Override
-      public void forEach(@NotNull IntConsumer consumer) { }
-
-      @Override
-      public @NotNull MappedFileTypeIndex.IntSeq copy() {
-        return this;
-      }
-    };
   }
 }
