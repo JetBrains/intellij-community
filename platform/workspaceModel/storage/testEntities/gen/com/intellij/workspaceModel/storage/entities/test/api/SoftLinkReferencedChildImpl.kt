@@ -25,7 +25,7 @@ import org.jetbrains.deft.annotations.Open
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SoftLinkReferencedChildImpl : SoftLinkReferencedChild, WorkspaceEntityBase() {
+open class SoftLinkReferencedChildImpl(val dataSource: SoftLinkReferencedChildData) : SoftLinkReferencedChild, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(EntityWithSoftLinks::class.java,
@@ -169,11 +169,13 @@ class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferencedChild>
   }
 
   override fun createEntity(snapshot: EntityStorage): SoftLinkReferencedChild {
-    val entity = SoftLinkReferencedChildImpl()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SoftLinkReferencedChildImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

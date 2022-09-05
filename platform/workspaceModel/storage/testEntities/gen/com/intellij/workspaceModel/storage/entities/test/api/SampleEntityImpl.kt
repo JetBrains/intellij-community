@@ -28,7 +28,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SampleEntityImpl : SampleEntity, WorkspaceEntityBase() {
+open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(SampleEntity::class.java, ChildSampleEntity::class.java,
@@ -40,38 +40,26 @@ open class SampleEntityImpl : SampleEntity, WorkspaceEntityBase() {
 
   }
 
-  override var booleanProperty: Boolean = false
-  @JvmField
-  var _stringProperty: String? = null
+  override val booleanProperty: Boolean get() = dataSource.booleanProperty
   override val stringProperty: String
-    get() = _stringProperty!!
+    get() = dataSource.stringProperty
 
-  @JvmField
-  var _stringListProperty: List<String>? = null
   override val stringListProperty: List<String>
-    get() = _stringListProperty!!
+    get() = dataSource.stringListProperty
 
-  @JvmField
-  var _stringMapProperty: Map<String, String>? = null
   override val stringMapProperty: Map<String, String>
-    get() = _stringMapProperty!!
-  @JvmField
-  var _fileProperty: VirtualFileUrl? = null
+    get() = dataSource.stringMapProperty
   override val fileProperty: VirtualFileUrl
-    get() = _fileProperty!!
+    get() = dataSource.fileProperty
 
   override val children: List<ChildSampleEntity>
     get() = snapshot.extractOneToManyChildren<ChildSampleEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
-  @JvmField
-  var _nullableData: String? = null
   override val nullableData: String?
-    get() = _nullableData
+    get() = dataSource.nullableData
 
-  @JvmField
-  var _randomUUID: UUID? = null
   override val randomUUID: UUID?
-    get() = _randomUUID
+    get() = dataSource.randomUUID
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -302,18 +290,13 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): SampleEntity {
-    val entity = SampleEntityImpl()
-    entity.booleanProperty = booleanProperty
-    entity._stringProperty = stringProperty
-    entity._stringListProperty = stringListProperty.toList()
-    entity._stringMapProperty = stringMapProperty
-    entity._fileProperty = fileProperty
-    entity._nullableData = nullableData
-    entity._randomUUID = randomUUID
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SampleEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): SampleEntityData {

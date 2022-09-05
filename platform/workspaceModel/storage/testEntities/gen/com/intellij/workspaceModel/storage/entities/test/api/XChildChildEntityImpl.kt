@@ -23,7 +23,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
+open class XChildChildEntityImpl(val dataSource: XChildChildEntityData) : XChildChildEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENT1_CONNECTION_ID: ConnectionId = ConnectionId.create(XParentEntity::class.java, XChildChildEntity::class.java,
@@ -222,11 +222,13 @@ class XChildChildEntityData : WorkspaceEntityData<XChildChildEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): XChildChildEntity {
-    val entity = XChildChildEntityImpl()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = XChildChildEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

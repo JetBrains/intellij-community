@@ -22,7 +22,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ChildNullableEntityImpl : ChildNullableEntity, WorkspaceEntityBase() {
+open class ChildNullableEntityImpl(val dataSource: ChildNullableEntityData) : ChildNullableEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentNullableEntity::class.java,
@@ -35,10 +35,8 @@ open class ChildNullableEntityImpl : ChildNullableEntity, WorkspaceEntityBase() 
 
   }
 
-  @JvmField
-  var _childData: String? = null
   override val childData: String
-    get() = _childData!!
+    get() = dataSource.childData
 
   override val parentEntity: ParentNullableEntity
     get() = snapshot.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this)!!
@@ -181,12 +179,13 @@ class ChildNullableEntityData : WorkspaceEntityData<ChildNullableEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): ChildNullableEntity {
-    val entity = ChildNullableEntityImpl()
-    entity._childData = childData
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ChildNullableEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

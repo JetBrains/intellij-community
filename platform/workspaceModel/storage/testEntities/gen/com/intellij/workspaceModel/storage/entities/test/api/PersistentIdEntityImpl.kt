@@ -25,7 +25,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class PersistentIdEntityImpl : PersistentIdEntity, WorkspaceEntityBase() {
+open class PersistentIdEntityImpl(val dataSource: PersistentIdEntityData) : PersistentIdEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -35,10 +35,8 @@ open class PersistentIdEntityImpl : PersistentIdEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -132,12 +130,13 @@ class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<Pe
   }
 
   override fun createEntity(snapshot: EntityStorage): PersistentIdEntity {
-    val entity = PersistentIdEntityImpl()
-    entity._data = data
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = PersistentIdEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {

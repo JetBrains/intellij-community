@@ -25,7 +25,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class HeadAbstractionEntityImpl : HeadAbstractionEntity, WorkspaceEntityBase() {
+open class HeadAbstractionEntityImpl(val dataSource: HeadAbstractionEntityData) : HeadAbstractionEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(HeadAbstractionEntity::class.java, CompositeBaseEntity::class.java,
@@ -37,10 +37,8 @@ open class HeadAbstractionEntityImpl : HeadAbstractionEntity, WorkspaceEntityBas
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
   override val child: CompositeBaseEntity?
     get() = snapshot.extractOneToAbstractOneChild(CHILD_CONNECTION_ID, this)
@@ -172,12 +170,13 @@ class HeadAbstractionEntityData : WorkspaceEntityData.WithCalculablePersistentId
   }
 
   override fun createEntity(snapshot: EntityStorage): HeadAbstractionEntity {
-    val entity = HeadAbstractionEntityImpl()
-    entity._data = data
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = HeadAbstractionEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {

@@ -24,7 +24,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ComposedLinkEntityImpl : ComposedLinkEntity, WorkspaceEntityBase() {
+open class ComposedLinkEntityImpl(val dataSource: ComposedLinkEntityData) : ComposedLinkEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -34,10 +34,8 @@ open class ComposedLinkEntityImpl : ComposedLinkEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _link: ComposedId? = null
   override val link: ComposedId
-    get() = _link!!
+    get() = dataSource.link
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -169,12 +167,13 @@ class ComposedLinkEntityData : WorkspaceEntityData<ComposedLinkEntity>(), SoftLi
   }
 
   override fun createEntity(snapshot: EntityStorage): ComposedLinkEntity {
-    val entity = ComposedLinkEntityImpl()
-    entity._link = link
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ComposedLinkEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

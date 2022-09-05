@@ -23,7 +23,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class NullableVFUEntityImpl : NullableVFUEntity, WorkspaceEntityBase() {
+open class NullableVFUEntityImpl(val dataSource: NullableVFUEntityData) : NullableVFUEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -33,15 +33,11 @@ open class NullableVFUEntityImpl : NullableVFUEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
-  @JvmField
-  var _fileProperty: VirtualFileUrl? = null
   override val fileProperty: VirtualFileUrl?
-    get() = _fileProperty
+    get() = dataSource.fileProperty
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -148,13 +144,13 @@ class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): NullableVFUEntity {
-    val entity = NullableVFUEntityImpl()
-    entity._data = data
-    entity._fileProperty = fileProperty
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = NullableVFUEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

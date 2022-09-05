@@ -30,7 +30,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class EclipseProjectPropertiesEntityImpl : EclipseProjectPropertiesEntity, WorkspaceEntityBase() {
+open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectPropertiesEntityData) : EclipseProjectPropertiesEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
@@ -46,31 +46,21 @@ open class EclipseProjectPropertiesEntityImpl : EclipseProjectPropertiesEntity, 
   override val module: ModuleEntity
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _variablePaths: Map<String, String>? = null
   override val variablePaths: Map<String, String>
-    get() = _variablePaths!!
-  @JvmField
-  var _eclipseUrls: List<VirtualFileUrl>? = null
+    get() = dataSource.variablePaths
   override val eclipseUrls: List<VirtualFileUrl>
-    get() = _eclipseUrls!!
+    get() = dataSource.eclipseUrls
 
-  @JvmField
-  var _unknownCons: List<String>? = null
   override val unknownCons: List<String>
-    get() = _unknownCons!!
+    get() = dataSource.unknownCons
 
-  @JvmField
-  var _knownCons: List<String>? = null
   override val knownCons: List<String>
-    get() = _knownCons!!
+    get() = dataSource.knownCons
 
-  override var forceConfigureJdk: Boolean = false
-  override var expectedModuleSourcePlace: Int = 0
-  @JvmField
-  var _srcPlace: Map<String, Int>? = null
+  override val forceConfigureJdk: Boolean get() = dataSource.forceConfigureJdk
+  override val expectedModuleSourcePlace: Int get() = dataSource.expectedModuleSourcePlace
   override val srcPlace: Map<String, Int>
-    get() = _srcPlace!!
+    get() = dataSource.srcPlace
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -317,18 +307,13 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
   }
 
   override fun createEntity(snapshot: EntityStorage): EclipseProjectPropertiesEntity {
-    val entity = EclipseProjectPropertiesEntityImpl()
-    entity._variablePaths = variablePaths
-    entity._eclipseUrls = eclipseUrls.toList()
-    entity._unknownCons = unknownCons.toList()
-    entity._knownCons = knownCons.toList()
-    entity.forceConfigureJdk = forceConfigureJdk
-    entity.expectedModuleSourcePlace = expectedModuleSourcePlace
-    entity._srcPlace = srcPlace
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = EclipseProjectPropertiesEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): EclipseProjectPropertiesEntityData {

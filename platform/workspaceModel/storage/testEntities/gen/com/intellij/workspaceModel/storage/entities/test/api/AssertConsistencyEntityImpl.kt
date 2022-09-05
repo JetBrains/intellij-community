@@ -19,7 +19,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class AssertConsistencyEntityImpl : AssertConsistencyEntity, WorkspaceEntityBase() {
+open class AssertConsistencyEntityImpl(val dataSource: AssertConsistencyEntityData) : AssertConsistencyEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -29,7 +29,7 @@ open class AssertConsistencyEntityImpl : AssertConsistencyEntity, WorkspaceEntit
 
   }
 
-  override var passCheck: Boolean = false
+  override val passCheck: Boolean get() = dataSource.passCheck
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -119,12 +119,13 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
   }
 
   override fun createEntity(snapshot: EntityStorage): AssertConsistencyEntity {
-    val entity = AssertConsistencyEntityImpl()
-    entity.passCheck = passCheck
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = AssertConsistencyEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

@@ -21,7 +21,7 @@ import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SimplePersistentIdEntityImpl : SimplePersistentIdEntity, WorkspaceEntityBase() {
+open class SimplePersistentIdEntityImpl(val dataSource: SimplePersistentIdEntityData) : SimplePersistentIdEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -31,21 +31,15 @@ open class SimplePersistentIdEntityImpl : SimplePersistentIdEntity, WorkspaceEnt
 
   }
 
-  override var version: Int = 0
-  @JvmField
-  var _name: String? = null
+  override val version: Int get() = dataSource.version
   override val name: String
-    get() = _name!!
+    get() = dataSource.name
 
-  @JvmField
-  var _related: SimpleId? = null
   override val related: SimpleId
-    get() = _related!!
+    get() = dataSource.related
 
-  @JvmField
-  var _sealedClassWithLinks: SealedClassWithLinks? = null
   override val sealedClassWithLinks: SealedClassWithLinks
-    get() = _sealedClassWithLinks!!
+    get() = dataSource.sealedClassWithLinks
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -368,15 +362,13 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
   }
 
   override fun createEntity(snapshot: EntityStorage): SimplePersistentIdEntity {
-    val entity = SimplePersistentIdEntityImpl()
-    entity.version = version
-    entity._name = name
-    entity._related = related
-    entity._sealedClassWithLinks = sealedClassWithLinks
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SimplePersistentIdEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {

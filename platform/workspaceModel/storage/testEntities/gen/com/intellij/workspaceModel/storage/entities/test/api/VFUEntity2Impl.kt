@@ -21,7 +21,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
+open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, WorkspaceEntityBase() {
 
   companion object {
 
@@ -31,25 +31,17 @@ open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
-  @JvmField
-  var _filePath: VirtualFileUrl? = null
   override val filePath: VirtualFileUrl?
-    get() = _filePath
+    get() = dataSource.filePath
 
-  @JvmField
-  var _directoryPath: VirtualFileUrl? = null
   override val directoryPath: VirtualFileUrl
-    get() = _directoryPath!!
+    get() = dataSource.directoryPath
 
-  @JvmField
-  var _notNullRoots: List<VirtualFileUrl>? = null
   override val notNullRoots: List<VirtualFileUrl>
-    get() = _notNullRoots!!
+    get() = dataSource.notNullRoots
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -198,15 +190,13 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): VFUEntity2 {
-    val entity = VFUEntity2Impl()
-    entity._data = data
-    entity._filePath = filePath
-    entity._directoryPath = directoryPath
-    entity._notNullRoots = notNullRoots.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = VFUEntity2Impl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): VFUEntity2Data {

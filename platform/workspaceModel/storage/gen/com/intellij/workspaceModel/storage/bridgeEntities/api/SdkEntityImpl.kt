@@ -27,7 +27,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SdkEntityImpl : SdkEntity, WorkspaceEntityBase() {
+open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, SdkEntity::class.java,
@@ -42,10 +42,8 @@ open class SdkEntityImpl : SdkEntity, WorkspaceEntityBase() {
   override val library: LibraryEntity
     get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _homeUrl: VirtualFileUrl? = null
   override val homeUrl: VirtualFileUrl
-    get() = _homeUrl!!
+    get() = dataSource.homeUrl
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -188,12 +186,13 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): SdkEntity {
-    val entity = SdkEntityImpl()
-    entity._homeUrl = homeUrl
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SdkEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

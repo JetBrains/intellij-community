@@ -24,7 +24,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class OoParentWithPidEntityImpl : OoParentWithPidEntity, WorkspaceEntityBase() {
+open class OoParentWithPidEntityImpl(val dataSource: OoParentWithPidEntityData) : OoParentWithPidEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val CHILDONE_CONNECTION_ID: ConnectionId = ConnectionId.create(OoParentWithPidEntity::class.java,
@@ -41,10 +41,8 @@ open class OoParentWithPidEntityImpl : OoParentWithPidEntity, WorkspaceEntityBas
 
   }
 
-  @JvmField
-  var _parentProperty: String? = null
   override val parentProperty: String
-    get() = _parentProperty!!
+    get() = dataSource.parentProperty
 
   override val childOne: OoChildForParentWithPidEntity?
     get() = snapshot.extractOneToOneChild(CHILDONE_CONNECTION_ID, this)
@@ -214,12 +212,13 @@ class OoParentWithPidEntityData : WorkspaceEntityData.WithCalculablePersistentId
   }
 
   override fun createEntity(snapshot: EntityStorage): OoParentWithPidEntity {
-    val entity = OoParentWithPidEntityImpl()
-    entity._parentProperty = parentProperty
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = OoParentWithPidEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {

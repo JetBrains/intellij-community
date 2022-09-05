@@ -31,7 +31,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
+open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val ROOTELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java,
@@ -53,21 +53,15 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _name: String? = null
   override val name: String
-    get() = _name!!
+    get() = dataSource.name
 
-  @JvmField
-  var _artifactType: String? = null
   override val artifactType: String
-    get() = _artifactType!!
+    get() = dataSource.artifactType
 
-  override var includeInProjectBuild: Boolean = false
-  @JvmField
-  var _outputUrl: VirtualFileUrl? = null
+  override val includeInProjectBuild: Boolean get() = dataSource.includeInProjectBuild
   override val outputUrl: VirtualFileUrl?
-    get() = _outputUrl
+    get() = dataSource.outputUrl
 
   override val rootElement: CompositePackagingElementEntity?
     get() = snapshot.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this)
@@ -330,15 +324,13 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
   }
 
   override fun createEntity(snapshot: EntityStorage): ArtifactEntity {
-    val entity = ArtifactEntityImpl()
-    entity._name = name
-    entity._artifactType = artifactType
-    entity.includeInProjectBuild = includeInProjectBuild
-    entity._outputUrl = outputUrl
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ArtifactEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {

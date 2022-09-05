@@ -24,7 +24,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SourceRootTestOrderEntityImpl : SourceRootTestOrderEntity, WorkspaceEntityBase() {
+open class SourceRootTestOrderEntityImpl(val dataSource: SourceRootTestOrderEntityData) : SourceRootTestOrderEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootTestEntity::class.java,
@@ -37,10 +37,8 @@ open class SourceRootTestOrderEntityImpl : SourceRootTestOrderEntity, WorkspaceE
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
   override val contentRoot: ContentRootTestEntity
     get() = snapshot.extractOneToOneParent(CONTENTROOT_CONNECTION_ID, this)!!
@@ -183,12 +181,13 @@ class SourceRootTestOrderEntityData : WorkspaceEntityData<SourceRootTestOrderEnt
   }
 
   override fun createEntity(snapshot: EntityStorage): SourceRootTestOrderEntity {
-    val entity = SourceRootTestOrderEntityImpl()
-    entity._data = data
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SourceRootTestOrderEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

@@ -32,7 +32,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ModuleEntityImpl : ModuleEntity, WorkspaceEntityBase() {
+open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val CONTENTROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java,
@@ -62,20 +62,14 @@ open class ModuleEntityImpl : ModuleEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _name: String? = null
   override val name: String
-    get() = _name!!
+    get() = dataSource.name
 
-  @JvmField
-  var _type: String? = null
   override val type: String?
-    get() = _type
+    get() = dataSource.type
 
-  @JvmField
-  var _dependencies: List<ModuleDependencyItem>? = null
   override val dependencies: List<ModuleDependencyItem>
-    get() = _dependencies!!
+    get() = dataSource.dependencies
 
   override val contentRoots: List<ContentRootEntity>
     get() = snapshot.extractOneToManyChildren<ContentRootEntity>(CONTENTROOTS_CONNECTION_ID, this)!!.toList()
@@ -605,14 +599,13 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   }
 
   override fun createEntity(snapshot: EntityStorage): ModuleEntity {
-    val entity = ModuleEntityImpl()
-    entity._name = name
-    entity._type = type
-    entity._dependencies = dependencies.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ModuleEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): ModuleEntityData {

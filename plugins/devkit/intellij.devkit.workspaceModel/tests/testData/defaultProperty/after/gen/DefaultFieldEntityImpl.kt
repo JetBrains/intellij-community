@@ -17,7 +17,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class DefaultFieldEntityImpl : DefaultFieldEntity, WorkspaceEntityBase() {
+open class DefaultFieldEntityImpl(val dataSource: DefaultFieldEntityData) : DefaultFieldEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -27,15 +27,13 @@ open class DefaultFieldEntityImpl : DefaultFieldEntity, WorkspaceEntityBase() {
 
   }
 
-  override var version: Int = 0
-  @JvmField
-  var _data: TestData? = null
+  override val version: Int get() = dataSource.version
   override val data: TestData
-    get() = _data!!
+    get() = dataSource.data
 
-  override var anotherVersion: Int = super<DefaultFieldEntity>.anotherVersion
+  override var anotherVersion: Int = dataSource.anotherVersion
 
-  override var description: String = super<DefaultFieldEntity>.description
+  override var description: String = dataSource.description
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -161,15 +159,13 @@ class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): DefaultFieldEntity {
-    val entity = DefaultFieldEntityImpl()
-    entity.version = version
-    entity._data = data
-    entity.anotherVersion = anotherVersion
-    entity.description = description
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = DefaultFieldEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

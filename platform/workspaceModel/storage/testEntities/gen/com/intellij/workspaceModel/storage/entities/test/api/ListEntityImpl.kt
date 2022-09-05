@@ -21,7 +21,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ListEntityImpl : ListEntity, WorkspaceEntityBase() {
+open class ListEntityImpl(val dataSource: ListEntityData) : ListEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -31,10 +31,8 @@ open class ListEntityImpl : ListEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: List<String>? = null
   override val data: List<String>
-    get() = _data!!
+    get() = dataSource.data
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -137,12 +135,13 @@ class ListEntityData : WorkspaceEntityData<ListEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): ListEntity {
-    val entity = ListEntityImpl()
-    entity._data = data.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ListEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): ListEntityData {

@@ -26,7 +26,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class JavaSourceRootEntityImpl : JavaSourceRootEntity, WorkspaceEntityBase() {
+open class JavaSourceRootEntityImpl(val dataSource: JavaSourceRootEntityData) : JavaSourceRootEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
@@ -42,11 +42,9 @@ open class JavaSourceRootEntityImpl : JavaSourceRootEntity, WorkspaceEntityBase(
   override val sourceRoot: SourceRootEntity
     get() = snapshot.extractOneToManyParent(SOURCEROOT_CONNECTION_ID, this)!!
 
-  override var generated: Boolean = false
-  @JvmField
-  var _packagePrefix: String? = null
+  override val generated: Boolean get() = dataSource.generated
   override val packagePrefix: String
-    get() = _packagePrefix!!
+    get() = dataSource.packagePrefix
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -201,13 +199,13 @@ class JavaSourceRootEntityData : WorkspaceEntityData<JavaSourceRootEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): JavaSourceRootEntity {
-    val entity = JavaSourceRootEntityImpl()
-    entity.generated = generated
-    entity._packagePrefix = packagePrefix
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = JavaSourceRootEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

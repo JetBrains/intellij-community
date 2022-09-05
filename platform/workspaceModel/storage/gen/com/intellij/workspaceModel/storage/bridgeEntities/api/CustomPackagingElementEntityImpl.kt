@@ -31,7 +31,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class CustomPackagingElementEntityImpl : CustomPackagingElementEntity, WorkspaceEntityBase() {
+open class CustomPackagingElementEntityImpl(val dataSource: CustomPackagingElementEntityData) : CustomPackagingElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -61,15 +61,11 @@ open class CustomPackagingElementEntityImpl : CustomPackagingElementEntity, Work
   override val children: List<PackagingElementEntity>
     get() = snapshot.extractOneToAbstractManyChildren<PackagingElementEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
-  @JvmField
-  var _typeId: String? = null
   override val typeId: String
-    get() = _typeId!!
+    get() = dataSource.typeId
 
-  @JvmField
-  var _propertiesXmlTag: String? = null
   override val propertiesXmlTag: String
-    get() = _propertiesXmlTag!!
+    get() = dataSource.propertiesXmlTag
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -301,13 +297,13 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
   }
 
   override fun createEntity(snapshot: EntityStorage): CustomPackagingElementEntity {
-    val entity = CustomPackagingElementEntityImpl()
-    entity._typeId = typeId
-    entity._propertiesXmlTag = propertiesXmlTag
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = CustomPackagingElementEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

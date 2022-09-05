@@ -604,6 +604,15 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
   abstract class WithCalculablePersistentId<E : WorkspaceEntity> : WorkspaceEntityData<E>() {
     abstract fun persistentId(): PersistentEntityId<*>
   }
+
+  protected fun <T: WorkspaceEntity> getCached(storage: EntityStorage, init: () -> T): T {
+    if (storage is EntityStorageSnapshotImpl) {
+      return storage.getCachedEntityById(createEntityId(), init) as T
+    }
+    else {
+      return init()
+    }
+  }
 }
 
 fun WorkspaceEntityData<*>.persistentId(): PersistentEntityId<*>? = when (this) {

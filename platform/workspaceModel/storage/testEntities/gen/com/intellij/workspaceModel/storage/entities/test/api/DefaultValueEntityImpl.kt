@@ -20,7 +20,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class DefaultValueEntityImpl : DefaultValueEntity, WorkspaceEntityBase() {
+open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : DefaultValueEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -30,14 +30,12 @@ open class DefaultValueEntityImpl : DefaultValueEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _name: String? = null
   override val name: String
-    get() = _name!!
+    get() = dataSource.name
 
-  override var isGenerated: Boolean = super<DefaultValueEntity>.isGenerated
+  override var isGenerated: Boolean = dataSource.isGenerated
 
-  override var anotherName: String = super<DefaultValueEntity>.anotherName
+  override var anotherName: String = dataSource.anotherName
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -151,14 +149,13 @@ class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): DefaultValueEntity {
-    val entity = DefaultValueEntityImpl()
-    entity._name = name
-    entity.isGenerated = isGenerated
-    entity.anotherName = anotherName
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = DefaultValueEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

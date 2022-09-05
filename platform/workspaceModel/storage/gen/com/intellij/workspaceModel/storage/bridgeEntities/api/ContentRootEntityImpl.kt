@@ -31,7 +31,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ContentRootEntityImpl : ContentRootEntity, WorkspaceEntityBase() {
+open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : ContentRootEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java,
@@ -53,20 +53,14 @@ open class ContentRootEntityImpl : ContentRootEntity, WorkspaceEntityBase() {
   override val module: ModuleEntity
     get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _url: VirtualFileUrl? = null
   override val url: VirtualFileUrl
-    get() = _url!!
+    get() = dataSource.url
 
-  @JvmField
-  var _excludedUrls: List<VirtualFileUrl>? = null
   override val excludedUrls: List<VirtualFileUrl>
-    get() = _excludedUrls!!
+    get() = dataSource.excludedUrls
 
-  @JvmField
-  var _excludedPatterns: List<String>? = null
   override val excludedPatterns: List<String>
-    get() = _excludedPatterns!!
+    get() = dataSource.excludedPatterns
 
   override val sourceRoots: List<SourceRootEntity>
     get() = snapshot.extractOneToManyChildren<SourceRootEntity>(SOURCEROOTS_CONNECTION_ID, this)!!.toList()
@@ -353,14 +347,13 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): ContentRootEntity {
-    val entity = ContentRootEntityImpl()
-    entity._url = url
-    entity._excludedUrls = excludedUrls.toList()
-    entity._excludedPatterns = excludedPatterns.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ContentRootEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): ContentRootEntityData {

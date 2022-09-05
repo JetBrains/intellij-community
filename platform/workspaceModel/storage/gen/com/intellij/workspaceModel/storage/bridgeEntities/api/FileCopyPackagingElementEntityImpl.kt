@@ -26,7 +26,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class FileCopyPackagingElementEntityImpl : FileCopyPackagingElementEntity, WorkspaceEntityBase() {
+open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingElementEntityData) : FileCopyPackagingElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -42,15 +42,11 @@ open class FileCopyPackagingElementEntityImpl : FileCopyPackagingElementEntity, 
   override val parentEntity: CompositePackagingElementEntity?
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
 
-  @JvmField
-  var _filePath: VirtualFileUrl? = null
   override val filePath: VirtualFileUrl
-    get() = _filePath!!
+    get() = dataSource.filePath
 
-  @JvmField
-  var _renamedOutputFileName: String? = null
   override val renamedOutputFileName: String?
-    get() = _renamedOutputFileName
+    get() = dataSource.renamedOutputFileName
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -196,13 +192,13 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
   }
 
   override fun createEntity(snapshot: EntityStorage): FileCopyPackagingElementEntity {
-    val entity = FileCopyPackagingElementEntityImpl()
-    entity._filePath = filePath
-    entity._renamedOutputFileName = renamedOutputFileName
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = FileCopyPackagingElementEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

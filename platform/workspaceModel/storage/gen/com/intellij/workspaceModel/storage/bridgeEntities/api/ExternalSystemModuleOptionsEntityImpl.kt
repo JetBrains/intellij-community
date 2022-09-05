@@ -26,7 +26,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ExternalSystemModuleOptionsEntityImpl : ExternalSystemModuleOptionsEntity, WorkspaceEntityBase() {
+open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemModuleOptionsEntityData) : ExternalSystemModuleOptionsEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
@@ -42,40 +42,26 @@ open class ExternalSystemModuleOptionsEntityImpl : ExternalSystemModuleOptionsEn
   override val module: ModuleEntity
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _externalSystem: String? = null
   override val externalSystem: String?
-    get() = _externalSystem
+    get() = dataSource.externalSystem
 
-  @JvmField
-  var _externalSystemModuleVersion: String? = null
   override val externalSystemModuleVersion: String?
-    get() = _externalSystemModuleVersion
+    get() = dataSource.externalSystemModuleVersion
 
-  @JvmField
-  var _linkedProjectPath: String? = null
   override val linkedProjectPath: String?
-    get() = _linkedProjectPath
+    get() = dataSource.linkedProjectPath
 
-  @JvmField
-  var _linkedProjectId: String? = null
   override val linkedProjectId: String?
-    get() = _linkedProjectId
+    get() = dataSource.linkedProjectId
 
-  @JvmField
-  var _rootProjectPath: String? = null
   override val rootProjectPath: String?
-    get() = _rootProjectPath
+    get() = dataSource.rootProjectPath
 
-  @JvmField
-  var _externalSystemModuleGroup: String? = null
   override val externalSystemModuleGroup: String?
-    get() = _externalSystemModuleGroup
+    get() = dataSource.externalSystemModuleGroup
 
-  @JvmField
-  var _externalSystemModuleType: String? = null
   override val externalSystemModuleType: String?
-    get() = _externalSystemModuleType
+    get() = dataSource.externalSystemModuleType
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -273,18 +259,13 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
   }
 
   override fun createEntity(snapshot: EntityStorage): ExternalSystemModuleOptionsEntity {
-    val entity = ExternalSystemModuleOptionsEntityImpl()
-    entity._externalSystem = externalSystem
-    entity._externalSystemModuleVersion = externalSystemModuleVersion
-    entity._linkedProjectPath = linkedProjectPath
-    entity._linkedProjectId = linkedProjectId
-    entity._rootProjectPath = rootProjectPath
-    entity._externalSystemModuleGroup = externalSystemModuleGroup
-    entity._externalSystemModuleType = externalSystemModuleType
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ExternalSystemModuleOptionsEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

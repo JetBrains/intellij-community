@@ -20,7 +20,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ChildWithNullsImpl : ChildWithNulls, WorkspaceEntityBase() {
+open class ChildWithNullsImpl(val dataSource: ChildWithNullsData) : ChildWithNulls, WorkspaceEntityBase() {
 
   companion object {
 
@@ -30,10 +30,8 @@ open class ChildWithNullsImpl : ChildWithNulls, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _childData: String? = null
   override val childData: String
-    get() = _childData!!
+    get() = dataSource.childData
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -127,12 +125,13 @@ class ChildWithNullsData : WorkspaceEntityData<ChildWithNulls>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): ChildWithNulls {
-    val entity = ChildWithNullsImpl()
-    entity._childData = childData
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ChildWithNullsImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

@@ -20,7 +20,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class OptionalIntEntityImpl : OptionalIntEntity, WorkspaceEntityBase() {
+open class OptionalIntEntityImpl(val dataSource: OptionalIntEntityData) : OptionalIntEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -30,7 +30,7 @@ open class OptionalIntEntityImpl : OptionalIntEntity, WorkspaceEntityBase() {
 
   }
 
-  override var data: Int? = null
+  override val data: Int? get() = dataSource.data
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -120,12 +120,13 @@ class OptionalIntEntityData : WorkspaceEntityData<OptionalIntEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): OptionalIntEntity {
-    val entity = OptionalIntEntityImpl()
-    entity.data = data
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = OptionalIntEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

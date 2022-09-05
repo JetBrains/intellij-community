@@ -25,7 +25,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class FacetTestEntityImpl : FacetTestEntity, WorkspaceEntityBase() {
+open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleTestEntity::class.java, FacetTestEntity::class.java,
@@ -37,15 +37,11 @@ open class FacetTestEntityImpl : FacetTestEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
-  @JvmField
-  var _moreData: String? = null
   override val moreData: String
-    get() = _moreData!!
+    get() = dataSource.moreData
 
   override val module: ModuleTestEntity
     get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
@@ -206,13 +202,13 @@ class FacetTestEntityData : WorkspaceEntityData.WithCalculablePersistentId<Facet
   }
 
   override fun createEntity(snapshot: EntityStorage): FacetTestEntity {
-    val entity = FacetTestEntityImpl()
-    entity._data = data
-    entity._moreData = moreData
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = FacetTestEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {

@@ -30,7 +30,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SourceRootEntityImpl : SourceRootEntity, WorkspaceEntityBase() {
+open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRootEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, SourceRootEntity::class.java,
@@ -57,15 +57,11 @@ open class SourceRootEntityImpl : SourceRootEntity, WorkspaceEntityBase() {
   override val contentRoot: ContentRootEntity
     get() = snapshot.extractOneToManyParent(CONTENTROOT_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _url: VirtualFileUrl? = null
   override val url: VirtualFileUrl
-    get() = _url!!
+    get() = dataSource.url
 
-  @JvmField
-  var _rootType: String? = null
   override val rootType: String
-    get() = _rootType!!
+    get() = dataSource.rootType
 
   override val customSourceRootProperties: CustomSourceRootPropertiesEntity?
     get() = snapshot.extractOneToOneChild(CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID, this)
@@ -374,13 +370,13 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): SourceRootEntity {
-    val entity = SourceRootEntityImpl()
-    entity._url = url
-    entity._rootType = rootType
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SourceRootEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

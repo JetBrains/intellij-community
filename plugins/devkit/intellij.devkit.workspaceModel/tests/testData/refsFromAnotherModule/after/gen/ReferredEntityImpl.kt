@@ -21,7 +21,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
+open class ReferredEntityImpl(val dataSource: ReferredEntityData) : ReferredEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ReferredEntity::class.java, ContentRootEntity::class.java,
@@ -33,11 +33,9 @@ open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
 
   }
 
-  override var version: Int = 0
-  @JvmField
-  var _name: String? = null
+  override val version: Int get() = dataSource.version
   override val name: String
-    get() = _name!!
+    get() = dataSource.name
 
   override val contentRoot: ContentRootEntity?
     get() = snapshot.extractOneToOneChild(CONTENTROOT_CONNECTION_ID, this)
@@ -180,13 +178,13 @@ class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): ReferredEntity {
-    val entity = ReferredEntityImpl()
-    entity.version = version
-    entity._name = name
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ReferredEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

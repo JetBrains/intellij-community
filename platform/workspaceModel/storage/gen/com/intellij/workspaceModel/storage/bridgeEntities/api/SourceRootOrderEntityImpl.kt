@@ -27,7 +27,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SourceRootOrderEntityImpl : SourceRootOrderEntity, WorkspaceEntityBase() {
+open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) : SourceRootOrderEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val CONTENTROOTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java,
@@ -43,10 +43,8 @@ open class SourceRootOrderEntityImpl : SourceRootOrderEntity, WorkspaceEntityBas
   override val contentRootEntity: ContentRootEntity
     get() = snapshot.extractOneToOneParent(CONTENTROOTENTITY_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _orderOfSourceRoots: List<VirtualFileUrl>? = null
   override val orderOfSourceRoots: List<VirtualFileUrl>
-    get() = _orderOfSourceRoots!!
+    get() = dataSource.orderOfSourceRoots
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -197,12 +195,13 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): SourceRootOrderEntity {
-    val entity = SourceRootOrderEntityImpl()
-    entity._orderOfSourceRoots = orderOfSourceRoots.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SourceRootOrderEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): SourceRootOrderEntityData {

@@ -25,7 +25,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class TreeMultiparentRootEntityImpl : TreeMultiparentRootEntity, WorkspaceEntityBase() {
+open class TreeMultiparentRootEntityImpl(val dataSource: TreeMultiparentRootEntityData) : TreeMultiparentRootEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(TreeMultiparentRootEntity::class.java,
@@ -38,10 +38,8 @@ open class TreeMultiparentRootEntityImpl : TreeMultiparentRootEntity, WorkspaceE
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
   override val children: List<TreeMultiparentLeafEntity>
     get() = snapshot.extractOneToManyChildren<TreeMultiparentLeafEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
@@ -188,12 +186,13 @@ class TreeMultiparentRootEntityData : WorkspaceEntityData.WithCalculablePersiste
   }
 
   override fun createEntity(snapshot: EntityStorage): TreeMultiparentRootEntity {
-    val entity = TreeMultiparentRootEntityImpl()
-    entity._data = data
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = TreeMultiparentRootEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {

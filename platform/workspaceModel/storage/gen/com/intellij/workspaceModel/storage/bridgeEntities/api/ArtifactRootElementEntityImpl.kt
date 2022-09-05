@@ -31,7 +31,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ArtifactRootElementEntityImpl : ArtifactRootElementEntity, WorkspaceEntityBase() {
+open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEntityData) : ArtifactRootElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -263,11 +263,13 @@ class ArtifactRootElementEntityData : WorkspaceEntityData<ArtifactRootElementEnt
   }
 
   override fun createEntity(snapshot: EntityStorage): ArtifactRootElementEntity {
-    val entity = ArtifactRootElementEntityImpl()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ArtifactRootElementEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

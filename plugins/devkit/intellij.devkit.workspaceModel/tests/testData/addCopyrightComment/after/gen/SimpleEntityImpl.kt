@@ -17,7 +17,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
+open class SimpleEntityImpl(val dataSource: SimpleEntityData) : SimpleEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -27,10 +27,8 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _name: String? = null
   override val name: String
-    get() = _name!!
+    get() = dataSource.name
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -124,12 +122,13 @@ class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): SimpleEntity {
-    val entity = SimpleEntityImpl()
-    entity._name = name
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SimpleEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

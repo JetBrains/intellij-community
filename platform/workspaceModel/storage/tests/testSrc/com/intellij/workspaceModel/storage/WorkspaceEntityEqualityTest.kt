@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
+import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Assert.*
 import org.junit.Before
@@ -98,5 +98,13 @@ class WorkspaceEntityEqualityTest {
     val entityThree = builder.toSnapshot().entities(SampleEntity::class.java).single { it.stringProperty == "AnotherData2" }
 
     assertFalse(entityThree in checkSet)
+  }
+
+  @Test
+  fun `cache for requests works`() {
+    builderOne.addSampleEntity("Data")
+    val snapshot = builderOne.toSnapshot()
+
+    assertSame(snapshot.entities(SampleEntity::class.java).single(), snapshot.entities(SampleEntity::class.java).single())
   }
 }

@@ -29,7 +29,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ModuleOutputPackagingElementEntityImpl : ModuleOutputPackagingElementEntity, WorkspaceEntityBase() {
+open class ModuleOutputPackagingElementEntityImpl(val dataSource: ModuleOutputPackagingElementEntityData) : ModuleOutputPackagingElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -45,10 +45,8 @@ open class ModuleOutputPackagingElementEntityImpl : ModuleOutputPackagingElement
   override val parentEntity: CompositePackagingElementEntity?
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
 
-  @JvmField
-  var _module: ModuleId? = null
   override val module: ModuleId?
-    get() = _module
+    get() = dataSource.module
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -233,12 +231,13 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
   }
 
   override fun createEntity(snapshot: EntityStorage): ModuleOutputPackagingElementEntity {
-    val entity = ModuleOutputPackagingElementEntityImpl()
-    entity._module = module
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ModuleOutputPackagingElementEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

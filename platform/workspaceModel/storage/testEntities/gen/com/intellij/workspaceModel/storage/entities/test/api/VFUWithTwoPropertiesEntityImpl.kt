@@ -23,7 +23,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class VFUWithTwoPropertiesEntityImpl : VFUWithTwoPropertiesEntity, WorkspaceEntityBase() {
+open class VFUWithTwoPropertiesEntityImpl(val dataSource: VFUWithTwoPropertiesEntityData) : VFUWithTwoPropertiesEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -33,20 +33,14 @@ open class VFUWithTwoPropertiesEntityImpl : VFUWithTwoPropertiesEntity, Workspac
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
-  @JvmField
-  var _fileProperty: VirtualFileUrl? = null
   override val fileProperty: VirtualFileUrl
-    get() = _fileProperty!!
+    get() = dataSource.fileProperty
 
-  @JvmField
-  var _secondFileProperty: VirtualFileUrl? = null
   override val secondFileProperty: VirtualFileUrl
-    get() = _secondFileProperty!!
+    get() = dataSource.secondFileProperty
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -174,14 +168,13 @@ class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPropertiesE
   }
 
   override fun createEntity(snapshot: EntityStorage): VFUWithTwoPropertiesEntity {
-    val entity = VFUWithTwoPropertiesEntityImpl()
-    entity._data = data
-    entity._fileProperty = fileProperty
-    entity._secondFileProperty = secondFileProperty
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = VFUWithTwoPropertiesEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

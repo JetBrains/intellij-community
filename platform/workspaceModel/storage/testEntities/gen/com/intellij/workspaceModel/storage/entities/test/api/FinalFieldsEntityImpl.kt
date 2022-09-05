@@ -21,7 +21,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class FinalFieldsEntityImpl : FinalFieldsEntity, WorkspaceEntityBase() {
+open class FinalFieldsEntityImpl(val dataSource: FinalFieldsEntityData) : FinalFieldsEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -31,14 +31,12 @@ open class FinalFieldsEntityImpl : FinalFieldsEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _descriptor: AnotherDataClass? = null
   override val descriptor: AnotherDataClass
-    get() = _descriptor!!
+    get() = dataSource.descriptor
 
-  override var description: String = super<FinalFieldsEntity>.description
+  override var description: String = dataSource.description
 
-  override var anotherVersion: Int = super<FinalFieldsEntity>.anotherVersion
+  override var anotherVersion: Int = dataSource.anotherVersion
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -153,14 +151,13 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): FinalFieldsEntity {
-    val entity = FinalFieldsEntityImpl()
-    entity._descriptor = descriptor
-    entity.description = description
-    entity.anotherVersion = anotherVersion
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = FinalFieldsEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

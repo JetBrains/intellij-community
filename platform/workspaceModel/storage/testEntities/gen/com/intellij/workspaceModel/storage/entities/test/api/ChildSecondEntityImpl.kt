@@ -23,7 +23,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ChildSecondEntityImpl : ChildSecondEntity, WorkspaceEntityBase() {
+open class ChildSecondEntityImpl(val dataSource: ChildSecondEntityData) : ChildSecondEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentAbEntity::class.java,
@@ -36,18 +36,14 @@ open class ChildSecondEntityImpl : ChildSecondEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _commonData: String? = null
   override val commonData: String
-    get() = _commonData!!
+    get() = dataSource.commonData
 
   override val parentEntity: ParentAbEntity
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _secondData: String? = null
   override val secondData: String
-    get() = _secondData!!
+    get() = dataSource.secondData
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -205,13 +201,13 @@ class ChildSecondEntityData : WorkspaceEntityData<ChildSecondEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): ChildSecondEntity {
-    val entity = ChildSecondEntityImpl()
-    entity._commonData = commonData
-    entity._secondData = secondData
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ChildSecondEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

@@ -26,7 +26,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class FacetsOrderEntityImpl : FacetsOrderEntity, WorkspaceEntityBase() {
+open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : FacetsOrderEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val MODULEENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetsOrderEntity::class.java,
@@ -38,10 +38,8 @@ open class FacetsOrderEntityImpl : FacetsOrderEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _orderOfFacets: List<String>? = null
   override val orderOfFacets: List<String>
-    get() = _orderOfFacets!!
+    get() = dataSource.orderOfFacets
 
   override val moduleEntity: ModuleEntity
     get() = snapshot.extractOneToOneParent(MODULEENTITY_CONNECTION_ID, this)!!
@@ -193,12 +191,13 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): FacetsOrderEntity {
-    val entity = FacetsOrderEntityImpl()
-    entity._orderOfFacets = orderOfFacets.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = FacetsOrderEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): FacetsOrderEntityData {

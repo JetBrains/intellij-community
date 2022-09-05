@@ -23,7 +23,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBase() {
+open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) : CollectionFieldEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -33,15 +33,11 @@ open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBas
 
   }
 
-  @JvmField
-  var _versions: Set<Int>? = null
   override val versions: Set<Int>
-    get() = _versions!!
+    get() = dataSource.versions
 
-  @JvmField
-  var _names: List<String>? = null
   override val names: List<String>
-    get() = _names!!
+    get() = dataSource.names
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -167,13 +163,13 @@ class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): CollectionFieldEntity {
-    val entity = CollectionFieldEntityImpl()
-    entity._versions = versions.toSet()
-    entity._names = names.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = CollectionFieldEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): CollectionFieldEntityData {
