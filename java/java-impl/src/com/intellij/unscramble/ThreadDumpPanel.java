@@ -359,12 +359,16 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     }
   }
 
-  private final class 
-  FilterAction extends ToggleAction implements DumbAware {
+  private final class FilterAction extends ToggleAction implements DumbAware {
 
     private FilterAction() {
       super(CommonBundle.messagePointer("action.text.filter"), JavaBundle.messagePointer(
         "action.description.show.only.threads.containing.a.specific.string"), AllIcons.General.Filter);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -383,8 +387,7 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     }
   }
 
-  private final class 
-  MergeStacktracesAction extends ToggleAction implements DumbAware {
+  private final class MergeStacktracesAction extends ToggleAction implements DumbAware {
     private MergeStacktracesAction() {
       super(JavaBundle.messagePointer("action.text.merge.identical.stacktraces"), JavaBundle.messagePointer(
         "action.description.group.threads.with.identical.stacktraces"), AllIcons.Actions.Collapseall);
@@ -393,6 +396,11 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return UISettings.getInstance().getState().getMergeEqualStackTraces();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

@@ -399,6 +399,11 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project != null && myConnection == null) {
