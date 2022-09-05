@@ -935,6 +935,14 @@ public class GradleExecutionHelper {
           LOG.warn("The gradle api jar shouldn't be added to the gradle daemon classpath: {" + aClass + "," + path + "}");
           return null;
         }
+        if (FileUtil.normalize(path).endsWith("lib/app.jar")) {
+          final String message = "Attempting to pass whole IDEA app [" + path + "] into Gradle Daemon for class [" + aClass + "]";
+          if (Boolean.parseBoolean(System.getProperty("idea.is.integration.test"))) {
+            LOG.error(message);
+          } else {
+            LOG.warn(message);
+          }
+        }
         return FileUtil.toCanonicalPath(path);
       }
       return null;
