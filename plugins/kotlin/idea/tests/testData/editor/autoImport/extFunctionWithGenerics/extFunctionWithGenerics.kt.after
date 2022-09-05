@@ -1,0 +1,11 @@
+package testingExtensionFunctionsImport
+
+import pkg.Rec
+import pkg.foo
+
+fun some() {
+    val r = Rec<String>()
+    r.foo("")
+}<caret>
+
+/* IGNORE_FIR */

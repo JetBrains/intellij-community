@@ -757,7 +757,7 @@ internal class ComponentsImportFix(
     }
 }
 
-internal class ImportForMismatchingArgumentsFix(
+internal open class ImportForMismatchingArgumentsFix(
     expression: KtSimpleNameExpression
 ) : ImportFixBase<KtSimpleNameExpression>(expression, MyFactory) {
     override fun getCallTypeAndReceiver() = element?.let { CallTypeAndReceiver.detect(it) }
@@ -842,9 +842,17 @@ internal class ImportForMismatchingArgumentsFix(
             val nameExpression = element.takeIf { it.elementType == KtNodeTypes.OPERATION_REFERENCE }.safeAs<KtSimpleNameExpression>()
                 ?: element.getStrictParentOfType<KtCallExpression>()?.calleeExpression?.safeAs<KtNameReferenceExpression>()
                 ?: return null
-            return ImportForMismatchingArgumentsFix(nameExpression)
+            val hintsEnabled = AbstractImportFixInfo.isHintsEnabled(diagnostic.psiFile)
+            return if (hintsEnabled) ImportForMismatchingArgumentsFixWithHint(nameExpression) else
+                ImportForMismatchingArgumentsFix(nameExpression)
         }
     }
+}
+
+internal class ImportForMismatchingArgumentsFixWithHint(
+    expression: KtSimpleNameExpression
+): ImportForMismatchingArgumentsFix(expression), HintAction {
+    override fun fixSilently(editor: Editor): Boolean = doFixSilently(editor)
 }
 
 internal object ImportForMissingOperatorFactory : ImportFixBase.Factory() {
