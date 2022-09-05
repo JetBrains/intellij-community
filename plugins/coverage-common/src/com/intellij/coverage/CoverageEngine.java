@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -351,10 +352,10 @@ public abstract class CoverageEngine {
     return null;
   }
 
-  public boolean isInLibraryClasses(Project project, VirtualFile file) {
+  public boolean isInLibraryClasses(final Project project, final VirtualFile file) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-    return projectFileIndex.isInLibraryClasses(file) && !projectFileIndex.isInSource(file);
+    return ReadAction.compute(() -> projectFileIndex.isInLibraryClasses(file)) && !projectFileIndex.isInSource(file);
   }
 
   public boolean isInLibrarySource(Project project, VirtualFile file) {
