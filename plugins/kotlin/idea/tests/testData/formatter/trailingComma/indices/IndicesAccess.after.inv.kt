@@ -2,27 +2,27 @@
 
 fun foo() {
     testtest[foofoo, foofoo, foofoo,
-            foofoo, bar]
+        foofoo, bar]
 
     testtest[
-            foofoo, foofoo, foofoo, foofoo, bar
+        foofoo, foofoo, foofoo, foofoo, bar
     ]
 
     testtest[foofoo, foofoo, foofoo, foofoo, bar
     ]
 
     testtest[foofoo, foofoo, foofoo, foofoo,
-            bar
+        bar
     ]
 
     testtest[foofoo
     ]
 
     testtest[
-            foofoo]
+        foofoo]
 
     testtest[
-            foofoo
+        foofoo
     ]
 
     testtest[foofoo]
@@ -30,8 +30,8 @@ fun foo() {
     testtest[foofoo, testtest[testtest[foofoo]]]
 
     testtest[
-            foofoo, fososos,
-            testtest[testtest[foofoo]],
+        foofoo, fososos,
+        testtest[testtest[foofoo]],
     ]
 
     testtest[foofoo, testtest[testtest[foofoo]], testsa]
@@ -51,9 +51,9 @@ fun foo() {
     useCallable[Callable { println["Hello world"] }]
 
     useCallable[
-            Callable {
-                println["Hello world"]
-            },
+        Callable {
+            println["Hello world"]
+        },
     ]
 
     useCallable[Callable { println["Hello world"] }
@@ -64,7 +64,7 @@ fun foo() {
     }
 
     useCallable[
-            Callable { println["Hello world"] }]
+        Callable { println["Hello world"] }]
 
     useCallable["A", { println["Hello world"] }]
 
@@ -79,14 +79,14 @@ fun foo() {
     useCallable[{ println["Hello world"] }]
 
     useCallable[
-            { println["Hello world"] },
+        { println["Hello world"] },
     ]
 
     useCallable[{ println["Hello world"] }
     ]
 
     useCallable[
-            { println["Hello world"] }]
+        { println["Hello world"] }]
 
     useCallable["A", object : Callable<Unit> {
         override fun call() {
@@ -113,11 +113,11 @@ fun foo() {
     }]
 
     useCallable[
-            object : Callable<Unit> {
-                override fun call() {
-                    println["Hello world"]
-                }
-            },
+        object : Callable<Unit> {
+            override fun call() {
+                println["Hello world"]
+            }
+        },
     ]
 
     useCallable[object : Callable<Unit> {
@@ -136,15 +136,15 @@ fun foo() {
     }
 
     useCallable[
-            object : Callable<Unit> {
-                override fun call() {
-                    println["Hello world"]
-                }
-            }]
+        object : Callable<Unit> {
+            override fun call() {
+                println["Hello world"]
+            }
+        }]
 
     testtest[
-            foofoo, foofoo, foofoo, foofoo,
-            bar /*
+        foofoo, foofoo, foofoo, foofoo,
+        bar /*
     */, /* */ foo
     ]
 
@@ -152,7 +152,7 @@ fun foo() {
     */foofoo, foofoo, foofoo, /*
 
     */
-            foofoo, bar]
+        foofoo, bar]
 
     testtest[foofoo, foofoo, foofoo, foofoo, bar/*
     */]
@@ -163,14 +163,14 @@ fun foo() {
     testtest[foofoo, foofoo, foofoo, foofoo, /*
 
     */
-            bar
+        bar
     ]
 
     testtest[foofoo // fd
     ]
 
     testtest[ /**/
-            foofoo
+        foofoo
     ]
 
     testtest[foofoo/**/]
@@ -183,16 +183,16 @@ fun foo() {
     ]
 
     testtest[ /**/
-            foofoo
+        foofoo
     ]
 
     testtest[foofoo/**/]
 
     testtest[
-            foofoo, fososos,
-            /*
+        foofoo, fososos,
+        /*
     */
-            testtest[testtest[foofoo]],
+        testtest[testtest[foofoo]],
     ]
 
     testtest[foofoo, testtest[testtest[foofoo]], /**/testsa]

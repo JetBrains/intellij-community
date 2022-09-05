@@ -1761,6 +1761,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/AnonymousInitializersLineBreak.after.inv.kt");
             }
 
+            @TestMetadata("ArrayAccess.after.inv.kt")
+            public void testArrayAccess() throws Exception {
+                runTest("testData/formatter/ArrayAccess.after.inv.kt");
+            }
+
             @TestMetadata("BinaryExpressions.after.inv.kt")
             public void testBinaryExpressions() throws Exception {
                 runTest("testData/formatter/BinaryExpressions.after.inv.kt");
