@@ -9,7 +9,6 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
@@ -266,19 +265,13 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
 
   @Override
   public boolean isFromWorkspaceOnly(@NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) {
-    var isFromWorkspaceOnly = ThreeState.UNSURE;
+    if (indexingInfos.isEmpty()) return false;
     for (RootsChangeRescanningInfo info : indexingInfos) {
-      if (info instanceof WorkspaceEventRescanningInfo) {
-        if (isFromWorkspaceOnly == ThreeState.UNSURE) {
-          isFromWorkspaceOnly = ThreeState.YES;
-        }
-      }
-      else {
-        isFromWorkspaceOnly = ThreeState.NO;
-        break;
+      if (!(info instanceof WorkspaceEventRescanningInfo)) {
+        return false;
       }
     }
-    return isFromWorkspaceOnly == ThreeState.YES;
+    return true;
   }
 
 
