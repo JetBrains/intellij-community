@@ -69,7 +69,7 @@ interface AddValVarToConstructorParameterAction {
             val element = this.element ?: return ""
 
             val key = when {
-                element.getStrictParentOfType<KtClass>()?.isInline() == true -> "add.val.to.parameter.0"
+                element.getStrictParentOfType<KtClass>()?.let { it.isValue() || it.isInline() } == true -> "add.val.to.parameter.0"
                 else -> "add.val.var.to.parameter.0"
             }
 

@@ -722,7 +722,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         COMPATIBILITY_WARNING.registerFactory(UseFullyQualifiedCallFix)
 
-        VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER.registerFactory(InlineClassConstructorNotValParameterFactory)
+        VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER.registerFactory(ValueClassConstructorNotValParameterFactory)
 
         INLINE_CLASS_DEPRECATED.registerFactory(InlineClassDeprecatedFix)
 
