@@ -46,8 +46,18 @@ use anyhow::{bail, Result};
 use crate::remote_dev::RemoteDevLaunchConfiguration;
 
 pub fn main_lib() {
+    let show_error_ui = match env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR) {
+        Ok(_) => false,
+        Err(_) => {
+            let cmd_args: Vec<String> = env::args().collect();
+            let is_remote_dev = cmd_args.len() > 1 && cmd_args[1] == "--remote-dev";
+
+            !is_remote_dev
+        }
+    };
+
     let main_result = main_impl();
-    unwrap_with_human_readable_error(main_result);
+    unwrap_with_human_readable_error(main_result, show_error_ui);
 }
 
 fn main_impl() -> Result<()> {
@@ -171,16 +181,15 @@ fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
 
 pub const DO_NOT_SHOW_ERROR_UI_ENV_VAR: &str = "DO_NOT_SHOW_ERROR_UI";
 
-fn unwrap_with_human_readable_error<S>(result: Result<S>) -> S {
+fn unwrap_with_human_readable_error<S>(result: Result<S>, show_error_ui: bool) -> S {
     match result {
         Ok(x) => { x }
         Err(e) => {
             eprintln!("{e:?}");
             error!("{e:?}");
 
-            match env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR) {
-                Ok(_) => {  }
-                Err(_) => { show_fail_to_start_message("Failed to start", format!("{e:?}").as_str()) }
+            if show_error_ui {
+                show_fail_to_start_message("Failed to start", format!("{e:?}").as_str())
             }
 
             std::process::exit(1);
