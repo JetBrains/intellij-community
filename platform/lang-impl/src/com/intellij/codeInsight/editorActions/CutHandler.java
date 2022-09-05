@@ -41,13 +41,11 @@ public class CutHandler extends EditorWriteActionHandler {
     }
 
     final SelectionModel selectionModel = editor.getSelectionModel();
-    if (!selectionModel.hasSelection(true)) {
-      if (CopyAction.isSkipCopyPasteForEmptySelection()) {
-        return;
-      }
-      editor.getCaretModel().runForEachCaret(__ -> selectionModel.selectLineAtCaret());
-      if (!selectionModel.hasSelection(true)) return;
+    CopyAction.SelectionToCopy selectionToCopy = CopyAction.prepareSelectionToCopy(editor, false);
+    if (selectionToCopy == null) {
+      return;
     }
+    dataContext = selectionToCopy.extendDataContext(dataContext);
 
     int start = selectionModel.getSelectionStart();
     int end = selectionModel.getSelectionEnd();

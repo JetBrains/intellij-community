@@ -4,7 +4,6 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
@@ -22,8 +21,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.SlowOperations;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +49,7 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
       return;
     }
 
-    CopyAction.copyToClipboard(editor, this);
+    CopyAction.copyToClipboard(editor, dataContext, this);
   }
 
   @Override

@@ -4,15 +4,11 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.EditorCopyPasteHelper.CopyPasteOptions;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -34,30 +30,63 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
   public static class Handler extends EditorActionHandler {
     @Override
     public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      copyToClipboard(editor, EditorCopyPasteHelper.getInstance()::getSelectionTransferable);
+      copyToClipboard(editor, dataContext, EditorCopyPasteHelper.getInstance()::getSelectionTransferable);
     }
   }
 
-  public static void copyToClipboard(@NotNull Editor editor, @NotNull TransferableProvider transferableProvider) {
-    SelectionModel selectionModel = editor.getSelectionModel();
+  public record SelectionToCopy(@NotNull CopyPasteOptions copyPasteOptions) {
+    private static final @NotNull DataKey<SelectionToCopy> KEY = DataKey.create("CopyAction.SelectionToCopy.KEY");
 
-    boolean isEntireLineFromEmptySelection = !selectionModel.hasSelection(true);
-    if (isEntireLineFromEmptySelection) {
-      if (isSkipCopyPasteForEmptySelection()) {
-        return;
-      }
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.copy.line");
-
-      editor.getCaretModel().runForEachCaret(caret -> {
-        EditorActionUtil.selectEntireLines(caret);
-        if (caret.hasSelection()) {
-          caret.moveToVisualPosition(caret.getSelectionStartPosition());
-        }
-      });
+    public static @Nullable SelectionToCopy fromDataContext(@NotNull DataContext dataContext) {
+      return KEY.getData(dataContext);
     }
 
-    CopyPasteOptions copyPasteOptions = new CopyPasteOptions(isEntireLineFromEmptySelection);
-    Transferable transferable = transferableProvider.getSelection(editor, copyPasteOptions);
+    public @NotNull DataContext extendDataContext(@NotNull DataContext dataContext) {
+      return dataId -> {
+        if (KEY.is(dataId)) return this;
+        return dataContext.getData(dataId);
+      };
+    }
+  }
+
+  public static @Nullable SelectionToCopy prepareSelectionToCopy(@NotNull Editor editor, boolean isToMoveCaretToSelectionStart) {
+    if (editor.getSelectionModel().hasSelection(true)) {
+      return new SelectionToCopy(CopyPasteOptions.DEFAULT);
+    }
+    if (isSkipCopyPasteForEmptySelection()) {
+      return null;
+    }
+
+    editor.getCaretModel().runForEachCaret(caret -> {
+      EditorActionUtil.selectEntireLines(caret);
+      if (isToMoveCaretToSelectionStart && caret.hasSelection()) {
+        caret.moveToVisualPosition(caret.getSelectionStartPosition());
+      }
+    });
+    CopyPasteOptions copyPasteOptions = new CopyPasteOptions(true);
+    return new SelectionToCopy(copyPasteOptions);
+  }
+
+  public static void copyToClipboard(@NotNull Editor editor,
+                                     @NotNull DataContext dataContext,
+                                     @NotNull TransferableProvider transferableProvider) {
+    SelectionToCopy selectionToCopy = SelectionToCopy.fromDataContext(dataContext);
+    if (selectionToCopy == null) {  // a genuine "Copy", not "Cut"
+      selectionToCopy = prepareSelectionToCopy(editor, true);
+      if (selectionToCopy == null) {
+        return;
+      }
+      if (selectionToCopy.copyPasteOptions().isEntireLineFromEmptySelection()) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.copy.line");
+      }
+    }
+    copyToClipboard(editor, transferableProvider, selectionToCopy);
+  }
+
+  public static void copyToClipboard(@NotNull Editor editor,
+                                     @NotNull TransferableProvider transferableProvider,
+                                     @NotNull SelectionToCopy selectionToCopy) {
+    Transferable transferable = transferableProvider.getSelection(editor, selectionToCopy.copyPasteOptions());
     if (transferable == null) {
       return;
     }
