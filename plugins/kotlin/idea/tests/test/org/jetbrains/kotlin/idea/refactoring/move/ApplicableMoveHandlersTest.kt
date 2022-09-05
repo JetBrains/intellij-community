@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.move.MoveHandlerDelegate
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtClass
@@ -10,6 +11,24 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 class ApplicableMoveHandlersTest : KotlinLightCodeInsightFixtureTestCase() {
+    fun testOrder() {
+        val kotlinHandlers = MoveHandlerDelegate.EP_NAME.extensionList.filter { it.supportsLanguage(KotlinLanguage.INSTANCE) }
+        assertEquals(
+            listOf(
+                "MoveKotlinMethodHandler",
+                "MoveKotlinDeclarationsHandler",
+                "KotlinAwareJavaMovePackagesHandler",
+                "KotlinMoveFilesOrDirectoriesHandler",
+                "MoveRelatedFilesHandler",
+                "JavaMoveClassesOrPackagesHandler",
+                "JavaMoveFilesOrDirectoriesHandler",
+                "MoveFilesOrDirectoriesHandler",
+                "RemoteMoveHandlerDelegate",
+            ),
+            kotlinHandlers.map { it::class.simpleName },
+        )
+    }
+
     fun testFile() {
         val kotlinFile = myFixture.addFileToProject(
             "a/kotlinFile.kt",
