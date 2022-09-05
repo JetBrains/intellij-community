@@ -3,7 +3,6 @@ package com.intellij.usages.similarity.clustering;
 
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
-import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -43,7 +42,7 @@ public class UsageCluster {
   public boolean contains(@Nullable UsageInfo usageInfo) {
     synchronized (myUsages) {
       for (SimilarUsage usage : myUsages) {
-        if (usage instanceof UsageInfo2UsageAdapter && ((UsageInfo2UsageAdapter)usage).getUsageInfo().equals(usageInfo)) {
+        if (usage.getUsageInfo().equals(usageInfo)) {
           return true;
         }
       }

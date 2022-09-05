@@ -1,11 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.similarity.usageAdapter;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This interface marks {@link com.intellij.usages.UsageInfo2UsageAdapter} implementation as a subject of clustering
@@ -22,4 +25,7 @@ public interface SimilarUsage extends Usage {
 
   @NotNull ClusteringSearchSession getClusteringSession();
 
+  @NotNull UsageInfo getUsageInfo();
+
+  @Nullable PsiElement getElement();
 }
