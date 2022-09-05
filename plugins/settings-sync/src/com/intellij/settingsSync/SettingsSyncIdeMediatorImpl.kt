@@ -66,6 +66,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     if (pluginsFileState != null) {
       val pluginManager = SettingsSyncPluginManager.getInstance()
       writeStatesToAppConfig(listOf(pluginsFileState))
+      pluginManager.updateStateFromFileStateContent(pluginsFileState)
       pluginManager.pushChangesToIde()
     }
 

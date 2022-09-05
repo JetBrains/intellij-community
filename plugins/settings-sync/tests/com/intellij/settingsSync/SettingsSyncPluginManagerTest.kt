@@ -4,6 +4,7 @@ import com.intellij.configurationStore.ComponentSerializationUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.settingsSync.plugins.PluginManagerProxy
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.testFramework.LightPlatformTestCase
@@ -11,10 +12,8 @@ import com.intellij.testFramework.replaceService
 import com.intellij.util.xmlb.XmlSerializer
 import junit.framework.TestCase
 import org.jdom.Element
-import org.jdom.input.SAXBuilder
 import org.jdom.output.Format
 import org.jdom.output.XMLOutputter
-import java.io.StringReader
 import java.io.StringWriter
 
 // region Test data
@@ -78,6 +77,15 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
   private lateinit var pluginManager: SettingsSyncPluginManager
   private lateinit var testPluginManager: TestPluginManager
 
+  private val quickJump = TestPluginDescriptor(
+    "QuickJump",
+    listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false))
+  )
+  private val typengo = TestPluginDescriptor(
+    "codeflections.typengo",
+    listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false))
+  )
+
   override fun setUp() {
     super.setUp()
     SettingsSyncSettings.getInstance().syncEnabled = true
@@ -88,8 +96,9 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
   }
 
   fun `test install missing plugins`() {
-    loadPluginManagerState(incomingPluginData)
+    pluginManager.updateStateFromFileStateContent(getTestDataFileState())
     pluginManager.pushChangesToIde()
+
     val installedPluginIds = testPluginManager.installer.installedPluginIds
     // Make sure QuickJump is skipped because it is disabled
     TestCase.assertEquals(2, installedPluginIds.size)
@@ -97,11 +106,15 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
       listOf("codeflections.typengo", "color.scheme.IdeaLight")))
   }
 
+  private fun getTestDataFileState(): FileState.Modified {
+    val content = incomingPluginData.toByteArray()
+    return FileState.Modified(SettingsSyncPluginManager.FILE_SPEC, content, content.size)
+  }
 
   fun `test do not install when plugin sync is disabled`() {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.PLUGINS, false)
     try {
-      loadPluginManagerState(incomingPluginData)
+      pluginManager.updateStateFromFileStateContent(getTestDataFileState())
       pluginManager.pushChangesToIde()
       val installedPluginIds = testPluginManager.installer.installedPluginIds
       // IdeaLight is a UI plugin, it doesn't fall under PLUGINS category
@@ -116,7 +129,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
   fun `test do not install UI plugin when UI category is disabled`() {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.UI, false)
     try {
-      loadPluginManagerState(incomingPluginData)
+      pluginManager.updateStateFromFileStateContent(getTestDataFileState())
       pluginManager.pushChangesToIde()
       val installedPluginIds = testPluginManager.installer.installedPluginIds
       // IdeaLight is a UI plugin, it doesn't fall under PLUGINS category
@@ -129,16 +142,11 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
   }
 
   fun `test disable installed plugin`() {
-    // Pretend QuickJump is installed
-    val descriptor = TestPluginDescriptor(
-      "QuickJump",
-      listOf(TestPluginDependency("com.intellij.modules.platform", false))
-    )
-    testPluginManager.addPluginDescriptors(pluginManager, descriptor)
-    TestCase.assertTrue(descriptor.isEnabled)
-    loadPluginManagerState(incomingPluginData)
+    testPluginManager.addPluginDescriptors(pluginManager, quickJump)
+    pluginManager.updateStateFromFileStateContent(getTestDataFileState())
+    assertTrue(quickJump.isEnabled)
     pluginManager.pushChangesToIde()
-    TestCase.assertFalse(descriptor.isEnabled)
+    assertFalse(quickJump.isEnabled)
   }
 
   fun `test default state is empty` () {
@@ -147,11 +155,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
   }
 
   fun `test state contains installed plugin` () {
-    val descriptor = TestPluginDescriptor(
-      "QuickJump",
-      listOf(TestPluginDependency("com.intellij.modules.platform", false))
-    )
-    testPluginManager.addPluginDescriptors(pluginManager, descriptor)
+    testPluginManager.addPluginDescriptors(pluginManager, quickJump)
     assertSerializedStateEquals(
       """
       <component>
@@ -175,17 +179,9 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
 
   fun `test disable two plugins at once`() {
     // install two plugins
-    val quickJump = TestPluginDescriptor(
-      "QuickJump",
-      listOf(TestPluginDependency("com.intellij.modules.platform", false))
-    )
-    val typengo = TestPluginDescriptor(
-      "codeflections.typengo",
-      listOf(TestPluginDependency("com.intellij.modules.platform", false))
-    )
     testPluginManager.addPluginDescriptors(pluginManager, quickJump, typengo)
 
-    loadPluginManagerState(incomingPluginData)
+    pluginManager.updateStateFromFileStateContent(getTestDataFileState())
     pluginManager.state.plugins["codeflections.typengo"] = SettingsSyncPluginManager.PluginData().apply {
       this.isEnabled = false
     }
@@ -199,15 +195,15 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     TestCase.assertFalse(typengo.isEnabled)
   }
 
-  private fun loadElement(xmlData: String): Element {
-    val builder = SAXBuilder()
-    val doc = builder.build(StringReader(xmlData))
-    return doc.rootElement
-  }
+  fun `test plugin manager collects state on start`() {
+    testPluginManager.addPluginDescriptors(pluginManager, quickJump)
 
-  fun loadPluginManagerState(xmlData: String) {
-    val element = loadElement(xmlData)
+    val element = JDOMUtil.load(incomingPluginData)
     ComponentSerializationUtil.loadComponentState(pluginManager, element)
+
+    val dataForQuickJump = pluginManager.state.plugins[quickJump.idString]
+    assertNotNull("The data about ${quickJump.idString} plugin is not in the state", dataForQuickJump)
+    TestCase.assertTrue("Plugin is enabled in the IDE but disabled in the state", dataForQuickJump!!.isEnabled)
   }
 
   fun assertSerializedStateEquals(expected: String) {

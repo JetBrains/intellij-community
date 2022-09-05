@@ -1,5 +1,6 @@
 package com.intellij.settingsSync.plugins
 
+import com.intellij.configurationStore.jdomSerializer
 import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginStateListener
@@ -10,6 +11,8 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.settingsSync.FileState
 import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.config.BUNDLED_PLUGINS_ID
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager.Companion.FILE_SPEC
@@ -35,7 +38,6 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
   }
 
   override fun loadState(state: SyncPluginsState) {
-    this.state = state
   }
 
   class SyncPluginsState : BaseState() {
@@ -131,6 +133,20 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
 
     LOG.info("Installing plugins: $pluginsToInstall")
     installer.installPlugins(pluginsToInstall)
+  }
+
+  internal fun updateStateFromFileStateContent(pluginsFileState: FileState) {
+    val stateFromFile = if (pluginsFileState is FileState.Modified) {
+      val element = JDOMUtil.load(pluginsFileState.content)
+      jdomSerializer.deserialize(element, SyncPluginsState::class.java)
+    }
+    else {
+      SyncPluginsState()
+    }
+
+    synchronized(LOCK) {
+      state = stateFromFile
+    }
   }
 
   private fun isPluginEnabled(pluginId: PluginId) = !DisabledPluginsState.getDisabledIds().contains(pluginId)
