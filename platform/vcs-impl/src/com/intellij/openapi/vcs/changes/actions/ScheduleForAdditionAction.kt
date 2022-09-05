@@ -114,9 +114,16 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
 
     @JvmStatic
     fun addUnversionedFilesToVcs(project: Project,
-                                 list: LocalChangeList?,
+                                 targetChangeList: LocalChangeList?,
                                  files: List<VirtualFile>): Boolean {
-      return addUnversionedFilesToVcs(project, list, files, null, null)
+      return addUnversionedFilesToVcs(project, targetChangeList, files, null, null)
+    }
+
+    @JvmStatic
+    fun addUnversionedFilesToVcsInBackground(project: Project,
+                                             targetChangeList: LocalChangeList?,
+                                             files: List<VirtualFile>) {
+      addUnversionedFilesToVcsInBackground(project, targetChangeList, files, null, null)
     }
 
     @JvmStatic

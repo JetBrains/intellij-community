@@ -51,6 +51,11 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
    */
   public abstract void setDefaultChangeList(@NotNull LocalChangeList list, boolean automatic);
 
+  /**
+   * Add unversioned files into VCS under modal progress dialog
+   *
+   * @see com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
+   */
   public abstract void addUnversionedFiles(@Nullable LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles);
 
   /**
