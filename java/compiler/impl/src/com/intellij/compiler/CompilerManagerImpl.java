@@ -28,13 +28,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -77,12 +75,6 @@ public class CompilerManagerImpl extends CompilerManager {
   private final Set<ModuleType<?>> myValidationDisabledModuleTypes = new HashSet<>();
   private final Set<LocalFileSystem.WatchRequest> myWatchRoots;
   private volatile ExternalJavacManager myExternalJavacManager;
-
-  @NonInjectable
-  @Deprecated(forRemoval = true)
-  public CompilerManagerImpl(@NotNull Project project, @NotNull MessageBus messageBus) {
-    this(project);
-  }
 
   public CompilerManagerImpl(@NotNull Project project) {
     myProject = project;

@@ -258,14 +258,6 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
   }
 
   /**
-   * @deprecated use {@link #addPhysicalAnnotationIfAbsent(String, PsiNameValuePair[], PsiAnnotationOwner)}
-   */
-  @Deprecated(forRemoval = true)
-  public static PsiAnnotation addPhysicalAnnotation(String fqn, PsiNameValuePair[] pairs, PsiModifierList modifierList) {
-    return addPhysicalAnnotationTo(fqn, pairs, modifierList);
-  }
-
-  /**
    * Add new physical (non-external) annotation to the annotation owner. Annotation will not be added if it already exists
    * on the same annotation owner (externally or explicitly) or if there's a {@link PsiTypeElement} that follows the owner,
    * and its innermost component type has the annotation with the same fully-qualified name.

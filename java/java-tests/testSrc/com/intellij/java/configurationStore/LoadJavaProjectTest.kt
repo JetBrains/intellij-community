@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.TemporaryDirectory
@@ -39,10 +40,10 @@ class LoadJavaProjectTest {
       runReadAction {
         assertThat(LanguageLevelUtil.getEffectiveLanguageLevel(bar)).isEqualTo(LanguageLevel.JDK_11)
         assertThat(LanguageLevelUtil.getCustomLanguageLevel(bar)).isNull()
-        assertThat(LanguageLevelModuleExtensionImpl.getInstance(bar).languageLevel).isNull()
+        assertThat(ModuleRootManager.getInstance(bar).getModuleExtension(LanguageLevelModuleExtensionImpl::class.java).languageLevel).isNull()
         assertThat(LanguageLevelUtil.getEffectiveLanguageLevel(foo)).isEqualTo(LanguageLevel.JDK_1_8)
         assertThat(LanguageLevelUtil.getCustomLanguageLevel(foo)).isEqualTo(LanguageLevel.JDK_1_8)
-        assertThat(LanguageLevelModuleExtensionImpl.getInstance(foo).languageLevel).isEqualTo(LanguageLevel.JDK_1_8)
+        assertThat(ModuleRootManager.getInstance(foo).getModuleExtension(LanguageLevelModuleExtensionImpl::class.java).languageLevel).isEqualTo(LanguageLevel.JDK_1_8)
       }
     }
   }
