@@ -209,6 +209,11 @@ data class IDETestContext(
     paths.logsDir.toFile().deleteRecursively()
   }
 
+  fun wipeFusDir() = apply {
+    logOutput("Cleaning FUS dir for $this at $paths")
+    paths.systemDir.resolve("event-log-data/logs/FUS").toFile().deleteRecursively()
+  }
+
   fun wipeReportDir() = apply {
     logOutput("Cleaning report dir for $this at $paths")
     Files.walk(paths.reportsDir)
