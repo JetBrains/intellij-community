@@ -3,7 +3,7 @@ mod tests_util;
 
 mod tests {
     use std::process::ExitStatus;
-    use crate::tests_util::{IntellijMainDumpedLaunchParameters, LauncherLocation, prepare_test_env, run_launcher};
+    use crate::tests_util::{IntellijMainDumpedLaunchParameters, LauncherLocation, prepare_test_env, run_launcher, TEST_OUTPUT_FILE_NAME};
     use rstest::*;
 
     #[cfg(any(target_os = "macos", target_os = "linux"))]
@@ -16,7 +16,7 @@ mod tests {
     #[case::plugins_bin(&LauncherLocation::PluginsBin)]
     fn correct_launcher_startup_test(#[case] layout_kind: &LauncherLocation) {
         let test = prepare_test_env(layout_kind);
-        let status = &run_launcher(&test).exit_status;
+        let status = &run_launcher(&test, &[]).exit_status;
 
         let exit_status_string = exit_status_to_string(status);
         println!("Launcher's exit status:\n{exit_status_string}");
@@ -57,13 +57,18 @@ mod tests {
     #[case::main_bin(&LauncherLocation::MainBin)]
     #[case::plugins_bin(&LauncherLocation::PluginsBin)]
     fn arguments_test(#[case] layout_kind: &LauncherLocation) {
-        let dump = run_launcher_and_get_dump(layout_kind);
-        let first_arg = &dump.cmdArguments[1];
+        let test = prepare_test_env(layout_kind);
 
-        assert_eq!(
-            first_arg,
-            "--output"
-        );
+        let args = &["arguments-test-123"];
+        let result = run_launcher(&test, args);
+        assert!(&result.exit_status.success());
+
+        let dump = &result.dump.expect("Launcher exited successfully, but no dump received");
+
+        assert_eq!(&dump.cmdArguments[0], test.launcher_path.to_string_lossy().as_ref());
+        assert_eq!(&dump.cmdArguments[1], "--output");
+        assert_eq!(&dump.cmdArguments[2], test.test_root_dir.join(TEST_OUTPUT_FILE_NAME).to_string_lossy().as_ref());
+        assert_eq!(&dump.cmdArguments[3], args[0]);
     }
 
     #[cfg(target_os = "windows")]
@@ -89,7 +94,7 @@ mod tests {
 
     fn run_launcher_and_get_dump(layout_kind: &LauncherLocation) -> IntellijMainDumpedLaunchParameters {
         let test = prepare_test_env(layout_kind);
-        let result = run_launcher(&test);
+        let result = run_launcher(&test, &[]);
         assert!(result.exit_status.success(), "Launcher didn't exit successfully");
         result.dump.expect("Launcher exited successfully, but there is no output")
     }

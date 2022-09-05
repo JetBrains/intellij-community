@@ -417,8 +417,8 @@ pub struct IntellijMainDumpedLaunchParameters {
     pub systemProperties: HashMap<String, String>
 }
 
-pub fn run_launcher(test: &TestEnvironment) -> LauncherRunResult {
-    let result = match run_launcher_impl(test) {
+pub fn run_launcher(test: &TestEnvironment, args: &[&str]) -> LauncherRunResult {
+    let result = match run_launcher_impl(test, args) {
         Ok(x) => x,
         Err(e) => {
             panic!("Failed to get launcher run result: {e:?}")
@@ -428,12 +428,17 @@ pub fn run_launcher(test: &TestEnvironment) -> LauncherRunResult {
     result
 }
 
-fn run_launcher_impl(test: &TestEnvironment) -> Result<LauncherRunResult> {
-    let output_file = test.test_root_dir.join("output.json");
+pub const TEST_OUTPUT_FILE_NAME: &str = "output.json";
+
+fn run_launcher_impl(test: &TestEnvironment, args: &[&str]) -> Result<LauncherRunResult> {
+    let output_file = test.test_root_dir.join(TEST_OUTPUT_FILE_NAME);
+    let output_args = ["--output", &output_file.to_string_lossy()];
+    let full_args = &mut output_args.to_vec();
+    full_args.append(&mut args.to_vec());
 
     let mut launcher_process = Command::new(&test.launcher_path)
         .current_dir(&test.test_root_dir)
-        .args(["--output", &output_file.to_string_lossy()])
+        .args(full_args)
         .env(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")
         .spawn()
         .context("Failed to spawn launcher process")?;
