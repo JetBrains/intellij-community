@@ -248,37 +248,6 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  @Deprecated("Use overloaded collapsibleGroup(...) instead")
-  override fun collapsibleGroup(title: String,
-                                indent: Boolean,
-                                topGroupGap: Boolean?,
-                                bottomGroupGap: Boolean?,
-                                init: Panel.() -> Unit): CollapsiblePanel {
-    val row = row { }
-    val result = CollapsiblePanelImpl(dialogPanelConfig, row, title) {
-      if (indent) {
-        indent(init)
-      }
-      else {
-        init()
-      }
-    }
-
-    result.expanded = false
-    row.cell(result)
-
-    setTopGroupGap(row, topGroupGap)
-    setBottomGroupGap(row, bottomGroupGap)
-
-    return result
-  }
-
-  @Deprecated("Use buttonsGroup(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun buttonGroup(title: String?, indent: Boolean, init: Panel.() -> Unit) {
-    buttonsGroup(title, indent, init)
-  }
-
   @Deprecated("Use buttonsGroup(...) instead")
   @ApiStatus.ScheduledForRemoval
   override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, title: String?, indent: Boolean, init: Panel.() -> Unit) {

@@ -24,10 +24,6 @@ fun <T, C : ComboBox<T>> Cell<C>.bindItem(prop: MutableProperty<T?>): Cell<C> {
               prop)
 }
 
-@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval
-fun <T, C : ComboBox<T>> Cell<C>.bindItem(property: GraphProperty<T>) = bindItem(property)
-
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(property: ObservableMutableProperty<T>): Cell<C> {
   installValidationRequestor(property)
   return applyToComponent { bind(property) }

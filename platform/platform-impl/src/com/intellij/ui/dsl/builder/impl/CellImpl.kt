@@ -17,7 +17,6 @@ import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.awt.ItemSelectable
 import javax.swing.JComponent
@@ -323,12 +322,4 @@ internal class CellImpl<T : JComponent>(
     private fun DialogValidation.forComponentIfNeeded(component: JComponent) =
       transformResult { if (this.component == null) forComponent(component) else this }
   }
-}
-
-private const val HTML = "<html>"
-
-@Deprecated("Not needed in the future")
-@ApiStatus.ScheduledForRemoval
-internal fun removeHtml(text: @Nls String): @Nls String {
-  return if (text.startsWith(HTML, ignoreCase = true)) text.substring(HTML.length) else text
 }

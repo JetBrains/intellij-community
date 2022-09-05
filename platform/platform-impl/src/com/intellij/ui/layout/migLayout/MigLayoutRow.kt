@@ -501,10 +501,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     gapAfter = "${spacing.largeVerticalGap}px!"
   }
 
-  override fun createRow(label: String?): Row {
-    return createChildRow(label = label?.let { Label(it) })
-  }
-
   override fun createNoteOrCommentRow(component: JComponent): Row {
     val cc = CC()
     cc.vertical.gapBefore = gapToBoundSize(if (subRows == null) spacing.verticalGap else spacing.largeVerticalGap, false)
@@ -575,12 +571,6 @@ private class CellBuilderImpl<T : JComponent>(
 
   override fun comment(text: String, maxLineLength: Int, forComponent: Boolean): CellBuilder<T> {
     row.addCommentRow(text, maxLineLength, forComponent, viewComponent)
-    return this
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override fun commentComponent(component: JComponent, forComponent: Boolean): CellBuilder<T> {
-    row.addCommentRow(component, forComponent, viewComponent)
     return this
   }
 

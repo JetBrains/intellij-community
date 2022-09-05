@@ -90,11 +90,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  override fun rowComment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int): Row {
-    this.rowComment = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
-    return this
-  }
-
   override fun rowComment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int, action: HyperlinkEventAction): RowImpl {
     this.rowComment = createComment(comment, maxLineLength, action)
     return this
@@ -203,11 +198,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
       isOpaque = false
     }
   }
-
-  override fun radioButton(@NlsContexts.RadioButton text: String): Cell<JBRadioButton> {
-    return radioButton(text, null)
-  }
-
+  
   override fun radioButton(text: String, value: Any?): Cell<JBRadioButton> {
     val result = cell(JBRadioButton(text)).applyToComponent {
       isOpaque = false
@@ -281,10 +272,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(Label(text))
   }
 
-  override fun labelHtml(@NlsContexts.Label text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
-    return text(removeHtml(text), MAX_LINE_LENGTH_WORD_WRAP, action)
-  }
-
   override fun text(@NlsContexts.Label text: String, maxLineLength: Int, action: HyperlinkEventAction): Cell<JEditorPane> {
     val dslLabel = DslLabel(DslLabelType.LABEL)
     dslLabel.action = action
@@ -292,21 +279,9 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     dslLabel.text = text
     return cell(dslLabel)
   }
-
-  override fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int): Cell<JLabel> {
-    return cell(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength, true))
-  }
-
+  
   override fun comment(comment: String, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<JEditorPane> {
     return cell(createComment(comment, maxLineLength, action))
-  }
-
-  override fun commentNoWrap(text: String): Cell<JLabel> {
-    return cell(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
-  }
-
-  override fun commentHtml(text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
-    return comment(text, MAX_LINE_LENGTH_WORD_WRAP, action)
   }
 
   override fun link(text: String, action: (ActionEvent) -> Unit): CellImpl<ActionLink> {
