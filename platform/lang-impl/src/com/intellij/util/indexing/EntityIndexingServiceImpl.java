@@ -18,7 +18,6 @@ import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIterato
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
@@ -84,9 +83,8 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
       if (change == RootsChangeRescanningInfo.NO_RESCAN_NEEDED || change == RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED) {
         continue;
       }
-      if (change instanceof ProjectRootsChangeListener.WorkspaceEventRescanningInfo) {
-        builders.addAll(getBuildersOnWorkspaceChange(project,
-                                                     ((ProjectRootsChangeListener.WorkspaceEventRescanningInfo)change).getEvents()));
+      if (change instanceof WorkspaceEventRescanningInfo) {
+        builders.addAll(getBuildersOnWorkspaceChange(project, ((WorkspaceEventRescanningInfo)change).events));
       }
       else if (change instanceof BuildableRootsChangeRescanningInfo) {
         builders.addAll(getBuildersOnBuildableChangeInfo((BuildableRootsChangeRescanningInfo)change));
@@ -245,21 +243,19 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
 
   @Override
   public @NotNull RootsChangeRescanningInfo createWorkspaceChangedEventInfo(@NotNull List<EntityChange<?>> changes) {
-    return new ProjectRootsChangeListener.WorkspaceEventRescanningInfo(changes, true);
+    return new WorkspaceEventRescanningInfo(changes, true);
   }
 
   @Override
   public @NotNull RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(@NotNull List<WorkspaceEntity> entities) {
-    return new ProjectRootsChangeListener.WorkspaceEventRescanningInfo(
-      ContainerUtil.map(entities, entity -> new EntityChange.Added<>(entity)), false);
+    return new WorkspaceEventRescanningInfo(ContainerUtil.map(entities, entity -> new EntityChange.Added<>(entity)), false);
   }
 
   @Override
   public boolean isFromWorkspaceOnly(@NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) {
     var isFromWorkspaceOnly = ThreeState.UNSURE;
     for (RootsChangeRescanningInfo info : indexingInfos) {
-      if (info instanceof ProjectRootsChangeListener.WorkspaceEventRescanningInfo &&
-          ((ProjectRootsChangeListener.WorkspaceEventRescanningInfo)info).isFromWorkspaceModelEvent()) {
+      if (info instanceof WorkspaceEventRescanningInfo && ((WorkspaceEventRescanningInfo)info).isFromWorkspaceModelEvent) {
         if (isFromWorkspaceOnly == ThreeState.UNSURE) {
           isFromWorkspaceOnly = ThreeState.YES;
         }
@@ -270,5 +266,16 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
       }
     }
     return isFromWorkspaceOnly == ThreeState.YES;
+  }
+
+
+  private static class WorkspaceEventRescanningInfo implements RootsChangeRescanningInfo {
+    private final List<EntityChange<?>> events;
+    private final boolean isFromWorkspaceModelEvent;
+
+    private WorkspaceEventRescanningInfo(List<EntityChange<?>> events, boolean isFromWorkspaceModelEvent) {
+      this.events = events;
+      this.isFromWorkspaceModelEvent = isFromWorkspaceModelEvent;
+    }
   }
 }

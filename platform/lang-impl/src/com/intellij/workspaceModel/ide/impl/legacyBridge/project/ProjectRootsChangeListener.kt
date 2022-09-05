@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.util.indexing.EntityIndexingServiceEx
 import com.intellij.util.indexing.roots.IndexableEntityProvider
@@ -102,7 +101,4 @@ internal class ProjectRootsChangeListener(private val project: Project) {
       return ModuleDependencyIndex.getInstance(project).hasDependencyOn(library.persistentId)
     }
   }
-
-  class WorkspaceEventRescanningInfo(val events: List<EntityChange<*>>,
-                                     val isFromWorkspaceModelEvent: Boolean) : RootsChangeRescanningInfo
 }
