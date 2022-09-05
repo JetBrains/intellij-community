@@ -101,11 +101,11 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<KtModul
         return KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker
     }
 
-    override fun outOfBlockModificationTracker(element: PsiElement, module: KtModule): ModificationTracker {
+    override fun outOfBlockModificationTracker(element: PsiElement): ModificationTracker {
         return KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker
     }
 
-    override fun librariesTracker(element: PsiElement, module: KtModule): ModificationTracker {
+    override fun librariesTracker(element: PsiElement): ModificationTracker {
         return LibraryModificationTracker.getInstance(project)
     }
 
@@ -120,15 +120,15 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<KtModul
         )
 
 
-    override fun createInstanceOfLightClass(classOrObject: KtClassOrObject, module: KtModule): KtLightClass? {
+    override fun createInstanceOfLightClass(classOrObject: KtClassOrObject): KtLightClass? {
         return LightClassGenerationSupport.getInstance(project).createUltraLightClass(classOrObject)
     }
 
-    override fun createInstanceOfDecompiledLightClass(classOrObject: KtClassOrObject, module: KtModule): KtLightClass? {
+    override fun createInstanceOfDecompiledLightClass(classOrObject: KtClassOrObject): KtLightClass? {
         return getLightClassForDecompiledClassOrObject(classOrObject, project)
     }
 
-    override fun declarationLocation(file: KtFile, module: KtModule): DeclarationLocation? {
+    override fun declarationLocation(file: KtFile): DeclarationLocation? {
         //return when (module) {
         //    is KtSourceModule -> DeclarationLocation.ProjectSources
         //    is KtLibraryModule -> DeclarationLocation.LibraryClasses
@@ -189,12 +189,8 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<KtModul
         }
     }
 
-    private fun findPlatformWrapper(fqName: FqName, scope: GlobalSearchScope): PsiClass? {
-        return platformMutabilityWrapper(fqName) {
-            JavaPsiFacade.getInstance(
-                project
-            ).findClass(it, scope)
-        }
+    private fun findPlatformWrapper(fqName: FqName, scope: GlobalSearchScope): PsiClass? = platformMutabilityWrapper(fqName) {
+        JavaPsiFacade.getInstance(project).findClass(it, scope)
     }
 
     override fun findFilesForFacade(facadeFqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> = runReadAction {
@@ -204,15 +200,13 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<KtModul
     override fun getFakeLightClass(classOrObject: KtClassOrObject): KtFakeLightClass = KtDescriptorBasedFakeLightClass(classOrObject)
     override val KtModule.contentSearchScope: GlobalSearchScope get() = this.contentScope
 
-    override fun createInstanceOfLightFacade(facadeFqName: FqName, files: List<KtFile>, module: KtModule): KtLightClassForFacade {
+    override fun createInstanceOfLightFacade(facadeFqName: FqName, files: List<KtFile>): KtLightClassForFacade {
         return LightClassGenerationSupport.getInstance(project).createUltraLightClassForFacade(facadeFqName, files)
     }
 
-    override fun createInstanceOfDecompiledLightFacade(
-        facadeFqName: FqName,
-        files: List<KtFile>,
-        module: KtModule,
-    ): KtLightClassForFacade? = DecompiledLightClassesFactory.createLightFacadeForDecompiledKotlinFile(project, facadeFqName, files)
+    override fun createInstanceOfDecompiledLightFacade(facadeFqName: FqName, files: List<KtFile>): KtLightClassForFacade? {
+        return DecompiledLightClassesFactory.createLightFacadeForDecompiledKotlinFile(project, facadeFqName, files)
+    }
 }
 
 // NOTE: this is a hacky solution to the following problem:
