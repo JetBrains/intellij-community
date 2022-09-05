@@ -28,11 +28,8 @@ public final class DuplicateLinesAction extends EditorAction {
         }
         VisualPosition rangeStart = editor.offsetToVisualPosition(Math.min(selStart, selEnd));
         VisualPosition rangeEnd = editor.offsetToVisualPosition(Math.max(selStart, selEnd));
-        TextRange copiedRange =
-          DuplicateAction.duplicateLinesRange(editor, rangeStart, rangeEnd);
-        if (copiedRange != null) {
-          editor.getSelectionModel().setSelection(copiedRange.getStartOffset(), copiedRange.getEndOffset());
-        }
+        TextRange copiedRange = DuplicateAction.duplicateLinesRange(editor, rangeStart, rangeEnd);
+        editor.getSelectionModel().setSelection(copiedRange.getStartOffset(), copiedRange.getEndOffset());
       }
       else {
         VisualPosition caretPos = editor.getCaretModel().getVisualPosition();

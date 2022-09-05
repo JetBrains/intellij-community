@@ -54,9 +54,6 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
           caret.moveToVisualPosition(caret.getSelectionStartPosition());
         }
       });
-      if (!selectionModel.hasSelection(true)) {
-        return;
-      }
     }
 
     CopyPasteOptions copyPasteOptions = new CopyPasteOptions(isEntireLineFromEmptySelection);

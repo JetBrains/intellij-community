@@ -102,15 +102,15 @@ public class JsonCopyPasteTest extends CodeInsightFixtureTestCase {
     doTestFromTextToJson("    \"react-dom\": \"^16.5.2\"\n", "{\n" +
                              "  \"name\": \"untitled\",\n" +
                              "  \"version\": \"1.0.0\",\n" +
-                             "  \"dependencies\": {<caret>\n" +
-                             "    \"react\": \"^16.5.2\",\n" +
+                             "  \"dependencies\": {\n" +
+                             "    \"react\"<caret>: \"^16.5.2\",\n" +
                              "    \"react-dom\": \"^16.5.2\"\n" +
                              "  }\n" +
                              "}", "{\n" +
                                   "  \"name\": \"untitled\",\n" +
                                   "  \"version\": \"1.0.0\",\n" +
-                                  "  \"dependencies\": {    \"react-dom\": \"^16.5.2\",\n" +
-                                  "\n" +
+                                  "  \"dependencies\": {\n" +
+                                  "    \"react-dom\": \"^16.5.2\",\n" +
                                   "    \"react\": \"^16.5.2\",\n" +
                                   "    \"react-dom\": \"^16.5.2\"\n" +
                                   "  }\n" +

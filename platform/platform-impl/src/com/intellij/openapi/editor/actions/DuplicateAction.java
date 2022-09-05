@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class DuplicateAction extends EditorAction {
   public DuplicateAction() {
@@ -50,14 +49,10 @@ public class DuplicateAction extends EditorAction {
     }
   }
 
-  @Nullable
-  static TextRange duplicateLinesRange(@NotNull Editor editor,
-                                       @NotNull VisualPosition rangeStart,
-                                       @NotNull VisualPosition rangeEnd) {
+  static @NotNull TextRange duplicateLinesRange(@NotNull Editor editor,
+                                                @NotNull VisualPosition rangeStart,
+                                                @NotNull VisualPosition rangeEnd) {
     TextRange range = EditorUtil.calcSurroundingTextRange(editor, rangeStart, rangeEnd);
-    if (range.isEmpty()) {
-      return null;
-    }
     String s = editor.getDocument().getText(range);
     int offset = editor.getCaretModel().getOffset();
     int newOffset = offset + range.getLength();

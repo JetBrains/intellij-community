@@ -219,26 +219,26 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
 
   public void testCopyPasteFromEmptySelection() {
     initText("<caret>one two \n" +
-             "three<caret> four\n");
+             "three<caret> four");
     executeAction("EditorCopy");
     executeAction("EditorLineEnd");
     executeAction("EditorPaste");
     checkResultByText("one two \n" +
                       "one two<caret> \n" +
                       "three four\n" +
-                      "three four<caret>\n");
+                      "three four<caret>");
   }
 
   public void testCopyPasteFromEmptySelectionMultiCaretOnEachLine() {
     initText("<caret>one <caret>two \n" +
-             "three<caret> four<caret>\n");
+             "three<caret> four<caret>");
     executeAction("EditorCopy");
     executeAction("EditorLineEnd");
     executeAction("EditorPaste");
     checkResultByText("one two \n" +
                       "one two<caret> \n" +
                       "three four\n" +
-                      "three four<caret>\n");
+                      "three four<caret>");
   }
 
   public void testCutAndPaste() {

@@ -58,10 +58,11 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     int[] endOffsets = new int[carets.size()];
     for (int i = 0; i < carets.size(); i++) {
       buf.append(separator);
-      String caretSelectedText = carets.get(i).getSelectedText();
+      String caretSelectedText = StringUtil.notNullize(carets.get(i).getSelectedText());
       startOffsets[i] = buf.length();
-      if (caretSelectedText != null) {
-        buf.append(caretSelectedText);
+      buf.append(caretSelectedText);
+      if (options.isEntireLineFromEmptySelection() && !caretSelectedText.endsWith("\n")) {
+        buf.append("\n");  // make sure the last line with no '\n' is still copied as a real line
       }
       endOffsets[i] = buf.length();
       separator = "\n";
@@ -130,6 +131,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
   public static @NotNull TextRange insertEntireLineAboveCaret(@NotNull Editor editor, @NotNull String text) {
     int caretOffset = editor.getCaretModel().getOffset();
     int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, caretOffset);
+    if (!text.endsWith("\n")) text += "\n";
     editor.getDocument().insertString(lineStartOffset, text);
     EditorModificationUtilEx.scrollToCaret(editor);
     return TextRange.from(lineStartOffset, text.length());
