@@ -87,7 +87,7 @@ data class VMOptions(
     return VMOptionsDiff(originalLines = this.data, actualLines = loadedOptions)
   }
 
-  fun writeJavaArgsFile(theFile: File) {
+  fun writeJavaArgsFile(theFile: Path) {
     writeJvmArgsFile(theFile, this.data)
   }
 
