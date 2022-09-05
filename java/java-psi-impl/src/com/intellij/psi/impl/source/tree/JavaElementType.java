@@ -171,7 +171,7 @@ public interface JavaElementType {
     }
 
     @Override
-    public FlyweightCapableTreeStructure<LighterASTNode> parseContents(final LighterLazyParseableNode chameleon) {
+    public @NotNull FlyweightCapableTreeStructure<LighterASTNode> parseContents(final @NotNull LighterLazyParseableNode chameleon) {
       final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
       JavaParser.INSTANCE.getStatementParser().parseCodeBlockDeep(builder, true);
       return builder.getLightTree();
