@@ -234,10 +234,6 @@ internal class CellImpl<T : JComponent>(
     val origin = component.origin
     dialogPanelConfig.validationsOnApply.getOrPut(origin) { SmartList() }
       .addAll(validations.map { it.forComponentIfNeeded(origin) })
-
-    // Fallback in case if no validation requestors is defined
-    guessAndInstallValidationRequestor()
-
     return this
   }
 
