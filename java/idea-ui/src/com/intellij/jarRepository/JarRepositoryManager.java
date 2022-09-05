@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.repository.RemoteRepository;
@@ -86,6 +87,9 @@ public final class JarRepositoryManager {
   static final ExecutorService DOWNLOADER_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor("RemoteLibraryDownloader",
                                                                                                           ProcessIOExecutorService.INSTANCE,
                                                                                                           4);
+
+  // used in integration tests
+  private static final boolean DO_REFRESH = SystemProperties.getBooleanProperty("idea.do.refresh.after.jps.library.downloaded", true);
 
   public final static NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Repository");
 
@@ -578,14 +582,16 @@ public final class JarRepositoryManager {
           }
         }
 
-        // search for jar file first otherwise lib root won't be found!
-        manager.refreshAndFindFileByUrl(VfsUtilCore.pathToUrl(toFile.getPath()));
-        final String url = VfsUtil.getUrlForLibraryRoot(toFile);
-        final VirtualFile file = manager.refreshAndFindFileByUrl(url);
-        if (file != null) {
-          OrderRootType rootType = ourClassifierToRootType.getOrDefault(each.getClassifier(), OrderRootType.CLASSES);
+        if (DO_REFRESH) {
+          // search for jar file first otherwise lib root won't be found!
+          manager.refreshAndFindFileByUrl(VfsUtilCore.pathToUrl(toFile.getPath()));
+          final String url = VfsUtil.getUrlForLibraryRoot(toFile);
+          final VirtualFile file = manager.refreshAndFindFileByUrl(url);
+          if (file != null) {
+            OrderRootType rootType = ourClassifierToRootType.getOrDefault(each.getClassifier(), OrderRootType.CLASSES);
 
-          result.add(new OrderRoot(file, rootType));
+            result.add(new OrderRoot(file, rootType));
+          }
         }
       }
       catch (IOException e) {

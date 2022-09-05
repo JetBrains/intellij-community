@@ -177,6 +177,10 @@ data class IDETestContext(
     addSystemProperty("idea.skip.indices.initialization", value)
   }
 
+  fun doRefreshAfterJpsLibraryDownloaded(value: Boolean = true) = addVMOptionsPatch {
+    addSystemProperty("idea.do.refresh.after.jps.library.downloaded", value)
+  }
+
   fun collectImportProjectPerfMetrics() = addVMOptionsPatch {
     addSystemProperty("idea.collect.project.import.performance", true)
   }
