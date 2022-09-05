@@ -21,8 +21,6 @@ import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,16 +37,6 @@ public class ChangeInfoImpl implements ChangeInfo {
     myOffset = offset;
     myOldLength = oldLength;
     myNewLength = newChild != null ? newChild.getTextLength() : 0;
-  }
-
-  /**
-   * @deprecated for API compatibility with Kotlin plugin
-   */
-  @Nullable
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public TreeElement getOldChild() {
-    return (TreeElement)myOldChild;
   }
 
   public ASTNode getOldChildNode() {

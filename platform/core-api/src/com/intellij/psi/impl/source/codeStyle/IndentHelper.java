@@ -15,15 +15,6 @@ public abstract class IndentHelper {
   }
 
   /**
-   * @deprecated Use {@link #getIndent(PsiFile, ASTNode)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public final int getIndent(Project project, FileType fileType, ASTNode element) {
-    return getIndent(getFile(element), element);
-  }
-
-  /**
    * @deprecated Use {@link #getIndent(PsiFile, ASTNode, boolean)}
    */
   @Deprecated

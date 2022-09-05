@@ -5,7 +5,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Condition;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class ModalityUiUtil {
@@ -58,25 +57,5 @@ public final class ModalityUiUtil {
     else {
       app.invokeLater(runnable, modalityState, expired);
     }
-  }
-
-  /**
-   * @deprecated Use ModalityUiUtil.invokeLaterIfNeeded(ModalityState, Runnable) instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static void invokeLaterIfNeeded(@NotNull Runnable runnable,
-                                         @NotNull ModalityState modalityState) {
-    invokeLaterIfNeeded(modalityState,runnable);
-  }
-
-  /**
-   * @deprecated Use ModalityUiUtil.invokeLaterIfNeeded(ModalityState, Condition<?>, Runnable) instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState,
-                                         @NotNull Condition<?> expired) {
-    invokeLaterIfNeeded(modalityState, expired, runnable);
   }
 }
