@@ -75,22 +75,6 @@ data class ProjectModule @JvmOverloads constructor(
         buildFile: VirtualFile,
         buildSystemType: BuildSystemType,
         moduleType: ProjectModuleType,
-        navigatableDependency: (groupId: String, artifactId: String, version: PackageVersion) -> Navigatable?
-    ) : this(name, nativeModule, parent, buildFile, buildFile.parent.toNioPath().toFile(), buildSystemType, moduleType)
-
-    @Suppress("UNUSED_PARAMETER")
-    @Deprecated(
-        "Use main constructor",
-        ReplaceWith("ProjectModule(name, nativeModule, parent, buildFile, projectDir, buildSystemType, moduleType)")
-    )
-    @ScheduledForRemoval
-    constructor(
-        name: String,
-        nativeModule: Module,
-        parent: ProjectModule,
-        buildFile: VirtualFile,
-        buildSystemType: BuildSystemType,
-        moduleType: ProjectModuleType,
         navigatableDependency: (groupId: String, artifactId: String, version: PackageVersion) -> Navigatable?,
         availableScopes: List<String>
     ) : this(name, nativeModule, parent, buildFile, buildFile.parent.toNioPath().toFile(), buildSystemType, moduleType, availableScopes)
