@@ -461,11 +461,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
           paintOutlineBorder(g2, r.width, r.height, myArc, true, hasFocus, Outline.valueOf(op.toString()));
         }
         else {
-          if (hasFocus && !isBorderless(c)) {
-            paintOutlineBorder(g2, r.width, r.height, myArc, true, true, Outline.focus);
+          if (!isBorderless(c)) {
+            if (hasFocus) {
+              paintOutlineBorder(g2, r.width, r.height, myArc, true, true, Outline.focus);
+            }
+            paintBorder(c, g2, bw, r, lw, myArc);
           }
-
-          paintBorder(c, g2, isBorderless(c) ? lw : bw, r, lw, myArc);
         }
       }
       else {

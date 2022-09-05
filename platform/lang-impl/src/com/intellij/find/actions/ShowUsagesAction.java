@@ -1000,6 +1000,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     @NotNull Consumer<? super SearchScope> scopeConsumer
   ) {
     ScopeChooserCombo scopeChooserCombo = new ScopeChooserCombo();
+    scopeChooserCombo.getComboBox().putClientProperty("JComboBox.isBorderless", Boolean.TRUE);
     scopeChooserCombo
       .initialize(project, false, false, initialScope.getDisplayName(), null)
       .onSuccess(__ -> {
@@ -1015,7 +1016,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
           }
           scopeConsumer.accept(scope);
         });
-        scopeComboBox.putClientProperty("JComboBox.isBorderless", Boolean.TRUE);
       });
     scopeChooserCombo.setButtonVisible(false);
     scopeChooserCombo.setOpaque(false);
