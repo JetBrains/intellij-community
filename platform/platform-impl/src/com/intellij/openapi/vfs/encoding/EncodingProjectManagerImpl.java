@@ -82,8 +82,11 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   static final class EncodingProjectManagerStartUpActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
+      // do not try to init on EDT due to VFS usage in loadState
+      EncodingProjectManagerImpl service = (EncodingProjectManagerImpl)getInstance(project);
+
       ApplicationManager.getApplication().invokeLater(() -> {
-        ((EncodingProjectManagerImpl)getInstance(project)).reloadAlreadyLoadedDocuments();
+        service.reloadAlreadyLoadedDocuments();
       }, project.getDisposed());
     }
   }
