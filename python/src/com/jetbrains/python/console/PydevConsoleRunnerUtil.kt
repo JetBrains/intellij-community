@@ -5,10 +5,7 @@ package com.jetbrains.python.console
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.value.TargetEnvironmentFunction
-import com.intellij.execution.target.value.TraceableTargetEnvironmentFunction
-import com.intellij.execution.target.value.constant
-import com.intellij.execution.target.value.joinToStringFunction
+import com.intellij.execution.target.value.*
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -31,6 +28,7 @@ import com.jetbrains.python.run.toStringLiteral
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import java.nio.file.Path
 import java.util.function.Function
 
 fun getPathMapper(project: Project,
@@ -124,7 +122,7 @@ fun constructPyPathAndWorkingDirCommand(pythonPath: MutableCollection<Function<T
                                         workingDir: String?,
                                         command: String): TargetEnvironmentFunction<String> {
   if (workingDir != null) {
-    pythonPath.add(constant(workingDir))
+    pythonPath.add(targetPath(Path.of(workingDir)))
   }
   val path = pythonPath.joinToStringFunction(separator = ", ", transform = String::toStringLiteral)
   return ReplaceSubstringFunction(command, PydevConsoleRunnerImpl.WORKING_DIR_AND_PYTHON_PATHS, path)
