@@ -36,6 +36,9 @@ anyhow = { version = "1.0.62", features = ["std", "backtrace"] }
 cargo-deny = "0.12.2" # checks licenses / vulns
 cargo-about = "0.5.1" # generates license report
 
+[dev-dependencies]
+rstest = "0.15.0"
+
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.9.3"
 

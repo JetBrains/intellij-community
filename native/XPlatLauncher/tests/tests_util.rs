@@ -10,18 +10,18 @@ use std::process::{Command, ExitStatus, Output};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Once;
 use std::time::SystemTime;
-use utils::get_path_from_env_var;
+use utils::{get_path_from_env_var, PathExt};
 
 static INIT: Once = Once::new();
 static mut SHARED: Option<TestEnvironmentShared> = None;
 
 pub struct TestEnvironment {
     pub launcher_path: PathBuf,
-    pub working_dir: PathBuf
+    pub test_root_dir: PathBuf
 }
 
-pub fn prepare_test_env() -> TestEnvironment {
-    let result = match prepare_test_env_impl() {
+pub fn prepare_test_env(layout_kind: &LayoutKind) -> TestEnvironment {
+    let result = match prepare_test_env_impl(layout_kind) {
         Ok(x) => x,
         Err(e) => {
             panic!("Failed to prepare test environment: {e:?}")
@@ -31,7 +31,7 @@ pub fn prepare_test_env() -> TestEnvironment {
     result
 }
 
-fn prepare_test_env_impl() -> Result<TestEnvironment> {
+fn prepare_test_env_impl(layout_kind: &LayoutKind) -> Result<TestEnvironment> {
     INIT.call_once(|| {
         let shared = init_test_environment_once().expect("Failed to init shared test environment");
         unsafe {
@@ -47,7 +47,8 @@ fn prepare_test_env_impl() -> Result<TestEnvironment> {
 
     let test_number = shared.test_counter.fetch_add(1, Ordering::SeqCst);
     // create tmp dir
-    let dir_name = shared.start_unix_timestamp_nanos + u128::from(test_number);
+    let timestamp = shared.start_unix_timestamp_nanos;
+    let dir_name = format!("{timestamp}_{test_number}");
     let test_dir = env::temp_dir().join(dir_name.to_string());
     create_dir(&test_dir).context(format!("Failed to create temp directory: {test_dir:?}"))?;
 
@@ -59,14 +60,14 @@ fn prepare_test_env_impl() -> Result<TestEnvironment> {
         &product_info_path,
     )?;
 
-    let launcher_dir = resolve_launcher_dir(&test_dir);
+    let launcher_dir = resolve_launcher_dir(&test_dir, layout_kind);
     env::set_current_dir(&launcher_dir)?;
 
     let launcher_path = launcher_dir.join("xplat-launcher");
 
     let result = TestEnvironment {
         launcher_path,
-        working_dir: test_dir
+        test_root_dir: test_dir
     };
 
     Ok(result)
@@ -179,6 +180,11 @@ pub fn get_child_dir(parent: &Path, prefix: &str) -> io::Result<PathBuf> {
     ));
 }
 
+pub enum LayoutKind {
+    Desktop,
+    RemoteDev
+}
+
 #[cfg(target_os = "linux")]
 pub fn layout_launcher(
     target_dir: &Path,
@@ -194,6 +200,10 @@ pub fn layout_launcher(
     // │   └── idea64.vmoptions
     // ├── lib/
     // │   └── app.jar
+    // ├── plugins/
+    // │   └── remote-dev-server
+    // │       └── bin
+    // │           └── xplat-launcher
     // ├── jbr/
     // └── product-info.json
 
@@ -204,19 +214,19 @@ pub fn layout_launcher(
 
     layout_launcher_impl(
         target_dir,
-        vec![ "lib", "bin" ],
         vec![
             "bin/idea64.vmoptions",
             "lib/test.jar"
         ],
-        HashMap::from([
+        vec![
             (launcher.as_path(), "bin/xplat-launcher"),
+            (launcher.as_path(), "plugins/remote-dev-server/bin/xplat-launcher"),
             (intellij_main_mock_jar, "lib/app.jar"),
             (product_info_absolute_path, "product-info.json"),
-        ]),
-        HashMap::from([
+        ],
+        vec![
             (jbr_absolute_path, "jbr")
-        ])
+        ]
     )?;
 
     Ok(())
@@ -240,6 +250,10 @@ pub fn layout_launcher(
     //     │   └── product-info.json
     //     ├── lib/
     //     │   └── app.jar
+    //     ├── plugins/
+    //     │   └── remote-dev-server
+    //     │       └── bin
+    //     │           └── xplat-launcher
     //     └── jbr/
 
     let launcher = get_testing_binary_root(project_root).join("xplat-launcher");
@@ -250,23 +264,18 @@ pub fn layout_launcher(
     layout_launcher_impl(
         target_dir,
         vec![
-            "Contents",
-            "Contents/Resources",
-            "Contents/lib",
-            "Contents/bin"
-        ],
-        vec![
             "Contents/bin/idea.vmoptions",
             "Contents/lib/test.jar"
         ],
-        HashMap::from([
+        vec![
             (launcher.as_path(), "Contents/bin/xplat-launcher"),
+            (launcher.as_path(), "Contents/plugins/remote-dev-server/bin/xplat-launcher"),
             (intellij_main_mock_jar, "Contents/lib/app.jar"),
             (product_info_absolute_path, "Contents/Resources/product-info.json"),
-        ]),
-        HashMap::from([
+        ],
+        vec![
             (jbr_absolute_path, "Contents/jbr")
-        ])
+        ]
     )?;
 
     Ok(())
@@ -288,6 +297,10 @@ pub fn layout_launcher(
     // ├── lib/
     // │   └── app.jar
     // ├── jbr/
+    // ├── plugins/
+    // │   └── remote-dev-server
+    // │       └── bin
+    // │           └── xplat-launcher
     // └── product-info.json
 
     let launcher = get_testing_binary_root(project_root).join("xplat-launcher.exe");
@@ -297,19 +310,19 @@ pub fn layout_launcher(
 
     layout_launcher_impl(
         target_dir,
-        vec![ "lib", "bin" ],
         vec![
             "bin/idea64.exe.vmoptions",
             "lib/test.jar"
         ],
-        HashMap::from([
+        vec![
             (launcher.as_path(), "bin/xplat-launcher.exe"),
+            (launcher.as_path(), "plugins/remote-dev-server/bin/xplat-launcher.exe"),
             (intellij_main_mock_jar, "lib/app.jar"),
             (product_info_absolute_path, "product-info.json"),
-        ]),
-        HashMap::from([
+        ],
+        vec![
             (jbr_absolute_path, "jbr")
-        ])
+        ]
     )?;
 
     Ok(())
@@ -333,29 +346,27 @@ fn get_testing_binary_root(project_root: &Path) -> PathBuf {
 
 fn layout_launcher_impl(
     target_dir: &Path,
-    create_dirs: Vec<&str>,
     create_files: Vec<&str>,
-    copy_files: HashMap<&Path, &str>,
-    symlink_dirs: HashMap<&Path, &str>
+    copy_files: Vec<(&Path, &str)>,
+    symlink_dirs: Vec<(&Path, &str)>
 ) -> Result<()> {
-    for dir in create_dirs {
-        let path = &target_dir.join(dir);
-        create_dir(path).context(format!("Failed to create dir {path:?}"))?;
-    }
 
     for file in create_files {
-        let path = &target_dir.join(file);
-        File::create(path).context(format!("Failed to create file {path:?}"))?;
+        let target = &target_dir.join(file);
+        fs::create_dir_all(target.parent_or_err()?)?;
+        File::create(target).context(format!("Failed to create file {target:?}"))?;
     }
 
     for (source, target_relative) in copy_files {
         let target = &target_dir.join(target_relative);
+        fs::create_dir_all(target.parent_or_err()?)?;
         fs::copy(source, target).context(format!("Failed to copy from {source:?} to {target:?}"))?;
     }
 
     for (source, target_relative) in symlink_dirs {
         let target = &target_dir.join(target_relative);
-        symlink(source, target)?;
+        fs::create_dir_all(target.parent_or_err()?)?;
+        symlink(source, target).context(format!("Failed to create symlink {target:?} pointing to {source:?}"))?;
     }
 
     Ok(())
@@ -377,11 +388,15 @@ fn symlink(source: &Path, target: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn resolve_launcher_dir(test_dir: &Path) -> PathBuf {
-    if cfg!(target_os = "macos") {
-        test_dir.join("Contents").join("bin")
-    } else {
-        test_dir.join("bin")
+pub fn resolve_launcher_dir(test_dir: &Path, layout_kind: &LayoutKind) -> PathBuf {
+    let root = match cfg!(target_os = "macos") {
+        true => test_dir.join("Contents"),
+        false => test_dir.to_path_buf()
+    };
+
+    match layout_kind {
+        LayoutKind::Desktop => root.join("bin"),
+        LayoutKind::RemoteDev => root.join("plugins/remote-dev-server/bin")
     }
 }
 
@@ -414,14 +429,14 @@ pub fn run_launcher(test: &TestEnvironment) -> LauncherRunResult {
 }
 
 fn run_launcher_impl(test: &TestEnvironment) -> Result<LauncherRunResult> {
-    let output_file = test.working_dir.join("output.json");
+    let output_file = test.test_root_dir.join("output.json");
 
     let mut launcher_process = Command::new(&test.launcher_path)
-        .current_dir(&test.working_dir)
+        .current_dir(&test.test_root_dir)
         .args(["--output", &output_file.to_string_lossy()])
         .env(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")
         .spawn()
-        .expect("Failed to spawn launcher process");
+        .context("Failed to spawn launcher process")?;
 
     let started = time::Instant::now();
 
