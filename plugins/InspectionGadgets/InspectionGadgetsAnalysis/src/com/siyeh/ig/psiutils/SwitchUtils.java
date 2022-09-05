@@ -413,7 +413,7 @@ public final class SwitchUtils {
         final PsiExpression instanceOf = ContainerUtil.find(operands, operand -> operand instanceof PsiInstanceOfExpression);
         StringBuilder builder = new StringBuilder();
         builder.append(createPatternCaseText(instanceOf));
-        boolean needAppendWhen = PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_19);
+        boolean needAppendWhen = HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(expression);
         for (PsiExpression operand : operands) {
           if (operand != instanceOf) {
             builder.append(needAppendWhen ? " when " : " && ").append(operand.getText());
