@@ -17,8 +17,8 @@ fun executeOrQueueOnDispatchThread(block: () -> Unit) {
   }
 }
 
-val VirtualFileUrl.virtualFile
+val VirtualFileUrl.virtualFile: VirtualFile?
   get() = if (this is VirtualFileUrlBridge) file else VirtualFileManager.getInstance().findFileByUrl(url)
 
 // TODO: use segment names from virtualFiles?
-fun VirtualFile.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager) = virtualFileManager.fromUrl(this.url)
+fun VirtualFile.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromUrl(this.url)
