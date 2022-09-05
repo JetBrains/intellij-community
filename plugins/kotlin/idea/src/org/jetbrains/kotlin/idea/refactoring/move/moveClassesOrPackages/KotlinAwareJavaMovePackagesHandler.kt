@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveClassesOrPackages
 
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -20,4 +23,12 @@ class KotlinAwareJavaMovePackagesHandler : JavaMoveClassesOrPackagesHandler() {
     }
 
     override fun isValidTarget(psiElement: PsiElement?, sources: Array<PsiElement>): Boolean = isPackageOrDirectory(psiElement)
+
+    override fun tryToMove(
+        element: PsiElement?,
+        project: Project?,
+        dataContext: DataContext?,
+        reference: PsiReference?,
+        editor: Editor?,
+    ): Boolean = false
 }
