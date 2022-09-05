@@ -20,7 +20,7 @@ pub struct TestEnvironment {
     pub test_root_dir: PathBuf
 }
 
-pub fn prepare_test_env(layout_kind: &LayoutKind) -> TestEnvironment {
+pub fn prepare_test_env(layout_kind: &LauncherLocation) -> TestEnvironment {
     let result = match prepare_test_env_impl(layout_kind) {
         Ok(x) => x,
         Err(e) => {
@@ -31,7 +31,7 @@ pub fn prepare_test_env(layout_kind: &LayoutKind) -> TestEnvironment {
     result
 }
 
-fn prepare_test_env_impl(layout_kind: &LayoutKind) -> Result<TestEnvironment> {
+fn prepare_test_env_impl(layout_kind: &LauncherLocation) -> Result<TestEnvironment> {
     INIT.call_once(|| {
         let shared = init_test_environment_once().expect("Failed to init shared test environment");
         unsafe {
@@ -180,9 +180,9 @@ pub fn get_child_dir(parent: &Path, prefix: &str) -> io::Result<PathBuf> {
     ));
 }
 
-pub enum LayoutKind {
-    Desktop,
-    RemoteDev
+pub enum LauncherLocation {
+    MainBin,
+    PluginsBin
 }
 
 #[cfg(target_os = "linux")]
@@ -388,15 +388,15 @@ fn symlink(source: &Path, target: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn resolve_launcher_dir(test_dir: &Path, layout_kind: &LayoutKind) -> PathBuf {
+pub fn resolve_launcher_dir(test_dir: &Path, layout_kind: &LauncherLocation) -> PathBuf {
     let root = match cfg!(target_os = "macos") {
         true => test_dir.join("Contents"),
         false => test_dir.to_path_buf()
     };
 
     match layout_kind {
-        LayoutKind::Desktop => root.join("bin"),
-        LayoutKind::RemoteDev => root.join("plugins/remote-dev-server/bin")
+        LauncherLocation::MainBin => root.join("bin"),
+        LauncherLocation::PluginsBin => root.join("plugins/remote-dev-server/bin")
     }
 }
 

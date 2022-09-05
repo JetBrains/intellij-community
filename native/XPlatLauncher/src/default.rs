@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use log::{debug, warn};
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use utils::{canonical_non_unc, get_path_from_env_var, get_readable_file_from_env_var, is_readable, PathExt, read_file_to_end};
 use crate::{LaunchConfiguration, ProductInfo};
 
@@ -92,7 +92,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
 impl DefaultLaunchConfiguration {
     pub fn new(args: Vec<String>) -> Result<Self> {
-        let current_exe = match get_path_from_env_var("XPLAT_LAUNCHER_CURRENT_EXE_PATH") {
+        let current_exe = &match get_path_from_env_var("XPLAT_LAUNCHER_CURRENT_EXE_PATH") {
             Ok(x) => {
                 debug!("Using exe path from XPLAT_LAUNCHER_CURRENT_EXE_PATH: {x:?}");
                 x
@@ -102,11 +102,11 @@ impl DefaultLaunchConfiguration {
 
         debug!("Resolved current executable path as '{current_exe:?}'");
 
-        let ide_bin = current_exe.parent_or_err()?;
-        debug!("Resolved ide bin dir as '{ide_bin:?}'");
-
-        let ide_home = ide_bin.parent_or_err()?;
+        let ide_home = get_ide_home(current_exe).context("Failed to resolve IDE home")?;
         debug!("Resolved ide home dir as '{ide_home:?}'");
+
+        let ide_bin = ide_home.join("bin");
+        debug!("Resolved ide bin dir as '{ide_bin:?}'");
 
         let config_home = get_config_home();
         debug!("Resolved config home as '{config_home:?}'");
@@ -539,6 +539,23 @@ fn get_product_info(ide_home: &Path) -> Result<ProductInfo> {
     debug!("{serialized}");
 
     return Ok(product_info);
+}
+
+fn get_ide_home(current_exe: &Path) -> Result<PathBuf> {
+    let max_lookup_count = 5;
+    let mut ide_home = current_exe.parent_or_err()?;
+    for _ in 0..max_lookup_count {
+        debug!("Resolving ide_home, candidate: {ide_home:?}");
+
+        let product_info_path = get_product_info_home(&ide_home)?.join("product-info.json");
+        if product_info_path.exists() {
+            return Ok(ide_home)
+        }
+
+        ide_home = ide_home.parent_or_err()?;
+    }
+
+    bail!("Failed to resolve ide_home in {max_lookup_count} attempts")
 }
 
 #[cfg(target_os = "windows")]

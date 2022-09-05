@@ -3,7 +3,7 @@ mod tests_util;
 
 mod tests {
     use std::process::ExitStatus;
-    use crate::tests_util::{IntellijMainDumpedLaunchParameters, LayoutKind, prepare_test_env, run_launcher};
+    use crate::tests_util::{IntellijMainDumpedLaunchParameters, LauncherLocation, prepare_test_env, run_launcher};
     use rstest::*;
 
     #[cfg(any(target_os = "macos", target_os = "linux"))]
@@ -12,9 +12,9 @@ mod tests {
     };
 
     #[rstest]
-    #[case::desktop(&LayoutKind::Desktop)]
-    #[case::remote_dev(&LayoutKind::RemoteDev)]
-    fn correct_launcher_startup_test(#[case] layout_kind: &LayoutKind) {
+    #[case::main_bin(&LauncherLocation::MainBin)]
+    #[case::plugins_bin(&LauncherLocation::PluginsBin)]
+    fn correct_launcher_startup_test(#[case] layout_kind: &LauncherLocation) {
         let test = prepare_test_env(layout_kind);
         let status = &run_launcher(&test).exit_status;
 
@@ -28,9 +28,9 @@ mod tests {
     }
 
     #[rstest]
-    #[case::desktop(&LayoutKind::Desktop)]
-    #[case::remote_dev(&LayoutKind::RemoteDev)]
-    fn classpath_test(#[case] layout_kind: &LayoutKind) {
+    #[case::main_bin(&LauncherLocation::MainBin)]
+    #[case::plugins_bin(&LauncherLocation::PluginsBin)]
+    fn classpath_test(#[case] layout_kind: &LauncherLocation) {
         let dump = run_launcher_and_get_dump(layout_kind);
         let classpath = &dump.systemProperties["java.class.path"];
 
@@ -41,9 +41,9 @@ mod tests {
     }
 
     #[rstest]
-    #[case::desktop(&LayoutKind::Desktop)]
-    #[case::remote_dev(&LayoutKind::RemoteDev)]
-    fn additional_jvm_arguments_in_product_info_test(#[case] layout_kind: &LayoutKind) {
+    #[case::main_bin(&LauncherLocation::MainBin)]
+    #[case::plugins_bin(&LauncherLocation::PluginsBin)]
+    fn additional_jvm_arguments_in_product_info_test(#[case] layout_kind: &LauncherLocation) {
         let dump = run_launcher_and_get_dump(layout_kind);
         let idea_vendor_name_vm_option = dump.vmOptions.iter().find(|&vm| vm.starts_with("-Didea.vendor.name=JetBrains"));
 
@@ -54,9 +54,9 @@ mod tests {
     }
 
     #[rstest]
-    #[case::desktop(&LayoutKind::Desktop)]
-    #[case::remote_dev(&LayoutKind::RemoteDev)]
-    fn arguments_test(#[case] layout_kind: &LayoutKind) {
+    #[case::main_bin(&LauncherLocation::MainBin)]
+    #[case::plugins_bin(&LauncherLocation::PluginsBin)]
+    fn arguments_test(#[case] layout_kind: &LauncherLocation) {
         let dump = run_launcher_and_get_dump(layout_kind);
         let first_arg = &dump.cmdArguments[1];
 
@@ -87,7 +87,7 @@ mod tests {
         }
     }
 
-    fn run_launcher_and_get_dump(layout_kind: &LayoutKind) -> IntellijMainDumpedLaunchParameters {
+    fn run_launcher_and_get_dump(layout_kind: &LauncherLocation) -> IntellijMainDumpedLaunchParameters {
         let test = prepare_test_env(layout_kind);
         let result = run_launcher(&test);
         assert!(result.exit_status.success(), "Launcher didn't exit successfully");
