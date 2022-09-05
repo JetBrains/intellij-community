@@ -158,6 +158,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/SAMConstructor.kt");
     }
 
+    @TestMetadata("SingleLineLambda.kt")
+    public void testSingleLineLambda() throws Exception {
+        runTest("testData/codeInsight/hints/types/SingleLineLambda.kt");
+    }
+
     @TestMetadata("TypeInCompanion.kt")
     public void testTypeInCompanion() throws Exception {
         runTest("testData/codeInsight/hints/types/TypeInCompanion.kt");

@@ -77,9 +77,10 @@ enum class HintType(
             return emptyList()
         }
 
-        override fun isApplicable(e: PsiElement): Boolean =
-            e is KtNamedFunction && !(e.hasBlockBody() || e.hasDeclaredReturnType()) ||
-                    e is KtExpression && e !is KtFunctionLiteral && !e.isNameReferenceInCall() && e.isLambdaReturnValueHintsApplicable()
+        override fun isApplicable(e: PsiElement): Boolean {
+            return e is KtNamedFunction && !(e.hasBlockBody() || e.hasDeclaredReturnType()) ||
+                    e is KtExpression && e !is KtFunctionLiteral && !e.isNameReferenceInCall() && e.isLambdaReturnValueHintsApplicable(allowOneLiner = true)
+        }
     },
 
     PARAMETER_TYPE_HINT(

@@ -19,21 +19,23 @@ import org.jetbrains.kotlin.resolve.BindingContext.USED_AS_RESULT_OF_LAMBDA
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-fun KtExpression.isLambdaReturnValueHintsApplicable(): Boolean {
+fun KtExpression.isLambdaReturnValueHintsApplicable(allowOneLiner: Boolean = false): Boolean {
     if (this is KtWhenExpression || this is KtBlockExpression) {
         return false
     }
 
-    if (this is KtIfExpression && !this.isOneLiner()) {
-        return false
-    }
+    if (!allowOneLiner) {
+        if (this is KtIfExpression && !this.isOneLiner()) {
+            return false
+        }
 
-    if (this.getParentOfType<KtIfExpression>(true)?.isOneLiner() == true) {
-        return false
+        if (this.getParentOfType<KtIfExpression>(true)?.isOneLiner() == true) {
+            return false
+        }
     }
 
     if (!KtPsiUtil.isStatement(this)) {
-        if (!allowLabelOnExpressionPart(this)) {
+        if (!allowOneLiner && !allowLabelOnExpressionPart(this)) {
             return false
         }
     } else if (forceLabelOnExpressionPart(this)) {
@@ -65,7 +67,7 @@ fun provideLambdaReturnValueHints(expression: KtExpression): InlayInfoDetails? {
 }
 
 fun provideLambdaReturnTypeHints(expression: KtExpression): InlayInfoDetails? {
-    if (!expression.isLambdaReturnValueHintsApplicable()) {
+    if (!expression.isLambdaReturnValueHintsApplicable(allowOneLiner = true)) {
         return null
     }
 
