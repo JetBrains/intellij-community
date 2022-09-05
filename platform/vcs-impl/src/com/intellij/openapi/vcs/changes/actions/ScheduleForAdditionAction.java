@@ -19,7 +19,10 @@ import com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.impl.VcsRootIterator;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.IconUtil;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import one.util.streamex.StreamEx;
@@ -221,16 +224,15 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   private static Set<VirtualFile> getUnversionedDescendantsRecursively(@NotNull Project project,
                                                                        @NotNull List<? extends VirtualFile> items) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    final Set<VirtualFile> result = new HashSet<>();
-    Processor<VirtualFile> addToResultProcessor = file -> {
-      if (changeListManager.getStatus(file) == FileStatus.UNKNOWN) {
-        result.add(file);
-      }
-      return true;
-    };
+    Set<VirtualFile> result = new HashSet<>();
 
     for (VirtualFile item : items) {
-      VcsRootIterator.iterateVfUnderVcsRoot(project, item, addToResultProcessor);
+      VcsRootIterator.iterateVfUnderVcsRoot(project, item, child -> {
+        if (changeListManager.getStatus(child) == FileStatus.UNKNOWN) {
+          result.add(child);
+        }
+        return true;
+      });
     }
 
     return result;
@@ -243,7 +245,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     if (!vcs.areDirectoriesVersionedItems()) return Collections.emptySet();
 
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    HashSet<VirtualFile> result = new HashSet<>();
+    Set<VirtualFile> result = new HashSet<>();
 
     for (VirtualFile item : items) {
       VirtualFile parent = item.getParent();
