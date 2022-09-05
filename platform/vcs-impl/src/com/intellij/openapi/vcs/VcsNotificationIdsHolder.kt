@@ -42,7 +42,8 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
       UNCOMMITTED_CHANGES_SAVING_ERROR,
       CANNOT_LOAD_ANNOTATIONS,
       SUGGESTED_PLUGIN_INSTALL_FAILED,
-      OBSOLETE_PLUGIN_UNBUNDLED
+      OBSOLETE_PLUGIN_UNBUNDLED,
+      ADD_UNVERSIONED_ERROR
     )
   }
 
@@ -84,6 +85,7 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
     const val CANNOT_LOAD_ANNOTATIONS = "vcs.cannot.load.annotations"
     const val SUGGESTED_PLUGIN_INSTALL_FAILED = "vcs.suggested.plugin.install.failed"
     const val OBSOLETE_PLUGIN_UNBUNDLED = "vcs.obsolete.plugin.unbundled"
+    const val ADD_UNVERSIONED_ERROR = "vcs.add.unversioned.error"
   }
 }
 

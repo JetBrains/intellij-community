@@ -3,14 +3,17 @@ package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.ADD_UNVERSIONED_ERROR
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
@@ -45,7 +48,7 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
     val unversionedFiles = getUnversionedFiles(e, project).toList()
 
-    addUnversioned(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY))
+    performUnversionedFilesAddition(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY), null)
   }
 
   protected open fun isEnabled(e: AnActionEvent): Boolean {
@@ -53,32 +56,30 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
     return project != null && getUnversionedFiles(e, project).isNotEmpty
   }
 
+  protected fun performUnversionedFilesAddition(project: Project,
+                                                files: List<VirtualFile>,
+                                                browser: ChangesBrowserBase?,
+                                                additionalTask: PairConsumer<in ProgressIndicator, in MutableList<VcsException>>?) {
+    if (files.isEmpty() && additionalTask == null) return
+
+    val targetChangeList = when (browser) {
+      is CommitDialogChangesBrowser -> browser.selectedChangeList
+      else -> ChangeListManager.getInstance(project).defaultChangeList
+    }
+
+    val changesConsumer = browser?.let { Consumer { changes: List<Change> -> browser.viewer.includeChanges(changes) } }
+
+    FileDocumentManager.getInstance().saveAllDocuments()
+
+    if (ModalityState.current() == ModalityState.NON_MODAL) {
+      addUnversionedFilesToVcsInBackground(project, targetChangeList, files, changesConsumer, additionalTask)
+    }
+    else {
+      addUnversionedFilesToVcs(project, targetChangeList, files, changesConsumer, additionalTask)
+    }
+  }
+
   companion object {
-    @JvmStatic
-    fun addUnversioned(project: Project,
-                       files: List<VirtualFile>,
-                       browser: ChangesBrowserBase?): Boolean {
-      return addUnversioned(project, files, browser, null)
-    }
-
-    @JvmStatic
-    protected fun addUnversioned(project: Project,
-                                 files: List<VirtualFile>,
-                                 browser: ChangesBrowserBase?,
-                                 additionalTask: PairConsumer<in ProgressIndicator, in MutableList<VcsException>>?): Boolean {
-      if (files.isEmpty() && additionalTask == null) return true
-
-      val targetChangeList = when (browser) {
-        is CommitDialogChangesBrowser -> browser.selectedChangeList
-        else -> ChangeListManager.getInstance(project).defaultChangeList
-      }
-
-      val changesConsumer = browser?.let { Consumer { changes: List<Change> -> browser.viewer.includeChanges(changes) } }
-
-      FileDocumentManager.getInstance().saveAllDocuments()
-      return addUnversionedFilesToVcs(project, targetChangeList, files, changesConsumer, additionalTask)
-    }
-
     fun getUnversionedFiles(e: AnActionEvent, project: Project): JBIterable<VirtualFile> {
       return getUnversionedFiles(e.dataContext, project)
     }
@@ -119,8 +120,31 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
     }
 
     @JvmStatic
+    fun addUnversionedFilesToVcsInBackground(project: Project,
+                                             targetChangeList: LocalChangeList?,
+                                             files: List<VirtualFile>,
+                                             changesConsumer: Consumer<in List<Change>>?,
+                                             additionalTask: PairConsumer<in ProgressIndicator, in MutableList<VcsException>>?) {
+      runBackgroundableTask(VcsBundle.message("progress.title.adding.files.to.vcs"), project, true) { indicator ->
+        val exceptions = mutableListOf<VcsException>()
+        try {
+          val allProcessedFiles = performUnversionedFilesAddition(project, files, exceptions)
+          additionalTask?.consume(indicator, exceptions)
+          moveAddedChangesTo(project, targetChangeList, allProcessedFiles, changesConsumer)
+        }
+        finally {
+          if (!exceptions.isEmpty()) {
+            VcsNotifier.getInstance(project).notifyError(ADD_UNVERSIONED_ERROR,
+                                                         VcsBundle.message("error.adding.files.notification.title"),
+                                                         createErrorMessage(exceptions))
+          }
+        }
+      }
+    }
+
+    @JvmStatic
     fun addUnversionedFilesToVcs(project: Project,
-                                 list: LocalChangeList?,
+                                 targetChangeList: LocalChangeList?,
                                  files: List<VirtualFile>,
                                  changesConsumer: Consumer<in List<Change>>?,
                                  additionalTask: PairConsumer<in ProgressIndicator, in MutableList<VcsException>>?): Boolean {
@@ -129,7 +153,7 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
       runModalTask(VcsBundle.message("progress.title.adding.files.to.vcs"), project, true) { indicator ->
         val allProcessedFiles = performUnversionedFilesAddition(project, files, exceptions)
         additionalTask?.consume(indicator, exceptions)
-        moveAddedChangesTo(project, list, allProcessedFiles, changesConsumer)
+        moveAddedChangesTo(project, targetChangeList, allProcessedFiles, changesConsumer)
       }
 
       if (!exceptions.isEmpty()) {

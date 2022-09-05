@@ -29,7 +29,6 @@ import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
 import one.util.streamex.StreamEx
 import java.util.stream.Stream
-import kotlin.streams.toList
 
 
 class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditionAction() {
@@ -72,7 +71,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
       }
       else null
 
-    addUnversioned(project, unversionedFiles, browser, addToVcsTask)
+    performUnversionedFilesAddition(project, unversionedFiles, browser, addToVcsTask)
   }
 
   private fun dialogMessage(path: FilePath): String {
