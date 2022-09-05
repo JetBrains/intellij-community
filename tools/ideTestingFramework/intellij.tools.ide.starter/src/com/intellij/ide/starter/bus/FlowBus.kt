@@ -56,7 +56,7 @@ open class FlowBus {
     if (!retain) {
       // without starting a coroutine here, the event is dropped immediately
       // and not delivered to subscribers
-      CoroutineScope(Job() + Dispatchers.Default).launch {
+      CoroutineScope(Job() + Dispatchers.IO).launch {
         dropEvent(event.javaClass)
       }
     }
