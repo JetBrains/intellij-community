@@ -841,6 +841,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myHideModuleGroups;
     }
@@ -1008,6 +1013,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         final NamedConfigurable<?> selectedConfigurable = getSelectedConfigurable();
         e.getPresentation().setEnabled(selectedConfigurable instanceof ModuleConfigurable || canBeCopiedByExtension(selectedConfigurable));
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

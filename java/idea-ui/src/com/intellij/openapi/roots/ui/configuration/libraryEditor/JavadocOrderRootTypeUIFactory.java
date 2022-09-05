@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -58,6 +59,11 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           onSpecifyUrlButtonClicked();
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
         }
       };
       specifyUrlButton.setShortcut(CustomShortcutSet.fromString("alt S"));

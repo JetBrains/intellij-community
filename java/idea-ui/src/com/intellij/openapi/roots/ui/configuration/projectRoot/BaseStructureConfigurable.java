@@ -192,6 +192,10 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+    @Override
     protected ProjectStructureElement getSelectedElement() {
       return BaseStructureConfigurable.this.getSelectedElement();
     }
