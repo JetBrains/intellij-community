@@ -12,6 +12,10 @@ import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightCla
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory.getLightClassForDecompiledClassOrObject
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
+import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
+import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
@@ -23,27 +27,20 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
-import org.jetbrains.kotlin.idea.caches.project.getPlatformModuleInfo
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 
-class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaModuleInfo>(project) {
+class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<KtModule>(project) {
     override fun findClassOrObjectDeclarations(fqName: FqName, searchScope: GlobalSearchScope): Collection<KtClassOrObject> {
         return project.runReadActionInSmartMode {
             KotlinFullClassNameIndex.get(
@@ -88,11 +85,11 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
         ),
     )
 
-    override fun KtFile.findModule(): IdeaModuleInfo = getModuleInfoPreferringJvmPlatform()
+    override fun KtFile.findModule(): KtModule = getKtModule(project)
 
-    override fun facadeIsApplicable(module: IdeaModuleInfo, file: KtFile): Boolean = when (module) {
-        is ModuleSourceInfo, is PlatformModuleInfo -> true
-        is LibrarySourceInfo -> file.isCompiled
+    override fun facadeIsApplicable(module: KtModule, file: KtFile): Boolean = when (module) {
+        is KtSourceModule -> true
+        is KtLibraryModule -> true
         else -> false
     }
 
@@ -100,11 +97,11 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
         return KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker
     }
 
-    override fun outOfBlockModificationTracker(element: PsiElement, module: IdeaModuleInfo): ModificationTracker {
+    override fun outOfBlockModificationTracker(element: PsiElement, module: KtModule): ModificationTracker {
         return KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker
     }
 
-    override fun librariesTracker(element: PsiElement, module: IdeaModuleInfo): ModificationTracker {
+    override fun librariesTracker(element: PsiElement, module: KtModule): ModificationTracker {
         return LibraryModificationTracker.getInstance(project)
     }
 
@@ -117,15 +114,21 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
         MemberScope.ALL_NAME_FILTER,
     )
 
-    override fun createInstanceOfLightClass(classOrObject: KtClassOrObject, module: IdeaModuleInfo): KtLightClass? {
+    override fun createInstanceOfLightClass(classOrObject: KtClassOrObject, module: KtModule): KtLightClass? {
         return LightClassGenerationSupport.getInstance(project).createUltraLightClass(classOrObject)
     }
 
-    override fun createInstanceOfDecompiledLightClass(classOrObject: KtClassOrObject, module: IdeaModuleInfo): KtLightClass? {
+    override fun createInstanceOfDecompiledLightClass(classOrObject: KtClassOrObject, module: KtModule): KtLightClass? {
         return getLightClassForDecompiledClassOrObject(classOrObject, project)
     }
 
-    override fun declarationLocation(file: KtFile, module: IdeaModuleInfo): DeclarationLocation? {
+    override fun declarationLocation(file: KtFile, module: KtModule): DeclarationLocation? {
+        //return when (module) {
+        //    is KtSourceModule -> DeclarationLocation.ProjectSources
+        //    is KtLibraryModule -> DeclarationLocation.LibraryClasses
+        //    is KtLibrarySourceModule -> DeclarationLocation.LibrarySources
+        //    else -> null
+        //}
         val virtualFile = file.virtualFile ?: return null
         return when {
             RootKindFilter.projectSources.matches(project, virtualFile) -> DeclarationLocation.ProjectSources
@@ -185,16 +188,16 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
     }
 
     override fun getFakeLightClass(classOrObject: KtClassOrObject): KtFakeLightClass = KtDescriptorBasedFakeLightClass(classOrObject)
-    override val IdeaModuleInfo.contentSearchScope: GlobalSearchScope get() = this.contentScope
+    override val KtModule.contentSearchScope: GlobalSearchScope get() = this.contentScope
 
-    override fun createInstanceOfLightFacade(facadeFqName: FqName, files: List<KtFile>, module: IdeaModuleInfo): KtLightClassForFacade {
+    override fun createInstanceOfLightFacade(facadeFqName: FqName, files: List<KtFile>, module: KtModule): KtLightClassForFacade {
         return LightClassGenerationSupport.getInstance(project).createUltraLightClassForFacade(facadeFqName, files)
     }
 
     override fun createInstanceOfDecompiledLightFacade(
         facadeFqName: FqName,
         files: List<KtFile>,
-        module: IdeaModuleInfo,
+        module: KtModule,
     ): KtLightClassForFacade? = DecompiledLightClassesFactory.createLightFacadeForDecompiledKotlinFile(project, facadeFqName, files)
 }
 
@@ -205,6 +208,3 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
 // (resolver built by a file from the common part will have no knowledge of the platform part)
 // the actual of order of files that resolver receives is controlled by *findFilesForFacade* method
 private fun Collection<KtFile>.platformSourcesFirst() = sortedByDescending { it.platform.isJvm() }
-
-private fun PsiElement.getModuleInfoPreferringJvmPlatform(): IdeaModuleInfo =
-    getPlatformModuleInfo(JvmPlatforms.unspecifiedJvmPlatform) ?: this.moduleInfo
