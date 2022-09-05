@@ -39,14 +39,6 @@ public abstract class ExecutionTarget {
   public abstract Icon getIcon();
 
   /**
-   * @deprecated implement {@link #canRun(RunConfiguration)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public boolean canRun(@NotNull RunnerAndConfigurationSettings configuration) {
-    return canRun(configuration.getConfiguration());
-  }
-
-  /**
    * Implementation-specific logic should decide whether to suggest this target for the given configuration.
    */
   public boolean canRun(@NotNull RunConfiguration configuration) {
