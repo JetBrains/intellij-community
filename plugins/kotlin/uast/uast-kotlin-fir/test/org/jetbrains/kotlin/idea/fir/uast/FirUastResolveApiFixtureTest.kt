@@ -213,4 +213,8 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("ResolveToSubstituteOverride", ::checkResolveToSubstituteOverride)
     }
 
+    fun testResolveEnumEntrySuperType() {
+        doCheck("TypeReferenceFromEnumEntry", ::checkResolveEnumEntrySuperType)
+    }
+
 }
