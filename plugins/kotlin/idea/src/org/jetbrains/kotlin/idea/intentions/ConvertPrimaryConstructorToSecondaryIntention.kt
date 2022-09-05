@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.mustHaveOnlyPropertiesInPrimaryConstructor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.lexer.KtTokens.THIS_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.VARARG_KEYWORD
@@ -31,13 +32,7 @@ class ConvertPrimaryConstructorToSecondaryIntention : SelfTargetingRangeIntentio
         val primaryCtor = element.primaryConstructor ?: return null
         val startOffset =
             (if (primaryCtor.getConstructorKeyword() != null) primaryCtor else element.nameIdentifier)?.startOffset ?: return null
-        if (element.isAnnotation() ||
-            element.isData() ||
-            element.isData() ||
-            element.isInline() ||
-            element.isValue() ||
-            element.superTypeListEntries.any { it is KtDelegatedSuperTypeEntry }
-        ) {
+        if (element.mustHaveOnlyPropertiesInPrimaryConstructor() || element.superTypeListEntries.any { it is KtDelegatedSuperTypeEntry }) {
             return null
         }
         if (primaryCtor.valueParameters.any { it.hasValOrVar() && (it.name == null || it.annotationEntries.isNotEmpty()) }) return null
