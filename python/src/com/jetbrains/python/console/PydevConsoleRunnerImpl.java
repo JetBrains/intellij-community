@@ -115,6 +115,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private static final @NonNls String LOCALHOST = "localhost";
 
   public static final @NonNls String WORKING_DIR_AND_PYTHON_PATHS = "WORKING_DIR_AND_PYTHON_PATHS";
+  public static final @NonNls String PROJECT_ROOT = "PROJECT_ROOT";
   public static final @NonNls String CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n" +
                                                              "sys.path.extend([" + WORKING_DIR_AND_PYTHON_PATHS + "])\n";
   public static final @NonNls String STARTED_BY_RUNNER = "startedByRunner";

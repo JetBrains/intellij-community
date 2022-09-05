@@ -136,6 +136,18 @@ private class ReplaceSubstringFunction(private val s: String,
   override fun toString(): String = "ReplaceSubstringFunction(s='$s', oldValue='$oldValue', newValue=$newValue)"
 }
 
+class ReplaceSubstringsFunction(private val s: String,
+                                private val replaces: List<kotlin.Pair<String, TargetEnvironmentFunction<String>>>)
+  : TraceableTargetEnvironmentFunction<String>() {
+  override fun applyInner(t: TargetEnvironment): String {
+    var res = s
+    replaces.forEach { res = res.replace(it.first, it.second.apply(t)) }
+    return res
+  }
+
+  override fun toString(): String = "ReplaceSubstringsFunction(s='$s', oldValues=${replaces.map{it.first}}, newValues=${replaces.map{it.second}})"
+}
+
 fun addDefaultEnvironments(sdk: Sdk,
                            envs: Map<String, String>,
                            project: Project): Map<String, String> {

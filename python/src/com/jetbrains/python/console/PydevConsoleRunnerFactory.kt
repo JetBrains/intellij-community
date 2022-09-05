@@ -1,9 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console
 
-import com.intellij.execution.target.value.TargetEnvironmentFunction
-import com.intellij.execution.target.value.constant
-import com.intellij.execution.target.value.targetPath
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.value.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -15,9 +14,11 @@ import com.intellij.util.PathMapper
 import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.run.*
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.findPythonTargetInterpreter
 import com.jetbrains.python.sdk.PythonEnvUtil
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import java.util.function.Function
 
 open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
   @ApiStatus.Experimental
@@ -183,19 +184,38 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
       return arrayOf(selfPathAppend)
     }
 
+    private fun makeStartWithEmptyLine(line: String): String {
+      if (line.startsWith("\n") || line.isBlank()) return line
+      return "\n" + line
+    }
+
     private fun createSetupScriptFunction(project: Project,
                                           module: Module?,
                                           workingDir: TargetEnvironmentFunction<String>?,
                                           pathMapper: PyRemotePathMapper?,
                                           settingsProvider: PyConsoleSettings): TargetEnvironmentFunction<String> {
-      var customStartScript = settingsProvider.customStartScript
-      if (customStartScript.isNotBlank()) {
-        customStartScript = "\n" + customStartScript
-      }
+      val customStartScript = makeStartWithEmptyLine(settingsProvider.customStartScript)
       val pythonPathFuns = collectPythonPath(project, module, settingsProvider.mySdkHome, pathMapper,
                                              settingsProvider.shouldAddContentRoots(), settingsProvider.shouldAddSourceRoots(),
                                              false).toMutableSet()
       return constructPyPathAndWorkingDirCommand(pythonPathFuns, workingDir, customStartScript)
+    }
+
+    fun createSetupScriptWithHelpersAndProjectRoot(project: Project, projectRoot: String, sdk: Sdk, settingsProvider: PyConsoleSettings): TargetEnvironmentFunction<String> {
+      val paths = ArrayList<Function<TargetEnvironment, String>>()
+      paths.add(getTargetEnvironmentValueForLocalPath(Path.of(projectRoot)))
+
+      val targetEnvironmentRequest = findPythonTargetInterpreter(sdk, project)
+      val helpersTargetPath = targetEnvironmentRequest.preparePyCharmHelpers()
+      for (helper in listOf("pycharm", "pydev")) {
+        paths.add(helpersTargetPath.getRelativeTargetPath(helper))
+      }
+
+      val pathStr = paths.joinToStringFunction(separator = ", ", transform = String::toStringLiteral)
+      val projectRootStr = getTargetEnvironmentValueForLocalPath(Path.of(projectRoot)).toStringLiteral()
+      val replaces = listOf(PydevConsoleRunnerImpl.WORKING_DIR_AND_PYTHON_PATHS to pathStr,
+                            PydevConsoleRunnerImpl.PROJECT_ROOT to projectRootStr)
+      return ReplaceSubstringsFunction(makeStartWithEmptyLine(settingsProvider.customStartScript), replaces)
     }
   }
 }
