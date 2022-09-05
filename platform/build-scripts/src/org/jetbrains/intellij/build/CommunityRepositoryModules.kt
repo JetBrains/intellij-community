@@ -116,6 +116,7 @@ object CommunityRepositoryModules {
     plugin("intellij.packageSearch") { spec ->
       spec.withModule("intellij.packageSearch.compat")
       spec.withModule("intellij.packageSearch.gradle")
+      spec.withModule("intellij.packageSearch.gradle.tooling", "pkgs-tooling-extension.jar")
       spec.withModule("intellij.packageSearch.maven")
       spec.withModule("intellij.packageSearch.kotlin")
     },

@@ -28,7 +28,6 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackagesToUpgrade
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.util.BackgroundLoadingBarController
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
@@ -241,19 +240,18 @@ internal class PackageSearchProjectService(private val project: Project) {
         knownRepositoriesFlow
     ) { installedPackages, moduleModels, repos ->
         coroutineScope {
-            availableUpgradesLoadingFlow.whileLoading {
-                val allKnownRepos = allKnownRepositoryModels(moduleModels, repos)
-                val nativeModulesMap = moduleModels.associateBy { it.projectModule }
-
-                val allUpdates = computePackageUpgrades(
+            availableUpgradesLoadingFlow.emit(true)
+            val result = PackageUpgradeCandidates(
+                computePackageUpgrades(
                     installedPackages = installedPackages,
                     onlyStable = false,
                     normalizer = packageVersionNormalizer,
-                    repos = allKnownRepos,
-                    nativeModulesMap = nativeModulesMap
+                    repos = allKnownRepositoryModels(moduleModels, repos),
+                    nativeModulesMap = moduleModels.associateBy { it.projectModule }
                 )
-                PackageUpgradeCandidates(allUpdates)
-            }.value
+            )
+            availableUpgradesLoadingFlow.emit(false)
+            result
         }
     }
         .catchAndLog(
