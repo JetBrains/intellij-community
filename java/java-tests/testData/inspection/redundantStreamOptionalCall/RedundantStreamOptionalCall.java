@@ -38,7 +38,7 @@ public class RedundantStreamOptionalCall {
       .filter(x -> x > 0).distinct().sequential().forEach(System.out::println);
     Stream.of(0, 100).map(x -> x*2).<warning descr="Redundant 'sequential()' call: there is a subsequent 'parallel()' call which overrides this call">sequential()</warning>
       .filter(x -> x > 0).limit(10).parallel().forEach(System.out::println);
-    Stream.of("xyz").parallel().<warning descr="Redundant 'sorted()' call: stream contains at most one element">sorted()</warning>.collect(Collectors.toList()).stream().sequential().forEach(System.out::println);
+    Stream.of("xyz").parallel().<warning descr="Redundant 'sorted()' call: stream contains at most one element">sorted()</warning>.collect(Collectors.toList()).stream().<warning descr="Redundant 'sequential()' call: the stream was created via 'stream()', so it's already sequential">sequential()</warning>.forEach(System.out::println);
 
     IntStream.range(0, 100).unordered().filter(x -> x > 50).<warning descr="Redundant 'unordered()' call: there is a previous 'unordered()' call in the chain">unordered()</warning>.forEach(System.out::println);
     IntStream.range(0, 100).unordered().filter(x -> x > 50).sorted().unordered().forEach(System.out::println);
@@ -78,6 +78,16 @@ public class RedundantStreamOptionalCall {
     Stream.of(1,2,3,4,5).<warning descr="Redundant 'flatMap()' call">flatMap(Stream::of)</warning>.toArray();
     Stream.of(1,2,3,4,5).<warning descr="Redundant 'flatMap()' call">flatMap(t -> Stream.of(t))</warning>.toArray();
     Stream.of(arr1, arr2).flatMap(Stream::of).toArray();
+  }
+
+  void fromCollection(Collection<String> c) {
+    c.parallelStream().sorted().<warning descr="Redundant 'parallel()' call: the stream was created via 'parallelStream()', so it's already parallel">parallel()</warning>.forEach(System.out::println);
+    c.stream().<warning descr="Redundant 'sequential()' call: the stream was created via 'stream()', so it's already sequential">sequential()</warning>.forEach(System.out::println);
+    // strange but not redundant
+    c.parallelStream().sequential().forEach(System.out::println);
+    c.stream().parallel().forEach(System.out::println);
+    // another stream
+    c.parallelStream().sorted().findFirst().get().chars().parallel().forEach(System.out::println);
   }
 
   public static Stream<SomeClazz> fun1(Stream<Stream<SomeClazz>> objectStreams) {
