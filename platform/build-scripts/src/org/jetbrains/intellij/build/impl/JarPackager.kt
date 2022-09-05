@@ -3,9 +3,9 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.URLUtil
+import com.intellij.util.io.sanitizeFileName
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -110,7 +110,7 @@ class JarPackager private constructor(private val context: BuildContext) {
         val library = context.findRequiredModule(data.moduleName).libraryCollection.libraries
                         .find { getLibraryName(it) == data.libraryName }
                       ?: throw IllegalArgumentException("Cannot find library ${data.libraryName} in \'${data.moduleName}\' module")
-        var fileName = libNameToMergedJarFileName(data.libraryName)
+        var fileName = nameToJarFileName(data.libraryName)
         var relativePath = data.relativeOutputPath
         var targetFile: Path? = null
         if (relativePath.endsWith(".jar")) {
@@ -354,7 +354,7 @@ class JarPackager private constructor(private val context: BuildContext) {
           }
         }
         if (packMode == LibraryPackMode.STANDALONE_MERGED) {
-          addLibrary(library = library, targetFile = libOutputDir.resolve(libNameToMergedJarFileName(libName)), files = files)
+          addLibrary(library = library, targetFile = libOutputDir.resolve(nameToJarFileName(libName)), files = files)
         }
         else {
           for (file in files) {
@@ -514,8 +514,8 @@ private fun getLibraryFiles(library: JpsLibrary,
   return files
 }
 
-private fun libNameToMergedJarFileName(libName: String): String {
-  return "${FileUtil.sanitizeFileName(libName.lowercase(Locale.getDefault()), false)}.jar"
+private fun nameToJarFileName(name: String): String {
+  return "${sanitizeFileName(name.lowercase(), replacement = "-")}.jar"
 }
 
 @Suppress("SpellCheckingInspection")

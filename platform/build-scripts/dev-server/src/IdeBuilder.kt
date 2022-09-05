@@ -51,7 +51,7 @@ class IdeBuilder private constructor(internal val pluginBuilder: PluginBuilder,
     LOG.info("Checking changes...")
     var changedModules = 0
     for (item in moduleChanges) {
-      if (!Files.exists(item.checkFile)) {
+      if (Files.notExists(item.checkFile)) {
         pluginBuilder.addDirtyPluginDir(item.plugin, item.moduleName)
         changedModules++
       }

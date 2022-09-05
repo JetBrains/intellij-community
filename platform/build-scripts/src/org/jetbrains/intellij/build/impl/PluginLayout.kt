@@ -1,9 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext")
 
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.containers.MultiMap
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.BuildContext
@@ -44,7 +47,7 @@ class PluginLayout(val mainModule: String): BaseLayout() {
   var retainProductDescriptorForBundledPlugin = false
 
   internal val resourceGenerators: MutableList<BiFunction<Path, BuildContext, Path?>> = mutableListOf()
-  internal val patchers: MutableList<BiConsumer<ModuleOutputPatcher, BuildContext>> = mutableListOf()
+  internal var patchers: PersistentList<suspend (ModuleOutputPatcher, BuildContext) -> Unit> = persistentListOf()
 
   fun getMainJarName() = mainJarName
 
@@ -121,8 +124,8 @@ class PluginLayout(val mainModule: String): BaseLayout() {
   }
 
   fun mergeServiceFiles() {
-    patchers.add(BiConsumer { patcher, context ->
-      val discoveredServiceFiles: MultiMap<String, Pair<String, Path>> = MultiMap.createLinkedSet()
+    patchers.add { patcher, context ->
+      val discoveredServiceFiles = MultiMap.createLinkedSet<String, Pair<String, Path>>()
 
       for (moduleName in jarToModules.get(mainJarName)!!) {
         val path = context.findFileInModuleSources(moduleName, "META-INF/services") ?: continue
@@ -141,12 +144,16 @@ class PluginLayout(val mainModule: String): BaseLayout() {
         }
 
         val content = serviceFiles.joinToString("\n") { Files.readString(it.second) }
-        context.messages.info("Merging service file $serviceFileName (${serviceFiles.joinToString(", ") { it.first }})")
+        Span.current().addEvent("merge service file)",
+                                Attributes.of(
+                                  AttributeKey.stringKey("serviceFile"), serviceFileName,
+                                  AttributeKey.stringArrayKey("serviceFiles"), serviceFiles.map { it.first },
+                                ))
         patcher.patchModuleOutput(moduleName = serviceFiles.first().first, // first one wins
                                   path = "META-INF/services/$serviceFileName",
                                   content = content)
       }
-    })
+    }
   }
 
   class PluginLayoutSpec(private val layout: PluginLayout): BaseLayoutSpec(layout) {
@@ -271,7 +278,7 @@ class PluginLayout(val mainModule: String): BaseLayout() {
     }
 
     fun withPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext>) {
-      layout.patchers.add(patcher)
+      layout.patchers.add(patcher::accept)
     }
 
     fun withGeneratedResources(generator: BiConsumer<Path, BuildContext>) {

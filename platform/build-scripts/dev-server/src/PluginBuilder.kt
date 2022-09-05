@@ -3,8 +3,10 @@ package org.jetbrains.intellij.build.devServer
 
 import com.intellij.diagnostic.telemetry.useWithScope2
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
@@ -70,7 +72,7 @@ class PluginBuilder(val buildContext: BuildContext, private val outDir: Path) {
       return "All plugins are up to date"
     }
 
-    coroutineScope {
+    withContext(Dispatchers.IO) {
       for (plugin in dirtyPlugins) {
         try {
           clearDirContent(plugin.dir)
@@ -112,6 +114,7 @@ private suspend fun buildPlugin(plugin: BuildItem, context: BuildContext, projec
       layoutDistribution(layout = plugin.layout,
                          targetDirectory = plugin.dir,
                          copyFiles = true,
+                         simplify = true,
                          moduleOutputPatcher = moduleOutputPatcher,
                          jarToModule = plugin.layout.jarToModules,
                          context = context)

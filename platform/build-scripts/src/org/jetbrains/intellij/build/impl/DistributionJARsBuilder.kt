@@ -258,6 +258,7 @@ class DistributionJARsBuilder {
           entries.addAll(layoutDistribution(layout = plugin,
                                             targetDirectory = pluginLayoutRoot,
                                             copyFiles = false,
+                                            simplify = false,
                                             moduleOutputPatcher = moduleOutputPatcher,
                                             jarToModule = plugin.jarToModules,
                                             context = context))
@@ -285,9 +286,10 @@ class DistributionJARsBuilder {
         // Doesn't make sense to require passing here a list with a stable order - unnecessary complication. Just sort by main module.
         pluginsToBundle.sortWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)
         span.setAttribute("satisfiableCount", pluginsToBundle.size.toLong())
+        val targetDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
         buildPlugins(moduleOutputPatcher = ModuleOutputPatcher(),
                      plugins = pluginsToBundle,
-                     targetDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY),
+                     targetDir = targetDir,
                      state = state,
                      context = context,
                      buildPlatformJob = buildPlatformJob)
@@ -364,7 +366,7 @@ class DistributionJARsBuilder {
       coroutineScope {
         val buildKeymapPluginsTask = async { buildKeymapPlugins(autoUploadingDir, context) }
         val moduleOutputPatcher = ModuleOutputPatcher()
-        val stageDir = context.paths.tempDir.resolve("non-bundled-plugins-" + context.applicationInfo.productCode)
+        val stageDir = context.paths.tempDir.resolve("non-bundled-plugins-${context.applicationInfo.productCode}")
         NioFiles.deleteRecursively(stageDir)
         val dirToJar = ConcurrentLinkedQueue<Pair<String, Path>>()
         val defaultPluginVersion = if (context.buildNumber.endsWith(".SNAPSHOT")) {
@@ -488,14 +490,15 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
       val pluginDir = targetDir.resolve(directoryName)
       val task = async {
         spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).useWithScope2 {
-          val result = layoutDistribution(layout = plugin,
-                                          targetDirectory = pluginDir,
-                                          copyFiles = true,
-                                          moduleOutputPatcher = moduleOutputPatcher,
-                                          jarToModule = plugin.jarToModules,
-                                          context = context)
+          val entries = layoutDistribution(layout = plugin,
+                                           targetDirectory = pluginDir,
+                                           copyFiles = true,
+                                           simplify = true,
+                                           moduleOutputPatcher = moduleOutputPatcher,
+                                           jarToModule = plugin.jarToModules,
+                                           context = context)
           pluginBuilt?.invoke(plugin, pluginDir)
-          result
+          entries
         }
       }
 
@@ -537,6 +540,12 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
     }
   }
   return entries
+}
+
+private fun getAtMostTwoNonHiddenChildren(outDir: Path): List<Path> {
+  return Files.newDirectoryStream(outDir).use { stream ->
+    stream.asSequence().filter { !Files.isHidden(it) && !it.fileName.startsWith(".") }.take(2).toList()
+  }
 }
 
 private const val PLUGINS_DIRECTORY = "plugins"
@@ -645,6 +654,7 @@ suspend fun processLibDirectoryLayout(moduleOutputPatcher: ModuleOutputPatcher,
       layoutDistribution(layout = platform,
                          targetDirectory = context.paths.distAllDir,
                          copyFiles = copyFiles,
+                         simplify = false,
                          moduleOutputPatcher = moduleOutputPatcher,
                          jarToModule = platform.jarToModules,
                          context = context)
@@ -886,6 +896,7 @@ private suspend fun buildKeymapPlugins(targetDir: Path, context: BuildContext): 
 suspend fun layoutDistribution(layout: BaseLayout,
                                targetDirectory: Path,
                                copyFiles: Boolean,
+                               simplify: Boolean,
                                moduleOutputPatcher: ModuleOutputPatcher,
                                jarToModule: Map<String, List<String>>,
                                context: BuildContext): List<DistributionFileEntry> {
@@ -896,25 +907,30 @@ suspend fun layoutDistribution(layout: BaseLayout,
   // patchers must be executed _before_ pack because patcher patches module output
   if (copyFiles && layout is PluginLayout && !layout.patchers.isEmpty()) {
     val patchers = layout.patchers
-    spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).useWithScope {
-      for (patcher in patchers) {
-        patcher.accept(moduleOutputPatcher, context)
+    spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).useWithScope2 {
+      withContext(Dispatchers.IO) {
+        for (patcher in patchers) {
+          patcher(moduleOutputPatcher, context)
+        }
       }
     }
   }
 
-  return coroutineScope {
+  val entries = withContext(Dispatchers.IO) {
     val tasks = ArrayList<Deferred<Collection<DistributionFileEntry>>>(3)
     tasks.add(async {
       spanBuilder("pack").useWithScope2 {
-        withContext(Dispatchers.IO) {
-          pack(jarToModule, targetDirectory.resolve("lib"), layout, moduleOutputPatcher, !copyFiles, context)
-        }
+        pack(jarToModules = jarToModule,
+             outputDir = targetDirectory.resolve("lib"),
+             layout = layout,
+             moduleOutputPatcher = moduleOutputPatcher,
+             dryRun = !copyFiles,
+             context = context)
       }
     })
 
     if (copyFiles && (!layout.resourcePaths.isEmpty() || (layout is PluginLayout && !layout.resourceGenerators.isEmpty()))) {
-      tasks.add(async(Dispatchers.IO) {
+      tasks.add(async {
         spanBuilder("pack additional resources").useWithScope2 {
           layoutAdditionalResources(layout, context, targetDirectory)
           emptyList()
@@ -923,12 +939,34 @@ suspend fun layoutDistribution(layout: BaseLayout,
     }
 
     if (!layout.includedArtifacts.isEmpty()) {
-      tasks.add(async(Dispatchers.IO) {
+      tasks.add(async {
         spanBuilder("pack artifacts").useWithScope2 { layoutArtifacts(layout, context, copyFiles, targetDirectory) }
       })
     }
     tasks
   }.flatMap { it.getCompleted() }
+
+  if (!simplify) {
+    return entries
+  }
+
+  return withContext(Dispatchers.IO) {
+    val dirs = getAtMostTwoNonHiddenChildren(targetDirectory)
+    if (dirs.size == 1 && dirs.first().endsWith("lib")) {
+      val jarFiles = getAtMostTwoNonHiddenChildren(dirs.first())
+      if (jarFiles.size == 1) {
+        val jarFile = jarFiles.first()
+        val newFile = targetDirectory.parent.resolve("${targetDirectory.fileName}.jar")
+        Files.move(jarFile, newFile)
+        NioFiles.deleteRecursively(targetDirectory)
+        return@withContext entries.map {
+          check(it.path == jarFile)
+          it.changePath(newFile)
+        }
+      }
+    }
+    entries
+  }
 }
 
 private fun layoutAdditionalResources(layout: BaseLayout, context: BuildContext, targetDirectory: Path) {
