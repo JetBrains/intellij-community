@@ -603,7 +603,7 @@ abstract class ComponentManagerImpl(
     if (adapter == null) {
       checkCanceledIfNotInClassInit()
       if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-        throwAlreadyDisposedError(key.name, this, ProgressManager.getGlobalProgressIndicator())
+        throwAlreadyDisposedError(key.name, this)
       }
       return null
     }
@@ -618,7 +618,7 @@ abstract class ComponentManagerImpl(
       }
 
       if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-        adapter.throwAlreadyDisposedError(this, ProgressManager.getGlobalProgressIndicator())
+        adapter.throwAlreadyDisposedError(this)
       }
       return adapter.getInstance(adapter.componentManager, key)
     }
@@ -675,13 +675,13 @@ abstract class ComponentManagerImpl(
     val adapter = componentKeyToAdapter.get(key)
     if (adapter is ServiceComponentAdapter) {
       if (createIfNeeded && containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-        throwAlreadyDisposedError(adapter.toString(), this, ProgressIndicatorProvider.getGlobalProgressIndicator())
+        throwAlreadyDisposedError(adapter.toString(), this)
       }
       return adapter.getInstance(this, serviceClass, createIfNeeded)
     }
     else if (adapter is LightServiceComponentAdapter) {
       if (createIfNeeded && containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-        throwAlreadyDisposedError(adapter.toString(), this, ProgressIndicatorProvider.getGlobalProgressIndicator())
+        throwAlreadyDisposedError(adapter.toString(), this)
       }
 
       @Suppress("UNCHECKED_CAST")
@@ -699,7 +699,7 @@ abstract class ComponentManagerImpl(
       if (!createIfNeeded) {
         return null
       }
-      throwAlreadyDisposedError(serviceClass.name, this, ProgressIndicatorProvider.getGlobalProgressIndicator())
+      throwAlreadyDisposedError(serviceClass.name, this)
     }
 
     if (parent != null) {
@@ -736,7 +736,7 @@ abstract class ComponentManagerImpl(
       LoadingState.COMPONENTS_REGISTERED.checkOccurred()
 
       var result: T? = null
-      if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+      if (!isUnderIndicatorOrJob()) {
         result = createLightService(serviceClass)
       }
       else {
@@ -753,7 +753,7 @@ abstract class ComponentManagerImpl(
 
   private fun checkThatCreatingOfLightServiceIsAllowed(serviceClass: Class<*>) {
     if (isDisposed) {
-      throwAlreadyDisposedError("light service ${serviceClass.name}", this, ProgressIndicatorProvider.getGlobalProgressIndicator())
+      throwAlreadyDisposedError("light service ${serviceClass.name}", this)
     }
 
     // assertion only for non-platform plugins
@@ -763,7 +763,7 @@ abstract class ComponentManagerImpl(
         val error = AlreadyDisposedException(
           "Cannot create light service ${serviceClass.name} because container in read-only mode (reason=$it, container=$this"
         )
-        throw if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) error else ProcessCanceledException(error)
+        throw if (!isUnderIndicatorOrJob()) error else ProcessCanceledException(error)
       }
     }
   }
