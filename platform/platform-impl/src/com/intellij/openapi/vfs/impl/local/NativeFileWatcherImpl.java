@@ -143,7 +143,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     String name = null;
-    if (SystemInfo.isWindows) {
+    if (SystemInfo.isWindows && (CpuArch.isIntel64() || CpuArch.isArm64())) {
       name = "fsnotifier.exe";
     }
     else if (SystemInfo.isMac) {

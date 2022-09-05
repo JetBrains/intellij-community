@@ -94,7 +94,7 @@ final class ProcessProxyImpl implements ProcessProxy {
 
   @Override
   public boolean canSendBreak() {
-    if (SystemInfo.isWindows && (CpuArch.isIntel64() || CpuArch.isIntel32())) {  // see also: `AppMainV2#loadHelper`
+    if (SystemInfo.isWindows && (CpuArch.isArm64() || CpuArch.isIntel64() || CpuArch.isIntel32())) {  // see also: `AppMainV2#loadHelper`
       synchronized (myLock) {
         if (myConnection == null) return false;
       }
