@@ -105,6 +105,10 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return Arrays.asList(myClassesToImport);
   }
 
+  protected @NotNull R getReference() {
+    return myReference;
+  }
+
   private PsiClass @NotNull [] calcClassesToImport() {
     PsiElement referenceElement;
     if (!myReferenceElement.isValid() || (referenceElement = myReference.getElement()) != myReferenceElement && !referenceElement.isValid()) {
