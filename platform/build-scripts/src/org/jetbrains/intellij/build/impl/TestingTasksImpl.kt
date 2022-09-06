@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.TestCaseLoader
@@ -46,7 +48,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       }
       CompoundRunConfigurationProperties.TYPE -> {
         val runConfiguration = CompoundRunConfigurationProperties.loadRunConfiguration(file)
-        runConfiguration.toRun.flatMap { loadRunConfigurations(it) }
+        runConfiguration.toRun.flatMap(::loadRunConfigurations)
       }
       else -> {
         throw RuntimeException("Unsupported run configuration type '${type}' in run configuration '${name}' of project '${projectHome}'")
@@ -456,16 +458,16 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
     else if (options.isDebugEnabled) {
       val suspend = if (suspendDebugProcess) "y" else "n"
-      jvmArgs += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${suspend},address=${options.debugHost}:${options.debugPort}"
+      jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=${suspend},address=${options.debugHost}:${options.debugPort}")
     }
 
     if (options.isEnableCausalProfiling) {
-      val causalProfilingOptions = CausalProfilingOptions.getIMPL()
-      systemProperties["intellij.build.test.patterns"] = causalProfilingOptions.testClass.replace(".", "\\.")
-      jvmArgs += buildCausalProfilingAgentJvmArg(causalProfilingOptions)
+      val causalProfilingOptions = CausalProfilingOptions.IMPL
+      systemProperties.put("intellij.build.test.patterns", causalProfilingOptions.testClass.replace(".", "\\."))
+      jvmArgs.addAll(buildCausalProfilingAgentJvmArg(causalProfilingOptions))
     }
 
-    jvmArgs += getCommandLineArgumentsForOpenPackages(context)
+    jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(context))
 
     if (suspendDebugProcess) {
       context.messages.info("""
@@ -691,18 +693,14 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
   private fun buildCausalProfilingAgentJvmArg(options: CausalProfilingOptions): List<String> {
     val causalProfilingJvmArgs = ArrayList<String>()
+    @Suppress("SpellCheckingInspection")
     val causalProfilerAgentName = if (SystemInfoRt.isLinux || SystemInfoRt.isMac) "liblagent.so" else null
-    if (causalProfilerAgentName != null) {
-      val agentArgs = options.buildAgentArgsString()
-      if (agentArgs != null) {
-        causalProfilingJvmArgs += "-agentpath:${System.getProperty("teamcity.build.checkoutDir")}/${causalProfilerAgentName}=${agentArgs}"
-      }
-      else {
-        context.messages.info("Could not find agent options")
-      }
+    if (causalProfilerAgentName == null) {
+      context.messages.info("Causal profiling is supported for Linux and Mac only")
     }
     else {
-      context.messages.info("Causal profiling is supported for Linux and Mac only")
+      val agentArgs = options.buildAgentArgsString()
+      causalProfilingJvmArgs += "-agentpath:${System.getProperty("teamcity.build.checkoutDir")}/${causalProfilerAgentName}=${agentArgs}"
     }
     return causalProfilingJvmArgs
   }
