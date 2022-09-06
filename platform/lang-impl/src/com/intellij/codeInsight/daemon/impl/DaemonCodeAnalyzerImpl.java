@@ -373,7 +373,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     myPassExecutorService.cancelAll(false);
 
     FileStatusMap fileStatusMap = getFileStatusMap();
-    fileStatusMap.allowDirt(canChangeDocument);
+    boolean old = fileStatusMap.allowDirt(canChangeDocument);
     for (int ignoreId : passesToIgnore) {
       fileStatusMap.markFileUpToDate(document, ignoreId);
     }
@@ -383,7 +383,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
     finally {
       DaemonProgressIndicator.setDebug(false);
-      fileStatusMap.allowDirt(true);
+      fileStatusMap.allowDirt(old);
     }
   }
 
