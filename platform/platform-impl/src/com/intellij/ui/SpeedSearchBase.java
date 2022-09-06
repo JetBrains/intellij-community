@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -628,6 +629,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       };
 
       addExtension(leftExtension);
+
+      Extension rightExtension = createSearchFieldExtension();
+      if (rightExtension != null) {
+        addExtension(rightExtension);
+      }
     }
 
     @Override
@@ -683,6 +689,17 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     }
 
+  }
+
+  /**
+   * Creates an additional extension.
+   * SpeedSearch calls this method when creating the search text field.
+   * If the result of this method is not null, the caller adds it as a serach text field extension.
+   * @return an extension, or null.
+   */
+  @Nullable
+  protected ExtendableTextComponent.Extension createSearchFieldExtension() {
+    return null;
   }
 
   private static boolean isUpDownHomeEnd(int keyCode) {
