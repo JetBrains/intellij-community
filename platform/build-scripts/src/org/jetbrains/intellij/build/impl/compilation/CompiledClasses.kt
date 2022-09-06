@@ -12,7 +12,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.JpsCompilationRunner
 import java.nio.file.Path
 
-object CompiledClasses {
+internal object CompiledClasses {
   fun checkOptions(context: CompilationContext) {
     val options = context.options
     val messages = context.messages
@@ -57,17 +57,19 @@ object CompiledClasses {
    * @return true even if [PortableCompilationCache.IS_ENABLED] because incremental compilation
    * may still be triggered due to [PortableCompilationCache.isCompilationRequired]
    */
-  fun isCompilationRequired(options: BuildOptions): Boolean =
-    !options.useCompiledClassesFromProjectOutput &&
-    options.pathToCompiledClassesArchive == null &&
-    options.pathToCompiledClassesArchivesMetadata == null
+  fun isCompilationRequired(options: BuildOptions): Boolean {
+    return !options.useCompiledClassesFromProjectOutput &&
+           options.pathToCompiledClassesArchive == null &&
+           options.pathToCompiledClassesArchivesMetadata == null
+  }
 
-  fun keepCompilationState(options: BuildOptions): Boolean =
-    PortableCompilationCache.IS_ENABLED ||
-    options.useCompiledClassesFromProjectOutput ||
-    options.pathToCompiledClassesArchive == null ||
-    options.pathToCompiledClassesArchivesMetadata != null ||
-    options.incrementalCompilation
+  fun keepCompilationState(options: BuildOptions): Boolean {
+    return PortableCompilationCache.IS_ENABLED ||
+           options.useCompiledClassesFromProjectOutput ||
+           options.pathToCompiledClassesArchive == null ||
+           options.pathToCompiledClassesArchivesMetadata != null ||
+           options.incrementalCompilation
+  }
 
   @Synchronized
   fun reuseOrCompile(context: CompilationContext, moduleNames: Collection<String>? = null, includingTestsInModules: List<String>? = null) {

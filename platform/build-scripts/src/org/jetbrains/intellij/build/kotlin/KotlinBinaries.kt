@@ -12,7 +12,9 @@ import java.nio.file.Path
 /**
  * Sets up Kotlin compiler (downloaded from Marketplace) which is required for JPS to compile the repository
  */
-internal class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot, private val options: BuildOptions, private val messages: BuildMessages) {
+internal class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot,
+                              private val options: BuildOptions,
+                              private val messages: BuildMessages) {
   val isCompilerRequired: Boolean
     get() = CompiledClasses.isCompilationRequired(options)
 
