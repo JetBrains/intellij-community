@@ -1943,6 +1943,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             public void testAnnotation() throws Exception {
                 runTest("testData/quickfix/addValVar/annotation.kt");
             }
+
+            @TestMetadata("expectAnnotation.kt")
+            public void testExpectAnnotation() throws Exception {
+                runTest("testData/quickfix/addValVar/expectAnnotation.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
