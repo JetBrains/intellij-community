@@ -6,6 +6,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -45,6 +46,8 @@ import java.util.*;
  * @author lesya
  */
 public final class AnnotateToggleAction extends ToggleAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(AnnotateToggleAction.class);
+
   public static final ExtensionPointName<Provider> EP_NAME =
     new ExtensionPointName<>("com.intellij.openapi.vcs.actions.AnnotateToggleAction.Provider");
 
@@ -133,7 +136,10 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
       int expectedLines = Math.max(upToDateLineNumbers.getLineCount(), 1);
       int actualLines = Math.max(fileAnnotation.getLineCount(), 1);
       if (Math.abs(expectedLines - actualLines) > 1) { // 1 - for different conventions about files ending with line separator
-        editor.setHeaderComponent(new MyEditorNotificationPanel(editor, vcs, () -> doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, false)));
+        LOG.warn("Unexpected annotation lines number. Expected: " + expectedLines + ", actual: " + actualLines);
+        editor.setHeaderComponent(new MyEditorNotificationPanel(editor, vcs, () -> {
+          doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, false);
+        }));
         return;
       }
     }
