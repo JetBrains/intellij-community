@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.editor.markup.HighlighterLayer
@@ -38,7 +39,7 @@ class NotebookGutterLineMarkerManager {
     putHighlighters(editor)
   }
 
-  private fun putHighlighters(editor: EditorEx) {
+  fun putHighlighters(editor: EditorEx) {
     val highlighters = editor.markupModel.allHighlighters.filter { it.lineMarkerRenderer is NotebookLineMarkerRenderer }
     highlighters.forEach { editor.markupModel.removeHighlighter(it) }
 
@@ -75,6 +76,11 @@ class NotebookGutterLineMarkerManager {
       } else if (editor.editorKind != EditorKind.DIFF) {
         editor.markupModel.addRangeHighlighter(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE).lineMarkerRenderer =
           NotebookTextCellBackgroundLineMarkerRenderer(interval, interval.lines)
+      }
+
+      val notebookCellInlayManager = NotebookCellInlayManager.get(editor) ?: throw AssertionError("Register inlay manager first")
+      for (controller: NotebookCellInlayController in notebookCellInlayManager.inlaysForInterval(interval)) {
+        controller.createGutterRendererLineMarker(editor, interval)
       }
     }
   }
@@ -122,6 +128,23 @@ class NotebookGutterLineMarkerManager {
 
 abstract class NotebookLineMarkerRenderer : LineMarkerRendererEx {
   override fun getPosition(): LineMarkerRendererEx.Position = LineMarkerRendererEx.Position.CUSTOM
+
+  protected fun getInlayBounds(editor: EditorEx, linesRange: IntRange) : Rectangle? {
+    val startOffset = editor.document.getLineStartOffset(linesRange.first)
+    val endOffset = editor.document.getLineStartOffset(linesRange.last)
+    val inlays = editor.inlayModel.getBlockElementsInRange(startOffset, endOffset)
+
+    val inlay = inlays.firstOrNull()
+    return inlay?.bounds
+  }
+  protected fun getInlayBounds(editor: EditorEx, linesRange: IntRange, inlayId: Long) : Rectangle? {
+    val startOffset = editor.document.getLineStartOffset(linesRange.first)
+    val endOffset = editor.document.getLineStartOffset(linesRange.last)
+    val inlays = editor.inlayModel.getBlockElementsInRange(startOffset, endOffset + 1)
+
+    val inlay = inlays.firstOrNull { it is RangeMarkerEx && it.id == inlayId }
+    return inlay?.bounds
+  }
 }
 class NotebookCellLineNumbersLineMarkerRenderer(private val lineRange: IntRange) : NotebookLineMarkerRenderer() {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
