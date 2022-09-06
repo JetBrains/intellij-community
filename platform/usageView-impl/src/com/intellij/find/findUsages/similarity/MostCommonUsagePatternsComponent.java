@@ -6,11 +6,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -31,6 +28,8 @@ import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.usages.similarity.clustering.UsageCluster;
 import com.intellij.usages.similarity.statistics.SimilarUsagesCollector;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -42,6 +41,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 
@@ -52,16 +55,25 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private final @NotNull JBPanelWithEmptyText myMainPanel;
   private final @NotNull JScrollPane myMostCommonUsageScrollPane;
   private final @NotNull Ref<Collection<UsageCluster>> mySortedClusters;
+  private final @NotNull ScheduledFuture<?> myFireEventsFuture;
   private @NotNull MostCommonUsagesToolbar myMostCommonUsagesToolbar;
   private final @NotNull RefreshAction myRefreshAction;
   private @NotNull Set<Usage> mySelectedUsages;
   private final @NotNull Set<Usage> myNonClusteredUsages;
   private final @NotNull ClusteringSearchSession mySession;
-  private @Nullable BackgroundableProcessIndicator myProcessIndicator;
   private int myAlreadyRenderedSnippets;
+  private final AtomicBoolean isRefreshing;
+  private final AtomicInteger lastUsagesNumber;
+  private boolean isDisposed;
 
   public MostCommonUsagePatternsComponent(@NotNull UsageViewImpl usageView, @NotNull ClusteringSearchSession session) {
     super(true);
+    isRefreshing = new AtomicBoolean(false);
+    lastUsagesNumber = new AtomicInteger(0);
+    myFireEventsFuture =
+      EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this::refreshIfNeeded, 100, 100, TimeUnit.MILLISECONDS);
+    Disposer.register(this, () -> myFireEventsFuture.cancel(false));
+
     mySession = session;
     myUsageView = usageView;
     myProject = usageView.getProject();
@@ -78,19 +90,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           SimilarUsagesCollector.logMostCommonUsagePatternsRefreshClicked(myProject, mySession);
-          mySortedClusters.set(null);
-          myMainPanel.removeAll();
-          myMainPanel.revalidate();
-          mySelectedUsages = myUsageView.getSelectedUsages();
-          setToolbar(null);
-          myMostCommonUsagesToolbar = new MostCommonUsagesToolbar(myMostCommonUsageScrollPane,
-                                                                  UsageViewBundle.message("similar.usages.0.results",
-                                                                                          mySelectedUsages.size()),
-                                                                  myRefreshAction);
-          setToolbar(myMostCommonUsagesToolbar);
-          addInternalClusteringSessionActions(usageView);
-          addMostCommonUsagesForSelectedGroups();
-          setContent(myMostCommonUsageScrollPane);
+          refresh();
         }
 
         @Override
@@ -106,6 +106,39 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     revalidate();
     setContent(myMostCommonUsageScrollPane);
   }
+
+  private void refreshIfNeeded() {
+    if (isScrolled() && !isRefreshing.get() && newResutlsAdded()) {
+      refresh();
+    }
+  }
+
+  private boolean isScrolled() {
+    return myMostCommonUsageScrollPane.getVerticalScrollBar().getValue() == 0;
+  }
+
+  private boolean newResutlsAdded() {
+    return lastUsagesNumber.get() != myUsageView.getSelectedUsages().size();
+  }
+
+  private void refresh() {
+    isRefreshing.set(true);
+    mySortedClusters.set(null);
+    mySelectedUsages = myUsageView.getSelectedUsages();
+    addMostCommonUsagesForSelectedGroups();
+  }
+
+  private void updateToolbar() {
+    setToolbar(null);
+    myMostCommonUsagesToolbar = new MostCommonUsagesToolbar(myMostCommonUsageScrollPane,
+                                                            UsageViewBundle.message("similar.usages.0.results",
+                                                                                    mySelectedUsages.size()),
+                                                            myRefreshAction);
+    setToolbar(myMostCommonUsagesToolbar);
+    addInternalClusteringSessionActions(myUsageView);
+    setContent(myMostCommonUsageScrollPane);
+  }
+
 
   @NotNull
   private JScrollPane createLazyLoadingScrollPane() {
@@ -178,9 +211,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
 
   @Override
   public void dispose() {
-    if (myProcessIndicator != null && myProcessIndicator.isRunning()) {
-      myProcessIndicator.cancel();
-    }
+    isDisposed = true;
   }
 
   private void renderClusterDescription(@NotNull Usage usage, @NotNull Set<@NotNull SimilarUsage> clusterUsages) {
@@ -195,27 +226,23 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   }
 
   private void addMostCommonUsagesForSelectedGroups() {
-    Task.Backgroundable loadMostCommonUsagePatternsTask =
-      new Task.Backgroundable(myProject, UsageViewBundle.message(
-        "similar.usages.loading.most.common.usage.patterns.progress.title")) {
-        @Override
-        public void onSuccess() {
-          if (!mySortedClusters.isNull()) {
-            myAlreadyRenderedSnippets = 0;
-            loadMoreSnippets();
-            myMainPanel.revalidate();
-          }
+    ReadAction.nonBlocking(() -> {
+      mySortedClusters.set(mySession.getClustersForSelectedUsages(mySelectedUsages));
+      return true;
+    }).finishOnUiThread(
+      ModalityState.NON_MODAL, e -> {
+        if (!mySortedClusters.isNull() && !isDisposed) {
+          myAlreadyRenderedSnippets = 0;
+          myMainPanel.removeAll();
+          myMainPanel.revalidate();
+          updateToolbar();
+          loadMoreSnippets();
+          myMainPanel.revalidate();
+          isRefreshing.set(false);
+          lastUsagesNumber.set(mySelectedUsages.size());
         }
-
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          ApplicationManager.getApplication().runReadAction(() -> {
-            mySortedClusters.set(mySession.getClustersForSelectedUsages(indicator, mySelectedUsages));
-          });
-        }
-      };
-    myProcessIndicator = new BackgroundableProcessIndicator(loadMostCommonUsagePatternsTask);
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(loadMostCommonUsagePatternsTask, myProcessIndicator);
+      }
+    ).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   public static @Nullable ClusteringSearchSession findClusteringSessionInUsageView(@NotNull UsageView usageView) {

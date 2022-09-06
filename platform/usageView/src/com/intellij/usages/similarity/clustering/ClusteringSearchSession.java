@@ -2,7 +2,6 @@
 package com.intellij.usages.similarity.clustering;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
@@ -65,14 +64,11 @@ public class ClusteringSearchSession {
 
   @RequiresBackgroundThread
   @RequiresReadLock
-  public @NotNull List<UsageCluster> getClustersForSelectedUsages(@NotNull ProgressIndicator indicator,
-                                                                  @NotNull Set<Usage> selectedUsages) {
-    //create new ArrayList from clusters to avoid concurrent modification and do all the needed sorting and filtering in non-blocking way
+  public @NotNull List<UsageCluster> getClustersForSelectedUsages(@NotNull Set<Usage> selectedUsages) {
     return getClusters().stream()
       .map(cluster -> new UsageCluster(cluster.getOnlySelectedUsages(selectedUsages)))
       .filter(usageCluster -> !usageCluster.getUsages().isEmpty())
       .sorted((o1, o2) -> {
-        indicator.checkCanceled();
         return Integer.compare(o2.getUsages().size(), o1.getUsages().size());
       }).collect(Collectors.toList());
   }
