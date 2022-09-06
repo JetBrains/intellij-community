@@ -6,18 +6,6 @@ import com.intellij.util.ui.JBUI
 
 interface SpacingConfiguration {
 
-  companion object {
-    @JvmField
-    @Deprecated("Create EmptySpacingConfiguration directly when needed")
-    val EMPTY = EmptySpacingConfiguration()
-
-    @JvmStatic
-    @Deprecated("Create IntelliJSpacingConfiguration directly when needed")
-    fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
-      return IntelliJSpacingConfiguration()
-    }
-  }
-
   /**
    * Small horizontal gap, used between label and related component for example
    */

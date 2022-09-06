@@ -11,7 +11,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
@@ -95,6 +94,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun <T : JComponent> cell(component: T, viewComponent: JComponent): CellImpl<T> {
     val result = CellImpl(dialogPanelConfig, component, this, viewComponent)
     cells.add(result)
@@ -117,11 +117,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun <T : JComponent> scrollCell(component: T): CellImpl<T> {
     return cell(component, JBScrollPane(component))
-  }
-
-  @Deprecated("Remove with deprecated collapsibleGroup")
-  fun cell(cell: CellBaseImpl<*>) {
-    cells.add(cell)
   }
 
   override fun placeholder(): PlaceholderImpl {
@@ -233,6 +228,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(ActionButton(actionGroup, actionGroup.templatePresentation.clone(), actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE))
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar> {
     val actionGroup = DefaultActionGroup(options.map { DeprecatedSegmentedButtonAction(it, property, renderer(it)) })
     val toolbar = SegmentedButtonToolbar(actionGroup, parent.spacingConfiguration)
@@ -410,6 +406,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(component)
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
     val component = ComboBox(items)
     component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }

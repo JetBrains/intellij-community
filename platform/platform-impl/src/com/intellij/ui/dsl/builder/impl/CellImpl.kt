@@ -166,7 +166,7 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  @Deprecated("Use overloaded method")
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): CellImpl<T> {
     return bind(componentGet, componentSet, MutableProperty(binding.get, binding.set))
   }

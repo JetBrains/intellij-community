@@ -140,11 +140,6 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     }.layout(RowLayout.PARENT_GRID)
   }
 
-  @Suppress("OVERRIDE_DEPRECATION")
-  override fun separator(@NlsContexts.Separator title: String?, background: Color?): Row {
-    return createSeparatorRow(title)
-  }
-
   override fun separator(background: Color?): Row {
     return createSeparatorRow(null, background)
   }
