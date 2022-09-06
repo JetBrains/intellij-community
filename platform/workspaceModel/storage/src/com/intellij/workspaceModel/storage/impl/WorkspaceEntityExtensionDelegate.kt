@@ -11,17 +11,21 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.extensionReceiverParameter
 import kotlin.reflect.full.isSubclassOf
 
+val calculatedCache = mutableMapOf<String, PropertyMetadata>()
+data class PropertyMetadata(val returnTypeClass: Class<out WorkspaceEntity>, val targetFieldName: String, val isCollection: Boolean,
+                            val isNullable: Boolean)
+
 class WorkspaceEntityExtensionDelegate<T> {
   operator fun getValue(thisRef: WorkspaceEntity, property: KProperty<*>): T {
     thisRef as WorkspaceEntityBase
-    val workspaceEntitySequence = thisRef.referrers(property.returnTypeKClass.java, property.findTargetField(thisRef).name)
+    val propertyMetadata = computeOrGetCachedMetadata(thisRef, property)
+    val workspaceEntitySequence = thisRef.referrers(propertyMetadata.returnTypeClass, propertyMetadata.targetFieldName)
 
-    val returnType = property.returnType
-    val result: Any? = if (returnType.isCollection) {
+    val result: Any? = if (propertyMetadata.isCollection) {
       workspaceEntitySequence.toList()
     }
     else {
-      if (returnType.isMarkedNullable) {
+      if (propertyMetadata.isNullable) {
         workspaceEntitySequence.singleOrNull()
       }
       else {
@@ -35,6 +39,17 @@ class WorkspaceEntityExtensionDelegate<T> {
     thisRef as ModifiableWorkspaceEntityBase<*>
     val entities = if (value is List<*>) value else listOf(value)
     thisRef.linkExternalEntity(property.returnTypeKClass, property.isChildProperty, entities as List<WorkspaceEntity?>)
+  }
+
+  private fun computeOrGetCachedMetadata(thisRef: WorkspaceEntity, property: KProperty<*>): PropertyMetadata {
+    val key = property.toString()
+    val cachesMetadata = calculatedCache[key]
+    if (cachesMetadata != null) return cachesMetadata
+    val returnType = property.returnType
+    val metadata = PropertyMetadata(property.returnTypeKClass.java, property.findTargetField(thisRef).name, returnType.isCollection,
+                                    returnType.isMarkedNullable)
+    calculatedCache[key] = metadata
+    return metadata
   }
 
   private val KProperty<*>.isChildProperty: Boolean
