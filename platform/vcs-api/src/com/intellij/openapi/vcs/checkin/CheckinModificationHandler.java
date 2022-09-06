@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.checkin;
 /**
  * Marker-interface for {@link CheckinHandler} that notifies that check will perform mutable operations on committed changes.
  * <p>
- * Such handlers shall be processed before 'pure checks' during the commit.
+ * Such handlers shall be processed before other checks during the commit.
  */
 public interface CheckinModificationHandler {
 }

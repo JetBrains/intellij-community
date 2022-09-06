@@ -39,7 +39,7 @@ interface CommitCheck : PossiblyDumbAware {
    * Runs commit check and returns the found commit problem if any.
    *
    * Method is executed with [com.intellij.openapi.application.EDT] dispatcher.
-   * Consider using explicit [kotlinx.coroutines.Dispatchers.Default] context for potentially long operations,
+   * Consider using explicit context (e.g. [kotlinx.coroutines.Dispatchers.Default]) for potentially long operations,
    * that can be performed on pooled thread.
    *
    * Use [com.intellij.openapi.progress.progressSink] to report progress state.
@@ -81,7 +81,9 @@ interface CommitProblem {
   val text: String
 
   /**
-   * Show modal resolution dialog for modal commit mode, if needed.
+   * Suggest a solution for the found problem in modal commit mode, if needed.
+   * Typically, this is a `Problem found, commit anyway? [Yes/No]` message dialog.
+   *
    * Method is not called for non-modal commit modes.
    */
   @RequiresEdt

@@ -348,7 +348,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         return CommitChecksResult.OnlyChecks(checksPassed)
       }
       checksPassed -> {
-        isCommitChecksResultUpToDate = RecentCommitChecks.UNKNOWN
+        isCommitChecksResultUpToDate = RecentCommitChecks.UNKNOWN // We are going to commit, remembering the result is not needed.
         return CommitChecksResult.Passed
       }
       else -> {
