@@ -153,7 +153,10 @@ internal class RecentProjectFilteringTree(
       }
     }
 
-    val treeUpdater = Runnable { searchModel.updateStructure() }
+    val treeUpdater = Runnable {
+      searchModel.updateStructure()
+      tree.repaint()
+    }
 
     return RecentProjectPanel.FilePathChecker(treeUpdater, recentProjects.map { it.projectPath })
   }
