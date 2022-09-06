@@ -119,10 +119,20 @@ public final class DocumentUtil {
     return isSurrogatePair(document, offset - 1);
   }
 
+  /**
+   * Equivalent to {@code (offset - 1)} except that the result never ends up in the middle of a surrogate pair.
+   * Make sure to <b>check that the returned offset is not negative</b> because this method
+   * doesn't perform the range check for you (passing an invalid offset is fine though).
+   */
   public static int getPreviousCodePointOffset(@NotNull Document document, int offset) {
     return offset - (isSurrogatePair(document, offset - 2) ? 2 : 1);
   }
 
+  /**
+   * Equivalent to {@code (offset + 1)} except that the result never ends up in the middle of a surrogate pair.
+   * Make sure to <b>check that the returned offset is not beyond the document text length</b> because this method
+   * doesn't perform the range check for you (passing an invalid offset is fine though).
+   */
   public static int getNextCodePointOffset(@NotNull Document document, int offset) {
     return offset + (isSurrogatePair(document, offset) ? 2 : 1);
   }
