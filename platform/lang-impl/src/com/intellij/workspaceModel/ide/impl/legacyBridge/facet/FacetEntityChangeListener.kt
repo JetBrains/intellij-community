@@ -25,6 +25,9 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 
 class FacetEntityChangeListener(private val project: Project): Disposable {
+  private val publisher
+    get() = FacetEventsPublisher.getInstance(project)
+
   init {
     if (!project.isDefault) {
       val busConnection = project.messageBus.connect(this)
@@ -195,7 +198,4 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
     val module = ModuleManager.getInstance(project).findModuleByName(entity.name) ?: return null
     return FacetManager.getInstance(module) as? FacetManagerBridge
   }
-
-  private val publisher
-    get() = FacetEventsPublisher.getInstance(project)
 }
