@@ -3,23 +3,19 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.annotations.Child
-import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.extensionReceiverParameter
 import kotlin.reflect.full.isSubclassOf
 
 val calculatedCache = mutableMapOf<String, PropertyMetadata>()
-data class PropertyMetadata(val returnTypeClass: Class<out WorkspaceEntity>, val targetFieldName: String, val isCollection: Boolean,
-                            val isNullable: Boolean)
+data class PropertyMetadata(val returnTypeClass: Class<out WorkspaceEntity>, val isCollection: Boolean, val isNullable: Boolean)
 
 class WorkspaceEntityExtensionDelegate<T> {
   operator fun getValue(thisRef: WorkspaceEntity, property: KProperty<*>): T {
     thisRef as WorkspaceEntityBase
-    val propertyMetadata = computeOrGetCachedMetadata(thisRef, property)
-    val workspaceEntitySequence = thisRef.referrers(propertyMetadata.returnTypeClass, propertyMetadata.targetFieldName)
+    val propertyMetadata = computeOrGetCachedMetadata(property)
+    val workspaceEntitySequence = thisRef.referrers(propertyMetadata.returnTypeClass)
 
     val result: Any? = if (propertyMetadata.isCollection) {
       workspaceEntitySequence.toList()
@@ -41,13 +37,12 @@ class WorkspaceEntityExtensionDelegate<T> {
     thisRef.linkExternalEntity(property.returnTypeKClass, property.isChildProperty, entities as List<WorkspaceEntity?>)
   }
 
-  private fun computeOrGetCachedMetadata(thisRef: WorkspaceEntity, property: KProperty<*>): PropertyMetadata {
+  private fun computeOrGetCachedMetadata(property: KProperty<*>): PropertyMetadata {
     val key = property.toString()
     val cachesMetadata = calculatedCache[key]
     if (cachesMetadata != null) return cachesMetadata
     val returnType = property.returnType
-    val metadata = PropertyMetadata(property.returnTypeKClass.java, property.findTargetField(thisRef).name, returnType.isCollection,
-                                    returnType.isMarkedNullable)
+    val metadata = PropertyMetadata(property.returnTypeKClass.java, returnType.isCollection, returnType.isMarkedNullable)
     calculatedCache[key] = metadata
     return metadata
   }
@@ -71,16 +66,5 @@ class WorkspaceEntityExtensionDelegate<T> {
 
   private val KType.isCollection: Boolean
     get() = (classifier as KClass<*>).isSubclassOf(List::class)
-
-  private fun KProperty<*>.findTargetField(entity: WorkspaceEntity): KCallable<*> {
-    val expectedFieldType = if (entity is ModifiableWorkspaceEntityBase<*>) {
-      entity.getEntityClass()
-    } else {
-      (extensionReceiverParameter?.type?.classifier as? KClass<*>)?.java ?: error("Unexpected behaviour at detecting extension field's receiver type")
-    }
-    return returnTypeKClass.declaredMemberProperties.find { member ->
-      return@find expectedFieldType == member.returnTypeKClass.java
-    } ?: error("Unexpected behaviour in detecting link to $expectedFieldType at $returnTypeKClass")
-  }
 }
 
