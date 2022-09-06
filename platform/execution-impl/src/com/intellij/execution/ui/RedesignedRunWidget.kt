@@ -66,7 +66,7 @@ private data class RunToolbarData(val project: Project,
 private val runToolbarDataKey = Key.create<RunToolbarData>("run-toolbar-data")
 
 private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
-  override fun getActionUpdateThread(): ActionUpdateThread  = ActionUpdateThread.BGT
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent): Unit = error("Should not be invoked")
 
@@ -85,7 +85,7 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
     }
     e.presentation.isEnabled = false
     val project = e.project ?: return
-    val selectedConfiguration: RunnerAndConfigurationSettings? = RunManager.getInstance(project).selectedConfiguration
+    val selectedConfiguration: RunnerAndConfigurationSettings? = RunManager.getInstanceIfCreated(project)?.selectedConfiguration
     val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { it === selectedConfiguration }
     val someRunning = !runningDescriptors.isEmpty()
     e.presentation.putClientProperty(runToolbarDataKey, RunToolbarData(project, selectedConfiguration, someRunning))
