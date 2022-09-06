@@ -14,6 +14,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ModalityState;
@@ -207,9 +208,8 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
            : null;
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     Splitter splitter = new JBSplitter(true);
     myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation());
     myTable = new JBTable(new MyKeyValueModel());
@@ -250,6 +250,12 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
           e.getPresentation().setText(shouldMarkAsNonNls(selection)
                                       ? JavaI18nBundle.message("action.text.mark.as.nonnls")
                                       : JavaI18nBundle.message("action.text.unmark.as.nonnls"));
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          // getSelectedDataWithIndices() is used which queries swing
+          return ActionUpdateThread.EDT;
         }
 
         private boolean shouldMarkAsNonNls(List<Pair<Integer, I18nizedPropertyData<D>>> selection) {
