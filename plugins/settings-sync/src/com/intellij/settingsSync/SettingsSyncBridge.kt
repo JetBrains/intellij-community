@@ -111,24 +111,10 @@ class SettingsSyncBridge(parentDisposable: Disposable,
   }
 
   private fun forcePushToCloud(masterPosition: SettingsLog.Position) {
-    val pushResult = pushToCloud(settingsLog.collectCurrentSnapshot(), force = true)
-    LOG.info("Result of pushing settings to the cloud: $pushResult")
-    when (pushResult) {
-      is SettingsSyncPushResult.Success -> {
-        settingsLog.setCloudPosition(masterPosition)
-        SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = pushResult.serverVersionId
-        SettingsSyncStatusTracker.getInstance().updateOnSuccess()
-      }
-      is SettingsSyncPushResult.Error -> {
-        SettingsSyncStatusTracker.getInstance().updateOnError(
-          SettingsSyncBundle.message("notification.title.push.error") + ": " + pushResult.message)
-      }
-      SettingsSyncPushResult.Rejected -> {
-        LOG.error("Reject shouldn't happen when force push is used")
-        SettingsSyncStatusTracker.getInstance().updateOnError(
-          SettingsSyncBundle.message("notification.title.push.error") + ": " + pushResult)
-      }
-    }
+    pushAndHandleResult(true, masterPosition, onRejectedPush = {
+      LOG.error("Reject shouldn't happen when force push is used")
+      SettingsSyncStatusTracker.getInstance().updateOnError(SettingsSyncBundle.message("notification.title.push.error"))
+    })
   }
 
   internal sealed class InitMode {
@@ -185,33 +171,39 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     }
 
     if (newCloudPosition != masterPosition || pushRequestMode == MUST_PUSH || pushRequestMode == FORCE_PUSH) {
-      val pushResult: SettingsSyncPushResult = pushToCloud(settingsLog.collectCurrentSnapshot(), pushRequestMode == FORCE_PUSH)
-      LOG.info("Result of pushing settings to the cloud: $pushResult")
-      when (pushResult) {
-        is SettingsSyncPushResult.Success -> {
-          settingsLog.setCloudPosition(masterPosition)
-          SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = pushResult.serverVersionId
-          SettingsSyncStatusTracker.getInstance().updateOnSuccess()
-        }
-        is SettingsSyncPushResult.Error -> {
-          SettingsSyncStatusTracker.getInstance().updateOnError(
-            SettingsSyncBundle.message("notification.title.push.error") + ": " + pushResult.message)
-        }
-        SettingsSyncPushResult.Rejected -> {
-          // todo add protection against potential infinite reject-update-reject cycle
-          //  (it would indicate some problem, but still shouldn't cycle forever)
+      pushAndHandleResult(pushRequestMode == FORCE_PUSH, masterPosition, onRejectedPush = {
+        // todo add protection against potential infinite reject-update-reject cycle
+        //  (it would indicate some problem, but still shouldn't cycle forever)
 
-          // In the case of reject we'll just "wait" for the next update event:
-          // it will be processed in the next session anyway
-          if (pendingEvents.none { it is SyncSettingsEvent.CloudChange }) {
-            // not to wait for too long, schedule an update right away unless it has already been scheduled
-            updateChecker.scheduleUpdateFromServer()
-          }
+        // In the case of reject we'll just "wait" for the next update event:
+        // it will be processed in the next session anyway
+        if (pendingEvents.none { it is SyncSettingsEvent.CloudChange }) {
+          // not to wait for too long, schedule an update right away unless it has already been scheduled
+          updateChecker.scheduleUpdateFromServer()
         }
-      }
+      })
     }
     else {
       LOG.info("Nothing to push")
+    }
+  }
+
+  private fun pushAndHandleResult(force: Boolean, positionToSetCloudBranch: SettingsLog.Position, onRejectedPush: () -> Unit) {
+    val pushResult: SettingsSyncPushResult = pushToCloud(settingsLog.collectCurrentSnapshot(), force)
+    LOG.info("Result of pushing settings to the cloud: $pushResult")
+    when (pushResult) {
+      is SettingsSyncPushResult.Success -> {
+        settingsLog.setCloudPosition(positionToSetCloudBranch)
+        SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = pushResult.serverVersionId
+        SettingsSyncStatusTracker.getInstance().updateOnSuccess()
+      }
+      is SettingsSyncPushResult.Error -> {
+        SettingsSyncStatusTracker.getInstance().updateOnError(
+          SettingsSyncBundle.message("notification.title.push.error") + ": " + pushResult.message)
+      }
+      SettingsSyncPushResult.Rejected -> {
+        onRejectedPush()
+      }
     }
   }
 
