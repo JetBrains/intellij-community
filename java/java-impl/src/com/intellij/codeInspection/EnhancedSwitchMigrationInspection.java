@@ -254,12 +254,16 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     @NotNull final PsiStatement myStatement;
     final List<SwitchExpressionBranch> myNewBranches;
     final @Nullable PsiReturnStatement myReturnToDelete;
+    private final List<PsiStatement> myStatementsToDelete;
 
     private ReturningSwitchReplacer(@NotNull PsiStatement statement,
-                                    List<SwitchExpressionBranch> newBranches, @Nullable PsiReturnStatement returnToDelete) {
+                                    @NotNull List<SwitchExpressionBranch> newBranches,
+                                    @Nullable PsiReturnStatement returnToDelete,
+                                    @NotNull List<PsiStatement> statementsToDelete) {
       myStatement = statement;
       myNewBranches = newBranches;
       myReturnToDelete = returnToDelete;
+      myStatementsToDelete = statementsToDelete;
     }
 
     @Override
@@ -267,14 +271,18 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       CommentTracker commentTracker = new CommentTracker();
       PsiSwitchBlock switchBlock = generateEnhancedSwitch(statement, myNewBranches, commentTracker, true);
       if (switchBlock == null) return;
+
+      if (myReturnToDelete != null) {
+        CommentTracker ct = new CommentTracker();
+        commentTracker.markUnchanged(myReturnToDelete.getReturnValue());
+        ct.delete(myReturnToDelete);
+      }
+      for (PsiStatement toDelete : myStatementsToDelete) {
+        commentTracker.delete(toDelete);
+      }
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(statement.getProject());
       PsiStatement returnStatement = factory.createStatementFromText("return " + switchBlock.getText() + ";", switchBlock);
       commentTracker.replaceAndRestoreComments(statement, returnStatement);
-      if (myReturnToDelete != null) {
-        CommentTracker ct = new CommentTracker();
-        ct.markUnchanged(myReturnToDelete.getReturnValue());
-        ct.deleteAndRestoreComments(myReturnToDelete);
-      }
     }
 
     @Override
@@ -334,7 +342,20 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                                                  new SwitchRuleExpressionResult(returnExpr),
                                                  Collections.emptyList()));
     }
-    return new ReturningSwitchReplacer(statement, newBranches, returnAfterSwitch);
+    List<PsiStatement> statementsToDelete = new ArrayList<>();
+    if (isExhaustive && returnAfterSwitch == null) {
+      PsiElement current = statement.getNextSibling();
+      while (current != null) {
+        if (current instanceof PsiStatement stmt) {
+          statementsToDelete.add(stmt);
+          if (stmt instanceof PsiReturnStatement || stmt instanceof PsiThrowStatement) {
+            break;
+          }
+        }
+        current = current.getNextSibling();
+      }
+    }
+    return new ReturningSwitchReplacer(statement, newBranches, returnAfterSwitch, statementsToDelete);
   }
 
   private static final class SwitchExistingVariableReplacer implements SwitchReplacer {
