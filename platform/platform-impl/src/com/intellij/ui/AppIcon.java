@@ -34,8 +34,6 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
@@ -208,15 +206,12 @@ public abstract class AppIcon {
       try {
         if (myAppImage != null) return myAppImage;
 
-        Image appImage = (Image)getAppMethod("getDockIconImage").invoke(getApp());
+        Image appImage = Taskbar.getTaskbar().getIconImage();
         if (appImage == null) return null;
 
         // [tav] expecting two resolution variants for the dock icon: 128x128, 256x256
         appImage = MultiResolutionImageProvider.getMaxSizeResolutionVariant(appImage);
         myAppImage = ImageUtil.toBufferedImage(appImage);
-      }
-      catch (NoSuchMethodException e) {
-        return null;
       }
       catch (Exception e) {
         LOG.error(e);
@@ -230,9 +225,8 @@ public abstract class AppIcon {
       EDT.assertIsEdt();
 
       try {
-        getAppMethod("setDockIconBadge", String.class).invoke(getApp(), text);
+        Taskbar.getTaskbar().setIconBadge(text);
       }
-      catch (NoSuchMethodException ignored) { }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -251,9 +245,8 @@ public abstract class AppIcon {
       EDT.assertIsEdt();
 
       try {
-        getAppMethod("requestForeground", boolean.class).invoke(getApp(), true);
+        Desktop.getDesktop().requestForeground(true);
       }
-      catch (NoSuchMethodException ignored) { }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -264,9 +257,8 @@ public abstract class AppIcon {
       EDT.assertIsEdt();
 
       try {
-        getAppMethod("requestUserAttention", boolean.class).invoke(getApp(), critical);
+        Taskbar.getTaskbar().requestUserAttention(true, critical);
       }
-      catch (NoSuchMethodException ignored) { }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -393,23 +385,11 @@ public abstract class AppIcon {
 
     static void setDockIcon(BufferedImage image) {
       try {
-        getAppMethod("setDockIconImage", Image.class).invoke(getApp(), image);
+        Taskbar.getTaskbar().setIconImage(image);
       }
       catch (Exception e) {
         LOG.error(e);
       }
-    }
-
-    private static Method getAppMethod(String name, Class<?>... args) throws NoSuchMethodException, ClassNotFoundException {
-      return getAppClass().getMethod(name, args);
-    }
-
-    private static Object getApp() throws NoSuchMethodException, ClassNotFoundException, InvocationTargetException, IllegalAccessException {
-      return getAppClass().getMethod("getApplication").invoke(null);
-    }
-
-    private static Class<?> getAppClass() throws ClassNotFoundException {
-      return Class.forName("com.apple.eawt.Application");
     }
   }
 
