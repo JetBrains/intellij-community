@@ -6969,34 +6969,34 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/mayBeConstant/constInExpr.kt");
         }
 
-        @TestMetadata("ecplicitType.kt")
-        public void testEcplicitType() throws Exception {
-            runTest("testData/inspectionsLocal/mayBeConstant/ecplicitType.kt");
-        }
-
-        @TestMetadata("ecplicitType2.kt")
-        public void testEcplicitType2() throws Exception {
-            runTest("testData/inspectionsLocal/mayBeConstant/ecplicitType2.kt");
-        }
-
-        @TestMetadata("ecplicitType3.kt")
-        public void testEcplicitType3() throws Exception {
-            runTest("testData/inspectionsLocal/mayBeConstant/ecplicitType3.kt");
-        }
-
-        @TestMetadata("ecplicitType4.kt")
-        public void testEcplicitType4() throws Exception {
-            runTest("testData/inspectionsLocal/mayBeConstant/ecplicitType4.kt");
-        }
-
-        @TestMetadata("ecplicitType5.kt")
-        public void testEcplicitType5() throws Exception {
-            runTest("testData/inspectionsLocal/mayBeConstant/ecplicitType5.kt");
-        }
-
         @TestMetadata("enum.kt")
         public void testEnum() throws Exception {
             runTest("testData/inspectionsLocal/mayBeConstant/enum.kt");
+        }
+
+        @TestMetadata("explicitType.kt")
+        public void testExplicitType() throws Exception {
+            runTest("testData/inspectionsLocal/mayBeConstant/explicitType.kt");
+        }
+
+        @TestMetadata("explicitType2.kt")
+        public void testExplicitType2() throws Exception {
+            runTest("testData/inspectionsLocal/mayBeConstant/explicitType2.kt");
+        }
+
+        @TestMetadata("explicitType3.kt")
+        public void testExplicitType3() throws Exception {
+            runTest("testData/inspectionsLocal/mayBeConstant/explicitType3.kt");
+        }
+
+        @TestMetadata("explicitType4.kt")
+        public void testExplicitType4() throws Exception {
+            runTest("testData/inspectionsLocal/mayBeConstant/explicitType4.kt");
+        }
+
+        @TestMetadata("explicitType5.kt")
+        public void testExplicitType5() throws Exception {
+            runTest("testData/inspectionsLocal/mayBeConstant/explicitType5.kt");
         }
 
         @TestMetadata("getter.kt")
@@ -7012,6 +7012,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("inClass.kt")
         public void testInClass() throws Exception {
             runTest("testData/inspectionsLocal/mayBeConstant/inClass.kt");
+        }
+
+        @TestMetadata("jvmStatic.kt")
+        public void testJvmStatic() throws Exception {
+            runTest("testData/inspectionsLocal/mayBeConstant/jvmStatic.kt");
         }
 
         @TestMetadata("nonConstInExpr.kt")

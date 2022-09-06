@@ -577,39 +577,6 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/addConstModifier")
-    public static class AddConstModifier extends AbstractIntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("inapplicableToConst.kt")
-        public void testInapplicableToConst() throws Exception {
-            runTest("testData/intentions/addConstModifier/inapplicableToConst.kt");
-        }
-
-        @TestMetadata("inapplicableToOverride.kt")
-        public void testInapplicableToOverride() throws Exception {
-            runTest("testData/intentions/addConstModifier/inapplicableToOverride.kt");
-        }
-
-        @TestMetadata("removeJvmField.kt")
-        public void testRemoveJvmField() throws Exception {
-            runTest("testData/intentions/addConstModifier/removeJvmField.kt");
-        }
-
-        @TestMetadata("removeJvmStatic.kt")
-        public void testRemoveJvmStatic() throws Exception {
-            runTest("testData/intentions/addConstModifier/removeJvmStatic.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/addConstModifier/simple.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addForLoopIndices")
     public static class AddForLoopIndices extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
