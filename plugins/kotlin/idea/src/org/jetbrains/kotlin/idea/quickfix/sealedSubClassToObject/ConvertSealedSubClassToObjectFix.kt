@@ -12,7 +12,11 @@ import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.intentions.ConvertSecondaryConstructorToPrimaryIntention
+import org.jetbrains.kotlin.idea.util.application.isDispatchThread
+import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -22,6 +26,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 class ConvertSealedSubClassToObjectFix : LocalQuickFix {
 
     override fun getFamilyName() = KotlinBundle.message("convert.sealed.sub.class.to.object.fix.family.name")
+
+    override fun startInWriteAction(): Boolean = false
 
     companion object {
         val JAVA_LANG = Language.findLanguageByID("JAVA")
@@ -39,10 +45,12 @@ class ConvertSealedSubClassToObjectFix : LocalQuickFix {
      * Changes declaration of class to object.
      */
     private fun changeDeclaration(element: KtClass) {
-        val factory = KtPsiFactory(element)
+        runWriteAction {
+            val factory = KtPsiFactory(element)
 
-        element.changeToObject(factory)
-        element.transformToObject(factory)
+            element.changeToObject(factory)
+            element.transformToObject(factory)
+        }
     }
 
     private fun KtClass.changeToObject(factory: KtPsiFactory) {
@@ -61,16 +69,29 @@ class ConvertSealedSubClassToObjectFix : LocalQuickFix {
     private fun changeInstances(klass: KtClass) {
         mapReferencesByLanguage(klass)
             .apply {
-                replaceKotlin(klass)
-                replaceJava(klass)
+                runWriteAction {
+                    replaceKotlin(klass)
+                    replaceJava(klass)
+                }
             }
     }
 
     /**
      * Map references to this class by language
      */
-    private fun mapReferencesByLanguage(klass: KtClass) = ReferencesSearch.search(klass)
-        .groupBy({ it.element.language }, { it.element.parent })
+    private fun mapReferencesByLanguage(klass: KtClass): Map<Language, List<PsiElement>> {
+        val computable = {
+            ReferencesSearch.search(klass)
+                .groupBy({ it.element.language }, { it.element.parent })
+        }
+        return if (isDispatchThread()) {
+            klass.project.runSynchronouslyWithProgress(KotlinBundle.message("progress.looking.up.sealed.sub.class.usage"), true) {
+                runReadAction { computable() }
+            } ?: emptyMap()
+        } else {
+            computable()
+        }
+    }
 
     /**
      * Replace Kotlin instantiations to a straightforward call to the singleton.
