@@ -33,6 +33,10 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
         private val operationData: Set<KtFile>
     ) : Task.Backgroundable(project, COLLECT_UNUSED_IMPORTS_TITLE, true) {
 
+        override fun isConditionalModal(): Boolean = true
+
+        override fun shouldStartInBackground(): Boolean = !isOptimizeImportsSynchronously
+
         override fun run(indicator: ProgressIndicator) {
             indicator.isIndeterminate = false
 
@@ -87,6 +91,9 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
     }
 
     companion object {
+        private val isOptimizeImportsSynchronously: Boolean by lazy {
+            System.getProperty("kotlin.optimize.imports.synchronously") == "true"
+        }
         private val COLLECT_UNUSED_IMPORTS_TITLE get() = KotlinBundle.message("optimize.imports.collect.unused.imports")
         private val REMOVING_REDUNDANT_IMPORTS_TITLE get() = KotlinBundle.message("optimize.imports.task.removing.redundant.imports")
     }
