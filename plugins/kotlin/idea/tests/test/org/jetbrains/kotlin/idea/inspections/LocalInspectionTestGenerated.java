@@ -6969,6 +6969,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/mayBeConstant/constInExpr.kt");
         }
 
+        @TestMetadata("delegation.kt")
+        public void testDelegation() throws Exception {
+            runTest("testData/inspectionsLocal/mayBeConstant/delegation.kt");
+        }
+
         @TestMetadata("enum.kt")
         public void testEnum() throws Exception {
             runTest("testData/inspectionsLocal/mayBeConstant/enum.kt");
@@ -6997,6 +7002,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("explicitType5.kt")
         public void testExplicitType5() throws Exception {
             runTest("testData/inspectionsLocal/mayBeConstant/explicitType5.kt");
+        }
+
+        @TestMetadata("extension.kt")
+        public void testExtension() throws Exception {
+            runTest("testData/inspectionsLocal/mayBeConstant/extension.kt");
         }
 
         @TestMetadata("getter.kt")
