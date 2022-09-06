@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.*;
@@ -76,19 +77,21 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
         return;
       }
 
-      for (Project project : openProjects) {
-        if (project.isDisposed()) {
-          continue;
-        }
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        for (Project project : openProjects) {
+          if (project.isDisposed()) {
+            continue;
+          }
 
-        GeneratedSourceFileChangeTrackerImpl fileChangeTracker = (GeneratedSourceFileChangeTrackerImpl)getInstance(project);
-        ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
-        if (fileIndex.isInContent(file) || fileIndex.isInLibrary(file)) {
-          fileChangeTracker.myFilesToCheck.add(file);
-          fileChangeTracker.myCheckingQueue.cancelAndRequest();
-          // don't stop, one file maybe in different projects
+          GeneratedSourceFileChangeTrackerImpl fileChangeTracker = (GeneratedSourceFileChangeTrackerImpl)getInstance(project);
+          ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+          if (fileIndex.isInContent(file) || fileIndex.isInLibrary(file)) {
+            fileChangeTracker.myFilesToCheck.add(file);
+            fileChangeTracker.myCheckingQueue.cancelAndRequest();
+            // don't stop, one file maybe in different projects
+          }
         }
-      }
+      });
     }
   }
 
