@@ -19,31 +19,33 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
 public abstract class LibraryScopeBase extends GlobalSearchScope {
-  private final Set<VirtualFile> myEntries;
+  private final Object2IntMap<VirtualFile> myEntries; // Maps each classpath root to its position in the classpath.
   protected final ProjectFileIndex myIndex;
 
   public LibraryScopeBase(Project project, VirtualFile[] classes, VirtualFile[] sources) {
     super(project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    myEntries = new LinkedHashSet<>(classes.length + sources.length);
-    Collections.addAll(myEntries, classes);
-    Collections.addAll(myEntries, sources);
+    myEntries = new Object2IntOpenHashMap<>(classes.length + sources.length);
+    myEntries.defaultReturnValue(Integer.MAX_VALUE);
+    for (VirtualFile file : classes) {
+      myEntries.putIfAbsent(file, myEntries.size());
+    }
+    for (VirtualFile file : sources)  {
+      myEntries.putIfAbsent(file, myEntries.size());
+    }
   }
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return myEntries.contains(getFileRoot(file));
+    return myEntries.containsKey(getFileRoot(file));
   }
 
   @Nullable
@@ -59,13 +61,9 @@ public abstract class LibraryScopeBase extends GlobalSearchScope {
 
   @Override
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    final VirtualFile r1 = getFileRoot(file1);
-    final VirtualFile r2 = getFileRoot(file2);
-    for (VirtualFile root : myEntries) {
-      if (Comparing.equal(r1, root)) return 1;
-      if (Comparing.equal(r2, root)) return -1;
-    }
-    return 0;
+    int pos1 = myEntries.getInt(getFileRoot(file1));
+    int pos2 = myEntries.getInt(getFileRoot(file2));
+    return Integer.compare(pos2, pos1);
   }
 
   @Override
@@ -83,11 +81,11 @@ public abstract class LibraryScopeBase extends GlobalSearchScope {
     if (this == o) return true;
     if (!(o instanceof LibraryScopeBase)) return false;
 
-    return myEntries.equals(((LibraryScopeBase)o).myEntries);
+    return myEntries.keySet().equals(((LibraryScopeBase)o).myEntries.keySet());
   }
 
   @Override
   public int calcHashCode() {
-    return myEntries.hashCode();
+    return myEntries.keySet().hashCode();
   }
 }
