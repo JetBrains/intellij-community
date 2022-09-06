@@ -420,7 +420,7 @@ internal class PackagesListPanel(
             .flowOn(project.lifecycleScope.coroutineDispatcher)
             .onEach { (targetModules, headerData, packagesTableViewModel) ->
                 val renderingTime = measureTime {
-                    updateListEmptyState(targetModules)
+                    updateListEmptyState(targetModules, project.packageSearchProjectService.isLoadingFlow.value)
 
                     headerPanel.display(headerData)
 
@@ -482,7 +482,8 @@ internal class PackagesListPanel(
             .launchIn(project.lifecycleScope)
     }
 
-    private fun updateListEmptyState(targetModules: TargetModules) {
+    private fun updateListEmptyState(targetModules: TargetModules, loading: Boolean) {
+        listPanel.emptyText.clear()
         when {
             isSearching() -> {
                 listPanel.emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.searching")
@@ -490,13 +491,12 @@ internal class PackagesListPanel(
             targetModules is TargetModules.None -> {
                 listPanel.emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.noModule")
             }
-            else -> {
+            !loading -> {
                 val targetModuleNames = when (targetModules) {
                     is TargetModules.All -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.allModules")
                     is TargetModules.One -> targetModules.module.projectModule.name
                     is TargetModules.None -> error("No module selected empty state should be handled separately")
                 }
-                listPanel.emptyText.clear()
                 listPanel.emptyText.appendLine(
                     PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.packagesOnly", targetModuleNames)
                 )
@@ -506,6 +506,11 @@ internal class PackagesListPanel(
                 ) {
                     BrowserUtil.browse("https://www.jetbrains.com/help/idea/package-search-build-system-support-limitations.html")
                 }
+            }
+            else -> {
+                listPanel.emptyText.appendLine(
+                    PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.loading")
+                )
             }
         }
     }
