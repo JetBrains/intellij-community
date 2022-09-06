@@ -81,8 +81,8 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
           if (distinct.add(psiElement) && value != null) {
             I18nizedPropertyData<HardcodedStringContextData> data = keyValuePairs.get(value);
             if (data != null) {
-              data.getContextData().getPsiElements().add(psiElement);
-              data.getContextData().getExpressions().add(concatenation.getRootUExpression());
+              data.contextData().getPsiElements().add(psiElement);
+              data.contextData().getExpressions().add(concatenation.getRootUExpression());
             }
             else {
               String key = ObjectUtils.notNull(suggestKeyByPlace(value, concatenation.getRootUExpression()),
@@ -130,8 +130,8 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     if (dialog.showAndGet()) {
       PropertiesFile propertiesFile = dialog.getPropertiesFile();
       Set<PsiFile> files = new HashSet<>();
-      for (I18nizedPropertyData<HardcodedStringContextData> pair : replacements) {
-        for (PsiElement element : pair.getContextData().getPsiElements()) {
+      for (I18nizedPropertyData<HardcodedStringContextData> data : replacements) {
+        for (PsiElement element : data.contextData().getPsiElements()) {
           ContainerUtil.addIfNotNull(files, element.getContainingFile());
         }
       }
@@ -144,17 +144,17 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
         for (I18nizedPropertyData<HardcodedStringContextData> data : replacements) {
           JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                         Collections.singletonList(propertiesFile),
-                                                                        data.getKey(),
-                                                                        data.getValue(),
+                                                                        data.key(),
+                                                                        data.value(),
                                                                         new UExpression[0]);
-          List<UExpression> uExpressions = data.getContextData().getExpressions();
-          List<PsiElement> psiElements = data.getContextData().getPsiElements();
+          List<UExpression> uExpressions = data.contextData().getExpressions();
+          List<PsiElement> psiElements = data.contextData().getPsiElements();
           for (int i = 0; i < psiElements.size(); i++) {
             PsiElement psiElement = psiElements.get(i);
             UExpression uExpression = uExpressions.get(i);
             Language language = psiElement.getLanguage();
             String i18NText =
-              dialog.getI18NText(data.getKey(), data.getValue(), JavaI18nUtil.composeParametersText(data.getContextData().getArgs()));
+              dialog.getI18NText(data.key(), data.value(), JavaI18nUtil.composeParametersText(data.contextData().getArgs()));
 
             PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
             PsiExpression expression;
@@ -168,7 +168,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
             catch (IncorrectOperationException e) {
               LOG.debug(e);
               try {
-                expression = elementFactory.createExpressionFromText(dialog.getI18NText(data.getKey(), data.getValue(), ""), psiElement);
+                expression = elementFactory.createExpressionFromText(dialog.getI18NText(data.key(), data.value(), ""), psiElement);
               }
               catch (IncorrectOperationException exception) {
                 continue;
@@ -189,8 +189,8 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
             }
             UastElementFactory pluginElementFactory = generationPlugin.getElementFactory(project);
             List<UExpression> arguments = new ArrayList<>();
-            arguments.add(pluginElementFactory.createStringLiteralExpression(data.getKey(), psiElement));
-            arguments.addAll(data.getContextData().getArgs());
+            arguments.add(pluginElementFactory.createStringLiteralExpression(data.key(), psiElement));
+            arguments.addAll(data.contextData().getArgs());
 
             UExpression receiver = callDescriptor.first != null
                                    ? pluginElementFactory.createQualifiedReference(callDescriptor.first, uExpression.getSourcePsi())

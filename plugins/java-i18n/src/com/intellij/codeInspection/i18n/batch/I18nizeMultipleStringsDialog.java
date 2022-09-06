@@ -42,6 +42,7 @@ import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NonNls;
@@ -162,7 +163,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
           ReadAction.nonBlocking(() -> {
             List<I18nizedPropertyData<D>> result = new ArrayList<>();
             for (I18nizedPropertyData<D> data : pairs) {
-              result.add(data.changeKey(I18nizeQuickFixDialog.suggestUniquePropertyKey(data.getValue(), data.getKey(), propertiesFile)));
+              result.add(data.changeKey(I18nizeQuickFixDialog.suggestUniquePropertyKey(data.value(), data.key(), propertiesFile)));
             }  
             return result;
           }).finishOnUiThread(ModalityState.stateForComponent(myPropertiesFile), datum -> {
@@ -252,7 +253,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
         }
 
         private boolean shouldMarkAsNonNls(List<Pair<Integer, I18nizedPropertyData<D>>> selection) {
-          return !selection.stream().allMatch(data -> data.second.isMarkAsNonNls());
+          return !ContainerUtil.and(selection, data -> data.second.markAsNonNls());
         }
       };
       markAsNonNls.setShortcut(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_DOWN_MASK)));
@@ -278,7 +279,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
   private void updateUsagePreview(JBTable table) {
     int index = table.getSelectionModel().getLeadSelectionIndex();
     if (index != -1 && index < myKeyValuePairs.size()) {
-      myUsagePreviewPanel.updateLayout(myUsagePreviewProvider.apply(myKeyValuePairs.get(index).getContextData()));
+      myUsagePreviewPanel.updateLayout(myUsagePreviewProvider.apply(myKeyValuePairs.get(index).contextData()));
     }
     else {
       myUsagePreviewPanel.updateLayout(null);
@@ -342,16 +343,16 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return columnIndex == 0 && 0 <= rowIndex && rowIndex < myKeyValuePairs.size() && !myKeyValuePairs.get(rowIndex).isMarkAsNonNls();
+      return columnIndex == 0 && 0 <= rowIndex && rowIndex < myKeyValuePairs.size() && !myKeyValuePairs.get(rowIndex).markAsNonNls();
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       I18nizedPropertyData<?> data = myKeyValuePairs.get(rowIndex);
       if (columnIndex == 0) {
-        return data.isMarkAsNonNls() ? "will be marked as NonNls" : data.getKey();
+        return data.markAsNonNls() ? "will be marked as NonNls" : data.key();
       }
-      return data.getValue();
+      return data.value();
     }
 
     @Override

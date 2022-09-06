@@ -118,24 +118,24 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
       WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> {
         for (I18nizedPropertyData<HardcodedStringInFormData> data : dataList) {
           StringDescriptor valueDescriptor;
-          if (!data.isMarkAsNonNls()) {
+          if (!data.markAsNonNls()) {
             JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                           Collections.singletonList(propertiesFile),
-                                                                          data.getKey(),
-                                                                          data.getValue(),
+                                                                          data.key(),
+                                                                          data.value(),
                                                                           new UExpression[0]);
-            valueDescriptor = new StringDescriptor(bundleName, data.getKey());
+            valueDescriptor = new StringDescriptor(bundleName, data.key());
           }
           else {
-            valueDescriptor = StringDescriptor.create(data.getValue());
+            valueDescriptor = StringDescriptor.create(data.value());
             valueDescriptor.setNoI18n(true);
           }
 
-          setPropertyValue(data.getContextData().getComponent(), data.getContextData().getPropertyName(), valueDescriptor);
-          List<I18nizedPropertyData<HardcodedStringInFormData>> duplicateValues = duplicates.get(data.getValue());
+          setPropertyValue(data.contextData().getComponent(), data.contextData().getPropertyName(), valueDescriptor);
+          List<I18nizedPropertyData<HardcodedStringInFormData>> duplicateValues = duplicates.get(data.value());
           if (duplicateValues != null) {
             for (I18nizedPropertyData<HardcodedStringInFormData> duplicateBean : duplicateValues) {
-              setPropertyValue(duplicateBean.getContextData().getComponent(), duplicateBean.getContextData().getPropertyName(),
+              setPropertyValue(duplicateBean.contextData().getComponent(), duplicateBean.contextData().getPropertyName(),
                                valueDescriptor);
             }
           }
