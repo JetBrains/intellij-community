@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.parentsOfType
+import com.intellij.util.castSafelyTo
 import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -134,3 +135,9 @@ fun KtPropertyAccessor.deleteBody() {
     val leftParenthesis = leftParenthesis ?: return
     deleteChildRange(leftParenthesis, lastChild)
 }
+
+fun KtDeclarationWithBody.singleExpressionBody(): KtExpression? =
+    when (val body = bodyExpression) {
+        is KtBlockExpression -> body.statements.singleOrNull()?.castSafelyTo<KtReturnExpression>()?.returnedExpression
+        else -> body
+    }

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.core.stepping
 import com.intellij.debugger.engine.SimplePropertyGetterProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.base.psi.singleExpressionBody
 import org.jetbrains.kotlin.psi.*
 
 class KotlinSimpleGetterProvider : SimplePropertyGetterProvider {
@@ -16,15 +17,7 @@ class KotlinSimpleGetterProvider : SimplePropertyGetterProvider {
 
         val accessor = PsiTreeUtil.getParentOfType(element, KtPropertyAccessor::class.java)
         if (accessor != null && accessor.isGetter) {
-            return when (val body = accessor.bodyExpression) {
-                is KtBlockExpression -> {
-                    // val a: Int get() { return field }
-                    val returnedExpression = (body.statements.singleOrNull() as? KtReturnExpression)?.returnedExpression ?: return false
-                    returnedExpression.textMatches("field")
-                }
-                is KtExpression -> body.textMatches("field") // val a: Int get() = field
-                else -> false
-            }
+            return accessor.singleExpressionBody()?.textMatches("field") == true
         }
 
         val property = PsiTreeUtil.getParentOfType(element, KtProperty::class.java)
