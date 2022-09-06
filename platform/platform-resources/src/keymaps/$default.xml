@@ -1164,10 +1164,6 @@
     <keyboard-shortcut first-keystroke="shift N"/>
   </action>
 
-  <action id="GitCheckoutFromInputAction">
-    <keyboard-shortcut first-keystroke="shift U"/>
-  </action>
-
   <action id="ChangesView.SetDefault">
     <keyboard-shortcut first-keystroke="control SPACE" />
   </action>
