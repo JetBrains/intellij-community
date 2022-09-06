@@ -78,6 +78,7 @@ public final class ThreadLeakTracker {
       "Image Fetcher ",
       "InnocuousThreadGroup",
       "Java2D Disposer",
+      "JNA Cleaner",
       "JobScheduler FJ pool ",
       "JPS thread pool",
       "Keep-Alive-SocketCleaner", // Thread[Keep-Alive-SocketCleaner,8,InnocuousThreadGroup], JBR-11
@@ -97,7 +98,7 @@ public final class ThreadLeakTracker {
       "Signal Dispatcher",
       "tc-okhttp-stream", // Dockers "com.github.dockerjava.okhttp.UnixDomainSocket.recv"
       "timer-int", //serverIm,
-      "timer-sys", //clientim,
+      "timer-sys", //clientIm,
       "TimerQueue",
       "UserActivityMonitor thread",
       "VM Periodic Task Thread",
