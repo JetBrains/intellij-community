@@ -423,7 +423,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       }
       ClusteringSearchSession session = findClusteringSessionInUsageView(usageView);
       if (session != null) {
-        UsageCluster cluster = session.findCluster(infos);
+        UsageCluster cluster = session.findCluster(ContainerUtil.getFirstItem(infos));
         if (cluster != null && cluster.getUsages().size() > 1) {
           myToolbar = new UsagePreviewToolbarWithSimilarUsagesLink(this, usageView, infos, cluster);
           add(myToolbar, BorderLayout.NORTH);

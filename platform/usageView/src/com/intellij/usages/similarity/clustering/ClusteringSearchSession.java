@@ -10,7 +10,6 @@ import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,14 +59,6 @@ public class ClusteringSearchSession {
           return cluster;
         }
       }
-    }
-    return null;
-  }
-
-  public @Nullable UsageCluster findCluster(@NotNull List<? extends UsageInfo> infos) {
-    UsageInfo selectedInfo = ContainerUtil.getFirstItem(infos);
-    if (selectedInfo != null) {
-      return findCluster(selectedInfo);
     }
     return null;
   }
