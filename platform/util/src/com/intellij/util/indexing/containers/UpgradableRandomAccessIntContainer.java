@@ -11,7 +11,7 @@ import java.util.function.Supplier;
  * @param <T> implementation that is used while size < threshold
  * @param <F> implementation that is used once threshold is reached
  */
-final public class RAIntContainerThresholdImplementationSwitcher<
+final public class UpgradableRandomAccessIntContainer<
   T extends RandomAccessIntContainer,
   F extends RandomAccessIntContainer> implements RandomAccessIntContainer {
   private T myInstanceLow;
@@ -19,9 +19,9 @@ final public class RAIntContainerThresholdImplementationSwitcher<
   private final int myThreshold;
   private final @NotNull InstanceUpgrader<? extends F> myFactoryHigh;
 
-  public RAIntContainerThresholdImplementationSwitcher(int sizeThreshold,
-                                                @NotNull Supplier<? extends T> factoryLow,
-                                                @NotNull InstanceUpgrader<? extends F> factoryHigh) {
+  public UpgradableRandomAccessIntContainer(int sizeThreshold,
+                                            @NotNull Supplier<? extends T> factoryLow,
+                                            @NotNull InstanceUpgrader<? extends F> factoryHigh) {
     myThreshold = sizeThreshold;
     myInstanceLow = factoryLow.get();
     myFactoryHigh = factoryHigh;
@@ -56,8 +56,8 @@ final public class RAIntContainerThresholdImplementationSwitcher<
   @Override
   public Object clone() {
     try {
-      RAIntContainerThresholdImplementationSwitcher<T, F> copy =
-        (RAIntContainerThresholdImplementationSwitcher<T, F>)super.clone();
+      UpgradableRandomAccessIntContainer<T, F> copy =
+        (UpgradableRandomAccessIntContainer<T, F>)super.clone();
       if (myInstanceHigh != null) {
         copy.myInstanceHigh = (F)myInstanceHigh.clone();
       }

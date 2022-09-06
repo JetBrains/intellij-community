@@ -65,7 +65,7 @@ public class BitSetAsRAIntContainer implements Cloneable, RandomAccessIntContain
   public void compact() { }
 
   /**
-   * @implNote this must be O(1) because this class is used with {@link RAIntContainerThresholdImplementationSwitcher}
+   * @implNote this must be O(1) because this class is used with {@link UpgradableRandomAccessIntContainer}
    */
   @Override
   public int size() {

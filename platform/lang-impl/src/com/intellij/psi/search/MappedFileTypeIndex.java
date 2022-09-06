@@ -39,7 +39,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void, FileContent, Void>, FileTypeNameEnumerator,
                                                   MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(MappedFileTypeIndex.class);
-  private static final int INVERTED_INDEX_SIZE_THRESHOLD = SystemProperties.getIntProperty("mapped.file.type.index.threshold", 256);
+  private static final int INVERTED_INDEX_SIZE_THRESHOLD =
+    SystemProperties.getIntProperty("mapped.file.type.index.inverse.upgrade.threshold", 256);
 
   private static class FileDetails {
     public FileType myFileType;
@@ -193,7 +194,7 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
 
     myLock.readLock().lock();
     try {
-      for (IntIdsIterator it = mySnapshot.getFileIds(fileTypeId); it.hasNext();) {
+      for (IntIdsIterator it = mySnapshot.getFileIds(fileTypeId); it.hasNext(); ) {
         result.addValue(it.next(), null);
       }
     }
@@ -497,7 +498,7 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
       }
       setForwardIndexData(myForwardIndex, inputId, data);
       if (data != 0) {
-        myInvertedIndex.computeIfAbsent(data, __ -> createContainerForInverseIndex()).add(inputId);
+        myInvertedIndex.computeIfAbsent(data, __ -> createContainerForInvertedIndex()).add(inputId);
       }
     }
 
@@ -516,8 +517,8 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
     }
   }
 
-  private static RandomAccessIntContainer createContainerForInverseIndex() {
-    return new RAIntContainerThresholdImplementationSwitcher<>(
+  private static RandomAccessIntContainer createContainerForInvertedIndex() {
+    return new UpgradableRandomAccessIntContainer<>(
       INVERTED_INDEX_SIZE_THRESHOLD,
       () -> {
         return new IntHashSetAsRAIntContainer(INVERTED_INDEX_SIZE_THRESHOLD, Hash.DEFAULT_LOAD_FACTOR);
@@ -540,7 +541,7 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
     forwardIndex.processEntries((inputId, data) -> {
       if (data != 0) {
         setForwardIndexData(forwardIndex, inputId, data);
-        invertedIndex.computeIfAbsent(data, __ -> createContainerForInverseIndex()).add(inputId);
+        invertedIndex.computeIfAbsent(data, __ -> createContainerForInvertedIndex()).add(inputId);
       }
     });
     return new MappedFileTypeIndex.MemorySnapshot(invertedIndex, forwardIndex);
