@@ -27,29 +27,32 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
                                      private val ideMenu: IdeMenuBar) : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder {
   private var toolbar: MainToolbar?
 
+  private val LEFT_GAP = JBUI.scale(16)
+  private val RIGHT_GAP = JBUI.scale(24)
+
   init {
     layout = BorderLayout()
     root.addPropertyChangeListener(MacMainFrameDecorator.FULL_SCREEN, PropertyChangeListener { updateBorders() })
     add(ideMenu, BorderLayout.NORTH)
 
-    val toolbar = createToolBar()
-    this.toolbar = toolbar
+    toolbar = createToolBar()
   }
 
   private fun createToolBar(): MainToolbar {
     val toolbar = MainToolbar()
     toolbar.isOpaque = false
+    toolbar.border = JBUI.Borders.empty(0, LEFT_GAP, 0, RIGHT_GAP)
     add(toolbar, BorderLayout.CENTER)
     return toolbar
   }
 
   override fun initToolbar() {
-    var toolbar = toolbar
-    if (toolbar == null) {
-      toolbar = createToolBar()
-      this.toolbar = toolbar
+    var tb = toolbar
+    if (tb == null) {
+      tb = createToolBar()
+      toolbar = tb
     }
-    toolbar.init((frame as? IdeFrame)?.project)
+    tb.init((frame as? IdeFrame)?.project)
   }
 
   override fun updateToolbar() {

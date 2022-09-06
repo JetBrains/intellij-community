@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import javax.swing.JComponent
 
 class ProjectToolbarWidgetAction : AnAction(), CustomComponentAction {
@@ -23,7 +24,7 @@ class ProjectToolbarWidgetAction : AnAction(), CustomComponentAction {
     val project = e.project
     val file = project?.let { FileEditorManager.getInstance(it).selectedFiles.firstOrNull() }
     val settings = UISettings.getInstance()
-    val showFileName = settings.editorTabPlacement == UISettings.TABS_NONE && file != null
+    val showFileName = Registry.`is`("ide.experimental.ui.project.widget.show.file") && settings.editorTabPlacement == UISettings.TABS_NONE && file != null
     val maxLength = if (showFileName) 12 else 24
     val projName = project?.name ?: ""
 

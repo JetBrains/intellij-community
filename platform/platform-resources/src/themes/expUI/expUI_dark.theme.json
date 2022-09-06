@@ -500,7 +500,8 @@
       "Button": {
         "buttonInsets": "0,0,0,0"
       },
-      "background": "Grey2"
+      "background": "Grey2",
+      "separatorColor": "Grey1"
     },
 
     "Tree": {

@@ -513,6 +513,7 @@
     "MainToolbar": {
       "background": "Grey2",
       "inactiveBackground": "Grey3",
+      "separatorColor": "Grey4",
       "Icon": {
         "borderInsets": "10,10,10,10",
         "background": "Grey2",

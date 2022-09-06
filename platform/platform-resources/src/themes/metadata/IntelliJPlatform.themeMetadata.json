@@ -1749,6 +1749,11 @@
     },
     {
       "key": "Tag.background"
+    },
+    {
+      "key": "MainToolbar.separatorColor",
+      "description": "Color of the Main Toolbar separators",
+      "since": "2022.3"
     }
   ]
 }
