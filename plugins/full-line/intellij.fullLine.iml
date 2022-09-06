@@ -3,8 +3,9 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/testData" type="java-test-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -34,5 +35,15 @@
     <orderEntry type="module" module-name="intellij.fullLine.languages.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.fullLine.languages.python" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.fullLine.languages.kotlin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.psi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.psi.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin.tests" scope="TEST" />
+    <orderEntry type="library" name="kotlin-reflect" level="project" scope="TEST" />
+    <orderEntry type="library" name="jaxb-api" level="project" scope="TEST" />
+    <orderEntry type="library" name="mockito" level="project" scope="TEST" />
+    <orderEntry type="library" name="JUnit5" level="project" scope="TEST" />
   </component>
 </module>
