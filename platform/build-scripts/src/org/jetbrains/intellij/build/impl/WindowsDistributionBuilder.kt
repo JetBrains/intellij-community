@@ -4,14 +4,12 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.useWithScope2
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
-import org.jdom.Element
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.productInfo.*
@@ -29,7 +27,6 @@ internal class WindowsDistributionBuilder(
   override val context: BuildContext,
   private val customizer: WindowsDistributionCustomizer,
   private val ideaProperties: Path?,
-  private val patchedApplicationInfo: String,
 ) : OsSpecificDistributionBuilder {
   private val icoFile: Path?
 
@@ -306,7 +303,7 @@ internal class WindowsDistributionBuilder(
       val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ";")
       val envVarBaseName = context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)
       val icoFilesDirectory = context.paths.tempDir.resolve("win-launcher-ico")
-      val appInfoForLauncher = generateApplicationInfoForLauncher(patchedApplicationInfo, icoFilesDirectory)
+      val appInfoForLauncher = generateApplicationInfoForLauncher(context.applicationInfo.appInfoXml, icoFilesDirectory)
       @Suppress("SpellCheckingInspection")
       Files.writeString(launcherPropertiesPath, """
         IDS_JDK_ONLY=${context.productProperties.toolsJarRequired}
@@ -354,6 +351,7 @@ internal class WindowsDistributionBuilder(
           appInfoForLauncher.toString(),
           "$communityHome/native/WinLauncher/resource.h",
           launcherPropertiesPath.toString(),
+          icoFile?.fileName?.toString() ?: " ",
           outputPath.toString(),
         ),
         jvmArgs = listOf("-Djava.awt.headless=true"),
@@ -367,21 +365,12 @@ internal class WindowsDistributionBuilder(
    * todo pass path to ico file to LauncherGeneratorMain directly (probably after IDEA-196705 is fixed).
    */
   private fun generateApplicationInfoForLauncher(appInfo: String, icoFilesDirectory: Path): Path {
-    val patchedFile = context.paths.tempDir.resolve("win-launcher-application-info.xml")
-    if (icoFile == null) {
-      Files.writeString(patchedFile, appInfo)
-      return patchedFile
-    }
-
     Files.createDirectories(icoFilesDirectory)
-    Files.copy(icoFile, icoFilesDirectory.resolve(icoFile.fileName), StandardCopyOption.REPLACE_EXISTING)
-    val root = JDOMUtil.load(appInfo)
-    // do not use getChild - maybe null due to namespace
-    val iconElement = root.content.firstOrNull { it is Element && it.name == "icon" }
-                      ?: throw RuntimeException("`icon` element not found in $appInfo:\n${appInfo}")
-
-    (iconElement as Element).setAttribute("ico", icoFile.fileName.toString())
-    JDOMUtil.write(root, patchedFile)
+    if (icoFile != null) {
+      Files.copy(icoFile, icoFilesDirectory.resolve(icoFile.fileName), StandardCopyOption.REPLACE_EXISTING)
+    }
+    val patchedFile = icoFilesDirectory.resolve("win-launcher-application-info.xml")
+    Files.writeString(patchedFile, appInfo)
     return patchedFile
   }
 }

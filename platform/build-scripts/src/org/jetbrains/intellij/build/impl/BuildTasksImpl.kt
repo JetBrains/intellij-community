@@ -1062,8 +1062,7 @@ fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null, context
   return when (os) {
     OsFamily.WINDOWS -> WindowsDistributionBuilder(context = context,
                                                    customizer = context.windowsDistributionCustomizer ?: return null,
-                                                   ideaProperties = ideaProperties,
-                                                   patchedApplicationInfo = context.applicationInfo.toString())
+                                                   ideaProperties = ideaProperties)
     OsFamily.LINUX -> LinuxDistributionBuilder(context = context,
                                                customizer = context.linuxDistributionCustomizer ?: return null,
                                                ideaProperties = ideaProperties)
