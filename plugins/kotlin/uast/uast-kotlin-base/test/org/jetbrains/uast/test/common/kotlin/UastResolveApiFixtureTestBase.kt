@@ -582,7 +582,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val getOrDefaultExtResolved = getOrDefaultExt.resolve()
             .orFail("cant resolve from $getOrDefaultExt")
         TestCase.assertEquals("getOrDefault", getOrDefaultExtResolved.name)
-        TestCase.assertEquals("Map", getOrDefaultExtResolved.containingClass?.name)
+        TestCase.assertEquals("CollectionsJDK8Kt", getOrDefaultExtResolved.containingClass?.name)
 
         val getOrDefault = uFile.findElementByTextFromPsi<UCallExpression>("getOrDefault(\"a\", \"b\")", strict = false)
             .orFail("cant convert to UCallExpression")
