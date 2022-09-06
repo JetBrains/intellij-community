@@ -5,10 +5,7 @@ import com.intellij.ProjectTopics
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.debug
@@ -129,12 +126,15 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
           .registerModuleLibraryInstances(builder)
       }
     }
+
     // Facets that are loaded from the cache do not generate "EntityAdded" event and aren't initialized
     // We initialize the facets manually here (after modules loading).
     //
     // Possible issue - if we'll initialize facets here and after that we'll get "EntityAdded" event, the facet will be initialized twice
     // But 1. That seems impossible as we don't create facets before the modules are loaded 2. I hope that facets initialization is idempotent
-    modules.forEach(ModuleBridge::initFacets)
+    invokeLater {
+      modules.forEach(ModuleBridge::initFacets)
+    }
   }
 
   override fun unloadNewlyAddedModulesIfPossible(storage: EntityStorage) {
