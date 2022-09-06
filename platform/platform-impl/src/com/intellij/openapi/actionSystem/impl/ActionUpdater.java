@@ -183,6 +183,9 @@ final class ActionUpdater {
         }
       }
     }
+    if (PopupMenuPreloader.isToSkipComputeOnEDT(myPlace)) {
+      throw new ComputeOnEDTSkipped();
+    }
     if (myPreCacheSlowDataKeys && updateThread == ActionUpdateThread.OLD_EDT) {
       ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> ensureSlowDataKeysPreCached(operationName));
     }
@@ -498,14 +501,20 @@ final class ActionUpdater {
   }
 
   private List<AnAction> getGroupChildren(ActionGroup group, UpdateStrategy strategy) {
-    return myGroupChildren.computeIfAbsent(group, __ -> {
+    Function<ActionGroup, List<AnAction>> function = __ -> {
       AnAction[] children = strategy.getChildren.fun(group);
       int nullIndex = ArrayUtil.indexOf(children, null);
       if (nullIndex < 0) return Arrays.asList(children);
 
       LOG.error("action is null: i=" + nullIndex + " group=" + group + " group id=" + ActionManager.getInstance().getId(group));
       return ContainerUtil.filter(children, Conditions.notNull());
-    });
+    };
+    try {
+      return myGroupChildren.computeIfAbsent(group, function);
+    }
+    catch (ComputeOnEDTSkipped ignore) {
+    }
+    return Collections.emptyList();
   }
 
   private List<AnAction> expandGroupChild(AnAction child, boolean hideDisabledBase, UpdateStrategy strategy) {
@@ -663,12 +672,16 @@ final class ActionUpdater {
     if (cached != null) {
       return cached;
     }
-
-    Presentation presentation = strategy.update.fun(action);
-    if (presentation != null) {
-      myUpdatedPresentations.put(action, presentation);
+    try {
+      Presentation presentation = strategy.update.fun(action);
+      if (presentation != null) {
+        myUpdatedPresentations.put(action, presentation);
+        return presentation;
+      }
     }
-    return presentation;
+    catch (ComputeOnEDTSkipped ignore) {
+    }
+    return null;
   }
 
   // returns false if exception was thrown and handled
@@ -793,5 +806,8 @@ final class ActionUpdater {
     Compact(@NotNull ActionGroup action) {
       super(action);
     }
+  }
+
+  private static class ComputeOnEDTSkipped extends ProcessCanceledException {
   }
 }
