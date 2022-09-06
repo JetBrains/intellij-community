@@ -95,6 +95,15 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   static final class MyPersistentFsConnectionListener implements PersistentFsConnectionListener {
+
+    @Override
+    public void connectionOpen() {
+      final var service = ApplicationManager.getApplication().getServiceIfCreated(VirtualFilePointerManager.class);
+      if (service != null) {
+        ((VirtualFilePointerManagerImpl)service).resolveUrlBasedPointers();
+      }
+    }
+
     @Override
     public void beforeConnectionClosed() {
       final var service = ApplicationManager.getApplication().getServiceIfCreated(VirtualFilePointerManager.class);
@@ -426,6 +435,32 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
                                                @Nullable VirtualFilePointerListener listener) {
     VirtualFile file = pointer.getFile();
     return file == null ? create(pointer.getUrl(), parent, listener) : create(file, parent, listener);
+  }
+
+  synchronized void resolveUrlBasedPointers() {
+    resolveUrlBasedPointers(myLocalRoot);
+    resolveUrlBasedPointers(myTempRoot);
+  }
+
+  private static void resolveUrlBasedPointers(@NotNull FilePartNodeRoot root) {
+    for (FilePartNode child : root.children) {
+      if (child.isUrlBased()) {
+        final var resolvedChild = VirtualFileManager.getInstance().findFileByUrl(FilePartNode.myUrl(child.myFileOrUrl));
+        if (resolvedChild != null) {
+          child = child.replaceWithFPPN(resolvedChild, root);
+        }
+      }
+
+      resolveUrlBasedPointers(child, root, root);
+    }
+  }
+
+  private static void resolveUrlBasedPointers(@NotNull FilePartNode node, @NotNull FilePartNode parent, @NotNull FilePartNodeRoot root) {
+    node.update(parent, root, "VFPMI invalidated VFP during FS connection", null);
+
+    for (FilePartNode child : node.children) {
+      resolveUrlBasedPointers(child, node, root);
+    }
   }
 
   synchronized void switchToUrlBasedPointers() {
