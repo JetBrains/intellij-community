@@ -95,7 +95,7 @@ pub fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     // jbrsdk-17.0.3-x64-b469
     let jbrsdk_root = get_child_dir(&jbrsdk_gradle_parent, java_dir_prefix)?;
 
-    let jar_path = Path::new("resources/TestProject/build/libs/app.jar");
+    let jar_path = Path::new("./resources/TestProject/build/libs/app.jar");
     let intellij_app_jar_source = jar_path.canonicalize()?;
 
     let start_unix_timestamp_nanos = SystemTime::now()
@@ -123,6 +123,12 @@ pub struct TestEnvironmentShared {
 }
 
 pub fn gradle_command_wrapper(gradle_command: &str) {
+    let current_dir = env::current_dir()
+        .expect("Failed to get current dir")
+        .canonicalize()
+        .expect("Failed to get canonical path to current dir");
+    println!("current_dir={current_dir:?}");
+
     let executable_name = get_gradlew_executable_name();
     let executable = PathBuf::from("./resources/TestProject")
         .join(executable_name);
@@ -132,7 +138,7 @@ pub fn gradle_command_wrapper(gradle_command: &str) {
     let gradlew = executable.canonicalize().expect("Failed to get canonical path to gradlew");
     let command_to_execute = Command::new(gradlew)
         .arg(gradle_command)
-        .current_dir("resources/TestProject")
+        .current_dir("./resources/TestProject")
         .output()
         .expect(format!("Failed to execute gradlew :{gradle_command}").as_str());
 
@@ -417,8 +423,24 @@ pub struct IntellijMainDumpedLaunchParameters {
     pub systemProperties: HashMap<String, String>
 }
 
-pub fn run_launcher(test: &TestEnvironment, args: &[&str]) -> LauncherRunResult {
-    let result = match run_launcher_impl(test, args) {
+pub fn run_launcher_with_default_args(test: &TestEnvironment, args: &[&str]) -> LauncherRunResult {
+    let output_file = test.test_root_dir.join(TEST_OUTPUT_FILE_NAME);
+    let output_args = ["dump-launch-parameters", "--output", &output_file.to_string_lossy()];
+    let full_args = &mut output_args.to_vec();
+    full_args.append(&mut args.to_vec());
+
+    let result = match run_launcher_impl(test, full_args, &output_file) {
+        Ok(x) => x,
+        Err(e) => {
+            panic!("Failed to get launcher run result: {e:?}")
+        }
+    };
+
+    result
+}
+
+pub fn run_launcher(test: &TestEnvironment, args: &[&str], output_file: &Path) -> LauncherRunResult {
+    let result = match run_launcher_impl(test, args, output_file) {
         Ok(x) => x,
         Err(e) => {
             panic!("Failed to get launcher run result: {e:?}")
@@ -430,15 +452,10 @@ pub fn run_launcher(test: &TestEnvironment, args: &[&str]) -> LauncherRunResult 
 
 pub const TEST_OUTPUT_FILE_NAME: &str = "output.json";
 
-fn run_launcher_impl(test: &TestEnvironment, args: &[&str]) -> Result<LauncherRunResult> {
-    let output_file = test.test_root_dir.join(TEST_OUTPUT_FILE_NAME);
-    let output_args = ["--output", &output_file.to_string_lossy()];
-    let full_args = &mut output_args.to_vec();
-    full_args.append(&mut args.to_vec());
-
+fn run_launcher_impl(test: &TestEnvironment, args: &[&str], output_file: &Path) -> Result<LauncherRunResult> {
     let mut launcher_process = Command::new(&test.launcher_path)
         .current_dir(&test.test_root_dir)
-        .args(full_args)
+        .args(args)
         .env(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")
         .spawn()
         .context("Failed to spawn launcher process")?;
@@ -479,4 +496,18 @@ fn read_launcher_run_result(path: &Path) -> Result<IntellijMainDumpedLaunchParam
     let reader = BufReader::new(file);
     let dump: IntellijMainDumpedLaunchParameters = serde_json::from_reader(reader)?;
     Ok(dump)
+}
+
+pub fn run_launcher_and_get_dump(layout_kind: &LauncherLocation) -> IntellijMainDumpedLaunchParameters {
+    let test = prepare_test_env(layout_kind);
+    let result = run_launcher_with_default_args(&test, &[]);
+    assert!(result.exit_status.success(), "Launcher didn't exit successfully");
+    result.dump.expect("Launcher exited successfully, but there is no output")
+}
+
+pub fn run_launcher_and_get_dump_with_args(layout_kind: &LauncherLocation, args: &[&str]) -> IntellijMainDumpedLaunchParameters {
+    let test = prepare_test_env(layout_kind);
+    let result = run_launcher_with_default_args(&test, args);
+    assert!(result.exit_status.success(), "Launcher didn't exit successfully");
+    result.dump.expect("Launcher exited successfully, but there is no output")
 }

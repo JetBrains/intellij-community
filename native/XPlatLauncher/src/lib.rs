@@ -148,15 +148,19 @@ trait LaunchConfiguration {
     fn prepare_for_launch(&self) -> Result<PathBuf>;
 }
 
+pub fn is_remote_dev(cmd_args: &[String]) -> bool {
+    // 0 arg is binary itself
+    cmd_args.len() > 1 && cmd_args[1] == "--remote-dev"
+}
+
 fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
     let cmd_args: Vec<String> = env::args().collect();
-
-    // 0 arg is binary itself
-    let is_remote_dev = cmd_args.len() > 1 && cmd_args[1] == "--remote-dev";
+    
+    let is_remote_dev = is_remote_dev(&cmd_args);
 
     let (remote_dev_project_path, ij_args) = match is_remote_dev {
         true => {
-            let remote_dev_args = RemoteDevLaunchConfiguration::parse_remote_dev_args(&cmd_args[2..])?;
+            let remote_dev_args = RemoteDevLaunchConfiguration::parse_remote_dev_args(&cmd_args)?;
             (remote_dev_args.project_path, remote_dev_args.ij_args)
         },
         false => (None, cmd_args)

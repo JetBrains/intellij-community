@@ -42,7 +42,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
                 debug!("IDE properties env var env_var_name is set to {x:?}")
             }
             Err(e) => {
-                debug!("IDE properties env var {env_var_name} doesn't seem to be set, details: {e:?}");
+                debug!("IDE properties env var {env_var_name} doesn't seem to be set, details: {e}");
             }
         };
 
@@ -66,6 +66,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
                 Err(e) => {
                     match e.is::<std::io::Error>() {
                         true => {
+                            // this handles non-existent file probably
                             warn!("{item_path:?}: IoError {e:?} when trying to get canonical path");
                             continue
                         }
@@ -170,25 +171,25 @@ impl DefaultLaunchConfiguration {
         debug!("Trying to resolve runtime from product code env var {product_code_env_var}");
         match self.get_java_executable_from_java_root_env_var(product_code_env_var) {
             Ok(p) => { return Ok(p); }
-            Err(e) => { debug!("Didn't find runtime from env var: {product_code_env_var}, error: {e:?}") }
+            Err(e) => { debug!("Didn't find runtime from env var: {product_code_env_var}, error: {e}") }
         }
 
         debug!("Trying to resolve runtime from custom user file");
         match self.get_user_jre() {
             Ok(p) => { return Ok(p) }
-            Err(e) => { debug!("Didn't find runtime from custom user file, error: {e:?}") }
+            Err(e) => { debug!("Didn't find runtime from custom user file, error: {e}") }
         }
 
         debug!("Resolving runtime jbr dir in ide home");
         match self.get_from_jbr_dir() {
             Ok(p) => { return Ok(p) }
-            Err(e) => { debug!("Didn't find runtime from jbr dir in ide home. Error: {e:?}") }
+            Err(e) => { debug!("Didn't find runtime from jbr dir in ide home. Error: {e}") }
         }
 
         debug!("Resolving runtime from default env vars");
         match self.get_from_java_env_vars() {
             Ok(p) => { return Ok(p) }
-            Err(e) => { debug!("Didn't find runtime from jbr dir in ide home. Error: {e:?}") }
+            Err(e) => { debug!("Didn't find runtime from jbr dir in ide home. Error: {e}") }
         }
 
         // TODO: timeout?
@@ -230,7 +231,7 @@ impl DefaultLaunchConfiguration {
     fn get_from_java_env_vars(&self) -> Result<PathBuf> {
         match self.get_java_executable_from_java_root_env_var("JDK_HOME") {
             Ok(p) => { return Ok(p) }
-            Err(e) => { debug!("Didn't find a valid runtime from JDK_HOME env var, error: {e:?}") }
+            Err(e) => { debug!("Didn't find a valid runtime from JDK_HOME env var, error: {e}") }
         }
 
         return self.get_java_executable_from_java_root_env_var("JAVA_HOME");
@@ -407,7 +408,7 @@ impl DefaultLaunchConfiguration {
         match is_readable(options_from_toolbox) {
             Ok(f) => { return Ok(f) }
             Err(e) => {
-                debug!("Didn't resolve vmoptions from {options_from_toolbox:?}, details: {e:?}")
+                debug!("Didn't resolve vmoptions from {options_from_toolbox:?}, details: {e}")
             }
         }
 
@@ -441,14 +442,14 @@ impl DefaultLaunchConfiguration {
 
         match get_readable_file_from_env_var(env_var_name.as_str()) {
             Ok(f) => { return Ok(f) }
-            Err(e) => { debug!("Didn't resolve vm options file from {env_var_name} env var, details: {e:?}") }
+            Err(e) => { debug!("Didn't resolve vm options file from {env_var_name} env var, details: {e}") }
         };
 
         let vm_options_file_name = self.get_vm_options_file_name()?;
         let vm_options_from_ide_bin = &self.ide_bin.join(vm_options_file_name.as_str());
         match is_readable(vm_options_from_ide_bin) {
             Ok(f) => { return Ok(f); }
-            Err(e) => { debug!("Didn't resolve vm options file from base bin dir {vm_options_from_ide_bin:?}, details: {e:?}") }
+            Err(e) => { debug!("Didn't resolve vm options file from base bin dir {vm_options_from_ide_bin:?}, details: {e}") }
         }
 
         let os_specific_dir = match env::consts::OS {
@@ -617,7 +618,7 @@ fn get_user_home() -> PathBuf {
         }
         Err(e) => {
             // TODO: this seems wrong
-            warn!("Failed to get $HOME env var value: {e:?}, using / as home dir");
+            warn!("Failed to get $HOME env var value: {e}, using / as home dir");
 
             PathBuf::from("/")
         }

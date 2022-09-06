@@ -142,7 +142,8 @@ pub fn call_intellij_main(jni_env: jni::JNIEnv<'_>, args: Vec<String>) -> Result
 
     let method_call_args = vec![JValue::from(main_args)];
 
-    debug!("Calling IntelliJ main");
+    let args_string = args.join(", ");
+    debug!("Calling IntelliJ main, args: {args_string}");
     match jni_env.call_static_method("com/intellij/idea/Main", "main", "([Ljava/lang/String;)V", &method_call_args) {
         Ok(_) => {}
         Err(e) => {
