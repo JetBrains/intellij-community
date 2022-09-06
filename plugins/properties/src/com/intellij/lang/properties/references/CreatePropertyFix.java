@@ -82,7 +82,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     String fileName = myPropertiesFiles != null && !myPropertiesFiles.isEmpty() ? myPropertiesFiles.get(0).getName() : "";
-    return new IntentionPreviewInfo.CustomDiff(PropertiesFileType.INSTANCE, fileName, "", myKey + "=");
+    return new IntentionPreviewInfo.CustomDiff(PropertiesFileType.INSTANCE, fileName, myKey + "=", myKey + "=...");
   }
 
   private void invokeAction(@NotNull final Project project,
