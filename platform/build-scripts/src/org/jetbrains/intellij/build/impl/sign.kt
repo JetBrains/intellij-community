@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.intellij.build.tasks
+package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.use
 import com.intellij.diagnostic.telemetry.useWithScope
@@ -26,9 +26,14 @@ import net.schmizz.sshj.userauth.password.Resource
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
 import org.apache.commons.compress.archivers.zip.ZipFile
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
-import org.jetbrains.intellij.build.io.*
-import org.jetbrains.intellij.build.tracer
+import org.jetbrains.intellij.build.io.info
+import org.jetbrains.intellij.build.io.retryWithExponentialBackOff
+import org.jetbrains.intellij.build.io.warn
+import org.jetbrains.intellij.build.io.writeNewFile
+import org.jetbrains.intellij.build.tasks.NoDuplicateZipArchiveOutputStream
+import org.jetbrains.intellij.build.tasks.entry
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets
@@ -40,6 +45,7 @@ import java.security.SecureRandom
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletableFuture.runAsync
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.logging.*
@@ -78,7 +84,7 @@ private const val regularFileMode = 420
 // 0777 octal -> 511 decimal
 private const val executableFileMode = 511
 
-fun signMacApp(
+internal fun signMacApp(
   host: String,
   user: String,
   password: String,
@@ -95,7 +101,7 @@ fun signMacApp(
   jetSignClient: Path
 ) {
   executeTask(host, user, password, "intellij-builds/${fullBuildNumber}") { ssh, sftp, remoteDir ->
-    tracer.spanBuilder("upload file")
+    spanBuilder("upload file")
       .setAttribute("file", appArchiveFile.toString())
       .setAttribute("remoteDir", remoteDir)
       .setAttribute("host", host)
@@ -104,7 +110,7 @@ fun signMacApp(
       }
 
     val scriptDir = communityHome.communityRoot.resolve("platform/build-scripts/tools/mac/scripts")
-    tracer.spanBuilder("upload scripts")
+    spanBuilder("upload scripts")
       .setAttribute("scriptDir", scriptDir.toString())
       .setAttribute("remoteDir", remoteDir)
       .setAttribute("host", host)
@@ -136,7 +142,7 @@ fun signMacApp(
       .joinToString(separator = " ", postfix = " ") {
         "$it=${System.getenv(it)}"
       }
-    tracer.spanBuilder("sign mac app").setAttribute("file", appArchiveFile.toString()).useWithScope {
+    spanBuilder("sign mac app").setAttribute("file", appArchiveFile.toString()).useWithScope {
       signFile(remoteDir = remoteDir,
                commandString = "$env'$remoteDir/signapp.sh' '${args.joinToString("' '")}'",
                file = appArchiveFile,
@@ -158,7 +164,7 @@ fun signMacApp(
     if (dmgImage != null) {
       val fileNameWithoutExt = appArchiveFile.fileName.toString().removeSuffix(".sit")
       val dmgFile = artifactDir.resolve("$fileNameWithoutExt.dmg")
-      tracer.spanBuilder("build dmg").setAttribute("file", dmgFile.toString()).useWithScope {
+      spanBuilder("build dmg").setAttribute("file", dmgFile.toString()).useWithScope {
         processFile(localFile = dmgFile,
                     ssh = ssh,
                     commandString = "/bin/bash -l '$remoteDir/makedmg.sh' '${fileNameWithoutExt}' '$fullBuildNumber'",
@@ -266,7 +272,7 @@ private fun InputStream.writeEachLineTo(vararg outputStreams: OutputStream, chan
 private fun downloadResult(remoteFile: String,
                            localFile: Path,
                            ftpClient: SFTPClient) {
-  tracer.spanBuilder("download file")
+  spanBuilder("download file")
     .setAttribute("remoteFile", remoteFile)
     .setAttribute("localFile", localFile.toString())
     .use { span ->
@@ -313,7 +319,6 @@ private fun generateRemoteDirName(remoteDirPrefix: String): String {
   return "$remoteDirPrefix-$currentDateTimeString-${java.lang.Long.toUnsignedString(random.nextLong(), Character.MAX_RADIX)}"
 }
 
-@Throws(java.lang.Exception::class)
 private fun AgentProxy.getAuthMethods(): List<AuthMethod> {
   val identities = identities
   System.getLogger("org.jetbrains.intellij.build.tasks.Sign")
@@ -338,7 +343,7 @@ private inline fun executeTask(host: String,
                                remoteDirPrefix: String,
                                task: (ssh: SSHClient, sftp: SFTPClient, remoteDir: String) -> Unit) {
   initLog
-  tracer.spanBuilder("connecting to $host").use { span ->
+  spanBuilder("connecting to $host").use { span ->
     retryWithExponentialBackOff(attempts = 10, action = {
       val config = DefaultConfig()
       config.keepAliveProvider = KeepAliveProvider.KEEP_ALIVE
@@ -378,7 +383,7 @@ private inline fun executeTask(host: String,
 }
 
 private fun removeDir(ssh: SSHClient, remoteDir: String) {
-  tracer.spanBuilder("remove remote dir").setAttribute("remoteDir", remoteDir).use {
+  spanBuilder("remove remote dir").setAttribute("remoteDir", remoteDir).use {
     ssh.startSession().use { session ->
       val command = session.exec("rm -rf '$remoteDir'")
       command.join(5, TimeUnit.MINUTES)

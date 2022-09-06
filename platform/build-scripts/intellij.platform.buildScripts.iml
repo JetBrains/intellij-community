@@ -74,5 +74,8 @@
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="library" name="blockmap" level="project" />
+    <orderEntry type="library" name="SSHJ" level="project" />
+    <orderEntry type="library" name="jsch-agent-proxy" level="project" />
+    <orderEntry type="library" name="jsch-agent-proxy-sshj" level="project" />
   </component>
 </module>
