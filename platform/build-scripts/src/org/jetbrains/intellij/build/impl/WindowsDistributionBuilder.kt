@@ -76,7 +76,7 @@ internal class WindowsDistributionBuilder(
       }
       generateVMOptions(distBinDir)
       buildWinLauncher(targetPath, arch)
-      customizer.copyAdditionalFiles(context, targetPath.toString())
+      customizer.copyAdditionalFiles(context, targetPath.toString(), arch)
 
       pty4jNativeDir
     }

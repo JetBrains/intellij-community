@@ -199,6 +199,7 @@ private val BINARIES: List<Binary> = listOf(
   Binary(OsFamily.LINUX, JvmArchitecture.x64, "bin/repair-linux-amd64", "bin/repair", "linux_amd64"),
   Binary(OsFamily.LINUX, JvmArchitecture.aarch64, "bin/repair-linux-arm64", "bin/repair", "linux_arm64"),
   Binary(OsFamily.WINDOWS, JvmArchitecture.x64, "bin/repair.exe", "bin/repair.exe", "windows_amd64"),
+  Binary(OsFamily.WINDOWS, JvmArchitecture.aarch64, "bin/repair64a.exe", "bin/repair.exe", "windows_arm4"),
   Binary(OsFamily.MACOS, JvmArchitecture.x64, "bin/repair-darwin-amd64", "bin/repair", "darwin_amd64"),
   Binary(OsFamily.MACOS, JvmArchitecture.aarch64, "bin/repair-darwin-arm64", "bin/repair", "darwin_arm64")
 )
