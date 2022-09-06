@@ -15,7 +15,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -23,10 +23,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -54,6 +51,7 @@ import com.intellij.util.io.basicAttributesIfExists
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.annotations.SystemDependent
@@ -672,7 +670,13 @@ object ProjectUtil {
   }
 }
 
+@Suppress("DeprecatedCallableAddReplaceWith")
 @Internal
+@ScheduledForRemoval
+@Deprecated(
+  "Use runBlockingModal on EDT with proper owner and title, " +
+  "or runBlockingCancellable(+withBackgroundProgressIndicator with proper title) on BGT"
+)
 // inline is not used - easier debug
 fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
   if (!ApplicationManager.getApplication().isDispatchThread) {
@@ -681,8 +685,11 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
   return runBlockingUnderModalProgress(task = task)
 }
 
+@Suppress("DeprecatedCallableAddReplaceWith")
 @Internal
 @RequiresEdt
+@ScheduledForRemoval
+@Deprecated("Use runBlockingModal with proper owner and title")
 fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: String = "", project: Project? = null, task: suspend CoroutineScope.() -> T): T {
   return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
