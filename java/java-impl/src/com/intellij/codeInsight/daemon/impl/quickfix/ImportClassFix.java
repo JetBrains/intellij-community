@@ -12,11 +12,12 @@ import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceElement, PsiJavaCodeReferenceElement> {
@@ -46,7 +47,9 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiClass firstClassToImport = getClassesToImport().get(0);
+    List<? extends PsiClass> classesToImport = getClassesToImport(true);
+    if (classesToImport.isEmpty()) return IntentionPreviewInfo.EMPTY;
+    PsiClass firstClassToImport = classesToImport.get(0);
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.findSameElementInCopy(getReference(), file);
     bindReference(ref, firstClassToImport);
     return IntentionPreviewInfo.DIFF;
@@ -117,7 +120,7 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
     PsiElement prev = FilterPositionUtil.searchNonSpaceNonCommentBack(type);
     PsiTypeParameterList typeParameterList = PsiTreeUtil.getParentOfType(prev, PsiTypeParameterList.class);
     if (typeParameterList != null && typeParameterList.getParent() instanceof PsiErrorElement) {
-      return Arrays.stream(typeParameterList.getTypeParameters()).anyMatch(p -> Objects.equals(element.getReferenceName(), p.getName()));
+      return ContainerUtil.exists(typeParameterList.getTypeParameters(), p -> Objects.equals(element.getReferenceName(), p.getName()));
     }
     return false;
   }
