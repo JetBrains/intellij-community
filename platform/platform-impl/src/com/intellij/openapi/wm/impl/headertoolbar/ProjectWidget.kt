@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.*
+import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
@@ -79,11 +80,27 @@ internal class ProjectWidget(private val presentation: Presentation) : ToolbarCo
 
     val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
     res.addAll(group.getChildren(initEvent).asList())
-    res.addSeparator(IdeBundle.message("project.widget.recent.projects"))
-    RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).forEach { res.add(it) }
+    val openProjects = ProjectUtilCore.getOpenProjects()
+    val actionsMap: Map<Boolean, List<AnAction>> = RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).groupBy(createSelector(openProjects))
+
+    actionsMap[true]?.let {
+      res.addSeparator(IdeBundle.message("project.widget.open.projects"))
+      res.addAll(it)
+    }
+
+    actionsMap[false]?.let {
+      res.addSeparator(IdeBundle.message("project.widget.recent.projects"))
+      res.addAll(it)
+    }
 
     return res
   }
+
+  private fun createSelector(openProjects: Array<Project>): (AnAction) -> Boolean {
+    val paths = openProjects.map { it.basePath }
+    return { action -> (action as? ReopenProjectAction)?.projectPath in paths }
+  }
+
 
   private fun createStep(actionGroup: ActionGroup): ListPopupStep<Any> {
     val context = DataManager.getInstance().getDataContext(this)
