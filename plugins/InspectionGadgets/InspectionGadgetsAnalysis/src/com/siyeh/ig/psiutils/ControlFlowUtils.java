@@ -479,10 +479,10 @@ public final class ControlFlowUtils {
     return statement == null ? PsiStatement.EMPTY_ARRAY : new PsiStatement[]{statement};
   }
 
-  public static boolean statementCompletesWithStatement(@NotNull PsiStatement containingStatement, @NotNull PsiStatement statement) {
+  public static boolean statementCompletesWithStatement(@NotNull PsiElement containingElement, @NotNull PsiStatement statement) {
     PsiElement statementToCheck = statement;
     while (true) {
-      if (containingStatement.equals(statementToCheck)) {
+      if (containingElement.equals(statementToCheck)) {
         return true;
       }
       final PsiElement container = getContainingStatementOrBlock(statementToCheck);
