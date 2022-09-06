@@ -57,18 +57,17 @@ internal abstract class ToolWindowToolbar : JPanel() {
     if (!isShowing) {
       return null
     }
-
-    val topLeftRect = Rectangle(topStripe.locationOnScreen, topStripe.size).also {
-      if (it.width == 0) it.width = SHADOW_WIDTH
-      it.height = height - maxOf(SHADOW_WIDTH, bottomStripe.height + SHADOW_WIDTH)
+    val topRect = Rectangle(locationOnScreen, size).also {
+      it.width = it.width.coerceAtLeast(SHADOW_WIDTH)
+      it.height = (it.height / 2).coerceAtLeast(SHADOW_WIDTH)
     }
-    return if (topLeftRect.contains(screenPoint)) {
+    val bottomRect = Rectangle(topRect).also {
+      it.y += topRect.height
+    }
+    return if (topRect.contains(screenPoint)) {
       topStripe
     }
-    else if (Rectangle(locationOnScreen, size).also {
-        it.y -= SHADOW_WIDTH
-        it.height += SHADOW_WIDTH
-      }.contains(screenPoint)) {
+    else if (bottomRect.contains(screenPoint)) {
       bottomStripe
     }
     else {
