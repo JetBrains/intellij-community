@@ -1360,6 +1360,9 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     for (UsageViewElementsListener listener : UsageViewElementsListener.EP_NAME.getExtensionList()) {
+      if (listener.skipUsage(this, usage)) {
+        return null;
+      }
       listener.beforeUsageAdded(this, usage);
     }
 
