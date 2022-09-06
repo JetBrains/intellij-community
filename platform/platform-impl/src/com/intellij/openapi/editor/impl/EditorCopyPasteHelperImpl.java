@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,11 +115,34 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       final TextRange[] ranges = new TextRange[caretCount];
       final Iterator<String> segments = new ClipboardTextPerCaretSplitter().split(text, caretData, caretCount).iterator();
       final int[] index = {0};
-      caretModel.runForEachCaret(caret -> {
-        String normalizedText = normalizeText(editor, segments.next());
-        ranges[index[0]++] = isInsertingEntireLineAboveCaret ? insertEntireLineAboveCaret(editor, normalizedText)
-                                                             : insertStringAtCaret(editor, normalizedText);
-      });
+      if (isInsertingEntireLineAboveCaret) {
+        caretModel.runBatchCaretOperation(() -> {
+          List<CaretLineState> caretLineStateList = ContainerUtil.map(caretModel.getAllCarets(), CaretLineState::create);
+          List<List<CaretLineState>> caretsGroupedByLine = ContainerUtil.groupSublistRuns(caretLineStateList,
+                                                                                          CaretLineState::isOnSameLine);
+          int shift = 0;
+          for (List<CaretLineState> caretsOnSameLine : caretsGroupedByLine) {
+            int lineStartOffset = caretsOnSameLine.get(0).lineStartOffset + shift;
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < caretsOnSameLine.size(); i++) {
+              String normalizedText = normalizeText(editor, segments.next());
+              ranges[index[0]++] = appendEntireLine(sb, normalizedText).shiftRight(lineStartOffset);
+            }
+            editor.getDocument().insertString(lineStartOffset, sb);
+            for (CaretLineState caretLineState : caretsOnSameLine) {
+              caretLineState.moveCaretAfterInsertionIfNeeded(lineStartOffset, sb.length());
+            }
+            shift += sb.length();
+          }
+        });
+        EditorModificationUtilEx.scrollToCaret(editor);
+      }
+      else {
+        caretModel.runForEachCaret(caret -> {
+          String normalizedText = normalizeText(editor, segments.next());
+          ranges[index[0]++] = insertStringAtCaret(editor, normalizedText);
+        });
+      }
       return ranges;
     }
     else {
@@ -128,11 +152,58 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     }
   }
 
+  private record CaretLineState(
+    @NotNull Caret caret,
+    @NotNull VisualPosition position,
+    int lineStartOffset,
+    @NotNull VisualPosition lineStartPosition
+  ) {
+    static @NotNull CaretLineState create(@NotNull Caret caret) {
+      Editor editor = caret.getEditor();
+      int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, caret.getOffset());
+      VisualPosition lineStartPosition = editor.offsetToVisualPosition(lineStartOffset);
+      return new CaretLineState(caret, caret.getVisualPosition(), lineStartOffset, lineStartPosition);
+    }
+
+    void moveCaretAfterInsertionIfNeeded(int insertionLineStartOffset, int insertionLength) {
+      if (caret.getOffset() != insertionLineStartOffset) {
+        return;
+      }
+      int newLineStartOffset = insertionLineStartOffset + insertionLength;
+      VisualPosition newLineStartPosition = caret.getEditor().offsetToVisualPosition(newLineStartOffset);
+      int lineShift = newLineStartPosition.line - lineStartPosition.line;
+      VisualPosition newPosition = new VisualPosition(position.line + lineShift,
+                                                      position.column,
+                                                      position.leansRight);
+      caret.moveToVisualPosition(newPosition);
+      // the following shouldn't happen, but just to be sure
+      if (caret.getOffset() != newLineStartOffset) {
+        caret.moveToOffset(newLineStartOffset);
+      }
+    }
+
+    boolean isOnSameLine(@NotNull CaretLineState other) {
+      return lineStartOffset == other.lineStartOffset;
+    }
+  }
+
+  private static @NotNull TextRange appendEntireLine(@NotNull StringBuilder sb, @NotNull String line) {
+    int startOffset = sb.length();
+    sb.append(line);
+    if (!line.endsWith("\n")) {
+      sb.append("\n");
+    }
+    int endOffset = sb.length();
+    return TextRange.create(startOffset, endOffset);
+  }
+
   public static @NotNull TextRange insertEntireLineAboveCaret(@NotNull Editor editor, @NotNull String text) {
-    int caretOffset = editor.getCaretModel().getOffset();
-    int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, caretOffset);
+    Caret caret = editor.getCaretModel().getCurrentCaret();
+    CaretLineState caretLineState = CaretLineState.create(caret);
+    int lineStartOffset = caretLineState.lineStartOffset;
     if (!text.endsWith("\n")) text += "\n";
     editor.getDocument().insertString(lineStartOffset, text);
+    caretLineState.moveCaretAfterInsertionIfNeeded(lineStartOffset, text.length());
     EditorModificationUtilEx.scrollToCaret(editor);
     return TextRange.from(lineStartOffset, text.length());
   }

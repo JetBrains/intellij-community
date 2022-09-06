@@ -241,6 +241,37 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
                       "three four<caret>");
   }
 
+  public void testCopyPasteFromEmptySelectionMultipleCaretsAtLineStart() {
+    initText("\tone two \n" +
+             " hi<caret> \n" +
+             "\tthree four ");
+    int tabSize = getEditor().getSettings().getTabSize(getProject());
+    getEditor().getSettings().setCaretInsideTabs(true);
+    executeAction("EditorCopy");
+    executeAction("EditorLineStart");
+    getEditor().getCaretModel().moveToVisualPosition(new VisualPosition(1,0));
+    getEditor().getCaretModel().addCaret(new VisualPosition(0,0));
+    getEditor().getCaretModel().addCaret(new VisualPosition(0,1));
+    getEditor().getCaretModel().addCaret(new VisualPosition(0, tabSize));
+    getEditor().getCaretModel().addCaret(new VisualPosition(2,0));
+    getEditor().getCaretModel().addCaret(new VisualPosition(2,1));
+    getEditor().getCaretModel().addCaret(new VisualPosition(2, tabSize));
+    checkResultByText("<caret><caret>\t<caret>one two \n" +
+                      "<caret> hi \n" +
+                      "<caret><caret>\t<caret>three four ");
+    executeAction("EditorPaste");
+    checkResultByText(" hi \n" +
+                      " hi \n" +
+                      " hi \n" +
+                      "<caret><caret>\t<caret>one two \n" +
+                      " hi \n" +
+                      "<caret> hi \n" +
+                      " hi \n" +
+                      " hi \n" +
+                      " hi \n" +
+                      "<caret><caret>\t<caret>three four ");
+  }
+
   public void testCutAndPaste() {
     initText("<selection>one<caret></selection> two \n" +
              "<selection>three<caret></selection> four ");
