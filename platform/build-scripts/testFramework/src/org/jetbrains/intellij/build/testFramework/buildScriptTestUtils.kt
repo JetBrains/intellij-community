@@ -68,6 +68,13 @@ fun createBuildContext(
                                         options = options)
 }
 
+// don't expose BuildDependenciesCommunityRoot
+fun runTestBuild(homePath: Path,
+                 productProperties: ProductProperties,
+                 buildTools: ProprietaryBuildTools) {
+  runTestBuild(homePath, productProperties, buildTools, traceSpanName = null)
+}
+
 fun runTestBuild(
   homePath: Path,
   productProperties: ProductProperties,
