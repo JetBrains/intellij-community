@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.configurable.VcsMappingConfigurable;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -43,7 +44,7 @@ public final class VcsRootProblemNotifier {
 
   @NotNull private final Project myProject;
   @NotNull private final VcsConfiguration mySettings;
-  @NotNull private final ProjectLevelVcsManager myVcsManager;
+  @NotNull private final ProjectLevelVcsManagerImpl myVcsManager;
   @NotNull private final ChangeListManager myChangeListManager;
   @NotNull private final ProjectFileIndex myProjectFileIndex;
 
@@ -64,7 +65,7 @@ public final class VcsRootProblemNotifier {
     mySettings = VcsConfiguration.getInstance(myProject);
     myChangeListManager = ChangeListManager.getInstance(project);
     myProjectFileIndex = ProjectFileIndex.getInstance(myProject);
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
+    myVcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
     myReportedUnregisteredRoots = new HashSet<>();
   }
 
@@ -89,7 +90,7 @@ public final class VcsRootProblemNotifier {
       if (invalidRoots.isEmpty() && importantUnregisteredRoots.isEmpty()) return;
 
       LOG.info("Auto-registered following mappings: " + importantUnregisteredRoots);
-      addMappings(importantUnregisteredRoots);
+      addMappings(importantUnregisteredRoots, true);
 
       // Register the single root equal to the project dir silently, without any notification
       if (invalidRoots.isEmpty() &&
@@ -122,7 +123,7 @@ public final class VcsRootProblemNotifier {
 
       NotificationAction enableIntegration = NotificationAction
         .create(VcsBundle.messagePointer("action.NotificationAction.VcsRootProblemNotifier.text.enable.integration"),
-                (event, notification) -> addMappings(importantUnregisteredRoots));
+                (event, notification) -> addMappings(importantUnregisteredRoots, false));
       NotificationAction ignoreAction = NotificationAction
         .create(VcsBundle.messagePointer("action.NotificationAction.VcsRootProblemNotifier.text.ignore"), (event, notification) -> {
           mySettings.addIgnoredUnregisteredRoots(map(importantUnregisteredRoots, rootError -> rootError.getMapping().getDirectory()));
@@ -159,12 +160,17 @@ public final class VcsRootProblemNotifier {
       });
   }
 
-  private void addMappings(Collection<? extends VcsRootError> importantUnregisteredRoots) {
+  private void addMappings(Collection<? extends VcsRootError> importantUnregisteredRoots, boolean silently) {
     List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
     for (VcsRootError root : importantUnregisteredRoots) {
       mappings = VcsUtil.addMapping(mappings, root.getMapping());
     }
-    myVcsManager.setDirectoryMappings(mappings);
+    if (silently) {
+      myVcsManager.setAutoDirectoryMappings(mappings);
+    }
+    else {
+      myVcsManager.setDirectoryMappings(mappings);
+    }
   }
 
   private boolean isUnderOrAboveProjectDir(@NotNull VcsDirectoryMapping mapping) {
