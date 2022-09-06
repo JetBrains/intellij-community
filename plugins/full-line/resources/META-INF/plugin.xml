@@ -134,7 +134,6 @@
   <depends optional="true" config-file="python.xml">com.intellij.modules.python</depends>
   <depends optional="true" config-file="java.xml">com.intellij.java</depends>
   <depends optional="true" config-file="kotlin.xml">org.jetbrains.kotlin</depends>
-  <depends optional="true" config-file="js.xml">JavaScript</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="org.jetbrains.completion.full.line.actions.FullLineStartupActivity"/>
