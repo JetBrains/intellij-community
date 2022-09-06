@@ -63,33 +63,17 @@ public class FileTypeIndexTest extends BasePlatformTestCase {
                  }));
     var smth1 = registerFakeFileType("test filetype 1", "smth1", disposable);
     var smth2 = registerFakeFileType("test filetype 2", "smth2", disposable);
-    assertEquals(smth1, ReadAction.compute(() -> {
-      return FileTypeIndex.getIndexedFileType(file, getProject());
-    }));
-    assertOneElement(ReadAction.compute(() -> {
-      return FileTypeIndex.getFiles(smth1, GlobalSearchScope.allScope(getProject()));
-    }));
-    assertEmpty(ReadAction.compute(() -> {
-      return FileTypeIndex.getFiles(smth2, GlobalSearchScope.allScope(getProject()));
-    }));
+    assertEquals(smth1, FileTypeIndex.getIndexedFileType(file, getProject()));
+    assertOneElement(FileTypeIndex.getFiles(smth1, GlobalSearchScope.allScope(getProject())));
+    assertEmpty(FileTypeIndex.getFiles(smth2, GlobalSearchScope.allScope(getProject())));
     WriteAction.run(() -> {
       file.rename(this, "filename.smth2");
     });
-    assertEquals(smth2,
-                 ReadAction.compute(() -> {
-                   return FileTypeIndex.getIndexedFileType(file, getProject());
-                 }));
-    assertEmpty(ReadAction.compute(() -> {
-      return FileTypeIndex.getFiles(smth1, GlobalSearchScope.allScope(getProject()));
-    }));
-    assertOneElement(ReadAction.compute(() -> {
-      return FileTypeIndex.getFiles(smth2, GlobalSearchScope.allScope(getProject()));
-    }));
+    assertEquals(smth2, FileTypeIndex.getIndexedFileType(file, getProject()));
+    assertEmpty(FileTypeIndex.getFiles(smth1, GlobalSearchScope.allScope(getProject())));
+    assertOneElement(FileTypeIndex.getFiles(smth2, GlobalSearchScope.allScope(getProject())));
     Disposer.dispose(disposable);
-    assertEquals(PlainTextFileType.INSTANCE,
-                 ReadAction.compute(() -> {
-                   return FileTypeIndex.getIndexedFileType(file, getProject());
-                 }));
+    assertEquals(PlainTextFileType.INSTANCE, FileTypeIndex.getIndexedFileType(file, getProject()));
   }
 
   /**
