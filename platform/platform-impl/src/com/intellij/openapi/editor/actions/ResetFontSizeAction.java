@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,8 @@ public final class ResetFontSizeAction extends EditorAction {
   public interface Strategy {
     float getFontSize();
     void setFontSize(float fontSize);
+
+    @NlsActions.ActionText String getText(float fontSize);
     default void reset() {
       setFontSize(getFontSize());
     }
@@ -58,6 +61,11 @@ public final class ResetFontSizeAction extends EditorAction {
     public void setFontSize(float fontSize) {
       myEditorEx.setFontSize(fontSize);
     }
+
+    @Override
+    public String getText(float fontSize) {
+      return IdeBundle.message("action.reset.font.size", fontSize);
+    }
   }
 
   private static final class AllEditorsStrategy implements Strategy {
@@ -80,6 +88,11 @@ public final class ResetFontSizeAction extends EditorAction {
     public void setFontSize(float fontSize) {
       EditorColorsManager.getInstance().getGlobalScheme().setEditorFontSize(fontSize);
       ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
+    }
+
+    @Override
+    public String getText(float fontSize) {
+      return IdeBundle.message("action.reset.font.size.all.editors", fontSize);
     }
   }
 
@@ -106,9 +119,10 @@ public final class ResetFontSizeAction extends EditorAction {
         return;
       }
       EditorEx editorEx = (EditorEx)editor;
-      float toReset = getStrategy(editorEx).getFontSize();
+      Strategy strategy = getStrategy(editorEx);
+      float toReset = strategy.getFontSize();
       //noinspection DialogTitleCapitalization
-      e.getPresentation().setText(IdeBundle.message("action.reset.font.size", toReset));
+      e.getPresentation().setText(strategy.getText(toReset));
       if (editor instanceof EditorImpl) {
         e.getPresentation().setEnabled(((EditorImpl)editor).getFontSize2D() != toReset);
       }
