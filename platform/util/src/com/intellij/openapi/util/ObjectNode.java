@@ -4,7 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.util.SmartList;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -59,18 +59,15 @@ final class ObjectNode {
   }
 
   private void addChildNode(@NotNull ObjectNode childNode) {
-    if (myChildren == EMPTY) {
-      myChildren = new ListNodeChildren();
+    NodeChildren children = myChildren;
+    NodeChildren newChildren = children.addChildNode(childNode);
+    if (children != newChildren) {
+      myChildren = newChildren;
     }
-    if (myChildren instanceof ListNodeChildren && myChildren.getSize() >= REASONABLY_BIG) {
-      myChildren = ((ListNodeChildren)myChildren).convertToMapImpl();
-    }
-    myChildren.addChildNode(childNode);
   }
 
   void removeChildNode(@NotNull ObjectNode childNode) {
     myChildren.removeChildNode(childNode.getObject());
-    switchChildrenImplIfNeeded();
   }
 
   @NotNull
@@ -78,9 +75,6 @@ final class ObjectNode {
     ObjectNode childNode = myChildren.removeChildNode(child);
     if (childNode == null) {
       childNode = new ObjectNode(child, isRootNode());
-    }
-    else {
-      switchChildrenImplIfNeeded();
     }
     otherParentNode.addChildNode(childNode);
     assert childNode.getObject() == child;
@@ -104,18 +98,8 @@ final class ObjectNode {
         disposables.add(object);
       }
     });
-
-    switchChildrenImplIfNeeded();
   }
 
-  private void switchChildrenImplIfNeeded() {
-    if (myChildren instanceof MapNodeChildren && myChildren.getSize() <= REASONABLY_BIG) {
-      myChildren = ((MapNodeChildren)myChildren).convertToListImpl();
-    }
-    else if (myChildren instanceof ListNodeChildren && myChildren.getSize() == 0) {
-      myChildren = EMPTY;
-    }
-  }
 
   @NotNull
   Disposable getObject() {
@@ -162,11 +146,14 @@ final class ObjectNode {
   // must not override hasCode/equals because ObjectNode must have identity semantics
 
   private static class MapNodeChildren implements NodeChildren {
-    private final Map<Disposable, ObjectNode> myChildren = new Reference2ObjectOpenHashMap<>();
+    private final Map<Disposable, ObjectNode> myChildren;
 
-    @Override
-    public @NotNull Collection<ObjectNode> getAllNodes() {
-      return myChildren.values();
+    MapNodeChildren(@NotNull List<? extends ObjectNode> children) {
+      Reference2ObjectLinkedOpenHashMap<Disposable, ObjectNode> map = new Reference2ObjectLinkedOpenHashMap<>(children.size());
+      for (ObjectNode child : children) {
+        map.put(child.getObject(), child);
+      }
+      myChildren = map;
     }
 
     @Override
@@ -180,12 +167,13 @@ final class ObjectNode {
     }
 
     @Override
-    public void addChildNode(@NotNull ObjectNode node) {
+    public @NotNull NodeChildren addChildNode(@NotNull ObjectNode node) {
       myChildren.put(node.getObject(), node);
+      return this;
     }
 
     @Override
-    public void removeChildren(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<ObjectNode> deletedNodeConsumer) {
+    public void removeChildren(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<? super ObjectNode> deletedNodeConsumer) {
       Iterator<Map.Entry<Disposable, ObjectNode>> iterator = myChildren.entrySet().iterator();
       while (iterator.hasNext()) {
         Map.Entry<Disposable, ObjectNode> entry = iterator.next();
@@ -198,20 +186,8 @@ final class ObjectNode {
     }
 
     @Override
-    public int getSize() {
-      return myChildren.size();
-    }
-
-    NodeChildren convertToListImpl() {
-      ListNodeChildren children = new ListNodeChildren();
-      children.addChildNodes(getAllNodes());
-      return children;
-    }
-
-    void addChildNodes(@NotNull Collection<ObjectNode> nodes) {
-      for (ObjectNode node : nodes) {
-        myChildren.put(node.getObject(), node);
-      }
+    public @NotNull Collection<? extends ObjectNode> getAllNodes() {
+      return myChildren.values();
     }
   }
 
@@ -219,13 +195,8 @@ final class ObjectNode {
     @NotNull
     private final List<ObjectNode> myChildren;
 
-    private ListNodeChildren() {
-      myChildren = new SmartList<>();
-    }
-
-    @Override
-    public @NotNull Collection<ObjectNode> getAllNodes() {
-      return myChildren;
+    ListNodeChildren(@NotNull ObjectNode node) {
+      myChildren = new SmartList<>(node);
     }
 
     @Override
@@ -252,16 +223,13 @@ final class ObjectNode {
     }
 
     @Override
-    public void addChildNode(@NotNull ObjectNode node) {
+    public @NotNull NodeChildren addChildNode(@NotNull ObjectNode node) {
       myChildren.add(node);
-    }
-
-    void addChildNodes(@NotNull Collection<ObjectNode> nodes) {
-      myChildren.addAll(nodes);
+      return myChildren.size() > REASONABLY_BIG ? new MapNodeChildren(myChildren) : this;
     }
 
     @Override
-    public void removeChildren(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<ObjectNode> deletedNodeConsumer) {
+    public void removeChildren(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<? super ObjectNode> deletedNodeConsumer) {
       for (int i = myChildren.size() - 1; i >= 0; i--) {
         ObjectNode childNode = myChildren.get(i);
         Disposable object = childNode.getObject();
@@ -273,37 +241,30 @@ final class ObjectNode {
     }
 
     @Override
-    public int getSize() {
-      return myChildren.size();
-    }
-
-    @NotNull NodeChildren convertToMapImpl() {
-      MapNodeChildren children = new MapNodeChildren();
-      children.addChildNodes(getAllNodes());
-      return children;
+    public @NotNull Collection<? extends ObjectNode> getAllNodes() {
+      return myChildren;
     }
   }
 
+  /**
+   * A collection of child ObjectNodes.
+   * Backed up either by an {@code ArrayList<ObjectNode>} (when the number of children is small) or {@code Map<Disposable, ObjectNode>} otherwise, to speedup lookup
+   */
   private interface NodeChildren {
-    @NotNull Collection<ObjectNode> getAllNodes();
-
     @Nullable ObjectNode removeChildNode(@NotNull Disposable object);
 
     @Nullable ObjectNode findChildNode(@NotNull Disposable object);
 
-    void addChildNode(@NotNull ObjectNode node);
+    @NotNull // return a new instance of NodeChildren when the underlying data-structure changed, e.g. list->map
+    NodeChildren addChildNode(@NotNull ObjectNode node);
 
-    void removeChildren(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<ObjectNode> deletedNodeConsumer);
+    void removeChildren(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<? super ObjectNode> deletedNodeConsumer);
 
-    int getSize();
+    @NotNull
+    Collection<? extends ObjectNode> getAllNodes();
   }
 
   private final static NodeChildren EMPTY = new NodeChildren() {
-    @Override
-    public @NotNull Collection<ObjectNode> getAllNodes() {
-      return Collections.emptyList();
-    }
-
     @Override
     public ObjectNode removeChildNode(@NotNull Disposable object) {
       return null;
@@ -315,17 +276,17 @@ final class ObjectNode {
     }
 
     @Override
-    public void addChildNode(@NotNull ObjectNode node) {
-      throw new IllegalStateException();
+    public @NotNull NodeChildren addChildNode(@NotNull ObjectNode node) {
+      return new ListNodeChildren(node);
     }
 
     @Override
-    public void removeChildren(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<ObjectNode> deletedNodeConsumer) {
+    public void removeChildren(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<? super ObjectNode> deletedNodeConsumer) {
     }
 
     @Override
-    public int getSize() {
-      return 0;
+    public @NotNull Collection<? extends ObjectNode> getAllNodes() {
+      return Collections.emptyList();
     }
   };
 }
