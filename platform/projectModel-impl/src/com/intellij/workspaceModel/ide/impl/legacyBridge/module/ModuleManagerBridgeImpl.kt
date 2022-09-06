@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.*
 import com.intellij.openapi.module.impl.*
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
@@ -258,7 +259,9 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
     // we need to save module configurations before unloading, otherwise their settings will be lost
     if (modulesToUnload.isNotEmpty()) {
-      project.save()
+      blockingContext {
+        project.save()
+      }
     }
 
     withContext(Dispatchers.EDT) {
