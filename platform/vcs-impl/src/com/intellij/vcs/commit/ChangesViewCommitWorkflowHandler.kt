@@ -93,7 +93,7 @@ internal class ChangesViewCommitWorkflowHandler(
       }
     })
 
-    DelayedCommitMessageProvider.init(project, ui, getCommitMessage())
+    DelayedCommitMessageProvider.init(project, ui, getCommitMessageFromPolicy(currentChangeList))
   }
 
   override fun createDataProvider(): DataProvider = object : DataProvider {
