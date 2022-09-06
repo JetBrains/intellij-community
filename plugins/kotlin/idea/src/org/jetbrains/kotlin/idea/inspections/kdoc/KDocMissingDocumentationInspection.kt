@@ -6,6 +6,7 @@ import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
@@ -21,14 +22,16 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
 import org.jetbrains.kotlin.idea.kdoc.findKDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.namedDeclarationVisitor
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyPublicApi
+import javax.swing.JComponent
 
-class KDocMissingDocumentationInspection : AbstractKotlinInspection() {
+class KDocMissingDocumentationInspection(@JvmField var ignoreOverrideElements: Boolean = false) : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         namedDeclarationVisitor { element ->
             if (TestUtils.isInTestSourceContent(element)) {
@@ -36,6 +39,10 @@ class KDocMissingDocumentationInspection : AbstractKotlinInspection() {
             }
             val nameIdentifier = element.nameIdentifier
             if (nameIdentifier != null) {
+                if (ignoreOverrideElements && element.modifierList?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true) {
+                    return@namedDeclarationVisitor
+                }
+
                 if (element.findKDoc { DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, it) } == null) {
                     val descriptor =
                         element.resolveToDescriptorIfAny() as? DeclarationDescriptorWithVisibility ?: return@namedDeclarationVisitor
@@ -49,6 +56,12 @@ class KDocMissingDocumentationInspection : AbstractKotlinInspection() {
 
         }
 
+    override fun createOptionsPanel(): JComponent {
+        val panel = MultipleCheckboxOptionsPanel(this)
+        panel.addCheckbox(KotlinBundle.message("ignore.override.elements"), "ignoreOverrideElements")
+        return panel
+    }
+        
     class AddDocumentationFix : LocalQuickFix {
         override fun getName(): String = KotlinBundle.message("add.documentation.fix.text")
 
