@@ -50,7 +50,8 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
 
     #[cfg(target_os = "linux")]
     fn prepare_for_launch(&self) -> Result<PathBuf> {
-        todo!()
+        // TODO: ld patching
+        self.default.prepare_for_launch()
     }
 }
 
@@ -305,8 +306,8 @@ impl RemoteDevLaunchConfiguration {
 
     #[cfg(any(target_os = "linux"))]
     pub fn setup_font_config() -> Result<()> {
-
-        todo!("")
+        // TODO: implement
+        Ok(())
     }
 }
 
