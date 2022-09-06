@@ -3,7 +3,6 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.actions.OpenInRightSplitAction;
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
-import com.intellij.ide.ui.NavBarLocation;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
@@ -103,8 +102,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     UIEventLogger.NavBarShowPopup.log(myPanel.getProject());
 
     int relativeY = ExperimentalUI.isNewUI()
-                    && UISettings.getInstance().getNavBarLocation() == NavBarLocation.BOTTOM
-                    && UISettings.getInstance().getShowNavigationBar()
+                    && UISettings.getInstance().getShowNavigationBarInBottom()
                     ? -getComponent().getPreferredSize().height
                     : item.getHeight();
 
@@ -198,11 +196,8 @@ public class NavBarPopup extends LightweightHint implements Disposable{
 
     NavBarListWrapper navBarListWrapper = new NavBarListWrapper(list);
     ListWithFilter<?> component = (ListWithFilter<?>)ListWithFilter.wrap(list, navBarListWrapper, o -> panel.getPresentation().getPresentableText(o, false));
-    UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.getShowNavigationBar() && uiSettings.getNavBarLocation() == NavBarLocation.BOTTOM) {
-      component.setAutoPackHeight(false);
-    }
     navBarListWrapper.updateViewportPreferredSizeIfNeeded();
+    component.setAutoPackHeight(!UISettings.getInstance().getShowNavigationBarInBottom());
     component.putClientProperty(JBLIST_KEY, list);
     OpenInRightSplitAction.Companion.overrideDoubleClickWithOneClick(component);
     return component;
