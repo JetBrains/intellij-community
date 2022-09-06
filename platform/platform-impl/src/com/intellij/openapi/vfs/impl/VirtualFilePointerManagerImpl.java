@@ -480,7 +480,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       }
     }
     else {
-      node.processPointers(VirtualFilePointerManagerImpl::throwAndDisposeOnLeakedPointer);
+      throw new IllegalStateException("Node for " + node.myFileOrUrl + " is not a url-based");
     }
   }
 
@@ -488,7 +488,12 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     List<VirtualFilePointer> leaked = new ArrayList<>(dumpAllPointers());
     leaked.sort(Comparator.comparing(VirtualFilePointer::getUrl));
     for (VirtualFilePointer pointer : leaked) {
-      throwAndDisposeOnLeakedPointer((VirtualFilePointerImpl)pointer);
+      try {
+        ((VirtualFilePointerImpl)pointer).throwDisposalError("Not disposed pointer: " + pointer);
+      }
+      finally {
+        ((VirtualFilePointerImpl)pointer).dispose();
+      }
     }
 
     synchronized (myContainers) {
@@ -496,15 +501,6 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
         VirtualFilePointerContainerImpl container = myContainers.iterator().next();
         container.throwDisposalError("Not disposed container");
       }
-    }
-  }
-
-  private static void throwAndDisposeOnLeakedPointer(@NotNull VirtualFilePointerImpl pointer) {
-    try {
-      pointer.throwDisposalError("Not disposed pointer: " + pointer);
-    }
-    finally {
-      pointer.dispose();
     }
   }
 
