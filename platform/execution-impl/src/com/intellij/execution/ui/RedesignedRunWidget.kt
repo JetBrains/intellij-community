@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
@@ -205,11 +206,15 @@ private abstract class TogglePopupAction : ToggleAction {
     if (!state) return
     val component = e.inputEvent?.component as? JComponent ?: return
     val actionGroup = getActionGroup(e) ?: return
-    val function = { Toggleable.setSelected(presentation, false) }
-    val popup = JBPopupFactory.getInstance().createActionGroupPopup(
-      null, actionGroup, e.dataContext, false, false, false, function, 30, null)
+    val disposeCallback = { Toggleable.setSelected(presentation, false) }
+    val popup = createPopup(actionGroup, e, disposeCallback)
     popup.showUnderneathOf(component)
   }
+
+  open fun createPopup(actionGroup: ActionGroup,
+                          e: AnActionEvent,
+                          disposeCallback: () -> Unit) = JBPopupFactory.getInstance().createActionGroupPopup(
+    null, actionGroup, e.dataContext, false, false, false, disposeCallback, 30, null)
 
   abstract fun getActionGroup(e: AnActionEvent): ActionGroup?
 }
@@ -252,8 +257,11 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
 
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
-    return createRunConfigurationsActionGroup(project, addHeader = false)
+    return createRunConfigurationsActionGroup(project, extendableAllConfigurations = true, addHeader = false)
   }
+
+  override fun createPopup(actionGroup: ActionGroup, e: AnActionEvent, disposeCallback: () -> Unit): ListPopup =
+    RunConfigurationsActionGroupPopup(actionGroup, e.dataContext, disposeCallback)
 
   override fun update(e: AnActionEvent) {
     super.update(e)

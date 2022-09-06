@@ -3,6 +3,7 @@ package com.intellij.execution.ui
 
 import com.intellij.execution.*
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
+import com.intellij.execution.actions.RunConfigurationsComboBoxAction.SelectConfigAction
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.executors.ExecutorGroup
@@ -31,10 +32,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.popup.*
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
@@ -42,8 +40,11 @@ import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.popup.KeepingPopupOpenAction
+import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.popup.list.ListPopupImpl
+import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.SVGLoader
 import com.intellij.util.ui.JBInsets
@@ -204,7 +205,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
   }
 }
 
-internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boolean = true): ActionGroup {
+internal fun createRunConfigurationsActionGroup(project: Project, extendableAllConfigurations: Boolean, addHeader: Boolean = true): ActionGroup {
   val actions = DefaultActionGroup()
   val registry = ExecutorRegistry.getInstance()
   val runExecutor = registry.getExecutorById(RUN) ?: error("No '${RUN}' executor found")
@@ -219,21 +220,99 @@ internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boo
   }
   actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
   RunConfigurationStartHistory.getInstance(project).history().mapTo(mutableSetOf()) { it.configuration }.forEach { conf ->
-    val inlineActions = mutableListOf<AnAction>()
-    inlineActions.add(RunToolbarWidgetRunAction(runExecutor) { conf })
-    inlineActions.add(RunToolbarWidgetRunAction(debugExecutor) { conf })
-
-    actions.add(ActionGroupWithInlineActions(inlineActions, conf, project))
+    val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project)
+    actions.add(actionGroupWithInlineActions)
   }
   actions.add(Separator.create())
-  actions.add(DelegateAction({ ExecutionBundle.message("run.toolbar.widget.all.configurations") },
-                             ActionManager.getInstance().getAction("ChooseRunConfiguration")))
+  if (extendableAllConfigurations) {
+    val allRunConfigurationsToggle = AllRunConfigurationsToggle()
+    actions.add(allRunConfigurationsToggle)
+
+    val createActionFn: (RunnerAndConfigurationSettings) -> AnAction = { configuration ->
+      createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project) {
+        allRunConfigurationsToggle.selected
+      }
+    }
+    val createFolderFn: (String) -> DefaultActionGroup = { folderName ->
+      HideableDefaultActionGroup(folderName) {
+        allRunConfigurationsToggle.selected
+      }
+    }
+    RunConfigurationsComboBoxAction.addRunConfigurations(actions, project, createActionFn, createFolderFn)
+  }
+  else {
+    actions.add(DelegateAction({ ExecutionBundle.message("run.toolbar.widget.all.configurations") },
+                               ActionManager.getInstance().getAction("ChooseRunConfiguration")))
+  }
+
   actions.add(ActionManager.getInstance().getAction("editRunConfigurations"))
   return actions
 }
 
+internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataContext: DataContext, disposeCallback: (() -> Unit)?) :
+  PopupFactoryImpl.ActionGroupPopup(null, actionGroup, dataContext, false, false, true, false,
+                                    disposeCallback, 30, null, null) {
+
+  init {
+    (list as? JBList<*>)?.setExpandableItemsEnabled(false)
+  }
+
+
+  override fun shouldBeShowing(value: Any?): Boolean {
+    if (!super.shouldBeShowing(value)) return false
+    return if (value !is PopupFactoryImpl.ActionItem) true else shouldBeShowing(value.action)
+  }
+
+
+  fun shouldBeShowing(action: AnAction): Boolean {
+    return if (action is HideableAction) return action.shouldBeShown() else true
+  }
+}
+
+private interface HideableAction {
+  val shouldBeShown: () -> Boolean
+}
+
+private class HideableDefaultActionGroup(@NlsSafe name: String, override val shouldBeShown: () -> Boolean)
+  : DefaultActionGroup({ name }, true), DumbAware, HideableAction
+
+private class AllRunConfigurationsToggle : ToggleAction(
+  ExecutionBundle.message("run.toolbar.widget.all.configurations")), KeepingPopupOpenAction, DumbAware {
+  var selected = false
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+  override fun isSelected(e: AnActionEvent): Boolean = selected
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    selected = state
+
+    val inputEvent = e.inputEvent ?: return
+    val listPopupModel = (inputEvent.source as? JList<*>)?.model as? ListPopupModel<*> ?: return
+    listPopupModel.refilter()
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isEnabledAndVisible = true
+    e.presentation.icon = if (selected) AllIcons.General.ChevronDown else AllIcons.General.ChevronRight
+  }
+}
+
+private fun createRunConfigurationWithInlines(runExecutor: Executor,
+                                              debugExecutor: Executor,
+                                              conf: RunnerAndConfigurationSettings,
+                                              project: Project,
+                                              shouldBeShown: () -> Boolean = { true }): ActionGroupWithInlineActions {
+  val inlineActions = mutableListOf<AnAction>()
+  inlineActions.add(RunToolbarWidgetRunAction(runExecutor) { conf })
+  inlineActions.add(RunToolbarWidgetRunAction(debugExecutor) { conf })
+
+  return ActionGroupWithInlineActions(inlineActions, conf, project, shouldBeShown)
+}
+
 private fun createRunConfigurationPopup(context: DataContext, project: Project): JBPopup {
-  val actions = createRunConfigurationsActionGroup(project)
+  val actions = createRunConfigurationsActionGroup(project, extendableAllConfigurations = false)
   return JBPopupFactory.getInstance().createActionGroupPopup(
     null,
     actions,
@@ -243,7 +322,6 @@ private fun createRunConfigurationPopup(context: DataContext, project: Project):
     ActionPlaces.getPopupPlace(ActionPlaces.MAIN_TOOLBAR)
   ).apply { disableExpandableItems(this) }
 }
-
 
 private fun disableExpandableItems(popup: ListPopup) {
   val list = (popup as? ListPopupImpl)?.list
@@ -267,9 +345,12 @@ private class DelegateAction(val string: Supplier<@Nls String>, delegate: AnActi
   }
 }
 
-private class ActionGroupWithInlineActions(
-  private val actions: List<AnAction>, configuration: RunnerAndConfigurationSettings, project: Project
-) : RunConfigurationsComboBoxAction.SelectConfigAction(configuration, project, excludeRunAndDebug), InlineActionsHolder {
+internal class ActionGroupWithInlineActions(
+  private val actions: List<AnAction>,
+  configuration: RunnerAndConfigurationSettings,
+  project: Project,
+  override val shouldBeShown: () -> Boolean
+) : SelectConfigAction(configuration, project, excludeRunAndDebug), InlineActionsHolder, HideableAction {
   override fun getInlineActions(): List<AnAction> = actions
 }
 
