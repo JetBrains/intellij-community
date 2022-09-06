@@ -172,6 +172,10 @@ internal class PythonInterpreterMasterDetails(private val project: Project,
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = !isEmptySdkSelection()
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
   }
 
   private inner class RenameAction : DumbAwareAction(PyBundle.messagePointer("python.interpreters.rename.interpreter.action.text"),
@@ -219,6 +223,10 @@ internal class PythonInterpreterMasterDetails(private val project: Project,
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = !isEmptySdkSelection()
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
   }
 
   private inner class ToggleVirtualEnvFilterButton : ToggleActionButton(PyBundle.messagePointer("sdk.details.dialog.hide.all.virtual.envs"),
@@ -236,6 +244,10 @@ internal class PythonInterpreterMasterDetails(private val project: Project,
         allPythonSdks.filter { it.isAssociatedWithAnotherModule(module) }.forEach(::incrementalRemoveSdk)
       }
       hideOtherProjectVirtualenvs = state
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
     }
   }
 

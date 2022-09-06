@@ -23,6 +23,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.EditorSettings;
@@ -274,6 +275,11 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
         myCurrentConsumer.consume(t);
       }
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   /**

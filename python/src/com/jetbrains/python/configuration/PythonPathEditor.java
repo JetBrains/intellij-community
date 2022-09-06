@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -126,6 +127,11 @@ public class PythonPathEditor extends SdkPathEditor {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         fireReloadPathsActionCallbacks();
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
     });
   }

@@ -181,6 +181,11 @@ public final class PyConsoleUtil {
         String textToCursor = document.getText(new TextRange(lineStart, offset));
         e.getPresentation().setEnabled(!CharMatcher.whitespace().matchesAllOf(textToCursor));
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
 
     runCompletions.registerCustomShortcutSet(KeyEvent.VK_TAB, 0, consoleView.getConsoleEditor().getComponent());
@@ -222,6 +227,11 @@ public final class PyConsoleUtil {
         }
         e.getPresentation().setEnabled(enabled);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
 
     anAction.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK, consoleView.getConsoleEditor().getComponent());
@@ -255,6 +265,11 @@ public final class PyConsoleUtil {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         printAction.actionPerformed(createActionEvent(e, consoleView));
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
   }

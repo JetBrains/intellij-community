@@ -3,6 +3,7 @@ package com.jetbrains.python.configuration;
 
 import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -405,6 +406,11 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       refreshSdkList();
       updateOkButton();
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   private class ShowPathButton extends AnActionButton implements DumbAware {
@@ -434,6 +440,11 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         }
       }
       updateOkButton();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
