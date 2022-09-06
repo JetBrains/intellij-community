@@ -8,7 +8,10 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.SpecialConfigFiles
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.util.User32Ex
+import com.sun.jna.platform.win32.WinDef
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufOutputStream
 import io.netty.channel.ChannelHandlerContext
@@ -182,6 +185,16 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
     lockedFiles.clear()
   }
 
+  private fun allowActivation(input: DataInputStream) {
+    if (SystemInfo.isWindows) {
+      try {
+        User32Ex.INSTANCE.AllowSetForegroundWindow(WinDef.DWORD(input.readLong()))
+      } catch (e: Exception) {
+        log(e)
+      }
+    }
+  }
+
   private fun tryActivate(portNumber: Int, paths: List<String>, args: List<String>): Pair<ActivationStatus, CliResult?> {
     log("trying: port=%s", portNumber)
     try {
@@ -193,6 +206,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
         val result = paths.any(stringList::contains)
         if (result) {
           try {
+            allowActivation(input)
             val token = readOneLine(systemPath.resolve(SpecialConfigFiles.TOKEN_FILE))
             val out = DataOutputStream(socket.getOutputStream())
             var currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
@@ -291,6 +305,10 @@ private fun sendStringSequence(context: ChannelHandlerContext, strings: List<Str
         out.writeUTF(s)
       }
       out.writeUTF(PATHS_EOT_RESPONSE)
+      if (SystemInfo.isWindows) {
+        // see 'allowActivation' function
+        out.writeLong(ProcessHandle.current().pid())
+      }
       success = true
     }
   }
