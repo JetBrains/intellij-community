@@ -84,5 +84,11 @@
     <projectConfigurable displayName="<warning descr="Extract displayName for i18n">Not Localized</warning>">
       <configurable displayName="<warning descr="Extract displayName for i18n">Not Localized</warning>"/>
     </projectConfigurable>
+
+
+    <!--  NotificationGroup-->
+
+    <<warning descr="Extract text/description for i18n">notificationGroup</warning> id="Non I18n Group" displayType="BALLOON"/>
+
   </extensions>
 </idea-plugin>
