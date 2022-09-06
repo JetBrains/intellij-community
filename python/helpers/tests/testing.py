@@ -1,9 +1,11 @@
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function
 
+import collections
 import errno
 import logging
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import textwrap
@@ -20,6 +22,9 @@ _test_root = os.path.dirname(os.path.abspath(__file__))
 _helpers_root = os.path.dirname(_test_root)
 _test_data_root = os.path.join(_test_root, 'data')
 _override_test_data = False
+
+ProcessResult = collections.namedtuple('GeneratorResults',
+                                       ('exit_code', 'stdout', 'stderr'))
 
 
 # noinspection PyMethodMayBeStatic
@@ -47,12 +52,16 @@ class HelpersTestCase(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp(
             prefix='{}_{}__'.format(self.test_class_name, self.test_name))
+        self.process_stdout = six.StringIO()
+        self.process_stderr = six.StringIO()
 
     def tearDown(self):
         if self._test_has_failed():
             self.tearDownForFailedTest()
         else:
             self.tearDownForSuccessfulTest()
+        self.process_stdout.close()
+        self.process_stderr.close()
 
     def tearDownForSuccessfulTest(self):
         shutil.rmtree(self.temp_dir)
@@ -233,3 +242,34 @@ class HelpersTestCase(unittest.TestCase):
     def read_zip_entries(self, path):
         with zipfile.ZipFile(path, 'r') as zf:
             return sorted(zf.namelist())
+
+    def run_process(self, args, input=None, env=None):
+        # On Windows we have to propagate entire parent environment explicitly to a
+        # subprocess. See https://www.scivision.dev/python-calling-python-subprocess/.
+        complete_env = os.environ.copy()
+        complete_env.update(env)
+
+        # Remove possible (NAME: None) pairs and make sure that environment content is
+        # all str (critical for Python 2.x on Windows)
+        def as_str(s):
+            if isinstance(s, str):
+                return s
+            elif six.PY2:
+                return s.encode(encoding='latin-1')
+            else:
+                return s.decode(encoding='latin-1')
+
+        complete_env = {as_str(k): as_str(v) for k, v in complete_env.items()
+                        if v is not None}
+        # In Python 2.7 Popen doesn't support the "encoding" parameter
+        process = subprocess.Popen(args,
+                                   env=complete_env,
+                                   stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE,
+                                   universal_newlines=False)
+        stdout, stderr = process.communicate(input.encode('utf-8') if input else None)
+        stdout, stderr = stdout.decode('utf-8'), stderr.decode('utf-8')
+        self.process_stdout.write(stdout)
+        self.process_stderr.write(stderr)
+        return ProcessResult(process.returncode, stdout, stderr)

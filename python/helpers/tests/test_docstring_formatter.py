@@ -3,7 +3,6 @@ from __future__ import unicode_literals, print_function
 
 import errno
 import os
-import subprocess
 import sys
 import textwrap
 
@@ -79,21 +78,13 @@ class DocstringFormatterTest(HelpersTestCase):
     def launch_helper(self, stdin):
         helper_path = os.path.join(_helpers_root, 'docstring_formatter.py')
         args = [sys.executable, helper_path, self.docstring_format]
-        # On Windows we need to explicitly copy the parent environment
-        env = os.environ.copy()
-        env.update({str('PYTHONPATH'): str(docutils_root)})
-        # In Python 2.7 Popen doesn't support the "encoding" parameter
-        process = subprocess.Popen(args,
-                                   env=env,
-                                   stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE,
-                                   universal_newlines=False)
-        stdout, stderr = process.communicate(stdin.encode('utf-8'))
-        if stderr:
+        result = self.run_process(args,
+                                  input=stdin,
+                                  env={'PYTHONPATH': docutils_root})
+        if result.stderr:
             raise AssertionError("Non-empty stderr for docstring_formatter.py:\n"
-                                 "{}".format(stderr.decode('utf-8')))
-        return stdout.decode('utf-8')
+                                 "{}".format(result.stderr))
+        return result.stdout
 
     @staticmethod
     def read_docstring_from_module(module_path):
