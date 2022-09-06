@@ -248,6 +248,10 @@ public class LineStatusMarkerDrawUtil {
         g.setColor(color);
         double width = x2 - x1;
         RectanglePainter2D.FILL.paint(g, x1, y - size + 1, width, 2 * size - 2, width);
+      } else if (borderColor != null) {
+        g.setColor(borderColor);
+        double width = x2 - x1;
+        RectanglePainter2D.DRAW.paint(g, x1, y - size + 1, width, 2 * size - 2, width);
       }
       return;
     }
