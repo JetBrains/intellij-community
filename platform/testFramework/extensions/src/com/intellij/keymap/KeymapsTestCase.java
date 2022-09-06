@@ -3,7 +3,10 @@ package com.intellij.keymap;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   /**
@@ -142,6 +145,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt S",         "ShowProjectStructureSettings", "GoShareInPlaygroundAction"},
       {"shift ctrl alt RIGHT",     "MoveElementRight", "ResizeToolWindowRight"},
       {"shift ctrl alt UP",        "ResizeToolWindowUp", "VcsShowPrevChangeMarker"},
+      {"ctrl alt N",               "Console.TableResult.SetNull", "Git.New.Branch.In.Log", "GitNewBranchAction", "Inline"},
     }),
     Map.entry("Mac OS X 10.5+", new String[][]{
       {"BACK_SPACE",               "$Delete", "EditorBackSpace"},

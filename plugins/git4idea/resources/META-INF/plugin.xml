@@ -55,6 +55,7 @@
     <action id="Git.Drop.Commits" class="git4idea.rebase.log.drop.GitDropLogAction"/>
     <action id="Git.Rename.Local.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$RenameLocalBranch"/>
     <action id="Git.Checkout.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$CheckoutSelectedBranchAction"/>
+    <action id="Git.New.Branch.In.Log" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$NewBranchAction"/>
     <action id="Git.Log.Branches.Change.Branch.Filter"
             class="git4idea.ui.branch.dashboard.BranchesDashboardActions$UpdateBranchFilterInLogAction">
       <mouse-shortcut keystroke="button1 doubleClick" keymap="$default"/>
