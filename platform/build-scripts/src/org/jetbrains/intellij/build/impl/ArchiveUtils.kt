@@ -4,36 +4,30 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.Decompressor
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.Nullable
 
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
-class ArchiveUtils {
-  static void tar(Path archive, String rootDir, List<String> paths, long buildDateInSeconds) {
-    if (rootDir.endsWith("/")) {
-      def trailingSlash = rootDir.lastIndexOf("/")
-      rootDir = rootDir.substring(0, trailingSlash)
-    }
-    new Compressor.Tar(archive.toFile(), Compressor.Tar.Compression.GZIP).withCloseable { compressor ->
-      paths.each {
-        def path = Paths.get(it)
+object ArchiveUtils {
+  fun tar(archive: Path, rootDir: String, paths: List<String>, buildDateInSeconds: Long) {
+    val normalizedRootDir = rootDir.removeSuffix("/")
+    Compressor.Tar(archive.toFile(), Compressor.Tar.Compression.GZIP).use { compressor ->
+      for (it in paths) {
+        val path = Path.of(it)
         if (Files.isDirectory(path)) {
-          compressor.addDirectory(rootDir, path, buildDateInSeconds)
+          compressor.addDirectory(normalizedRootDir, path, buildDateInSeconds)
         }
         else {
-          compressor.addFile("$rootDir/${path.fileName}", path, buildDateInSeconds)
+          compressor.addFile("$normalizedRootDir/${path.fileName}", path, buildDateInSeconds)
         }
       }
     }
   }
 
-  static void unTar(Path archive, Path destination, @Nullable String rootDirToBeStripped = null) {
+  fun unTar(archive: Path, destination: Path, rootDirToBeStripped: String? = null) {
     if (SystemInfoRt.isWindows) {
-      Decompressor.Tar decompressor = new Decompressor.Tar(archive)
+      val decompressor = Decompressor.Tar(archive)
       if (rootDirToBeStripped != null) {
         decompressor.removePrefixPath(rootDirToBeStripped)
       }
@@ -43,11 +37,11 @@ class ArchiveUtils {
       // 'tar' command is used for performance reasons
       // both GNU Tar and BSD Tar will suffice
       Files.createDirectories(destination)
-      List<String> args = new ArrayList<>()
+      val args = ArrayList<String>()
       args.add("tar")
       args.add("--extract")
       args.add("--gzip")
-      args.add("--file=${archive.fileName}".toString())
+      args.add("--file=${archive.fileName}")
       if (rootDirToBeStripped != null) {
         args.add("--strip")
         args.add("1")
@@ -58,18 +52,19 @@ class ArchiveUtils {
     }
   }
 
-  private static callProcess(List<String> args, Path workDir) {
-    ProcessBuilder builder = new ProcessBuilder(args)
+  private fun callProcess(args: List<String>, workDir: Path) {
+    val builder = ProcessBuilder(args)
       .directory(workDir.toFile())
       .inheritIO()
-    Process process = builder.start()
+    val process = builder.start()
     if (!process.waitFor(10, TimeUnit.MINUTES)) {
       process.destroyForcibly().waitFor()
-      throw new IllegalStateException("Cannot execute $args: 10 min timeout")
+      throw IllegalStateException("Cannot execute $args: 10 min timeout")
     }
-    int exitCode = process.exitValue()
-    if (exitCode != 0) {
-      throw new RuntimeException("Cannot execute $args (exitCode=$exitCode)")
+
+    val exitCode = process.exitValue()
+    check(exitCode == 0) {
+      "Cannot execute $args (exitCode=$exitCode)"
     }
   }
 }
