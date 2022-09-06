@@ -19,8 +19,6 @@ class GHAvatarIconsProvider(private val scope: CoroutineScope,
                             private val requestExecutor: GithubApiRequestExecutor)
   : CachingCircleImageIconsProvider<String>(scope, GithubIcons.DefaultAvatar), Disposable {
 
-  fun getIcon(key: String?): Icon = super.getIcon(key, GHUIUtil.AVATAR_SIZE)
-
   override suspend fun loadImage(key: String): Image? = avatarsLoader.requestAvatar(requestExecutor, key).await()
 
   override fun dispose() = scope.cancel()

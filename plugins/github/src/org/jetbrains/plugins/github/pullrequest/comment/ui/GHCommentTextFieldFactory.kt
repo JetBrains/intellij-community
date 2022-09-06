@@ -21,6 +21,7 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -43,7 +44,7 @@ class GHCommentTextFieldFactory(private val model: CommentTextFieldModel) {
     val authorLabel = LinkLabel.create("") {
       BrowserUtil.browse(author.url)
     }.apply {
-      icon = avatarIconsProvider.getIcon(author.avatarUrl)
+      icon = avatarIconsProvider.getIcon(author.avatarUrl, GHUIUtil.AVATAR_SIZE)
       isFocusable = true
       border = JBUI.Borders.empty(getEditorTextFieldVerticalOffset() - 2, 0)
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)

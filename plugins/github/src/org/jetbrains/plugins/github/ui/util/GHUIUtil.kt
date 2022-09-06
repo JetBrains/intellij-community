@@ -13,7 +13,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
@@ -236,13 +235,13 @@ object GHUIUtil {
     class PRReviewers(private val iconsProvider: GHAvatarIconsProvider)
       : SelectionListCellRenderer<GHPullRequestRequestedReviewer>() {
       override fun getText(value: GHPullRequestRequestedReviewer) = value.shortName
-      override fun getIcon(value: GHPullRequestRequestedReviewer) = iconsProvider.getIcon(value.avatarUrl)
+      override fun getIcon(value: GHPullRequestRequestedReviewer) = iconsProvider.getIcon(value.avatarUrl, AVATAR_SIZE)
     }
 
     class Users(private val iconsProvider: GHAvatarIconsProvider)
       : SelectionListCellRenderer<GHUser>() {
       override fun getText(value: GHUser) = value.login
-      override fun getIcon(value: GHUser) = iconsProvider.getIcon(value.avatarUrl)
+      override fun getIcon(value: GHUser) = iconsProvider.getIcon(value.avatarUrl, AVATAR_SIZE)
     }
 
     class Labels : SelectionListCellRenderer<GHLabel>() {
