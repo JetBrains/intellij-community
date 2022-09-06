@@ -3,7 +3,7 @@ package com.intellij.collaboration.auth.ui
 
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
-import com.intellij.collaboration.ui.codereview.avatar.IconsProvider
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow

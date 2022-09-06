@@ -3,7 +3,7 @@ package com.intellij.collaboration.auth.ui
 
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
-import com.intellij.collaboration.ui.codereview.avatar.CachingCircleImageIconsProvider
+import com.intellij.collaboration.ui.icon.CachingCircleImageIconsProvider
 import com.intellij.collaboration.ui.items
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred

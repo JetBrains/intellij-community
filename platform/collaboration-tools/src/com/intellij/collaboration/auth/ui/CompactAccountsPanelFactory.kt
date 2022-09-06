@@ -4,7 +4,7 @@ package com.intellij.collaboration.auth.ui
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
-import com.intellij.collaboration.ui.codereview.avatar.IconsProvider
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.items
 import com.intellij.ui.ClickListener
 import com.intellij.ui.ClientProperty
