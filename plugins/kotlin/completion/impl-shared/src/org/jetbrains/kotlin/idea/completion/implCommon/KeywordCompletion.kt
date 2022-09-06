@@ -303,6 +303,17 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
         while (parent != null) {
             when (parent) {
                 is KtBlockExpression -> {
+                    if (
+                        prevParent is KtScriptInitializer &&
+                        parent.parent is KtScript &&
+                        parent.allChildren.firstIsInstanceOrNull<KtScriptInitializer>() === prevParent &&
+                        parent.parent.allChildren.firstIsInstanceOrNull<KtBlockExpression>() === parent
+                    ) {
+                        // It's the first script initializer after preamble.
+                        // Possibly, user enters "import" or "package" here. So we need a global context for it.
+                        return buildFilterWithReducedContext("", null, position)
+                    }
+
                     var prefixText = "fun foo() { "
                     if (prevParent is KtExpression) {
                         // check that we are right after a try-expression without finally-block or after if-expression without else
