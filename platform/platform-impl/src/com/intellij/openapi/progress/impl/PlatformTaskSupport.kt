@@ -275,7 +275,13 @@ private fun CoroutineScope.awaitCancellation(action: () -> Unit) {
       awaitCancellation()
     }
     finally {
-      action()
+      withContext(NonCancellable) {
+        // Force re-dispatch to avoid executing the action in the current EDT event.
+        // Without this the dialog might be closed before it's shown, if the cancellation happens concurrently with `dialog.show()`.
+        // Concurrent cancellation might happen on a background thread, when the task finishes just before the dialog is about to show.
+        yield()
+        action()
+      }
     }
   }
 }
