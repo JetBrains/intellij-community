@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -117,7 +118,9 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
 
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       if (editor instanceof EditorEx) {
-        ((EditorEx)editor).setFontSize(fontSize);
+        EditorEx editorEx = ((EditorEx)editor);
+        editorEx.putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true);
+        editorEx.setFontSize(fontSize);
       }
     }
     UISettings.getInstance().fireUISettingsChanged();

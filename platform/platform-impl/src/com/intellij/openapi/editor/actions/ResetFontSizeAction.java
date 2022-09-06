@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -12,6 +13,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
@@ -96,13 +98,44 @@ public final class ResetFontSizeAction extends EditorAction {
     }
   }
 
+  private static final class PresentationModeStrategy implements Strategy {
+    private final UISettings settings = UISettings.getInstance();
+
+    @Override
+    public float getFontSize() {
+      return settings.getPresentationModeFontSize();
+    }
+
+    @Override
+    public void setFontSize(float fontSize) {
+      int fs = (int)fontSize;
+      settings.setPresentationModeFontSize(fs);
+      for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+        if (editor instanceof EditorEx) {
+          ((EditorEx)editor).setFontSize(fs);
+        }
+      }
+    }
+
+    @Override
+    public String getText(float fontSize) {
+      return IdeBundle.message("action.reset.font.size", fontSize);
+    }
+  }
+
   @ApiStatus.Internal
   public static Strategy getStrategy(EditorEx editor) {
     float globalSize = ConsoleViewUtil.isConsoleViewEditor(editor)
                        ? EditorColorsManager.getInstance().getGlobalScheme().getConsoleFontSize2D()
                        : EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
-    if (editor instanceof EditorImpl && ((EditorImpl) editor).getFontSize2D() == globalSize) {
-      return new AllEditorsStrategy(editor);
+
+    if (editor instanceof EditorImpl) {
+      if (UISettings.getInstance().getPresentationMode()) {
+        return new PresentationModeStrategy();
+      }
+      if (((EditorImpl) editor).getFontSize2D() == globalSize) {
+        return new AllEditorsStrategy(editor);
+      }
     }
     return new SingleEditorStrategy(editor);
   }
