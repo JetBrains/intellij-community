@@ -60,7 +60,7 @@ class StubBuilderType {
     if (myElementType != null) {
       if (myElementType.getLanguage() instanceof TemplateLanguage &&
           myElementType.getStubVersion() < IStubFileElementType.getTemplateStubBaseVersion()) {
-        PluginException.logPluginError(LOG, myElementType.getLanguage() + " stub version should call super.getStubVersion()",
+        PluginException.logPluginError(LOG, myElementType.getClass() + " " + myElementType.getLanguage() + " stub version should call super.getStubVersion()",
                                        null, myElementType.getClass());
       }
       String baseVersion = myElementType.getClass().getName() + ":" + myElementType.getStubVersion();
