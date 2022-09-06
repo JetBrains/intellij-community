@@ -123,7 +123,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     private static boolean isMergeCasesFixAvailable(@NotNull BranchBase<?> duplicate, @NotNull BranchBase<?> original) {
-      if (duplicate.myIsGuardedOrParenthesizedPattern || original.myIsGuardedOrParenthesizedPattern) return false;
+      if (duplicate.myIsUnmergeable || original.myIsUnmergeable) return false;
       if (duplicate.myIsTypeTestPattern != original.myIsTypeTestPattern) {
         return duplicate.myIsNull || original.myIsNull;
       }
@@ -490,7 +490,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     protected final String @NotNull [] myCommentTexts;
     private final boolean myIsDefault;
     private final boolean myIsTypeTestPattern;
-    private final boolean myIsGuardedOrParenthesizedPattern;
+    private final boolean myIsUnmergeable;
     private final boolean myIsNull;
     private DuplicatesFinder myFinder;
 
@@ -503,11 +503,12 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       myCommentTexts = commentTexts;
       myIsDefault = ContainerUtil.find(labels, PsiSwitchLabelStatementBase::isDefaultCase) != null;
       myIsTypeTestPattern = isPatternBy(labels, PsiTypeTestPattern.class);
-      myIsGuardedOrParenthesizedPattern = isPatternBy(labels, PsiGuardedPattern.class, PsiParenthesizedPattern.class);
+      myIsUnmergeable =
+        isPatternBy(labels, PsiGuardedPattern.class, PsiPatternGuard.class, PsiParenthesizedPattern.class, PsiDeconstructionPattern.class);
       myIsNull = isNull(labels);
     }
 
-    private boolean isPatternBy(T @NotNull [] labels, Class<? extends PsiPattern>... classes) {
+    private boolean isPatternBy(T @NotNull [] labels, Class<? extends PsiCaseLabelElement>... classes) {
       return ContainerUtil.find(labels, label -> {
         PsiCaseLabelElement[] labelElements = getCaseLabelElements(label);
         if (labelElements == null) return false;
