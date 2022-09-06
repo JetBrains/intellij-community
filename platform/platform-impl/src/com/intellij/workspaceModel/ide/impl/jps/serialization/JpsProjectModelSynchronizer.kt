@@ -186,7 +186,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     })
   }
 
-  suspend fun loadProjectToEmptyStorage(project: Project): Pair<EntityStorage, List<EntitySource>>? {
+  suspend fun loadProjectToEmptyStorage(project: Project): Pair<MutableEntityStorage, List<EntitySource>>? {
     val configLocation = getJpsProjectConfigLocation(project)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
     activity = startActivity("project files loading", ActivityCategory.DEFAULT)
@@ -199,7 +199,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, it, project) }
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.entityTracer?.printInfoAboutTracedEntity(builder, "JPS files")
       childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")
-      return builder.toSnapshot() to sourcesToUpdate
+      return builder to sourcesToUpdate
     }
     else {
       childActivity?.end()

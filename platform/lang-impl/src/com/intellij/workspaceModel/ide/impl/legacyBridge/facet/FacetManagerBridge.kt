@@ -129,7 +129,7 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
 
   init {
     // Initialize facet bridges after loading from cache
-    val moduleEntity = moduleBridge.entityStorage.current.resolve(moduleBridge.moduleEntityId)
+    val moduleEntity = (moduleBridge.diff ?: moduleBridge.entityStorage.current).resolve(moduleBridge.moduleEntityId)
                        ?: error("Module entity should be available")
     WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetContributor ->
       if (facetContributor.rootEntityType != FacetEntity::class.java) {
@@ -143,7 +143,7 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
   }
 
   override fun getAllFacets(): Array<Facet<*>> {
-    val moduleEntity = moduleBridge.entityStorage.current.resolve(moduleBridge.moduleEntityId)
+    val moduleEntity = (moduleBridge.diff ?: moduleBridge.entityStorage.current).resolve(moduleBridge.moduleEntityId)
     if (moduleEntity == null) {
       LOG.error("Cannot resolve module entity ${moduleBridge.moduleEntityId}")
       return emptyArray()
@@ -246,6 +246,10 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
 
   private fun facetMapping(): ExternalEntityMapping<Facet<*>> {
     return moduleBridge.diff?.facetMapping() ?: moduleBridge.entityStorage.current.facetMapping()
+  }
+
+  private inline fun <reified R> updateBuilder(builder: MutableEntityStorage, crossinline updater: MutableExternalEntityMapping<Facet<*>>.() -> R): R {
+    return builder.mutableFacetMapping().updater()
   }
 
   private inline fun <reified R> updateDiffOrStorage(crossinline updater: MutableExternalEntityMapping<Facet<*>>.() -> R): R {

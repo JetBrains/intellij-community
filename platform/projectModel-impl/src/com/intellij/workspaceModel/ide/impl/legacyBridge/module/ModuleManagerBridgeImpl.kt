@@ -78,7 +78,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
   val entityStore = WorkspaceModel.getInstance(project).entityStorage
 
-  suspend fun loadModules(entities: Sequence<ModuleEntity>, initializeFacets: Boolean) {
+  suspend fun loadModules(entities: Sequence<ModuleEntity>, targetBuilder: MutableEntityStorage?, initializeFacets: Boolean) {
     val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
     val corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID }
     val result = coroutineScope {
@@ -93,7 +93,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
           try {
             val module = createModuleInstanceWithoutCreatingComponents(moduleEntity = moduleEntity,
                                                                        versionedStorage = entityStore,
-                                                                       diff = null,
+                                                                       diff = targetBuilder,
                                                                        isNew = false,
                                                                        precomputedExtensionModel = precomputedExtensionModel,
                                                                        plugins = plugins,
@@ -117,7 +117,8 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     }.awaitAll()
 
     val modules = LinkedHashSet<ModuleBridge>(result.size)
-    WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
+
+    fun fillBuilder(builder: MutableEntityStorage) {
       val moduleMap = builder.mutableModuleMap
       for (item in result) {
         val (entity, module) = item ?: continue
@@ -128,6 +129,13 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       }
     }
 
+    if (targetBuilder == null) {
+      WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
+        fillBuilder(builder)
+      }
+    } else {
+      fillBuilder(targetBuilder)
+    }
     // Facets that are loaded from the cache do not generate "EntityAdded" event and aren't initialized
     // We initialize the facets manually here (after modules loading).
     if (initializeFacets) {
@@ -299,7 +307,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
           }
           // todo why we load modules in a write action
           runBlocking {
-            loadModules(moduleEntitiesToLoad.asSequence(), true)
+            loadModules(moduleEntitiesToLoad.asSequence(), null, true)
           }
         }
       }
@@ -411,6 +419,8 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     entityStorage: VersionedEntityStorage,
     diff: MutableEntityStorage?,
   ): ModuleBridge
+
+  abstract fun initializeBridges(event: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage)
 
   companion object {
     private val LOG = logger<ModuleManagerBridgeImpl>()

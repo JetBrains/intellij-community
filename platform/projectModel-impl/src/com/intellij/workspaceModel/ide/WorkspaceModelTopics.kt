@@ -46,19 +46,10 @@ class WorkspaceModelTopics : Disposable {
     @Topic.ProjectLevel
     private val CHANGED = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
 
-    @Topic.ProjectLevel
-    private val MODULE_BRIDGE_INITIALIZER = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
-
-    @Topic.ProjectLevel
-    private val PROJECT_LIBS_INITIALIZER = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
-
     @JvmStatic
     fun getInstance(project: Project): WorkspaceModelTopics = project.service()
   }
 
-  private val allEventsForModuleBridge = ContainerUtil.createConcurrentList<EventsDispatcher>()
-  private val allEvents = ContainerUtil.createConcurrentList<EventsDispatcher>()
-  private var sendToQueue = true
   var modulesAreLoaded = false
 
   /**
@@ -79,120 +70,15 @@ class WorkspaceModelTopics : Disposable {
    * Topic is project-level only without broadcasting - connection expected to be to project message bus only.
    */
   fun subscribeAfterModuleLoading(connection: MessageBusConnection, listener: WorkspaceModelChangeListener) {
-    if (!sendToQueue) {
-      subscribeImmediately(connection, listener)
-    }
-    else {
-      val queue = EventsDispatcher(listener)
-      allEvents += queue
-      subscribeImmediately(connection, queue)
-    }
+    subscribeImmediately(connection, listener)
   }
 
-  /**
-   * For internal use only
-   */
-  fun subscribeProjectLibsInitializer(connection: MessageBusConnection, listener: WorkspaceModelChangeListener) {
-    connection.subscribe(PROJECT_LIBS_INITIALIZER, listener)
-  }
-
-  /**
-   * Internal use only
-   */
-  fun subscribeModuleBridgeInitializer(connection: MessageBusConnection, listener: WorkspaceModelChangeListener) {
-    if (!sendToQueue) {
-      connection.subscribe(MODULE_BRIDGE_INITIALIZER, listener)
-    }
-    else {
-      val queue = EventsDispatcher(listener)
-      allEventsForModuleBridge += queue
-      connection.subscribe(MODULE_BRIDGE_INITIALIZER, queue)
-    }
-  }
-
-  fun syncProjectLibs(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(PROJECT_LIBS_INITIALIZER)
-  fun syncModuleBridge(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(MODULE_BRIDGE_INITIALIZER)
   fun syncPublisher(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(CHANGED)
 
   suspend fun notifyModulesAreLoaded() {
-    val activity = StartUpMeasurer.startActivity("postponed events sending")
-    sendToQueue = false
-
-    if (allEvents.isNotEmpty() && allEvents.any { it.events.isNotEmpty() }) {
-      val activityInQueue = activity.startChild("events sending (in queue)")
-      val application = ApplicationManager.getApplication()
-      withContext(Dispatchers.EDT) {
-        application.runWriteAction {
-          val innerActivity = activityInQueue.endAndStart("events sending")
-          allEvents.forEach { queue ->
-            queue.collectToQueue = false
-            queue.events.forEach { (isBefore, event) ->
-              if (isBefore) queue.originalListener.beforeChanged(event)
-              else queue.originalListener.changed(event)
-            }
-            queue.events.clear()
-          }
-          innerActivity.end()
-        }
-      }
-    }
-    else {
-      allEvents.forEach { queue -> queue.collectToQueue = false }
-    }
-    allEvents.clear()
-
-    if (allEventsForModuleBridge.isNotEmpty() && allEventsForModuleBridge.any { it.events.isNotEmpty() }) {
-      val activityInQueue = activity.startChild("events sending (in queue first)")
-      val application = ApplicationManager.getApplication()
-      withContext(Dispatchers.EDT) {
-        application.runWriteAction {
-          val innerActivity = activityInQueue.endAndStart("events sending first")
-          allEventsForModuleBridge.forEach { queue ->
-            queue.collectToQueue = false
-            queue.events.forEach { (isBefore, event) ->
-              if (isBefore) queue.originalListener.beforeChanged(event)
-              else queue.originalListener.changed(event)
-            }
-            queue.events.clear()
-          }
-          innerActivity.end()
-        }
-      }
-    }
-    else {
-      allEventsForModuleBridge.forEach { queue -> queue.collectToQueue = false }
-    }
-    allEventsForModuleBridge.clear()
-
     modulesAreLoaded = true
-    activity.end()
-  }
-
-  private class EventsDispatcher(val originalListener: WorkspaceModelChangeListener) : WorkspaceModelChangeListener {
-    val events = mutableListOf<Pair<Boolean, VersionedStorageChange>>()
-    var collectToQueue = true
-
-    override fun beforeChanged(event: VersionedStorageChange) {
-      if (collectToQueue) {
-        events += true to event
-      }
-      else {
-        originalListener.beforeChanged(event)
-      }
-    }
-
-    override fun changed(event: VersionedStorageChange) {
-      if (collectToQueue) {
-        events += false to event
-      }
-      else {
-        originalListener.changed(event)
-      }
-    }
   }
 
   override fun dispose() {
-    allEvents.forEach { it.events.clear() }
-    allEvents.clear()
   }
 }

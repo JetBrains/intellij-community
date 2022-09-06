@@ -60,7 +60,7 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
       project = module.project,
       initialId = entity.persistentId,
       initialEntityStorage = moduleBridge.entityStorage,
-      targetBuilder = null
+      targetBuilder = storageBuilder
     )
     if (storageBuilder != null) {
       storageBuilder.mutableLibraryMap.addMapping(entity, library)
