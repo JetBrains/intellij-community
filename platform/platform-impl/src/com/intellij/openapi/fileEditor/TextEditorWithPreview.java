@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -168,6 +169,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
   protected boolean isShowFloatingToolbar() {
     return Registry.is("ide.text.editor.with.preview.show.floating.toolbar") && myToolbarWrapper.isLeftToolbarEmpty();
+  }
+
+  protected boolean isShowActionsInTabs() {
+    return ExperimentalUI.isNewUI() && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE;
   }
 
   private void registerToolbarListeners(JComponent actualComponent, LayoutActionsFloatingToolbar toolbar) {
@@ -454,6 +459,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     return null;
   }
 
+  @Override
+  @Nullable
+  public ActionGroup getTabActions() {
+    return ExperimentalUI.isNewUI() ? createViewActionGroup() : null;
+  }
+
   @NotNull
   protected ToggleAction getShowEditorAction() {
     return new ChangeViewModeAction(Layout.SHOW_EDITOR);
@@ -639,6 +650,8 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
     @Override
     public void eventDispatched(AWTEvent event) {
+      if (isShowActionsInTabs()) return;
+
       try {
         var isMouseOutsideToolbar = toolbar.getMousePosition() == null;
         if (myComponent.getMousePosition() != null) {

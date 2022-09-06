@@ -575,7 +575,7 @@ public final class EditorWindow {
       VirtualFile file = composite.getFile();
       Icon template = AllIcons.FileTypes.Text;
       EmptyIcon emptyIcon = EmptyIcon.create(template.getIconWidth(), template.getIconHeight());
-      myTabbedPane.insertTab(file, emptyIcon, new TComp(this, composite), null, indexToInsert, composite);
+      myTabbedPane.insertTab(file, emptyIcon, new TComp(this, composite), null, indexToInsert, composite, composite);
 
       Integer dragStartIndex = null;
       Integer hash = file.getUserData(DRAG_START_LOCATION_HASH_KEY);

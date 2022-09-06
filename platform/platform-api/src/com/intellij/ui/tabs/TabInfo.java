@@ -60,6 +60,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
 
 
   private ActionGroup myTabLabelActions;
+  private @Nullable ActionGroup myTabPaneActions;
   private String myTabActionPlace;
 
   private AlertIcon myAlertIcon;
@@ -265,6 +266,20 @@ public final class TabInfo implements Queryable, PlaceProvider {
     myTabLabelActions = tabActions;
     myTabActionPlace = place;
     myChangeSupport.firePropertyChange(TAB_ACTION_GROUP, old, myTabLabelActions);
+    return this;
+  }
+
+  @Nullable
+  public ActionGroup getTabPaneActions() {
+    return myTabPaneActions;
+  }
+
+  /**
+   * Sets the actions that will be displayed on the right side of the tabs
+   */
+  @NotNull
+  public TabInfo setTabPaneActions(final @Nullable ActionGroup tabPaneActions) {
+    myTabPaneActions = tabPaneActions;
     return this;
   }
 

@@ -258,6 +258,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
                         @NotNull JComponent component,
                         @Nullable @NlsContexts.Tooltip String tooltip,
                         int indexToInsert,
+                        @NotNull EditorComposite composite,
                         @NotNull Disposable parentDisposable) {
     TabInfo existing = myTabs.findInfo(file);
     if (existing != null) {
@@ -296,6 +297,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     group.addAction(closeTab, Constraints.LAST);
 
     tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB);
+    tab.setTabPaneActions(composite.getSelectedEditor().getTabActions());
 
     myTabs.addTabSilently(tab, indexToInsert);
   }
