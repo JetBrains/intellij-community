@@ -1227,6 +1227,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     int rowHeight = table.getRowHeight();
     int space = addExtraSpace && visibleRows < modelRows ? rowHeight / 2 : 0;
     int height = visibleRows * rowHeight + minHeight + space;
+    if (ExperimentalUI.isNewUI() && space == 0 && visibleRows == modelRows) {
+      height += JBUIScale.scale(4);
+    }
     Rectangle bounds = new Rectangle(point.x, point.y, width, height);
     ScreenUtil.fitToScreen(bounds);
     if (bounds.height != height) {
