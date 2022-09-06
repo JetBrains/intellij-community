@@ -285,20 +285,22 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
                     null
                 } ?: key.findStdLib()
 
-                val stdlibDependency = stdLib.toStdlibDependency()
+                return stdLib.toStdlibDependency()
+            }
+
+            override fun postProcessNewValue(key: IdeaModuleInfo, value: StdlibDependency) {
+                val moduleSourceInfo = key.safeAs<ModuleSourceInfo>()
 
                 moduleSourceInfo?.let {
                     val result = hashMapOf<LibraryInfo, StdlibDependency>()
                     // all module dependencies have same stdlib as module itself
                     key.dependencies().forEach {
                         if (it is LibraryInfo) {
-                            result[it] = stdlibDependency
+                            result[it] = value
                         }
                     }
                     libraryCache.putExtraValues(result)
                 }
-
-                return stdlibDependency
             }
 
             override fun checkKeyValidity(key: IdeaModuleInfo) {

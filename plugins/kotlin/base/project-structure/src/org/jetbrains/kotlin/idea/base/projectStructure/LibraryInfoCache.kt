@@ -46,8 +46,11 @@ class LibraryInfoCache(project: Project): SynchronizedFineGrainedEntityCache<Lib
             is NativeIdePlatformKind -> createLibraryInfos(key, platformKind, ::NativeKlibLibraryInfo, null)
             else -> error("Unexpected platform kind: $platformKind")
         }
-        project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosAdded(libraryInfos)
         return libraryInfos
+    }
+
+    override fun postProcessNewValue(key: Library, value: List<LibraryInfo>) {
+        project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosAdded(value)
     }
 
     private fun createLibraryInfos(
@@ -59,17 +62,17 @@ class LibraryInfoCache(project: Project): SynchronizedFineGrainedEntityCache<Lib
         val defaultPlatform = platformKind.defaultPlatform
         val klibFiles = library.getFiles(OrderRootType.CLASSES).filter { it.isKlibLibraryRootForPlatform(defaultPlatform) }
 
-        if (klibFiles.isNotEmpty()) {
-            return ArrayList<LibraryInfo>(klibFiles.size).apply {
+        return if (klibFiles.isNotEmpty()) {
+            ArrayList<LibraryInfo>(klibFiles.size).apply {
                 for (file in klibFiles) {
                     val path = PathUtil.getLocalPath(file) ?: continue
                     add(klibLibraryInfoFactory(project, library, path))
                 }
             }
         } else if (metadataLibraryInfoFactory != null) {
-            return listOfNotNull(metadataLibraryInfoFactory(project, library))
+            listOfNotNull(metadataLibraryInfoFactory(project, library))
         } else {
-            return emptyList()
+            emptyList()
         }
     }
 

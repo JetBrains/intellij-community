@@ -241,16 +241,24 @@ abstract class SynchronizedFineGrainedEntityCache<Key: Any, Value: Any>(project:
             checkValueValidity(newValue)
         }
 
-        ProgressManager.checkCanceled()
-
         useCache { cache ->
             cache.putIfAbsent(key, newValue)
         }?.let { return it }
 
+        postProcessNewValue(key, newValue)
+
         return newValue
     }
 
+    /**
+     * it has to be a pure function w/o side effects as a value could be recalculated
+     */
     abstract fun calculate(key: Key): Value
+
+    /**
+     * side effect function on a newly calculated value
+     */
+    open fun postProcessNewValue(key: Key, value: Value) {}
 }
 
 fun EntityStorage.findModuleByEntityWithHack(entity: ModuleEntity, project: Project) = entity.findModule(this) ?:
