@@ -36,5 +36,6 @@
     <orderEntry type="library" scope="TEST" name="kotlin-test-assertions-core-jvm" level="project" />
     <orderEntry type="library" scope="TEST" name="java-diff-utils" level="project" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.ide.starter.junit5" scope="TEST" />
   </component>
 </module>
