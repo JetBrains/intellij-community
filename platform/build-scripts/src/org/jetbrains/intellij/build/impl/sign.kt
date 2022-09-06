@@ -23,17 +23,11 @@ import net.schmizz.sshj.userauth.method.AuthPassword
 import net.schmizz.sshj.userauth.method.PasswordResponseProvider
 import net.schmizz.sshj.userauth.password.PasswordFinder
 import net.schmizz.sshj.userauth.password.Resource
-import org.apache.commons.compress.archivers.zip.Zip64Mode
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
-import org.apache.commons.compress.archivers.zip.ZipFile
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.io.info
 import org.jetbrains.intellij.build.io.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.io.warn
-import org.jetbrains.intellij.build.io.writeNewFile
-import org.jetbrains.intellij.build.tasks.NoDuplicateZipArchiveOutputStream
-import org.jetbrains.intellij.build.tasks.entry
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets
@@ -49,35 +43,10 @@ import java.util.concurrent.CompletableFuture.runAsync
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.logging.*
-import java.util.zip.Deflater
 import kotlin.io.path.name
 import kotlin.io.path.outputStream
 
 private val random by lazy { SecureRandom() }
-
-// our zip for JARs, but here we need to support file permissions - that's why apache compress is used
-fun prepareMacZip(macZip: Path,
-                  sitFile: Path,
-                  productJson: String,
-                  zipRoot: String) {
-  Files.newByteChannel(macZip, StandardOpenOption.READ).use { sourceFileChannel ->
-    ZipFile(sourceFileChannel).use { zipFile ->
-      writeNewFile(sitFile) { targetFileChannel ->
-        NoDuplicateZipArchiveOutputStream(targetFileChannel).use { out ->
-          // file is used only for transfer to mac builder
-          out.setLevel(Deflater.BEST_SPEED)
-          out.setUseZip64(Zip64Mode.Never)
-
-          // exclude existing product-info.json as a custom one will be added
-          val productJsonZipPath = "$zipRoot/Resources/product-info.json"
-          zipFile.copyRawEntries(out, ZipArchiveEntryPredicate { it.name != productJsonZipPath })
-
-          out.entry(productJsonZipPath, productJson.encodeToByteArray())
-        }
-      }
-    }
-  }
-}
 
 // 0644 octal -> 420 decimal
 private const val regularFileMode = 420
