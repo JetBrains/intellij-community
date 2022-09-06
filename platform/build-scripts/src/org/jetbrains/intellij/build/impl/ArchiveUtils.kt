@@ -12,8 +12,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
-@CompileStatic
-final class ArchiveUtils {
+class ArchiveUtils {
   static void tar(Path archive, String rootDir, List<String> paths, long buildDateInSeconds) {
     if (rootDir.endsWith("/")) {
       def trailingSlash = rootDir.lastIndexOf("/")
