@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hints.filtering.MatcherConstructor
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtensionPoint
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -65,7 +64,6 @@ fun getBaseLanguagesWithProviders(): List<Language> {
 
 fun isParameterHintsEnabledForLanguage(language: Language): Boolean {
   @Suppress("DEPRECATION")
-  if (!EditorSettingsExternalizable.getInstance().isShowParameterNameHints) return false
   if (!InlayHintsSettings.instance().hintsShouldBeShown(language)) return false
   return ParameterNameHintsSettings.getInstance().isEnabledForLanguage(getLanguageForSettingKey(language))
 }

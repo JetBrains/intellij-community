@@ -458,7 +458,6 @@
     <applicationService serviceImplementation="com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager"/>
     <editorFactoryMouseListener implementation="com.intellij.codeInsight.hints.presentation.listeners.InlayEditorMouseListener"/>
     <editorFactoryMouseMotionListener implementation="com.intellij.codeInsight.hints.presentation.listeners.InlayEditorMouseMotionListener"/>
-    <postStartupActivity implementation="com.intellij.codeInsight.hints.ParameterHintsSettingsMigration"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.hints.InlayHintsPassFactory"/>
 
     <projectConfigurable provider="com.intellij.codeInsight.hints.settings.InlaySettingsConfigurableProvider"

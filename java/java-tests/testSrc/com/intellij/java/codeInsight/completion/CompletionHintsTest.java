@@ -12,7 +12,6 @@ import com.intellij.java.codeInsight.AbstractParameterInfoTestCase;
 import com.intellij.java.codeInsight.JavaExternalDocumentationTest;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -535,46 +534,37 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   public void testCompletionHintsAreShownEvenWhenStaticHintsAreDisabled() {
     disableVirtualComma();
 
-    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    boolean oldValue = settings.isShowParameterNameHints();
-    try {
-      settings.setShowParameterNameHints(false);
+    // check hints appearance on completion
+    configureJava("class C { void m() { Character.for<caret> } }");
+    complete("forDigit");
+    checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
 
-      // check hints appearance on completion
-      configureJava("class C { void m() { Character.for<caret> } }");
-      complete("forDigit");
-      checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
+    // check that hints don't disappear after daemon highlighting passes
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
 
-      // check that hints don't disappear after daemon highlighting passes
-      waitForAllAsyncStuff();
-      checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
+    // test Tab/Shift+Tab navigation
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { Character.forDigit(<Hint text=\"digit:\"/>, <HINT text=\"radix:\"/><caret>) } }");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
 
-      // test Tab/Shift+Tab navigation
-      next();
-      waitForAllAsyncStuff();
-      checkResultWithInlays("class C { void m() { Character.forDigit(<Hint text=\"digit:\"/>, <HINT text=\"radix:\"/><caret>) } }");
-      prev();
-      waitForAllAsyncStuff();
-      checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
+    // test hints remain shown while entering parameter values
+    type("1");
+    next();
+    type("2");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { Character.forDigit(<Hint text=\"digit:\"/>1, <HINT text=\"radix:\"/>2<caret>) } }");
 
-      // test hints remain shown while entering parameter values
-      type("1");
-      next();
-      type("2");
-      waitForAllAsyncStuff();
-      checkResultWithInlays("class C { void m() { Character.forDigit(<Hint text=\"digit:\"/>1, <HINT text=\"radix:\"/>2<caret>) } }");
+    // test hints disappear when caret moves out of parameter list
+    right();
+    right();
+    right();
 
-      // test hints disappear when caret moves out of parameter list
-      right();
-      right();
-      right();
-
-      waitForAllAsyncStuff();
-      checkResultWithInlays("class C { void m() { Character.forDigit(1, 2) }<caret> }");
-    }
-    finally {
-      settings.setShowParameterNameHints(oldValue);
-    }
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { Character.forDigit(1, 2) }<caret> }");
   }
 
   public void testLargeNumberOfParameters() {
