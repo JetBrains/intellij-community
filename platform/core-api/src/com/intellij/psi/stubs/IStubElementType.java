@@ -12,9 +12,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static java.util.Collections.unmodifiableSet;
+
 public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extends PsiElement> extends IElementType implements StubSerializer<StubT> {
-  private static volatile boolean ourInitializedStubs;
-  private static volatile Set<String> ourLazyExternalIds = Collections.emptySet();
+  private static final Set<String> NOT_INITIALIZED_SET = unmodifiableSet(new HashSet<>(0));
+
+  private static volatile Set<String> ourLazyExternalIds = NOT_INITIALIZED_SET;
 
   public IStubElementType(@NotNull @NonNls String debugName, @Nullable Language language) {
     super(debugName, language);
@@ -24,7 +27,7 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
   }
 
   public static void checkNotInstantiatedTooLate(@NotNull Class<?> aClass) {
-    if (ourInitializedStubs) {
+    if (isInitialized()) {
       Logger.getInstance(IStubElementType.class)
         .error("All stub element types should be created before index initialization is complete.\n" +
                "Please add the " + aClass + " containing stub element type constants to \"stubElementTypeHolder\" extension.\n" +
@@ -33,12 +36,16 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
   }
 
   private void checkNotInstantiatedTooLateWithId(@NotNull Class<?> aClass) {
-    if (ourInitializedStubs) {
+    if (isInitialized()) {
       Logger.getInstance(IStubElementType.class)
         .error("All stub element types should be created before index initialization is complete.\n" +
                "Please add the " + aClass + " with external ID " + getExternalId() + " containing stub element type constants to \"stubElementTypeHolder\" extension.\n" +
                "Registered extensions: " + StubElementTypeHolderEP.EP_NAME.getExtensionList());
     }
+  }
+
+  private static boolean isInitialized() {
+    return ourLazyExternalIds != NOT_INITIALIZED_SET;
   }
 
   private boolean isLazilyRegistered() {
@@ -54,7 +61,7 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
   }
 
   static void dropRegisteredTypes() {
-    ourInitializedStubs = false;
+    ourLazyExternalIds = NOT_INITIALIZED_SET;
   }
 
   static @NotNull List<StubFieldAccessor> loadRegisteredStubElementTypes() {
@@ -67,8 +74,7 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
     for (StubFieldAccessor accessor : result) {
       lazyIds.add(accessor.externalId);
     }
-    ourInitializedStubs = true;
-    ourLazyExternalIds = lazyIds;
+    ourLazyExternalIds = unmodifiableSet(lazyIds);
     return result;
   }
 
