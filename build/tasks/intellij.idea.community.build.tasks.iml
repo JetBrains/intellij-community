@@ -50,9 +50,8 @@
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.immutableKeyValueStore" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
-    <orderEntry type="library" name="commons-io" level="project" />
     <orderEntry type="module" module-name="intellij.java.rt" />
-    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.util.base" />
@@ -60,5 +59,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" scope="TEST" name="commons-compress" level="project" />
   </component>
 </module>

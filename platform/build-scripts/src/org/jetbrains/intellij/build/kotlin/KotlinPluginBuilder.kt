@@ -9,7 +9,6 @@ import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.*
-import org.jetbrains.intellij.build.tasks.consumeDataByPrefix
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 

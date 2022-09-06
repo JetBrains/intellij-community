@@ -1,14 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.tasks
+package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtilRt
-import junit.framework.ComparisonFailure
 import com.intellij.util.PathUtilRt
+import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
+import org.apache.commons.io.FileExistsException
 import org.apache.commons.io.IOUtils
 import org.jetbrains.intellij.build.io.readZipFile
-import org.jetbrains.intellij.build.io.writeNewZip
+import java.nio.channels.SeekableByteChannel
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.NoSuchFileException
@@ -25,20 +26,6 @@ private const val fileFlag = 32768  // 0100000
 
 const val executableFileUnixMode = fileFlag or 493  // 0755
 
-fun packInternalUtilities(outFile: Path, files: List<Path>) {
-  writeNewZip(outFile, compress = true) { writer ->
-    for (file in files) {
-      writer.file(file.fileName.toString(), file)
-    }
-
-    readZipFile(files.last()) { name, entry ->
-      if (name.endsWith(".xml")) {
-        writer.uncompressedData(name, entry.getByteBuffer())
-      }
-    }
-  }
-}
-
 fun filterFileIfAlreadyInZip(relativePath: String, file: Path, zipFiles: MutableMap<String, Path>): Boolean {
   val found = zipFiles.put(relativePath, file) ?: return true
 
@@ -51,10 +38,10 @@ fun filterFileIfAlreadyInZip(relativePath: String, file: Path, zipFiles: Mutable
   val isAsciiText: (Char) -> Boolean = { it == '\t' || it == '\n' || it == '\r' || it.code in 32..126 }
   val message = "Two files '${found}' and '${file}' with the same target path '${relativePath}' have different content"
   if (file1Text.take(1024).all(isAsciiText) && file2Text.take(1024).all(isAsciiText)) {
-    throw ComparisonFailure(message, file1Text, file2Text)
+    throw RuntimeException("$message\n\nFile 1: ${"-".repeat(80)}\n$file1Text\n\nFile 2 ${"-".repeat(80)}\n$file2Text")
   }
   else {
-    error(message)
+    throw RuntimeException(message)
   }
 }
 
@@ -123,13 +110,13 @@ fun ZipArchiveOutputStream.dir(startDir: Path,
   }
 }
 
-fun ZipArchiveOutputStream.entryToDir(file: Path, zipPath: String) {
+internal fun ZipArchiveOutputStream.entryToDir(file: Path, zipPath: String) {
   entry("$zipPath/${file.fileName}", file)
 }
 
 private val zeroTime = FileTime.fromMillis(0)
 
-fun ZipArchiveOutputStream.entry(name: String, file: Path, unixMode: Int = -1) {
+internal fun ZipArchiveOutputStream.entry(name: String, file: Path, unixMode: Int = -1) {
   val entry = ZipArchiveEntryAssertName(name)
   if (unixMode != -1) {
     entry.unixMode = unixMode
@@ -137,7 +124,7 @@ fun ZipArchiveOutputStream.entry(name: String, file: Path, unixMode: Int = -1) {
   writeFileEntry(file, entry, this)
 }
 
-fun ZipArchiveOutputStream.entry(name: String, data: ByteArray) {
+internal fun ZipArchiveOutputStream.entry(name: String, data: ByteArray) {
   val entry = ZipArchiveEntryAssertName(name)
   entry.size = data.size.toLong()
   entry.lastModifiedTime = zeroTime
@@ -146,7 +133,7 @@ fun ZipArchiveOutputStream.entry(name: String, data: ByteArray) {
   closeArchiveEntry()
 }
 
-fun assertRelativePathIsCorrectForPackaging(relativeName: String) {
+private fun assertRelativePathIsCorrectForPackaging(relativeName: String) {
   if (relativeName.isEmpty()) {
     throw IllegalArgumentException("relativeName must not be empty")
   }
@@ -184,4 +171,23 @@ private fun writeFileEntry(file: Path, entry: ZipArchiveEntry, out: ZipArchiveOu
   out.putArchiveEntry(entry)
   Files.copy(file, out)
   out.closeArchiveEntry()
+}
+
+private class ZipArchiveEntryAssertName(name: String): ZipArchiveEntry(name) {
+  init {
+    assertRelativePathIsCorrectForPackaging(name)
+  }
+}
+
+internal class NoDuplicateZipArchiveOutputStream(channel: SeekableByteChannel) : ZipArchiveOutputStream(channel) {
+  private val entries = HashSet<String>()
+
+  override fun putArchiveEntry(archiveEntry: ArchiveEntry) {
+    val entryName = archiveEntry.name
+    assertRelativePathIsCorrectForPackaging(entryName)
+    if (!entries.add(entryName)) {
+      throw FileExistsException("File $entryName already exists")
+    }
+    super.putArchiveEntry(archiveEntry)
+  }
 }

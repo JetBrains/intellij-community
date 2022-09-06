@@ -77,5 +77,6 @@
     <orderEntry type="library" name="SSHJ" level="project" />
     <orderEntry type="library" name="jsch-agent-proxy" level="project" />
     <orderEntry type="library" name="jsch-agent-proxy-sshj" level="project" />
+    <orderEntry type="library" name="commons-io" level="project" />
   </component>
 </module>

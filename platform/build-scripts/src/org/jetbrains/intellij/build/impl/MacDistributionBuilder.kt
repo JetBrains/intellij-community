@@ -22,10 +22,6 @@ import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
 import org.jetbrains.intellij.build.io.writeNewFile
-import org.jetbrains.intellij.build.tasks.NoDuplicateZipArchiveOutputStream
-import org.jetbrains.intellij.build.tasks.dir
-import org.jetbrains.intellij.build.tasks.entry
-import org.jetbrains.intellij.build.tasks.executableFileUnixMode
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path

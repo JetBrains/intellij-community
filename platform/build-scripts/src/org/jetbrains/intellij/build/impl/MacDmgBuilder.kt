@@ -19,8 +19,6 @@ import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.io.writeNewFile
-import org.jetbrains.intellij.build.tasks.NoDuplicateZipArchiveOutputStream
-import org.jetbrains.intellij.build.tasks.entry
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption

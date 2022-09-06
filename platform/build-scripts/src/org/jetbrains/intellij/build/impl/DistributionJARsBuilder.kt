@@ -265,7 +265,7 @@ class DistributionJARsBuilder {
         }
       }
       entries.addAll(libDirLayout.await())
-       entries
+      entries
     }
   }
 
@@ -350,7 +350,7 @@ class DistributionJARsBuilder {
   suspend fun buildNonBundledPlugins(pluginsToPublish: Set<PluginLayout>,
                                      compressPluginArchive: Boolean,
                                      buildPlatformLibJob: Job?,
-                                     context: BuildContext): List<DistributionFileEntry>  {
+                                     context: BuildContext): List<DistributionFileEntry> {
     if (pluginsToPublish.isEmpty()) {
       return emptyList()
     }
@@ -468,6 +468,7 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
   val isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
 
   class ScrambleTask(@JvmField val plugin: PluginLayout, @JvmField val pluginDir: Path, @JvmField val targetDir: Path)
+
   val scrambleTasks = mutableListOf<ScrambleTask>()
 
   val entries: List<DistributionFileEntry> = coroutineScope {
@@ -614,7 +615,9 @@ private fun basePath(buildContext: BuildContext, moduleName: String): Path {
   return Path.of(JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first()))
 }
 
-suspend fun buildLib(moduleOutputPatcher: ModuleOutputPatcher, platform: PlatformLayout, context: BuildContext): List<DistributionFileEntry> {
+suspend fun buildLib(moduleOutputPatcher: ModuleOutputPatcher,
+                     platform: PlatformLayout,
+                     context: BuildContext): List<DistributionFileEntry> {
   patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher, context)
   val libDirMappings = processLibDirectoryLayout(moduleOutputPatcher = moduleOutputPatcher,
                                                  platform = platform,
@@ -648,7 +651,7 @@ suspend fun processLibDirectoryLayout(moduleOutputPatcher: ModuleOutputPatcher,
                                       platform: PlatformLayout,
                                       context: BuildContext,
                                       copyFiles: Boolean): List<DistributionFileEntry> {
-  return spanBuilder("layout")
+  return spanBuilder("layout lib")
     .setAttribute("path", context.paths.buildOutputDir.relativize(context.paths.distAllDir).toString())
     .useWithScope2 {
       layoutDistribution(layout = platform,
@@ -698,9 +701,10 @@ fun checkOutputOfPluginModules(mainPluginModule: String,
   check(!modulesWithPluginXml.isEmpty()) {
     "No module from \'$mainPluginModule\' plugin contains plugin.xml"
   }
-  check(modulesWithPluginXml.size == 1) { (
-    "Multiple modules (${modulesWithPluginXml.joinToString()}) from \'$mainPluginModule\' plugin " +
-    "contain plugin.xml files so the plugin won\'t work properly")
+  check(modulesWithPluginXml.size == 1) {
+    (
+      "Multiple modules (${modulesWithPluginXml.joinToString()}) from \'$mainPluginModule\' plugin " +
+      "contain plugin.xml files so the plugin won\'t work properly")
   }
   for (module in jarToModules.values.asSequence().flatten().distinct()) {
     if (module == "intellij.java.guiForms.rt" ||
@@ -797,7 +801,17 @@ private fun packInternalUtilities(context: BuildContext) {
     sources.add(file.toPath())
   }
   sources.add(context.paths.buildOutputDir.resolve("internal/internalUtilities.jar"))
-  packInternalUtilities(context.paths.artifactDir.resolve("internalUtilities.zip"), sources)
+  writeNewZip(context.paths.artifactDir.resolve("internalUtilities.zip"), compress = true) { writer ->
+    for (file in sources) {
+      writer.file(file.fileName.toString(), file)
+    }
+
+    readZipFile(sources.last()) { name, entry ->
+      if (name.endsWith(".xml")) {
+        writer.uncompressedData(name, entry.getByteBuffer())
+      }
+    }
+  }
 }
 
 private fun CoroutineScope.createBuildBrokenPluginListJob(context: BuildContext): Job? {
@@ -815,7 +829,7 @@ private fun CoroutineScope.createBuildBrokenPluginListJob(context: BuildContext)
 
 private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: List<DistributionFileEntry>, context: BuildContext): Job? {
   return createSkippableJob(spanBuilder("generate table of licenses for used third-party libraries"),
-                             BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP, context) {
+                            BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP, context) {
     val generator = LibraryLicensesListGenerator.create(project = context.project,
                                                         licensesList = context.productProperties.allLibraryLicenses,
                                                         usedModulesNames = entries.includedModules.toHashSet())
@@ -906,10 +920,12 @@ suspend fun layoutDistribution(layout: BaseLayout,
   // patchers must be executed _before_ pack because patcher patches module output
   if (copyFiles && layout is PluginLayout && !layout.patchers.isEmpty()) {
     val patchers = layout.patchers
-    spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).useWithScope2 {
-      withContext(Dispatchers.IO) {
-        for (patcher in patchers) {
-          patcher(moduleOutputPatcher, context)
+    withContext(Dispatchers.IO) {
+      spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).useWithScope2 {
+        withContext(Dispatchers.IO) {
+          for (patcher in patchers) {
+            patcher(moduleOutputPatcher, context)
+          }
         }
       }
     }

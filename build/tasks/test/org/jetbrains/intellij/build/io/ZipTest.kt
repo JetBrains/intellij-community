@@ -7,13 +7,11 @@ import com.intellij.util.io.write
 import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.lang.ImmutableZipFile
 import com.intellij.util.lang.ZipFile
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.configuration.ConfigurationProvider
 import org.jetbrains.intellij.build.tasks.DirSource
 import org.jetbrains.intellij.build.tasks.ZipSource
 import org.jetbrains.intellij.build.tasks.buildJar
-import org.jetbrains.intellij.build.tasks.dir
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -222,23 +220,6 @@ class ZipTest {
         assertThat(entry!!.isCompressed()).isFalse()
         assertThat(String(entry.getData(zipFile), Charsets.UTF_8)).isEqualTo("\n")
       }
-    }
-  }
-
-  @Test
-  fun symlink(@TempDir tempDir: Path) {
-    Assumptions.assumeTrue(SystemInfoRt.isUnix)
-
-    val dir = tempDir.resolve("dir")
-    Files.createDirectories(dir)
-
-    val targetFile = dir.resolve("target")
-    Files.writeString(targetFile, "target")
-    Files.createSymbolicLink(dir.resolve("link"), targetFile)
-
-    val zipFile = tempDir.resolve("file.zip")
-    writeNewFile(zipFile) { outFileChannel ->
-      ZipArchiveOutputStream(outFileChannel).use { out -> out.dir(dir, "") }
     }
   }
 
