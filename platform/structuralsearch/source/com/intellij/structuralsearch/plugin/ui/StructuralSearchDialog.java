@@ -968,11 +968,6 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     }
   }
 
-  public void showFilterPanel(String variableName) {
-    myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
-    setFilterPanelVisible(true);
-  }
-
   private void setFilterPanelVisible(boolean visible) {
     if (visible) {
       if (myFilterPanel.getVariable() == null) {
