@@ -888,7 +888,17 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @Nullable
     @Override
     public TextRange getHighlightRange() {
-      return intersectWithLine(SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition), mySourcePosition.getFile(), getLine());
+      TextRange range = SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
+      PsiFile file = mySourcePosition.getFile();
+      if (range != null) {
+        Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+        if (document != null) {
+          TextRange lineRange = DocumentUtil.getLineTextRange(document, getLine());
+          TextRange res = range.intersection(lineRange);
+          return res.equals(lineRange) ? null : res; // highlight the whole line for multiline lambdas
+        }
+      }
+      return range;
     }
   }
 
