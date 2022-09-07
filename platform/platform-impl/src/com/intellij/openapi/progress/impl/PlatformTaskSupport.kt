@@ -198,7 +198,8 @@ private fun CoroutineScope.showModalIndicator(
   }
   delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
   val mainJob = this@showModalIndicator.coroutineContext.job
-  withContext(RawSwingDispatcher) {
+  // Use Dispatchers.EDT to avoid showing the dialog on top of another unrelated modal dialog (e.g. MessageDialogBuilder.YesNoCancel)
+  withContext(Dispatchers.EDT) {
     val window = ownerWindow(owner)
     if (window == null) {
       logger<PlatformTaskSupport>().error("Cannot show progress dialog because owner window is not found")
@@ -232,7 +233,7 @@ private fun CoroutineScope.showModalIndicator(
 
     // 1. If the dialog is heavy (= spins an inner event loop):
     // show() returns after dialog was closed
-    // => following yield() will resume with CancellationException
+    // => following withContext() will resume with CancellationException
     // => don't complete deferredDialog
     // 2. If the dialog is glass pane based (= without inner event loop):
     // show() returns immediately
@@ -240,21 +241,21 @@ private fun CoroutineScope.showModalIndicator(
     dialog.show()
 
     // 'Light' popup is shown in glass pane,
-    // glass pane is 'activating' (becomes visible) in 'invokeLater' call (see IdeGlassPaneImp.addImpl),
+    // glass pane is 'activating' (becomes visible) in 'SwingUtilities.invokeLater' call (see IdeGlassPaneImp.addImpl),
     // requesting focus to cancel button until that time has no effect, as it's not showing
-    // => yield() to re-dispatch via invokeLater
-    yield()
-
-    val focusComponent = ui.cancelButton
-    val previousFocusOwner = SwingUtilities.getWindowAncestor(focusComponent)?.mostRecentFocusOwner
-    focusComponent.requestFocusInWindow()
-    if (previousFocusOwner != null) {
-      awaitCancellation {
-        previousFocusOwner.requestFocusInWindow()
+    // => re-dispatch via 'SwingUtilities.invokeLater'
+    withContext(RawSwingDispatcher) {
+      val focusComponent = ui.cancelButton
+      val previousFocusOwner = SwingUtilities.getWindowAncestor(focusComponent)?.mostRecentFocusOwner
+      focusComponent.requestFocusInWindow()
+      if (previousFocusOwner != null) {
+        awaitCancellation {
+          previousFocusOwner.requestFocusInWindow()
+        }
       }
-    }
 
-    deferredDialog?.complete(dialog)
+      deferredDialog?.complete(dialog)
+    }
   }
 }
 
