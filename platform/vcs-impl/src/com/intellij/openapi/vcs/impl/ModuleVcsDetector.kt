@@ -21,7 +21,6 @@ internal class ModuleVcsDetector(private val project: Project) {
   private val queue = MergingUpdateQueue("ModuleVcsDetector", 1000, true, null, project, null, Alarm.ThreadToUse.POOLED_THREAD).also {
     it.setRestartTimerOnAdd(true)
   }
-  private val dirtyContentRoots: MutableSet<VirtualFile> = mutableSetOf()
 
   private fun startDetection() {
     val busConnection = project.messageBus.connect()
@@ -63,7 +62,7 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
   }
 
-  private fun autoDetectModuleVcsMapping(contentRoots: List<VirtualFile>) {
+  private fun autoDetectForContentRoots(contentRoots: List<VirtualFile>) {
     if (vcsManager.haveDefaultMapping() != null) return
 
     val newMappings = mutableListOf<VcsDirectoryMapping>()
@@ -96,26 +95,16 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
   }
 
-  private inner class ContentRootsScan : Update("modules scan") {
-    override fun run() {
-      val contentRoots: List<VirtualFile>
-      synchronized(dirtyContentRoots) {
-        contentRoots = dirtyContentRoots.toList()
-        dirtyContentRoots.clear()
-      }
-
-      autoDetectModuleVcsMapping(contentRoots)
-    }
-  }
-
   private inner class MyWorkspaceModelChangeListener : ContentRootChangeListener(skipFileChanges = true) {
+    private val dirtyContentRoots = mutableSetOf<VirtualFile>()
+
     override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
       if (added.isNotEmpty() && vcsManager.haveDefaultMapping() == null) {
         synchronized(dirtyContentRoots) {
           dirtyContentRoots.addAll(added)
-          dirtyContentRoots.removeAll(removed)
+          dirtyContentRoots.removeAll(removed.toSet())
         }
-        queue.queue(ContentRootsScan())
+        queue.queue(Update.create("content root scan") { runScanForNewContentRoots() })
       }
 
       if (removed.isNotEmpty()) {
@@ -123,6 +112,16 @@ internal class ModuleVcsDetector(private val project: Project) {
         val removedMappings = vcsManager.directoryMappings.filter { it.directory in remotedPaths }
         removedMappings.forEach { mapping -> vcsManager.removeDirectoryMapping(mapping) }
       }
+    }
+
+    private fun runScanForNewContentRoots() {
+      val contentRoots: List<VirtualFile>
+      synchronized(dirtyContentRoots) {
+        contentRoots = dirtyContentRoots.toList()
+        dirtyContentRoots.clear()
+      }
+
+      autoDetectForContentRoots(contentRoots)
     }
   }
 
