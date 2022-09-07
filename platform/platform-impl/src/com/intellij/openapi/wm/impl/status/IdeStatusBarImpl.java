@@ -491,17 +491,14 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   @Override
-  public void startRefreshIndication(final String tooltipText) {
-    myInfoAndProgressPanel.setRefreshToolTipText(tooltipText);
-    myInfoAndProgressPanel.setRefreshVisible(true);
-
+  public void startRefreshIndication(@NlsContexts.Tooltip String tooltipText) {
+    myInfoAndProgressPanel.setRefreshVisible(tooltipText);
     updateChildren(child -> child.startRefreshIndication(tooltipText));
   }
 
   @Override
   public void stopRefreshIndication() {
-    myInfoAndProgressPanel.setRefreshVisible(false);
-
+    myInfoAndProgressPanel.setRefreshHidden();
     updateChildren(IdeStatusBarImpl::stopRefreshIndication);
   }
 

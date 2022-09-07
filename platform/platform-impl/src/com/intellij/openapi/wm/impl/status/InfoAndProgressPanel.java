@@ -154,7 +154,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     myUpdateQueue = new MergingUpdateQueue("Progress indicator", 50, true, MergingUpdateQueue.ANY_COMPONENT);
     myPopup = new ProcessPopup(this);
 
-    setRefreshVisible(false);
+    setRefreshHidden();
 
     setLayout(new InlineLayout());
     add(myRefreshAndInfoPanel);
@@ -227,7 +227,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
   @Override
   public void dispose() {
-    setRefreshVisible(false);
+    setRefreshHidden();
     synchronized (myOriginals) {
       restoreEmptyStatus();
       for (InlineProgressIndicator indicator : myInlineToOriginal.keySet()) {
@@ -408,15 +408,30 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     return text;
   }
 
-  void setRefreshVisible(boolean visible) {
+  void setRefreshVisible(@NlsContexts.Tooltip String tooltip) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (!myShowNavBar) myRefreshIcon.setVisible(visible);
+      if (!myShowNavBar) {
+        myRefreshIcon.setVisible(true);
+        myRefreshIcon.setToolTipText(tooltip);
+      }
+      else {
+        var statusBar = UIUtil.getParentOfType(StatusBar.class, this);
+        if (statusBar != null) {
+          VfsRefreshIndicatorWidgetFactory.start(statusBar, tooltip);
+        }
+      }
     });
   }
 
-  void setRefreshToolTipText(@NlsContexts.Tooltip String tooltip) {
+  void setRefreshHidden() {
     if (!myShowNavBar) {
-      myRefreshIcon.setToolTipText(tooltip);
+      myRefreshIcon.setVisible(false);
+    }
+    else {
+      var statusBar = UIUtil.getParentOfType(StatusBar.class, this);
+      if (statusBar != null) {
+        VfsRefreshIndicatorWidgetFactory.stop(statusBar);
+      }
     }
   }
 

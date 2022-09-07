@@ -1,0 +1,101 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.wm.impl.status;
+
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.openapi.wm.StatusBarWidgetFactory;
+import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.UIBundle;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+
+public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFactory {
+  private static final String ID = "VFS_REFRESH";
+
+  @Override
+  public @NotNull String getId() {
+    return ID;
+  }
+
+  @Override
+  public @NotNull @Nls String getDisplayName() {
+    return UIBundle.message("status.bar.vfs.refresh.widget.name");
+  }
+
+  @Override
+  public boolean isAvailable(@NotNull Project project) {
+    return ExperimentalUI.isNewUI() && UISettings.getInstance().getShowNavigationBarInBottom();  // see `InfoAndProgressPanel#myShowNavBar`
+  }
+
+  @Override
+  public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
+    return true;
+  }
+
+  @Override
+  public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
+    return new VfsRefreshWidget();
+  }
+
+  @Override
+  public void disposeWidget(@NotNull StatusBarWidget widget) {
+    Disposer.dispose(widget);
+  }
+
+  @RequiresEdt
+  public static void start(@NotNull StatusBar statusBar, @NotNull @NlsContexts.Tooltip String tooltipText) {
+    var widget = ((VfsRefreshWidget)statusBar.getWidget(ID));
+    if (widget != null) {
+      widget.myComponent.setIcon(widget.myProgress);
+      widget.myComponent.setEnabled(true);
+      widget.myComponent.setToolTipText(tooltipText);
+    }
+  }
+
+  @RequiresEdt
+  public static void stop(@NotNull StatusBar statusBar) {
+    var widget = ((VfsRefreshWidget)statusBar.getWidget(ID));
+    if (widget != null) {
+      widget.myComponent.setIcon(widget.myInactive);
+      widget.myComponent.setEnabled(false);
+      widget.myComponent.setToolTipText(UIBundle.message("status.bar.vfs.refresh.widget.tooltip"));
+    }
+  }
+
+  private static final class VfsRefreshWidget implements CustomStatusBarWidget {
+    private final Icon myInactive = IconLoader.getDisabledIcon(AllIcons.Actions.StopRefresh);
+    private final Icon myProgress = new AnimatedIcon.FS();
+    private final JLabel myComponent = new JLabel(myInactive);
+
+    private VfsRefreshWidget() {
+      myComponent.setEnabled(false);
+    }
+
+    @Override
+    public @NotNull String ID() {
+      return ID;
+    }
+
+    @Override
+    public JComponent getComponent() {
+      return myComponent;
+    }
+
+    @Override
+    public void install(@NotNull StatusBar statusBar) { }
+
+    @Override
+    public void dispose() { }
+  }
+}
