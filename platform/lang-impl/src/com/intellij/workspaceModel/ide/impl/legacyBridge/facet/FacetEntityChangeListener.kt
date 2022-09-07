@@ -116,12 +116,16 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
           publisher.fireFacetRemoved(manager.module, facet)
         }
         is EntityChange.Replaced -> {
-          val moduleEntity = workspaceFacetContributor.getRelatedModuleEntity(change.newEntity)
-          val facet = event.storageAfter.facetMapping().getDataByEntity(change.newEntity) ?: error("Facet should be available")
           val workspaceModel = WorkspaceModel.getInstance(project)
+          val facetToOldEntity = workspaceModel.entityStorage.current.facetMapping().getDataByEntity(change.oldEntity)
           workspaceModel.updateProjectModelSilent {
-            it.mutableFacetMapping().addMapping(change.newEntity, facet)
+            if (facetToOldEntity != null) {
+              it.mutableFacetMapping().removeMapping(change.oldEntity)
+              it.mutableFacetMapping().addMapping(change.newEntity, facetToOldEntity)
+            }
           }
+          val facet = workspaceModel.entityStorage.current.facetMapping().getDataByEntity(change.newEntity) ?: error("Facet should be available")
+          val moduleEntity = workspaceFacetContributor.getRelatedModuleEntity(change.newEntity)
           getFacetManager(moduleEntity)?.model?.facetsChanged()
           val newFacetName = workspaceFacetContributor.getFacetName(change.newEntity)
           val oldFacetName = workspaceFacetContributor.getFacetName(change.oldEntity)

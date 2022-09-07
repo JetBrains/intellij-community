@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
@@ -9,6 +10,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.facet.FacetState
+import java.util.function.Consumer
 
 class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEntity> {
   override val rootEntityType: Class<FacetEntity>
@@ -42,6 +44,13 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
       }
 
       if (existingFacet == null) {
+        val logger = logger<DefaultFacetEntitySerializer>()
+        logger.info("Add facet entity ${facetState.name}:${facetState.facetType}")
+        logger.info("Stack Trace facet Add")
+        val stackTrace = Thread.currentThread().stackTrace
+        for (stackTraceElement in stackTrace) {
+          logger.info(stackTraceElement.toString())
+        }
         facetEntity = builder.addFacetEntity(facetState.name, facetState.facetType, configurationXmlTag, moduleEntity, underlyingFacet, entitySource)
       }
 

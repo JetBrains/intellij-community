@@ -16,7 +16,7 @@ class FacetEntityContributor: WorkspaceFacetContributor<FacetEntity> {
   override fun getRootEntityByModuleEntity(moduleEntity: ModuleEntity): FacetEntity = error("Unsupported operation")
 
   override fun createFacetFromEntity(entity: FacetEntity, project: Project): Facet<*> {
-    val module = ModuleManager.getInstance(project).findModuleByName(entity.module.name) ?: error("Module bridge should be avaliable")
+    val module = ModuleManager.getInstance(project).findModuleByName(entity.module.name) ?: error("Module bridge should be available")
     val facetManagerBridge = FacetManager.getInstance(module) as FacetManagerBridge
     return facetManagerBridge.model.createFacet(entity)
   }

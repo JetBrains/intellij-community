@@ -29,8 +29,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import org.jetbrains.jps.model.serialization.facet.FacetState
 
 class FacetManagerBridge(module: Module) : FacetManagerBase() {
-  val module = module as ModuleBridge
-  val model = FacetModelBridge(this.module)
+  internal val module = module as ModuleBridge
+  internal val model = FacetModelBridge(this.module)
 
   private fun isThisModule(moduleEntity: ModuleEntity) = moduleEntity.name == module.name
 
@@ -128,10 +128,21 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
 open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase() {
 
   init {
-    val existingEntities = moduleBridge.entityStorage.current.entities(FacetEntity::class.java)
-      .filter { it.moduleId == moduleBridge.moduleEntityId }
-    for (facetEntity in existingEntities) {
-      getOrCreateFacet(facetEntity)
+    // Initialize facet bridges after loading from cache
+    fun createFacetBridgeIfNeeded(entity: WorkspaceEntity, facetContributor: WorkspaceFacetContributor<WorkspaceEntity>, project: Project) {
+      updateDiffOrStorage{ this.getOrPutDataByEntity(entity) { facetContributor.createFacetFromEntity(entity, project) } }
+    }
+    moduleBridge.project
+    val moduleEntity = moduleBridge.entityStorage.current.resolve(moduleBridge.moduleEntityId)
+                       ?: error("Module entity should be available")
+    WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetContributor ->
+      if (facetContributor.rootEntityType != FacetEntity::class.java) {
+        facetContributor.getRootEntityByModuleEntity(moduleEntity)?.let {
+          createFacetBridgeIfNeeded(it, facetContributor, moduleBridge.project)
+        }
+      } else {
+        moduleEntity.facets.forEach { createFacetBridgeIfNeeded(it, facetContributor, moduleBridge.project) }
+      }
     }
   }
 
@@ -198,21 +209,6 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
 
   public override fun facetsChanged() {
     super.facetsChanged()
-  }
-
-  fun updateEntity(oldEntity: FacetEntity, newEntity: FacetEntity): Facet<*>? {
-    val oldFacet = updateDiffOrStorage {
-      this.removeMapping(oldEntity)
-    }
-    var updatedFacet: Facet<*>? = null
-    if (oldFacet != null) {
-      updatedFacet = updateDiffOrStorage {
-        this.addMapping(newEntity, oldFacet)
-        oldFacet
-      }
-    }
-    facetsChanged()
-    return updatedFacet
   }
 
   fun checkConsistency(facetRelatedEntities: List<WorkspaceEntity>,
