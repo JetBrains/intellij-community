@@ -559,9 +559,9 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     List<Path> files = Collections.emptyList();
     ClassLoader parent;
     boolean lockJars = true;
-    boolean useCache;
+    boolean useCache = true;
     boolean isSystemClassLoader;
-    boolean isClassPathIndexEnabled;
+    boolean isClassPathIndexEnabled = isClassPathIndexEnabledGlobalValue;
     boolean isBootstrapResourcesAllowed;
     @Nullable CachePoolImpl cachePool;
     Predicate<? super Path> cachingCondition;
