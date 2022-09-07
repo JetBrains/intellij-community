@@ -98,7 +98,7 @@ object CodeWithMeClientDownloader {
         val fileNameFromUrl = sanitizeFileName(bareUrl.path.toString().substringAfterLast('/'))
         val fileName = fileNameFromUrl.take(100) +
                        "-" +
-                       DigestUtil.sha256Hex(url.withFragment(null).toString().toByteArray()).substring(0, 10)
+                       DigestUtil.sha256Hex(urlWithoutFragment.toString().toByteArray()).substring(0, 10)
         return DownloadableFileData(
           fileCaption = fileNameFromUrl,
           url = url,
