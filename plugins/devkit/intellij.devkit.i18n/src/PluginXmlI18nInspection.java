@@ -304,7 +304,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
                 xmlTag.setAttribute("bundle", bundleQName);
               }
 
-              String id = xmlTag.getAttributeValue("id");
+              String id = StringUtil.defaultIfEmpty(xmlTag.getAttributeValue("id"), "notificationID").replace(' ', '.');
               String messageKey = "notification.group." + id;
               xmlTag.setAttribute("key", messageKey);
 
