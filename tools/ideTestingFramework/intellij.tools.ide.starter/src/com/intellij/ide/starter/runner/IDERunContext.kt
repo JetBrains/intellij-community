@@ -106,7 +106,7 @@ data class IDERunContext(
     .takeScreenshotIfFailure(testContext.paths.logsDir)
     .withJvmCrashLogDirectory(jvmCrashLogDirectory)
     .withHeapDumpOnOutOfMemoryDirectory(heapDumpOnOomDirectory)
-    .let { if (isStarterPerformanceTest) it.withClassFileVerification() else it }
+    .let { if (!isStarterPerformanceTest) it.withClassFileVerification() else it }
     .let { testContext.testCase.vmOptionsFix(it) }
     .let { testContext.patchVMOptions(it) }
     .patchVMOptions()
