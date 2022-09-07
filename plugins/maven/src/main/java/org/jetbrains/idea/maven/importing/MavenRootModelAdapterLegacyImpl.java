@@ -74,7 +74,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   private void initContentRoots() {
     Url url = toUrl(myMavenProject.getDirectory());
     if (getContentRootFor(url) != null) return;
-    myRootModel.addContentEntry(url.getUrl());
+    myRootModel.addContentEntry(url.getUrl(), getMavenExternalSource());
   }
 
   private ContentEntry getContentRootFor(Url url) {

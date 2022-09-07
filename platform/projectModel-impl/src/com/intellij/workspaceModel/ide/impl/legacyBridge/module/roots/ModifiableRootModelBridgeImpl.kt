@@ -17,8 +17,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtilRt
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.util.ExceptionUtil
+import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
@@ -28,6 +28,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.storage.CachedValue
+import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
@@ -41,7 +42,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.ConcurrentHashMap
 
-internal class ModifiableRootModelBridgeImpl(
+class ModifiableRootModelBridgeImpl(
   diff: MutableEntityStorage,
   override val moduleBridge: ModuleBridge,
   override val accessor: RootConfigurationAccessor,
@@ -180,12 +181,28 @@ internal class ModifiableRootModelBridgeImpl(
 
   override fun getProject(): Project = moduleBridge.project
 
-  override fun addContentEntry(root: VirtualFile): ContentEntry =
-    addContentEntry(root.url)
+  override fun addContentEntry(root: VirtualFile): ContentEntry {
+    return addContentEntry(root.url)
+  }
+
+  override fun addContentEntry(root: VirtualFile, externalSource: ProjectModelExternalSource?): ContentEntry {
+    return addContentEntry(root.url, externalSource)
+  }
 
   override fun addContentEntry(url: String): ContentEntry {
     assertModelIsLive()
 
+    val finalSource = getInternalFileSource(moduleEntity.entitySource) ?: moduleEntity.entitySource
+    return addEntityAndContentEntry(url, finalSource)
+  }
+
+  override fun addContentEntry(url: String, externalSource: ProjectModelExternalSource?): ContentEntry {
+    assertModelIsLive()
+
+    return addEntityAndContentEntry(url, moduleEntity.entitySource)
+  }
+
+  private fun addEntityAndContentEntry(url: String, entitySource: EntitySource): ContentEntry {
     val virtualFileUrl = virtualFileManager.fromUrl(url)
     val existingEntry = contentEntries.firstOrNull { it.contentEntryUrl == virtualFileUrl }
     if (existingEntry != null) {
@@ -196,7 +213,8 @@ internal class ModifiableRootModelBridgeImpl(
       module = moduleEntity,
       excludedUrls = emptyList(),
       excludedPatterns = emptyList(),
-      url = virtualFileUrl
+      url = virtualFileUrl,
+      source = entitySource
     )
 
     // TODO It's N^2 operations since we need to recreate contentEntries every time
@@ -712,3 +730,9 @@ internal class ModifiableRootModelBridgeImpl(
   }
 }
 
+internal fun getInternalFileSource(source: EntitySource) = when (source) {
+  is JpsFileDependentEntitySource -> source.originalSource
+  is CustomModuleEntitySource -> source.internalSource
+  is JpsFileEntitySource -> source
+  else -> null
+}

@@ -27,6 +27,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.SystemInfo;
@@ -151,7 +152,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     for (final DataNode<ContentRootData> node : data) {
       final ContentRootData contentRoot = node.getData();
 
-      final ContentEntry contentEntry = findOrCreateContentRoot(modifiableRootModel, contentRoot.getRootPath());
+      final ContentEntry contentEntry = findOrCreateContentRoot(modifiableRootModel, contentRoot);
       if (!importedContentEntries.contains(contentEntry)) {
         removeSourceFoldersIfAbsent(contentEntry, contentRoot);
         importedContentEntries.add(contentEntry);
@@ -167,7 +168,8 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
             String sourceRootPath = sourceRoot.getPath();
             boolean createSourceFolder = !updatedSourceRoots.contains(sourceRootPath);
             if (createSourceFolder) {
-              createOrReplaceSourceFolder(sourceFolderManager, contentEntry, sourceRoot, module, type, forceDirectoriesCreation);
+              createOrReplaceSourceFolder(sourceFolderManager, contentEntry, sourceRoot, module, type, forceDirectoriesCreation,
+                                          ExternalSystemApiUtil.toExternalSource(contentRoot.getOwner()));
               if (externalSrcType == ExternalSystemSourceType.SOURCE || externalSrcType == ExternalSystemSourceType.TEST) {
                 updatedSourceRoots.add(sourceRootPath);
               }
@@ -209,7 +211,8 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
   }
 
   @NotNull
-  private static ContentEntry findOrCreateContentRoot(@NotNull ModifiableRootModel model, @NotNull String path) {
+  private static ContentEntry findOrCreateContentRoot(@NotNull ModifiableRootModel model, @NotNull ContentRootData contentRootData) {
+    String path = contentRootData.getRootPath();
     ContentEntry[] entries = model.getContentEntries();
 
     for (ContentEntry entry : entries) {
@@ -221,7 +224,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
         return entry;
       }
     }
-    return model.addContentEntry(pathToUrl(path));
+    return model.addContentEntry(pathToUrl(path), ExternalSystemApiUtil.toExternalSource(contentRootData.getOwner()));
   }
 
   private static Set<String> getSourceRoots(@NotNull ContentRootData contentRoot) {
@@ -255,7 +258,8 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
                                                   @NotNull final SourceRoot sourceRoot,
                                                   @NotNull Module module,
                                                   @NotNull JpsModuleSourceRootType<?> sourceRootType,
-                                                  boolean createEmptyContentRootDirectories) {
+                                                  boolean createEmptyContentRootDirectories,
+                                                  @NotNull ProjectModelExternalSource externalSource) {
     String path = sourceRoot.getPath();
     if (SystemInfo.isWindows) {
       if (!path.isEmpty() && StringUtil.isWhiteSpace(path.charAt(path.length() - 1))) {
@@ -285,7 +289,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
       sourceFolderManager.addSourceFolder(module, url, sourceRootType);
     }
     else {
-      contentEntry.addSourceFolder(url, sourceRootType);
+      contentEntry.addSourceFolder(url, sourceRootType, externalSource);
     }
   }
 

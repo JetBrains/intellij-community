@@ -664,7 +664,12 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         val url = getActualFileUrl(source)
         val internalSource = getInternalFileSource(source)
         if (url != null && internalSource != null
-            && (ModuleEntity::class.java in entities || FacetEntity::class.java in entities || ModuleGroupPathEntity::class.java in entities)) {
+            && (ModuleEntity::class.java in entities
+                || FacetEntity::class.java in entities
+                || ModuleGroupPathEntity::class.java in entities
+                || ContentRootEntity::class.java in entities
+                || SourceRootEntity::class.java in entities
+               )) {
           val existingSerializers = fileSerializersByUrl.getValues(url)
           val moduleGroup = (entities[ModuleGroupPathEntity::class.java]?.first() as? ModuleGroupPathEntity)?.path?.joinToString("/")
           if (existingSerializers.isEmpty() || existingSerializers.any { it is ModuleImlFileEntitiesSerializer && it.modulePath.group != moduleGroup }) {
@@ -752,7 +757,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     if (directoryFactory != null) {
       return getDefaultFileNameForEntity(directoryFactory, entities)
     }
-    if (ModuleEntity::class.java in entities || FacetEntity::class.java in entities) {
+    if (ModuleEntity::class.java in entities
+        || FacetEntity::class.java in entities
+        || ContentRootEntity::class.java in entities
+        || SourceRootEntity::class.java in entities) {
       val moduleListSerializer = moduleListSerializersByUrl.values.find {
          it.entitySourceFilter(originalSource)
       }
@@ -774,6 +782,14 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val entity = entities[ModuleEntity::class.java]?.singleOrNull() as? ModuleEntity
     if (entity != null) {
       return moduleListSerializer.getFileName(entity)
+    }
+    val contentRootEntity = entities[ContentRootEntity::class.java]?.singleOrNull() as? ContentRootEntity
+    if (contentRootEntity != null) {
+      return moduleListSerializer.getFileName(contentRootEntity.module)
+    }
+    val sourceRootEntity = entities[SourceRootEntity::class.java]?.singleOrNull() as? SourceRootEntity
+    if (sourceRootEntity != null) {
+      return moduleListSerializer.getFileName(sourceRootEntity.contentRoot.module)
     }
     val additionalEntity = entities[FacetEntity::class.java]?.firstOrNull() as? FacetEntity ?: return null
     return moduleListSerializer.getFileName(additionalEntity.module)

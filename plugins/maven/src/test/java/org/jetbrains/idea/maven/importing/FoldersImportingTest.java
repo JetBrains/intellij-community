@@ -123,30 +123,38 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     });
 
 
-    if (supportsKeepingManualChanges()) {
+    if (supportsImportOfNonExistingFolders()) {
+      assertSources("project", "userSourceFolder", "src/main/java");
+    } else {
       assertSources("project", "userSourceFolder");
+    }
+    if (supportsKeepingManualChanges()) {
       assertExcludes("project", "target", "userExcludedFolder");
     }
 
     importProject();
 
-    if (supportsKeepingManualChanges()) {
-      assertSources("project", "userSourceFolder");
-      assertExcludes("project", "target", "userExcludedFolder");
-    }
-    else {
+    if (supportsImportOfNonExistingFolders()) {
       assertSources("project", "src/main/java");
+    } else {
+      assertSources("project", "userSourceFolder");
+    }
+    if (supportsKeepingManualChanges()) {
+      assertExcludes("project", "target", "userExcludedFolder");
+    } else {
       assertExcludes("project", "target");
     }
 
     resolveFoldersAndImport();
 
-    if (supportsKeepingManualChanges()) {
-      assertSources("project", "userSourceFolder");
-      assertExcludes("project", "target", "userExcludedFolder");
-    }
-    else {
+    if (supportsImportOfNonExistingFolders()) {
       assertSources("project", "src/main/java");
+    } else {
+      assertSources("project", "userSourceFolder");
+    }
+    if (supportsKeepingManualChanges()) {
+      assertExcludes("project", "target", "userExcludedFolder");
+    } else {
       assertExcludes("project", "target");
     }
   }

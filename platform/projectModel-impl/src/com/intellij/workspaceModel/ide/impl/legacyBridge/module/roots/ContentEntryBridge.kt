@@ -2,6 +2,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ExcludeFolder
+import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -67,19 +68,28 @@ internal class ContentEntryBridge(internal val model: ModuleRootModelBridge,
   override fun getSourceFolders(rootTypes: Set<JpsModuleSourceRootType<*>>): List<SourceFolder> = sourceFolders.filter { it.rootType in rootTypes }
   override fun getSourceFolderFiles() = sourceFolders.mapNotNull { it.file }.toTypedArray()
 
-  override fun <P : JpsElement?> addSourceFolder(file: VirtualFile,
-                                                 type: JpsModuleSourceRootType<P>,
-                                                 properties: P): SourceFolder = throwReadonly()
+  override fun <P : JpsElement> addSourceFolder(file: VirtualFile,
+                                                type: JpsModuleSourceRootType<P>,
+                                                properties: P): SourceFolder = throwReadonly()
 
-  override fun <P : JpsElement?> addSourceFolder(url: String,
-                                                 type: JpsModuleSourceRootType<P>,
-                                                 properties: P): SourceFolder = throwReadonly()
+  override fun <P : JpsElement> addSourceFolder(url: String,
+                                                type: JpsModuleSourceRootType<P>,
+                                                properties: P): SourceFolder = throwReadonly()
+
+  override fun <P : JpsElement> addSourceFolder(url: String,
+                                                type: JpsModuleSourceRootType<P>,
+                                                properties: P,
+                                                externalSource: ProjectModelExternalSource?): SourceFolder = throwReadonly()
 
   override fun addSourceFolder(file: VirtualFile, isTestSource: Boolean) = throwReadonly()
   override fun addSourceFolder(file: VirtualFile, isTestSource: Boolean, packagePrefix: String): SourceFolder = throwReadonly()
-  override fun <P : JpsElement?> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>) = throwReadonly()
+  override fun <P : JpsElement> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>) = throwReadonly()
   override fun addSourceFolder(url: String, isTestSource: Boolean): SourceFolder = throwReadonly()
-  override fun <P : JpsElement?> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>): SourceFolder = throwReadonly()
+  override fun <P : JpsElement> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>): SourceFolder = throwReadonly()
+  override fun <P : JpsElement> addSourceFolder(url: String,
+                                                type: JpsModuleSourceRootType<P>,
+                                                externalSource: ProjectModelExternalSource): SourceFolder = throwReadonly()
+
   override fun removeSourceFolder(sourceFolder: SourceFolder) = throwReadonly()
   override fun clearSourceFolders() = throwReadonly()
   override fun addExcludeFolder(file: VirtualFile): ExcludeFolder = throwReadonly()
