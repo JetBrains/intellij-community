@@ -96,6 +96,11 @@ open class ProjectModelRule : TestRule {
 
   fun createSdk(name: String = "sdk", setup: (SdkModificator) -> Unit = {}): Sdk {
     val sdk = ProjectJdkTable.getInstance().createSdk(name, sdkType)
+    modifySdk(sdk, setup)
+    return sdk
+  }
+
+  fun modifySdk(sdk: Sdk, setup: (SdkModificator) -> Unit) {
     val sdkModificator = sdk.sdkModificator
     try {
       setup(sdkModificator)
@@ -103,7 +108,6 @@ open class ProjectModelRule : TestRule {
     finally {
       sdkModificator.commitChanges()
     }
-    return sdk
   }
 
   fun addSdk(name: String = "sdk", setup: (SdkModificator) -> Unit = {}): Sdk {
