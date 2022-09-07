@@ -130,9 +130,9 @@ public final class TextDiffViewerUtil {
     if (sameDocuments) {
       StringBuilder message = new StringBuilder();
       message.append("DiffRequest with same documents detected\n");
-      message.append(request.toString()).append("\n");
+      message.append(request).append("\n");
       for (DiffContent content : contents) {
-        message.append(content.toString()).append("\n");
+        message.append(content).append("\n");
       }
       LOG.warn(message.toString());
     }
@@ -245,7 +245,7 @@ public final class TextDiffViewerUtil {
     }
   }
 
-  public static abstract class EnumPolicySettingAction<T extends Enum> extends TextDiffViewerUtil.ComboBoxSettingAction<T> {
+  public static abstract class EnumPolicySettingAction<T extends Enum<T>> extends TextDiffViewerUtil.ComboBoxSettingAction<T> {
     private final T @NotNull [] myPolicies;
 
     public EnumPolicySettingAction(T @NotNull [] policies) {
@@ -262,7 +262,6 @@ public final class TextDiffViewerUtil {
     @NotNull
     @Override
     protected List<T> getAvailableOptions() {
-      //noinspection unchecked
       return ContainerUtil.sorted(Arrays.asList(myPolicies));
     }
 

@@ -859,7 +859,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
 
   @NotNull
   public List<? extends DocumentContent> getContents() {
-    //noinspection unchecked
+    //noinspection unchecked,rawtypes
     return (List)myRequest.getContents();
   }
 

@@ -1359,19 +1359,12 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
   private class ErrorState implements ViewerState {
     @Nullable private final DiffTool myDiffTool;
-    @NotNull private final MessageDiffRequest myRequest;
 
     @NotNull private final DiffViewer myViewer;
 
-    ErrorState(@NotNull MessageDiffRequest request) {
-      this(request, null);
-    }
-
     ErrorState(@NotNull MessageDiffRequest request, @Nullable DiffTool diffTool) {
       myDiffTool = diffTool;
-      myRequest = request;
-
-      myViewer = ErrorDiffTool.INSTANCE.createComponent(myContext, myRequest);
+      myViewer = ErrorDiffTool.INSTANCE.createComponent(myContext, request);
     }
 
     @Override
@@ -1510,7 +1503,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     }
 
     @Nullable
-    private List<AnAction> mergeActions(@Nullable List<AnAction> actions1, @Nullable List<AnAction> actions2) {
+    private static List<AnAction> mergeActions(@Nullable List<AnAction> actions1, @Nullable List<AnAction> actions2) {
       if (actions1 == null && actions2 == null) return null;
       if (ContainerUtil.isEmpty(actions1)) return actions2;
       if (ContainerUtil.isEmpty(actions2)) return actions1;

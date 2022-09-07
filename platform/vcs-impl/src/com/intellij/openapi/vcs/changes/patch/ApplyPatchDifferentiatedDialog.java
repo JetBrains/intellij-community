@@ -854,7 +854,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    public PopupStep onChosen(final VirtualFile selectedValue, boolean finalChoice) {
+    public PopupStep<?> onChosen(final VirtualFile selectedValue, boolean finalChoice) {
       if (selectedValue == null) {
         myNewBaseSelector.run();
         return null;

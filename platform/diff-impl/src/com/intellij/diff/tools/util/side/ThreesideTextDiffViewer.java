@@ -205,7 +205,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
 
   @NotNull
   public List<? extends DocumentContent> getContents() {
-    //noinspection unchecked
+    //noinspection unchecked,rawtypes
     return (List)myRequest.getContents();
   }
 
