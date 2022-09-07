@@ -13,18 +13,15 @@ import org.jetbrains.intellij.build.BuildOptions
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.Path
 
 @Serializable
-data class Configuration(val products: Map<String, ProductConfiguration>)
+internal data class Configuration(@JvmField val products: Map<String, ProductConfiguration>)
 
 @Serializable
-data class ProductConfiguration(val modules: List<String>, @SerialName("class") val className: String)
+internal data class ProductConfiguration(@JvmField val modules: List<String>, @JvmField @SerialName("class") val className: String)
 
-class BuildServer(val homePath: Path) {
-  private val outDir: Path = Path(
-    System.getenv("CLASSES_DIR") ?: homePath.resolve("out/classes/production").toRealPath().toString()
-  ).toAbsolutePath()
+internal class BuildServer(@JvmField val homePath: Path, private val additionalModules: List<String>) {
+  private val outDir: Path = Path.of(System.getenv("CLASSES_DIR") ?: homePath.resolve("out/classes/production").toString()).toAbsolutePath()
   private val configuration: Configuration
 
   private val platformPrefixToPluginBuilder = ConcurrentHashMap<String, Deferred<IdeBuilder>>()
@@ -35,17 +32,23 @@ class BuildServer(val homePath: Path) {
 
     val jsonFormat = Json { isLenient = true }
     configuration = jsonFormat.decodeFromString(Configuration.serializer(),
-      Files.readString(homePath.resolve("build/dev-build-server.json")))
+                                                Files.readString(homePath.resolve("build/dev-build.json")))
+  }
+
+  // not synchronized version
+  suspend fun buildProductInProcess(platformPrefix: String, isServerMode: Boolean): IdeBuilder {
+    return buildProduct(productConfiguration = getProductConfiguration(platformPrefix),
+                        homePath = homePath,
+                        outDir = outDir,
+                        additionalModules = additionalModules,
+                        platformPrefix = platformPrefix,
+                        isServerMode = isServerMode)
   }
 
   suspend fun checkOrCreateIdeBuilder(platformPrefix: String): IdeBuilder {
     platformPrefixToPluginBuilder.get(platformPrefix)?.let {
       return checkChangesIfNeeded(it)
     }
-
-    val productConfiguration = configuration.products.get(platformPrefix)
-                               ?: throw ConfigurationException("No production configuration for platform prefix `$platformPrefix`, " +
-                                                               "please add to `dev-build-server.json` if needed")
 
     val ideBuilderDeferred = CompletableDeferred<IdeBuilder>()
     platformPrefixToPluginBuilder.putIfAbsent(platformPrefix, ideBuilderDeferred)?.let {
@@ -54,14 +57,20 @@ class BuildServer(val homePath: Path) {
     }
 
     try {
-      val ideBuilder = initialBuild(productConfiguration, homePath, outDir)
-      ideBuilderDeferred.complete(ideBuilder)
-      return ideBuilder
+      return buildProductInProcess(platformPrefix, isServerMode = true)
     }
     catch (e: Throwable) {
       ideBuilderDeferred.completeExceptionally(e)
       throw e
     }
+  }
+
+  private fun getProductConfiguration(platformPrefix: String): ProductConfiguration {
+    return (configuration.products.get(platformPrefix)
+            ?: throw ConfigurationException(
+              "No production configuration for platform prefix `$platformPrefix`, " +
+              "please add to `dev-build-server.json` if needed")
+           )
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)

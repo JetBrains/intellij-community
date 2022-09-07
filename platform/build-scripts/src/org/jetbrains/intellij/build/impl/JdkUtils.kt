@@ -4,7 +4,9 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.io.URLUtil
-import org.jetbrains.intellij.build.BuildMessages
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -15,13 +17,13 @@ import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 
 object JdkUtils {
-  fun defineJdk(global: JpsGlobal, jdkName: String, jdkHomePath: String, messages: BuildMessages) {
+  fun defineJdk(global: JpsGlobal, jdkName: String, jdkHomePath: String) {
     val sdk = JpsJavaExtensionService.getInstance().addJavaSdk(global, jdkName, jdkHomePath)
     val toolsJar = File(jdkHomePath, "lib/tools.jar")
     if (toolsJar.exists()) {
       sdk.addRoot(toolsJar, JpsOrderRootType.COMPILED)
     }
-    messages.info("'$jdkName' Java SDK set to $jdkHomePath")
+    Span.current().addEvent("'$jdkName' JDK set", Attributes.of(AttributeKey.stringKey("jdkHomePath"), jdkHomePath))
   }
 
   /**
@@ -29,14 +31,16 @@ object JdkUtils {
    */
   fun readModulesFromReleaseFile(jbrBaseDir: Path): List<String> {
     val releaseFile = jbrBaseDir.resolve("release")
-    if (!releaseFile.exists()) {
-      throw IllegalStateException("JRE release file is missing: $releaseFile")
+    check(releaseFile.exists()) {
+      "JRE release file is missing: $releaseFile"
     }
 
     releaseFile.inputStream().use { stream ->
       val p = Properties()
       p.load(stream)
-      val jbrBaseUrl = "${URLUtil.JRT_PROTOCOL}${URLUtil.SCHEME_SEPARATOR}${FileUtilRt.toSystemIndependentName(jbrBaseDir.toAbsolutePath().toString())}${URLUtil.JAR_SEPARATOR}"
+      val jbrBaseUrl = "${URLUtil.JRT_PROTOCOL}${URLUtil.SCHEME_SEPARATOR}${
+        FileUtilRt.toSystemIndependentName(jbrBaseDir.toAbsolutePath().toString())
+      }${URLUtil.JAR_SEPARATOR}"
       val modules = p.getProperty("MODULES") ?: return emptyList()
       return StringUtilRt.unquoteString(modules).split(' ').map { jbrBaseUrl + it }
     }

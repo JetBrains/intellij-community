@@ -265,6 +265,7 @@ class BuildOptions {
    * Mostly useful for build scripts debugging.
    */
   var printEnvironmentInfo = SystemProperties.getBooleanProperty("intellij.print.environment", false)
+  var printFreeSpace = true
 
   /**
    * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be

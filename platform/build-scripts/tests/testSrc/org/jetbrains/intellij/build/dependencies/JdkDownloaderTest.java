@@ -20,7 +20,7 @@ public class JdkDownloaderTest {
           continue;
         }
 
-        Path jdkHome = JdkDownloader.getJdkHome(communityRoot, os, arch);
+        Path jdkHome = JdkDownloader.getJdkHome(communityRoot, os, arch, s -> {});
         Path javaExecutable = JdkDownloader.getJavaExecutable(jdkHome);
         Assert.assertTrue(Files.exists(javaExecutable));
       }

@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.use
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.PathUtilRt
@@ -14,6 +15,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.ConsoleSpanExporter.Companion.setPathRoot
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.TracerProviderManager.flush
 import org.jetbrains.intellij.build.TracerProviderManager.setOutput
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
@@ -119,7 +121,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
       }
       else -> projectOutputDirectory = paths.buildOutputDir.resolve("classes")
     }
-    messages.info("Project output directory is $projectOutputDirectory")
+    Span.current().addEvent("project output directory is $projectOutputDirectory")
   }
 
   override var projectOutputDirectory: Path
@@ -177,7 +179,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
       targetDirectoryPath = FileUtilRt.toSystemIndependentName(paths.artifactDir.relativize(artifactPath.parent).toString())
     }
     if (!isRegularFile) {
-      targetDirectoryPath = (if (!targetDirectoryPath.isEmpty()) "$targetDirectoryPath/" else "") + artifactPath.fileName
+      targetDirectoryPath = (if (targetDirectoryPath.isEmpty()) "" else "$targetDirectoryPath/") + artifactPath.fileName
     }
     var pathToReport = artifactPath.toString()
     if (targetDirectoryPath.isNotEmpty()) {
@@ -216,14 +218,11 @@ class CompilationContextImpl private constructor(model: JpsModel,
                                 projectHome: Path,
                                 buildOutputRootEvaluator: (JpsProject) -> Path,
                                 options: BuildOptions = BuildOptions()): CompilationContextImpl {
-      // This is not a proper place to initialize tracker for downloader
-      // but this is the only place which is called in most build scripts
-      BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
       val messages = BuildMessagesImpl.create()
-      if (sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").any {
-          !Files.exists(communityHome.communityRoot.resolve(it))
-        }) {
-        messages.error("communityHome ($communityHome) doesn\'t point to a directory containing IntelliJ Community sources")
+      check(sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").all {
+        Files.exists(communityHome.communityRoot.resolve(it))
+      }) {
+        "communityHome ($communityHome) doesn\'t point to a directory containing IntelliJ Community sources"
       }
       if (options.printEnvironmentInfo) {
         messages.block("Environment info") {
@@ -232,17 +231,30 @@ class CompilationContextImpl private constructor(model: JpsModel,
           printEnvironmentDebugInfo()
         }
       }
-      logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
-      val kotlinBinaries = KotlinBinaries(communityHome, options, messages)
-      val model = loadProject(projectHome, kotlinBinaries)
+
+      if (options.printFreeSpace) {
+        logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
+      }
+
+      // This is not a proper place to initialize tracker for downloader
+      // but this is the only place which is called in most build scripts
+      val model = coroutineScope {
+        launch {
+          BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
+        }
+
+        loadProject(projectHome = projectHome, kotlinBinaries = KotlinBinaries(communityHome, options, messages))
+      }
       val context = CompilationContextImpl(model = model,
                                            communityHome = communityHome,
                                            projectHome = projectHome,
                                            messages = messages,
                                            buildOutputRootEvaluator = buildOutputRootEvaluator,
                                            options = options)
-      defineJavaSdk(context)
-      messages.block("Preparing for build") {
+      spanBuilder("define JDK").useWithScope {
+        defineJavaSdk(context)
+      }
+      spanBuilder("prepare for build").useWithScope {
         context.prepareForBuild()
       }
 
@@ -268,7 +280,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
     paths = BuildPathsImpl(communityHome, projectHome, buildOut, logDir)
     dependenciesProperties = DependenciesProperties(paths.communityHomeDir)
     bundledRuntime = BundledRuntimeImpl(options, paths, dependenciesProperties, messages::error, messages::info)
-    stableJdkHome = JdkDownloader.getJdkHome(paths.communityHomeDir)
+    stableJdkHome = JdkDownloader.getJdkHome(paths.communityHomeDir, Span.current()::addEvent)
     stableJavaExecutable = JdkDownloader.getJavaExecutable(stableJdkHome)
   }
 }
@@ -280,18 +292,23 @@ private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinarie
     kotlinBinaries.loadKotlinJpsPluginToClassPath()
 
     val kotlinCompilerHome = kotlinBinaries.kotlinCompilerHome
-    System.setProperty("jps.kotlin.home", kotlinCompilerHome.toFile().absolutePath)
+    System.setProperty("jps.kotlin.home", kotlinCompilerHome.toString())
     pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", kotlinCompilerHome.toString())
   }
-  pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(
-    File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
-  val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
-  JpsProjectLoader.loadProject(model.project, pathVariables, projectHome)
-  Span.current().addEvent("project loaded", Attributes.of(
-    AttributeKey.stringKey("project"), projectHome.toString(),
-    AttributeKey.longKey("moduleCount"), model.project.modules.size.toLong(),
-    AttributeKey.longKey("libraryCount"), model.project.libraryCollection.libraries.size.toLong(),
-  ))
+
+  withContext(Dispatchers.IO) {
+    spanBuilder("load project").useWithScope { span ->
+      pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(
+        Path.of(SystemProperties.getUserHome(), ".m2/repository").toString()))
+      val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
+      loadProject(model.project, pathVariables, JpsPathMapper.IDENTITY, projectHome, { launch { it.run() } }, false)
+      span.setAllAttributes(Attributes.of(
+        AttributeKey.stringKey("project"), projectHome.toString(),
+        AttributeKey.longKey("moduleCount"), model.project.modules.size.toLong(),
+        AttributeKey.longKey("libraryCount"), model.project.libraryCollection.libraries.size.toLong(),
+      ))
+    }
+  }
   return model as JpsModel
 }
 
@@ -324,24 +341,22 @@ private class BuildPathsImpl(communityHome: BuildDependenciesCommunityRoot, proj
 }
 
 private fun defineJavaSdk(context: CompilationContext) {
-  val homePath = JdkDownloader.getJdkHome(context.paths.communityHomeDir)
+  val homePath = JdkDownloader.getJdkHome(context.paths.communityHomeDir, Span.current()::addEvent)
   val jbrHome = toCanonicalPath(homePath.toString())
   val jbrVersionName = "11"
-  defineJdk(context.projectModel.global, jbrVersionName, jbrHome, context.messages)
-  readModulesFromReleaseFile(context.projectModel, jbrVersionName, jbrHome)
+  defineJdk(global = context.projectModel.global, jdkName = jbrVersionName, jdkHomePath = jbrHome)
+  readModulesFromReleaseFile(model = context.projectModel, sdkName = jbrVersionName, sdkHome = jbrHome)
 
-  // Validate all modules have proper SDK reference
-  context.projectModel.project.modules
-    .asSequence()
-    .forEach { module ->
-      val sdkName = module.getSdkReference(JpsJavaSdkType.INSTANCE)?.sdkName ?: return@forEach
-      val vendorPrefixEnd = sdkName.indexOf('-')
-      val sdkNameWithoutVendor = if (vendorPrefixEnd == -1) sdkName else sdkName.substring(vendorPrefixEnd + 1)
-      check(sdkNameWithoutVendor == "17") {
-        "Project model at ${context.paths.projectHome} [module ${module.name}] requested SDK $sdkNameWithoutVendor, " +
-        "but only '17' is supported as SDK in intellij project"
-      }
+  // validate all modules have proper SDK reference
+  for (module in context.projectModel.project.modules.asSequence()) {
+    val sdkName = module.getSdkReference(JpsJavaSdkType.INSTANCE)?.sdkName ?: continue
+    val vendorPrefixEnd = sdkName.indexOf('-')
+    val sdkNameWithoutVendor = if (vendorPrefixEnd == -1) sdkName else sdkName.substring(vendorPrefixEnd + 1)
+    check(sdkNameWithoutVendor == "17") {
+      "Project model at ${context.paths.projectHome} [module ${module.name}] requested SDK $sdkNameWithoutVendor, " +
+      "but only '17' is supported as SDK in intellij project"
     }
+  }
 
   context.projectModel.project.modules
     .asSequence()
@@ -349,7 +364,7 @@ private fun defineJavaSdk(context: CompilationContext) {
     .distinct()
     .forEach { sdkName ->
       if (context.projectModel.global.libraryCollection.findLibrary(sdkName) == null) {
-        defineJdk(context.projectModel.global, sdkName, jbrHome, context.messages)
+        defineJdk(context.projectModel.global, sdkName, jbrHome)
         readModulesFromReleaseFile(context.projectModel, sdkName, jbrHome)
       }
     }
@@ -380,7 +395,7 @@ private fun CompilationContext.cleanOutput(keepCompilationState: Boolean) {
     outputDirectoriesToKeep.add("classes")
     outputDirectoriesToKeep.add("project-artifacts")
   }
-  TraceManager.spanBuilder("clean output")
+  spanBuilder("clean output")
     .setAttribute("path", outDir.toString())
     .setAttribute(AttributeKey.stringArrayKey("outputDirectoriesToKeep"), java.util.List.copyOf(outputDirectoriesToKeep))
     .use { span ->

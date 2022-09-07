@@ -16,9 +16,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
-import java.net.ConnectException;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Stream;
@@ -39,7 +37,7 @@ public final class BootstrapClassLoaderUtil {
   public static @NotNull Collection<Path> getProductClassPath() throws IOException {
     Path distDir = Path.of(PathManager.getHomePath());
     if (isDevServer()) {
-      return loadClassPathFromDevBuildServer(distDir);
+      return loadClassPathFromDevBuild(distDir);
     }
 
     Path libDir = distDir.resolve("lib");
@@ -68,7 +66,7 @@ public final class BootstrapClassLoaderUtil {
         System.exit(1);
       }
 
-      List<Path> paths = loadClassPathFromDevBuildServer(distDir);
+      List<Path> paths = loadClassPathFromDevBuild(distDir);
       ((PathClassLoader)classLoader).getClassPath().appendFiles(paths);
       return;
     }
@@ -167,8 +165,18 @@ public final class BootstrapClassLoaderUtil {
     return pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).resolve("lib/boot");
   }
 
-  private static @NotNull List<Path> loadClassPathFromDevBuildServer(@NotNull Path distDir) throws IOException {
+  private static @NotNull List<Path> loadClassPathFromDevBuild(@NotNull Path distDir) throws IOException {
     String platformPrefix = System.getProperty("idea.platform.prefix", "idea");
+    Path devRunDir = distDir.resolve("out/dev-run");
+    Path productDevRunDir = devRunDir.resolve(platformPrefix);
+    Path coreClassPathFile = productDevRunDir.resolve("core-classpath.txt");
+    FileSystem fs = FileSystems.getDefault();
+    try {
+      return loadCoreClassPath(fs, coreClassPathFile);
+    }
+    catch (NoSuchFileException ignore) {
+    }
+
     URL serverUrl = new URL("http://127.0.0.1:20854/build?platformPrefix=" + platformPrefix);
     //noinspection UseOfSystemOutOrSystemErr
     System.out.println("Waiting for " + serverUrl + " (first launch can take up to 1-2 minute)");
@@ -181,7 +189,8 @@ public final class BootstrapClassLoaderUtil {
       responseCode = connection.getResponseCode();
     }
     catch (ConnectException e) {
-      throw new RuntimeException("Please run Dev Build Server. Run build/dev-build-server.cmd in OS terminal. See https://bit.ly/3rMPnUX", e);
+      throw new RuntimeException("Please run Dev Build Server. Run build/dev-build-server.cmd in OS terminal. See https://bit.ly/3rMPnUX",
+                                 e);
     }
 
     connection.disconnect();
@@ -189,9 +198,11 @@ public final class BootstrapClassLoaderUtil {
       throw new RuntimeException("Dev Build server is not able to handle build request, see server's log for details");
     }
 
+    return loadCoreClassPath(fs, productDevRunDir.resolve("libClassPath.txt"));
+  }
+
+  private static @NotNull List<Path> loadCoreClassPath(FileSystem fs, Path excludedModuleListPath) throws IOException {
     List<Path> result = new ArrayList<>();
-    FileSystem fs = FileSystems.getDefault();
-    Path excludedModuleListPath = distDir.resolve("out/dev-run/" + platformPrefix + "/libClassPath.txt");
     try (Stream<String> lineStream = Files.lines(excludedModuleListPath)) {
       lineStream.forEach(s -> {
         if (!s.isEmpty()) {

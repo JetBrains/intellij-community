@@ -35,6 +35,8 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
                                            override val macDistributionCustomizer: MacDistributionCustomizer?,
                                            override val proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
                                            private val distFiles: ConcurrentLinkedQueue<Map.Entry<Path, String>>) : BuildContext {
+
+
   override val fullBuildNumber: String
     get() = "${applicationInfo.productCode}-$buildNumber"
 

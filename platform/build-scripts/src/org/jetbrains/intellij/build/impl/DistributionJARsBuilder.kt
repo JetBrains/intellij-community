@@ -838,27 +838,20 @@ private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: List<Dis
   }
 }
 
-private fun satisfiesBundlingRequirements(plugin: PluginLayout,
-                                          osFamily: OsFamily?,
-                                          arch: JvmArchitecture?,
-                                          context: BuildContext): Boolean {
+fun satisfiesBundlingRequirements(plugin: PluginLayout,
+                                  osFamily: OsFamily?,
+                                  arch: JvmArchitecture?,
+                                  context: BuildContext): Boolean {
   val bundlingRestrictions = plugin.bundlingRestrictions
   if (bundlingRestrictions.includeInEapOnly && !context.applicationInfo.isEAP) {
     return false
   }
 
-  if (osFamily == null && bundlingRestrictions.supportedOs != OsFamily.ALL) {
-    return false
-  }
-  else if (osFamily != null &&
-           (bundlingRestrictions.supportedOs == OsFamily.ALL || !bundlingRestrictions.supportedOs.contains(osFamily))) {
-    return false
-  }
-  else if (arch == null && bundlingRestrictions.supportedArch != JvmArchitecture.ALL) {
-    return false
-  }
-  else {
-    return arch == null || bundlingRestrictions.supportedArch.contains(arch)
+  return when {
+    osFamily == null && bundlingRestrictions.supportedOs != OsFamily.ALL -> false
+    osFamily != null && (bundlingRestrictions.supportedOs == OsFamily.ALL || !bundlingRestrictions.supportedOs.contains(osFamily)) -> false
+    arch == null && bundlingRestrictions.supportedArch != JvmArchitecture.ALL -> false
+    else -> arch == null || bundlingRestrictions.supportedArch.contains(arch)
   }
 }
 
@@ -914,7 +907,9 @@ suspend fun layoutDistribution(layout: BaseLayout,
                                jarToModule: Map<String, List<String>>,
                                context: BuildContext): List<DistributionFileEntry> {
   if (copyFiles) {
-    checkModuleExcludes(layout.moduleExcludes, context)
+    withContext(Dispatchers.IO) {
+      checkModuleExcludes(layout.moduleExcludes, context)
+    }
   }
 
   // patchers must be executed _before_ pack because patcher patches module output

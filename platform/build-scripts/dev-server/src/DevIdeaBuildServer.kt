@@ -3,15 +3,16 @@
 
 package org.jetbrains.intellij.build.devServer
 
+import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.io.NioFiles
 import com.sun.net.httpserver.HttpContext
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
+import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.net.HttpURLConnection
@@ -27,21 +28,39 @@ import java.util.logging.ConsoleHandler
 import java.util.logging.Formatter
 import java.util.logging.Level
 import java.util.logging.LogRecord
-import kotlin.io.path.createDirectories
 import kotlin.system.exitProcess
 
-@Suppress("GrazieInspection")
-internal val skippedPluginModules = hashSetOf(
-  "intellij.cwm.plugin", // quiche downloading should be implemented as a maven lib
+internal val skippedPluginModules = hashSetOf<String>(
+  //"intellij.cwm.plugin", // quiche downloading should be implemented as a maven lib
+  //"intellij.cwm.plugin.projector", // as we excluded cwm, this plugin doesn't make sense
 )
-
-internal val LOG: Logger = LoggerFactory.getLogger(DevIdeaBuildServer::class.java)
 
 enum class DevIdeaBuildServerStatus {
   OK,
   FAILED,
   IN_PROGRESS,
   UNDEFINED
+}
+
+suspend fun buildProductInProcess(homePath: Path, platformPrefix: String, additionalModules: List<String>) {
+  spanBuilder("build ide")
+    .setAttribute("platformPrefix", platformPrefix)
+    .setAttribute(AttributeKey.stringArrayKey("additionalModules"), additionalModules)
+    .useWithScope2 {
+      BuildServer(homePath = homePath, additionalModules = additionalModules).buildProductInProcess(platformPrefix, isServerMode = false)
+    }
+}
+
+object DevIdeaBuilder {
+  @JvmStatic
+  fun main(args: Array<String>) {
+    initLog()
+    runBlocking(Dispatchers.Default) {
+      buildProductInProcess(homePath = getHomePath(),
+                            platformPrefix = System.getProperty("idea.platform.prefix") ?: "idea",
+                            additionalModules = getAdditionalModules()?.toList() ?: emptyList())
+    }
+  }
 }
 
 object DevIdeaBuildServer {
@@ -60,40 +79,20 @@ object DevIdeaBuildServer {
       start()
     }
     catch (e: ConfigurationException) {
-      LOG.error(e.message)
+      e.printStackTrace()
       exitProcess(1)
     }
   }
 
-  private fun initLog() {
-    val root = java.util.logging.Logger.getLogger("")
-    root.level = Level.INFO
-    val handlers = root.handlers
-    for (handler in handlers) {
-      root.removeHandler(handler)
-    }
-    root.addHandler(ConsoleHandler().apply {
-      formatter = object : Formatter() {
-        override fun format(record: LogRecord): String {
-          val timestamp = String.format("%1\$tT,%1\$tL", record.millis)
-          return "$timestamp ${record.message}\n" + (record.thrown?.let { thrown ->
-            StringWriter().also {
-              thrown.printStackTrace(PrintWriter(it))
-            }.toString()
-          } ?: "")
-        }
-      }
-    })
-  }
-
   private fun start() {
-    val buildServer = BuildServer(homePath = getHomePath())
+    val additionalModules = getAdditionalModules()?.toList()
+    val buildServer = BuildServer(homePath = getHomePath(), additionalModules ?: emptyList())
 
     val httpServer = createHttpServer(buildServer)
-    LOG.info("Listening on ${httpServer.address.hostString}:${httpServer.address.port}")
-    LOG.info(
-      "Custom plugins: ${getAdditionalModules()?.joinToString() ?: "not set (use VM property `additional.modules` to specify additional module ids)"}")
-    LOG.info(
+    println("Listening on ${httpServer.address.hostString}:${httpServer.address.port}")
+    println(
+      "Custom plugins: ${additionalModules?.joinToString() ?: "not set (use VM property `additional.modules` to specify additional module ids)"}")
+    println(
       "Run IDE on module intellij.platform.bootstrap with VM properties -Didea.use.dev.build.server=true -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
     httpServer.start()
 
@@ -108,7 +107,7 @@ object DevIdeaBuildServer {
     catch (ignore: InterruptedException) {
     }
 
-    LOG.info("Server stopping...")
+    println("Server stopping...")
     httpServer.stop(10)
     exitProcess(0)
   }
@@ -132,7 +131,7 @@ object DevIdeaBuildServer {
           val ideBuilder = buildServer.checkOrCreateIdeBuilder(platformPrefix)
           statusMessage = ideBuilder.pluginBuilder.buildChanged()
         }
-        LOG.info(statusMessage)
+        println(statusMessage)
       }
       catch (e: ConfigurationException) {
         statusCode = HttpURLConnection.HTTP_BAD_REQUEST
@@ -142,7 +141,8 @@ object DevIdeaBuildServer {
       catch (e: Throwable) {
         productBuildStatus.put(platformPrefix, DevIdeaBuildServerStatus.FAILED)
         exchange.sendResponseHeaders(HttpURLConnection.HTTP_UNAVAILABLE, -1)
-        LOG.error("Cannot handle build request", e)
+        System.err.println("Cannot handle build request: ")
+        e.printStackTrace()
         return@createContext
       }
       finally {
@@ -210,10 +210,31 @@ object DevIdeaBuildServer {
     httpServer.executor = Executors.newFixedThreadPool(2)
     return httpServer
   }
+}
 
-  private fun getHomePath(): Path {
-    return IdeaProjectLoaderUtil.guessUltimateHome(DevIdeaBuildServer::class.java)
+private fun initLog() {
+  val root = java.util.logging.Logger.getLogger("")
+  root.level = Level.INFO
+  val handlers = root.handlers
+  for (handler in handlers) {
+    root.removeHandler(handler)
   }
+  root.addHandler(ConsoleHandler().apply {
+    formatter = object : Formatter() {
+      override fun format(record: LogRecord): String {
+        val timestamp = String.format("%1\$tT,%1\$tL", record.millis)
+        return "$timestamp ${record.message}\n" + (record.thrown?.let { thrown ->
+          StringWriter().also {
+            thrown.printStackTrace(PrintWriter(it))
+          }.toString()
+        } ?: "")
+      }
+    }
+  })
+}
+
+private fun getHomePath(): Path {
+  return IdeaProjectLoaderUtil.guessUltimateHome(DevIdeaBuildServer::class.java)
 }
 
 private fun parseQuery(url: URI): Map<String, List<String?>> {
@@ -228,12 +249,17 @@ private fun parseQuery(url: URI): Map<String, List<String?>> {
     .groupBy(keySelector = { it.key }, valueTransform = { it.value })
 }
 
-internal fun clearDirContent(dir: Path) {
-  if (Files.isDirectory(dir)) {
-    // because of problem on Windows https://stackoverflow.com/a/55198379/2467248
-    NioFiles.deleteRecursively(dir)
-    dir.createDirectories()
+internal fun clearDirContent(dir: Path): Boolean {
+  if (!Files.isDirectory(dir)) {
+    return false
   }
+
+  Files.newDirectoryStream(dir).use { stream ->
+    for (child in stream) {
+      NioFiles.deleteRecursively(child)
+    }
+  }
+  return true
 }
 
 internal class ConfigurationException(message: String) : RuntimeException(message)

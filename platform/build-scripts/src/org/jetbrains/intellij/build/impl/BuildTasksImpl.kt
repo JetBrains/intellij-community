@@ -960,7 +960,9 @@ private fun checkMandatoryPath(path: String, fieldName: String, messages: BuildM
 }
 
 private fun logFreeDiskSpace(phase: String, context: CompilationContext) {
-  logFreeDiskSpace(context.paths.buildOutputDir, phase)
+  if (context.options.printFreeSpace) {
+    logFreeDiskSpace(context.paths.buildOutputDir, phase)
+  }
 }
 
 internal fun logFreeDiskSpace(dir: Path, phase: String) {

@@ -114,7 +114,7 @@ public final class BuildDependenciesUtil {
     return result.get(0);
   }
 
-  static String getLibraryMavenId(Path libraryXml) {
+  public static String getLibraryMavenId(Path libraryXml) {
     try {
       DocumentBuilder documentBuilder = createDocumentBuilder();
       Document document = documentBuilder.parse(libraryXml.toFile());

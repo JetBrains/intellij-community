@@ -36,8 +36,8 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
 
   var pluginXmlPatcher: (String, BuildContext) -> String = { s, _ -> s }
   var directoryNameSetExplicitly: Boolean = false
-  @JvmField
-  internal var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
+  var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
+    internal set
   var pathsToScramble: PersistentList<String> = persistentListOf()
   val scrambleClasspathPlugins: MutableList<Pair<String /*plugin name*/, String /*relative path*/>> = mutableListOf()
   var scrambleClasspathFilter: BiPredicate<BuildContext, Path> = BiPredicate { _, _ -> true }
