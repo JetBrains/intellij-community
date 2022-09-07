@@ -78,7 +78,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
   val entityStore = WorkspaceModel.getInstance(project).entityStorage
 
-  suspend fun loadModules(entities: Sequence<ModuleEntity>) {
+  suspend fun loadModules(entities: Sequence<ModuleEntity>, initializeFacets: Boolean) {
     val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
     val corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID }
     val result = coroutineScope {
@@ -130,13 +130,12 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
     // Facets that are loaded from the cache do not generate "EntityAdded" event and aren't initialized
     // We initialize the facets manually here (after modules loading).
-    //
-    // Possible issue - if we'll initialize facets here and after that we'll get "EntityAdded" event, the facet will be initialized twice
-    // But 1. That seems impossible as we don't create facets before the modules are loaded 2. I hope that facets initialization is idempotent
-    blockingContext {
-      invokeLater {
-        for (module in modules) {
-          module.initFacets()
+    if (initializeFacets) {
+      blockingContext {
+        invokeLater {
+          for (module in modules) {
+            module.initFacets()
+          }
         }
       }
     }
@@ -301,7 +300,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
           }
           // todo why we load modules in a write action
           runBlocking {
-            loadModules(moduleEntitiesToLoad.asSequence())
+            loadModules(moduleEntitiesToLoad.asSequence(), true)
           }
         }
       }

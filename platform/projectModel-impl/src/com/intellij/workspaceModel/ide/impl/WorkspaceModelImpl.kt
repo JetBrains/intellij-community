@@ -38,7 +38,10 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     val initialContent = WorkspaceModelInitialTestContent.pop()
     val cache = WorkspaceModelCache.getInstance(project)
     val projectEntities: MutableEntityStorage = when {
-      initialContent != null -> initialContent.toBuilder()
+      initialContent != null -> {
+        loadedFromCache = initialContent !== EntityStorageSnapshot.empty()
+        initialContent.toBuilder()
+      }
       cache != null -> {
         val activity = startActivity("cache loading")
         val previousStorage: MutableEntityStorage?

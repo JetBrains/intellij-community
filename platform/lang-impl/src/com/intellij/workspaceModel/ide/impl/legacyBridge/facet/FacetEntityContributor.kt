@@ -3,8 +3,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.intellij.facet.Facet
 import com.intellij.facet.FacetManager
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.module.Module
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
@@ -15,8 +14,7 @@ class FacetEntityContributor: WorkspaceFacetContributor<FacetEntity> {
 
   override fun getRootEntityByModuleEntity(moduleEntity: ModuleEntity): FacetEntity = error("Unsupported operation")
 
-  override fun createFacetFromEntity(entity: FacetEntity, project: Project): Facet<*> {
-    val module = ModuleManager.getInstance(project).findModuleByName(entity.module.name) ?: error("Module bridge should be available")
+  override fun createFacetFromEntity(entity: FacetEntity, module: Module): Facet<*> {
     val facetManagerBridge = FacetManager.getInstance(module) as FacetManagerBridge
     return facetManagerBridge.model.createFacet(entity)
   }

@@ -2,7 +2,7 @@ package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.facet.Facet
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.module.Module
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.annotations.ApiStatus
@@ -51,7 +51,7 @@ interface WorkspaceFacetContributor<T: WorkspaceEntity> {
   /**
    * Method for creating [com.intellij.facet.Facet] from the given entity of root type
    */
-  fun createFacetFromEntity(entity: T, project: Project): Facet<*>
+  fun createFacetFromEntity(entity: T, module: Module): Facet<*>
 
   /**
    * This field should be overridden if root entity can have children which changes can affect e.g. facet configuration

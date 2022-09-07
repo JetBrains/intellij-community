@@ -31,7 +31,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
   init {
     if (!project.isDefault) {
       val busConnection = project.messageBus.connect(this)
-      WorkspaceModelTopics.getInstance(project).subscribeModuleBridgeInitializer(busConnection, object : WorkspaceModelChangeListener {
+      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
         override fun beforeChanged(event: VersionedStorageChange) {
           WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetBridgeContributor ->
             processBeforeChangeEvents(event, facetBridgeContributor)
@@ -54,7 +54,9 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
           val existingFacetBridge = event.storageAfter.facetMapping().getDataByEntity(change.entity)
           val facetBridge = if (existingFacetBridge == null) {
             val workspaceModel = WorkspaceModel.getInstance(project)
-            val newFacetBridge = workspaceFacetContributor.createFacetFromEntity(change.newEntity, project)
+            val moduleEntity = workspaceFacetContributor.getRelatedModuleEntity(change.newEntity)
+            val module = ModuleManager.getInstance(project).findModuleByName(moduleEntity.name) ?: error("Module bridge should be available")
+            val newFacetBridge = workspaceFacetContributor.createFacetFromEntity(change.newEntity, module)
             workspaceModel.updateProjectModelSilent {
               it.mutableFacetMapping().addMapping(change.newEntity, newFacetBridge)
             }
@@ -85,7 +87,9 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
           val existingFacetBridge = event.storageAfter.facetMapping().getDataByEntity(change.entity)
           val facet = if (existingFacetBridge == null) {
             val workspaceModel = WorkspaceModel.getInstance(project)
-            val newFacetBridge = workspaceFacetContributor.createFacetFromEntity(change.newEntity, project)
+            val moduleEntity = workspaceFacetContributor.getRelatedModuleEntity(change.newEntity)
+            val module = ModuleManager.getInstance(project).findModuleByName(moduleEntity.name) ?: error("Module bridge should be available")
+            val newFacetBridge = workspaceFacetContributor.createFacetFromEntity(change.newEntity, module)
             workspaceModel.updateProjectModelSilent {
               it.mutableFacetMapping().addMapping(change.newEntity, newFacetBridge)
             }

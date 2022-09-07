@@ -129,19 +129,15 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
 
   init {
     // Initialize facet bridges after loading from cache
-    fun createFacetBridgeIfNeeded(entity: WorkspaceEntity, facetContributor: WorkspaceFacetContributor<WorkspaceEntity>, project: Project) {
-      updateDiffOrStorage{ this.getOrPutDataByEntity(entity) { facetContributor.createFacetFromEntity(entity, project) } }
-    }
-    moduleBridge.project
     val moduleEntity = moduleBridge.entityStorage.current.resolve(moduleBridge.moduleEntityId)
                        ?: error("Module entity should be available")
     WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetContributor ->
       if (facetContributor.rootEntityType != FacetEntity::class.java) {
         facetContributor.getRootEntityByModuleEntity(moduleEntity)?.let {
-          createFacetBridgeIfNeeded(it, facetContributor, moduleBridge.project)
+          updateDiffOrStorage{ this.getOrPutDataByEntity(it) { facetContributor.createFacetFromEntity(it, moduleBridge) }}
         }
       } else {
-        moduleEntity.facets.forEach { createFacetBridgeIfNeeded(it, facetContributor, moduleBridge.project) }
+        moduleEntity.facets.forEach { getOrCreateFacet(it) }
       }
     }
   }
