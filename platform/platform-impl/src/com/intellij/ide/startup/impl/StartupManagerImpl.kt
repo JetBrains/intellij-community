@@ -275,7 +275,9 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         @Suppress("SSBasedInspection")
         if (activity is DumbAware) {
           dumbService.runWithWaitForSmartModeDisabled().use {
-            runActivityAndMeasureDuration(activity, pluginDescriptor.pluginId)
+            blockingContext {
+              runActivityAndMeasureDuration(activity, pluginDescriptor.pluginId)
+            }
           }
           return@processExtensions
         }
@@ -287,13 +289,15 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
           // DumbService.unsafeRunWhenSmart throws an assertion in LightEdit mode, see LightEditDumbService.unsafeRunWhenSmart
           if (!isProjectLightEditCompatible) {
             counter.incrementAndGet()
-            dumbService.unsafeRunWhenSmart {
-              traceContext.makeCurrent()
-              val duration = runActivityAndMeasureDuration(activity, pluginDescriptor.pluginId)
-              if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
-                reportUiFreeze(uiFreezeWarned)
+            blockingContext {
+              dumbService.unsafeRunWhenSmart {
+                traceContext.makeCurrent()
+                val duration = runActivityAndMeasureDuration(activity, pluginDescriptor.pluginId)
+                if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
+                  reportUiFreeze(uiFreezeWarned)
+                }
+                dumbUnawarePostActivitiesPassed(edtActivity, counter.decrementAndGet())
               }
-              dumbUnawarePostActivitiesPassed(edtActivity, counter.decrementAndGet())
             }
           }
         }
