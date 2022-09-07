@@ -64,7 +64,7 @@ internal abstract class SettingsSyncTestBase {
   @After
   fun cleanup() {
     if (::bridge.isInitialized) {
-      bridge.waitForAllExecuted(10, TimeUnit.SECONDS)
+      bridge.waitForAllExecuted(10, TIMEOUT_UNIT)
     }
 
     remoteCommunicator.delete()

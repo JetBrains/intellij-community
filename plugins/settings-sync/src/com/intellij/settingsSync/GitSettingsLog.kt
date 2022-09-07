@@ -244,6 +244,10 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     updateBranchPosition(CLOUD_REF_NAME, position)
   }
 
+  override fun setMasterPosition(position: SettingsLog.Position) {
+    updateBranchPosition(MASTER_REF_NAME, position)
+  }
+
   private fun updateBranchPosition(refName: String, targetPosition: SettingsLog.Position): Ref {
     val ref = repository.findRef(refName)!!
     val previousObjectId = ref.objectId

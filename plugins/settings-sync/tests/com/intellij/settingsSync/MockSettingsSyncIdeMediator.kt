@@ -5,12 +5,17 @@ import com.intellij.util.io.isFile
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.streams.toList
 
 internal class MockSettingsSyncIdeMediator : SettingsSyncIdeMediator {
   internal val files = mutableMapOf<String, String>()
 
+  private var exceptionToThrowOnApply: Exception? = null
+
   override fun applyToIde(snapshot: SettingsSnapshot) {
+    if (exceptionToThrowOnApply != null) {
+      throw exceptionToThrowOnApply!!
+    }
+
     for (fileState in snapshot.fileStates) {
       if (fileState is FileState.Modified) {
         files[fileState.file] = String(fileState.content, Charset.defaultCharset())
@@ -29,6 +34,10 @@ internal class MockSettingsSyncIdeMediator : SettingsSyncIdeMediator {
 
   override fun collectFilesToExportFromSettings(appConfigPath: Path): () -> Collection<Path> {
     return getAllFilesFromSettings(appConfigPath)
+  }
+
+  fun throwOnApply(exception: Exception) {
+    exceptionToThrowOnApply = exception
   }
 
   companion object {

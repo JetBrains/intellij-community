@@ -13,6 +13,10 @@ internal class SettingsSyncEvents : Disposable {
     settingsChangeDispatcher.addListener(settingsChangeListener)
   }
 
+  fun removeSettingsChangedListener(settingsChangeListener: SettingsChangeListener) {
+    settingsChangeDispatcher.removeListener(settingsChangeListener)
+  }
+
   fun fireSettingsChanged(event: SyncSettingsEvent) {
     settingsChangeDispatcher.multicaster.settingChanged(event)
   }
