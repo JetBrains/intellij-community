@@ -10,7 +10,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.facet.FacetState
-import java.util.function.Consumer
 
 class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEntity> {
   override val rootEntityType: Class<FacetEntity>
