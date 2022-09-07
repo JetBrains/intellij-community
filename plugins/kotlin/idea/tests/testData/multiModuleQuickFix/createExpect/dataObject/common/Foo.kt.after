@@ -1,1 +1,1 @@
-expect data object <selection><caret></selection>Foo
+expect object <selection><caret></selection>Foo
