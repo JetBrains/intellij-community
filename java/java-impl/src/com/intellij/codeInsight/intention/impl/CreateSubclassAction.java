@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -38,9 +37,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -49,7 +46,7 @@ import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Objects;
 
 public class CreateSubclassAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance(CreateSubclassAction.class);
@@ -390,17 +387,8 @@ public class CreateSubclassAction extends BaseIntentionAction {
       }
     }
     if (hasNonTrivialConstructor) {
-      final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(psiClass, targetClass, PsiSubstitutor.EMPTY);
-      final List<PsiMethodMember> baseConstructors = new ArrayList<>();
-      for (PsiMethod baseConstr : constructors) {
-        if (PsiUtil.isAccessible(project, baseConstr, targetClass, targetClass)) {
-          baseConstructors.add(new PsiMethodMember(baseConstr, substitutor));
-        }
-      }
       final int offset = editor.getCaretModel().getOffset();
-      CreateConstructorMatchingSuperFix.chooseConstructor2Delegate(project, editor,
-                                                                   substitutor,
-                                                                   baseConstructors, constructors, targetClass);
+      CreateConstructorMatchingSuperFix.chooseConstructor2Delegate(project, editor, targetClass);
       editor.getCaretModel().moveToOffset(offset);
     }
 
