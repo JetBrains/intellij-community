@@ -383,7 +383,9 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
           .setAttribute(AttributeKey.stringKey("class"), runnableClass.name)
           .setAttribute(AttributeKey.stringKey("plugin"), pluginId.idString)
           .useWithScope {
-            runnable.run()
+            blockingContext {
+              runnable.run()
+            }
           }
       }
       catch (e: CancellationException) {
