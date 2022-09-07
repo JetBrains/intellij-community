@@ -2,13 +2,16 @@ package com.intellij.settingsSync
 
 import com.intellij.configurationStore.ComponentSerializationUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.settingsSync.plugins.PluginManagerProxy
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.replaceService
+import com.intellij.util.io.readText
 import com.intellij.util.xmlb.XmlSerializer
 import junit.framework.TestCase
 import org.jdom.Element
@@ -206,7 +209,21 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     TestCase.assertTrue("Plugin is enabled in the IDE but disabled in the state", dataForQuickJump!!.isEnabled)
   }
 
-  fun assertSerializedStateEquals(expected: String) {
+  fun `test state deserialization`() {
+    pluginManager.state.plugins["A"] = SettingsSyncPluginManager.PluginData().apply { this.isEnabled = false }
+    (ApplicationManager.getApplication() as ComponentManagerImpl).componentStore.saveComponent(pluginManager)
+    val serializedComponent = PathManager.getConfigDir().resolve("options").resolve("settingsSyncPlugins.xml").readText()
+    pluginManager.state.plugins.clear()
+
+    val byteArray = serializedComponent.toByteArray()
+    pluginManager.updateStateFromFileStateContent(FileState.Modified("options/settingsSyncPlugins.xml", byteArray, byteArray.size))
+
+    val pluginData = pluginManager.state.plugins["A"]
+    assertNotNull("Plugin data for A is not found in ${pluginManager.state.plugins}", pluginData)
+    TestCase.assertFalse(pluginData!!.isEnabled)
+  }
+
+  private fun assertSerializedStateEquals(expected: String) {
     val state = pluginManager.state
     val e = Element("component")
     XmlSerializer.serializeInto(state, e)

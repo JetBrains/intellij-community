@@ -16,6 +16,7 @@ import com.intellij.settingsSync.FileState
 import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.config.BUNDLED_PLUGINS_ID
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager.Companion.FILE_SPEC
+import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 
 @State(name = "SettingsSyncPlugins", storages = [Storage(FILE_SPEC)])
@@ -137,8 +138,14 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
 
   internal fun updateStateFromFileStateContent(pluginsFileState: FileState) {
     val stateFromFile = if (pluginsFileState is FileState.Modified) {
-      val element = JDOMUtil.load(pluginsFileState.content)
-      jdomSerializer.deserialize(element, SyncPluginsState::class.java)
+      val element = getElementToDeserialize(pluginsFileState.content)
+
+      if (element != null) {
+        jdomSerializer.deserialize(element, SyncPluginsState::class.java)
+      }
+      else {
+        SyncPluginsState()
+      }
     }
     else {
       SyncPluginsState()
@@ -146,6 +153,21 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
 
     synchronized(LOCK) {
       state = stateFromFile
+    }
+  }
+
+  private fun getElementToDeserialize(byteArray: ByteArray): Element? {
+    val element = JDOMUtil.load(byteArray)
+    return when (element.name) {
+      "application" -> {
+        element.getChild("component")
+      }
+      "component" -> {
+        element
+      }
+      else -> {
+        null
+      }
     }
   }
 
