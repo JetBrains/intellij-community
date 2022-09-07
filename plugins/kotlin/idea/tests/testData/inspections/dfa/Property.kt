@@ -11,3 +11,19 @@ abstract class X {
         if (c > 5 && c < 3) {}
     }
 }
+open class Test {
+  open var a: String? = ""
+  fun printA0(){
+    if (a==null){
+      println()
+    } else if (a!=null){
+      println()
+    }
+  }
+}
+
+open class Test2 : Test() {
+  override var a: String?
+    get() = if (Math.random() > 0.5) "" else null
+    set(<warning descr="[UNUSED_PARAMETER] Parameter 'value' is never used">value</warning>) {}
+}
