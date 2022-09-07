@@ -779,21 +779,20 @@ private fun checkProductLayout(context: BuildContext) {
   // todo mainJarName type specified as not-null - does it work?
   val messages = context.messages
   @Suppress("SENSELESS_COMPARISON")
-  if (layout.mainJarName == null) {
-    messages.error("productProperties.productLayout.mainJarName is not specified")
+  check(layout.mainJarName != null) {
+    "productProperties.productLayout.mainJarName is not specified"
   }
 
   val pluginLayouts = layout.pluginLayouts
-  checkScrambleClasspathPlugins(pluginLayouts, context)
-  checkPluginDuplicates(pluginLayouts, context)
+  checkScrambleClasspathPlugins(pluginLayouts)
+  checkPluginDuplicates(pluginLayouts)
   checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", pluginLayouts, context)
   checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", pluginLayouts, context)
   checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", pluginLayouts,
                      context)
   if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
     messages.warning("layout.buildAllCompatiblePlugins option isn't enabled. Value of " +
-                     "layout.compatiblePluginsToIgnore property will be ignored (" + layout.compatiblePluginsToIgnore.toString() +
-                     ")")
+                     "layout.compatiblePluginsToIgnore property will be ignored (${layout.compatiblePluginsToIgnore})")
   }
   if (layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
     checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore",
@@ -805,21 +804,21 @@ private fun checkProductLayout(context: BuildContext) {
                      "layout.buildAllCompatiblePlugins option is enabled. layout.pluginModulesToPublish will be used (" +
                      layout.pluginModulesToPublish + ")")
   }
-  if (layout.prepareCustomPluginRepositoryForPublishedPlugins &&
-      layout.pluginModulesToPublish.isEmpty() &&
-      !layout.buildAllCompatiblePlugins) {
-    messages.error("productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins option is enabled" +
-                   " but no pluginModulesToPublish are specified")
+  check (!layout.prepareCustomPluginRepositoryForPublishedPlugins ||
+         !layout.pluginModulesToPublish.isEmpty() ||
+         layout.buildAllCompatiblePlugins) {
+    "productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins option is enabled" +
+    " but no pluginModulesToPublish are specified"
   }
   checkModules(layout.productApiModules, "productProperties.productLayout.productApiModules", context)
   checkModules(layout.productImplementationModules, "productProperties.productLayout.productImplementationModules", context)
   checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars", context)
-  checkModules(layout.moduleExcludes.keySet(), "productProperties.productLayout.moduleExcludes", context)
+  checkModules(layout.moduleExcludes.keys, "productProperties.productLayout.moduleExcludes", context)
   checkModules(layout.mainModules, "productProperties.productLayout.mainModules", context)
   checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar,
                         "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar", context)
   for (plugin in pluginLayouts) {
-    checkBaseLayout(plugin as BaseLayout, "\'${plugin.mainModule}\' plugin", context)
+    checkBaseLayout(plugin, "\'${plugin.mainModule}\' plugin", context)
   }
 }
 
@@ -833,8 +832,8 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
 
   for ((moduleName, libraryName) in layout.includedModuleLibraries) {
     checkModules(listOf(moduleName), "includedModuleLibraries in $description", context)
-    if (!context.findRequiredModule(moduleName).libraryCollection.libraries.any { getLibraryName(it) == libraryName }) {
-      context.messages.error("Cannot find library \'$libraryName\' in \'$moduleName\' (used in $description)")
+    check(context.findRequiredModule(moduleName).libraryCollection.libraries.any { getLibraryName(it) == libraryName }) {
+      "Cannot find library \'$libraryName\' in \'$moduleName\' (used in $description)"
     }
   }
 
@@ -842,8 +841,8 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
   for ((key, value) in layout.excludedModuleLibraries.entrySet()) {
     val libraries = context.findRequiredModule(key).libraryCollection.libraries
     for (libraryName in value) {
-      if (!libraries.any { getLibraryName(it) == libraryName }) {
-        context.messages.error("Cannot find library \'$libraryName\' in \'$key\' (used in \'excludedModuleLibraries\' in $description)")
+      check(libraries.any { getLibraryName(it) == libraryName }) {
+        "Cannot find library \'$libraryName\' in \'$key\' (used in \'excludedModuleLibraries\' in $description)"
       }
     }
   }
@@ -852,11 +851,11 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
   checkModules(layout.modulesWithExcludedModuleLibraries, "modulesWithExcludedModuleLibraries in $description", context)
 }
 
-private fun checkPluginDuplicates(nonTrivialPlugins: List<PluginLayout>, context: BuildContext) {
+private fun checkPluginDuplicates(nonTrivialPlugins: List<PluginLayout>) {
   val pluginsGroupedByMainModule = nonTrivialPlugins.groupBy { it.mainModule to it.bundlingRestrictions }.values
   for (duplicatedPlugins in pluginsGroupedByMainModule) {
-    if (duplicatedPlugins.size > 1) {
-      context.messages.error("Duplicated plugin description in productLayout.pluginLayouts: main module ${duplicatedPlugins.first().mainModule}")
+    check(duplicatedPlugins.size <= 1) {
+      "Duplicated plugin description in productLayout.pluginLayouts: main module ${duplicatedPlugins.first().mainModule}"
     }
   }
 
@@ -870,8 +869,8 @@ private fun checkPluginDuplicates(nonTrivialPlugins: List<PluginLayout>, context
       continue
     }
 
-    if (duplicatedPlugins.size > 1) {
-      context.messages.error("Duplicated plugin description in productLayout.pluginLayouts: directory name $pluginDirectoryName")
+    check(duplicatedPlugins.size <= 1) {
+      "Duplicated plugin description in productLayout.pluginLayouts: directory name $pluginDirectoryName"
     }
   }
 }
@@ -879,28 +878,27 @@ private fun checkPluginDuplicates(nonTrivialPlugins: List<PluginLayout>, context
 private fun checkModules(modules: Collection<String>?, fieldName: String, context: CompilationContext) {
   if (modules != null) {
     val unknownModules = modules.filter { context.findModule(it) == null }
-    if (!unknownModules.isEmpty()) {
-      context.messages.error("The following modules from $fieldName aren\'t found in the project: $unknownModules")
+    check(unknownModules.isEmpty()) {
+      "The following modules from $fieldName aren\'t found in the project: $unknownModules"
     }
   }
 }
 
 private fun checkArtifacts(names: Collection<String>, fieldName: String, context: CompilationContext) {
   val unknownArtifacts = names - JpsArtifactService.getInstance().getArtifacts(context.project).map { it.name }.toSet()
-  if (!unknownArtifacts.isEmpty()) {
-    context.messages.error("The following artifacts from $fieldName aren\'t found in the project: $unknownArtifacts")
+  check(unknownArtifacts.isEmpty()) {
+    "The following artifacts from $fieldName aren\'t found in the project: $unknownArtifacts"
   }
 }
 
-private fun checkScrambleClasspathPlugins(pluginLayoutList: List<PluginLayout>, context: BuildContext) {
+private fun checkScrambleClasspathPlugins(pluginLayoutList: List<PluginLayout>) {
   val pluginDirectories = pluginLayoutList.map { it.directoryName }.toImmutableSet()
 
   for (pluginLayout in pluginLayoutList) {
     for ((pluginDirectoryName, _) in pluginLayout.scrambleClasspathPlugins) {
-      if (!pluginDirectories.contains(pluginDirectoryName)) {
-        context.messages.error(
-          "Layout of plugin '${pluginLayout.mainModule}' declares an unresolved plugin directory name in pluginLayout.scrambleClasspathPlugins: $pluginDirectoryName"
-        )
+      check(pluginDirectories.contains(pluginDirectoryName)) {
+        "Layout of plugin '${pluginLayout.mainModule}' declares an unresolved plugin directory name" +
+        " in ${pluginLayout.scrambleClasspathPlugins}: $pluginDirectoryName"
       }
     }
   }
