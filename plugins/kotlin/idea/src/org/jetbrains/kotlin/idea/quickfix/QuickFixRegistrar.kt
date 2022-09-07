@@ -672,7 +672,6 @@ class QuickFixRegistrar : QuickFixContributor {
         ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS.registerFactory(RemoveDefaultParameterValueFix)
 
         RESOLUTION_TO_CLASSIFIER.registerFactory(ConvertToAnonymousObjectFix)
-        RESOLUTION_TO_PRIVATE_CONSTRUCTOR_OF_SEALED_CLASS.registerFactory(RemoveModifierFixBase.createRemovePrivateModifierFromSealedConstructor())
 
         NOTHING_TO_INLINE.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
 
