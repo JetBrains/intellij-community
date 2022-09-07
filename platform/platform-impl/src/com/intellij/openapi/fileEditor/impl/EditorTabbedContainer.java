@@ -345,6 +345,10 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       if (EditorWindow.DATA_KEY.is(dataId)) {
         return myWindow;
       }
+      if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
+        EditorComposite selectedComposite = myWindow.getSelectedComposite();
+        return selectedComposite != null ? selectedComposite.getSelectedEditor() : null;
+      }
       if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return HELP_ID;
       }
