@@ -6,7 +6,7 @@ import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.CodeInjector
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.command.MarshallableCommand
-import com.intellij.ide.starter.isStarterPerformanceTest
+import com.intellij.ide.starter.isClassFileVerificationEnabled
 import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.models.andThen
@@ -106,7 +106,7 @@ data class IDERunContext(
     .takeScreenshotIfFailure(testContext.paths.logsDir)
     .withJvmCrashLogDirectory(jvmCrashLogDirectory)
     .withHeapDumpOnOutOfMemoryDirectory(heapDumpOnOomDirectory)
-    .let { if (!isStarterPerformanceTest) it.withClassFileVerification() else it }
+    .let { if (isClassFileVerificationEnabled) it.withClassFileVerification() else it }
     .let { testContext.testCase.vmOptionsFix(it) }
     .let { testContext.patchVMOptions(it) }
     .patchVMOptions()
