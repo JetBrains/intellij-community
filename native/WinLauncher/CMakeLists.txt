@@ -1,11 +1,9 @@
 cmake_minimum_required(VERSION 3.15)
-project(WinLauncher)
+project(WinLauncher CXX)
 
 if (NOT WIN32)
   message(FATAL_ERROR "Windows only.")
 endif ()
-
-set(CMAKE_RC_FLAGS "${CMAKE_RC_FLAGS} /i${CMAKE_CURRENT_SOURCE_DIR}")
 
 if (DEFINED ENV{BUILD_NUMBER})
   set(BUILD_NUMBER $ENV{BUILD_NUMBER})
@@ -29,6 +27,6 @@ set_target_properties(WinLauncher PROPERTIES
     MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
 target_compile_definitions(WinLauncher PRIVATE UNICODE _UNICODE)
-target_include_directories(WinLauncher PRIVATE ${JAVA_HOME}/include ${JAVA_HOME}/include/win32)
-target_compile_options(WinLauncher PRIVATE /W3 /Zi /O2 /Oi /Gy /GL)
+target_include_directories(WinLauncher PRIVATE ${JAVA_HOME}/include ${JAVA_HOME}/include/win32 ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_options(WinLauncher PRIVATE /W3 /Zi /Oi /Gy /GL)
 target_link_options(WinLauncher PRIVATE /INCREMENTAL:NO /DEBUG /LTCG /OPT:REF /OPT:ICF)
