@@ -8,11 +8,13 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.function.IntUnaryOperator;
 
 /**
  * Characters are encoded using UTF-8. Not optimized for non-ASCII string.
  */
+@SuppressWarnings("CommentedOutCode")
 @ApiStatus.Internal
 @ApiStatus.Experimental
 public final class Xxh3 {
@@ -51,21 +53,21 @@ public final class Xxh3 {
    * Characters are encoded using UTF-8.
    */
   public static long hash(String input) {
-    return StringHash.longHash(input, 0, input.length(), 0);
+    return stringLongHash(input, 0);
   }
 
   // secret is shared - seeded hash only for universal hashing
   public static long seededHash(String input, long seed) {
-    return StringHash.longHash(input, 0, input.length(), seed);
+    return stringLongHash(input, seed);
   }
 
   public static long seededHash(byte[] input, long seed) {
     return Xxh3Impl.hash(input, ByteArrayAccess.INSTANCE, 0, input.length, seed);
   }
 
-  public static long hash(String input, int start, int length) {
-    return StringHash.longHash(input, start, length, 0);
-  }
+  //public static long hash(String input, int start, int length) {
+  //  return stringLongHash(input, start, length);
+  //}
 
   public static int hash32(String input) {
     return (int)hash(input);
@@ -138,5 +140,15 @@ public final class Xxh3 {
     protected int i8(long[] input, int offset) {
       throw new UnsupportedOperationException();
     }
+  }
+
+  //private static long stringLongHash(String s, int offset, int length) {
+  //  byte[] data = s.substring(offset, offset + length).getBytes(StandardCharsets.UTF_8);
+  //  return Xxh3Impl.hash(data, ByteArrayAccess.INSTANCE, 0, data.length, 0);
+  //}
+
+  private static long stringLongHash(String s, long seed) {
+    byte[] data = s.getBytes(StandardCharsets.UTF_8);
+    return Xxh3Impl.hash(data, ByteArrayAccess.INSTANCE, 0, data.length, seed);
   }
 }
