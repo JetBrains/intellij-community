@@ -14,6 +14,10 @@ import kotlin.io.path.listDirectoryEntries
 object ErrorReporter {
   private const val MAX_TEST_NAME_LENGTH = 250
 
+  private val listOfPatternsWhichShouldBeIgnored = listOf(
+    "No files have been downloaded for .+:.+".toRegex()
+  )
+
   /**
    * Read files from errors directories, written by performance testing plugin.
    * Report them as an individual failures on CI
@@ -31,6 +35,10 @@ object ErrorReporter {
       if (messageFile.exists() && stacktraceFile.exists()) {
         val messageText = generifyErrorMessage(messageFile.readText().trimIndent().trim())
         val stackTraceContent = stacktraceFile.readText().trimIndent().trim()
+
+        if (checkIfShouldBeIgnored(messageText)) {
+          return@forEach
+        }
 
         val testName: String
 
@@ -52,5 +60,14 @@ object ErrorReporter {
                                                          details = stackTraceContent)
       }
     }
+  }
+
+  private fun checkIfShouldBeIgnored(message: String): Boolean {
+    listOfPatternsWhichShouldBeIgnored.forEach { pattern ->
+      if (pattern.containsMatchIn(message)) {
+        return true
+      }
+    }
+    return false
   }
 }
