@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.importing;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleTypeManager;
@@ -248,8 +248,7 @@ public final class MavenImportUtil {
       modifiableModel.addContentEntry(contentRoot);
       modifiableModel.commit();
 
-      //this is needed to ensure that dummy module created here will be correctly replaced by real ModuleEntity when import finishes
-      ExternalSystemModulePropertyManager.getInstance(module).setMavenized(true);
+      ExternalSystemUtil.markModuleAsMaven(module, true);
 
       return module;
     });
