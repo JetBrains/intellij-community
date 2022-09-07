@@ -66,6 +66,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.Callable
 import java.util.concurrent.CompletableFuture
+import kotlin.Result
 
 private val LOG = Logger.getInstance(ProjectUtil::class.java)
 private var ourProjectsPath: String? = null
@@ -150,16 +151,18 @@ object ProjectUtil {
       }
     }
 
-    val lazyVirtualFile = lazy {
-      ProjectUtilCore.getFileAndRefresh(file)
-    }
+    var virtualFileResult: Result<VirtualFile>? = null
     for (provider in ProjectOpenProcessor.EXTENSION_POINT_NAME.iterable) {
       if (!provider.isStrongProjectInfoHolder) {
         continue
       }
 
       // `PlatformProjectOpenProcessor` is not a strong project info holder, so there is no need to optimize (VFS not required)
-      val virtualFile = lazyVirtualFile.value ?: return null
+      val virtualFile: VirtualFile = virtualFileResult?.getOrThrow() ?: blockingContext {
+        ProjectUtilCore.getFileAndRefresh(file)
+      }?.also {
+        virtualFileResult = Result.success(it)
+      } ?: return null
       if (provider.canOpenProject(virtualFile)) {
         return chooseProcessorAndOpenAsync(mutableListOf(provider), virtualFile, options)
       }
@@ -185,7 +188,20 @@ object ProjectUtil {
       catch (ignore: IOException) {
       }
     }
-    val processors = computeProcessors(file, lazyVirtualFile)
+    var nullableVirtualFileResult: Result<VirtualFile?>? = virtualFileResult
+    val processors = blockingContext {
+      computeProcessors(file) {
+        val capturedNullableVirtualFileResult = nullableVirtualFileResult
+        if (capturedNullableVirtualFileResult != null) {
+          capturedNullableVirtualFileResult.getOrThrow()
+        }
+        else {
+          ProjectUtilCore.getFileAndRefresh(file).also {
+            nullableVirtualFileResult = Result.success(it)
+          }
+        }
+      }
+    }
     if (processors.isEmpty()) {
       return null
     }
@@ -206,13 +222,17 @@ object ProjectUtil {
       )
     }
     else {
-      val virtualFile = lazyVirtualFile.value ?: return null
+      val virtualFile = nullableVirtualFileResult?.let {
+        it.getOrThrow() ?: return null
+      } ?: blockingContext {
+        ProjectUtilCore.getFileAndRefresh(file)
+      } ?: return null
       project = chooseProcessorAndOpenAsync(processors, virtualFile, options)
     }
     return postProcess(project)
   }
 
-  private fun computeProcessors(file: Path, lazyVirtualFile: Lazy<VirtualFile?>): MutableList<ProjectOpenProcessor> {
+  private fun computeProcessors(file: Path, lazyVirtualFile: () -> VirtualFile?): MutableList<ProjectOpenProcessor> {
     val processors = ArrayList<ProjectOpenProcessor>()
     ProjectOpenProcessor.EXTENSION_POINT_NAME.forEachExtensionSafe { processor: ProjectOpenProcessor ->
       if (processor is PlatformProjectOpenProcessor) {
@@ -221,7 +241,7 @@ object ProjectUtil {
         }
       }
       else {
-        val virtualFile = lazyVirtualFile.value
+        val virtualFile = lazyVirtualFile()
         if (virtualFile != null && processor.canOpenProject(virtualFile)) {
           processors.add(processor)
         }
