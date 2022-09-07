@@ -71,7 +71,7 @@ object TestKotlinArtifacts {
     @JvmStatic val jsr305: File by lazy { getLibraryFile("com.google.code.findbugs", "jsr305", "jsr305.xml") }
     @JvmStatic val junit3: File by lazy { getLibraryFile("junit", "junit", "JUnit3.xml") }
 
-    @JvmStatic val kotlinStdlibNative: File by lazy { getNativeLib() }
+    @JvmStatic val kotlinStdlibNative: File by lazy { getNativeLib(library = "klib/common/stdlib") }
 
     @JvmStatic
     val compilerTestDataDir: File by lazy {
@@ -118,28 +118,26 @@ object TestKotlinArtifacts {
     private fun getNativeLib(
         version: String = KotlinNativeVersion.resolvedKotlinNativeVersion,
         platform: String = HostManager.platformName(),
-        library: String = "klib/common/stdlib"
+        library: String
     ): File {
-        val baseDir = Paths.get(PathManager.getCommunityHomePath()).resolve("out")
-        if (!File(baseDir.toString()).exists()) {
-            File(baseDir.toString()).mkdirs()
+        val baseDir = File(PathManager.getCommunityHomePath()).resolve("out")
+        if (!baseDir.exists()) {
+            baseDir.mkdirs()
         }
         val prebuilt = "kotlin-native-prebuilt-$platform-$version"
         val archiveName = "$prebuilt.tar.gz"
         val downloadUrl = "$NATIVE_PREBUILT_DEV_CDN_URL/$version/$platform/$archiveName"
-        val downloadOut = "$baseDir/$archiveName"
-        val libPath = "$baseDir/$prebuilt/$prebuilt/$library"
+        val downloadOut = "${baseDir.absolutePath}/$archiveName"
+        val libPath = "${baseDir.absolutePath}/$prebuilt/$prebuilt/$library"
+        val libFile = File(libPath)
 
-        if (Files.exists(Paths.get(libPath))) {
-            return File(libPath)
+        if (!libFile.exists()) {
+            val archiveFilePath = Paths.get(downloadOut)
+            downloadFile(downloadUrl, Paths.get(downloadOut))
+            unpackPrebuildArchive(archiveFilePath, Paths.get("$baseDir/$prebuilt"))
+            Files.deleteIfExists(archiveFilePath)
         }
-
-        val archiveFilePath = Paths.get(downloadOut)
-        downloadFile(downloadUrl, Paths.get(downloadOut))
-        unpackPrebuildArchive(archiveFilePath, Paths.get("$baseDir/$prebuilt"))
-        Files.deleteIfExists(archiveFilePath)
-
-        return if (Files.exists(Paths.get(libPath))) File(libPath) else
+        return if (libFile.exists()) libFile else
             throw IOException("Library doesn't exist: $libPath")
     }
 }

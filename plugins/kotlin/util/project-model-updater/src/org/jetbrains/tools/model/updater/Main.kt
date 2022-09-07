@@ -142,8 +142,8 @@ private fun updateKGPVersionForKotlinNativeTests(communityRoot: File, kotlinGrad
     )
     updateFile(
         kotlinNativeVersionsKt,
-        """private const val kotlinGradlePluginVersion :String\? = .*""",
-        "private const val kotlinGradlePluginVersion :String? = \"$kotlinGradlePluginVersion\""
+        """private const val kotlinGradlePluginVersion: String =.*""",
+        "private const val kotlinGradlePluginVersion: String = \"$kotlinGradlePluginVersion\""
     )
 }
 

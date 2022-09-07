@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.konan.target.HostManager
-import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
@@ -107,8 +106,6 @@ sealed class ResolveLibrary(
     }
 }
 
-val platformTargetByHost: TargetPlatform = NativePlatforms.nativePlatformBySingleTarget(HostManager.host)
-
 sealed class Stdlib(
     name: String,
     root: File,
@@ -125,10 +122,9 @@ sealed class Stdlib(
     object NativeStdlib : Stdlib(
         "stdlib-native-by-host",
         TestKotlinArtifacts.kotlinStdlibNative,
-        platformTargetByHost,
+        NativePlatforms.nativePlatformBySingleTarget(HostManager.host),
         KotlinNativeLibraryKind
     )
-
 
     object JvmStdlib : Stdlib(
         "stdlib-jvm",

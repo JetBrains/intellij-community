@@ -74,7 +74,7 @@ object KotlinMavenUtils {
     }
 }
 
-private abstract class KotlinMavenArtifactFinder {
+internal abstract class KotlinMavenArtifactFinder {
     companion object {
         val instance: KotlinMavenArtifactFinder
             get() = when {
