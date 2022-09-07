@@ -166,7 +166,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       }
       PsiSwitchLabeledRuleStatement ruleStatement = (PsiSwitchLabeledRuleStatement)element;
       PsiStatement body = ruleStatement.getBody();
-      if (body != null) {
+      if (body != null && !(body instanceof PsiBlockStatement blockStatement && blockStatement.getCodeBlock().isEmpty())) {
         TryWithIdenticalCatchesInspection.collectCommentTexts(ruleStatement, commentTexts);
         Rule rule = new Rule(ruleStatement, body, ArrayUtilRt.toStringArray(commentTexts));
         commentTexts.clear();

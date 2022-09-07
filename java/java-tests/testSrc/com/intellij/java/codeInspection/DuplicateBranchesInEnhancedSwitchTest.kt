@@ -23,6 +23,7 @@ class DuplicateBranchesInEnhancedSwitchTest : LightJavaCodeInsightFixtureTestCas
   fun testCaseLabelsExpressionDefaultLast() = doTest()
   fun testCaseLabelsExpressionDifferentComments() = doTest()
   fun testCaseLabelsExpressionSameComments() = doTest()
+  fun testEmptyBodies() = doTest()
 
   private fun doTest() {
     myFixture.enableInspections(DuplicateBranchesInSwitchInspection())
