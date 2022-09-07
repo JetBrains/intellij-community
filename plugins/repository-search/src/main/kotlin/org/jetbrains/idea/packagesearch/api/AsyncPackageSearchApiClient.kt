@@ -19,24 +19,23 @@ package org.jetbrains.idea.packagesearch.api
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.util.concurrency.AppExecutorUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.future.future
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.idea.packagesearch.DefaultPackageServiceConfig
 import org.jetbrains.idea.packagesearch.HashingAlgorithm
 import org.jetbrains.idea.packagesearch.PackageSearchServiceConfig
-import org.jetbrains.idea.reposearch.DependencySearchProvider
-import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import org.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import java.util.concurrent.CompletableFuture
-import java.util.function.Consumer
 
-class AsyncPackageSearchProvider(
+class AsyncPackageSearchApiClient(
   private val config: PackageSearchServiceConfig = service<DefaultPackageServiceConfig>()
-) : DependencySearchProvider, Disposable {
+): Disposable {
 
-  private val myService = PackageSearchProvider(config)
+  private val myClient = PackageSearchApiClient(config)
 
   private val myScope =
     CoroutineScope(SupervisorJob() + AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher())
@@ -45,25 +44,13 @@ class AsyncPackageSearchProvider(
     myScope.cancel("Disposing ${this::class.qualifiedName}")
   }
 
-  @Deprecated("Use V2 PKGS API: [AsyncPackageSearchProvider#packagesByQuery]")
-  @ScheduledForRemoval
-  override fun fulltextSearch(searchString: String, consumer: Consumer<RepositoryArtifactData>) =
-    myService.fulltextSearch(searchString, consumer)
-
-  @Deprecated("Use V2 PKGS API: [AsyncPackageSearchProvider#suggestPackages]")
-  @ScheduledForRemoval
-  override fun suggestPrefix(groupId: String?, artifactId: String?, consumer: Consumer<RepositoryArtifactData>) =
-    myService.suggestPrefix(groupId, artifactId, consumer)
-
-  override fun isLocal(): Boolean = false
-
   fun packagesByQuery(
     searchQuery: String,
     onlyStable: Boolean,
     onlyMpp: Boolean,
     repositoryIds: List<String>
   ): CompletableFuture<ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> =
-    myScope.future { myService.packagesByQuery(searchQuery, onlyStable, onlyMpp, repositoryIds) }
+    myScope.future { myClient.packagesByQuery(searchQuery, onlyStable, onlyMpp, repositoryIds) }
 
   fun suggestPackages(
     groupId: String?,
@@ -71,24 +58,24 @@ class AsyncPackageSearchProvider(
     onlyMpp: Boolean,
     repositoryIds: List<String>
   ): CompletableFuture<ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> =
-    myScope.future { myService.suggestPackages(groupId, artifactId, onlyMpp, repositoryIds) }
+    myScope.future { myClient.suggestPackages(groupId, artifactId, onlyMpp, repositoryIds) }
 
 
   fun packagesByRange(range: List<String>) =
-    myScope.future { myService.packagesByRange(range) }
+    myScope.future { myClient.packagesByRange(range) }
 
   fun packageByHash(hash: String, hashingAlgorithm: HashingAlgorithm) =
-    myScope.future { myService.packageByHash(hash, hashingAlgorithm) }
+    myScope.future { myClient.packageByHash(hash, hashingAlgorithm) }
 
   fun packageById(id: String) =
-    myScope.future { myService.packageById(id) }
+    myScope.future { myClient.packageById(id) }
 
   fun readmeByPackageId(id: String) =
-    myScope.future { myService.readmeByPackageId(id) }
+    myScope.future { myClient.readmeByPackageId(id) }
 
   fun statistics() =
-    myScope.future { myService.statistics() }
+    myScope.future { myClient.statistics() }
 
   fun repositories() =
-    myScope.future { myService.repositories() }
+    myScope.future { myClient.repositories() }
 }

@@ -25,13 +25,13 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
-import org.jetbrains.idea.packagesearch.api.PackageSearchProvider
+import org.jetbrains.idea.packagesearch.api.PackageSearchApiClient
 import org.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import org.jetbrains.packagesearch.api.v2.ApiRepository
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 
 internal class ProjectDataProvider(
-    private val apiClient: PackageSearchProvider,
+    private val apiClient: PackageSearchApiClient,
     private val packageCache: CoroutineLRUCache<InstalledDependency, ApiStandardPackage>
 ) {
 
