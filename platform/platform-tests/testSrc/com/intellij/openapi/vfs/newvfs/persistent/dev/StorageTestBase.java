@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
+import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.StorageLockContext;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -31,6 +32,9 @@ import static org.junit.Assert.*;
  * FIXME type something meaningful here
  */
 public abstract class StorageTestBase<S> {
+  static {
+    IndexDebugProperties.DEBUG = true;
+  }
 
   protected static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);
   protected static final int ENOUGH_RECORDS = 7_000_000;
@@ -236,7 +240,6 @@ public abstract class StorageTestBase<S> {
       );
     }
   }
-
 
 
   @NotNull

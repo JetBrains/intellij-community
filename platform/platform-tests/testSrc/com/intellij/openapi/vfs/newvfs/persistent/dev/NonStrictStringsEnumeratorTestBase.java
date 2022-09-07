@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
+import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.DataEnumerator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -18,7 +19,12 @@ import static org.junit.Assert.assertEquals;
 
 public abstract class NonStrictStringsEnumeratorTestBase<T extends DataEnumerator<String>> {
 
-  public static final int MANY = 500_000;
+  static{
+    IndexDebugProperties.DEBUG = true;
+  }
+
+  private static final int ENOUGH_VALUES = 500_000;
+
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -30,7 +36,7 @@ public abstract class NonStrictStringsEnumeratorTestBase<T extends DataEnumerato
   public void setUp() throws Exception {
     storageFile = temporaryFolder.newFile().toPath();
     enumerator = openEnumerator(storageFile);
-    manyValues = generateValues(MANY);
+    manyValues = generateValues(ENOUGH_VALUES);
   }
 
   @After

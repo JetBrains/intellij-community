@@ -103,35 +103,40 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
     this.file = file;
 
     final long fileSize = file.getLogicalSize();
-
-    if (fileSize >= HEADER_SIZE) {
-      final int version = file.getInt(HEADER_VERSION_OFFSET);
-      if (version != VERSION) {
-        throw new IOException("Enumerator persistent format version (" + VERSION + ") != read version (" + version + ")");
+    file.lockWrite();
+    try {
+      if (fileSize >= HEADER_SIZE) {
+        final int version = file.getInt(HEADER_VERSION_OFFSET);
+        if (version != VERSION) {
+          throw new IOException("Enumerator persistent format version (" + VERSION + ") != read version (" + version + ")");
+        }
+        final int safeClosedMarker = file.getInt(HEADER_SAFE_CLOSE_OFFSET);
+        //TODO check it against magic value
       }
-      final int safeClosedMarker = file.getInt(HEADER_SAFE_CLOSE_OFFSET);
-      //TODO check it against magic value
+      else {
+
+        file.putInt(HEADER_VERSION_OFFSET, VERSION);
+        file.putInt(HEADER_SAFE_CLOSE_OFFSET, 0); //TODO put value 'opened'
+      }
+
+      //TODO RC: do we really need to read through whole file? We could read nothing (leaving cache empty, but
+      //    this is OK from correctness PoV), or read last 2-3 CACHE_SIZE records to fill up recentNames/Ids cache.
+      //    ...But we can't read file backward that with <length> field _before_ string bytes, so for that
+      //    to work we need to put <length> _after_ string bytes -- which makes it hard to read file in a
+      //    regular start->end way.
+      //    Both issues could be solved by storing data page-aware: i.e. never put record on a page boundary,
+      //    move record on a new page if it doesn't fit on a current page fully. This way page always start
+      //    with record (length), hence it is enough to scan few last pages to fill up the cache. This also
+      //    should slightly improve performance of ResizeableMappedFile (see valuesAreBufferAligned ctor param)
+
+      nextOffsetToUse = HEADER_SIZE;
+      while (nextOffsetToUse < fileSize) {
+        final String value = valueOf(nextOffsetToUse);
+        nextOffsetToUse += value.getBytes(UTF_8).length + RECORD_HEADER_SIZE;
+      }
     }
-    else {
-      file.putInt(HEADER_VERSION_OFFSET, VERSION);
-      file.putInt(HEADER_SAFE_CLOSE_OFFSET, 0); //TODO put value 'opened'
-    }
-
-    //TODO RC: do we really need to read through whole file? We could read nothing (leaving cache empty, but
-    //    this is OK from correctness PoV), or read last 2-3 CACHE_SIZE records to fill up recentNames/Ids cache.
-    //    ...But we can't read file backward that with <length> field _before_ string bytes, so for that
-    //    to work we need to put <length> _after_ string bytes -- which makes it hard to read file in a
-    //    regular start->end way.
-    //    Both issues could be solved by storing data page-aware: i.e. never put record on a page boundary,
-    //    move record on a new page if it doesn't fit on a current page fully. This way page always start
-    //    with record (length), hence it is enough to scan few last pages to fill up the cache. This also
-    //    should slightly improve performance of ResizeableMappedFile (see valuesAreBufferAligned ctor param)
-
-
-    nextOffsetToUse = HEADER_SIZE;
-    while (nextOffsetToUse < fileSize) {
-      final String value = valueOf(nextOffsetToUse);
-      nextOffsetToUse += value.getBytes(UTF_8).length + RECORD_HEADER_SIZE;
+    finally {
+      file.unlockWrite();
     }
   }
 
