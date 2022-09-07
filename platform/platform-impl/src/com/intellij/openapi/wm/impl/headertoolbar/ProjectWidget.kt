@@ -155,7 +155,7 @@ internal class ProjectWidget(private val presentation: Presentation) : ToolbarCo
               row {
                 pathLbl = label(FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(projectPath), false))
                   .applyToComponent {
-                    font = JBFont.small()
+                    font = JBFont.smallOrNewUiMedium()
                     foreground = UIUtil.getLabelInfoForeground()
                   }.component
               }
