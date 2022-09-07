@@ -61,7 +61,7 @@ public class UsageCluster {
   @RequiresBackgroundThread
   public @NotNull Set<SimilarUsage> getOnlySelectedUsages(@NotNull Set<Usage> selectedUsages) {
     synchronized (myUsages) {
-      return myUsages.stream().filter(e -> e.isValid() && selectedUsages.contains(e)).collect(Collectors.toSet());
+      return myUsages.stream().filter(e -> selectedUsages.contains(e)).collect(Collectors.toSet());
     }
   }
 

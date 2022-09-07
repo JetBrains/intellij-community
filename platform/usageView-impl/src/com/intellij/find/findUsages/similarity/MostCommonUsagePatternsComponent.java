@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -49,13 +50,12 @@ import java.util.stream.Collectors;
 
 
 public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel implements Disposable {
-  private static final int CLUSTER_LIMIT = 20;
+  private static final int CLUSTER_LIMIT = 3;
   private final @NotNull Project myProject;
   private final @NotNull UsageViewImpl myUsageView;
   private final @NotNull JBPanelWithEmptyText myMainPanel;
   private final @NotNull JScrollPane myMostCommonUsageScrollPane;
   private final @NotNull Ref<Collection<UsageCluster>> mySortedClusters;
-  private final @NotNull ScheduledFuture<?> myFireEventsFuture;
   private @NotNull MostCommonUsagesToolbar myMostCommonUsagesToolbar;
   private final @NotNull RefreshAction myRefreshAction;
   private @NotNull Set<Usage> mySelectedUsages;
@@ -70,9 +70,11 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     super(true);
     isRefreshing = new AtomicBoolean(false);
     lastUsagesNumber = new AtomicInteger(0);
-    myFireEventsFuture =
-      EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this::refreshIfNeeded, 100, 100, TimeUnit.MILLISECONDS);
-    Disposer.register(this, () -> myFireEventsFuture.cancel(false));
+    if (Registry.is("similarity.find.usages.view.auto.update")) {
+      ScheduledFuture<?> fireEventsFuture =
+        EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this::refreshIfNeeded, 1000, 1000, TimeUnit.MILLISECONDS);
+      Disposer.register(this, () -> fireEventsFuture.cancel(true));
+    }
 
     mySession = session;
     myUsageView = usageView;
@@ -108,7 +110,9 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   }
 
   private void refreshIfNeeded() {
-    if (isScrolled() && !isRefreshing.get() && newResutlsAdded()) {
+    if (isScrolled() &&
+        !isRefreshing.get() &&
+        (newResultsAdded() && !myUsageView.isSearchInProgress())) {
       refresh();
     }
   }
@@ -117,7 +121,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     return myMostCommonUsageScrollPane.getVerticalScrollBar().getValue() == 0;
   }
 
-  private boolean newResutlsAdded() {
+  private boolean newResultsAdded() {
     return lastUsagesNumber.get() != myUsageView.getSelectedUsages().size();
   }
 
@@ -156,9 +160,9 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     Collection<UsageCluster> sortedClusters = mySortedClusters.get();
     if (myAlreadyRenderedSnippets < sortedClusters.size()) {
       sortedClusters.stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
-        final Set<SimilarUsage> usagesFilteredByGroup = new HashSet<>(cluster.getUsages());
-        SimilarUsage usage = ContainerUtil.getFirstItem(usagesFilteredByGroup);
-        renderClusterDescription(usage, usagesFilteredByGroup);
+        final Set<SimilarUsage> filteredUsages =
+          cluster.getUsages().stream().filter(e -> (e instanceof UsageInfo2UsageAdapter)).collect(Collectors.toSet());
+        renderClusterDescription(ContainerUtil.getFirstItem(filteredUsages), filteredUsages);
       });
       SimilarUsagesCollector.logMoreClustersLoaded(myProject, mySession, myAlreadyRenderedSnippets);
     }
@@ -166,7 +170,9 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
       int numberOfAlreadyRenderedNonClusteredUsages = myAlreadyRenderedSnippets - sortedClusters.size();
       if (numberOfAlreadyRenderedNonClusteredUsages < myNonClusteredUsages.size()) {
         myNonClusteredUsages.stream().skip(numberOfAlreadyRenderedNonClusteredUsages).limit(CLUSTER_LIMIT).forEach(e -> {
-          renderClusterDescription(e, Collections.emptySet());
+          if (e instanceof UsageInfo2UsageAdapter && e.isValid()) {
+            renderNonClusteredUsage((UsageInfo2UsageAdapter)e);
+          }
         });
         SimilarUsagesCollector.logMoreNonClusteredUsagesLoaded(myProject, mySession, myAlreadyRenderedSnippets);
       }
@@ -214,15 +220,26 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     isDisposed = true;
   }
 
-  private void renderClusterDescription(@NotNull Usage usage, @NotNull Set<@NotNull SimilarUsage> clusterUsages) {
+  private void renderClusterDescription(@Nullable SimilarUsage usage, @NotNull Set<@NotNull SimilarUsage> clusterUsages) {
     if (usage instanceof UsageInfo2UsageAdapter) {
-      final UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
-      UsageCodeSnippetComponent summaryRendererComponent = new UsageCodeSnippetComponent(Objects.requireNonNull(usageInfo.getElement()));
-      Disposer.register(this, summaryRendererComponent);
-      myMainPanel.add(createHeaderPanel(usageInfo, clusterUsages));
-      myMainPanel.add(summaryRendererComponent);
-      myAlreadyRenderedSnippets++;
+      final UsageInfo usageInfo = usage.getUsageInfo();
+      PsiElement element = usageInfo.getElement();
+      if (element != null) {
+        UsageCodeSnippetComponent summaryRendererComponent = new UsageCodeSnippetComponent(element);
+        Disposer.register(this, summaryRendererComponent);
+        myMainPanel.add(createHeaderPanel(usageInfo, clusterUsages));
+        myMainPanel.add(summaryRendererComponent);
+      }
     }
+    myAlreadyRenderedSnippets++;
+  }
+
+  private void renderNonClusteredUsage(UsageInfo2UsageAdapter usage) {
+    final UsageInfo usageInfo = usage.getUsageInfo();
+    UsageCodeSnippetComponent summaryRendererComponent = new UsageCodeSnippetComponent(Objects.requireNonNull(usageInfo.getElement()));
+    Disposer.register(this, summaryRendererComponent);
+    myMainPanel.add(createHeaderWithLocationLink(usageInfo));
+    myMainPanel.add(summaryRendererComponent);
   }
 
   private void addMostCommonUsagesForSelectedGroups() {
@@ -252,15 +269,21 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
 
   private @NotNull JPanel createHeaderPanel(@NotNull UsageInfo info,
                                             @NotNull Set<SimilarUsage> usageFilteredByGroup) {
+    final JPanel header = createHeaderWithLocationLink(info);
+    if (usageFilteredByGroup.size() > 1) {
+      header.add(createOpenSimilarUsagesActionLink(info, usageFilteredByGroup));
+    }
+    return header;
+  }
+
+  @NotNull
+  private static JPanel createHeaderWithLocationLink(@NotNull UsageInfo info) {
     final LocationLinkComponent component = new LocationLinkComponent(info);
     final JPanel header = new JPanel();
     header.setBackground(UIUtil.getTextFieldBackground());
     header.setLayout(new FlowLayout(FlowLayout.LEFT));
     header.add(component.getComponent());
     header.setBorder(JBUI.Borders.customLineTop(new JBColor(Gray.xCD, Gray.x51)));
-    if (usageFilteredByGroup.size() > 1) {
-      header.add(createOpenSimilarUsagesActionLink(info, usageFilteredByGroup));
-    }
     return header;
   }
 }

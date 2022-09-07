@@ -22,9 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 import java.awt.*;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.ActionPlaces.SIMILAR_USAGES_PREVIEW_TOOLBAR;
 
@@ -38,7 +38,7 @@ public class UsagePreviewToolbarWithSimilarUsagesLink extends JPanel {
     super(new FlowLayout(FlowLayout.LEFT));
     myUsageView = usageView;
     setBackground(UIUtil.getTextFieldBackground());
-    add(createSimilarUsagesLink(previewPanel, selectedInfos, new HashSet<>(cluster.getUsages())));
+    add(createSimilarUsagesLink(previewPanel, selectedInfos, cluster.getUsages()));
     add(createRefreshButton(previewPanel, usageView, selectedInfos));
   }
 
@@ -75,17 +75,18 @@ public class UsagePreviewToolbarWithSimilarUsagesLink extends JPanel {
       UsageViewBundle.message("similar.usages.show.0.similar.usages.title", usages.size() - 1), new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
+        Set<SimilarUsage> onlyValidUsages = usages.stream().filter(usage -> usage.isValid()).collect(Collectors.toSet());
         previewPanel.removeAll();
         previewPanel.revalidate();
         previewPanel.releaseEditor();
         UsageInfo firstSelectedInfo = ContainerUtil.getFirstItem(infos);
         assert firstSelectedInfo != null;
-        ClusteringSearchSession session = ContainerUtil.getFirstItem(usages).getClusteringSession();
+        ClusteringSearchSession session = ContainerUtil.getFirstItem(onlyValidUsages).getClusteringSession();
         SimilarUsagesCollector.logLinkToSimilarUsagesLinkFromUsagePreviewClicked(firstSelectedInfo.getProject(), session);
         final SimilarUsagesComponent similarComponent =
           new SimilarUsagesComponent(session, firstSelectedInfo, previewPanel);
         previewPanel.add(
-          new SimilarUsagesToolbar(similarComponent, UsageViewBundle.message("0.similar.usages", usages.size() - 1), null,
+          new SimilarUsagesToolbar(similarComponent, UsageViewBundle.message("0.similar.usages", onlyValidUsages.size() - 1), null,
                                    new AnActionLink(UsageViewBundle.message("0.similar.usages.back.to.usage.preview", UIUtil.leftArrow()),
                                                     new AnAction() {
                                                       @Override
@@ -94,7 +95,7 @@ public class UsagePreviewToolbarWithSimilarUsagesLink extends JPanel {
                                                         previewPanel.updateLayout(infos, myUsageView);
                                                       }
                                                     })), BorderLayout.NORTH);
-        previewPanel.add(similarComponent.createLazyLoadingScrollPane(usages));
+        previewPanel.add(similarComponent.createLazyLoadingScrollPane(onlyValidUsages));
       }
     });
     similarUsagesLink.setVisible(usages.size() > 1);
