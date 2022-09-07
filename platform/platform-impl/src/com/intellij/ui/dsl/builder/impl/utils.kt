@@ -155,15 +155,21 @@ private fun getLabelComponentFor(cell: CellBaseImpl<*>?): JComponent? {
 }
 
 private fun getLabelComponentFor(component: JComponent): JComponent? {
-  val delegate = component.getClientProperty(DslComponentProperty.LABEL_FOR) as? JComponent
-  if (delegate != null && delegate !== component) return getLabelComponentFor(delegate)
+  val labelFor = component.getClientProperty(DslComponentProperty.LABEL_FOR)
+  if (labelFor != null) {
+    if (labelFor is JComponent) {
+      return labelFor
+    }
+    else {
+      throw UiDslException("LABEL_FOR must be a JComponent: ${labelFor::class.java.name}")
+    }
+  }
 
   if (ALLOWED_LABEL_COMPONENTS.any { clazz -> clazz.isInstance(component) }) {
     return component
   }
   return null
 }
-
 
 internal fun warn(message: String) {
   if (FAIL_ON_WARN) {
