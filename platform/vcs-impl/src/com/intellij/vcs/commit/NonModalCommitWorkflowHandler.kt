@@ -53,11 +53,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   private var areCommitOptionsCreated = false
 
   private val uiDispatcher = AppUIExecutor.onUiThread().coroutineDispatchingContext()
-  private val exceptionHandler = CoroutineExceptionHandler { _, exception ->
-    if (exception !is ProcessCanceledException) LOG.error(exception)
-  }
   private val coroutineScope =
-    CoroutineScope(CoroutineName("commit workflow") + uiDispatcher + SupervisorJob() + exceptionHandler)
+    CoroutineScope(CoroutineName("commit workflow") + uiDispatcher + SupervisorJob())
 
   private var isCommitChecksResultUpToDate: RecentCommitChecks by observable(RecentCommitChecks.UNKNOWN) { _, oldValue, newValue ->
     if (oldValue == newValue) return@observable
