@@ -96,9 +96,11 @@ internal class LibraryUsageStatisticsProvider(private val project: Project) : Da
         }
       }
 
-    private val boundedExecutor: ExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor(
-      /* name = */ "LibraryUsageStatisticsProvider",
-      /* maxThreads = */ 1,
-    )
+    private val boundedExecutor: ExecutorService by lazy {
+      AppExecutorUtil.createBoundedApplicationPoolExecutor(
+        /* name = */ "LibraryUsageStatisticsProvider",
+        /* maxThreads = */ 1,
+      )
+    }
   }
 }
