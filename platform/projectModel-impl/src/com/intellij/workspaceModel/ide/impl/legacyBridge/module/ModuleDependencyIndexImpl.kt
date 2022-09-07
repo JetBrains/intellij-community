@@ -78,6 +78,14 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     return libraryId.tableId is LibraryTableId.ModuleLibraryTableId || libraryTablesListener.hasDependencyOn(libraryId)
   }
 
+  override fun hasDependencyOn(library: Library): Boolean {
+    return library.table == null || libraryTablesListener.hasDependencyOn(library)
+  }
+
+  override fun hasDependencyOn(sdk: Sdk): Boolean {
+    return jdkChangeListener.hasDependencyOn(sdk)
+  }
+
   private fun addTrackedLibraryAndJdkFromEntity(moduleEntity: ModuleEntity) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     LOG.debug { "Add tracked global libraries and JDK from ${moduleEntity.name}" }
@@ -170,7 +178,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       }
     }
 
-    private fun hasDependencyOn(library: Library) = librariesPerModuleMap.containsValue(getLibraryIdentifier(library))
+    fun hasDependencyOn(library: Library) = librariesPerModuleMap.containsValue(getLibraryIdentifier(library))
     fun hasDependencyOn(libraryId: LibraryId) = librariesPerModuleMap.containsValue(getLibraryIdentifier(libraryId))
 
     override fun afterLibraryRenamed(library: Library, oldName: String?) {
@@ -212,7 +220,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     private val watchedSdks = HashSet<RootProvider>()
 
     override fun jdkAdded(jdk: Sdk) {
-      if (hasDependencies(jdk)) {
+      if (hasDependencyOn(jdk)) {
         if (watchedSdks.add(jdk.rootProvider)) {
           eventDispatcher.multicaster.addedDependencyOn(jdk)
         }
@@ -245,7 +253,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       if (watchedSdks.remove(jdk.rootProvider)) {
         eventDispatcher.multicaster.removedDependencyOn(jdk)
       }
-      if (hasDependencies(jdk)) {
+      if (hasDependencyOn(jdk)) {
         eventDispatcher.multicaster.referencedSdkRemoved(jdk)
       }
     }
@@ -261,7 +269,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     fun removeTrackedJdk(sdkDependency: ModuleDependencyItem, moduleEntity: ModuleEntity) {
       sdkDependencies.remove(sdkDependency, moduleEntity.persistentId)
       val sdk = findSdk(sdkDependency)
-      if (sdk != null && !hasDependencies(sdk) && watchedSdks.remove(sdk.rootProvider)) {
+      if (sdk != null && !hasDependencyOn(sdk) && watchedSdks.remove(sdk.rootProvider)) {
         eventDispatcher.multicaster.removedDependencyOn(sdk)
       }
     }
@@ -278,7 +286,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       else -> null
     }
 
-    private fun hasDependencies(jdk: Sdk): Boolean {
+    fun hasDependencyOn(jdk: Sdk): Boolean {
       return sdkDependencies.get(ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)).isNotEmpty()
              || jdk.name == projectRootManager.projectSdkName && jdk.sdkType.name == projectRootManager.projectSdkTypeName && hasProjectSdkDependency()
     }

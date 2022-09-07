@@ -36,6 +36,16 @@ interface ModuleDependencyIndex {
    * Return `true` if at least one module has dependency on [libraryId]
    */
   fun hasDependencyOn(libraryId: LibraryId): Boolean
+
+  /**
+   * Return `true` if at least one module has dependency on [library]
+   */
+  fun hasDependencyOn(library: Library): Boolean
+
+  /**
+   * Return `true` if at least one module has dependency on [sdk]
+   */
+  fun hasDependencyOn(sdk: Sdk): Boolean
 }
 
 /**
