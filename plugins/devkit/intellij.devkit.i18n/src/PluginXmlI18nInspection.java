@@ -304,8 +304,8 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
                 xmlTag.setAttribute("bundle", bundleQName);
               }
 
-              String id = StringUtil.defaultIfEmpty(xmlTag.getAttributeValue("id"), "notificationID").replace(' ', '.');
-              String messageKey = "notification.group." + id;
+              String escapedId = StringUtil.defaultIfEmpty(StringUtil.toLowerCase(xmlTag.getAttributeValue("id")), "notification.id").replace(' ', '.');
+              String messageKey = "notification.group." + escapedId;
               xmlTag.setAttribute("key", messageKey);
 
               JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
