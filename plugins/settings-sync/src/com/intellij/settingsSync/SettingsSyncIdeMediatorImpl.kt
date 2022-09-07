@@ -23,6 +23,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.ui.JBColor
 import com.intellij.util.SmartList
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.*
 import com.intellij.util.ui.StartupUiUtil
 import java.io.InputStream
@@ -32,6 +33,7 @@ import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 import kotlin.io.path.pathString
+import kotlin.random.Random
 
 internal class SettingsSyncIdeMediatorImpl(private val componentStore: ComponentStoreImpl,
                                            private val rootConfig: Path,
@@ -59,6 +61,12 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     val settingsSyncFileState = snapshot.fileStates.find { it.file == "$OPTIONS_DIRECTORY/${SettingsSyncSettings.FILE_SPEC}" }
     if (settingsSyncFileState != null) {
       writeStatesToAppConfig(listOf(settingsSyncFileState))
+    }
+
+    if (SystemProperties.getBooleanProperty("settings.sync.test.fail.on.settings.apply", false)) {
+      if (Random.nextBoolean()) {
+        throw IllegalStateException("Applying settings failed")
+      }
     }
 
     // 2. update plugins
