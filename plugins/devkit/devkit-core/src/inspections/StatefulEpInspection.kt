@@ -2,14 +2,17 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.lang.jvm.*
+import com.intellij.lang.jvm.DefaultJvmElementVisitor
+import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmField
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.types.JvmReferenceType
+import com.intellij.lang.jvm.types.JvmType
 import com.intellij.lang.jvm.util.JvmInheritanceUtil.isInheritor
 import com.intellij.lang.jvm.util.JvmUtil
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.xml.XmlTag
@@ -28,7 +31,6 @@ class StatefulEpInspection : DevKitJvmInspection() {
     override fun visitField(field: JvmField): Boolean? {
       val clazz = field.containingClass ?: return null
       val className = clazz.name ?: return null
-      val fieldTypeClass = JvmUtil.resolveClass(field.type as? JvmReferenceType) ?: return null
 
       val isQuickFix by lazy(LazyThreadSafetyMode.NONE) { isInheritor(clazz, localQuickFixFqn) }
 
@@ -37,17 +39,18 @@ class StatefulEpInspection : DevKitJvmInspection() {
         return null
       }
 
-      if (isInheritor(fieldTypeClass, PsiElement::class.java.canonicalName)) {
+      if (isHoldingElement(field.type, PsiElement::class.java.canonicalName)) {
         val message = getMessage(isQuickFix)
         sink.highlight(message)
         return false
       }
 
-      if (isInheritor(fieldTypeClass, PsiReference::class.java.canonicalName)) {
+      if (isHoldingElement(field.type, PsiReference::class.java.canonicalName)) {
         sink.highlight(message(PsiReference::class.java.simpleName, isQuickFix))
         return false
       }
 
+      val fieldTypeClass = JvmUtil.resolveClass(field.type as? JvmReferenceType) ?: return null
       if (!isProjectFieldAllowed(field, clazz, targets) && isInheritor(fieldTypeClass, Project::class.java.canonicalName)) {
         sink.highlight(message(Project::class.java.simpleName, isQuickFix))
         return false
@@ -59,14 +62,28 @@ class StatefulEpInspection : DevKitJvmInspection() {
     override fun visitClass(clazz: JvmClass): Boolean? {
       if (canCapture(clazz) && isInheritor (clazz, localQuickFixFqn)) {
         for (capturedElement in getCapturedPoints(clazz)) {
-          if (capturedElement.resolved is PsiVariable && InheritanceUtil.isInheritor(capturedElement.resolved.type,
-                                                                                     PsiElement::class.java.name)) {
+          if (capturedElement.resolved is PsiVariable && isHoldingElement(capturedElement.resolved.type, PsiElement::class.java.canonicalName)) {
             (sink as HighlightSinkImpl).holder.registerProblem(capturedElement.reference, getMessage(true))
           }
         }
       }
       return super.visitClass(clazz)
     }
+  }
+
+  private val holderClasses = listOf(java.util.Collection::class.java.canonicalName,
+                                     java.util.Map::class.java.canonicalName,
+                                     com.intellij.openapi.util.Ref::class.java.canonicalName)
+
+  private fun isHoldingElement(type: JvmType, elementClass: String): Boolean {
+    val typeClass = JvmUtil.resolveClass(type as? JvmReferenceType) ?: return false
+    if (isInheritor(typeClass, elementClass)) {
+      return true
+    }
+    if (type is JvmReferenceType && type.typeArguments().iterator().hasNext() && holderClasses.any { isInheritor(typeClass, it) }) {
+      return type.typeArguments().any { isHoldingElement(it, elementClass) }
+    }
+    return false
   }
 
   private fun getMessage(isQuickFix: Boolean): @Nls String {
