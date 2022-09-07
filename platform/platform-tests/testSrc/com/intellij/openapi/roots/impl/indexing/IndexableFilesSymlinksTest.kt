@@ -164,7 +164,7 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
       sourcesSymlink = symlink("sources", sourcesDir)
     }
 
-    val sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdk")) { sdkModificator ->
+    val sdk = projectModelRule.addSdk("sdk") { sdkModificator ->
       sdkModificator.addRoot(classesSymlink.file, OrderRootType.CLASSES)
       sdkModificator.addRoot(sourcesSymlink.file, OrderRootType.SOURCES)
     }
@@ -207,7 +207,7 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
       sourcesSymlink = symlink("sources", sourcesDir)
     }
 
-    val sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdk")) { sdkModificator ->
+    val sdk = projectModelRule.addSdk("sdk") { sdkModificator ->
       sdkModificator.addRoot(classesSymlink.file, OrderRootType.CLASSES)
       sdkModificator.addRoot(sourcesSymlink.file, OrderRootType.SOURCES)
     }

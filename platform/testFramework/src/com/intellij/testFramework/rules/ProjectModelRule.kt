@@ -94,22 +94,28 @@ open class ProjectModelRule : TestRule {
 
   private fun generateImlPath(name: String) = projectRootDir.resolve("$name/$name.iml")
 
-  fun createSdk(name: String = "sdk"): Sdk {
-    return ProjectJdkTable.getInstance().createSdk(name, sdkType)
-  }
-
-  fun addSdk(sdk: Sdk, setup: (SdkModificator) -> Unit = {}): Sdk {
-    runWriteActionAndWait {
-      ProjectJdkTable.getInstance().addJdk(sdk, disposableRule.disposable)
-      val sdkModificator = sdk.sdkModificator
-      try {
-        setup(sdkModificator)
-      }
-      finally {
-        sdkModificator.commitChanges()
-      }
+  fun createSdk(name: String = "sdk", setup: (SdkModificator) -> Unit = {}): Sdk {
+    val sdk = ProjectJdkTable.getInstance().createSdk(name, sdkType)
+    val sdkModificator = sdk.sdkModificator
+    try {
+      setup(sdkModificator)
+    }
+    finally {
+      sdkModificator.commitChanges()
     }
     return sdk
+  }
+
+  fun addSdk(name: String = "sdk", setup: (SdkModificator) -> Unit = {}): Sdk {
+    val sdk = createSdk(name, setup)
+    addSdk(sdk)
+    return sdk
+  }
+  
+  fun addSdk(sdk: Sdk) {
+    runWriteActionAndWait {
+      ProjectJdkTable.getInstance().addJdk(sdk, disposableRule.disposable)
+    }
   }
 
   fun addProjectLevelLibrary(name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
