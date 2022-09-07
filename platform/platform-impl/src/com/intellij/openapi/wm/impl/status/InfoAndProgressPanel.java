@@ -58,7 +58,6 @@ import java.util.List;
 import java.util.*;
 
 public final class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget, UISettingsListener {
-
   @ApiStatus.Internal
   public enum AutoscrollLimit {
     NOT_ALLOWED, ALLOW_ONCE, UNLIMITED
@@ -217,7 +216,6 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
         myRefreshAndInfoPanel.remove(c);
         myCentralComponent = null;
       }
-
       if (component != null) {
         myRefreshAndInfoPanel.add(component, BorderLayout.CENTER);
       }
@@ -248,8 +246,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     return this;
   }
 
-  @NotNull
-  List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {
+  @NotNull List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {
     synchronized (myOriginals) {
       if (myOriginals.isEmpty()) return Collections.emptyList();
 
@@ -269,7 +266,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
   }
 
   void addProgress(@NotNull ProgressIndicatorEx original, @NotNull TaskInfo info) {
-    ApplicationManager.getApplication().assertIsDispatchThread(); // openProcessPopup may require dispatch thread
+    ApplicationManager.getApplication().assertIsDispatchThread(); // `openProcessPopup` may require the dispatch thread
 
     synchronized (myOriginals) {
       if (myOriginals.isEmpty()) {
@@ -394,9 +391,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
-  @Nullable
-  @NlsContexts.StatusBarText
-  public String setText(@Nullable @NlsContexts.StatusBarText String text, @Nullable String requestor) {
+  public @Nullable @NlsContexts.StatusBarText String setText(@Nullable @NlsContexts.StatusBarText String text, @Nullable String requestor) {
     if (myShowNavBar) return text;
 
     if (Strings.isEmpty(text) &&!Objects.equals(requestor, myCurrentRequestor) && !EventLog.LOG_REQUESTOR.equals(requestor)) {
@@ -478,9 +473,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     return () -> SwingUtilities.invokeLater(balloon::hide);
   }
 
-  private @NotNull MyInlineProgressIndicator createInlineDelegate(@NotNull TaskInfo info,
-                                                                  @NotNull ProgressIndicatorEx original,
-                                                                  boolean compact) {
+  private MyInlineProgressIndicator createInlineDelegate(TaskInfo info, ProgressIndicatorEx original, boolean compact) {
     Set<MyInlineProgressIndicator> inlines = myOriginalToInlines.computeIfAbsent(original, __ -> new HashSet<>());
     if (!inlines.isEmpty()) {
       for (MyInlineProgressIndicator eachInline : inlines) {
@@ -490,8 +483,8 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       }
     }
 
-    MyInlineProgressIndicator inline = compact ? new MyInlineProgressIndicator(info, original) :
-                                       new ProgressPanelProgressIndicator(info, original);
+    MyInlineProgressIndicator inline =
+      compact ? new MyInlineProgressIndicator(info, original) : new ProgressPanelProgressIndicator(info, original);
     myInlineToOriginal.put(inline, original);
     inlines.add(inline);
 
@@ -737,21 +730,18 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       cancel.setVisible(painting || !suspend.isVisible());
     }
 
-    @NotNull
-    JBIterable<ProgressButton> createPresentationButtons() {
+    @NotNull JBIterable<ProgressButton> createPresentationButtons() {
       ProgressButton suspend = createSuspendButton();
       ProgressButton cancel = createCancelButton();
       return JBIterable.of(suspend).append(new ProgressButton(cancel.button, () -> updateCancelButton(suspend.button, cancel.button)));
     }
 
-    @NotNull
     private ProgressButton createSuspendButton() {
       InplaceButton suspendButton = new InplaceButton("", AllIcons.Actions.Pause, e -> createSuspendRunnable().run()).setFillBg(false);
       return new ProgressButton(suspendButton, createSuspendUpdateRunnable(suspendButton));
     }
 
-    @NotNull
-    protected Runnable createSuspendRunnable() {
+    protected @NotNull Runnable createSuspendRunnable() {
       return () -> {
         ProgressSuspender suspender = getSuspender();
         if (suspender == null) {
@@ -767,8 +757,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       };
     }
 
-    @NotNull
-    protected Runnable createSuspendUpdateRunnable(@NotNull InplaceButton suspendButton) {
+    protected @NotNull Runnable createSuspendUpdateRunnable(@NotNull InplaceButton suspendButton) {
       suspendButton.setVisible(false);
 
       return () -> {
@@ -985,17 +974,17 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
                 setBounds(myProcessIconComponent, 0, centerY, iconSize, false);
               }
               else {
-                boolean minisWidth = true;
+                boolean miniWidth = true;
 
                 if (myMultiProcessLink.isVisible()) {
                   rightX = setBounds(myMultiProcessLink, rightX, centerY, null, true) - gap;
                 }
                 else if (width < 60) {
                   rightX = 0;
-                  minisWidth = false;
+                  miniWidth = false;
                 }
 
-                setBounds(myProcessIconComponent, rightX, centerY, iconSize, minisWidth);
+                setBounds(myProcessIconComponent, rightX, centerY, iconSize, miniWidth);
               }
 
               myProcessIconComponent.setVisible(true);
@@ -1035,11 +1024,11 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       myMultiProcessLink.setVisible(false);
     }
 
-    private int getGap() {
+    private static int getGap() {
       return JBUI.scale(10);
     }
 
-    private int setBounds(@NotNull JComponent component, int x, int centerY, @Nullable Dimension size, boolean minusWidth) {
+    private static int setBounds(JComponent component, int x, int centerY, @Nullable Dimension size, boolean minusWidth) {
       if (size == null) {
         size = component.getPreferredSize();
       }
