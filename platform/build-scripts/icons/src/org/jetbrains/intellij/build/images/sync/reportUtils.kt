@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.images.sync
 
 import java.nio.file.Path
-import java.util.stream.Collectors
 
 internal fun report(context: Context, skipped: Int): String {
   val (devIcons, icons) = context.devIcons.size to context.icons.size
@@ -54,30 +53,23 @@ internal fun commit(context: Context) {
     return
   }
 
-  val repos = context.iconsChanges().map {
-    findRepo(context.devRepoRoot.resolve(it))
-  }.distinct()
-  repos.forEach { repo ->
-    stageFiles(gitStatus(repo).all(), repo)
-  }
-  if (repos.all { gitStage(it).isEmpty() }) {
+  stageFiles(gitStatus(context.devRepoRoot).all(), context.devRepoRoot)
+  if (gitStage(context.devRepoRoot).isEmpty()) {
     log("Nothing to commit")
     context.byDesigners.clear()
   }
   else {
     val user = triggeredBy()
-    val branch = repos.parallelStream().map(::head).collect(Collectors.toSet()).single()
-    commit(branch, user.name, user.email, context.iconsCommitsToSync.commitMessage(), repos)
+    val branch = head(context.devRepoRoot)
+    commit(branch, user.name, user.email, context.iconsCommitsToSync.commitMessage(), context.devRepoRoot)
   }
 }
 
-internal fun pushToIconsRepo(context: Context): Collection<CommitInfo> {
-  val repos = listOf(context.iconRepo)
-  val master = head(context.iconRepo)
-  return context.devCommitsToSync.values.flatten()
+internal fun pushToIconsRepo(branch: String, context: Context): List<CommitInfo> =
+  context.devCommitsToSync.values.flatten()
     .groupBy(CommitInfo::committer)
-    .flatMap { (committer, commits) ->
-      repos.parallelStream().forEach { checkout(it, master) }
+    .mapNotNull { (committer, commits) ->
+      checkout(context.iconRepo, branch)
       commits.forEach { commit ->
         val change = context.byCommit[commit.hash] ?: error("Unable to find changes for commit ${commit.hash} by $committer")
         log("$committer syncing ${commit.hash} in ${context.iconsRepoName}")
@@ -86,14 +78,13 @@ internal fun pushToIconsRepo(context: Context): Collection<CommitInfo> {
       if (gitStage(context.iconRepo).isEmpty()) {
         log("Nothing to commit")
         context.byDev.clear()
-        emptyList()
+        null
       }
       else {
-        commitAndPush(master, committer.name, committer.email,
-                      commits.groupBy(CommitInfo::repo).commitMessage(), repos)
+        commitAndPush(branch, committer.name, committer.email,
+                      commits.groupBy(CommitInfo::repo).commitMessage(), context.iconRepo)
       }
     }
-}
 
 private fun findCommitsByRepo(context: Context, root: Path, changes: Changes): Map<Path, Collection<CommitInfo>> {
   val commits = findCommits(context, root, changes)
@@ -104,18 +95,7 @@ private fun findCommitsByRepo(context: Context, root: Path, changes: Changes): M
   return commits.map { it.key }.groupBy(CommitInfo::repo)
 }
 
-@Volatile
-private var reposMap = emptyMap<Path, Path>()
-private val reposMapGuard = Any()
-
-internal fun findRepo(file: Path): Path {
-  if (!reposMap.containsKey(file)) synchronized(reposMapGuard) {
-    if (!reposMap.containsKey(file)) {
-      reposMap = reposMap + (file to findGitRepoRoot(file, silent = true))
-    }
-  }
-  return reposMap.getValue(file)
-}
+internal fun findRepo(file: Path) = findGitRepoRoot(file, silent = true)
 
 private fun findCommits(context: Context, root: Path, changes: Changes) = changes.all()
   .mapNotNull { change ->
@@ -137,18 +117,17 @@ private fun findCommits(context: Context, root: Path, changes: Changes) = change
 
 private fun commitAndPush(branch: String, user: String,
                           email: String, message: String,
-                          repos: Collection<Path>) = repos.parallelStream().map {
-  execute(it, GIT, "checkout", "-B", branch)
-  commitAndPush(it, branch, message, user, email)
-}.toList()
+                          repo: Path): CommitInfo = run {
+  execute(repo, GIT, "checkout", "-B", branch)
+  commitAndPush(repo, branch, message, user, email)
+}
 
 private fun commit(branch: String, user: String,
                    email: String, message: String,
-                   repos: Collection<Path>) = repos.parallelStream().map { repo ->
+                   repo: Path) {
   execute(repo, GIT, "checkout", "-B", branch)
   commit(repo, message, user, email)
-  commitInfo(repo) ?: error("Unable to read last commit")
-}.toList()
+}
 
 private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel")
 

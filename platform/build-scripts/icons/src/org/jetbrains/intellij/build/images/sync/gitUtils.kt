@@ -61,26 +61,6 @@ private fun listGitTree(repo: Path, dirToList: Path?, fileFilter: (Path) -> Bool
 }
 
 /**
- * @param repos multiple git repos from which to list files
- * @param root root repo
- * @return map of file paths (relative to [root]) to [GitObject]
- */
-internal fun listGitObjects(root: Path, repos: List<Path>, fileFilter: (Path) -> Boolean = { true }): Map<String, GitObject> {
-  return repos.parallelStream().flatMap { repo ->
-    listGitTree(repo, null, fileFilter).map {
-      // root relative <file> path to git object
-      val rootRelativePath = root.relativize(repo).toString()
-      if (rootRelativePath.isEmpty()) {
-        it.first
-      }
-      else {
-        "$rootRelativePath/${it.first}"
-      } to it.second
-    }
-  }.collect(Collectors.toMap({ it.first }, { it.second }))
-}
-
-/**
  * @param path path relative to [repo]
  */
 internal data class GitObject(val path: String, val hash: String, val repo: Path) {
@@ -158,7 +138,7 @@ internal fun commitAndPush(repo: Path, branch: String, message: String, user: St
   return commitInfo(repo) ?: error("Unable to read last commit")
 }
 
-internal fun checkout(repo: Path, branch: String) = execute(repo, GIT, "checkout", branch)
+internal fun checkout(repo: Path, branch: String) = execute(repo, GIT, "checkout", "-B", branch)
 
 internal fun push(repo: Path, spec: String, user: String? = null, email: String? = null, force: Boolean = false) =
   retry(doRetry = { beforePushRetry(it, repo, spec, user, email) }) {

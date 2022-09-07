@@ -14,15 +14,14 @@ fun main(args: Array<String>) {
 }
 
 internal fun checkIcons(context: Context = Context()) {
-  val devRepoVcsRoots = vcsRoots(context.devRepoRoot)
   callWithTimer("Searching for changed icons..") {
     when {
       context.iconsCommitHashesToSync.isNotEmpty() -> searchForChangedIconsByDesigners(context)
-      context.devIconsCommitHashesToSync.isNotEmpty() -> searchForChangedIconsByDev(context, devRepoVcsRoots)
+      context.devIconsCommitHashesToSync.isNotEmpty() -> searchForChangedIconsByDev(context)
       else -> {
         context.icons = readIconsRepo(context)
-        context.devIcons = readDevRepo(context, devRepoVcsRoots)
-        searchForAllChangedIcons(context, devRepoVcsRoots)
+        context.devIcons = readDevRepo(context)
+        searchForAllChangedIcons(context)
       }
     }
   }
@@ -58,8 +57,9 @@ internal fun checkIcons(context: Context = Context()) {
 }
 
 private fun push(context: Context) {
-  val pushedCommits = pushToIconsRepo(context)
-  if (pushedCommits.isNotEmpty() && context.notifySlack) {
+  val branch = head(context.devRepoRoot)
+  val pushedCommits = pushToIconsRepo(branch, context)
+  if (pushedCommits.isNotEmpty() && context.notifySlack && branch == "master") {
     notifySlackChannel(
       pushedCommits.joinToString("\n") { pushedCommit ->
         val devCommitsLinks = context.devCommitsToSync
@@ -75,7 +75,7 @@ private fun push(context: Context) {
 
 private enum class SearchType { MODIFIED, REMOVED_BY_DEV, REMOVED_BY_DESIGNERS }
 
-private fun searchForAllChangedIcons(context: Context, devRepoVcsRoots: Collection<Path>) {
+private fun searchForAllChangedIcons(context: Context) {
   log("Searching for all")
   val devIconsTmp = HashMap(context.devIcons)
   val modified = mutableListOf<String>()
@@ -90,7 +90,7 @@ private fun searchForAllChangedIcons(context: Context, devRepoVcsRoots: Collecti
   context.byDev.added += devIconsTmp.keys
   Stream.of(
     { SearchType.MODIFIED to modifiedByDev(context, modified) },
-    { SearchType.REMOVED_BY_DEV to removedByDev(context, context.byDesigners.added, devRepoVcsRoots, context.devRepoDir) },
+    { SearchType.REMOVED_BY_DEV to removedByDev(context, context.byDesigners.added) },
     {
       val iconsDir = context.iconRepo.relativize(context.iconRepoDir).toString().let { if (it.isEmpty()) "" else "$it/" }
       SearchType.REMOVED_BY_DESIGNERS to removedByDesigners(context, context.byDev.added, context.iconRepo, iconsDir)
@@ -147,7 +147,7 @@ private fun searchForChangedIconsByDesigners(context: Context) {
   log(context.iconsCommitHashesToSync.joinToString())
 }
 
-private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<Path>) {
+private fun searchForChangedIconsByDev(context: Context) {
   fun asIcons(files: Collection<String>, repo: Path): List<String> {
     return files.asSequence()
       .filter { ImageExtension.fromName(it) != null }
@@ -158,19 +158,17 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<P
   }
 
   ArrayList(context.devIconsCommitHashesToSync).mapNotNull { commit ->
-    devRepoVcsRoots.asSequence().map { repo ->
-      try {
-        commitInfo(repo, commit)
-      }
-      catch (ignored: Exception) {
-        null
-      }
-    }.filterNotNull().firstOrNull().apply {
-      if (this == null) {
-        log("No repo is found for $commit, skipping")
-        context.devIconsCommitHashesToSync.remove(commit)
-      }
+    val commitInfo = try {
+      commitInfo(context.devRepoRoot, commit)
     }
+    catch (ignored: Exception) {
+      null
+    }
+    if (commitInfo == null) {
+      log("No repo is found for $commit, skipping")
+      context.devIconsCommitHashesToSync.remove(commit)
+    }
+    commitInfo
   }.sortedBy { it.timestamp }.forEach {
     val commit = it.hash
     val before = context.devChanges().size
@@ -193,18 +191,11 @@ private fun readIconsRepo(context: Context) = protectStdErr {
   }
 }
 
-private fun readDevRepo(context: Context, devRepoVcsRoots: List<Path>) = protectStdErr {
+private fun readDevRepo(context: Context) = protectStdErr {
   if (context.skipDirsPattern != null) {
     log("Using pattern ${context.skipDirsPattern} to skip dirs")
   }
-  val devIcons = if (devRepoVcsRoots.size == 1 && devRepoVcsRoots.contains(context.devRepoRoot)) {
-    // read icons from devRepoRoot
-    listGitObjects(context.devRepoRoot, context.devRepoDir, context.devIconsFilter)
-  }
-  else {
-    // read icons from multiple repos in devRepoRoot
-    listGitObjects(context.devRepoRoot, devRepoVcsRoots, context.devIconsFilter)
-  }
+  val devIcons = listGitObjects(context.devRepoRoot, context.devRepoDir, context.devIconsFilter)
   if (devIcons.isEmpty()) error("${context.devRepoName} doesn't contain icons")
   devIcons.toMutableMap()
 }
@@ -247,26 +238,16 @@ private fun removedByDesigners(context: Context, addedByDev: Collection<String>,
   }.toList()
 }
 
-private fun removedByDev(context: Context,
-                         addedByDesigners: Collection<String>,
-                         devRepos: Collection<Path>,
-                         devRepoDir: Path): List<String> {
+private fun removedByDev(context: Context, addedByDesigners: Collection<String>): List<String> {
   return addedByDesigners.parallelStream().filter {
-    val byDev = latestChangeTime(devRepoDir.resolve(it).toAbsolutePath().toString(), devRepos)
+    val file = context.devRepoDir.resolve(it).toAbsolutePath().toString()
+    val prefix = "${context.devRepoRoot.toAbsolutePath()}/"
+    val byDev = if (file.startsWith(prefix)) {
+      latestChangeTime(file.removePrefix(prefix), context.devRepoRoot)
+    } else -1
     // latest changes are made by developers
     byDev > 0 && latestChangeTime(context.icons[it]) < byDev
   }.toList()
-}
-
-private fun latestChangeTime(file: String, repos: Collection<Path>): Long {
-  for (repo in repos) {
-    val prefix = "${repo.toAbsolutePath()}/"
-    if (file.startsWith(prefix)) {
-      val lct = latestChangeTime(file.removePrefix(prefix), repo)
-      if (lct > 0) return lct
-    }
-  }
-  return -1
 }
 
 private fun modifiedByDev(context: Context, modified: Collection<String>) = modified.parallelStream().filter {
