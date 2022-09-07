@@ -333,12 +333,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     UIManager.LookAndFeelInfo expectedLaf;
     if (systemIsDark) {
       expectedLaf = preferredDarkLaf;
+      if (expectedLaf == null && ExperimentalUI.isNewUI()) {
+        expectedLaf = findLafByName("Dark");
+      }
       if (expectedLaf == null) {
         expectedLaf = getDefaultDarkLaf();
       }
     }
     else {
       expectedLaf = preferredLightLaf;
+      if (expectedLaf == null && ExperimentalUI.isNewUI()) {
+        expectedLaf = findLafByName("Light");
+      }
       if (expectedLaf == null) {
         expectedLaf = getDefaultLightLaf();
       }
@@ -583,6 +589,15 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     throw new IllegalStateException("No default L&F found: " + defaultLafName);
+  }
+
+  private @Nullable UIManager.LookAndFeelInfo findLafByName(@NotNull String name) {
+    for (UIManager.LookAndFeelInfo laf : getInstalledLookAndFeels()) {
+      if (name.equals(laf.getName())) {
+        return laf;
+      }
+    }
+    return null;
   }
 
   private @Nullable UIManager.LookAndFeelInfo findLaf(@NotNull String className) {
@@ -1141,6 +1156,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     autodetect = value;
     if (autodetect) {
       detectAndSyncLaf();
+    }
+    else if (ExperimentalUI.isNewUI()) {
+      if ("Light".equals(myCurrentLaf.getName()) && myCurrentLaf == preferredLightLaf) {
+        preferredLightLaf = null;
+      }
+      else if ("Dark".equals(myCurrentLaf.getName()) && myCurrentLaf == preferredDarkLaf) {
+        preferredDarkLaf = null;
+      }
     }
   }
 
