@@ -192,6 +192,11 @@ public final class TextDiffViewerUtil {
     private DefaultActionGroup myActions;
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setText(getText(getValue()));
@@ -227,6 +232,11 @@ public final class TextDiffViewerUtil {
 
     private class MyAction extends AnAction implements Toggleable, DumbAware {
       @NotNull private final T myOption;
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
 
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -386,6 +396,11 @@ public final class TextDiffViewerUtil {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return mySettings.isEnableSyncScroll();
     }
@@ -404,6 +419,11 @@ public final class TextDiffViewerUtil {
       super(DiffBundle.message("collapse.unchanged.fragments"), AllIcons.Actions.Collapseall);
       mySettings = settings;
       myFoldingSupport = foldingSupport;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -443,6 +463,11 @@ public final class TextDiffViewerUtil {
       if (isVisible()) { // apply default state
         setSelected(isSelected());
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

@@ -715,6 +715,11 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       getShowActions().get(0).actionPerformed(e);
     }
@@ -787,12 +792,17 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
   private class MyChangeDiffToolAction extends ComboBoxAction implements DumbAware {
     // TODO: add icons for diff tools, show only icon in toolbar - to reduce jumping on change ?
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
 
       DiffTool activeTool = myState.getActiveTool();
+      //noinspection DialogTitleCapitalization
       presentation.setText(activeTool.getName());
 
       if (myForcedDiffTool != null) {
@@ -826,8 +836,14 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     @NotNull private final DiffTool myDiffTool;
 
     private DiffToolToggleAction(@NotNull DiffTool tool) {
+      //noinspection DialogTitleCapitalization
       super(tool.getName());
       myDiffTool = tool;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -849,6 +865,11 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   private class ShowActionGroupPopupAction extends DumbAwareAction {
     ShowActionGroupPopupAction() {
       ActionUtil.copyFrom(this, "Diff.ShowSettingsPopup");
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -902,6 +923,11 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
         e.getPresentation().setEnabledAndVisible(true);
@@ -947,6 +973,11 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   protected class MyPrevDifferenceAction extends PrevDifferenceAction {
 
     public MyPrevDifferenceAction() {
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -1055,6 +1086,11 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     public MyNextChangeAction() { }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
         e.getPresentation().setEnabledAndVisible(true);
@@ -1080,6 +1116,11 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
   protected class MyPrevChangeAction extends PrevChangeAction {
     public MyPrevChangeAction() { }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {

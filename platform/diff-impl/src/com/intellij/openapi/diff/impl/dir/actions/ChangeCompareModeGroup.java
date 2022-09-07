@@ -46,6 +46,11 @@ public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutPr
     e.getPresentation().setEnabledAndVisible(mySettings.showCompareModes);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
