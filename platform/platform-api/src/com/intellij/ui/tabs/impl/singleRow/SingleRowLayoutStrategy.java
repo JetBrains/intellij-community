@@ -35,6 +35,8 @@ public abstract class SingleRowLayoutStrategy {
 
   public abstract int getLengthIncrement(final Dimension dimension);
 
+  public abstract int getAdditionalLength();
+
   public abstract int getMinPosition(final Rectangle bounds);
 
   public abstract int getMaxPosition(final Rectangle bounds);
@@ -130,6 +132,11 @@ public abstract class SingleRowLayoutStrategy {
     @Override
     public int getLengthIncrement(final Dimension labelPrefSize) {
       return myTabs.isEditorTabs() ? Math.max(labelPrefSize.width, MIN_TAB_WIDTH) : labelPrefSize.width;
+    }
+
+    @Override
+    public int getAdditionalLength() {
+      return 0;
     }
 
     @Override
@@ -368,6 +375,11 @@ public abstract class SingleRowLayoutStrategy {
     @Override
     public int getLengthIncrement(final Dimension labelPrefSize) {
       return labelPrefSize.height;
+    }
+
+    @Override
+    public int getAdditionalLength() {
+      return ExperimentalUI.isNewUI() ? JBUI.scale(32) : 0;
     }
 
     @Override

@@ -1944,7 +1944,7 @@ public class JBTabsImpl extends JComponent
     if (myScrollBarModel.getValueIsAdjusting()) return;
 
     boolean pinnedTabsSeparately = myTableLayout.myLastTableLayout != null && TabLayout.showPinnedTabsSeparately();
-    int maximum = 0;
+    int maximum = myLastLayoutPass.getRequiredLength();
     int value = 0;
     int extent = 0;
 
@@ -1954,7 +1954,6 @@ public class JBTabsImpl extends JComponent
       int theMostLeftX = 0;
       for (TabLabel tab : myInfo2Label.values()) {
         if (tab.isPinned() && pinnedTabsSeparately) continue;
-        maximum += tab.getPreferredSize().width + (isEditorTabs() ? getTabHGap() : 0);
         theMostLeftX = Math.min(theMostLeftX, tab.getX());
       }
       value = Math.max(0, -theMostLeftX);
@@ -1968,7 +1967,6 @@ public class JBTabsImpl extends JComponent
       int theMostTopX = 0;
       for (TabLabel tab : myInfo2Label.values()) {
         if (tab.isPinned() && pinnedTabsSeparately) continue;
-        maximum += tab.getPreferredSize().height + (isEditorTabs() ? getTabHGap() : 0);
         theMostTopX = Math.min(theMostTopX, tab.getY());
       }
       value = Math.max(0, -theMostTopX);

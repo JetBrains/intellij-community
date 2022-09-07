@@ -56,4 +56,9 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   public Rectangle getHeaderRectangle() {
     return (Rectangle)tabRectangle.clone();
   }
+
+  @Override
+  public int getRequiredLength() {
+    return requiredLength;
+  }
 }

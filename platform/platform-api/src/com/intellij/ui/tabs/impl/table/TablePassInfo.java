@@ -47,4 +47,9 @@ public class TablePassInfo extends LayoutPassInfo {
   public Rectangle getHeaderRectangle() {
     return (Rectangle)toFitRec.clone();
   }
+
+  @Override
+  public int getRequiredLength() {
+    return requiredLength;
+  }
 }
