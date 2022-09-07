@@ -302,29 +302,24 @@ abstract class AbstractCommitWorkflow(val project: Project) {
              LocalCommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
     }
 
-    private fun wrapWithCommitMetaHandler(metaHandler: CheckinMetaHandler, task: Runnable): Runnable {
-      return Runnable {
-        try {
-          LOG.debug("CheckinMetaHandler.runCheckinHandlers: $metaHandler")
-          metaHandler.runCheckinHandlers(task)
-        }
-        catch (e: ProcessCanceledException) {
-          LOG.debug("CheckinMetaHandler cancelled $metaHandler")
-          throw e
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
-          task.run()
-        }
-      }
-    }
-
     suspend fun runMetaHandlers(metaHandlers: List<CheckinMetaHandler>) {
       // reversed to have the same order as when wrapping meta handlers into each other
       for (metaHandler in metaHandlers.reversed()) {
         suspendCancellableCoroutine<Unit> { continuation ->
-          val handlerCall = wrapWithCommitMetaHandler(metaHandler) { continuation.resume(Unit) }
-          handlerCall.run()
+          try {
+            LOG.debug("CheckinMetaHandler.runCheckinHandlers: $metaHandler")
+            metaHandler.runCheckinHandlers {
+              continuation.resume(Unit)
+            }
+          }
+          catch (e: ProcessCanceledException) {
+            LOG.debug("CheckinMetaHandler cancelled $metaHandler")
+            throw e
+          }
+          catch (e: Throwable) {
+            LOG.error(e)
+            continuation.resume(Unit)
+          }
         }
       }
     }
