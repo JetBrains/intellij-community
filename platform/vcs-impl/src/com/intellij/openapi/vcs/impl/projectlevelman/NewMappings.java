@@ -596,6 +596,10 @@ public final class NewMappings implements Disposable {
       }
     }
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("NewMappings.cleanupMappings", getDirectoryMappings(), filteredMappings);
+    }
+
     updateVcsMappings(filteredMappings);
   }
 

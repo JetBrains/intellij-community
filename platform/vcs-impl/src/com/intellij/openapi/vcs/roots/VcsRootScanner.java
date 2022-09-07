@@ -34,6 +34,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import static com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.*;
 
 @Service
@@ -135,6 +136,7 @@ public final class VcsRootScanner implements Disposable {
     if (myAlarm.isDisposed()) return;
     if (VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList().isEmpty()) return;
 
+    MAPPING_DETECTION_LOG.debug("VcsRootScanner.scheduleScan");
     myAlarm.cancelAllRequests(); // one scan is enough, no need to queue, they all do the same
     myAlarm.addRequest(() -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(myAlarm, () -> {
       myRootProblemNotifier.rescanAndNotifyIfNeeded();
@@ -179,6 +181,7 @@ public final class VcsRootScanner implements Disposable {
     public void runActivity(@NotNull Project project) {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
       if (!TrustedProjects.isTrusted(project)) return; // vcs is disabled
+      MAPPING_DETECTION_LOG.debug("VcsRootScanner.start activity");
       getInstance(project).scheduleScan();
     }
 

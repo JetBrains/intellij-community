@@ -33,6 +33,7 @@ import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.ROOTS_INVALID;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.ROOTS_REGISTERED;
 import static com.intellij.openapi.vcs.VcsRootError.Type.UNREGISTERED_ROOT;
+import static com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.ui.UIUtil.BR;
 
@@ -77,7 +78,7 @@ public final class VcsRootProblemNotifier {
       }
       return;
     }
-    LOG.debug("Following errors detected: " + errors);
+    MAPPING_DETECTION_LOG.debug("Following errors detected: " + errors);
 
     Collection<VcsRootError> importantUnregisteredRoots = getImportantUnregisteredMappings(errors);
     Collection<VcsRootError> invalidRoots = getInvalidRoots(errors);

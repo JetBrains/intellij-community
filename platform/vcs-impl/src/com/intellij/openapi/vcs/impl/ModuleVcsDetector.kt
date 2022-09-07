@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsDirectoryMapping
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -23,6 +24,7 @@ internal class ModuleVcsDetector(private val project: Project) {
   }
 
   private fun startDetection() {
+    MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.startDetection")
     val busConnection = project.messageBus.connect()
 
     WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, MyWorkspaceModelChangeListener())
@@ -35,12 +37,15 @@ internal class ModuleVcsDetector(private val project: Project) {
 
   @RequiresBackgroundThread
   private fun autoDetectDefaultRoots() {
+    MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.autoDetectDefaultRoots")
     if (vcsManager.haveDefaultMapping() != null) return
+
+    val contentRoots = DefaultVcsRootPolicy.getInstance(project).defaultVcsRoots
+    MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.autoDetectDefaultRoots - contentRoots", contentRoots)
 
     val usedVcses = mutableSetOf<AbstractVcs>()
     val detectedRoots = mutableSetOf<Pair<VirtualFile, AbstractVcs>>()
 
-    val contentRoots = DefaultVcsRootPolicy.getInstance(project).defaultVcsRoots
     contentRoots
       .forEach { root ->
         val foundVcs = vcsManager.findVersioningVcs(root)
@@ -50,6 +55,7 @@ internal class ModuleVcsDetector(private val project: Project) {
         }
       }
     if (detectedRoots.isEmpty()) return
+    MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.autoDetectDefaultRoots - detectedRoots", detectedRoots)
 
     val commonVcs = usedVcses.singleOrNull()
     if (commonVcs != null) {
@@ -65,6 +71,7 @@ internal class ModuleVcsDetector(private val project: Project) {
 
   @RequiresBackgroundThread
   private fun autoDetectForContentRoots(contentRoots: List<VirtualFile>) {
+    MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.autoDetectForContentRoots - contentRoots", contentRoots)
     if (vcsManager.haveDefaultMapping() != null) return
 
     val usedVcses = mutableSetOf<AbstractVcs>()
@@ -81,6 +88,7 @@ internal class ModuleVcsDetector(private val project: Project) {
         }
       }
     if (detectedRoots.isEmpty()) return
+    MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.autoDetectForContentRoots - detectedRoots", detectedRoots)
 
     val commonVcs = usedVcses.singleOrNull()
     if (commonVcs != null && !vcsManager.hasAnyMappings()) {
@@ -104,15 +112,19 @@ internal class ModuleVcsDetector(private val project: Project) {
     private val dirtyContentRoots = mutableSetOf<VirtualFile>()
 
     override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
-      if (added.isNotEmpty() && vcsManager.haveDefaultMapping() == null) {
-        synchronized(dirtyContentRoots) {
-          dirtyContentRoots.addAll(added)
-          dirtyContentRoots.removeAll(removed.toSet())
+      if (added.isNotEmpty()) {
+        MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.contentRootsChanged - roots added", added)
+        if (vcsManager.haveDefaultMapping() == null) {
+          synchronized(dirtyContentRoots) {
+            dirtyContentRoots.addAll(added)
+            dirtyContentRoots.removeAll(removed.toSet())
+          }
+          queue.queue(Update.create("modules scan") { runScanForNewContentRoots() })
         }
-        queue.queue(Update.create("content root scan") { runScanForNewContentRoots() })
       }
 
       if (removed.isNotEmpty()) {
+        MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.contentRootsChanged - roots removed", removed)
         val remotedPaths = removed.map { it.path }.toSet()
         val removedMappings = vcsManager.directoryMappings.filter { it.directory in remotedPaths }
         removedMappings.forEach { mapping -> vcsManager.removeDirectoryMapping(mapping) }
