@@ -494,7 +494,7 @@
         "pressedBackground": "Grey3"
       },
       "Dropdown": {
-        "borderInsets": "3,8,3,4",
+        "borderInsets": "3,12,3,6",
         "pressedBackground": "Grey3"
       },
       "Button": {
