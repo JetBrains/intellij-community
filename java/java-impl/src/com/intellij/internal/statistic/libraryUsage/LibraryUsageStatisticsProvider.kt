@@ -98,7 +98,7 @@ internal class LibraryUsageStatisticsProvider(private val project: Project) : Da
 
     private val boundedExecutor: ExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor(
       /* name = */ "LibraryUsageStatisticsProvider",
-      /* maxThreads = */ 4,
+      /* maxThreads = */ 1,
     )
   }
 }
