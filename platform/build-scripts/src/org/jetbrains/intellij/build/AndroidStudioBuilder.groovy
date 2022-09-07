@@ -29,7 +29,7 @@ class AndroidStudioBuilder {
 
   AndroidStudioBuilder(BuildDependenciesCommunityRoot home, BuildOptions options = new BuildOptions()) {
     def properties = new AndroidStudioProperties(home.communityRoot, options)
-    buildContext = BuildContextImpl.createContext(home, home.communityRoot, properties, ProprietaryBuildTools.DUMMY, options)
+    buildContext = BuildContextImpl.createContextBlocking(home, home.communityRoot, properties, ProprietaryBuildTools.DUMMY, options)
   }
 
   void compileModules() {
