@@ -4,10 +4,16 @@ package org.jetbrains.kotlin.idea.quickfix.utils
 
 import java.io.File
 
+private const val INSPECTION_FILE_NAME = ".inspection"
+
 fun findInspectionFile(startDir: File): File? {
+    return findInspectionFile(startDir, INSPECTION_FILE_NAME)
+}
+
+fun findInspectionFile(startDir: File, inspectionFileName: String): File? {
     var currentDir: File? = startDir
     while (currentDir != null) {
-        val inspectionFile = File(currentDir, ".inspection")
+        val inspectionFile = File(currentDir, inspectionFileName)
         if (inspectionFile.exists()) {
             return inspectionFile
         }

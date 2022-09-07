@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
@@ -98,4 +99,16 @@ fun removeRedundantSetter(setter: KtPropertyAccessor) {
     } else {
         setter.deleteBody()
     }
+}
+
+fun isPublicApi(declaration: KtModifierListOwner): Boolean {
+    val visibilityModifier = declaration.visibilityModifierTypeOrDefault()
+    if (visibilityModifier == KtTokens.PUBLIC_KEYWORD ||
+        visibilityModifier == KtTokens.PROTECTED_KEYWORD ||
+        visibilityModifier == KtTokens.DEFAULT_VISIBILITY_KEYWORD
+    ) {
+        val parent = declaration.parent
+        if (parent is KtModifierListOwner) return isPublicApi(parent) else return true
+    }
+    return false;
 }
