@@ -283,7 +283,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     @NotNull
     @Override
     public String getFamilyName() {
-      return DevKitI18nBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", "displayName");
+      return DevKitI18nBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", "key");
     }
 
     @Override
