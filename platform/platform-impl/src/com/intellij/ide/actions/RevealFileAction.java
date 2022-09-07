@@ -149,7 +149,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   /**
-   * Opens a system file manager with given file's parent directory open and the file highlighted in it
+   * Opens a system file manager with the given file's parent directory open and the file highlighted in it
    * (note that not all platforms support highlighting).
    */
   public static void openFile(@NotNull File file) {
@@ -157,7 +157,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   /**
-   * Opens a system file manager with given file's parent directory open and the file highlighted in it
+   * Opens a system file manager with the given file's parent directory open and the file highlighted in it
    * (note that not all platforms support highlighting).
    */
   public static void openFile(@NotNull Path file) {
@@ -171,14 +171,14 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   /**
-   * Opens a system file manager with given directory open in it.
+   * Opens a system file manager with the given directory open in it.
    */
   public static void openDirectory(@NotNull File directory) {
     doOpen(directory.toPath(), null);
   }
 
   /**
-   * Opens a system file manager with given directory open in it.
+   * Opens a system file manager with the given directory open in it.
    */
   public static void openDirectory(@NotNull Path directory) {
     doOpen(directory, null);
