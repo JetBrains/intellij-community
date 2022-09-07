@@ -133,8 +133,12 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     //
     // Possible issue - if we'll initialize facets here and after that we'll get "EntityAdded" event, the facet will be initialized twice
     // But 1. That seems impossible as we don't create facets before the modules are loaded 2. I hope that facets initialization is idempotent
-    invokeLater {
-      modules.forEach(ModuleBridge::initFacets)
+    blockingContext {
+      invokeLater {
+        for (module in modules) {
+          module.initFacets()
+        }
+      }
     }
   }
 
