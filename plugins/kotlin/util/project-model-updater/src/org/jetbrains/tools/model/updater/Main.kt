@@ -126,25 +126,31 @@ private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
  * the project model can be overwritten by the [main] args (see also [GeneratorPreferences.parse])
  */
 private fun updateLatestGradlePluginVersion(communityRoot: File, kotlinGradlePluginVersion: String) {
-    val gradleTestSourceFile = communityRoot.resolve(
+    val kotlinGradlePluginVersionsKt = communityRoot.resolve(
         "plugins/kotlin/gradle/gradle-java/tests/test/org/jetbrains/kotlin/idea/codeInsight/gradle/KotlinGradlePluginVersions.kt"
     )
-    updateFile(gradleTestSourceFile, """val latest = .*""",
-               "val latest = KotlinToolingVersion(\"$kotlinGradlePluginVersion\")")
+    updateFile(
+        kotlinGradlePluginVersionsKt,
+        """val latest = .*""",
+        "val latest = KotlinToolingVersion(\"$kotlinGradlePluginVersion\")"
+    )
 }
 
 private fun updateKGPVersionForKotlinNativeTests(communityRoot: File, kotlinGradlePluginVersion: String) {
-    val ideaMultiplatformTestFile = communityRoot.resolve(
+    val kotlinNativeVersionsKt = communityRoot.resolve(
         "plugins/kotlin/base/plugin/test/org/jetbrains/kotlin/idea/artifacts/KotlinNativeVersion.kt"
     )
-    updateFile(ideaMultiplatformTestFile,
-               """private val kotlinGradlePluginVersion :String\? = .*""",
-               "private val kotlinGradlePluginVersion :String? = \"$kotlinGradlePluginVersion\"")
+    updateFile(
+        kotlinNativeVersionsKt,
+        """private const val kotlinGradlePluginVersion :String\? = .*""",
+        "private const val kotlinGradlePluginVersion :String? = \"$kotlinGradlePluginVersion\""
+    )
 }
 
 private fun updateFile(sourceFile: File, regexp: String, replacement: String) {
     val updatedFileContent = sourceFile.readText().replace(
-        Regex(regexp), replacement)
+        Regex(regexp), replacement
+    )
 
     sourceFile.writeText(updatedFileContent)
 }
