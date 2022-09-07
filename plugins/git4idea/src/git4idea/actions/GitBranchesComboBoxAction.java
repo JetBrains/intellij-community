@@ -52,7 +52,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
     presentation.setText(name, false);
     presentation.setIcon(BranchIconUtil.Companion.getBranchIcon(repo));
     presentation.setEnabledAndVisible(true);
-    presentation.setDescription(GitBundle.messagePointer("action.Git.ShowBranches.description").get());
+    presentation.setDescription(GitBundle.messagePointer("action.Git.ShowBranches.pretty.description").get());
   }
 
   @Override
