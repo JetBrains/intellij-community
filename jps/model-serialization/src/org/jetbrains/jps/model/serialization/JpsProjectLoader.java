@@ -113,15 +113,13 @@ public final class JpsProjectLoader extends JpsLoaderBase {
     }
   }
 
-  @NotNull
-  public static String getDirectoryBaseProjectName(@NotNull Path dir) {
+  public static @NotNull String getDirectoryBaseProjectName(@NotNull Path dir) {
     String name = JpsPathUtil.readProjectName(dir);
     return name != null ? name : JpsPathUtil.getDefaultProjectName(dir);
   }
 
-  @Nullable
   @Override
-  protected <E extends JpsElement> Element loadComponentData(@NotNull JpsElementExtensionSerializerBase<E> serializer, @NotNull Path configFile) {
+  protected @Nullable <E extends JpsElement> Element loadComponentData(@NotNull JpsElementExtensionSerializerBase<E> serializer, @NotNull Path configFile) {
     Path externalConfigDir = resolveExternalProjectConfig("project");
     Element data = super.loadComponentData(serializer, configFile);
     String componentName = serializer.getComponentName();
@@ -240,8 +238,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
     return false;
   }
 
-  @NotNull
-  private static List<Path> listXmlFiles(@NotNull Path dir) {
+  private static @NotNull List<Path> listXmlFiles(@NotNull Path dir) {
     try {
       try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, it -> it.getFileName().toString().endsWith(".xml") && Files.isRegularFile(it))) {
         return ContainerUtil.collect(stream.iterator());
@@ -286,8 +283,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
     JpsArtifactSerializer.loadArtifacts(myProject, artifactManagerComponent);
   }
 
-  @Nullable
-  private JpsSdkType<?> loadProjectRoot(@Nullable Element root) {
+  private @Nullable JpsSdkType<?> loadProjectRoot(@Nullable Element root) {
     JpsSdkType<?> sdkType = null;
     Element rootManagerElement = JDomSerializationUtil.findComponent(root, "ProjectRootManager");
     if (rootManagerElement != null) {
@@ -338,17 +334,15 @@ public final class JpsProjectLoader extends JpsLoaderBase {
     timingLog.run();
   }
 
-  @Nullable
-  private static Path resolveExternalProjectConfig(@NotNull String subDirName) {
+  private static @Nullable Path resolveExternalProjectConfig(@NotNull String subDirName) {
     String externalProjectConfigDir = System.getProperty("external.project.config");
     return StringUtil.isEmptyOrSpaces(externalProjectConfigDir) ? null : Paths.get(externalProjectConfigDir, subDirName);
   }
 
-  @NotNull
-  public static List<JpsModule> loadModules(@NotNull List<? extends Path> moduleFiles,
-                                            @Nullable JpsSdkType<?> projectSdkType,
-                                            @NotNull Map<String, String> pathVariables,
-                                            @NotNull JpsPathMapper pathMapper) {
+  public static @NotNull List<JpsModule> loadModules(@NotNull List<? extends Path> moduleFiles,
+                                                     @Nullable JpsSdkType<?> projectSdkType,
+                                                     @NotNull Map<String, String> pathVariables,
+                                                     @NotNull JpsPathMapper pathMapper) {
     List<JpsModule> modules = new ArrayList<>();
     List<Future<Pair<Path, Element>>> futureModuleFilesContents = new ArrayList<>();
     Path externalModuleDir = resolveExternalProjectConfig("modules");
@@ -415,9 +409,8 @@ public final class JpsProjectLoader extends JpsLoaderBase {
     }
   }
 
-  @NotNull
-  private static JpsModule loadModule(@NotNull Path file, @NotNull Element moduleRoot, List<String> paths,
-                                      @Nullable JpsSdkType<?> projectSdkType, Map<String, String> pathVariables, @NotNull JpsPathMapper pathMapper) {
+  private static @NotNull JpsModule loadModule(@NotNull Path file, @NotNull Element moduleRoot, List<String> paths,
+                                               @Nullable JpsSdkType<?> projectSdkType, Map<String, String> pathVariables, @NotNull JpsPathMapper pathMapper) {
     String name = getModuleName(file);
     final String typeId = moduleRoot.getAttributeValue("type");
     final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);
@@ -466,8 +459,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
     return module;
   }
 
-  @NotNull
-  private static String getModuleName(@NotNull Path file) {
+  private static @NotNull String getModuleName(@NotNull Path file) {
     return FileUtilRt.getNameWithoutExtension(file.getFileName().toString());
   }
 
@@ -494,7 +486,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
         }
       }
     }
-    return new JpsModulePropertiesSerializer<JpsDummyElement>(JpsJavaModuleType.INSTANCE, "JAVA_MODULE", null) {
+    return new JpsModulePropertiesSerializer<>(JpsJavaModuleType.INSTANCE, "JAVA_MODULE", null) {
       @Override
       public JpsDummyElement loadProperties(@Nullable Element componentElement) {
         return JpsElementFactory.getInstance().createDummyElement();
