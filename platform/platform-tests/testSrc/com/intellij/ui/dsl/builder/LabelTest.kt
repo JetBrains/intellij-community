@@ -4,7 +4,6 @@ package com.intellij.ui.dsl.builder
 import com.intellij.ui.dsl.UiDslException
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
-import java.awt.TextArea
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTextField
@@ -45,9 +44,7 @@ class LabelTest {
   fun testInvalidLabelForProperty() {
     val label = JLabel("Label:")
     val panel = JPanel()
-    val component = TextArea()
-    panel.add(component)
-    panel.putClientProperty(DslComponentProperty.LABEL_FOR, component)
+    panel.putClientProperty(DslComponentProperty.LABEL_FOR, "Invalid")
     assertThrows<UiDslException> {
       panel {
         row(label) {
