@@ -37,6 +37,7 @@ HANDLE hFileMapping;
 HANDLE hEvent;
 HANDLE hSingleInstanceWatcherThread;
 const int FILE_MAPPING_SIZE = 16000;
+const int FILE_MAPPING_CMD_OFFSET = sizeof(DWORD);
 
 void TrimLine(char* line);
 
@@ -723,9 +724,10 @@ DWORD WINAPI SingleInstanceThread(LPVOID args)
     WaitForSingleObject(hEvent, INFINITE);
     if (terminating) break;
 
-    wchar_t *view = static_cast<wchar_t *>(MapViewOfFile(hFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0));
+    void *view = MapViewOfFile(hFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
     if (!view) continue;
-    std::wstring command(view);
+    void *cmdView = (char*)view + FILE_MAPPING_CMD_OFFSET;
+    std::wstring command(static_cast<wchar_t *>(cmdView));
     int pos = command.find('\n');
     if (pos >= 0)
     {
@@ -779,10 +781,32 @@ void SendCommandLineToFirstInstance(int response_id)
   void *view = MapViewOfFile(hFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
   if (view)
   {
-    memcpy(view, command.c_str(), (command.size() + 1) * sizeof(wchar_t));
+    DWORD pid = *(DWORD*)view;
+    AllowSetForegroundWindow(pid);
+
+    void *cmdView = (char*)view + FILE_MAPPING_CMD_OFFSET;
+    memcpy(cmdView, command.c_str(), (command.size() + 1) * sizeof(wchar_t));
     UnmapViewOfFile(view);
   }
   SetEvent(hEvent);
+}
+
+// returns 'true' if file mapping has been created, and 'false' if existing one has been opened
+static bool CreateOrOpenFileMapping(const char* name) {
+  hFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, name);
+  if (hFileMapping) {
+    return false;
+  } else {
+    hFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE, name);
+    if (hFileMapping) {
+      DWORD *view = (DWORD*)MapViewOfFile(hFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+      if (view) {
+        *view = GetCurrentProcessId();
+        UnmapViewOfFile(view);
+      }
+    }
+    return true;
+  }
 }
 
 int CheckSingleInstance()
@@ -802,11 +826,8 @@ int CheckSingleInstance()
 
   hEvent = CreateEventA(NULL, FALSE, FALSE, eventName.c_str());
 
-  hFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, mappingName.c_str());
-  if (!hFileMapping)
+  if (CreateOrOpenFileMapping(mappingName.c_str()))
   {
-    hFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE,
-      mappingName.c_str());
     // Means we're the first instance
     return -1;
   }
@@ -846,12 +867,9 @@ int CheckSingleInstance()
     while (WaitForSingleObject(hResponseEvent, waitTimeoutMs) == WAIT_TIMEOUT)
     {
       // Check if the file mapping still exists outside the current process:
-      hFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, mappingName.c_str());
-      if (!hFileMapping)
+      if (CreateOrOpenFileMapping(mappingName.c_str()))
       {
         // Means the mapping was abandoned by the initial process we observed. So, we should take over.
-        hFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE,
-          mappingName.c_str());
         CloseHandle(hResultFileMapping);
         CloseHandle(hResponseEvent);
         return -1;
