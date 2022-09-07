@@ -16,7 +16,9 @@ final class RefreshProgress extends ProgressIndicatorBase {
 
   @Override
   public void start() {
+    var text = getText();
     super.start();
+    setText(text);
     scheduleUiUpdate();
   }
 
