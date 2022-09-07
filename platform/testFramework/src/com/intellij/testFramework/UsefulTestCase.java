@@ -203,6 +203,8 @@ public abstract class UsefulTestCase extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
+    GlobalState.checkSystemStreams();
+
     setupTempDir();
 
     boolean isStressTest = isStressTest();
@@ -286,6 +288,7 @@ public abstract class UsefulTestCase extends TestCase {
         }
       },
       () -> disposeRootDisposable(),
+      () -> GlobalState.checkSystemStreams(),
       () -> cleanupSwingDataStructures(),
       () -> Disposer.setDebugMode(true),
       () -> {
