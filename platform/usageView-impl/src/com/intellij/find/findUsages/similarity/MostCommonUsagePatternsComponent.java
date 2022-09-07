@@ -162,7 +162,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
       });
       SimilarUsagesCollector.logMoreClustersLoaded(myProject, mySession, myAlreadyRenderedSnippets);
     }
-    else {
+    if (myAlreadyRenderedSnippets >= sortedClusters.size()) {
       int numberOfAlreadyRenderedNonClusteredUsages = myAlreadyRenderedSnippets - sortedClusters.size();
       if (numberOfAlreadyRenderedNonClusteredUsages < myNonClusteredUsages.size()) {
         myNonClusteredUsages.stream().skip(numberOfAlreadyRenderedNonClusteredUsages).limit(CLUSTER_LIMIT).forEach(e -> {
