@@ -191,6 +191,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/data.kt");
         }
 
+        @TestMetadata("dataObject.kt")
+        public void testDataObject() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/dataObject.kt");
+        }
+
         @TestMetadata("enum.kt")
         public void testEnum() throws Exception {
             runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/enum.kt");

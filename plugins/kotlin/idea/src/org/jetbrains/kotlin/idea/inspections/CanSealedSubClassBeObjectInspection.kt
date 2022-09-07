@@ -28,6 +28,11 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
+/**
+ * Tests:
+ * [org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated.CanSealedSubClassBeObject]
+ * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.ConvertSealedSubClassToObject]
+ */
 class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         fun reportPossibleObject(klass: KtClass) {

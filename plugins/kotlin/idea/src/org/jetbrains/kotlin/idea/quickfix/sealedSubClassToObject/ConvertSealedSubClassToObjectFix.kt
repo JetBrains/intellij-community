@@ -11,6 +11,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.intentions.ConvertSecondaryConstructorToPrimaryIntention
@@ -21,6 +23,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.buildExpression
+import org.jetbrains.kotlin.psi.createDeclarationByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 class ConvertSealedSubClassToObjectFix : LocalQuickFix {
@@ -56,7 +59,12 @@ class ConvertSealedSubClassToObjectFix : LocalQuickFix {
     private fun KtClass.changeToObject(factory: KtPsiFactory) {
         secondaryConstructors.forEach { ConvertSecondaryConstructorToPrimaryIntention().applyTo(it, null) }
         primaryConstructor?.delete()
-        getClassOrInterfaceKeyword()?.replace(factory.createExpression(KtTokens.OBJECT_KEYWORD.value))
+        getClassOrInterfaceKeyword()?.replace(
+            if (languageVersionSettings.supportsFeature(LanguageFeature.DataObjects))
+                factory.createDeclarationByPattern("${KtTokens.DATA_KEYWORD.value} ${KtTokens.OBJECT_KEYWORD.value}")
+            else
+                factory.createExpression(KtTokens.OBJECT_KEYWORD.value)
+        )
     }
 
     private fun KtClass.transformToObject(factory: KtPsiFactory) {

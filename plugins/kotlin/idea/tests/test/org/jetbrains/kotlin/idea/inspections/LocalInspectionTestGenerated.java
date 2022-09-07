@@ -3973,6 +3973,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertSealedSubClassToObject/data.kt");
         }
 
+        @TestMetadata("dataObject.kt")
+        public void testDataObject() throws Exception {
+            runTest("testData/inspectionsLocal/convertSealedSubClassToObject/dataObject.kt");
+        }
+
         @TestMetadata("enum.kt")
         public void testEnum() throws Exception {
             runTest("testData/inspectionsLocal/convertSealedSubClassToObject/enum.kt");
