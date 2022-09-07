@@ -48,7 +48,7 @@ open class ProjectModelRule : TestRule {
   lateinit var projectRootDir: Path
   lateinit var filePointerTracker: VirtualFilePointerTracker
 
-  val projectResource = ProjectResource()
+  private val projectResource = ProjectResource()
 
   inner class ProjectResource : ExternalResource() {
     public override fun before() {
@@ -200,9 +200,9 @@ open class ProjectModelRule : TestRule {
   }
 
   protected fun tearDown() {
-    baseProjectDir.after()
-    projectResource.after()
     disposableRule.after()
+    projectResource.after()
+    baseProjectDir.after()
   }
 
   val sdkType: SdkTypeId
