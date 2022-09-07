@@ -51,7 +51,7 @@ fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: Produ
   options.compilationLogEnabled = false
 }
 
-fun createBuildContext(
+suspend fun createBuildContext(
   homePath: Path, productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   communityHomePath: BuildDependenciesCommunityRoot,
@@ -114,14 +114,16 @@ private fun testBuild(
   onFinish: suspend (context: BuildContext) -> Unit,
   buildOptionsCustomizer: (BuildOptions) -> Unit,
 ) {
-  val context = createBuildContext(
-    homePath = homePath,
-    productProperties = productProperties,
-    buildTools = buildTools,
-    skipDependencySetup = false,
-    communityHomePath = communityHomePath,
-    buildOptionsCustomizer = buildOptionsCustomizer,
-  )
+  val context = runBlocking(Dispatchers.Default) {
+    createBuildContext(
+      homePath = homePath,
+      productProperties = productProperties,
+      buildTools = buildTools,
+      skipDependencySetup = false,
+      communityHomePath = communityHomePath,
+      buildOptionsCustomizer = buildOptionsCustomizer,
+    )
+  }
 
   runTestBuild(
     buildContext = context,

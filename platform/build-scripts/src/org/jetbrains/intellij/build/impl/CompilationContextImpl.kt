@@ -11,6 +11,7 @@ import com.intellij.util.SystemProperties
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.ConsoleSpanExporter.Companion.setPathRoot
 import org.jetbrains.intellij.build.TracerProviderManager.flush
@@ -37,18 +38,30 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
-import org.jetbrains.jps.model.serialization.JpsProjectLoader
+import org.jetbrains.jps.model.serialization.JpsPathMapper
+import org.jetbrains.jps.model.serialization.JpsProjectLoader.loadProject
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.exists
 
 @JvmOverloads
-fun createCompilationContext(communityHome: BuildDependenciesCommunityRoot,
-                             projectHome: Path,
-                             defaultOutputRoot: Path,
-                             options: BuildOptions = BuildOptions()): CompilationContextImpl {
+fun createCompilationContextBlocking(communityHome: BuildDependenciesCommunityRoot,
+                                     projectHome: Path,
+                                     defaultOutputRoot: Path,
+                                     options: BuildOptions = BuildOptions()): CompilationContextImpl {
+  return runBlocking(Dispatchers.Default) {
+    createCompilationContext(communityHome = communityHome,
+                             projectHome = projectHome,
+                             defaultOutputRoot = defaultOutputRoot,
+                             options = options)
+  }
+}
+
+suspend fun createCompilationContext(communityHome: BuildDependenciesCommunityRoot,
+                                     projectHome: Path,
+                                     defaultOutputRoot: Path,
+                                     options: BuildOptions = BuildOptions()): CompilationContextImpl {
   return CompilationContextImpl.create(communityHome = communityHome,
                                        projectHome = projectHome,
                                        buildOutputRootEvaluator = { defaultOutputRoot },
@@ -101,7 +114,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
     val override = options.projectClassesOutputDirectory
     when {
       !override.isNullOrEmpty() -> projectOutputDirectory = Path.of(override)
-      options.useCompiledClassesFromProjectOutput -> require(projectOutputDirectory.exists()) {
+      options.useCompiledClassesFromProjectOutput -> require(Files.exists(projectOutputDirectory)) {
         "${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled but the project output directory $projectOutputDirectory doesn't exist"
       }
       else -> projectOutputDirectory = paths.buildOutputDir.resolve("classes")
@@ -199,15 +212,17 @@ class CompilationContextImpl private constructor(model: JpsModel,
       }
     }
 
-    internal fun create(communityHome: BuildDependenciesCommunityRoot,
-                        projectHome: Path,
-                        buildOutputRootEvaluator: (JpsProject) -> Path,
-                        options: BuildOptions = BuildOptions()): CompilationContextImpl {
+    internal suspend fun create(communityHome: BuildDependenciesCommunityRoot,
+                                projectHome: Path,
+                                buildOutputRootEvaluator: (JpsProject) -> Path,
+                                options: BuildOptions = BuildOptions()): CompilationContextImpl {
       // This is not a proper place to initialize tracker for downloader
       // but this is the only place which is called in most build scripts
       BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
       val messages = BuildMessagesImpl.create()
-      if (sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").any { !Files.exists(communityHome.communityRoot.resolve(it)) }) {
+      if (sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").any {
+          !Files.exists(communityHome.communityRoot.resolve(it))
+        }) {
         messages.error("communityHome ($communityHome) doesn\'t point to a directory containing IntelliJ Community sources")
       }
       if (options.printEnvironmentInfo) {
@@ -258,7 +273,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
   }
 }
 
-private fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinaries): JpsModel {
+private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinaries): JpsModel {
   val model = JpsElementFactory.getInstance().createModel()
   val pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
   if (kotlinBinaries.isCompilerRequired) {

@@ -13,10 +13,10 @@ internal fun createCommunityBuildContext(
   options: BuildOptions = BuildOptions(),
   projectHome: Path = communityHome.communityRoot,
 ): BuildContextImpl {
-  return BuildContextImpl.createContext(communityHome = communityHome,
-                                        projectHome = projectHome,
-                                        productProperties = IdeaCommunityProperties(communityHome),
-                                        options = options)
+  return BuildContextImpl.createContextBlocking(communityHome = communityHome,
+                                                projectHome = projectHome,
+                                                productProperties = IdeaCommunityProperties(communityHome),
+                                                options = options)
 }
 
 open class IdeaCommunityProperties(private val communityHome: BuildDependenciesCommunityRoot) : BaseIdeaProperties() {

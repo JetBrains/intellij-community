@@ -11,13 +11,13 @@ import org.jetbrains.intellij.build.pycharm.PyCharmCommunityProperties
 object PyCharmCommunityInstallersBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
-    val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-    val context = BuildContextImpl.createContext(
-      communityHome = communityHome,
-      projectHome = communityHome.communityRoot,
-      productProperties = PyCharmCommunityProperties(communityHome),
-    )
     runBlocking(Dispatchers.Default) {
+      val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
+      val context = BuildContextImpl.createContext(
+        communityHome = communityHome,
+        projectHome = communityHome.communityRoot,
+        productProperties = PyCharmCommunityProperties(communityHome),
+      )
       BuildTasks.create(context).buildDistributions()
     }
   }

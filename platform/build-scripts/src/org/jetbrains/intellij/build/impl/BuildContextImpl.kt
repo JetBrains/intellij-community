@@ -10,6 +10,8 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
@@ -69,11 +71,25 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
   companion object {
     @JvmStatic
     @JvmOverloads
-    fun createContext(communityHome: BuildDependenciesCommunityRoot,
-                      projectHome: Path,
-                      productProperties: ProductProperties,
-                      proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-                      options: BuildOptions = BuildOptions()): BuildContextImpl {
+    fun createContextBlocking(communityHome: BuildDependenciesCommunityRoot,
+                              projectHome: Path,
+                              productProperties: ProductProperties,
+                              proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+                              options: BuildOptions = BuildOptions()): BuildContextImpl {
+      return runBlocking(Dispatchers.Default) {
+        createContext(communityHome = communityHome,
+                      projectHome = projectHome,
+                      productProperties = productProperties,
+                      proprietaryBuildTools = proprietaryBuildTools,
+                      options = options)
+      }
+    }
+
+    suspend fun createContext(communityHome: BuildDependenciesCommunityRoot,
+                              projectHome: Path,
+                              productProperties: ProductProperties,
+                              proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+                              options: BuildOptions = BuildOptions()): BuildContextImpl {
       val projectHomeAsString = FileUtilRt.toSystemIndependentName(projectHome.toString())
       val windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString)
       val linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString)
