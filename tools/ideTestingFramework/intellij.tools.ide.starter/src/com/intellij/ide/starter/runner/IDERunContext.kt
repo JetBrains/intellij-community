@@ -6,6 +6,7 @@ import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.CodeInjector
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.command.MarshallableCommand
+import com.intellij.ide.starter.isStarterPerformanceTest
 import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.models.andThen
@@ -64,6 +65,9 @@ data class IDERunContext(
       testContext.testName
     }
 
+  val jvmCrashLogDirectory by lazy { testContext.paths.logsDir.resolve("jvm-crash").createDirectories() }
+  val heapDumpOnOomDirectory by lazy { testContext.paths.logsDir.resolve("heap-dump").createDirectories() }
+
   fun verbose() = copy(verboseOutput = true)
 
   @Suppress("unused")
@@ -94,6 +98,27 @@ data class IDERunContext(
     }
   }
 
+  private fun calculateVmOptions(): VMOptions = testContext.ide.originalVMOptions
+    .disableStartupDialogs()
+    .usingStartupFramework()
+    .setFatalErrorNotificationEnabled()
+    .setFlagIntegrationTests()
+    .takeScreenshotIfFailure(testContext.paths.logsDir)
+    .withJvmCrashLogDirectory(jvmCrashLogDirectory)
+    .withHeapDumpOnOutOfMemoryDirectory(heapDumpOnOomDirectory)
+    .let { if (isStarterPerformanceTest) it.withClassFileVerification() else it }
+    .let { testContext.testCase.vmOptionsFix(it) }
+    .let { testContext.patchVMOptions(it) }
+    .patchVMOptions()
+    .let {
+      if (!useStartupScript) {
+        require(commands.count() > 0) { "script builder is not allowed when useStartupScript is disabled" }
+        it
+      }
+      else
+        it.installTestScript(testName = contextName, paths = testContext.paths, commands = commands)
+    }
+
   // TODO: refactor this https://youtrack.jetbrains.com/issue/AT-18/Simplify-refactor-code-for-starting-IDE-in-IdeRunContext
   private fun prepareToRunIDE(): IDEStartResult {
     StarterBus.post(IdeLaunchEvent(EventState.BEFORE, this))
@@ -102,8 +127,7 @@ data class IDERunContext(
     val paths = testContext.paths
     val logsDir = paths.logsDir.createDirectories()
     paths.snapshotsDir.createDirectories()
-    val jvmCrashLogDirectory = logsDir.resolve("jvm-crash").createDirectories()
-    val heapDumpOnOomDirectory = logsDir.resolve("heap-dump").createDirectories()
+
     val disabledPlugins = paths.configDir.resolve("disabled_plugins.txt")
     if (disabledPlugins.toFile().exists()) {
       logOutput("The list of disabled plugins: " + disabledPlugins.toFile().readText())
@@ -121,26 +145,7 @@ data class IDERunContext(
         host.codeBuilder()
       }
 
-      val finalOptions = testContext.ide.originalVMOptions
-        .disableStartupDialogs()
-        .usingStartupFramework()
-        .setFatalErrorNotificationEnabled()
-        .setFlagIntegrationTests()
-        .takeScreenshotIfFailure(logsDir)
-        .withJvmCrashLogDirectory(jvmCrashLogDirectory)
-        .withHeapDumpOnOutOfMemoryDirectory(heapDumpOnOomDirectory)
-        .withClassFileVerification()
-        .let { testContext.testCase.vmOptionsFix(it) }
-        .let { testContext.patchVMOptions(it) }
-        .patchVMOptions()
-        .let {
-          if (!useStartupScript) {
-            require(commands.count() > 0) { "script builder is not allowed when useStartupScript is disabled" }
-            it
-          }
-          else
-            it.installTestScript(contextName, paths, commands)
-        }
+      val finalOptions: VMOptions = calculateVmOptions()
 
       if (codeBuilder != null) {
         host.setup(testContext)
