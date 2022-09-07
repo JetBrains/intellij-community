@@ -18,9 +18,12 @@ open class BaseLayout {
   }
 
   // one module can be packed into several JARs, that's why we have map "jar to modules" and not "module to jar"
-  private val _jarToModules = TreeMap<String, MutableList<String>>()
+  @Suppress("PropertyName")
+  @JvmField
+  protected val _jarToModules = TreeMap<String, List<String>>()
   // only as guard for checkAndAssociateModuleNameWithJarPath - do not use it, because strictly speaking for one module maybe several JARs
-  private val moduleNameToJarPath = HashMap<String, String>()
+  @JvmField
+  protected val moduleNameToJarPath = HashMap<String, String>()
 
   /** JAR name (or path relative to 'lib' directory) to names of modules */
   val jarToModules: Map<String, List<String>>
@@ -72,7 +75,7 @@ open class BaseLayout {
       }
     }
 
-    _jarToModules.computeIfAbsent(relativeJarPath) { mutableListOf() }.add(moduleName)
+    (_jarToModules.computeIfAbsent(relativeJarPath) { mutableListOf() } as MutableList<String>).add(moduleName)
   }
 
   open fun withModule(moduleName: String) {

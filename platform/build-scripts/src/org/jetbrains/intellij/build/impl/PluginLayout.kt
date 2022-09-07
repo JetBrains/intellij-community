@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext")
+@file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl
 
@@ -22,10 +22,13 @@ import java.util.function.*
 /**
  * Describes layout of a plugin in the product distribution
  */
-class PluginLayout(val mainModule: String): BaseLayout() {
-  private var mainJarName = "${convertModuleNameToFileName(mainModule)}.jar"
+class PluginLayout private constructor(val mainModule: String, mainJarNameWithoutExtension: String): BaseLayout() {
+  constructor(mainModule: String) : this(mainModule, convertModuleNameToFileName(mainModule))
 
-  lateinit var directoryName: String
+  private var mainJarName = "$mainJarNameWithoutExtension.jar"
+
+  var directoryName: String = mainJarNameWithoutExtension
+    private set
 
   var versionEvaluator: VersionEvaluator = object : VersionEvaluator {
     override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext) = ideBuildVersion
@@ -91,15 +94,22 @@ class PluginLayout(val mainModule: String): BaseLayout() {
     }
 
     @JvmStatic
+    fun plugin(modules: List<String>): PluginLayout {
+      val mainModule = modules.first()
+      val layout = PluginLayout(mainModule = mainModule)
+      layout.setModules(modules)
+      return layout
+    }
+
+    @JvmStatic
     fun simplePlugin(mainModuleName: String): PluginLayout {
-      if (mainModuleName.isEmpty()) {
-        error("mainModuleName must be not empty")
+      check(!mainModuleName.isEmpty()) {
+        "mainModuleName must be not empty"
       }
 
       val layout = PluginLayout(mainModuleName)
       layout.directoryName = convertModuleNameToFileName(layout.mainModule)
       layout.withModuleImpl(mainModuleName, layout.mainJarName)
-      layout.bundlingRestrictions = PluginBundlingRestrictions.NONE
       return layout
     }
   }
@@ -380,5 +390,20 @@ class PluginLayout(val mainModule: String): BaseLayout() {
 
   interface VersionEvaluator {
     fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String
+  }
+
+  internal fun setModules(modules: List<String>) {
+    check(moduleNameToJarPath.isEmpty())
+    check(_jarToModules.isEmpty())
+
+    for (module in modules) {
+      check(!module.isEmpty()) {
+        "module name must be not empty"
+      }
+
+      moduleNameToJarPath.put(module, mainJarName)
+    }
+
+    _jarToModules.put(mainJarName, modules)
   }
 }
