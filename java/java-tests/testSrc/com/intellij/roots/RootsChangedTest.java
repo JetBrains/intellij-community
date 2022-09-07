@@ -2,7 +2,6 @@
 package com.intellij.roots;
 
 import com.intellij.ProjectTopics;
-import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -32,7 +31,10 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.JavaModuleTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -197,8 +199,17 @@ public class RootsChangedTest extends JavaModuleTestCase {
       model.commit();
       myModuleRootListener.assertEventsCount(1);
 
+      Sdk unusedJdk = ProjectJdkTable.getInstance().createSdk("unused-jdk", JavaSdk.getInstance());
+      ProjectJdkTable.getInstance().addJdk(unusedJdk, getTestRootDisposable());
+      myModuleRootListener.assertNoEvents();
+      
       Sdk jdk = ProjectJdkTable.getInstance().createSdk("new-jdk", JavaSdk.getInstance());
       ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
+      myModuleRootListener.assertEventsCount(1);
+
+      final SdkModificator sdkModificator = jdk.getSdkModificator();
+      sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
+      sdkModificator.commitChanges();
       myModuleRootListener.assertEventsCount(1);
     });
   }
@@ -277,6 +288,11 @@ public class RootsChangedTest extends JavaModuleTestCase {
       myModuleRootListener.assertEventsCount(1);
 
       final Library libraryQ = libraryTable.createLibrary("Q");
+      myModuleRootListener.assertEventsCount(1);
+
+      Library.ModifiableModel model = libraryQ.getModifiableModel();
+      model.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
+      model.commit();
       myModuleRootListener.assertEventsCount(1);
 
       libraryTable.removeLibrary(libraryQ);

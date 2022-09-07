@@ -168,12 +168,14 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
     override fun afterLibraryAdded(newLibrary: Library) {
       if (hasDependencyOn(newLibrary)) {
+        eventDispatcher.multicaster.addedDependencyOn(newLibrary)
         eventDispatcher.multicaster.referencedLibraryAdded(newLibrary)
       }
     }
 
     override fun afterLibraryRemoved(library: Library) {
       if (hasDependencyOn(library)) {
+        eventDispatcher.multicaster.removedDependencyOn(library)
         eventDispatcher.multicaster.referencedLibraryRemoved(library)
       }
     }
