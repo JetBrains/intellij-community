@@ -4,6 +4,7 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
@@ -36,7 +37,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testMethodReferenceOnNullable() { doTest(); }
   public void testObjectsNonNullWithUnknownNullable() {
     setupTypeUseAnnotations("typeUse", myFixture);
-    doTestWith(insp -> insp.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
+    doTestWith((insp, __) -> insp.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
   }
   public void testNullableVoidLambda() { doTest(); }
   public void testNullableForeachVariable() { doTestWithCustomAnnotations(); }
@@ -108,7 +109,9 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupCustomAnnotations();
     DataFlowInspection inspection = new DataFlowInspection();
     inspection.IGNORE_ASSERT_STATEMENTS = true;
-    myFixture.enableInspections(inspection);
+    ConstantValueInspection cvInspection = new ConstantValueInspection();
+    cvInspection.IGNORE_ASSERT_STATEMENTS = true;
+    myFixture.enableInspections(inspection, cvInspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
@@ -216,7 +219,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testStreamReduceLogicalAnd() { doTest(); }
   public void testStreamSingleElementReduce() { doTest(); }
   public void testRequireNonNullMethodRef() {
-    doTestWith(dfa -> dfa.SUGGEST_NULLABLE_ANNOTATIONS = true);
+    doTestWith((dfa, __) -> dfa.SUGGEST_NULLABLE_ANNOTATIONS = true);
   }
 
   public void testMapGetWithValueNullability() { doTestWithCustomAnnotations(); }
@@ -360,9 +363,9 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     myFixture.addClass("package org.jetbrains.annotations;\nimport java.lang.annotation.*;\n" +
                        "@Target(ElementType.TYPE_USE)\n" +
                        "public @interface UnknownNullability { }");
-    doTestWith(insp -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false);
+    doTestWith((insp, __) -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false);
   }
-  public void testReturnOrElseNull() { doTestWith(insp -> insp.REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true); }
+  public void testReturnOrElseNull() { doTestWith((insp, __) -> insp.REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true); }
   public void testArrayIntersectionType() { doTest(); }
   public void testFunctionType() { doTest(); }
   public void testIteratorHasNextModifiesPrivateField() { doTest(); }

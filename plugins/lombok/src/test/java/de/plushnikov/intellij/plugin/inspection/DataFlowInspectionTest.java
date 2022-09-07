@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 
 
@@ -13,7 +14,7 @@ public class DataFlowInspectionTest extends LombokInspectionTest {
 
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new DataFlowInspection();
+    return new ConstantValueInspection();
   }
 
   public void testDefaultBuilderFinalValueInspectionIsAlwaysThat() {

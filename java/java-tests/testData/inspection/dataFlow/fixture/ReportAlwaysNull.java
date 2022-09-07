@@ -24,14 +24,14 @@ class Test {
 
   void parens() {
     Object x = null;
-    doNotNull(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">x</warning>);
+    doNotNull(<warning descr="Passing 'null' argument to parameter annotated as @NotNull"><weak_warning descr="Value 'x' is always 'null'">x</weak_warning></warning>);
     x = null;
-    doNotNull((<warning descr="Passing 'null' argument to parameter annotated as @NotNull">x</warning>));
+    doNotNull((<warning descr="Passing 'null' argument to parameter annotated as @NotNull"><weak_warning descr="Value 'x' is always 'null'">x</weak_warning></warning>));
   }
 
   @NotNull Object testReturn(Object x1, Object x2) {
-    if(x1 == null) return <warning descr="'null' is returned by the method declared as @NotNull">x1</warning>;
-    if(x2 == null) return (<warning descr="'null' is returned by the method declared as @NotNull">x2</warning>);
+    if(x1 == null) return <warning descr="'null' is returned by the method declared as @NotNull"><weak_warning descr="Value 'x1' is always 'null'">x1</weak_warning></warning>;
+    if(x2 == null) return (<warning descr="'null' is returned by the method declared as @NotNull"><weak_warning descr="Value 'x2' is always 'null'">x2</weak_warning></warning>);
     return new Object();
   }
 
