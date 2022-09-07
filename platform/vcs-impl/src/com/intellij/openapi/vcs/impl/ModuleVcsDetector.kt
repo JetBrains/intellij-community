@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
@@ -33,20 +34,23 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
   }
 
-  private fun autoDetectVcsMappings(tryMapPieces: Boolean) {
+  @RequiresBackgroundThread
+  private fun autoDetectDefaultRoots(tryMapPieces: Boolean) {
     if (vcsManager.haveDefaultMapping() != null) return
 
     val usedVcses = mutableSetOf<AbstractVcs>()
     val detectedRoots = mutableSetOf<Pair<VirtualFile, AbstractVcs>>()
 
     val contentRoots = DefaultVcsRootPolicy.getInstance(project).defaultVcsRoots
-    for (root in contentRoots) {
-      val moduleVcs = vcsManager.findVersioningVcs(root)
-      if (moduleVcs != null) {
-        detectedRoots.add(Pair(root, moduleVcs))
-        usedVcses.add(moduleVcs)
+    contentRoots
+      .forEach { root ->
+        val foundVcs = vcsManager.findVersioningVcs(root)
+        if (foundVcs != null) {
+          detectedRoots.add(Pair(root, foundVcs))
+          usedVcses.add(foundVcs)
+        }
       }
-    }
+    if (detectedRoots.isEmpty()) return
 
     val commonVcs = usedVcses.singleOrNull()
     if (commonVcs != null) {
@@ -60,23 +64,24 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
   }
 
+  @RequiresBackgroundThread
   private fun autoDetectForContentRoots(contentRoots: List<VirtualFile>) {
     if (vcsManager.haveDefaultMapping() != null) return
 
     val detectedRoots = mutableSetOf<Pair<VirtualFile, AbstractVcs>>()
+
     contentRoots
       .filter { it.isInLocalFileSystem }
       .filter { it.isDirectory }
-      .forEach { file ->
-        val vcs = vcsManager.findVersioningVcs(file)
-        if (vcs != null && vcs !== vcsManager.getVcsFor(file)) {
-          detectedRoots.add(Pair(file, vcs))
+      .forEach { root ->
+        val foundVcs = vcsManager.findVersioningVcs(root)
+        if (foundVcs != null && foundVcs !== vcsManager.getVcsFor(root)) {
+          detectedRoots.add(Pair(root, foundVcs))
         }
       }
+    if (detectedRoots.isEmpty()) return
 
-    if (detectedRoots.isNotEmpty()) {
-      registerNewDirectMappings(detectedRoots)
-    }
+    registerNewDirectMappings(detectedRoots)
   }
 
   private fun registerNewDirectMappings(detectedRoots: Collection<Pair<VirtualFile, AbstractVcs>>) {
@@ -90,7 +95,7 @@ internal class ModuleVcsDetector(private val project: Project) {
 
   private inner class InitialFullScan : Update("initial scan") {
     override fun run() {
-      autoDetectVcsMappings(true)
+      autoDetectDefaultRoots(true)
     }
 
     override fun canEat(update: Update?): Boolean = update is DelayedFullScan
@@ -98,7 +103,7 @@ internal class ModuleVcsDetector(private val project: Project) {
 
   private inner class DelayedFullScan : Update("delayed scan") {
     override fun run() {
-      autoDetectVcsMappings(false)
+      autoDetectDefaultRoots(false)
     }
   }
 
