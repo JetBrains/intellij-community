@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -143,14 +144,15 @@ open class ProjectModelRule : TestRule {
       libraryModel.commit()
       model.commit()
     }
+    if (libraryTable.tableLevel !in setOf(LibraryTableImplUtil.MODULE_LEVEL, LibraryTablesRegistrar.PROJECT_LEVEL)) {
+      disposeOnTearDown(library)
+    }
     return library
   }
 
   fun addApplicationLevelLibrary(name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
     val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
-    val library = addLibrary(name, libraryTable, setup)
-    disposeOnTearDown(library)
-    return library
+    return addLibrary(name, libraryTable, setup)
   }
 
   private fun disposeOnTearDown(library: LibraryEx) {
@@ -170,8 +172,14 @@ open class ProjectModelRule : TestRule {
   }
 
   fun renameLibrary(library: Library, newName: String) {
-    val model = library.modifiableModel
-    model.name = newName
+    modifyLibrary(library) {
+      it.name = newName
+    }
+  }
+  
+  fun modifyLibrary(library: Library, action: (LibraryEx.ModifiableModelEx) -> Unit) {
+    val model = library.modifiableModel as LibraryEx.ModifiableModelEx
+    action(model)
     runWriteActionAndWait { model.commit() }
   }
 
