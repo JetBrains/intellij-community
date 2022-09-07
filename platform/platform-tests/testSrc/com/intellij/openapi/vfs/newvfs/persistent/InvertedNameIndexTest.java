@@ -3,6 +3,8 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -105,6 +107,18 @@ public class InvertedNameIndexTest {
           fileIdsByNameId(nameId).contains(fileId));
       }
     }
+  }
+
+
+  @Before
+  public void setUp() throws Exception {
+    InvertedNameIndex.clear();
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    InvertedNameIndex.checkConsistency();
+    InvertedNameIndex.clear();
   }
 
   /* ============================ infrastructure ===================================================== */
