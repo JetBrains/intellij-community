@@ -2,12 +2,14 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.getModalityFromDescriptor
 import org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject.ConvertSealedSubClassToObjectFix
@@ -39,8 +41,8 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
             val keyword = klass.getClassOrInterfaceKeyword() ?: return
             val isExpectClass = klass.isExpectDeclaration()
             val fixes = listOfNotNull(
-                createFixIfPossible(!isExpectClass && !klass.isEffectivelyActual(), ::ConvertSealedSubClassToObjectFix),
-                createFixIfPossible(!isExpectClass && klass.module?.platform?.isJvm() == true, ::GenerateIdentityEqualsFix),
+                if (!isExpectClass && !klass.isEffectivelyActual()) ConvertSealedSubClassToObjectFix() else null,
+                if (!isExpectClass && !klass.isData() && klass.module?.platform?.isJvm() == true) GenerateIdentityEqualsFix() else null,
             ).toTypedArray()
 
             holder.registerProblem(
@@ -65,9 +67,9 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
 
         const val HASH_CODE: String = "hashCode"
 
-        val CLASS_MODIFIERS: List<KtModifierKeywordToken> = listOf(
+        fun getExclusivelyClassModifiers(languageVersionSettings: LanguageVersionSettings): List<KtModifierKeywordToken> = listOfNotNull(
             KtTokens.ANNOTATION_KEYWORD,
-            KtTokens.DATA_KEYWORD,
+            KtTokens.DATA_KEYWORD.takeUnless { languageVersionSettings.supportsFeature(LanguageFeature.DataObjects) },
             KtTokens.ENUM_KEYWORD,
             KtTokens.INNER_KEYWORD,
             KtTokens.SEALED_KEYWORD,
@@ -96,7 +98,7 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
 
         fun KtClass.hasNoClassModifiers(): Boolean {
             val modifierList = modifierList ?: return true
-            return CLASS_MODIFIERS.none { modifierList.hasModifier(it) }
+            return getExclusivelyClassModifiers(languageVersionSettings).none { modifierList.hasModifier(it) }
         }
 
         fun KtClass.isFinal(): Boolean = getModalityFromDescriptor() == KtTokens.FINAL_KEYWORD
@@ -141,8 +143,3 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
         }
     }
 }
-
-private fun <T : LocalQuickFix> createFixIfPossible(
-    flag: Boolean,
-    quickFixFactory: () -> T,
-): T? = quickFixFactory.takeIf { flag }?.invoke()

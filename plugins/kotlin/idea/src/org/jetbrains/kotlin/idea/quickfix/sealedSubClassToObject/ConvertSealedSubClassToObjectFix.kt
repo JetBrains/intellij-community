@@ -60,7 +60,7 @@ class ConvertSealedSubClassToObjectFix : LocalQuickFix {
         secondaryConstructors.forEach { ConvertSecondaryConstructorToPrimaryIntention().applyTo(it, null) }
         primaryConstructor?.delete()
         getClassOrInterfaceKeyword()?.replace(
-            if (languageVersionSettings.supportsFeature(LanguageFeature.DataObjects))
+            if (!isData() && languageVersionSettings.supportsFeature(LanguageFeature.DataObjects))
                 factory.createDeclarationByPattern("${KtTokens.DATA_KEYWORD.value} ${KtTokens.OBJECT_KEYWORD.value}")
             else
                 factory.createExpression(KtTokens.OBJECT_KEYWORD.value)
