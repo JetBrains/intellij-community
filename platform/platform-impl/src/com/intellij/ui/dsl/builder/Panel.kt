@@ -68,6 +68,9 @@ interface Panel : CellBase<Panel> {
    */
   fun threeColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null, column3: (Row.() -> Unit)? = null): Row
 
+  @Deprecated(message = "Use overloaded method or group/groupRowsRange instead", level = DeprecationLevel.HIDDEN)
+  fun separator(@NlsContexts.Separator title: String? = null, background: Color? = null): Row
+
   /**
    * Adds horizontal line separator. Use [group] or [groupRowsRange] if you need a separator with title
    */
