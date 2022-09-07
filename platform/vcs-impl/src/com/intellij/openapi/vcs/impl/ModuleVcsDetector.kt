@@ -51,34 +51,41 @@ internal class ModuleVcsDetector(private val project: Project) {
     val commonVcs = usedVcses.singleOrNull()
     if (commonVcs != null) {
       // Remove existing mappings that will duplicate added <Project> mapping.
-      val rootPaths = contentRoots.map { it.path }.toSet()
-      val additionalMappings = vcsManager.directoryMappings.filter { it.directory !in rootPaths }
-
+      val rootPaths = detectedRoots.mapTo(mutableSetOf()) { it.first.path }
+      val additionalMappings = vcsManager.directoryMappings.filter { it.vcs != commonVcs.name || it.directory !in rootPaths }
       vcsManager.setAutoDirectoryMappings(additionalMappings + VcsDirectoryMapping.createDefault(commonVcs.name))
     }
     else if (tryMapPieces) {
-      val newMappings = detectedRoots.map { (root, vcs) -> VcsDirectoryMapping(root.path, vcs.name) }
-      vcsManager.setAutoDirectoryMappings(vcsManager.directoryMappings + newMappings)
+      registerNewDirectMappings(detectedRoots)
     }
   }
 
   private fun autoDetectForContentRoots(contentRoots: List<VirtualFile>) {
     if (vcsManager.haveDefaultMapping() != null) return
 
-    val newMappings = mutableListOf<VcsDirectoryMapping>()
+    val detectedRoots = mutableSetOf<Pair<VirtualFile, AbstractVcs>>()
     contentRoots
       .filter { it.isInLocalFileSystem }
       .filter { it.isDirectory }
       .forEach { file ->
         val vcs = vcsManager.findVersioningVcs(file)
         if (vcs != null && vcs !== vcsManager.getVcsFor(file)) {
-          newMappings.add(VcsDirectoryMapping(file.path, vcs.name))
+          detectedRoots.add(Pair(file, vcs))
         }
       }
 
-    if (newMappings.isNotEmpty()) {
-      vcsManager.setAutoDirectoryMappings(vcsManager.directoryMappings + newMappings)
+    if (detectedRoots.isNotEmpty()) {
+      registerNewDirectMappings(detectedRoots)
     }
+  }
+
+  private fun registerNewDirectMappings(detectedRoots: Collection<Pair<VirtualFile, AbstractVcs>>) {
+    val oldMappings = vcsManager.directoryMappings
+    val knownMappedRoots = oldMappings.mapTo(mutableSetOf()) { it.directory }
+    val newMappings = detectedRoots.asSequence()
+      .map { (root, vcs) -> VcsDirectoryMapping(root.path, vcs.name) }
+      .filter { it.directory !in knownMappedRoots }
+    vcsManager.setAutoDirectoryMappings(oldMappings + newMappings)
   }
 
   private inner class InitialFullScan : Update("initial scan") {
