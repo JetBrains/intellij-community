@@ -159,7 +159,7 @@ class GitMergeDialog(private val project: Project,
 
   fun getSelectedRoot(): VirtualFile = repositoryField.item.root
 
-  fun getSelectedBranch() = tryGetSelectedBranch() ?: error("Unable to find branch: ${branchField.getText().orEmpty()}")
+  fun getSelectedBranch(): GitBranch = tryGetSelectedBranch() ?: error("Unable to find branch: ${branchField.getText().orEmpty()}")
 
   private fun tryGetSelectedBranch() = getSelectedRepository().branches.findBranchByName(branchField.getText().orEmpty())
 
