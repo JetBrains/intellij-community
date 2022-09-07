@@ -28,12 +28,11 @@ import java.util.ArrayList;
  * Time: 11:22:12 PM
  */
 public class DirectoryEntry extends LevelEntry {
-  private ArrayOfBins<EntryDescription> myNamedEntries;
   private ArrayOfBins<EntryDescription> myIdEntries;
-  private ResourceSectionReader mySection;
-  private ArrayList<DirectoryEntry> mySubDirs = new ArrayList<DirectoryEntry>();
-  private ArrayList<DataEntry> myDatas = new ArrayList<DataEntry>();
-  private long myIdOrName;
+  private final ResourceSectionReader mySection;
+  private final ArrayList<DirectoryEntry> mySubDirs = new ArrayList<>();
+  private final ArrayList<DataEntry> myDatas = new ArrayList<>();
+  private final long myIdOrName;
 
   public DirectoryEntry(ResourceSectionReader section, EntryDescription entry, long idOrName) {
     super( createName( entry ) );
@@ -46,7 +45,7 @@ public class DirectoryEntry extends LevelEntry {
     addMember(new Word("NumberOfIdEntries"));
     mySection = section;
     if ( entry != null ){
-      Value flagValue = new DWord( "flag" ).setValue( 0x80000000 );
+      Value flagValue = new DWord( "flag" ).setValue(0xffff_ffff_8000_0000L);
       Bin.Value offset = entry.getValueMember("OffsetToData");
       addOffsetHolder( new ValuesSub( offset, new ValuesAdd( mySection.getStartOffset(), flagValue ) ));
     }
@@ -113,7 +112,7 @@ public class DirectoryEntry extends LevelEntry {
   public void addIdEntry( EntryDescription entry ){
     if ( myIdEntries == null ){
       Word numberOfNamedEntries = (Word) getMember("NumberOfIdEntries");
-      myIdEntries = new ArrayOfBins<EntryDescription>("Id entries", EntryDescription.class, 0);
+      myIdEntries = new ArrayOfBins<>("Id entries", EntryDescription.class, 0);
       addMember(myIdEntries);
       myIdEntries.setCountHolder(numberOfNamedEntries);
     }
@@ -124,18 +123,18 @@ public class DirectoryEntry extends LevelEntry {
     super.read(stream);
 
     Word numberOfNamedEntries = (Word) getMember("NumberOfNamedEntries");
-    myNamedEntries = new ArrayOfBins<EntryDescription>("Named entries", EntryDescription.class, numberOfNamedEntries);
-    addMember(myNamedEntries);
-    myNamedEntries.setCountHolder(numberOfNamedEntries);
-    myNamedEntries.read(stream);
+    ArrayOfBins<EntryDescription> namedEntries = new ArrayOfBins<>("Named entries", EntryDescription.class, numberOfNamedEntries);
+    addMember(namedEntries);
+    namedEntries.setCountHolder(numberOfNamedEntries);
+    namedEntries.read(stream);
 
     Word numberOfIdEntries = (Word) getMember("NumberOfIdEntries");
-    myIdEntries = new ArrayOfBins<EntryDescription>("Id entries", EntryDescription.class, numberOfIdEntries);
+    myIdEntries = new ArrayOfBins<>("Id entries", EntryDescription.class, numberOfIdEntries);
     addMember(myIdEntries);
     myIdEntries.setCountHolder(numberOfIdEntries);
     myIdEntries.read(stream);
 
-    processEntries(myNamedEntries);
+    processEntries(namedEntries);
     processEntries(myIdEntries);
   }
 
@@ -144,7 +143,7 @@ public class DirectoryEntry extends LevelEntry {
       EntryDescription entry = entries.get(i);
       Bin.Value offset = entry.getValueMember("OffsetToData");
       Bin.Value name = entry.getValueMember("Name");
-      if ((offset.getValue() & 0x80000000) != 0) {
+      if ((offset.getValue() & 0xffff_ffff_8000_0000L) != 0) {
         addDirectoryEntry( new DirectoryEntry( mySection, entry, name.getValue()) );
       } else {
         addDataEntry( new DataEntry( mySection, offset) );

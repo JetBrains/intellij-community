@@ -1459,7 +1459,7 @@ public final class MavenProjectsTree {
   }
 
   @FunctionalInterface
-  private static interface ThrowableCallable<T extends Throwable, V> {
+  private interface ThrowableCallable<T extends Throwable, V> {
     V call() throws T;
   }
 
