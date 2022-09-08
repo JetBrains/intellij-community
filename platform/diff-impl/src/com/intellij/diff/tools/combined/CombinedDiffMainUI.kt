@@ -405,6 +405,10 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
       ActionUtil.copyFrom(this, "Diff.ShowSettingsPopup")
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
+    }
+
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = popupActionGroup.childrenCount > 0
     }

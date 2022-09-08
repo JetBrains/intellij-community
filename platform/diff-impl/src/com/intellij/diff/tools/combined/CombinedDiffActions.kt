@@ -33,6 +33,10 @@ import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 
 internal open class CombinedNextChangeAction(private val context: DiffContext) : NextChangeAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   override fun update(e: AnActionEvent) {
     if (DiffUtil.isFromShortcut(e)) {
       e.presentation.isEnabledAndVisible = true
@@ -58,6 +62,10 @@ internal open class CombinedNextChangeAction(private val context: DiffContext) :
 }
 
 internal open class CombinedPrevChangeAction(private val context: DiffContext) : PrevChangeAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   override fun update(e: AnActionEvent) {
     if (DiffUtil.isFromShortcut(e)) {
       e.presentation.isEnabledAndVisible = true
@@ -84,6 +92,9 @@ internal open class CombinedPrevChangeAction(private val context: DiffContext) :
 
 internal open class CombinedNextDifferenceAction(private val settings: DiffSettings,
                                                  private val context: DiffContext) : NextDifferenceAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   protected open fun getDifferenceIterable(e: AnActionEvent): PrevNextDifferenceIterable? {
     return e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE)
@@ -130,6 +141,9 @@ internal open class CombinedNextDifferenceAction(private val settings: DiffSetti
 
 internal open class CombinedPrevDifferenceAction(private val settings: DiffSettings,
                                                  private val context: DiffContext) : PrevDifferenceAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   protected open fun getDifferenceIterable(e: AnActionEvent): PrevNextDifferenceIterable? {
     return e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE)
@@ -177,6 +191,10 @@ internal open class CombinedPrevDifferenceAction(private val settings: DiffSetti
 internal class CombinedToggleExpandByDefaultAction(private val textSettings: TextDiffSettingsHolder.TextDiffSettings,
                                                    private val foldingModels: () -> List<FoldingModelSupport>) :
   ToggleActionButton(message("collapse.unchanged.fragments"), null), DumbAware {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   override fun isVisible(): Boolean = textSettings.contextRange != -1
 
@@ -249,6 +267,10 @@ internal class CombinedPrevNextFileAction(private val blockId: CombinedPathBlock
     templatePresentation.icon = null
     templatePresentation.text = HtmlBuilder().appendLink("", text).toString()
     templatePresentation.description = null //disable label tooltip
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun update(e: AnActionEvent) {
