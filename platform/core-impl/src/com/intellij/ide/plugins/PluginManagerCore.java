@@ -772,10 +772,10 @@ public final class PluginManagerCore {
     Map<PluginId, String> pluginsToEnable = new HashMap<>();
 
     pluginSetBuilder.computeEnabledModuleMap(descriptor -> {
+      Set<PluginId> disabledPlugins = context.disabledPlugins;
       PluginLoadingError loadingError = pluginSetBuilder.initEnableState$intellij_platform_core_impl(descriptor,
                                                                                                      idMap,
-                                                                                                     pluginsToEnable,
-                                                                                                     context.disabledPlugins,
+                                                                                                     disabledPlugins,
                                                                                                      pluginErrorsById);
 
       PluginId pluginId = descriptor.getPluginId();
@@ -783,6 +783,11 @@ public final class PluginManagerCore {
       if (!isLoadable) {
         pluginErrorsById.put(pluginId, loadingError);
         pluginsToDisable.put(pluginId, descriptor.getName());
+
+        PluginId disabledDependencyId = loadingError.disabledDependency;
+        if (disabledDependencyId != null && disabledPlugins.contains(disabledDependencyId)) {
+          pluginsToEnable.put(disabledDependencyId, idMap.get(disabledDependencyId).getName());
+        }
       }
 
       boolean shouldLoad = !context.expiredPlugins.contains(pluginId) &&
