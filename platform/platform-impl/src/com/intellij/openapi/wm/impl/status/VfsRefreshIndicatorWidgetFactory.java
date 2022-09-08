@@ -14,7 +14,6 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,7 +27,7 @@ public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFa
   }
 
   @Override
-  public @NotNull @Nls String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return UIBundle.message("status.bar.vfs.refresh.widget.name");
   }
 

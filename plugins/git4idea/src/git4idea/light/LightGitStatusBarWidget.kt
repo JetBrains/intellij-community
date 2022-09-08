@@ -17,7 +17,7 @@ import java.awt.Component
 import java.awt.event.MouseEvent
 
 private const val ID = "light.edit.git"
-private val LOG = Logger.getInstance("#git4idea.light.LightGitStatusBarWidget")
+private val LOG = Logger.getInstance(LightGitStatusBarWidget::class.java)
 
 private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTracker) : StatusBarWidget, StatusBarWidget.TextPresentation {
   private var statusBar: StatusBar? = null
@@ -38,9 +38,8 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
 
   override fun getPresentation(): StatusBarWidget.WidgetPresentation = this
 
-  override fun getText(): String {
-    return lightGitTracker.currentLocation?.let { GitBundle.message("git.light.status.bar.text", it) } ?: ""
-  }
+  override fun getText(): String =
+    lightGitTracker.currentLocation?.let { GitBundle.message("git.light.status.bar.text", it) } ?: ""
 
   override fun getTooltipText(): String {
     val locationText = lightGitTracker.currentLocation?.let { GitBundle.message("git.light.status.bar.tooltip", it) } ?: ""
