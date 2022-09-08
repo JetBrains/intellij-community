@@ -35,6 +35,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.longs.LongArrayList
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintWriter
@@ -48,7 +49,7 @@ fun analyzeGraph(analysisContext: AnalysisContext, listProvider: ListProvider, p
 
 open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private val listProvider: ListProvider) {
 
-  private val unreachableDisposableObjects = IntArrayList()
+  private val unreachableDisposableObjects = LongArrayList()
   private var strongRefHistogram: Histogram? = null
   private var softWeakRefHistogram: Histogram? = null
   private var traverseReport: String? = null
@@ -104,7 +105,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
     }
     if (config.disposerOptions.includeDisposerTreeSummary) {
       mainReport.appendLine(sectionHeader("Disposer tree summary"))
-      mainReport.append(analyzeDisposer.prepareDisposerTreeSummarySection(config.disposerOptions.disposerTreeSummaryOptions))
+      mainReport.append(analyzeDisposer.prepareDisposerTreeSummarySection(analysisContext.disposerParentToChildren, config.disposerOptions.disposerTreeSummaryOptions))
     }
     if (config.disposerOptions.includeDisposedObjectsSummary || config.disposerOptions.includeDisposedObjectsDetails) {
       mainReport.appendLine(sectionHeader("Disposed objects"))
@@ -323,11 +324,11 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
         val nonDisposerReferences = references.size
 
         // Inline children from the disposer tree
-        if (includeDisposerRelationships && analysisContext.disposerParentToChildren.contains(id)) {
+        if (includeDisposerRelationships && analysisContext.disposerParentToChildren.contains(id.toLong())) {
           if (phase >= WalkGraphPhase.DisposerTree) {
-            unreachableDisposableObjects.add(id)
+            unreachableDisposableObjects.add(id.toLong())
           }
-          analysisContext.disposerParentToChildren[id].forEach {
+          analysisContext.disposerParentToChildren[id.toLong()].forEach {
             references.add(it.toLong())
           }
         }
@@ -514,15 +515,15 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
       appendLine("Weak-reachable size: ${toShortStringAsSize(weakBytes)}")
       appendLine("Reachable only from disposer tree: ${unreachableDisposableObjects.size}")
       TruncatingPrintBuffer(10, 0, this::appendLine).use { buffer ->
-        val unreachableChildren = IntOpenHashSet()
+        val unreachableChildren = LongOpenHashSet()
         unreachableDisposableObjects.forEach { id ->
-          analysisContext.disposerParentToChildren[id]?.let { unreachableChildren.addAll(it) }
+          analysisContext.disposerParentToChildren[id.toLong()]?.let { unreachableChildren.addAll(it) }
         }
         unreachableDisposableObjects.forEach { id ->
           if (unreachableChildren.contains(id)) {
             return@forEach
           }
-          buffer.println(" * ${nav.getClassForObjectId(id.toLong()).name} (${toShortStringAsSize(sizesList.get(id).toLong() * 4)})")
+          buffer.println(" * ${nav.getClassForObjectId(id.toLong()).name} (${toShortStringAsSize(sizesList.get(id.toInt()).toLong() * 4)})")
         }
       }
     }

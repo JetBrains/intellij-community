@@ -15,21 +15,19 @@
  */
 package com.intellij.diagnostic.hprof.analysis
 
-import com.intellij.util.ExceptionUtil
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import java.util.ArrayDeque
-import java.util.Stack
-import java.util.function.LongConsumer
 import com.intellij.diagnostic.hprof.classstore.ClassDefinition
 import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
-import com.intellij.diagnostic.hprof.util.TreeNode
-import com.intellij.diagnostic.hprof.util.TreeVisualizer
-import com.intellij.diagnostic.hprof.util.TruncatingPrintBuffer
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.toPaddedShortStringAsSize
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.toShortStringAsCount
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.toShortStringAsSize
+import com.intellij.diagnostic.hprof.util.TreeNode
+import com.intellij.diagnostic.hprof.util.TreeVisualizer
+import com.intellij.diagnostic.hprof.util.TruncatingPrintBuffer
+import com.intellij.util.ExceptionUtil
 import it.unimi.dsi.fastutil.longs.*
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import java.util.*
+import java.util.function.LongConsumer
 
 class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
 
@@ -75,37 +73,39 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
       nav.goToStaticField("com.intellij.openapi.util.Disposer", "ourTree")
       analysisContext.disposerTreeObjectId = nav.id.toInt()
 
-      goToArrayOfDisposableObjectNodes(nav)
-      nav.getReferencesCopy().forEach {
-        if (it == 0L) return@forEach
-
-        nav.goTo(it)
-        verifyClassIsObjectNode(nav.getClass())
-        val objectNodeParentId = nav.getInstanceFieldObjectId(null, "myParent")
-        val childId = nav.getInstanceFieldObjectId(null, "myObject")
-        nav.goTo(objectNodeParentId)
-
-        val parentId = if (nav.isNull()) {
-          0L
-        }
-        else {
-          nav.getInstanceFieldObjectId(null, "myObject")
-        }
-
-        val childrenList = if (result.containsKey(parentId.toInt())) {
-          result.get(parentId.toInt())
-        }
-        else {
-          val list = IntArrayList()
-          result.put(parentId.toInt(), list)
-          list
-        }
-        childrenList.add(childId.toInt())
+      if (nav.getClass().refInstanceFields.any { it.name == "myObject2NodeMap" }) {
+        goToArrayOfDisposableObjectNodes(nav)
+        collectDisposerParentToChildren(nav, result)
       }
-      result.values.forEach(IntArrayList::trim)
+      else {
+        collectDisposerParentToChildrenNew(nav, result)
+      }
+      result.values.forEach(LongArrayList::trim)
     }
     catch (ex: Exception) {
       prepareException = ex
+    }
+  }
+
+  private fun collectDisposerParentToChildren(nav: ObjectNavigator, result: Long2ObjectOpenHashMap<LongArrayList>) {
+    nav.getReferencesCopy().forEach {
+      if (it == 0L) return@forEach
+
+      nav.goTo(it)
+      verifyClassIsObjectNode(nav.getClass())
+      val objectNodeParentId = nav.getInstanceFieldObjectId(null, "myParent")
+      val childId = nav.getInstanceFieldObjectId(null, "myObject")
+      nav.goTo(objectNodeParentId)
+
+      val parentId = if (nav.isNull()) {
+        0L
+      }
+      else {
+        nav.getInstanceFieldObjectId(null, "myObject")
+      }
+
+      val childrenList = result.getOrPut(parentId) { LongArrayList() }
+      childrenList.add(childId)
     }
   }
 
@@ -131,6 +131,66 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
     }
     if (!nav.getClass().isArray()) {
       throw ObjectNavigator.NavigationException("Invalid type of map values collection: ${nav.getClass().name}")
+    }
+  }
+
+  private fun collectDisposerParentToChildrenNew(nav: ObjectNavigator, result: Long2ObjectOpenHashMap<LongArrayList>) {
+    nav.goToStaticField("com.intellij.openapi.util.Disposer", "ourTree")
+    analysisContext.disposerTreeObjectId = nav.id.toInt()
+    nav.goToInstanceField("com.intellij.openapi.util.ObjectTree", "myRootNode")
+    val rootObjectNodeIds = getObjectNodeChildrenIds(nav)
+    for (i in 0 until rootObjectNodeIds.size) {
+      val rootObjectNodeId = rootObjectNodeIds.getLong(i)
+      nav.goTo(rootObjectNodeId)
+      if (nav.isNull()) continue
+      val rootObjectId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myObject")
+      nav.goTo(rootObjectNodeId)
+      visitObjectTreeRecursively(nav, rootObjectNodeId, 0L, result/*, null, rootObjectId, rootObjectClass,
+                                 tooDeepObjectClasses, maxTreeDepth, 0, groupingToObjectStats*/)
+    }
+  }
+
+  private fun visitObjectTreeRecursively(nav: ObjectNavigator,
+                                         currentNodeId: Long,
+                                         parentObjectId: Long,
+                                         result: Long2ObjectOpenHashMap<LongArrayList>) {
+    nav.goTo(currentNodeId)
+    if (nav.isNull()) return
+    val currentObjectId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myObject")
+    result.getOrPut(parentObjectId) { LongArrayList() }.add(currentObjectId)
+    val childrenNodeIds = getObjectNodeChildrenIds(nav)
+    for (i in 0 until childrenNodeIds.size) {
+      val childNodeId = childrenNodeIds.getLong(i)
+      visitObjectTreeRecursively(nav, childNodeId, currentObjectId, result)
+    }
+  }
+
+  private fun getObjectNodeChildrenIds(nav: ObjectNavigator): LongList {
+    nav.goToInstanceField("com.intellij.openapi.util.ObjectNode", "myChildren")
+    return when (nav.getClass().name) {
+      Collections.emptyList<Any>().javaClass.name, "com.intellij.openapi.util.ObjectNode\$1" -> {
+        // no children
+        LongList.of()
+      }
+      "com.intellij.openapi.util.ObjectNode\$ListNodeChildren" -> {
+        nav.goToInstanceField("com.intellij.openapi.util.ObjectNode\$ListNodeChildren", "myChildren")
+        getSmartListChildren(nav)
+      }
+      else -> {
+        getSmartListChildren(nav)
+      }
+    }
+  }
+
+  private fun getSmartListChildren(nav: ObjectNavigator): LongList {
+    nav.goToInstanceField("com.intellij.util.SmartList", "myElem")
+    if (nav.isNull()) return LongList.of()
+    if (nav.getClass().isArray()) {
+      return nav.getReferencesCopy()
+    }
+    else {
+      // myElem is ObjectNode
+      return LongList.of(nav.id)
     }
   }
 
@@ -170,7 +230,10 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
 
   private enum class SubTreeUpdaterOperation  { PROCESS_CHILDREN, UPDATE_SIZE }
 
-  fun prepareDisposerTreeSummarySection(options: AnalysisConfig.DisposerTreeSummaryOptions): String = buildString {
+  fun prepareDisposerTreeSummarySection(
+    disposerParentToChildren: Long2ObjectOpenHashMap<LongArrayList>,
+    options: AnalysisConfig.DisposerTreeSummaryOptions
+  ): String = buildString {
     TruncatingPrintBuffer(options.headLimit, 0, this::appendLine).use { buffer ->
       if (!analysisContext.classStore.containsClass("com.intellij.openapi.util.Disposer")) {
         return@buildString
@@ -182,50 +245,16 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
       }
 
       val nav = analysisContext.navigator
-      val objectId2Children = Long2ObjectOpenHashMap<LongArrayList>()
-      val topLevelObjectIds = LongArrayList()
 
       // Build a map: object -> list of its disposable children
       // Collect top-level objects (i.e. have no parent)
       try {
-        goToArrayOfDisposableObjectNodes(nav)
-
-        nav.getReferencesCopy().forEach { childId ->
-          if (childId == 0L) return@forEach
-
-          nav.goTo(childId)
-          verifyClassIsObjectNode(nav.getClass())
-
-          val objectNodeParentId = nav.getInstanceFieldObjectId(null, "myParent")
-          val objectId = nav.getInstanceFieldObjectId(null, "myObject")
-          nav.goTo(objectNodeParentId)
-
-          if (!objectId2Children.containsKey(objectId))
-            objectId2Children[objectId] = LongArrayList()
-
-          if (nav.isNull()) {
-            topLevelObjectIds.add(objectId)
-          }
-          else {
-            verifyClassIsObjectNode(nav.getClass())
-            val parentId = nav.getInstanceFieldObjectId(null, "myObject")
-
-            var children = objectId2Children.get(parentId)
-            if (children == null) {
-              children = LongArrayList()
-              objectId2Children[parentId] = children
-            }
-            children.add(objectId)
-          }
-          true
-        }
-
         val rootNode = DisposerNode("<root>")
 
         data class StackObject(val node: DisposerNode, val childrenIds: LongCollection)
 
         val stack = Stack<StackObject>()
-        stack.push(StackObject(rootNode, topLevelObjectIds))
+        stack.push(StackObject(rootNode, disposerParentToChildren[0L]))
 
         while (!stack.empty()) {
           val (currentNode, childrenIds) = stack.pop()
@@ -235,7 +264,9 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
             val childClassName = nav.getClassForObjectId(it).name
             val childNode = currentNode.getChildForClassName(childClassName)
             childNode.addInstance()
-            nodeToChildren.getOrPut(childNode, { LongArrayList() }).addAll(objectId2Children[it])
+            disposerParentToChildren[it]?.let {
+              nodeToChildren.getOrPut(childNode) { LongArrayList() }.addAll(it)
+            }
           })
           nodeToChildren.forEach { (node, children) -> stack.push(StackObject(node, children)) }
         }
