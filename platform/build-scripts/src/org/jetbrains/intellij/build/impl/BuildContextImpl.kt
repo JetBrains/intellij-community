@@ -77,7 +77,7 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
                               projectHome: Path,
                               productProperties: ProductProperties,
                               proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-                              options: BuildOptions = BuildOptions()): BuildContextImpl {
+                              options: BuildOptions = BuildOptions()): BuildContext {
       return runBlocking(Dispatchers.Default) {
         createContext(communityHome = communityHome,
                       projectHome = projectHome,
@@ -91,17 +91,27 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
                               projectHome: Path,
                               productProperties: ProductProperties,
                               proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-                              options: BuildOptions = BuildOptions()): BuildContextImpl {
-      val projectHomeAsString = FileUtilRt.toSystemIndependentName(projectHome.toString())
-      val windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString)
-      val linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString)
-      val macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeAsString)
-      val compilationContext = CompilationContextImpl.create(
+                              options: BuildOptions = BuildOptions()): BuildContext {
+      val compilationContext = CompilationContextImpl.createCompilationContext(
         communityHome = communityHome,
         projectHome = projectHome,
         buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options),
         options = options
       )
+      return createContext(compilationContext = compilationContext,
+                           projectHome = projectHome,
+                           productProperties = productProperties,
+                           proprietaryBuildTools = proprietaryBuildTools)
+    }
+
+    fun createContext(compilationContext: CompilationContextImpl,
+                      projectHome: Path,
+                      productProperties: ProductProperties,
+                      proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY): BuildContextImpl {
+      val projectHomeAsString = FileUtilRt.toSystemIndependentName(projectHome.toString())
+      val windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString)
+      val linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString)
+      val macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeAsString)
       return BuildContextImpl(compilationContext = compilationContext,
                               productProperties = productProperties,
                               windowsDistributionCustomizer = windowsDistributionCustomizer,

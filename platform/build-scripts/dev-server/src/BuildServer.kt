@@ -66,11 +66,9 @@ internal class BuildServer(@JvmField val homePath: Path, private val additionalM
   }
 
   private fun getProductConfiguration(platformPrefix: String): ProductConfiguration {
-    return (configuration.products.get(platformPrefix)
-            ?: throw ConfigurationException(
-              "No production configuration for platform prefix `$platformPrefix`, " +
-              "please add to `dev-build-server.json` if needed")
-           )
+    return configuration.products.get(platformPrefix) ?: throw ConfigurationException(
+      "No production configuration for platform prefix `$platformPrefix` please add to `dev-build-server.json` if needed"
+    )
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)

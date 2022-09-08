@@ -12,7 +12,7 @@ internal fun createCommunityBuildContext(
   communityHome: BuildDependenciesCommunityRoot,
   options: BuildOptions = BuildOptions(),
   projectHome: Path = communityHome.communityRoot,
-): BuildContextImpl {
+): BuildContext {
   return BuildContextImpl.createContextBlocking(communityHome = communityHome,
                                                 projectHome = projectHome,
                                                 productProperties = IdeaCommunityProperties(communityHome),

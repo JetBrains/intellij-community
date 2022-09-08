@@ -236,7 +236,8 @@ class BuildOptions {
    * By default, build process produces temporary and resulting files under projectHome/out/productName directory, use this property to
    * change the output directory.
    */
-  var outputRootPath: String? = System.getProperty("intellij.build.output.root")
+  var outputRootPath: Path? = System.getProperty("intellij.build.output.root")?.let { Path.of(it).toAbsolutePath().normalize() }
+
   var logPath: String? = System.getProperty("intellij.build.log.root")
 
   /**
@@ -265,7 +266,11 @@ class BuildOptions {
    * Mostly useful for build scripts debugging.
    */
   var printEnvironmentInfo = SystemProperties.getBooleanProperty("intellij.print.environment", false)
+
+  @Internal
   var printFreeSpace = true
+  @Internal
+  var setupTracer = true
 
   /**
    * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be

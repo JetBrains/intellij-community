@@ -5,7 +5,6 @@ import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.addToClasspathAgent.AddToClasspathUtil
-import org.jetbrains.intellij.build.impl.compilation.CompiledClasses
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -15,9 +14,6 @@ import java.nio.file.Path
 internal class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot,
                               private val options: BuildOptions,
                               private val messages: BuildMessages) {
-  val isCompilerRequired: Boolean
-    get() = CompiledClasses.isCompilationRequired(options)
-
   val kotlinCompilerHome: Path by lazy {
     val compilerHome = KotlinCompilerDependencyDownloader.downloadAndExtractKotlinCompiler(communityHome)
     val kotlinc = compilerHome.resolve("bin/kotlinc")

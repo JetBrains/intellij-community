@@ -10,10 +10,7 @@ import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
@@ -70,9 +67,6 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration,
                                   additionalModules: List<String>,
                                   platformPrefix: String,
                                   isServerMode: Boolean): IdeBuilder {
-  val productProperties = createProductProperties(productConfiguration, outDir, homePath)
-  val bundledMainModuleNames = getBundledMainModuleNames(productProperties, additionalModules)
-
   val runDir = withContext(Dispatchers.IO) {
     val usePluginCache = spanBuilder("check plugin cache applicability").useWithScope2 {
       checkBuildModulesModificationAndMark(productConfiguration, outDir)
@@ -80,20 +74,20 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration,
     createRunDirForProduct(homePath = homePath, platformPrefix = platformPrefix, usePluginCache = usePluginCache)
   }
 
-  val context = spanBuilder("create build context").useWithScope2 {
-    BuildContextImpl.createContext(
-      communityHome = getCommunityHomePath(homePath),
-      projectHome = homePath,
-      productProperties = productProperties,
-      options = createBuildOptions(runDir),
-    )
-  }
+  val context = createBuildContext(productConfiguration = productConfiguration,
+                                   outDir = outDir,
+                                   homePath = homePath,
+                                   runDir = runDir,
+                                   isServerMode = isServerMode)
+
+  val bundledMainModuleNames = getBundledMainModuleNames(context.productProperties, additionalModules)
+
   val pluginRootDir = runDir.resolve("plugins")
   val pluginCacheRootDir = runDir.resolve(PLUGIN_CACHE_DIR_NAME)
 
   val moduleNameToPluginBuildDescriptor = HashMap<String, PluginBuildDescriptor>()
   val pluginBuildDescriptors = mutableListOf<PluginBuildDescriptor>()
-  for (plugin in productProperties.productLayout.pluginLayouts) {
+  for (plugin in context.productProperties.productLayout.pluginLayouts) {
     if (!isPluginApplicable(bundledMainModuleNames = bundledMainModuleNames, plugin = plugin, context = context)) {
       continue
     }
@@ -133,7 +127,37 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration,
   return IdeBuilder(pluginBuilder = pluginBuilder, outDir = outDir, moduleNameToPlugin = moduleNameToPluginBuildDescriptor)
 }
 
-private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: PluginLayout, context: BuildContextImpl): Boolean {
+private suspend fun createBuildContext(productConfiguration: ProductConfiguration,
+                                       outDir: Path,
+                                       homePath: Path,
+                                       runDir: Path,
+                                       isServerMode: Boolean): BuildContext {
+  return coroutineScope {
+    // ~1 second
+    val productProperties = async {
+      createProductProperties(productConfiguration, outDir, homePath)
+    }
+
+    // load project is executed as part of compilation context creation - ~1 second
+    val compilationContext = async {
+      spanBuilder("create build context").useWithScope2 {
+        CompilationContextImpl.createCompilationContext(
+          communityHome = getCommunityHomePath(homePath),
+          projectHome = homePath,
+          buildOutputRootEvaluator = { _ -> runDir },
+          options = createBuildOptions(runDir).also { it.setupTracer = isServerMode }
+        )
+      }
+    }
+
+    BuildContextImpl.createContext(compilationContext = compilationContext.await(),
+                                   projectHome = homePath,
+                                   productProperties = productProperties.await()
+    )
+  }
+}
+
+private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: PluginLayout, context: BuildContext): Boolean {
   if (!bundledMainModuleNames.contains(plugin.mainModule)) {
     return false
   }
@@ -317,7 +341,7 @@ private fun createBuildOptions(runDir: Path): BuildOptions {
   options.targetOs = BuildOptions.OS_NONE
   options.cleanOutputFolder = false
   options.skipDependencySetup = true
-  options.outputRootPath = runDir.toString()
+  options.outputRootPath = runDir
   options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES)
   return options
 }

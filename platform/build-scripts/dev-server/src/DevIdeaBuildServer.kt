@@ -3,18 +3,12 @@
 
 package org.jetbrains.intellij.build.devServer
 
-import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.io.NioFiles
 import com.sun.net.httpserver.HttpContext
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
-import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import java.io.PrintWriter
-import java.io.StringWriter
 import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -24,10 +18,6 @@ import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
-import java.util.logging.ConsoleHandler
-import java.util.logging.Formatter
-import java.util.logging.Level
-import java.util.logging.LogRecord
 import kotlin.system.exitProcess
 
 internal val skippedPluginModules = hashSetOf<String>(
@@ -35,32 +25,11 @@ internal val skippedPluginModules = hashSetOf<String>(
   //"intellij.cwm.plugin.projector", // as we excluded cwm, this plugin doesn't make sense
 )
 
-enum class DevIdeaBuildServerStatus {
+private enum class DevIdeaBuildServerStatus {
   OK,
   FAILED,
   IN_PROGRESS,
   UNDEFINED
-}
-
-suspend fun buildProductInProcess(homePath: Path, platformPrefix: String, additionalModules: List<String>) {
-  spanBuilder("build ide")
-    .setAttribute("platformPrefix", platformPrefix)
-    .setAttribute(AttributeKey.stringArrayKey("additionalModules"), additionalModules)
-    .useWithScope2 {
-      BuildServer(homePath = homePath, additionalModules = additionalModules).buildProductInProcess(platformPrefix, isServerMode = false)
-    }
-}
-
-object DevIdeaBuilder {
-  @JvmStatic
-  fun main(args: Array<String>) {
-    initLog()
-    runBlocking(Dispatchers.Default) {
-      buildProductInProcess(homePath = getHomePath(),
-                            platformPrefix = System.getProperty("idea.platform.prefix") ?: "idea",
-                            additionalModules = getAdditionalModules()?.toList() ?: emptyList())
-    }
-  }
 }
 
 object DevIdeaBuildServer {
@@ -210,31 +179,6 @@ object DevIdeaBuildServer {
     httpServer.executor = Executors.newFixedThreadPool(2)
     return httpServer
   }
-}
-
-private fun initLog() {
-  val root = java.util.logging.Logger.getLogger("")
-  root.level = Level.INFO
-  val handlers = root.handlers
-  for (handler in handlers) {
-    root.removeHandler(handler)
-  }
-  root.addHandler(ConsoleHandler().apply {
-    formatter = object : Formatter() {
-      override fun format(record: LogRecord): String {
-        val timestamp = String.format("%1\$tT,%1\$tL", record.millis)
-        return "$timestamp ${record.message}\n" + (record.thrown?.let { thrown ->
-          StringWriter().also {
-            thrown.printStackTrace(PrintWriter(it))
-          }.toString()
-        } ?: "")
-      }
-    }
-  })
-}
-
-private fun getHomePath(): Path {
-  return IdeaProjectLoaderUtil.guessUltimateHome(DevIdeaBuildServer::class.java)
 }
 
 private fun parseQuery(url: URI): Map<String, List<String?>> {
