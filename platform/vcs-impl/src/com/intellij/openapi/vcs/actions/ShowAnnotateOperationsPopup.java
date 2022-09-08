@@ -99,6 +99,11 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       boolean visible = myChangesProvider != null && myFile != null;
       e.getPresentation().setVisible(visible);
@@ -108,7 +113,8 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       FilePath filePath = VcsUtil.getFilePath(myFile);
-      AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myFileAnnotation.getProject(), myRevisionNumber, filePath, () -> myChangesProvider.getChangesIn(myLine));
+      AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myFileAnnotation.getProject(), myRevisionNumber, filePath,
+                                                               () -> myChangesProvider.getChangesIn(myLine));
     }
   }
 }
