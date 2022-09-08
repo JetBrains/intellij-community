@@ -32,11 +32,9 @@ class ScriptingSupportChecker: EditorNotificationProvider {
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
         if (file.isNonScript()) return null
 
-        val providers = ScriptingSupportCheckerProvider.CHECKER_PROVIDERS.getExtensionList(project)
-
         if (!decideLaterIsOn(project) && !compilerAllowsAnyScriptsInSourceRoots(project)
             && file.isUnderSourceRoot(project)
-            && (file.isStandaloneKotlinScript(project) && file.hasNoExceptionsToBeUnderSourceRoot(providers))
+            && (file.isStandaloneKotlinScript(project) && file.hasNoExceptionsToBeUnderSourceRoot())
         ) {
             return Function {
                 EditorNotificationPanel(it, EditorNotificationPanel.Status.Warning).apply {
@@ -59,7 +57,7 @@ class ScriptingSupportChecker: EditorNotificationProvider {
             return null
         }
 
-        if (providers.none { it.isSupportedScriptExtension(file) }) {
+        if (file.hasUnknownScriptExt()) {
             return Function {
                 EditorNotificationPanel(it, EditorNotificationPanel.Status.Info).apply {
                     text = KotlinBundle.message("kotlin.script.in.beta.stage")
@@ -139,8 +137,11 @@ private fun VirtualFile.isStandaloneKotlinScript(project: Project): Boolean {
     return scriptDefinition.compilationConfiguration[ScriptCompilationConfiguration.isStandalone] == true
 }
 
-private fun VirtualFile.hasNoExceptionsToBeUnderSourceRoot(providers: MutableList<ScriptingSupportCheckerProvider>): Boolean =
-    providers.none { it.isSupportedUnderSourceRoot(this) }
+private fun VirtualFile.hasNoExceptionsToBeUnderSourceRoot(): Boolean =
+    scriptResidenceExceptionProviders.none { it.isSupportedUnderSourceRoot(this) }
+
+private fun VirtualFile.hasUnknownScriptExt(): Boolean =
+    scriptResidenceExceptionProviders.none { it.isSupportedScriptExtension(this) }
 
 private fun decideLaterIsOn(project: Project): Boolean =
     KotlinScriptingSettings.getInstance(project).decideOnRemainingInSourceRootLater
