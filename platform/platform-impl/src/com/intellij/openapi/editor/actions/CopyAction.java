@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +73,7 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
                                      @NotNull TransferableProvider transferableProvider) {
     SelectionToCopy selectionToCopy = SelectionToCopy.fromDataContext(dataContext);
     if (selectionToCopy == null) {  // a genuine "Copy", not "Cut"
-      selectionToCopy = prepareSelectionToCopy(editor, true);
+      selectionToCopy = prepareSelectionToCopy(editor, isCopyFromEmptySelectionToMoveCaretToLineStart());
       if (selectionToCopy == null) {
         return;
       }
@@ -103,6 +104,10 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
 
   public static boolean isSkipCopyPasteForEmptySelection() {
     return AdvancedSettings.getBoolean(SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY);
+  }
+
+  public static boolean isCopyFromEmptySelectionToMoveCaretToLineStart() {
+    return Registry.is("editor.action.copy.entireLineFromEmptySelection.moveCaretToLineStart");
   }
 
   public interface TransferableProvider {

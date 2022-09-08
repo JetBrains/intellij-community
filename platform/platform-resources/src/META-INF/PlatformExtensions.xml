@@ -711,6 +711,12 @@
                               When true, moves the caret up or down as if there were no selection.\n\
                               When false, places the caret at the line before or after the corresponding selection boundary."/>
 
+    <registryKey key="editor.action.copy.entireLineFromEmptySelection.moveCaretToLineStart" defaultValue="false"
+                 description="Controls the behavior of Copy with empty selection w.r.t. caret placement after copying.\n\
+                              When true, the Copy action invoked with empty selection moves the caret to the beginning of\
+                              the just copied line.\n\
+                              When false, keeps the caret where it was."/>
+
     <editorFloatingToolbarProvider
       implementation="com.intellij.openapi.editor.toolbar.floating.DefaultFloatingToolbarProvider"
       id="DefaultFloatingToolbarProvider"/>
