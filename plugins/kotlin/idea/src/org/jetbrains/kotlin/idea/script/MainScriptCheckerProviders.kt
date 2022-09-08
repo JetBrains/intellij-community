@@ -8,6 +8,8 @@ class MainKtsScriptCheckerProvider: SupportedScriptScriptingSupportCheckerProvid
 
 class SpaceKtsScriptCheckerProvider: SupportedScriptScriptingSupportCheckerProvider(".space.kts")
 
+class WorkspaceKtsScriptCheckerProvider: SupportedScriptScriptingSupportCheckerProvider(".ws.kts", true)
+
 class TeamCityKtsScriptCheckerProvider: SupportedScriptScriptingSupportCheckerProvider(".teamcity.kts", true) {
     override fun isSupportedScriptExtension(virtualFile: VirtualFile): Boolean {
         if (!virtualFile.name.endsWith(".kts")) return false

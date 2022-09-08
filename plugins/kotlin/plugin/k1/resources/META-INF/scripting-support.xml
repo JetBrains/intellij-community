@@ -162,6 +162,9 @@
     <scripting.support.checker.provider id="TeamCityKtsScriptCheckerProvider"
             implementation="org.jetbrains.kotlin.idea.script.TeamCityKtsScriptCheckerProvider"/>
 
+    <scripting.support.checker.provider id="WorkspaceKtsScriptCheckerProvider"
+            implementation="org.jetbrains.kotlin.idea.script.WorkspaceKtsScriptCheckerProvider"/>
+
     <ideScriptConfigurationControlFacade implementation="org.jetbrains.kotlin.idea.script.DefaultIdeScriptingConfigurationFacade"/>
 
     <scratchFileLanguageProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.scratch.KtScratchFileLanguageProvider"/>
