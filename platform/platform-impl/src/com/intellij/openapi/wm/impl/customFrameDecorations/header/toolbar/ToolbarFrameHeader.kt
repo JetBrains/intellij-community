@@ -166,7 +166,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     val toolbarPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
       add(mainMenuButton.button, gb.next().insetLeft(JBUI.scale(20)))
-      add(myToolbarPlaceholder, gb.next().weightx(1.0).fillCellHorizontally())
+      add(myToolbarPlaceholder, gb.next().weightx(1.0).fillCell())
     }
 
     res.add(ShowMode.MENU.name, menuPnl)

@@ -137,7 +137,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
       while (comp != null && restDelta > 0) {
         comp.isVisible = false
         restDelta -= comp.preferredSize.width
-        comp = visibleComponentsPool.nextToShow()
+        comp = visibleComponentsPool.nextToHide()
       }
     }
   }
