@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.DeferredIcon
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
@@ -282,13 +283,15 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
 private class RunToolbarSeparator(private val isCurrentConfigurationRunning: () -> Boolean) : JComponent() {
   override fun paint(g: Graphics) {
     super.paint(g)
-    g.color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
-    g.drawLine(0, 0, 0, JBUI.scale(TOOLBAR_HEIGHT))
-    g.color = Color.WHITE.addAlpha(0.4)
-    g.drawLine(0, JBUI.scale(5), 0, JBUI.scale(25))
+    val g2 = g.create() as Graphics2D
+    g2.color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
+    g2.fill(Rectangle(size))
+    g2.color = Color.WHITE.addAlpha(0.4)
+    g2.stroke = BasicStroke(JBUIScale.scale(1f));
+    g2.drawLine(0, JBUI.scale(5), 0, JBUI.scale(25))
   }
 
-  override fun getPreferredSize(): Dimension = Dimension(1, JBUI.scale(TOOLBAR_HEIGHT))
+  override fun getPreferredSize(): Dimension = Dimension(JBUI.scale(1), JBUI.scale(TOOLBAR_HEIGHT))
 }
 
 private fun Color.addAlpha(alpha: Double): Color {
