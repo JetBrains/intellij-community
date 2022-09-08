@@ -11368,6 +11368,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceCollectionCountWithSize/countOfIterable3.kt");
         }
 
+        @TestMetadata("countOfIterableSubclass.kt")
+        public void testCountOfIterableSubclass() throws Exception {
+            runTest("testData/inspectionsLocal/replaceCollectionCountWithSize/countOfIterableSubclass.kt");
+        }
+
         @TestMetadata("countOfMap.kt")
         public void testCountOfMap() throws Exception {
             runTest("testData/inspectionsLocal/replaceCollectionCountWithSize/countOfMap.kt");
