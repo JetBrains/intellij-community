@@ -46,6 +46,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
@@ -55,6 +56,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -167,19 +169,11 @@ public class ShelvedChangesViewManager implements Disposable {
         myPanel = new ShelfToolWindowPanel(myProject);
         myContent = new ContentImpl(myPanel.myRootPanel, VcsBundle.message("shelf.tab"), false);
         myContent.setTabName(SHELF); //NON-NLS overridden by displayName above
-        MyDnDTarget dnDTarget = new MyDnDTarget(myPanel.myProject, myContent);
-        myContent.putUserData(Content.TAB_DND_TARGET_KEY, dnDTarget);
+        myContent.putUserData(Content.TAB_DND_TARGET_KEY, new MyDnDTarget(myPanel.myProject, myContent));
         myContent.putUserData(IS_IN_COMMIT_TOOLWINDOW_KEY, true);
 
         myContent.setCloseable(false);
         myContent.setDisposer(myPanel);
-        DnDSupport.createBuilder(myPanel.myTree)
-          .setImageProvider(myPanel::createDraggedImage)
-          .setBeanProvider(myPanel::createDragStartBean)
-          .setTargetChecker(dnDTarget)
-          .setDropHandler(dnDTarget)
-          .setDisposableParent(myContent)
-          .install();
         addContent(myContent);
       }
       updateTreeIfShown(tree -> {
@@ -642,18 +636,30 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public void drop(DnDEvent event) {
       super.drop(event);
-      Object attachedObject = event.getAttachedObject();
-      if (attachedObject instanceof ChangeListDragBean) {
-        FileDocumentManager.getInstance().saveAllDocuments();
-        List<Change> changes = Arrays.asList(((ChangeListDragBean)attachedObject).getChanges());
-        ShelveChangesManager.getInstance(myProject).shelveSilentlyUnderProgress(changes, true);
-      }
+      handleDropEvent(myProject, event);
     }
 
     @Override
     public boolean isDropPossible(@NotNull DnDEvent event) {
-      Object attachedObject = event.getAttachedObject();
-      return attachedObject instanceof ChangeListDragBean && ((ChangeListDragBean)attachedObject).getChanges().length > 0;
+      return canHandleDropEvent(myProject, event);
+    }
+  }
+
+  private static boolean canHandleDropEvent(@NotNull Project project, @NotNull DnDEvent event) {
+    Object attachedObject = event.getAttachedObject();
+    if (attachedObject instanceof ChangeListDragBean) {
+      List<Change> changes = Arrays.asList(((ChangeListDragBean)attachedObject).getChanges());
+      return !changes.isEmpty();
+    }
+    return false;
+  }
+
+  private static void handleDropEvent(@NotNull Project project, @NotNull DnDEvent event) {
+    Object attachedObject = event.getAttachedObject();
+    if (attachedObject instanceof ChangeListDragBean) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+      List<Change> changes = Arrays.asList(((ChangeListDragBean)attachedObject).getChanges());
+      ShelveChangesManager.getInstance(project).shelveSilentlyUnderProgress(changes, true);
     }
   }
 
@@ -741,6 +747,7 @@ public class ShelvedChangesViewManager implements Disposable {
       myRootPanel.addDataProvider(this);
 
       PopupHandler.installPopupMenu(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
+      new MyDnDSupport(myProject, myTree, myTreeScrollPane).install(this);
     }
 
     @Override
@@ -837,20 +844,65 @@ public class ShelvedChangesViewManager implements Disposable {
       return !isOpenEditorDiffPreviewWithSingleClick.asBoolean() || myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
     }
 
-    @Nullable
-    private DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info) {
-      if (info.isMove()) {
-        DataContext dc = DataManager.getInstance().getDataContext(myTree);
-        return new DnDDragStartBean(new ShelvedChangeListDragBean(getShelveChanges(dc), getBinaryShelveChanges(dc), getShelvedLists(dc)));
-      }
-      return null;
-    }
+    private static class MyDnDSupport implements DnDDropHandler, DnDTargetChecker {
+      private final @NotNull Project myProject;
+      private final @NotNull ChangesTree myTree;
+      private final @NotNull JScrollPane myTreeScrollPane;
 
-    @NotNull
-    private DnDImage createDraggedImage(@NotNull DnDActionInfo info) {
-      String imageText = VcsBundle.message("unshelve.changes.action");
-      Image image = DnDAwareTree.getDragImage(myTree, imageText, null).getFirst();
-      return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
+      private MyDnDSupport(@NotNull Project project,
+                           @NotNull ChangesTree tree,
+                           @NotNull JScrollPane treeScrollPane) {
+        myProject = project;
+        myTree = tree;
+        myTreeScrollPane = treeScrollPane;
+      }
+
+      public void install(@NotNull Disposable disposable) {
+        DnDSupport.createBuilder(myTree)
+          .setTargetChecker(this)
+          .setDropHandler(this)
+          .setImageProvider(this::createDraggedImage)
+          .setBeanProvider(this::createDragStartBean)
+          .setDisposableParent(disposable)
+          .install();
+      }
+
+      @Override
+      public void drop(DnDEvent aEvent) {
+        handleDropEvent(myProject, aEvent);
+      }
+
+      @Override
+      public boolean update(DnDEvent aEvent) {
+        aEvent.hideHighlighter();
+        aEvent.setDropPossible(false, "");
+
+        boolean canHandle = canHandleDropEvent(myProject, aEvent);
+        if (!canHandle) return true;
+
+        // highlight top of the tree
+        Rectangle tableCellRect = new Rectangle(0, 0, JBUI.scale(300), JBUI.scale(12));
+        aEvent.setHighlighting(new RelativeRectangle(myTreeScrollPane, tableCellRect), DnDEvent.DropTargetHighlightingType.RECTANGLE);
+        aEvent.setDropPossible(true);
+
+        return false;
+      }
+
+      @Nullable
+      private DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info) {
+        if (info.isMove()) {
+          DataContext dc = DataManager.getInstance().getDataContext(myTree);
+          return new DnDDragStartBean(new ShelvedChangeListDragBean(getShelveChanges(dc), getBinaryShelveChanges(dc), getShelvedLists(dc)));
+        }
+        return null;
+      }
+
+      @NotNull
+      private DnDImage createDraggedImage(@NotNull DnDActionInfo info) {
+        String imageText = VcsBundle.message("unshelve.changes.action");
+        Image image = DnDAwareTree.getDragImage(myTree, imageText, null).getFirst();
+        return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
+      }
     }
 
     @Override
