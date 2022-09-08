@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.requests.DiffRequest;
@@ -48,7 +51,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ObjectUtils;
@@ -75,13 +77,15 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Predicates.nonNull;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_DELETION_UNDO;
 import static com.intellij.openapi.vcs.changes.ChangesViewManager.isEditorPreview;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.*;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowShown;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -99,11 +103,10 @@ public class ShelvedChangesViewManager implements Disposable {
 
   private final ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
-  private ShelfToolWindowPanel myPanel = null;
-  private ContentImpl myContent = null;
-  private boolean myDisposed = false;
   private final MergingUpdateQueue myUpdateQueue;
   private final List<Runnable> myPostUpdateEdtActivity = new ArrayList<>();
+
+  @Nullable private ShelfToolWindowPanel myPanel = null;
 
   public static final DataKey<ChangesTree> SHELVED_CHANGES_TREE =
     DataKey.create("ShelveChangesManager.ShelvedChangesTree");
@@ -126,26 +129,80 @@ public class ShelvedChangesViewManager implements Disposable {
     myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, true);
 
     MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(ShelveChangesManager.SHELF_TOPIC, e -> scheduleContentUpdate());
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> {
-      ApplicationManager.getApplication().invokeLater(this::updateAvailability, o -> myDisposed);
+    connection.subscribe(ShelveChangesManager.SHELF_TOPIC, e -> onShelveChangelistsChange());
+  }
+
+  private void onShelveChangelistsChange() {
+    myUpdateQueue.queue(new MyContentUpdater());
+    ApplicationManager.getApplication().invokeLater(() -> {
+      myProject.getMessageBus().syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged();
     });
   }
 
-  private void scheduleContentUpdate() {
-    myUpdateQueue.queue(new MyContentUpdater());
+  public static class ContentPreloader implements ChangesViewContentProvider.Preloader {
+    @NotNull private final Project myProject;
+
+    public ContentPreloader(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void preloadTabContent(@NotNull Content content) {
+      content.putUserData(Content.TAB_DND_TARGET_KEY, new MyDnDTarget(myProject, content));
+    }
+  }
+
+  final static class ContentPredicate implements Predicate<Project> {
+    @Override
+    public boolean test(Project project) {
+      return !ShelveChangesManager.getInstance(project).getAllLists().isEmpty() &&
+             !hideDefaultShelfTab(project);
+    }
+  }
+
+  public static class DisplayNameSupplier implements Supplier<String> {
+    @Override
+    public String get() {
+      return VcsBundle.message("shelf.tab");
+    }
+  }
+
+  public static class ContentProvider implements ChangesViewContentProvider {
+    @NotNull private final Project myProject;
+
+    public ContentProvider(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void initTabContent(@NotNull Content content) {
+      ShelfToolWindowPanel panel = getInstance(myProject).initToolWindowPanel();
+      content.setComponent(panel.myRootPanel);
+      content.setDisposer(panel);
+      content.setPreferredFocusableComponent(panel.myTree);
+    }
+  }
+
+  @NotNull
+  @RequiresEdt
+  private ShelfToolWindowPanel initToolWindowPanel() {
+    if (myPanel == null) {
+      Activity activity = StartUpMeasurer.startActivity("ShelvedChangesViewManager initialization", ActivityCategory.DEFAULT);
+      myPanel = new ShelfToolWindowPanel(myProject);
+      Disposer.register(myPanel, () -> {
+        // Content is removed from TW
+        myPanel = null;
+      });
+      updateTreeModel();
+      activity.end();
+    }
+    return myPanel;
   }
 
   private void updateTreeIfShown(@NotNull Consumer<? super ShelfTree> treeConsumer) {
-    if (myContent == null) return;
-    treeConsumer.consume(myPanel.myTree);
-  }
-
-  @ApiStatus.Internal
-  @RequiresEdt
-  public void updateAvailability() {
-    updateViewContent();
-    scheduleContentUpdate();
+    if (myPanel != null) {
+      treeConsumer.consume(myPanel.myTree);
+    }
   }
 
   @RequiresEdt
@@ -153,33 +210,6 @@ public class ShelvedChangesViewManager implements Disposable {
     updateTreeIfShown(tree -> {
       tree.rebuildTree();
     });
-  }
-
-  @RequiresEdt
-  private void updateViewContent() {
-    if (myShelveChangesManager.getAllLists().isEmpty() || hideDefaultShelfTab(myProject)) {
-      if (myContent != null) {
-        removeContent(myContent);
-        VcsNotifier.getInstance(myProject).hideAllNotificationsByType(ShelfNotification.class);
-      }
-      myContent = null;
-    }
-    else {
-      if (myContent == null) {
-        myPanel = new ShelfToolWindowPanel(myProject);
-        myContent = new ContentImpl(myPanel.myRootPanel, VcsBundle.message("shelf.tab"), false);
-        myContent.setTabName(SHELF); //NON-NLS overridden by displayName above
-        myContent.putUserData(Content.TAB_DND_TARGET_KEY, new MyDnDTarget(myPanel.myProject, myContent));
-        myContent.putUserData(IS_IN_COMMIT_TOOLWINDOW_KEY, true);
-
-        myContent.setCloseable(false);
-        myContent.setDisposer(myPanel);
-        addContent(myContent);
-      }
-      updateTreeIfShown(tree -> {
-        tree.rebuildTree();
-      });
-    }
   }
 
   @ApiStatus.Internal
@@ -202,7 +232,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
   protected void activateContent() {
     ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
-    contentManager.setSelectedContent(myContent);
+    contentManager.selectContent(SHELF);
 
     ToolWindow window = getToolWindowFor(myProject, SHELF);
     if (window != null && !window.isVisible()) {
@@ -249,13 +279,14 @@ public class ShelvedChangesViewManager implements Disposable {
 
   @RequiresEdt
   private void updateTreeModel() {
+    if (myPanel == null) return;
+
     updateTreeIfShown(tree -> tree.setPaintBusy(true));
     BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
       List<ShelvedChangeList> lists = myShelveChangesManager.getAllLists();
       lists.forEach(l -> l.loadChangesIfNeeded(myProject));
       List<ShelvedChangeList> sortedLists = sorted(lists, ChangelistComparator.getInstance());
       ApplicationManager.getApplication().invokeLater(() -> {
-        updateViewContent();
         updateTreeIfShown(tree -> {
           tree.setLoadedLists(sortedLists);
           tree.setPaintBusy(false);
@@ -269,7 +300,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
   @RequiresEdt
   public void startEditing(@NotNull ShelvedChangeList shelvedChangeList) {
-    runAfterUpdate(() -> {
+    activateAndUpdate(() -> {
       selectShelvedList(shelvedChangeList);
       updateTreeIfShown(tree -> tree.startEditingAtPath(tree.getLeadSelectionPath()));
     });
@@ -289,18 +320,16 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   public void activateView(@Nullable final ShelvedChangeList list) {
-    runAfterUpdate(() -> {
-      if (myContent == null) return;
-
+    activateAndUpdate(() -> {
       if (list != null) {
         selectShelvedList(list);
       }
-      activateContent();
     });
   }
 
-  private void runAfterUpdate(@NotNull Runnable postUpdateRunnable) {
+  private void activateAndUpdate(@NotNull Runnable postUpdateRunnable) {
     ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, myProject.getDisposed(), () -> {
+      activateContent();
       myUpdateQueue.cancelAllUpdates();
       myPostUpdateEdtActivity.add(postUpdateRunnable);
       updateTreeModel();
@@ -309,7 +338,6 @@ public class ShelvedChangesViewManager implements Disposable {
 
   @Override
   public void dispose() {
-    myDisposed = true;
     myUpdateQueue.cancelAllUpdates();
   }
 
@@ -1109,12 +1137,14 @@ public class ShelvedChangesViewManager implements Disposable {
     }
   }
 
+  /**
+   * @deprecated Implement {@link StartupActivity.Background} directly.
+   */
+  @Deprecated
   public static class PostStartupActivity implements StartupActivity.Background {
     @Override
     public void runActivity(@NotNull Project project) {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-
-      getInstance(project).scheduleContentUpdate();
+      throw new UnsupportedOperationException();
     }
   }
 }
