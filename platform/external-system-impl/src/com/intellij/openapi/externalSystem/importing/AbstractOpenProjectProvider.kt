@@ -21,23 +21,23 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Experimental
-abstract class AbstractOpenProjectProvider : OpenProjectProvider {
+abstract class AbstractOpenProjectProvider {
 
   abstract val systemId: ProjectSystemId
 
   protected abstract fun isProjectFile(file: VirtualFile): Boolean
 
-  override fun canOpenProject(file: VirtualFile): Boolean {
+  open fun canOpenProject(file: VirtualFile): Boolean {
     return if (file.isDirectory) file.children.any(::isProjectFile) else isProjectFile(file)
   }
 
-  protected fun getProjectDirectory(file: VirtualFile): VirtualFile {
+  protected open fun getProjectDirectory(file: VirtualFile): VirtualFile {
     return if (file.isDirectory) file else file.parent
   }
 
-  abstract override fun linkToExistingProject(projectFile: VirtualFile, project: Project)
+  abstract fun linkToExistingProject(projectFile: VirtualFile, project: Project)
 
-  override suspend fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+  open suspend fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     LOG.debug("Open ${systemId.readableName} project from $projectFile")
 
     val projectDirectory = getProjectDirectory(projectFile)
