@@ -39,11 +39,11 @@ class ScaleAwarePresentationFactory(
   }
 
   override fun icon(icon: Icon): InlayPresentation {
-    return MyScaledIconPresentation(icon, editor, fontShift = 0)
+    return ScaleAwareIconPresentation(icon, editor, fontShift = 0)
   }
 
   fun icon(icon: Icon, debugName: String, fontShift: Int): InlayPresentation {
-    return MyScaledIconPresentation(icon, editor, debugName, fontShift)
+    return ScaleAwareIconPresentation(icon, editor, debugName, fontShift)
   }
 
   fun inset(base: InlayPresentation, left: Int = 0, right: Int = 0, top: Int = 0, down: Int = 0): InlayPresentation {
@@ -151,10 +151,10 @@ class LineCenteredInset(
 }
 
 @ApiStatus.Internal
-class MyScaledIconPresentation(val icon: Icon,
-                               private val editor: Editor,
-                               private val debugName: String = "image",
-                               val fontShift: Int) : BasePresentation() {
+class ScaleAwareIconPresentation(val icon: Icon,
+                                 private val editor: Editor,
+                                 private val debugName: String = "image",
+                                 val fontShift: Int) : BasePresentation() {
   override val width: Int
     get() = scaledIcon.iconWidth
   override val height: Int
