@@ -68,8 +68,8 @@ object UltraLightChecker {
 
     fun checkClassEquivalence(ktClass: KtClassOrObject): KtUltraLightClass? {
         val javaSupport = KotlinAsJavaSupport.getInstance(ktClass.project).cast<KotlinAsJavaSupportBase<*>>()
-        val ultraLightClass = javaSupport.createLightClass(ktClass)?.first?.cast<KtUltraLightClass>() ?: return null
-        val secondULInstance = javaSupport.createLightClass(ktClass)?.first?.cast<KtUltraLightClass>()
+        val ultraLightClass = javaSupport.createLightClass(ktClass)?.value?.cast<KtUltraLightClass>() ?: return null
+        val secondULInstance = javaSupport.createLightClass(ktClass)?.value?.cast<KtUltraLightClass>()
         Assert.assertNotNull(secondULInstance)
         Assert.assertTrue(ultraLightClass !== secondULInstance)
         secondULInstance!!
