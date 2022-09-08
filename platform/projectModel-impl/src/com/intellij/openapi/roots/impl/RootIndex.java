@@ -1017,17 +1017,10 @@ class RootIndex {
       for (Object library : producers) {
         if (librariesToIgnore.contains(library)) continue;
         if (library instanceof SyntheticLibrary) {
-          Condition<VirtualFile> exclusion = ((SyntheticLibrary)library).getExcludeFileCondition();
+          Condition<VirtualFile> exclusion = ((SyntheticLibrary)library).getUnitedExcludeCondition();
           if (exclusion != null) {
             exclusions.add(exclusion);
             if (exclusion.value(root)) {
-              continue;
-            }
-          }
-          Condition<VirtualFile> constantCondition = ((SyntheticLibrary)library).getConstantExcludeConditionAsCondition();
-          if (constantCondition != null) {
-            exclusions.add(constantCondition);
-            if (constantCondition.value(root)) {
               continue;
             }
           }
