@@ -41,6 +41,7 @@ import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogContentProvider.MAIN_LOG_ID
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsLogManager.BaseVcsLogUiFactory
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToBranch
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
@@ -128,7 +129,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   internal fun navigateToSelectedBranch(focus: Boolean) {
     val selectedReference = filteringTree.getSelectedBranchFilters().singleOrNull() ?: return
 
-    logUi.vcsLog.jumpToReference(selectedReference, focus)
+    logUi.jumpToBranch(selectedReference, focus)
   }
 
   internal fun toggleGrouping(key: GroupingKey, state: Boolean) {

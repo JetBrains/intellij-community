@@ -205,6 +205,13 @@ object VcsLogNavigationUtil {
   }
 
   @JvmStatic
+  fun VcsLogUiEx.jumpToBranch(branchName: String, focus: Boolean) {
+    jumpTo(branchName, { visiblePack, branch ->
+      return@jumpTo getBranchRow(logData, visiblePack, branch)
+    }, SettableFuture.create(), false, focus)
+  }
+
+  @JvmStatic
   fun VcsLogUiEx.jumpToRefOrHash(reference: String, focus: Boolean): ListenableFuture<Boolean> {
     if (StringUtil.isEmptyOrSpaces(reference)) return Futures.immediateFuture(false)
     val future = SettableFuture.create<Boolean>()
@@ -254,6 +261,15 @@ object VcsLogNavigationUtil {
       getCommitRow(logData.storage, visiblePack, hash, root)
     }, future, silently, focus)
     return future
+  }
+
+  private fun getBranchRow(vcsLogData: VcsLogData, visiblePack: VisiblePack, referenceName: String): Int {
+    val matchingRefs = visiblePack.refs.branches.filter { ref -> ref.name == referenceName }
+    if (matchingRefs.isEmpty()) {
+      return VcsLogUiEx.COMMIT_NOT_FOUND
+    }
+    val ref = matchingRefs.minWith(VcsGoToRefComparator(visiblePack.logProviders))
+    return getCommitRow(vcsLogData.storage, visiblePack, ref.commitHash, ref.root)
   }
 
   private fun getCommitRow(vcsLogData: VcsLogData, visiblePack: VisiblePack, partialHash: String): Int {
