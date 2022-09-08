@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.*;
@@ -9,9 +10,11 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.EditorCopyPasteHelper.CopyPasteOptions;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,8 +122,23 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
   private static void restoreCaretStateIfNeeded(@NotNull Editor editor, @NotNull SelectionToCopy selectionToCopy) {
     List<CaretState> originalCaretState = selectionToCopy.caretStateToRestore();
     if (originalCaretState != null) {
+      Project project = editor.getProject();
+      if (project != null) {
+        highlightSelections(editor, project);
+      }
       editor.getCaretModel().setCaretsAndSelections(originalCaretState);
     }
+  }
+
+  private static void highlightSelections(@NotNull Editor editor, @NotNull Project project) {
+    HighlightManager highlightManager = HighlightManager.getInstance(project);
+    editor.getCaretModel().runForEachCaret(caret -> {
+      if (caret.hasSelection()) {
+        highlightManager.addOccurrenceHighlight(editor, caret.getSelectionStart(), caret.getSelectionEnd(),
+                                                EditorColors.SEARCH_RESULT_ATTRIBUTES,
+                                                HighlightManager.HIDE_BY_ANY_KEY, null);
+      }
+    });
   }
 
   public static boolean isSkipCopyPasteForEmptySelection() {
