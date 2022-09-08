@@ -1,5 +1,5 @@
 // WITH_STDLIB
-val percentage: Double = 103.0
+val percentage: Double = Math.abs(103.0)
 
 val formattedPercentage1: Int
     get() = when {
