@@ -185,13 +185,11 @@
     <pathMacroFilter implementation="com.intellij.find.impl.FindInProjectSettingsBase$FindInProjectPathMacroFilter"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"
-                        serviceImplementation="com.intellij.openapi.roots.impl.libraries.ExportableApplicationLibraryTable"/>
+                        serviceImplementation="com.intellij.openapi.roots.impl.libraries.ExportableApplicationLibraryTable"
+                        overrides="true"/>
 
     <applicationService serviceInterface="com.intellij.psi.codeStyle.CodeStyleSchemes"
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.PersistableCodeStyleSchemes"/>
-
-    <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTablesRegistrar"
-                        serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryDetectionManager"
                         serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryDetectionManagerImpl"/>
