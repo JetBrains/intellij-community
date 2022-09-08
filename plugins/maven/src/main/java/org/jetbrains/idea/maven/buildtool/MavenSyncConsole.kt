@@ -479,7 +479,7 @@ class MavenSyncConsole(private val myProject: Project) {
       }
     }
     catch (e: Exception) {
-      completeTask(mySyncId, taskName, FailureResultImpl(e))
+      MavenProjectsManager.getInstance(myProject).showServerException(e)
       throw e
     }
     finally {
