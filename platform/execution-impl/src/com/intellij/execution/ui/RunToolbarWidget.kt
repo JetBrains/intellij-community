@@ -39,6 +39,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.*
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.PopupState
@@ -698,7 +699,7 @@ private class RunDropDownButtonUI : BasicButtonUI() {
                 }
               })
             }
-            ?.showUnderneathOf(e.component)
+            ?.showAlignedTo(e.component)
           return
         }
       }
@@ -706,6 +707,16 @@ private class RunDropDownButtonUI : BasicButtonUI() {
       super.mousePressed(e)
     }
   }
+}
+
+private fun JBPopup.showAlignedTo(widget: Component) {
+  val widgetLeftInset = if (widget is JComponent)
+    widget.border.getBorderInsets(widget).left
+  else
+    0
+  val popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() +
+                       JBUI.CurrentTheme.Popup.Selection.innerInsets().left
+  show(RelativePoint(widget, Point(widgetLeftInset - popupLeftInset, widget.height)))
 }
 
 private fun RunnerAndConfigurationSettings.isRunning(project: Project, execId: String? = null) : Boolean {
