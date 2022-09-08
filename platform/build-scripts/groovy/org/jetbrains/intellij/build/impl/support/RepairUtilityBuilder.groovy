@@ -39,11 +39,11 @@ final class RepairUtilityBuilder {
   private static volatile Map<Binary, Path> BINARIES_CACHE
 
   private static final Collection<Binary> BINARIES = List.of(
-    new Binary(OsFamily.LINUX, JvmArchitecture.x64, 'bin/repair-linux-amd64', 'bin/repair', "linux_amd64"),
-    new Binary(OsFamily.LINUX, JvmArchitecture.aarch64, 'bin/repair-linux-arm64', 'bin/repair', "linux_arm64"),
-    new Binary(OsFamily.WINDOWS, JvmArchitecture.x64, 'bin/repair.exe', 'bin/repair.exe', "windows_amd64"),
-    new Binary(OsFamily.MACOS, JvmArchitecture.x64, 'bin/repair-darwin-amd64', 'bin/repair', "darwin_amd64"),
-    new Binary(OsFamily.MACOS, JvmArchitecture.aarch64, 'bin/repair-darwin-arm64', 'bin/repair',  "darwin_arm64")
+    new Binary(OsFamily.LINUX, JvmArchitecture.x64, 'bin/repair-linux-amd64', 'bin/repair', "linux_amd64_url"),
+    new Binary(OsFamily.LINUX, JvmArchitecture.aarch64, 'bin/repair-linux-arm64', 'bin/repair', "linux_arm64_url"),
+    new Binary(OsFamily.WINDOWS, JvmArchitecture.x64, 'bin/repair.exe', 'bin/repair.exe', "windows_amd64_url"),
+    new Binary(OsFamily.MACOS, JvmArchitecture.x64, 'bin/repair-darwin-amd64', 'bin/repair', "darwin_amd64_url"),
+    new Binary(OsFamily.MACOS, JvmArchitecture.aarch64, 'bin/repair-darwin-arm64', 'bin/repair',  "darwin_arm64_url")
   )
 
   static final class Binary {
