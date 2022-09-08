@@ -233,16 +233,27 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
       outInfos.add(info);
     }
 
-    HighlightInfoHolder holder = createInfoHolder(injectedPsi);
-    runHighlightVisitorsForInjected(injectedPsi, holder);
+    NotebookInjectedCodeUtility notebookUtility = NotebookInjectedCodeUtility.INSTANCE;
+    HighlightInfoHolder holder = notebookUtility.tryGetPreviousPassHolderFromInjected(injectedPsi);
+    boolean isUsingExistingPassData = holder != null;
+    if (!isUsingExistingPassData) {
+      holder = createInfoHolder(injectedPsi);
+      runHighlightVisitorsForInjected(injectedPsi, holder);
+    }
+
+
     for (int i = 0; i < holder.size(); i++) {
       HighlightInfo info = holder.get(i);
       int startOffset = documentWindow.injectedToHost(info.startOffset);
       TextRange fixedTextRange = getFixedTextRange(documentWindow, startOffset);
       addPatchedInfos(info, injectedPsi, documentWindow, injectedLanguageManager, fixedTextRange, outInfos);
     }
+
+
     int injectedStart = holder.size();
-    highlightInjectedSyntax(injectedPsi, holder);
+    if (!isUsingExistingPassData) {
+      highlightInjectedSyntax(injectedPsi, holder);
+    }
     for (int i = injectedStart; i < holder.size(); i++) {
       HighlightInfo info = holder.get(i);
       int startOffset = info.startOffset;
@@ -270,6 +281,11 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
         addPatchedInfos(info, injectedPsi, documentWindow, injectedLanguageManager, null, outInfos);
       }
     }
+
+    if (notebookUtility.isSuitableKtNotebookFragment(injectedPsi)) {
+      notebookUtility.ensureStateAfterHighlightingAnalysis(injectedPsi, holder);
+    }
+
     return true;
   }
 
@@ -346,11 +362,17 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
     return textRange;
   }
 
+  private static Boolean isUselessVisitorForInjectedNotebookFile(@NotNull PsiFile injectedPsi, @NotNull HighlightVisitor visitor) {
+    boolean isNotebookFile = injectedPsi.getName().endsWith("jupyter-kts");
+    return isNotebookFile && visitor instanceof DefaultHighlightVisitor;
+  }
+
   private void runHighlightVisitorsForInjected(@NotNull PsiFile injectedPsi, @NotNull HighlightInfoHolder holder) {
     HighlightVisitor[] filtered = getHighlightVisitors(injectedPsi);
     try {
       List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());
       for (HighlightVisitor visitor : filtered) {
+        if (isUselessVisitorForInjectedNotebookFile(injectedPsi, visitor)) continue;
         visitor.analyze(injectedPsi, true, holder, () -> {
           for (PsiElement element : elements) {
             ProgressManager.checkCanceled();
