@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class StatusBarWidgetsManager extends SimpleModificationTracker implements Disposable {
   private static final @NotNull Logger LOG = Logger.getInstance(StatusBar.class);
 
