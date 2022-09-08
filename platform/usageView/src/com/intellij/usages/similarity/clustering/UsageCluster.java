@@ -22,13 +22,13 @@ import java.util.stream.Collectors;
  */
 public class UsageCluster {
 
-  private final @NotNull Set<SimilarUsage> myUsages;
+  private final @NotNull Set<@NotNull SimilarUsage> myUsages;
 
   public UsageCluster() {
     this.myUsages = Collections.synchronizedSet(new LinkedHashSet<>());
   }
 
-  public UsageCluster(@NotNull Set<SimilarUsage> usages) {
+  public UsageCluster(@NotNull Set<@NotNull SimilarUsage> usages) {
     this.myUsages = usages;
   }
 
@@ -36,7 +36,7 @@ public class UsageCluster {
     myUsages.add(usage);
   }
 
-  public @NotNull Set<SimilarUsage> getUsages() {
+  public @NotNull Set<@NotNull SimilarUsage> getUsages() {
     return new HashSet<>(myUsages);
   }
 
@@ -59,7 +59,7 @@ public class UsageCluster {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  public @NotNull Set<SimilarUsage> getOnlySelectedUsages(@NotNull Set<Usage> selectedUsages) {
+  public @NotNull Set<@NotNull SimilarUsage> getOnlySelectedUsages(@NotNull Set<@NotNull Usage> selectedUsages) {
     synchronized (myUsages) {
       return myUsages.stream().filter(e -> selectedUsages.contains(e)).collect(Collectors.toSet());
     }

@@ -42,8 +42,7 @@ public class ImportClusteringResultActionLink extends ActionLink {
             if (file == null) return;
             try {
               Map<String, SimilarUsage> usageIndex = buildIndex(session);
-              List<UsageCluster> parsedClusters = new ArrayList<>(parseFile(file, usageIndex));
-              session.updateClusters(parsedClusters);
+              session.updateClusters(parseFile(file, usageIndex));
               refreshAction.actionPerformed(ActionUtil.createEmptyEvent());
             }
             catch (IOException ioe) {

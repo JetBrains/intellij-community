@@ -26,7 +26,7 @@ public class ClusteringSearchSession {
   public static final AtomicInteger counter = new AtomicInteger();
   private final @NotNull List<@NotNull UsageCluster> myClusters;
   private final int myUniqueId;
-  private final Distance myDistance;
+  private final @NotNull Distance myDistance;
 
   public ClusteringSearchSession() {
     myClusters = Collections.synchronizedList(new ArrayList<>());
@@ -34,7 +34,7 @@ public class ClusteringSearchSession {
     myUniqueId = counter.incrementAndGet();
   }
 
-  public @NotNull List<UsageCluster> getClusters() {
+  public @NotNull List<@NotNull UsageCluster> getClusters() {
     return new ArrayList<>(myClusters);
   }
 
@@ -64,7 +64,7 @@ public class ClusteringSearchSession {
 
   @RequiresBackgroundThread
   @RequiresReadLock
-  public @NotNull List<UsageCluster> getClustersForSelectedUsages(@NotNull Set<Usage> selectedUsages) {
+  public @NotNull List<@NotNull UsageCluster> getClustersForSelectedUsages(@NotNull Set<Usage> selectedUsages) {
     return getClusters().stream()
       .map(cluster -> new UsageCluster(cluster.getOnlySelectedUsages(selectedUsages)))
       .filter(usageCluster -> !usageCluster.getUsages().isEmpty())
@@ -77,7 +77,7 @@ public class ClusteringSearchSession {
     return myUniqueId;
   }
 
-  public void updateClusters(@NotNull List<UsageCluster> clusters) {
+  public void updateClusters(@NotNull Collection<@NotNull UsageCluster> clusters) {
     synchronized (myClusters) {
       myClusters.clear();
       myClusters.addAll(clusters);
