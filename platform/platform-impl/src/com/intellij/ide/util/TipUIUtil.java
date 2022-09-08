@@ -18,7 +18,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.icons.LoadIconParameters;
 import com.intellij.ui.scale.JBUIScale;
@@ -547,8 +546,7 @@ public final class TipUIUtil {
 
       delegate.paintIcon(c, g2d, x, y);
 
-      Color color = JBColor.namedColor("TipOfTheDay.Image.borderColor", JBColor.border());
-      g2d.setPaint(color);
+      g2d.setPaint(TipUiSettings.getImageBorderColor());
       g2d.setStroke(new BasicStroke(2f));
       g2d.draw(clipBounds);
 

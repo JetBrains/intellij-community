@@ -51,7 +51,7 @@ public final class TipDialog extends DialogWrapper {
   @Override
   protected JComponent createSouthPanel() {
     JComponent component = super.createSouthPanel();
-    component.setBorder(JBUI.Borders.empty(8, 24, 15, 24));
+    component.setBorder(JBUI.Borders.empty(13, 24, 15, 24));
     UIUtil.setBackgroundRecursively(component, UIUtil.getTextFieldBackground());
     return component;
   }
