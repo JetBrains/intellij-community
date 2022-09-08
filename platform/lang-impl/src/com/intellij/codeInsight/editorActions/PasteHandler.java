@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.actionSystem.EditorTextInsertHandler;
 import com.intellij.openapi.editor.actions.BasePasteHandler;
 import com.intellij.openapi.editor.actions.PasteAction;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl;
 import com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl.CopyPasteOptionsTransferableData;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -200,10 +201,25 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
     // We assume that EditorModificationUtil.insertStringAtCaret() is smart enough to remove currently selected text (if any).
 
+    CopyPasteOptions copyPasteOptions = CopyPasteOptionsTransferableData.valueFromTransferable(content);
+    boolean isInsertingEntireLineAboveCaret = copyPasteOptions.isEntireLineFromEmptySelection() &&
+                                              !selectionModel.hasSelection();
+    List<CaretState> caretStateToRestore = null;
+    if (isInsertingEntireLineAboveCaret) {
+      // Make CopyPastePreProcessors see the caret at the real insertion offset.
+      caretStateToRestore = caretModel.getCaretsAndSelections();
+      int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, caretOffset);
+      caretModel.moveToOffset(lineStartOffset);
+    }
+
     RawText rawText = RawText.fromTransferable(content);
     String newText = text;
     for (CopyPastePreProcessor preProcessor : CopyPastePreProcessor.EP_NAME.getExtensionList()) {
       newText = preProcessor.preprocessOnPaste(project, file, editor, newText, rawText);
+    }
+
+    if (caretStateToRestore != null) {
+      caretModel.setCaretsAndSelections(caretStateToRestore);
     }
 
     final boolean pastedTextWasChanged = !text.equals(newText);
@@ -213,10 +229,6 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     if (LanguageFormatting.INSTANCE.forContext(file) == null && indentOptions != CodeInsightSettings.NO_REFORMAT) {
       indentOptions = CodeInsightSettings.INDENT_BLOCK;
     }
-
-    CopyPasteOptions copyPasteOptions = CopyPasteOptionsTransferableData.valueFromTransferable(content);
-    boolean isInsertingEntireLineAboveCaret = copyPasteOptions.isEntireLineFromEmptySelection() &&
-                                              !selectionModel.hasSelection();
 
     final String _text = text;
     final TextRange pastedRange = ApplicationManager.getApplication().runWriteAction((Computable<TextRange>)() -> {
