@@ -5,7 +5,6 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationAware
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -18,26 +17,13 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.apache.commons.lang.StringUtils
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Experimental
 abstract class AbstractOpenProjectProvider : OpenProjectProvider {
-  protected open val systemId: ProjectSystemId by lazy {
-    /**
-     * Tries to resolve external system id
-     * Note: Implemented approach is super heuristics.
-     * Please, override [systemId] to avoid discrepancy with real id.
-     */
-    LOG.warn("Class ${javaClass.name} have to override AbstractOpenProjectProvider.systemId. " +
-             "Resolving of systemId will be removed in future releases.")
-    val readableName = StringUtils.splitByCharacterTypeCamelCase(javaClass.simpleName).first()
-    val manager = ExternalSystemManager.EP_NAME.findFirstSafe {
-      StringUtils.equalsIgnoreCase(StringUtils.splitByCharacterTypeCamelCase(it.javaClass.simpleName).first(), readableName)
-    }
-    manager?.systemId ?: ProjectSystemId(readableName.toUpperCase())
-  }
+
+  abstract val systemId: ProjectSystemId
 
   protected abstract fun isProjectFile(file: VirtualFile): Boolean
 
@@ -55,7 +41,8 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
   }
 
   override suspend fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    LOG.debug("Open project from $projectFile")
+    LOG.debug("Open ${systemId.readableName} project from $projectFile")
+
     val projectDirectory = getProjectDirectory(projectFile)
     if (focusOnOpenedSameProject(projectDirectory.toNioPath())) {
       return null
