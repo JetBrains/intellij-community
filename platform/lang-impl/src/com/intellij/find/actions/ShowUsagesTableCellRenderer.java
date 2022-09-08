@@ -21,10 +21,7 @@ import com.intellij.usages.impl.GroupNode;
 import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.usages.rules.UsageInFile;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -396,12 +393,18 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     }
   }
 
+  private static final int ARC = 8;
+  private static final int LEFT_OFFSET = 6;
+  private static final int HORIZONTAL_GAP = 6;
+
   private static class RoundedColoredComponent extends SimpleColoredComponent {
 
     private RoundedColoredComponent(boolean isSelected) {
       if (isSelected) {
         setOpaque(false);
       }
+      setFont(JBFont.medium());
+      setIpad(JBUI.insets(0, LEFT_OFFSET + HORIZONTAL_GAP, 0, HORIZONTAL_GAP));
       setForeground(JBUI.CurrentTheme.List.Tag.FOREGROUND);
     }
 
@@ -421,8 +424,9 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       try {
         GraphicsUtil.setupAAPainting(g2);
         g2.setColor(JBUI.CurrentTheme.List.Tag.BACKGROUND);
-        int arc = JBUIScale.scale(8);
-        g2.fillRoundRect(x, y, width, height, arc, arc);
+        int arc = JBUIScale.scale(ARC);
+        int offset = JBUIScale.scale(LEFT_OFFSET);
+        g2.fillRoundRect(x + offset, y, width - offset, height, arc, arc);
       }
       finally {
         g2.dispose();
