@@ -1052,7 +1052,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         return;
       }
 
-      final ResolveContext context = new ResolveContext();
+      final ResolveContext context = new ResolveContext(getProjectsTree());
       Runnable onCompletion = () -> {
         if (hasScheduledProjects()) {
           scheduleImportChangedProjects().processed(result);

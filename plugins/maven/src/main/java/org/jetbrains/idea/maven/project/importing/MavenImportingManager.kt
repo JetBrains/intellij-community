@@ -211,6 +211,7 @@ class MavenImportingManager(val project: Project) {
           MavenLog.LOG.warn(e)
         }
       }
+      flow.updateProjectManager(readMavenFiles)
 
       val dependenciesContext = doTask(MavenProjectBundle.message("maven.resolving"), activity,
                                        MavenImportStats.ResolvingTask::class.java) {
@@ -235,7 +236,7 @@ class MavenImportingManager(val project: Project) {
                             MavenImportStats.ConfiguringProjectsTask::class.java) {
         currentContext?.indicator?.checkCanceled()
         flow.runPostImportTasks(importContext)
-        flow.updateProjectManager(readMavenFiles)
+        runLegacyListeners(readMavenFiles) { projectImportCompleted() }
         setProjectSettings(initialImport)
         MavenResolveResultProblemProcessor.notifyMavenProblems(project) // remove this, should be in appropriate phase
         return@doTask MavenImportFinishedContext(importContext)
