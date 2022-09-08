@@ -5,5 +5,5 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
 interface AlphaAnimated {
-  val alphaAnimator: ShowHideAnimator
+  val alphaContext: AlphaAnimationContext
 }

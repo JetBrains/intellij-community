@@ -322,8 +322,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @Override
-  public @NotNull ShowHideAnimator getAlphaAnimator() {
-    return myAlphaContext.getAnimator();
+  public @NotNull AlphaAnimationContext getAlphaContext() {
+    return myAlphaContext;
   }
 
   @Override

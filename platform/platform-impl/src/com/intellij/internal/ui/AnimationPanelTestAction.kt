@@ -722,7 +722,7 @@ internal class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel"
       addTo(component)
     }
 
-    override fun hoverChanged(component: Component, hovered: Boolean) = helper.setVisible(hovered)
+    override fun hoverChanged(component: Component, hovered: Boolean) = helper.setVisible(hovered) {}
   }
 
   private enum class RColors {
