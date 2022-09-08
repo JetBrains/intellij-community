@@ -2,8 +2,10 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.LineNumberConstants;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -17,6 +19,8 @@ import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,5 +120,24 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
       AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myFileAnnotation.getProject(), myRevisionNumber, filePath,
                                                                () -> myChangesProvider.getChangesIn(myLine));
     }
+  }
+
+  /**
+   * @return Annotation line number (ex: to be passed into {@link FileAnnotation#getLineRevisionNumber(int)}).
+   * <p>
+   * Not to be confused with 'editor line'.
+   */
+  @CalledInAny
+  public static int getAnnotationLineNumber(@NonNls DataContext dataContext) {
+    Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
+    if (editor == null) return LineNumberConstants.ABSENT_LINE_NUMBER;
+
+    TextAnnotationPresentation annotationPresentation = AnnotateToggleAction.getAnnotationPresentation(editor);
+    if (annotationPresentation == null) return LineNumberConstants.ABSENT_LINE_NUMBER;
+
+    Integer gutterLine = dataContext.getData(EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR);
+    int editorLine = gutterLine != null ? gutterLine : editor.getCaretModel().getLogicalPosition().line;
+
+    return annotationPresentation.getAnnotationLine(editorLine);
   }
 }

@@ -12,7 +12,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
@@ -25,11 +24,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Supplier;
 
-abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase implements DumbAware, UpToDateLineNumberListener {
+abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase implements DumbAware {
   @NotNull protected final FileAnnotation myAnnotation;
   @NotNull private final AbstractVcs myVcs;
-
-  private int currentLine;
 
   AnnotateRevisionAction(@NotNull Supplier<String> dynamicText,
                          @NotNull Supplier<String> dynamicDescription,
@@ -86,24 +83,19 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
   @Nullable
   @Override
   protected VcsFileRevision getFileRevision(@NotNull AnActionEvent e) {
+    int currentLine = getAnnotatedLine(e);
     return getRevision(currentLine);
   }
 
   @Override
   protected int getAnnotatedLine(@NotNull AnActionEvent e) {
-    if (currentLine < 0) return super.getAnnotatedLine(e);
-    return currentLine;
+    return ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.getDataContext());
   }
 
   @Nullable
   @Override
   protected Editor getEditor(@NotNull AnActionEvent e) {
     return e.getData(CommonDataKeys.EDITOR);
-  }
-
-  @Override
-  public void consume(Integer integer) {
-    currentLine = integer;
   }
 
   private static class MyVcsVirtualFile extends VcsVirtualFile {
