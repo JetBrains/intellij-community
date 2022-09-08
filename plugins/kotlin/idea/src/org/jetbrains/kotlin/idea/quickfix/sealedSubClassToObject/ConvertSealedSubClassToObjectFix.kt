@@ -8,6 +8,8 @@ import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.KtNodeTypes
@@ -39,16 +41,18 @@ class ConvertSealedSubClassToObjectFix : LocalQuickFix {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val klass = descriptor.psiElement.getParentOfType<KtClass>(false) ?: return
+        val ktClassSmartPointer: SmartPsiElementPointer<KtClass> = SmartPointerManager.createPointer(klass)
 
-        changeInstances(klass)
-        changeDeclaration(klass)
+        changeInstances(ktClassSmartPointer)
+        changeDeclaration(ktClassSmartPointer)
     }
 
     /**
      * Changes declaration of class to object.
      */
-    private fun changeDeclaration(element: KtClass) {
+    private fun changeDeclaration(pointer: SmartPsiElementPointer<KtClass>) {
         runWriteAction {
+            val element = pointer.element ?: return@runWriteAction
             val factory = KtPsiFactory(element)
 
             element.changeToObject(factory)
@@ -74,12 +78,13 @@ class ConvertSealedSubClassToObjectFix : LocalQuickFix {
     /**
      * Replace instantiations of the class with links to the singleton instance of the object.
      */
-    private fun changeInstances(klass: KtClass) {
-        mapReferencesByLanguage(klass)
+    private fun changeInstances(pointer: SmartPsiElementPointer<KtClass>) {
+        mapReferencesByLanguage(pointer)
             .apply {
                 runWriteAction {
-                    replaceKotlin(klass)
-                    replaceJava(klass)
+                    val ktClass = pointer.element ?: return@runWriteAction
+                    replaceKotlin(ktClass)
+                    replaceJava(ktClass)
                 }
             }
     }
@@ -87,13 +92,14 @@ class ConvertSealedSubClassToObjectFix : LocalQuickFix {
     /**
      * Map references to this class by language
      */
-    private fun mapReferencesByLanguage(klass: KtClass): Map<Language, List<PsiElement>> {
+    private fun mapReferencesByLanguage(pointer: SmartPsiElementPointer<KtClass>): Map<Language, List<PsiElement>> {
         val computable = {
-            ReferencesSearch.search(klass)
-                .groupBy({ it.element.language }, { it.element.parent })
+            pointer.element?.let { ktClass ->
+                ReferencesSearch.search(ktClass).groupBy({ it.element.language }, { it.element.parent })
+            } ?: emptyMap()
         }
         return if (isDispatchThread()) {
-            klass.project.runSynchronouslyWithProgress(KotlinBundle.message("progress.looking.up.sealed.sub.class.usage"), true) {
+            pointer.project.runSynchronouslyWithProgress(KotlinBundle.message("progress.looking.up.sealed.sub.class.usage"), true) {
                 runReadAction { computable() }
             } ?: emptyMap()
         } else {
