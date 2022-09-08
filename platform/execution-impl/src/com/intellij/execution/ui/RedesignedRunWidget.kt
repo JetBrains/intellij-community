@@ -194,18 +194,17 @@ private abstract class TogglePopupAction : ToggleAction {
               @NlsActions.ActionDescription description: String?,
               icon: Icon?) : super(text, description, icon)
 
-  private var selectedState: Boolean = false
-
   override fun isSelected(e: AnActionEvent): Boolean {
-    return selectedState
+    return Toggleable.isSelected(e.presentation)
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    selectedState = state
-    if (!selectedState) return
+    val presentation = e.presentation
+    Toggleable.setSelected(presentation, state)
+    if (!state) return
     val component = e.inputEvent?.component as? JComponent ?: return
     val actionGroup = getActionGroup(e) ?: return
-    val function = { selectedState = false }
+    val function = { Toggleable.setSelected(presentation, false) }
     val popup = JBPopupFactory.getInstance().createActionGroupPopup(
       null, actionGroup, e.dataContext, false, false, false, function, 30, null)
     popup.showUnderneathOf(component)
