@@ -27,11 +27,6 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
 
   protected abstract fun isProjectFile(file: VirtualFile): Boolean
 
-  @Deprecated("redundant method", replaceWith = ReplaceWith("linkToExistingProject(projectFile, project)"))
-  protected open fun linkAndRefreshProject(projectDirectory: Path, project: Project) {
-    throw UnsupportedOperationException("use linkToExistingProject(VirtualFile, Project) instead")
-  }
-
   override fun canOpenProject(file: VirtualFile): Boolean {
     return if (file.isDirectory) file.children.any(::isProjectFile) else isProjectFile(file)
   }
@@ -39,6 +34,8 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
   protected fun getProjectDirectory(file: VirtualFile): VirtualFile {
     return if (file.isDirectory) file else file.parent
   }
+
+  abstract override fun linkToExistingProject(projectFile: VirtualFile, project: Project)
 
   override suspend fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     LOG.debug("Open ${systemId.readableName} project from $projectFile")
@@ -71,13 +68,6 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
       }
     }
     return ProjectManagerEx.getInstanceEx().openProjectAsync(nioPath, options)
-  }
-
-  override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
-    LOG.debug("Import project from $projectFile")
-    val projectDirectory = getProjectDirectory(projectFile)
-    @Suppress("DEPRECATION")
-    linkAndRefreshProject(projectDirectory.toNioPath(), project)
   }
 
   fun linkToExistingProject(projectFilePath: String, project: Project) {

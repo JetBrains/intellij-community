@@ -13,7 +13,6 @@ import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.testFramework.openProjectAsync
 import com.intellij.util.io.systemIndependentPath
-import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
 
@@ -58,7 +57,8 @@ abstract class AutoLinkTestCase : ExternalSystemTestCase() {
       override fun isProjectFile(file: VirtualFile): Boolean =
         unlinedProjectAware.isBuildFile(file)
 
-      override fun linkAndRefreshProject(projectDirectory: Path, project: Project) {
+      override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
+        val projectDirectory = getProjectDirectory(projectFile).toNioPath()
         unlinedProjectAware.linkAndLoadProject(project, projectDirectory.systemIndependentPath)
       }
     }
