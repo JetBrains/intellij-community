@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.sun.jdi.*
+import org.jetbrains.kotlin.backend.common.descriptors.synthesizedString
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.AsmUtil.getCapturedFieldName
 import org.jetbrains.kotlin.codegen.AsmUtil.getLabeledThisName
@@ -137,6 +138,9 @@ class VariableFinder(val context: ExecutionContext) {
 
         // Local variables – direct search
         findLocalVariable(variables, kind, kind.name)?.let { return it }
+
+        // Local variables - synthetic captured local variable (IR Backend)
+        findLocalVariable(variables, kind, kind.name.synthesizedString)?.let { return it }
 
         // Recursive search in local receiver variables
         findCapturedVariableInReceiver(variables, kind)?.let { return it }
