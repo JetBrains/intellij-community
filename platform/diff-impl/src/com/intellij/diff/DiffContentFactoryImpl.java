@@ -188,6 +188,12 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     return createContentFromFile(project, file);
   }
 
+  @NotNull
+  @Override
+  public DiffContent create(@Nullable Project project, @NotNull VirtualFile file, @Nullable VirtualFile highlightFile) {
+    return createContentFromFile(project, file, highlightFile);
+  }
+
   @Nullable
   @Override
   public DocumentContent createDocument(@Nullable Project project, @NotNull final VirtualFile file) {
