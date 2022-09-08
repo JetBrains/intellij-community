@@ -41,6 +41,7 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1944,6 +1945,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitPatternGuard(@NotNull PsiPatternGuard guard) {
     super.visitPatternGuard(guard);
     myHolder.add(checkFeature(guard, HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
+    if (myHolder.hasErrorResults()) return;
+    PsiExpression guardingExpr = guard.getGuardingExpression();
+    Object constVal = ExpressionUtils.computeConstantExpression(guardingExpr);
+    if (Boolean.FALSE.equals(constVal)) {
+      String message = JavaErrorBundle.message("when.expression.is.false");
+      myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(guardingExpr).descriptionAndTooltip(message).create());
+    }
   }
 
   @Override
