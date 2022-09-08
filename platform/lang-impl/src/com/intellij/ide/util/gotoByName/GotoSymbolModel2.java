@@ -8,6 +8,7 @@ import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -23,21 +24,29 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<LanguageRef> {
   private String[] mySeparators;
   private final boolean myAllContributors;
 
-  public GotoSymbolModel2(@NotNull Project project, ChooseByNameContributor @NotNull [] contributors) {
+  public GotoSymbolModel2(@NotNull Project project, ChooseByNameContributor @NotNull [] contributors, @NotNull Disposable parentDisposable) {
     super(project, contributors);
     myAllContributors = false;
-    addEpListener(project);
+    addEpListener(parentDisposable);
   }
 
+  /**
+   * @deprecated Please pass parent disposable explicitly
+   */
+  @Deprecated
   public GotoSymbolModel2(@NotNull Project project) {
+    this(project, project);
+  }
+
+  public GotoSymbolModel2(@NotNull Project project, @NotNull Disposable parentDisposable) {
     super(project, new ChooseByNameContributor[0]);
     myAllContributors = true;
-    addEpListener(project);
+    addEpListener(parentDisposable);
   }
 
-  private void addEpListener(@NotNull Project project) {
+  private void addEpListener(@NotNull Disposable parentDisposable) {
     ChooseByNameContributor.CLASS_EP_NAME.addChangeListener(
-      () -> mySeparators = null, project);
+      () -> mySeparators = null, parentDisposable);
   }
 
   @Override

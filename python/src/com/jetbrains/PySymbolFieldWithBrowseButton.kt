@@ -190,5 +190,5 @@ private class PySymbolChooserDialog(project: Project, scope: GlobalSearchScope, 
         super.getQualifiedName(item)
       }
     }
-  }))
+  }), disposable)
 }

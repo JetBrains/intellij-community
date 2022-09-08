@@ -11,7 +11,7 @@ import static org.jetbrains.kotlin.idea.navigation.GotoCheck.checkGotoDirectives
 public abstract class AbstractKotlinGotoTest extends KotlinLightCodeInsightFixtureTestCase {
     protected void doSymbolTest(String path) {
         myFixture.configureByFile(path);
-        checkGotoDirectives(new GotoSymbolModel2(getProject()), myFixture.getEditor());
+        checkGotoDirectives(new GotoSymbolModel2(getProject(), myFixture.getTestRootDisposable()), myFixture.getEditor());
     }
 
     protected void doClassTest(String path) {
