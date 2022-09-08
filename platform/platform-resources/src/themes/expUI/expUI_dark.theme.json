@@ -259,6 +259,10 @@
         "separatorColor": "Grey2",
         "hoverBackground": "Blue3",
         "leftRightInset": 8
+      },
+      "Tag": {
+        "background": "Grey3",
+        "foreground": "Grey8"
       }
     },
 
