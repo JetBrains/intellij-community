@@ -89,12 +89,17 @@ public abstract class AppIcon {
    * <p>
    * This method might resort to requesting user attention to a target window if focus stealing is not supported by the OS
    * (this is the case on Windows, where focus stealing can only be enabled using {@link WinFocusStealer}).
+   *
+   * @see #requestFocus(Window)
    */
   public void requestFocus(IdeFrame frame) {
     requestFocus(frame == null ? null : SwingUtilities.getWindowAncestor(frame.getComponent()));
   }
 
-  protected void requestFocus(@Nullable Window window) {
+  /**
+   * @see #requestFocus(IdeFrame)
+   */
+  public void requestFocus(@Nullable Window window) {
   }
 
   public void requestFocus() {
@@ -233,7 +238,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    protected void requestFocus(@Nullable Window window) {
+    public void requestFocus(@Nullable Window window) {
       if (window != null) {
         window.toFront();
       }
@@ -647,7 +652,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    protected void requestFocus(@Nullable Window window) {
+    public void requestFocus(@Nullable Window window) {
       if (window != null) {
         try {
           // This is required for the focus stealing mechanism to work reliably;
@@ -657,7 +662,7 @@ public abstract class AppIcon {
         catch (InterruptedException e) {
           LOG.error(e);
         }
-        window.toFront();
+        UIUtil.toFront(window);
       }
     }
 
