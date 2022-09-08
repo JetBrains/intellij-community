@@ -823,7 +823,7 @@ private fun checkProductLayout(context: BuildContext) {
 }
 
 private fun checkBaseLayout(layout: BaseLayout, description: String, context: BuildContext) {
-  checkModules(layout.includedModuleNames, "moduleJars in $description", context)
+  checkModules(layout.includedModuleNames.toList(), "moduleJars in $description", context)
   checkArtifacts(layout.includedArtifacts.keys, "includedArtifacts in $description", context)
   checkModules(layout.resourcePaths.map { it.moduleName }, "resourcePaths in $description", context)
   checkModules(layout.moduleExcludes.keySet(), "moduleExcludes in $description", context)

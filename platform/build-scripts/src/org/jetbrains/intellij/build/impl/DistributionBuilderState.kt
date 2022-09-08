@@ -31,7 +31,7 @@ class DistributionBuilderState(pluginsToPublish: Set<PluginLayout>, private val 
   }
 
   val platformModules: Collection<String>
-    get() = platform.includedModuleNames + getToolModules()
+    get() = (platform.includedModuleNames + getToolModules().asSequence()).toList()
 
   fun getModulesForPluginsToPublish(): Set<String> {
     val result = LinkedHashSet<String>()

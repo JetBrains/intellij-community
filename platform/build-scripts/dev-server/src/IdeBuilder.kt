@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "BlockingMethodInNonBlockingContext")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "BlockingMethodInNonBlockingContext", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.diagnostic.telemetry.useWithScope
@@ -92,9 +92,13 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration,
       continue
     }
 
+    // remove all modules without content root
+    val modules = plugin.includedModuleNames
+      .filter { it != plugin.mainModule && context.findRequiredModule(it).contentRootsList.urls.isEmpty() }
+      .toList()
     val pluginBuildDescriptor = PluginBuildDescriptor(dir = pluginRootDir.resolve(plugin.directoryName),
                                                       layout = plugin,
-                                                      moduleNames = plugin.includedModuleNames.toList())
+                                                      moduleNames = modules)
     for (name in pluginBuildDescriptor.moduleNames) {
       moduleNameToPluginBuildDescriptor.put(name, pluginBuildDescriptor)
     }
@@ -288,7 +292,7 @@ private fun getBundledMainModuleNames(productProperties: ProductProperties, addi
   return bundledPlugins
 }
 
-fun getAdditionalModules(): Sequence<String>? {
+internal fun getAdditionalModules(): Sequence<String>? {
   return (System.getProperty("additional.modules") ?: System.getProperty("additional.plugins") ?: return null)
     .splitToSequence(',')
     .map(String::trim)

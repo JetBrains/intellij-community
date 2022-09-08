@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext", "ReplacePutWithAssignment", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package org.jetbrains.intellij.build.impl
 
@@ -81,12 +81,6 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
       layout.directoryName = spec.directoryName
       if (!layout.includedModuleNames.contains(mainModuleName)) {
         layout.withModule(mainModuleName, layout.mainJarName)
-      }
-      if (spec.mainJarNameSetExplicitly) {
-        layout.explicitlySetJarPaths.add(layout.mainJarName)
-      }
-      else {
-        layout.explicitlySetJarPaths.remove(layout.mainJarName)
       }
       layout.directoryNameSetExplicitly = spec.directoryNameSetExplicitly
       layout.bundlingRestrictions = spec.bundlingRestrictions.build()
@@ -178,8 +172,6 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
         directoryNameSetExplicitly = true
       }
 
-    var mainJarNameSetExplicitly: Boolean = false
-      private set
     var directoryNameSetExplicitly: Boolean = false
       private set
 
@@ -222,7 +214,6 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
        */
       set(value) {
         layout.mainJarName = value
-        mainJarNameSetExplicitly = true
       }
 
     /**

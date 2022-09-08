@@ -49,15 +49,11 @@ open class BaseLayout {
   val projectLibrariesToUnpack: MultiMap<String, String> = MultiMap.createLinked()
   val modulesWithExcludedModuleLibraries: MutableList<String> = mutableListOf()
 
-  /** set of keys in {@link #moduleJars} which are set explicitly, not automatically derived from modules names */
-  val explicitlySetJarPaths: MutableSet<String> = LinkedHashSet()
+  val includedModuleNames: Sequence<String>
+    get() = _jarToModules.values.asSequence().flatten().distinct()
 
-  val includedModuleNames: Collection<String>
-    get() = _jarToModules.values.asSequence().flatten().distinct().toList()
-
-  open fun withModule(moduleName: String, relativeJarPath: String) {
+  fun withModule(moduleName: String, relativeJarPath: String) {
     checkAndAssociateModuleNameWithJarPath(moduleName, relativeJarPath)
-    explicitlySetJarPaths.add(relativeJarPath)
   }
 
   private fun checkAndAssociateModuleNameWithJarPath(moduleName: String, relativeJarPath: String) {
