@@ -19,6 +19,8 @@ import com.intellij.diagnostic.hprof.histogram.Histogram
 import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
 import com.intellij.diagnostic.hprof.util.IntList
 import com.intellij.diagnostic.hprof.util.UByteList
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 
 class AnalysisContext(
@@ -32,4 +34,6 @@ class AnalysisContext(
 ) {
   val classStore = navigator.classStore
   val disposedObjectsIDs = IntOpenHashSet()
+  val disposerParentToChildren = Int2ObjectOpenHashMap<IntArrayList>()
+  var disposerTreeObjectId = 0
 }

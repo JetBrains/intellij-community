@@ -1,0 +1,12 @@
+============== DISPOSER TREE SUMMARY ==============
+Cutoff: 0
+Count of disposable objects: 9
+
+[7] 1 MyDisposableRoot
+  [5] 3 MyDisposableChild
+    [2] 2 MyDisposableGrandchild
+  [1] 1 com.intellij.openapi.util.Disposer$1
+
+[2] 1 com.intellij.openapi.util.Disposer$1
+  [1] 1 MyDisposableChild
+

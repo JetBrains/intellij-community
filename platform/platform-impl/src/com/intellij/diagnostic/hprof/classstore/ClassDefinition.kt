@@ -49,6 +49,9 @@ class ClassDefinition(val name: String,
   val prettyName: String
     get() = computePrettyName(name)
 
+  val undecoratedName: String
+    get() = name.substringBefore('!')
+
   companion object {
     const val OBJECT_PREAMBLE_SIZE = 8
     const val ARRAY_PREAMBLE_SIZE = 12
