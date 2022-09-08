@@ -63,12 +63,14 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private final @NotNull ClusteringSearchSession mySession;
   private int myAlreadyRenderedSnippets;
   private final AtomicBoolean isRefreshing;
+  private final AtomicBoolean isShowingSimilarUsagesComponent;
   private final AtomicInteger lastUsagesNumber;
   private boolean isDisposed;
 
   public MostCommonUsagePatternsComponent(@NotNull UsageViewImpl usageView, @NotNull ClusteringSearchSession session) {
     super(true);
     isRefreshing = new AtomicBoolean(false);
+    isShowingSimilarUsagesComponent = new AtomicBoolean(false);
     lastUsagesNumber = new AtomicInteger(0);
     if (Registry.is("similarity.find.usages.view.auto.update")) {
       ScheduledFuture<?> fireEventsFuture =
@@ -111,7 +113,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
 
   private void refreshIfNeeded() {
     if (isScrolled() &&
-        !isRefreshing.get() &&
+        !isRefreshing.get() && !isShowingSimilarUsagesComponent.get() &&
         (newResultsAdded() && !myUsageView.isSearchInProgress())) {
       refresh();
     }
@@ -197,6 +199,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
         SimilarUsagesCollector.logShowSimilarUsagesLinkClicked(myProject, mySession);
         final SimilarUsagesComponent similarComponent = new SimilarUsagesComponent(mySession, info, this);
         removeAll();
+        isShowingSimilarUsagesComponent.set(true);
         setToolbar(new SimilarUsagesToolbar(similarComponent, UsageViewBundle.message("0.similar.usages", usagesToRender.size() - 1),
                                             myRefreshAction,
                                             new ActionLink(
@@ -206,6 +209,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
                                                 setToolbar(myMostCommonUsagesToolbar);
                                                 setContent(myMostCommonUsageScrollPane);
                                                 revalidate();
+                                                isShowingSimilarUsagesComponent.set(false);
                                               }
                                             )));
         setContent(similarComponent.createLazyLoadingScrollPane(usagesToRender));
