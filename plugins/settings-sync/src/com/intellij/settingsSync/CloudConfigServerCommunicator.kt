@@ -9,6 +9,7 @@ import com.intellij.util.io.inputStream
 import com.jetbrains.cloudconfig.*
 import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
+import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
@@ -26,14 +27,19 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   private fun receiveSnapshotFile(): Pair<InputStream?, String?> {
     return clientVersionContext.doWithVersion(null) {
-      val stream = client.read(SETTINGS_SYNC_SNAPSHOT_ZIP)
+      try {
+        val stream = client.read(SETTINGS_SYNC_SNAPSHOT_ZIP)
 
-      val actualVersion: String? = clientVersionContext.get(SETTINGS_SYNC_SNAPSHOT_ZIP)
-      if (actualVersion == null) {
-        LOG.warn("Version not stored in the context for $SETTINGS_SYNC_SNAPSHOT_ZIP")
+        val actualVersion: String? = clientVersionContext.get(SETTINGS_SYNC_SNAPSHOT_ZIP)
+        if (actualVersion == null) {
+          LOG.warn("Version not stored in the context for $SETTINGS_SYNC_SNAPSHOT_ZIP")
+        }
+
+        Pair(stream, actualVersion)
       }
-
-      Pair(stream, actualVersion)
+      catch (fileNotFound : FileNotFoundException) {
+        Pair(null, null)
+      }
     }
   }
 
