@@ -1,14 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
@@ -20,6 +25,22 @@ import javax.swing.*;
 
 public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFactory {
   private static final String ID = "VFS_REFRESH";
+
+  private volatile boolean myAvailable;
+
+  public VfsRefreshIndicatorWidgetFactory() {
+    // see also: `InfoAndProgressPanel#myShowNavBar`
+    myAvailable = ExperimentalUI.isNewUI() && UISettings.getInstance().getShowNavigationBarInBottom();
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(UISettingsListener.TOPIC, newUiSettings -> {
+      myAvailable = ExperimentalUI.isNewUI() && newUiSettings.getShowNavigationBarInBottom();
+      var projectManager = ProjectManager.getInstanceIfCreated();
+      if (projectManager != null) {
+        for (var project : projectManager.getOpenProjects()) {
+          project.getService(StatusBarWidgetsManager.class).updateWidget(this);
+        }
+      }
+    });
+  }
 
   @Override
   public @NotNull String getId() {
@@ -33,7 +54,7 @@ public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFa
 
   @Override
   public boolean isAvailable(@NotNull Project project) {
-    return ExperimentalUI.isNewUI() && ApplicationManager.getApplication().isInternal();
+    return myAvailable;
   }
 
   @Override

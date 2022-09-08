@@ -114,7 +114,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
   private boolean myDisposed;
   private WeakReference<Balloon> myLastShownBalloon;
   private JComponent myCentralComponent;
-  private boolean myShowNavBar;
+  private boolean myShowNavBar;  // see also: `VfsRefreshIndicatorWidgetFactory#myAvailable`
 
   private final Set<InlineProgressIndicator> myDirtyIndicators = new ReferenceOpenHashSet<>();
   private final Update myUpdateIndicators = new Update("UpdateIndicators", false, 1) {
