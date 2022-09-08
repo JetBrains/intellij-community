@@ -15,11 +15,14 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -159,6 +162,56 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   }
 
   private static JComponent createPopupContent(@NotNull NavBarPanel panel, Object @NotNull [] siblings) {
+
+    class MySelectablePanel extends SelectablePanel implements Disposable {
+      MySelectablePanel(NavBarItem item) {
+        super();
+        item.setIconOpaque(false);
+        setLayout(new BorderLayout());
+        add(item, BorderLayout.CENTER);
+        setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
+      }
+
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        return getItem().getAccessibleContext();
+      }
+
+      @Override
+      public void dispose() {
+        Disposer.dispose(getItem());
+      }
+
+      NavBarItem getItem() {
+        return (NavBarItem)getComponent(0);
+      }
+    }
+
+    class MyListRenderer implements ListCellRenderer<Object> {
+      final List<MySelectablePanel> selectables = new ArrayList<>();
+
+      @Override
+      public Component getListCellRendererComponent(JList<?> list, Object obj, int index, boolean isSelected, boolean cellHasFocus) {
+        MySelectablePanel selectable = null;
+
+        for (MySelectablePanel cachedSelectable : selectables) {
+          NavBarItem item = cachedSelectable.getItem();
+          if (obj == item.getObject()) {
+            item.update();
+            selectable = cachedSelectable;
+          }
+        }
+
+        if (selectable == null) {
+          selectable = new MySelectablePanel(new NavBarItem(panel, obj, null, true));
+          selectables.add(selectable);
+        }
+
+        selectable.setSelectionColor(isSelected ? UIUtil.getListSelectionBackground(cellHasFocus) : null);
+        return selectable;
+      }
+    }
+
     class MyList<E> extends JBList<E> implements DependentTransientComponent, Queryable {
       @Override
       public void putInfo(@NotNull Map<? super String, ? super String> info) {
@@ -173,19 +226,28 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     JBList<Object> list = new MyList<>();
     list.setModel(new CollectionListModel<>(siblings));
     HintUpdateSupply.installSimpleHintUpdateSupply(list);
-    List<NavBarItem> items = new ArrayList<>();
-    list.putClientProperty(DISPOSED_OBJECTS, items);
-    list.installCellRenderer(obj -> {
-      for (NavBarItem item : items) {
-        if (obj == item.getObject()) {
-          item.update();
-          return item;
+
+    if (ExperimentalUI.isNewUI()) {
+      MyListRenderer renderer = new MyListRenderer();
+      list.putClientProperty(DISPOSED_OBJECTS, renderer.selectables);
+      list.setCellRenderer(renderer);
+    }
+    else {
+      List<NavBarItem> items = new ArrayList<>();
+      list.putClientProperty(DISPOSED_OBJECTS, items);
+      list.installCellRenderer(obj -> {
+        for (NavBarItem item : items) {
+          if (obj == item.getObject()) {
+            item.update();
+            return item;
+          }
         }
-      }
-      NavBarItem item = new NavBarItem(panel, obj, null, true);
-      items.add(item);
-      return item;
-    });
+        NavBarItem item = new NavBarItem(panel, obj, null, true);
+        items.add(item);
+        return item;
+      });
+    }
+
     list.setBorder(JBUI.Borders.empty(5));
     list.addListSelectionListener(new ListSelectionListener() {
       @Override

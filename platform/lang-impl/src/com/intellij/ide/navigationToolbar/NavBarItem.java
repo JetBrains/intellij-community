@@ -241,6 +241,10 @@ public final class NavBarItem extends SimpleColoredComponent implements Disposab
     return isFocused() || isPopupElement;
   }
 
+  private boolean isPopupElementInNewUI() {
+    return isPopupElement && ExperimentalUI.isNewUI();
+  }
+
   public boolean isFocused() {
     if (myPanel.allowNavItemsFocus()) {
       return UIUtil.isFocusAncestor(myPanel) && !myPanel.isNodePopupActive();
@@ -256,7 +260,7 @@ public final class NavBarItem extends SimpleColoredComponent implements Disposab
 
   @Override
   protected boolean shouldDrawBackground() {
-    return isSelected() && isFocusedOrPopupElement();
+    return isSelected() && isFocusedOrPopupElement() && !isPopupElementInNewUI();
   }
 
   @Override

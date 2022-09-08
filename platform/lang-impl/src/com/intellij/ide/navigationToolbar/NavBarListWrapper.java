@@ -59,7 +59,6 @@ class NavBarListWrapper extends JBScrollPane implements DataProvider {
     ScrollingUtil.installActions(list);
     myList = list;
 
-    setBorder(BorderFactory.createEmptyBorder());
     if (isPopupHeightStatic()) {
       list.setVisibleRowCount(0);
       updateViewportPreferredSizeIfNeeded();
@@ -77,7 +76,6 @@ class NavBarListWrapper extends JBScrollPane implements DataProvider {
   private boolean isPopupHeightStatic() {
     if (ExperimentalUI.isNewUI()) return false;
     final int modelSize = myList.getModel().getSize();
-    setBorder(BorderFactory.createEmptyBorder());
     return modelSize > 0 && modelSize <= MAX_SIZE;
   }
 
