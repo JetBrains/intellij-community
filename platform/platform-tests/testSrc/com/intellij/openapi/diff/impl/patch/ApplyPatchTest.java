@@ -192,6 +192,10 @@ public class ApplyPatchTest extends HeavyPlatformTestCase {
     doTest(0, ApplyPatchStatus.SUCCESS, null, ApplyPatchTest::useCyrillicNames);
   }
 
+  public void testRenameWithModificationWithGitStyleCyrillicPaths() throws Exception {
+    doTest(0, ApplyPatchStatus.SUCCESS, null, ApplyPatchTest::useCyrillicNames);
+  }
+
   public void testFileWithGitStylePathsWithSpaces() throws Exception {
     doTest(0, ApplyPatchStatus.SUCCESS);
   }
