@@ -711,11 +711,6 @@
                               When true, moves the caret up or down as if there were no selection.\n\
                               When false, places the caret at the line before or after the corresponding selection boundary."/>
 
-    <registryKey key="editor.action.copy.entireLineFromEmptySelection.selectLine" defaultValue="false"
-                 description="Controls the behavior of Copy with empty selection w.r.t. the automatic selection of the copied line.\n\
-                              When true, the Copy action invoked with empty selection selects the just copied line.\n\
-                              When false, keeps the line with no selection."/>
-
     <registryKey key="editor.action.copy.entireLineFromEmptySelection.moveCaretToLineStart" defaultValue="false"
                  description="Controls the behavior of Copy with empty selection w.r.t. caret placement after copying.\n\
                               When true, the Copy action invoked with empty selection moves the caret to the beginning of\
@@ -1352,6 +1347,7 @@
     <advancedSetting id="ide.tree.collapse.recursively" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.open.readme.md.on.startup" default="true" groupKey="group.advanced.settings.startup"/>
     <advancedSetting id="editor.skip.copy.and.cut.for.empty.selection" default="false" groupKey="group.advanced.settings.editor"/>
+    <advancedSetting id="editor.skip.selecting.line.after.copy.empty.selection" default="false" groupKey="group.advanced.settings.editor"/>
     <advancedSetting id="editor.show.special.chars" default="true" groupKey="group.advanced.settings.editor"/>
     <advancedSetting id="editor.show.zoom.indicator" default="true" groupKey="group.advanced.settings.editor"/>
     <advancedSetting id="ide.cycle.scrolling" default="true" groupKey="group.advanced.settings.ui"/>
