@@ -183,42 +183,41 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     List<TextEditorHighlightingPass> result = new ArrayList<>(frozenPassConfigs.length);
     IntList passesRefusedToCreate = new IntArrayList();
     boolean isDumb = DumbService.getInstance(myProject).isDumb();
-    for (int passId = 1; passId < frozenPassConfigs.length; passId++) {
-      PassConfig passConfig = frozenPassConfigs[passId];
-      if (passConfig == null) continue;
-      if (ArrayUtil.find(passesToIgnore, passId) != -1) {
-        continue;
-      }
-      TextEditorHighlightingPassFactory factory = passConfig.passFactory;
-      TextEditorHighlightingPass pass = null;
-      if (!isDumb || DumbService.isDumbAware(factory)) {
-        try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
-          pass = factory.createHighlightingPass(psiFile, editor);
+    try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
+      for (int passId = 1; passId < frozenPassConfigs.length; passId++) {
+        PassConfig passConfig = frozenPassConfigs[passId];
+        if (passConfig == null) continue;
+        if (ArrayUtil.find(passesToIgnore, passId) != -1) {
+          continue;
         }
-      }
-      if (pass == null || isDumb && !DumbService.isDumbAware(pass)) {
-        passesRefusedToCreate.add(passId);
-      }
-      else {
-        // init with editor's colors scheme
-        pass.setColorsScheme(editor.getColorsScheme());
+        TextEditorHighlightingPassFactory factory = passConfig.passFactory;
+        TextEditorHighlightingPass pass =
+          isDumb && !DumbService.isDumbAware(factory) ? null : factory.createHighlightingPass(psiFile, editor);
+        if (pass == null || isDumb && !DumbService.isDumbAware(pass)) {
+          passesRefusedToCreate.add(passId);
+        }
+        else {
+          // init with editor's colors scheme
+          pass.setColorsScheme(editor.getColorsScheme());
 
-        IntList ids = passConfig.completionPredecessorIds.length == 0 ? IntList.of() : new IntArrayList(passConfig.completionPredecessorIds.length);
-        for (int id : passConfig.completionPredecessorIds) {
-          if (id < frozenPassConfigs.length && frozenPassConfigs[id] != null) {
-            ids.add(id);
+          IntList ids =
+            passConfig.completionPredecessorIds.length == 0 ? IntList.of() : new IntArrayList(passConfig.completionPredecessorIds.length);
+          for (int id : passConfig.completionPredecessorIds) {
+            if (id < frozenPassConfigs.length && frozenPassConfigs[id] != null) {
+              ids.add(id);
+            }
           }
-        }
-        pass.setCompletionPredecessorIds(ids.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : ids.toIntArray());
-        ids = passConfig.startingPredecessorIds.length == 0 ? IntList.of() : new IntArrayList(passConfig.startingPredecessorIds.length);
-        for (int id : passConfig.startingPredecessorIds) {
-          if (id < frozenPassConfigs.length && frozenPassConfigs[id] != null) {
-            ids.add(id);
+          pass.setCompletionPredecessorIds(ids.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : ids.toIntArray());
+          ids = passConfig.startingPredecessorIds.length == 0 ? IntList.of() : new IntArrayList(passConfig.startingPredecessorIds.length);
+          for (int id : passConfig.startingPredecessorIds) {
+            if (id < frozenPassConfigs.length && frozenPassConfigs[id] != null) {
+              ids.add(id);
+            }
           }
+          pass.setStartingPredecessorIds(ids.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : ids.toIntArray());
+          pass.setId(passId);
+          result.add(pass);
         }
-        pass.setStartingPredecessorIds(ids.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : ids.toIntArray());
-        pass.setId(passId);
-        result.add(pass);
       }
     }
 
