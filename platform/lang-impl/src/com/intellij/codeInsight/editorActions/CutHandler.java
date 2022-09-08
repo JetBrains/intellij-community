@@ -41,7 +41,7 @@ public class CutHandler extends EditorWriteActionHandler {
     }
 
     final SelectionModel selectionModel = editor.getSelectionModel();
-    CopyAction.SelectionToCopy selectionToCopy = CopyAction.prepareSelectionToCopy(editor, false);
+    CopyAction.SelectionToCopy selectionToCopy = CopyAction.prepareSelectionToCut(editor);
     if (selectionToCopy == null) {
       return;
     }

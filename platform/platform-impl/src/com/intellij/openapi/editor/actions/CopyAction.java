@@ -5,9 +5,7 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorCopyPasteHelper;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.EditorCopyPasteHelper.CopyPasteOptions;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -19,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
+import java.util.List;
 
 public class CopyAction extends TextComponentEditorAction implements HintManagerImpl.ActionToIgnore {
 
@@ -35,7 +34,8 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
     }
   }
 
-  public record SelectionToCopy(@NotNull CopyPasteOptions copyPasteOptions) {
+  public record SelectionToCopy(@NotNull CopyPasteOptions copyPasteOptions,
+                                @Nullable List<CaretState> caretStateToRestore) {
     private static final @NotNull DataKey<SelectionToCopy> KEY = DataKey.create("CopyAction.SelectionToCopy.KEY");
 
     public static @Nullable SelectionToCopy fromDataContext(@NotNull DataContext dataContext) {
@@ -50,22 +50,37 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
     }
   }
 
-  public static @Nullable SelectionToCopy prepareSelectionToCopy(@NotNull Editor editor, boolean isToMoveCaretToSelectionStart) {
+  public static @Nullable SelectionToCopy prepareSelectionToCut(@NotNull Editor editor) {
+    return prepareSelectionToCopy(editor, false, false);
+  }
+
+  private static @Nullable SelectionToCopy prepareSelectionToCopy(@NotNull Editor editor) {
+    boolean moveCaretToSelectionStart = isCopyFromEmptySelectionToMoveCaretToLineStart();
+    boolean preserveOriginalCaretState = !isCopyFromEmptySelectionToSelectLine();
+    return prepareSelectionToCopy(editor, moveCaretToSelectionStart, preserveOriginalCaretState);
+  }
+
+  private static @Nullable SelectionToCopy prepareSelectionToCopy(@NotNull Editor editor,
+                                                                  boolean isToMoveCaretToSelectionStart,
+                                                                  boolean isToPreserveOriginalCaretState) {
     if (editor.getSelectionModel().hasSelection(true)) {
-      return new SelectionToCopy(CopyPasteOptions.DEFAULT);
+      return new SelectionToCopy(CopyPasteOptions.DEFAULT, null);
     }
     if (isSkipCopyPasteForEmptySelection()) {
       return null;
     }
 
-    editor.getCaretModel().runForEachCaret(caret -> {
+    CaretModel caretModel = editor.getCaretModel();
+
+    List<CaretState> originalCaretState = isToPreserveOriginalCaretState ? caretModel.getCaretsAndSelections() : null;
+    caretModel.runForEachCaret(caret -> {
       EditorActionUtil.selectEntireLines(caret);
       if (isToMoveCaretToSelectionStart && caret.hasSelection()) {
         caret.moveToVisualPosition(caret.getSelectionStartPosition());
       }
     });
     CopyPasteOptions copyPasteOptions = new CopyPasteOptions(true);
-    return new SelectionToCopy(copyPasteOptions);
+    return new SelectionToCopy(copyPasteOptions, originalCaretState);
   }
 
   public static void copyToClipboard(@NotNull Editor editor,
@@ -73,7 +88,7 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
                                      @NotNull TransferableProvider transferableProvider) {
     SelectionToCopy selectionToCopy = SelectionToCopy.fromDataContext(dataContext);
     if (selectionToCopy == null) {  // a genuine "Copy", not "Cut"
-      selectionToCopy = prepareSelectionToCopy(editor, isCopyFromEmptySelectionToMoveCaretToLineStart());
+      selectionToCopy = prepareSelectionToCopy(editor);
       if (selectionToCopy == null) {
         return;
       }
@@ -88,22 +103,32 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
                                      @NotNull TransferableProvider transferableProvider,
                                      @NotNull SelectionToCopy selectionToCopy) {
     Transferable transferable = transferableProvider.getSelection(editor, selectionToCopy.copyPasteOptions());
-    if (transferable == null) {
-      return;
-    }
+    if (transferable != null) {
+      CopyPasteManager.getInstance().setContents(transferable);
 
-    CopyPasteManager.getInstance().setContents(transferable);
-
-    if (editor instanceof EditorEx) {
-      EditorEx ex = (EditorEx)editor;
-      if (ex.isStickySelection()) {
-        ex.setStickySelection(false);
+      if (editor instanceof EditorEx) {
+        EditorEx ex = (EditorEx)editor;
+        if (ex.isStickySelection()) {
+          ex.setStickySelection(false);
+        }
       }
+    }
+    restoreCaretStateIfNeeded(editor, selectionToCopy);
+  }
+
+  private static void restoreCaretStateIfNeeded(@NotNull Editor editor, @NotNull SelectionToCopy selectionToCopy) {
+    List<CaretState> originalCaretState = selectionToCopy.caretStateToRestore();
+    if (originalCaretState != null) {
+      editor.getCaretModel().setCaretsAndSelections(originalCaretState);
     }
   }
 
   public static boolean isSkipCopyPasteForEmptySelection() {
     return AdvancedSettings.getBoolean(SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY);
+  }
+
+  public static boolean isCopyFromEmptySelectionToSelectLine() {
+    return Registry.is("editor.action.copy.entireLineFromEmptySelection.selectLine");
   }
 
   public static boolean isCopyFromEmptySelectionToMoveCaretToLineStart() {

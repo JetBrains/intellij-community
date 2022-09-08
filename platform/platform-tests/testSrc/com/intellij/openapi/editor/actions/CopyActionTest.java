@@ -22,9 +22,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 
-import static com.intellij.testFramework.EditorTestUtil.CARET_TAG;
+import static com.intellij.testFramework.EditorTestUtil.*;
 
 public class CopyActionTest extends LightPlatformCodeInsightTestCase {
+
+  public static @NotNull String maybeSelection(@NotNull String line) {
+    if (!CopyAction.isCopyFromEmptySelectionToSelectLine()) {
+      return line;
+    }
+    return SELECTION_START_TAG + line + SELECTION_END_TAG;
+  }
 
   public static @NotNull String maybeCaretOnLineStart(@NotNull String line) {
     if (!CopyAction.isCopyFromEmptySelectionToMoveCaretToLineStart() || !line.contains(CARET_TAG)) {
@@ -39,8 +46,8 @@ public class CopyActionTest extends LightPlatformCodeInsightTestCase {
             "third line");
     copy();
     verifyResult("first line\n" +
-                 maybeCaretOnLineStart("<selection>second<caret> line\n") +
-                 "</selection>third line",
+                 maybeCaretOnLineStart(maybeSelection("second<caret> line\n")) +
+                 "third line",
                  "second line\n"
     );
   }
@@ -52,8 +59,8 @@ public class CopyActionTest extends LightPlatformCodeInsightTestCase {
     assertTrue("Failed to activate soft wrapping", EditorTestUtil.configureSoftWraps(getEditor(), 6));
     copy();
     verifyResult("first line\n" +
-                 maybeCaretOnLineStart("<selection>second line<caret>\n") +
-                 "</selection>third line",
+                 maybeCaretOnLineStart(maybeSelection("second line<caret>\n")) +
+                 "third line",
                  "second line\n"
     );
   }

@@ -20,7 +20,7 @@ public class CutAction extends TextComponentEditorAction {
   public static class Handler extends EditorWriteActionHandler {
     @Override
     public void executeWriteAction(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      SelectionToCopy selectionToCopy = CopyAction.prepareSelectionToCopy(editor, false);
+      SelectionToCopy selectionToCopy = CopyAction.prepareSelectionToCut(editor);
       if (selectionToCopy == null) {
         return;
       }
