@@ -147,7 +147,14 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   @RequiresEdt
-  void updateViewContent() {
+  void updateTreeView() {
+    updateTreeIfShown(tree -> {
+      tree.rebuildTree();
+    });
+  }
+
+  @RequiresEdt
+  private void updateViewContent() {
     if (myShelveChangesManager.getAllLists().isEmpty() || hideDefaultShelfTab(myProject)) {
       if (myContent != null) {
         removeContent(myContent);
