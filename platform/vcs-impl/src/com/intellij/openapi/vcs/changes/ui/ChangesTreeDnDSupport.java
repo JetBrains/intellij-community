@@ -56,7 +56,7 @@ public abstract class ChangesTreeDnDSupport implements DnDDropHandler, DnDTarget
     aEvent.hideHighlighter();
     aEvent.setDropPossible(false, "");
 
-    ChangesBrowserNode<?> dropNode = getDropRootNode(myTree, aEvent);
+    ChangesBrowserNode<?> dropNode = getDropNode(aEvent);
 
     boolean canHandle = canHandleDropEvent(aEvent, dropNode);
     if (!canHandle) return true;
@@ -65,6 +65,11 @@ public abstract class ChangesTreeDnDSupport implements DnDDropHandler, DnDTarget
     aEvent.setDropPossible(true);
 
     return false;
+  }
+
+  @Nullable
+  protected ChangesBrowserNode<?> getDropNode(DnDEvent aEvent) {
+    return getDropRootNode(myTree, aEvent);
   }
 
   private void highlightDropNode(@NotNull DnDEvent aEvent, @Nullable ChangesBrowserNode<?> dropNode) {
