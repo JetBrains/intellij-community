@@ -31,7 +31,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.shareIn
 
 @Service(Service.Level.PROJECT)
-internal class UiCommandsService(project: Project) : UiStateModifier, UiStateSource {
+internal class PkgsUiCommandsService(project: Project) : UiStateModifier, UiStateSource {
 
     private val programmaticSearchQueryChannel = Channel<String>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
     private val programmaticTargetModulesChannel = Channel<TargetModules>(onBufferOverflow = BufferOverflow.DROP_OLDEST)

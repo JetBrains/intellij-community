@@ -34,7 +34,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchTo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
-import com.jetbrains.packagesearch.intellij.plugin.util.uiStateModifier
+import com.jetbrains.packagesearch.intellij.plugin.util.pkgsUiStateModifier
 
 class AddDependencyAction : AnAction(
     PackageSearchBundle.message("packagesearch.actions.addDependency.text"),
@@ -70,7 +70,7 @@ class AddDependencyAction : AnAction(
         val selectedModule = findSelectedModule(e, modules) ?: return
 
         PackageSearchToolWindowFactory.activateToolWindow(project) {
-            project.uiStateModifier.setTargetModules(TargetModules.One(selectedModule))
+            project.pkgsUiStateModifier.setTargetModules(TargetModules.One(selectedModule))
         }
     }
 

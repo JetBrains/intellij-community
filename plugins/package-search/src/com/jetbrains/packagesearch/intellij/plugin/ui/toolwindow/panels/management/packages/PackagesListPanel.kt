@@ -494,29 +494,40 @@ internal class PackagesListPanel(
             isSearching() -> {
                 listPanel.emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.searching")
             }
-            targetModules is TargetModules.None -> {
-                listPanel.emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.noModule")
-            }
-            !loading -> {
-                val targetModuleNames = when (targetModules) {
-                    is TargetModules.All -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.allModules")
-                    is TargetModules.One -> targetModules.module.projectModule.name
-                    is TargetModules.None -> error("No module selected empty state should be handled separately")
+            project.packageSearchProjectService.isComputationAllowed -> when {
+                targetModules is TargetModules.None -> {
+                    listPanel.emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.noModule")
                 }
-                listPanel.emptyText.appendLine(
-                    PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.packagesOnly", targetModuleNames)
+                !loading -> {
+                    val targetModuleNames = when (targetModules) {
+                        is TargetModules.All -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.allModules")
+                        is TargetModules.One -> targetModules.module.projectModule.name
+                        is TargetModules.None -> error("No module selected empty state should be handled separately")
+                    }
+                    listPanel.emptyText.appendLine(
+                        PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.packagesOnly", targetModuleNames)
+                    )
+                    listPanel.emptyText.appendLine(
+                        PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.learnMore"),
+                        SimpleTextAttributes.LINK_ATTRIBUTES
+                    ) {
+                        BrowserUtil.browse("https://www.jetbrains.com/help/idea/package-search-build-system-support-limitations.html")
+                    }
+                }
+                else -> listPanel.emptyText.appendLine(
+                    PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.loading")
                 )
-                listPanel.emptyText.appendLine(
-                    PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.learnMore"),
-                    SimpleTextAttributes.LINK_ATTRIBUTES
-                ) {
-                    BrowserUtil.browse("https://www.jetbrains.com/help/idea/package-search-build-system-support-limitations.html")
-                }
             }
             else -> {
                 listPanel.emptyText.appendLine(
-                    PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.loading")
+                    PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.interrupted")
                 )
+                listPanel.emptyText.appendLine(
+                    PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.interrupted.restart"),
+                    SimpleTextAttributes.LINK_ATTRIBUTES
+                ) {
+                    project.packageSearchProjectService.resumeComputation()
+                }
             }
         }
     }

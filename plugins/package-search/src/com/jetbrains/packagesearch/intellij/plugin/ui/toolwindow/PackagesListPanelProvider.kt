@@ -22,10 +22,7 @@ class PackagesListPanelProvider : DependenciesToolwindowTabProvider {
 
     override fun provideTab(project: Project): Content = project.service<PanelContainer>().packageManagementPanel
 
-    override fun isAvailable(project: Project) = project.packageSearchProjectService
-        .projectModulesStateFlow
-        .value
-        .isNotEmpty()
+    override fun isAvailable(project: Project) = project.packageSearchProjectService.isAvailable
 
     override fun addIsAvailableChangesListener(project: Project, callback: (Boolean) -> Unit): Subscription {
         val job = project.packageSearchProjectService
