@@ -1,11 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -15,6 +13,7 @@ import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,12 +34,17 @@ public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFa
 
   @Override
   public boolean isAvailable(@NotNull Project project) {
-    return ExperimentalUI.isNewUI() && UISettings.getInstance().getShowNavigationBarInBottom();  // see `InfoAndProgressPanel#myShowNavBar`
+    return ExperimentalUI.isNewUI() && ApplicationManager.getApplication().isInternal();
   }
 
   @Override
   public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
     return true;
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return false;
   }
 
   @Override
@@ -74,7 +78,7 @@ public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFa
   }
 
   private static final class VfsRefreshWidget implements CustomStatusBarWidget {
-    private final Icon myInactive = IconLoader.getDisabledIcon(AllIcons.Actions.StopRefresh);
+    private final Icon myInactive = EmptyIcon.ICON_16;
     private final Icon myProgress = new AnimatedIcon.FS();
     private final JLabel myComponent = new JLabel(myInactive);
 
