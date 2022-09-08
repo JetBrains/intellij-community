@@ -16,19 +16,16 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TraceableDisposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-public class DaemonProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator, Disposable {
+public class DaemonProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator {
   private static boolean debug;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(debug);
-  private volatile boolean myDisposed;
   private volatile Throwable myCancellationCause;
 
   @Override
@@ -53,38 +50,22 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public final void cancel() {
-    boolean changed = false;
     synchronized (getLock()) {
       if (!isCanceled()) {
         myTraceableDisposable.kill("Daemon Progress Canceled");
         super.cancel();
-        changed = true;
       }
-    }
-    if (changed) {
-      Disposer.dispose(this);
     }
   }
 
   public final void cancel(@NotNull Throwable cause) {
-    boolean changed = false;
     synchronized (getLock()) {
       if (!isCanceled()) {
         myCancellationCause = cause;
         myTraceableDisposable.killExceptionally(cause);
         super.cancel();
-        changed = true;
       }
     }
-    if (changed) {
-      Disposer.dispose(this);
-    }
-  }
-
-  // called when canceled
-  @Override
-  public void dispose() {
-    myDisposed = true;
   }
 
   @Override
@@ -131,13 +112,16 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
     return super.toString() + (debug ? "; "+myTraceableDisposable.getStackTrace()+"\n;" : "");
   }
 
-  final boolean isDisposed() {
-    return myDisposed;
-  }
-
   @Override
   public boolean isIndeterminate() {
     // to avoid silly exceptions "this progress is indeterminate" on storing/restoring wrapper states in JobLauncher
     return false;
+  }
+
+  /**
+   * @deprecated does nothing, use {@link #cancel()} instead
+   */
+  @Deprecated
+  public void dispose() {
   }
 }

@@ -435,7 +435,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         ((HighlightingSessionImpl)session).waitForHighlightInfosApplied();
         EDT.dispatchAllInvocationEvents();
         EDT.dispatchAllInvocationEvents();
-        assert progress.isCanceled() && progress.isDisposed();
+        assert progress.isCanceled();
       }
       catch (Throwable e) {
         Throwable unwrapped = ExceptionUtilRt.unwrapException(e, ExecutionException.class);
