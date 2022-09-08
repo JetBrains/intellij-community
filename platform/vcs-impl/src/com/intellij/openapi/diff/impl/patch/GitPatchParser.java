@@ -98,7 +98,8 @@ public final class GitPatchParser {
         else if (fileRenameFromMatcher.matches() && iterator.hasNext()) {
           Matcher fileRenameToMatcher = ourRenameToPattern.matcher(iterator.next());
           if (fileRenameToMatcher.matches()) {
-            beforeAfterName = Couple.of(fileRenameFromMatcher.group(1).trim(), fileRenameToMatcher.group(1).trim());
+            beforeAfterName = Couple.of(VcsFileUtil.unescapeGitPath(fileRenameFromMatcher.group(1).trim()),
+                                        VcsFileUtil.unescapeGitPath(fileRenameToMatcher.group(1).trim()));
           }
           else {
             iterator.previous();
