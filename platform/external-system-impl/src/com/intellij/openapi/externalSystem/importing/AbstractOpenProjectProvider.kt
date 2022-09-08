@@ -50,6 +50,10 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
     return if (file.isDirectory) file.children.any(::isProjectFile) else isProjectFile(file)
   }
 
+  protected fun getProjectDirectory(file: VirtualFile): VirtualFile {
+    return if (file.isDirectory) file else file.parent
+  }
+
   override suspend fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     LOG.debug("Open project from $projectFile")
     val projectDirectory = getProjectDirectory(projectFile)
@@ -85,6 +89,7 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
   override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
     LOG.debug("Import project from $projectFile")
     val projectDirectory = getProjectDirectory(projectFile)
+    @Suppress("DEPRECATION")
     linkAndRefreshProject(projectDirectory.toNioPath(), project)
   }
 
@@ -108,11 +113,8 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
     return false
   }
 
-  private fun getProjectDirectory(file: VirtualFile): VirtualFile {
-    return if (file.isDirectory) file else file.parent
-  }
-
   companion object {
+    @JvmStatic
     protected val LOG = logger<AbstractOpenProjectProvider>()
   }
 }
