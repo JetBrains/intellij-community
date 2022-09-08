@@ -27,7 +27,10 @@ public final class SystemInfo {
 
   private static String getRtVersion(@SuppressWarnings("SameParameterValue") String fallback) {
     String rtVersion = System.getProperty("java.runtime.version");
-    return Character.isDigit(rtVersion.charAt(0)) ? rtVersion : fallback;
+    if (rtVersion != null && Character.isDigit(rtVersion.charAt(0))) {
+      return rtVersion;
+    }
+    return fallback;
   }
 
   public static final boolean isWindows = SystemInfoRt.isWindows;
