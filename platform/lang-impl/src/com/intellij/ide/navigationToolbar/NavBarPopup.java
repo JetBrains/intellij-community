@@ -22,7 +22,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -91,8 +90,8 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       if (o instanceof JComponent) HintUpdateSupply.hideHint((JComponent)o);
     }
     //noinspection unchecked
-    for (Disposable disposable : (List<? extends Disposable>)getList().getClientProperty(DISPOSED_OBJECTS)) {
-      Disposer.dispose(disposable);
+    for (SelectablePanel selectablePanel : (List<SelectablePanel>)getList().getClientProperty(DISPOSED_OBJECTS)) {
+      Disposer.dispose(unwrapItem(selectablePanel));
     }
     Disposer.dispose(this);
   }
@@ -162,40 +161,15 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   }
 
   private static JComponent createPopupContent(@NotNull NavBarPanel panel, Object @NotNull [] siblings) {
-
-    class MySelectablePanel extends SelectablePanel implements Disposable {
-      MySelectablePanel(NavBarItem item) {
-        super();
-        item.setIconOpaque(false);
-        setLayout(new BorderLayout());
-        add(item, BorderLayout.CENTER);
-        setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
-      }
-
-      @Override
-      public AccessibleContext getAccessibleContext() {
-        return getItem().getAccessibleContext();
-      }
-
-      @Override
-      public void dispose() {
-        Disposer.dispose(getItem());
-      }
-
-      NavBarItem getItem() {
-        return (NavBarItem)getComponent(0);
-      }
-    }
-
     class MyListRenderer implements ListCellRenderer<Object> {
-      final List<MySelectablePanel> selectables = new ArrayList<>();
+      final List<SelectablePanel> selectables = new ArrayList<>();
 
       @Override
       public Component getListCellRendererComponent(JList<?> list, Object obj, int index, boolean isSelected, boolean cellHasFocus) {
-        MySelectablePanel selectable = null;
+        SelectablePanel selectable = null;
 
-        for (MySelectablePanel cachedSelectable : selectables) {
-          NavBarItem item = cachedSelectable.getItem();
+        for (SelectablePanel cachedSelectable : selectables) {
+          NavBarItem item = unwrapItem(cachedSelectable);
           if (obj == item.getObject()) {
             item.update();
             selectable = cachedSelectable;
@@ -203,7 +177,10 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         }
 
         if (selectable == null) {
-          selectable = new MySelectablePanel(new NavBarItem(panel, obj, null, true));
+          selectable = SelectablePanel.wrap(new NavBarItem(panel, obj, null, true));
+          if (ExperimentalUI.isNewUI()) {
+            selectable.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
+          }
           selectables.add(selectable);
         }
 
@@ -223,32 +200,15 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         return panel;
       }
     }
+
     JBList<Object> list = new MyList<>();
     list.setModel(new CollectionListModel<>(siblings));
     HintUpdateSupply.installSimpleHintUpdateSupply(list);
-
-    if (ExperimentalUI.isNewUI()) {
-      MyListRenderer renderer = new MyListRenderer();
-      list.putClientProperty(DISPOSED_OBJECTS, renderer.selectables);
-      list.setCellRenderer(renderer);
-    }
-    else {
-      List<NavBarItem> items = new ArrayList<>();
-      list.putClientProperty(DISPOSED_OBJECTS, items);
-      list.installCellRenderer(obj -> {
-        for (NavBarItem item : items) {
-          if (obj == item.getObject()) {
-            item.update();
-            return item;
-          }
-        }
-        NavBarItem item = new NavBarItem(panel, obj, null, true);
-        items.add(item);
-        return item;
-      });
-    }
-
+    MyListRenderer renderer = new MyListRenderer();
+    list.putClientProperty(DISPOSED_OBJECTS, renderer.selectables);
+    list.setCellRenderer(renderer);
     list.setBorder(JBUI.Borders.empty(5));
+    list.setBackground(UIUtil.getPanelBackground());
     list.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -263,6 +223,10 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     component.putClientProperty(JBLIST_KEY, list);
     OpenInRightSplitAction.Companion.overrideDoubleClickWithOneClick(component);
     return component;
+  }
+
+  private static NavBarItem unwrapItem(SelectablePanel panel) {
+    return (NavBarItem)panel.getComponent(0);
   }
 
   @NotNull
