@@ -581,6 +581,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals(null, getOrDefaultExt.valueArguments[1].evaluate())
         val getOrDefaultExtResolved = getOrDefaultExt.resolve()
             .orFail("cant resolve from $getOrDefaultExt")
+        TestCase.assertTrue(getOrDefaultExtResolved is PsiCompiledElement)
         TestCase.assertEquals("getOrDefault", getOrDefaultExtResolved.name)
         TestCase.assertEquals("Map", getOrDefaultExtResolved.containingClass?.name)
 
@@ -591,6 +592,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("b", getOrDefault.valueArguments[1].evaluate())
         val getOrDefaultResolved = getOrDefault.resolve()
             .orFail("cant resolve from $getOrDefault")
+        TestCase.assertTrue(getOrDefaultResolved is PsiCompiledElement)
         TestCase.assertEquals("getOrDefault", getOrDefaultResolved.name)
         TestCase.assertEquals("Map", getOrDefaultResolved.containingClass?.name)
 
@@ -598,6 +600,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             .orFail("cant convert to UCallExpression")
         val removeResolved = remove.resolve()
             .orFail("cant resolve from $remove")
+        TestCase.assertTrue(removeResolved is PsiCompiledElement)
         TestCase.assertEquals("remove", removeResolved.name)
         TestCase.assertEquals("Map", removeResolved.containingClass?.name)
     }

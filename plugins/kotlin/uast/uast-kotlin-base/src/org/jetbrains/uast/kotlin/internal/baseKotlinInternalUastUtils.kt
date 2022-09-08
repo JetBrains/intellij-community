@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
+import org.jetbrains.kotlin.type.MapPsiToAsmDesc
 import org.jetbrains.kotlin.utils.addToStdlib.constant
 import org.jetbrains.uast.*
 
@@ -125,6 +126,12 @@ fun PsiElement.getMaybeLightElement(sourcePsi: KtExpression? = null): PsiElement
         else -> this
     }
 }
+
+val PsiMethod.desc: String
+    get() = buildString {
+        parameterList.parameters.joinTo(this, separator = "", prefix = "(", postfix = ")") { MapPsiToAsmDesc.typeDesc(it.type) }
+        append(MapPsiToAsmDesc.typeDesc(returnType ?: PsiType.VOID))
+    }
 
 private val KtCallElement.isAnnotationArgument: Boolean
     // KtAnnotationEntry (or KtCallExpression when annotation is nested) -> KtValueArgumentList -> KtValueArgument -> arrayOf call
