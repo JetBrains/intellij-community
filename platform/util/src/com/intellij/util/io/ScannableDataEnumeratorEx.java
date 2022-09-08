@@ -17,5 +17,5 @@ public interface ScannableDataEnumeratorEx<Data> extends DataEnumeratorEx<Data> 
    * by processor returning false
    */
   @ApiStatus.Internal
-  public boolean processAllDataObjects(@NotNull Processor<? super Data> processor) throws IOException;
+  boolean processAllDataObjects(@NotNull Processor<? super Data> processor) throws IOException;
 }

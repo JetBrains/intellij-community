@@ -369,7 +369,7 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
   }
 
   private interface IntThrowableComputable<E extends Exception> {
-    public int compute() throws E;
+    int compute() throws E;
   }
 
   @FunctionalInterface

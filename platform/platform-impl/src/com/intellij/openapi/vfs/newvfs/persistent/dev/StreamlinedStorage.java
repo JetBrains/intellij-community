@@ -382,7 +382,7 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
 
 
   public interface Processor {
-    public boolean process(final int recordId,
+    boolean process(final int recordId,
                            final short recordCapacity,
                            final short recordLength,
                            final ByteBuffer payload) throws IOException;
