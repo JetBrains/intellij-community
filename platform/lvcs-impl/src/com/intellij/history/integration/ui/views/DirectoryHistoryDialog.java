@@ -215,6 +215,10 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     protected abstract void doPerform(DirectoryHistoryDialogModel model, List<? extends DirectoryChange> selected);
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
 
     @Override
     protected boolean isEnabled(DirectoryHistoryDialogModel model) {
