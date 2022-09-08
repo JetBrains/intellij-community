@@ -24,7 +24,7 @@ import org.jetbrains.jps.model.ex.JpsElementContainerEx;
 import org.jetbrains.jps.model.ex.JpsElementContainerImpl;
 import org.jetbrains.jps.model.ex.JpsExElementFactory;
 
-public class JpsExElementFactoryImpl extends JpsExElementFactory {
+public final class JpsExElementFactoryImpl extends JpsExElementFactory {
   @Override
   public JpsElementContainerEx createContainer(@NotNull JpsCompositeElementBase<?> parent) {
     return new JpsElementContainerImpl(parent);
