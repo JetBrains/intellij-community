@@ -58,6 +58,16 @@ public class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         runTest("../../../idea/tests/testData/quickfix/redundantIf/negate.kt");
     }
 
+    @TestMetadata("negate2.kt")
+    public void testNegate2() throws Exception {
+        runTest("../../../idea/tests/testData/quickfix/redundantIf/negate2.kt");
+    }
+
+    @TestMetadata("negate3.kt")
+    public void testNegate3() throws Exception {
+        runTest("../../../idea/tests/testData/quickfix/redundantIf/negate3.kt");
+    }
+
     @TestMetadata("simple.kt")
     public void testSimple() throws Exception {
         runTest("../../../idea/tests/testData/quickfix/redundantIf/simple.kt");

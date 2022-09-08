@@ -3,11 +3,18 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.*
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
+import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
@@ -32,11 +39,16 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                 expression,
                 KotlinBundle.message("redundant.if.statement"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                RemoveRedundantIf(redundancyType, branchType, this::isBooleanExpression)
+                RemoveRedundantIf(redundancyType, branchType)
             )
         }
     }
 
+    /**
+     * Tells whether the given [expression] is of the boolean type.
+     *
+     * Called from read action and from modal window, so it's safe to use resolve here.
+     */
     abstract fun isBooleanExpression(expression: KtExpression): Boolean
 
     private sealed class BranchType {
@@ -92,17 +104,20 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
         private val redundancyType: RedundancyType,
         @SafeFieldForPreview // may refer to PsiElement of original file but we are only reading from it
         private val branchType: BranchType,
-        private val isBooleanExpression: (KtExpression) -> Boolean
     ) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("remove.redundant.if.text")
         override fun getFamilyName() = name
+
+        override fun startInWriteAction(): Boolean = false
+
+        override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement = currentFile
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val element = descriptor.psiElement as KtIfExpression
             val condition = when (redundancyType) {
                 RedundancyType.NONE -> return
                 RedundancyType.THEN_TRUE -> element.condition
-                RedundancyType.ELSE_TRUE -> element.condition?.negate(isBooleanExpression = isBooleanExpression)
+                RedundancyType.ELSE_TRUE -> element.condition?.negate(isBooleanExpression = ::checkIsBooleanExpressionFromModalWindow)
             } ?: return
             val factory = KtPsiFactory(element)
             val newExpressionOnlyWithCondition = when (branchType) {
@@ -111,7 +126,22 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                 is BranchType.Assign -> factory.createExpressionByPattern("$0 = $1", branchType.lvalue, condition)
                 else -> condition
             }
-            element.replace(newExpressionOnlyWithCondition)
+
+            runWriteAction {
+                element.replace(newExpressionOnlyWithCondition)
+            }
+        }
+
+        private fun checkIsBooleanExpressionFromModalWindow(expression: KtExpression): Boolean {
+            val modalTask = object : Task.WithResult<Boolean, Exception>(
+                expression.project,
+                KotlinBundle.message("redundant.if.statement.analyzing.type"),
+                true
+            ) {
+                override fun compute(indicator: ProgressIndicator): Boolean = runReadAction { isBooleanExpression(expression) }
+            }
+
+            return ProgressManager.getInstance().run(modalTask)
         }
     }
 }
