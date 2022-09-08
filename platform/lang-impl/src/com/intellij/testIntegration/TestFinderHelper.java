@@ -19,7 +19,7 @@ import java.util.*;
 
 public final class TestFinderHelper {
   public static PsiElement findSourceElement(@NotNull final PsiElement from) {
-    for (TestFinder each : getFinders(from)) {
+    for (TestFinder each : getFinders()) {
       PsiElement result = each.findSourceElement(from);
       if (result != null) return result;
     }
@@ -28,7 +28,7 @@ public final class TestFinderHelper {
 
   public static Collection<PsiElement> findTestsForClass(@NotNull final PsiElement element) {
     Collection<PsiElement> result = new LinkedHashSet<>();
-    for (TestFinder each : getFinders(element)) {
+    for (TestFinder each : getFinders()) {
       result.addAll(each.findTestsForClass(element));
     }
     return result;
@@ -36,7 +36,7 @@ public final class TestFinderHelper {
 
   public static Collection<PsiElement> findClassesForTest(@NotNull final PsiElement element) {
     Collection<PsiElement> result = new LinkedHashSet<>();
-    for (TestFinder each : getFinders(element)) {
+    for (TestFinder each : getFinders()) {
       result.addAll(each.findClassesForTest(element));
     }
     return result;
@@ -44,7 +44,7 @@ public final class TestFinderHelper {
 
   public static boolean isTest(PsiElement element) {
     if (element == null) return false;
-    for (TestFinder each : getFinders(element)) {
+    for (TestFinder each : getFinders()) {
       if (each.isTest(element)) return true;
     }
     return false;
@@ -52,7 +52,7 @@ public final class TestFinderHelper {
 
   @ApiStatus.Experimental
   public static boolean navigateToTestImmediately(@NotNull PsiElement element) {
-    for (TestFinder each : getFinders(element)) {
+    for (TestFinder each : getFinders()) {
       if (each.navigateToTestImmediately(element)) {
         return true;
       }
@@ -61,23 +61,19 @@ public final class TestFinderHelper {
   }
 
   public static @NotNull @NlsContexts.ProgressTitle String getSearchingForTestsForClassProgressTitle(@NotNull PsiElement element) {
-    List<TestFinder> finders = getFinders(element);
+    List<TestFinder> finders = getFinders();
     Set<String> titles = ContainerUtil.map2SetNotNull(finders, finder -> finder.getSearchingForTestsForClassProgressTitle(element));
     return ContainerUtil.getOnlyItem(titles, LangBundle.message("progress.title.searching.for.tests.for.class"));
   }
 
   public static @NotNull @NlsContexts.ProgressTitle String getSearchingForClassesForTestProgressTitle(@NotNull PsiElement element) {
-    List<TestFinder> finders = getFinders(element);
+    List<TestFinder> finders = getFinders();
     Set<String> titles = ContainerUtil.map2SetNotNull(finders, finder -> finder.getSearchingForClassesForTestProgressTitle(element));
     return ContainerUtil.getOnlyItem(titles, LangBundle.message("progress.title.searching.for.classes.for.test"));
   }
 
   public static List<TestFinder> getFinders() {
     return TestFinder.EP_NAME.getExtensionList();
-  }
-
-  public static @NotNull List<TestFinder> getFinders(@NotNull PsiElement element) {
-    return ContainerUtil.filter(getFinders(), finder -> finder.isApplicable(element));
   }
 
   public static Integer calcTestNameProximity(final String className, final String testName) {

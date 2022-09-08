@@ -60,27 +60,12 @@ public interface TestFinder {
   }
 
   /**
-   * Returns {@code true} if a test finder can be applied to a particular element, {@code false} otherwise.
-   * Other methods should not be called for a test finder that returned {@code false}.
-   * It's recommended to override this method together with {@link #getSearchingForTestsForClassProgressTitle(PsiElement)}
-   * and {@link #getSearchingForClassesForTestProgressTitle(PsiElement)} as otherwise different implementations
-   * might interfere with each other.
-   *
-   * @param element may be of any language and is not specific to the current test finder's domain language
-   * @return {@code true} if a test finder can be applied to a particular element, {@code false} otherwise
-   */
-  default boolean isApplicable(@NotNull PsiElement element) {
-    return true;
-  }
-
-  /**
    * Returns a progress title that's shown while {@link #findTestsForClass(PsiElement)} is executed.
    * The result of the method is only used when other implementations return {@code null} or the same result.
    * The default progress title is used otherwise.
    *
    * @param element may be of any language and is not specific to the current test finder's domain language
    * @return localized progress title or {@code null} for default
-   * @see #isApplicable(PsiElement)
    */
   default @Nullable @NlsContexts.ProgressTitle String getSearchingForTestsForClassProgressTitle(@NotNull PsiElement element) {
     return null;
@@ -93,7 +78,6 @@ public interface TestFinder {
    *
    * @param element may be of any language and is not specific to the current test finder's domain language
    * @return localized progress title or {@code null} for default
-   * @see #isApplicable(PsiElement)
    */
   default @Nullable @NlsContexts.ProgressTitle String getSearchingForClassesForTestProgressTitle(@NotNull PsiElement element) {
     return null;
