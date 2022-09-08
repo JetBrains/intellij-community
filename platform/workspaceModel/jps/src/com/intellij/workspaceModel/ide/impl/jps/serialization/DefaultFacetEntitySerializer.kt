@@ -43,13 +43,6 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
       }
 
       if (existingFacet == null) {
-        val logger = logger<DefaultFacetEntitySerializer>()
-        logger.info("Add facet entity ${facetState.name}:${facetState.facetType}")
-        logger.info("Stack Trace facet Add")
-        val stackTrace = Thread.currentThread().stackTrace
-        for (stackTraceElement in stackTrace) {
-          logger.info(stackTraceElement.toString())
-        }
         facetEntity = builder.addFacetEntity(facetState.name, facetState.facetType, configurationXmlTag, moduleEntity, underlyingFacet, entitySource)
       }
 

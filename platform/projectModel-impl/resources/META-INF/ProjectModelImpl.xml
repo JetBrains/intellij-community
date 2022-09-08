@@ -13,9 +13,7 @@
     <extensionPoint name="customEntityProjectModelInfoProvider"
                     interface="com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider"
                     dynamic="true"/>
-    <extensionPoint name="workspaceModel.moduleSettingsContributor" interface="com.intellij.workspaceModel.ide.ModuleSettingsContributor"
-                    dynamic="true"/>
-    <extensionPoint name="workspaceModel.facetBridgeContributor" interface="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor"
+    <extensionPoint name="workspaceModel.facetContributor" interface="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor"
                     dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">

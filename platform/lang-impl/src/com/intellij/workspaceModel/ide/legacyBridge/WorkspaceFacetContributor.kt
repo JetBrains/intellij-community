@@ -71,6 +71,6 @@ interface WorkspaceFacetContributor<T: WorkspaceEntity> {
   }
 
   companion object {
-    val EP_NAME: ExtensionPointName<WorkspaceFacetContributor<WorkspaceEntity>> = ExtensionPointName.create("com.intellij.workspaceModel.facetBridgeContributor")
+    val EP_NAME: ExtensionPointName<WorkspaceFacetContributor<WorkspaceEntity>> = ExtensionPointName.create("com.intellij.workspaceModel.facetContributor")
   }
 }
