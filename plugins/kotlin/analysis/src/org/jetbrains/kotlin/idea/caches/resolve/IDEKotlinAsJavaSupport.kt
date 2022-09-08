@@ -128,12 +128,6 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
     }
 
     override fun declarationLocation(file: KtFile): DeclarationLocation? {
-        //return when (module) {
-        //    is KtSourceModule -> DeclarationLocation.ProjectSources
-        //    is KtLibraryModule -> DeclarationLocation.LibraryClasses
-        //    is KtLibrarySourceModule -> DeclarationLocation.LibrarySources
-        //    else -> null
-        //}
         val virtualFile = file.virtualFile ?: return null
         return when {
             RootKindFilter.projectSources.matches(project, virtualFile) -> DeclarationLocation.ProjectSources
