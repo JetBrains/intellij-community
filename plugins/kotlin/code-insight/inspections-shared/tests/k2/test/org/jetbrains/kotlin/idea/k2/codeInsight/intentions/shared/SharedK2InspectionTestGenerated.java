@@ -39,6 +39,23 @@ public abstract class SharedK2InspectionTestGenerated extends AbstractSharedK2In
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspections/redundantSemicolon")
+        public abstract static class RedundantSemicolon extends AbstractSharedK2InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspections/redundantSemicolon/inspectionData")
+            public static class InspectionData extends AbstractSharedK2InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../testData/inspections/redundantSemicolon/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspections/removeSetterParameterType")
         public abstract static class RemoveSetterParameterType extends AbstractSharedK2InspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
@@ -90,23 +107,6 @@ public abstract class SharedK2InspectionTestGenerated extends AbstractSharedK2In
                 public void testInspections_test() throws Exception {
                     runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/inspectionData/inspections.test");
                 }
-            }
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../testData/inspections/redundantSemicolon")
-    public abstract static class RedundantSemicolon extends AbstractSharedK2InspectionTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../testData/inspections/redundantSemicolon/inspectionData")
-        public static class InspectionData extends AbstractSharedK2InspectionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("inspections.test")
-            public void testInspections_test() throws Exception {
-                runTest("../testData/inspections/redundantSemicolon/inspectionData/inspections.test");
             }
         }
     }
