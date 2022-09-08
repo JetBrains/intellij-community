@@ -191,8 +191,6 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     val popup = createDialog(myParentWindow)
     myPopup = popup
 
-    Disposer.register(popup.disposable) { myProgressWindow.exitModality() }
-
     popup.show()
 
     // 'Light' popup is shown in glass pane, glass pane is 'activating' (becomes visible) in 'invokeLater' call
