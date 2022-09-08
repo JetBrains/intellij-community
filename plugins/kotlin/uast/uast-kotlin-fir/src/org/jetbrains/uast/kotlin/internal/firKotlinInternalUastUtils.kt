@@ -99,29 +99,37 @@ internal fun KtAnalysisSession.toPsiMethod(
             } else {
                 psi.getRepresentativeLightMethod()
                     ?: handleLocalOrSynthetic(psi)
-                    ?: // Deserialized member function
-                        psi.containingClass()?.getClassId()?.let { classId ->
-                            toPsiClass(
-                                buildClassType(classId),
-                                source = null,
-                                context,
-                                TypeOwnerKind.DECLARATION,
-                                boxed = false
-                            )?.let {
-                                it.methods.firstOrNull { method ->
-                                    method.name == psi.name && method.desc == desc(functionSymbol, method, context)
-                                } ?: UastFakeDeserializedLightMethod(psi, it) // fake Java-invisible methods
-                            }
-                        }
-                    ?: // Deserialized top-level function
-                        psi.containingKtFile.findFacadeClass()?.let {
-                            it.methods.firstOrNull { method ->
-                                method.name == psi.name && method.desc == desc(functionSymbol, method, context)
-                            } ?: UastFakeDeserializedLightMethod(psi, it) // fake Java-invisible methods
-                        }
+                    ?: toPsiMethodForDeserialized(functionSymbol, context, psi)
             }
         }
         else -> psi.getRepresentativeLightMethod()
+    }
+}
+
+private fun KtAnalysisSession.toPsiMethodForDeserialized(
+    functionSymbol: KtFunctionLikeSymbol,
+    context: KtElement,
+    psi: KtFunction,
+): PsiMethod? {
+    // Deserialized member function
+    return psi.containingClass()?.getClassId()?.let { classId ->
+        toPsiClass(
+            buildClassType(classId),
+            source = null,
+            context,
+            TypeOwnerKind.DECLARATION,
+            boxed = false
+        )?.let {
+            it.methods.firstOrNull { method ->
+                method.name == psi.name && method.desc == desc(functionSymbol, method, context)
+            } ?: UastFakeDeserializedLightMethod(psi, it) // fake Java-invisible methods
+        }
+    } ?:
+    // Deserialized top-level function
+    psi.containingKtFile.findFacadeClass()?.let {
+        it.methods.firstOrNull { method ->
+            method.name == psi.name && method.desc == desc(functionSymbol, method, context)
+        } ?: UastFakeDeserializedLightMethod(psi, it) // fake Java-invisible methods
     }
 }
 
