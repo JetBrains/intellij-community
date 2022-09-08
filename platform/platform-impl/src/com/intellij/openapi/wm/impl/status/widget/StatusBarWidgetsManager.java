@@ -21,7 +21,7 @@ import java.util.*;
 
 @Service(Service.Level.PROJECT)
 public final class StatusBarWidgetsManager extends SimpleModificationTracker implements Disposable {
-  private static final @NotNull Logger LOG = Logger.getInstance(StatusBar.class);
+  private static final @NotNull Logger LOG = Logger.getInstance(StatusBarWidgetsManager.class);
 
   private final List<StatusBarWidgetFactory> myPendingFactories = new ArrayList<>();
   private final Map<StatusBarWidgetFactory, StatusBarWidget> myWidgetFactories = new LinkedHashMap<>();
