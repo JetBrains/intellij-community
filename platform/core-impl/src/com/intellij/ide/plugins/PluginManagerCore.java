@@ -14,7 +14,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -45,6 +44,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.util.containers.ContainerUtil.getOnlyItem;
 
 /**
  * See <a href="https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md">Plugin Model</a> documentation.
@@ -468,40 +469,29 @@ public final class PluginManagerCore {
     return pluginLoadingErrors.get(pluginId);
   }
 
-  private static @NotNull List<Supplier<HtmlChunk>> prepareActions(@NotNull Set<IdeaPluginDescriptorImpl> disabledIds,
-                                                                   @NotNull Set<IdeaPluginDescriptorImpl> disabledRequiredIds) {
-    if (disabledIds.isEmpty()) {
+  private static @NotNull List<Supplier<? extends HtmlChunk>> prepareActions(@NotNull Collection<String> pluginNamesToDisable,
+                                                                             @NotNull Collection<String> pluginNamesToEnable) {
+    if (pluginNamesToDisable.isEmpty()) {
       return Collections.emptyList();
     }
 
-    List<Supplier<HtmlChunk>> actions = new ArrayList<>();
-    String nameToDisable = getFirstPluginName(disabledIds);
-    actions.add(() -> {
-      return HtmlChunk.link(DISABLE, nameToDisable == null
-                                     ? CoreBundle.message("link.text.disable.not.loaded.plugins")
-                                     : CoreBundle.message("link.text.disable.plugin", nameToDisable));
-    });
-    if (!disabledRequiredIds.isEmpty()) {
-      String nameToEnable = getFirstPluginName(disabledRequiredIds);
-      actions.add(() -> {
-        return HtmlChunk.link(ENABLE, nameToEnable == null
-                                      ? CoreBundle.message("link.text.enable.all.necessary.plugins")
-                                      : CoreBundle.message("link.text.enable.plugin", nameToEnable));
-      });
-    }
-    actions.add(() -> HtmlChunk.link(EDIT, CoreBundle.message("link.text.open.plugin.manager")));
-    return actions;
-  }
+    List<Supplier<? extends HtmlChunk>> actions = new ArrayList<>();
+    String pluginNameToDisable = getOnlyItem(pluginNamesToDisable);
+    String disableMessage = pluginNameToDisable != null ?
+                            CoreBundle.message("link.text.disable.plugin", pluginNameToDisable) :
+                            CoreBundle.message("link.text.disable.not.loaded.plugins");
+    actions.add(() -> HtmlChunk.link(DISABLE, disableMessage));
 
-  private static @Nullable @NlsSafe String getFirstPluginName(@NotNull Set<IdeaPluginDescriptorImpl> modules) {
-    switch (modules.size()) {
-      case 0:
-        throw new IllegalArgumentException("Plugins set should not be empty");
-      case 1:
-        return modules.iterator().next().getName();
-      default:
-        return null;
+    if (!pluginNamesToEnable.isEmpty()) {
+      String pluginNameToEnable = getOnlyItem(pluginNamesToEnable);
+      String enableMessage = pluginNameToEnable != null ?
+                             CoreBundle.message("link.text.enable.plugin", pluginNameToEnable) :
+                             CoreBundle.message("link.text.enable.all.necessary.plugins");
+      actions.add(() -> HtmlChunk.link(ENABLE, enableMessage));
     }
+
+    actions.add(() -> HtmlChunk.link(EDIT, CoreBundle.message("link.text.open.plugin.manager")));
+    return Collections.unmodifiableList(actions);
   }
 
   @ApiStatus.Internal
@@ -778,13 +768,13 @@ public final class PluginManagerCore {
     disableIncompatiblePlugins(pluginSetBuilder.getUnsortedPlugins(), idMap, pluginErrorsById);
     pluginSetBuilder.checkPluginCycles(globalErrors);
 
-    Set<IdeaPluginDescriptorImpl> disabledAfterInit = new HashSet<>();
-    Set<IdeaPluginDescriptorImpl> disabledRequired = new HashSet<>();
+    Map<PluginId, String> pluginsToDisable = new HashMap<>();
+    Map<PluginId, String> pluginsToEnable = new HashMap<>();
 
     pluginSetBuilder.computeEnabledModuleMap(descriptor -> {
       PluginLoadingError loadingError = pluginSetBuilder.initEnableState$intellij_platform_core_impl(descriptor,
                                                                                                      idMap,
-                                                                                                     disabledRequired,
+                                                                                                     pluginsToEnable,
                                                                                                      context.disabledPlugins,
                                                                                                      pluginErrorsById);
 
@@ -792,7 +782,7 @@ public final class PluginManagerCore {
       boolean isLoadable = loadingError == null;
       if (!isLoadable) {
         pluginErrorsById.put(pluginId, loadingError);
-        disabledAfterInit.add(descriptor);
+        pluginsToDisable.put(pluginId, descriptor.getName());
       }
 
       boolean shouldLoad = !context.expiredPlugins.contains(pluginId) &&
@@ -803,7 +793,8 @@ public final class PluginManagerCore {
       return !descriptor.isEnabled();
     });
 
-    List<Supplier<HtmlChunk>> actions = prepareActions(disabledAfterInit, disabledRequired);
+    List<Supplier<? extends HtmlChunk>> actions = prepareActions(pluginsToDisable.values(),
+                                                                 pluginsToEnable.values());
     pluginLoadingErrors = pluginErrorsById;
 
     List<Supplier<HtmlChunk>> errorList = preparePluginErrors(globalErrors);
@@ -820,7 +811,9 @@ public final class PluginManagerCore {
 
     PluginSet pluginSet = pluginSetBuilder.createPluginSet(loadingResult.getIncompleteIdMap().values());
     new ClassLoaderConfigurator(pluginSet, coreLoader).configure();
-    return new PluginManagerState(pluginSet, disabledRequired, disabledAfterInit);
+    return new PluginManagerState(pluginSet,
+                                  pluginsToDisable.keySet(),
+                                  pluginsToEnable.keySet());
   }
 
   private static void check3rdPartyPluginsPrivacyConsent(@NotNull List<IdeaPluginDescriptorImpl> aliens) {
@@ -1019,8 +1012,8 @@ public final class PluginManagerCore {
     Activity activity = StartUpMeasurer.startActivity("plugin initialization");
     PluginManagerState initResult = initializePlugins(context, loadingResult, coreLoader, !isUnitTestMode, activity);
 
-    ourPluginsToDisable = initResult.effectiveDisabledIds;
-    ourPluginsToEnable = initResult.disabledRequiredIds;
+    ourPluginsToDisable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToDisable);
+    ourPluginsToEnable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToEnable);
     shadowedBundledPlugins = Java11Shim.INSTANCE.copyOf(loadingResult.shadowedBundledIds);
 
     activity.end();

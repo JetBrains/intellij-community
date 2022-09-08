@@ -189,7 +189,7 @@ class PluginSetBuilder(
   internal fun initEnableState(
     descriptor: IdeaPluginDescriptorImpl,
     idMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    disabledRequired: MutableSet<IdeaPluginDescriptorImpl>,
+    pluginsToEnable: MutableMap<PluginId, String>,
     disabledPlugins: Set<PluginId>,
     errors: MutableMap<PluginId, PluginLoadingError>,
   ): PluginLoadingError? {
@@ -217,7 +217,7 @@ class PluginSetBuilder(
       val dep = idMap.get(depId)
       if (dep != null && disabledPlugins.contains(depId)) {
         // broken/incompatible plugins can be updated, add them anyway
-        disabledRequired.add(dep)
+        pluginsToEnable.put(depId, dep.name)
       }
       return createCannotLoadError(descriptor, errors, isNotifyUser, depId, dep)
     }
@@ -231,7 +231,7 @@ class PluginSetBuilder(
       val dep = idMap.get(depId)
       if (dep != null && disabledPlugins.contains(depId)) {
         // broken/incompatible plugins can be updated, add them anyway
-        disabledRequired.add(dep)
+        pluginsToEnable.put(depId, dep.name)
       }
       return createCannotLoadError(descriptor, errors, isNotifyUser, depId, dep)
     }
