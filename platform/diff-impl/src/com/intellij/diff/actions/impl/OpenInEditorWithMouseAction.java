@@ -50,6 +50,11 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     InputEvent inputEvent = e.getInputEvent();
     if (!(inputEvent instanceof MouseEvent)) {
