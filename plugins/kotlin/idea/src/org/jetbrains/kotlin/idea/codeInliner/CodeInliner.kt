@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -191,13 +192,15 @@ class CodeInliner<TCallElement : KtElement>(
         }
 
         assert(canBeReplaced(elementToBeReplaced))
-        return replacementPerformer.doIt(postProcessing = { range ->
-            val newRange = postProcessInsertedCode(range, lexicalScope)
-            if (!newRange.isEmpty) {
-                commentSaver.restore(newRange)
-            }
-            newRange
-        })
+        return run {
+            replacementPerformer.doIt(postProcessing = { range ->
+                val newRange = postProcessInsertedCode(range, lexicalScope)
+                if (!newRange.isEmpty) {
+                    commentSaver.restore(newRange)
+                }
+                newRange
+            })
+        }
     }
 
     private fun KtElement.callableReferenceExpressionForReference(): KtCallableReferenceExpression? =

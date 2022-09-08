@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
+import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgressIfEdt
 import org.jetbrains.kotlin.idea.intentions.ConvertSecondaryConstructorToPrimaryIntention
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -92,20 +93,12 @@ class ConvertSealedSubClassToObjectFix : LocalQuickFix {
     /**
      * Map references to this class by language
      */
-    private fun mapReferencesByLanguage(pointer: SmartPsiElementPointer<KtClass>): Map<Language, List<PsiElement>> {
-        val computable = {
+    private fun mapReferencesByLanguage(pointer: SmartPsiElementPointer<KtClass>): Map<Language, List<PsiElement>> =
+        pointer.project.runSynchronouslyWithProgressIfEdt(KotlinBundle.message("progress.looking.up.sealed.sub.class.usage"), true) {
             pointer.element?.let { ktClass ->
                 ReferencesSearch.search(ktClass).groupBy({ it.element.language }, { it.element.parent })
             } ?: emptyMap()
-        }
-        return if (isDispatchThread()) {
-            pointer.project.runSynchronouslyWithProgress(KotlinBundle.message("progress.looking.up.sealed.sub.class.usage"), true) {
-                runReadAction { computable() }
-            } ?: emptyMap()
-        } else {
-            computable()
-        }
-    }
+        } ?: emptyMap()
 
     /**
      * Replace Kotlin instantiations to a straightforward call to the singleton.

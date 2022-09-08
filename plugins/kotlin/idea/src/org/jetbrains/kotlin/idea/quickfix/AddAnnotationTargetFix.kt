@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.diagnostics.Errors.WRONG_ANNOTATION_TARGET_WITH_USE_
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgressIfEdt
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -41,6 +43,8 @@ class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFi
 
     override fun getFamilyName() = text
 
+    override fun startInWriteAction(): Boolean = false
+
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val annotationEntry = element ?: return
 
@@ -49,9 +53,12 @@ class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFi
         val requiredAnnotationTargets = annotationEntry.getRequiredAnnotationTargets(annotationClass, annotationClassDescriptor, project)
         if (requiredAnnotationTargets.isEmpty()) return
 
-        val psiFactory = KtPsiFactory(annotationEntry)
         annotationClass.runOnExpectAndAllActuals(useOnSelf = true) {
-            it.safeAs<KtClass>()?.addAnnotationTargets(requiredAnnotationTargets, psiFactory)
+            val ktClass = it.safeAs<KtClass>() ?: return@runOnExpectAndAllActuals
+            val psiFactory = KtPsiFactory(annotationEntry)
+            runWriteAction {
+                ktClass.addAnnotationTargets(requiredAnnotationTargets, psiFactory)
+            }
         }
     }
 
@@ -95,21 +102,23 @@ private fun KtAnnotationEntry.getRequiredAnnotationTargets(
     if (requiredTargets.isEmpty()) return emptyList()
 
     val searchScope = GlobalSearchScope.allScope(project)
-    val otherReferenceRequiredTargets = ReferencesSearch.search(annotationClass, searchScope).mapNotNull { reference ->
-        if (reference.element is KtNameReferenceExpression) {
-            // Kotlin annotation
-            reference.element.getNonStrictParentOfType<KtAnnotationEntry>()?.takeIf { it != this }?.getActualTargetList()
-        } else {
-            // Java annotation
-            (reference.element.parent as? PsiAnnotation)?.getActualTargetList()
-        }
-    }.flatten().toSet()
+    return project.runSynchronouslyWithProgressIfEdt(KotlinBundle.message("progress.looking.up.add.annotation.usage"), true) {
+        val otherReferenceRequiredTargets = ReferencesSearch.search(annotationClass, searchScope).mapNotNull { reference ->
+            if (reference.element is KtNameReferenceExpression) {
+                // Kotlin annotation
+                reference.element.getNonStrictParentOfType<KtAnnotationEntry>()?.takeIf { it != this }?.getActualTargetList()
+            } else {
+                // Java annotation
+                (reference.element.parent as? PsiAnnotation)?.getActualTargetList()
+            }
+        }.flatten().toSet()
 
-    return (requiredTargets + otherReferenceRequiredTargets).asSequence()
-        .distinct()
-        .filter { it.name in annotationTargetValueNames }
-        .sorted()
-        .toList()
+        (requiredTargets + otherReferenceRequiredTargets).asSequence()
+            .distinct()
+            .filter { it.name in annotationTargetValueNames }
+            .sorted()
+            .toList()
+    } ?: emptyList()
 }
 
 private fun ClassDescriptor.hasRequiresOptInAnnotation() = annotations.any { it.fqName == FqName("kotlin.RequiresOptIn") }
