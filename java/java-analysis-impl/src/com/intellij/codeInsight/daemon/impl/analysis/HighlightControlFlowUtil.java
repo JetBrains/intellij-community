@@ -726,7 +726,8 @@ public final class HighlightControlFlowUtil {
       if (parent instanceof PsiParameterList && parent.getParent() == lambdaExpression) {
         return null;
       }
-      if (PsiTreeUtil.getParentOfType(context, PsiGuardedPattern.class, true, PsiLambdaExpression.class) != null) {
+      if (PsiTreeUtil.getParentOfType(context, PsiGuardedPattern.class, true, PsiLambdaExpression.class) != null ||
+          PsiTreeUtil.getParentOfType(context, PsiPatternGuard.class, true, PsiLambdaExpression.class) != null) {
         return null;
       }
       if (!isEffectivelyFinal(variable, lambdaExpression, context)) {
@@ -745,7 +746,7 @@ public final class HighlightControlFlowUtil {
    */
   @Nullable
   private static HighlightInfo checkFinalUsageInsideGuardedPattern(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
-    PsiGuardedPattern guardedPattern = PsiTreeUtil.getParentOfType(context, PsiGuardedPattern.class);
+    PsiCaseLabelElement guardedPattern = PsiTreeUtil.getParentOfType(context, PsiGuardedPattern.class, PsiPatternGuard.class);
     if (guardedPattern == null) return null;
     PsiPatternVariable patternVariable = JavaPsiPatternUtil.getPatternVariable(guardedPattern);
     if (variable != patternVariable && !isEffectivelyFinal(variable, guardedPattern, context)) {
@@ -753,7 +754,7 @@ public final class HighlightControlFlowUtil {
         .descriptionAndTooltip(JavaErrorBundle.message("guarded.pattern.variable.must.be.final")).create();
       // todo quick-fix may be registered here, but
       // todo com.intellij.codeInsight.intention.QuickFixFactory.createVariableAccessFromInnerClassFix should be fix beforehand
-      return highlightInfo;
+      return ErrorFixExtensionPoint.registerFixes(highlightInfo, context, "guarded.pattern.variable.must.be.final");
     }
     return null;
   }

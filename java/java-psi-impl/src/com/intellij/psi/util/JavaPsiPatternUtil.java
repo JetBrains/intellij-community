@@ -117,9 +117,12 @@ public final class JavaPsiPatternUtil {
    */
   @Contract(value = "null -> null", pure = true)
   @Nullable
-  public static PsiPatternVariable getPatternVariable(@Nullable PsiPattern pattern) {
+  public static PsiPatternVariable getPatternVariable(@Nullable PsiCaseLabelElement pattern) {
     if (pattern instanceof PsiGuardedPattern) {
       return getPatternVariable(((PsiGuardedPattern)pattern).getPrimaryPattern());
+    }
+    if (pattern instanceof PsiPatternGuard) {
+      return getPatternVariable(((PsiPatternGuard)pattern).getPattern());
     }
     if (pattern instanceof PsiParenthesizedPattern) {
       return getPatternVariable(((PsiParenthesizedPattern)pattern).getPattern());
