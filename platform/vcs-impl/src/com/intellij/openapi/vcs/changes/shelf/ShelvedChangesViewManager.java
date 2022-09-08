@@ -312,26 +312,6 @@ public class ShelvedChangesViewManager implements Disposable {
     myUpdateQueue.cancelAllUpdates();
   }
 
-  public void closeEditorPreview() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    if (myContent == null) {
-      return;
-    }
-
-    EditorTabPreview diffPreview = myPanel.myEditorDiffPreview;
-    if (diffPreview != null) {
-      diffPreview.closePreview();
-    }
-  }
-
-  public void openEditorPreview() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    if (myContent == null) return;
-    myPanel.openEditorPreview(false);
-  }
-
   public void updateOnVcsMappingsChanged() {
     ApplicationManager.getApplication().invokeLater(() -> {
       updateTreeIfShown(tree -> {
@@ -848,13 +828,6 @@ public class ShelvedChangesViewManager implements Disposable {
 
     private boolean isEditorPreviewAllowed() {
       return !isOpenEditorDiffPreviewWithSingleClick.asBoolean() || myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
-    }
-
-    private void openEditorPreview(boolean focusEditor) {
-      if (myEditorDiffPreview == null) return;
-      if (!isEditorPreviewAllowed()) return;
-
-      myEditorDiffPreview.openPreview(focusEditor);
     }
 
     @Nullable
