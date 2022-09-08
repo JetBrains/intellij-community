@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -27,9 +28,9 @@ public final class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
   }
 
   static @NotNull Pair<String, String> splitPath(@NotNull String path) {
-    int separator = path.indexOf("!/");
+    int separator = path.indexOf(URLUtil.JAR_SEPARATOR);
     if (separator < 0) throw new IllegalArgumentException("Path in JarFileSystem must contain a separator: " + path);
-    return pair(path.substring(0, separator), path.substring(separator + 2));
+    return pair(path.substring(0, separator), path.substring(separator + URLUtil.JAR_SEPARATOR.length()));
   }
 
   @Override
