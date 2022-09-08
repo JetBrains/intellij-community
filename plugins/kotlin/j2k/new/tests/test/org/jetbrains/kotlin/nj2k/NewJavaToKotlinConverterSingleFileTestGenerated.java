@@ -665,6 +665,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/binaryExpression/multiply.java");
         }
 
+        @TestMetadata("negatedRelationalOperator.java")
+        public void testNegatedRelationalOperator() throws Exception {
+            runTest("testData/newJ2k/binaryExpression/negatedRelationalOperator.java");
+        }
+
         @TestMetadata("operatorPrecedence.java")
         public void testOperatorPrecedence() throws Exception {
             runTest("testData/newJ2k/binaryExpression/operatorPrecedence.java");

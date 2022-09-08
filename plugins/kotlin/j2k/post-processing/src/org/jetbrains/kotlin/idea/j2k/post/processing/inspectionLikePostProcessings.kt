@@ -156,13 +156,13 @@ internal inline fun <reified E : PsiElement, I : SelfTargetingRangeIntention<E>>
     override val writeActionNeeded = writeActionNeeded
 }
 
-
 internal inline fun <reified E : PsiElement, I : AbstractApplicabilityBasedInspection<E>> inspectionBasedProcessing(
     inspection: I,
-    writeActionNeeded: Boolean = true
+    writeActionNeeded: Boolean = true,
+    noinline additionalChecker: (E) -> Boolean = { true }
 ) = object : InspectionLikeProcessingForElement<E>(E::class.java) {
     override fun isApplicableTo(element: E, settings: ConverterSettings?): Boolean =
-        inspection.isApplicable(element)
+        inspection.isApplicable(element) && additionalChecker(element)
 
     override fun apply(element: E) {
         inspection.applyTo(element)

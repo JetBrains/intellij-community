@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
+import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.canBeSimplifiedWithoutChangingSemantics
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.KotlinInspectionFacade
 import org.jetbrains.kotlin.idea.inspections.*
@@ -216,7 +217,9 @@ private val inspectionLikePostProcessingGroup =
         },
         inspectionBasedProcessing(IfThenToSafeAccessInspection(inlineWithPrompt = false), writeActionNeeded = false),
         inspectionBasedProcessing(IfThenToElvisInspection(highlightStatement = true, inlineWithPrompt = false), writeActionNeeded = false),
-        inspectionBasedProcessing(KotlinInspectionFacade.instance.simplifyNegatedBinaryExpression),
+        inspectionBasedProcessing(KotlinInspectionFacade.instance.simplifyNegatedBinaryExpression) {
+            it.canBeSimplifiedWithoutChangingSemantics()
+        },
         inspectionBasedProcessing(ReplaceGetOrSetInspection()),
         intentionBasedProcessing(ObjectLiteralToLambdaIntention(), writeActionNeeded = true),
         intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()),

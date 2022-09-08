@@ -807,6 +807,11 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/lessThan.kt");
         }
 
+        @TestMetadata("lessThanFloatingPoint.kt")
+        public void testLessThanFloatingPoint() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/lessThanFloatingPoint.kt");
+        }
+
         @TestMetadata("lessThanOrEquals.kt")
         public void testLessThanOrEquals() throws Exception {
             runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/lessThanOrEquals.kt");
