@@ -112,19 +112,19 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   }
 
   private void refreshIfNeeded() {
-    if (isScrolled() &&
-        !isRefreshing.get() && !isShowingSimilarUsagesComponent.get() &&
-        (newResultsAdded() && !myUsageView.isSearchInProgress())) {
+    if (refreshNeeded()) {
       refresh();
     }
   }
 
-  private boolean isScrolled() {
-    return myMostCommonUsageScrollPane.getVerticalScrollBar().getValue() == 0;
+  private boolean refreshNeeded() {
+    return !isScrolled() &&
+           !isRefreshing.get() && !isShowingSimilarUsagesComponent.get() &&
+           !myUsageView.isSearchInProgress();
   }
 
-  private boolean newResultsAdded() {
-    return lastUsagesNumber.get() != myUsageView.getSelectedUsages().size();
+  private boolean isScrolled() {
+    return myMostCommonUsageScrollPane.getVerticalScrollBar().getValue() != 0;
   }
 
   private void refresh() {
