@@ -2,10 +2,7 @@
 package git4idea.conflicts
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
@@ -77,6 +74,10 @@ class GitConflictsView(
   private inner class ResolveAction
     : JButtonAction(GitBundle.message("conflicts.resolve.action.text")) {
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = conflictsPanel.canShowMergeWindowForSelection()
     }
@@ -89,6 +90,10 @@ class GitConflictsView(
   private inner class AcceptSideAction(val takeTheirs: Boolean)
     : JButtonAction(if (takeTheirs) GitBundle.message("conflicts.accept.theirs.action.text")
                     else GitBundle.message("conflicts.accept.yours.action.text") ) {
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = conflictsPanel.canAcceptConflictSideForSelection()

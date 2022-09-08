@@ -73,6 +73,10 @@ internal abstract class ChangeEntryStateSimpleAction(
     updateModel(::performEntryAction)
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   override fun updateButton(e: AnActionEvent) {
     val hasSelection = table.editingRow == -1 && table.selectedRowCount != 0
     e.presentation.isEnabled = hasSelection && isEntryActionEnabled(table.selectedRows.toList(), table.model.rebaseTodoModel)
