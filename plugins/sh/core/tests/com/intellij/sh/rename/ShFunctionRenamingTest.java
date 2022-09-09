@@ -10,7 +10,7 @@ public class ShFunctionRenamingTest extends BasePlatformTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/impl/testData/rename/";
+    return PluginPathManager.getPluginHomePath("sh") + "/core/testData/rename/";
   }
 
   public void testFunctionCaseOne() {

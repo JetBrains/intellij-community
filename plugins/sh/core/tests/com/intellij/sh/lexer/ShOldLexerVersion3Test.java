@@ -14,7 +14,7 @@ public class ShOldLexerVersion3Test extends LexerTestCase {
 
   @Override
   protected String getDirPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/impl/testData/oldLexer/v3";
+    return PluginPathManager.getPluginHomePath("sh") + "/core/testData/oldLexer/v3";
   }
 
   @NotNull

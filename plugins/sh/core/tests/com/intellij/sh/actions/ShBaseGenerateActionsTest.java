@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public class ShBaseGenerateActionsTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/impl/testData/generate/";
+    return PluginPathManager.getPluginHomePath("sh") + "/core/testData/generate/";
   }
 
   public void testForLoop() {

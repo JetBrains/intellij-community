@@ -12,7 +12,7 @@ public class ShOldParserTest extends ParsingTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/impl/testData";
+    return PluginPathManager.getPluginHomePath("sh") + "/core/testData";
   }
 
   public void testAppendAssignment()                    { doTest(true); }

@@ -8,7 +8,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 public class ShSpellcheckerTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/impl/testData/spellchecker";
+    return PluginPathManager.getPluginHomePath("sh") + "/core/testData/spellchecker";
   }
 
   @Override

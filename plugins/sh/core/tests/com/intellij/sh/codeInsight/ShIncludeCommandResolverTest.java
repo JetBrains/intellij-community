@@ -11,7 +11,7 @@ public class ShIncludeCommandResolverTest extends BasePlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("sh") + "/impl/testData/resolve/include_command");
+    myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("sh") + "/core/testData/resolve/include_command");
     myFixture.copyDirectoryToProject(getTestName(true), "");
   }
 

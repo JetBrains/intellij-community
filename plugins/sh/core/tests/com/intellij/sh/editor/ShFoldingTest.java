@@ -10,7 +10,7 @@ public class ShFoldingTest extends BasePlatformTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/impl/testData/folding/";
+    return PluginPathManager.getPluginHomePath("sh") + "/core/testData/folding/";
   }
 
   public void testFunction() { doTest(); }

@@ -17,7 +17,7 @@ public class ShFileLexerTest extends LexerTestCase {
 
   @Override
   protected String getDirPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/impl/testData/lexer";
+    return PluginPathManager.getPluginHomePath("sh") + "/core/testData/lexer";
   }
 
   @NotNull

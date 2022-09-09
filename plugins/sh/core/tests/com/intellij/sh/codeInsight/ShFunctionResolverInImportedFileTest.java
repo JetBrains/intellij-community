@@ -10,7 +10,7 @@ public class ShFunctionResolverInImportedFileTest extends BasePlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("sh") + "/impl/testData/resolve/function_imported_scope");
+    myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("sh") + "/core/testData/resolve/function_imported_scope");
     myFixture.copyDirectoryToProject(getTestName(true), "");
   }
 

@@ -243,7 +243,7 @@ object CommunityRepositoryModules {
     simplePlugin("intellij.java.debugger.streams"),
     plugin("intellij.sh") { spec ->
       spec.withModules(listOf(
-        "intellij.sh.impl",
+        "intellij.sh.core",
         "intellij.sh.terminal",
         "intellij.sh.copyright",
         "intellij.sh.markdown")

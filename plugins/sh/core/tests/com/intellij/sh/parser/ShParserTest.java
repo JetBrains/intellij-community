@@ -11,7 +11,7 @@ public class ShParserTest extends ParsingTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/impl/testData";
+    return PluginPathManager.getPluginHomePath("sh") + "/core/testData";
   }
 
   public void testTrickyStrings() { doTest(true); }

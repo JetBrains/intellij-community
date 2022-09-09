@@ -35,7 +35,7 @@ public class ShShellcheckInspectionTest extends BasePlatformTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/impl/testData/shellcheck/";
+    return PluginPathManager.getPluginHomePath("sh") + "/core/testData/shellcheck/";
   }
 
   public void testSuppressInspection() {

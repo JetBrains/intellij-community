@@ -11,7 +11,7 @@ public class ShLineIndentProviderTest extends BasePlatformTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/impl/testData/formatter";
+    return PluginPathManager.getPluginHomePath("sh") + "/core/testData/formatter";
   }
 
   public void testShebang()               { doTest(); }

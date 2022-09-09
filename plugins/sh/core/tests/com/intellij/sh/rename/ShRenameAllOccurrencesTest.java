@@ -16,7 +16,7 @@ public class ShRenameAllOccurrencesTest extends LightPlatformCodeInsightTestCase
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/impl/testData/rename/";
+    return PluginPathManager.getPluginHomePath("sh") + "/core/testData/rename/";
   }
 
   public void testBasic1() {
