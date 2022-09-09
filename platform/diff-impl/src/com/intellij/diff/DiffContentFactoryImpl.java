@@ -648,17 +648,8 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
     @NotNull
     private DocumentContent build(@NotNull TextContent textContent) {
-      FileType fileType = context != null ? context.getContentType() : null;
-
-      FilePath filePath = originalFilePath;
-      if (filePath == null) {
-        String name = fileName;
-        if (name == null) {
-          name = "diff." + StringUtil.defaultIfEmpty(fileType != null ? fileType.getDefaultExtension() : null, "txt");
-        }
-        filePath = DiffVcsFacade.getInstance().getFilePath(name);
-      }
-
+      FileType fileType = constructFileType();
+      FilePath filePath = constructFilePath();
       Document document = createDocument(project, textContent.text, fileType, filePath, readOnly);
 
       DocumentContent documentContent = new ContextReferentDocumentContent(project, document, textContent, context);
@@ -677,6 +668,30 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       }
 
       return documentContent;
+    }
+
+    @Nullable
+    private FileType constructFileType() {
+      return context != null ? context.getContentType() : null;
+    }
+
+    @NotNull
+    private FilePath constructFilePath() {
+      if (originalFilePath != null) {
+        return originalFilePath;
+      }
+
+      String name = fileName;
+      if (name == null) {
+        FileType fileType = constructFileType();
+        name = "diff." + StringUtil.defaultIfEmpty(fileType != null ? fileType.getDefaultExtension() : null, "txt");
+      }
+      return DiffVcsFacade.getInstance().getFilePath(name);
+    }
+
+    @Nullable
+    private VirtualFile constructHighlightFile() {
+      return context != null ? context.getHighlightFile() : null;
     }
   }
 
