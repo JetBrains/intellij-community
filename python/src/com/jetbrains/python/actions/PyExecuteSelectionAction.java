@@ -53,32 +53,6 @@ public class PyExecuteSelectionAction extends DumbAwareAction {
     }
   }
 
-  private static void moveCaretDown(Editor editor) {
-    LogicalPosition position = editor.getCaretModel().getLogicalPosition();
-
-    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLineRange(editor);
-    LogicalPosition nextLineStart = lines.second;
-
-    LogicalPosition newPosition = new LogicalPosition(nextLineStart.line, position.column);
-    editor.getCaretModel().moveToLogicalPosition(newPosition);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-  }
-
-  private static String getLineUnderCaret(Editor editor) {
-    VisualPosition caretPos = editor.getCaretModel().getVisualPosition();
-
-    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcSurroundingRange(editor, caretPos, caretPos);
-
-    LogicalPosition lineStart = lines.first;
-    LogicalPosition nextLineStart = lines.second;
-    int start = editor.logicalPositionToOffset(lineStart);
-    int end = editor.logicalPositionToOffset(nextLineStart);
-    if (end <= start) {
-      return null;
-    }
-    return editor.getDocument().getCharsSequence().subSequence(start, end).toString();
-  }
-
   @Nullable
   private static String getSelectionText(@NotNull Editor editor) {
     if (editor.getSelectionModel().hasSelection()) {
