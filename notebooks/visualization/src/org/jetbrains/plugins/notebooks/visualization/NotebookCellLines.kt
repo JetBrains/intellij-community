@@ -55,6 +55,8 @@ interface NotebookCellLines {
      * Components which work with intervals can simply listen for NotebookCellLinesEvent and don't subscribe for DocumentEvent.
      */
     fun documentChanged(event: NotebookCellLinesEvent)
+
+    fun beforeDocumentChange(event: NotebookCellLinesEventBeforeChange) {}
   }
 
   fun intervalsIterator(startLine: Int = 0): ListIterator<Interval>

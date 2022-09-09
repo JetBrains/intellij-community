@@ -48,3 +48,13 @@ data class NotebookCellLinesEvent(
   fun isIntervalsChanged(): Boolean =
     !(oldIntervals.isEmpty() && newIntervals.isEmpty())
 }
+
+/**
+ * Passed to [NotebookCellLines.IntervalListener] before document change.
+ * [modificationStamp] is old, version before change
+ */
+data class NotebookCellLinesEventBeforeChange(
+  val documentEvent: DocumentEvent,
+  val oldAffectedIntervals: List<NotebookCellLines.Interval>,
+  val modificationStamp: Long,
+)
