@@ -395,7 +395,6 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
   private static final int ARC = 8;
   private static final int LEFT_OFFSET = 6;
-  private static final int HORIZONTAL_GAP = 6;
 
   private static class RoundedColoredComponent extends SimpleColoredComponent {
 
@@ -403,8 +402,9 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       if (isSelected) {
         setOpaque(false);
       }
+      JBInsets insets = rectInsets();
       setFont(JBFont.medium());
-      setIpad(JBUI.insets(0, LEFT_OFFSET + HORIZONTAL_GAP, 0, HORIZONTAL_GAP));
+      setIpad(JBUI.insets(0, LEFT_OFFSET + insets.left, 0, insets.right));
       setForeground(JBUI.CurrentTheme.List.Tag.FOREGROUND);
     }
 
@@ -415,9 +415,10 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       int y = 0;
       int baseline = getBaseline(width, height);
       if (baseline >= 0) {
+        JBInsets insets = rectInsets();
         FontMetrics metrics = g.getFontMetrics(getBaseFont());
-        y = baseline - metrics.getAscent();
-        height = metrics.getHeight();
+        y = baseline - metrics.getAscent() - insets.top;
+        height = metrics.getHeight() + insets.height();
       }
 
       Graphics2D g2 = (Graphics2D)g.create();
@@ -431,6 +432,10 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       finally {
         g2.dispose();
       }
+    }
+
+    private static JBInsets rectInsets() {
+      return JBUI.insets(1, 6);
     }
   }
 }
