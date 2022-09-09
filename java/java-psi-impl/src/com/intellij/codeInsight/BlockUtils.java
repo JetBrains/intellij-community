@@ -24,6 +24,17 @@ public final class BlockUtils {
    */
   public static PsiStatement addBefore(PsiStatement anchor, PsiStatement... newStatements) {
     if (newStatements.length == 0) throw new IllegalArgumentException();
+    if (anchor instanceof PsiBlockStatement) {
+      PsiCodeBlock codeBlock = ((PsiBlockStatement)anchor).getCodeBlock();
+      PsiJavaToken brace = codeBlock.getLBrace();
+      if (brace != null) {
+        PsiElement result = brace;
+        for (PsiStatement statement : newStatements) {
+          result = codeBlock.addAfter(statement, result);
+        }
+        return (PsiStatement)result;
+      }
+    }
     PsiStatement oldStatement = anchor;
     PsiElement parent = oldStatement.getParent();
     while (parent instanceof PsiLabeledStatement) {
