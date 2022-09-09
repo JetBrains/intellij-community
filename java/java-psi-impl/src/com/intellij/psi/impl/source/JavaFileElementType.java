@@ -49,7 +49,7 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
 
   public static boolean isInSourceContent(@NotNull VirtualFile file) {
     VirtualFile dir = file.getParent();
-    if (dir == null || dir.getUserData(LanguageLevel.KEY) != null) {
+    if (dir == null || LanguageLevel.KEY.getPersistentValue(dir) != null) {
       return true;
     }
     ModelBranch branch = ModelBranch.getFileBranch(file);

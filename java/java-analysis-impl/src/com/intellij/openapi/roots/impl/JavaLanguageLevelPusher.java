@@ -9,11 +9,10 @@ import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.FilePropertyKey;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +26,7 @@ public final class JavaLanguageLevelPusher implements FileIntPropertyPusher<Lang
 
   @Override
   @NotNull
-  public Key<LanguageLevel> getFileDataKey() {
+  public FilePropertyKey<LanguageLevel> getFileDataKey() {
     return LanguageLevel.KEY;
   }
 
@@ -55,23 +54,6 @@ public final class JavaLanguageLevelPusher implements FileIntPropertyPusher<Lang
   @Override
   public boolean acceptsDirectory(@NotNull VirtualFile file, @NotNull Project project) {
     return ProjectFileIndex.getInstance(project).isInSourceContent(file);
-  }
-
-  private static final FileAttribute PERSISTENCE = new FileAttribute("language_level_persistence", 3, true);
-
-  @Override
-  public @NotNull FileAttribute getAttribute() {
-    return PERSISTENCE;
-  }
-
-  @Override
-  public int toInt(@NotNull LanguageLevel languageLevel) {
-    return languageLevel.ordinal();
-  }
-
-  @Override
-  public @NotNull LanguageLevel fromInt(int val) {
-    return LanguageLevel.values()[val];
   }
 
   @Override
@@ -103,11 +85,6 @@ public final class JavaLanguageLevelPusher implements FileIntPropertyPusher<Lang
 
   @Nullable
   public static LanguageLevel getPushedLanguageLevel(@NotNull VirtualFile file) {
-    VirtualFile parent = file.getParent();
-    if (parent != null) {
-      LanguageLevel level = parent.getUserData(LanguageLevel.KEY);
-      if (level != null) return level;
-    }
-    return null;
+    return LanguageLevel.KEY.getPersistentValue(file.getParent());
   }
 }

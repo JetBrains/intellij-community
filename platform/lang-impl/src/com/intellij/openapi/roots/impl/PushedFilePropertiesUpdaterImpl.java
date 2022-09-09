@@ -119,7 +119,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         boolean isDirectory = file.isDirectory();
         List<FilePropertyPusher<?>> pushers = isDirectory ? FilePropertyPusher.EP_NAME.getExtensionList() : filePushers;
         for (FilePropertyPusher<?> pusher : pushers) {
-          file.putUserData(pusher.getFileDataKey(), null);
+          pusher.getFileDataKey().setPersistentValue(file, null);
         }
         ContainerUtil.addIfNotNull(syncTasks, createRecursivePushTask(event, pushers));
       }
@@ -298,7 +298,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   private static <T> T findNewPusherValueFromParent(Project project, VirtualFile fileOrDir, FilePropertyPusher<? extends T> pusher) {
     final VirtualFile parent = fileOrDir.getParent();
     if (parent != null && ProjectFileIndex.getInstance(project).isInContent(parent)) {
-      final T userValue = parent.getUserData(pusher.getFileDataKey());
+      final T userValue = pusher.getFileDataKey().getPersistentValue(parent);
       if (userValue != null) return userValue;
       return findNewPusherValue(project, parent, pusher, null);
     }
@@ -442,15 +442,11 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   @Override
   public <T> void findAndUpdateValue(@NotNull VirtualFile fileOrDir, @NotNull FilePropertyPusher<T> pusher, @Nullable T moduleValue) {
     T newValue = findNewPusherValue(myProject, fileOrDir, pusher, moduleValue);
-    T oldValue = fileOrDir.getUserData(pusher.getFileDataKey());
-    if (newValue != oldValue) {
-      fileOrDir.putUserData(pusher.getFileDataKey(), newValue);
-      try {
-        pusher.persistAttribute(myProject, fileOrDir, newValue);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+    try {
+      pusher.persistAttribute(myProject, fileOrDir, newValue);
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
   }
 

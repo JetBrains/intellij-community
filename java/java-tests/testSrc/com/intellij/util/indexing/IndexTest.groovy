@@ -1528,25 +1528,25 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void 'test stub index updated after language level change'() {
     def file = myFixture.addFileToProject("src1/A.java", "class A {}").virtualFile
 
-    def languageLevel = file.parent.getUserData(LanguageLevel.KEY)
+    def languageLevel = LanguageLevel.KEY.getPersistentValue(file.parent)
     assertNotNull(languageLevel)
     assertNotNull(findClass("A"))
 
     // be a :hacker:😀
     // do it manually somehow
     // seems property pushers are crazy, we know it from its name
-    file.parent.putUserData(LanguageLevel.KEY, null)
+    LanguageLevel.KEY.setPersistentValue(file.parent, null)
     // fire any event
     FileContentUtilCore.reparseFiles(file)
 
-    assertNull(file.parent.getUserData(LanguageLevel.KEY))
+    assertNull(LanguageLevel.KEY.getPersistentValue(file.parent))
     assertNull(findClass("A"))
 
     // and return everything to a normal state
-    file.parent.putUserData(LanguageLevel.KEY, languageLevel)
+    LanguageLevel.KEY.setPersistentValue(file.parent, languageLevel)
     FileContentUtilCore.reparseFiles(file)
 
-    assertNotNull(file.parent.getUserData(LanguageLevel.KEY))
+    assertNotNull(LanguageLevel.KEY.getPersistentValue(file.parent))
     assertNotNull(findClass("A"))
   }
 
