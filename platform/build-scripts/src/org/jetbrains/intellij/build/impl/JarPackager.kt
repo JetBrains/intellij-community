@@ -301,7 +301,7 @@ class JarPackager private constructor(private val context: BuildContext) {
                        modulePatches = moduleOutputPatcher.getPatchedDir(moduleName),
                        modulePatchContents = moduleOutputPatcher.getPatchedContent(moduleName),
                        searchableOptionsRootDir = searchableOptionsDir,
-                       extraExcludes = layout.moduleExcludes.get(moduleName),
+                       extraExcludes = layout.moduleExcludes.get(moduleName) ?: emptyList(),
                        sourceList = sourceList)
     }
 

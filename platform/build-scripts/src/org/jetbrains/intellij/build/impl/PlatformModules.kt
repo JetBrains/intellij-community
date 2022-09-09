@@ -223,7 +223,7 @@ object PlatformModules {
     }
 
     for ((module, patterns) in productLayout.moduleExcludes) {
-      layout.moduleExcludes.putValues(module, patterns)
+      layout.excludeFromModule(module, patterns)
     }
 
     jar(UTIL_RT_JAR, listOf(

@@ -261,7 +261,7 @@ class DistributionJARsBuilder {
                                             simplify = false,
                                             moduleOutputPatcher = moduleOutputPatcher,
                                             jarToModule = plugin.jarToModules,
-                                            context = context))
+                                            context = context).first)
         }
       }
       entries.addAll(libDirLayout.await())
@@ -355,9 +355,9 @@ class DistributionJARsBuilder {
       return emptyList()
     }
 
-    return spanBuilder("build non-bundled plugins").setAttribute("count", pluginsToPublish.size.toLong()).useWithScope2 {
+    return spanBuilder("build non-bundled plugins").setAttribute("count", pluginsToPublish.size.toLong()).useWithScope2 { span ->
       if (context.options.buildStepsToSkip.contains(BuildOptions.NON_BUNDLED_PLUGINS_STEP)) {
-        Span.current().addEvent("skip")
+        span.addEvent("skip")
         return@useWithScope2 emptyList<DistributionFileEntry>()
       }
 
@@ -368,7 +368,7 @@ class DistributionJARsBuilder {
         val moduleOutputPatcher = ModuleOutputPatcher()
         val stageDir = context.paths.tempDir.resolve("non-bundled-plugins-${context.applicationInfo.productCode}")
         NioFiles.deleteRecursively(stageDir)
-        val dirToJar = ConcurrentLinkedQueue<Pair<String, Path>>()
+        val dirToJar = ConcurrentLinkedQueue<Pair<Path, Path>>()
         val defaultPluginVersion = if (context.buildNumber.endsWith(".SNAPSHOT")) {
           "${context.buildNumber}.${pluginDateFormat.format(ZonedDateTime.now())}"
         }
@@ -385,9 +385,8 @@ class DistributionJARsBuilder {
                                     targetDir = stageDir,
                                     state = state,
                                     context = context,
-                                    buildPlatformJob = buildPlatformLibJob) { plugin, pluginDir ->
+                                    buildPlatformJob = buildPlatformLibJob) { plugin, pluginDirOrFile ->
           val targetDirectory = if (autoPublishPluginChecker.test(plugin)) autoUploadingDir else nonBundledPluginsArtifacts
-          val pluginDirName = pluginDir.fileName.toString()
           val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
           val pluginXmlPath = moduleOutput.resolve("META-INF/plugin.xml")
           val pluginVersion = if (Files.exists(pluginXmlPath)) {
@@ -396,18 +395,15 @@ class DistributionJARsBuilder {
           else {
             defaultPluginVersion
           }
-          val destFile = targetDirectory.resolve("$pluginDirName-$pluginVersion.zip")
+          val destFile = targetDirectory.resolve("${plugin.directoryName}-$pluginVersion.zip")
           if (prepareCustomPluginRepositoryForPublishedPlugins) {
             val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
             pluginsToIncludeInCustomRepository.add(PluginRepositorySpec(destFile, pluginXml))
           }
-          dirToJar.add(pluginDirName to destFile)
+          dirToJar.add(pluginDirOrFile to destFile)
         }
 
-        bulkZipWithPrefix(commonSourceDir = stageDir,
-                          items = dirToJar,
-                          compress = compressPluginArchive,
-                          withBlockMap = compressPluginArchive)
+        bulkZipWithPrefix(items = dirToJar, compress = compressPluginArchive, withBlockMap = compressPluginArchive)
         val helpPlugin = buildHelpPlugin(pluginVersion = defaultPluginVersion, context = context)
         if (helpPlugin != null) {
           val spec = buildHelpPlugin(helpPlugin = helpPlugin,
@@ -422,7 +418,7 @@ class DistributionJARsBuilder {
 
         for (item in buildKeymapPluginsTask.await()) {
           if (prepareCustomPluginRepositoryForPublishedPlugins) {
-            pluginsToIncludeInCustomRepository.add(PluginRepositorySpec(item.first, item.second))
+            pluginsToIncludeInCustomRepository.add(PluginRepositorySpec(pluginZip = item.first, pluginXml = item.second))
           }
         }
 
@@ -464,7 +460,7 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
                                  state: DistributionBuilderState,
                                  context: BuildContext,
                                  buildPlatformJob: Job?,
-                                 pluginBuilt: ((PluginLayout, Path) -> Unit)? = null): List<DistributionFileEntry> {
+                                 pluginBuilt: ((PluginLayout, pluginDirOrFile: Path) -> Unit)? = null): List<DistributionFileEntry> {
   val scrambleTool = context.proprietaryBuildTools.scrambleTool
   val isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
 
@@ -491,14 +487,14 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
       val pluginDir = targetDir.resolve(directoryName)
       val task = async {
         spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).useWithScope2 {
-          val entries = layoutDistribution(layout = plugin,
+          val (entries, file) = layoutDistribution(layout = plugin,
                                            targetDirectory = pluginDir,
                                            copyFiles = true,
                                            simplify = true,
                                            moduleOutputPatcher = moduleOutputPatcher,
                                            jarToModule = plugin.jarToModules,
                                            context = context)
-          pluginBuilt?.invoke(plugin, pluginDir)
+          pluginBuilt?.invoke(plugin, file)
           entries
         }
       }
@@ -660,7 +656,7 @@ suspend fun processLibDirectoryLayout(moduleOutputPatcher: ModuleOutputPatcher,
                          simplify = false,
                          moduleOutputPatcher = moduleOutputPatcher,
                          jarToModule = platform.jarToModules,
-                         context = context)
+                         context = context).first
     }
 }
 
@@ -684,14 +680,17 @@ internal fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArch
 
 fun checkOutputOfPluginModules(mainPluginModule: String,
                                jarToModules: Map<String, List<String>>,
-                               moduleExcludes: MultiMap<String, String>,
+                               moduleExcludes: Map<String, List<String>>,
                                context: BuildContext) {
   // don't check modules which are not direct children of lib/ directory
   var modulesWithPluginXml = persistentListOf<String>()
   for (entry in jarToModules.entries) {
     if (!entry.key.contains('/')) {
       for (moduleName in entry.value) {
-        if (containsFileInOutput(moduleName, "META-INF/plugin.xml", moduleExcludes.get(moduleName), context)) {
+        if (containsFileInOutput(moduleName = moduleName,
+                                 filePath = "META-INF/plugin.xml",
+                                 excludes = moduleExcludes.get(moduleName) ?: emptyList(),
+                                 context = context)) {
           modulesWithPluginXml = modulesWithPluginXml.add(moduleName)
         }
       }
@@ -710,7 +709,7 @@ fun checkOutputOfPluginModules(mainPluginModule: String,
     if (module == "intellij.java.guiForms.rt" ||
         !containsFileInOutput(moduleName = module,
                               filePath = "com/intellij/uiDesigner/core/GridLayoutManager.class",
-                              excludes = moduleExcludes.get(module),
+                              excludes = moduleExcludes.get(module) ?: emptyList(),
                               context = context)) {
       "Runtime classes of GUI designer must not be packaged to \'$module\' module in \'$mainPluginModule\' plugin, " +
       "because they are included into a platform JAR. Make sure that 'Automatically copy form runtime classes " +
@@ -725,14 +724,12 @@ private fun containsFileInOutput(moduleName: String,
                                  context: BuildContext): Boolean {
   val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(moduleName))
   val fileInOutput = moduleOutput.resolve(filePath)
-  if (!Files.exists(fileInOutput)) {
+  if (Files.notExists(fileInOutput)) {
     return false
   }
 
   val set = FileSet(moduleOutput).include(filePath)
-  for (it in excludes) {
-    set.exclude(it)
-  }
+  excludes.forEach(set::exclude)
   return !set.isEmpty()
 }
 
@@ -905,20 +902,22 @@ suspend fun layoutDistribution(layout: BaseLayout,
                                simplify: Boolean,
                                moduleOutputPatcher: ModuleOutputPatcher,
                                jarToModule: Map<String, List<String>>,
-                               context: BuildContext): List<DistributionFileEntry> {
+                               context: BuildContext): Pair<List<DistributionFileEntry>, Path> {
   if (copyFiles) {
     withContext(Dispatchers.IO) {
-      checkModuleExcludes(layout.moduleExcludes, context)
-    }
-  }
+      if (!layout.moduleExcludes.isEmpty()) {
+        launch {
+          checkModuleExcludes(layout.moduleExcludes, context)
+        }
+      }
 
-  // patchers must be executed _before_ pack because patcher patches module output
-  if (copyFiles && layout is PluginLayout && !layout.patchers.isEmpty()) {
-    val patchers = layout.patchers
-    withContext(Dispatchers.IO) {
-      spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).useWithScope2 {
-        for (patcher in patchers) {
-          patcher(moduleOutputPatcher, context)
+      // patchers must be executed _before_ pack because patcher patches module output
+      if (layout is PluginLayout && !layout.patchers.isEmpty()) {
+        val patchers = layout.patchers
+        spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).useWithScope2 {
+          for (patcher in patchers) {
+            patcher(moduleOutputPatcher, context)
+          }
         }
       }
     }
@@ -955,7 +954,7 @@ suspend fun layoutDistribution(layout: BaseLayout,
   }.flatMap { it.getCompleted() }
 
   if (!simplify) {
-    return entries
+    return entries to targetDirectory
   }
 
   return withContext(Dispatchers.IO) {
@@ -970,10 +969,10 @@ suspend fun layoutDistribution(layout: BaseLayout,
         return@withContext entries.map {
           check(it.path == jarFile)
           it.changePath(newFile)
-        }
+        } to newFile
       }
     }
-    entries
+    entries to targetDirectory
   }
 }
 
@@ -1076,52 +1075,51 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
   }
 }
 
-private fun checkModuleExcludes(moduleExcludes: MultiMap<String, String>, context: BuildContext) {
-  for ((module, value) in moduleExcludes.entrySet()) {
+private fun checkModuleExcludes(moduleExcludes: Map<String, List<String>>, context: BuildContext) {
+  for ((module, value) in moduleExcludes) {
     for (pattern in value) {
-      if (Files.notExists(context.getModuleOutputDir(context.findRequiredModule(module)))) {
-        throw IllegalStateException("There are excludes defined for module `$module`, but the module wasn't compiled;" +
-                                    " most probably it means that \'$module\' isn\'t include into the product distribution " +
-                                    "so it makes no sense to define excludes for it.")
+      check(Files.exists(context.getModuleOutputDir(context.findRequiredModule(module)))) {
+        "There are excludes defined for module `$module`, but the module wasn't compiled;" +
+        " most probably it means that \'$module\' isn\'t include into the product distribution " +
+        "so it makes no sense to define excludes for it."
       }
     }
   }
 }
 
-private suspend fun bulkZipWithPrefix(commonSourceDir: Path,
-                                      items: Collection<Pair<String, Path>>,
-                                      compress: Boolean,
-                                      withBlockMap: Boolean) {
-  spanBuilder("archive directories")
-    .setAttribute(AttributeKey.longKey("count"), items.size.toLong())
-    .setAttribute(AttributeKey.stringKey("commonSourceDir"), commonSourceDir.toString())
-    .useWithScope2 {
-      val json = JSON.std.without(JSON.Feature.USE_FIELDS)
-      withContext(Dispatchers.IO) {
-        for (item in items) {
-          val target = item.second
-          val dir = commonSourceDir.resolve(item.first)
-          launch {
-            spanBuilder("build plugin archive")
-              .setAttribute("inputDir", dir.toString())
-              .setAttribute("outputFile", target.toString())
-              .useWithScope2 {
-                writeNewZip(target, compress = compress) { zipCreator ->
-                  ZipArchiver(zipCreator).use { archiver ->
-                    archiver.setRootDir(dir, item.first)
-                    compressDir(dir, archiver, excludes = null)
+private suspend fun bulkZipWithPrefix(items: Collection<Pair<Path, Path>>, compress: Boolean, withBlockMap: Boolean) {
+  spanBuilder("archive directories").setAttribute(AttributeKey.longKey("count"), items.size.toLong()).useWithScope2 {
+    val json = JSON.std.without(JSON.Feature.USE_FIELDS)
+    withContext(Dispatchers.IO) {
+      for (item in items) {
+        val target = item.second
+        launch {
+          spanBuilder("build plugin archive")
+            .setAttribute("input", item.first.toString())
+            .setAttribute("outputFile", target.toString())
+            .useWithScope2 {
+              writeNewZip(target, compress = compress) { zipCreator ->
+                ZipArchiver(zipCreator).use { archiver ->
+                  if (Files.isDirectory(item.first)) {
+                    archiver.setRootDir(item.first, item.first.fileName.toString())
+                    compressDir(startDir = item.first, archiver = archiver, excludes = null)
+                  }
+                  else {
+                    archiver.setRootDir(item.first.parent)
+                    archiver.addFile(item.first)
                   }
                 }
               }
-            if (withBlockMap) {
-              spanBuilder("build plugin blockmap").setAttribute("file", target.toString()).useWithScope2 {
-                buildBlockMap(target, json)
-              }
+            }
+          if (withBlockMap) {
+            spanBuilder("build plugin blockmap").setAttribute("file", target.toString()).useWithScope2 {
+              buildBlockMap(target, json)
             }
           }
         }
       }
     }
+  }
 }
 
 /**

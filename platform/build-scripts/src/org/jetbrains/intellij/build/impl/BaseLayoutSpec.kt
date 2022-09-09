@@ -69,6 +69,10 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
     layout.excludeFromModule(moduleName, excludedPattern)
   }
 
+  fun excludeFromModule(moduleName: String, excludedPatterns: List<String>) {
+    layout.excludeFromModule(moduleName, excludedPatterns)
+  }
+
   /**
    * Include an artifact output to the plugin distribution.
    * @param artifactName name of the project configuration

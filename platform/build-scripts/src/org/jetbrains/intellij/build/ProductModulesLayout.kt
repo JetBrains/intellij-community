@@ -128,7 +128,7 @@ class ProductModulesLayout {
   var prepareCustomPluginRepositoryForPublishedPlugins = true
 
   /**
-   * If {@code true} then all plugins that compatible with an IDE will be built. By default these plugins will be placed to "auto-uploading"
+   * If {@code true} then all plugins that compatible with an IDE will be built. By default, these plugins will be placed to "auto-uploading"
    * subdirectory and may be automatically uploaded to plugins.jetbrains.com.
    * <br>
    * If {@code false} only plugins from {@link #setPluginModulesToPublish} will be considered.

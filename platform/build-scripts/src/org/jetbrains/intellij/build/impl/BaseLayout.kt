@@ -3,10 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.containers.MultiMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.*
 import java.util.*
 
 /**
@@ -36,7 +33,8 @@ open class BaseLayout {
   internal var resourcePaths: PersistentList<ModuleResourceData> = persistentListOf()
 
   /** module name to entries which should be excluded from its output */
-  val moduleExcludes: MultiMap<String, String> = MultiMap.createLinked()
+  var moduleExcludes: PersistentMap<String, MutableList<String>> = persistentMapOf()
+    private set
 
   @Suppress("SSBasedInspection")
   internal val includedProjectLibraries = ObjectOpenHashSet<ProjectLibraryData>()
@@ -87,7 +85,15 @@ open class BaseLayout {
   }
 
   fun excludeFromModule(moduleName: String, excludedPattern: String) {
-    moduleExcludes.putValue(moduleName, excludedPattern)
+    moduleExcludes = moduleExcludes.mutate {
+      it.computeIfAbsent(moduleName) { mutableListOf() }.add(excludedPattern)
+    }
+  }
+
+  fun excludeFromModule(moduleName: String, excludedPatterns: List<String>) {
+    moduleExcludes = moduleExcludes.mutate {
+      it.computeIfAbsent(moduleName) { mutableListOf() }.addAll(excludedPatterns)
+    }
   }
 
   fun withProjectLibrary(libraryName: String) {

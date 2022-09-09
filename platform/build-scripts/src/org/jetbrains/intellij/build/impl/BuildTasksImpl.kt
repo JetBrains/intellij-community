@@ -825,7 +825,7 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
   checkModules(layout.includedModuleNames.toList(), "moduleJars in $description", context)
   checkArtifacts(layout.includedArtifacts.keys, "includedArtifacts in $description", context)
   checkModules(layout.resourcePaths.map { it.moduleName }, "resourcePaths in $description", context)
-  checkModules(layout.moduleExcludes.keySet(), "moduleExcludes in $description", context)
+  checkModules(layout.moduleExcludes.keys, "moduleExcludes in $description", context)
 
   checkProjectLibraries(layout.includedProjectLibraries.map { it.libraryName }, "includedProjectLibraries in $description", context)
 
