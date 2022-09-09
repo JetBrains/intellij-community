@@ -56,7 +56,7 @@ class InspectionResultViewTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         -Code maturity
          -Usage of API marked for removal
           -some.module
-           'M2' is deprecated and marked for removal(LIKE_DEPRECATED)
+           'M2' is deprecated and marked for removal
         -Declaration redundancy
          -Redundant 'requires' directive in module-info
           -some.module
@@ -76,7 +76,7 @@ class InspectionResultViewTest : LightJava9ModulesCodeInsightFixtureTestCase() {
          -Usage of API marked for removal
           -${LightProjectDescriptor.TEST_MODULE_NAME}
            -some.module
-            'M2' is deprecated and marked for removal(LIKE_DEPRECATED)
+            'M2' is deprecated and marked for removal
         -Declaration redundancy
          -Redundant 'requires' directive in module-info
           -${LightProjectDescriptor.TEST_MODULE_NAME}
