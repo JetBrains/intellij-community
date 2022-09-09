@@ -388,6 +388,11 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull final AnActionEvent e) {
       for (MergeInfoHolder holder : myHolders.values()) {
         if (holder.refreshEnabled(false)) {
@@ -417,6 +422,11 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull final AnActionEvent e) {
       return myHighlightingOn;
     }
@@ -437,6 +447,11 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
     protected CommonFilter(@NotNull Supplier<@ActionText String> text) {
       super(text);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

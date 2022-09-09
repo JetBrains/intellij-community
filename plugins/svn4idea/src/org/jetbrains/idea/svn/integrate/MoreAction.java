@@ -2,6 +2,7 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -47,6 +48,11 @@ public abstract class MoreAction extends DumbAwareAction implements CustomCompon
     myEnabled = enabled;
     myLoadMoreBtn.setVisible(myEnabled);
     myLabel.setVisible(! myEnabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
