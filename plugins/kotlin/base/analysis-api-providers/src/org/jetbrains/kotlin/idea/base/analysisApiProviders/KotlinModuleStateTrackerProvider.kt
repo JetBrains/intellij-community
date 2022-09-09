@@ -41,6 +41,7 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
 
     fun getModuleStateTrackerFor(module: KtModule): KtModuleStateTracker {
         return when (module) {
+            is KtBuiltinsModule -> ModuleStateTrackerImpl()
             is KtLibraryModule -> {
                 val libraryInfo = module.moduleInfo as LibraryInfo
                 libraryInfo.checkValidity()
@@ -62,7 +63,6 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
 
             is KtLibrarySourceModule -> getModuleStateTrackerFor(module.binaryLibrary)
             is KtNotUnderContentRootModule -> ModuleStateTrackerImpl() // TODO need proper cache?
-            is KtBuiltinsModule -> ModuleStateTrackerImpl()
         }
     }
 
