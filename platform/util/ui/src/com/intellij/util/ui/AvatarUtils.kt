@@ -50,9 +50,12 @@ class AvatarIcon(private val targetSize: Int,
 }
 
 object AvatarUtils {
-  fun generateColoredAvatar(gradientSeed: String, name: String, palette: ColorPalette = AvatarPalette): BufferedImage {
-    return generateColoredAvatar(null, 64, 0.0, gradientSeed, name, palette)
-  }
+  fun generateColoredAvatar(gradientSeed: String,
+                            name: String,
+                            size: Int = 64,
+                            arcRatio: Double = 0.0,
+                            palette: ColorPalette = AvatarPalette): BufferedImage =
+    generateColoredAvatar(null, size, arcRatio, gradientSeed, name, palette)
 
   internal fun generateColoredAvatar(gc: GraphicsConfiguration?,
                                      fullSize: Int,

@@ -1,53 +1,52 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.icon
 
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.ui.AsyncImageIcon
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.ui.ImageUtil.*
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.ImageUtil.ensureHiDPI
+import com.intellij.util.ui.ImageUtil.scaleImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.awt.Image
-import java.time.Duration
-import java.time.temporal.ChronoUnit
 import javax.swing.Icon
 
-abstract class CachingCircleImageIconsProvider<T : Any>(private val scope: CoroutineScope, private val defaultIcon: Icon)
-  : IconsProvider<T> {
+class AsyncImageIconsProvider<T : Any>(
+  private val scope: CoroutineScope,
+  private val loader: AsyncImageLoader<T>
+) : IconsProvider<T> {
 
-  private val iconsCache = Caffeine.newBuilder()
-    .expireAfterAccess(Duration.of(5, ChronoUnit.MINUTES))
-    .build<Pair<T?, Int>, Icon>()
-
-  override fun getIcon(key: T?, iconSize: Int): Icon =
-    iconsCache.get(key to iconSize) { (key, iconSize) ->
-      val defaultIcon = IconUtil.resizeSquared(defaultIcon, iconSize)
-      if (key == null) {
-        defaultIcon
-      }
-      else {
-        AsyncImageIcon(scope, defaultIcon) { scaleCtx, width, height ->
-          loadAndResizeImage(key, scaleCtx, width, height)
-        }
+  override fun getIcon(key: T?, iconSize: Int): Icon {
+    val baseIcon = loader.createBaseIcon(key, iconSize)
+    return if (key == null) {
+      baseIcon
+    }
+    else {
+      AsyncImageIcon(scope, baseIcon) { scaleCtx, width, height ->
+        loadAndResizeImage(key, scaleCtx, width, height)
       }
     }
+  }
 
   private suspend fun loadAndResizeImage(key: T, scaleCtx: ScaleContext, width: Int, height: Int): Image? =
     withContext(Dispatchers.IO) {
-      loadImage(key)?.let { image ->
+      loader.load(key)?.let { image ->
         withContext(RESIZE_DISPATCHER) {
           val hidpiImage = ensureHiDPI(image, scaleCtx)
           val scaleImage = scaleImage(hidpiImage, width, height)
-          createCircleImage(toBufferedImage(scaleImage))
+          loader.postProcess(scaleImage)
         }
       }
     }
 
-  protected abstract suspend fun loadImage(key: T): Image?
+  interface AsyncImageLoader<T : Any> {
+    suspend fun load(key: T): Image?
+    fun createBaseIcon(key: T?, iconSize: Int): Icon = EmptyIcon.create(iconSize)
+    suspend fun postProcess(image: Image): Image = image
+  }
 
   companion object {
     private val RESIZE_DISPATCHER = AppExecutorUtil.createBoundedApplicationPoolExecutor(

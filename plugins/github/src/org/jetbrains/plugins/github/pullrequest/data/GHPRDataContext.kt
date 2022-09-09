@@ -3,11 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModel
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCreationService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRDetailsService
@@ -45,7 +41,6 @@ internal class GHPRDataContext(val listLoader: GHPRListLoader,
   }
 
   override fun dispose() {
-    Disposer.dispose(avatarIconsProvider)
     Disposer.dispose(filesManager)
     Disposer.dispose(listenersDisposable)
     Disposer.dispose(dataProviderRepository)

@@ -3,8 +3,11 @@ package com.intellij.collaboration.auth.ui
 
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
-import com.intellij.collaboration.ui.icon.CachingCircleImageIconsProvider
+import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
+import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.collaboration.ui.items
+import com.intellij.util.IconUtil
+import com.intellij.util.ui.ImageUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -23,8 +26,8 @@ import kotlin.properties.Delegates.observable
 
 abstract class LazyLoadingAccountsDetailsProvider<A : Account, D : AccountDetails>(
   private val scope: CoroutineScope,
-  defaultAvatarIcon: Icon
-) : LoadingAccountsDetailsProvider<A, D>, CachingCircleImageIconsProvider<A>(scope, defaultAvatarIcon) {
+  private val defaultAvatarIcon: Icon
+) : LoadingAccountsDetailsProvider<A, D> {
 
   final override val loadingState = MutableStateFlow(false)
   private var loadingCount by observable(0) { _, _, newValue ->
@@ -35,6 +38,8 @@ abstract class LazyLoadingAccountsDetailsProvider<A : Account, D : AccountDetail
 
   private val requestsMap = ConcurrentHashMap<A, Deferred<Result<D>>>()
   private val resultsMap = ConcurrentHashMap<A, Result<D>>()
+
+  private val delegateIconProvider = CachingIconsProvider(createIconProvider())
 
   private fun requestDetails(account: A) = requestsMap.getOrPut(account) {
     scope.async {
@@ -76,12 +81,7 @@ abstract class LazyLoadingAccountsDetailsProvider<A : Account, D : AccountDetail
     return (resultsMap[account] as? Result.Error<*>)?.needReLogin ?: false
   }
 
-  final override fun getIcon(key: A?, iconSize: Int): Icon = super.getIcon(key, iconSize)
-
-  final override suspend fun loadImage(key: A): Image? {
-    val url = (requestDetails(key).await() as? Result.Success<D>)?.details?.avatarUrl ?: return null
-    return loadAvatar(key, url)
-  }
+  final override fun getIcon(key: A?, iconSize: Int): Icon = delegateIconProvider.getIcon(key, iconSize)
 
   protected abstract suspend fun loadAvatar(account: A, url: String): Image?
 
@@ -89,6 +89,16 @@ abstract class LazyLoadingAccountsDetailsProvider<A : Account, D : AccountDetail
     class Success<out D : AccountDetails>(val details: D) : Result<D>()
     class Error<out D : AccountDetails>(val error: @Nls String?, val needReLogin: Boolean) : Result<D>()
   }
+
+  private fun createIconProvider() = AsyncImageIconsProvider(scope, object : AsyncImageIconsProvider.AsyncImageLoader<A> {
+    override suspend fun load(key: A): Image? {
+      val url = (requestDetails(key).await() as? Result.Success<D>)?.details?.avatarUrl ?: return null
+      return loadAvatar(key, url)
+    }
+
+    override fun createBaseIcon(key: A?, iconSize: Int): Icon = IconUtil.resizeSquared(defaultAvatarIcon, iconSize)
+    override suspend fun postProcess(image: Image): Image = ImageUtil.createCircleImage(ImageUtil.toBufferedImage(image))
+  })
 }
 
 fun <A : Account> LazyLoadingAccountsDetailsProvider<A, *>.cancelOnRemoval(listModel: ListModel<A>) {
