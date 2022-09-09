@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
+import com.google.common.collect.ImmutableSetMultimap;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -37,7 +38,10 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity;
 import kotlin.sequences.SequencesKt;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
@@ -82,41 +86,8 @@ public class IndexableFilesIndex {
 
   private void regenerateResultingSnapshot() {
     if (nonWorkspaceSnapshot != null) {
-      snapshot = createResultingSnapshot(workspaceModelStatus, nonWorkspaceSnapshot);
+      snapshot = new ResultingSnapshot(workspaceModelStatus, nonWorkspaceSnapshot);
     }
-  }
-
-  private static ResultingSnapshot createResultingSnapshot(@NotNull WorkspaceModelStatus status,
-                                                           @NotNull NonWorkspaceModelSnapshot snapshot) {
-    Collection<IndexableSetSelfDependentOrigin> origins = new ArrayList<>();
-    Set<VirtualFile> excludedModuleFilesFromPolicies = new HashSet<>(snapshot.excludedFilesFromPolicies);
-    excludedModuleFilesFromPolicies.addAll(
-      ContainerUtil.mapNotNull(snapshot.excludedModuleFilesFromPolicies, pointer -> pointer.getFile()));
-    for (Map.Entry<WorkspaceEntity, Collection<IndexableSetSelfDependentOrigin>> entry : status.entitiesToOrigins.entrySet()) {
-      for (IndexableSetSelfDependentOrigin origin : entry.getValue()) {
-        if (origin instanceof SdkSelfDependentOriginImpl) {
-          List<VirtualFile> excludedRootsForSdk = new ArrayList<>();
-          for (Function<Sdk, List<VirtualFile>> exclusionFunction : snapshot.sdkExclusionFunctions) {
-            List<VirtualFile> roots = exclusionFunction.fun(((SdkOrigin)origin).getSdk());
-            if (roots != null && !roots.isEmpty()) {
-              excludedRootsForSdk.addAll(roots);
-            }
-          }
-          if (!excludedRootsForSdk.isEmpty()) {
-            origins.add(((SdkSelfDependentOriginImpl)origin).copyWithAdditionalExcludedFiles(excludedRootsForSdk));
-            continue;
-          }
-        }
-        else if (origin instanceof ModuleRootSelfDependentOriginImpl && !excludedModuleFilesFromPolicies.isEmpty()) {
-          origins.add(((ModuleRootSelfDependentOriginImpl)origin).copyWithAdditionalExcludedFiles(excludedModuleFilesFromPolicies));
-          continue;
-        }
-        origins.add(origin);
-      }
-    }
-    origins.addAll(snapshot.indexableSetOrigins);
-    origins.addAll(snapshot.syntheticLibrariesOrigins);
-    return new ResultingSnapshot(origins);
   }
 
   public boolean shouldBeIndexed(@NotNull VirtualFile file) {
@@ -162,14 +133,46 @@ public class IndexableFilesIndex {
   }
 
   private static class ResultingSnapshot {
-    private final MultiMap<VirtualFile, IndexableSetSelfDependentOrigin> roots = MultiMap.createSet();
+    private final ImmutableSetMultimap<VirtualFile, IndexableSetSelfDependentOrigin> roots;
 
-    ResultingSnapshot(Collection<IndexableSetSelfDependentOrigin> origins) {
-      for (IndexableSetSelfDependentOrigin origin : origins) {
-        for (VirtualFile root : origin.getIterationRoots()) {
-          roots.putValue(root, origin);
+    ResultingSnapshot(@NotNull WorkspaceModelStatus status,
+                      @NotNull NonWorkspaceModelSnapshot snapshot) {
+      Collection<IndexableSetSelfDependentOrigin> origins = new ArrayList<>();
+      Set<VirtualFile> excludedModuleFilesFromPolicies = new HashSet<>(snapshot.excludedFilesFromPolicies);
+      excludedModuleFilesFromPolicies.addAll(
+        ContainerUtil.mapNotNull(snapshot.excludedModuleFilesFromPolicies, pointer -> pointer.getFile()));
+      for (Map.Entry<WorkspaceEntity, Collection<IndexableSetSelfDependentOrigin>> entry : status.entitiesToOrigins.entrySet()) {
+        for (IndexableSetSelfDependentOrigin origin : entry.getValue()) {
+          if (origin instanceof SdkSelfDependentOriginImpl) {
+            List<VirtualFile> excludedRootsForSdk = new ArrayList<>();
+            for (Function<Sdk, List<VirtualFile>> exclusionFunction : snapshot.sdkExclusionFunctions) {
+              List<VirtualFile> roots = exclusionFunction.fun(((SdkOrigin)origin).getSdk());
+              if (roots != null && !roots.isEmpty()) {
+                excludedRootsForSdk.addAll(roots);
+              }
+            }
+            if (!excludedRootsForSdk.isEmpty()) {
+              origins.add(((SdkSelfDependentOriginImpl)origin).copyWithAdditionalExcludedFiles(excludedRootsForSdk));
+              continue;
+            }
+          }
+          else if (origin instanceof ModuleRootSelfDependentOriginImpl && !excludedModuleFilesFromPolicies.isEmpty()) {
+            origins.add(((ModuleRootSelfDependentOriginImpl)origin).copyWithAdditionalExcludedFiles(excludedModuleFilesFromPolicies));
+            continue;
+          }
+          origins.add(origin);
         }
       }
+      origins.addAll(snapshot.indexableSetOrigins);
+      origins.addAll(snapshot.syntheticLibrariesOrigins);
+
+      ImmutableSetMultimap.Builder<VirtualFile, IndexableSetSelfDependentOrigin> builder = new ImmutableSetMultimap.Builder<>();
+      for (IndexableSetSelfDependentOrigin origin : origins) {
+        for (VirtualFile root : origin.getIterationRoots()) {
+          builder.put(root, origin);
+        }
+      }
+      roots = builder.build();
     }
   }
 
