@@ -78,6 +78,10 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
     }
 
     override fun prepareMembersInfo(klass: KtClassOrObject, project: Project, editor: Editor?): Info? {
+        return prepareMembersInfo(klass, project, true)
+    }
+
+    fun prepareMembersInfo(klass: KtClassOrObject, project: Project, askForRewrite: Boolean): Info? {
         if (klass !is KtClass) throw AssertionError("Not a class: ${klass.getElementTextWithContext()}")
 
         val context = klass.analyzeWithContent()
@@ -88,7 +92,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
 
         var needEquals = equalsDescriptor == null
         var needHashCode = hashCodeDescriptor == null
-        if (!needEquals && !needHashCode) {
+        if (!needEquals && !needHashCode && askForRewrite) {
             if (!confirmMemberRewrite(klass, equalsDescriptor!!, hashCodeDescriptor!!)) return null
 
             runWriteAction {
@@ -177,7 +181,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
         }
     }
 
-    private fun generateEquals(project: Project, info: Info, targetClass: KtClassOrObject): KtNamedFunction? {
+    fun generateEquals(project: Project, info: Info, targetClass: KtClassOrObject): KtNamedFunction? {
         with(info) {
             if (!needEquals) return null
 
@@ -250,7 +254,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
         }
     }
 
-    private fun generateHashCode(project: Project, info: Info, targetClass: KtClassOrObject): KtNamedFunction? {
+    fun generateHashCode(project: Project, info: Info, targetClass: KtClassOrObject): KtNamedFunction? {
         fun VariableDescriptor.genVariableHashCode(parenthesesNeeded: Boolean): String {
             val ref = (DescriptorToSourceUtilsIde.getAnyDeclaration(project, this) as PsiNameIdentifierOwner).nameIdentifier!!.text
             val isNullable = TypeUtils.isNullableType(type)

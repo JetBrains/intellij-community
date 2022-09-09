@@ -760,5 +760,8 @@ class QuickFixRegistrar : QuickFixContributor {
         PROGRESSIONS_CHANGING_RESOLVE.registerFactory(OverloadResolutionChangeFix)
 
         ENUM_DECLARING_CLASS_DEPRECATED.registerFactory(DeclaringJavaClassMigrationFix)
+
+        ABSTRACT_SUPER_CALL.registerFactory(AbstractSuperCallFix)
+        ABSTRACT_SUPER_CALL_WARNING.registerFactory(AbstractSuperCallFix)
     }
 }

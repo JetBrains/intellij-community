@@ -80,3 +80,4 @@ com.intellij.spring.model.highlighting.autowire.SpringUastInjectionPointsAutowir
 org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelMigrateToParcelizeQuickFix
 org.jetbrains.kotlin.idea.quickfix.AddConversionCallFix
 org.jetbrains.kotlin.idea.quickfix.OverloadResolutionChangeFix
+org.jetbrains.kotlin.idea.quickfix.AbstractSuperCallFix

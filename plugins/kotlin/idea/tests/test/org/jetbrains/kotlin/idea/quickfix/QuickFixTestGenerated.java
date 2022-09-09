@@ -13058,6 +13058,54 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/specifySuperExplicitly")
+    public static class SpecifySuperExplicitly extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("abstractSuperCall.kt")
+        public void testAbstractSuperCall() throws Exception {
+            runTest("testData/quickfix/specifySuperExplicitly/abstractSuperCall.kt");
+        }
+
+        @TestMetadata("abstractSuperCall2.kt")
+        public void testAbstractSuperCall2() throws Exception {
+            runTest("testData/quickfix/specifySuperExplicitly/abstractSuperCall2.kt");
+        }
+
+        @TestMetadata("abstractSuperCallEquals.kt")
+        public void testAbstractSuperCallEquals() throws Exception {
+            runTest("testData/quickfix/specifySuperExplicitly/abstractSuperCallEquals.kt");
+        }
+
+        @TestMetadata("abstractSuperCallFromNested.kt")
+        public void testAbstractSuperCallFromNested() throws Exception {
+            runTest("testData/quickfix/specifySuperExplicitly/abstractSuperCallFromNested.kt");
+        }
+
+        @TestMetadata("abstractSuperCallFromObject.kt")
+        public void testAbstractSuperCallFromObject() throws Exception {
+            runTest("testData/quickfix/specifySuperExplicitly/abstractSuperCallFromObject.kt");
+        }
+
+        @TestMetadata("abstractSuperCallHashCode.kt")
+        public void testAbstractSuperCallHashCode() throws Exception {
+            runTest("testData/quickfix/specifySuperExplicitly/abstractSuperCallHashCode.kt");
+        }
+
+        @TestMetadata("abstractSuperCallWithExplicitSuper.kt")
+        public void testAbstractSuperCallWithExplicitSuper() throws Exception {
+            runTest("testData/quickfix/specifySuperExplicitly/abstractSuperCallWithExplicitSuper.kt");
+        }
+
+        @TestMetadata("abstractSuperCallWithExplicitSuper2.kt")
+        public void testAbstractSuperCallWithExplicitSuper2() throws Exception {
+            runTest("testData/quickfix/specifySuperExplicitly/abstractSuperCallWithExplicitSuper2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/specifySuperType")
     public static class SpecifySuperType extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
