@@ -780,18 +780,22 @@ public final class PluginManagerCore {
 
       PluginId pluginId = descriptor.getPluginId();
       boolean isLoadable = loadingError == null;
+
+      boolean isLoadableOnDemand = descriptor.isOnDemand() &&
+                                   !context.enabledOnDemandPlugins.contains(pluginId);
       if (!isLoadable) {
         pluginErrorsById.put(pluginId, loadingError);
         pluginsToDisable.put(pluginId, descriptor.getName());
 
         PluginId disabledDependencyId = loadingError.disabledDependency;
-        if (disabledDependencyId != null && disabledPlugins.contains(disabledDependencyId)) {
+        if (disabledDependencyId != null &&
+            (disabledPlugins.contains(disabledDependencyId) || isLoadableOnDemand)) {
           pluginsToEnable.put(disabledDependencyId, idMap.get(disabledDependencyId).getName());
         }
       }
 
       boolean shouldLoad = !context.expiredPlugins.contains(pluginId) &&
-                           (!descriptor.isOnDemand() || context.enabledOnDemandPlugins.contains(pluginId));
+                           !isLoadableOnDemand;
 
       descriptor.setEnabled(descriptor.isEnabled()
                             && isLoadable && shouldLoad);
