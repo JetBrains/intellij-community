@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,7 +33,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,8 +44,6 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
 public final class TipPanel extends JPanel implements DoNotAskOption {
   private static final Logger LOG = Logger.getInstance(TipPanel.class);
-
-  private static final Key<Cursor> CURSOR_KEY = Key.create("action.button.cursor");
 
   private @NotNull final Project myProject;
   private final StyledTextPane myTextPane;
@@ -103,7 +99,6 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     panel.add(Box.createHorizontalGlue());
 
     JLabel label = new JLabel(IdeBundle.message("tip.of.the.day.feedback.question"));
-    label.setForeground(UIUtil.getLabelInfoForeground());
     panel.add(label);
     panel.add(Box.createRigidArea(new JBDimension(8, 0)));
 
@@ -135,14 +130,6 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
           protected void paintButtonLook(Graphics g) {
             // do not paint icon background
             getButtonLook().paintIcon(g, this, getIcon());
-          }
-
-          @Override
-          protected void presentationPropertyChanged(@NotNull PropertyChangeEvent e) {
-            super.presentationPropertyChanged(e);
-            if (CURSOR_KEY.toString().equals(e.getPropertyName())) {
-              setCursor((Cursor)e.getNewValue());
-            }
           }
 
           @Override
@@ -185,9 +172,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     return new DumbAwareAction(text, null, icon) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        if (!isSelected()) {
-          myLikenessState = isLike;
-        }
+        myLikenessState = isSelected() ? null : isLike;
       }
 
       @Override
@@ -196,8 +181,6 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
         Presentation presentation = e.getPresentation();
         presentation.setIcon(selected ? selectedIcon : icon);
         presentation.setHoveredIcon(selected ? selectedIcon : hoveredIcon);
-        Cursor cursor = selected ? Cursor.getDefaultCursor() : Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-        presentation.putClientProperty(CURSOR_KEY, cursor);
       }
 
       @Override
