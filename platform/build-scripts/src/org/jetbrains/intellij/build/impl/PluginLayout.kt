@@ -89,21 +89,15 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
 
     @JvmStatic
     fun plugin(modules: List<String>): PluginLayout {
-      val mainModule = modules.first()
-      val layout = PluginLayout(mainModule = mainModule)
+      val layout = PluginLayout(mainModule = modules.first())
       layout.setModules(modules)
       return layout
     }
 
     @JvmStatic
-    fun simplePlugin(mainModuleName: String): PluginLayout {
-      check(!mainModuleName.isEmpty()) {
-        "mainModuleName must be not empty"
-      }
-
-      val layout = PluginLayout(mainModuleName)
-      layout.directoryName = convertModuleNameToFileName(layout.mainModule)
-      layout.withModuleImpl(mainModuleName, layout.mainJarName)
+    fun simplePlugin(mainModule: String): PluginLayout {
+      val layout = PluginLayout(mainModule)
+      layout.setModules(listOf(mainModule))
       return layout
     }
   }
