@@ -10,7 +10,7 @@ import com.maddyhome.idea.copyright.psi.UpdateCopyrightFactory;
 public class ShCopyrightTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/testData/copyright/";
+    return PluginPathManager.getPluginHomePath("sh") + "/copyright/testData/copyright/";
   }
 
   public void testEmpty() throws Exception { doTest(); }
