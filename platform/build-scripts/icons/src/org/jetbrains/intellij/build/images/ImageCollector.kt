@@ -55,6 +55,9 @@ internal class ImageInfo(val id: String,
         path.contains("_dark.") -> {
           result = result or ImageDescriptor.HAS_DARK
         }
+        path.contains("_stroke.") -> {
+          result = result or ImageDescriptor.HAS_STROKE
+        }
       }
     }
     return result

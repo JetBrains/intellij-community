@@ -59,19 +59,19 @@ object SVGLoader {
   @Throws(IOException::class)
   @JvmStatic
   fun load(url: URL, scale: Float): Image {
-    return load(path = url.path, stream = url.openStream(), SvgCacheMapper(scale = scale, isDark = false), colorPatcher = null, docSize = null)
+    return load(path = url.path, stream = url.openStream(), SvgCacheMapper(scale = scale), colorPatcher = null, docSize = null)
   }
 
   @Throws(IOException::class)
   @JvmStatic
   fun load(stream: InputStream, scale: Float): Image {
-    return load(path = null, stream = stream, SvgCacheMapper(scale = scale, isDark = false), colorPatcher = null, docSize = null)
+    return load(path = null, stream = stream, SvgCacheMapper(scale = scale), colorPatcher = null, docSize = null)
   }
 
   @Throws(IOException::class)
   @JvmStatic
   fun load(url: URL?, stream: InputStream, scale: Float): Image {
-    return load(path = url?.path, stream = stream, SvgCacheMapper(scale = scale, isDark = false), colorPatcher = null, docSize = null)
+    return load(path = url?.path, stream = stream, SvgCacheMapper(scale = scale), colorPatcher = null, docSize = null)
   }
 
   @ApiStatus.Internal
@@ -95,7 +95,7 @@ object SVGLoader {
       }
       if (themeDigest != null) {
         @Suppress("ReplaceArrayEqualityOpWithArraysEquals")
-        if (themeDigest == DEFAULT_THEME && rasterizedCacheKey != 0) {
+        if (themeDigest == DEFAULT_THEME && rasterizedCacheKey != 0 && !mapper.isStroke) {
           try {
             SvgCache.prebuiltPersistentCache?.loadFromCache(rasterizedCacheKey, mapper.scale, mapper.isDark, docSize)?.let {
               return it
@@ -230,7 +230,7 @@ object SVGLoader {
   fun loadHiDPI(url: URL?, stream: InputStream, context: ScaleContext): Image {
     val image = load(path = url?.path,
                      stream = stream,
-                     mapper = SvgCacheMapper(scale = context.getScale(DerivedScaleType.PIX_SCALE).toFloat(), isDark = false),
+                     mapper = SvgCacheMapper(scale = context.getScale(DerivedScaleType.PIX_SCALE).toFloat()),
                      colorPatcher = null,
                      docSize = null)
     return ImageUtil.ensureHiDPI(image, context)

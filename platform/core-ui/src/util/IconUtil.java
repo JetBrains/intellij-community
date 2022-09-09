@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.ui.*;
 import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.ui.icons.CopyableIcon;
+import com.intellij.ui.icons.ImageDescriptor;
 import com.intellij.ui.scale.*;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.*;
@@ -996,7 +997,25 @@ public final class IconUtil {
   public static @NotNull Icon toStrokeIcon(@NotNull Icon original, @NotNull Color resultColor) {
     List<String> strokeColors = List.of("#000000", "#6c707e", "#3574f0", "#5fb865", "#e35252", "#eb7171", "#e3ae4d", "#fcc75b", "#f28c35");
     List<String> backgroundColors = List.of("#ebecf0", "#e7effd", "#dff2e0", "#f2fcf3", "#ffe8e8", "#fff5f5", "#fff8e3", "#fff4eb");
-    SVGLoader.SvgElementColorPatcherProvider patcher = getStrokePatcher(resultColor, strokeColors, backgroundColors);
-    return IconLoader.colorPatchedIcon(original, patcher, false);
+    SVGLoader.SvgElementColorPatcherProvider palettePatcher = getStrokePatcher(resultColor, strokeColors, backgroundColors);
+    SVGLoader.SvgElementColorPatcherProvider strokeReplacer = getStrokePatcher(resultColor, List.of("white", "#ffffff"), List.of());
+
+    return IconLoader.replaceCachedImageIcons(original, (cachedImageIcon) -> {
+      SVGLoader.SvgElementColorPatcherProvider patcher = palettePatcher;
+      int flags = cachedImageIcon.getImageFlags();
+      if ((flags & ImageDescriptor.HAS_STROKE) == ImageDescriptor.HAS_STROKE) {
+        Icon strokeIcon = cachedImageIcon.createStrokeIcon();
+        //noinspection UseJBColor
+        if (Color.WHITE.equals(resultColor)) {
+          // will be nothing to patch actually
+          return strokeIcon;
+        }
+        if (strokeIcon instanceof IconLoader.CachedImageIcon) {
+          cachedImageIcon = (IconLoader.CachedImageIcon) strokeIcon;
+          patcher = strokeReplacer;
+        }
+      }
+      return IconLoader.patchColorsInCacheImageIcon(cachedImageIcon, patcher, false);
+    });
   }
 }

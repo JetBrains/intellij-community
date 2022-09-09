@@ -17,4 +17,8 @@ public interface ImageDataLoader {
   @Nullable ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform);
 
   boolean isMyClassLoader(@NotNull ClassLoader classLoader);
+
+  default int getFlags() {
+    return 0;
+  }
 }
