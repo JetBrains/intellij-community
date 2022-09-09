@@ -1,13 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.util.indexing.impl.IndexDebugProperties;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -33,18 +31,28 @@ public class IntToIntBtreeTest {
   private IntToIntBtree bTree;
   private Int2IntOpenHashMap generatedKeyValues;
 
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    IndexDebugProperties.DEBUG = true;
+  }
+
   @Before
   public void setUp() throws Exception {
     final File file = temporaryFolder.newFile("btree");
-    bTree = new IntToIntBtree(PAGE_SIZE, file.toPath(), LOCK_CONTEXT, /*createAnew: */ true);
+    LOCK_CONTEXT.writeLock().lock();
 
+    bTree = new IntToIntBtree(PAGE_SIZE, file.toPath(), LOCK_CONTEXT, /*createAnew: */ true);
     generatedKeyValues = generateKeyValues(ENOUGH_KEYS);
   }
 
   @After
   public void tearDown() throws Exception {
-    if (bTree != null) {
-      bTree.doClose();
+    try {
+      if (bTree != null) {
+        bTree.doClose();
+      }
+    }finally {
+      LOCK_CONTEXT.writeLock().unlock();
     }
   }
 
