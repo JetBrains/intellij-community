@@ -34,6 +34,7 @@ import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
@@ -53,6 +54,8 @@ public class DefaultTreeUI extends BasicTreeUI {
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
   @ApiStatus.Internal
   public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
+  @ApiStatus.Internal
+  public static final Key<Function<Object, Boolean>> AUTO_EXPAND_FILTER = Key.create("allows to filter single child nodes which should not be auto-expanded");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
   private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();
 
@@ -141,6 +144,11 @@ public class DefaultTreeUI extends BasicTreeUI {
   private static boolean isAutoExpandAllowed(@NotNull JTree tree) {
     Boolean allowed = ClientProperty.get(tree, AUTO_EXPAND_ALLOWED);
     return allowed != null ? allowed : tree.isShowing();
+  }
+
+  private static boolean isAutoExpandAllowed(@NotNull JTree tree, @NotNull Object node) {
+    Function<Object, Boolean> filter = ClientProperty.get(tree, AUTO_EXPAND_FILTER);
+    return filter == null || !filter.apply(node);
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -584,7 +592,10 @@ public class DefaultTreeUI extends BasicTreeUI {
           for (int i = 0; i <= oldRowCount; i++) {
             TreePath row = getPathForRow(i);
             if (row != null && pathCount == row.getPathCount() && path.equals(row.getParentPath())) {
-              ((AsyncTreeModel)model).onValidThread(() -> tree.expandPath(row));
+              Object node = row.getLastPathComponent();
+              if (isAutoExpandAllowed(tree, node)) {
+                ((AsyncTreeModel)model).onValidThread(() -> tree.expandPath(row));
+              }
               return; // this code is intended to auto-expand a single child node
             }
           }
