@@ -20,7 +20,7 @@ open class BaseLayout {
   // one module can be packed into several JARs, that's why we have map "jar to modules" and not "module to jar"
   @Suppress("PropertyName")
   @JvmField
-  protected val _jarToModules = TreeMap<String, List<String>>()
+  protected val _jarToModules = TreeMap<String, MutableList<String>>()
   // only as guard for checkAndAssociateModuleNameWithJarPath - do not use it, because strictly speaking for one module maybe several JARs
   @JvmField
   protected val moduleNameToJarPath = HashMap<String, String>()
@@ -71,7 +71,7 @@ open class BaseLayout {
       }
     }
 
-    (_jarToModules.computeIfAbsent(relativeJarPath) { mutableListOf() } as MutableList<String>).add(moduleName)
+    _jarToModules.computeIfAbsent(relativeJarPath) { mutableListOf() }.add(moduleName)
   }
 
   open fun withModule(moduleName: String) {
@@ -109,6 +109,17 @@ open class BaseLayout {
       moduleName = moduleName,
       libraryName = libraryName,
       relativeOutputPath = relativeOutputPath))
+  }
+
+  /**
+   * @param resourcePath path to resource file or directory relative to {@code moduleName} module content root
+   * @param relativeOutputPath target path relative to the plugin root directory
+   */
+  fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
+    resourcePaths = resourcePaths.add(ModuleResourceData(moduleName = moduleName,
+                                                         resourcePath = resourcePath,
+                                                         relativeOutputPath = relativeOutputPath,
+                                                         packToZip = false))
   }
 }
 

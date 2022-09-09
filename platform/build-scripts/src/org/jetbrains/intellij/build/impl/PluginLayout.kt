@@ -86,6 +86,12 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
       return layout
     }
 
+    fun plugin(modules: List<String>, builder: Consumer<PluginLayoutBuilder>): PluginLayout {
+      val layout = plugin(modules)
+      builder.accept(PluginLayoutSpec(layout))
+      return layout
+    }
+
     @JvmStatic
     fun plugin(modules: List<String>): PluginLayout {
       val layout = PluginLayout(mainModule = modules.first())
@@ -120,8 +126,22 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     })
   }
 
+  open class PluginLayoutBuilder(@JvmField protected val layout: PluginLayout) : BaseLayoutSpec(layout) {
+    /**
+     * @param resourcePath path to resource file or directory relative to the plugin's main module content root
+     * @param relativeOutputPath target path relative to the plugin root directory
+     */
+    fun withResource(resourcePath: String, relativeOutputPath: String) {
+      layout.withResourceFromModule(layout.mainModule, resourcePath, relativeOutputPath)
+    }
+
+    fun withGeneratedResources(generator: BiConsumer<Path, BuildContext>) {
+      layout.withGeneratedResources(generator)
+    }
+  }
+
   // as a builder for PluginLayout, that ideally should be immutable
-  class PluginLayoutSpec(private val layout: PluginLayout): BaseLayoutSpec(layout) {
+  class PluginLayoutSpec(layout: PluginLayout): PluginLayoutBuilder(layout) {
     var directoryName: String = convertModuleNameToFileName(layout.mainModule)
       /**
        * Custom name of the directory (under 'plugins' directory) where the plugin should be placed. By default, the main module name is used
@@ -202,22 +222,11 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     }
 
     /**
-     * @param resourcePath path to resource file or directory relative to the plugin's main module content root
-     * @param relativeOutputPath target path relative to the plugin root directory
-     */
-    fun withResource(resourcePath: String, relativeOutputPath: String) {
-      withResourceFromModule(layout.mainModule, resourcePath, relativeOutputPath)
-    }
-
-    /**
      * @param resourcePath path to resource file or directory relative to {@code moduleName} module content root
      * @param relativeOutputPath target path relative to the plugin root directory
      */
     fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
-      layout.resourcePaths = layout.resourcePaths.add(ModuleResourceData(moduleName = moduleName,
-                                                                         resourcePath = resourcePath,
-                                                                         relativeOutputPath = relativeOutputPath,
-                                                                         packToZip = false))
+      layout.withResourceFromModule(moduleName, resourcePath, relativeOutputPath)
     }
 
     /**
@@ -241,10 +250,6 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
 
     fun withPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext>) {
       layout.patchers = layout.patchers.add(patcher::accept)
-    }
-
-    fun withGeneratedResources(generator: BiConsumer<Path, BuildContext>) {
-      layout.withGeneratedResources(generator)
     }
 
     /**
@@ -382,9 +387,13 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
         "module name must be not empty"
       }
 
-      moduleNameToJarPath.put(module, mainJarName)
+      if (module.endsWith(".jps") || module.endsWith(".rt")) {
+        // must be in a separate JAR
+        withModuleImpl(module, "${convertModuleNameToFileName(module)}.jar")
+      }
+      else {
+        withModuleImpl(module, mainJarName)
+      }
     }
-
-    _jarToModules.put(mainJarName, modules)
   }
 }
