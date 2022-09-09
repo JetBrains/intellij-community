@@ -450,7 +450,7 @@ final class ActionUpdater {
     Disposable disposable = Disposer.newDisposable("Action Update");
     Disposer.register(disposableParent, disposable);
     IdeEventQueue.getInstance().addPreprocessor(event -> {
-      if (event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
+      if (event instanceof KeyEvent && ((KeyEvent)event).getKeyCode() != 0 ||
           event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
         cancelPromise(promise, event);
       }
