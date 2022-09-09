@@ -2712,7 +2712,9 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   private Border createEntryPointToolbarBorder() {
-    return getTabsPosition().isSide() ? JBUI.Borders.empty(4, 3) : JBUI.Borders.emptyRight(8);
+    return getTabsPosition().isSide()
+           ? JBUI.Borders.empty(4, 8, 4, 3)
+           : JBUI.Borders.empty(0, 5, 0, 8);
   }
 
   private static class ThinActionSeparator extends JComponent {

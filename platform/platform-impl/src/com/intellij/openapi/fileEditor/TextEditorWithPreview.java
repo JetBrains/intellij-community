@@ -473,7 +473,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     group.setPopup(true);
     Presentation presentation = group.getTemplatePresentation();
     presentation.setText(IdeBundle.message("tab.view.modes"));
-    presentation.setIcon(AllIcons.Toolbar.Expand);
+    presentation.setIcon(AllIcons.General.ChevronDown);
     presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
     return group;
   }
