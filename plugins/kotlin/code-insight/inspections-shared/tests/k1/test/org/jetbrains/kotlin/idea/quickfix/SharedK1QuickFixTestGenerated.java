@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared;
+package org.jetbrains.kotlin.idea.quickfix;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
@@ -14,14 +14,14 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("code-insight/inspections-shared/tests/k2")
+@TestRoot("code-insight/inspections-shared/tests/k1")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../testData/quickfix")
-public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
+public abstract class SharedK1QuickFixTestGenerated extends AbstractSharedK1QuickFixTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/quickfix/redundantSemicolon")
-    public static class RedundantSemicolon extends AbstractK2QuickFixTest {
+    public static class RedundantSemicolon extends AbstractSharedK1QuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

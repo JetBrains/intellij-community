@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared
 
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 
-abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
+abstract class AbstractK2SharedQuickFixTest : AbstractQuickFixTest() {
     override fun checkForUnexpectedErrors() {}
 
     override fun isFirPlugin(): Boolean = true
