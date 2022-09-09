@@ -196,7 +196,7 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
         @NlsSafe
         val description = JvmTarget.DEFAULT.description
         jvmTargets.selectedItem = description
-        ir = JCheckBox(KotlinJvmBundle.message("checkbox.text.ir"), false)
+        ir = JCheckBox(KotlinJvmBundle.message("checkbox.text.ir"), true)
         optionPanel.add(enableInline)
         optionPanel.add(enableOptimization)
         optionPanel.add(enableAssertions)
