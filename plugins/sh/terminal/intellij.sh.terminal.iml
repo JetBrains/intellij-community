@@ -13,6 +13,6 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="library" name="jediterm-pty" level="project" />
-    <orderEntry type="module" module-name="intellij.sh.api" />
+    <orderEntry type="module" module-name="intellij.sh.impl" />
   </component>
 </module>
