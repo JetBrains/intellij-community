@@ -150,7 +150,7 @@ public class JBTabsImpl extends JComponent
   final Set<TabInfo> myAttractions = new HashSet<>();
   private final Animator myAnimator;
   private List<TabInfo> myAllTabs;
-  private IdeFocusManager myFocusManager;
+  private @NotNull IdeFocusManager myFocusManager;
   private static final boolean myAdjustBorders = true;
   private final Set<JBTabsImpl> myNestedTabs = new HashSet<>();
 
@@ -1456,7 +1456,7 @@ public class JBTabsImpl extends JComponent
           requestFocusInWindow();
         }
         else {
-          requestFocus();
+          myFocusManager.requestFocusInProject(this, myProject);
         }
       }, ModalityState.NON_MODAL);
       return removeDeferred();
