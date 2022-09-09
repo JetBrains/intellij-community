@@ -63,10 +63,7 @@ import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -83,6 +80,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -90,6 +88,7 @@ import java.util.stream.Stream;
 import static com.intellij.usages.impl.UsageFilteringRuleActions.usageFilteringRuleActions;
 
 public class UsageViewImpl implements UsageViewEx {
+  private final int myUniqueIdentifier;
   private static final GroupNode.NodeComparator COMPARATOR = new GroupNode.NodeComparator();
   private static final Logger LOG = Logger.getInstance(UsageViewImpl.class);
   @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
@@ -190,6 +189,7 @@ public class UsageViewImpl implements UsageViewEx {
                        UsageTarget @NotNull [] targets,
                        @Nullable Factory<? extends UsageSearcher> usageSearcherFactory) {
     // fire events every 50 ms, not more often to batch requests
+    myUniqueIdentifier = COUNTER.getAndIncrement();
     myFireEventsFuture =
       EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this::fireEvents, 50, 50, TimeUnit.MILLISECONDS);
     Disposer.register(this, () -> myFireEventsFuture.cancel(false));
@@ -296,6 +296,13 @@ public class UsageViewImpl implements UsageViewEx {
         }
       }
     };
+  }
+
+  @Override
+  @ApiStatus.Internal
+  @IntellijInternalApi
+  public int getId() {
+    return myUniqueIdentifier;
   }
 
   private void initInEDT() {

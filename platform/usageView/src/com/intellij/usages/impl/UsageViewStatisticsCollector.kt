@@ -35,12 +35,12 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 6)
+    val GROUP = EventLogGroup("usage.view", 7)
     private val USAGE_VIEW = object : PrimitiveEventField<UsageView>() {
       override val name: String = "usage_view"
 
       override fun addData(fuData: FeatureUsageData, value: UsageView) {
-        fuData.addData(name, value.hashCode())
+        fuData.addData(name, value.id)
       }
 
       override val validationRule: List<String>
