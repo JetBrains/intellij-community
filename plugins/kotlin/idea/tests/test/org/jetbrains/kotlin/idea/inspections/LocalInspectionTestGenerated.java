@@ -11217,6 +11217,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("countInBlock.kt")
+        public void testCountInBlock() throws Exception {
+            runTest("testData/inspectionsLocal/replaceCollectionCountWithSize/countInBlock.kt");
+        }
+
         @TestMetadata("countOfArray.kt")
         public void testCountOfArray() throws Exception {
             runTest("testData/inspectionsLocal/replaceCollectionCountWithSize/countOfArray.kt");
@@ -11255,6 +11260,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("countOfMap.kt")
         public void testCountOfMap() throws Exception {
             runTest("testData/inspectionsLocal/replaceCollectionCountWithSize/countOfMap.kt");
+        }
+
+        @TestMetadata("countOfPrimitiveArray.kt")
+        public void testCountOfPrimitiveArray() throws Exception {
+            runTest("testData/inspectionsLocal/replaceCollectionCountWithSize/countOfPrimitiveArray.kt");
+        }
+
+        @TestMetadata("differentCount.kt")
+        public void testDifferentCount() throws Exception {
+            runTest("testData/inspectionsLocal/replaceCollectionCountWithSize/differentCount.kt");
         }
     }
 
