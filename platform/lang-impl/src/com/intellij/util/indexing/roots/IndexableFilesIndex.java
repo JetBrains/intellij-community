@@ -308,15 +308,27 @@ public class IndexableFilesIndex {
   }
 
   private static class NonWorkspaceModelSnapshot {
-    private final Collection<IndexableSetContributorSelfDependentOriginImpl> indexableSetOrigins = new ArrayList<>();
-    private final Collection<SyntheticLibrarySelfDependentOriginImpl> syntheticLibrariesOrigins = new ArrayList<>();
-    private final Set<VirtualFile> excludedFilesFromPolicies = new HashSet<>();
-    private final Set<VirtualFilePointer> excludedModuleFilesFromPolicies = new HashSet<>();
-    private final List<@NotNull Function<Sdk, List<VirtualFile>>> sdkExclusionFunctions = new ArrayList<>();
+    private final Collection<IndexableSetContributorSelfDependentOriginImpl> indexableSetOrigins;
+    private final Collection<SyntheticLibrarySelfDependentOriginImpl> syntheticLibrariesOrigins;
+    private final Set<VirtualFile> excludedFilesFromPolicies;
+    private final Set<VirtualFilePointer> excludedModuleFilesFromPolicies;
+    private final List<@NotNull Function<Sdk, List<VirtualFile>>> sdkExclusionFunctions;
+
+    private NonWorkspaceModelSnapshot(Collection<IndexableSetContributorSelfDependentOriginImpl> indexableSetOrigins,
+                                      Collection<SyntheticLibrarySelfDependentOriginImpl> syntheticLibrariesOrigins,
+                                      Set<VirtualFile> excludedFilesFromPolicies,
+                                      Set<VirtualFilePointer> excludedModuleFilesFromPolicies,
+                                      List<@NotNull Function<Sdk, List<VirtualFile>>> sdkExclusionFunctions) {
+      this.indexableSetOrigins = List.copyOf(indexableSetOrigins);
+      this.syntheticLibrariesOrigins = List.copyOf(syntheticLibrariesOrigins);
+      this.excludedFilesFromPolicies = Set.copyOf(excludedFilesFromPolicies);
+      this.excludedModuleFilesFromPolicies = Set.copyOf(excludedModuleFilesFromPolicies);
+      this.sdkExclusionFunctions = List.copyOf(sdkExclusionFunctions);
+    }
 
     @NotNull
     private static NonWorkspaceModelSnapshot buildSnapshot(@NotNull Project project) {
-      NonWorkspaceModelSnapshot snapshot = new NonWorkspaceModelSnapshot();
+      Collection<SyntheticLibrarySelfDependentOriginImpl> syntheticLibrariesOrigins = new ArrayList<>();
       for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
         Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
         for (SyntheticLibrary library : libraries) {
@@ -324,46 +336,51 @@ public class IndexableFilesIndex {
                                                                                                        library.getAllRoots(),
                                                                                                        library.getExcludedRoots(),
                                                                                                        library.getUnitedExcludeCondition());
-          snapshot.syntheticLibrariesOrigins.add(origin);
+          syntheticLibrariesOrigins.add(origin);
         }
       }
-
+      Collection<IndexableSetContributorSelfDependentOriginImpl> indexableSetOrigins = new ArrayList<>();
       for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensionList()) {
         Set<VirtualFile> roots = contributor.getAdditionalRootsToIndex();
         IndexableSetContributorSelfDependentOriginImpl origin = new IndexableSetContributorSelfDependentOriginImpl(contributor, roots);
-        snapshot.indexableSetOrigins.add(origin);
+        indexableSetOrigins.add(origin);
 
         Set<VirtualFile> projectRoots = contributor.getAdditionalProjectRootsToIndex(project);
-        snapshot.indexableSetOrigins.add(new IndexableSetContributorSelfDependentOriginImpl(contributor, projectRoots));
+        indexableSetOrigins.add(new IndexableSetContributorSelfDependentOriginImpl(contributor, projectRoots));
       }
 
+      Set<VirtualFile> excludedFilesFromPolicies = new HashSet<>();
+      Set<VirtualFilePointer> excludedModuleFilesFromPolicies = new HashSet<>();
+      List<@NotNull Function<Sdk, List<VirtualFile>>> sdkExclusionFunctions = new ArrayList<>();
       List<ModuleRootModel> modules =
         ContainerUtil.map(ModuleManager.getInstance(project).getModules(), module -> ModuleRootManager.getInstance(module));
       for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.getExtensions(project)) {
         VirtualFileManager fileManager = VirtualFileManager.getInstance();
         String[] urls = policy.getExcludeUrlsForProject();
-        snapshot.excludedFilesFromPolicies.addAll(ContainerUtil.mapNotNull(urls, url -> fileManager.findFileByUrl(url)));
+        excludedFilesFromPolicies.addAll(ContainerUtil.mapNotNull(urls, url -> fileManager.findFileByUrl(url)));
 
         Function<Sdk, List<VirtualFile>> strategy = policy.getExcludeSdkRootsStrategy();
         if (strategy != null) {
-          snapshot.sdkExclusionFunctions.add(strategy);
+          sdkExclusionFunctions.add(strategy);
         }
 
         for (ModuleRootModel model : modules) {
-          ContainerUtil.addAll(snapshot.excludedModuleFilesFromPolicies, policy.getExcludeRootsForModule(model));
+          ContainerUtil.addAll(excludedModuleFilesFromPolicies, policy.getExcludeRootsForModule(model));
         }
       }
-      return snapshot;
+      return new NonWorkspaceModelSnapshot(indexableSetOrigins, syntheticLibrariesOrigins, excludedFilesFromPolicies,
+                                           excludedModuleFilesFromPolicies, sdkExclusionFunctions);
     }
 
 
-    public boolean rebuildExcludedFromModuleRootsIfNeeded(@NotNull VersionedStorageChange storageChange,
-                                                          @NotNull Project project) {
+    @Nullable
+    public NonWorkspaceModelSnapshot rebuildExcludedFromModuleRootsIfNeeded(@NotNull VersionedStorageChange storageChange,
+                                                                            @NotNull Project project) {
       boolean shouldRebuild = ContainerUtil.exists(storageChange.getChanges(ModuleEntity.class),
                                                    change -> change instanceof EntityChange.Added<ModuleEntity> ||
                                                              change instanceof EntityChange.Removed<?>);
       if (shouldRebuild) {
-        excludedModuleFilesFromPolicies.clear();
+        Set<VirtualFilePointer> excludedModuleFilesFromPolicies = new HashSet<>();
         List<ModuleRootModel> modules =
           ContainerUtil.map(ModuleManager.getInstance(project).getModules(), module -> ModuleRootManager.getInstance(module));
         for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.getExtensions(project)) {
@@ -371,18 +388,25 @@ public class IndexableFilesIndex {
             ContainerUtil.addAll(excludedModuleFilesFromPolicies, policy.getExcludeRootsForModule(model));
           }
         }
+        return new NonWorkspaceModelSnapshot(indexableSetOrigins, syntheticLibrariesOrigins, excludedFilesFromPolicies,
+                                             excludedModuleFilesFromPolicies, sdkExclusionFunctions);
       }
-      return shouldRebuild;
+      return null;
     }
   }
 
   public void workspaceModelChanged(@NotNull VersionedStorageChange storageChange) {
     boolean changed = workspaceModelStatus.changed(storageChange, project);
-    if (nonWorkspaceSnapshot != null) {
-      changed = changed || nonWorkspaceSnapshot.rebuildExcludedFromModuleRootsIfNeeded(storageChange, project);
-    }
     if (changed) {
-      regenerateResultingSnapshot();
+      snapshot = null;
+    }
+    if (nonWorkspaceSnapshot != null) {
+      NonWorkspaceModelSnapshot newNonWorkspaceSnapshot =
+        nonWorkspaceSnapshot.rebuildExcludedFromModuleRootsIfNeeded(storageChange, project);
+      if (newNonWorkspaceSnapshot != null) {
+        nonWorkspaceSnapshot = newNonWorkspaceSnapshot;
+        snapshot = null;
+      }
     }
   }
 
