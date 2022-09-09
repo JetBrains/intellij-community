@@ -44,6 +44,17 @@ open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
   }
 
   protected fun importNewProject(file: VirtualFile) {
+    if (isNewImportingProcess) {
+      importProject(file)
+    }
+    else {
+      importNewProjectLegacyWay(file)
+    }
+
+  }
+
+  protected fun importNewProjectLegacyWay(file: VirtualFile) {
+
     val files = listOf(file)
 
     myProjectsManager.initForTests()
