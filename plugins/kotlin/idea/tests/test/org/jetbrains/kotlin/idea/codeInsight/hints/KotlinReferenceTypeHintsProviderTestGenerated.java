@@ -113,6 +113,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/JavaFQName.kt");
     }
 
+    @TestMetadata("LambdaReturnType.kt")
+    public void testLambdaReturnType() throws Exception {
+        runTest("testData/codeInsight/hints/types/LambdaReturnType.kt");
+    }
+
     @TestMetadata("LocalVariable.kt")
     public void testLocalVariable() throws Exception {
         runTest("testData/codeInsight/hints/types/LocalVariable.kt");
@@ -156,11 +161,6 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
     @TestMetadata("SAMConstructor.kt")
     public void testSAMConstructor() throws Exception {
         runTest("testData/codeInsight/hints/types/SAMConstructor.kt");
-    }
-
-    @TestMetadata("SingleLineLambda.kt")
-    public void testSingleLineLambda() throws Exception {
-        runTest("testData/codeInsight/hints/types/SingleLineLambda.kt");
     }
 
     @TestMetadata("TypeInCompanion.kt")

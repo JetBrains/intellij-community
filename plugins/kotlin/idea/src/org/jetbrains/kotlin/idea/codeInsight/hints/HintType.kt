@@ -244,6 +244,12 @@ data class InlayInfoDetails(val inlayInfo: InlayInfo, val details: List<InlayInf
 
 sealed class InlayInfoDetail(val text: String)
 
-class TextInlayInfoDetail(text: String, val smallText: Boolean = true): InlayInfoDetail(text)
-class TypeInlayInfoDetail(text: String, val fqName: String?): InlayInfoDetail(text)
-class PsiInlayInfoDetail(text: String, val element: PsiElement): InlayInfoDetail(text)
+class TextInlayInfoDetail(text: String, val smallText: Boolean = true): InlayInfoDetail(text) {
+    override fun toString(): String = "[$text]"
+}
+class TypeInlayInfoDetail(text: String, val fqName: String?): InlayInfoDetail(text) {
+    override fun toString(): String = "[$text :$fqName]"
+}
+class PsiInlayInfoDetail(text: String, val element: PsiElement): InlayInfoDetail(text) {
+    override fun toString(): String = "[$text @ $element]"
+}
