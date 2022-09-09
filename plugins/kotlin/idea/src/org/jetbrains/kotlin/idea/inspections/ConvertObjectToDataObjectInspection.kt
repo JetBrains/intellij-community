@@ -60,7 +60,7 @@ class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
                 isCompatibleReadResolve(ktObject, fqName, isSerializable)
             ) {
                 holder.registerProblem(
-                    ktObject,
+                    ktObject.getObjectKeyword() ?: return,
                     KotlinBundle.message(
                         when {
                             candidate1 -> "serializable.object.must.be.marked.with.data"
@@ -136,7 +136,7 @@ private class ConvertToDataObjectQuickFix(private val isSerializable: Boolean) :
     override fun getFamilyName(): String = KotlinBundle.message("convert.to.data.object")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val ktObject = descriptor.psiElement.castSafelyTo<KtObjectDeclaration>() ?: return
+        val ktObject = descriptor.psiElement.parent.castSafelyTo<KtObjectDeclaration>() ?: return
         ktObject.findToString()?.delete()
         ktObject.findEquals()?.delete()
         ktObject.findHashCode()?.delete()

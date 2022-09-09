@@ -2,6 +2,6 @@
 // PROBLEM: none
 import java.io.Serializable
 
-object <caret>Foo : Serializable {
+object<caret> Foo : Serializable {
     fun readResolve(): Any = Foo
 }
