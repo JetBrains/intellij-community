@@ -244,7 +244,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
            index.getContentRootForFile(file, false) != null ||
            index.isInLibrary(file) ||
            Comparing.equal(file.getParent(), project.getBaseDir()) ||
-           ScratchUtil.isScratch(file);
+           (ScratchUtil.isScratch(file) && ProjectView.getInstance(project).isShowScratchesAndConsoles(ID));
   }
 
   @Override
@@ -254,6 +254,11 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
 
   @Override
   public boolean supportsShowExcludedFiles() {
+    return true;
+  }
+
+  @Override
+  public boolean supportsShowScratchesAndConsoles() {
     return true;
   }
 }

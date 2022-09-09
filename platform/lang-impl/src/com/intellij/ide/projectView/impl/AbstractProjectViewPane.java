@@ -1019,6 +1019,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   @ApiStatus.Internal
+  public boolean supportsShowScratchesAndConsoles() {
+    return false;
+  }
+
+  @ApiStatus.Internal
   public boolean supportsSortByType() {
     return true;
   }

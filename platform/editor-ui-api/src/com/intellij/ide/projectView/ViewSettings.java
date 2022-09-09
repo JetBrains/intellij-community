@@ -49,6 +49,13 @@ public interface ViewSettings extends NodeOptions {
   }
 
   /**
+   * @return {@code true} if scratches and consoles node should be shown as a root node in this pane
+   */
+  default boolean isShowScratchesAndConsoles() {
+    return true;
+  }
+
+  /**
    * @return {@code true} if modules should be shown in a flat list without grouping accordingly to qualified names
    */
   default boolean isFlattenModules() {

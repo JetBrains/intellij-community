@@ -267,6 +267,28 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   };
 
+  private final Option myShowScratchesAndConsoles = new Option() {
+    @Override
+    public boolean isEnabled(@NotNull AbstractProjectViewPane pane) {
+      return pane.supportsShowScratchesAndConsoles();
+    }
+
+    @Override
+    public boolean isSelected() {
+      return myCurrentState.getShowScratchesAndConsoles();
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+      if (myProject.isDisposed()) return;
+      boolean updated = selected != isSelected();
+      myCurrentState.setShowScratchesAndConsoles(selected);
+      getDefaultState().setShowScratchesAndConsoles(selected);
+      getGlobalOptions().setShowScratchesAndConsoles(selected);
+      if (updated) updatePanes(true);
+    }
+  };
+
   private final Option myHideEmptyMiddlePackages = new Option() {
     @NotNull
     @Override
@@ -1548,6 +1570,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
+  public boolean isShowScratchesAndConsoles(String paneId) {
+    return myShowScratchesAndConsoles.isEnabled(paneId) ? myShowScratchesAndConsoles.isSelected() : false;
+  }
+
+  @Override
   public void setHideEmptyPackages(@NotNull String paneId, boolean hideEmptyPackages) {
     if (myHideEmptyMiddlePackages.isEnabled(paneId)) myHideEmptyMiddlePackages.setSelected(hideEmptyPackages);
   }
@@ -1943,6 +1970,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     static final class FoldersAlwaysOnTop extends Action {
       FoldersAlwaysOnTop() {
         super(view -> view.myFoldersAlwaysOnTop);
+      }
+    }
+
+    static final class ShowScratchesAndConsoles extends Action {
+      ShowScratchesAndConsoles() {
+        super(view -> view.myShowScratchesAndConsoles);
       }
     }
 
