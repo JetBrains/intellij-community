@@ -24,7 +24,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.ui.ImageUtil;
@@ -791,10 +791,10 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
   private static GlobalMenuLib _loadLibrary() {
     Application app;
-    if (!SystemInfo.isLinux ||
+    if (!SystemInfoRt.isLinux ||
         !(CpuArch.isIntel64() || CpuArch.isArm64()) ||
         (app = ApplicationManager.getApplication()) == null || app.isUnitTestMode() || app.isHeadlessEnvironment() ||
-        Registry.is("linux.native.menu.force.disable") ||
+        Boolean.getBoolean("linux.native.menu.force.disable") ||
         (LoadingState.COMPONENTS_REGISTERED.isOccurred() && !Experiments.getInstance().isFeatureEnabled("linux.native.menu")) ||
         !JnaLoader.isLoaded() ||
         isUnderVMWithSwiftPluginInstalled()) {
