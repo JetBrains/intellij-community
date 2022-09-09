@@ -255,6 +255,11 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedRowsCount() != 0 && !myPatchTable.isEditing());
     }
