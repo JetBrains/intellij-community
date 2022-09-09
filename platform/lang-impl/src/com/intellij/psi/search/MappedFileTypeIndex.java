@@ -1,15 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.StorageException;
@@ -33,18 +30,6 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   private static final int INVERTED_INDEX_SIZE_THRESHOLD =
     SystemProperties.getIntProperty("mapped.file.type.index.inverse.upgrade.threshold", 256);
 
-  private static class FileDetails {
-    public FileType myFileType;
-    public String myFileTypeName;
-
-    private FileDetails(FileType fileType, String fileTypeName) {
-      myFileType = fileType;
-      myFileTypeName = fileTypeName;
-    }
-  }
-
-  private final @NotNull ConcurrentIntObjectMap<FileDetails> myId2FileDetailsCache =
-    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private final @NotNull MappedFileTypeIndex.MemorySnapshot mySnapshot;
   private final @NotNull ForwardIndexFileController myForwardIndexController;
 
@@ -90,26 +75,10 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     }
   }
 
-  private FileDetails getFileDetails(int id) {
-    assert id < Short.MAX_VALUE : "file type id = " + id;
-    FileDetails fileDetails = myId2FileDetailsCache.get(id);
-    if (fileDetails == null) {
-      String fileTypeName = myFileTypeEnumerator.valueOf(id);
-      FileType fileTypeByName = fileTypeName == null ? null : FileTypeManager.getInstance().findFileTypeByName(fileTypeName);
-      fileDetails = new FileDetails(fileTypeByName, fileTypeName);
-      myId2FileDetailsCache.put(id, fileDetails);
-    }
-    return fileDetails;
-  }
-
   @Override
   public String getFileTypeName(int id) {
-    return getFileDetails(id).myFileTypeName;
-  }
-
-  @Override
-  protected @NotNull FileType getFileTypeById(int id) {
-    return getFileDetails(id).myFileType;
+    FileType fileType = getFileTypeById(id);
+    return fileType == null ? null : fileType.getName();
   }
 
   @Override

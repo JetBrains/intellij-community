@@ -5,7 +5,6 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
@@ -35,8 +34,6 @@ public final class LogFileTypeIndex extends FileTypeIndexImplBase {
   private static final Logger LOG = Logger.getInstance(LogFileTypeIndex.class);
 
   private final @NotNull LogBasedIntIntIndex myPersistentLog;
-  private final @NotNull ConcurrentIntObjectMap<Ref<FileType>> myId2FileTypeCache =
-    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private final @NotNull ConcurrentIntObjectMap<Ref<String>> myId2FileNameCache =
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
@@ -72,18 +69,6 @@ public final class LogFileTypeIndex extends FileTypeIndexImplBase {
     catch (StorageException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  @Override
-  protected @NotNull FileType getFileTypeById(int id) {
-    assert id < Short.MAX_VALUE : "file type id = " + id;
-    Ref<FileType> fileType = myId2FileTypeCache.get(id);
-    if (fileType == null) {
-      String fileTypeName = myFileTypeEnumerator.valueOf(id);
-      FileType fileTypeByName = fileTypeName == null ? null : FileTypeManager.getInstance().findFileTypeByName(fileTypeName);
-      myId2FileTypeCache.put(id, fileType = Ref.create(fileTypeByName));
-    }
-    return fileType.get();
   }
 
   @Override

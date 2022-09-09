@@ -1,11 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.InputData;
@@ -29,12 +32,13 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
                                                        MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(FileTypeIndexImplBase.class);
 
-  protected final @NotNull SimpleStringPersistentEnumerator myFileTypeEnumerator;
   protected final @NotNull FileBasedIndexExtension<FileType, Void> myExtension;
-  protected final @NotNull ReadWriteLock myLock = new ReentrantReadWriteLock();
-
-  protected final @NotNull AtomicBoolean myInMemoryMode = new AtomicBoolean();
   protected final @NotNull ID<FileType, Void> myIndexId;
+  protected final @NotNull ReadWriteLock myLock = new ReentrantReadWriteLock();
+  protected final @NotNull SimpleStringPersistentEnumerator myFileTypeEnumerator;
+  private final @NotNull ConcurrentIntObjectMap<Ref<FileType>> myId2FileTypeCache =
+    ConcurrentCollectionFactory.createConcurrentIntObjectMap(); // Ref is here to store nulls
+  protected final @NotNull AtomicBoolean myInMemoryMode = new AtomicBoolean();
 
   protected Path getStorageFile() throws IOException {
     return IndexInfrastructure.getStorageFile(myIndexId);
@@ -49,7 +53,17 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
     myFileTypeEnumerator = new SimpleStringPersistentEnumerator(getStorageFile().resolveSibling("fileType.enum"));
   }
 
-  protected abstract @NotNull FileType getFileTypeById(int id);
+  protected @Nullable FileType getFileTypeById(int id) {
+    assert id < Short.MAX_VALUE : "file type id = " + id;
+    Ref<FileType> fileType = myId2FileTypeCache.get(id);
+    if (fileType == null) {
+      String fileTypeName = myFileTypeEnumerator.valueOf(id);
+      FileType fileTypeByName = fileTypeName == null ? null : FileTypeManager.getInstance().findFileTypeByName(fileTypeName);
+      myId2FileTypeCache.put(id, fileType = Ref.create(fileTypeByName));
+    }
+    return fileType.get();
+  }
+
   protected abstract int getIndexedFileTypeId(int fileId) throws StorageException;
   protected abstract void processFileIdsForFileTypeId(int fileTypeId, @NotNull IntConsumer consumer);
 
@@ -127,7 +141,7 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
     if (isIndexed != FileIndexingState.UP_TO_DATE) return isIndexed;
     try {
       int indexedFileTypeId = getIndexedFileTypeId(fileId);
-      if (indexedFileTypeId == 0) return isIndexed;
+      if (indexedFileTypeId == 0) return FileIndexingState.NOT_INDEXED;
       int actualFileTypeId = getFileTypeId(file.getFileType());
 
       return indexedFileTypeId == actualFileTypeId
