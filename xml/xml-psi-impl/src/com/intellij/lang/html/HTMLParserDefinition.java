@@ -18,11 +18,14 @@ import com.intellij.psi.impl.source.xml.stub.XmlStubBasedElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.xml.HtmlFileElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 
 public class HTMLParserDefinition implements ParserDefinition {
+  public static final IFileElementType FILE_ELEMENT_TYPE = new HtmlFileElementType();
+
   @Override
   @NotNull
   public Lexer createLexer(Project project) {
