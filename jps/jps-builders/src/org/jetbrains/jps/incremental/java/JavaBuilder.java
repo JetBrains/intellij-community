@@ -428,7 +428,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     try {
       final int targetLanguageLevel = getTargetPlatformLanguageVersion(chunk.representativeTarget().getModule());
 
-      // when forking external javac, compilers from SDK 1.6 and higher are supported
+      // when forking external javac, compilers from SDK 1.7 and higher are supported
       final Pair<String, Integer> forkSdk;
       if (shouldForkCompilerProcess(context, chunk, targetLanguageLevel)) {
         forkSdk = getForkedJavacSdk(chunk, targetLanguageLevel);
@@ -1170,7 +1170,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     final Pair<JpsSdk<JpsDummyElement>, Integer> sdkVersionPair = getAssociatedSdk(chunk);
     if (sdkVersionPair != null) {
       final int sdkVersion = sdkVersionPair.second;
-      if (sdkVersion >= 6 && isTargetReleaseSupported(sdkVersion, targetLanguageLevel)) {
+      if (sdkVersion >= ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION && isTargetReleaseSupported(sdkVersion, targetLanguageLevel)) {
         // current javac compiler does support required language level
         return Pair.create(sdkVersionPair.first.getHomePath(), sdkVersion);
       }
@@ -1187,9 +1187,9 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       return null;
     }
     final int fallbackVersion = JpsJavaSdkType.parseVersion(fallbackJdkVersion);
-    if (fallbackVersion < 6) {
+    if (fallbackVersion < ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION) {
       LOG.info("Version string for fallback JDK is '" + fallbackJdkVersion + "' (recognized as version '" + fallbackVersion + "')." +
-               " At least version 6 is required.");
+               " At least version " + ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION + " is required.");
       return null;
     }
     return Pair.create(fallbackJdkHome, fallbackVersion);
