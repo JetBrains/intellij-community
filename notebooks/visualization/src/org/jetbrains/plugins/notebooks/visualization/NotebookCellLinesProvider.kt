@@ -48,6 +48,3 @@ internal fun getLanguage(editor: Editor): Language? =
     ?.let(PsiDocumentManager::getInstance)
     ?.getPsiFile(editor.document)
     ?.language
-
-val Editor.notebookCellLinesProvider: NotebookCellLinesProvider?
-  get() = NotebookCellLinesProvider.install(this)

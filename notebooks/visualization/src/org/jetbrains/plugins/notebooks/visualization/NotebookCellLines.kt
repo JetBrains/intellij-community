@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.EventDispatcher
 import java.util.*
@@ -65,11 +66,17 @@ interface NotebookCellLines {
   val modificationStamp: Long
 
   companion object {
+    fun get(document: Document): NotebookCellLines =
+      NotebookCellLinesProvider.get(document)?.create(document)
+      ?: error("Can't get NotebookCellLinesProvider for document ${document}")
+
+    fun hasSupport(document: Document): Boolean =
+      NotebookCellLinesProvider.get(document) != null
+
     fun get(editor: Editor): NotebookCellLines =
-      editor.notebookCellLinesProvider?.create(editor.document)
-      ?: error("Can't get for $editor with document ${editor.document}")
+      get(editor.document)
 
     fun hasSupport(editor: Editor): Boolean =
-      editor.notebookCellLinesProvider != null
+      hasSupport(editor.document)
   }
 }
