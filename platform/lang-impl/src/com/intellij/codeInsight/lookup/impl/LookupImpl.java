@@ -15,6 +15,9 @@ import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction;
 import com.intellij.codeInsight.template.impl.actions.NextVariableAction;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -171,6 +174,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     addListeners();
 
     myCreatedTimestamp = System.currentTimeMillis();
+    // When Screen Reader is supported, Lookup is focused instead of editor, and actions in lookup
+    // get the lookup component as event source. So we need to delegate data provider to make actions working
+    DataManager.registerDataProvider(getComponent(), IdeUiService.getInstance().createUiDataContext(editor.getComponent())::getData);
   }
 
   private CollectionListModelWithBatchUpdate<LookupElement> getListModel() {
