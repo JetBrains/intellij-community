@@ -25,7 +25,7 @@ import java.util.List;
 public class CopyAction extends TextComponentEditorAction implements HintManagerImpl.ActionToIgnore {
 
   private static final String SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY = "editor.skip.copy.and.cut.for.empty.selection";
-  private static final String SKIP_SELECTING_LINE_AFTER_COPY_EMPTY_SELECTION_KEY = "editor.skip.selecting.line.after.copy.empty.selection";
+  public static final String SKIP_SELECTING_LINE_AFTER_COPY_EMPTY_SELECTION_KEY = "editor.skip.selecting.line.after.copy.empty.selection";
 
   public CopyAction() {
     super(new Handler(), false);
