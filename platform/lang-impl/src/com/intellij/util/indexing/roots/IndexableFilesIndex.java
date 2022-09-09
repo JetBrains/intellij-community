@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.Function;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.EntityIndexingServiceEx;
@@ -57,11 +58,7 @@ public class IndexableFilesIndex {
   @NotNull
   private final Project project;
   @NotNull
-  private WorkspaceModelStatus workspaceModelStatus;
-  @Nullable
-  private NonWorkspaceModelSnapshot nonWorkspaceSnapshot;
-  @Nullable
-  private ResultingSnapshot snapshot;
+  private final SnapshotHandler snapshotHandler;
 
   public static boolean shouldBeUsed() {
     return (Registry.is("indexing.use.indexable.files.index") ||
@@ -77,21 +74,10 @@ public class IndexableFilesIndex {
 
   public IndexableFilesIndex(@NotNull Project project) {
     this.project = project;
-    workspaceModelStatus = new WorkspaceModelStatus(project);
-    regenerateResultingSnapshot();
+    snapshotHandler = new SnapshotHandler(project);
   }
 
-  private void resetSnapshots() {
-    nonWorkspaceSnapshot = null;
-    snapshot = null;
-  }
-
-  private void regenerateResultingSnapshot() {
-    if (nonWorkspaceSnapshot != null) {
-      snapshot = new ResultingSnapshot(workspaceModelStatus, nonWorkspaceSnapshot);
-    }
-  }
-
+  @RequiresBackgroundThread
   public boolean shouldBeIndexed(@NotNull VirtualFile file) {
     return getOrigin(file) != null;
   }
@@ -99,10 +85,10 @@ public class IndexableFilesIndex {
   @Nullable
   public IndexableSetSelfDependentOrigin getOrigin(@NotNull VirtualFile file) {
     VirtualFile currentFile = file;
-    ensureSnapshotGenerated();
+    ImmutableSetMultimap<VirtualFile, IndexableSetSelfDependentOrigin> roots = snapshotHandler.getResultingSnapshot(project).roots;
     boolean isExcludedFromContent = false;
     while (currentFile != null) {
-      Collection<IndexableSetSelfDependentOrigin> origins = snapshot.roots.get(currentFile);
+      Collection<IndexableSetSelfDependentOrigin> origins = roots.get(currentFile);
       for (IndexableSetSelfDependentOrigin origin : origins) {
         // situation with content/source roots higher in hierarchy is ignored when a file's already excluded from a lower root
         if (origin instanceof ModuleRootOrigin) {
@@ -127,17 +113,10 @@ public class IndexableFilesIndex {
     return null;
   }
 
-  private void ensureSnapshotGenerated() {
-    if (nonWorkspaceSnapshot == null) {
-      nonWorkspaceSnapshot = NonWorkspaceModelSnapshot.buildSnapshot(project);
-      regenerateResultingSnapshot();
-    }
-  }
-
   private static class ResultingSnapshot {
     private final ImmutableSetMultimap<VirtualFile, IndexableSetSelfDependentOrigin> roots;
 
-    ResultingSnapshot(@NotNull WorkspaceModelStatus status,
+    ResultingSnapshot(@NotNull IndexableFilesIndex.WorkspaceModelSnapshot status,
                       @NotNull NonWorkspaceModelSnapshot snapshot) {
       Collection<IndexableSetSelfDependentOrigin> origins = new ArrayList<>();
       Set<VirtualFile> excludedModuleFilesFromPolicies = new HashSet<>(snapshot.excludedFilesFromPolicies);
@@ -178,14 +157,14 @@ public class IndexableFilesIndex {
     }
   }
 
-  private static class WorkspaceModelStatus {
+  private static class WorkspaceModelSnapshot {
     private final ImmutableMap<WorkspaceEntity, Collection<IndexableSetSelfDependentOrigin>> entitiesToOrigins;
 
-    private WorkspaceModelStatus(@NotNull ImmutableSetMultimap.Builder<WorkspaceEntity, IndexableSetSelfDependentOrigin> builder) {
+    private WorkspaceModelSnapshot(@NotNull ImmutableSetMultimap.Builder<WorkspaceEntity, IndexableSetSelfDependentOrigin> builder) {
       this.entitiesToOrigins = builder.build().asMap();
     }
 
-    private WorkspaceModelStatus(@NotNull Project project) {
+    private WorkspaceModelSnapshot(@NotNull Project project) {
       this(createBuilder(project));
     }
 
@@ -212,7 +191,8 @@ public class IndexableFilesIndex {
     }
 
     @Nullable
-    private WorkspaceModelStatus createChangedIfNeeded(@NotNull VersionedStorageChange storageChange, @NotNull Project project) {
+    private IndexableFilesIndex.WorkspaceModelSnapshot createChangedIfNeeded(@NotNull VersionedStorageChange storageChange,
+                                                                             @NotNull Project project) {
       EntityStorageSnapshot storage = storageChange.getStorageAfter();
       MultiMap<WorkspaceEntity, IndexableSetSelfDependentOrigin> toAdd = MultiMap.createSet();
       MultiMap<WorkspaceEntity, IndexableSetSelfDependentOrigin> toRemove = MultiMap.createSet();
@@ -246,7 +226,7 @@ public class IndexableFilesIndex {
       for (Map.Entry<WorkspaceEntity, Collection<IndexableSetSelfDependentOrigin>> entry : toAdd.entrySet()) {
         copy.putAll(entry.getKey(), entry.getValue());
       }
-      return new WorkspaceModelStatus(copy);
+      return new WorkspaceModelSnapshot(copy);
     }
 
     private static <E extends WorkspaceEntity> void handleWorkspaceModelChange(@NotNull MultiMap<WorkspaceEntity, IndexableSetSelfDependentOrigin> toAdd,
@@ -318,8 +298,8 @@ public class IndexableFilesIndex {
     }
 
     @Nullable
-    private WorkspaceModelStatus createWithRefreshedEntitiesIfNeeded(@NotNull List<? extends WorkspaceEntity> entities,
-                                                                     @NotNull Project project) {
+    private IndexableFilesIndex.WorkspaceModelSnapshot createWithRefreshedEntitiesIfNeeded(@NotNull List<? extends WorkspaceEntity> entities,
+                                                                                           @NotNull Project project) {
       if (entities.isEmpty()) return null;
       EntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
       MultiMap<WorkspaceEntity, IndexableSetSelfDependentOrigin> refreshed = MultiMap.createSet();
@@ -338,7 +318,7 @@ public class IndexableFilesIndex {
           result.putAll(entry.getKey(), entry.getValue());
         }
       }
-      return new WorkspaceModelStatus(result);
+      return new WorkspaceModelSnapshot(result);
     }
 
     private static <E extends WorkspaceEntity> void handleEntitiesRefresh(@NotNull IndexableEntityProvider.ExistingEx<E> provider,
@@ -447,23 +427,14 @@ public class IndexableFilesIndex {
   }
 
   public void workspaceModelChanged(@NotNull VersionedStorageChange storageChange) {
-    @Nullable WorkspaceModelStatus changed = workspaceModelStatus.createChangedIfNeeded(storageChange, project);
-    if (changed != null) {
-      workspaceModelStatus = changed;
-      snapshot = null;
-    }
-    if (nonWorkspaceSnapshot != null) {
-      NonWorkspaceModelSnapshot newNonWorkspaceSnapshot =
-        nonWorkspaceSnapshot.rebuildExcludedFromModuleRootsIfNeeded(storageChange, project);
-      if (newNonWorkspaceSnapshot != null) {
-        nonWorkspaceSnapshot = newNonWorkspaceSnapshot;
-        snapshot = null;
-      }
-    }
+    snapshotHandler.updateWorkspaceSnapshot(snapshot -> snapshot.createChangedIfNeeded(storageChange, project));
+    snapshotHandler.updateNonWorkspaceSnapshot(snapshot -> {
+      return snapshot == null ? null : snapshot.rebuildExcludedFromModuleRootsIfNeeded(storageChange, project);
+    });
   }
 
   public void beforeRootsChanged() {
-    resetSnapshots();
+    snapshotHandler.resetSnapshots();
   }
 
   public void afterRootsChanged(boolean fileTypes,
@@ -472,15 +443,186 @@ public class IndexableFilesIndex {
     if (fileTypes) {
       LOG.assertTrue(indexingInfos.isEmpty(), "File type root change event shouldn't have indexingInfos");
       LOG.assertTrue(!isFromWorkspaceOnly, "File type root change event has nothing to do with Workspace Model");
-      resetSnapshots();
+      snapshotHandler.resetSnapshots();
       return;
     }
     if (isFromWorkspaceOnly) return;
     List<WorkspaceEntity> entityWithChangedRoots = EntityIndexingServiceEx.getInstanceEx().getEntitiesWithChangedRoots(indexingInfos);
-    WorkspaceModelStatus refreshed = workspaceModelStatus.createWithRefreshedEntitiesIfNeeded(entityWithChangedRoots, project);
-    if (refreshed != null) {
-      workspaceModelStatus = refreshed;
-      snapshot = null;
+    snapshotHandler.updateWorkspaceSnapshot(snapshot -> snapshot.createWithRefreshedEntitiesIfNeeded(entityWithChangedRoots, project));
+  }
+
+  private static class SnapshotHandler {
+    private final Object LOCK = new Object();
+    @NotNull
+    private Snapshots mySnapshots;
+
+    private SnapshotHandler(@NotNull Project project) {
+      Snapshots snapshots = Snapshots.create(project);
+      synchronized (LOCK) {
+        mySnapshots = snapshots;
+      }
+    }
+
+    @NotNull
+    public Snapshots getSnapshots() {
+      synchronized (LOCK) {
+        return mySnapshots;
+      }
+    }
+
+    @NotNull
+    private ResultingSnapshot getResultingSnapshot(@NotNull Project project) {
+      ResultingSnapshot resultingSnapshot;
+      NonWorkspaceModelSnapshot nonWorkspaceSnapshot;
+      int nonWorkspaceCounter;
+      WorkspaceModelSnapshot workspaceStatus;
+      int workspaceCounter;
+      while (true) {
+        synchronized (LOCK) {
+          workspaceStatus = mySnapshots.myWorkspaceModelSnapshot;
+          workspaceCounter = mySnapshots.myWorkspaceModificationCounter;
+          nonWorkspaceSnapshot = mySnapshots.myNonWorkspaceModelSnapshot;
+          nonWorkspaceCounter = mySnapshots.myNonWorkspaceModificationCounter;
+          resultingSnapshot = mySnapshots.myResultingSnapshot;
+        }
+        if (resultingSnapshot != null) return resultingSnapshot;
+
+        if (nonWorkspaceSnapshot == null) {
+          NonWorkspaceModelSnapshot snapshot = NonWorkspaceModelSnapshot.buildSnapshot(project);
+          synchronized (LOCK) {
+            if (mySnapshots.myNonWorkspaceModificationCounter == nonWorkspaceCounter) {
+              mySnapshots = mySnapshots.copyWithNonWorkspaceSnapshot(snapshot);
+            }
+          }
+        }
+        else {
+          ResultingSnapshot snapshot = new ResultingSnapshot(workspaceStatus, nonWorkspaceSnapshot);
+          synchronized (LOCK) {
+            if (mySnapshots.myWorkspaceModificationCounter == workspaceCounter &&
+                mySnapshots.myNonWorkspaceModificationCounter == nonWorkspaceCounter) {
+              mySnapshots = mySnapshots.copyWithResultingSnapshot(snapshot);
+              return snapshot;
+            }
+          }
+        }
+      }
+    }
+
+    public void updateWorkspaceSnapshot(Function<@NotNull WorkspaceModelSnapshot, @Nullable WorkspaceModelSnapshot> updater) {
+      WorkspaceModelSnapshot status;
+      int counter;
+      while (true) {
+        synchronized (LOCK) {
+          status = mySnapshots.myWorkspaceModelSnapshot;
+          counter = mySnapshots.myWorkspaceModificationCounter;
+        }
+        WorkspaceModelSnapshot update = updater.fun(status);
+        if (update == null) return;
+        synchronized (LOCK) {
+          if (mySnapshots.myWorkspaceModificationCounter == counter) {
+            mySnapshots = mySnapshots.copyWithWorkspaceStatus(update);
+            return;
+          }
+        }
+      }
+    }
+
+    public void updateNonWorkspaceSnapshot(Function<@Nullable NonWorkspaceModelSnapshot, @Nullable NonWorkspaceModelSnapshot> updater) {
+      NonWorkspaceModelSnapshot snapshot;
+      int snapshotModificationCounter;
+      while (true) {
+        synchronized (LOCK) {
+          snapshot = mySnapshots.myNonWorkspaceModelSnapshot;
+          snapshotModificationCounter = mySnapshots.myNonWorkspaceModificationCounter;
+        }
+        NonWorkspaceModelSnapshot update = updater.fun(snapshot);
+        if (update == null) {
+          return;
+        }
+        synchronized (LOCK) {
+          if (snapshotModificationCounter == mySnapshots.myNonWorkspaceModificationCounter) {
+            mySnapshots = mySnapshots.copyWithNonWorkspaceSnapshot(update);
+            return;
+          }
+        }
+      }
+    }
+
+    public void resetSnapshots() {
+      updateSnapshots(snapshots -> snapshots.createReset());
+    }
+
+    private void updateSnapshots(@NotNull Function<Snapshots, Snapshots> updater) {
+      Snapshots snapshots;
+      while (true) {
+        synchronized (LOCK) {
+          snapshots = mySnapshots;
+        }
+        Snapshots update = updater.fun(snapshots);
+        if (update == null) {
+          return;
+        }
+        synchronized (LOCK) {
+          if (mySnapshots == snapshots) {
+            mySnapshots = update;
+            return;
+          }
+        }
+      }
+    }
+  }
+
+  private static class Snapshots {
+    @NotNull
+    private final IndexableFilesIndex.WorkspaceModelSnapshot myWorkspaceModelSnapshot;
+    private final int myWorkspaceModificationCounter;
+    @Nullable
+    private final NonWorkspaceModelSnapshot myNonWorkspaceModelSnapshot;
+    private final int myNonWorkspaceModificationCounter;
+    @Nullable
+    private final ResultingSnapshot myResultingSnapshot;
+
+    private Snapshots(@NotNull IndexableFilesIndex.WorkspaceModelSnapshot workspaceModelSnapshot,
+                      int workspaceModificationCounter,
+                      @Nullable NonWorkspaceModelSnapshot nonWorkspaceModelSnapshot,
+                      int nonWorkspaceModificationCounter,
+                      @Nullable ResultingSnapshot resultingSnapshot) {
+      myWorkspaceModelSnapshot = workspaceModelSnapshot;
+      myWorkspaceModificationCounter = workspaceModificationCounter;
+      myNonWorkspaceModelSnapshot = nonWorkspaceModelSnapshot;
+      myNonWorkspaceModificationCounter = nonWorkspaceModificationCounter;
+      myResultingSnapshot = resultingSnapshot;
+    }
+
+    private static Snapshots create(@NotNull Project project) {
+      return new Snapshots(new WorkspaceModelSnapshot(project), 0, null, 0, null);
+    }
+
+    public Snapshots createReset() {
+      return new Snapshots(myWorkspaceModelSnapshot, myWorkspaceModificationCounter, null,
+                           myNonWorkspaceModelSnapshot == null ? myNonWorkspaceModificationCounter : myNonWorkspaceModificationCounter + 1,
+                           null);
+    }
+
+    @NotNull
+    public Snapshots copyWithWorkspaceStatus(@NotNull IndexableFilesIndex.WorkspaceModelSnapshot update) {
+      return new Snapshots(update, myWorkspaceModificationCounter + 1,
+                           myNonWorkspaceModelSnapshot, myNonWorkspaceModificationCounter,
+                           null);
+    }
+
+    @NotNull
+    public Snapshots copyWithNonWorkspaceSnapshot(@Nullable NonWorkspaceModelSnapshot update) {
+      return new Snapshots(myWorkspaceModelSnapshot, myWorkspaceModificationCounter,
+                           update, myNonWorkspaceModificationCounter + 1,
+                           null);
+    }
+
+    @NotNull
+    public Snapshots copyWithResultingSnapshot(@NotNull ResultingSnapshot snapshot) {
+      return new Snapshots(myWorkspaceModelSnapshot, myWorkspaceModificationCounter,
+                           myNonWorkspaceModelSnapshot, myNonWorkspaceModificationCounter,
+                           snapshot);
     }
   }
 }
