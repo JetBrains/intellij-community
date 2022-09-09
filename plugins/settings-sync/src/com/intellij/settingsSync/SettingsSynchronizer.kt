@@ -26,7 +26,6 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
       return
     }
 
-    SettingsSyncPluginManager.getInstance()
     SettingsSyncEvents.getInstance().addEnabledStateChangeListener(this)
 
     if (isSettingsSyncEnabledInSettings()) {
@@ -69,6 +68,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
   private fun initializeSyncing(initMode: SettingsSyncBridge.InitMode): Runnable = Runnable {
     LOG.info("Initializing settings sync")
     val settingsSyncMain = SettingsSyncMain.getInstance()
+    SettingsSyncPluginManager.getInstance()
     settingsSyncMain.controls.bridge.initialize(initMode)
     settingsSyncMain.syncSettings()
   }

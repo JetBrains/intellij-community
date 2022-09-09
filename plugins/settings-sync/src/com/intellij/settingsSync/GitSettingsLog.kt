@@ -5,8 +5,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
+import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.util.PathUtil
 import com.intellij.util.io.*
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeResult.MergeStatus.CONFLICTING
 import org.eclipse.jgit.api.ResetCommand
@@ -24,6 +28,7 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.time.Instant
 import java.util.regex.Pattern
+import kotlin.io.path.div
 import kotlin.io.path.relativeTo
 
 internal class GitSettingsLog(private val settingsSyncStorage: Path,
@@ -38,6 +43,9 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   private val master: Ref get() = repository.findRef(MASTER_REF_NAME)!!
   private val ide: Ref get() = repository.findRef(IDE_REF_NAME)!!
   private val cloud: Ref get() = repository.findRef(CLOUD_REF_NAME)!!
+
+  private val pluginsFile = settingsSyncStorage / METAINFO_FOLDER / PLUGINS_FILE
+  private val json = Json { prettyPrint = true }
 
   init {
     Disposer.register(parentDisposable, this)
@@ -173,6 +181,13 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       }
       addCommand.addFilepattern(fileState.file)
     }
+
+    if (snapshot.plugins != null) {
+      val pluginsState = json.encodeToString(snapshot.plugins)
+      pluginsFile.write(pluginsState)
+      addCommand.addFilepattern("$METAINFO_FOLDER/$PLUGINS_FILE")
+    }
+
     addCommand.call()
 
     commit(message, snapshot.metaInfo.dateCreated)
@@ -216,10 +231,24 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
     val lastModifiedDate = getDate(getBranchTip(master))
     val files = settingsSyncStorage.toFile().walkTopDown()
-      .onEnter { it.name != ".git" }
+      .onEnter { it.name != ".git" && it.name != METAINFO_FOLDER }
       .filter { it.isFile && it.name != ".gitignore" }
       .mapTo(HashSet()) { getFileStateFromFileWithDeletedMarker(it.toPath(), settingsSyncStorage) }
-    return SettingsSnapshot(MetaInfo(lastModifiedDate, getLocalApplicationInfo()), files)
+
+    val pluginsState = readPluginsState()
+    return SettingsSnapshot(MetaInfo(lastModifiedDate, getLocalApplicationInfo()), files, pluginsState)
+  }
+
+  private fun readPluginsState(): SettingsSyncPluginsState? {
+    try {
+      if (pluginsFile.exists()) {
+        return json.decodeFromString<SettingsSyncPluginsState>(pluginsFile.readText())
+      }
+    }
+    catch (e: Exception) {
+      LOG.error("Couldn't parse $pluginsFile", e)
+    }
+    return null
   }
 
   override fun getIdePosition(): SettingsLog.Position {
@@ -349,6 +378,9 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     const val MASTER_REF_NAME = "master"
     const val IDE_REF_NAME = "ide"
     const val CLOUD_REF_NAME = "cloud"
+
+    const val PLUGINS_FILE = "plugins.json"
+    const val METAINFO_FOLDER = ".metainfo"
 
     const val DATE_PREFIX = "date: "
     val DATE_PATTERN = Pattern.compile("$DATE_PREFIX(\\d+)")

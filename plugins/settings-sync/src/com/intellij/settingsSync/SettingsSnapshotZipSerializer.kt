@@ -3,7 +3,11 @@ package com.intellij.settingsSync
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.util.io.*
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
@@ -15,14 +19,20 @@ import kotlin.io.path.div
 internal object SettingsSnapshotZipSerializer {
   private const val METAINFO = ".metainfo"
   private const val INFO = "info.json"
+  private const val PLUGINS = "plugins.json"
 
   private val LOG = logger<SettingsSnapshotZipSerializer>()
+
+  private val json = Json { prettyPrint = true }
 
   fun serializeToZip(snapshot: SettingsSnapshot): Path {
     val file = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT_ZIP, null)
     Compressor.Zip(file)
       .use { zip ->
         zip.addFile("$METAINFO/$INFO", serializeMetaInfo(snapshot.metaInfo))
+        if (snapshot.plugins != null) {
+          zip.addFile("$METAINFO/$PLUGINS", serializePlugins(snapshot.plugins).toByteArray())
+        }
 
         for (fileState in snapshot.fileStates) {
           val content = if (fileState is FileState.Modified) fileState.content else DELETED_FILE_MARKER.toByteArray()
@@ -30,6 +40,10 @@ internal object SettingsSnapshotZipSerializer {
         }
       }
     return file.toPath()
+  }
+
+  private fun serializePlugins(plugins: SettingsSyncPluginsState): String {
+    return json.encodeToString(plugins)
   }
 
   fun extractFromZip(zipFile: Path): SettingsSnapshot {
@@ -41,7 +55,21 @@ internal object SettingsSnapshotZipSerializer {
       .filter { it.isFile() && !metaInfoFolder.isAncestor(it) }
       .map { getFileStateFromFileWithDeletedMarker(it, tempDir) }
       .collect(Collectors.toSet())
-    return SettingsSnapshot(metaInfo, fileStates)
+    val plugins = deserializePlugins(metaInfoFolder)
+    return SettingsSnapshot(metaInfo, fileStates, plugins)
+  }
+
+  private fun deserializePlugins(metaInfoFolder: Path): SettingsSyncPluginsState {
+    val pluginsFile = metaInfoFolder / PLUGINS
+    try {
+      if (pluginsFile.exists()) {
+        return json.decodeFromString(pluginsFile.readText())
+      }
+    }
+    catch (e: Throwable) {
+      LOG.error("Failed to read $pluginsFile", e)
+    }
+    return SettingsSyncPluginsState(emptyMap())
   }
 
   private fun serializeMetaInfo(snapshotMetaInfo: SettingsSnapshot.MetaInfo): ByteArray {

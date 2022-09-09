@@ -70,16 +70,12 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     }
 
     // 2. update plugins
-    val pluginsFileState = snapshot.fileStates.find { it.file == "$OPTIONS_DIRECTORY/${SettingsSyncPluginManager.FILE_SPEC}" }
-    if (pluginsFileState != null) {
-      val pluginManager = SettingsSyncPluginManager.getInstance()
-      writeStatesToAppConfig(listOf(pluginsFileState))
-      pluginManager.updateStateFromFileStateContent(pluginsFileState)
-      pluginManager.pushChangesToIde()
+    if (snapshot.plugins != null) {
+      SettingsSyncPluginManager.getInstance().pushChangesToIde(snapshot.plugins)
     }
 
     // 3. after that update the rest of changed settings
-    val regularFileStates = snapshot.fileStates.filter { it != settingsSyncFileState && it != pluginsFileState }
+    val regularFileStates = snapshot.fileStates.filter { it != settingsSyncFileState }
     writeStatesToAppConfig(regularFileStates)
 
     invokeLater { updateUI() }
@@ -115,7 +111,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     }
 
     val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()),
-                                    setOf(FileState.Modified(file, content, size)))
+                                    setOf(FileState.Modified(file, content, size)), plugins = null)
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
   }
 
@@ -179,7 +175,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     }
     if (deleted) {
       val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()),
-                                      setOf(FileState.Deleted(adjustedSpec)))
+                                      setOf(FileState.Deleted(adjustedSpec)), plugins = null)
       SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
     }
     return deleted

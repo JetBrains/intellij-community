@@ -9,13 +9,11 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.settingsSync.config.SettingsSyncUiGroup
-import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 
 internal fun isSyncEnabled(fileSpec: String, roamingType: RoamingType): Boolean {
   if (roamingType == RoamingType.DISABLED) return false
   val rawFileSpec = removeOsPrefix(fileSpec)
-  if (rawFileSpec == SettingsSyncSettings.FILE_SPEC ||
-      rawFileSpec == SettingsSyncPluginManager.FILE_SPEC) return true
+  if (rawFileSpec == SettingsSyncSettings.FILE_SPEC) return true
   val componentClasses = findComponentClasses(rawFileSpec)
   val category = getSchemeCategory(rawFileSpec) ?: getCategory(componentClasses)
   if (category != SettingsCategory.OTHER && SettingsSyncSettings.getInstance().isCategoryEnabled(category)) {
