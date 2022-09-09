@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -31,6 +32,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBThinOverlappingScrollBar;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.hover.HoverListener;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
@@ -476,7 +478,8 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   private ActionToolbar createToolbar(ActionGroup group) {
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, group, true);
+    final ActionToolbar toolbar =
+      ActionManagerEx.getInstanceEx().createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, group, true, text -> new ThinActionSeparator());
     toolbar.setTargetComponent(this);
     toolbar.getComponent().setBorder(JBUI.Borders.empty());
     toolbar.getComponent().setOpaque(false);
@@ -2710,6 +2713,20 @@ public class JBTabsImpl extends JComponent
   @NotNull
   private Border createEntryPointToolbarBorder() {
     return getTabsPosition().isSide() ? JBUI.Borders.empty(4, 3) : JBUI.Borders.emptyRight(8);
+  }
+
+  private static class ThinActionSeparator extends JComponent {
+    @Override
+    protected void paintComponent(Graphics g) {
+      Graphics2D g2d = (Graphics2D)g;
+      g2d.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
+      LinePainter2D.paint(g2d, 0, 0, 0, getHeight());
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return new JBDimension(1, 14);
+    }
   }
 
   @Override

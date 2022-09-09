@@ -73,6 +73,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -388,6 +389,15 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     return contextComponent != null ? dataManager.getDataContext(contextComponent) : dataManager.getDataContext();
   }
 
+  private static @NotNull ActionToolbarImpl createActionToolbarImpl(@NotNull String place,
+                                                                    @NotNull ActionGroup group,
+                                                                    boolean horizontal,
+                                                                    boolean decorateButtons) {
+    ActionToolbarImpl toolbar = new ActionToolbarImpl(place, group, horizontal, decorateButtons);
+    managerPublisher().toolbarCreated(place, group, horizontal, toolbar);
+    return toolbar;
+  }
+
   @Override
   public void dispose() {
     if (myTimer != null) {
@@ -445,8 +455,16 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
   @Override
   public @NotNull ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons) {
-    ActionToolbar toolbar = new ActionToolbarImpl(place, group, horizontal, decorateButtons);
-    managerPublisher().toolbarCreated(place, group, horizontal, toolbar);
+    return createActionToolbarImpl(place, group, horizontal, decorateButtons);
+  }
+
+  @Override
+  public @NotNull ActionToolbar createActionToolbar(@NotNull String place,
+                                                    @NotNull ActionGroup group,
+                                                    boolean horizontal,
+                                                    @NotNull Function<String, Component> separatorCreator) {
+    ActionToolbarImpl toolbar = createActionToolbarImpl(place, group, horizontal, false);
+    toolbar.setSeparatorCreator(separatorCreator);
     return toolbar;
   }
 
