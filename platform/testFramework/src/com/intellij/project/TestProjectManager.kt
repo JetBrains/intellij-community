@@ -217,6 +217,22 @@ open class TestProjectManager : ProjectManagerImpl() {
     return projects.keys.asSequence()
   }
 
+  /**
+   * Having a leaked project means having an unintended hard reference to a ProjectImpl
+   * while your test is in the tearDown phase (or, in a production scenario, while you
+   * close a project).
+   *
+   * If you hit the "Too many projects leaked" assertion error in your tests, keep in mind
+   * that hard references to ProjectImpl may exist indirectly. For example, any PsiElement
+   * owns such a hard reference. So one way to create a leaked project is by having a static
+   * class that owns a PsiElement.
+   *
+   * If the above does not trigger enough "aha" to go and fix things, you can find a
+   * leakedProjects.hprof.zip in your build config (not aggregator) artifacts. Open it in
+   * YourKit's Memory Profiling > Object explorer view. In the search box type ProjectImpl.
+   * The search results include all ProjectImpl instances. Select one and click "Calculate
+   * paths". Traverse down a bit and you should see who's owning the hard reference.
+   */
   private fun checkProjectLeaksInTests() {
     if (!LOG_PROJECT_LEAKAGE || getLeakedProjectCount() < MAX_LEAKY_PROJECTS) {
       return
@@ -241,7 +257,10 @@ open class TestProjectManager : ProjectManagerImpl() {
       projects.clear()
       if (copy.iterator().asSequence().count() >= MAX_LEAKY_PROJECTS) {
         reportLeakedProjects(copy)
-        throw AssertionError("Too many projects leaked, again.")
+        throw AssertionError("""
+          Too many projects leaked.
+          See build log and com.intellij.project.TestProjectManager.checkProjectLeaksInTests docs for more details.")
+        """.trimIndent())
       }
     }
   }
