@@ -14,7 +14,6 @@ import com.intellij.settingsSync.*
 import com.intellij.settingsSync.config.BUNDLED_PLUGINS_ID
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.PluginData
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
 import java.time.Instant
 
 internal class SettingsSyncPluginManager : Disposable {
@@ -22,18 +21,18 @@ internal class SettingsSyncPluginManager : Disposable {
   private val pluginInstallationStateListener = PluginInstallationStateListener()
   private val pluginEnabledStateListener = PluginEnabledStateListener()
   private val LOCK = Object()
+
   internal var state = SettingsSyncPluginsState(emptyMap())
     private set
+
   private val sessionUninstalledPlugins = HashSet<String>()
 
   init {
     PluginStateManager.addStateListener(pluginInstallationStateListener)
     PluginManagerProxy.getInstance().addDisablePluginListener(pluginEnabledStateListener, this)
-    updateStateFromIde()
   }
 
-  @VisibleForTesting
-  internal fun updateStateFromIde() {
+  internal fun updateStateFromIde() : SettingsSyncPluginsState {
     synchronized(LOCK) {
       val newPlugins = mutableMapOf<PluginId, PluginData>()
       for (plugin in PluginManagerProxy.getInstance().getPlugins()) {
@@ -49,6 +48,7 @@ internal class SettingsSyncPluginManager : Disposable {
       if (oldPlugins != newPlugins) {
         firePluginsStateChangeEvent(state)
       }
+      return state
     }
   }
 

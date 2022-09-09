@@ -246,7 +246,8 @@ internal class GitSettingsLogTest {
 
   private fun initializeGitSettingsLog(vararg filesToCopyInitially: Path): GitSettingsLog {
     val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
-      filesToCopyInitially.toList()
+      val fileStates = collectFileStatesFromFiles(filesToCopyInitially.toSet(), configDir)
+      SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), null), fileStates, plugins = null)
     }
     settingsLog.initialize()
     settingsLog.logExistingSettings()

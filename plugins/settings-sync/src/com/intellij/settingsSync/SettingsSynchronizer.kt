@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
@@ -68,7 +67,6 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
   private fun initializeSyncing(initMode: SettingsSyncBridge.InitMode): Runnable = Runnable {
     LOG.info("Initializing settings sync")
     val settingsSyncMain = SettingsSyncMain.getInstance()
-    SettingsSyncPluginManager.getInstance()
     settingsSyncMain.controls.bridge.initialize(initMode)
     settingsSyncMain.syncSettings()
   }

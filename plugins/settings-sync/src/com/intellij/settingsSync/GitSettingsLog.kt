@@ -3,11 +3,12 @@ package com.intellij.settingsSync
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.NioFiles
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
-import com.intellij.util.PathUtil
-import com.intellij.util.io.*
+import com.intellij.util.io.createFile
+import com.intellij.util.io.exists
+import com.intellij.util.io.readText
+import com.intellij.util.io.write
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -24,17 +25,15 @@ import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import java.nio.charset.StandardCharsets
-import java.nio.file.*
-import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.Path
 import java.time.Instant
 import java.util.regex.Pattern
 import kotlin.io.path.div
-import kotlin.io.path.relativeTo
 
 internal class GitSettingsLog(private val settingsSyncStorage: Path,
                               private val rootConfigPath: Path,
                               parentDisposable: Disposable,
-                              private val collectFilesToExportFromSettings: () -> Collection<Path>
+                              private val initialSnapshotProvider: () -> SettingsSnapshot
 ) : SettingsLog, Disposable {
 
   private lateinit var repository: Repository
@@ -85,47 +84,8 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
   private fun copyExistingSettings() {
     LOG.info("Copying existing settings from $rootConfigPath to $settingsSyncStorage")
-    git.checkout().setName(IDE_REF_NAME).call()
-
-    val copiedFileSpecs = mutableListOf<String>()
-
-    val filesToExport = collectFilesToExportFromSettings()
-    for (path in filesToExport) {
-      val fileSpec = path.relativeTo(rootConfigPath).toString()
-      if (path.isFile()) {
-        // 'path' is e.g. 'ROOT_CONFIG/options/editor.xml'
-        val target = settingsSyncStorage.resolve(fileSpec)
-        path.copy(target)
-      }
-      else {
-        // 'path' is e.g. 'ROOT_CONFIG/keymaps/'
-        copyDirectory(path, settingsSyncStorage)
-      }
-      copiedFileSpecs.add(fileSpec)
-    }
-
-    LOG.debug("Copied files for the following fileSpecs: $copiedFileSpecs")
-
-    if (copiedFileSpecs.isNotEmpty()) {
-      val addCommand = git.add()
-      for (fileSpec in copiedFileSpecs) {
-        val filePattern = PathUtil.toSystemIndependentName(fileSpec)
-        addCommand.addFilepattern(filePattern)
-      }
-      addCommand.call()
-      commit("Copy existing configs", Instant.now())
-    }
-  }
-
-  private fun copyDirectory(dirToCopy: Path, targetDir: Path) {
-    Files.walkFileTree(dirToCopy, object : SimpleFileVisitor<Path>() {
-      override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-        val target = targetDir.resolve(dirToCopy.parent.relativize(file))  // file is mykeymap.xml => target is keymaps/mykeymap.xml
-        NioFiles.createDirectories(target.parent)
-        Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING)
-        return FileVisitResult.CONTINUE
-      }
-    })
+    val snapshot = initialSnapshotProvider()
+    applyState(IDE_REF_NAME, snapshot, "Copy current configs")
   }
 
   private fun initRepository(repository: Repository?) {

@@ -17,6 +17,6 @@ interface SettingsSyncIdeMediator {
 
   fun removeStreamProvider()
 
-  fun collectFilesToExportFromSettings(appConfigPath: Path): () -> Collection<Path>
+  fun getInitialSnapshot(appConfigPath: Path): SettingsSnapshot
 
 }

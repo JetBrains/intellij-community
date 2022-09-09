@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.IconLoader
+import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.ui.JBColor
 import com.intellij.util.SmartList
@@ -89,12 +90,16 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     componentStore.storageManager.removeStreamProvider(this::class.java)
   }
 
-  override fun collectFilesToExportFromSettings(appConfigPath: Path): () -> Collection<Path> {
-    return {
-      val exportableItems = getExportableComponentsMap(isComputePresentableNames = false, componentStore.storageManager,
-                                                       withExportable = false)
-      getExportableItemsFromLocalStorage(exportableItems, componentStore.storageManager).keys
-    }
+  override fun getInitialSnapshot(appConfigPath: Path): SettingsSnapshot {
+    val exportableItems = getExportableComponentsMap(isComputePresentableNames = false, componentStore.storageManager,
+                                                     withExportable = false)
+    val filesToExport = getExportableItemsFromLocalStorage(exportableItems, componentStore.storageManager).keys
+
+    val fileStates = collectFileStatesFromFiles(filesToExport, appConfigPath)
+    LOG.debug("Collected files for the following fileSpecs: $fileStates")
+    val pluginsState = SettingsSyncPluginManager.getInstance().updateStateFromIde()
+    LOG.debug("Collected following plugin state: $pluginsState")
+    return SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), fileStates, pluginsState)
   }
 
   override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
@@ -110,7 +115,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       return
     }
 
-    val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()),
+    val snapshot = SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()),
                                     setOf(FileState.Modified(file, content, size)), plugins = null)
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
   }
@@ -174,7 +179,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       deleteOrLogError(file)
     }
     if (deleted) {
-      val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()),
+      val snapshot = SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()),
                                       setOf(FileState.Deleted(adjustedSpec)), plugins = null)
       SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
     }
