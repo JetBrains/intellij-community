@@ -21,6 +21,7 @@
   <node text="AbstractList  (kotlin.collections)">
     <node text="ReversedListReadOnly  (kotlin.collections)"/>
     <node text="RingBuffer  (kotlin.collections)"/>
+    <node text="EnumEntriesList  (kotlin.enums)"/>
     <node text="MovingSubList  (kotlin.collections)"/>
   </node>
   <node text="SynchronizedList in Collections  (java.util)"/>
