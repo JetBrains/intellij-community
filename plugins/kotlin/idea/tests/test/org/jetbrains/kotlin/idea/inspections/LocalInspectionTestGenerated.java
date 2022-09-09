@@ -3892,6 +3892,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertObjectToDataObject/publicReadResolve.kt");
         }
 
+        @TestMetadata("sealedSubObject.kt")
+        public void testSealedSubObject() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/sealedSubObject.kt");
+        }
+
+        @TestMetadata("sealedSubObjectIncompatibleToString.kt")
+        public void testSealedSubObjectIncompatibleToString() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/sealedSubObjectIncompatibleToString.kt");
+        }
+
+        @TestMetadata("sealedSubObjectWithCompatibleToString.kt")
+        public void testSealedSubObjectWithCompatibleToString() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/sealedSubObjectWithCompatibleToString.kt");
+        }
+
         @TestMetadata("serializableButIncompatibleToString.kt")
         public void testSerializableButIncompatibleToString() throws Exception {
             runTest("testData/inspectionsLocal/convertObjectToDataObject/serializableButIncompatibleToString.kt");

@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.resolveType
+import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Companion.isSubclassOfStatelessSealed
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyEquals
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyHashCode
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyToString
@@ -50,24 +51,25 @@ class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
             val fqName = lazy { ktObject.descriptor?.fqNameSafe }
             val isSerializable = isSerializable(ktObject)
             val toString = ktObject.findToString()
-            if ((toString == null && isSerializable || toString != null && isCompatibleToString(ktObject, fqName, toString)) &&
+            val candidate1 = toString == null && isSerializable
+            val candidate2 = lazy { toString == null && ktObject.isSubclassOfStatelessSealed() }
+            val candidate3 = lazy { toString != null && isCompatibleToString(ktObject, fqName, toString) }
+            if ((candidate1 || candidate2.value || candidate3.value) &&
                 isCompatibleHashCode(ktObject) &&
                 isCompatibleEquals(ktObject, fqName) &&
                 isCompatibleReadResolve(ktObject, fqName, isSerializable)
             ) {
-                if (toString != null) {
-                    holder.registerProblem(
-                        ktObject,
-                        KotlinBundle.message("inspection.message.object.with.manual.tostring.can.be.converted.to.data.object"),
-                        ConvertToDataObjectQuickFix(isSerializable),
-                    )
-                } else {
-                    holder.registerProblem(
-                        ktObject,
-                        KotlinBundle.message("serializable.object.must.be.marked.with.data"),
-                        ConvertToDataObjectQuickFix(isSerializable),
-                    )
-                }
+                holder.registerProblem(
+                    ktObject,
+                    KotlinBundle.message(
+                        when {
+                            candidate1 -> "serializable.object.must.be.marked.with.data"
+                            candidate2.value -> "inspection.message.sealed.object.can.be.converted.to.data.object"
+                            else -> "inspection.message.object.with.manual.tostring.can.be.converted.to.data.object"
+                        }
+                    ),
+                    ConvertToDataObjectQuickFix(isSerializable),
+                )
             }
         }
     }
