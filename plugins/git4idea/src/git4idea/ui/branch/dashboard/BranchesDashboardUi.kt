@@ -156,7 +156,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   private val BRANCHES_UI_FOCUS_TRAVERSAL_POLICY = object : ComponentsListFocusTraversalPolicy() {
     override fun getOrderedComponents(): List<Component> = listOf(filteringTree.component, logUi.table,
                                                                   logUi.changesBrowser.preferredFocusedComponent,
-                                                                  logUi.filterUi.textFilterComponent.textEditor)
+                                                                  logUi.filterUi.textFilterComponent.textField)
   }
 
   private val showBranches get() = logUi.properties.get(SHOW_GIT_BRANCHES_LOG_PROPERTY)

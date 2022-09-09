@@ -217,8 +217,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     DefaultActionGroup toolbarGroup = (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.TOOLBAR_ACTION_GROUP);
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
-    mainGroup.add(actionManager.getAction(VcsLogActionIds.TEXT_FILTER_SETTINGS_ACTION_GROUP));
-    mainGroup.add(new Separator());
     mainGroup.add(myFilterUi.createActionGroup());
     mainGroup.addSeparator();
     mainGroup.add(toolbarGroup);
@@ -420,7 +418,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     protected List<Component> getOrderedComponents() {
       return ContainerUtil.newArrayList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent(),
                                         myDiffPreview.getPreviewDiff().getPreferredFocusedComponent(),
-                                        myFilterUi.getTextFilterComponent().getTextEditor());
+                                        myFilterUi.getTextFilterComponent());
     }
   }
 
