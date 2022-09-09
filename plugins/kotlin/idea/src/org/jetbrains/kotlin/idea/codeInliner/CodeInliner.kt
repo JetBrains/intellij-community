@@ -192,15 +192,13 @@ class CodeInliner<TCallElement : KtElement>(
         }
 
         assert(canBeReplaced(elementToBeReplaced))
-        return run {
-            replacementPerformer.doIt(postProcessing = { range ->
-                val newRange = postProcessInsertedCode(range, lexicalScope)
-                if (!newRange.isEmpty) {
-                    commentSaver.restore(newRange)
-                }
-                newRange
-            })
-        }
+        return replacementPerformer.doIt(postProcessing = { range ->
+            val newRange = postProcessInsertedCode(range, lexicalScope)
+            if (!newRange.isEmpty) {
+                commentSaver.restore(newRange)
+            }
+            newRange
+        })
     }
 
     private fun KtElement.callableReferenceExpressionForReference(): KtCallableReferenceExpression? =
