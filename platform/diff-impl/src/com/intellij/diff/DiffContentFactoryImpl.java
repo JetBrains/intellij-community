@@ -637,21 +637,30 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     @Override
     @NotNull
     public DocumentContent buildFromText(@NotNull String text, boolean respectLineSeparators) {
-      return build(TextContent.fromText(text, respectLineSeparators));
+      FileType fileType = constructFileType();
+      FilePath filePath = constructFilePath();
+
+      TextContent textContent = TextContent.fromText(text, respectLineSeparators);
+
+      Document document = createDocument(project, textContent.text, fileType, filePath, readOnly);
+      return build(document, textContent);
     }
 
     @Override
     @NotNull
     public DocumentContent buildFromBytes(byte @NotNull [] content, @NotNull Charset charset) {
-      return build(TextContent.fromBytes(content, charset));
+      FileType fileType = constructFileType();
+      FilePath filePath = constructFilePath();
+
+      // decode bytes ourselves to detect incorrect charsets
+      TextContent textContent = TextContent.fromBytes(content, charset);
+
+      Document document = createDocument(project, textContent.text, fileType, filePath, readOnly);
+      return build(document, textContent);
     }
 
     @NotNull
-    private DocumentContent build(@NotNull TextContent textContent) {
-      FileType fileType = constructFileType();
-      FilePath filePath = constructFilePath();
-      Document document = createDocument(project, textContent.text, fileType, filePath, readOnly);
-
+    private DocumentContent build(@NotNull Document document, @NotNull TextContent textContent) {
       DocumentContent documentContent = new ContextReferentDocumentContent(project, document, textContent, context);
 
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
