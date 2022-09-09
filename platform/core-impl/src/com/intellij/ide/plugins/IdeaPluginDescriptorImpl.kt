@@ -11,10 +11,7 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.PropertyKey
-import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.annotations.*
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
@@ -97,15 +94,33 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   companion object {
 
-    @ApiStatus.Experimental
+    private var _isOnDemandEnabled: Boolean? = null
+
     @VisibleForTesting
     const val ON_DEMAND_ENABLED_KEY: String = "ide.plugins.allow.on.demand"
 
     @JvmStatic
-    val isOnDemandEnabled: Boolean by lazy(LazyThreadSafetyMode.NONE) {
-      !AppMode.isHeadless()
-      && EarlyAccessRegistryManager.getBoolean(ON_DEMAND_ENABLED_KEY)
-    }
+    var isOnDemandEnabled: Boolean
+      @ApiStatus.Experimental get() {
+        var result = _isOnDemandEnabled
+
+        if (result == null) {
+          synchronized(Companion::class.java) {
+            if (_isOnDemandEnabled == null) {
+              result = !AppMode.isHeadless()
+                       && EarlyAccessRegistryManager.getBoolean(ON_DEMAND_ENABLED_KEY)
+              _isOnDemandEnabled = result
+            }
+          }
+        }
+
+        return result!!
+      }
+      @TestOnly set(value) {
+        synchronized(Companion::class.java) {
+          _isOnDemandEnabled = value
+        }
+      }
   }
 
   @Transient @JvmField var jarFiles: List<Path>? = null
