@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.util.containers.MultiMap
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -114,46 +113,14 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     }
   }
 
-  fun withGeneratedResources(generator: BiConsumer<Path, BuildContext>) {
+  private fun withGeneratedResources(generator: BiConsumer<Path, BuildContext>) {
     resourceGenerators.add(BiFunction<Path, BuildContext, Path?> { targetDir, context ->
-          generator.accept(targetDir, context)
-          null
-        })
+      generator.accept(targetDir, context)
+      null
+    })
   }
 
-  fun mergeServiceFiles() {
-    patchers.add { patcher, context ->
-      val discoveredServiceFiles = MultiMap.createLinkedSet<String, Pair<String, Path>>()
-
-      for (moduleName in jarToModules.get(mainJarName)!!) {
-        val path = context.findFileInModuleSources(moduleName, "META-INF/services") ?: continue
-        Files.list(path).use { stream ->
-          stream
-            .filter { Files.isRegularFile(it) }
-            .forEach { serviceFile: Path ->
-              discoveredServiceFiles.putValue(serviceFile.fileName.toString(), Pair(moduleName, serviceFile))
-            }
-        }
-      }
-
-      for ((serviceFileName, serviceFiles) in discoveredServiceFiles.entrySet()) {
-        if (serviceFiles.size <= 1) {
-          continue
-        }
-
-        val content = serviceFiles.joinToString("\n") { Files.readString(it.second) }
-        Span.current().addEvent("merge service file)",
-                                Attributes.of(
-                                  AttributeKey.stringKey("serviceFile"), serviceFileName,
-                                  AttributeKey.stringArrayKey("serviceFiles"), serviceFiles.map { it.first },
-                                ))
-        patcher.patchModuleOutput(moduleName = serviceFiles.first().first, // first one wins
-                                  path = "META-INF/services/$serviceFileName",
-                                  content = content)
-      }
-    }
-  }
-
+  // as a builder for PluginLayout, that ideally should be immutable
   class PluginLayoutSpec(private val layout: PluginLayout): BaseLayoutSpec(layout) {
     var directoryName: String = convertModuleNameToFileName(layout.mainModule)
       /**
@@ -273,7 +240,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     }
 
     fun withPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext>) {
-      layout.patchers.add(patcher::accept)
+      layout.patchers = layout.patchers.add(patcher::accept)
     }
 
     fun withGeneratedResources(generator: BiConsumer<Path, BuildContext>) {
@@ -369,7 +336,36 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
      * By default, the first service file silently wins.
      */
     fun mergeServiceFiles() {
-      layout.mergeServiceFiles()
+      withPatch { patcher, context ->
+        val discoveredServiceFiles = LinkedHashMap<String, LinkedHashSet<Pair<String, Path>>>()
+
+        for (moduleName in layout.jarToModules.get(layout.mainJarName)!!) {
+          val path = context.findFileInModuleSources(moduleName, "META-INF/services") ?: continue
+          Files.list(path).use { stream ->
+            stream
+              .filter { Files.isRegularFile(it) }
+              .forEach { serviceFile ->
+                discoveredServiceFiles.computeIfAbsent(serviceFile.fileName.toString()) { LinkedHashSet() }
+                  .add(Pair(moduleName, serviceFile))
+              }
+          }
+        }
+
+        for ((serviceFileName, serviceFiles) in discoveredServiceFiles) {
+          if (serviceFiles.size <= 1) {
+            continue
+          }
+
+          val content = serviceFiles.joinToString(separator = "\n") { Files.readString(it.second) }
+          Span.current().addEvent("merge service file)", Attributes.of(
+            AttributeKey.stringKey("serviceFile"), serviceFileName,
+            AttributeKey.stringArrayKey("serviceFiles"), serviceFiles.map { it.first },
+          ))
+          patcher.patchModuleOutput(moduleName = serviceFiles.first().first, // first one wins
+                                    path = "META-INF/services/$serviceFileName",
+                                    content = content)
+        }
+      }
     }
   }
 

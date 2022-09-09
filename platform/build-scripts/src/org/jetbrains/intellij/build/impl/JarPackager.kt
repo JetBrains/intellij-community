@@ -10,6 +10,9 @@ import com.intellij.util.io.sanitizeFileName
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.mutate
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -70,37 +73,33 @@ private val libsThatUsedInJps = java.util.Set.of(
   "kotlin-stdlib-jdk8"
 )
 
+private val extraMergeRules: PersistentMap<String, (String) -> Boolean> = persistentMapOf<String, (String) -> Boolean>().mutate { map ->
+  map.put("groovy.jar") { it.startsWith("org.codehaus.groovy:") }
+  map.put("jsch-agent.jar") { it.startsWith("jsch-agent") }
+  map.put("rd.jar") { it.startsWith("rd-") }
+  // see ClassPathUtil.getUtilClassPath
+  map.put("3rd-party-rt.jar") { libsThatUsedInJps.contains(it) || it.startsWith("kotlinx-") || it == "kotlin-reflect" }
+}
+
+internal fun getLibraryFileName(lib: JpsLibrary): String {
+    val name = lib.name
+    if (!name.startsWith("#")) {
+      return name
+    }
+
+    val roots = lib.getRoots(JpsOrderRootType.COMPILED)
+    check(roots.size == 1) {
+      "Non-single entry module library $name: ${roots.joinToString { it.url }}"
+    }
+    return PathUtilRt.getFileName(roots.first().url.removeSuffix(URLUtil.JAR_SEPARATOR))
+  }
+
 class JarPackager private constructor(private val context: BuildContext) {
   private val jarDescriptors = LinkedHashMap<Path, JarDescriptor>()
   private val libraryEntries = ConcurrentLinkedQueue<LibraryFileEntry>()
   private val libToMetadata = HashMap<JpsLibrary, ProjectLibraryData>()
 
   companion object {
-    private val extraMergeRules = LinkedHashMap<String, (String) -> Boolean>()
-
-    init {
-      extraMergeRules.put("groovy.jar") { it.startsWith("org.codehaus.groovy:") }
-      extraMergeRules.put("jsch-agent.jar") { it.startsWith("jsch-agent") }
-      extraMergeRules.put("rd.jar") { it.startsWith("rd-") }
-      // see ClassPathUtil.getUtilClassPath
-      extraMergeRules.put("3rd-party-rt.jar") {
-        libsThatUsedInJps.contains(it) || it.startsWith("kotlinx-") || it == "kotlin-reflect"
-      }
-    }
-
-    fun getLibraryName(lib: JpsLibrary): String {
-      val name = lib.name
-      if (!name.startsWith("#")) {
-        return name
-      }
-
-      val roots = lib.getRoots(JpsOrderRootType.COMPILED)
-      if (roots.size != 1) {
-        throw IllegalStateException("Non-single entry module library $name: ${roots.joinToString { it.url }}")
-      }
-      return PathUtilRt.getFileName(roots.first().url.removeSuffix(URLUtil.JAR_SEPARATOR))
-    }
-
     suspend fun pack(jarToModules: Map<String, List<String>>,
                      outputDir: Path,
                      layout: BaseLayout = BaseLayout(),
@@ -111,7 +110,7 @@ class JarPackager private constructor(private val context: BuildContext) {
       val packager = JarPackager(context)
       for (data in layout.includedModuleLibraries) {
         val library = context.findRequiredModule(data.moduleName).libraryCollection.libraries
-                        .find { getLibraryName(it) == data.libraryName }
+                        .find { getLibraryFileName(it) == data.libraryName }
                       ?: throw IllegalArgumentException("Cannot find library ${data.libraryName} in \'${data.moduleName}\' module")
         var fileName = nameToJarFileName(data.libraryName)
         var relativePath = data.relativeOutputPath
@@ -426,7 +425,7 @@ class JarPackager private constructor(private val context: BuildContext) {
     }
 
     val library = libraryDependency.library!!
-    val libraryName = getLibraryName(library)
+    val libraryName = getLibraryFileName(library)
     if (excluded.contains(libraryName) || layout.includedModuleLibraries.any { it.libraryName == libraryName }) {
       return
     }

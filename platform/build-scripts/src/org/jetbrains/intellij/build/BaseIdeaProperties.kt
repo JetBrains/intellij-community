@@ -14,12 +14,12 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
-private val JAVA_IDE_API_MODULES: List<String> = java.util.List.of(
+private val JAVA_IDE_API_MODULES = java.util.List.of(
   "intellij.xml.dom",
   "intellij.jsp.base"
 )
 
-private val JAVA_IDE_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
+private val JAVA_IDE_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.xml.dom.impl",
   "intellij.tools.testsBootstrap"
 )
@@ -56,7 +56,6 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
 abstract class BaseIdeaProperties : JetBrainsProductProperties() {
   companion object {
     @Suppress("SpellCheckingInspection")
-    @JvmStatic
     val BUNDLED_PLUGIN_MODULES: PersistentList<String> = persistentListOf(
       "intellij.java.plugin",
       "intellij.java.ide.customization",
@@ -123,7 +122,6 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
       "intellij.keymap.netbeans",
     )
 
-    @JvmStatic
     val CE_CLASS_VERSIONS: PersistentMap<String, String> = BASE_CLASS_VERSIONS.putAll(persistentHashMapOf(
       "plugins/java/lib/jshell-frontend.jar" to "9",
       "plugins/java/lib/sa-jdwp" to "",  // ignored

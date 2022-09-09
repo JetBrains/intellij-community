@@ -23,7 +23,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 
 internal const val UNMODIFIED_MARK_FILE_NAME = ".unmodified"
@@ -181,17 +180,26 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
 }
 
 private suspend fun createProductProperties(productConfiguration: ProductConfiguration, outDir: Path, homePath: Path): ProductProperties {
+  val classPathFiles = getBuildModules(productConfiguration).map { outDir.resolve(it) }.toList()
+
   val classLoader = spanBuilder("create product properties classloader").useWithScope2 {
     PathClassLoader(
       UrlClassLoader.build()
         .useCache()
-        .files(getBuildModules(productConfiguration).map { outDir.resolve(it) }.toList())
+        .files(classPathFiles)
         .parent(IdeBuilder::class.java.classLoader)
     )
   }
 
   val productProperties = spanBuilder("create product properties").useWithScope2 {
-    val productPropertiesClass = classLoader.loadClass(productConfiguration.className)
+    val productPropertiesClass = try {
+      classLoader.loadClass(productConfiguration.className)
+    }
+    catch (e: ClassNotFoundException) {
+      throw RuntimeException("cannot create product properties (classPath=${classPathFiles.joinToString(separator = "\n")}, " +
+                             "homePath=$homePath)", e)
+    }
+
     MethodHandles.lookup()
       .findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE, Path::class.java))
       .invoke(homePath) as ProductProperties
@@ -215,11 +223,7 @@ private fun checkBuildModulesModificationAndMark(productConfiguration: ProductCo
       isApplicable = false
     }
 
-    try {
-      Files.newByteChannel(markFile, TOUCH_OPTIONS)
-    }
-    catch (ignore: NoSuchFileException) {
-    }
+    createMarkFile(markFile)
   }
   return isApplicable
 }
@@ -285,15 +289,12 @@ private suspend fun createLibClassPath(homePath: Path, context: BuildContext): S
 
 private fun getBundledMainModuleNames(productProperties: ProductProperties, additionalModules: List<String>): Set<String> {
   val bundledPlugins = LinkedHashSet(productProperties.productLayout.bundledPluginModules)
-  if (!additionalModules.isEmpty()) {
-    bundledPlugins.addAll(additionalModules)
-  }
-  bundledPlugins.removeAll(skippedPluginModules)
+  bundledPlugins.addAll(additionalModules)
   return bundledPlugins
 }
 
 internal fun getAdditionalModules(): Sequence<String>? {
-  return (System.getProperty("additional.modules") ?: System.getProperty("additional.plugins") ?: return null)
+  return (System.getProperty("additional.modules") ?: return null)
     .splitToSequence(',')
     .map(String::trim)
     .filter { it.isNotEmpty() }
@@ -307,7 +308,7 @@ private fun createRunDirForProduct(homePath: Path, platformPrefix: String, usePl
     rootDir = rootDir.toRealPath()
   }
 
-  val runDir = rootDir.resolve(platformPrefix)
+  val runDir = rootDir.resolve(if (platformPrefix == "Idea") "idea-community" else platformPrefix)
   // on start delete everything to avoid stale data
   if (!Files.isDirectory(runDir)) {
     Files.createDirectories(runDir)

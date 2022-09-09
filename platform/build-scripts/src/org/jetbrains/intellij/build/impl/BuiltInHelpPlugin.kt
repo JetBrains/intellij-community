@@ -38,10 +38,13 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
       )
     }
     spec.withPatch { patcher, buildContext ->
-      patcher.patchModuleOutput(MODULE_NAME,
-                                "META-INF/services/org.apache.lucene.codecs.Codec",
-                                "org.apache.lucene.codecs.lucene50.Lucene50Codec")
-      patcher.patchModuleOutput(MODULE_NAME, "META-INF/plugin.xml", pluginXml(buildContext, pluginVersion), true)
+      patcher.patchModuleOutput(moduleName = MODULE_NAME,
+                                path = "META-INF/services/org.apache.lucene.codecs.Codec",
+                                content = "org.apache.lucene.codecs.lucene50.Lucene50Codec")
+      patcher.patchModuleOutput(moduleName = MODULE_NAME,
+                                path = "META-INF/plugin.xml",
+                                content = pluginXml(buildContext, pluginVersion),
+                                overwrite = true)
     }
   }
 }

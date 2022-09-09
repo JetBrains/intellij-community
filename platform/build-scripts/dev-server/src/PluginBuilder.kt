@@ -18,15 +18,13 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.*
 
-internal val TOUCH_OPTIONS = EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE)
+private val TOUCH_OPTIONS = EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE)
 
-internal fun markModules(outDir: Path, moduleNames: Iterable<String>) {
-  for (moduleName in moduleNames) {
-    try {
-      Files.newByteChannel(outDir.resolve(moduleName).resolve(UNMODIFIED_MARK_FILE_NAME), TOUCH_OPTIONS)
-    }
-    catch (ignore: NoSuchFileException) {
-    }
+internal fun createMarkFile(file: Path) {
+  try {
+    Files.newByteChannel(file, TOUCH_OPTIONS)
+  }
+  catch (ignore: NoSuchFileException) {
   }
 }
 
@@ -36,7 +34,9 @@ internal data class PluginBuildDescriptor(
   @JvmField val moduleNames: List<String>,
 ) {
   fun markAsBuilt(outDir: Path) {
-    markModules(outDir, moduleNames)
+    for (moduleName in moduleNames) {
+      createMarkFile(outDir.resolve(moduleName).resolve(UNMODIFIED_MARK_FILE_NAME))
+    }
   }
 }
 
@@ -101,10 +101,6 @@ internal class PluginBuilder(private val outDir: Path,
 
   internal suspend fun buildPlugin(plugin: PluginBuildDescriptor) {
     val mainModule = plugin.layout.mainModule
-    if (skippedPluginModules.contains(mainModule)) {
-      return
-    }
-
     val moduleOutputPatcher = ModuleOutputPatcher()
     spanBuilder("build plugin")
       .setAttribute("mainModule", mainModule)

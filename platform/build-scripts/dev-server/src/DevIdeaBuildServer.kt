@@ -20,11 +20,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import kotlin.system.exitProcess
 
-internal val skippedPluginModules = hashSetOf<String>(
-  //"intellij.cwm.plugin", // quiche downloading should be implemented as a maven lib
-  //"intellij.cwm.plugin.projector", // as we excluded cwm, this plugin doesn't make sense
-)
-
 private enum class DevIdeaBuildServerStatus {
   OK,
   FAILED,

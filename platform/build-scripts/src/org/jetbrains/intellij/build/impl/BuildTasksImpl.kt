@@ -25,7 +25,6 @@ import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.impl.JarPackager.Companion.getLibraryName
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
 import org.jetbrains.intellij.build.impl.productInfo.generateMultiPlatformProductJson
@@ -832,7 +831,7 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
 
   for ((moduleName, libraryName) in layout.includedModuleLibraries) {
     checkModules(listOf(moduleName), "includedModuleLibraries in $description", context)
-    check(context.findRequiredModule(moduleName).libraryCollection.libraries.any { getLibraryName(it) == libraryName }) {
+    check(context.findRequiredModule(moduleName).libraryCollection.libraries.any { getLibraryFileName(it) == libraryName }) {
       "Cannot find library \'$libraryName\' in \'$moduleName\' (used in $description)"
     }
   }
@@ -841,7 +840,7 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
   for ((key, value) in layout.excludedModuleLibraries.entrySet()) {
     val libraries = context.findRequiredModule(key).libraryCollection.libraries
     for (libraryName in value) {
-      check(libraries.any { getLibraryName(it) == libraryName }) {
+      check(libraries.any { getLibraryFileName(it) == libraryName }) {
         "Cannot find library \'$libraryName\' in \'$key\' (used in \'excludedModuleLibraries\' in $description)"
       }
     }

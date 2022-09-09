@@ -408,7 +408,8 @@ class DistributionJARsBuilder {
                           items = dirToJar,
                           compress = compressPluginArchive,
                           withBlockMap = compressPluginArchive)
-        buildHelpPlugin(pluginVersion = defaultPluginVersion, context = context)?.let { helpPlugin ->
+        val helpPlugin = buildHelpPlugin(pluginVersion = defaultPluginVersion, context = context)
+        if (helpPlugin != null) {
           val spec = buildHelpPlugin(helpPlugin = helpPlugin,
                                      pluginsToPublishDir = stageDir,
                                      targetDir = autoUploadingDir,
@@ -443,7 +444,7 @@ class DistributionJARsBuilder {
                                       context: BuildContext): PluginRepositorySpec {
     val directory = helpPlugin.directoryName
     val destFile = targetDir.resolve("$directory.zip")
-    spanBuilder("build help plugin").setAttribute("dir", directory).useWithScope {
+    spanBuilder("build help plugin").setAttribute("dir", directory).useWithScope2 {
       buildPlugins(moduleOutputPatcher = moduleOutputPatcher,
                    plugins = listOf(helpPlugin),
                    targetDir = pluginsToPublishDir,
@@ -473,8 +474,7 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
 
   val entries: List<DistributionFileEntry> = coroutineScope {
     plugins.map { plugin ->
-      val isHelpPlugin = plugin.mainModule == "intellij.platform.builtInHelp"
-      if (!isHelpPlugin) {
+      if (plugin.mainModule != "intellij.platform.builtInHelp") {
         checkOutputOfPluginModules(mainPluginModule = plugin.mainModule,
                                    jarToModules = plugin.jarToModules,
                                    moduleExcludes = plugin.moduleExcludes,
@@ -917,10 +917,8 @@ suspend fun layoutDistribution(layout: BaseLayout,
     val patchers = layout.patchers
     withContext(Dispatchers.IO) {
       spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).useWithScope2 {
-        withContext(Dispatchers.IO) {
-          for (patcher in patchers) {
-            patcher(moduleOutputPatcher, context)
-          }
+        for (patcher in patchers) {
+          patcher(moduleOutputPatcher, context)
         }
       }
     }
