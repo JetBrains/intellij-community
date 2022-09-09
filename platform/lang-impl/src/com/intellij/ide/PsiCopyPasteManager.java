@@ -73,7 +73,7 @@ public final class PsiCopyPasteManager {
   }
 
   public PsiElement @Nullable [] getElements(boolean[] isCopied) {
-    MyData data = getData(myCopyPasteManager.getContents(ourDataFlavor));
+    MyData data = myCopyPasteManager.getContents(ourDataFlavor);
     if (data == null || !Comparing.equal(data, myRecentData)) {
       return null;
     }
