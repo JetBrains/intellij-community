@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.inspection;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.style.FieldMayBeFinalInspection;
 
-public class FieldMayBeFinalInspectionTest extends LombokInspectionTest {
+public class LombokFieldMayBeFinalInspectionTest extends LombokInspectionTest {
 
   @Override
   protected String getBasePath() {

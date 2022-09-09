@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.inspection;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.resources.AutoCloseableResourceInspection;
 
-public class AutoCloseableResourceInspectionTest extends LombokInspectionTest {
+public class LombokAutoCloseableResourceInspectionTest extends LombokInspectionTest {
 
   @Override
   protected String getBasePath() {

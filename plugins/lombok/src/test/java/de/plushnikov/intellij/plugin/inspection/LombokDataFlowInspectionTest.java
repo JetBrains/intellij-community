@@ -2,10 +2,9 @@ package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
-import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 
 
-public class DataFlowInspectionTest extends LombokInspectionTest {
+public class LombokDataFlowInspectionTest extends LombokInspectionTest {
 
   @Override
   protected String getBasePath() {
