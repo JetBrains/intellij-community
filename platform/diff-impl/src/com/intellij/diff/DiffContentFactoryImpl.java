@@ -655,7 +655,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       DocumentContent documentContent = new ContextReferentDocumentContent(project, document, textContent, context);
 
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-      if (file instanceof LightVirtualFile) {
+      if (file != null && !file.isInLocalFileSystem()) {
         OutsidersPsiFileSupport.markFile(file, originalFilePath != null ? originalFilePath.getPath() : null);
       }
 
