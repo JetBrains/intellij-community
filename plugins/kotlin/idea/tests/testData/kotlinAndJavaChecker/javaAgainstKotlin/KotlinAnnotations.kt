@@ -1,3 +1,4 @@
+// ALLOW_AST_ACCESS
 package k
 
 annotation class Anno1(val d: Int, val c: Int = 2)

@@ -1,3 +1,4 @@
+// ALLOW_AST_ACCESS
 class WithClassObject {
     companion object {
         fun foo() {}

@@ -1,3 +1,4 @@
+// ALLOW_AST_ACCESS
 package test
 
 public interface MyFunction<in P1, out R> : Function<R> {
