@@ -1,4 +1,3 @@
-// ALLOW_AST_ACCESS
 package test
 
 enum class ZZZ {

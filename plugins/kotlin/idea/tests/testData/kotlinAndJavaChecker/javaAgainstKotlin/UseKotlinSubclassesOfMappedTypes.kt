@@ -1,4 +1,3 @@
-// ALLOW_AST_ACCESS
 class KotlinComparableTest : Comparable<Int> {
     override fun compareTo(other: Int): Int {
         throw UnsupportedOperationException()
