@@ -2914,6 +2914,15 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.replace.readline.with.readln.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReplaceWithStringBuilderAppendRangeInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.replace.with.string.builder.append.range.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 
 </idea-plugin>
