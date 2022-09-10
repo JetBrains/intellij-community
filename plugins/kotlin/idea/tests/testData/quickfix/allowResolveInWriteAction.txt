@@ -81,3 +81,4 @@ org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelMigrateToPar
 org.jetbrains.kotlin.idea.quickfix.AddConversionCallFix
 org.jetbrains.kotlin.idea.quickfix.OverloadResolutionChangeFix
 org.jetbrains.kotlin.idea.quickfix.AbstractSuperCallFix
+org.jetbrains.kotlin.idea.quickfix.AddFunModifierFix
