@@ -34,8 +34,10 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
     )
   }
 
+  override val baseFileName: String
+    get() = "idea"
+
   init {
-    baseFileName = "idea"
     platformPrefix = "Idea"
     applicationInfoModule = "intellij.idea.community.resources"
     additionalIDEPropertiesFilePaths = persistentListOf(communityHome.communityRoot.resolve("build/conf/ideaCE.properties"))

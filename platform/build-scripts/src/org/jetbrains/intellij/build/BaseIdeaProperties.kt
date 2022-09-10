@@ -50,88 +50,88 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
   "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar" to "1.8",
 )
 
+@Suppress("SpellCheckingInspection")
+val BUNDLED_PLUGIN_MODULES: PersistentList<String> = persistentListOf(
+  "intellij.java.plugin",
+  "intellij.java.ide.customization",
+  "intellij.copyright",
+  "intellij.properties",
+  "intellij.terminal",
+  "intellij.emojipicker",
+  "intellij.textmate",
+  "intellij.editorconfig",
+  "intellij.settingsRepository",
+  "intellij.settingsSync",
+  "intellij.configurationScript",
+  "intellij.yaml",
+  "intellij.tasks.core",
+  "intellij.repository.search",
+  "intellij.maven",
+  "intellij.maven.model",
+  "intellij.maven.server",
+  "intellij.packageSearch",
+  "intellij.gradle",
+  "intellij.gradle.dependencyUpdater",
+  "intellij.android.gradle.dsl",
+  "intellij.gradle.java",
+  "intellij.gradle.java.maven",
+  "intellij.vcs.git",
+  "intellij.vcs.svn",
+  "intellij.vcs.hg",
+  "intellij.vcs.github",
+  "intellij.groovy",
+  "intellij.junit",
+  "intellij.testng",
+  "intellij.xpath",
+  "intellij.xslt.debugger",
+  "intellij.android.plugin",
+  "intellij.android.design-plugin",
+  "intellij.javaFX.community",
+  "intellij.java.i18n",
+  "intellij.ant",
+  "intellij.java.guiForms.designer",
+  "intellij.java.byteCodeViewer",
+  "intellij.java.coverage",
+  "intellij.java.decompiler",
+  "intellij.devkit",
+  "intellij.eclipse",
+  "intellij.platform.langInjection",
+  "intellij.java.debugger.streams",
+  "intellij.android.smali",
+  "intellij.completionMlRanking",
+  "intellij.completionMlRankingModels",
+  "intellij.statsCollector",
+  "intellij.sh",
+  "intellij.markdown",
+  "intellij.webp",
+  "intellij.grazie",
+  "intellij.featuresTrainer",
+  "intellij.vcs.git.featuresTrainer",
+  "intellij.lombok",
+  "intellij.searchEverywhereMl",
+  "intellij.platform.tracing.ide",
+  "intellij.toml",
+  KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
+  "intellij.keymap.eclipse",
+  "intellij.keymap.visualStudio",
+  "intellij.keymap.netbeans",
+)
+
+val CE_CLASS_VERSIONS: PersistentMap<String, String> = BASE_CLASS_VERSIONS.putAll(persistentHashMapOf(
+  "plugins/java/lib/jshell-frontend.jar" to "9",
+  "plugins/java/lib/sa-jdwp" to "",  // ignored
+  "plugins/java/lib/rt/debugger-agent.jar" to "1.7",
+  "plugins/Groovy/lib/groovy-rt.jar" to "1.7",
+  "plugins/Groovy/lib/groovy-constants-rt.jar" to "1.7",
+))
+
 /**
  * Base class for all editions of IntelliJ IDEA
  */
-abstract class BaseIdeaProperties : JetBrainsProductProperties() {
-  companion object {
-    @Suppress("SpellCheckingInspection")
-    val BUNDLED_PLUGIN_MODULES: PersistentList<String> = persistentListOf(
-      "intellij.java.plugin",
-      "intellij.java.ide.customization",
-      "intellij.copyright",
-      "intellij.properties",
-      "intellij.terminal",
-      "intellij.emojipicker",
-      "intellij.textmate",
-      "intellij.editorconfig",
-      "intellij.settingsRepository",
-      "intellij.settingsSync",
-      "intellij.configurationScript",
-      "intellij.yaml",
-      "intellij.tasks.core",
-      "intellij.repository.search",
-      "intellij.maven",
-      "intellij.maven.model",
-      "intellij.maven.server",
-      "intellij.packageSearch",
-      "intellij.gradle",
-      "intellij.gradle.dependencyUpdater",
-      "intellij.android.gradle.dsl",
-      "intellij.gradle.java",
-      "intellij.gradle.java.maven",
-      "intellij.vcs.git",
-      "intellij.vcs.svn",
-      "intellij.vcs.hg",
-      "intellij.vcs.github",
-      "intellij.groovy",
-      "intellij.junit",
-      "intellij.testng",
-      "intellij.xpath",
-      "intellij.xslt.debugger",
-      "intellij.android.plugin",
-      "intellij.android.design-plugin",
-      "intellij.javaFX.community",
-      "intellij.java.i18n",
-      "intellij.ant",
-      "intellij.java.guiForms.designer",
-      "intellij.java.byteCodeViewer",
-      "intellij.java.coverage",
-      "intellij.java.decompiler",
-      "intellij.devkit",
-      "intellij.eclipse",
-      "intellij.platform.langInjection",
-      "intellij.java.debugger.streams",
-      "intellij.android.smali",
-      "intellij.completionMlRanking",
-      "intellij.completionMlRankingModels",
-      "intellij.statsCollector",
-      "intellij.sh",
-      "intellij.markdown",
-      "intellij.webp",
-      "intellij.grazie",
-      "intellij.featuresTrainer",
-      "intellij.vcs.git.featuresTrainer",
-      "intellij.lombok",
-      "intellij.searchEverywhereMl",
-      "intellij.platform.tracing.ide",
-      "intellij.toml",
-      KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
-      "intellij.keymap.eclipse",
-      "intellij.keymap.visualStudio",
-      "intellij.keymap.netbeans",
-    )
-
-    val CE_CLASS_VERSIONS: PersistentMap<String, String> = BASE_CLASS_VERSIONS.putAll(persistentHashMapOf(
-      "plugins/java/lib/jshell-frontend.jar" to "9",
-      "plugins/java/lib/sa-jdwp" to "",  // ignored
-      "plugins/java/lib/rt/debugger-agent.jar" to "1.7",
-      "plugins/Groovy/lib/groovy-rt.jar" to "1.7",
-      "plugins/Groovy/lib/groovy-constants-rt.jar" to "1.7",
-    ))
-  }
-
+abstract class BaseIdeaProperties : ProductProperties() {
   init {
+    @Suppress("LeakingThis")
+    configureJetBrainsProduct(this)
     productLayout.mainJarName = "idea.jar"
 
     productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.java.ide.resources")
@@ -142,7 +142,7 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
           layout.withModule(name)
         }
       }
-      for (moduleName in listOf(
+      for (moduleName in arrayOf(
         "intellij.java.testFramework",
         "intellij.platform.testFramework.core",
         "intellij.platform.testFramework.impl",

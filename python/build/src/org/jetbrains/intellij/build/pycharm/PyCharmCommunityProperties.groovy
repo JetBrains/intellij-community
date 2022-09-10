@@ -12,10 +12,14 @@ import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf
 import static org.jetbrains.intellij.build.impl.PluginLayoutGroovy.plugin
 
 @CompileStatic
-class PyCharmCommunityProperties extends PyCharmPropertiesBase {
+final class PyCharmCommunityProperties extends PyCharmPropertiesBase {
+  @Override
+  String getCustomProductCode() {
+    return "PC"
+  }
+
   PyCharmCommunityProperties(BuildDependenciesCommunityRoot communityHome) {
     platformPrefix = "PyCharmCore"
-    customProductCode = "PC"
     applicationInfoModule = "intellij.pycharm.community"
     brandingResourcePaths = List.of(communityHome.communityRoot.resolve("python/resources"))
     scrambleMainJar = false

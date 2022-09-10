@@ -28,16 +28,19 @@ object VmOptionsGenerator {
     "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
     "-Djdk.attach.allowAttachSelf=true",
     "-Djdk.module.illegalAccess.silent=true",
-    "-Dkotlinx.coroutines.debug=off")
+    "-Dkotlinx.coroutines.debug=off"
+  )
 
   private val MEMORY_OPTIONS: Map<String, String> = linkedMapOf(
     "-Xms" to "128m",
     "-Xmx" to "750m",
-    "-XX:ReservedCodeCacheSize=" to "512m")
+    "-XX:ReservedCodeCacheSize=" to "512m"
+  )
 
   @JvmStatic
-  fun computeVmOptions(isEAP: Boolean, productProperties: ProductProperties): List<String> =
-    computeVmOptions(isEAP, productProperties.customJvmMemoryOptions)
+  fun computeVmOptions(isEAP: Boolean, productProperties: ProductProperties): List<String> {
+    return computeVmOptions(isEAP, productProperties.customJvmMemoryOptions)
+  }
 
   @JvmStatic
   fun computeVmOptions(isEAP: Boolean, customJvmMemoryOptions: Map<String, String>?): List<String> {
