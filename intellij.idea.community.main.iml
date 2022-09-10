@@ -180,7 +180,6 @@
     <orderEntry type="module" module-name="intellij.platform.tracing.ide" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.notebooks.visualization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.refactoring.detector" scope="RUNTIME" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinx.kotlinx-serialization-compiler-plugin-for-compilation" level="project" />
     <orderEntry type="module" module-name="intellij.keymap.eclipse" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.keymap.visualStudio" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.keymap.netbeans" scope="RUNTIME" />
