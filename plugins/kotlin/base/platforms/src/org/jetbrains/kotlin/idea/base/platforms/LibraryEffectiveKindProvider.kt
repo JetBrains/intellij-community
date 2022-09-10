@@ -13,10 +13,10 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import org.jetbrains.kotlin.idea.base.util.caching.findLibraryByEntityWithHack
 import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
@@ -35,10 +35,9 @@ class LibraryEffectiveKindProvider(project: Project): Disposable {
             }
 
             private fun dropKindMapEntry(libraryEntity: LibraryEntity?, storage: EntityStorage) {
-                val lib = libraryEntity?.findLibraryBridge(storage)
-                if (lib != null) {
-                    effectiveKindMap.remove(lib)
-                }
+                val entity = libraryEntity ?: return
+                val lib = storage.findLibraryByEntityWithHack(entity, project) ?: return
+                effectiveKindMap.remove(lib)
             }
         })
 

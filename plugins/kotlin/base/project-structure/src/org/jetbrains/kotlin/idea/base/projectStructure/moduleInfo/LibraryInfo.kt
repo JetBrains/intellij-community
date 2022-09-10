@@ -60,7 +60,7 @@ abstract class LibraryInfo(
         get() = _sourcesModuleInfo
 
     override fun getLibraryRoots(): Collection<String> =
-        library.getFiles(OrderRootType.CLASSES).mapNotNull(PathUtil::getLocalPath)
+        libraryWrapper.getFiles(OrderRootType.CLASSES).mapNotNull(PathUtil::getLocalPath)
 
     override fun createModificationTracker(): ModificationTracker =
         if (!project.useLibraryToSourceAnalysis) {
@@ -79,7 +79,7 @@ abstract class LibraryInfo(
     }
 
     override fun toString() =
-        "${this::class.simpleName}(libraryName=${library.name}${if (!isDisposed) ", libraryRoots=${getLibraryRoots()}" else " -disposed-"})"
+        "${this::class.simpleName}($libraryWrapper)"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

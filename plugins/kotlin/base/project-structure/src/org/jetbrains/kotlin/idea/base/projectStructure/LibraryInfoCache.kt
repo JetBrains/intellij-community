@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
@@ -33,9 +32,7 @@ class LibraryInfoCache(project: Project): SynchronizedFineGrainedEntityCache<Lib
     }
 
     override fun checkKeyValidity(key: Library) {
-        if (key is LibraryEx && key.isDisposed) {
-            throw AlreadyDisposedException("Library ${key.name} is already disposed")
-        }
+        key.checkValidity()
     }
 
     override fun calculate(key: Library): List<LibraryInfo> {
@@ -70,19 +67,18 @@ class LibraryInfoCache(project: Project): SynchronizedFineGrainedEntityCache<Lib
                 }
             }
         } else if (metadataLibraryInfoFactory != null) {
-            listOfNotNull(metadataLibraryInfoFactory(project, library))
+            listOf(metadataLibraryInfoFactory(project, library))
         } else {
             emptyList()
         }
     }
 
-    private fun getPlatform(library: Library): TargetPlatform {
+    private fun getPlatform(library: Library): TargetPlatform =
         if (library is LibraryEx && !library.isDisposed) {
-            return LibraryEffectiveKindProvider.getInstance(project).getEffectiveKind(library).platform
+            LibraryEffectiveKindProvider.getInstance(project).getEffectiveKind(library).platform
+        } else {
+            JvmPlatforms.defaultJvmPlatform
         }
-
-        return JvmPlatforms.defaultJvmPlatform
-    }
 
     internal class ModelChangeListener(project: Project) : LibraryEntityChangeListener(project, afterChangeApplied = false) {
 

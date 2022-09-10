@@ -18,19 +18,19 @@ sealed class LibraryDependencyCandidate {
         fun fromLibraryOrNull(project: Project, library: Library): LibraryDependencyCandidate? {
             val libraryInfos = LibraryInfoCache.getInstance(project)[library]
             val libraryInfo = libraryInfos.firstOrNull() ?: return null
-            if(libraryInfo is AbstractKlibLibraryInfo) {
-                return KlibLibraryDependencyCandidate(
+            return if (libraryInfo is AbstractKlibLibraryInfo) {
+                KlibLibraryDependencyCandidate(
                     platform = libraryInfo.platform,
                     libraries = libraryInfos,
                     uniqueName = libraryInfo.uniqueName,
                     isInterop = libraryInfo.isInterop
                 )
+            } else {
+                DefaultLibraryDependencyCandidate(
+                    platform = libraryInfo.platform,
+                    libraries = libraryInfos
+                )
             }
-
-            return DefaultLibraryDependencyCandidate(
-                platform = libraryInfo.platform,
-                libraries = libraryInfos
-            )
         }
     }
 }
