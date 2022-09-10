@@ -10,11 +10,10 @@ import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
+import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.fileClasses.JvmMultifileClassPartInfo
 import org.jetbrains.kotlin.fileClasses.fileClassInfo
-import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
@@ -83,8 +82,7 @@ object SourceNavigationHelper {
                     // if the asked element is multifile classs, it might be compiled into .kotlin_metadata and .class
                     // but we don't have support of metadata declarations in light classes and in reference search (without
                     // acceptOverrides). That's why we include only .class jar in the scope.
-                    val psiClass = JavaElementFinder.getInstance(containingFile.project)
-                        .findClass(containingFile.javaFileFacadeFqName.asString(), declaration.resolveScope)
+                    val psiClass = containingFile.findFacadeClass()
                     if (psiClass != null) {
                         return ModuleInfoProvider.getInstance(declaration.project)
                             .collectLibraryBinariesModuleInfos(psiClass.containingFile.virtualFile)

@@ -71,9 +71,8 @@ private class IdeKotlinDeclarationProvider(
         return KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex.getNamesInPackage(packageFqName, scope)
     }
 
-    override fun getFacadeFilesInPackage(packageFqName: FqName): Collection<KtFile> {
-        return KotlinFileFacadeClassByPackageIndex
-            .get(packageFqName.asString(), project, scope)
+    override fun findFilesForFacadeByPackage(packageFqName: FqName): Collection<KtFile> {
+        return KotlinFileFacadeClassByPackageIndex.get(packageFqName.asString(), project, scope)
     }
 
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {

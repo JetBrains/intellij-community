@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSer
 import org.jetbrains.kotlin.idea.completion.test.*
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractBasicCompletionHandlerTest
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionCharFilterTest
+import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractJavaCompletionHandlerTest
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractKeywordCompletionHandlerTest
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractSmartCompletionHandlerTest
 import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractBasicCompletionWeigherTest
@@ -1128,6 +1129,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("handlers/keywords", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
+        testClass<AbstractJavaCompletionHandlerTest> {
+            model("handlers/injava", pattern = JAVA)
+        }
+
         testClass<AbstractCompletionCharFilterTest> {
             model("handlers/charFilter", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
         }
@@ -1257,11 +1262,14 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("uast/uast-kotlin/tests", testDataPath = "../../uast-kotlin-fir/testData") {
         testClass<AbstractFE1UastDeclarationTest> {
             model("declaration")
-            model("legacy")
         }
 
         testClass<AbstractFE1UastTypesTest> {
             model("type")
+        }
+
+        testClass<AbstractFE1UastValuesTest> {
+            model("value")
         }
     }
 

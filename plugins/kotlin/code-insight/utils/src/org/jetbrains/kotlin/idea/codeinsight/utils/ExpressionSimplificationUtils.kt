@@ -50,6 +50,8 @@ object NegatedBinaryExpressionSimplificationUtils {
 
         KtTokens.EQEQ -> KtTokens.EXCLEQ
         KtTokens.EXCLEQ -> KtTokens.EQEQ
+        KtTokens.EQEQEQ -> KtTokens.EXCLEQEQEQ
+        KtTokens.EXCLEQEQEQ -> KtTokens.EQEQEQ
 
         KtTokens.LT -> KtTokens.GTEQ
         KtTokens.GTEQ -> KtTokens.LT

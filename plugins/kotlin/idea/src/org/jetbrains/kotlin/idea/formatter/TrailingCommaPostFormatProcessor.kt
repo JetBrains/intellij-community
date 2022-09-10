@@ -13,6 +13,8 @@ import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.util.reformatted
+import org.jetbrains.kotlin.idea.codeinsight.utils.trailingCommaAllowedInModule
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.visitor.TrailingCommaVisitor
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaContext
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper.findInvalidCommas
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper.lineBreakIsMissing
