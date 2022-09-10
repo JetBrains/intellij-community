@@ -3,17 +3,22 @@
 package org.jetbrains.kotlin.checkers
 
 import com.intellij.ide.highlighter.JavaClassFileType
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiCompiledElement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMember
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.FileTreeAccessFilter
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -24,6 +29,7 @@ import org.jetbrains.kotlin.idea.test.CompilerTestDirectives
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 
@@ -71,8 +77,12 @@ abstract class AbstractJavaAgainstKotlinBinariesCheckerTest : AbstractJavaAgains
 
         classFiles.forEach { assertFalse(it.isContentsLoaded) }
 
-        fun unwrapWithAssert(element: PsiNamedElement) {
-            val result = kotlin.runCatching { element.unwrapped }
+        val unwrappedMap = mutableMapOf<PsiMember, PsiElement?>()
+        fun unwrapWithAssert(element: PsiMember) {
+            val result = kotlin.runCatching {
+                unwrappedMap[element] = element.unwrapped
+            }
+
             if (!allowAstForCompiledFile) {
                 result.exceptionOrNull()?.let {
                     fail("access to tree from ${element.name}")
@@ -124,6 +134,32 @@ abstract class AbstractJavaAgainstKotlinBinariesCheckerTest : AbstractJavaAgains
                 }.joinToString("\n"),
                 /* expectedFilePath = */ ktFilePath,
             )
+        }
+
+        if (allowAstForCompiledFile) return
+
+        classFiles.forEach {
+            it.children
+            assertTrue(it.isContentsLoaded)
+        }
+
+        for ((member, unwrapped) in unwrappedMap.entries) {
+            if (member is PsiClass) continue
+
+            val file = member.containingFile.cast<PsiCompiledElement>().mirror as KtClsFile
+            val unwrappedByAst = KotlinDeclarationInCompiledFileSearcher.getInstance().findDeclarationInCompiledFile(
+                file,
+                member,
+            )
+
+            if (unwrapped != null) {
+                assertEquals("${member.name}", unwrapped, unwrappedByAst)
+            }
+        }
+
+        classFiles.forEach {
+            runWriteAction { it.onContentReload() }
+            assertFalse(it.isContentsLoaded)
         }
     }
 }
