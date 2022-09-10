@@ -26,6 +26,7 @@ class KotlinJdkAndMultiplatformStdlibDescriptor private constructor(private val 
 
     companion object {
         val JDK_AND_MULTIPLATFORM_STDLIB_WITH_SOURCES = KotlinJdkAndMultiplatformStdlibDescriptor(true)
+        val JDK_AND_MULTIPLATFORM_STDLIB = KotlinJdkAndMultiplatformStdlibDescriptor(false)
 
         private const val STDLIB_COMMON_LIB_NAME = "stdlib-common"
         private const val STDLIB_LIB_NAME = "stdlib"

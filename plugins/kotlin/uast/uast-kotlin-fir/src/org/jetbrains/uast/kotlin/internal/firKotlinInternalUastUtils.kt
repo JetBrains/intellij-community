@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.*
@@ -195,6 +194,19 @@ internal fun KtAnalysisSession.nullability(ktType: KtType?): TypeNullability? {
     if (ktType == null) return null
     if (ktType is KtClassErrorType) return null
     return if (ktType.canBeNull) TypeNullability.NULLABLE else TypeNullability.NOT_NULL
+}
+
+internal fun KtAnalysisSession.nullability(ktCallableDeclaration: KtCallableDeclaration): TypeNullability? {
+    val ktType = (ktCallableDeclaration.getSymbol() as? KtCallableSymbol)?.returnType
+    return nullability(ktType)
+}
+
+internal fun KtAnalysisSession.nullability(ktDeclaration: KtDeclaration): TypeNullability? {
+    return nullability(ktDeclaration.getReturnKtType())
+}
+
+internal fun KtAnalysisSession.nullability(ktExpression: KtExpression): TypeNullability? {
+    return nullability(ktExpression.getKtType())
 }
 
 /**

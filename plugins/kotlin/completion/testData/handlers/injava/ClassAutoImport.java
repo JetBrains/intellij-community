@@ -3,3 +3,5 @@ public class Testing {
         ClassFr<caret>
     }
 }
+
+// INVOCATION_COUNT: 2

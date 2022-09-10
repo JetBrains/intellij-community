@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.inspections
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.intention.FileModifier
@@ -18,13 +17,13 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.formatter.TrailingCommaVisitor
+import org.jetbrains.kotlin.idea.codeinsight.utils.trailingCommaAllowedInModule
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.visitor.TrailingCommaVisitor
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaContext
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaState
 import org.jetbrains.kotlin.idea.formatter.trailingComma.addTrailingCommaIsAllowedFor
-import org.jetbrains.kotlin.idea.formatter.trailingCommaAllowedInModule
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.isComma
