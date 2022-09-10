@@ -80,8 +80,12 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
   )
 
+  @Override
+  public String getBaseFileName() {
+    return "studio"
+  }
+
   AndroidStudioProperties(Path home, BuildOptions buildOptions) {
-    baseFileName = "studio"
     platformPrefix = "AndroidStudio"
     productCode = "AI"
     applicationInfoModule = "intellij.android.adt.branding"
