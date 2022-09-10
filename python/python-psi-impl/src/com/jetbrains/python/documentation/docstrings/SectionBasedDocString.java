@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static com.jetbrains.python.documentation.docstrings.SectionBasedDocString.FieldType.OPTIONAL_TYPE;
+
 /**
  * Common base class for docstring styles supported by Napoleon Sphinx extension.
  *
@@ -219,6 +221,13 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
            // note that field may have the same indent as its containing section
            (!isEmpty(lineNum) && getLineIndentSize(lineNum) <= getSectionIndentationThreshold(curSectionIndent)) ||
            isSectionStart(lineNum);
+  }
+
+  @NotNull
+  protected Pair<List<Substring>, Integer> parseFieldContinuation(int lineNum, @NotNull FieldType fieldType) {
+    int indent = getLineIndentSize(lineNum);
+    // we don't need additional indentation for Yields and Returns sections
+    return parseIndentedBlock(lineNum + 1, fieldType == OPTIONAL_TYPE ? indent - 1 : indent);
   }
 
   /**

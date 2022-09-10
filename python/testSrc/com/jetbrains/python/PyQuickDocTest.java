@@ -721,6 +721,16 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  // PY-43035
+  public void testMultilineReturnSectionGoogle() {
+    checkHTMLOnly();
+  }
+
+  // PY-43035
+  public void testMultilineReturnSectionNumpy() {
+    checkHTMLOnly();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/quickdoc/";
