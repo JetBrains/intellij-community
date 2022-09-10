@@ -380,11 +380,13 @@ class DistributionJARsBuilder {
         val pluginsToIncludeInCustomRepository = ConcurrentLinkedQueue<PluginRepositorySpec>()
         val autoPublishPluginChecker = loadPluginAutoPublishList(context)
         val prepareCustomPluginRepositoryForPublishedPlugins = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins
+        // we don't simplify layout for non-bundled plugins, because PluginInstaller not ready for this (see rootEntryName)
         val mappings = buildPlugins(moduleOutputPatcher = moduleOutputPatcher,
                                     plugins = pluginsToPublish.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE),
                                     targetDir = stageDir,
                                     state = state,
                                     context = context,
+                                    simplify = false,
                                     buildPlatformJob = buildPlatformLibJob) { plugin, pluginDirOrFile ->
           val targetDirectory = if (autoPublishPluginChecker.test(plugin)) autoUploadingDir else nonBundledPluginsArtifacts
           val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
@@ -460,6 +462,7 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
                                  state: DistributionBuilderState,
                                  context: BuildContext,
                                  buildPlatformJob: Job?,
+                                 simplify: Boolean = true,
                                  pluginBuilt: ((PluginLayout, pluginDirOrFile: Path) -> Unit)? = null): List<DistributionFileEntry> {
   val scrambleTool = context.proprietaryBuildTools.scrambleTool
   val isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
@@ -490,7 +493,7 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
           val (entries, file) = layoutDistribution(layout = plugin,
                                            targetDirectory = pluginDir,
                                            copyFiles = true,
-                                           simplify = true,
+                                           simplify = simplify,
                                            moduleOutputPatcher = moduleOutputPatcher,
                                            jarToModule = plugin.jarToModules,
                                            context = context)
@@ -1089,7 +1092,7 @@ private fun checkModuleExcludes(moduleExcludes: Map<String, List<String>>, conte
 
 private suspend fun bulkZipWithPrefix(items: Collection<Pair<Path, Path>>, compress: Boolean, withBlockMap: Boolean) {
   spanBuilder("archive directories").setAttribute(AttributeKey.longKey("count"), items.size.toLong()).useWithScope2 {
-    val json = JSON.std.without(JSON.Feature.USE_FIELDS)
+    val json by lazy { JSON.std.without(JSON.Feature.USE_FIELDS) }
     withContext(Dispatchers.IO) {
       for (item in items) {
         val target = item.second
@@ -1098,7 +1101,7 @@ private suspend fun bulkZipWithPrefix(items: Collection<Pair<Path, Path>>, compr
             .setAttribute("input", item.first.toString())
             .setAttribute("outputFile", target.toString())
             .useWithScope2 {
-              writeNewZip(target, compress = compress) { zipCreator ->
+              writeNewZip(target, compress = compress, withOptimizedMetadataEnabled = false) { zipCreator ->
                 ZipArchiver(zipCreator).use { archiver ->
                   if (Files.isDirectory(item.first)) {
                     archiver.setRootDir(item.first, item.first.fileName.toString())
