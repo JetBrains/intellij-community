@@ -28,7 +28,6 @@ import com.jetbrains.python.run.toStringLiteral
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
-import java.nio.file.Path
 import java.util.function.Function
 
 fun getPathMapper(project: Project,
@@ -119,10 +118,10 @@ fun constructPyPathAndWorkingDirCommand(pythonPath: MutableCollection<String>,
 }
 
 fun constructPyPathAndWorkingDirCommand(pythonPath: MutableCollection<Function<TargetEnvironment, String>>,
-                                        workingDir: String?,
+                                        workingDirFunction: TargetEnvironmentFunction<String>?,
                                         command: String): TargetEnvironmentFunction<String> {
-  if (workingDir != null) {
-    pythonPath.add(targetPath(Path.of(workingDir)))
+  if (workingDirFunction != null) {
+    pythonPath.add(workingDirFunction)
   }
   val path = pythonPath.joinToStringFunction(separator = ", ", transform = String::toStringLiteral)
   return ReplaceSubstringFunction(command, PydevConsoleRunnerImpl.WORKING_DIR_AND_PYTHON_PATHS, path)
