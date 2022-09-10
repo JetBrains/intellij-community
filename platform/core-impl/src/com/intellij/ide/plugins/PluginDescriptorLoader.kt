@@ -560,7 +560,7 @@ private fun CoroutineScope.loadDescriptorsFromDirs(
   isRunningFromSources: Boolean = PluginManagerCore.isRunningFromSources(),
   zipFilePool: ZipFilePool?,
 ): List<Deferred<IdeaPluginDescriptorImpl?>> {
-  val isInDevServerMode = java.lang.Boolean.getBoolean("idea.use.dev.build.server")
+  val isInDevServerMode = AppMode.isDevServer()
 
   val platformPrefixProperty = PlatformUtils.getPlatformPrefix()
   val platformPrefix = if (platformPrefixProperty == PlatformUtils.QODANA_PREFIX) {
@@ -583,7 +583,7 @@ private fun CoroutineScope.loadDescriptorsFromDirs(
     null
   }
   else if (isInDevServerMode) {
-    Paths.get(PathManager.getHomePath(), "out/dev-run", platformPrefix, "plugins")
+    Paths.get(PathManager.getHomePath(), "out/dev-run", AppMode.getDevBuildRunDirName(platformPrefix), "plugins")
   }
   else {
     Paths.get(PathManager.getPreInstalledPluginsPath())

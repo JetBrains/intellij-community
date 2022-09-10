@@ -2,13 +2,11 @@
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.diagnostic.telemetry.useWithScope2
-import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.ConsoleSpanExporter
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.TracerProviderManager
-import java.nio.file.Path
 import java.util.function.Supplier
 
 object DevIdeaBuilder {
@@ -19,9 +17,11 @@ object DevIdeaBuilder {
       // don't use JaegerJsonSpanExporter - not needed for clients, should be enabled only if needed to avoid writing ~500KB JSON file
       TracerProviderManager.spanExporterProvider = Supplier { listOf(ConsoleSpanExporter()) }
       try {
-        buildProductInProcess(homePath = getHomePath(),
-                              platformPrefix = System.getProperty("idea.platform.prefix") ?: "idea",
-                              additionalModules = getAdditionalModules()?.toList() ?: emptyList())
+        buildProductInProcess(request = BuildRequest(
+          homePath = getHomePath(),
+          platformPrefix = System.getProperty("idea.platform.prefix") ?: "idea",
+          additionalModules = getAdditionalModules()?.toList() ?: emptyList()
+        ))
       }
       finally {
         TracerProviderManager.flush()
@@ -30,12 +30,9 @@ object DevIdeaBuilder {
   }
 }
 
-suspend fun buildProductInProcess(homePath: Path, platformPrefix: String, additionalModules: List<String>) {
-  spanBuilder("build ide")
-    .setAttribute("platformPrefix", platformPrefix)
-    .setAttribute(AttributeKey.stringArrayKey("additionalModules"), additionalModules)
-    .useWithScope2 {
-      BuildServer(homePath = homePath, additionalModules = additionalModules)
-        .buildProductInProcess(platformPrefix, isServerMode = false)
-    }
+suspend fun buildProductInProcess(request: BuildRequest) {
+  spanBuilder("build ide").setAttribute("request", request.toString()).useWithScope2 {
+    BuildServer(homePath = request.homePath, productionClassOutput = request.productionClassOutput)
+      .buildProductInProcess(isServerMode = false, request = request)
+  }
 }

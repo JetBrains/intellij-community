@@ -50,9 +50,22 @@ object DevIdeaBuildServer {
 
   private fun start() {
     val additionalModules = getAdditionalModules()?.toList()
-    val buildServer = BuildServer(homePath = getHomePath(), additionalModules ?: emptyList())
+    val homePath = getHomePath()
+    val productionClassOutput = (System.getenv("CLASSES_DIR")?.let { Path.of(it).toAbsolutePath().normalize() }
+                                 ?: homePath.resolve("out/classes/production"))
 
-    val httpServer = createHttpServer(buildServer)
+    val httpServer = createHttpServer(
+      buildServer = BuildServer(
+        homePath = homePath,
+        productionClassOutput = productionClassOutput
+      ),
+      requestTemplate = BuildRequest(
+        platformPrefix = "",
+        additionalModules = additionalModules ?: emptyList(),
+        homePath = homePath,
+        productionClassOutput = productionClassOutput,
+      )
+    )
     println("Listening on ${httpServer.address.hostString}:${httpServer.address.port}")
     println(
       "Custom plugins: ${additionalModules?.joinToString() ?: "not set (use VM property `additional.modules` to specify additional module ids)"}")
@@ -78,7 +91,9 @@ object DevIdeaBuildServer {
 
   private fun HttpExchange.getPlatformPrefix() = parseQuery(this.requestURI).get("platformPrefix")?.first() ?: "idea"
 
-  private fun createBuildEndpoint(httpServer: HttpServer, buildServer: BuildServer): HttpContext? {
+  private fun createBuildEndpoint(httpServer: HttpServer,
+                                  buildServer: BuildServer,
+                                  requestTemplate: BuildRequest): HttpContext? {
     return httpServer.createContext("/build") { exchange ->
       val platformPrefix = exchange.getPlatformPrefix()
 
@@ -92,7 +107,7 @@ object DevIdeaBuildServer {
 
         exchange.responseHeaders.add("Content-Type", "text/plain")
         runBlocking(Dispatchers.Default) {
-          val ideBuilder = buildServer.checkOrCreateIdeBuilder(platformPrefix)
+          val ideBuilder = buildServer.checkOrCreateIdeBuilder(requestTemplate.copy(platformPrefix = platformPrefix))
           statusMessage = ideBuilder.pluginBuilder.buildChanged()
         }
         println(statusMessage)
@@ -162,11 +177,11 @@ object DevIdeaBuildServer {
     }
   }
 
-  private fun createHttpServer(buildServer: BuildServer): HttpServer {
+  private fun createHttpServer(buildServer: BuildServer, requestTemplate: BuildRequest): HttpServer {
     val httpServer = HttpServer.create()
     httpServer.bind(InetSocketAddress(InetAddress.getLoopbackAddress(), SERVER_PORT), 2)
 
-    createBuildEndpoint(httpServer, buildServer)
+    createBuildEndpoint(httpServer, buildServer, requestTemplate)
     createStatusEndpoint(httpServer)
     createStopEndpoint(httpServer)
 
@@ -200,5 +215,3 @@ internal fun clearDirContent(dir: Path): Boolean {
   }
   return true
 }
-
-internal class ConfigurationException(message: String) : RuntimeException(message)

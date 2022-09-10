@@ -16,7 +16,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
-import java.net.*;
+import java.net.ConnectException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Stream;
@@ -28,15 +30,11 @@ public final class BootstrapClassLoaderUtil {
 
   private BootstrapClassLoaderUtil() { }
 
-  private static boolean isDevServer() {
-    return Boolean.getBoolean("idea.use.dev.build.server");
-  }
-
   // for CWM
   // Marketplace plugin, PROPERTY_IGNORE_CLASSPATH and PROPERTY_ADDITIONAL_CLASSPATH is not supported by intention
   public static @NotNull Collection<Path> getProductClassPath() throws IOException {
     Path distDir = Path.of(PathManager.getHomePath());
-    if (isDevServer()) {
+    if (AppMode.isDevServer()) {
       return loadClassPathFromDevBuild(distDir);
     }
 
@@ -58,16 +56,14 @@ public final class BootstrapClassLoaderUtil {
   public static void initClassLoader(boolean addCwmLibs) throws Throwable {
     Path distDir = Path.of(PathManager.getHomePath());
     ClassLoader classLoader = BootstrapClassLoaderUtil.class.getClassLoader();
+    if (!(classLoader instanceof PathClassLoader)) {
+      throw new RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader");
+    }
+    PathClassLoader pathClassLoader = (PathClassLoader)classLoader;
 
-    if (isDevServer()) {
-      if (!(classLoader instanceof PathClassLoader)) {
-        //noinspection UseOfSystemOutOrSystemErr
-        System.err.println("Please run with VM option -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader");
-        System.exit(1);
-      }
-
+    if (AppMode.isDevServer()) {
       List<Path> paths = loadClassPathFromDevBuild(distDir);
-      ((PathClassLoader)classLoader).getClassPath().appendFiles(paths);
+      pathClassLoader.getClassPath().appendFiles(paths);
       return;
     }
 
@@ -128,11 +124,6 @@ public final class BootstrapClassLoaderUtil {
       updateSystemClassLoader = true;
     }
 
-    if (!(classLoader instanceof PathClassLoader)) {
-      throw new RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader");
-    }
-
-    PathClassLoader pathClassLoader = (PathClassLoader)classLoader;
     if (!classpath.isEmpty()) {
       pathClassLoader.getClassPath().appendFiles(List.copyOf(classpath));
     }
@@ -168,7 +159,7 @@ public final class BootstrapClassLoaderUtil {
   private static @NotNull List<Path> loadClassPathFromDevBuild(@NotNull Path distDir) throws IOException {
     String platformPrefix = System.getProperty("idea.platform.prefix", "idea");
     Path devRunDir = distDir.resolve("out/dev-run");
-    Path productDevRunDir = devRunDir.resolve(platformPrefix);
+    Path productDevRunDir = devRunDir.resolve(AppMode.getDevBuildRunDirName(platformPrefix));
     Path coreClassPathFile = productDevRunDir.resolve("core-classpath.txt");
     FileSystem fs = FileSystems.getDefault();
     try {

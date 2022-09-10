@@ -20,13 +20,24 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEnt
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jetbrains.xxh3.Xx3UnencodedString
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.seconds
 
 internal const val UNMODIFIED_MARK_FILE_NAME = ".unmodified"
 private const val PLUGIN_CACHE_DIR_NAME = "plugin-cache"
+
+data class BuildRequest(
+  @JvmField val platformPrefix: String,
+  @JvmField val additionalModules: List<String>,
+  @JvmField val isIdeProfileAware: Boolean = false,
+  @JvmField val homePath: Path,
+  @JvmField val productionClassOutput: Path = Path.of(System.getenv("CLASSES_DIR")
+                                                      ?: homePath.resolve("out/classes/production").toString()).toAbsolutePath(),
+)
 
 private suspend fun computeLibClassPath(targetFile: Path, homePath: Path, context: BuildContext) {
   spanBuilder("compute lib classpath").useWithScope2 {
@@ -60,26 +71,22 @@ internal class IdeBuilder(internal val pluginBuilder: PluginBuilder,
   }
 }
 
-internal suspend fun buildProduct(productConfiguration: ProductConfiguration,
-                                  homePath: Path,
-                                  outDir: Path,
-                                  additionalModules: List<String>,
-                                  platformPrefix: String,
-                                  isServerMode: Boolean): IdeBuilder {
+internal suspend fun buildProduct(productConfiguration: ProductConfiguration, request: BuildRequest, isServerMode: Boolean): IdeBuilder {
   val runDir = withContext(Dispatchers.IO) {
     val usePluginCache = spanBuilder("check plugin cache applicability").useWithScope2 {
-      checkBuildModulesModificationAndMark(productConfiguration, outDir)
+      checkBuildModulesModificationAndMark(productConfiguration, request.productionClassOutput)
     }
-    createRunDirForProduct(homePath = homePath, platformPrefix = platformPrefix, usePluginCache = usePluginCache)
+    createRunDirForProduct(homePath = request.homePath,
+                           usePluginCache = usePluginCache,
+                           request = request)
   }
 
   val context = createBuildContext(productConfiguration = productConfiguration,
-                                   outDir = outDir,
-                                   homePath = homePath,
+                                   request = request,
                                    runDir = runDir,
                                    isServerMode = isServerMode)
 
-  val bundledMainModuleNames = getBundledMainModuleNames(context.productProperties, additionalModules)
+  val bundledMainModuleNames = getBundledMainModuleNames(context.productProperties, request.additionalModules)
 
   val pluginRootDir = runDir.resolve("plugins")
   val pluginCacheRootDir = runDir.resolve(PLUGIN_CACHE_DIR_NAME)
@@ -104,13 +111,13 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration,
     pluginBuildDescriptors.add(pluginBuildDescriptor)
   }
 
-  val artifactOutDir = homePath.resolve("out/classes/artifacts").toString()
+  val artifactOutDir = request.homePath.resolve("out/classes/artifacts").toString()
   for (artifact in JpsArtifactService.getInstance().getArtifacts(context.project)) {
     artifact.outputPath = "$artifactOutDir/${PathUtilRt.getFileName(artifact.outputPath)}"
   }
 
   // initial building
-  val pluginBuilder = PluginBuilder(outDir = outDir,
+  val pluginBuilder = PluginBuilder(outDir = request.productionClassOutput,
                                     pluginRootDir = pluginRootDir,
                                     pluginCacheRootDir = pluginCacheRootDir,
                                     context = context)
@@ -123,30 +130,31 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration,
     }
     launch {
       computeLibClassPath(targetFile = runDir.resolve(if (isServerMode) "libClassPath.txt" else "core-classpath.txt"),
-                          homePath = homePath,
+                          homePath = request.homePath,
                           context = context)
     }
   }
-  return IdeBuilder(pluginBuilder = pluginBuilder, outDir = outDir, moduleNameToPlugin = moduleNameToPluginBuildDescriptor)
+  return IdeBuilder(pluginBuilder = pluginBuilder, outDir = request.productionClassOutput, moduleNameToPlugin = moduleNameToPluginBuildDescriptor)
 }
 
 private suspend fun createBuildContext(productConfiguration: ProductConfiguration,
-                                       outDir: Path,
-                                       homePath: Path,
+                                       request: BuildRequest,
                                        runDir: Path,
                                        isServerMode: Boolean): BuildContext {
   return coroutineScope {
     // ~1 second
     val productProperties = async {
-      createProductProperties(productConfiguration, outDir, homePath)
+      withTimeout(30.seconds) {
+        createProductProperties(productConfiguration = productConfiguration, request = request)
+      }
     }
 
     // load project is executed as part of compilation context creation - ~1 second
     val compilationContext = async {
       spanBuilder("create build context").useWithScope2 {
         CompilationContextImpl.createCompilationContext(
-          communityHome = getCommunityHomePath(homePath),
-          projectHome = homePath,
+          communityHome = getCommunityHomePath(request.homePath),
+          projectHome = request.homePath,
           buildOutputRootEvaluator = { _ -> runDir },
           options = createBuildOptions(runDir).also { it.setupTracer = isServerMode }
         )
@@ -154,7 +162,7 @@ private suspend fun createBuildContext(productConfiguration: ProductConfiguratio
     }
 
     BuildContextImpl.createContext(compilationContext = compilationContext.await(),
-                                   projectHome = homePath,
+                                   projectHome = request.homePath,
                                    productProperties = productProperties.await()
     )
   }
@@ -179,16 +187,13 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
                                        context = context)
 }
 
-private suspend fun createProductProperties(productConfiguration: ProductConfiguration, outDir: Path, homePath: Path): ProductProperties {
-  val classPathFiles = getBuildModules(productConfiguration).map { outDir.resolve(it) }.toList()
+private suspend fun createProductProperties(productConfiguration: ProductConfiguration, request: BuildRequest): ProductProperties {
+  val classPathFiles = getBuildModules(productConfiguration).map { request.productionClassOutput.resolve(it) }.toList()
 
   val classLoader = spanBuilder("create product properties classloader").useWithScope2 {
-    PathClassLoader(
-      UrlClassLoader.build()
-        .useCache()
-        .files(classPathFiles)
-        .parent(IdeBuilder::class.java.classLoader)
-    )
+    PathClassLoader(UrlClassLoader.build().files(classPathFiles).parent(IdeBuilder::class.java.classLoader))
+
+    //URLClassLoader.newInstance(classPathFiles.map { it.toUri().toURL() }.toTypedArray())
   }
 
   val productProperties = spanBuilder("create product properties").useWithScope2 {
@@ -196,13 +201,15 @@ private suspend fun createProductProperties(productConfiguration: ProductConfigu
       classLoader.loadClass(productConfiguration.className)
     }
     catch (e: ClassNotFoundException) {
-      throw RuntimeException("cannot create product properties (classPath=${classPathFiles.joinToString(separator = "\n")}, " +
-                             "homePath=$homePath)", e)
+      val classPathString = classPathFiles.joinToString(separator = "\n") { file ->
+        "$file (" + (if (Files.isDirectory(file)) "dir" else if (Files.exists(file)) "exists" else "doesn't exist") + ")"
+      }
+      throw RuntimeException("cannot create product properties (classPath=$classPathString")
     }
 
     MethodHandles.lookup()
       .findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE, Path::class.java))
-      .invoke(homePath) as ProductProperties
+      .invoke(request.homePath) as ProductProperties
   }
   return productProperties
 }
@@ -300,7 +307,19 @@ internal fun getAdditionalModules(): Sequence<String>? {
     .filter { it.isNotEmpty() }
 }
 
-private fun createRunDirForProduct(homePath: Path, platformPrefix: String, usePluginCache: Boolean): Path {
+fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String {
+  if (additionalModules.isEmpty()) {
+    return ""
+  }
+
+  val string = additionalModules.sorted().joinToString (",")
+  val result = Xx3UnencodedString.hashUnencodedString(string, 0).toString(26) +
+               Xx3UnencodedString.hashUnencodedString(string, 301236010888646397L).toString(36)
+  // - maybe here due to negative number
+  return if (result.startsWith('-')) result else "-$result"
+}
+
+private fun createRunDirForProduct(homePath: Path, usePluginCache: Boolean, request: BuildRequest): Path {
   // if symlinked to ram disk, use real path for performance reasons and avoid any issues in ant/other code
   var rootDir = homePath.resolve("out/dev-run")
   if (Files.exists(rootDir)) {
@@ -308,7 +327,8 @@ private fun createRunDirForProduct(homePath: Path, platformPrefix: String, usePl
     rootDir = rootDir.toRealPath()
   }
 
-  val runDir = rootDir.resolve(if (platformPrefix == "Idea") "idea-community" else platformPrefix)
+  val classifier = if (request.isIdeProfileAware) computeAdditionalModulesFingerprint(request.additionalModules) else ""
+  val runDir = rootDir.resolve((if (request.platformPrefix == "Idea") "idea-community" else request.platformPrefix) + classifier)
   // on start delete everything to avoid stale data
   if (!Files.isDirectory(runDir)) {
     Files.createDirectories(runDir)

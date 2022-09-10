@@ -20,44 +20,38 @@ internal data class Configuration(@JvmField val products: Map<String, ProductCon
 @Serializable
 internal data class ProductConfiguration(@JvmField val modules: List<String>, @JvmField @SerialName("class") val className: String)
 
-internal class BuildServer(@JvmField val homePath: Path, private val additionalModules: List<String>) {
-  private val outDir: Path = Path.of(System.getenv("CLASSES_DIR") ?: homePath.resolve("out/classes/production").toString()).toAbsolutePath()
+internal class BuildServer(homePath: Path, productionClassOutput: Path) {
   private val configuration: Configuration
 
   private val platformPrefixToPluginBuilder = ConcurrentHashMap<String, Deferred<IdeBuilder>>()
 
   init {
     // for compatibility with local runs and runs on CI
-    System.setProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY, outDir.parent.toString())
+    System.setProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY, productionClassOutput.parent.toString())
 
     val jsonFormat = Json { isLenient = true }
-    configuration = jsonFormat.decodeFromString(Configuration.serializer(),
-                                                Files.readString(homePath.resolve("build/dev-build.json")))
+    configuration = jsonFormat.decodeFromString(Configuration.serializer(), Files.readString(homePath.resolve("build/dev-build.json")))
   }
 
   // not synchronized version
-  suspend fun buildProductInProcess(platformPrefix: String, isServerMode: Boolean): IdeBuilder {
-    return buildProduct(productConfiguration = getProductConfiguration(platformPrefix),
-                        homePath = homePath,
-                        outDir = outDir,
-                        additionalModules = additionalModules,
-                        platformPrefix = platformPrefix,
-                        isServerMode = isServerMode)
+  suspend fun buildProductInProcess(isServerMode: Boolean, request: BuildRequest): IdeBuilder {
+    val platformPrefix = request.platformPrefix
+    return buildProduct(productConfiguration = getProductConfiguration(platformPrefix), request = request, isServerMode = isServerMode)
   }
 
-  suspend fun checkOrCreateIdeBuilder(platformPrefix: String): IdeBuilder {
-    platformPrefixToPluginBuilder.get(platformPrefix)?.let {
+  suspend fun checkOrCreateIdeBuilder(request: BuildRequest): IdeBuilder {
+    platformPrefixToPluginBuilder.get(request.platformPrefix)?.let {
       return checkChangesIfNeeded(it)
     }
 
     val ideBuilderDeferred = CompletableDeferred<IdeBuilder>()
-    platformPrefixToPluginBuilder.putIfAbsent(platformPrefix, ideBuilderDeferred)?.let {
+    platformPrefixToPluginBuilder.putIfAbsent(request.platformPrefix, ideBuilderDeferred)?.let {
       ideBuilderDeferred.cancel()
       return checkChangesIfNeeded(it)
     }
 
     try {
-      return buildProductInProcess(platformPrefix, isServerMode = true)
+      return buildProductInProcess(isServerMode = true, request = request)
     }
     catch (e: Throwable) {
       ideBuilderDeferred.completeExceptionally(e)
@@ -83,3 +77,5 @@ internal class BuildServer(@JvmField val homePath: Path, private val additionalM
     }
   }
 }
+
+internal class ConfigurationException(message: String) : RuntimeException(message)
