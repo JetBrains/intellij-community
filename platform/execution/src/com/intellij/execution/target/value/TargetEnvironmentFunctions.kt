@@ -253,7 +253,7 @@ fun TargetEnvironment.downloadFromTarget(localPath: Path, progressIndicator: Pro
  *
  * If there are no suitable mappings found, the function returns a string representation of [localPath].
  */
-private class TargetPathFunction(private val localPath: Path) : TraceableTargetEnvironmentFunction<String>() {
+private data class TargetPathFunction(private val localPath: Path) : TraceableTargetEnvironmentFunction<String>() {
   override fun applyInner(t: TargetEnvironment): String {
     if (t is LocalTargetEnvironment) {
       return localPath.toString()
@@ -265,8 +265,6 @@ private class TargetPathFunction(private val localPath: Path) : TraceableTargetE
     }
     return targetPath
   }
-
-  override fun toString(): String = "targetPath(\"$localPath\")"
 
   companion object {
     private val LOG = logger<TargetPathFunction>()
