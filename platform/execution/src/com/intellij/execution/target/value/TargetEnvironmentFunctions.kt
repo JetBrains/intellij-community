@@ -79,8 +79,7 @@ abstract class TraceableTargetEnvironmentFunction<R> : TargetEnvironmentFunction
  */
 fun <T> constant(value: T): TargetEnvironmentFunction<T> = Constant(value)
 
-private class Constant<T>(private val value: T) : TraceableTargetEnvironmentFunction<T>() {
-  override fun toString(): String = "${javaClass.simpleName}($value)"
+private data class Constant<T>(private val value: T) : TraceableTargetEnvironmentFunction<T>() {
   override fun applyInner(t: TargetEnvironment): T = value
 }
 
@@ -291,9 +290,7 @@ private class ConcatTargetEnvironmentFunction(private val left: TargetEnvironmen
   : TraceableTargetEnvironmentFunction<String>() {
   override fun applyInner(t: TargetEnvironment): String = left.apply(t) + right.apply(t)
 
-  override fun toString(): String {
-    return "ConcatTargetEnvironmentFunction(left=$left, right=$right)"
-  }
+  override fun toString(): String = "ConcatTargetEnvironmentFunction(left=$left, right=$right)"
 }
 
 operator fun TargetEnvironmentFunction<String>.plus(f: TargetEnvironmentFunction<String>): TargetEnvironmentFunction<String> =
