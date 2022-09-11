@@ -260,7 +260,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
     private final int flagMask;
     private final @NotNull Icon icon;
 
-    private IconLayer(final int flagMask, @NotNull Icon icon) {
+    private IconLayer(int flagMask, @NotNull Icon icon) {
       BitUtil.assertOneBitMask(flagMask);
       this.flagMask = flagMask;
       this.icon = icon;
