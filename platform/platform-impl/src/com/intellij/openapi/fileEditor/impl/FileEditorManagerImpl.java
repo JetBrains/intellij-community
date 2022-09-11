@@ -600,7 +600,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @Override
   public EditorWindow getNextWindow(@NotNull EditorWindow window) {
-    List<EditorWindow> windows = getSplitters().getOrderedWindows();
+    List<EditorWindow> windows = getSplitters().getOrderedWindows$intellij_platform_ide_impl();
     for (int i = 0; i != windows.size(); ++i) {
       if (windows.get(i).equals(window)) {
         return windows.get((i + 1) % windows.size());
@@ -612,7 +612,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @Override
   public EditorWindow getPrevWindow(@NotNull EditorWindow window) {
-    List<EditorWindow> windows = getSplitters().getOrderedWindows();
+    List<EditorWindow> windows = getSplitters().getOrderedWindows$intellij_platform_ide_impl();
     for (int i = 0; i != windows.size(); ++i) {
       if (windows.get(i).equals(window)) {
         return windows.get((i + windows.size() - 1) % windows.size());
@@ -805,7 +805,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     }
 
     EditorWindow windowToOpenIn = window;
-    if (windowToOpenIn == null && (options.getReuseOpen() || !AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER))) {
+    if (windowToOpenIn == null && (options.reuseOpen || !AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER))) {
       windowToOpenIn = findWindowInAllSplitters(file);
     }
     if (windowToOpenIn == null) {
@@ -986,7 +986,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     VirtualFile file = getOriginalFile(_file);
     Ref<EditorComposite> compositeRef = new Ref<>();
 
-    if (!options.isReopeningOnStartup()) {
+    if (!options.isReopeningOnStartup) {
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> compositeRef.set(window.getComposite(file)));
     }
 
@@ -1045,7 +1045,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
     LOG.assertTrue(file.isValid(), "Invalid file: " + file);
 
-    if (options.getRequestFocus()) {
+    if (options.requestFocus) {
       Project activeProject = ProjectUtil.getActiveProject();
       if (activeProject != null && !activeProject.equals(myProject)) {
         // allow focus switching only within a project
@@ -1069,10 +1069,10 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
     List<FileEditorWithProvider> editorsWithProviders = composite.getAllEditorsWithProviders();
 
-    window.setComposite(composite, options);
+    window.setComposite$intellij_platform_ide_impl(composite, options);
 
     for (FileEditorWithProvider editorWithProvider : editorsWithProviders) {
-      restoreEditorState(file, editorWithProvider, entry, newEditor, options.isExactState());
+      restoreEditorState(file, editorWithProvider, entry, newEditor, options.isExactState);
     }
     // Restore selected editor
     FileEditorProvider provider = entry == null
@@ -1085,7 +1085,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
     // Notify editors about selection changes
     EditorsSplitters splitters = window.getOwner();
-    splitters.setCurrentWindow(window, options.getRequestFocus());
+    splitters.setCurrentWindow(window, options.requestFocus);
     splitters.afterFileOpen(file);
     addSelectionRecord(file, window);
 
@@ -1093,7 +1093,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     selectedEditor.selectNotify();
 
     // transfer focus into editor
-    if (options.getRequestFocus() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (options.requestFocus && !ApplicationManager.getApplication().isUnitTestMode()) {
       EditorComposite finalComposite = composite;
       Runnable focusRunnable = () -> {
         if (splitters.getCurrentWindow() != window || window.getSelectedComposite() != finalComposite) {
@@ -1134,8 +1134,8 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     // Make back/forward work
     ideDocumentHistory.includeCurrentCommandAsNavigation();
 
-    if (options.getPin() != null) {
-      window.setFilePinned(file, options.getPin());
+    if (options.pin != null) {
+      window.setFilePinned(file, options.pin);
     }
 
     if (newEditor) {

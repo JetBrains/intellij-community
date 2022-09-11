@@ -181,6 +181,7 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
     return getAllProviders().toArray(FileEditorProvider.EMPTY_ARRAY);
   }
 
+  @Override
   public @NotNull List<@NotNull FileEditorProvider> getAllProviders() {
     return ContainerUtil.map(getAllEditorsWithProviders(), it -> it.getProvider());
   }
@@ -299,14 +300,6 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
 
   public @NotNull FileEditorManager getFileEditorManager() {
     return myFileEditorManager;
-  }
-
-  /**
-   * @return initial time stamp of the file (on moment of creation of
-   * the composite)
-   */
-  public long getInitialFileTimeStamp() {
-    return myInitialFileTimeStamp;
   }
 
   /**

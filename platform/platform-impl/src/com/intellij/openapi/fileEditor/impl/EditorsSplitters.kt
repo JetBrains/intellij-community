@@ -511,7 +511,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       return 0
     }
 
-  open fun afterFileClosed(file: VirtualFile) {}
+  internal open fun afterFileClosed(file: VirtualFile) {}
 
   protected open fun afterFileOpen(file: VirtualFile) {}
 
@@ -624,7 +624,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     add(currentWindow!!.panel, BorderLayout.CENTER)
   }
 
-  internal fun createEditorWindow() = EditorWindow(this, this)
+  internal fun createEditorWindow() = EditorWindow(owner = this, parentDisposable = this)
 
   /**
    * sets the window passed as a current ('focused') window among all splitters. All file openings will be done inside this
@@ -651,7 +651,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     }
   }
 
-  fun addWindow(window: EditorWindow) {
+  internal fun addWindow(window: EditorWindow) {
     windows.add(window)
   }
 
@@ -687,7 +687,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 
   // Collector for windows in tree ordering:
   // get root component and traverse splitters tree:
-  fun getOrderedWindows(): MutableList<EditorWindow> {
+  internal fun getOrderedWindows(): MutableList<EditorWindow> {
     val result = ArrayList<EditorWindow>()
 
     // Collector for windows in tree ordering:
