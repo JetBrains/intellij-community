@@ -595,7 +595,7 @@ public final class IconLoader {
       return ((CachedImageIcon)icon).createWithPatcher(colorPatcher);
     }
     else {
-      LOG.error("Cannot patch " + icon.getClass());
+      LOG.warn("Cannot patch " + icon.getClass());
       return icon;
     }
   }
