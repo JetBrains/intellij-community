@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.types.typeUtil.isInt
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ReplaceWithStringBuilderAppendRangeInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     companion object {
@@ -65,14 +66,19 @@ class ReplaceWithStringBuilderAppendRangeInspection : AbstractKotlinInspection()
 
             val psiFactory = KtPsiFactory(callExpression)
             calleeExpression.replace(psiFactory.createCalleeExpression(functionName))
-            if (secondArg is KtConstantExpression && thirdArg is KtConstantExpression) {
-                thirdArg.replace(psiFactory.createExpression(secondArg.text.toInt().plus(thirdArg.text.toInt()).toString()))
-            } else {
+
+            val secondArgAsInt = secondArg.toIntOrNull()
+            val thirdArgAsInt = thirdArg.toIntOrNull()
+            if (secondArgAsInt != null && thirdArgAsInt != null) {
+                thirdArg.replace(psiFactory.createExpression(secondArgAsInt.plus(thirdArgAsInt).toString()))
+            } else if (secondArgAsInt != 0) {
                 thirdArg.replace(psiFactory.createExpressionByPattern("$0 + $1", secondArg, thirdArg))
             }
         }
 
         private fun KtPsiFactory.createCalleeExpression(functionName: String): KtExpression =
             (createExpression("$functionName()") as KtCallExpression).calleeExpression!!
+
+        private fun KtExpression.toIntOrNull(): Int? = safeAs<KtConstantExpression>()?.text?.toIntOrNull()
     }
 }
