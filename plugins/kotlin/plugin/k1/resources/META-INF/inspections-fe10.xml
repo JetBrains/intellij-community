@@ -2911,6 +2911,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
                      enabledByDefault="true"
+                     cleanupTool="true"
                      level="WARNING"
                      language="kotlin"
                      key="inspection.replace.with.string.builder.append.range.display.name" bundle="messages.KotlinBundle"/>

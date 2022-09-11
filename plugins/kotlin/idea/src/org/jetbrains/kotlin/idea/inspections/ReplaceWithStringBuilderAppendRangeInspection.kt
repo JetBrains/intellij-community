@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -17,7 +18,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.types.typeUtil.isInt
 
-class ReplaceWithStringBuilderAppendRangeInspection : AbstractKotlinInspection() {
+class ReplaceWithStringBuilderAppendRangeInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     companion object {
         private const val appendFunctionName = "append"
         private const val appendRangeFunctionName = "appendRange"
