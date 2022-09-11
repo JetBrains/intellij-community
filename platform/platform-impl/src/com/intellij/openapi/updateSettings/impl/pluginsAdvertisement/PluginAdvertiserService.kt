@@ -385,7 +385,7 @@ open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdv
   }
 }
 
-open class HeadlessPluginAdvertiserService : PluginAdvertiserService {
+open class HeadlessPluginAdvertiserServiceImpl : PluginAdvertiserService {
 
   final override suspend fun run(
     customPlugins: List<PluginNode>,
