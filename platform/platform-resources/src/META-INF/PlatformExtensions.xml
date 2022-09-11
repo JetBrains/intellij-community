@@ -1395,11 +1395,20 @@
     <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.persistent.FsRootDataLoader"
                         serviceImplementation="com.intellij.openapi.vfs.newvfs.persistent.EmptyFsRootDataLoader"/>
 
-    <projectBuildWarmupSupport implementation="com.intellij.warmup.PlatformBuildWarmupSupport" />
+    <projectBuildWarmupSupport implementation="com.intellij.warmup.PlatformBuildWarmupSupport"/>
 
     <applicationService serviceInterface="com.intellij.diagnostic.PerformanceWatcher"
                         serviceImplementation="com.intellij.diagnostic.PerformanceWatcherImpl" preload="notHeadless"/>
-   </extensions>
+
+    <!-- MiniMap -->
+    <registryKey key="editor.minimap.enabled" defaultValue="false" description="Enables MiniMap"/>
+    <editorFactoryListener implementation="com.intellij.ide.miniMap.MiniMapEditorFactoryListener"/>
+    <applicationService serviceImplementation="com.intellij.ide.miniMap.settings.MiniMapSettings"/>
+    <applicationConfigurable id="com.intellij.miniMap" parentId="editor"
+                             provider="com.intellij.ide.miniMap.settings.MiniMapConfigurableProvider"
+                             key="settings.name" bundle="messages.MiniMapBundle"/>
+    <applicationService serviceImplementation="com.intellij.ide.miniMap.MiniMapService"/>
+  </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
