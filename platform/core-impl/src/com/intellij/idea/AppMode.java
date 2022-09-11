@@ -125,7 +125,7 @@ public final class AppMode {
       "ant", "duplocate", "dump-launch-parameters", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
       "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup", "buildEventsScheme",
       "inspectopedia-generator", "remoteDevShowHelp", "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler",
-      "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit");
+      "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit", "qodanaExcludedPlugins");
     return headlessCommands.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect"); //NON-NLS
   }
 
