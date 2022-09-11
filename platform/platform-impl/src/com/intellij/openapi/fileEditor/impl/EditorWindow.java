@@ -247,7 +247,9 @@ public final class EditorWindow {
   }
 
   void removeFromSplitter() {
-    if (!inSplitter()) return;
+    if (!inSplitter()) {
+      return;
+    }
 
     if (myOwner.getCurrentWindow() == this) {
       EditorWindow[] siblings = findSiblings();

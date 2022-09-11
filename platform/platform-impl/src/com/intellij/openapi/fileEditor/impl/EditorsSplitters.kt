@@ -74,19 +74,6 @@ private val OPENED_IN_BULK = Key.create<Boolean>("EditorSplitters.opened.in.bulk
 @DirtyUI
 open class EditorsSplitters internal constructor(val manager: FileEditorManagerImpl) : IdePanePanel(BorderLayout()),
                                                                                        UISettingsListener, Disposable {
-  var lastFocusGainedTime = 0L
-    private set
-
-  private val windows = CopyOnWriteArraySet<EditorWindow>()
-
-  // temporarily used during initialization
-  private var splittersElement: Element? = null
-
-  @JvmField
-  var insideChange = 0
-
-  private val focusWatcher: MyFocusWatcher
-  private val iconUpdaterAlarm = Alarm(this)
 
   companion object {
     const val SPLITTER_KEY: @NonNls String = "EditorsSplitters"
@@ -151,6 +138,86 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     }
   }
 
+  var lastFocusGainedTime = 0L
+    private set
+
+  private val windows = CopyOnWriteArraySet<EditorWindow>()
+
+  // temporarily used during initialization
+  private var splittersElement: Element? = null
+
+  @JvmField
+  var insideChange = 0
+
+  private val focusWatcher: MyFocusWatcher
+  private val iconUpdaterAlarm = Alarm(this)
+
+  val currentFile: VirtualFile?
+    get() = if (currentWindow != null) currentWindow!!.selectedFile else null
+
+  private fun showEmptyText(): Boolean = currentWindow == null || currentWindow!!.files.isEmpty()
+
+  val openFileList: List<VirtualFile>
+    get() {
+      val files = ArrayList<VirtualFile>()
+      for (window in windows) {
+        for (composite in window.allComposites) {
+          val file = composite.file
+          if (!files.contains(file)) {
+            files.add(file)
+          }
+        }
+      }
+      return files
+    }
+
+  val selectedFiles: Array<VirtualFile>
+    get() {
+      val files = ArrayListSet<VirtualFile>()
+      for (window in windows) {
+        window.selectedFile?.let {
+          files.add(it)
+        }
+      }
+
+      val virtualFiles = VfsUtilCore.toVirtualFileArray(files)
+      currentFile?.let { currentFile ->
+        for (i in virtualFiles.indices) {
+          if (virtualFiles[i] == currentFile) {
+            virtualFiles[i] = virtualFiles[0]
+            virtualFiles[0] = currentFile
+            break
+          }
+        }
+      }
+      return virtualFiles
+    }
+
+  private val filesToUpdateIconsFor = HashSet<VirtualFile>()
+
+  init {
+    background = JBColor.namedColor("Editor.background", IdeBackgroundUtil.getIdeBackgroundColor())
+    val l = PropertyChangeListener { e ->
+      val propName = e.propertyName
+      if ("Editor.background" == propName || "Editor.foreground" == propName || "Editor.shortcutForeground" == propName) {
+        repaint()
+      }
+    }
+    UIManager.getDefaults().addPropertyChangeListener(l)
+    Disposer.register(this) { UIManager.getDefaults().removePropertyChangeListener(l) }
+    focusWatcher = MyFocusWatcher()
+    Disposer.register(this) { focusWatcher.deinstall(this) }
+    focusTraversalPolicy = MyFocusTraversalPolicy(this)
+    transferHandler = MyTransferHandler(this)
+    clear()
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
+      override fun activeKeymapChanged(keymap: Keymap?) {
+        invalidate()
+        repaint()
+      }
+    })
+  }
+
   override fun dispose() {
     dropTarget = null
   }
@@ -170,11 +237,6 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   fun startListeningFocus() {
     focusWatcher.install(this)
   }
-
-  val currentFile: VirtualFile?
-    get() = if (currentWindow != null) currentWindow!!.selectedFile else null
-
-  private fun showEmptyText(): Boolean = currentWindow == null || currentWindow!!.files.isEmpty()
 
   override fun paintComponent(g: Graphics) {
     if (showEmptyText()) {
@@ -262,7 +324,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
         removeAll()
         add(component, BorderLayout.CENTER)
         // clear empty splitters
-        for (window in getWindows()) {
+        for (window in windows.toTypedArray()) {
           if (window.tabCount == 0) {
             window.removeFromSplitter()
           }
@@ -309,42 +371,6 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     splittersElement = element
   }
 
-  val openFileList: List<VirtualFile>
-    get() {
-      val files = ArrayList<VirtualFile>()
-      for (window in windows) {
-        for (composite in window.allComposites) {
-          val file = composite.file
-          if (!files.contains(file)) {
-            files.add(file)
-          }
-        }
-      }
-      return files
-    }
-
-  val selectedFiles: Array<VirtualFile>
-    get() {
-      val files = ArrayListSet<VirtualFile>()
-      for (window in windows) {
-        window.selectedFile?.let {
-          files.add(it)
-        }
-      }
-
-      val virtualFiles = VfsUtilCore.toVirtualFileArray(files)
-      currentFile?.let { currentFile ->
-        for (i in virtualFiles.indices) {
-          if (virtualFiles[i] == currentFile) {
-            virtualFiles[i] = virtualFiles[0]
-            virtualFiles[0] = currentFile
-            break
-          }
-        }
-      }
-      return virtualFiles
-    }
-
   fun getSelectedEditors(): Array<FileEditor> {
     val windows = HashSet(windows)
     currentWindow?.let {
@@ -362,31 +388,6 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     for (window in findWindows(file)) {
       window.updateFileIcon(file, icon)
     }
-  }
-
-  private val filesToUpdateIconsFor = HashSet<VirtualFile>()
-
-  init {
-    background = JBColor.namedColor("Editor.background", IdeBackgroundUtil.getIdeBackgroundColor())
-    val l = PropertyChangeListener { e ->
-      val propName = e.propertyName
-      if ("Editor.background" == propName || "Editor.foreground" == propName || "Editor.shortcutForeground" == propName) {
-        repaint()
-      }
-    }
-    UIManager.getDefaults().addPropertyChangeListener(l)
-    Disposer.register(this) { UIManager.getDefaults().removePropertyChangeListener(l) }
-    focusWatcher = MyFocusWatcher()
-    Disposer.register(this) { focusWatcher.deinstall(this) }
-    focusTraversalPolicy = MyFocusTraversalPolicy(this)
-    transferHandler = MyTransferHandler(this)
-    clear()
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
-      override fun activeKeymapChanged(keymap: Keymap?) {
-        invalidate()
-        repaint()
-      }
-    })
   }
 
   fun updateFileIconLater(file: VirtualFile) {
@@ -592,7 +593,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 
   var currentWindow: EditorWindow? = null
     private set(currentWindow) {
-      require(!(currentWindow != null && !windows.contains(currentWindow))) { "$currentWindow is not a member of this container" }
+      require(currentWindow == null || windows.contains(currentWindow)) { "$currentWindow is not a member of this container" }
       field = currentWindow
     }
 
