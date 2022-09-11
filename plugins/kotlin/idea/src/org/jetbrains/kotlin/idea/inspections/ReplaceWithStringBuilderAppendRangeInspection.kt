@@ -9,13 +9,21 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.isInt
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -61,8 +69,11 @@ class ReplaceWithStringBuilderAppendRangeInspection : AbstractKotlinInspection()
             val callExpression = calleeExpression.parent as? KtCallExpression ?: return
 
             val args = callExpression.valueArguments
+            val firstArg = args.getOrNull(0)?.getArgumentExpression() ?: return
             val secondArg = args.getOrNull(1)?.getArgumentExpression() ?: return
             val thirdArg = args.getOrNull(2)?.getArgumentExpression() ?: return
+
+            val isNotNullFirstArg = firstArg.isNotNullType()
 
             val psiFactory = KtPsiFactory(callExpression)
             calleeExpression.replace(psiFactory.createCalleeExpression(functionName))
@@ -74,11 +85,25 @@ class ReplaceWithStringBuilderAppendRangeInspection : AbstractKotlinInspection()
             } else if (secondArgAsInt != 0) {
                 thirdArg.replace(psiFactory.createExpressionByPattern("$0 + $1", secondArg, thirdArg))
             }
+
+            if (!isNotNullFirstArg) {
+                firstArg.replace(psiFactory.createExpressionByPattern("$0!!", firstArg))
+            }
         }
 
         private fun KtPsiFactory.createCalleeExpression(functionName: String): KtExpression =
             (createExpression("$functionName()") as KtCallExpression).calleeExpression!!
 
         private fun KtExpression.toIntOrNull(): Int? = safeAs<KtConstantExpression>()?.text?.toIntOrNull()
+
+        private fun KtExpression.isNotNullType(): Boolean {
+            val context = analyze(BodyResolveMode.PARTIAL)
+            val type = getType(context) ?: return false
+            if (!type.isNullable()) return true
+            val dataFlowValueFactory = getResolutionFacade().dataFlowValueFactory
+            val dataFlowValue = dataFlowValueFactory.createDataFlowValue(this, type, context, findModuleDescriptor())
+            val stableNullability = context.getDataFlowInfoBefore(this).getStableNullability(dataFlowValue)
+            return !stableNullability.canBeNull()
+        }
     }
 }

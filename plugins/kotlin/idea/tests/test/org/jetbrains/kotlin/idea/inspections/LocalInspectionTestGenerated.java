@@ -13294,6 +13294,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceWithStringBuilderAppendRange/hasReceiver.kt");
         }
 
+        @TestMetadata("nullableCharArray.kt")
+        public void testNullableCharArray() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithStringBuilderAppendRange/nullableCharArray.kt");
+        }
+
+        @TestMetadata("nullableCharArray2.kt")
+        public void testNullableCharArray2() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithStringBuilderAppendRange/nullableCharArray2.kt");
+        }
+
         @TestMetadata("precedence.kt")
         public void testPrecedence() throws Exception {
             runTest("testData/inspectionsLocal/replaceWithStringBuilderAppendRange/precedence.kt");
