@@ -209,7 +209,6 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     Disposer.register(this) { focusWatcher.deinstall(this) }
     focusTraversalPolicy = MyFocusTraversalPolicy(this)
     transferHandler = MyTransferHandler(this)
-    clear()
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
       override fun activeKeymapChanged(keymap: Keymap?) {
         invalidate()
@@ -358,7 +357,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     clear()
     for (window in windows) {
       for (file in window.files) {
-        window.closeFile(file!!, false, false)
+        window.closeFile(file = file, disposeIfNeeded = false, transferFocus = false)
       }
     }
   }
@@ -512,7 +511,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       return 0
     }
 
-  protected open fun afterFileClosed(file: VirtualFile) {}
+  open fun afterFileClosed(file: VirtualFile) {}
 
   protected open fun afterFileOpen(file: VirtualFile) {}
 
@@ -688,7 +687,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 
   // Collector for windows in tree ordering:
   // get root component and traverse splitters tree:
-  fun getOrderedWindows(): List<EditorWindow> {
+  fun getOrderedWindows(): MutableList<EditorWindow> {
     val result = ArrayList<EditorWindow>()
 
     // Collector for windows in tree ordering:
@@ -816,7 +815,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
     else {
       children = ArrayList(fileElements.size)
       // trim to EDITOR_TAB_LIMIT, ignoring CLOSE_NON_MODIFIED_FILES_FIRST policy
-      var toRemove = fileElements.size - EditorWindow.getTabLimit()
+      var toRemove = fileElements.size - EditorWindow.tabLimit
       for (fileElement in fileElements) {
         if (toRemove <= 0 || fileElement.getAttributeValue(PINNED).toBoolean()) {
           children.add(fileElement)

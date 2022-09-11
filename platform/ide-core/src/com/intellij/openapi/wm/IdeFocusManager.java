@@ -98,7 +98,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
   /**
    * Computes effective focus owner.
    */
-  public abstract Component getFocusOwner();
+  public abstract @Nullable Component getFocusOwner();
 
   /**
    * Runs runnable for which {@code DataContext} will not be computed from the current focus owner,

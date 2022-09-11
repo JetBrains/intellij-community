@@ -135,7 +135,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     EditorWindow window = null;
     final EditorTabbedContainer.DockableEditor dockableEditor = (EditorTabbedContainer.DockableEditor)content;
     VirtualFile file = dockableEditor.getFile();
-    Integer dragStartLocation = file.getUserData(EditorWindow.DRAG_START_LOCATION_HASH_KEY);
+    Integer dragStartLocation = file.getUserData(EditorWindow.Companion.getDRAG_START_LOCATION_HASH_KEY$intellij_platform_ide_impl());
     boolean sameWindow = myCurrentOver != null && dragStartLocation != null && dragStartLocation == System.identityHashCode(myCurrentOver);
     int dropSide = getCurrentDropSide();
     if (myCurrentOver != null) {
@@ -164,7 +164,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
         TabInfo tabInfo = index == myCurrentOver.getTabCount() ? null : myCurrentOver.getTabAt(index);
         TabInfo previousInfo = index > 0 ? myCurrentOver.getTabAt(index - 1) : null;
         boolean previousIsPinned = previousInfo != null && previousInfo.isPinned();
-        if (file.getUserData(EditorWindow.DRAG_START_PINNED_KEY) == Boolean.TRUE) {
+        if (file.getUserData(EditorWindow.Companion.getDRAG_START_PINNED_KEY$intellij_platform_ide_impl()) == Boolean.TRUE) {
           dropInBetweenPinnedTabs = index == 0 || (tabInfo != null && tabInfo.isPinned()) || previousIsPinned;
         }
         else {
@@ -181,14 +181,14 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
             && bounds.y < dropPoint.y && bounds.getMaxY() > dropPoint.y;
         }
       }
-      Integer dragStartIndex = file.getUserData(EditorWindow.DRAG_START_INDEX_KEY);
+      Integer dragStartIndex = file.getUserData(EditorWindow.Companion.getDRAG_START_INDEX_KEY$intellij_platform_ide_impl());
       boolean isDroppedToOriginalPlace = dragStartIndex != null && dragStartIndex == index && sameWindow;
       if (!isDroppedToOriginalPlace) {
-        file.putUserData(EditorWindow.DRAG_START_PINNED_KEY, dropInBetweenPinnedTabs);
+        file.putUserData(EditorWindow.Companion.getDRAG_START_PINNED_KEY$intellij_platform_ide_impl(), dropInBetweenPinnedTabs);
       }
       if (dropInPinnedRow) {
-        file.putUserData(EditorWindow.DRAG_START_INDEX_KEY, index + 1);
-        file.putUserData(EditorWindow.DRAG_START_PINNED_KEY, Boolean.TRUE);
+        file.putUserData(EditorWindow.Companion.getDRAG_START_INDEX_KEY$intellij_platform_ide_impl(), index + 1);
+        file.putUserData(EditorWindow.Companion.getDRAG_START_PINNED_KEY$intellij_platform_ide_impl(), Boolean.TRUE);
         dropInBetweenPinnedTabs = true;
       }
     }

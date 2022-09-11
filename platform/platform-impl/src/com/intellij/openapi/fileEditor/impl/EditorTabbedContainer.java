@@ -433,7 +433,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   private void doProcessDoubleClick(@NotNull MouseEvent e) {
     TabInfo info = myTabs.findInfo(e);
     if (info != null) {
-      EditorComposite composite = ((EditorWindow.TComp)info.getComponent()).myComposite;
+      EditorComposite composite = ((EditorWindow.TComp)info.getComponent()).getComposite$intellij_platform_ide_impl();
       if (composite.isPreview()) {
         composite.setPreview(false);
         myWindow.getOwner().updateFileColor(composite.getFile());
@@ -525,9 +525,9 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       }
 
       myFile = (VirtualFile)info.getObject();
-      myFile.putUserData(EditorWindow.DRAG_START_INDEX_KEY, dragStartIndex);
-      myFile.putUserData(EditorWindow.DRAG_START_LOCATION_HASH_KEY, System.identityHashCode(myTabs));
-      myFile.putUserData(EditorWindow.DRAG_START_PINNED_KEY, isPinnedAtStart);
+      myFile.putUserData(EditorWindow.Companion.getDRAG_START_INDEX_KEY$intellij_platform_ide_impl(), dragStartIndex);
+      myFile.putUserData(EditorWindow.Companion.getDRAG_START_LOCATION_HASH_KEY$intellij_platform_ide_impl(), System.identityHashCode(myTabs));
+      myFile.putUserData(EditorWindow.Companion.getDRAG_START_PINNED_KEY$intellij_platform_ide_impl(), isPinnedAtStart);
       Presentation presentation = new Presentation(info.getText());
       if (DockManagerImpl.REOPEN_WINDOW.isIn(myFile)) {
         presentation.putClientProperty(DockManagerImpl.REOPEN_WINDOW, DockManagerImpl.REOPEN_WINDOW.get(myFile, true));
@@ -721,7 +721,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       if (info == null) {
         return true;
       }
-      EditorComposite composite = ((EditorWindow.TComp)info.getComponent()).myComposite;
+      EditorComposite composite = ((EditorWindow.TComp)info.getComponent()).getComposite$intellij_platform_ide_impl();
       return !composite.selfBorder();
     }
 
@@ -809,7 +809,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       int index = getIndexOf(info);
       if (index != -1) {
         VirtualFile file = myWindow.getFileAt(index);
-        int indexToSelect = myWindow.calcIndexToSelect(file, index);
+        int indexToSelect = myWindow.calcIndexToSelect$intellij_platform_ide_impl(file, index);
         if (indexToSelect >= 0 && indexToSelect < getTabs().size()) {
           return getTabAt(indexToSelect);
         }
