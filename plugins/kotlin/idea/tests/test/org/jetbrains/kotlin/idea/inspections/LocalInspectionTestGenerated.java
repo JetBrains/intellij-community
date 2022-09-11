@@ -13303,6 +13303,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testSimple() throws Exception {
             runTest("testData/inspectionsLocal/replaceWithStringBuilderAppendRange/simple.kt");
         }
+
+        @TestMetadata("zeroOffset.kt")
+        public void testZeroOffset() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithStringBuilderAppendRange/zeroOffset.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
