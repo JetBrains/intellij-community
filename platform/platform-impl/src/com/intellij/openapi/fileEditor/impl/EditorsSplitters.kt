@@ -653,9 +653,15 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 
   internal fun addWindow(window: EditorWindow) {
     windows.add(window)
+    if (currentWindow == null) {
+      currentWindow = window
+      val selectedComposite = window.selectedComposite ?: return
+      manager.updateFileName(selectedComposite.file)
+      manager.fireSelectionChanged(window.selectedComposite)
+    }
   }
 
-  fun removeWindow(window: EditorWindow) {
+  internal fun removeWindow(window: EditorWindow) {
     windows.remove(window)
     if (currentWindow == window) {
       currentWindow = null

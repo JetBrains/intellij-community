@@ -1771,25 +1771,27 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @ApiStatus.Internal
   public void fireSelectionChanged(@Nullable EditorComposite newSelectedComposite) {
-    @Nullable EditorComposite composite = SoftReference.dereference(myLastSelectedComposite);
+    EditorComposite composite = SoftReference.dereference(myLastSelectedComposite);
     FileEditorWithProvider oldEditorWithProvider = composite == null ? null : composite.getSelectedWithProvider();
     FileEditorWithProvider newEditorWithProvider = newSelectedComposite == null ? null : newSelectedComposite.getSelectedWithProvider();
     myLastSelectedComposite = newSelectedComposite == null ? null : new WeakReference<>(newSelectedComposite);
-    if (!Objects.equals(oldEditorWithProvider, newEditorWithProvider)) {
-      FileEditorManagerEvent event = new FileEditorManagerEvent(this, oldEditorWithProvider, newEditorWithProvider);
-      FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
-
-      if (newEditorWithProvider != null) {
-        JComponent component =  newEditorWithProvider.getFileEditor().getComponent();
-        EditorWindowHolder holder =
-          ComponentUtil.getParentOfType((Class<? extends EditorWindowHolder>)EditorWindowHolder.class, (Component)component);
-        VirtualFile file = newEditorWithProvider.getFileEditor().getFile();
-        if (holder != null && file != null) {
-          addSelectionRecord(file, holder.getEditorWindow());
-        }
-      }
-      notifyPublisher(() -> publisher.selectionChanged(event));
+    if (Objects.equals(oldEditorWithProvider, newEditorWithProvider)) {
+      return;
     }
+
+    FileEditorManagerEvent event = new FileEditorManagerEvent(this, oldEditorWithProvider, newEditorWithProvider);
+    FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
+
+    if (newEditorWithProvider != null) {
+      JComponent component = newEditorWithProvider.getFileEditor().getComponent();
+      EditorWindowHolder holder =
+        ComponentUtil.getParentOfType((Class<? extends EditorWindowHolder>)EditorWindowHolder.class, (Component)component);
+      VirtualFile file = newEditorWithProvider.getFileEditor().getFile();
+      if (holder != null && file != null) {
+        addSelectionRecord(file, holder.getEditorWindow());
+      }
+    }
+    notifyPublisher(() -> publisher.selectionChanged(event));
   }
 
   protected static @NotNull VirtualFile getOriginalFile(@NotNull VirtualFile file) {

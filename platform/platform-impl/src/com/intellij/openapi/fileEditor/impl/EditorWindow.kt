@@ -204,9 +204,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT)
     }
     owner.addWindow(this)
-    if (owner.currentWindow == null) {
-      owner.setCurrentWindow(this, false)
-    }
     updateTabsVisibility()
   }
 
