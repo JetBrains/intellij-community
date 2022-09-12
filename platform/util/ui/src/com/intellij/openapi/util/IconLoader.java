@@ -578,29 +578,41 @@ public final class IconLoader {
    * Creates new icon with the color patching applied.
    */
   public static @NotNull Icon colorPatchedIcon(@NotNull Icon icon, @NotNull SVGLoader.SvgElementColorPatcherProvider colorPatcher) {
-    if (icon instanceof DummyIcon) {
-      return icon;
-    }
+    IconReplacer replacer = new IconReplacer() {
+      @NotNull
+      @Override
+      public Icon replaceIcon(@NotNull Icon icon) {
+        if (icon instanceof DummyIcon) {
+          return icon;
+        }
 
-    if (icon instanceof LazyIcon) {
-      icon = ((LazyIcon)icon).getOrComputeIcon();
-    }
+        if (icon instanceof EmptyIcon) {
+          return icon;
+        }
 
-    if (!isGoodSize(icon)) {
-      LOG.error(icon);
-      return CachedImageIcon.EMPTY_ICON;
-    }
+        if (icon instanceof LazyIcon) {
+          return replaceIcon(((LazyIcon)icon).getOrComputeIcon());
+        }
 
-    if (icon instanceof CachedImageIcon) {
-      return ((CachedImageIcon)icon).createWithPatcher(colorPatcher);
-    }
-    else if (icon instanceof RetrievableIcon) {
-      return colorPatchedIcon(((RetrievableIcon)icon).retrieveIcon(), colorPatcher);
-    }
-    else {
-      LOG.error("Cannot patch " + icon.getClass());
-      return icon;
-    }
+        if (icon instanceof ReplaceableIcon) {
+          return ((ReplaceableIcon)icon).replaceBy(this);
+        }
+
+        if (!isGoodSize(icon)) {
+          LOG.error(icon);
+          return CachedImageIcon.EMPTY_ICON;
+        }
+
+        if (icon instanceof CachedImageIcon) {
+          return ((CachedImageIcon)icon).createWithPatcher(colorPatcher);
+        }
+        else {
+          LOG.error("Cannot patch " + icon.getClass());
+          return icon;
+        }
+      }
+    };
+    return replacer.replaceIcon(icon);
   }
 
   /**
