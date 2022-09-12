@@ -34,7 +34,7 @@ class ProjectToolbarWidgetAction : AnAction(), CustomComponentAction {
       fullName.append(" — ").append(file!!.name)
       cutName.append(" — ").append(cutFile(file.name, maxLength))
     }
-    e.presentation.text = cutName.toString()
+    e.presentation.setText(cutName.toString(), false)
     e.presentation.description = if (cutName.toString() == fullName.toString()) null else fullName.toString()
     e.presentation.putClientProperty(projectKey, project)
   }
