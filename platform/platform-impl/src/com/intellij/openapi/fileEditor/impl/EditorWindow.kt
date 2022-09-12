@@ -178,14 +178,17 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     ignorePopup) as? EditorWindowTopComponent)?.composite
 
   val allComposites: List<EditorComposite>
-    get() = IntRange(0, tabCount).asSequence().map(::getCompositeAt).toList()
+    get() = composites.toList()
+
+  val composites: Sequence<EditorComposite>
+    get() = IntRange(0, tabCount - 1).asSequence().map(::getCompositeAt)
 
   @Suppress("DEPRECATION")
   @get:Deprecated("{@link #getAllComposites()}", ReplaceWith("allComposites)"))
   val editors: Array<EditorWithProviderComposite>
-    get() = allComposites.filterIsInstance<EditorWithProviderComposite>().toTypedArray()
+    get() = composites.filterIsInstance<EditorWithProviderComposite>().toList().toTypedArray()
   val files: Array<VirtualFile>
-    get() = allComposites.map { it.file }.toTypedArray()
+    get() = composites.map { it.file }.toList().toTypedArray()
 
   private var painter: MySplitPainter? = null
 
@@ -343,7 +346,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
 
     val fileEditorManager = owner.manager
     if (!forceSplit && inSplitter()) {
-      val siblings = findSiblings()
+      val siblings = getSiblings()
       val target = siblings[0]
       if (virtualFile != null) {
         val editors = fileEditorManager.openFileImpl3(target, virtualFile, focusNew, null).first
@@ -468,10 +471,13 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     }
   }
 
-  fun findSiblings(): Array<EditorWindow> {
+  @Deprecated("Use getSiblings()", ReplaceWith("getSiblings()"))
+  fun findSiblings(): Array<EditorWindow> = getSiblings().toTypedArray()
+
+  fun getSiblings(): List<EditorWindow> {
     checkConsistency()
-    val splitter = (panel.parent as? Splitter) ?: return emptyArray()
-    return owner.getWindows().filter { SwingUtilities.isDescendingFrom(it.panel, splitter) }.toTypedArray()
+    val splitter = (panel.parent as? Splitter) ?: return emptyList()
+    return owner.getWindows().filter { SwingUtilities.isDescendingFrom(it.panel, splitter) }
   }
 
   fun updateFileBackgroundColor(file: VirtualFile) {
@@ -586,7 +592,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     }
 
     if (owner.currentWindow == this) {
-      val siblings = findSiblings()
+      val siblings = getSiblings()
       owner.setCurrentWindow(window = siblings.first(), requestFocus = true)
     }
 
@@ -615,6 +621,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     dispose()
   }
 
+  @Suppress("MemberVisibilityCanBePrivate")
   internal fun calcIndexToSelect(fileBeingClosed: VirtualFile, fileIndex: Int): Int {
     val currentlySelectedIndex = tabbedPane.selectedIndex
     if (currentlySelectedIndex != fileIndex) {
@@ -666,7 +673,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     }
     panel.addFocusListener(focusAdapter)
     return {
-      painter!!.myRectangle = null
+      painter!!.rectangle = null
       painter = null
       panel.removeFocusListener(focusAdapter)
       panel.isFocusable = false
@@ -675,42 +682,42 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     }
   }
 
-  private inner class MySplitPainter(private var myShowInfoPanel: Boolean) : AbstractPainter() {
-    var myRectangle: Shape? = tabbedPane.tabs.dropArea
+  private inner class MySplitPainter(private var showInfoPanel: Boolean) : AbstractPainter() {
+    var rectangle: Shape? = tabbedPane.tabs.dropArea
     var position = RelativePosition.CENTER
-    override fun needsRepaint(): Boolean {
-      return myRectangle != null
-    }
+
+    override fun needsRepaint(): Boolean = rectangle != null
 
     override fun executePaint(component: Component, g: Graphics2D) {
-      if (myRectangle == null) {
+      if (rectangle == null) {
         return
       }
+
       GraphicsUtil.setupAAPainting(g)
       g.color = JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
-      g.fill(myRectangle)
-      if (position == RelativePosition.CENTER && myShowInfoPanel) {
+      g.fill(rectangle)
+      if (position == RelativePosition.CENTER && showInfoPanel) {
         drawInfoPanel(component, g)
       }
     }
 
     private fun drawInfoPanel(component: Component, g: Graphics2D) {
-      val centerX = myRectangle!!.bounds.x + myRectangle!!.bounds.width / 2
-      val centerY = myRectangle!!.bounds.y + myRectangle!!.bounds.height / 2
+      val rectangle = rectangle!!
+      val centerX = rectangle.bounds.x + rectangle.bounds.width / 2
+      val centerY = rectangle.bounds.y + rectangle.bounds.height / 2
       val height = Registry.intValue("ide.splitter.chooser.info.panel.height")
       var width = Registry.intValue("ide.splitter.chooser.info.panel.width")
       val arc = Registry.intValue("ide.splitter.chooser.info.panel.arc")
-      val getShortcut = Function { actionId: String? ->
-        val shortcut = ActionManager.getInstance().getKeyboardShortcut(
-          actionId!!)
+      val getShortcut: (actionId: String) -> Unit = { actionId ->
+        val shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId)
         KeymapUtil.getKeystrokeText(shortcut?.firstKeyStroke)
       }
-      val openShortcuts = String.format(IdeBundle.message("split.with.chooser.move.tab"), getShortcut.apply("SplitChooser.Split"),
+      val openShortcuts = String.format(IdeBundle.message("split.with.chooser.move.tab"), getShortcut("SplitChooser.Split"),
                                         if (SplitterService.getInstance().initialEditorWindow != null) String.format(
                                           IdeBundle.message("split.with.chooser.duplicate.tab"),
-                                          getShortcut.apply("SplitChooser.Duplicate"))
+                                          getShortcut("SplitChooser.Duplicate"))
                                         else "")
-      val switchShortcuts = String.format(IdeBundle.message("split.with.chooser.switch.tab"), getShortcut.apply("SplitChooser.NextWindow"))
+      val switchShortcuts = String.format(IdeBundle.message("split.with.chooser.switch.tab"), getShortcut("SplitChooser.NextWindow"))
 
       // Adjust default width to info text
       val font = StartupUiUtil.getLabelFont()
@@ -720,13 +727,14 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       width = width.coerceAtLeast((openShortcutsWidth.coerceAtLeast(switchShortcutsWidth) * 1.2f).roundToInt())
 
       // Check if info panel will actually fit into editor with some free space around edges
-      if (myRectangle!!.bounds.height < height * 1.2f || myRectangle!!.bounds.width < width * 1.2f) {
+      if (rectangle.bounds.height < height * 1.2f || rectangle.bounds.width < width * 1.2f) {
         return
       }
-      val rectangle: Shape = RoundRectangle2D.Double(centerX - width / 2.0, centerY - height / 2.0, width.toDouble(), height.toDouble(),
-                                                     arc.toDouble(), arc.toDouble())
+
+      val shape = RoundRectangle2D.Double(centerX - width / 2.0, centerY - height / 2.0, width.toDouble(), height.toDouble(),
+                                          arc.toDouble(), arc.toDouble())
       g.color = UIUtil.getLabelBackground()
-      g.fill(rectangle)
+      g.fill(shape)
       val arrowsCenterVShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.center")
       val arrowsVShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.vertical")
       val arrowsHShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.horizontal")
@@ -752,13 +760,13 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
         return
       }
 
-      myShowInfoPanel = false
+      showInfoPanel = false
       this.position = position
-      myRectangle = null
+      rectangle = null
       setNeedsRepaint(true)
       val r = tabbedPane.tabs.dropArea
       TabsUtil.updateBoundsWithDropSide(r, this.position.mySwingConstant)
-      myRectangle = Rectangle2D.Double(r.x.toDouble(), r.y.toDouble(), r.width.toDouble(), r.height.toDouble())
+      rectangle = Rectangle2D.Double(r.x.toDouble(), r.y.toDouble(), r.width.toDouble(), r.height.toDouble())
     }
   }
 
@@ -920,7 +928,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     checkConsistency()
     val splitter = panel.parent as? Splitter ?: return
     var compositeToSelect = selectedComposite
-    val siblings = findSiblings()
+    val siblings = getSiblings()
     val parent = splitter.parent as JPanel
     for (eachSibling in siblings) {
       // selected editors will be added first
@@ -933,8 +941,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     // we'll select and focus a single editor in the end
     val openOptions = FileEditorOpenOptions(selectAsCurrent = false, requestFocus = false)
     for (sibling in siblings) {
-      val siblingEditors = sibling.allComposites
-      for (siblingEditor in siblingEditors) {
+      for (siblingEditor in sibling.composites.toList()) {
         if (compositeToSelect == null) {
           compositeToSelect = siblingEditor
         }
@@ -1082,7 +1089,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     }
 
     // close all preview tabs
-    val previews = allComposites.asSequence().filter { it.isPreview }.map { it.file }.toSet()
+    val previews = composites.filter { it.isPreview }.map { it.file }.distinct().toList()
     for (preview in previews) {
       if (preview != fileToIgnore) {
         defaultCloseFile(preview, transferFocus)

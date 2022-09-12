@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.Activity
@@ -44,7 +46,6 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
-import com.intellij.util.containers.ArrayListSet
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -159,28 +160,15 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 
   val openFileList: List<VirtualFile>
     get() {
-      val files = ArrayList<VirtualFile>()
-      for (window in windows) {
-        for (composite in window.allComposites) {
-          val file = composite.file
-          if (!files.contains(file)) {
-            files.add(file)
-          }
-        }
-      }
-      return files
+      return windows.asSequence()
+        .flatMap { window -> window.composites.map { it.file } }
+        .distinct()
+        .toList()
     }
 
   val selectedFiles: Array<VirtualFile>
     get() {
-      val files = ArrayListSet<VirtualFile>()
-      for (window in windows) {
-        window.selectedFile?.let {
-          files.add(it)
-        }
-      }
-
-      val virtualFiles = VfsUtilCore.toVirtualFileArray(files)
+      val virtualFiles = VfsUtilCore.toVirtualFileArray(windows.mapNotNull { it.selectedFile })
       currentFile?.let { currentFile ->
         for (i in virtualFiles.indices) {
           if (virtualFiles[i] == currentFile) {
@@ -296,10 +284,10 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   }
 
   private fun writeWindow(result: Element, window: EditorWindow) {
-    val composites = window.allComposites
+    val composites = window.composites.toList()
     for (i in composites.indices) {
       val file = window.getFileAt(i)
-      result.addContent(writeComposite(composites[i], window.isFilePinned(file), window.selectedComposite))
+      result.addContent(writeComposite(composites.get(i), window.isFilePinned(file), window.selectedComposite))
     }
   }
 
@@ -343,6 +331,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
         result.add(editor)
       }
     }
+
     val currentWindow = currentWindow
     if (currentWindow != null && !windows.contains(currentWindow)) {
       val editor = currentWindow.selectedComposite?.selectedEditor
@@ -637,7 +626,10 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     val fireRunnable = Runnable { manager.fireSelectionChanged(newComposite) }
     currentWindow = window
     manager.updateFileName(window?.selectedFile)
-    if (window != null) {
+    if (window == null) {
+      fireRunnable.run()
+    }
+    else {
       val selectedComposite = window.selectedComposite
       if (selectedComposite != null) {
         fireRunnable.run()
@@ -645,9 +637,6 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       if (requestFocus) {
         window.requestFocus(true)
       }
-    }
-    else {
-      fireRunnable.run()
     }
   }
 
@@ -673,16 +662,16 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   @Suppress("DEPRECATION")
   @Deprecated("Use {@link #getAllComposites()}")
   fun getEditorComposites(): List<EditorWithProviderComposite> {
-    return windows.asSequence().flatMap { it.allComposites }.filterIsInstance(EditorWithProviderComposite::class.java).toList()
+    return windows.asSequence().flatMap { it.composites }.filterIsInstance<EditorWithProviderComposite>().toList()
   }
 
-  fun getAllComposites(): List<EditorComposite> = windows.flatMap { it.allComposites }
+  fun getAllComposites(): List<EditorComposite> = windows.flatMap { it.composites }
   //---------------------------------------------------------
 
   @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
   @Deprecated("Use {@link #getAllComposites(VirtualFile)}")
   fun findEditorComposites(file: VirtualFile): List<EditorWithProviderComposite> {
-    return getAllComposites(file).filterIsInstance(EditorWithProviderComposite::class.java)
+    return windows.asSequence().mapNotNull { it.getComposite(file) }.filterIsInstance<EditorWithProviderComposite>().toList()
   }
 
   fun getAllComposites(file: VirtualFile): List<EditorComposite> = windows.mapNotNull { it.getComposite(file) }
@@ -836,7 +825,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
                         context = context)
   }
 
-  suspend fun processFiles(fileElements: List<Element>, tabSizeLimit: Int, context: JPanel?): JPanel {
+  private suspend fun processFiles(fileElements: List<Element>, tabSizeLimit: Int, context: JPanel?): JPanel {
     val window = withContext(Dispatchers.EDT) {
       val editorWindow = context?.let { splitters.findWindowWith(it) } ?: splitters.createEditorWindow()
       splitters.setCurrentWindow(window = editorWindow, requestFocus = false)
@@ -920,8 +909,8 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
     if (context == null) {
       val orientation = "vertical" == element.getAttributeValue("split-orientation")
       val proportion = element.getAttributeValue("split-proportion").toFloat()
-      val firstComponent = process(firstChild!!, null)!!
-      val secondComponent = process(secondChild!!, null)!!
+      val firstComponent = process(element = firstChild!!, context = null)!!
+      val secondComponent = process(element = secondChild!!, context = null)!!
       return withContext(Dispatchers.EDT) {
         val panel = JPanel(BorderLayout())
         panel.isOpaque = false
