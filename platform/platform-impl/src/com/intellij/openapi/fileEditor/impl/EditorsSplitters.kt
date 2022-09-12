@@ -827,8 +827,13 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
 
   private suspend fun processFiles(fileElements: List<Element>, tabSizeLimit: Int, context: JPanel?): JPanel {
     val window = withContext(Dispatchers.EDT) {
-      val editorWindow = context?.let { splitters.findWindowWith(it) } ?: splitters.createEditorWindow()
-      splitters.setCurrentWindow(window = editorWindow, requestFocus = false)
+      var editorWindow = context?.let(splitters::findWindowWith)
+      if (editorWindow == null) {
+        editorWindow = splitters.createEditorWindow()
+      }
+      else if (splitters.currentWindow == null) {
+        splitters.setCurrentWindow(window = editorWindow, requestFocus = false)
+      }
       if (tabSizeLimit != 1) {
         editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)
       }
