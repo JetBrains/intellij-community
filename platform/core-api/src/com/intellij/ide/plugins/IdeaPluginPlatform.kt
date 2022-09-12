@@ -47,6 +47,9 @@ enum class IdeaPluginPlatform {
 
     @JvmStatic
     fun fromModuleId(moduleId: PluginId): IdeaPluginPlatform? =
-      directory[moduleId] ?: Unknown.takeIf { moduleId.idString.startsWith(moduleNamePrefix) }
+      directory[moduleId] ?: Unknown.takeIf { looksLikePlatformId(moduleId.idString) }
+
+    private fun looksLikePlatformId(idString: String): Boolean =
+      idString.startsWith(moduleNamePrefix) && idString != "com.intellij.platform.images"
   }
 }
