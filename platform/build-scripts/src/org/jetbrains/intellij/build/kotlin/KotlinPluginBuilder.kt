@@ -381,7 +381,7 @@ object KotlinPluginBuilder {
   }
 
   private fun replace(oldText: String, regex: String, newText: String): String {
-    val result = oldText.replaceFirst(regex, newText)
+    val result = oldText.replaceFirst(Regex(regex), newText)
     if (result == oldText) {
       if (oldText.contains(newText) && !TeamCityHelper.isUnderTeamCity) {
         // Locally e.g. in 'Update IDE from Sources' allow data to be already present
