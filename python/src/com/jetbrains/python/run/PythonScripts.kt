@@ -37,14 +37,19 @@ import java.nio.file.Path
 
 private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
 
+/**
+ * If [customInterpreterPath] is specified, it is used instead of [Sdk.getHomePath] from [sdk].
+ */
+@JvmOverloads
 fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironment,
                                              sdk: Sdk?,
                                              interpreterParameters: List<String>,
-                                             isUsePty: Boolean = false): TargetedCommandLine {
+                                             isUsePty: Boolean = false,
+                                             customInterpreterPath: String? = null): TargetedCommandLine {
   val commandLineBuilder = TargetedCommandLineBuilder(targetEnvironment.request)
   workingDir?.apply(targetEnvironment)?.let { commandLineBuilder.setWorkingDirectory(it) }
-  charset?.let { commandLineBuilder.setCharset(it) }
-  val interpreterPath = getInterpreterPath(sdk)
+  charset.let { commandLineBuilder.setCharset(it) }
+  val interpreterPath = customInterpreterPath ?: getInterpreterPath(sdk)
   val platform = targetEnvironment.targetPlatform.platform
   if (!interpreterPath.isNullOrEmpty()) {
     commandLineBuilder.setExePath(platform.toSystemDependentName(interpreterPath))
