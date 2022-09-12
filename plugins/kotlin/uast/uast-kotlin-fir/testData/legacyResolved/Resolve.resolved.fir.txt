@@ -65,7 +65,7 @@ UBlockExpression -> UQualifiedReferenceExpression -> Kotlin_Light_Method: foo
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = contains) -> FUN: contains
     UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as) -> null: null
     UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = IntRange) -> Decompiled_Class: IntRange
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = IntRange) -> Decompiled_Method: IntRange
 UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A {
     fun foo() {}
     inline fun inlineFoo() {

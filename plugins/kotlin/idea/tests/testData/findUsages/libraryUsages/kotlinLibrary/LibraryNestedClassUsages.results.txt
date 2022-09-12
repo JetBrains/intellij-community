@@ -3,6 +3,7 @@
 [LibraryNestedClassUsages.0.kt] New instance creation 18 val aa = A.T(1)
 [LibraryNestedClassUsages.0.kt] Supertype 10 class X : A.T {
 [LibraryNestedClassUsages.0.kt] Supertype 14 class Y() : A.T(1)
+[LibraryNestedClassUsages.0.kt] Unclassified 11 constructor(n: Int) : super(n)
 [LibraryNestedClassUsages.1.java] Local variable declaration 11 A.T t = new A.T();
 [LibraryNestedClassUsages.1.java] Local variable declaration 12 A.T tt = new A.T(1);
 [LibraryNestedClassUsages.1.java] New instance creation 11 A.T t = new A.T();
