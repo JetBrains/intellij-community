@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "OverridingDeprecatedMember", "ReplaceNegatedIsEmptyWithIsNotEmpty")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "OverridingDeprecatedMember", "ReplaceNegatedIsEmptyWithIsNotEmpty",
+               "PrivatePropertyName")
 
 package com.intellij.openapi.wm.impl
 
@@ -131,7 +132,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
     else {
       waiterForSecondPress = SingleAlarm(
-        task = Runnable {
+        task = {
           if (currentState != KeyState.HOLD) {
             resetHoldState()
           }
@@ -269,7 +270,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       val awtFocusListener = MyListener()
       Toolkit.getDefaultToolkit().addAWTEventListener(awtFocusListener, AWTEvent.FOCUS_EVENT_MASK or AWTEvent.WINDOW_FOCUS_EVENT_MASK)
 
-      val updateHeadersAlarm = SingleAlarm(Runnable {
+      val updateHeadersAlarm = SingleAlarm({
         processOpenedProjects { project ->
           (getInstance(project) as ToolWindowManagerImpl).updateToolWindowHeaders()
         }
@@ -328,7 +329,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
         }
       })
 
-      IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.EventDispatcher { event ->
+      IdeEventQueue.getInstance().addDispatcher({ event ->
         if (event is KeyEvent) {
           process { manager ->
             manager.dispatchKeyEvent(event)
@@ -620,7 +621,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
     activateToolWindow(idToEntry.get(id)!!, getRegisteredMutableInfoOrLogError(id), autoFocusContents, source)
 
-    ApplicationManager.getApplication().invokeLater(Runnable {
+    ApplicationManager.getApplication().invokeLater({
       runnable?.run()
       UiActivityMonitor.getInstance().removeActivity(project, activity)
     }, project.disposed)
@@ -1484,21 +1485,20 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
     val balloon = balloonBuilder.createBalloon()
     if (balloon is BalloonImpl) {
-      NotificationsManagerImpl.frameActivateBalloonListener(balloon, Runnable {
+      NotificationsManagerImpl.frameActivateBalloonListener(balloon) {
         EdtExecutorService.getScheduledExecutorInstance().schedule({ balloon.setHideOnClickOutside(true) }, 100, TimeUnit.MILLISECONDS)
-      })
+      }
     }
 
     listenerWrapper.balloon = balloon
     entry.balloon = balloon
-    Disposer.register(balloon, Disposable {
+    Disposer.register(balloon) {
       entry.toolWindow.isPlaceholderMode = false
       entry.balloon = null
-    })
+    }
     Disposer.register(entry.disposable, balloon)
     return balloon
   }
-
 
   override fun getToolWindowBalloon(id: String) = idToEntry[id]?.balloon
 
@@ -1836,11 +1836,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       window.setLocationRelativeTo(frameState!!.frameOrNull)
     }
     entry.windowedDecorator = windowedDecorator
-    Disposer.register(windowedDecorator, Disposable {
+    Disposer.register(windowedDecorator) {
       if (idToEntry.get(id)?.windowedDecorator != null) {
         hideToolWindow(id, false)
       }
-    })
+    }
     windowedDecorator.show(false)
 
     val rootPane = (window as RootPaneContainer).rootPane

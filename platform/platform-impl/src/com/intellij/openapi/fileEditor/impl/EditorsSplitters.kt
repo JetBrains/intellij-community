@@ -307,13 +307,13 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
     runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
       val component = UIBuilder(this).process(element, topPanel) ?: return
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         component.isFocusable = false
 
         removeAll()
         add(component, BorderLayout.CENTER)
         // clear empty splitters
-        for (window in windows.toTypedArray()) {
+        for (window in windows.toList()) {
           if (window.tabCount == 0) {
             window.removeFromSplitter()
           }
@@ -850,7 +850,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
     var focusedFile: VirtualFile? = null
     val fileEditorManager = splitters.manager
     for (i in fileElements.indices) {
-      val file = fileElements[i]
+      val file = fileElements.get(i)
       val historyElement = file.getChild(HistoryEntry.TAG)
       val fileName = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR)
       val activity = StartUpMeasurer.startActivity(PathUtil.getFileName(fileName), ActivityCategory.REOPENING_EDITOR)
@@ -860,40 +860,40 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
         if (ApplicationManager.getApplication().isUnitTestMode) {
           LOG.error(InvalidDataException("No file exists: ${entry.filePointer.url}"))
         }
+        continue
       }
-      else {
-        val openOptions = FileEditorOpenOptions(
-          selectAsCurrent = false,
-          pin = file.getAttributeValue(PINNED).toBoolean(),
-          index = i,
-          isReopeningOnStartup = true,
-        )
-        try {
-          virtualFile.putUserData(OPENED_IN_BULK, true)
-          val document = readAction {
-            if (virtualFile.isValid) FileDocumentManager.getInstance().getDocument(virtualFile) else null
-          }
-          val isCurrentTab = file.getAttributeValue(CURRENT_IN_TAB).toBoolean()
-          (fileEditorManager as AsyncFileEditorOpener).openFileImpl5(window = window,
-                                                                     virtualFile = virtualFile,
-                                                                     entry = entry,
-                                                                     options = openOptions)
-          // This is just to make sure document reference is kept on stack till this point
-          // so that document is available for folding state deserialization in HistoryEntry constructor
-          // and that document will be created only once during file opening
-          Reference.reachabilityFence(document)
-          if (isCurrentTab) {
-            focusedFile = virtualFile
-          }
+
+      val openOptions = FileEditorOpenOptions(
+        selectAsCurrent = false,
+        pin = file.getAttributeValue(PINNED).toBoolean(),
+        index = i,
+        isReopeningOnStartup = true,
+      )
+      try {
+        virtualFile.putUserData(OPENED_IN_BULK, true)
+        val document = readAction {
+          if (virtualFile.isValid) FileDocumentManager.getInstance().getDocument(virtualFile) else null
         }
-        catch (e: InvalidDataException) {
-          if (ApplicationManager.getApplication().isUnitTestMode) {
-            LOG.error(e)
-          }
+        val isCurrentTab = file.getAttributeValue(CURRENT_IN_TAB).toBoolean()
+        (fileEditorManager as AsyncFileEditorOpener).openFileImpl5(window = window,
+                                                                   virtualFile = virtualFile,
+                                                                   entry = entry,
+                                                                   options = openOptions)
+        // This is just to make sure document reference is kept on stack till this point
+        // so that document is available for folding state deserialization in HistoryEntry constructor
+        // and that document will be created only once during file opening
+        Reference.reachabilityFence(document)
+        if (isCurrentTab) {
+          focusedFile = virtualFile
         }
-        finally {
-          virtualFile.putUserData(OPENED_IN_BULK, null)
+      }
+      catch (e: InvalidDataException) {
+        if (ApplicationManager.getApplication().isUnitTestMode) {
+          LOG.error(e)
         }
+      }
+      finally {
+        virtualFile.putUserData(OPENED_IN_BULK, null)
       }
       activity.end()
     }

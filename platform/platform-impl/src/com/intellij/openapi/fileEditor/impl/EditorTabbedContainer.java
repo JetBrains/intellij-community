@@ -201,36 +201,20 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
   void setTabLayoutPolicy(int policy) {
     switch (policy) {
-      case JTabbedPane.SCROLL_TAB_LAYOUT:
-        myTabs.getPresentation().setSingleRow(true);
-        break;
-      case JTabbedPane.WRAP_TAB_LAYOUT:
-        myTabs.getPresentation().setSingleRow(false);
-        break;
-      default:
-        throw new IllegalArgumentException("Unsupported tab layout policy: " + policy);
+      case JTabbedPane.SCROLL_TAB_LAYOUT -> myTabs.getPresentation().setSingleRow(true);
+      case JTabbedPane.WRAP_TAB_LAYOUT -> myTabs.getPresentation().setSingleRow(false);
+      default -> throw new IllegalArgumentException("Unsupported tab layout policy: " + policy);
     }
   }
 
   public void setTabPlacement(int tabPlacement) {
     switch (tabPlacement) {
-      case SwingConstants.TOP:
-        myTabs.getPresentation().setTabsPosition(JBTabsPosition.top);
-        break;
-      case SwingConstants.BOTTOM:
-        myTabs.getPresentation().setTabsPosition(JBTabsPosition.bottom);
-        break;
-      case SwingConstants.LEFT:
-        myTabs.getPresentation().setTabsPosition(JBTabsPosition.left);
-        break;
-      case SwingConstants.RIGHT:
-        myTabs.getPresentation().setTabsPosition(JBTabsPosition.right);
-        break;
-      case UISettings.TABS_NONE:
-        myTabs.getPresentation().setHideTabs(true);
-        break;
-      default:
-        throw new IllegalArgumentException("Unknown tab placement code=" + tabPlacement);
+      case SwingConstants.TOP -> myTabs.getPresentation().setTabsPosition(JBTabsPosition.top);
+      case SwingConstants.BOTTOM -> myTabs.getPresentation().setTabsPosition(JBTabsPosition.bottom);
+      case SwingConstants.LEFT -> myTabs.getPresentation().setTabsPosition(JBTabsPosition.left);
+      case SwingConstants.RIGHT -> myTabs.getPresentation().setTabsPosition(JBTabsPosition.right);
+      case UISettings.TABS_NONE -> myTabs.getPresentation().setHideTabs(true);
+      default -> throw new IllegalArgumentException("Unknown tab placement code=" + tabPlacement);
     }
   }
 
@@ -240,7 +224,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
    */
   public @Nullable Object getSelectedComponent(boolean ignorePopup) {
     TabInfo info = ignorePopup ? myTabs.getSelectedInfo() : myTabs.getTargetInfo();
-    return info != null ? info.getComponent() : null;
+    return info == null ? null : info.getComponent();
   }
 
   public void insertTab(@NotNull VirtualFile file,
@@ -423,7 +407,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   private void doProcessDoubleClick(@NotNull MouseEvent e) {
     TabInfo info = myTabs.findInfo(e);
     if (info != null) {
-      EditorComposite composite = ((EditorWindowTopComponent)info.getComponent()).getComposite();
+      EditorComposite composite = ((EditorWindowTopComponent)info.getComponent()).composite;
       if (composite.isPreview()) {
         composite.setPreview(false);
         myWindow.getOwner().updateFileColor(composite.getFile());
@@ -692,7 +676,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       if (info == null) {
         return true;
       }
-      EditorComposite composite = ((EditorWindowTopComponent)info.getComponent()).getComposite();
+      EditorComposite composite = ((EditorWindowTopComponent)info.getComponent()).composite;
       return !composite.selfBorder();
     }
 
@@ -752,9 +736,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     private void updateActive() {
       checkActive();
-      SwingUtilities.invokeLater(() -> {
-        checkActive();
-      });
+      SwingUtilities.invokeLater(this::checkActive);
     }
 
     private void checkActive() {
@@ -786,7 +768,8 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     @Override
     public void revalidateAndRepaint(boolean layoutNow) {
-      //noinspection ConstantConditions - called from super constructor
+      // called from super constructor
+      //noinspection ConstantValue
       if (myWindow != null && myWindow.getOwner().isInsideChange()) {
         return;
       }

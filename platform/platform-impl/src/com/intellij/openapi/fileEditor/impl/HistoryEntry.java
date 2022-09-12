@@ -237,7 +237,7 @@ public final class HistoryEntry {
     myProviderToState.remove(provider);
   }
 
-  static class EntryData {
+  static final class EntryData {
     @NotNull private final String url;
     @NotNull private final List<Pair<FileEditorProvider, FileEditorState>> providerStates;
     @Nullable private final FileEditorProvider selectedProvider;

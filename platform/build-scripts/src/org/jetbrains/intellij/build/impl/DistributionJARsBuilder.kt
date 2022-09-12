@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext")
+@file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext", "ReplaceNegatedIsEmptyWithIsNotEmpty", "PrivatePropertyName")
 
 package org.jetbrains.intellij.build.impl
 
@@ -780,7 +780,7 @@ private suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildCon
     copyDir(sourceDir = context.paths.communityHomeDir.communityRoot.resolve("lib/ant"),
             targetDir = antDir,
             dirFilter = { !it.endsWith("src") },
-            fileFilter = Predicate { file ->
+            fileFilter = { file ->
               if (file.toString().endsWith(".jar")) {
                 sources.add(ZipSource(file = file) { result.add(ProjectLibraryEntry(antTargetFile, libraryData, file, it)) })
                 false
