@@ -223,19 +223,19 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         .map { it.asCommitCheck(sessionInfo, commitContext) }
         .groupBy { it.getExecutionOrder() }
 
-      if (!checkDumbMode(commitChecks.values.flatten(), commitInfo)) {
+      if (!checkDumbMode(commitInfo, commitChecks.values.flatten())) {
         return CommitChecksResult.Cancelled
       }
 
-      runModalCommitChecks(project, commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
+      runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
 
       val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
       runMetaHandlers(metaHandlers)
 
-      runModalCommitChecks(project, commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION])?.let { return it }
+      runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION])?.let { return it }
       FileDocumentManager.getInstance().saveAllDocuments()
 
-      runModalCommitChecks(project, commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE])?.let { return it }
+      runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE])?.let { return it }
 
       return CommitChecksResult.Passed
     }
@@ -248,7 +248,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     }
   }
 
-  private fun checkDumbMode(commitChecks: List<CommitCheck>, commitInfo: CommitInfo): Boolean {
+  private fun checkDumbMode(commitInfo: CommitInfo, commitChecks: List<CommitCheck>): Boolean {
     if (!DumbService.isDumb(project)) return true
     if (commitChecks.none { commitCheck -> commitCheck.isEnabled() && !DumbService.isDumbAware(commitCheck) }) return true
 
@@ -257,6 +257,30 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       .yesText(message("checkin.wait"))
       .noText(commitInfo.commitActionText)
       .ask(project)
+  }
+
+  private suspend fun runModalCommitChecks(commitInfo: CommitInfo,
+                                           commitChecks: List<CommitCheck>?): CommitChecksResult? {
+    for (commitCheck in commitChecks.orEmpty()) {
+      try {
+        val problem = runCommitCheck(project, commitCheck)
+        if (problem == null) continue
+
+        val result = blockingContext {
+          problem.showModalSolution(project, commitInfo)
+        }
+        return when (result) {
+          CheckinHandler.ReturnResult.COMMIT -> continue
+          CheckinHandler.ReturnResult.CANCEL -> CommitChecksResult.Failed()
+          CheckinHandler.ReturnResult.CLOSE_WINDOW -> CommitChecksResult.Failed(toCloseWindow = true)
+        }
+      }
+      catch (e: CancellationException) {
+        LOG.debug("CheckinHandler cancelled $commitCheck")
+        throw e
+      }
+    }
+    return null // check passed
   }
 
   protected open fun getBeforeCommitChecksChangelist(): LocalChangeList? = null
@@ -341,31 +365,6 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       ctx.progressSink?.update(text = "", details = "")
 
       return commitCheck.runCheck()
-    }
-
-    private suspend fun runModalCommitChecks(project: Project,
-                                             commitInfo: CommitInfo,
-                                             commitChecks: List<CommitCheck>?): CommitChecksResult? {
-      for (commitCheck in commitChecks.orEmpty()) {
-        try {
-          val problem = runCommitCheck(project, commitCheck)
-          if (problem == null) continue
-
-          val result = blockingContext {
-            problem.showModalSolution(project, commitInfo)
-          }
-          return when (result) {
-            CheckinHandler.ReturnResult.COMMIT -> continue
-            CheckinHandler.ReturnResult.CANCEL -> CommitChecksResult.Failed()
-            CheckinHandler.ReturnResult.CLOSE_WINDOW -> CommitChecksResult.Failed(toCloseWindow = true)
-          }
-        }
-        catch (e: CancellationException) {
-          LOG.debug("CheckinHandler cancelled $commitCheck")
-          throw e
-        }
-      }
-      return null // check passed
     }
   }
 }

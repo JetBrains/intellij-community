@@ -70,10 +70,6 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   private val commitHandlers get() = workflow.commitHandlers
   protected val commitOptions get() = workflow.commitOptions
 
-  open fun updateDefaultCommitActionName() {
-    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
-  }
-
   protected open fun createDataProvider() = DataProvider { dataId ->
     when {
       COMMIT_WORKFLOW_HANDLER.`is`(dataId) -> this
@@ -90,6 +86,8 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     // TODO Potential leak here for non-modal
     getAfterOptions(workflow.commitHandlers, this)
   )
+
+  abstract fun updateDefaultCommitActionName()
 
   override fun inclusionChanged() = commitHandlers.forEachLoggingErrors(LOG) { it.includedChangesChanged() }
 
@@ -194,15 +192,13 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   override fun dispose() = Unit
 
   companion object {
-    fun getDefaultCommitActionName(vcses: Collection<AbstractVcs>): @Nls String =
-      replaceMnemonicAmpersand(
-        (vcses.mapNotNull { it.checkinEnvironment?.checkinOperationName }.distinct().singleOrNull()
-         ?: VcsBundle.message("commit.dialog.default.commit.operation.name")
-        ).fixUnderscoreMnemonic()
-      )
+    fun getDefaultCommitActionName(vcses: Collection<AbstractVcs>): @Nls String = getDefaultCommitActionName(vcses, false, false)
 
     fun getDefaultCommitActionName(vcses: Collection<AbstractVcs>, isAmend: Boolean, isSkipCommitChecks: Boolean): @Nls String {
-      val commitText = getDefaultCommitActionName(vcses)
+      val actionName = vcses.mapNotNull { it.checkinEnvironment?.checkinOperationName }.distinct().singleOrNull()
+                       ?: VcsBundle.message("commit.dialog.default.commit.operation.name")
+      val commitText = replaceMnemonicAmpersand(actionName.fixUnderscoreMnemonic())
+
       return when {
         isAmend && isSkipCommitChecks -> VcsBundle.message("action.amend.commit.anyway.text")
         isAmend && !isSkipCommitChecks -> VcsBundle.message("amend.action.name", commitText)
