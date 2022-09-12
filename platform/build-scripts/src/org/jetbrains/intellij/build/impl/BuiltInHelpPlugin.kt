@@ -7,7 +7,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.ZipArchiver
-import org.jetbrains.intellij.build.io.compressDir
+import org.jetbrains.intellij.build.io.archiveDir
 import org.jetbrains.intellij.build.io.writeNewZip
 import java.nio.file.Files
 import java.nio.file.Path
@@ -89,9 +89,9 @@ private fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: List<Stri
     writeNewZip(assetJar, compress = true) { zipCreator ->
       val archiver = ZipArchiver(zipCreator)
       archiver.setRootDir(resourceRoot)
-      compressDir(resourceRoot.resolve("topics"), archiver)
-      compressDir(resourceRoot.resolve("images"), archiver)
-      compressDir(resourceRoot.resolve("search"), archiver)
+      archiveDir(resourceRoot.resolve("topics"), archiver)
+      archiveDir(resourceRoot.resolve("images"), archiver)
+      archiveDir(resourceRoot.resolve("search"), archiver)
     }
   }
 }

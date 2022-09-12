@@ -1105,7 +1105,7 @@ private suspend fun bulkZipWithPrefix(items: Collection<Pair<Path, Path>>, compr
                 ZipArchiver(zipCreator).use { archiver ->
                   if (Files.isDirectory(item.first)) {
                     archiver.setRootDir(item.first, item.first.fileName.toString())
-                    compressDir(startDir = item.first, archiver = archiver, excludes = null)
+                    archiveDir(startDir = item.first, archiver = archiver, excludes = null)
                   }
                   else {
                     archiver.setRootDir(item.first.parent)

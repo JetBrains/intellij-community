@@ -79,7 +79,7 @@ else {
     for ((dir, prefix) in dirs.entries) {
       val normalizedDir = dir.toAbsolutePath().normalize()
       archiver.setRootDir(normalizedDir, prefix)
-      compressDir(normalizedDir, archiver, excludes = null)
+      archiveDir(normalizedDir, archiver, excludes = null)
     }
 
     for (dir in dirNameSetToAdd) {
@@ -127,7 +127,7 @@ class ZipArchiver(private val zipCreator: ZipFileWriter, val fileAdded: ((String
   }
 }
 
-fun compressDir(startDir: Path, archiver: ZipArchiver, excludes: List<PathMatcher>? = emptyList()) {
+fun archiveDir(startDir: Path, archiver: ZipArchiver, excludes: List<PathMatcher>? = emptyList()) {
   val dirCandidates = ArrayDeque<Path>()
   dirCandidates.add(startDir)
   val tempList = ArrayList<Path>()
