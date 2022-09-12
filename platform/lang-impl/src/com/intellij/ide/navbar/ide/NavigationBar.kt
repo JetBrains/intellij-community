@@ -27,6 +27,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.NaturalComparator
@@ -49,8 +50,8 @@ import javax.swing.JComponent
 import kotlin.coroutines.resume
 
 
-const val REGISTRY_KEY = "ide.navBar.v2"
-val navbarV2Enabled = Registry.`is`(REGISTRY_KEY, false)
+internal val navbarV2Enabled: Boolean = Registry.`is`("ide.navBar.v2", false)
+internal val LOG: Logger = Logger.getInstance("#com.intellij.ide.navbar.ide")
 
 internal class UiNavBarItem(
   val pointer: Pointer<out NavBarItem>,
@@ -128,15 +129,23 @@ internal class NavigationBar(
         myActivityEvents
           .throttle(DEFAULT_UI_RESPONSE_TIMEOUT)
           .collectLatest {
-            if (modelChangesAllowed.get()) {
-              val focusedData = getFocusedData()
-              val model = readAction {
-                buildModel(focusedData).ifEmpty {
-                  val item = ProjectNavBarItem(myProject)
-                  listOf(UiNavBarItem(item.createPointer(), item.presentation(), item.javaClass))
+            try {
+              if (modelChangesAllowed.get()) {
+                val focusedData = getFocusedData()
+                val model = readAction {
+                  buildModel(focusedData).ifEmpty {
+                    val item = ProjectNavBarItem(myProject)
+                    listOf(UiNavBarItem(item.createPointer(), item.presentation(), item.javaClass))
+                  }
                 }
+                myItems.emit(model)
               }
-              myItems.emit(model)
+            }
+            catch (ce: CancellationException) {
+              throw ce
+            }
+            catch (t: Throwable) {
+              LOG.error(t)
             }
           }
       }
