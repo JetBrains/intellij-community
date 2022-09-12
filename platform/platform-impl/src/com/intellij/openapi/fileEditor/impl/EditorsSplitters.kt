@@ -46,8 +46,10 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.Element
@@ -355,6 +357,13 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     runUnderModalProgressIfIsEdt { restoreEditors(requestFocus = false) }
   }
 
+  @RequiresEdt
+  fun openFilesAsync(): Job {
+    return manager.project.coroutineScope.launch {
+      restoreEditors(requestFocus = false)
+    }
+  }
+
   fun readExternal(element: Element) {
     splittersElement = element
   }
@@ -433,16 +442,14 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   }
 
   fun setTabsPlacement(tabPlacement: Int) {
-    val windows = getWindows()
-    for (i in windows.indices) {
-      windows[i].setTabsPlacement(tabPlacement)
+    for (window in this.windows.toList()) {
+      window.setTabsPlacement(tabPlacement)
     }
   }
 
   fun setTabLayoutPolicy(scrollTabLayout: Int) {
-    val windows = getWindows()
-    for (i in windows.indices) {
-      windows[i].setTabLayoutPolicy(scrollTabLayout)
+    for (window in this.windows.toList()) {
+      window.setTabLayoutPolicy(scrollTabLayout)
     }
   }
 
@@ -668,8 +675,8 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   fun getAllComposites(): List<EditorComposite> = windows.flatMap { it.composites }
   //---------------------------------------------------------
 
-  @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use {@link #getAllComposites(VirtualFile)}")
+  @Suppress("DEPRECATION")
+  @Deprecated("Use {@link #getAllComposites(VirtualFile)}", level = DeprecationLevel.ERROR)
   fun findEditorComposites(file: VirtualFile): List<EditorWithProviderComposite> {
     return windows.asSequence().mapNotNull { it.getComposite(file) }.filterIsInstance<EditorWithProviderComposite>().toList()
   }

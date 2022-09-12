@@ -331,7 +331,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
   public void showNotify() {
     if (!myWasEverShown) {
       myWasEverShown = true;
-      getSplitters().openFiles();
+      getSplitters().openFilesAsync();
     }
   }
 

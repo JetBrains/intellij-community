@@ -89,8 +89,6 @@ import com.intellij.util.ui.update.Update;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -103,6 +101,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -335,22 +334,23 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     return Collections.unmodifiableSet(all);
   }
 
-  private @NotNull Promise<EditorsSplitters> getActiveSplittersAsync() {
-    AsyncPromise<EditorsSplitters> result = new AsyncPromise<>();
+  private @NotNull CompletableFuture<@Nullable EditorsSplitters> getActiveSplittersAsync() {
+    CompletableFuture<EditorsSplitters> result = new CompletableFuture<>();
     IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     fm.doWhenFocusSettlesDown(() -> {
       if (myProject.isDisposed()) {
-        result.cancel();
+        result.complete(null);
         return;
       }
+
       Component focusOwner = fm.getFocusOwner();
       DockContainer container = myDockManager.getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
       if (container instanceof DockableEditorTabbedContainer) {
-        result.setResult(((DockableEditorTabbedContainer)container).getSplitters());
+        result.complete(((DockableEditorTabbedContainer)container).getSplitters());
       }
       else {
-        result.setResult(getMainSplitters());
+        result.complete(getMainSplitters());
       }
     }, ModalityState.defaultModalityState());
     return result;
@@ -533,7 +533,11 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   private void updateFrameTitle() {
-    getActiveSplittersAsync().onSuccess(splitters -> splitters.updateFileName(null));
+    getActiveSplittersAsync().thenAccept(splitters -> {
+      if (splitters != null) {
+        splitters.updateFileName(null);
+      }
+    });
   }
 
   @SuppressWarnings("removal")
@@ -671,9 +675,10 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   @Override
-  public @NotNull Promise<EditorWindow> getActiveWindow() {
-    return getActiveSplittersAsync()
-      .then(EditorsSplitters::getCurrentWindow);
+  public @NotNull CompletableFuture<@Nullable EditorWindow> getActiveWindow() {
+    return getActiveSplittersAsync().thenApply(splitters -> {
+      return splitters == null ? null : splitters.getCurrentWindow();
+    });
   }
 
   @Override

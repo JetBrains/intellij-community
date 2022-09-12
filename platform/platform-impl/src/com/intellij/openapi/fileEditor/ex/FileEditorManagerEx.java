@@ -18,13 +18,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class FileEditorManagerEx extends FileEditorManager implements BusyObject {
   private final List<EditorDataProvider> myDataProviders = new ArrayList<>();
@@ -62,7 +62,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   /**
    * Asynchronous version of {@link #getCurrentWindow()}. Execution happens after focus settle down. Can be invoked on any thread.
    */
-  public abstract @NotNull Promise<EditorWindow> getActiveWindow();
+  public abstract @NotNull CompletableFuture<@Nullable EditorWindow> getActiveWindow();
 
   public abstract void setCurrentWindow(EditorWindow window);
 
