@@ -81,7 +81,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     mySession = session;
     myUsageView = usageView;
     myProject = usageView.getProject();
-    SimilarUsagesCollector.logMoreSimilarUsagePatternsShow(myProject, session);
+    SimilarUsagesCollector.logMostCommonUsagePatternsShow(myProject, myUsageView);
     mySortedClusters = new Ref<>(null);
     mySelectedUsages = myUsageView.getSelectedUsages();
     myNonClusteredUsages = mySelectedUsages.stream().filter(e -> !(e instanceof SimilarUsage)).collect(Collectors.toCollection(HashSet::new));
@@ -93,7 +93,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
       new RefreshAction(IdeBundle.messagePointer("action.refresh"), IdeBundle.messagePointer("action.refresh"), AllIcons.Actions.Refresh) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          SimilarUsagesCollector.logMostCommonUsagePatternsRefreshClicked(myProject, mySession);
+          SimilarUsagesCollector.logMostCommonUsagePatternsRefreshClicked(myProject, myUsageView);
           refresh();
         }
 
@@ -167,7 +167,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
         renderClusterDescription(ContainerUtil.getFirstItem(filteredUsages), filteredUsages);
       });
       if (logMoreSnippetsLoaded) {
-        SimilarUsagesCollector.logMoreClustersLoaded(myProject, mySession, myAlreadyRenderedSnippets);
+        SimilarUsagesCollector.logMoreClustersLoaded(myProject, myUsageView, myAlreadyRenderedSnippets);
       }
     }
     if (myAlreadyRenderedSnippets >= sortedClusters.size()) {
@@ -179,7 +179,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
           }
         });
         if (logMoreSnippetsLoaded) {
-          SimilarUsagesCollector.logMoreNonClusteredUsagesLoaded(myProject, mySession, myAlreadyRenderedSnippets);
+          SimilarUsagesCollector.logMoreNonClusteredUsagesLoaded(myProject, myUsageView, myAlreadyRenderedSnippets);
         }
       }
     }
@@ -200,8 +200,8 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private @NotNull ActionLink createOpenSimilarUsagesActionLink(@NotNull UsageInfo info, @NotNull Set<SimilarUsage> usagesToRender) {
     final ActionLink actionLink =
       new ActionLink(UsageViewBundle.message("similar.usages.show.0.similar.usages.title", usagesToRender.size() - 1), e -> {
-        SimilarUsagesCollector.logShowSimilarUsagesLinkClicked(myProject, mySession);
-        final SimilarUsagesComponent similarComponent = new SimilarUsagesComponent(mySession, info, this);
+        SimilarUsagesCollector.logShowSimilarUsagesLinkClicked(myProject, myUsageView);
+        final SimilarUsagesComponent similarComponent = new SimilarUsagesComponent(myUsageView, info, this);
         removeAll();
         isShowingSimilarUsagesComponent.set(true);
         setToolbar(new SimilarUsagesToolbar(similarComponent, UsageViewBundle.message("0.similar.usages", usagesToRender.size() - 1),

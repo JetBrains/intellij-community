@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.intellij.usages.similarity.clustering.Distance.*;
@@ -23,15 +22,12 @@ import static com.intellij.usages.similarity.clustering.Distance.*;
  * Does usage clustering during the find usage process. Clusters are used on find usages results presentation.
  */
 public class ClusteringSearchSession {
-  public static final AtomicInteger counter = new AtomicInteger();
   private final @NotNull List<@NotNull UsageCluster> myClusters;
-  private final int myUniqueId;
   private final @NotNull Distance myDistance;
 
   public ClusteringSearchSession() {
     myClusters = Collections.synchronizedList(new ArrayList<>());
     myDistance = new Distance(Registry.doubleValue("similarity.find.usages.groups.threshold"));
-    myUniqueId = counter.incrementAndGet();
   }
 
   public @NotNull List<@NotNull UsageCluster> getClusters() {
@@ -73,9 +69,6 @@ public class ClusteringSearchSession {
       }).collect(Collectors.toList());
   }
 
-  public int getUniqueId() {
-    return myUniqueId;
-  }
 
   public void updateClusters(@NotNull Collection<@NotNull UsageCluster> clusters) {
     synchronized (myClusters) {

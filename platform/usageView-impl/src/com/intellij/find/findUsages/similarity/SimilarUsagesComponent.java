@@ -8,7 +8,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
+import com.intellij.usages.UsageView;
 import com.intellij.usages.similarity.statistics.SimilarUsagesCollector;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.ui.JBUI;
@@ -28,12 +28,11 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
   private int myAlreadyProcessedUsages = 0;
   private int myAlreadyRenderedUsages = 0;
   private final @NotNull UsageInfo myOriginalUsage;
+  private final @NotNull UsageView myUsageView;
 
-  private final @NotNull ClusteringSearchSession mySession;
-
-  public SimilarUsagesComponent(@NotNull ClusteringSearchSession session, @NotNull UsageInfo originalUsage, @NotNull Disposable parent) {
+  public SimilarUsagesComponent(@NotNull UsageView usageView, @NotNull UsageInfo originalUsage, @NotNull Disposable parent) {
     myOriginalUsage = originalUsage;
-    mySession = session;
+    myUsageView = usageView;
     setLayout(new VerticalLayout(0));
     setBackground(UIUtil.getTextFieldBackground());
     Disposer.register(parent, this);
@@ -90,7 +89,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     BoundedRangeModelThresholdListener.install(similarUsagesScrollPane.getVerticalScrollBar(), () -> {
       if (myAlreadyProcessedUsages < usagesToRender.size()) {
         renderSimilarUsages(usagesToRender);
-        SimilarUsagesCollector.logMoreUsagesLoaded(myOriginalUsage.getProject(), mySession, myAlreadyRenderedUsages);
+        SimilarUsagesCollector.logMoreUsagesLoaded(myOriginalUsage.getProject(), myUsageView, myAlreadyRenderedUsages);
       }
       return Unit.INSTANCE;
     });

@@ -36,7 +36,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
 
   companion object {
     val GROUP = EventLogGroup("usage.view", 7)
-    private val USAGE_VIEW = object : PrimitiveEventField<UsageView>() {
+    val USAGE_VIEW = object : PrimitiveEventField<UsageView>() {
       override val name: String = "usage_view"
 
       override fun addData(fuData: FeatureUsageData, value: UsageView) {

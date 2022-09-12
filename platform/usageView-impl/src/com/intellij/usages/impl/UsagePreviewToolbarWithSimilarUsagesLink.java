@@ -11,7 +11,6 @@ import com.intellij.ui.components.AnActionLink;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.usages.similarity.clustering.UsageCluster;
 import com.intellij.usages.similarity.statistics.SimilarUsagesCollector;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
@@ -81,10 +80,9 @@ public class UsagePreviewToolbarWithSimilarUsagesLink extends JPanel {
         previewPanel.releaseEditor();
         UsageInfo firstSelectedInfo = ContainerUtil.getFirstItem(infos);
         assert firstSelectedInfo != null;
-        ClusteringSearchSession session = ContainerUtil.getFirstItem(onlyValidUsages).getClusteringSession();
-        SimilarUsagesCollector.logLinkToSimilarUsagesLinkFromUsagePreviewClicked(firstSelectedInfo.getProject(), session);
+        SimilarUsagesCollector.logLinkToSimilarUsagesLinkFromUsagePreviewClicked(firstSelectedInfo.getProject(), myUsageView);
         final SimilarUsagesComponent similarComponent =
-          new SimilarUsagesComponent(session, firstSelectedInfo, previewPanel);
+          new SimilarUsagesComponent(myUsageView, firstSelectedInfo, previewPanel);
         previewPanel.add(
           new SimilarUsagesToolbar(similarComponent, UsageViewBundle.message("0.similar.usages", onlyValidUsages.size() - 1), null,
                                    new AnActionLink(UsageViewBundle.message("0.similar.usages.back.to.usage.preview", UIUtil.leftArrow()),

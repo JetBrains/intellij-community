@@ -5,56 +5,56 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.usages.similarity.clustering.ClusteringSearchSession
+import com.intellij.usages.UsageView
+import com.intellij.usages.impl.UsageViewStatisticsCollector.Companion.USAGE_VIEW
 
 class SimilarUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("similar.usages", 3)
-    private val SESSION_ID = EventFields.Int("id")
+    private val GROUP = EventLogGroup("similar.usages", 4)
     private val NUMBER_OF_LOADED = EventFields.Int("number_of_loaded")
-    private val MOST_COMMON_USAGE_PATTERNS_SHOWN = GROUP.registerEvent("most.common.usages.shown", SESSION_ID)
-    private val MOST_COMMON_USAGE_PATTERNS_REFRESH_CLICKED = GROUP.registerEvent("most.common.usage.patterns.refresh.clicked", SESSION_ID)
-    private val LINK_TO_SIMILAR_USAGES_FROM_USAGE_PREVIEW_CLICKED = GROUP.registerEvent("link.to.similar.usage.clicked", SESSION_ID)
-    private val SHOW_SIMILAR_USAGES_LINK_CLICKED = GROUP.registerEvent("show.similar.usages.link.clicked", SESSION_ID)
-    private val MORE_CLUSTERS_LOADED = GROUP.registerEvent("more.clusters.loaded", SESSION_ID, NUMBER_OF_LOADED)
-    private val MORE_USAGES_LOADED = GROUP.registerEvent("more.usages.loaded", SESSION_ID, NUMBER_OF_LOADED)
-    private val MORE_NON_CLUSTERED_USAGES_LOADED = GROUP.registerEvent("more.non.clustered.usage.loaded", SESSION_ID, NUMBER_OF_LOADED)
+    private val MOST_COMMON_USAGE_PATTERNS_SHOWN = GROUP.registerEvent("most.common.usages.shown", USAGE_VIEW)
+    private val MOST_COMMON_USAGE_PATTERNS_REFRESH_CLICKED = GROUP.registerEvent("most.common.usage.patterns.refresh.clicked", USAGE_VIEW)
+    private val LINK_TO_SIMILAR_USAGES_FROM_USAGE_PREVIEW_CLICKED = GROUP.registerEvent("link.to.similar.usage.clicked", USAGE_VIEW)
+    private val SHOW_SIMILAR_USAGES_LINK_CLICKED = GROUP.registerEvent("show.similar.usages.link.clicked", USAGE_VIEW)
+    private val MORE_CLUSTERS_LOADED = GROUP.registerEvent("more.clusters.loaded", USAGE_VIEW, NUMBER_OF_LOADED)
+    private val MORE_USAGES_LOADED = GROUP.registerEvent("more.usages.loaded", USAGE_VIEW, NUMBER_OF_LOADED)
+    private val MORE_NON_CLUSTERED_USAGES_LOADED = GROUP.registerEvent("more.non.clustered.usage.loaded", USAGE_VIEW, NUMBER_OF_LOADED)
 
     @JvmStatic
-    fun logMoreSimilarUsagePatternsShow(project: Project, session: ClusteringSearchSession) {
-      MOST_COMMON_USAGE_PATTERNS_SHOWN.log(project, session.uniqueId)
+    fun logMostCommonUsagePatternsShow(project: Project, usageView: UsageView) {
+      MOST_COMMON_USAGE_PATTERNS_SHOWN.log(project, usageView)
     }
 
     @JvmStatic
-    fun logMostCommonUsagePatternsRefreshClicked(project: Project, session: ClusteringSearchSession) {
-      MOST_COMMON_USAGE_PATTERNS_REFRESH_CLICKED.log(project, session.uniqueId)
+    fun logMostCommonUsagePatternsRefreshClicked(project: Project, usageView: UsageView) {
+      MOST_COMMON_USAGE_PATTERNS_REFRESH_CLICKED.log(project, usageView)
     }
 
     @JvmStatic
-    fun logLinkToSimilarUsagesLinkFromUsagePreviewClicked(project: Project, session: ClusteringSearchSession) {
-      LINK_TO_SIMILAR_USAGES_FROM_USAGE_PREVIEW_CLICKED.log(project, session.uniqueId)
+    fun logLinkToSimilarUsagesLinkFromUsagePreviewClicked(project: Project, usageView: UsageView) {
+      LINK_TO_SIMILAR_USAGES_FROM_USAGE_PREVIEW_CLICKED.log(project, usageView)
     }
 
     @JvmStatic
-    fun logShowSimilarUsagesLinkClicked(project: Project, session: ClusteringSearchSession) {
-      SHOW_SIMILAR_USAGES_LINK_CLICKED.log(project, session.uniqueId)
+    fun logShowSimilarUsagesLinkClicked(project: Project, usageView: UsageView) {
+      SHOW_SIMILAR_USAGES_LINK_CLICKED.log(project, usageView)
     }
 
     @JvmStatic
-    fun logMoreClustersLoaded(project: Project, session: ClusteringSearchSession, numberOfAddedUsages: Int) {
-      MORE_CLUSTERS_LOADED.log(project, session.uniqueId, numberOfAddedUsages)
+    fun logMoreClustersLoaded(project: Project, usageView: UsageView, numberOfAddedUsages: Int) {
+      MORE_CLUSTERS_LOADED.log(project, usageView, numberOfAddedUsages)
     }
 
     @JvmStatic
-    fun logMoreNonClusteredUsagesLoaded(project: Project, session: ClusteringSearchSession, numberOfAddedUsages: Int) {
-      MORE_NON_CLUSTERED_USAGES_LOADED.log(project, session.uniqueId, numberOfAddedUsages)
+    fun logMoreNonClusteredUsagesLoaded(project: Project, usageView: UsageView, numberOfAddedUsages: Int) {
+      MORE_NON_CLUSTERED_USAGES_LOADED.log(project, usageView, numberOfAddedUsages)
     }
 
     @JvmStatic
-    fun logMoreUsagesLoaded(project: Project, session: ClusteringSearchSession, numberOfAddedUsages: Int) {
-      MORE_USAGES_LOADED.log(project, session.uniqueId, numberOfAddedUsages)
+    fun logMoreUsagesLoaded(project: Project, usageView: UsageView, numberOfAddedUsages: Int) {
+      MORE_USAGES_LOADED.log(project, usageView, numberOfAddedUsages)
     }
   }
 }
