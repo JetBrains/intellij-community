@@ -1334,7 +1334,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (!myHolder.hasErrorResults() && resultForIncompleteCode != null) {
-      myHolder.add(HighlightUtil.checkExpressionRequired(expression, resultForIncompleteCode));
+      myHolder.add(HighlightUtil.checkExpressionRequired(expression, resultForIncompleteCode, myFile));
     }
 
     if (!myHolder.hasErrorResults() && resolved instanceof PsiField) {
@@ -1753,7 +1753,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitTypeElement(@NotNull PsiTypeElement type) {
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkIllegalType(type));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkIllegalType(type, myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVarTypeApplicability(type));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkReferenceTypeUsedAsTypeArgument(type, myLanguageLevel));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkWildcardUsage(type));

@@ -15,7 +15,7 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.core.JavaPsiBundle;
@@ -2135,7 +2135,7 @@ public final class HighlightUtil {
   }
 
   static HighlightInfo checkExpressionRequired(@NotNull PsiReferenceExpression expression,
-                                               @NotNull JavaResolveResult resultForIncompleteCode) {
+                                               @NotNull JavaResolveResult resultForIncompleteCode, @NotNull PsiFile containingFile) {
     if (expression.getNextSibling() instanceof PsiErrorElement) return null;
 
     PsiElement resolved = resultForIncompleteCode.getElement();
@@ -2150,7 +2150,7 @@ public final class HighlightUtil {
     HighlightInfo info =
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
     if (info != null) {
-      UnresolvedReferenceQuickFixProvider.registerReferenceFixes(expression, new QuickFixActionRegistrarImpl(info));
+      UnresolvedReferenceQuickFixUpdater.getInstance(containingFile.getProject()).registerQuickFixesLater(expression, info);
     }
     return info;
   }
@@ -2350,7 +2350,7 @@ public final class HighlightUtil {
   }
 
 
-  static HighlightInfo checkIllegalType(@NotNull PsiTypeElement typeElement) {
+  static HighlightInfo checkIllegalType(@NotNull PsiTypeElement typeElement, @NotNull PsiFile containingFile) {
     PsiElement parent = typeElement.getParent();
     if (parent instanceof PsiTypeElement) return null;
 
@@ -2370,11 +2370,10 @@ public final class HighlightUtil {
         }
         String canonicalText = componentType.getCanonicalText();
         String description = JavaErrorBundle.message("unknown.class", canonicalText);
-        HighlightInfo info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
         PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
         if (referenceElement != null && info != null) {
-          UnresolvedReferenceQuickFixProvider.registerReferenceFixes(referenceElement, new QuickFixActionRegistrarImpl(info));
+          UnresolvedReferenceQuickFixUpdater.getInstance(containingFile.getProject()).registerQuickFixesLater(referenceElement, info);
         }
         return info;
       }
@@ -3157,7 +3156,7 @@ public final class HighlightUtil {
         QuickFixAction.registerQuickFixAction(info, new RemoveNewKeywordFix(outerParent));
       }
       if (info != null) {
-        UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarImpl(info));
+        UnresolvedReferenceQuickFixUpdater.getInstance(containingFile.getProject()).registerQuickFixesLater(ref, info);
       }
 
       return info;
@@ -3184,7 +3183,7 @@ public final class HighlightUtil {
           }
         }
         if (info != null) {
-          UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarImpl(info));
+          UnresolvedReferenceQuickFixUpdater.getInstance(containingFile.getProject()).registerQuickFixesLater(ref, info);
         }
         return info;
       }
