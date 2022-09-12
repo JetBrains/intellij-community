@@ -1711,7 +1711,7 @@ public final class UIUtil {
     if (SwingUtilities.isDescendingFrom(owner, component)) return true;
 
     while (component != null) {
-      if (hasFocus(component)) return true;
+      if (kindaHasFocus(component)) return true;
       component = component.getParent();
     }
     return false;
@@ -1759,6 +1759,15 @@ public final class UIUtil {
     return false;
   }
 
+  private static boolean kindaHasFocus(@NotNull Component component) {
+    if (GraphicsEnvironment.isHeadless()) {
+      return true;
+    }
+
+    JComponent jComponent = component instanceof JComponent ? (JComponent)component : null;
+    return jComponent != null && Boolean.TRUE.equals(jComponent.getClientProperty(HAS_FOCUS));
+  }
+
   /**
    * Checks if a component is focused in a more general sense than UI focuses,
    * sometimes useful to limit various activities by checking the focus of real UI,
@@ -1767,12 +1776,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean hasFocus(@NotNull Component component) {
-    if (GraphicsEnvironment.isHeadless() || component.hasFocus()) {
-      return true;
-    }
-
-    JComponent jComponent = component instanceof JComponent ? (JComponent)component : null;
-    return jComponent != null && Boolean.TRUE.equals(jComponent.getClientProperty(HAS_FOCUS));
+    return kindaHasFocus(component) || component.hasFocus();
   }
 
   /**
