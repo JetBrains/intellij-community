@@ -579,10 +579,14 @@ public final class HighlightUtil {
     return highlightInfo;
   }
 
-  static HighlightInfo checkReturnFromSwitchExpr(@NotNull PsiStatement statement) {
+  static HighlightInfo checkReturnFromSwitchExpr(@NotNull PsiReturnStatement statement) {
     if (PsiImplUtil.findEnclosingSwitchExpression(statement) != null) {
       String message = JavaErrorBundle.message("return.outside.switch.expr");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
+      if (statement.getReturnValue() != null) {
+        QuickFixAction.registerQuickFixAction(info, new ReplaceWithYieldFix(statement));
+      }
+      return info;
     }
 
     return null;
