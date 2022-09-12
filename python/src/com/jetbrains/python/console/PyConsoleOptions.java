@@ -11,6 +11,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PathMappingSettings;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -117,7 +118,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myShowVariablesByDefault = true;
     public boolean myIpythonEnabled = true;
     public boolean myUseExistingConsole = false;
-    public boolean myCommandQueueEnabled = true;
+    public boolean myCommandQueueEnabled = PlatformUtils.isDataSpell();
     public boolean myAutoCompletionEnabled = false;
   }
 
