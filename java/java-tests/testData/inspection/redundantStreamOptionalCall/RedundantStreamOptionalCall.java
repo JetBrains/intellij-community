@@ -90,6 +90,19 @@ public class RedundantStreamOptionalCall {
     c.parallelStream().sorted().findFirst().get().chars().parallel().forEach(System.out::println);
   }
 
+  void parallelSorted(Collection<String> c) {
+    c.stream().sorted().forEach(x -> {});
+    c.parallelStream().<warning descr="Redundant 'sorted()' call: subsequent 'forEach()' operation doesn't depend on the sort order for parallel streams">sorted()</warning>.forEach(x -> {});
+    c.parallelStream().distinct().<warning descr="Redundant 'sorted()' call: subsequent 'forEach()' operation doesn't depend on the sort order for parallel streams">sorted()</warning>.forEach(x -> {});
+    c.stream().parallel().<warning descr="Redundant 'sorted()' call: subsequent 'forEach()' operation doesn't depend on the sort order for parallel streams">sorted()</warning>.forEach(x -> {});
+    c.stream().parallel().sorted().forEachOrdered(x -> {});
+    c.stream().parallel().sorted().filter(x -> !x.isEmpty()).findFirst();
+    c.stream().parallel().<warning descr="Redundant 'sorted()' call: subsequent 'findAny()' operation doesn't depend on the sort order for parallel streams">sorted()</warning>.filter(x -> !x.isEmpty()).findAny();
+    c.stream().parallel().distinct().<warning descr="Redundant 'sorted()' call: subsequent 'forEach()' operation doesn't depend on the sort order for parallel streams">sorted()</warning>.forEach(x -> {});
+    c.stream().<warning descr="Redundant 'parallel()' call: there is a subsequent 'sequential()' call which overrides this call">parallel()</warning>.distinct().sequential().sorted().forEach(x -> {});
+    c.stream().<warning descr="Redundant 'parallel()' call: there is a subsequent 'sequential()' call which overrides this call">parallel()</warning>.sorted().sequential().forEach(x -> {});
+  }
+
   public static Stream<SomeClazz> fun1(Stream<Stream<SomeClazz>> objectStreams) {
     return objectStreams.<Stream<SomeClazz>>map(Stream::distinct).flatMap(Function.identity());
   }
