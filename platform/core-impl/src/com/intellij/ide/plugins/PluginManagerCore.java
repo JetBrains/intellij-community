@@ -70,6 +70,7 @@ public final class PluginManagerCore {
   public static final String VENDOR_JETBRAINS_SRO = "JetBrains s.r.o.";
 
   private static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
+  private static final String PLATFORM_DEPENDENCY_PREFIX = "com.intellij.platform";
 
   public static final PluginId SPECIAL_IDEA_PLUGIN_ID = PluginId.getId("IDEA CORE");
 
@@ -274,7 +275,9 @@ public final class PluginManagerCore {
 
   @ApiStatus.Internal
   public static boolean isModuleDependency(@NotNull PluginId dependentPluginId) {
-    return dependentPluginId.getIdString().startsWith(MODULE_DEPENDENCY_PREFIX);
+    String idString = dependentPluginId.getIdString();
+    return idString.startsWith(MODULE_DEPENDENCY_PREFIX)
+           || idString.startsWith(PLATFORM_DEPENDENCY_PREFIX) && !"com.intellij.platform.images".equals(idString);
   }
 
   /**
