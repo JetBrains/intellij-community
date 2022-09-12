@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.JBColor
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextAware
 import com.intellij.util.IconUtil
@@ -88,7 +89,7 @@ internal class RecentProjectIconHelper {
     }
 
     @JvmStatic
-    fun projectIconSize() = Registry.intValue("ide.project.icon.size", 20)
+    fun projectIconSize() = JBUIScale.scale(Registry.intValue("ide.project.icon.size", 20))
 
     @JvmStatic
     fun generateProjectIcon(path: @SystemIndependent String): Icon {
