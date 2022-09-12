@@ -25,7 +25,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,10 +124,8 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
                                                           @NotNull String place,
                                                           @NotNull Presentation presentation,
                                                           @NotNull Dimension minimumSize) {
-        int iconSize = action.getTemplatePresentation().getIcon().getIconWidth();
-        int iconIndent = TipUiSettings.getFeedbackIconIndent();
-        int buttonDim = iconSize + 2 * iconIndent;
-        Dimension size = new Dimension(buttonDim, buttonDim);
+        int buttonSize = getFeedbackButtonSize();
+        Dimension size = new Dimension(buttonSize, buttonSize);
         ActionButton button = new ActionButton(action, presentation, place, size) {
           @Override
           protected void paintButtonLook(Graphics g) {
@@ -142,6 +143,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
             return size;
           }
         };
+        int iconIndent = TipUiSettings.getFeedbackIconIndent();
         button.setBorder(BorderFactory.createEmptyBorder(iconIndent, iconIndent, iconIndent, iconIndent));
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return button;
@@ -149,8 +151,14 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
 
       @Override
       public @NotNull Dimension getPreferredSize() {
-        Dimension buttonDim = getComponent(0).getPreferredSize();
-        return new Dimension(buttonDim.width * getComponentCount(), buttonDim.height);
+        int size = getFeedbackButtonSize();
+        int buttonsCount = getActionGroup().getChildren(null).length;
+        return new Dimension(size * buttonsCount, size);
+      }
+
+      @Override
+      public Dimension getMinimumSize() {
+        return getPreferredSize();
       }
 
       @Override
@@ -162,6 +170,10 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     toolbar.setBorder(null);
     toolbar.setTargetComponent(this);
     return toolbar;
+  }
+
+  private static int getFeedbackButtonSize() {
+    return AllIcons.Ide.Like.getIconWidth() + 2 * TipUiSettings.getFeedbackIconIndent();
   }
 
   private AnAction createFeedbackAction(@NlsActions.ActionText String text,
@@ -273,32 +285,18 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
 
   @Override
   public Dimension getPreferredSize() {
-    int width = TipUiSettings.imageWidth + TipUiSettings.getTipPanelLeftIndent() + TipUiSettings.getTipPanelRightIndent();
-    int height = getDefaultPromoterHeight() + getDefaultTextPaneHeight() + getDefaultFeedbackPanelHeight();
-    return new Dimension(width, height);
+    Dimension baseSize = super.getPreferredSize();
+    return new Dimension(getDefaultWidth(), baseSize.height);
   }
 
-  private int getDefaultPromoterHeight() {
-    int lineHeight = getFontMetrics(JBFont.label()).getHeight();
-    return lineHeight + JBUI.scale(12 + 12);
+  @Override
+  public Dimension getMinimumSize() {
+    Dimension baseSize = super.getMinimumSize();
+    return new Dimension(getDefaultWidth(), baseSize.height);
   }
 
-  private int getDefaultTextPaneHeight() {
-    int regularFontHeight = myTextPane.getFontMetrics(JBFont.label()).getHeight();
-    int headerFontHeight = myTextPane.getFontMetrics(JBFont.h3()).getHeight();
-    float regularLineSpacing = 1.2f;
-
-    return TipUiSettings.getTipPanelTopIndent() + regularFontHeight                                // subsystem label
-           + (int)TextParagraph.SMALL_INDENT + headerFontHeight                                    // header
-           + (int)TextParagraph.MEDIUM_INDENT + 6 * (int)(regularFontHeight * regularLineSpacing)  // tip content
-           + (int)TextParagraph.LARGE_INDENT + TipUiSettings.imageHeight                           // image
-           + TipUiSettings.getTipPanelBottomIndent();
-  }
-
-  private static int getDefaultFeedbackPanelHeight() {
-    return TipUiSettings.getFeedbackPanelTopIndent()
-           + AllIcons.Ide.Like.getIconHeight()
-           + 2 * TipUiSettings.getFeedbackIconIndent();
+  private static int getDefaultWidth() {
+    return TipUiSettings.imageWidth + TipUiSettings.getTipPanelLeftIndent() + TipUiSettings.getTipPanelRightIndent();
   }
 
   @Override

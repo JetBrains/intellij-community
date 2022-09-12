@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +32,6 @@ public final class TipDialog extends DialogWrapper {
     super(project, true);
     setModal(false);
     setTitle(IdeBundle.message("title.tip.of.the.day"));
-    setResizable(false);
     setCancelButtonText(CommonBundle.getCloseButtonText());
     myTipPanel = new TipPanel(project, tips, getDisposable());
     myShowActions = tips.size() > 1;
@@ -40,6 +40,18 @@ public final class TipDialog extends DialogWrapper {
     }
     myShowingOnStartup = myTipPanel.isToBeShown();
     init();
+  }
+
+  @Override
+  public void show() {
+    super.show();
+    // For some reason OS reduces the height of the dialog after showing (XDecoratedPeer#handleCorrectInsets)
+    // So we need to return preferred height back
+    SwingUtilities.invokeLater(() -> {
+      Dimension curSize = getSize();
+      Dimension prefSize = getPreferredSize();
+      setSize(curSize.width, prefSize.height);
+    });
   }
 
   @NotNull
