@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -160,13 +160,15 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   public void runInBackground(@NotNull Runnable action) {
     myApp.assertIsDispatchThread();
 
-    try (var ignoredModalityToken = enterModality()) {
-      ensureBackgroundThreadStarted(action);
+    try {
+      executeInModalContext(() -> {
+        ensureBackgroundThreadStarted(action);
 
-      while (isRunning()) {
-        myEventStealer.dispatchEvents(10);
-        updateUI(System.currentTimeMillis());
-      }
+        while (isRunning()) {
+          myEventStealer.dispatchEvents(10);
+          updateUI(System.currentTimeMillis());
+        }
+      });
     }
     finally {
       progressFinished();

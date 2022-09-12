@@ -176,9 +176,10 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }, getModalityState(), myDelayInMillis, TimeUnit.MILLISECONDS);
   }
 
-  final AccessToken enterModality() {
+  final void executeInModalContext(@NotNull Runnable modalAction) {
     if (!isModalEntity()) {
-      return AccessToken.EMPTY_ACCESS_TOKEN;
+      modalAction.run();
+      return;
     }
 
     if (myModalityEntered) {
@@ -186,20 +187,12 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
     LaterInvocator.enterModal(this, (ModalityStateEx)getModalityState());
     myModalityEntered = true;
-
-    return new AccessToken() {
-
-      private boolean myModalityLeft = false;
-
-      @Override
-      public void finish() {
-        if (myModalityLeft) {
-          throw new IllegalStateException("Modality already left: " + getModalityState());
-        }
-        myModalityLeft = true;
-        LaterInvocator.leaveModal(ProgressWindow.this);
-      }
-    };
+    try {
+      modalAction.run();
+    }
+    finally {
+      LaterInvocator.leaveModal(this);
+    }
   }
 
   @Override
@@ -211,20 +204,22 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       LOG.assertTrue(!myStoppedAlready);
     }
 
-    try (var ignoredModalityToken = enterModality()) {
-      init.run();
-      app.runUnlockingIntendedWrite(() -> {
-        initializeOnEdtIfNeeded();
-        // guarantee AWT event after the future is done will be pumped and loop exited
-        stopCondition.thenRun(() -> SwingUtilities.invokeLater(EmptyRunnable.INSTANCE));
-        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-          IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.getPanel(), stopCondition, event -> {
-            if (isCancellationEvent(event)) {
-              cancel();
-            }
-          });
-        }
-        return null;
+    try {
+      executeInModalContext(() -> {
+        init.run();
+        app.runUnlockingIntendedWrite(() -> {
+          initializeOnEdtIfNeeded();
+          // guarantee AWT event after the future is done will be pumped and loop exited
+          stopCondition.thenRun(() -> SwingUtilities.invokeLater(EmptyRunnable.INSTANCE));
+          try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+            IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.getPanel(), stopCondition, event -> {
+              if (isCancellationEvent(event)) {
+                cancel();
+              }
+            });
+          }
+          return null;
+        });
       });
     }
     finally {
