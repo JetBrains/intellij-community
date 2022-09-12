@@ -75,7 +75,7 @@ public final class Scopes {
       final String path = FileUtil.toSystemIndependentName(descriptor.substring(1));
       final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
       if (virtualFile == null) return null;
-      return new GlobalSearchScopesCore.DirectoryScope(project, virtualFile, recursive);
+      return GlobalSearchScopesCore.directoryScope(project, virtualFile, recursive);
     }
     else if (scopeType == Type.NAMED) {
       return findScopeByName(project, descriptor);

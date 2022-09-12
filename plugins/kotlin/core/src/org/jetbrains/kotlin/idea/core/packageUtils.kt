@@ -12,8 +12,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.project.RootsChangeRescanningInfo
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModulePackageIndex
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
@@ -27,12 +27,12 @@ import com.intellij.util.Query
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
-import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
+import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
@@ -238,7 +238,7 @@ fun findOrCreateDirectoryForPackage(module: Module, packageName: String): PsiDir
     if (packageName.isNotEmpty()) {
         val sourcePaths = module.findExistingNonGeneratedKotlinSourceRootFiles(pureKotlinSourceFoldersHolder)
         if (sourcePaths.isNotEmpty()) {
-            val allowedScope = sourcePaths.map { GlobalSearchScopesCore.DirectoryScope(project, it, true) }.reduce(GlobalSearchScope::union)
+            val allowedScope = sourcePaths.map { GlobalSearchScopesCore.directoryScope(project, it, true) }.reduce(GlobalSearchScope::union)
             val rootPackage = findLongestExistingPackage(module, packageName, pureKotlinSourceFoldersHolder, allowedScope)
             if (rootPackage != null) {
                 val beginIndex = rootPackage.qualifiedName.length + 1

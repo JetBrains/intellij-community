@@ -123,7 +123,7 @@ public class PyUserSkeletonsUtil {
   public static GlobalSearchScope getUserSkeletonsDirectoryScope(@NotNull Project project) {
     VirtualFile userSkeletonsDirectory = getUserSkeletonsDirectory();
     if (userSkeletonsDirectory != null) {
-      return new GlobalSearchScopesCore.DirectoryScope(project, userSkeletonsDirectory, true);
+      return GlobalSearchScopesCore.directoryScope(project, userSkeletonsDirectory, true);
     }
     else {
       return GlobalSearchScope.EMPTY_SCOPE;

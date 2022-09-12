@@ -5,7 +5,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.DataIndexer;
@@ -29,23 +28,17 @@ public final class TodoIndexers extends FileTypeExtension<DataIndexer<TodoIndexE
     if (FileBasedIndex.IGNORE_PLAIN_TEXT_FILES && file.getFileType() == PlainTextFileType.INSTANCE) {
       return false;
     }
+
     VirtualFile vFile = file.getFile();
-
-    if (!vFile.isInLocalFileSystem()) {
-      return false;
-    }
-
     Project project = file.getProject();
-    if (project != null && ProjectFileIndex.getInstance(project).isInContent(vFile)) {
-      return true;
-    }
 
     for (ExtraPlaceChecker checker : EP_NAME.getExtensionList()) {
-      if (checker.accept(project, file.getFile())) {
+      if (checker.accept(project, vFile)) {
         return true;
       }
     }
-    return false;
+
+    return vFile.isInLocalFileSystem() && project != null && ProjectFileIndex.getInstance(project).isInContent(vFile);
   }
 
   public static boolean belongsToProject(@NotNull Project project, @NotNull VirtualFile file) {
