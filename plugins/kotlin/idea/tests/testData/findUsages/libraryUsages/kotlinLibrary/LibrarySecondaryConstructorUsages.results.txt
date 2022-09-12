@@ -1,8 +1,8 @@
-[B.class] Unclassified Kt Constructor Delegation Reference Expression
-[BB.class] Unclassified Kt Constructor Delegation Reference Expression
+[B.class] Constructor delegation reference Kt Constructor Delegation Reference Expression
+[BB.class] Constructor delegation reference Kt Constructor Delegation Reference Expression
+[LibrarySecondaryConstructorUsages.0.kt] Constructor delegation reference 11 constructor() : super()
 [LibrarySecondaryConstructorUsages.0.kt] New instance creation 17 val a: A = A()
 [LibrarySecondaryConstructorUsages.0.kt] Supertype 14 class Y() : A()
-[LibrarySecondaryConstructorUsages.0.kt] Unclassified 11 constructor() : super()
 [LibrarySecondaryConstructorUsages.1.java] New instance creation 14 A a = new A();
 [LibrarySecondaryConstructorUsages.1.java] Unclassified 10 super();
 [LibrarySecondaryConstructorUsages.1.java] Unclassified 6 public J() {
