@@ -56,6 +56,9 @@ class MiniMapService : Disposable {
   }
 
   fun editorOpened(editor: Editor) {
+    if (!settings.state.enabled) {
+      return
+    }
     getEditorImpl(editor)?.let { addMiniMap(it) }
   }
 
