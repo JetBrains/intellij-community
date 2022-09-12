@@ -8,7 +8,7 @@ use path_absolutize::Absolutize;
 use anyhow::{bail, Context, Result};
 use crate::default::get_config_home;
 use utils::{get_path_from_env_var, PathExt, read_file_to_end};
-use crate::{DefaultLaunchConfiguration, LaunchConfiguration};
+use crate::{DefaultLaunchConfiguration, is_remote_dev, LaunchConfiguration};
 
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
@@ -50,7 +50,8 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
 
     #[cfg(target_os = "linux")]
     fn prepare_for_launch(&self) -> Result<PathBuf> {
-        todo!()
+        // TODO: ld patching
+        self.default.prepare_for_launch()
     }
 }
 
@@ -115,12 +116,21 @@ impl DefaultLaunchConfiguration {
 }
 
 impl RemoteDevLaunchConfiguration {
+
+    // launcher.exe --remote-dev command_name /path/to/project args ->
+    // launcher.exe ij_command_name /path/to/project args
     pub fn parse_remote_dev_args(args: &[String]) -> Result<RemoteDevArgs> {
-        if args.is_empty() {
+        debug!("Parsing remote dev command-line arguments");
+
+        if !is_remote_dev(args) {
+            bail!("Expected to see --remote-dev marker in command-line arguments")
+        }
+
+        if args.len() < 3 {
             bail!("Starter command is not specified")
         }
 
-        let remote_dev_starter_command = args[0].as_str();
+        let remote_dev_starter_command = args[2].as_str();
         let ij_starter_command = match remote_dev_starter_command {
             "registerBackendLocationForGateway" => {
                 register_backend();
@@ -128,23 +138,25 @@ impl RemoteDevLaunchConfiguration {
             }
             "run" => { "cwmHostNoLobby" }
             "status" => { "cwmHostStatus" }
+            "dumpLaunchParameters" => { "dump-launch-parameters" }
             x => {
                 print_help();
                 bail!("Unknown command: {x}")
             }
         };
 
-        if args.len() < 1 {
+        if args.len() < 4 {
             print_help();
             bail!("Project path is not specified");
         }
 
-        let project_path_string = args[1].as_str();
+        let project_path_string = args[3].as_str();
         if project_path_string == "-h" || project_path_string == "--help" {
             return Ok(
                 RemoteDevArgs {
                     project_path: None,
                     ij_args: vec![
+                        args[0].to_string(),
                         "remoteDevShowHelp".to_string(),
                         ij_starter_command.to_string()
                     ]
@@ -170,7 +182,7 @@ impl RemoteDevLaunchConfiguration {
             false => project_path.parent_or_err()?,
         }.absolutize()?.to_path_buf();
 
-        let mut ij_args = args[2..].to_vec();
+        let mut ij_args = args[4..].to_vec();
         let absolute_project_path_string = absolute_project_path.to_string_lossy().to_string();
 
         match ij_starter_command {
@@ -186,6 +198,9 @@ impl RemoteDevLaunchConfiguration {
                 ij_args.insert(0, ij_starter_command.to_string())
             }
         };
+
+        // path to executable itself
+        ij_args.insert(0, args[0].to_string());
 
         Ok(
             RemoteDevArgs {
@@ -291,8 +306,8 @@ impl RemoteDevLaunchConfiguration {
 
     #[cfg(any(target_os = "linux"))]
     pub fn setup_font_config() -> Result<()> {
-
-        todo!("")
+        // TODO: implement
+        Ok(())
     }
 }
 

@@ -14,8 +14,8 @@ class DistributionJARsBuilderTest {
   fun verifyStableClasspathOrder() {
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     val productProperties = IdeaCommunityProperties(communityHome)
-    val context = BuildContextImpl.createContext(communityHome, communityHome.communityRoot, productProperties)
     runBlocking(Dispatchers.Default) {
+      val context = BuildContextImpl.createContext(communityHome, communityHome.communityRoot, productProperties)
       val ideClasspath1 = DistributionJARsBuilder(DistributionBuilderState(emptySet(), context)).createIdeClassPath(context)
       val ideClasspath2 = DistributionJARsBuilder(DistributionBuilderState(emptySet(), context)).createIdeClassPath(context)
       assertThat(ideClasspath1).isEqualTo(ideClasspath2)

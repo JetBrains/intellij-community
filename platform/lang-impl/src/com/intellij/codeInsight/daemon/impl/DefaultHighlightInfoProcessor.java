@@ -3,10 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeWithMe.ClientId;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -15,6 +12,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -57,20 +55,23 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
       if (editor != null && !editor.isDisposed()) {
         // usability: show auto import popup as soon as possible
         if (!DumbService.isDumb(project)) {
-          ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-            ShowAutoImportPassFactory siFactory = TextEditorHighlightingPassRegistrarImpl.EP_NAME.findExtensionOrFail(ShowAutoImportPassFactory.class);
-            try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
-              TextEditorHighlightingPass highlightingPass = siFactory.createHighlightingPass(psiFile, editor);
-              if (highlightingPass != null) {
-                highlightingPass.doApplyInformationToEditor();
-              }
-            }
-          }, session.getProgressIndicator());
+          showAutoImportHints(editor, psiFile, session.getProgressIndicator());
         }
 
         repaintErrorStripeAndIcon(editor, project);
       }
     });
+  }
+
+  static void showAutoImportHints(@NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull ProgressIndicator progressIndicator) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      ShowAutoImportPassFactory siFactory = TextEditorHighlightingPassRegistrarImpl.EP_NAME.findExtensionOrFail(ShowAutoImportPassFactory.class);
+      TextEditorHighlightingPass highlightingPass = siFactory.createHighlightingPass(psiFile, editor);
+      if (highlightingPass != null) {
+        highlightingPass.doApplyInformationToEditor();
+      }
+    }, progressIndicator);
   }
 
   static void repaintErrorStripeAndIcon(@NotNull Editor editor, @NotNull Project project) {

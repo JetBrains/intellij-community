@@ -9,11 +9,6 @@ import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import java.io.PrintWriter
-import java.io.StringWriter
 import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -23,21 +18,9 @@ import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
-import java.util.logging.ConsoleHandler
-import java.util.logging.Formatter
-import java.util.logging.Level
-import java.util.logging.LogRecord
-import kotlin.io.path.createDirectories
 import kotlin.system.exitProcess
 
-@Suppress("GrazieInspection")
-internal val skippedPluginModules = hashSetOf(
-  "intellij.cwm.plugin", // quiche downloading should be implemented as a maven lib
-)
-
-internal val LOG: Logger = LoggerFactory.getLogger(DevIdeaBuildServer::class.java)
-
-enum class DevIdeaBuildServerStatus {
+private enum class DevIdeaBuildServerStatus {
   OK,
   FAILED,
   IN_PROGRESS,
@@ -60,40 +43,33 @@ object DevIdeaBuildServer {
       start()
     }
     catch (e: ConfigurationException) {
-      LOG.error(e.message)
+      e.printStackTrace()
       exitProcess(1)
     }
   }
 
-  private fun initLog() {
-    val root = java.util.logging.Logger.getLogger("")
-    root.level = Level.INFO
-    val handlers = root.handlers
-    for (handler in handlers) {
-      root.removeHandler(handler)
-    }
-    root.addHandler(ConsoleHandler().apply {
-      formatter = object : Formatter() {
-        override fun format(record: LogRecord): String {
-          val timestamp = String.format("%1\$tT,%1\$tL", record.millis)
-          return "$timestamp ${record.message}\n" + (record.thrown?.let { thrown ->
-            StringWriter().also {
-              thrown.printStackTrace(PrintWriter(it))
-            }.toString()
-          } ?: "")
-        }
-      }
-    })
-  }
-
   private fun start() {
-    val buildServer = BuildServer(homePath = getHomePath())
+    val additionalModules = getAdditionalModules()?.toList()
+    val homePath = getHomePath()
+    val productionClassOutput = (System.getenv("CLASSES_DIR")?.let { Path.of(it).toAbsolutePath().normalize() }
+                                 ?: homePath.resolve("out/classes/production"))
 
-    val httpServer = createHttpServer(buildServer)
-    LOG.info("Listening on ${httpServer.address.hostString}:${httpServer.address.port}")
-    LOG.info(
-      "Custom plugins: ${getAdditionalModules()?.joinToString() ?: "not set (use VM property `additional.modules` to specify additional module ids)"}")
-    LOG.info(
+    val httpServer = createHttpServer(
+      buildServer = BuildServer(
+        homePath = homePath,
+        productionClassOutput = productionClassOutput
+      ),
+      requestTemplate = BuildRequest(
+        platformPrefix = "",
+        additionalModules = additionalModules ?: emptyList(),
+        homePath = homePath,
+        productionClassOutput = productionClassOutput,
+      )
+    )
+    println("Listening on ${httpServer.address.hostString}:${httpServer.address.port}")
+    println(
+      "Custom plugins: ${additionalModules?.joinToString() ?: "not set (use VM property `additional.modules` to specify additional module ids)"}")
+    println(
       "Run IDE on module intellij.platform.bootstrap with VM properties -Didea.use.dev.build.server=true -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
     httpServer.start()
 
@@ -108,14 +84,16 @@ object DevIdeaBuildServer {
     catch (ignore: InterruptedException) {
     }
 
-    LOG.info("Server stopping...")
+    println("Server stopping...")
     httpServer.stop(10)
     exitProcess(0)
   }
 
   private fun HttpExchange.getPlatformPrefix() = parseQuery(this.requestURI).get("platformPrefix")?.first() ?: "idea"
 
-  private fun createBuildEndpoint(httpServer: HttpServer, buildServer: BuildServer): HttpContext? {
+  private fun createBuildEndpoint(httpServer: HttpServer,
+                                  buildServer: BuildServer,
+                                  requestTemplate: BuildRequest): HttpContext? {
     return httpServer.createContext("/build") { exchange ->
       val platformPrefix = exchange.getPlatformPrefix()
 
@@ -129,10 +107,10 @@ object DevIdeaBuildServer {
 
         exchange.responseHeaders.add("Content-Type", "text/plain")
         runBlocking(Dispatchers.Default) {
-          val ideBuilder = buildServer.checkOrCreateIdeBuilder(platformPrefix)
+          val ideBuilder = buildServer.checkOrCreateIdeBuilder(requestTemplate.copy(platformPrefix = platformPrefix))
           statusMessage = ideBuilder.pluginBuilder.buildChanged()
         }
-        LOG.info(statusMessage)
+        println(statusMessage)
       }
       catch (e: ConfigurationException) {
         statusCode = HttpURLConnection.HTTP_BAD_REQUEST
@@ -142,7 +120,8 @@ object DevIdeaBuildServer {
       catch (e: Throwable) {
         productBuildStatus.put(platformPrefix, DevIdeaBuildServerStatus.FAILED)
         exchange.sendResponseHeaders(HttpURLConnection.HTTP_UNAVAILABLE, -1)
-        LOG.error("Cannot handle build request", e)
+        System.err.println("Cannot handle build request: ")
+        e.printStackTrace()
         return@createContext
       }
       finally {
@@ -198,21 +177,17 @@ object DevIdeaBuildServer {
     }
   }
 
-  private fun createHttpServer(buildServer: BuildServer): HttpServer {
+  private fun createHttpServer(buildServer: BuildServer, requestTemplate: BuildRequest): HttpServer {
     val httpServer = HttpServer.create()
     httpServer.bind(InetSocketAddress(InetAddress.getLoopbackAddress(), SERVER_PORT), 2)
 
-    createBuildEndpoint(httpServer, buildServer)
+    createBuildEndpoint(httpServer, buildServer, requestTemplate)
     createStatusEndpoint(httpServer)
     createStopEndpoint(httpServer)
 
     // Serve requests in parallel. Though, there is no guarantee, that 2 requests will be served for different endpoints
     httpServer.executor = Executors.newFixedThreadPool(2)
     return httpServer
-  }
-
-  private fun getHomePath(): Path {
-    return IdeaProjectLoaderUtil.guessUltimateHome(DevIdeaBuildServer::class.java)
   }
 }
 
@@ -228,12 +203,15 @@ private fun parseQuery(url: URI): Map<String, List<String?>> {
     .groupBy(keySelector = { it.key }, valueTransform = { it.value })
 }
 
-internal fun clearDirContent(dir: Path) {
-  if (Files.isDirectory(dir)) {
-    // because of problem on Windows https://stackoverflow.com/a/55198379/2467248
-    NioFiles.deleteRecursively(dir)
-    dir.createDirectories()
+internal fun clearDirContent(dir: Path): Boolean {
+  if (!Files.isDirectory(dir)) {
+    return false
   }
-}
 
-internal class ConfigurationException(message: String) : RuntimeException(message)
+  Files.newDirectoryStream(dir).use { stream ->
+    for (child in stream) {
+      NioFiles.deleteRecursively(child)
+    }
+  }
+  return true
+}

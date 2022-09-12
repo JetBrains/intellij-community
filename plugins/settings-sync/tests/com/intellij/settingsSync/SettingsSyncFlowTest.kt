@@ -1,5 +1,7 @@
 package com.intellij.settingsSync
 
+import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import org.eclipse.jgit.api.Git
@@ -52,7 +54,8 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     // emulate first session with initialization
     val fileName = "options/laf.xml"
     val file = configDir.resolve(fileName).write("LaF Initial")
-    val log = GitSettingsLog(settingsSyncStorage, configDir, disposable, MockSettingsSyncIdeMediator.getAllFilesFromSettings(configDir))
+    val log = GitSettingsLog(settingsSyncStorage, configDir, disposable,
+                             initialSnapshotProvider = { MockSettingsSyncIdeMediator.getAllFilesFromSettingsAsSnapshot(configDir) })
     log.initialize()
     log.logExistingSettings()
 
@@ -163,6 +166,65 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     initSettingsSync(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration))
 
     assertEquals("Incorrect content", "Server Data", (settingsSyncStorage / "options" / "laf.xml").readText())
+  }
+
+  @Test
+  fun `rollback settings and stop sync in case of error`() {
+    val fileName = "options/laf.xml"
+    val initialContent = "LaF Initial"
+    configDir.resolve(fileName).write(initialContent)
+
+    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
+
+    val errorMessage = "Failed to apply settings: can't lock 'editor.xml'"
+    val exceptionToThrow = RuntimeException(errorMessage)
+    ideMediator.throwOnApply(exceptionToThrow)
+
+    suppressFailureOnLogError(exceptionToThrow) {
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.CloudChange(settingsSnapshot {
+        fileState("options/editor.xml", "Editor change")
+      }, null))
+      bridge.waitForAllExecuted(10, TIMEOUT_UNIT)
+    }
+
+    assertFalse("Partial apply was not rolled back", (settingsSyncStorage / "options" / "editor.xml").exists())
+    assertFalse("Settings sync was not disabled on error", SettingsSyncSettings.getInstance().syncEnabled)
+    assertFalse("Sync is not marked as failed", SettingsSyncStatusTracker.getInstance().isSyncSuccessful())
+    assertEquals("Incorrect error message", errorMessage, SettingsSyncStatusTracker.getInstance().getErrorMessage())
+  }
+
+  @Test
+  fun `rollback settings and stop sync if error happens on initialization`() {
+    val initialContent = "LaF Initial"
+    configDir.resolve("options/laf.xml").write(initialContent)
+
+    val cloudContent = "Editor from Server"
+    val snapshot = settingsSnapshot {
+      fileState("options/editor.xml", cloudContent)
+    }
+
+    val errorMessage = "Failed to apply settings: can't lock 'editor.xml'"
+    val exceptionToThrow = RuntimeException(errorMessage)
+    ideMediator.throwOnApply(exceptionToThrow)
+
+    suppressFailureOnLogError(exceptionToThrow) {
+      initSettingsSync(SettingsSyncBridge.InitMode.TakeFromServer(SyncSettingsEvent.CloudChange(snapshot, null)))
+    }
+
+    assertFalse("Partial apply was not rolled back", (settingsSyncStorage / "options" / "editor.xml").exists())
+    assertFalse("Settings sync was not disabled on error", SettingsSyncSettings.getInstance().syncEnabled)
+    assertFalse("Sync is not marked as failed", SettingsSyncStatusTracker.getInstance().isSyncSuccessful())
+    assertEquals("Incorrect error message", errorMessage, SettingsSyncStatusTracker.getInstance().getErrorMessage())
+  }
+
+  private fun suppressFailureOnLogError(expectedException: RuntimeException, activity: () -> Unit) {
+    LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
+        return if (t == expectedException) Action.NONE else Action.ALL
+      }
+    }) {
+      activity()
+    }
   }
 
   private fun migrationFromLafXml() = object : SettingsSyncMigration {

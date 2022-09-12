@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build.testFramework
 
 import com.intellij.openapi.application.PathManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension
 import org.jetbrains.intellij.build.BuildContext
@@ -33,11 +35,14 @@ abstract class IdeStructureTestBase {
 
   private fun createBuildContext(): BuildContext {
     val productProperties = createProductProperties(projectHome)
-    return createBuildContext(homePath = projectHome,
-                              productProperties = productProperties,
-                              buildTools = createBuildTools(),
-                              skipDependencySetup = false,
-                              communityHomePath = IdeaProjectLoaderUtil.guessCommunityHome(javaClass))
+    return runBlocking(Dispatchers.Default) {
+      createBuildContext(homePath = projectHome,
+                                    productProperties = productProperties,
+                                    buildTools = createBuildTools(),
+                                    skipDependencySetup = false,
+                                    communityHomePath = IdeaProjectLoaderUtil.guessCommunityHome(javaClass))
+
+    }
   }
 
   @Test

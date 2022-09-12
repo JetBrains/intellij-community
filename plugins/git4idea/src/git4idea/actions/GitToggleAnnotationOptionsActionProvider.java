@@ -97,6 +97,11 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return SETTINGS.isIgnoreWhitespaces();
     }
@@ -114,6 +119,11 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     ToggleInnerMovementsWhitespaces(@NotNull Project project) {
       super(GitBundle.message("annotations.options.detect.movements.within.file"));
       myProject = project;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -140,6 +150,11 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     ToggleOuterMovementsWhitespaces(@NotNull Project project) {
       super(GitBundle.message("annotations.options.detect.movements.across.files"));
       myProject = project;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

@@ -44,7 +44,7 @@ open class GHOpenInBrowserActionGroup
                 GithubBundle.messagePointer("open.on.github.action.description"),
                 AllIcons.Vcs.Vendors.Github), DumbAware {
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.OLD_EDT
 
   override fun update(e: AnActionEvent) {
     val data = getData(e.dataContext)

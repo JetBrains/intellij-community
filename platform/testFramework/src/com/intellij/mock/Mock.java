@@ -21,7 +21,6 @@ import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,6 +30,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 //[kirillk] - this class looks to be an overkill but IdeDocumentHistory is highly coupled
 // with all of that stuff below, so it's not possible to test it's back/forward capabilities
@@ -52,8 +52,7 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public JComponent getComponent() {
+    public @NotNull JComponent getComponent() {
       throw new UnsupportedOperationException();
     }
 
@@ -63,8 +62,7 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return "";
     }
 
@@ -106,24 +104,21 @@ public class Mock {
       return null;
     }
 
-    @NotNull
     @Override
-    public ActionCallback notifyPublisher(@NotNull Runnable runnable) {
+    public @NotNull ActionCallback notifyPublisher(@NotNull Runnable runnable) {
       runnable.run();
       return ActionCallback.DONE;
     }
 
-    @NotNull
     @Override
-    public ActionCallback getReady(@NotNull Object requestor) {
+    public @NotNull ActionCallback getReady(@NotNull Object requestor) {
       return ActionCallback.DONE;
     }
 
-    @NotNull
     @Override
-    public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                          boolean focusEditor,
-                                                                          @NotNull EditorWindow window) {
+    public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                                   boolean focusEditor,
+                                                                                   @NotNull EditorWindow window) {
       throw new UnsupportedOperationException();
     }
 
@@ -142,32 +137,30 @@ public class Mock {
       return null;
     }
 
-    @NotNull
     @Override
-    public EditorsSplitters getSplitters() {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public Promise<EditorWindow> getActiveWindow() {
+    public @NotNull EditorsSplitters getSplitters() {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    public @NotNull CompletableFuture<EditorWindow> getActiveWindow() {
+      throw new UnsupportedOperationException();
     }
 
     @Override
-    public void removeTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    public void addTopComponent(final @NotNull FileEditor editor, final @NotNull JComponent component) {
     }
 
     @Override
-    public void addBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    public void removeTopComponent(final @NotNull FileEditor editor, final @NotNull JComponent component) {
     }
 
     @Override
-    public void removeBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    public void addBottomComponent(final @NotNull FileEditor editor, final @NotNull JComponent component) {
+    }
+
+    @Override
+    public void removeBottomComponent(final @NotNull FileEditor editor, final @NotNull JComponent component) {
     }
 
     @Override
@@ -176,8 +169,7 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file) {
+    public @NotNull Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file) {
       throw new UnsupportedOperationException();
     }
 
@@ -274,10 +266,9 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                          boolean focusEditor,
-                                                                          boolean searchForSplitter) {
+    public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                                   boolean focusEditor,
+                                                                                   boolean searchForSplitter) {
       return Pair.create(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
     }
 
@@ -345,14 +336,12 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public List<FileEditor> openFileEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor) {
+    public @NotNull List<FileEditor> openFileEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor) {
       return Collections.emptyList();
     }
 
     @Override
-    @NotNull
-    public Project getProject() {
+    public @NotNull Project getProject() {
       throw new UnsupportedOperationException();
     }
 
@@ -375,20 +364,17 @@ public class Mock {
     public boolean myValid = true;
 
     @Override
-    @NotNull
-    public VirtualFileSystem getFileSystem() {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public String getPath() {
+    public @NotNull VirtualFileSystem getFileSystem() {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getPath() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public @NotNull String getName() {
       throw new UnsupportedOperationException();
     }
 
@@ -421,15 +407,13 @@ public class Mock {
       return VirtualFile.EMPTY_ARRAY;
     }
 
-    @NotNull
     @Override
-    public VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
+    public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
       throw new IOException(name);
     }
 
-    @NotNull
     @Override
-    public VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
+    public @NotNull VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
       throw new IOException(name);
     }
 
@@ -447,8 +431,7 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
+    public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
       throw new UnsupportedOperationException();
     }
 
@@ -484,8 +467,7 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
       throw new UnsupportedOperationException();
     }
 
@@ -494,20 +476,17 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+    public @NotNull FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    @NotNull
-    public String getEditorTypeId() {
+    public @NotNull String getEditorTypeId() {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    @NotNull
-    public FileEditorPolicy getPolicy() {
+    public @NotNull FileEditorPolicy getPolicy() {
       throw new UnsupportedOperationException();
     }
   }

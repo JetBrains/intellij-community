@@ -19,7 +19,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class EntityWithUrlsImpl : EntityWithUrls, WorkspaceEntityBase() {
+open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUrls, WorkspaceEntityBase() {
 
   companion object {
 
@@ -29,25 +29,17 @@ open class EntityWithUrlsImpl : EntityWithUrls, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _simpleUrl: VirtualFileUrl? = null
   override val simpleUrl: VirtualFileUrl
-    get() = _simpleUrl!!
+    get() = dataSource.simpleUrl
 
-  @JvmField
-  var _nullableUrl: VirtualFileUrl? = null
   override val nullableUrl: VirtualFileUrl?
-    get() = _nullableUrl
+    get() = dataSource.nullableUrl
 
-  @JvmField
-  var _listOfUrls: List<VirtualFileUrl>? = null
   override val listOfUrls: List<VirtualFileUrl>
-    get() = _listOfUrls!!
+    get() = dataSource.listOfUrls
 
-  @JvmField
-  var _dataClassWithUrl: DataClassWithUrl? = null
   override val dataClassWithUrl: DataClassWithUrl
-    get() = _dataClassWithUrl!!
+    get() = dataSource.dataClassWithUrl
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -197,15 +189,13 @@ class EntityWithUrlsData : WorkspaceEntityData<EntityWithUrls>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): EntityWithUrls {
-    val entity = EntityWithUrlsImpl()
-    entity._simpleUrl = simpleUrl
-    entity._nullableUrl = nullableUrl
-    entity._listOfUrls = listOfUrls.toList()
-    entity._dataClassWithUrl = dataClassWithUrl
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = EntityWithUrlsImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): EntityWithUrlsData {

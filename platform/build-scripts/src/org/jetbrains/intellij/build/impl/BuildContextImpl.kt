@@ -10,6 +10,8 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
@@ -33,6 +35,8 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
                                            override val macDistributionCustomizer: MacDistributionCustomizer?,
                                            override val proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
                                            private val distFiles: ConcurrentLinkedQueue<Map.Entry<Path, String>>) : BuildContext {
+
+
   override val fullBuildNumber: String
     get() = "${applicationInfo.productCode}-$buildNumber"
 
@@ -69,21 +73,45 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
   companion object {
     @JvmStatic
     @JvmOverloads
-    fun createContext(communityHome: BuildDependenciesCommunityRoot,
-                      projectHome: Path,
-                      productProperties: ProductProperties,
-                      proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-                      options: BuildOptions = BuildOptions()): BuildContextImpl {
-      val projectHomeAsString = FileUtilRt.toSystemIndependentName(projectHome.toString())
-      val windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString)
-      val linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString)
-      val macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeAsString)
-      val compilationContext = CompilationContextImpl.create(
+    fun createContextBlocking(communityHome: BuildDependenciesCommunityRoot,
+                              projectHome: Path,
+                              productProperties: ProductProperties,
+                              proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+                              options: BuildOptions = BuildOptions()): BuildContext {
+      return runBlocking(Dispatchers.Default) {
+        createContext(communityHome = communityHome,
+                      projectHome = projectHome,
+                      productProperties = productProperties,
+                      proprietaryBuildTools = proprietaryBuildTools,
+                      options = options)
+      }
+    }
+
+    suspend fun createContext(communityHome: BuildDependenciesCommunityRoot,
+                              projectHome: Path,
+                              productProperties: ProductProperties,
+                              proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+                              options: BuildOptions = BuildOptions()): BuildContext {
+      val compilationContext = CompilationContextImpl.createCompilationContext(
         communityHome = communityHome,
         projectHome = projectHome,
         buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options),
         options = options
       )
+      return createContext(compilationContext = compilationContext,
+                           projectHome = projectHome,
+                           productProperties = productProperties,
+                           proprietaryBuildTools = proprietaryBuildTools)
+    }
+
+    fun createContext(compilationContext: CompilationContextImpl,
+                      projectHome: Path,
+                      productProperties: ProductProperties,
+                      proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY): BuildContextImpl {
+      val projectHomeAsString = FileUtilRt.toSystemIndependentName(projectHome.toString())
+      val windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString)
+      val linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString)
+      val macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeAsString)
       return BuildContextImpl(compilationContext = compilationContext,
                               productProperties = productProperties,
                               windowsDistributionCustomizer = windowsDistributionCustomizer,

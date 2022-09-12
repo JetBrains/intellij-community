@@ -259,6 +259,10 @@
         "separatorColor": "Grey2",
         "hoverBackground": "Blue3",
         "leftRightInset": 8
+      },
+      "Tag": {
+        "background": "Grey3",
+        "foreground": "Grey8"
       }
     },
 
@@ -494,13 +498,14 @@
         "pressedBackground": "Grey3"
       },
       "Dropdown": {
-        "borderInsets": "3,8,3,4",
+        "borderInsets": "3,12,3,6",
         "pressedBackground": "Grey3"
       },
       "Button": {
         "buttonInsets": "0,0,0,0"
       },
-      "background": "Grey2"
+      "background": "Grey2",
+      "separatorColor": "Grey1"
     },
 
     "Tree": {

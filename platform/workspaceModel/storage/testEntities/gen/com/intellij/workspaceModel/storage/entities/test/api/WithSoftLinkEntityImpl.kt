@@ -24,7 +24,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class WithSoftLinkEntityImpl : WithSoftLinkEntity, WorkspaceEntityBase() {
+open class WithSoftLinkEntityImpl(val dataSource: WithSoftLinkEntityData) : WithSoftLinkEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -34,10 +34,8 @@ open class WithSoftLinkEntityImpl : WithSoftLinkEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _link: NameId? = null
   override val link: NameId
-    get() = _link!!
+    get() = dataSource.link
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -169,12 +167,13 @@ class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(), SoftLi
   }
 
   override fun createEntity(snapshot: EntityStorage): WithSoftLinkEntity {
-    val entity = WithSoftLinkEntityImpl()
-    entity._link = link
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = WithSoftLinkEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

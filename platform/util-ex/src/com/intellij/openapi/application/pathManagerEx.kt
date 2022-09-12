@@ -4,6 +4,7 @@ package com.intellij.openapi.application
 
 import com.intellij.openapi.diagnostic.Logger
 import java.io.IOException
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 
 /**

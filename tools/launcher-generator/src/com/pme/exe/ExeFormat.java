@@ -4,5 +4,5 @@ package com.pme.exe;
 
 
 public enum ExeFormat {
-  UNKNOWN, X86, X64
+  UNKNOWN, X86, X64, ARM64
 }

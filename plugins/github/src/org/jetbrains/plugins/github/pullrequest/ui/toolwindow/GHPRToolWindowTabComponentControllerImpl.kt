@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import git4idea.remote.hosting.knownRepositories
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -71,7 +72,9 @@ internal class GHPRToolWindowTabComponentControllerImpl(
     currentView = GHPRToolWindowViewType.NEW
     wrapper.setContent(createComponentHolder.value.component)
     IJSwingUtilities.updateComponentTreeUI(wrapper)
-    if (requestFocus) GHUIUtil.focusPanel(wrapper.targetComponent)
+    if (requestFocus) {
+      CollaborationToolsUIUtil.focusPanel(wrapper.targetComponent)
+    }
   }
 
   override fun resetNewPullRequestView() {
@@ -88,7 +91,9 @@ internal class GHPRToolWindowTabComponentControllerImpl(
     currentView = GHPRToolWindowViewType.LIST
     wrapper.setContent(listComponent)
     IJSwingUtilities.updateComponentTreeUI(wrapper)
-    if (requestFocus) GHUIUtil.focusPanel(wrapper.targetComponent)
+    if (requestFocus) {
+      CollaborationToolsUIUtil.focusPanel(wrapper.targetComponent)
+    }
   }
 
   override fun refreshList() {
@@ -112,7 +117,9 @@ internal class GHPRToolWindowTabComponentControllerImpl(
       wrapper.repaint()
     }
     if (onShown != null) onShown(UIUtil.getClientProperty(wrapper.targetComponent, GHPRViewComponentController.KEY))
-    if (requestFocus) GHUIUtil.focusPanel(wrapper.targetComponent)
+    if (requestFocus) {
+      CollaborationToolsUIUtil.focusPanel(wrapper.targetComponent)
+    }
   }
 
   override fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean) =

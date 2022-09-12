@@ -266,6 +266,10 @@
         "separatorColor": "Grey13",
         "hoverBackground": "Blue12",
         "leftRightInset": 8
+      },
+      "Tag": {
+        "background": "Grey11",
+        "foreground": "Grey4"
       }
     },
 
@@ -513,18 +517,19 @@
     "MainToolbar": {
       "background": "Grey2",
       "inactiveBackground": "Grey3",
+      "separatorColor": "Grey4",
       "Icon": {
         "borderInsets": "10,10,10,10",
         "background": "Grey2",
-        "hoverBackground": "Grey1",
-        "pressedBackground": "Grey1"
+        "hoverBackground": "#383A42B3",
+        "pressedBackground": "#383A42B3"
       },
       "Dropdown": {
         "foreground": "Grey11",
-        "borderInsets": "3,8,3,4",
+        "borderInsets": "3,12,3,6",
         "background": "Grey2",
-        "hoverBackground": "Grey1",
-        "pressedBackground": "Grey1"
+        "hoverBackground": "#383A42B3",
+        "pressedBackground": "#383A42B3"
       },
       "Button": {
         "buttonInsets": "0,0,0,0"

@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
  */
 
 private val logger = logger<PartialImportPerformer>()
+
 interface PartialImportPerformer {
   fun willPerform(settings: Settings): Boolean
   fun collectAllRequiredPlugins(settings: Settings): Set<PluginId>

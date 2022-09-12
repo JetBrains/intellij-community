@@ -31,7 +31,7 @@ class DistributionBuilderState(pluginsToPublish: Set<PluginLayout>, private val 
   }
 
   val platformModules: Collection<String>
-    get() = platform.includedModuleNames + getToolModules()
+    get() = (platform.includedModuleNames + getToolModules().asSequence()).toList()
 
   fun getModulesForPluginsToPublish(): Set<String> {
     val result = LinkedHashSet<String>()
@@ -123,12 +123,12 @@ private fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, c
 /**
  * @return module names which are required to run necessary tools from build scripts
  */
-fun getToolModules(): List<String> {
+internal fun getToolModules(): List<String> {
   return java.util.List.of("intellij.java.rt", "intellij.platform.main",
                            /*required to build searchable options index*/ "intellij.platform.updater")
 }
 
-fun isProjectLibraryUsedByPlugin(library: JpsLibrary, plugin: BaseLayout, libsToUnpack: Collection<String>): Boolean {
+internal fun isProjectLibraryUsedByPlugin(library: JpsLibrary, plugin: BaseLayout, libsToUnpack: Collection<String>): Boolean {
   return library.createReference().parentReference !is JpsModuleReference &&
          !plugin.includedProjectLibraries.any {it.libraryName == library.name} &&
          !libsToUnpack.contains(library.name)

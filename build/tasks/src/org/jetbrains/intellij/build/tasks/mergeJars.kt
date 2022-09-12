@@ -3,19 +3,11 @@
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 package org.jetbrains.intellij.build.tasks
 
-import com.intellij.diagnostic.telemetry.use
-import io.opentelemetry.api.common.AttributeKey
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.io.*
-import org.jetbrains.intellij.build.tracer
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import java.util.function.IntConsumer
 import java.util.zip.Deflater
-
-const val DO_NOT_EXPORT_TO_CONSOLE = "_CES_"
 
 sealed interface Source {
   val sizeConsumer: IntConsumer?
@@ -84,46 +76,6 @@ data class InMemoryContentSource(val relativePath: String, val data: ByteArray, 
   }
 }
 
-fun createZipSource(file: Path, sizeConsumer: IntConsumer?): ZipSource {
-  return ZipSource(file = file, sizeConsumer = sizeConsumer)
-}
-
-data class BuildJarDescriptor(@JvmField val file: Path,
-                              @JvmField val sources: List<Source>,
-                              @JvmField val relativePath: String = "")
-
-suspend fun buildJars(descriptors: List<BuildJarDescriptor>, dryRun: Boolean, nativeFiles: MutableMap<ZipSource, MutableList<String>>? = null) {
-  val uniqueFiles = HashMap<Path, List<Source>>()
-  for (descriptor in descriptors) {
-    val existing = uniqueFiles.putIfAbsent(descriptor.file, descriptor.sources)
-    check(existing == null) {
-      "File ${descriptor.file} is already associated." +
-      "\nPrevious:\n  ${existing!!.joinToString(separator = "\n  ")}" +
-      "\nCurrent:\n  ${descriptor.sources.joinToString(separator = "\n  ")}"
-    }
-  }
-
-  withContext(Dispatchers.IO) {
-    for (item in descriptors) {
-      launch {
-        val file = item.file
-        tracer.spanBuilder("build jar")
-          .setAttribute(DO_NOT_EXPORT_TO_CONSOLE, true)
-          .setAttribute("jar", file.toString())
-          .setAttribute(AttributeKey.stringArrayKey("sources"), item.sources.map(Source::toString))
-          .use {
-            buildJar(targetFile = file, sources = item.sources, dryRun = dryRun, nativeFiles = nativeFiles)
-          }
-
-        // app.jar is combined later with other JARs and then re-ordered
-        if (!dryRun && item.relativePath.isNotEmpty() && item.relativePath != "lib/app.jar") {
-          reorderJar(relativePath = item.relativePath, file = file)
-        }
-      }
-    }
-  }
-}
-
 @JvmOverloads
 fun buildJar(targetFile: Path,
              sources: List<Source>,
@@ -176,7 +128,7 @@ fun buildJar(targetFile: Path,
             val sourceFile = source.file
             val requiresMavenFiles = targetFile.fileName.toString().startsWith("junixsocket-")
             readZipFile(sourceFile) { name, entry ->
-              if (nativeFiles != null && (name.endsWith(".jnilib") || name.endsWith(".dylib") || name.endsWith(".so"))) {
+              if (nativeFiles != null && isNative(name)) {
                 nativeFiles.computeIfAbsent(source) { mutableListOf() }.add(name)
               }
               else {
@@ -207,6 +159,13 @@ fun buildJar(targetFile: Path,
       packageIndexBuilder?.writePackageIndex(zipCreator)
     }
   }
+}
+
+private fun isNative(name: String): Boolean {
+  return name.endsWith(".jnilib") ||
+         name.endsWith(".dylib") ||
+         name.endsWith(".so") ||
+         name.endsWith(".tbd")
 }
 
 private fun getIgnoredNames(): Set<String> {

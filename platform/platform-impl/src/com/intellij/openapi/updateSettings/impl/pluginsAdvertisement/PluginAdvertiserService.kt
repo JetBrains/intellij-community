@@ -26,22 +26,40 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.coroutineContext
 
-open class PluginAdvertiserService(private val project: Project) : Disposable {
+sealed interface PluginAdvertiserService {
 
   companion object {
-
-    private val notificationManager = SingletonNotificationManager(notificationGroup.displayId, NotificationType.INFORMATION)
-
     @JvmStatic
     fun getInstance(project: Project): PluginAdvertiserService = project.service()
   }
 
-  private val coroutineScope = CoroutineScope(SupervisorJob())
-
-  open suspend fun run(
+  suspend fun run(
     customPlugins: List<PluginNode>,
     unknownFeatures: Collection<UnknownFeature>,
-    includeIgnored: Boolean = false
+    includeIgnored: Boolean = false,
+  )
+
+  @ApiStatus.Internal
+  fun collectDependencyUnknownFeatures(includeIgnored: Boolean = false)
+
+  @ApiStatus.Internal
+  fun rescanDependencies(block: suspend CoroutineScope.() -> Unit = {})
+}
+
+open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdvertiserService,
+                                                                       Disposable {
+
+  companion object {
+
+    private val notificationManager = SingletonNotificationManager(notificationGroup.displayId, NotificationType.INFORMATION)
+  }
+
+  private val coroutineScope = CoroutineScope(SupervisorJob())
+
+  override suspend fun run(
+    customPlugins: List<PluginNode>,
+    unknownFeatures: Collection<UnknownFeature>,
+    includeIgnored: Boolean,
   ) {
     val featuresMap = MultiMap.createSet<PluginId, UnknownFeature>()
 
@@ -313,8 +331,7 @@ open class PluginAdvertiserService(private val project: Project) : Disposable {
     }
   }
 
-  @ApiStatus.Internal
-  open fun collectDependencyUnknownFeatures(includeIgnored: Boolean = false) {
+  override fun collectDependencyUnknownFeatures(includeIgnored: Boolean) {
     val featuresCollector = UnknownFeaturesCollector.getInstance(project)
 
     featuresCollector.getUnknownFeaturesOfType(DEPENDENCY_SUPPORT_FEATURE)
@@ -347,8 +364,7 @@ open class PluginAdvertiserService(private val project: Project) : Disposable {
     return result
   }
 
-  @JvmOverloads
-  fun rescanDependencies(block: suspend CoroutineScope.() -> Unit = {}) {
+  override fun rescanDependencies(block: suspend CoroutineScope.() -> Unit) {
     coroutineScope.launch(Dispatchers.IO) {
       rescanDependencies()
       block()
@@ -367,4 +383,18 @@ open class PluginAdvertiserService(private val project: Project) : Disposable {
       )
     }
   }
+}
+
+open class HeadlessPluginAdvertiserServiceImpl : PluginAdvertiserService {
+
+  final override suspend fun run(
+    customPlugins: List<PluginNode>,
+    unknownFeatures: Collection<UnknownFeature>,
+    includeIgnored: Boolean,
+  ) {
+  }
+
+  final override fun collectDependencyUnknownFeatures(includeIgnored: Boolean) {}
+
+  final override fun rescanDependencies(block: suspend CoroutineScope.() -> Unit) {}
 }

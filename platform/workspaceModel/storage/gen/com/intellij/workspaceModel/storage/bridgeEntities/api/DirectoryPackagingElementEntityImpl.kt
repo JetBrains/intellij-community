@@ -31,7 +31,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class DirectoryPackagingElementEntityImpl : DirectoryPackagingElementEntity, WorkspaceEntityBase() {
+open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagingElementEntityData) : DirectoryPackagingElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -61,10 +61,8 @@ open class DirectoryPackagingElementEntityImpl : DirectoryPackagingElementEntity
   override val children: List<PackagingElementEntity>
     get() = snapshot.extractOneToAbstractManyChildren<PackagingElementEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
-  @JvmField
-  var _directoryName: String? = null
   override val directoryName: String
-    get() = _directoryName!!
+    get() = dataSource.directoryName
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -284,12 +282,13 @@ class DirectoryPackagingElementEntityData : WorkspaceEntityData<DirectoryPackagi
   }
 
   override fun createEntity(snapshot: EntityStorage): DirectoryPackagingElementEntity {
-    val entity = DirectoryPackagingElementEntityImpl()
-    entity._directoryName = directoryName
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = DirectoryPackagingElementEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

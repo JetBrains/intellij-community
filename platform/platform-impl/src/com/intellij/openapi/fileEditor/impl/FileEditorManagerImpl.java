@@ -89,8 +89,6 @@ import com.intellij.util.ui.update.Update;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -103,6 +101,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -335,22 +334,23 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     return Collections.unmodifiableSet(all);
   }
 
-  private @NotNull Promise<EditorsSplitters> getActiveSplittersAsync() {
-    AsyncPromise<EditorsSplitters> result = new AsyncPromise<>();
+  private @NotNull CompletableFuture<@Nullable EditorsSplitters> getActiveSplittersAsync() {
+    CompletableFuture<EditorsSplitters> result = new CompletableFuture<>();
     IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     fm.doWhenFocusSettlesDown(() -> {
       if (myProject.isDisposed()) {
-        result.cancel();
+        result.complete(null);
         return;
       }
+
       Component focusOwner = fm.getFocusOwner();
       DockContainer container = myDockManager.getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
       if (container instanceof DockableEditorTabbedContainer) {
-        result.setResult(((DockableEditorTabbedContainer)container).getSplitters());
+        result.complete(((DockableEditorTabbedContainer)container).getSplitters());
       }
       else {
-        result.setResult(getMainSplitters());
+        result.complete(getMainSplitters());
       }
     }, ModalityState.defaultModalityState());
     return result;
@@ -533,7 +533,11 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   private void updateFrameTitle() {
-    getActiveSplittersAsync().onSuccess(splitters -> splitters.updateFileName(null));
+    getActiveSplittersAsync().thenAccept(splitters -> {
+      if (splitters != null) {
+        splitters.updateFileName(null);
+      }
+    });
   }
 
   @SuppressWarnings("removal")
@@ -600,7 +604,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @Override
   public EditorWindow getNextWindow(@NotNull EditorWindow window) {
-    List<EditorWindow> windows = getSplitters().getOrderedWindows();
+    List<EditorWindow> windows = getSplitters().getOrderedWindows$intellij_platform_ide_impl();
     for (int i = 0; i != windows.size(); ++i) {
       if (windows.get(i).equals(window)) {
         return windows.get((i + 1) % windows.size());
@@ -612,7 +616,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @Override
   public EditorWindow getPrevWindow(@NotNull EditorWindow window) {
-    List<EditorWindow> windows = getSplitters().getOrderedWindows();
+    List<EditorWindow> windows = getSplitters().getOrderedWindows$intellij_platform_ide_impl();
     for (int i = 0; i != windows.size(); ++i) {
       if (windows.get(i).equals(window)) {
         return windows.get((i + windows.size() - 1) % windows.size());
@@ -671,9 +675,10 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   @Override
-  public @NotNull Promise<EditorWindow> getActiveWindow() {
-    return getActiveSplittersAsync()
-      .then(EditorsSplitters::getCurrentWindow);
+  public @NotNull CompletableFuture<@Nullable EditorWindow> getActiveWindow() {
+    return getActiveSplittersAsync().thenApply(splitters -> {
+      return splitters == null ? null : splitters.getCurrentWindow();
+    });
   }
 
   @Override
@@ -805,7 +810,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     }
 
     EditorWindow windowToOpenIn = window;
-    if (windowToOpenIn == null && (options.getReuseOpen() || !AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER))) {
+    if (windowToOpenIn == null && (options.reuseOpen || !AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER))) {
       windowToOpenIn = findWindowInAllSplitters(file);
     }
     if (windowToOpenIn == null) {
@@ -986,7 +991,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     VirtualFile file = getOriginalFile(_file);
     Ref<EditorComposite> compositeRef = new Ref<>();
 
-    if (!options.isReopeningOnStartup()) {
+    if (!options.isReopeningOnStartup) {
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> compositeRef.set(window.getComposite(file)));
     }
 
@@ -1045,7 +1050,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
     LOG.assertTrue(file.isValid(), "Invalid file: " + file);
 
-    if (options.getRequestFocus()) {
+    if (options.requestFocus) {
       Project activeProject = ProjectUtil.getActiveProject();
       if (activeProject != null && !activeProject.equals(myProject)) {
         // allow focus switching only within a project
@@ -1069,10 +1074,10 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
     List<FileEditorWithProvider> editorsWithProviders = composite.getAllEditorsWithProviders();
 
-    window.setComposite(composite, options);
+    window.setComposite$intellij_platform_ide_impl(composite, options);
 
     for (FileEditorWithProvider editorWithProvider : editorsWithProviders) {
-      restoreEditorState(file, editorWithProvider, entry, newEditor, options.isExactState());
+      restoreEditorState(file, editorWithProvider, entry, newEditor, options.isExactState);
     }
     // Restore selected editor
     FileEditorProvider provider = entry == null
@@ -1085,7 +1090,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
     // Notify editors about selection changes
     EditorsSplitters splitters = window.getOwner();
-    splitters.setCurrentWindow(window, options.getRequestFocus());
+    splitters.setCurrentWindow(window, options.requestFocus);
     splitters.afterFileOpen(file);
     addSelectionRecord(file, window);
 
@@ -1093,7 +1098,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     selectedEditor.selectNotify();
 
     // transfer focus into editor
-    if (options.getRequestFocus() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (options.requestFocus && !ApplicationManager.getApplication().isUnitTestMode()) {
       EditorComposite finalComposite = composite;
       Runnable focusRunnable = () -> {
         if (splitters.getCurrentWindow() != window || window.getSelectedComposite() != finalComposite) {
@@ -1134,8 +1139,8 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     // Make back/forward work
     ideDocumentHistory.includeCurrentCommandAsNavigation();
 
-    if (options.getPin() != null) {
-      window.setFilePinned(file, options.getPin());
+    if (options.pin != null) {
+      window.setFilePinned(file, options.pin);
     }
 
     if (newEditor) {
@@ -1771,25 +1776,27 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @ApiStatus.Internal
   public void fireSelectionChanged(@Nullable EditorComposite newSelectedComposite) {
-    @Nullable EditorComposite composite = SoftReference.dereference(myLastSelectedComposite);
+    EditorComposite composite = SoftReference.dereference(myLastSelectedComposite);
     FileEditorWithProvider oldEditorWithProvider = composite == null ? null : composite.getSelectedWithProvider();
     FileEditorWithProvider newEditorWithProvider = newSelectedComposite == null ? null : newSelectedComposite.getSelectedWithProvider();
     myLastSelectedComposite = newSelectedComposite == null ? null : new WeakReference<>(newSelectedComposite);
-    if (!Objects.equals(oldEditorWithProvider, newEditorWithProvider)) {
-      FileEditorManagerEvent event = new FileEditorManagerEvent(this, oldEditorWithProvider, newEditorWithProvider);
-      FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
-
-      if (newEditorWithProvider != null) {
-        JComponent component =  newEditorWithProvider.getFileEditor().getComponent();
-        EditorWindowHolder holder =
-          ComponentUtil.getParentOfType((Class<? extends EditorWindowHolder>)EditorWindowHolder.class, (Component)component);
-        VirtualFile file = newEditorWithProvider.getFileEditor().getFile();
-        if (holder != null && file != null) {
-          addSelectionRecord(file, holder.getEditorWindow());
-        }
-      }
-      notifyPublisher(() -> publisher.selectionChanged(event));
+    if (Objects.equals(oldEditorWithProvider, newEditorWithProvider)) {
+      return;
     }
+
+    FileEditorManagerEvent event = new FileEditorManagerEvent(this, oldEditorWithProvider, newEditorWithProvider);
+    FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
+
+    if (newEditorWithProvider != null) {
+      JComponent component = newEditorWithProvider.getFileEditor().getComponent();
+      EditorWindowHolder holder =
+        ComponentUtil.getParentOfType((Class<? extends EditorWindowHolder>)EditorWindowHolder.class, (Component)component);
+      VirtualFile file = newEditorWithProvider.getFileEditor().getFile();
+      if (holder != null && file != null) {
+        addSelectionRecord(file, holder.getEditorWindow());
+      }
+    }
+    notifyPublisher(() -> publisher.selectionChanged(event));
   }
 
   protected static @NotNull VirtualFile getOriginalFile(@NotNull VirtualFile file) {

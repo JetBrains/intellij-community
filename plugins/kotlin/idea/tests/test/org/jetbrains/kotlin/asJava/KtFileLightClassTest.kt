@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.asJava
 
@@ -11,13 +11,13 @@ import com.intellij.testFramework.LightProjectDescriptor
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -52,22 +52,36 @@ class KtFileLightClassTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testAliasesOnly() {
         val file = myFixture.configureByFile("aliasesOnly.kt") as KtFile
         val aClass = file.classes.single()
-        assertEquals(0, aClass.getMethods().size)
+        assertEquals(0, aClass.methods.size)
     }
 
     fun testNoFacadeForScript() {
         val file = myFixture.configureByText("foo.kts", "package foo") as KtFile
         assertEquals(0, file.classes.size)
-        val facadeFiles =
-            KotlinAsJavaSupport.getInstance(project).findFilesForFacade(FqName("foo.FooKt"), GlobalSearchScope.allScope(project))
+        val javaSupport = KotlinAsJavaSupport.getInstance(project)
+        assertNull(javaSupport.getLightFacade(file))
+
+        val fqName = FqName("foo.FooKt")
+        val scope = GlobalSearchScope.allScope(project)
+        val facadeClasses = javaSupport.getFacadeClasses(fqName, scope)
+        assertEquals(0, facadeClasses.size)
+
+        val facadeFiles = javaSupport.findFilesForFacade(fqName, scope)
         assertEquals(0, facadeFiles.size)
     }
 
     fun testNoFacadeForHeaderClass() {
         val file = myFixture.configureByText("foo.kt", "header fun foo(): Int") as KtFile
         assertEquals(0, file.classes.size)
-        val facadeFiles =
-            KotlinAsJavaSupport.getInstance(project).findFilesForFacade(FqName("foo.FooKt"), GlobalSearchScope.allScope(project))
+        val javaSupport = KotlinAsJavaSupport.getInstance(project)
+        assertNull(javaSupport.getLightFacade(file))
+
+        val fqName = FqName("foo.FooKt")
+        val scope = GlobalSearchScope.allScope(project)
+        val facadeClasses = javaSupport.getFacadeClasses(fqName, scope)
+        assertEquals(0, facadeClasses.size)
+
+        val facadeFiles = javaSupport.getFacadeClasses(fqName, scope)
         assertEquals(0, facadeFiles.size)
     }
 

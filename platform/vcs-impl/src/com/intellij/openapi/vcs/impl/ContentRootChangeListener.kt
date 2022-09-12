@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.impl
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.impl.toVirtualFile
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -28,11 +28,11 @@ abstract class ContentRootChangeListener(
     var removed = removedUrls
       .asSequence()
       .filter { !addedUrls.contains(it) } // Do not process 'modifications' of any kind (ex: excluded root changes).
-      .mapNotNull { it.virtualFile }
+      .mapNotNull { it.toVirtualFile() }
     var added = addedUrls
       .asSequence()
       .filter { !removedUrls.contains(it) }
-      .mapNotNull { it.virtualFile }
+      .mapNotNull { it.toVirtualFile() }
 
     if (skipFileChanges) {
       // Filter-out 'file as content-roots'. Ex: Rider-project model.

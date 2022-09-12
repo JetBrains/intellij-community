@@ -27,7 +27,10 @@ public final class SystemInfo {
 
   private static String getRtVersion(@SuppressWarnings("SameParameterValue") String fallback) {
     String rtVersion = System.getProperty("java.runtime.version");
-    return Character.isDigit(rtVersion.charAt(0)) ? rtVersion : fallback;
+    if (rtVersion != null && Character.isDigit(rtVersion.charAt(0))) {
+      return rtVersion;
+    }
+    return fallback;
   }
 
   public static final boolean isWindows = SystemInfoRt.isWindows;
@@ -168,8 +171,12 @@ public final class SystemInfo {
     return new int[]{toInt(parts.get(0)), toInt(parts.get(1)), toInt(parts.get(2))};
   }
 
+  public static String getOsName() {
+    return isMac ? "macOS" : OS_NAME;
+  }
+
   public static String getOsNameAndVersion() {
-    return (isMac ? "macOS" : OS_NAME) + ' ' + OS_VERSION;
+    return getOsName() + ' ' + OS_VERSION;
   }
 
   private static int normalize(int number) {

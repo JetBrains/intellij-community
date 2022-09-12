@@ -87,25 +87,23 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     });
   }
 
-  private void importUnambiguousImports(int caretOffset) {
+  private void importUnambiguousImports(int exceptCaretOffset) {
     if (!mayAutoImportNow(myFile)) return;
     Document document = myEditor.getDocument();
     List<HighlightInfo> infos = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(document, myProject, null, 0, document.getTextLength(), info -> {
-      if (info.hasHint() && info.getSeverity() == HighlightSeverity.ERROR && !info.containsOffset(caretOffset, true)) {
+      if (info.isUnresolvedReference() && info.getSeverity() == HighlightSeverity.ERROR && !info.containsOffset(exceptCaretOffset, true)) {
         infos.add(info);
       }
       return true;
     });
 
     for (HighlightInfo info : infos) {
-      for (HintAction action : extractHints(info)) {
-        if (action.isAvailable(myProject, myEditor, myFile) && action.fixSilently(myEditor)) {
-          break;
-        }
+      for (ReferenceImporter importer : ReferenceImporter.EP_NAME.getExtensionList()) {
+        if (importer.isAddUnambiguousImportsOnTheFlyEnabled(myFile)
+            && importer.autoImportReferenceAtOffset(myEditor, myFile, info.getActualStartOffset())) break;
       }
     }
-
   }
 
   public static boolean mayAutoImportNow(@NotNull PsiFile psiFile) {

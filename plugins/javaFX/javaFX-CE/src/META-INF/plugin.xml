@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="org.jetbrains.plugins.javaFX">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="org.jetbrains.plugins.javaFX" on-demand="true">
   <name>JavaFX</name>
   <id>org.jetbrains.plugins.javaFX</id>
   <vendor>JetBrains</vendor>

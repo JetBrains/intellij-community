@@ -63,10 +63,7 @@ import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -83,6 +80,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -90,6 +88,7 @@ import java.util.stream.Stream;
 import static com.intellij.usages.impl.UsageFilteringRuleActions.usageFilteringRuleActions;
 
 public class UsageViewImpl implements UsageViewEx {
+  private final int myUniqueIdentifier;
   private static final GroupNode.NodeComparator COMPARATOR = new GroupNode.NodeComparator();
   private static final Logger LOG = Logger.getInstance(UsageViewImpl.class);
   @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
@@ -180,7 +179,7 @@ public class UsageViewImpl implements UsageViewEx {
       ContainerUtil.filter(navigatables, n -> n.canNavigateToSource() && n instanceof PsiElementUsage).
         forEach(n -> {
           PsiElement psiElement = ((PsiElementUsage)n).getElement();
-          if (psiElement != null) UsageViewStatisticsCollector.logItemChosen(getProject(), CodeNavigateSource.FindToolWindow, psiElement.getLanguage());
+          if (psiElement != null) UsageViewStatisticsCollector.logItemChosen(getProject(), this, CodeNavigateSource.FindToolWindow, psiElement.getLanguage());
       });
     }
   };
@@ -190,6 +189,7 @@ public class UsageViewImpl implements UsageViewEx {
                        UsageTarget @NotNull [] targets,
                        @Nullable Factory<? extends UsageSearcher> usageSearcherFactory) {
     // fire events every 50 ms, not more often to batch requests
+    myUniqueIdentifier = COUNTER.getAndIncrement();
     myFireEventsFuture =
       EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this::fireEvents, 50, 50, TimeUnit.MILLISECONDS);
     Disposer.register(this, () -> myFireEventsFuture.cancel(false));
@@ -296,6 +296,13 @@ public class UsageViewImpl implements UsageViewEx {
         }
       }
     };
+  }
+
+  @Override
+  @ApiStatus.Internal
+  @IntellijInternalApi
+  public int getId() {
+    return myUniqueIdentifier;
   }
 
   private void initInEDT() {
@@ -727,7 +734,7 @@ public class UsageViewImpl implements UsageViewEx {
           UsageContextPanel.Provider selectedProvider = myUsageContextPanelProviders.get(currentIndex);
           if (selectedProvider != myCurrentUsageContextProvider) {
             tabSelected(selectedProvider);
-            UsageViewStatisticsCollector.logTabSwitched(myProject);
+            UsageViewStatisticsCollector.logTabSwitched(myProject, this);
           }
         });
         panel.add(tabbedPane, BorderLayout.CENTER);
@@ -1360,6 +1367,9 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     for (UsageViewElementsListener listener : UsageViewElementsListener.EP_NAME.getExtensionList()) {
+      if (listener.skipUsage(this, usage)) {
+        return null;
+      }
       listener.beforeUsageAdded(this, usage);
     }
 
@@ -1391,7 +1401,7 @@ public class UsageViewImpl implements UsageViewEx {
     if (element != null && referenceClass != null) {
       Language language = element.getLanguage();
       if (myReportedReferenceClasses.add(Pair.create(referenceClass, language))) {
-        UsageViewStatisticsCollector.logUsageShown(myProject, referenceClass, language);
+        UsageViewStatisticsCollector.logUsageShown(myProject, referenceClass, language, this);
       }
     }
   }

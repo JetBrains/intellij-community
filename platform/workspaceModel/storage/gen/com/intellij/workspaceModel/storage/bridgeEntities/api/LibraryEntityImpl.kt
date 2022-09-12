@@ -31,7 +31,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
+open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val SDK_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, SdkEntity::class.java,
@@ -52,25 +52,17 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _name: String? = null
   override val name: String
-    get() = _name!!
+    get() = dataSource.name
 
-  @JvmField
-  var _tableId: LibraryTableId? = null
   override val tableId: LibraryTableId
-    get() = _tableId!!
+    get() = dataSource.tableId
 
-  @JvmField
-  var _roots: List<LibraryRoot>? = null
   override val roots: List<LibraryRoot>
-    get() = _roots!!
+    get() = dataSource.roots
 
-  @JvmField
-  var _excludedRoots: List<VirtualFileUrl>? = null
   override val excludedRoots: List<VirtualFileUrl>
-    get() = _excludedRoots!!
+    get() = dataSource.excludedRoots
 
   override val sdk: SdkEntity?
     get() = snapshot.extractOneToOneChild(SDK_CONNECTION_ID, this)
@@ -450,15 +442,13 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   }
 
   override fun createEntity(snapshot: EntityStorage): LibraryEntity {
-    val entity = LibraryEntityImpl()
-    entity._name = name
-    entity._tableId = tableId
-    entity._roots = roots.toList()
-    entity._excludedRoots = excludedRoots.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = LibraryEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): LibraryEntityData {

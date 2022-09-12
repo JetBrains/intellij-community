@@ -4,7 +4,10 @@ package org.jetbrains.plugins.github.api
 import git4idea.remote.hosting.HostedRepositoryCoordinates
 import com.intellij.openapi.util.NlsSafe
 
-data class GHRepositoryCoordinates(val serverPath: GithubServerPath, val repositoryPath: GHRepositoryPath) : HostedRepositoryCoordinates {
+data class GHRepositoryCoordinates(override val serverPath: GithubServerPath,
+                                   val repositoryPath: GHRepositoryPath)
+  : HostedRepositoryCoordinates {
+
   fun toUrl(): String {
     return serverPath.toUrl() + "/" + repositoryPath
   }

@@ -194,6 +194,11 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return isSelected();
     }
@@ -253,6 +258,11 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return myTextSettings.getHighlightingLevel() == myLayer;
       }
@@ -289,6 +299,11 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
       OptionAction(@NotNull BreadcrumbsPlacement option) {
         ActionUtil.copyFrom(this, option.getActionId());
         myOption = option;
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override

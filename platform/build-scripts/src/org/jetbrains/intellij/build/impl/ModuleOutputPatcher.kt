@@ -17,12 +17,10 @@ class ModuleOutputPatcher {
   private val patchDirs = ConcurrentHashMap<String, CopyOnWriteArrayList<Path>>()
   private val patches = ConcurrentHashMap<String, MutableMap<String, ByteArray>>()
 
-  @JvmOverloads
   fun patchModuleOutput(moduleName: String, path: String, content: String, overwrite: Boolean = false) {
     patchModuleOutput(moduleName, path, content.toByteArray(StandardCharsets.UTF_8), overwrite)
   }
 
-  @JvmOverloads
   fun patchModuleOutput(moduleName: String, path: String, content: ByteArray, overwrite: Boolean = false) {
     val pathToData = patches.computeIfAbsent(moduleName) { Collections.synchronizedMap(LinkedHashMap()) }
     if (overwrite) {
@@ -70,17 +68,6 @@ class ModuleOutputPatcher {
   fun getPatchedPluginXml(moduleName: String): ByteArray {
     return patches.get(moduleName)?.entries?.firstOrNull { it.key == "META-INF/plugin.xml" }?.value
            ?: error("patched plugin.xml not found for $moduleName module")
-  }
-
-  /**
-   * Contents of {@code pathToDirectoryWithPatchedFiles} will be used to patch the module output.
-   */
-  fun patchModuleOutput(moduleName: String, pathToDirectoryWithPatchedFiles: Path) {
-    val list = patchDirs.computeIfAbsent(moduleName) { CopyOnWriteArrayList() }
-    if (list.contains(pathToDirectoryWithPatchedFiles)) {
-      error("Patched directory $pathToDirectoryWithPatchedFiles is already added for module $moduleName")
-    }
-    list.add(pathToDirectoryWithPatchedFiles)
   }
 
   fun getPatchedDir(moduleName: String): Collection<Path> = patchDirs.get(moduleName) ?: emptyList()

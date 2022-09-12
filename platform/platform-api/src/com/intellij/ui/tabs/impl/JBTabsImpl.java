@@ -52,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.*;
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.PopupMenuEvent;
@@ -93,7 +94,7 @@ public class JBTabsImpl extends JComponent
   public final Map<TabInfo, Toolbar> myInfo2Toolbar = new HashMap<>();
   public final ActionToolbar myMoreToolbar;
   @Nullable
-  public final ActionToolbar myEntryPointToolbar;
+  public ActionToolbar myEntryPointToolbar;
   public final NonOpaquePanel myTitleWrapper = new NonOpaquePanel();
   public Dimension myHeaderFitSize;
 
@@ -149,7 +150,7 @@ public class JBTabsImpl extends JComponent
   final Set<TabInfo> myAttractions = new HashSet<>();
   private final Animator myAnimator;
   private List<TabInfo> myAllTabs;
-  private IdeFocusManager myFocusManager;
+  private @NotNull IdeFocusManager myFocusManager;
   private static final boolean myAdjustBorders = true;
   private final Set<JBTabsImpl> myNestedTabs = new HashSet<>();
 
@@ -480,7 +481,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @NotNull
-  private ActionToolbar createToolbar(DefaultActionGroup group) {
+  private ActionToolbar createToolbar(ActionGroup group) {
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, group, true);
     toolbar.setTargetComponent(this);
     toolbar.getComponent().setBorder(JBUI.Borders.empty());
@@ -1455,7 +1456,7 @@ public class JBTabsImpl extends JComponent
           requestFocusInWindow();
         }
         else {
-          requestFocus();
+          myFocusManager.requestFocusInProject(this, myProject);
         }
       }, ModalityState.NON_MODAL);
       return removeDeferred();
@@ -1943,7 +1944,7 @@ public class JBTabsImpl extends JComponent
     if (myScrollBarModel.getValueIsAdjusting()) return;
 
     boolean pinnedTabsSeparately = myTableLayout.myLastTableLayout != null && TabLayout.showPinnedTabsSeparately();
-    int maximum = 0;
+    int maximum = myLastLayoutPass.getRequiredLength();
     int value = 0;
     int extent = 0;
 
@@ -1953,7 +1954,6 @@ public class JBTabsImpl extends JComponent
       int theMostLeftX = 0;
       for (TabLabel tab : myInfo2Label.values()) {
         if (tab.isPinned() && pinnedTabsSeparately) continue;
-        maximum += tab.getPreferredSize().width + (isEditorTabs() ? getTabHGap() : 0);
         theMostLeftX = Math.min(theMostLeftX, tab.getX());
       }
       value = Math.max(0, -theMostLeftX);
@@ -1967,7 +1967,6 @@ public class JBTabsImpl extends JComponent
       int theMostTopX = 0;
       for (TabLabel tab : myInfo2Label.values()) {
         if (tab.isPinned() && pinnedTabsSeparately) continue;
-        maximum += tab.getPreferredSize().height + (isEditorTabs() ? getTabHGap() : 0);
         theMostTopX = Math.min(theMostTopX, tab.getY());
       }
       value = Math.max(0, -theMostTopX);
@@ -2667,12 +2666,45 @@ public class JBTabsImpl extends JComponent
         }
       }
     }
+
+    updateEntryPointToolbar();
+
     if (myLayout == mySingleRowLayout) {
       mySingleRowLayout.scrollSelectionInView();
     } else if (myLayout == myTableLayout) {
       myTableLayout.scrollSelectionInView();
     }
     relayout(forced, layoutNow);
+  }
+
+  private void updateEntryPointToolbar() {
+    if (myEntryPointToolbar != null) {
+      remove(myEntryPointToolbar.getComponent());
+    }
+
+    TabInfo selectedInfo = getSelectedInfo();
+    ActionGroup tabActionGroup = selectedInfo != null ? selectedInfo.getTabPaneActions() : null;
+    DefaultActionGroup entryPointActionGroup = getEntryPointActionGroup();
+    if (tabActionGroup != null || entryPointActionGroup != null) {
+      ActionGroup group = tabActionGroup != null && entryPointActionGroup != null
+                          ? new DefaultActionGroup(tabActionGroup, entryPointActionGroup)
+                          : tabActionGroup != null ? tabActionGroup : entryPointActionGroup;
+
+      myEntryPointToolbar = createToolbar(group);
+      JComponent toolbarComp = myEntryPointToolbar.getComponent();
+      if (ExperimentalUI.isNewUI()) {
+        toolbarComp.setBorder(createEntryPointToolbarBorder());
+      }
+      add(toolbarComp);
+    }
+    else {
+      myEntryPointToolbar = null;
+    }
+  }
+
+  @NotNull
+  private Border createEntryPointToolbarBorder() {
+    return getTabsPosition().isSide() ? JBUI.Borders.empty(4, 3) : JBUI.Borders.emptyRight(8);
   }
 
   @Override
@@ -3336,7 +3368,7 @@ public class JBTabsImpl extends JComponent
     }
     if (ExperimentalUI.isNewUI()) {
       if (myEntryPointToolbar != null) {
-        myEntryPointToolbar.getComponent().setBorder(getTabsPosition().isSide() ? JBUI.Borders.empty(4, 3) : JBUI.Borders.emptyRight(8));
+        myEntryPointToolbar.getComponent().setBorder(createEntryPointToolbarBorder());
       }
       myMoreToolbar.getComponent().setBorder(JBUI.Borders.empty(4, 3));
     }

@@ -13,7 +13,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
@@ -31,7 +30,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.util.CollectionDelta
+import com.intellij.collaboration.util.CollectionDelta
 import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
@@ -75,12 +74,6 @@ object GHUIUtil {
       GithubIssueState.open -> GithubBundle.message("issue.state.open")
       GithubIssueState.closed -> GithubBundle.message("issue.state.closed")
     }
-
-  fun focusPanel(panel: JComponent) {
-    val focusManager = IdeFocusManager.findInstanceByComponent(panel)
-    val toFocus = focusManager.getFocusTargetFor(panel) ?: return
-    focusManager.doWhenFocusSettlesDown { focusManager.requestFocus(toFocus, true) }
-  }
 
   fun createIssueLabelLabel(label: GHLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
     background = getLabelBackground(label)

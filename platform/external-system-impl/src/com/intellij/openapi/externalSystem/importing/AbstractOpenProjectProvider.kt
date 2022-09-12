@@ -5,7 +5,6 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationAware
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -18,40 +17,29 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.apache.commons.lang.StringUtils
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Experimental
-abstract class AbstractOpenProjectProvider : OpenProjectProvider {
-  protected open val systemId: ProjectSystemId by lazy {
-    /**
-     * Tries to resolve external system id
-     * Note: Implemented approach is super heuristics.
-     * Please, override [systemId] to avoid discrepancy with real id.
-     */
-    LOG.warn("Class ${javaClass.name} have to override AbstractOpenProjectProvider.systemId. " +
-             "Resolving of systemId will be removed in future releases.")
-    val readableName = StringUtils.splitByCharacterTypeCamelCase(javaClass.simpleName).first()
-    val manager = ExternalSystemManager.EP_NAME.findFirstSafe {
-      StringUtils.equalsIgnoreCase(StringUtils.splitByCharacterTypeCamelCase(it.javaClass.simpleName).first(), readableName)
-    }
-    manager?.systemId ?: ProjectSystemId(readableName.toUpperCase())
-  }
+abstract class AbstractOpenProjectProvider {
+
+  abstract val systemId: ProjectSystemId
 
   protected abstract fun isProjectFile(file: VirtualFile): Boolean
 
-  @Deprecated("redundant method", replaceWith = ReplaceWith("linkToExistingProject(projectFile, project)"))
-  protected open fun linkAndRefreshProject(projectDirectory: Path, project: Project) {
-    throw UnsupportedOperationException("use linkToExistingProject(VirtualFile, Project) instead")
-  }
-
-  override fun canOpenProject(file: VirtualFile): Boolean {
+  open fun canOpenProject(file: VirtualFile): Boolean {
     return if (file.isDirectory) file.children.any(::isProjectFile) else isProjectFile(file)
   }
 
-  override suspend fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    LOG.debug("Open project from $projectFile")
+  protected open fun getProjectDirectory(file: VirtualFile): VirtualFile {
+    return if (file.isDirectory) file else file.parent
+  }
+
+  abstract fun linkToExistingProject(projectFile: VirtualFile, project: Project)
+
+  open suspend fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+    LOG.debug("Open ${systemId.readableName} project from $projectFile")
+
     val projectDirectory = getProjectDirectory(projectFile)
     if (focusOnOpenedSameProject(projectDirectory.toNioPath())) {
       return null
@@ -82,12 +70,6 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
     return ProjectManagerEx.getInstanceEx().openProjectAsync(nioPath, options)
   }
 
-  override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
-    LOG.debug("Import project from $projectFile")
-    val projectDirectory = getProjectDirectory(projectFile)
-    linkAndRefreshProject(projectDirectory.toNioPath(), project)
-  }
-
   fun linkToExistingProject(projectFilePath: String, project: Project) {
     val localFileSystem = LocalFileSystem.getInstance()
     val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
@@ -108,11 +90,8 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
     return false
   }
 
-  private fun getProjectDirectory(file: VirtualFile): VirtualFile {
-    return if (file.isDirectory) file else file.parent
-  }
-
   companion object {
+    @JvmStatic
     protected val LOG = logger<AbstractOpenProjectProvider>()
   }
 }

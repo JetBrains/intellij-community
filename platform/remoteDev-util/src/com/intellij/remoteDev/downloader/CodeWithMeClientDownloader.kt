@@ -30,6 +30,8 @@ import com.intellij.util.io.*
 import com.intellij.util.io.HttpRequests.HttpStatusException
 import com.intellij.util.system.CpuArch
 import com.intellij.util.text.VersionComparatorUtil
+import com.intellij.util.withFragment
+import com.intellij.util.withQuery
 import com.jetbrains.infra.pgpVerifier.JetBrainsPgpConstants
 import com.jetbrains.infra.pgpVerifier.JetBrainsPgpConstants.JETBRAINS_DOWNLOADS_PGP_MASTER_PUBLIC_KEY
 import com.jetbrains.infra.pgpVerifier.PgpSignaturesVerifier
@@ -55,6 +57,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.*
 import kotlin.math.min
 
@@ -63,7 +66,7 @@ object CodeWithMeClientDownloader {
 
   private val LOG = logger<CodeWithMeClientDownloader>()
 
-  private const val extractDirSuffix = "-ide"
+  private const val extractDirSuffix = ".ide.d"
 
   private val config get () = service<JetBrainsClientDownloaderConfigurationProvider>()
 
@@ -83,23 +86,51 @@ object CodeWithMeClientDownloader {
   private const val minimumClientBuildWithBundledJre = "223.4374"
   fun isClientWithBundledJre(clientBuildNumber: String) = VersionComparatorUtil.compare(clientBuildNumber, minimumClientBuildWithBundledJre) >= 0
 
-  private data class DownloadableFileData(
-    val fileName: String,
+  @ApiStatus.Internal
+  class DownloadableFileData(
+    val fileCaption: String,
     val url: URI,
     val archivePath: Path,
     val targetPath: Path,
     val includeInManifest: (Path) -> Boolean,
     val downloadFuture: CompletableFuture<Boolean> = CompletableFuture(),
-    var status: DownloadableFileState = DownloadableFileState.Downloading
-  )
+    val status: AtomicReference<DownloadableFileState> = AtomicReference(DownloadableFileState.Downloading),
+  ) {
+    companion object {
+      private val prohibitedFileNameChars = Regex("[^._\\-a-zA-Z0-9]")
 
-  private enum class DownloadableFileState {
-    Downloading,
-    Extracting,
-    Done
+      private fun sanitizeFileName(fileName: String) = prohibitedFileNameChars.replace(fileName, "_")
+
+      fun build(url: URI, tempDir: Path, cachesDir: Path, includeInManifest: (Path) -> Boolean): DownloadableFileData {
+        val urlWithoutFragment = url.withFragment(null)
+        val bareUrl = urlWithoutFragment.withQuery(null)
+
+        val fileNameFromUrl = sanitizeFileName(bareUrl.path.toString().substringAfterLast('/'))
+        val fileName = fileNameFromUrl.take(100) +
+                       "-" +
+                       DigestUtil.sha256Hex(urlWithoutFragment.toString().toByteArray()).substring(0, 10)
+        return DownloadableFileData(
+          fileCaption = fileNameFromUrl,
+          url = url,
+          archivePath = tempDir.resolve(fileName),
+          targetPath = cachesDir / (fileName + extractDirSuffix),
+          includeInManifest = includeInManifest,
+        )
+      }
+    }
+
+    override fun toString(): String {
+      return "DownloadableFileData(fileCaption='$fileCaption', url=$url, archivePath=$archivePath, targetPath=$targetPath)"
+    }
+
+    enum class DownloadableFileState {
+      Downloading,
+      Extracting,
+      Done,
+    }
   }
 
-  const val buildNumberPattern = """[0-9]{3}\.(([0-9]+(\.[0-9]+)?)|SNAPSHOT)"""
+  private const val buildNumberPattern = """[0-9]{3}\.(([0-9]+(\.[0-9]+)?)|SNAPSHOT)"""
   val buildNumberRegex = Regex(buildNumberPattern)
 
   private fun getClientDistributionName(clientBuildVersion: String) = when {
@@ -141,9 +172,8 @@ object CodeWithMeClientDownloader {
 
     val clientDistributionName = getClientDistributionName(clientBuildVersion)
     val clientDownloadUrl = "${config.clientDownloadUrl.toString().trimEnd('/')}/$clientDistributionName-$hostBuildNumber$platformSuffix"
-    val clientName = "$clientDistributionName-$hostBuildNumber"
 
-    val (jreName, jreDownloadUrl) = if (jreBuildToDownload != null) {
+    val jreDownloadUrl = if (jreBuildToDownload != null) {
       val platformString = when {
         SystemInfo.isLinux -> "linux-x64"
         SystemInfo.isWindows -> "windows-x64"
@@ -159,7 +189,7 @@ object CodeWithMeClientDownloader {
 
       /**
        * After upgrade to JRE 17 Jetbrains Runtime Team made a couple of incompatible changes:
-       * 1. Java version began to contain dots in it's version
+       * 1. Java version began to contain dots in its version
        * 2. Root directory was renamed from 'jbr' to 'jbr_jcef_12.3.4b1235'
        *
        * We decided to maintain backward compatibility with old IDEs and
@@ -169,10 +199,8 @@ object CodeWithMeClientDownloader {
       val jdkBuild = jreBuildParts[1]
       val jreDownloadUrl = "${config.jreDownloadUrl.toString().trimEnd('/')}/jbr_jcef-$jdkVersion-$platformString-b${jdkBuild}.tar.gz"
 
-      val jreName = jreDownloadUrl.substringAfterLast('/').removeSuffix(".tar.gz")
-
-      jreName to jreDownloadUrl
-    } else null to null
+      jreDownloadUrl
+    } else null
 
     val pgpPublicKeyUrl = if (unattendedMode) {
       RemoteDevSystemSettings.getPgpPublicKeyUrl().value
@@ -180,9 +208,7 @@ object CodeWithMeClientDownloader {
 
     val sessionInfo = object : CodeWithMeSessionInfoProvider {
       override val hostBuildNumber = hostBuildNumber
-      override val compatibleClientName = clientName
       override val compatibleClientUrl = clientDownloadUrl
-      override val compatibleJreName = jreName
       override val isUnattendedMode = unattendedMode
       override val compatibleJreUrl = jreDownloadUrl
       override val hostFeaturesToEnable: Set<String>? = null
@@ -255,33 +281,21 @@ object CodeWithMeClientDownloader {
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
     LOG.info("Downloading Thin Client in $tempDir...")
 
-    fun archiveExtensionFromUrl(url: String) = when {
-      url.endsWith(".zip") -> "zip"
-      url.endsWith(".sit") -> "sit"
-      url.endsWith(".tar.gz") -> "tar.gz"
-      else -> error("Don't know how to extract archive downloaded from url $url")
-    }
-
-    val guestName = sessionInfoResponse.compatibleClientName
-    val guestFileName = "$guestName.${archiveExtensionFromUrl(sessionInfoResponse.compatibleClientUrl)}"
-    val guestData = DownloadableFileData(
-      fileName = guestFileName,
-      url = URI(sessionInfoResponse.compatibleClientUrl),
-      archivePath = tempDir.resolve(guestFileName),
-      targetPath = config.clientCachesDir / (guestName + extractDirSuffix),
+    val clientUrl = URI(sessionInfoResponse.compatibleClientUrl)
+    val guestData = DownloadableFileData.build(
+      url = clientUrl,
+      tempDir = tempDir,
+      cachesDir = config.clientCachesDir,
       includeInManifest = getJetBrainsClientManifestFilter(sessionInfoResponse.hostBuildNumber),
     )
 
-    val jdkFullName = sessionInfoResponse.compatibleJreName
-    val jdkUrl = sessionInfoResponse.compatibleJreUrl
-    val jdkData = if (jdkFullName != null && jdkUrl != null) {
-      val jdkFileName = "$jdkFullName.${archiveExtensionFromUrl(jdkUrl)}"
-      DownloadableFileData(
-        fileName = jdkFileName,
-        url = URI(jdkUrl),
-        archivePath = tempDir.resolve(jdkFileName),
-        targetPath = config.clientCachesDir / (jdkFullName + extractDirSuffix),
-        includeInManifest = cwmJbrManifestFilter
+    val jdkUrl = sessionInfoResponse.compatibleJreUrl?.let { URI(it) }
+    val jdkData = if (jdkUrl != null) {
+      DownloadableFileData.build(
+        url = jdkUrl,
+        tempDir = tempDir,
+        cachesDir = config.clientCachesDir,
+        includeInManifest = cwmJbrManifestFilter,
       )
     }
     else null
@@ -293,8 +307,8 @@ object CodeWithMeClientDownloader {
       else null
 
     fun updateStateText() {
-      val downloadList = dataList.filter { it.status == DownloadableFileState.Downloading }.joinToString(", ") { it.fileName }
-      val extractList = dataList.filter { it.status == DownloadableFileState.Extracting }.joinToString(", ") { it.fileName }
+      val downloadList = dataList.filter { it.status.get() == DownloadableFileData.DownloadableFileState.Downloading }.joinToString(", ") { it.fileCaption }
+      val extractList = dataList.filter { it.status.get() == DownloadableFileData.DownloadableFileState.Extracting }.joinToString(", ") { it.fileCaption }
       progressIndicator.text =
         if (downloadList.isNotBlank() && extractList.isNotBlank()) RemoteDevUtilBundle.message("thinClientDownloader.downloading.and.extracting", downloadList, extractList)
         else if (downloadList.isNotBlank()) RemoteDevUtilBundle.message("thinClientDownloader.downloading", downloadList)
@@ -339,8 +353,8 @@ object CodeWithMeClientDownloader {
           }
 
           if (isAlreadyDownloaded(data)) {
-            LOG.info("Already downloaded and extracted ${data.fileName} to ${data.targetPath}")
-            data.status = DownloadableFileState.Done
+            LOG.info("Already downloaded and extracted ${data.fileCaption} to ${data.targetPath}")
+            data.status.set(DownloadableFileData.DownloadableFileState.Done)
             dataProgressIndicator.fraction = 1.0
             updateStateText()
             future.complete(true)
@@ -393,7 +407,7 @@ object CodeWithMeClientDownloader {
 
           // extract
           dataProgressIndicator.fraction = 0.75
-          data.status = DownloadableFileState.Extracting
+          data.status.set(DownloadableFileData.DownloadableFileState.Extracting)
           updateStateText()
 
           // downloading a .zip file will get a VirtualFile with a path of `jar://C:/Users/ivan.pashchenko/AppData/Local/Temp/CodeWithMeGuest-212.2033-windows-x64.zip!/`
@@ -411,7 +425,7 @@ object CodeWithMeClientDownloader {
           }
 
           dataProgressIndicator.fraction = 1.0
-          data.status = DownloadableFileState.Done
+          data.status.set(DownloadableFileData.DownloadableFileState.Done)
           updateStateText()
 
           Files.delete(archivePath)
@@ -460,7 +474,10 @@ object CodeWithMeClientDownloader {
   private fun downloadWithRetries(url: URI, path: Path, progressIndicator: ProgressIndicator) {
     require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
 
+    @Suppress("LocalVariableName")
     val MAX_ATTEMPTS = 5
+
+    @Suppress("LocalVariableName")
     val BACKOFF_INITIAL_DELAY_MS = 500L
 
     var delayMs = BACKOFF_INITIAL_DELAY_MS
@@ -507,7 +524,7 @@ object CodeWithMeClientDownloader {
   }
 
   private fun findCwmGuestHome(guestRoot: Path): Path {
-    // maxDepth 2 for Mac OS's .app/Contents
+    // maxDepth 2 for macOS's .app/Contents
     Files.walk(guestRoot, 2).use {
       for (dir in it) {
         if (dir.resolve("bin").exists() && dir.resolve("lib").exists()) {
@@ -532,7 +549,7 @@ object CodeWithMeClientDownloader {
   }
 
   private fun findLauncher(guestRoot: Path, launcherName: Path): Path? {
-    // maxDepth 2 for Mac OS's .app/Contents
+    // maxDepth 2 for macOS's .app/Contents
     Files.walk(guestRoot, 2).use {
       for (dir in it) {
         val candidate = dir.resolve(launcherName)
@@ -600,6 +617,7 @@ object CodeWithMeClientDownloader {
         parameters = parameters
       )
 
+      @Suppress("LocalVariableName")
       val STILL_ACTIVE = 259
 
       application.executeOnPooledThread {
@@ -741,9 +759,9 @@ object CodeWithMeClientDownloader {
         }
       }
       try {
-        val linkRealPath = link.toRealPath()
-        if (linkRealPath != targetRealPath) {
-          LOG.error("Symlink/junction '$link' should point to '$targetRealPath', but points to '$linkRealPath' instead")
+        val linkRealPath2 = link.toRealPath()
+        if (linkRealPath2 != targetRealPath) {
+          LOG.error("Symlink/junction '$link' should point to '$targetRealPath', but points to '$linkRealPath2' instead")
         }
       }
       catch (e: Throwable) {

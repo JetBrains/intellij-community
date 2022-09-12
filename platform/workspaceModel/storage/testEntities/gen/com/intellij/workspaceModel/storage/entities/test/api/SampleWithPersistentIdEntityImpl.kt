@@ -28,7 +28,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SampleWithPersistentIdEntityImpl : SampleWithPersistentIdEntity, WorkspaceEntityBase() {
+open class SampleWithPersistentIdEntityImpl(val dataSource: SampleWithPersistentIdEntityData) : SampleWithPersistentIdEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(SampleWithPersistentIdEntity::class.java,
@@ -41,33 +41,23 @@ open class SampleWithPersistentIdEntityImpl : SampleWithPersistentIdEntity, Work
 
   }
 
-  override var booleanProperty: Boolean = false
-  @JvmField
-  var _stringProperty: String? = null
+  override val booleanProperty: Boolean get() = dataSource.booleanProperty
   override val stringProperty: String
-    get() = _stringProperty!!
+    get() = dataSource.stringProperty
 
-  @JvmField
-  var _stringListProperty: List<String>? = null
   override val stringListProperty: List<String>
-    get() = _stringListProperty!!
+    get() = dataSource.stringListProperty
 
-  @JvmField
-  var _stringMapProperty: Map<String, String>? = null
   override val stringMapProperty: Map<String, String>
-    get() = _stringMapProperty!!
-  @JvmField
-  var _fileProperty: VirtualFileUrl? = null
+    get() = dataSource.stringMapProperty
   override val fileProperty: VirtualFileUrl
-    get() = _fileProperty!!
+    get() = dataSource.fileProperty
 
   override val children: List<ChildWpidSampleEntity>
     get() = snapshot.extractOneToManyChildren<ChildWpidSampleEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
-  @JvmField
-  var _nullableData: String? = null
   override val nullableData: String?
-    get() = _nullableData
+    get() = dataSource.nullableData
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -286,17 +276,13 @@ class SampleWithPersistentIdEntityData : WorkspaceEntityData.WithCalculablePersi
   }
 
   override fun createEntity(snapshot: EntityStorage): SampleWithPersistentIdEntity {
-    val entity = SampleWithPersistentIdEntityImpl()
-    entity.booleanProperty = booleanProperty
-    entity._stringProperty = stringProperty
-    entity._stringListProperty = stringListProperty.toList()
-    entity._stringMapProperty = stringMapProperty
-    entity._fileProperty = fileProperty
-    entity._nullableData = nullableData
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SampleWithPersistentIdEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): SampleWithPersistentIdEntityData {

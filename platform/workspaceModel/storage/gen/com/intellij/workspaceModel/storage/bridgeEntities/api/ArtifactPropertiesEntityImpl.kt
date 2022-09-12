@@ -26,7 +26,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ArtifactPropertiesEntityImpl : ArtifactPropertiesEntity, WorkspaceEntityBase() {
+open class ArtifactPropertiesEntityImpl(val dataSource: ArtifactPropertiesEntityData) : ArtifactPropertiesEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val ARTIFACT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java,
@@ -42,15 +42,11 @@ open class ArtifactPropertiesEntityImpl : ArtifactPropertiesEntity, WorkspaceEnt
   override val artifact: ArtifactEntity
     get() = snapshot.extractOneToManyParent(ARTIFACT_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _providerType: String? = null
   override val providerType: String
-    get() = _providerType!!
+    get() = dataSource.providerType
 
-  @JvmField
-  var _propertiesXmlTag: String? = null
   override val propertiesXmlTag: String?
-    get() = _propertiesXmlTag
+    get() = dataSource.propertiesXmlTag
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -204,13 +200,13 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
   }
 
   override fun createEntity(snapshot: EntityStorage): ArtifactPropertiesEntity {
-    val entity = ArtifactPropertiesEntityImpl()
-    entity._providerType = providerType
-    entity._propertiesXmlTag = propertiesXmlTag
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ArtifactPropertiesEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

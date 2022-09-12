@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -18,6 +19,7 @@ class ToggleInlayHintsGloballyAction : ToggleAction(CodeInsightBundle.message("i
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     InlayHintsSettings.instance().setEnabledGlobally(state)
+    CodeVisionSettings.instance().codeVisionEnabled = state
     InlayHintsPassFactory.forceHintsUpdateOnNextPass()
   }
 }

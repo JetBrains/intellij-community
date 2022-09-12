@@ -5,16 +5,19 @@ import java.math.BigDecimal;
 public class Test {
     int test(Object obj, int x) {
         <caret>switch (obj) {
-            case Integer y:
+            case Integer y -> {
                 Integer z = y;
                 return y.byteValue();
-            case String r && x > 0:
+            }
+            case String r && x > 0 -> {
                 return ((String) obj).length();
-            case Character character:
+            }
+            case Character character -> {
                 return ((BigDecimal) obj).hashCode();
-            case null:
-            default:
+            }
+            case null, default -> {
                 return -1;
+            }
         }
     }
 }

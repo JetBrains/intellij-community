@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.collaboration.async.disposingScope
-import com.intellij.collaboration.auth.createAccountsFlow
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -74,13 +73,14 @@ private class GHServerVersionsCollector(private val project: Project) : Disposab
   private val scope = disposingScope()
 
   init {
-    val accountsFlow = project.service<GHAccountManager>().createAccountsFlow(this)
+    val accountsFlow = project.service<GHAccountManager>().accountsState
     scope.launch {
       accountsFlow.collect {
-        for (account in it) {
+        for ((account, _) in it) {
           val server = account.server
           if (server.isGithubDotCom) continue
 
+          //TODO: load with auth to avoid rate-limit
           try {
             val metadata = service<GHEnterpriseServerMetadataLoader>().loadMetadata(server).await()
             GHPRStatisticsCollector.logEnterpriseServerMeta(project, server, metadata)

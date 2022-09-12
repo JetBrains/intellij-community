@@ -43,9 +43,7 @@ object ThinClientSessionInfoFetcher {
         val sessionInfo = objectMapper.value.reader().readTree(responseString)
         return@connect object : CodeWithMeSessionInfoProvider {
           override val hostBuildNumber = sessionInfo["hostBuildNumber"].asText()
-          override val compatibleClientName = sessionInfo["compatibleClientName"].asText()
           override val compatibleClientUrl = sessionInfo["compatibleClientUrl"].asText()
-          override val compatibleJreName = sessionInfo["compatibleJreName"].asText()
           override val isUnattendedMode = false
           override val compatibleJreUrl = sessionInfo["compatibleJreUrl"].asText()
           override val hostFeaturesToEnable: Set<String>

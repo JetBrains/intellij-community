@@ -26,7 +26,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class TreeMultiparentLeafEntityImpl : TreeMultiparentLeafEntity, WorkspaceEntityBase() {
+open class TreeMultiparentLeafEntityImpl(val dataSource: TreeMultiparentLeafEntityData) : TreeMultiparentLeafEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val MAINPARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(TreeMultiparentRootEntity::class.java,
@@ -47,10 +47,8 @@ open class TreeMultiparentLeafEntityImpl : TreeMultiparentLeafEntity, WorkspaceE
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
   override val mainParent: TreeMultiparentRootEntity?
     get() = snapshot.extractOneToManyParent(MAINPARENT_CONNECTION_ID, this)
@@ -283,12 +281,13 @@ class TreeMultiparentLeafEntityData : WorkspaceEntityData<TreeMultiparentLeafEnt
   }
 
   override fun createEntity(snapshot: EntityStorage): TreeMultiparentLeafEntity {
-    val entity = TreeMultiparentLeafEntityImpl()
-    entity._data = data
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = TreeMultiparentLeafEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

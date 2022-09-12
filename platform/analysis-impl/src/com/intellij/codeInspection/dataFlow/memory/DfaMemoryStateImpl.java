@@ -1135,12 +1135,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private boolean applyRelation(@NotNull DfaValue dfaLeft, @NotNull DfaValue dfaRight, boolean isNegated) {
     if (!(dfaLeft instanceof DfaVariableValue) || !(dfaRight instanceof DfaVariableValue)) return true;
+    if (!isNegated && (isUnstableValue(dfaLeft) || isUnstableValue(dfaRight))) return true;
     int c1Index = getOrCreateEqClassIndex((DfaVariableValue)dfaLeft);
     int c2Index = getOrCreateEqClassIndex((DfaVariableValue)dfaRight);
     if (c1Index == c2Index) return !isNegated;
 
     if (!isNegated) { //Equals
-      if (isUnstableValue(dfaLeft) || isUnstableValue(dfaRight)) return true;
       if (!uniteClasses((DfaVariableValue)dfaLeft, (DfaVariableValue)dfaRight)) return false;
     }
     else { // Not Equals

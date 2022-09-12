@@ -4,14 +4,12 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.useWithScope2
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
-import org.jdom.Element
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.productInfo.*
@@ -29,7 +27,6 @@ internal class WindowsDistributionBuilder(
   override val context: BuildContext,
   private val customizer: WindowsDistributionCustomizer,
   private val ideaProperties: Path?,
-  private val patchedApplicationInfo: String,
 ) : OsSpecificDistributionBuilder {
   private val icoFile: Path?
 
@@ -46,12 +43,20 @@ internal class WindowsDistributionBuilder(
     val pty4jNativeDir = withContext(Dispatchers.IO) {
       Files.createDirectories(distBinDir)
 
-      val binWin = FileSet(context.paths.communityHomeDir.communityRoot.resolve("bin/win")).includeAll()
-      if (!context.includeBreakGenLibraries()) {
+      val sourceBinDir = context.paths.communityHomeDir.communityRoot.resolve("bin/win")
+
+      FileSet(sourceBinDir.resolve(arch.dirName))
+        .includeAll()
+        .copyToDir(distBinDir)
+
+      if (context.includeBreakGenLibraries()) {
+        // There's near zero chance that on x64 hardware arm64 library will be needed, but it's only 70 KiB.
+        // Contrary on arm64 hardware all three library versions could be used, so we copy them all.
         @Suppress("SpellCheckingInspection")
-        binWin.exclude("breakgen*")
+        FileSet(sourceBinDir)
+          .include("breakgen*.dll")
+          .copyToDir(distBinDir)
       }
-      binWin.copyToDir(distBinDir)
 
       val pty4jNativeDir = unpackPty4jNative(context, targetPath, "win")
       generateBuildTxt(context, targetPath)
@@ -67,8 +72,8 @@ internal class WindowsDistributionBuilder(
         generateScripts(distBinDir)
       }
       generateVMOptions(distBinDir)
-      buildWinLauncher(targetPath)
-      customizer.copyAdditionalFiles(context, targetPath.toString())
+      buildWinLauncher(targetPath, arch)
+      customizer.copyAdditionalFiles(context, targetPath.toString(), arch)
 
       pty4jNativeDir
     }
@@ -285,7 +290,7 @@ internal class WindowsDistributionBuilder(
     VmOptionsGenerator.writeVmOptions(distBinDir.resolve(fileName), vmOptions, "\r\n")
   }
 
-  private suspend fun buildWinLauncher(winDistPath: Path) {
+  private suspend fun buildWinLauncher(winDistPath: Path, arch: JvmArchitecture) {
     spanBuilder("build Windows executable").useWithScope2 {
       val executableBaseName = "${context.productProperties.baseFileName}64"
       val launcherPropertiesPath = context.paths.tempDir.resolve("launcher.properties")
@@ -298,7 +303,7 @@ internal class WindowsDistributionBuilder(
       val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ";")
       val envVarBaseName = context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)
       val icoFilesDirectory = context.paths.tempDir.resolve("win-launcher-ico")
-      val appInfoForLauncher = generateApplicationInfoForLauncher(patchedApplicationInfo, icoFilesDirectory)
+      val appInfoForLauncher = generateApplicationInfoForLauncher(context.applicationInfo.appInfoXml, icoFilesDirectory)
       @Suppress("SpellCheckingInspection")
       Files.writeString(launcherPropertiesPath, """
         IDS_JDK_ONLY=${context.productProperties.toolsJarRequired}
@@ -319,7 +324,7 @@ internal class WindowsDistributionBuilder(
         """.trimIndent().trim())
 
       val communityHome = context.paths.communityHome
-      val inputPath = "${communityHome}/platform/build-scripts/resources/win/launcher/WinLauncher.exe"
+      val inputPath = "${communityHome}/platform/build-scripts/resources/win/launcher/${arch.dirName}/WinLauncher.exe"
       val outputPath = winDistPath.resolve("bin/${executableBaseName}.exe")
       val classpath = ArrayList<String>()
 
@@ -346,6 +351,7 @@ internal class WindowsDistributionBuilder(
           appInfoForLauncher.toString(),
           "$communityHome/native/WinLauncher/resource.h",
           launcherPropertiesPath.toString(),
+          icoFile?.fileName?.toString() ?: " ",
           outputPath.toString(),
         ),
         jvmArgs = listOf("-Djava.awt.headless=true"),
@@ -359,21 +365,12 @@ internal class WindowsDistributionBuilder(
    * todo pass path to ico file to LauncherGeneratorMain directly (probably after IDEA-196705 is fixed).
    */
   private fun generateApplicationInfoForLauncher(appInfo: String, icoFilesDirectory: Path): Path {
-    val patchedFile = context.paths.tempDir.resolve("win-launcher-application-info.xml")
-    if (icoFile == null) {
-      Files.writeString(patchedFile, appInfo)
-      return patchedFile
-    }
-
     Files.createDirectories(icoFilesDirectory)
-    Files.copy(icoFile, icoFilesDirectory.resolve(icoFile.fileName), StandardCopyOption.REPLACE_EXISTING)
-    val root = JDOMUtil.load(appInfo)
-    // do not use getChild - maybe null due to namespace
-    val iconElement = root.content.firstOrNull { it is Element && it.name == "icon" }
-                      ?: throw RuntimeException("`icon` element not found in $appInfo:\n${appInfo}")
-
-    (iconElement as Element).setAttribute("ico", icoFile.fileName.toString())
-    JDOMUtil.write(root, patchedFile)
+    if (icoFile != null) {
+      Files.copy(icoFile, icoFilesDirectory.resolve(icoFile.fileName), StandardCopyOption.REPLACE_EXISTING)
+    }
+    val patchedFile = icoFilesDirectory.resolve("win-launcher-application-info.xml")
+    Files.writeString(patchedFile, appInfo)
     return patchedFile
   }
 }

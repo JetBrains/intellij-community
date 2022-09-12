@@ -8,7 +8,7 @@ import kotlinx.collections.immutable.PersistentList
  *
  * @see org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#getBundlingRestrictions()
  */
-internal data class PluginBundlingRestrictions(
+data class PluginBundlingRestrictions(
   /**
    * Change this value if the plugin works in some OS only and therefore don't need to be bundled with distributions for other OS.
    */

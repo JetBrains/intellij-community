@@ -475,6 +475,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     protected abstract void doPerform(T model);
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       p.setEnabled(isEnabled());

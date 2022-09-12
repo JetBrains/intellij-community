@@ -3,16 +3,22 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.diagnostic.telemetry.use
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.URLUtil
+import com.intellij.util.io.sanitizeFileName
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.mutate
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.BaseLayout.Companion.APP_JAR
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.tasks.*
@@ -67,37 +73,33 @@ private val libsThatUsedInJps = java.util.Set.of(
   "kotlin-stdlib-jdk8"
 )
 
+private val extraMergeRules: PersistentMap<String, (String) -> Boolean> = persistentMapOf<String, (String) -> Boolean>().mutate { map ->
+  map.put("groovy.jar") { it.startsWith("org.codehaus.groovy:") }
+  map.put("jsch-agent.jar") { it.startsWith("jsch-agent") }
+  map.put("rd.jar") { it.startsWith("rd-") }
+  // see ClassPathUtil.getUtilClassPath
+  map.put("3rd-party-rt.jar") { libsThatUsedInJps.contains(it) || it.startsWith("kotlinx-") || it == "kotlin-reflect" }
+}
+
+internal fun getLibraryFileName(lib: JpsLibrary): String {
+    val name = lib.name
+    if (!name.startsWith("#")) {
+      return name
+    }
+
+    val roots = lib.getRoots(JpsOrderRootType.COMPILED)
+    check(roots.size == 1) {
+      "Non-single entry module library $name: ${roots.joinToString { it.url }}"
+    }
+    return PathUtilRt.getFileName(roots.first().url.removeSuffix(URLUtil.JAR_SEPARATOR))
+  }
+
 class JarPackager private constructor(private val context: BuildContext) {
   private val jarDescriptors = LinkedHashMap<Path, JarDescriptor>()
   private val libraryEntries = ConcurrentLinkedQueue<LibraryFileEntry>()
   private val libToMetadata = HashMap<JpsLibrary, ProjectLibraryData>()
 
   companion object {
-    private val extraMergeRules = LinkedHashMap<String, (String) -> Boolean>()
-
-    init {
-      extraMergeRules.put("groovy.jar") { it.startsWith("org.codehaus.groovy:") }
-      extraMergeRules.put("jsch-agent.jar") { it.startsWith("jsch-agent") }
-      extraMergeRules.put("rd.jar") { it.startsWith("rd-") }
-      // see ClassPathUtil.getUtilClassPath
-      extraMergeRules.put("3rd-party-rt.jar") {
-        libsThatUsedInJps.contains(it) || it.startsWith("kotlinx-") || it == "kotlin-reflect"
-      }
-    }
-
-    fun getLibraryName(lib: JpsLibrary): String {
-      val name = lib.name
-      if (!name.startsWith("#")) {
-        return name
-      }
-
-      val roots = lib.getRoots(JpsOrderRootType.COMPILED)
-      if (roots.size != 1) {
-        throw IllegalStateException("Non-single entry module library $name: ${roots.joinToString { it.url }}")
-      }
-      return PathUtilRt.getFileName(roots.first().url.removeSuffix(URLUtil.JAR_SEPARATOR))
-    }
-
     suspend fun pack(jarToModules: Map<String, List<String>>,
                      outputDir: Path,
                      layout: BaseLayout = BaseLayout(),
@@ -108,9 +110,9 @@ class JarPackager private constructor(private val context: BuildContext) {
       val packager = JarPackager(context)
       for (data in layout.includedModuleLibraries) {
         val library = context.findRequiredModule(data.moduleName).libraryCollection.libraries
-                        .find { getLibraryName(it) == data.libraryName }
+                        .find { getLibraryFileName(it) == data.libraryName }
                       ?: throw IllegalArgumentException("Cannot find library ${data.libraryName} in \'${data.moduleName}\' module")
-        var fileName = libNameToMergedJarFileName(data.libraryName)
+        var fileName = nameToJarFileName(data.libraryName)
         var relativePath = data.relativeOutputPath
         var targetFile: Path? = null
         if (relativePath.endsWith(".jar")) {
@@ -182,7 +184,7 @@ class JarPackager private constructor(private val context: BuildContext) {
                                                              sourceList = sourceList)
       }
 
-      val entries = ArrayList<BuildJarDescriptor>(packager.jarDescriptors.size)
+      val descriptors = ArrayList<BuildJarDescriptor>(packager.jarDescriptors.size)
       val isReorderingEnabled = !context.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)
       for (descriptor in packager.jarDescriptors.values) {
         var pathInClassLog = ""
@@ -200,38 +202,16 @@ class JarPackager private constructor(private val context: BuildContext) {
             }
           }
         }
-        entries.add(BuildJarDescriptor(file = descriptor.jarFile, sources = descriptor.sources, relativePath = pathInClassLog))
+        descriptors.add(BuildJarDescriptor(file = descriptor.jarFile, sources = descriptor.sources, relativePath = pathInClassLog))
       }
 
       val nativeFiles = if (layout is PluginLayout) null else TreeMap<ZipSource, MutableList<String>>()
-      buildJars(descriptors = entries, dryRun = dryRun, nativeFiles = nativeFiles)
+      buildJars(descriptors = descriptors, dryRun = dryRun, nativeFiles = nativeFiles)
 
       val list = mutableListOf<DistributionFileEntry>()
 
       if (!nativeFiles.isNullOrEmpty()) {
-        withContext(Dispatchers.IO) {
-          val targetFile = outputDir.resolve("3rd-party-native.jar")
-          val sources = mutableListOf<Source>()
-          for ((source, paths) in nativeFiles) {
-            val sourceFile = source.file
-            sources.add(ZipSource(file = sourceFile, filter = paths::contains) { size ->
-              val originalEntry = packager.libraryEntries.first { it.libraryFile === sourceFile }
-              if (originalEntry is ProjectLibraryEntry) {
-                list.add(ProjectLibraryEntry(path = targetFile,
-                                             data = originalEntry.data,
-                                             libraryFile = sourceFile,
-                                             size = size))
-              }
-              else {
-                list.add(ModuleLibraryFileEntry(path = targetFile,
-                                                moduleName = (originalEntry as ModuleLibraryFileEntry).moduleName,
-                                                libraryFile = originalEntry.libraryFile,
-                                                size = size))
-              }
-            })
-          }
-          buildJar(targetFile = targetFile, sources = sources, dryRun = dryRun, nativeFiles = null)
-        }
+        packNativeFiles(outputDir = outputDir, nativeFiles = nativeFiles, packager = packager, list = list, dryRun = dryRun)
       }
 
       for (item in packager.jarDescriptors.values) {
@@ -245,6 +225,37 @@ class JarPackager private constructor(private val context: BuildContext) {
       // sort because projectStructureMapping is a concurrent collection
       return list +
              packager.libraryEntries.sortedWith { a, b -> compareValuesBy(a, b, { it.path }, { it.type }, { it.libraryFile }) }
+    }
+
+    private suspend fun packNativeFiles(outputDir: Path,
+                                        nativeFiles: TreeMap<ZipSource, MutableList<String>>,
+                                        packager: JarPackager,
+                                        list: MutableList<DistributionFileEntry>,
+                                        dryRun: Boolean) {
+      val targetFile = outputDir.resolve("3rd-party-native.jar")
+      val sources = mutableListOf<Source>()
+      for ((source, paths) in nativeFiles) {
+        val sourceFile = source.file
+        sources.add(ZipSource(file = sourceFile, filter = paths::contains) { size ->
+          val originalEntry = packager.libraryEntries.first { it.libraryFile === sourceFile }
+          if (originalEntry is ProjectLibraryEntry) {
+            list.add(ProjectLibraryEntry(path = targetFile,
+                                         data = originalEntry.data,
+                                         libraryFile = sourceFile,
+                                         size = size))
+          }
+          else {
+            list.add(ModuleLibraryFileEntry(path = targetFile,
+                                            moduleName = (originalEntry as ModuleLibraryFileEntry).moduleName,
+                                            libraryFile = originalEntry.libraryFile,
+                                            size = size))
+          }
+        })
+      }
+
+      withContext(Dispatchers.IO) {
+        buildJar(targetFile = targetFile, sources = sources, dryRun = dryRun, nativeFiles = null)
+      }
     }
   }
 
@@ -290,7 +301,7 @@ class JarPackager private constructor(private val context: BuildContext) {
                        modulePatches = moduleOutputPatcher.getPatchedDir(moduleName),
                        modulePatchContents = moduleOutputPatcher.getPatchedContent(moduleName),
                        searchableOptionsRootDir = searchableOptionsDir,
-                       extraExcludes = layout.moduleExcludes.get(moduleName),
+                       extraExcludes = layout.moduleExcludes.get(moduleName) ?: emptyList(),
                        sourceList = sourceList)
     }
 
@@ -354,7 +365,7 @@ class JarPackager private constructor(private val context: BuildContext) {
           }
         }
         if (packMode == LibraryPackMode.STANDALONE_MERGED) {
-          addLibrary(library = library, targetFile = libOutputDir.resolve(libNameToMergedJarFileName(libName)), files = files)
+          addLibrary(library = library, targetFile = libOutputDir.resolve(nameToJarFileName(libName)), files = files)
         }
         else {
           for (file in files) {
@@ -414,7 +425,7 @@ class JarPackager private constructor(private val context: BuildContext) {
     }
 
     val library = libraryDependency.library!!
-    val libraryName = getLibraryName(library)
+    val libraryName = getLibraryFileName(library)
     if (excluded.contains(libraryName) || layout.includedModuleLibraries.any { it.libraryName == libraryName }) {
       return
     }
@@ -514,8 +525,8 @@ private fun getLibraryFiles(library: JpsLibrary,
   return files
 }
 
-private fun libNameToMergedJarFileName(libName: String): String {
-  return "${FileUtil.sanitizeFileName(libName.lowercase(Locale.getDefault()), false)}.jar"
+private fun nameToJarFileName(name: String): String {
+  return "${sanitizeFileName(name.lowercase(), replacement = "-")}.jar"
 }
 
 @Suppress("SpellCheckingInspection")
@@ -582,4 +593,42 @@ private fun addModuleSources(moduleName: String,
   sourceList.add(DirSource(dir = moduleOutputDir, excludes = excludes, sizeConsumer = sizeConsumer))
 }
 
-private data class CopiedFor(val library: JpsLibrary, val targetFile: Path?)
+private data class CopiedFor(@JvmField val library: JpsLibrary, @JvmField val targetFile: Path?)
+
+private data class BuildJarDescriptor(@JvmField val file: Path, @JvmField val sources: List<Source>, @JvmField val relativePath: String)
+
+private const val DO_NOT_EXPORT_TO_CONSOLE = "_CES_"
+
+private suspend fun buildJars(descriptors: List<BuildJarDescriptor>,
+                              dryRun: Boolean,
+                              nativeFiles: MutableMap<ZipSource, MutableList<String>>? = null) {
+  val uniqueFiles = HashMap<Path, List<Source>>()
+  for (descriptor in descriptors) {
+    val existing = uniqueFiles.putIfAbsent(descriptor.file, descriptor.sources)
+    check(existing == null) {
+      "File ${descriptor.file} is already associated." +
+      "\nPrevious:\n  ${existing!!.joinToString(separator = "\n  ")}" +
+      "\nCurrent:\n  ${descriptor.sources.joinToString(separator = "\n  ")}"
+    }
+  }
+
+  withContext(Dispatchers.IO) {
+    for (item in descriptors) {
+      launch {
+        val file = item.file
+        spanBuilder("build jar")
+          .setAttribute(DO_NOT_EXPORT_TO_CONSOLE, true)
+          .setAttribute("jar", file.toString())
+          .setAttribute(AttributeKey.stringArrayKey("sources"), item.sources.map(Source::toString))
+          .use {
+            buildJar(targetFile = file, sources = item.sources, dryRun = dryRun, nativeFiles = nativeFiles)
+          }
+
+        // app.jar is combined later with other JARs and then re-ordered
+        if (!dryRun && item.relativePath.isNotEmpty() && item.relativePath != "lib/app.jar") {
+          reorderJar(relativePath = item.relativePath, file = file)
+        }
+      }
+    }
+  }
+}

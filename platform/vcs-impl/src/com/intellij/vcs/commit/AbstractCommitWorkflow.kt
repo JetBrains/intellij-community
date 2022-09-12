@@ -7,10 +7,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.progressSink
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -30,12 +27,13 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
-import java.lang.Runnable
 import java.util.*
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
@@ -269,7 +267,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       val hasPartialChanges = changes.any { getPartialTracker(project, it)?.hasPartialChangesToCommit() ?: false }
       if (hasPartialChanges) {
         return YES == showYesNoDialog(
-          project, message("commit.dialog.partial.commit.warning.body", executor.getPresentableText()),
+          project, message("commit.dialog.partial.commit.warning.body", cleanActionText(executor.actionText)),
           message("commit.dialog.partial.commit.warning.title"), executor.actionText, getCancelButtonText(),
           getWarningIcon())
       }
@@ -302,29 +300,27 @@ abstract class AbstractCommitWorkflow(val project: Project) {
              LocalCommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
     }
 
-    private fun wrapWithCommitMetaHandler(metaHandler: CheckinMetaHandler, task: Runnable): Runnable {
-      return Runnable {
-        try {
-          LOG.debug("CheckinMetaHandler.runCheckinHandlers: $metaHandler")
-          metaHandler.runCheckinHandlers(task)
-        }
-        catch (e: ProcessCanceledException) {
-          LOG.debug("CheckinMetaHandler cancelled $metaHandler")
-          throw e
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
-          task.run()
-        }
-      }
-    }
-
     suspend fun runMetaHandlers(metaHandlers: List<CheckinMetaHandler>) {
+      EDT.assertIsEdt()
       // reversed to have the same order as when wrapping meta handlers into each other
       for (metaHandler in metaHandlers.reversed()) {
-        suspendCancellableCoroutine<Unit> { continuation ->
-          val handlerCall = wrapWithCommitMetaHandler(metaHandler) { continuation.resume(Unit) }
-          handlerCall.run()
+        suspendCancellableCoroutine { continuation ->
+          try {
+            withCurrentJob(continuation.context.job) {
+              LOG.debug("CheckinMetaHandler.runCheckinHandlers: $metaHandler")
+              metaHandler.runCheckinHandlers {
+                continuation.resume(Unit)
+              }
+            }
+          }
+          catch (e: CancellationException) {
+            LOG.debug("CheckinMetaHandler cancelled $metaHandler")
+            continuation.resumeWithException(e)
+          }
+          catch (e: Throwable) {
+            LOG.debug("CheckinMetaHandler failed $metaHandler")
+            continuation.resumeWithException(e)
+          }
         }
       }
     }

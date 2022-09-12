@@ -2,7 +2,14 @@
 package org.jetbrains.intellij.build.pycharm
 
 import groovy.io.FileType
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildTasks
+import org.jetbrains.intellij.build.IdeaCommunityProperties
+import org.jetbrains.intellij.build.ProprietaryBuildTools
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.impl.BuildContextImpl
+
+import java.nio.file.Path
 
 /**
  * @author vlan
@@ -15,24 +22,25 @@ final class PythonCommunityPluginBuilder {
     this.home = home
   }
 
-  def build() {
-    def pluginBuildNumber = System.getProperty("build.number", "SNAPSHOT")
-    def pluginsForIdeaCommunity = [
+  void build() {
+    String pluginBuildNumber = System.getProperty("build.number", "SNAPSHOT")
+    Path homeDir = Path.of(home)
+    def options = new BuildOptions(buildNumber: pluginBuildNumber,
+                                   outputRootPath: homeDir.resolve("out/pycharmCE"))
+
+    BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(homeDir)
+    def buildContext = BuildContextImpl.createContextBlocking(communityRoot,
+                                                              homeDir,
+                                                              new IdeaCommunityProperties(communityRoot),
+                                                              ProprietaryBuildTools.DUMMY,
+                                                              options)
+    BuildTasks.create(buildContext).blockingBuildNonBundledPlugins(List.of(
       "intellij.python.community.plugin",
       "intellij.reStructuredText",
-    ]
-
-    def options = new BuildOptions(buildNumber: pluginBuildNumber,
-                                   outputRootPath: "$home/out/pycharmCE")
-    def buildContext = BuildContext.createContext(home,
-                                                  home,
-                                                  new IdeaCommunityProperties(home),
-                                                  ProprietaryBuildTools.DUMMY,
-                                                  options)
-    BuildTasks.create(buildContext).buildNonBundledPlugins(pluginsForIdeaCommunity)
+      ))
 
     List<File> builtPlugins = []
-    new File(buildContext.paths.artifacts, "${buildContext.applicationInfo.productCode}-plugins").eachFileRecurse(FileType.FILES) {
+    buildContext.paths.artifactDir.resolve("${buildContext.applicationInfo.productCode}-plugins").toFile().eachFileRecurse(FileType.FILES) {
       if (it.name.endsWith(".zip")) {
         builtPlugins << it
       }

@@ -23,9 +23,11 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
+import java.awt.Color
 import java.awt.Container
 import java.awt.Dimension
 import java.awt.Rectangle
@@ -135,7 +137,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
       while (comp != null && restDelta > 0) {
         comp.isVisible = false
         restDelta -= comp.preferredSize.width
-        comp = visibleComponentsPool.nextToShow()
+        comp = visibleComponentsPool.nextToHide()
       }
     }
   }
@@ -160,6 +162,10 @@ private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(Action
       findComboButton(component)?.setUI(MainToolbarComboBoxButtonUI())
     }
     return component
+  }
+
+  override fun getSeparatorColor(): Color {
+    return JBColor.namedColor("MainToolbar.separatorColor", super.getSeparatorColor())
   }
 
   private fun findComboButton(c: Container): ComboBoxButton? {

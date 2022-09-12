@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.libraries.CustomLibraryTableDescription
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.platform.testFramework.projectModel.library.MockCustomLibraryTableDescription
 import com.intellij.testFramework.DisposableRule
 import org.junit.Before
 import org.junit.Rule

@@ -31,14 +31,15 @@ class IdeaCommunityBuildTest {
   fun jpsStandalone(testInfo: TestInfo) {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-    val context = createBuildContext(
-      homePath = homePath,
-      productProperties = IdeaCommunityProperties(communityHome),
-      skipDependencySetup = true,
-      communityHomePath = communityHome,
-    )
-    val outDir = context.paths.buildOutputDir
     runBlocking(Dispatchers.Default) {
+      val context = createBuildContext(
+        homePath = homePath,
+        productProperties = IdeaCommunityProperties(communityHome),
+        skipDependencySetup = true,
+        communityHomePath = communityHome,
+      )
+      val outDir = context.paths.buildOutputDir
+
       try {
         buildCommunityStandaloneJpsBuilder(targetDir = context.paths.artifactDir.resolve("jps"), context = context)
       }

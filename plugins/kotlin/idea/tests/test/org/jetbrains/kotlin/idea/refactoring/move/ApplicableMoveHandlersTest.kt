@@ -13,7 +13,8 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 class ApplicableMoveHandlersTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testOrder() {
         val kotlinHandlers = MoveHandlerDelegate.EP_NAME.extensionList.filter { it.supportsLanguage(KotlinLanguage.INSTANCE) }
-        assertEquals(
+        assertContainsOrdered(
+            kotlinHandlers.map { it::class.simpleName },
             listOf(
                 "MoveKotlinMethodHandler",
                 "MoveKotlinDeclarationsHandler",
@@ -23,9 +24,7 @@ class ApplicableMoveHandlersTest : KotlinLightCodeInsightFixtureTestCase() {
                 "JavaMoveClassesOrPackagesHandler",
                 "JavaMoveFilesOrDirectoriesHandler",
                 "MoveFilesOrDirectoriesHandler",
-                "RemoteMoveHandlerDelegate",
             ),
-            kotlinHandlers.map { it::class.simpleName },
         )
     }
 

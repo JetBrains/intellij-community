@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
+import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.GridBag
@@ -36,8 +37,20 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
   private val myMenuBar = ideMenu
   private val mainMenuButton = MainMenuButton()
   private var toolbar : MainToolbar? = null
-  private val myToolbarPlaceholder = NonOpaquePanel()
+  private val myToolbarPlaceholder = createToolbarPlaceholder()
   private val myHeaderContent = createHeaderContent()
+
+  private fun createToolbarPlaceholder(): NonOpaquePanel {
+    val sideSeparatorGap = JBUI.scale(4)
+    val sideSeparatorColor = JBColor.namedColor("MainToolbar.separatorColor", JBColor.gray)
+    val panel = NonOpaquePanel()
+    panel.border = JBUI.Borders.compound(
+      JBUI.Borders.emptyLeft(sideSeparatorGap),
+      JBUI.Borders.customLine(sideSeparatorColor, 0, 1, 0, 1),
+      JBUI.Borders.empty(0, sideSeparatorGap)
+    )
+    return panel
+  }
 
   private val contentResizeListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
@@ -57,7 +70,6 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     add(productIcon, gb.nextLine().next().anchor(WEST).insetLeft(H))
     add(myHeaderContent, gb.next().fillCell().anchor(CENTER).weightx(1.0).weighty(1.0))
     val buttonsView = wrap(buttonPanes.getView())
-    if (SystemInfo.isWindows) buttonsView.border = JBUI.Borders.emptyLeft(8)
     add(buttonsView, gb.next().anchor(EAST))
 
     setCustomFrameTopBorder({ false }, {true})
@@ -154,7 +166,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     val toolbarPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
       add(mainMenuButton.button, gb.next().insetLeft(JBUI.scale(20)))
-      add(myToolbarPlaceholder, gb.next().weightx(1.0).fillCellHorizontally().insetLeft(JBUI.scale(16)))
+      add(myToolbarPlaceholder, gb.next().weightx(1.0).fillCell())
     }
 
     res.add(ShowMode.MENU.name, menuPnl)

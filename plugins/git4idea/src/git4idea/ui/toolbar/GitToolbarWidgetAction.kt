@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
+import com.intellij.ui.popup.PopupState
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
@@ -104,6 +105,7 @@ private val OUTGOING_CHANGES_ICON = DvcsImplIcons.Outgoing
 
 private class GitToolbarWidget(val presentation: Presentation) : ToolbarComboWidget() {
 
+  private val popupState = PopupState.forPopup()
   val project: Project?
     get() = presentation.getClientProperty(projectKey)
   val repository: GitRepository?
@@ -126,6 +128,8 @@ private class GitToolbarWidget(val presentation: Presentation) : ToolbarComboWid
   }
 
   override fun doExpand(e: InputEvent) {
+    if (popupState.isShowing || popupState.isRecentlyHidden) return
+
     project?.let { proj ->
       val repo = repository
 
@@ -140,8 +144,9 @@ private class GitToolbarWidget(val presentation: Presentation) : ToolbarComboWid
         listPopup = JBPopupFactory.getInstance()
           .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, place)
       }
+      popupState.prepareToShow(listPopup)
       listPopup.setRequestFocus(false)
-      listPopup.showUnderneathOf(this)
+      listPopup.showAligned()
     }
   }
 }

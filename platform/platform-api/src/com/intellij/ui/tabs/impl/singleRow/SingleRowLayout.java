@@ -236,6 +236,7 @@ public abstract class SingleRowLayout extends TabLayout {
       data.requiredLength += getRequiredLength(eachInfo);
       data.toLayout.add(eachInfo);
     }
+    data.requiredLength += getStrategy().getAdditionalLength();
   }
 
   protected int getRequiredLength(TabInfo eachInfo) {

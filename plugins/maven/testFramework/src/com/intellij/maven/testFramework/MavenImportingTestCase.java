@@ -80,8 +80,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
                       "MavenProjectsManagerTest.testUpdatingProjectsWhenAbsentManagedProjectFileAppears",
                       "MavenProjectsManagerTest.testAddingManagedFileAndChangingAggregation",
                       "MavenProjectsManagerWatcherTest.testChangeConfigInOurProjectShouldCallUpdatePomFile",
-                      "MavenProjectsManagerWatcherTest.testIncrementalAutoReload",
-                      "InvalidEnvironmentImportingTest.testShouldShowLogsOfMavenServerIfNotStarted");
+                      "MavenProjectsManagerWatcherTest.testIncrementalAutoReload");
 
   @Override
   protected void setUp() throws Exception {

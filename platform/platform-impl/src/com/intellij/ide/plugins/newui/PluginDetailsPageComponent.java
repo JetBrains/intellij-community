@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ColorUtil;
@@ -90,6 +91,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private JLabel mySize;
   private LinkPanel myAuthor;
   private BorderLayoutPanel myControlledByOrgNotification;
+  private BorderLayoutPanel myPlatformIncompatibleNotification;
   private final LicensePanel myLicensePanel = new LicensePanel(false);
   private LinkPanel myHomePage;
   private JBScrollPane myBottomScrollPane;
@@ -99,7 +101,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private OneLineProgressIndicator myIndicator;
 
   private @Nullable IdeaPluginDescriptor myPlugin;
-  private boolean myIsPluginAllowed;
+  private boolean myIsPluginAvailable;
+  private boolean myIsPluginCompatible;
   private IdeaPluginDescriptor myUpdateDescriptor;
 
   private ListPluginComponent myShowComponent;
@@ -160,22 +163,30 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     createBottomPanel();
 
     myRootPanel = new OpaquePanel(new BorderLayout());
-    myControlledByOrgNotification = new BorderLayoutPanel();
+    myControlledByOrgNotification = createNotificationPanel(
+      AllIcons.General.Warning,
+      IdeBundle.message("plugins.configurable.not.allowed"));
+    myPlatformIncompatibleNotification = createNotificationPanel(
+      AllIcons.General.Information,
+      IdeBundle.message("plugins.configurable.plugin.unavailable.for.platform", SystemInfo.getOsName()));
+    myRootPanel.add(myPanel, BorderLayout.CENTER);
+  }
+
+  @NotNull
+  private static BorderLayoutPanel createNotificationPanel(@NotNull Icon icon, @NotNull @Nls String message) {
+    BorderLayoutPanel panel = new BorderLayoutPanel();
     Border customLine = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0);
-    myControlledByOrgNotification.setBorder(JBUI.Borders.merge(JBUI.Borders.empty(10), customLine, true));
-    myControlledByOrgNotification.setBackground(JBUI.CurrentTheme.Notification.BACKGROUND);
-    myControlledByOrgNotification.setForeground(JBUI.CurrentTheme.Notification.FOREGROUND);
+    panel.setBorder(JBUI.Borders.merge(JBUI.Borders.empty(10), customLine, true));
+    panel.setBackground(JBUI.CurrentTheme.Notification.BACKGROUND);
+    panel.setForeground(JBUI.CurrentTheme.Notification.FOREGROUND);
 
     JBLabel notificationLabel = new JBLabel();
-    notificationLabel.setIcon(AllIcons.General.Warning);
+    notificationLabel.setIcon(icon);
     notificationLabel.setVerticalTextPosition(SwingConstants.TOP);
-    notificationLabel.setText(HtmlChunk.html().addText(IdeBundle.message("plugins.configurable.not.allowed")).toString());
+    notificationLabel.setText(HtmlChunk.html().addText(message).toString());
 
-    myControlledByOrgNotification.addToCenter(notificationLabel);
-    myControlledByOrgNotification.setVisible(false);
-
-    myRootPanel.add(myControlledByOrgNotification, BorderLayout.NORTH);
-    myRootPanel.add(myPanel, BorderLayout.CENTER);
+    panel.addToCenter(notificationLabel);
+    return panel;
   }
 
   @NotNull
@@ -531,7 +542,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myPlugin = pluginDescriptor;
     PluginManagerFilters org = PluginManagerFilters.getInstance();
     myUpdateDescriptor = updateDescriptor != null && org.isPluginAllowed(!myMarketplace, updateDescriptor) ? updateDescriptor : null;
-    myIsPluginAllowed = org.isPluginAllowed(!myMarketplace, pluginDescriptor);
+    myIsPluginCompatible = PluginManagerCore.getIncompatiblePlatform(pluginDescriptor).isEmpty();
+    myIsPluginAvailable = myIsPluginCompatible && org.isPluginAllowed(!myMarketplace, pluginDescriptor);
     showPlugin();
 
     select(0, true);
@@ -566,7 +578,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private void showPlugin() {
     @NlsSafe String text = "<html><span>" + myPlugin.getName() + "</span></html>";
     myNameComponent.setText(text);
-    myControlledByOrgNotification.setVisible(!myIsPluginAllowed);
+    updateNotifications();
     updateIcon();
 
     updateButtons();
@@ -681,6 +693,18 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     }
   }
 
+  private void updateNotifications() {
+    myRootPanel.remove(myControlledByOrgNotification);
+    myRootPanel.remove(myPlatformIncompatibleNotification);
+    if (!myIsPluginAvailable) {
+      if (!myIsPluginCompatible) {
+        myRootPanel.add(myPlatformIncompatibleNotification, BorderLayout.NORTH);
+      } else {
+        myRootPanel.add(myControlledByOrgNotification, BorderLayout.NORTH);
+      }
+    }
+  }
+
   private boolean isPluginFromMarketplace() {
     assert myPlugin != null;
     PluginInfoProvider provider = PluginInfoProvider.getInstance();
@@ -758,7 +782,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   public void updateButtons() {
-    if (!myIsPluginAllowed) {
+    if (!myIsPluginAvailable) {
       myRestartButton.setVisible(false);
       myInstallButton.setVisible(false);
       myUpdateButton.setVisible(false);

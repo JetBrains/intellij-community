@@ -20,7 +20,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class FirstEntityWithPIdImpl : FirstEntityWithPId, WorkspaceEntityBase() {
+open class FirstEntityWithPIdImpl(val dataSource: FirstEntityWithPIdData) : FirstEntityWithPId, WorkspaceEntityBase() {
 
   companion object {
 
@@ -30,10 +30,8 @@ open class FirstEntityWithPIdImpl : FirstEntityWithPId, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -127,12 +125,13 @@ class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<Fi
   }
 
   override fun createEntity(snapshot: EntityStorage): FirstEntityWithPId {
-    val entity = FirstEntityWithPIdImpl()
-    entity._data = data
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = FirstEntityWithPIdImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {

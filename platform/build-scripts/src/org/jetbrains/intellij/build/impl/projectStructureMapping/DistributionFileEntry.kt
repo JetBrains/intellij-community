@@ -14,6 +14,8 @@ sealed interface DistributionFileEntry {
    * Type of the element in the project configuration which was copied to [.path]
    */
   val type: String
+
+  fun changePath(newFile: Path): DistributionFileEntry
 }
 
 interface LibraryFileEntry : DistributionFileEntry {
@@ -30,6 +32,8 @@ internal class ModuleLibraryFileEntry(override val path: Path,
                                       override val size: Int) : DistributionFileEntry, LibraryFileEntry {
   override val type: String
     get() = "module-library-file"
+
+  override fun changePath(newFile: Path) = ModuleLibraryFileEntry(newFile, moduleName, libraryFile, size)
 }
 
 /**
@@ -38,6 +42,8 @@ internal class ModuleLibraryFileEntry(override val path: Path,
 internal class ModuleTestOutputEntry(override val path: Path, @JvmField val moduleName: String) : DistributionFileEntry {
   override val type: String
     get() = "module-test-output"
+
+  override fun changePath(newFile: Path) = ModuleTestOutputEntry(newFile, moduleName)
 }
 
 /**
@@ -51,6 +57,8 @@ internal class ProjectLibraryEntry(
 ) : DistributionFileEntry, LibraryFileEntry {
   override val type: String
     get() = "project-library"
+
+  override fun changePath(newFile: Path) = ProjectLibraryEntry(newFile, data, libraryFile, size)
 
   override fun toString() = "ProjectLibraryEntry(data='$data\', libraryFile=$libraryFile, size=$size)"
 }
@@ -66,4 +74,6 @@ class ModuleOutputEntry(
 ) : DistributionFileEntry {
   override val type: String
     get() = "module-output"
+
+  override fun changePath(newFile: Path) = ModuleOutputEntry(newFile, moduleName, size, reason)
 }

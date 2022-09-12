@@ -121,10 +121,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
   private final @NotNull Project myProject;
   private final @NotNull SearchContext mySearchContext;
   private Editor myEditor;
-  @NotNull
-  private Configuration myConfiguration;
-  @Nullable
-  @NonNls private LanguageFileType myFileType = StructuralSearchUtil.getDefaultFileType();
+  private ReplaceConfiguration myConfiguration;
+  @Nullable @NonNls private LanguageFileType myFileType = StructuralSearchUtil.getDefaultFileType();
   private Language myDialect;
   private PatternContext myPatternContext;
   private final List<RangeHighlighter> myRangeHighlighters = new SmartList<>();
@@ -142,7 +140,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
 
   // ui management
   private final Alarm myAlarm;
-  private boolean myUseLastConfiguration;
+  private boolean myConfigurationLoaded;
   private volatile boolean myPinned;
   private final boolean myEditConfigOnly;
   private boolean myReplace;
@@ -235,10 +233,11 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       }
     });
     connection.subscribe(EditorColorsManager.TOPIC, uiSettings -> updateColors());
-    myConfiguration = createConfiguration(null);
     setTitle(getDefaultTitle());
 
     init();
+    loadUIState();
+    myConfiguration = createConfiguration(null);
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     setValidationDelay(100);
   }
@@ -253,10 +252,6 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     if (myEditor != null) {
       myEditor.getDocument().removeDocumentListener(myRestartHighlightingListener);
     }
-  }
-
-  public void setUseLastConfiguration(boolean useLastConfiguration) {
-    myUseLastConfiguration = useLastConfiguration;
   }
 
   private EditorTextField createEditor(boolean replace) {
@@ -299,18 +294,24 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
   }
 
   @NotNull
-  private Configuration createConfiguration(Configuration template) {
-    if (myReplace) {
-      return (template == null) ? new ReplaceConfiguration(getUserDefined(), getUserDefined()) : new ReplaceConfiguration(template);
-    }
-    if (template == null) {
-      return new SearchConfiguration(getUserDefined(), getUserDefined());
-    }
-    return (template instanceof ReplaceConfiguration) ? new ReplaceConfiguration(template) : new SearchConfiguration(template);
-  }
+  private ReplaceConfiguration createConfiguration(Configuration template) {
+    final ReplaceConfiguration result = template == null
+                                        ? new ReplaceConfiguration(SSRBundle.message("new.template.defaultname"),
+                                                                   SSRBundle.message("user.defined.category"))
+                                        : new ReplaceConfiguration(template);
+    if (!myEditConfigOnly) {
+      final MatchOptions matchOptions = result.getMatchOptions();
+      matchOptions.setSearchInjectedCode(false);
+      matchOptions.setCaseSensitiveMatch(myMatchCase.isSelected());
 
-  static @Nls(capitalization = Nls.Capitalization.Sentence) String getUserDefined() {
-    return SSRBundle.message("new.template.defaultname");
+      final ReplaceOptions replaceOptions = result.getReplaceOptions();
+      replaceOptions.setToShortenFQN(myShortenFqn.isSelected());
+      replaceOptions.setToUseStaticImport(myStaticImport.isSelected());
+      replaceOptions.setToReformatAccordingToStyle(myReformat.isSelected());
+
+
+    }
+    return result;
   }
 
   private void setTextFromContext() {
@@ -324,9 +325,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
         }
         final String text = selectedText.trim();
         setTextForEditor(text.trim(), mySearchCriteriaEdit);
-        if (myReplace) {
-          setTextForEditor(text, myReplaceCriteriaEdit);
-        }
+        setTextForEditor(text, myReplaceCriteriaEdit);
         myScopePanel.setScopesFromContext(null);
         ApplicationManager.getApplication().invokeLater(() -> startTemplate());
         return;
@@ -390,8 +389,10 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     if (!myEditConfigOnly) {
       myScopePanel.setRecentDirectories(FindInProjectSettings.getInstance(myProject).getRecentDirectories());
       myScopePanel.setScopeConsumer(scope -> {
-        myConfiguration.getMatchOptions().setScope(scope);
-        initValidation();
+        if (myConfiguration != null) {
+          myConfiguration.getMatchOptions().setScope(scope);
+          initValidation();
+        }
       });
     }
     else {
@@ -447,6 +448,10 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
         myFileType = info.getFileType();
         myDialect = info.getDialect();
         myPatternContext = info.getContext();
+        final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+        matchOptions.setFileType(myFileType);
+        matchOptions.setDialect(myDialect);
+        matchOptions.setPatternContext(myPatternContext);
       }
       myOptionsToolbar.updateActionsImmediately();
       myFilterPanel.setFileType(myFileType);
@@ -577,6 +582,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       myConfiguration.getMatchOptions().setSearchInjectedCode(myInjected.isSelected());
       initValidation();
     });
+    myInjected.setVisible(!myEditConfigOnly);
 
     myMatchCase = new JBCheckBox(FindBundle.message("find.popup.case.sensitive"));
     myMatchCase.setOpaque(false);
@@ -624,21 +630,15 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
 
     myShortenFqn = new JBCheckBox(SSRBundle.message("shorten.fully.qualified.names.checkbox"));
     myShortenFqn.setOpaque(false);
-    myShortenFqn.addActionListener(e -> {
-      myConfiguration.getReplaceOptions().setToShortenFQN(myShortenFqn.isSelected());
-    });
+    myShortenFqn.addActionListener(e -> myConfiguration.getReplaceOptions().setToShortenFQN(myShortenFqn.isSelected()));
 
     myStaticImport = new JBCheckBox(SSRBundle.message("use.static.import.checkbox"));
     myStaticImport.setOpaque(false);
-    myStaticImport.addActionListener(e -> {
-      myConfiguration.getReplaceOptions().setToUseStaticImport(myStaticImport.isSelected());
-    });
+    myStaticImport.addActionListener(e -> myConfiguration.getReplaceOptions().setToUseStaticImport(myStaticImport.isSelected()));
 
     myReformat = new JBCheckBox(SSRBundle.message("reformat.checkbox"));
     myReformat.setOpaque(false);
-    myReformat.addActionListener(e -> {
-      myConfiguration.getReplaceOptions().setToReformatAccordingToStyle(myReformat.isSelected());
-    });
+    myReformat.addActionListener(e -> myConfiguration.getReplaceOptions().setToReformatAccordingToStyle(myReformat.isSelected()));
 
     myReplaceCriteriaEdit = createEditor(true);
     myReplaceWrapper = new JPanel(new GridBagLayout());
@@ -659,11 +659,6 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
   }
 
   private void updateOptions() {
-    // Search options
-    myInjected.setVisible(!myEditConfigOnly);
-
-    // Replace options
-    if (!myReplace) return;
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     myShortenFqn.setVisible(profile != null && profile.supportsShortenFQNames());
     myStaticImport.setVisible(profile != null && profile.supportsUseStaticImports());
@@ -706,10 +701,9 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
 
   @Override
   public void show() {
-    if (!myUseLastConfiguration) {
+    if (!myConfigurationLoaded) {
       setTextFromContext();
     }
-    loadUIState();
     super.show();
   }
 
@@ -950,11 +944,9 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
       if (constraint.getScriptCodeConstraint().length() > 2) scripts++;
     }
-    if (myConfiguration instanceof ReplaceConfiguration) {
-      final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
-      for (ReplacementVariableDefinition variableDefinition : replaceOptions.getVariableDefinitions()) {
-        if (variableDefinition.getScriptCodeConstraint().length() > 2) scripts++;
-      }
+    final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
+    for (ReplacementVariableDefinition variableDefinition : replaceOptions.getVariableDefinitions()) {
+      if (variableDefinition.getScriptCodeConstraint().length() > 2) scripts++;
     }
     if (scripts > 0) {
       NotificationGroupManager.getInstance()
@@ -968,24 +960,12 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     }
   }
 
-  public void showFilterPanel(String variableName) {
-    myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
-    setFilterPanelVisible(true);
-  }
-
   private void setFilterPanelVisible(boolean visible) {
-    if (visible) {
-      if (myFilterPanel.getVariable() == null) {
-        myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
-      }
-      if (!isFilterPanelVisible()) {
-        mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
-      }
+    if (visible && myFilterPanel.getVariable() == null) {
+      myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
     }
-    else {
-      if (isFilterPanelVisible()) {
-        mySearchEditorPanel.setSecondComponent(null);
-      }
+    if (isFilterPanelVisible() != visible) {
+      mySearchEditorPanel.setSecondComponent(visible ? myFilterPanel.getComponent() : null);
     }
   }
 
@@ -1050,16 +1030,17 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
   }
 
   public void loadConfiguration(Configuration configuration) {
-    final Configuration newConfiguration = createConfiguration(configuration);
-    if (myUseLastConfiguration) {
-      newConfiguration.setUuid(myConfiguration.getUuid());
-      newConfiguration.setName(myConfiguration.getName());
-      newConfiguration.setDescription(myConfiguration.getDescription());
-      newConfiguration.setSuppressId(myConfiguration.getSuppressId());
-      newConfiguration.setProblemDescriptor(myConfiguration.getProblemDescriptor());
-    }
-    myConfiguration = newConfiguration;
+    myConfigurationLoaded = true;
+    myConfiguration = createConfiguration(configuration);
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+    final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
+    if (myEditConfigOnly) {
+      myMatchCase.setSelected(matchOptions.isCaseSensitiveMatch());
+      myInjected.setSelected(false);
+      myReformat.setSelected(replaceOptions.isToReformatAccordingToStyle());
+      myStaticImport.setSelected(replaceOptions.isToUseStaticImport());
+      myShortenFqn.setSelected(replaceOptions.isToShortenFQN());
+    }
     setSearchTargets(matchOptions);
 
     myFileTypeChooser.setSelectedItem(matchOptions.getFileType(), matchOptions.getDialect(), matchOptions.getPatternContext());
@@ -1069,19 +1050,11 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     }
     setEditorContent(false, matchOptions.getSearchPattern());
 
-    if (myReplace) {
-      final Editor replaceEditor = myReplaceCriteriaEdit.getEditor();
-      if (replaceEditor != null) {
-        replaceEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
-      }
-      if (configuration instanceof ReplaceConfiguration) {
-        final ReplaceOptions replaceOptions = configuration.getReplaceOptions();
-        setEditorContent(true, replaceOptions.getReplacement());
-      }
-      else {
-        setEditorContent(true, matchOptions.getSearchPattern());
-      }
+    final Editor replaceEditor = myReplaceCriteriaEdit.getEditor();
+    if (replaceEditor != null) {
+      replaceEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
     }
+    setEditorContent(true, replaceOptions.getReplacement());
     updateOptions();
   }
 
@@ -1103,18 +1076,11 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     else {
       matchOptions.setScope(null);
     }
-    if (myFileType != null) {
-      matchOptions.setFileType(myFileType);
-    }
-    matchOptions.setDialect(myDialect);
-    matchOptions.setPatternContext(myPatternContext);
     matchOptions.setSearchPattern(getPattern(mySearchCriteriaEdit));
     matchOptions.setRecursiveSearch(!myReplace);
 
-    if (myReplace) {
-      final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
-      replaceOptions.setReplacement(getPattern(myReplaceCriteriaEdit));
-    }
+    final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
+    replaceOptions.setReplacement(getPattern(myReplaceCriteriaEdit));
   }
 
   private String getPattern(EditorTextField textField) {
@@ -1147,25 +1113,20 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
 
   private void loadUIState() {
     final UIState uiState = UIState.getInstance();
-    setFilterPanelVisible(uiState.filtersVisible);
+    if (isFilterPanelVisible() != uiState.filtersVisible) {
+      mySearchEditorPanel.setSecondComponent(uiState.filtersVisible ? myFilterPanel.getComponent() : null);
+    }
     setExistingTemplatesPanelVisible(uiState.existingTemplatesVisible);
     myPinned = uiState.pinned;
     myExistingTemplatesComponent.setTreeState(uiState.templatesTreeState);
-
-    if (myInjected.isVisible()) {
+    if (!myEditConfigOnly) {
       myInjected.setSelected(uiState.searchInjectedCode);
-    }
-    myMatchCase.setSelected(uiState.matchCase);
-    if (myScopePanel.isVisible() && uiState.scopeDescriptor != null && uiState.scopeType != null) {
-      myScopePanel.setScope(Scopes.createScope(myProject, uiState.scopeDescriptor, uiState.scopeType));
-    }
-    if (myReplace) {
-      if (myShortenFqn.isVisible()) {
-        myShortenFqn.setSelected(uiState.shortenFQNames);
+      myMatchCase.setSelected(uiState.matchCase);
+      if (uiState.scopeDescriptor != null && uiState.scopeType != null) {
+        myScopePanel.setScope(Scopes.createScope(myProject, uiState.scopeDescriptor, uiState.scopeType));
       }
-      if (myStaticImport.isVisible()) {
-        myStaticImport.setSelected(uiState.useStaticImport);
-      }
+      myShortenFqn.setSelected(uiState.shortenFQNames);
+      myStaticImport.setSelected(uiState.useStaticImport);
       myReformat.setSelected(uiState.reformat);
     }
   }
@@ -1178,23 +1139,25 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     uiState.pinned = myPinned;
     uiState.templatesTreeState = myExistingTemplatesComponent.getTreeState();
 
-    if (myInjected.isVisible()) {
-      uiState.searchInjectedCode = myInjected.isSelected();
-    }
-    uiState.matchCase = myMatchCase.isSelected();
-    if (myScopePanel.isVisible()) {
-      final SearchScope scope = myScopePanel.getScope();
-      uiState.scopeDescriptor = Scopes.getDescriptor(scope);
-      uiState.scopeType = Scopes.getType(scope);
-    }
-    if (myReplace) {
-      if (myShortenFqn.isVisible()) {
-        uiState.shortenFQNames = myShortenFqn.isSelected();
+    if (!myEditConfigOnly) {
+      if (myInjected.isVisible()) {
+        uiState.searchInjectedCode = myInjected.isSelected();
       }
-      if (myStaticImport.isVisible()) {
-        uiState.useStaticImport = myStaticImport.isSelected();
+      uiState.matchCase = myMatchCase.isSelected();
+      if (myScopePanel.isVisible()) {
+        final SearchScope scope = myScopePanel.getScope();
+        uiState.scopeDescriptor = Scopes.getDescriptor(scope);
+        uiState.scopeType = Scopes.getType(scope);
       }
-      uiState.reformat = myReformat.isSelected();
+      if (myReplace) {
+        if (myShortenFqn.isVisible()) {
+          uiState.shortenFQNames = myShortenFqn.isSelected();
+        }
+        if (myStaticImport.isVisible()) {
+          uiState.useStaticImport = myStaticImport.isSelected();
+        }
+        uiState.reformat = myReformat.isSelected();
+      }
     }
   }
 
@@ -1297,13 +1260,11 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       myReplace = !myReplace;
       setTitle(getDefaultTitle());
       myReplacePanel.setVisible(myReplace);
-      updateColors();
-      setUseLastConfiguration(true);
       loadConfiguration(myConfiguration);
       final Dimension size =
         DimensionService.getInstance().getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY, e.getProject());
       if (size != null) {
-        setSize(getSize().width, size.height);
+        setSize(size.width, size.height);
       }
       else {
         pack();
@@ -1345,7 +1306,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
         if (variableName.endsWith(ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX)) {
           //noinspection AssignmentToLambdaParameter
           variableName = StringUtil.trimEnd(variableName, ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);
-          assert myConfiguration instanceof ReplaceConfiguration;
+          assert myReplace;
           myFilterPanel.initFilters(UIUtil.getOrAddReplacementVariable(variableName, myConfiguration));
         }
         else{

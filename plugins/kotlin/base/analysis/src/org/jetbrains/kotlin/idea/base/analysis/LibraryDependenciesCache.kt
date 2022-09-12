@@ -108,12 +108,14 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
             override fun visitLibraryOrderEntry(libraryOrderEntry: LibraryOrderEntry, value: Unit) {
                 checkCanceled()
-                libraryOrderEntry.library.safeAs<LibraryEx>()?.takeIf { !it.isDisposed }?.let {
-                    libraries += LibraryInfoCache.getInstance(project)[it].mapNotNull { libraryInfo ->
+                libraryOrderEntry.library.safeAs<LibraryEx>()?.takeIf { !it.isDisposed }?.let { library ->
+                    for (libraryInfo in LibraryInfoCache.getInstance(project)[library]) {
                         LibraryDependencyCandidate.fromLibraryOrNull(
                             project,
                             libraryInfo.library
-                        )
+                        )?.let {
+                            libraries += it
+                        }
                     }
                 }
             }

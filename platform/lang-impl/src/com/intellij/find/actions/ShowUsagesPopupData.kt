@@ -8,13 +8,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import com.intellij.ui.popup.AbstractPopup
+import com.intellij.usages.UsageView
 import com.intellij.usages.impl.UsageViewStatisticsCollector.Companion.logOpenInFindToolWindow
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.JTable
 
 internal class ShowUsagesPopupData(@JvmField val parameters: ShowUsagesParameters, @JvmField val table: JTable,
-                                   @JvmField val actionHandler: ShowUsagesActionHandler) {
+                                   @JvmField val actionHandler: ShowUsagesActionHandler, @JvmField val usageView: UsageView) {
 
   @JvmField
   val popupRef = AtomicReference<AbstractPopup>()
@@ -40,7 +41,7 @@ internal class ShowUsagesPopupData(@JvmField val parameters: ShowUsagesParameter
       }
 
       override fun actionPerformed(e: AnActionEvent) {
-        logOpenInFindToolWindow(project)
+        logOpenInFindToolWindow(project, usageView)
         ShowUsagesAction.hideHints()
         ShowUsagesAction.cancel(popupRef.get())
         findUsagesRunnable.run()

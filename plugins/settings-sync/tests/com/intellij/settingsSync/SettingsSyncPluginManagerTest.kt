@@ -1,77 +1,15 @@
 package com.intellij.settingsSync
 
-import com.intellij.configurationStore.ComponentSerializationUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.settingsSync.plugins.PluginManagerProxy
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
+import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
+import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.*
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.replaceService
-import com.intellij.util.xmlb.XmlSerializer
-import junit.framework.TestCase
-import org.jdom.Element
-import org.jdom.output.Format
-import org.jdom.output.XMLOutputter
-import java.io.StringWriter
-
-// region Test data
-private const val incomingPluginData = """<component name="SettingsSyncPlugins">
-  <option name="plugins">
-    <map>
-      <entry key="QuickJump">
-        <value>
-          <PluginData>
-            <option name="dependencies">
-              <set>
-                <option value="com.intellij.modules.platform" />
-              </set>
-            </option>
-            <option name="enabled" value="false" />
-          </PluginData>
-        </value>
-      </entry>
-      <entry key="codeflections.typengo">
-        <value>
-          <PluginData>
-            <option name="dependencies">
-              <set>
-                <option value="com.intellij.modules.platform" />
-              </set>
-            </option>
-          </PluginData>
-        </value>
-      </entry>
-      <entry key="color.scheme.IdeaLight">
-        <value>
-          <PluginData>
-            <option name="category" value="UI" />
-            <option name="dependencies">
-              <set>
-                <option value="com.intellij.modules.lang" />
-              </set>
-            </option>
-          </PluginData>
-        </value>
-      </entry>
-      <entry key="com.company.plugin">
-        <value>
-          <PluginData>
-            <option name="dependencies">
-             <set>
-                <option value="com.intellij.modules.lang" />
-                <option value="com.company.other.plugin" />
-              </set>
-            </option>
-          </PluginData>
-        </value>
-      </entry>
-    </map>
-  </option>
-</component>"""
-
-// endregion
 
 class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
   private lateinit var pluginManager: SettingsSyncPluginManager
@@ -85,6 +23,15 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     "codeflections.typengo",
     listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false))
   )
+  private val ideaLight = TestPluginDescriptor(
+    "color.scheme.IdeaLight",
+    listOf(TestPluginDependency("com.intellij.modules.lang", isOptional = false))
+  )
+  private val git4idea = TestPluginDescriptor(
+    "git4idea",
+    listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false)),
+    bundled = true
+  )
 
   override fun setUp() {
     super.setUp()
@@ -96,30 +43,31 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
   }
 
   fun `test install missing plugins`() {
-    pluginManager.updateStateFromFileStateContent(getTestDataFileState())
-    pluginManager.pushChangesToIde()
+    pluginManager.pushChangesToIde(state {
+      quickJump(enabled = false)
+      typengo(enabled = true)
+      ideaLight(enabled = true, category = SettingsCategory.UI)
+    })
 
     val installedPluginIds = testPluginManager.installer.installedPluginIds
-    // Make sure QuickJump is skipped because it is disabled
-    TestCase.assertEquals(2, installedPluginIds.size)
-    TestCase.assertTrue(installedPluginIds.containsAll(
-      listOf("codeflections.typengo", "color.scheme.IdeaLight")))
-  }
-
-  private fun getTestDataFileState(): FileState.Modified {
-    val content = incomingPluginData.toByteArray()
-    return FileState.Modified(SettingsSyncPluginManager.FILE_SPEC, content, content.size)
+    // NB: quickJump should be skipped because it is disabled
+    assertEquals(2, installedPluginIds.size)
+    assertTrue(installedPluginIds.containsAll(listOf(typengo.idString, ideaLight.idString)))
   }
 
   fun `test do not install when plugin sync is disabled`() {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.PLUGINS, false)
     try {
-      pluginManager.updateStateFromFileStateContent(getTestDataFileState())
-      pluginManager.pushChangesToIde()
+      pluginManager.pushChangesToIde(state {
+        quickJump(enabled = false)
+        typengo(enabled = true)
+        ideaLight(enabled = true, category = SettingsCategory.UI)
+      })
+
       val installedPluginIds = testPluginManager.installer.installedPluginIds
       // IdeaLight is a UI plugin, it doesn't fall under PLUGINS category
-      TestCase.assertEquals(1, installedPluginIds.size)
-      TestCase.assertTrue(installedPluginIds.contains("color.scheme.IdeaLight"))
+      assertEquals(1, installedPluginIds.size)
+      assertTrue(installedPluginIds.contains(ideaLight.idString))
     }
     finally {
       SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.PLUGINS, true)
@@ -129,12 +77,16 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
   fun `test do not install UI plugin when UI category is disabled`() {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.UI, false)
     try {
-      pluginManager.updateStateFromFileStateContent(getTestDataFileState())
-      pluginManager.pushChangesToIde()
+      pluginManager.pushChangesToIde(state {
+        quickJump(enabled = false)
+        typengo(enabled = true)
+        ideaLight(enabled = true, category = SettingsCategory.UI)
+      })
+
       val installedPluginIds = testPluginManager.installer.installedPluginIds
       // IdeaLight is a UI plugin, it doesn't fall under PLUGINS category
-      TestCase.assertEquals(1, installedPluginIds.size)
-      TestCase.assertTrue(installedPluginIds.contains("codeflections.typengo"))
+      assertEquals(1, installedPluginIds.size)
+      assertTrue(installedPluginIds.contains(typengo.idString))
     }
     finally {
       SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.UI, true)
@@ -143,78 +95,140 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
 
   fun `test disable installed plugin`() {
     testPluginManager.addPluginDescriptors(pluginManager, quickJump)
-    pluginManager.updateStateFromFileStateContent(getTestDataFileState())
-    assertTrue(quickJump.isEnabled)
-    pluginManager.pushChangesToIde()
+    pluginManager.updateStateFromIde()
+
+    assertPluginManagerState {
+      quickJump(enabled = true)
+    }
+
+    pluginManager.pushChangesToIde(state {
+      quickJump(enabled = false)
+      typengo(enabled = true)
+      ideaLight(enabled = true, category = SettingsCategory.UI)
+    })
+
     assertFalse(quickJump.isEnabled)
-  }
-
-  fun `test default state is empty` () {
-    val state = pluginManager.state
-    TestCase.assertTrue(state.plugins.isEmpty())
-  }
-
-  fun `test state contains installed plugin` () {
-    testPluginManager.addPluginDescriptors(pluginManager, quickJump)
-    assertSerializedStateEquals(
-      """
-      <component>
-        <option name="plugins">
-          <map>
-            <entry key="QuickJump">
-              <value>
-                <PluginData>
-                  <option name="dependencies">
-                    <set>
-                      <option value="com.intellij.modules.platform" />
-                    </set>
-                  </option>
-                </PluginData>
-              </value>
-            </entry>
-          </map>
-        </option>
-      </component>""".trimIndent())
+    assertIdeState {
+      quickJump(enabled = false)
+    }
   }
 
   fun `test disable two plugins at once`() {
     // install two plugins
     testPluginManager.addPluginDescriptors(pluginManager, quickJump, typengo)
 
-    pluginManager.updateStateFromFileStateContent(getTestDataFileState())
-    pluginManager.state.plugins["codeflections.typengo"] = SettingsSyncPluginManager.PluginData().apply {
-      this.isEnabled = false
+    pluginManager.pushChangesToIde(state {
+      quickJump(enabled = false)
+      typengo(enabled = false)
+    })
+
+    assertFalse(quickJump.isEnabled)
+    assertFalse(typengo.isEnabled)
+  }
+
+  fun `test update state from IDE`() {
+    testPluginManager.addPluginDescriptors(pluginManager, quickJump, typengo, git4idea)
+
+    pluginManager.updateStateFromIde()
+
+    assertPluginManagerState {
+      quickJump(enabled = true)
+      typengo(enabled = true)
     }
 
-    TestCase.assertTrue(quickJump.isEnabled)
-    TestCase.assertTrue(typengo.isEnabled)
+    testPluginManager.disablePlugin(git4idea.pluginId)
 
-    pluginManager.pushChangesToIde()
+    assertPluginManagerState {
+      quickJump(enabled = true)
+      typengo(enabled = true)
+      git4idea(enabled = false)
+    }
 
-    TestCase.assertFalse(quickJump.isEnabled)
-    TestCase.assertFalse(typengo.isEnabled)
+    testPluginManager.disablePlugin(typengo.pluginId)
+    testPluginManager.enablePlugin(git4idea.pluginId)
+
+    assertPluginManagerState {
+      quickJump(enabled = true)
+      typengo(enabled = false)
+    }
   }
 
-  fun `test plugin manager collects state on start`() {
-    testPluginManager.addPluginDescriptors(pluginManager, quickJump)
+  fun `test push settings to IDE`() {
+    testPluginManager.addPluginDescriptors(pluginManager, quickJump, typengo, git4idea)
+    pluginManager.updateStateFromIde()
 
-    val element = JDOMUtil.load(incomingPluginData)
-    ComponentSerializationUtil.loadComponentState(pluginManager, element)
+    pluginManager.pushChangesToIde(state {
+      quickJump(enabled = false)
+      git4idea(enabled = false)
+    })
 
-    val dataForQuickJump = pluginManager.state.plugins[quickJump.idString]
-    assertNotNull("The data about ${quickJump.idString} plugin is not in the state", dataForQuickJump)
-    TestCase.assertTrue("Plugin is enabled in the IDE but disabled in the state", dataForQuickJump!!.isEnabled)
+    assertIdeState {
+      quickJump(enabled = false)
+      typengo(enabled = true)
+      git4idea(enabled = false)
+    }
+
+    pluginManager.pushChangesToIde(state {
+      quickJump(enabled = false)
+    })
+    // no entry for the bundled git4idea plugin => it is enabled
+
+    assertIdeState {
+      quickJump(enabled = false)
+      typengo(enabled = true)
+      git4idea(enabled = true)
+    }
   }
 
-  fun assertSerializedStateEquals(expected: String) {
-    val state = pluginManager.state
-    val e = Element("component")
-    XmlSerializer.serializeInto(state, e)
-    val writer = StringWriter()
-    val format = Format.getPrettyFormat()
-    format.lineSeparator = "\n"
-    XMLOutputter(format).output(e, writer)
-    val actual = writer.toString()
-    TestCase.assertEquals(expected, actual)
+  private fun assertPluginManagerState(build: StateBuilder.() -> Unit) {
+    val expectedState = state(build)
+    assertState(expectedState.plugins, pluginManager.state.plugins)
+  }
+
+  private fun assertIdeState(build: StateBuilder.() -> Unit) {
+    val expectedState = state(build)
+
+    val actualState = PluginManagerProxy.getInstance().getPlugins().associate { plugin ->
+      plugin.pluginId to PluginData(plugin.isEnabled)
+    }
+    assertState(expectedState.plugins, actualState)
+  }
+
+  private fun assertState(expectedStates: Map<PluginId, PluginData>, actualStates: Map<PluginId, PluginData>) {
+    fun stringifyStates(states: Map<PluginId, PluginData>) =
+      states.entries
+        .sortedBy { it.key }
+        .joinToString { (id, data) -> "$id: ${enabledOrDisabled(data.enabled)}" }
+
+    if (expectedStates.size != actualStates.size) {
+      assertEquals("Expected and actual states have different number of elements",
+                   stringifyStates(expectedStates), stringifyStates(actualStates))
+    }
+    for ((expectedId, expectedData) in expectedStates) {
+      val actualData = actualStates[expectedId]
+      assertNotNull("Record for plugin $expectedId not found", actualData)
+      assertEquals("Plugin $expectedId has incorrect state", expectedData.enabled, actualData!!.enabled)
+    }
+  }
+
+  private fun enabledOrDisabled(value: Boolean?) = if (value == null) "null" else if (value) "enabled" else "disabled"
+
+  private fun state(build: StateBuilder.() -> Unit): SettingsSyncPluginsState {
+    val builder = StateBuilder()
+    builder.build()
+    return SettingsSyncPluginsState(builder.states)
+  }
+
+  private class StateBuilder {
+    val states = mutableMapOf<PluginId, PluginData>()
+
+    operator fun TestPluginDescriptor.invoke(
+      enabled: Boolean,
+      category: SettingsCategory = SettingsCategory.PLUGINS): Pair<PluginId, PluginData> {
+
+      val pluginData = PluginData(enabled, category)
+      states[pluginId] = pluginData
+      return this.pluginId to pluginData
+    }
   }
 }

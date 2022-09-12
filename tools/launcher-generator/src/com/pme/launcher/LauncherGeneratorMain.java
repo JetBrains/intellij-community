@@ -17,8 +17,8 @@ import java.util.regex.Pattern;
 
 public class LauncherGeneratorMain {
   public static void main(String[] args) {
-    if (args.length != 5) {
-      System.err.println("Usage: LauncherGeneratorMain <template EXE file> <app info file> <resource.h file> <properties> <output>");
+    if (args.length != 6) {
+      System.err.println("Usage: LauncherGeneratorMain <template EXE file> <app info file> <resource.h file> <properties> <path to ico> <output>");
       System.exit(1);
     }
 
@@ -71,7 +71,10 @@ public class LauncherGeneratorMain {
       System.exit(6);
     }
 
-    String icoUrl = getChild(appInfoRoot, "icon").getAttributeValue("ico");
+    String icoUrl = args[4];
+    if (icoUrl == null || icoUrl.isBlank()) {
+      icoUrl = getChild(appInfoRoot, "icon").getAttributeValue("ico");
+    }
     if (icoUrl == null) {
       System.err.println(".ico file URL not specified in application info file " + appInfoFileName);
       System.exit(11);
@@ -126,7 +129,7 @@ public class LauncherGeneratorMain {
 
     int year = new GregorianCalendar().get(Calendar.YEAR);
 
-    LauncherGenerator generator = new LauncherGenerator(template, new File(args[4]));
+    LauncherGenerator generator = new LauncherGenerator(template, new File(args[5]));
     try {
       generator.load();
 

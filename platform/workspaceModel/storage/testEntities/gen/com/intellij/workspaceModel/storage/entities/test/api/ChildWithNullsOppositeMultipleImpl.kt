@@ -23,7 +23,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ChildWithNullsOppositeMultipleImpl : ChildWithNullsOppositeMultiple, WorkspaceEntityBase() {
+open class ChildWithNullsOppositeMultipleImpl(val dataSource: ChildWithNullsOppositeMultipleData) : ChildWithNullsOppositeMultiple, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentWithNullsOppositeMultiple::class.java,
@@ -36,10 +36,8 @@ open class ChildWithNullsOppositeMultipleImpl : ChildWithNullsOppositeMultiple, 
 
   }
 
-  @JvmField
-  var _childData: String? = null
   override val childData: String
-    get() = _childData!!
+    get() = dataSource.childData
 
   override val parentEntity: ParentWithNullsOppositeMultiple?
     get() = snapshot.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this)
@@ -176,12 +174,13 @@ class ChildWithNullsOppositeMultipleData : WorkspaceEntityData<ChildWithNullsOpp
   }
 
   override fun createEntity(snapshot: EntityStorage): ChildWithNullsOppositeMultiple {
-    val entity = ChildWithNullsOppositeMultipleImpl()
-    entity._childData = childData
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ChildWithNullsOppositeMultipleImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

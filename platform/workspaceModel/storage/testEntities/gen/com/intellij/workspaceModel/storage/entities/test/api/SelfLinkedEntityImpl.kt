@@ -23,7 +23,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SelfLinkedEntityImpl : SelfLinkedEntity, WorkspaceEntityBase() {
+open class SelfLinkedEntityImpl(val dataSource: SelfLinkedEntityData) : SelfLinkedEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(SelfLinkedEntity::class.java, SelfLinkedEntity::class.java,
@@ -156,11 +156,13 @@ class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): SelfLinkedEntity {
-    val entity = SelfLinkedEntityImpl()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SelfLinkedEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

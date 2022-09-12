@@ -3,6 +3,9 @@ package com.intellij.collaboration.auth
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 
 
 /**
@@ -18,6 +21,11 @@ interface AccountManager<A : Account, Cred> {
    */
   @get:RequiresEdt
   val accounts: Set<A>
+
+  /**
+   * Subscribable set of accounts registered within application
+   */
+  val accountsState: StateFlow<Map<A, Cred?>>
 
   /**
    * Add/update account and it's credentials

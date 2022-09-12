@@ -41,6 +41,10 @@ internal class EntityStorageSnapshotImpl constructor(
   // This cache should not be transferred to other versions of storage
   private val persistentIdCache = ConcurrentHashMap<PersistentEntityId<*>, WorkspaceEntity>()
 
+  // I suppose that we can use some kind of array of arrays to get a quicker access (just two accesses by-index)
+  // However, it's not implemented currently because I'm not sure about threading.
+  private val entitiesCache = ConcurrentHashMap<EntityId, WorkspaceEntity>()
+
   @Suppress("UNCHECKED_CAST")
   override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
     val entity = persistentIdCache.getOrPut(id) { super.resolve(id) ?: NULL_ENTITY }
@@ -48,6 +52,16 @@ internal class EntityStorageSnapshotImpl constructor(
   }
 
   override fun toSnapshot(): EntityStorageSnapshot = this
+
+  internal fun getCachedEntityById(entityId: EntityId, orPut: (() -> WorkspaceEntity)): WorkspaceEntity {
+    val found = entitiesCache[entityId]
+    if (found != null) {
+      return found
+    }
+    val newData = orPut()
+    entitiesCache[entityId] = newData
+    return newData
+  }
 
   companion object {
     private val NULL_ENTITY = ObjectUtils.sentinel("null entity", WorkspaceEntity::class.java)

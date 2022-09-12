@@ -691,10 +691,13 @@ fun createFromDescriptor(path: Path,
   return result
 }
 
-private fun withOnDemandEnabled(task: ThrowableRunnable<Throwable>) {
-  PlatformTestUtil.withSystemProperty(
-    /* key = */ IdeaPluginDescriptorImpl.ON_DEMAND_ENABLED_KEY,
-    /* value = */ "true",
-    /* task = */ task,
-  )
+private fun withOnDemandEnabled(runnable: ThrowableRunnable<Throwable>) {
+  val defaultValue = IdeaPluginDescriptorImpl.isOnDemandEnabled
+  IdeaPluginDescriptorImpl.isOnDemandEnabled = true
+  try {
+    runnable.run()
+  }
+  finally {
+    IdeaPluginDescriptorImpl.isOnDemandEnabled = defaultValue
+  }
 }

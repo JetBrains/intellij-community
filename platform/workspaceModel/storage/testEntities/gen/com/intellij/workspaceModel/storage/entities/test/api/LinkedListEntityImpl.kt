@@ -22,7 +22,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class LinkedListEntityImpl : LinkedListEntity, WorkspaceEntityBase() {
+open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedListEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -32,15 +32,11 @@ open class LinkedListEntityImpl : LinkedListEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _myName: String? = null
   override val myName: String
-    get() = _myName!!
+    get() = dataSource.myName
 
-  @JvmField
-  var _next: LinkedListEntityId? = null
   override val next: LinkedListEntityId
-    get() = _next!!
+    get() = dataSource.next
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -186,13 +182,13 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<Link
   }
 
   override fun createEntity(snapshot: EntityStorage): LinkedListEntity {
-    val entity = LinkedListEntityImpl()
-    entity._myName = myName
-    entity._next = next
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = LinkedListEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {

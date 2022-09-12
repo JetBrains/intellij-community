@@ -2,14 +2,11 @@
 package com.intellij.idea;
 
 import com.intellij.internal.statistic.utils.DumpLaunchParametersStarter;
-import sun.misc.Unsafe;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.Arrays;
 
 public class Main {
-  public static void main(String[] args) throws NoSuchFieldException, IllegalAccessException {
+  public static void main(String[] args) {
 //     how to fail with SIGSEGV:
 //
 //     Field f = Unsafe.class.getDeclaredField("theUnsafe");
@@ -17,7 +14,8 @@ public class Main {
 //     Unsafe unsafe = (Unsafe) f.get(null);
 //     unsafe.putAddress(0, 0);
 
-    new DumpLaunchParametersStarter().premain(Arrays.stream(args).toList());
+    DumpLaunchParametersStarter starter = new DumpLaunchParametersStarter();
+    starter.premain(Arrays.stream(args).toList());
   }
 }
 

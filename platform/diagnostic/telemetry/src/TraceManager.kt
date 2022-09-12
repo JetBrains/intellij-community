@@ -62,24 +62,24 @@ object TraceManager {
       spanExporters.add(OtlpGrpcSpanExporter.builder().setEndpoint(endpoint).build())
     }
 
-    val tracerProvider = SdkTracerProvider.builder()
-      .addSpanProcessor(BatchSpanProcessor.builder(SpanExporter.composite(spanExporters)).build())
-      .setResource(Resource.create(Attributes.of(
-        ResourceAttributes.SERVICE_NAME, serviceName,
-        ResourceAttributes.SERVICE_VERSION, serviceVersion,
-        ResourceAttributes.SERVICE_NAMESPACE, serviceNamespace
-      )))
-      .build()
-    sdk = OpenTelemetrySdk.builder()
-      .setTracerProvider(tracerProvider)
-      .buildAndRegisterGlobal()
-
-    val useVerboseSdk = System.getProperty("idea.diagnostic.opentelemetry.verbose")
-    if (useVerboseSdk?.toBooleanStrictOrNull() == true) {
-      verboseSdk = sdk
-    }
-
     if (spanExporters.isNotEmpty()) {
+      val tracerProvider = SdkTracerProvider.builder()
+        .addSpanProcessor(BatchSpanProcessor.builder(SpanExporter.composite(spanExporters)).build())
+        .setResource(Resource.create(Attributes.of(
+          ResourceAttributes.SERVICE_NAME, serviceName,
+          ResourceAttributes.SERVICE_VERSION, serviceVersion,
+          ResourceAttributes.SERVICE_NAMESPACE, serviceNamespace
+        )))
+        .build()
+      sdk = OpenTelemetrySdk.builder()
+        .setTracerProvider(tracerProvider)
+        .buildAndRegisterGlobal()
+
+      val useVerboseSdk = System.getProperty("idea.diagnostic.opentelemetry.verbose")
+      if (useVerboseSdk?.toBooleanStrictOrNull() == true) {
+        verboseSdk = sdk
+      }
+
       ShutDownTracker.getInstance().registerShutdownTask(Runnable {
         tracerProvider?.forceFlush()?.join(10, TimeUnit.SECONDS)
         JaegerJsonSpanExporter.finish()

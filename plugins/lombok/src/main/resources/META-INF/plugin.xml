@@ -39,7 +39,7 @@
   <li>Refactoring actions (lombok and delombok)</li>
 </ul>
 <br/>]]></description>
-  <category>Tools Integration</category>
+  <category>JVM Frameworks</category>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>

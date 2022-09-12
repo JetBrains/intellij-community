@@ -219,8 +219,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
 
     @Override
     protected void reportNullabilityProblems(DataFlowInspectionBase.ProblemReporter reporter,
-                                             List<NullabilityProblemKind.NullabilityProblem<?>> problems,
-                                             Map<PsiExpression, DataFlowInspectionBase.ConstantResult> expressions) {
+                                             List<NullabilityProblemKind.NullabilityProblem<?>> problems) {
       for (NullabilityProblemKind.NullabilityProblem<?> problem : problems) {
         String warning = getJSpecifyWarning(problem);
         if (warning != null) {

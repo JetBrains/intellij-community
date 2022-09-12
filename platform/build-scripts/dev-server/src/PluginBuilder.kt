@@ -1,10 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("BlockingMethodInNonBlockingContext")
+
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.diagnostic.telemetry.useWithScope2
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
@@ -19,42 +20,50 @@ import java.util.*
 
 private val TOUCH_OPTIONS = EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE)
 
-data class BuildItem(val dir: Path, val layout: PluginLayout) {
-  val moduleNames = HashSet<String>()
+internal fun createMarkFile(file: Path) {
+  try {
+    Files.newByteChannel(file, TOUCH_OPTIONS)
+  }
+  catch (ignore: NoSuchFileException) {
+  }
+}
 
+internal data class PluginBuildDescriptor(
+  @JvmField val dir: Path,
+  @JvmField val layout: PluginLayout,
+  @JvmField val moduleNames: List<String>,
+) {
   fun markAsBuilt(outDir: Path) {
     for (moduleName in moduleNames) {
-      try {
-        Files.newByteChannel(outDir.resolve(moduleName).resolve(UNMODIFIED_MARK_FILE_NAME), TOUCH_OPTIONS)
-      }
-      catch (ignore: NoSuchFileException) {
-      }
+      createMarkFile(outDir.resolve(moduleName).resolve(UNMODIFIED_MARK_FILE_NAME))
     }
   }
 }
 
-class PluginBuilder(val buildContext: BuildContext, private val outDir: Path) {
-  private val dirtyPlugins = HashSet<BuildItem>()
-
-  suspend fun initialBuild(plugins: List<BuildItem>) {
-    coroutineScope {
-      for (plugin in plugins) {
-        launch {
-          buildPlugin(plugin, buildContext, outDir)
-        }
-      }
+internal fun CoroutineScope.initialBuild(pluginBuildDescriptors: List<PluginBuildDescriptor>, pluginBuilder: PluginBuilder) {
+  for (plugin in pluginBuildDescriptors) {
+    launch {
+      pluginBuilder.buildPlugin(plugin = plugin)
     }
   }
+}
+
+internal class PluginBuilder(private val outDir: Path,
+                             private val pluginRootDir: Path,
+                             private val pluginCacheRootDir: Path,
+                             @JvmField val context: BuildContext) {
+  private val dirtyPlugins = HashSet<PluginBuildDescriptor>()
 
   @Synchronized
-  fun addDirtyPluginDir(item: BuildItem, reason: Any) {
+  fun addDirtyPluginDir(item: PluginBuildDescriptor, reason: Any) {
     if (dirtyPlugins.add(item)) {
-      LOG.info("${item.dir.fileName} is changed (at least ${if (reason is Path) outDir.relativize(reason) else reason} is changed)")
+      Span.current().addEvent("${item.layout.directoryName} is changed" +
+                              " (at least ${if (reason is Path) outDir.relativize(reason) else reason} is changed)")
     }
   }
 
   @Synchronized
-  private fun getDirtyPluginsAndClear(): Collection<BuildItem> {
+  private fun getDirtyPluginsAndClear(): Collection<PluginBuildDescriptor> {
     if (dirtyPlugins.isEmpty()) {
       return emptyList()
     }
@@ -70,11 +79,13 @@ class PluginBuilder(val buildContext: BuildContext, private val outDir: Path) {
       return "All plugins are up to date"
     }
 
-    coroutineScope {
+    withContext(Dispatchers.IO) {
       for (plugin in dirtyPlugins) {
         try {
-          clearDirContent(plugin.dir)
-          launch { buildPlugin(plugin, buildContext, outDir) }
+          launch {
+            clearDirContent(plugin.dir)
+            buildPlugin(plugin = plugin)
+          }
         }
         catch (e: Throwable) {
           // put back (that's ok to add already processed plugins - doesn't matter, no need to complicate)
@@ -87,34 +98,72 @@ class PluginBuilder(val buildContext: BuildContext, private val outDir: Path) {
     }
     return "Plugins ${dirtyPlugins.joinToString { it.dir.fileName.toString() }} were updated"
   }
-}
 
-private suspend fun buildPlugin(plugin: BuildItem, context: BuildContext, projectOutDir: Path) {
-  val mainModule = plugin.layout.mainModule
-  if (skippedPluginModules.contains(mainModule)) {
-    return
+  internal suspend fun buildPlugin(plugin: PluginBuildDescriptor) {
+    val mainModule = plugin.layout.mainModule
+    val moduleOutputPatcher = ModuleOutputPatcher()
+    spanBuilder("build plugin")
+      .setAttribute("mainModule", mainModule)
+      .setAttribute("dir", plugin.layout.directoryName)
+      .useWithScope2 { span ->
+        val isCached = withContext(Dispatchers.IO) {
+          // check cache
+          if (checkCache(plugin, outDir, span)) {
+            return@withContext true
+          }
+
+          if (mainModule != "intellij.platform.builtInHelp") {
+            checkOutputOfPluginModules(mainPluginModule = mainModule,
+                                       jarToModules = plugin.layout.jarToModules,
+                                       moduleExcludes = plugin.layout.moduleExcludes,
+                                       context = context)
+          }
+          false
+        }
+
+        if (isCached) {
+          return@useWithScope2
+        }
+
+        layoutDistribution(layout = plugin.layout,
+                           targetDirectory = plugin.dir,
+                           copyFiles = true,
+                           simplify = true,
+                           moduleOutputPatcher = moduleOutputPatcher,
+                           jarToModule = plugin.layout.jarToModules,
+                           context = context)
+        withContext(Dispatchers.IO) {
+          plugin.markAsBuilt(outDir)
+        }
+      }
   }
 
-  val moduleOutputPatcher = ModuleOutputPatcher()
-  spanBuilder("build plugin")
-    .setAttribute("mainModule", mainModule)
-    .setAttribute("dir", plugin.dir.fileName.toString())
-    .useWithScope2 {
-      Span.current().addEvent("build ${mainModule}")
-
-      if (mainModule != "intellij.platform.builtInHelp") {
-        checkOutputOfPluginModules(mainPluginModule = mainModule,
-                                   jarToModules = plugin.layout.jarToModules,
-                                   moduleExcludes = plugin.layout.moduleExcludes,
-                                   context = context)
+  private fun checkCache(plugin: PluginBuildDescriptor, projectOutDir: Path, span: Span): Boolean {
+    val dirName = plugin.layout.directoryName
+    val jarFilename = "$dirName.jar"
+    val cacheJarFile = pluginCacheRootDir.resolve(jarFilename)
+    val asJarExists = Files.exists(cacheJarFile)
+    val cacheDir = if (asJarExists) null else pluginCacheRootDir.resolve(dirName).takeIf { Files.exists(it) }
+    if ((asJarExists || cacheDir != null) && isCacheUpToDate(plugin, projectOutDir, span)) {
+      if (asJarExists) {
+        Files.move(cacheJarFile, pluginRootDir.resolve(jarFilename))
       }
-
-      layoutDistribution(layout = plugin.layout,
-                         targetDirectory = plugin.dir,
-                         copyFiles = true,
-                         moduleOutputPatcher = moduleOutputPatcher,
-                         jarToModule = plugin.layout.jarToModules,
-                         context = context)
-      plugin.markAsBuilt(projectOutDir)
+      else {
+        Files.move(cacheDir!!, plugin.dir)
+      }
+      span.addEvent("reuse $dirName from cache")
+      return true
     }
+    return false
+  }
+}
+
+private fun isCacheUpToDate(plugin: PluginBuildDescriptor, projectOutDir: Path, span: Span): Boolean {
+  for (moduleName in plugin.moduleNames) {
+    if (Files.notExists(projectOutDir.resolve(moduleName).resolve(UNMODIFIED_MARK_FILE_NAME))) {
+      span.addEvent("previously built is not reused because at least $moduleName is changed")
+      return false
+    }
+  }
+  return true
 }

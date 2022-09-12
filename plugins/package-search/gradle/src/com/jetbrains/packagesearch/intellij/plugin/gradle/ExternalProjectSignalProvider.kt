@@ -23,6 +23,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.awaitSmart
 import com.jetbrains.packagesearch.intellij.plugin.util.dumbService
 import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.messageBusFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.trySend
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapMerge
@@ -49,39 +50,39 @@ internal class GradleModuleLinkSignalProvider : FlowModuleChangesSignalProvider 
             project.dumbService.awaitSmart()
             object : GradleSettingsListener {
                 override fun onProjectRenamed(oldName: String, newName: String) {
-                    trySend(Unit)
+                    trySend()
                 }
 
                 override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
-                    trySend(Unit)
+                    trySend()
                 }
 
                 override fun onProjectsUnlinked(linkedProjectPaths: MutableSet<String>) {
-                    trySend(Unit)
+                    trySend()
                 }
 
                 override fun onGradleHomeChange(oldPath: String?, newPath: String?, linkedProjectPath: String) {
-                    trySend(Unit)
+                    trySend()
                 }
 
                 override fun onGradleDistributionTypeChange(currentValue: DistributionType?, linkedProjectPath: String) {
-                    trySend(Unit)
+                    trySend()
                 }
 
                 override fun onServiceDirectoryPathChange(oldPath: String?, newPath: String?) {
-                    trySend(Unit)
+                    trySend()
                 }
 
                 override fun onGradleVmOptionsChange(oldOptions: String?, newOptions: String?) {
-                    trySend(Unit)
+                    trySend()
                 }
 
                 override fun onBuildDelegationChange(delegatedBuild: Boolean, linkedProjectPath: String) {
-                    trySend(Unit)
+                    trySend()
                 }
 
                 override fun onTestRunnerChange(currentTestRunner: TestRunner, linkedProjectPath: String) {
-                    trySend(Unit)
+                    trySend()
                 }
             }
         }

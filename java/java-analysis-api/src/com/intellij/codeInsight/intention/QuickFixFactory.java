@@ -617,4 +617,10 @@ public abstract class QuickFixFactory {
   public abstract @NotNull IntentionAction createConvertAnonymousToInnerAction(@NotNull PsiAnonymousClass anonymousClass);
 
   public abstract @NotNull IntentionAction createSplitSwitchBranchWithSeveralCaseValuesAction();
+
+  /**
+   * @param variable variable to make an effectively final
+   * @return a fix that refactors code to make variable effectively final when possible. Null, if it cannot create such a fix.
+   */
+  public abstract @Nullable IntentionAction createMakeVariableEffectivelyFinalFix(@NotNull PsiVariable variable);
 }

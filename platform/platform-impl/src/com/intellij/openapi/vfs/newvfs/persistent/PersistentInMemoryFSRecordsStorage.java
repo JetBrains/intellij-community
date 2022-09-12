@@ -335,7 +335,7 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
       try (final SeekableByteChannel channel = Files.newByteChannel(storagePath, WRITE, CREATE)) {
         channel.write(records);
       }
-      records.clear();
+      records.clear();  //position <- 0, limit <- capacity
       markNotDirty();
     }
   }

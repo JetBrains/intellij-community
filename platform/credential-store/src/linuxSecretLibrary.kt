@@ -1,13 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
-import com.intellij.jna.DisposableMemory
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.text.nullize
-import com.sun.jna.Library
-import com.sun.jna.Native
-import com.sun.jna.Pointer
-import com.sun.jna.Structure
+import com.sun.jna.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -21,8 +17,8 @@ private const val DBUS_ERROR_SERVICE_UNKNOWN = 2
 private const val SECRET_ERROR_IS_LOCKED = 2
 
 // explicitly create pointer to be explicitly dispose it to avoid sensitive data in the memory
-internal fun stringPointer(data: ByteArray, clearInput: Boolean = false): DisposableMemory {
-  val pointer = DisposableMemory(data.size + 1L)
+internal fun stringPointer(data: ByteArray, clearInput: Boolean = false): Memory {
+  val pointer = Memory(data.size + 1L)
   pointer.write(0, data, 0, data.size)
   pointer.setByte(data.size.toLong(), 0.toByte())
   if (clearInput) {
@@ -49,7 +45,7 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
     }
 
     private fun pingService(): Boolean {
-      var attr: DisposableMemory? = null
+      var attr: Memory? = null
       var dummySchema: Pointer? = null
       try {
         attr = stringPointer("ij-dummy-attribute".toByteArray())
@@ -151,7 +147,7 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
     }
   }
 
-  private fun clearPassword(serviceNamePointer: DisposableMemory, accountName: String?) {
+  private fun clearPassword(serviceNamePointer: Memory, accountName: String?) {
     checkError("secret_password_clear_sync") { errorRef ->
       if (accountName == null) {
         library.secret_password_clear_sync(schema, null, errorRef,

@@ -6,6 +6,8 @@ package com.intellij.openapi.util.registry
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.StandardCharsets
@@ -58,14 +60,26 @@ object EarlyAccessRegistryManager {
         null
     }
 
+  private val LOG get() = Logger.getInstance(EarlyAccessRegistryManager::class.java)
+
   fun getBoolean(key: String): Boolean {
-    val map = lazyMap.value
-    if (!LoadingState.APP_STARTED.isOccurred) {
-      return map.get(key).toBoolean()
+    if (key.isEmpty()) {
+      LOG.error("Empty key")
+      return false
     }
 
-    // use RegistryManager to make sure that Registry is a fully loaded
-    val value = RegistryManager.getInstance().`is`(key)
+    val map = lazyMap.value
+    val registryManager = if (LoadingState.APP_STARTED.isOccurred)
+    // see com.intellij.ide.plugins.PluginDescriptorLoader.loadForCoreEnv
+      ApplicationManager.getApplication().serviceOrNull<RegistryManager>()
+    else
+      null
+    if (registryManager == null) {
+      return java.lang.Boolean.parseBoolean(map.get(key) ?: System.getProperty(key))
+    }
+
+    // use RegistryManager to make sure that Registry is fully loaded
+    val value = registryManager.`is`(key)
     // ensure that even if for some reason key was not early accessed, it is stored for early access on next start-up
     map.putIfAbsent(key, value.toString())
     return value
@@ -76,8 +90,8 @@ object EarlyAccessRegistryManager {
     // Why maybe in a registry but not in our store?
     // Because store file deleted / removed / loaded from ICS or registry value was set before using EarlyAccessedRegistryManager
     val map = map ?: return
+    val registryManager = ApplicationManager.getApplication().serviceIfCreated<RegistryManager>() ?: return
 
-    val registryManager = ApplicationManager.getApplication().getServiceIfCreated(RegistryManager::class.java) ?: return
     try {
       val lines = mutableListOf<String>()
       for (key in map.keys.sorted()) {
@@ -99,7 +113,7 @@ object EarlyAccessRegistryManager {
       }
     }
     catch (e: Throwable) {
-      Logger.getInstance(EarlyAccessRegistryManager::class.java).error("cannot save early access registry", e)
+      LOG.error("cannot save early access registry", e)
     }
   }
 

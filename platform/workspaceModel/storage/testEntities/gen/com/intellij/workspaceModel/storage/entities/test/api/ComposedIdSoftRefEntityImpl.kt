@@ -24,7 +24,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ComposedIdSoftRefEntityImpl : ComposedIdSoftRefEntity, WorkspaceEntityBase() {
+open class ComposedIdSoftRefEntityImpl(val dataSource: ComposedIdSoftRefEntityData) : ComposedIdSoftRefEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -34,15 +34,11 @@ open class ComposedIdSoftRefEntityImpl : ComposedIdSoftRefEntity, WorkspaceEntit
 
   }
 
-  @JvmField
-  var _myName: String? = null
   override val myName: String
-    get() = _myName!!
+    get() = dataSource.myName
 
-  @JvmField
-  var _link: NameId? = null
   override val link: NameId
-    get() = _link!!
+    get() = dataSource.link
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -188,13 +184,13 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
   }
 
   override fun createEntity(snapshot: EntityStorage): ComposedIdSoftRefEntity {
-    val entity = ComposedIdSoftRefEntityImpl()
-    entity._myName = myName
-    entity._link = link
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ComposedIdSoftRefEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {

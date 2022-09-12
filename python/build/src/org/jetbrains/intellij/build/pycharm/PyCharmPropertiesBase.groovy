@@ -8,8 +8,12 @@ import java.nio.file.Path
 
 @CompileStatic
 abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
+  @Override
+  String getBaseFileName() {
+    return "pycharm"
+  }
+
   PyCharmPropertiesBase() {
-    baseFileName = "pycharm"
     reassignAltClickToMultipleCarets = true
     useSplash = true
     productLayout.mainJarName = "pycharm.jar"

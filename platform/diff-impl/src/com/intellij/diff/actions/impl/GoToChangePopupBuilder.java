@@ -124,7 +124,7 @@ public final class GoToChangePopupBuilder {
       }
 
       @Override
-      public PopupStep onChosen(final DiffRequestProducer selectedValue, boolean finalChoice) {
+      public PopupStep<?> onChosen(final DiffRequestProducer selectedValue, boolean finalChoice) {
         return doFinalStep(() -> {
           int index = myChain.getRequests().indexOf(selectedValue);
           myOnSelected.consume(index);

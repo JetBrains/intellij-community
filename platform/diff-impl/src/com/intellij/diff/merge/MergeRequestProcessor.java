@@ -468,6 +468,11 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   private static class MyNextDifferenceAction extends NextDifferenceAction {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
         e.getPresentation().setEnabled(true);
@@ -493,6 +498,11 @@ public abstract class MergeRequestProcessor implements Disposable {
   }
 
   private static class MyPrevDifferenceAction extends PrevDifferenceAction {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {

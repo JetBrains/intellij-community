@@ -27,7 +27,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ModuleGroupPathEntityImpl : ModuleGroupPathEntity, WorkspaceEntityBase() {
+open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) : ModuleGroupPathEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleGroupPathEntity::class.java,
@@ -42,10 +42,8 @@ open class ModuleGroupPathEntityImpl : ModuleGroupPathEntity, WorkspaceEntityBas
   override val module: ModuleEntity
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _path: List<String>? = null
   override val path: List<String>
-    get() = _path!!
+    get() = dataSource.path
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -194,12 +192,13 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): ModuleGroupPathEntity {
-    val entity = ModuleGroupPathEntityImpl()
-    entity._path = path.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ModuleGroupPathEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): ModuleGroupPathEntityData {

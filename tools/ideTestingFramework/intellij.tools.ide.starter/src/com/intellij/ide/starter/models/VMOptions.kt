@@ -229,6 +229,10 @@ data class VMOptions(
   fun withXmx(sizeMb: Int) = this
     .addLine("-Xmx" + sizeMb + "m", "-Xmx")
 
+  fun withClassFileVerification() = this
+    .addLine("-XX:+UnlockDiagnosticVMOptions")
+    .addLine("-XX:+BytecodeVerificationLocal")
+
   fun withG1GC() = this
     .filterKeys { it == "-XX:+UseConcMarkSweepGC" }
     .filterKeys { it == "-XX:+UseG1GC" }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.collaboration.async.DisposingMainScope
+import git4idea.remote.hosting.HostedGitRepositoryConnectionValidator
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.EmptyAction
@@ -13,11 +14,15 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.content.Content
+import com.intellij.util.childScope
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSelectPullRequestForFileAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSwitchRemoteAction
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabControllerImpl
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHRepositoryConnectionManager
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import javax.swing.JPanel
 
@@ -53,7 +58,13 @@ internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   private fun configureContent(project: Project, content: Content) {
-    val controller = GHPRToolWindowTabControllerImpl(project, service(), project.service(), project.service(), project.service(), content)
+    val scope = DisposingMainScope(content)
+    val repositoriesManager = project.service<GHHostedRepositoriesManager>()
+    val accountManager = service<GHAccountManager>()
+    val connectionManager = GHRepositoryConnectionManager(scope, repositoriesManager, accountManager, service(), project.service())
+    val vm = GHPRToolWindowTabViewModel(scope, project, repositoriesManager, accountManager, connectionManager)
+
+    val controller = GHPRToolWindowTabControllerImpl(scope.childScope(), project, vm, content)
     content.putUserData(GHPRToolWindowTabController.KEY, controller)
   }
 

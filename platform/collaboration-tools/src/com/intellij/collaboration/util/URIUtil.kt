@@ -2,6 +2,7 @@
 package com.intellij.collaboration.util
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.util.withScheme
 import java.net.URI
 
 object URIUtil {
@@ -26,5 +27,10 @@ object URIUtil {
     catch (e: Throwable) {
       false
     }
+  }
+
+  fun equalWithoutSchema(first: URI, second: URI) : Boolean {
+    val stubScheme = "stub"
+    return first.withScheme(stubScheme) == second.withScheme(stubScheme)
   }
 }

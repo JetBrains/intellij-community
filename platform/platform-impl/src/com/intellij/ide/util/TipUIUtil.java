@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.TextAccessor;
+import com.intellij.ui.icons.LoadIconParameters;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ResourceUtil;
@@ -229,10 +230,12 @@ public final class TipUIUtil {
       }
       else {
         int flags = USE_SVG | ALLOW_FLOAT_SCALING | USE_CACHE;
-        if (StartupUiUtil.isUnderDarcula()) {
+        boolean isDark = StartupUiUtil.isUnderDarcula();
+        if (isDark) {
           flags |= USE_DARK;
         }
-        image = loadImage(tipsPath + path, Collections.emptyList(), null, loader, flags, ScaleContext.create(), !path.endsWith(".svg"));
+        image = loadImage(tipsPath + path, LoadIconParameters.defaultParameters(isDark),
+                          null, loader, flags, !path.endsWith(".svg"));
       }
 
       if (image != null) {

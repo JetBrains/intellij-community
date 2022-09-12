@@ -1,11 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
-import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -24,14 +25,14 @@ class GithubApiRequestExecutorManager : Disposable {
   }
 
   init {
-    val accountManager = service<GHAccountManager>()
-    accountManager.addListener(this, object : AccountsListener<GithubAccount> {
-      override fun onAccountCredentialsChanged(account: GithubAccount) {
-        val token = accountManager.findCredentials(account)
-        if (token == null) executors.remove(account)
-        else executors[account]?.token = token
+    disposingMainScope().launch {
+      service<GHAccountManager>().accountsState.collect {
+        it.forEach { (account, token) ->
+          if (token == null) executors.remove(account)
+          else executors[account]?.token = token
+        }
       }
-    })
+    }
   }
 
   @RequiresEdt

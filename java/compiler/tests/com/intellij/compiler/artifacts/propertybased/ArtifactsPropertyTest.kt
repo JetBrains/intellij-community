@@ -31,13 +31,12 @@ import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactRootElement
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.CompositePackagingElementEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.PackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import org.junit.Assert.*
-import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -570,8 +569,12 @@ class ArtifactsPropertyTest {
       if (artifacts.isEmpty()) return
 
       val index = env.generateValue(Generator.integers(0, artifacts.lastIndex), null)
+      val newName = selectArtifactName(env, artifacts.map { it.name }) ?: run {
+        env.logMessage("Cannot select name for new artifact via workspace model")
+        return
+      }
+
       val artifact = artifacts[index]
-      val newName = selectArtifactName(env, artifacts.map { it.name })
       val oldName = artifact.name
       env.logMessage("Rename artifact: $oldName -> $newName")
       makeChecksHappy {
@@ -662,7 +665,7 @@ class ArtifactsPropertyTest {
   private fun selectArtifactName(env: ImperativeCommand.Environment, notLike: List<String>): String? {
     var counter = 50
     while (counter > 0) {
-      val name = "Artifact-${env.generateValue(Generator.integers(0, MAX_ARTIFACT_NUMBER), null)}"
+      val name = selectArtifactName(env)
       if (name !in notLike) return name
       counter--
     }

@@ -37,12 +37,12 @@ fun getCompatiblePlatformVersionRange(compatibleBuildRange: CompatibleBuildRange
   return Pair(sinceBuild, untilBuild)
 }
 
-fun patchPluginXml(moduleOutputPatcher: ModuleOutputPatcher,
-                   plugin: PluginLayout,
-                   releaseDate: String,
-                   releaseVersion: String,
-                   pluginsToPublish: Set<PluginLayout?>,
-                   context: BuildContext) {
+internal fun patchPluginXml(moduleOutputPatcher: ModuleOutputPatcher,
+                            plugin: PluginLayout,
+                            releaseDate: String,
+                            releaseVersion: String,
+                            pluginsToPublish: Set<PluginLayout?>,
+                            context: BuildContext) {
   val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
   val pluginXmlFile = moduleOutput.resolve("META-INF/plugin.xml")
   if (Files.notExists(pluginXmlFile)) {

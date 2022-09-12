@@ -235,20 +235,18 @@ public final class JobLauncherImpl extends JobLauncher {
           return false;
         }
         // wait while helping other tasks in the meantime, but not for too long
-        if (!isDone()) {
-          ForkJoinPool.commonPool().awaitQuiescence(Math.min(toWait, 10), TimeUnit.MILLISECONDS);
-        }
         // we are avoiding calling timed myForkJoinTask.get() because it's very expensive when timed out (bc of TimeoutException)
-        if (myForkJoinTask.isDone()) {
-          try {
-            myForkJoinTask.get();
-          }
-          catch (CancellationException e) {
-            // was canceled in the middle of execution
-          }
-          catch (ExecutionException e) {
-            ExceptionUtil.rethrow(e.getCause());
-          }
+        ForkJoinPool.commonPool().awaitQuiescence(Math.min(toWait, 10), TimeUnit.MILLISECONDS);
+      }
+      if (myForkJoinTask.isDone()) {
+        try {
+          myForkJoinTask.get();
+        }
+        catch (CancellationException e) {
+          // was canceled in the middle of execution
+        }
+        catch (ExecutionException e) {
+          ExceptionUtil.rethrow(e.getCause());
         }
       }
       return true;

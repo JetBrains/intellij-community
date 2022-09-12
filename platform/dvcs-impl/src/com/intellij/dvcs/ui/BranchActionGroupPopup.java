@@ -345,9 +345,9 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     return createListPopupStep(parent, step, parentValue);
   }
 
-  private WizardPopup createListPopupStep(WizardPopup parent, PopupStep step, Object parentValue) {
+  private WizardPopup createListPopupStep(WizardPopup parent, PopupStep<?> step, Object parentValue) {
     if (step instanceof ListPopupStep) {
-      return new BranchActionGroupPopup(parent, (ListPopupStep)step, parentValue);
+      return new BranchActionGroupPopup(parent, (ListPopupStep<?>)step, parentValue);
     }
     return super.createPopup(parent, step, parentValue);
   }

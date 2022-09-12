@@ -31,7 +31,7 @@ public class DeprecationInspection extends DeprecationInspectionBase {
     return ApiUsageUastVisitor.createPsiElementVisitor(
       new DeprecatedApiUsageProcessor(holder, IGNORE_INSIDE_DEPRECATED, IGNORE_ABSTRACT_DEPRECATED_OVERRIDES,
                                       IGNORE_IMPORT_STATEMENTS, IGNORE_METHODS_OF_DEPRECATED,
-                                      IGNORE_IN_SAME_OUTERMOST_CLASS, false, null)
+                                      IGNORE_IN_SAME_OUTERMOST_CLASS, false)
     );
   }
 

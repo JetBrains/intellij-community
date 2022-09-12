@@ -3,6 +3,7 @@ package com.intellij.ide.navbar.ide
 
 import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navbar.NavBarItemProvider
@@ -11,15 +12,15 @@ import com.intellij.ide.navbar.ide.ItemSelectType.OPEN_POPUP
 import com.intellij.ide.navbar.impl.ModuleNavBarItem
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.impl.PsiNavBarItem
+import com.intellij.ide.navbar.ui.FloatingModeHelper
 import com.intellij.ide.navbar.ui.NavBarPanel
 import com.intellij.ide.navbar.ui.NavigationBarPopup
 import com.intellij.ide.navbar.ui.PopupEvent
 import com.intellij.ide.navbar.ui.PopupEvent.*
-import com.intellij.ide.ui.UISettings
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.model.Pointer
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
@@ -36,11 +37,12 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
 import com.intellij.ui.HintHint
 import com.intellij.util.flow.throttle
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
@@ -83,34 +85,61 @@ private sealed class ExpandResult {
 
 
 internal class NavigationBar(
-  val myProject: Project,
-  val cs: CoroutineScope,
-  myEventFlow: SharedFlow<Unit>
-) {
+  private val myProject: Project,
+  private val cs: CoroutineScope,
+  dataContext: DataContext? = null
+) : Disposable {
 
   // Flag to block external model changes while user click is being processed
   private val modelChangesAllowed = AtomicBoolean(true)
 
-  private val myItems = MutableStateFlow<List<UiNavBarItem>>(emptyList())
   private val myItemClickEvents = MutableSharedFlow<ItemClickEvent>(replay = 1, onBufferOverflow = DROP_OLDEST)
-  private val myComponent = NavBarPanel(cs, myItems, myItemClickEvents)
+  private lateinit var myComponent: NavBarPanel
+
+  private val myActivityEvents = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = DROP_OLDEST)
+  private val myItems: MutableStateFlow<List<UiNavBarItem>>
 
   init {
+    val initialContext = dataContext ?: runBlocking { getFocusedData() }
 
-    // init nav bar with current project until nothing is selected
-    cs.launch(Dispatchers.Default) {
-      val projectItem = readAction {
-        val item = ProjectNavBarItem(myProject)
-        UiNavBarItem(item.createPointer(), item.presentation(), item.javaClass)
+    val initialModel = runBlocking {
+      val items = readAction {
+        buildModel(initialContext)
       }
-      myItems.emit(listOf(projectItem))
+      items.ifEmpty {
+        readAction {
+          val projectItem = ProjectNavBarItem(myProject)
+          val uiProjectItem = UiNavBarItem(projectItem.createPointer(), projectItem.presentation(), projectItem.javaClass)
+          listOf(uiProjectItem)
+        }
+      }
     }
 
-    // rebuild model on external events
-    cs.launch(Dispatchers.EDT) {
-      myEventFlow
-        .throttle(DEFAULT_UI_RESPONSE_TIMEOUT)
-        .collectLatest { rebuildModel() }
+    myItems = MutableStateFlow(initialModel)
+
+    if (dataContext == null) {
+
+      // Watch the user activities
+      IdeEventQueue.getInstance().addActivityListener(Runnable {
+        myActivityEvents.tryEmit(Unit)
+      }, this)
+
+      cs.launch(Dispatchers.Default) {
+        myActivityEvents
+          .throttle(DEFAULT_UI_RESPONSE_TIMEOUT)
+          .collectLatest {
+            if (modelChangesAllowed.get()) {
+              val focusedData = getFocusedData()
+              val model = readAction {
+                buildModel(focusedData).ifEmpty {
+                  val item = ProjectNavBarItem(myProject)
+                  listOf(UiNavBarItem(item.createPointer(), item.presentation(), item.javaClass))
+                }
+              }
+              myItems.emit(model)
+            }
+          }
+      }
     }
 
     // handle clicks on navigation bar
@@ -119,7 +148,7 @@ internal class NavigationBar(
         when (e.type) {
           OPEN_POPUP -> freezeModelAndInvoke {
             handleItemSelected(e.index)
-            //FloatingModeHelper.hideHint()
+            FloatingModeHelper.hideHint(false)
           }
           NAVIGATE -> navigateTo(myProject, e.item)
         }
@@ -128,28 +157,24 @@ internal class NavigationBar(
 
   }
 
-  fun show(context: DataContext) {
+  override fun dispose() {
+    cs.coroutineContext.cancel()
+  }
+
+  fun focusTail() {
     cs.launch(Dispatchers.Default) {
-      rebuildModel(context)
       val i = (myItems.value.size - 2).coerceAtLeast(0)
       val item = myItems.value[i]
-
-      val settings = UISettings.getInstance()
-      if (!settings.showNavigationBar || settings.presentationMode) {
-        val editor = readAction {
-          CommonDataKeys.EDITOR.getData(context)
-        }
-        //
-        //withContext(Dispatchers.EDT) {
-        //  FloatingModeHelper.showHint(editor, context, myComponent, myProject)
-        //}
-      }
-
       myItemClickEvents.emit(ItemClickEvent(OPEN_POPUP, i, item))
     }
   }
 
-  fun getComponent(): JComponent = myComponent
+
+  fun getPanel(): JComponent {
+    EDT.assertIsEdt()
+    myComponent = NavBarPanel(myItemClickEvents, myItems.asStateFlow(), cs)
+    return myComponent
+  }
 
   private suspend fun childrenPopupPrompt(selectedItemIndex: Int, children: List<UiNavBarItem>): PopupEvent =
     suspendCancellableCoroutine {
@@ -231,9 +256,10 @@ internal class NavigationBar(
         return
       }
 
-      val popupResult = withContext(Dispatchers.EDT) {
-        childrenPopupPrompt(selectedIndex, children)
-      }
+      // Force suspend to render new navbar for proper popup positioning
+      yield()
+
+      val popupResult = childrenPopupPrompt(selectedIndex, children)
 
       when (popupResult) {
         PopupEventCancel -> {
@@ -282,64 +308,8 @@ internal class NavigationBar(
       }
     }
   }
-
-  private suspend fun rebuildModel(ctx: DataContext? = null) {
-    if (!modelChangesAllowed.get()) {
-      return
-    }
-    val c = ctx ?: getFocusedData()
-    val newItems = withContext(Dispatchers.Default) {
-      readAction {
-        buildModel(c)
-      }
-    }
-    if (newItems.isNotEmpty()) {
-      myItems.emit(newItems)
-    }
-  }
-
-  //companion object {
-  //  fun showNavigationBar() {
-  //    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(Runnable {
-  //      @Suppress("DEPRECATION")
-  //      val dataContextFromFocusedComponent = DataManager.getInstance().dataContext
-  //      val uiSnapshot = Utils.wrapToAsyncDataContext(dataContextFromFocusedComponent)
-  //      val asyncDataContext = AnActionEvent.getInjectedDataContext(uiSnapshot)
-  //
-  //      val frame = asyncDataContext.getData(IdeFrame.KEY)
-  //      if (frame is IdeFrameEx) {
-  //        val navBarExt = frame.getNorthExtension(NavBarRootPaneExtension.NAVBAR_WIDGET_KEY)
-  //        if (navBarExt is NavBarRootPaneExtension) {
-  //          navBarExt.show(asyncDataContext)
-  //        }
-  //      }
-  //    }, ModalityState.any())
-  //  }
-  //}
-
 }
 
-
-private suspend fun getFocusedData(): DataContext = suspendCancellableCoroutine {
-  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(Runnable {
-    @Suppress("DEPRECATION")
-    val dataContextFromFocusedComponent = DataManager.getInstance().dataContext
-    val uiSnapshot = Utils.wrapToAsyncDataContext(dataContextFromFocusedComponent)
-    val asyncDataContext = AnActionEvent.getInjectedDataContext(uiSnapshot)
-    it.resume(asyncDataContext)
-  }, ModalityState.any())
-}
-
-private fun buildModel(ctx: DataContext): List<UiNavBarItem> {
-  val result = arrayListOf<UiNavBarItem>()
-  var element = NavBarItem.NAVBAR_ITEM_KEY.getData(ctx)
-  while (element != null) {
-    val p = element.presentation()
-    result.add(UiNavBarItem(element.createPointer(), p, element.javaClass))
-    element = element.findParent()
-  }
-  return (result as List<UiNavBarItem>).asReversed()
-}
 
 private suspend fun navigateTo(project: Project, item: UiNavBarItem) {
   val navigationRequest = withContext(Dispatchers.Default) {
@@ -398,6 +368,28 @@ private fun NavBarItem.iterateAllChildren(): Iterable<NavBarItem> =
   NavBarItemProvider.EP_NAME
     .extensionList
     .flatMap { ext -> ext.iterateChildren(this) }
+
+
+private suspend fun getFocusedData(): DataContext = suspendCancellableCoroutine {
+  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(Runnable {
+    @Suppress("DEPRECATION")
+    val dataContextFromFocusedComponent = DataManager.getInstance().dataContext
+    val uiSnapshot = Utils.wrapToAsyncDataContext(dataContextFromFocusedComponent)
+    val asyncDataContext = AnActionEvent.getInjectedDataContext(uiSnapshot)
+    it.resume(asyncDataContext)
+  }, ModalityState.any())
+}
+
+private fun buildModel(ctx: DataContext): List<UiNavBarItem> {
+  val result = arrayListOf<UiNavBarItem>()
+  var element = NavBarItem.NAVBAR_ITEM_KEY.getData(ctx)
+  while (element != null) {
+    val p = element.presentation()
+    result.add(UiNavBarItem(element.createPointer(), p, element.javaClass))
+    element = element.findParent()
+  }
+  return (result as List<UiNavBarItem>).asReversed()
+}
 
 private fun NavBarItem.findParent(): NavBarItem? =
   NavBarItemProvider.EP_NAME

@@ -20,9 +20,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.IconLoader
+import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.ui.JBColor
 import com.intellij.util.SmartList
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.*
 import com.intellij.util.ui.StartupUiUtil
 import java.io.InputStream
@@ -32,6 +34,7 @@ import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 import kotlin.io.path.pathString
+import kotlin.random.Random
 
 internal class SettingsSyncIdeMediatorImpl(private val componentStore: ComponentStoreImpl,
                                            private val rootConfig: Path,
@@ -61,17 +64,19 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       writeStatesToAppConfig(listOf(settingsSyncFileState))
     }
 
+    if (SystemProperties.getBooleanProperty("settings.sync.test.fail.on.settings.apply", false)) {
+      if (Random.nextBoolean()) {
+        throw IllegalStateException("Applying settings failed")
+      }
+    }
+
     // 2. update plugins
-    val pluginsFileState = snapshot.fileStates.find { it.file == "$OPTIONS_DIRECTORY/${SettingsSyncPluginManager.FILE_SPEC}" }
-    if (pluginsFileState != null) {
-      val pluginManager = SettingsSyncPluginManager.getInstance()
-      writeStatesToAppConfig(listOf(pluginsFileState))
-      pluginManager.updateStateFromFileStateContent(pluginsFileState)
-      pluginManager.pushChangesToIde()
+    if (snapshot.plugins != null) {
+      SettingsSyncPluginManager.getInstance().pushChangesToIde(snapshot.plugins)
     }
 
     // 3. after that update the rest of changed settings
-    val regularFileStates = snapshot.fileStates.filter { it != settingsSyncFileState && it != pluginsFileState }
+    val regularFileStates = snapshot.fileStates.filter { it != settingsSyncFileState }
     writeStatesToAppConfig(regularFileStates)
 
     invokeLater { updateUI() }
@@ -85,12 +90,16 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     componentStore.storageManager.removeStreamProvider(this::class.java)
   }
 
-  override fun collectFilesToExportFromSettings(appConfigPath: Path): () -> Collection<Path> {
-    return {
-      val exportableItems = getExportableComponentsMap(isComputePresentableNames = false, componentStore.storageManager,
-                                                       withExportable = false)
-      getExportableItemsFromLocalStorage(exportableItems, componentStore.storageManager).keys
-    }
+  override fun getInitialSnapshot(appConfigPath: Path): SettingsSnapshot {
+    val exportableItems = getExportableComponentsMap(isComputePresentableNames = false, componentStore.storageManager,
+                                                     withExportable = false)
+    val filesToExport = getExportableItemsFromLocalStorage(exportableItems, componentStore.storageManager).keys
+
+    val fileStates = collectFileStatesFromFiles(filesToExport, appConfigPath)
+    LOG.debug("Collected files for the following fileSpecs: $fileStates")
+    val pluginsState = SettingsSyncPluginManager.getInstance().updateStateFromIde()
+    LOG.debug("Collected following plugin state: $pluginsState")
+    return SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), fileStates, pluginsState)
   }
 
   override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
@@ -106,8 +115,8 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       return
     }
 
-    val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()),
-                                    setOf(FileState.Modified(file, content, size)))
+    val snapshot = SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()),
+                                    setOf(FileState.Modified(file, content, size)), plugins = null)
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
   }
 
@@ -170,8 +179,8 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       deleteOrLogError(file)
     }
     if (deleted) {
-      val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()),
-                                      setOf(FileState.Deleted(adjustedSpec)))
+      val snapshot = SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()),
+                                      setOf(FileState.Deleted(adjustedSpec)), plugins = null)
       SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
     }
     return deleted

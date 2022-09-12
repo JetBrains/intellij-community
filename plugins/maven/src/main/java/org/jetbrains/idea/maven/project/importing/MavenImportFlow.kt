@@ -140,8 +140,8 @@ class MavenImportFlow {
 
   //TODO: Remove this. See StructureImportingTest.testProjectWithMavenConfigCustomUserSettingsXml
   private fun readDoubleUpdateToWorkaroundIssueWhenProjectToBeReadTwice(context: MavenInitialImportContext,
-                        projectsTree: MavenProjectsTree,
-                        indicator: MavenProgressIndicator) {
+                                                                        projectsTree: MavenProjectsTree,
+                                                                        indicator: MavenProgressIndicator) {
     context.generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
     projectsTree.updateAll(true, context.generalSettings, indicator)
   }
@@ -180,7 +180,7 @@ class MavenImportFlow {
     val resolver = MavenProjectResolver(context.projectsTree)
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
-    val resolveContext = ResolveContext()
+    val resolveContext = ResolveContext(context.projectsTree)
     val d = Disposer.newDisposable("MavenImportFlow:resolveDependencies:treeListener")
     Disposer.register(context.initialContext.importDisposable, d)
     val projectsToImport = ArrayList(context.toResolve)
@@ -296,7 +296,7 @@ class MavenImportFlow {
   fun updateProjectManager(context: MavenReadContext) {
     val projectManager = MavenProjectsManager.getInstance(context.project)
     projectManager.projectsTree = context.projectsTree
-    runLegacyListeners(context) { projectImportCompleted() }
+
   }
 
   fun runPostImportTasks(context: MavenImportedContext) {

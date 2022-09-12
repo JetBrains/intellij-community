@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
-open class BaseLayoutSpec(private val layout: BaseLayout) {
+sealed class BaseLayoutSpec(private val layout: BaseLayout) {
   /**
    * Register an additional module to be included into the plugin distribution. Module-level libraries from
    * {@code moduleName} with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
@@ -67,6 +67,10 @@ open class BaseLayoutSpec(private val layout: BaseLayout) {
   */
   fun excludeFromModule(moduleName: String, excludedPattern: String) {
     layout.excludeFromModule(moduleName, excludedPattern)
+  }
+
+  fun excludeFromModule(moduleName: String, excludedPatterns: List<String>) {
+    layout.excludeFromModule(moduleName, excludedPatterns)
   }
 
   /**

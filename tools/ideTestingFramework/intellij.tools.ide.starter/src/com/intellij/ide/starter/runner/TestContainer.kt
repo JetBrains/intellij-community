@@ -75,8 +75,8 @@ interface TestContainer<T> : Closeable {
     val testDirectory = (di.direct.instance<GlobalPaths>().testsDirectory / "${testCase.ideInfo.productCode}-$buildNumber") / testName
 
     val paths = IDEDataPaths.createPaths(testName, testDirectory, testCase.useInMemoryFileSystem)
-    logOutput("Using IDE paths for $testName: $paths")
-    logOutput("IDE to run for $testName: $ide")
+    logOutput("Using IDE paths for '$testName': $paths")
+    logOutput("IDE to run for '$testName': $ide")
 
     val projectHome = testCase.projectInfo?.downloadAndUnpackProject()
     testContext = IDETestContext(paths, ide, testCase, testName, projectHome, patchVMOptions = { this }, ciServer = ciServer)

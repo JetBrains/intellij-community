@@ -15,7 +15,7 @@ UFile (package = )
             UParameter (name = i)
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable)
             UParameter (name = t)
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable)
             UBlockExpression
                 UReturnExpression
                     UArrayAccessExpression

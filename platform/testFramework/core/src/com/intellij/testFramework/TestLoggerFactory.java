@@ -124,6 +124,10 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void dumpLogToStdout(@NotNull String testStartMarker) {
+    dumpLogTo(testStartMarker, System.out);
+  }
+
+  public static void dumpLogTo(@NotNull String testStartMarker, PrintStream out) {
     Path logFile = getTestLogDir().resolve(LOG_FILE_NAME);
     if (Files.exists(logFile)) {
       try {
@@ -142,12 +146,12 @@ public final class TestLoggerFactory implements Logger.Factory {
           logText = Files.readString(logFile);
         }
 
-        System.out.println("\n\nIdea Log:");
+        out.println("\n\nIdea Log:");
         Pattern logStart = Pattern.compile("[\\d\\-, :\\[\\]]+(DEBUG|INFO|ERROR) - ");
         for (String line : StringUtil.splitByLines(logText.substring(Math.max(0, logText.lastIndexOf(testStartMarker))))) {
           Matcher matcher = logStart.matcher(line);
           int lineStart = matcher.lookingAt() ? matcher.end() : 0;
-          System.out.println(line.substring(lineStart));
+          out.println(line.substring(lineStart));
         }
       }
       catch (IOException e) {

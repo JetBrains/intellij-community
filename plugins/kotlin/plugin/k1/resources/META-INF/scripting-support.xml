@@ -14,11 +14,6 @@
             dynamic="true"
             area="IDEA_PROJECT"/>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scripting.support.checker.provider"
-            interface="org.jetbrains.kotlin.idea.script.configuration.ScriptingSupportCheckerProvider"
-            dynamic="true"
-            area="IDEA_PROJECT"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptAdditionalIdeaDependenciesProvider"
             interface="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider"
             area="IDEA_PROJECT"
@@ -161,6 +156,9 @@
 
     <scripting.support.checker.provider id="TeamCityKtsScriptCheckerProvider"
             implementation="org.jetbrains.kotlin.idea.script.TeamCityKtsScriptCheckerProvider"/>
+
+    <scripting.support.checker.provider id="WorkspaceKtsScriptCheckerProvider"
+            implementation="org.jetbrains.kotlin.idea.script.WorkspaceKtsScriptCheckerProvider"/>
 
     <ideScriptConfigurationControlFacade implementation="org.jetbrains.kotlin.idea.script.DefaultIdeScriptingConfigurationFacade"/>
 

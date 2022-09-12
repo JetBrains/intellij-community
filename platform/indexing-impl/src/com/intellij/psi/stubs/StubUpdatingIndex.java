@@ -137,6 +137,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       @NotNull
       @Override
       public String getSubIndexerVersion(@NotNull StubBuilderType type) {
+        mySerializationManager.initSerializers();
         return type.getVersion();
       }
 

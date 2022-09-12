@@ -10,8 +10,8 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.toVirtualFile
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
-import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
@@ -65,11 +65,11 @@ class CompilerModuleExtensionBridge(
   override fun isCompilerOutputPathInherited(): Boolean = javaSettings?.inheritedCompilerOutput ?: true
 
   override fun getCompilerOutputUrl(): String? = getCompilerOutput()?.url
-  override fun getCompilerOutputPath(): VirtualFile? = getCompilerOutput()?.virtualFile
+  override fun getCompilerOutputPath(): VirtualFile? = getCompilerOutput()?.toVirtualFile()
   override fun getCompilerOutputPointer(): VirtualFilePointer? = getCompilerOutput() as? VirtualFilePointer
 
   override fun getCompilerOutputUrlForTests(): String? = getCompilerOutputForTests()?.url
-  override fun getCompilerOutputPathForTests(): VirtualFile? = getCompilerOutputForTests()?.virtualFile
+  override fun getCompilerOutputPathForTests(): VirtualFile? = getCompilerOutputForTests()?.toVirtualFile()
   override fun getCompilerOutputForTestsPointer(): VirtualFilePointer? = getCompilerOutputForTests() as? VirtualFilePointer
 
   override fun getModifiableModel(writable: Boolean): ModuleExtension = throw UnsupportedOperationException()

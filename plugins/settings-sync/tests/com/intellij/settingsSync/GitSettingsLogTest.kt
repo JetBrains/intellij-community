@@ -1,5 +1,7 @@
 package com.intellij.settingsSync
 
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
@@ -180,6 +182,30 @@ internal class GitSettingsLogTest {
     assertEquals("editorContent", String(actualFileState.content))
   }
 
+  @Test
+  fun `plugins state is written to the settings log`() {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = initializeGitSettingsLog(editorXml)
+
+    val id = "com.jetbrains.plugin"
+    val dependencies = setOf("com.intellij.modules.lang")
+    settingsLog.forceWriteToMaster(settingsSnapshot {
+      plugin(id, enabled = true, category = SettingsCategory.UI, dependencies = dependencies)
+    }, "Install plugin")
+
+    val snapshot = settingsLog.collectCurrentSnapshot()
+    assertNotNull(snapshot.plugins)
+    val pluginData = snapshot.plugins!!.plugins[PluginId.getId(id)]
+    assertNotNull(pluginData)
+    assertTrue(pluginData!!.enabled)
+    assertEquals(SettingsCategory.UI, pluginData.category)
+    assertEquals(dependencies, pluginData.dependencies)
+    snapshot.assertSettingsSnapshot {
+      fileState("options/editor.xml", "editorContent")
+    }
+  }
+
   //@Test
   // todo requires a more previse merge conflict strategy implementation
   @Suppress("unused")
@@ -220,7 +246,8 @@ internal class GitSettingsLogTest {
 
   private fun initializeGitSettingsLog(vararg filesToCopyInitially: Path): GitSettingsLog {
     val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
-      filesToCopyInitially.toList()
+      val fileStates = collectFileStatesFromFiles(filesToCopyInitially.toSet(), configDir)
+      SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), null), fileStates, plugins = null)
     }
     settingsLog.initialize()
     settingsLog.logExistingSettings()

@@ -20,11 +20,10 @@ import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-// todo remove 'open' in version 2022.2
 @ApiStatus.Internal
-internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
-                              var spacingConfiguration: SpacingConfiguration,
-                              private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
+internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
+                         var spacingConfiguration: SpacingConfiguration,
+                         private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
 
   val rows: List<RowImpl>
     get() = _rows

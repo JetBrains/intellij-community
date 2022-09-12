@@ -222,8 +222,8 @@ object PlatformModules {
       }
     }
 
-    for (entry in productLayout.moduleExcludes.entrySet()) {
-      layout.moduleExcludes.putValues(entry.key, entry.value)
+    for ((module, patterns) in productLayout.moduleExcludes) {
+      layout.excludeFromModule(module, patterns)
     }
 
     jar(UTIL_RT_JAR, listOf(

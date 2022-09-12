@@ -1,85 +1,93 @@
 package com.intellij.settingsSync.plugins
 
-import com.intellij.configurationStore.jdomSerializer
 import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginStateListener
 import com.intellij.ide.plugins.PluginStateManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.*
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.settingsSync.FileState
-import com.intellij.settingsSync.SettingsSyncSettings
+import com.intellij.settingsSync.*
 import com.intellij.settingsSync.config.BUNDLED_PLUGINS_ID
-import com.intellij.settingsSync.plugins.SettingsSyncPluginManager.Companion.FILE_SPEC
+import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.PluginData
 import org.jetbrains.annotations.TestOnly
+import java.time.Instant
 
-@State(name = "SettingsSyncPlugins", storages = [Storage(FILE_SPEC)])
-internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginManager.SyncPluginsState>, Disposable {
+internal class SettingsSyncPluginManager : Disposable {
 
   private val pluginInstallationStateListener = PluginInstallationStateListener()
   private val pluginEnabledStateListener = PluginEnabledStateListener()
   private val LOCK = Object()
-  private var state = SyncPluginsState()
+
+  internal var state = SettingsSyncPluginsState(emptyMap())
+    private set
+
   private val sessionUninstalledPlugins = HashSet<String>()
 
   init {
     PluginStateManager.addStateListener(pluginInstallationStateListener)
     PluginManagerProxy.getInstance().addDisablePluginListener(pluginEnabledStateListener, this)
-    updateStateFromIde()
   }
 
-  override fun getState(): SyncPluginsState {
-    return state
-  }
-
-  override fun loadState(state: SyncPluginsState) {
-  }
-
-  class SyncPluginsState : BaseState() {
-    var plugins by map<String, PluginData>()
-  }
-
-  class PluginData : BaseState() {
-    var isEnabled by property(true)
-    var dependencies by stringSet()
-    var category by enum(SettingsCategory.PLUGINS)
-  }
-
-  private fun updateStateFromIde() {
+  internal fun updateStateFromIde() : SettingsSyncPluginsState {
     synchronized(LOCK) {
+      val newPlugins = mutableMapOf<PluginId, PluginData>()
       for (plugin in PluginManagerProxy.getInstance().getPlugins()) {
-        val idString = plugin.pluginId.idString
+        val id = plugin.pluginId
         if (shouldSaveState(plugin)) {
-          val pluginData = state.plugins[idString] ?: savePluginState(plugin)
-          pluginData.isEnabled = plugin.isEnabled && !sessionUninstalledPlugins.contains(idString)
-        }
-        else {
-          if (state.plugins.containsKey(idString)) {
-            state.plugins.remove(idString)
-          }
+          newPlugins[id] = getPluginData(plugin)
         }
       }
+
+      val oldPlugins = state.plugins
+      logChangedState(oldPlugins, newPlugins)
+      state = SettingsSyncPluginsState(newPlugins)
+      if (oldPlugins != newPlugins) {
+        firePluginsStateChangeEvent(state)
+      }
+      return state
     }
   }
 
-  private fun savePluginState(descriptor: IdeaPluginDescriptor): PluginData {
-    val pluginData = PluginData()
-    pluginData.category = SettingsSyncPluginCategoryFinder.getPluginCategory(descriptor)
-    for (dependency in descriptor.dependencies) {
-      if (!dependency.isOptional) {
-        pluginData.dependencies.add(dependency.pluginId.idString)
-        pluginData.intIncrementModificationCount()
-      }
+  private fun firePluginsStateChangeEvent(pluginsState: SettingsSyncPluginsState) {
+    val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()), emptySet(), pluginsState)
+    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
+  }
+
+  private fun logChangedState(oldPlugins: Map<PluginId, PluginData>, newPlugins: Map<PluginId, PluginData>) {
+    val pluginsWithEnabledStateChanged = newPlugins.filter { (newKey, newData) ->
+      val oldData = oldPlugins[newKey]
+      oldData != null && oldData.enabled != newData.enabled
     }
-    val idString = descriptor.pluginId.idString
-    state.plugins[idString] = pluginData
-    LOG.info("Updated plugin state: ${idString}, enabled = ${pluginData.isEnabled}")
-    return pluginData
+    val pluginsWithOtherChanges = newPlugins.filter { (newKey, newData) ->
+      val oldData = oldPlugins[newKey]
+      oldData != null && oldData.enabled == newData.enabled
+    }
+    val enabledStateChanges = pluginsWithEnabledStateChanged.map { (id, _) ->
+      "$id: ${enabledOrDisabled(oldPlugins[id]?.enabled)} -> ${enabledOrDisabled(newPlugins[id]?.enabled)}"
+    }
+    LOG.info("""Updated component state by the state of IDE. 
+                Added: ${newPlugins.keys - oldPlugins.keys}
+                Removed: ${oldPlugins.keys - newPlugins.keys}
+                Changed enabled state: $enabledStateChanges
+                ${if (pluginsWithOtherChanges.isNotEmpty()) "Other changes: $pluginsWithOtherChanges" else ""}""".trimIndent())
+  }
+
+  private fun enabledOrDisabled(value: Boolean?) = if (value == null) "null" else if (value) "enabled" else "disabled"
+
+  private fun getPluginData(plugin: IdeaPluginDescriptor, explicitEnabled: Boolean? = null): PluginData {
+    val isEnabled = if (explicitEnabled != null) {
+      explicitEnabled
+    }
+    else {
+      plugin.isEnabled && !sessionUninstalledPlugins.contains(plugin.pluginId.idString)
+    }
+
+    val dependencies = plugin.dependencies.filter { !it.isOptional }.map { it.pluginId.idString }.toSet()
+    return PluginData(isEnabled, SettingsSyncPluginCategoryFinder.getPluginCategory(plugin), dependencies)
   }
 
   /**
@@ -87,66 +95,74 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
    * i.e. disables, enables and installs plugins according to the State.
    * It doesn't uninstall plugins - it only disable it.
    */
-  fun pushChangesToIde() {
-    val pluginManagerProxy = PluginManagerProxy.getInstance()
-    val installer = pluginManagerProxy.createInstaller()
-
+  fun pushChangesToIde(newState: SettingsSyncPluginsState) {
     val pluginsToDisable = mutableSetOf<PluginId>()
     val pluginsToEnable = mutableSetOf<PluginId>()
     val pluginsToInstall = mutableListOf<PluginId>()
 
     synchronized(LOCK) {
-      for ((pluginId, pluginData) in state.plugins) {
-        val plugin = findPlugin(pluginId)
+      val oldPlugins = state.plugins
+      val newPlugins = newState.plugins
+
+      logChangedState(oldPlugins, newPlugins)
+      state = SettingsSyncPluginsState(newPlugins)
+
+      val removedPluginData = oldPlugins.keys - newPlugins.keys
+      for (id in removedPluginData) {
+        // normally, only a bundled plugin which was enabled back (i.e. moved to its default state) can be removed from the state
+        val plugin = PluginManagerProxy.getInstance().findPlugin(id)
+        if (plugin != null && isPluginSyncEnabled(plugin)) {
+          if (plugin.isBundled && !plugin.isEnabled) {
+            pluginsToEnable += plugin.pluginId
+          }
+        }
+      }
+
+      for ((pluginId, pluginData) in newPlugins) {
+        val plugin = PluginManagerProxy.getInstance().findPlugin(pluginId)
         if (plugin != null) {
           if (isPluginSyncEnabled(plugin)) {
-            if (pluginData.isEnabled != isPluginEnabled(plugin.pluginId)) {
-              if (pluginData.isEnabled) {
-                pluginsToEnable += plugin.pluginId
+            val oldData = oldPlugins[pluginId]
+            // if enabled state has changed, or if there were no information about this plugin,
+            // then we enable/disable the plugin according to the new state
+            if (oldData == null || pluginData.enabled != oldData.enabled) {
+              if (pluginData.enabled) {
+                pluginsToEnable += pluginId
               }
               else {
-                pluginsToDisable += plugin.pluginId
+                pluginsToDisable += pluginId
               }
             }
           }
         }
-        else {
-          // we don't know this plugin => it should be installed (unless it is disabled in the state and if installation is possible)
-          if (pluginData.isEnabled &&
-              isPluginSyncEnabled(pluginId, false, pluginData.category) &&
+        else { // we don't know this plugin => it should be installed (unless it is disabled in the state and if installation is possible)
+          if (pluginData.enabled &&
+              isPluginSyncEnabled(pluginId, isBundled = false, pluginData.category) &&
               checkDependencies(pluginId, pluginData)) {
-            pluginsToInstall += PluginId.getId(pluginId)
+            pluginsToInstall += pluginId
+          }
+
+          if (oldPlugins.containsKey(pluginId)) { // this normally shouldn't happen, so let's log
+            LOG.warn("Plugin $pluginId was in the state but not installed")
           }
         }
       }
     }
 
-    runInEdt {
+    val pluginManagerProxy = PluginManagerProxy.getInstance()
+
+    invokeAndWaitIfNeeded {
       LOG.info("Enabling plugins: $pluginsToEnable")
       pluginManagerProxy.enablePlugins(pluginsToEnable)
     }
 
-    runInEdt {
+    invokeAndWaitIfNeeded {
       LOG.info("Disabling plugins: $pluginsToDisable")
       pluginManagerProxy.disablePlugins(pluginsToDisable)
     }
 
     LOG.info("Installing plugins: $pluginsToInstall")
-    installer.installPlugins(pluginsToInstall)
-  }
-
-  internal fun updateStateFromFileStateContent(pluginsFileState: FileState) {
-    val stateFromFile = if (pluginsFileState is FileState.Modified) {
-      val element = JDOMUtil.load(pluginsFileState.content)
-      jdomSerializer.deserialize(element, SyncPluginsState::class.java)
-    }
-    else {
-      SyncPluginsState()
-    }
-
-    synchronized(LOCK) {
-      state = stateFromFile
-    }
+    pluginManagerProxy.createInstaller().installPlugins(pluginsToInstall)
   }
 
   private fun isPluginEnabled(pluginId: PluginId) = !DisabledPluginsState.getDisabledIds().contains(pluginId)
@@ -155,10 +171,10 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
     return PluginId.findId(idString)?.let { PluginManagerProxy.getInstance().findPlugin(it) }
   }
 
-  private fun checkDependencies(idString: String, pluginState: PluginData): Boolean {
+  private fun checkDependencies(id: PluginId, pluginState: PluginData): Boolean {
     for (dependency in pluginState.dependencies) {
       if (findPlugin(dependency) == null) {
-        LOG.info("Skipping ${idString} plugin installation due to missing dependency: ${dependency}")
+        LOG.info("Skipping ${id} plugin installation due to missing dependency: ${dependency}")
         return false
       }
     }
@@ -166,19 +182,18 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
   }
 
   private fun shouldSaveState(plugin: IdeaPluginDescriptor): Boolean {
-    return isPluginSyncEnabled(plugin) &&
-           (!plugin.isBundled || !plugin.isEnabled || state.plugins.containsKey(plugin.pluginId.idString))
+    return isPluginSyncEnabled(plugin) && (!plugin.isBundled || !plugin.isEnabled)
   }
 
   private fun isPluginSyncEnabled(plugin: IdeaPluginDescriptor) =
-    isPluginSyncEnabled(plugin.pluginId.idString, plugin.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(plugin))
+    isPluginSyncEnabled(plugin.pluginId, plugin.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(plugin))
 
-  private fun isPluginSyncEnabled(idString: String, isBundled: Boolean, category: SettingsCategory): Boolean {
+  private fun isPluginSyncEnabled(id: PluginId, isBundled: Boolean, category: SettingsCategory): Boolean {
     val settings = SettingsSyncSettings.getInstance()
     return settings.isCategoryEnabled(category) &&
            (category != SettingsCategory.PLUGINS ||
             isBundled && settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, BUNDLED_PLUGINS_ID) ||
-            settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, idString))
+            settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, id.idString))
   }
 
   override fun dispose() {
@@ -190,66 +205,77 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
 
   private inner class PluginInstallationStateListener : PluginStateListener {
     override fun install(descriptor: IdeaPluginDescriptor) {
-      LOG.info("Installed plugin ${descriptor.pluginId.idString}")
+      val pluginId = descriptor.pluginId
+      LOG.info("Installed plugin ${pluginId.idString}")
       synchronized(LOCK) {
-        sessionUninstalledPlugins.remove(descriptor.pluginId.idString)
+        sessionUninstalledPlugins.remove(pluginId.idString)
         if (shouldSaveState(descriptor)) {
-          savePluginState(descriptor)
+          val oldPlugins = state.plugins
+          val newPlugins = oldPlugins + (pluginId to getPluginData(descriptor))
+          state = SettingsSyncPluginsState(newPlugins)
+          firePluginsStateChangeEvent(state)
         }
       }
     }
 
     override fun uninstall(descriptor: IdeaPluginDescriptor) {
-      val idString = descriptor.pluginId.idString
-      LOG.info("Uninstalled plugin ${idString}")
+      val pluginId = descriptor.pluginId
+      LOG.info("Uninstalled plugin $pluginId")
       synchronized(LOCK) {
-        state.plugins[idString]?.let {
-          it.isEnabled = false
-          LOG.info("${idString} state changed to disabled.")
+        sessionUninstalledPlugins.add(pluginId.idString)
+        if (shouldSaveState(descriptor)) {
+          val oldPlugins = state.plugins
+          val newPlugins = oldPlugins + (pluginId to getPluginData(descriptor))
+          state = SettingsSyncPluginsState(newPlugins)
+          firePluginsStateChangeEvent(state)
         }
-        sessionUninstalledPlugins.add(idString)
       }
     }
   }
 
   private inner class PluginEnabledStateListener : Runnable {
+    // this listener is called when some plugin or plugins change their enabled state
     override fun run() {
+      val oldPlugins = state.plugins
+      val newPlugins = oldPlugins.toMutableMap()
       val disabledIds = PluginManagerProxy.getInstance().getDisabledPluginIds()
-      val disabledIdStrings = HashSet<String>()
       synchronized(LOCK) {
         for (disabledPluginId in disabledIds) {
           LOG.info("Plugin ${disabledPluginId.idString} is disabled.")
-          disabledIdStrings.add(disabledPluginId.idString)
-          if (!state.plugins.containsKey(disabledPluginId.idString)) {
-            PluginManagerProxy.getInstance().findPlugin(disabledPluginId)?.let { descriptor ->
-              if (isPluginSyncEnabled(descriptor)) {
-                savePluginState(descriptor)
-              }
+          if (!newPlugins.containsKey(disabledPluginId)) { // otherwise we'll handle this known plugin below while iterating through oldPlugins
+            val disabledPlugin = PluginManagerProxy.getInstance().findPlugin(disabledPluginId)
+            if (disabledPlugin != null) {
+              newPlugins[disabledPluginId] = getPluginData(disabledPlugin, explicitEnabled = false)
             }
           }
         }
-        val pluginsToRemove = ArrayList<String>()
-        for ((id, pluginData) in state.plugins) {
-          val pluginId = PluginId.getId(id)
-          PluginManagerProxy.getInstance().findPlugin(pluginId)?.let {
-            if (disabledIdStrings.contains(id)) {
-              pluginData.isEnabled = false
-              LOG.info("${pluginId.idString} state changed to disabled")
+
+        for (id in oldPlugins.keys) {
+          val plugin = PluginManagerProxy.getInstance().findPlugin(id)
+          // iterate through all installed plugins and update their state according to the known disabled plugin ids
+          // if plugin is not installed, we don't modify its state:
+          // if it got uninstalled, the separate PluginInstallationStateListener will handle it or already has handled it.
+          if (plugin != null && isPluginSyncEnabled(plugin)) {
+            if (disabledIds.contains(id)) {
+              newPlugins[id] = getPluginData(plugin, explicitEnabled = false)
+              LOG.info("Plugin '$id' changed state to disabled")
             }
             else {
-              if (it.isBundled) {
-                pluginsToRemove.add(id)
+              if (plugin.isBundled) { // enabled bundled plugin is default => don't store in state
+                newPlugins.remove(id)
+                LOG.info("Removed plugin data for '$id'")
               }
               else {
-                pluginData.isEnabled = true
-                LOG.info("${pluginId.idString} state changed to enabled")
+                newPlugins[id] = getPluginData(plugin, explicitEnabled = true)
+                LOG.info("Plugin '$id' changed state to enabled")
               }
             }
           }
         }
-        for (pluginToRemove in pluginsToRemove) {
-          state.plugins.remove(pluginToRemove)
-          LOG.info("Removed plugin data for ${pluginToRemove}")
+
+        state = SettingsSyncPluginsState(newPlugins.toMap())
+        if (oldPlugins != newPlugins) {
+          firePluginsStateChangeEvent(state)
         }
       }
     }
@@ -257,7 +283,6 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
 
   internal companion object {
     fun getInstance(): SettingsSyncPluginManager = ApplicationManager.getApplication().getService(SettingsSyncPluginManager::class.java)
-    const val FILE_SPEC = "settingsSyncPlugins.xml"
     private val LOG = logger<SettingsSyncPluginManager>()
   }
 }

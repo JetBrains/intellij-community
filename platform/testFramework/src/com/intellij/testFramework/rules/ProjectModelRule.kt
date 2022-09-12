@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -48,7 +49,7 @@ open class ProjectModelRule : TestRule {
   lateinit var projectRootDir: Path
   lateinit var filePointerTracker: VirtualFilePointerTracker
 
-  val projectResource = ProjectResource()
+  private val projectResource = ProjectResource()
 
   inner class ProjectResource : ExternalResource() {
     public override fun before() {
@@ -94,22 +95,32 @@ open class ProjectModelRule : TestRule {
 
   private fun generateImlPath(name: String) = projectRootDir.resolve("$name/$name.iml")
 
-  fun createSdk(name: String = "sdk"): Sdk {
-    return ProjectJdkTable.getInstance().createSdk(name, sdkType)
+  fun createSdk(name: String = "sdk", setup: (SdkModificator) -> Unit = {}): Sdk {
+    val sdk = ProjectJdkTable.getInstance().createSdk(name, sdkType)
+    modifySdk(sdk, setup)
+    return sdk
   }
 
-  fun addSdk(sdk: Sdk, setup: (SdkModificator) -> Unit = {}): Sdk {
+  fun modifySdk(sdk: Sdk, setup: (SdkModificator) -> Unit) {
+    val sdkModificator = sdk.sdkModificator
+    try {
+      setup(sdkModificator)
+    }
+    finally {
+      sdkModificator.commitChanges()
+    }
+  }
+
+  fun addSdk(name: String = "sdk", setup: (SdkModificator) -> Unit = {}): Sdk {
+    val sdk = createSdk(name, setup)
+    addSdk(sdk)
+    return sdk
+  }
+  
+  fun addSdk(sdk: Sdk) {
     runWriteActionAndWait {
       ProjectJdkTable.getInstance().addJdk(sdk, disposableRule.disposable)
-      val sdkModificator = sdk.sdkModificator
-      try {
-        setup(sdkModificator)
-      }
-      finally {
-        sdkModificator.commitChanges()
-      }
     }
-    return sdk
   }
 
   fun addProjectLevelLibrary(name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
@@ -133,14 +144,15 @@ open class ProjectModelRule : TestRule {
       libraryModel.commit()
       model.commit()
     }
+    if (libraryTable.tableLevel !in setOf(LibraryTableImplUtil.MODULE_LEVEL, LibraryTablesRegistrar.PROJECT_LEVEL)) {
+      disposeOnTearDown(library)
+    }
     return library
   }
 
   fun addApplicationLevelLibrary(name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
     val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
-    val library = addLibrary(name, libraryTable, setup)
-    disposeOnTearDown(library)
-    return library
+    return addLibrary(name, libraryTable, setup)
   }
 
   private fun disposeOnTearDown(library: LibraryEx) {
@@ -160,8 +172,14 @@ open class ProjectModelRule : TestRule {
   }
 
   fun renameLibrary(library: Library, newName: String) {
-    val model = library.modifiableModel
-    model.name = newName
+    modifyLibrary(library) {
+      it.name = newName
+    }
+  }
+  
+  fun modifyLibrary(library: Library, action: (LibraryEx.ModifiableModelEx) -> Unit) {
+    val model = library.modifiableModel as LibraryEx.ModifiableModelEx
+    action(model)
     runWriteActionAndWait { model.commit() }
   }
 
@@ -194,9 +212,9 @@ open class ProjectModelRule : TestRule {
   }
 
   protected fun tearDown() {
-    baseProjectDir.after()
-    projectResource.after()
     disposableRule.after()
+    projectResource.after()
+    baseProjectDir.after()
   }
 
   val sdkType: SdkTypeId

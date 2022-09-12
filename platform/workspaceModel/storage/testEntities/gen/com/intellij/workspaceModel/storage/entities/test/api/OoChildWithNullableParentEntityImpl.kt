@@ -23,7 +23,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class OoChildWithNullableParentEntityImpl : OoChildWithNullableParentEntity, WorkspaceEntityBase() {
+open class OoChildWithNullableParentEntityImpl(val dataSource: OoChildWithNullableParentEntityData) : OoChildWithNullableParentEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(OoParentEntity::class.java,
@@ -155,11 +155,13 @@ class OoChildWithNullableParentEntityData : WorkspaceEntityData<OoChildWithNulla
   }
 
   override fun createEntity(snapshot: EntityStorage): OoChildWithNullableParentEntity {
-    val entity = OoChildWithNullableParentEntityImpl()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = OoChildWithNullableParentEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

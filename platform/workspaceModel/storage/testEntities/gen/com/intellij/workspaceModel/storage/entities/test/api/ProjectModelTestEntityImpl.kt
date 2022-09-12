@@ -20,7 +20,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ProjectModelTestEntityImpl : ProjectModelTestEntity, WorkspaceEntityBase() {
+open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData) : ProjectModelTestEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -30,15 +30,11 @@ open class ProjectModelTestEntityImpl : ProjectModelTestEntity, WorkspaceEntityB
 
   }
 
-  @JvmField
-  var _info: String? = null
   override val info: String
-    get() = _info!!
+    get() = dataSource.info
 
-  @JvmField
-  var _descriptor: Descriptor? = null
   override val descriptor: Descriptor
-    get() = _descriptor!!
+    get() = dataSource.descriptor
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -147,13 +143,13 @@ class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTestEntity>()
   }
 
   override fun createEntity(snapshot: EntityStorage): ProjectModelTestEntity {
-    val entity = ProjectModelTestEntityImpl()
-    entity._info = info
-    entity._descriptor = descriptor
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ProjectModelTestEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

@@ -3,17 +3,15 @@ package com.intellij.openapi.util;
 
 import com.intellij.ui.icons.IconTransform;
 import com.intellij.ui.icons.ImageDataLoader;
-import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.icons.LoadIconParameters;
 import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.image.ImageFilter;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
 
 @ApiStatus.Internal
 public final class ImageDataByUrlLoader implements ImageDataLoader {
@@ -69,12 +67,12 @@ public final class ImageDataByUrlLoader implements ImageDataLoader {
   }
 
   @Override
-  public @Nullable Image loadImage(@NotNull List<? extends ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
+  public @Nullable Image loadImage(@NotNull LoadIconParameters parameters) {
     int flags = ImageLoader.USE_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
     if (useCacheOnLoad) {
       flags |= ImageLoader.USE_CACHE;
     }
-    if (isDark) {
+    if (parameters.isDark) {
       flags |= ImageLoader.USE_DARK;
     }
 
@@ -86,7 +84,7 @@ public final class ImageDataByUrlLoader implements ImageDataLoader {
       }
       path = url.toString();
     }
-    return ImageLoader.loadImage(path, filters, ownerClass, classLoader, flags, scaleContext, !path.endsWith(".svg"));
+    return ImageLoader.loadImage(path, parameters, ownerClass, classLoader, flags, !path.endsWith(".svg"));
   }
 
   /**

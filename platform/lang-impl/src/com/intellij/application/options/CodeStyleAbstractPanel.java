@@ -246,7 +246,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     });
   }
 
-  private void applySettingsToModel() {
+  protected void applySettingsToModel() {
     if (mySettings instanceof CodeStyleSchemesModel.ModelSettings && ((CodeStyleSchemesModel.ModelSettings)mySettings).isLocked()) return;
     try {
       if (myModel != null && myModel.isUiEventsEnabled()) {

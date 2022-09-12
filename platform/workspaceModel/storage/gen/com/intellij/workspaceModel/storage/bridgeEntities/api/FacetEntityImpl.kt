@@ -27,7 +27,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class FacetEntityImpl : FacetEntity, WorkspaceEntityBase() {
+open class FacetEntityImpl(val dataSource: FacetEntityData) : FacetEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java,
@@ -42,28 +42,20 @@ open class FacetEntityImpl : FacetEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _name: String? = null
   override val name: String
-    get() = _name!!
+    get() = dataSource.name
 
   override val module: ModuleEntity
     get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _facetType: String? = null
   override val facetType: String
-    get() = _facetType!!
+    get() = dataSource.facetType
 
-  @JvmField
-  var _configurationXmlTag: String? = null
   override val configurationXmlTag: String?
-    get() = _configurationXmlTag
+    get() = dataSource.configurationXmlTag
 
-  @JvmField
-  var _moduleId: ModuleId? = null
   override val moduleId: ModuleId
-    get() = _moduleId!!
+    get() = dataSource.moduleId
 
   override val underlyingFacet: FacetEntity?
     get() = snapshot.extractOneToManyParent(UNDERLYINGFACET_CONNECTION_ID, this)
@@ -326,15 +318,13 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
   }
 
   override fun createEntity(snapshot: EntityStorage): FacetEntity {
-    val entity = FacetEntityImpl()
-    entity._name = name
-    entity._facetType = facetType
-    entity._configurationXmlTag = configurationXmlTag
-    entity._moduleId = moduleId
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = FacetEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {

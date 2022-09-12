@@ -71,7 +71,6 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private Pattern myCachedSearchPattern;
   private Pattern myCachedReplacePattern;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
-  private @Nullable MostCommonUsagePatternsComponent myCommonUsagePatternsComponent;
   private @NotNull Set<GroupNode> myPreviousSelectedGroupNodes = new HashSet<>();
   private @Nullable UsagePreviewToolbarWithSimilarUsagesLink myToolbar;
 
@@ -350,19 +349,11 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   public void dispose() {
     isDisposed = true;
     releaseEditor();
-    disposeMostCommonUsageComponent();
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       if (editor.getProject() == myProject && editor.getUserData(PREVIEW_EDITOR_FLAG) == this) {
         LOG.error("Editor was not released:" + editor);
       }
     }
-  }
-
-  private void disposeMostCommonUsageComponent() {
-    if (myCommonUsagePatternsComponent != null) {
-      Disposer.dispose(myCommonUsagePatternsComponent);
-    }
-    myCommonUsagePatternsComponent = null;
   }
 
   void releaseEditor() {
@@ -432,7 +423,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       }
       ClusteringSearchSession session = findClusteringSessionInUsageView(usageView);
       if (session != null) {
-        UsageCluster cluster = session.findCluster(infos);
+        UsageCluster cluster = session.findCluster(ContainerUtil.getFirstItem(infos));
         if (cluster != null && cluster.getUsages().size() > 1) {
           myToolbar = new UsagePreviewToolbarWithSimilarUsagesLink(this, usageView, infos, cluster);
           add(myToolbar, BorderLayout.NORTH);
@@ -446,10 +437,10 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
                                            @NotNull Set<? extends @NotNull GroupNode> selectedGroupNodes, ClusteringSearchSession session) {
     if (!myPreviousSelectedGroupNodes.equals(selectedGroupNodes)) {
       releaseEditor();
-      disposeMostCommonUsageComponent();
       removeAll();
-      myCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl, session);
-      add(myCommonUsagePatternsComponent);
+      MostCommonUsagePatternsComponent mostCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl, session);
+      add(mostCommonUsagePatternsComponent);
+      Disposer.register(this, mostCommonUsagePatternsComponent);
     }
   }
 

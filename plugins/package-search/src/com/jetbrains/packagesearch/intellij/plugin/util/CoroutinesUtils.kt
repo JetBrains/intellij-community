@@ -44,6 +44,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -52,6 +54,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -181,8 +184,9 @@ internal fun <T, R> Flow<T>.mapLatestTimedWithLoading(
 
 internal fun <T> Flow<T>.catchAndLog(context: String, message: String? = null) =
     catch {
-        if (message!= null) { logDebug(context, it) { message } }
-        else logDebug(context, it)
+        if (message != null) {
+            logDebug(context, it) { message }
+        } else logDebug(context, it)
     }
 
 internal suspend inline fun <R> MutableStateFlow<Boolean>.whileLoading(action: () -> R): TimedValue<R> {
@@ -218,10 +222,9 @@ internal suspend fun showBackgroundLoadingBar(
     isSafe: Boolean = true
 ): BackgroundLoadingBarController {
     val syncSignal = Mutex(true)
-    val cancellationRequested = Channel<Unit>()
     val externalScopeJob = coroutineContext.job
     val progressManager = ProgressManager.getInstance()
-
+    val progressController = BackgroundLoadingBarController(syncSignal)
     progressManager.run(object : Task.Backgroundable(project, title, cancellable) {
         override fun run(indicator: ProgressIndicator) {
             if (isSafe && progressManager is ProgressManagerImpl && indicator is UserDataHolder) {
@@ -232,10 +235,7 @@ internal suspend fun showBackgroundLoadingBar(
                 indicator.text = upperMessage // ??? why does it work?
                 val indicatorCancelledPollingJob = launch {
                     while (true) {
-                        if (indicator.isCanceled) {
-                            cancellationRequested.send(Unit)
-                            break
-                        }
+                        if (indicator.isCanceled) break
                         delay(50)
                     }
                 }
@@ -244,16 +244,31 @@ internal suspend fun showBackgroundLoadingBar(
                 }
                 select {
                     internalJob.onJoin { }
-                    externalScopeJob.onJoin { internalJob.cancel() }
+                    externalScopeJob.onJoin {
+                        internalJob.cancel()
+                        indicatorCancelledPollingJob.cancel()
+                    }
+                    indicatorCancelledPollingJob.onJoin {
+                        syncSignal.unlock()
+                        progressController.triggerCallbacks()
+                    }
                 }
                 indicatorCancelledPollingJob.cancel()
             }
         }
     })
-    return BackgroundLoadingBarController(syncSignal)
+    return progressController
 }
 
 internal class BackgroundLoadingBarController(private val syncMutex: Mutex) {
+
+    private val callbacks = mutableSetOf<() -> Unit>()
+
+    fun addOnComputationInterruptedCallback(callback: () -> Unit) {
+        callbacks.add(callback)
+    }
+
+    internal fun triggerCallbacks() = callbacks.forEach { it.invoke() }
 
     fun clear() {
         runCatching { syncMutex.unlock() }
@@ -274,7 +289,7 @@ internal fun AsyncModuleTransformer.asCoroutine() = object : CoroutineModuleTran
 
 internal fun ModuleChangesSignalProvider.asCoroutine() = object : FlowModuleChangesSignalProvider {
     override fun registerModuleChangesListener(project: Project) = callbackFlow {
-        val sub = registerModuleChangesListener(project) { trySend(Unit) }
+        val sub = registerModuleChangesListener(project) { trySend() }
         awaitClose { sub.unsubscribe() }
     }
 }
@@ -340,3 +355,19 @@ internal fun AsyncProjectModuleOperationProvider.asCoroutine() = object : Corout
     override suspend fun listRepositoriesInModule(module: ProjectModule) =
         this@asCoroutine.listRepositoriesInModule(module).await().toList()
 }
+
+fun SendChannel<Unit>.trySend() = trySend(Unit)
+fun ProducerScope<Unit>.trySend() = trySend(Unit)
+
+suspend fun SendChannel<Unit>.send() = send(Unit)
+suspend fun ProducerScope<Unit>.send() = send(Unit)
+
+data class CombineLatest3<A, B, C>(val a: A, val b: B, val c: C)
+
+fun <A, B, C, Z> combineLatest(
+    flowA: Flow<A>,
+    flowB: Flow<B>,
+    flowC: Flow<C>,
+    transform: suspend (CombineLatest3<A, B, C>) -> Z
+) = combine(flowA, flowB, flowC) { a, b, c -> CombineLatest3(a, b, c) }
+    .mapLatest(transform)

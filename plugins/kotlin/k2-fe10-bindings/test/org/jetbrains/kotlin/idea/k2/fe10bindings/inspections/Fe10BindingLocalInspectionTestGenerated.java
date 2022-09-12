@@ -186,9 +186,19 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/convertSubClassWithoutParentheses.kt");
         }
 
-        @TestMetadata("data.kt")
-        public void testData() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/data.kt");
+        @TestMetadata("dataClass17Lv.kt")
+        public void testDataClass17Lv() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/dataClass17Lv.kt");
+        }
+
+        @TestMetadata("dataClass18Lv.kt")
+        public void testDataClass18Lv() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/dataClass18Lv.kt");
+        }
+
+        @TestMetadata("dataObject.kt")
+        public void testDataObject() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/dataObject.kt");
         }
 
         @TestMetadata("enum.kt")

@@ -259,7 +259,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
 
   @NotNull
   @Override
-  public RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(List<WorkspaceEntity> entities) {
+  public RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(@NotNull List<WorkspaceEntity> entities) {
     return new WorkspaceEntitiesRootsChangedRescanningInfo(entities);
   }
 
@@ -274,6 +274,12 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     return true;
   }
 
+  @NotNull
+  @Override
+  public  List<WorkspaceEntity> getEntitiesWithChangedRoots(@NotNull List<? extends RootsChangeRescanningInfo> infos) {
+    return infos.stream().filter(info -> info instanceof WorkspaceEntitiesRootsChangedRescanningInfo).
+      flatMap(info -> ((WorkspaceEntitiesRootsChangedRescanningInfo)info).entities.stream()).collect(Collectors.toList());
+  }
 
   private static class WorkspaceEventRescanningInfo implements RootsChangeRescanningInfo {
     @NotNull

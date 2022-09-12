@@ -2,6 +2,7 @@
 import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 import org.jetbrains.intellij.build.TestingTasks
 import org.jetbrains.intellij.build.impl.createCompilationContext
+import org.jetbrains.intellij.build.impl.createCompilationContextBlocking
 
 /**
  * Compiles the sources and runs tests from 'community' project. Look at [org.jetbrains.intellij.build.TestingOptions] to see which
@@ -16,7 +17,7 @@ object CommunityRunTestsBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-    val context = createCompilationContext(
+    val context = createCompilationContextBlocking(
       communityHome = communityHome,
       projectHome = communityHome.communityRoot,
       defaultOutputRoot = communityHome.communityRoot.resolve("out/tests")

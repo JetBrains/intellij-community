@@ -17,7 +17,6 @@ import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
@@ -49,13 +48,11 @@ class ProjectLibraryTableBridgeImpl(
           .filterIsInstance<EntityChange.Removed<LibraryEntity>>()
         if (changes.isEmpty()) return
 
-        executeOrQueueOnDispatchThread {
-          for (change in changes) {
-            val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
-            LOG.debug { "Fire 'beforeLibraryRemoved' event for ${change.entity.name}, library = $library" }
-            if (library != null) {
-              dispatcher.multicaster.beforeLibraryRemoved(library)
-            }
+        for (change in changes) {
+          val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
+          LOG.debug { "Fire 'beforeLibraryRemoved' event for ${change.entity.name}, library = $library" }
+          if (library != null) {
+            dispatcher.multicaster.beforeLibraryRemoved(library)
           }
         }
       }
@@ -64,53 +61,51 @@ class ProjectLibraryTableBridgeImpl(
         val changes = event.getChanges(LibraryEntity::class.java).filterProjectLibraryChanges()
         if (changes.isEmpty()) return
 
-        executeOrQueueOnDispatchThread {
-          for (change in changes) {
-            LOG.debug { "Process library change $change" }
-            when (change) {
-              is EntityChange.Added -> {
-                val alreadyCreatedLibrary = event.storageAfter.libraryMap.getDataByEntity(change.entity) as LibraryBridgeImpl?
-                val library = if (alreadyCreatedLibrary != null) {
-                  alreadyCreatedLibrary.entityStorage = entityStorage
-                  alreadyCreatedLibrary
-                }
-                else {
-                  var newLibrary: LibraryBridge? = null
-                  WorkspaceModel.getInstance(project).updateProjectModelSilent {
-                    newLibrary = it.mutableLibraryMap.getOrPutDataByEntity(change.entity) {
-                      LibraryBridgeImpl(
-                        libraryTable = this@ProjectLibraryTableBridgeImpl,
-                        project = project,
-                        initialId = change.entity.persistentId,
-                        initialEntityStorage = entityStorage,
-                        targetBuilder = null
-                      )
-                    }
-                  }
-                  newLibrary!!
-                }
-
-                dispatcher.multicaster.afterLibraryAdded(library)
+        for (change in changes) {
+          LOG.debug { "Process library change $change" }
+          when (change) {
+            is EntityChange.Added -> {
+              val alreadyCreatedLibrary = event.storageAfter.libraryMap.getDataByEntity(change.entity) as LibraryBridgeImpl?
+              val library = if (alreadyCreatedLibrary != null) {
+                alreadyCreatedLibrary.entityStorage = entityStorage
+                alreadyCreatedLibrary
               }
-              is EntityChange.Removed -> {
-                val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
+              else {
+                var newLibrary: LibraryBridge? = null
+                WorkspaceModel.getInstance(project).updateProjectModelSilent {
+                  newLibrary = it.mutableLibraryMap.getOrPutDataByEntity(change.entity) {
+                    LibraryBridgeImpl(
+                      libraryTable = this@ProjectLibraryTableBridgeImpl,
+                      project = project,
+                      initialId = change.entity.persistentId,
+                      initialEntityStorage = entityStorage,
+                      targetBuilder = null
+                    )
+                  }
+                }
+                newLibrary!!
+              }
 
+              dispatcher.multicaster.afterLibraryAdded(library)
+            }
+            is EntityChange.Removed -> {
+              val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
+
+              if (library != null) {
+                // TODO There won't be any content in libraryImpl as EntityStore's current was already changed
+                dispatcher.multicaster.afterLibraryRemoved(library)
+                Disposer.dispose(library)
+              }
+            }
+            is EntityChange.Replaced -> {
+              val idBefore = change.oldEntity.persistentId
+              val idAfter = change.newEntity.persistentId
+
+              if (idBefore != idAfter) {
+                val library = event.storageBefore.libraryMap.getDataByEntity(change.oldEntity) as? LibraryBridgeImpl
                 if (library != null) {
-                  // TODO There won't be any content in libraryImpl as EntityStore's current was already changed
-                  dispatcher.multicaster.afterLibraryRemoved(library)
-                  Disposer.dispose(library)
-                }
-              }
-              is EntityChange.Replaced -> {
-                val idBefore = change.oldEntity.persistentId
-                val idAfter = change.newEntity.persistentId
-
-                if (idBefore != idAfter) {
-                  val library = event.storageBefore.libraryMap.getDataByEntity(change.oldEntity) as? LibraryBridgeImpl
-                  if (library != null) {
-                    library.entityId = idAfter
-                    dispatcher.multicaster.afterLibraryRenamed(library, LibraryNameGenerator.getLegacyLibraryName(idBefore))
-                  }
+                  library.entityId = idAfter
+                  dispatcher.multicaster.afterLibraryRenamed(library, LibraryNameGenerator.getLegacyLibraryName(idBefore))
                 }
               }
             }

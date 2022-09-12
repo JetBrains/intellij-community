@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build
 
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.SystemInfoRt
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
@@ -88,7 +89,7 @@ class GradleRunner(
     command.addAll(additionalParams)
     command.addAll(tasks)
     val processBuilder = ProcessBuilder(command).directory(gradleProjectDir.toFile())
-    processBuilder.environment().put("JAVA_HOME", JdkDownloader.getJdkHome(communityRoot).toString())
+    processBuilder.environment().put("JAVA_HOME", JdkDownloader.getJdkHome(communityRoot, Span.current()::addEvent).toString())
     processBuilder.inheritIO()
     return processBuilder.start().waitFor() == 0
   }

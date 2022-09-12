@@ -10,7 +10,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
-import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.impl.toVirtualFile
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
@@ -107,7 +107,7 @@ internal class EmlFileSaver(private val module: ModuleEntity,
 
   private fun saveModuleRelatedRoots(libTag: Element, library: LibraryEntity, type: OrderRootType, tagName: @NonNls String) {
     library.roots.filter { it.type.name == type.name() }.forEach {
-      val file = it.url.virtualFile
+      val file = it.url.toVirtualFile()
       val localFile = if (file?.fileSystem is JarFileSystem) JarFileSystem.getInstance().getVirtualFileForJar(file) else file
       if (localFile != null && pathShortener.isUnderContentRoots(localFile)) {
         libTag.addContent(Element(tagName).setAttribute(IdeaSpecificSettings.PROJECT_RELATED, projectReplacePathMacroMap.substitute(it.url.url, SystemInfo.isFileSystemCaseSensitive)))
@@ -117,7 +117,7 @@ internal class EmlFileSaver(private val module: ModuleEntity,
 
   private fun generateLibName(library: LibraryEntity?): String {
     val firstRoot = library?.roots?.firstOrNull { it.type.name == OrderRootType.CLASSES.name() }?.url
-    val file = firstRoot?.virtualFile
+    val file = firstRoot?.toVirtualFile()
     val fileForJar = JarFileSystem.getInstance().getVirtualFileForJar(file)
     if (fileForJar != null) return fileForJar.name
     return file?.name ?: "Empty Library"
@@ -136,9 +136,9 @@ internal class EmlFileSaver(private val module: ModuleEntity,
                                       .setAttribute(PACKAGE_PREFIX_VALUE_ATTR, packagePrefix))
         }
       }
-      val rootFile = contentRoot.url.virtualFile
+      val rootFile = contentRoot.url.toVirtualFile()
       contentRoot.excludedUrls.forEach { excluded ->
-        val excludedFile = excluded.virtualFile
+        val excludedFile = excluded.toVirtualFile()
         if (rootFile == null || excludedFile == null || VfsUtilCore.isAncestor(rootFile, excludedFile, false)) {
           contentRootTag.addContent(Element(EXCLUDE_FOLDER_TAG).setAttribute(URL_ATTR, excluded.url))
         }

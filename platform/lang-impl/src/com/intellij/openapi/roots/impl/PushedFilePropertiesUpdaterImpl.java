@@ -208,6 +208,13 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       applyScannersToFile(fileOrDir, sessions);
       return true;
     }, IndexableFilesDeduplicateFilter.create());
+    finishVisitors(sessions);
+  }
+
+  public static void finishVisitors(List<IndexableFileScanner.IndexableFileVisitor> sessions) {
+    for (IndexableFileScanner.IndexableFileVisitor session : sessions) {
+      session.visitingFinished();
+    }
   }
 
   private void queueTasks(@NotNull List<? extends Runnable> actions, @NotNull @NonNls String reason) {

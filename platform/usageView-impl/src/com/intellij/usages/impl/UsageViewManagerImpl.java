@@ -197,7 +197,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
             UsageViewStatisticsCollector.logSearchFinished(myProject, targetClass, scope, language,
                                                            count, durationFirstResults, duration, tooManyUsages,
-                                                           CodeNavigateSource.FindToolWindow);
+                                                           CodeNavigateSource.FindToolWindow, usageViewRef.get());
           }
       }
     };

@@ -188,7 +188,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
             return true;
         });
 
-        LibraryEffectiveKindProvider effectiveKindProvider = LibraryEffectiveKindProvider.getInstance(myProject);
+        LibraryEffectiveKindProvider effectiveKindProvider = myProject.getService(LibraryEffectiveKindProvider.class);
 
         assertEquals(RepositoryLibraryType.REPOSITORY_LIBRARY_KIND, jsTest.get().getKind());
         assertEquals(KotlinJavaScriptLibraryKind.INSTANCE, effectiveKindProvider.getEffectiveKind(jsTest.get()));
@@ -342,13 +342,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         try {
             KotlinFacet facet = FacetUtilsKt.getOrCreateFacet(getModule(), modelsProvider, false, null, false);
             TargetPlatform platform = JvmPlatforms.INSTANCE.jvmPlatformByTargetVersion(jvmTarget);
-            FacetUtilsKt.configureFacet(
-                    facet,
-                    IdeKotlinVersion.get("1.4.0"),
-                    platform,
-                    modelsProvider,
-                    emptySet()
-            );
+            FacetUtilsKt.configureFacet(facet, IdeKotlinVersion.get("1.4.0"), platform, modelsProvider);
             assertEquals(platform, facet.getConfiguration().getSettings().getTargetPlatform());
             assertEquals(jvmTarget.getDescription(),
                          ((K2JVMCompilerArguments) facet.getConfiguration().getSettings().getCompilerArguments()).getJvmTarget());

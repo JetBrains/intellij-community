@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.intellij.build.impl.logging.BuildMessageLoggerBase
 
 abstract class BuildMessageLogger {
@@ -50,6 +49,6 @@ class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
   override fun shouldBePrinted(kind: LogMessage.Kind) = kind != LogMessage.Kind.DEBUG
 
   override fun printLine(line: String) {
-    System.out.println(line)
+    println(line)
   }
 }

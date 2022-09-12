@@ -49,10 +49,6 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.hasKotlinFacet
-import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.configureFacet
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
@@ -67,6 +63,8 @@ import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.LANGUAGE_VERSION_DI
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.compiler.configuration.*
+import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.KOTLIN_COMPILER_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.PROJECT_LANGUAGE_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.rethrow
@@ -305,6 +303,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
 }
 
 object CompilerTestDirectives {
+    const val KOTLIN_COMPILER_VERSION_DIRECTIVE = "KOTLIN_COMPILER_VERSION:"
     const val LANGUAGE_VERSION_DIRECTIVE = "LANGUAGE_VERSION:"
     const val PROJECT_LANGUAGE_VERSION_DIRECTIVE = "PROJECT_LANGUAGE_VERSION:"
     const val API_VERSION_DIRECTIVE = "API_VERSION:"
@@ -332,24 +331,32 @@ fun <T> withCustomCompilerOptions(fileText: String, project: Project, module: Mo
 }
 
 private fun configureCompilerOptions(fileText: String, project: Project, module: Module): Boolean {
-    val rawLanguageVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $LANGUAGE_VERSION_DIRECTIVE ")
-    val rawProjectLanguageVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $PROJECT_LANGUAGE_VERSION_DIRECTIVE ")
-    val rawApiVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $API_VERSION_DIRECTIVE ")
     val jvmTarget = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $JVM_TARGET_DIRECTIVE ")
     // We can have several such directives in quickFixMultiFile tests
     // TODO: refactor such tests or add sophisticated check for the directive
     val options = InTextDirectivesUtils.findListWithPrefixes(fileText, "// $COMPILER_ARGUMENTS_DIRECTIVE ").firstOrNull()
 
-    val languageVersion = rawLanguageVersion?.let { LanguageVersion.fromVersionString(rawLanguageVersion) }
-    val projectLanguageVersion = rawProjectLanguageVersion?.let { LanguageVersion.fromVersionString(rawProjectLanguageVersion) }
-    val apiVersion = rawApiVersion?.let { ApiVersion.parse(rawApiVersion) }
+    val compilerVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $KOTLIN_COMPILER_VERSION_DIRECTIVE ")
+        ?.let(IdeKotlinVersion.Companion::opt)
+    val languageVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $LANGUAGE_VERSION_DIRECTIVE ")
+        ?.let { LanguageVersion.fromVersionString(it) }
+    val projectLanguageVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $PROJECT_LANGUAGE_VERSION_DIRECTIVE ")
+        ?.let { LanguageVersion.fromVersionString(it) }
+    val apiVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $API_VERSION_DIRECTIVE ")
+        ?.let { ApiVersion.parse(it) }
 
-    if (languageVersion != null || apiVersion != null || jvmTarget != null || options != null || projectLanguageVersion != null) {
+    if (compilerVersion != null || languageVersion != null || apiVersion != null || jvmTarget != null || options != null ||
+        projectLanguageVersion != null
+    ) {
         configureLanguageAndApiVersion(
-            project, module,
-            languageVersion ?: KotlinPluginLayout.standaloneCompilerVersion.languageVersion,
+            project,
+            module,
+            compilerVersion
+                ?: languageVersion?.let(IdeKotlinVersion.Companion::fromLanguageVersion)
+                ?: KotlinPluginLayout.standaloneCompilerVersion,
+            languageVersion,
             projectLanguageVersion,
-            apiVersion
+            apiVersion,
         )
 
         val facetSettings = KotlinFacet.get(module)!!.configuration.settings
@@ -369,6 +376,7 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
 
             KotlinCompilerSettings.getInstance(project).update { this.additionalArguments = options }
         }
+
         return true
     }
 
@@ -441,13 +449,7 @@ private fun rollbackCompilerOptions(project: Project, module: Module, removeFace
         return
     }
 
-    configureLanguageAndApiVersion(
-        project,
-        module,
-        bundledKotlinVersion.languageVersion,
-        projectLanguageVersion = null,
-        bundledKotlinVersion.apiVersion
-    )
+    configureLanguageAndApiVersion(project, module, bundledKotlinVersion)
 
     val facetSettings = KotlinFacet.get(module)!!.configuration.settings
     (facetSettings.compilerArguments as? K2JVMCompilerArguments)?.jvmTarget = JvmTarget.DEFAULT.description
@@ -467,7 +469,7 @@ fun withCustomLanguageAndApiVersion(
     body: () -> Unit
 ) {
     val removeFacet = !module.hasKotlinFacet()
-    configureLanguageAndApiVersion(project, module, languageVersion, projectLanguageVersion = null, apiVersion)
+    configureLanguageAndApiVersion(project, module, IdeKotlinVersion.fromLanguageVersion(languageVersion), apiVersion = apiVersion)
     try {
         body()
     } finally {
@@ -478,13 +480,7 @@ fun withCustomLanguageAndApiVersion(
                 .update { this.languageVersion = bundledCompilerVersion.languageVersion.versionString }
             module.removeKotlinFacet(ProjectDataManager.getInstance().createModifiableModelsProvider(project), commitModel = true)
         } else {
-            configureLanguageAndApiVersion(
-                project,
-                module,
-                bundledCompilerVersion.languageVersion,
-                projectLanguageVersion = null,
-                bundledCompilerVersion.apiVersion
-            )
+            configureLanguageAndApiVersion(project, module, bundledCompilerVersion)
         }
     }
 }
@@ -492,9 +488,10 @@ fun withCustomLanguageAndApiVersion(
 private fun configureLanguageAndApiVersion(
     project: Project,
     module: Module,
-    languageVersion: LanguageVersion,
-    projectLanguageVersion: LanguageVersion?,
-    apiVersion: ApiVersion?
+    compilerVersion: IdeKotlinVersion,
+    languageVersion: LanguageVersion? = null,
+    projectLanguageVersion: LanguageVersion? = null,
+    apiVersion: ApiVersion? = null,
 ) {
     WriteAction.run<Throwable> {
         val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
@@ -504,12 +501,15 @@ private fun configureLanguageAndApiVersion(
         if (compilerArguments != null) {
             compilerArguments.apiVersion = null
         }
-        facet.configureFacet(IdeKotlinVersion.fromLanguageVersion(languageVersion), null, modelsProvider, emptySet())
+        facet.configureFacet(compilerVersion, null, modelsProvider)
         if (apiVersion != null) {
             facet.configuration.settings.apiLevel = LanguageVersion.fromVersionString(apiVersion.versionString)
         }
+        if (languageVersion != null) {
+            facet.configuration.settings.languageLevel = languageVersion
+        }
         KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
-            this.languageVersion = (projectLanguageVersion ?: languageVersion).versionString
+            this.languageVersion = (projectLanguageVersion ?: languageVersion ?: compilerVersion.languageVersion).versionString
         }
         modelsProvider.commit()
     }
@@ -542,8 +542,8 @@ fun createTextEditorBasedDataContext(
     additionalSteps: SimpleDataContext.Builder.() -> SimpleDataContext.Builder = { this },
 ): DataContext {
     val parentContext = CaretSpecificDataContext.create(EditorUtil.getEditorDataContext(editor), caret)
-    assertEquals(project, parentContext.getData(CommonDataKeys.PROJECT));
-    assertEquals(editor, parentContext.getData(CommonDataKeys.EDITOR));
+    assertEquals(project, parentContext.getData(CommonDataKeys.PROJECT))
+    assertEquals(editor, parentContext.getData(CommonDataKeys.EDITOR))
     return SimpleDataContext.builder()
         .additionalSteps()
         .setParent(parentContext)

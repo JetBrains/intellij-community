@@ -1,6 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("PackageDirectoryMismatch")
-
 package com.intellij.internal.statistic.utils
 
 import com.google.gson.GsonBuilder
@@ -50,13 +48,14 @@ internal class DumpLaunchParametersStarter : ModernApplicationStarter() {
     get() = "dump-launch-parameters"
 
   override fun premain(args: List<String>) {
-    if (args.size < 3 || (args[1] != "-o" && args[1] != "--output")) {
+    val outputIndex = args.indexOfFirst { it == "-o" || it == "--output" } + 1
+    if (outputIndex == 0) {
       System.err.println("Usage: -o/--output /path/to/output/file")
       System.err.println("Current args: ${args.joinToString(" ")}")
       exitProcess(AppExitCodes.STARTUP_EXCEPTION)
     }
 
-    val outputFile = Path.of(args[2])
+    val outputFile = Path.of(args[outputIndex])
     Files.createDirectories(outputFile.parent)
 
     val gson = GsonBuilder().setPrettyPrinting().create()

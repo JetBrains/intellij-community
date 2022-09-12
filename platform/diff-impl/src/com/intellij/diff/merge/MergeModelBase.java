@@ -258,11 +258,11 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
   }
 
   private static final class MyUndoableAction extends BasicUndoableAction {
-    @NotNull private final WeakReference<MergeModelBase> myModelRef;
+    @NotNull private final WeakReference<MergeModelBase<?>> myModelRef;
     @NotNull private final List<? extends State> myStates;
     private final boolean myUndo;
 
-    MyUndoableAction(@NotNull MergeModelBase model, @NotNull List<? extends State> states, boolean undo) {
+    MyUndoableAction(@NotNull MergeModelBase<?> model, @NotNull List<? extends State> states, boolean undo) {
       super(model.myDocument);
       myModelRef = new WeakReference<>(model);
 
@@ -272,13 +272,13 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
 
     @Override
     public void undo() {
-      MergeModelBase model = myModelRef.get();
+      MergeModelBase<?> model = myModelRef.get();
       if (model != null && myUndo) restoreStates(model);
     }
 
     @Override
     public void redo() {
-      MergeModelBase model = myModelRef.get();
+      MergeModelBase<?> model = myModelRef.get();
       if (model != null && !myUndo) restoreStates(model);
     }
 

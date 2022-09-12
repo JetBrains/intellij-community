@@ -8,11 +8,14 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.util.application
 
-open class TransferSettingsPerformImportTask(project: Project, private val performer: ImportPerformer, private var settings: Settings, private val shouldInstallPlugins: Boolean) : Task.Backgroundable(project, "Importing settings", false) {
+open class TransferSettingsPerformImportTask(project: Project,
+                                             private val performer: ImportPerformer,
+                                             private var settings: Settings,
+                                             private val shouldInstallPlugins: Boolean) : Task.Backgroundable(project, "Importing settings",
+                                                                                                              false) {
   override fun run(indicator: ProgressIndicator) {
     indicator.isIndeterminate = true
     indicator.text2 = "Starting up..."
-    Thread.sleep(500)
     val requiredPlugins = performer.collectAllRequiredPlugins(settings)
     indicator.isIndeterminate = false
     indicator.fraction = 0.0
@@ -27,7 +30,6 @@ open class TransferSettingsPerformImportTask(project: Project, private val perfo
     indicator.isIndeterminate = true
     indicator.text2 = "Finishing up..."
     application.invokeAndWait({ performer.performEdt(project, settings) }, indicator.modalityState)
-
 
     indicator.text2 = "Complete"
   }

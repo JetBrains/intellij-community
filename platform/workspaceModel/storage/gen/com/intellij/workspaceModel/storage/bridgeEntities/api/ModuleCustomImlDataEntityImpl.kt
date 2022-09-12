@@ -26,7 +26,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ModuleCustomImlDataEntityImpl : ModuleCustomImlDataEntity, WorkspaceEntityBase() {
+open class ModuleCustomImlDataEntityImpl(val dataSource: ModuleCustomImlDataEntityData) : ModuleCustomImlDataEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleCustomImlDataEntity::class.java,
@@ -41,15 +41,11 @@ open class ModuleCustomImlDataEntityImpl : ModuleCustomImlDataEntity, WorkspaceE
   override val module: ModuleEntity
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _rootManagerTagCustomData: String? = null
   override val rootManagerTagCustomData: String?
-    get() = _rootManagerTagCustomData
+    get() = dataSource.rootManagerTagCustomData
 
-  @JvmField
-  var _customModuleOptions: Map<String, String>? = null
   override val customModuleOptions: Map<String, String>
-    get() = _customModuleOptions!!
+    get() = dataSource.customModuleOptions
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -199,13 +195,13 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
   }
 
   override fun createEntity(snapshot: EntityStorage): ModuleCustomImlDataEntity {
-    val entity = ModuleCustomImlDataEntityImpl()
-    entity._rootManagerTagCustomData = rootManagerTagCustomData
-    entity._customModuleOptions = customModuleOptions
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ModuleCustomImlDataEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

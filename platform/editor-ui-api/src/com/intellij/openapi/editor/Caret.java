@@ -2,9 +2,11 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  * Instances of this interface are supposed to be obtained from {@link CaretModel} instance, and not created explicitly.
  */
+@ApiStatus.NonExtendable
 public interface Caret extends UserDataHolderEx, Disposable {
   /**
    * Returns an instance of Editor, current caret belongs to.
@@ -108,7 +111,7 @@ public interface Caret extends UserDataHolderEx, Disposable {
 
   /**
    * Returns the offset of the caret in the document. Returns 0 for a disposed (invalid) caret.
-   *
+   * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
    * @return the caret offset.
    *
    * @see #isValid()
@@ -128,6 +131,7 @@ public interface Caret extends UserDataHolderEx, Disposable {
   /**
    * Returns the start offset in the document of the selected text range, or the caret
    * position if there is currently no selection.
+   * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
    *
    * @return the selection start offset.
    */
@@ -135,6 +139,7 @@ public interface Caret extends UserDataHolderEx, Disposable {
 
   /**
    * @return    object that encapsulates information about visual position of selected text start if any
+   * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
    */
   @NotNull
   VisualPosition getSelectionStartPosition();
@@ -142,6 +147,7 @@ public interface Caret extends UserDataHolderEx, Disposable {
   /**
    * Returns the end offset in the document of the selected text range, or the caret
    * position if there is currently no selection.
+   * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
    *
    * @return the selection end offset.
    */
@@ -149,12 +155,14 @@ public interface Caret extends UserDataHolderEx, Disposable {
 
   /**
    * @return    object that encapsulates information about visual position of selected text end if any;
+   * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
    */
   @NotNull
   VisualPosition getSelectionEndPosition();
 
   /**
    * Returns the text selected in the editor.
+   * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
    *
    * @return the selected text, or null if there is currently no selection.
    */
@@ -165,6 +173,7 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * Returns the offset from which the user started to extend the selection (the selection start
    * if the selection was extended in forward direction, or the selection end if it was
    * extended backward).
+   * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
    *
    * @return the offset from which the selection was started, or the caret offset if there is
    *         currently no selection.
@@ -173,12 +182,14 @@ public interface Caret extends UserDataHolderEx, Disposable {
 
   /**
    * @return    object that encapsulates information about visual position from which the user started to extend the selection if any
+   * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
    */
   @NotNull
   VisualPosition getLeadSelectionPosition();
 
   /**
    * Checks if a range of text is currently selected.
+   * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
    *
    * @return true if a range of text is selected, false otherwise.
    */
@@ -186,6 +197,7 @@ public interface Caret extends UserDataHolderEx, Disposable {
 
   /**
    * Returns current selection, or empty range at caret offset if no selection exists.
+   * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
    * @see #getSelectionStart()
    * @see #getSelectionEnd()
    */

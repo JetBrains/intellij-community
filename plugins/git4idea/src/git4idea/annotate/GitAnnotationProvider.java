@@ -107,7 +107,6 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
   @Override
   public String getActionName() {
-    //noinspection DialogTitleCapitalization
     return ActionsBundle.message("action.Annotate.with.Blame.text");
   }
 

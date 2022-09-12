@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
@@ -24,10 +25,11 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.DeferredIcon
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.SVGLoader
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
-import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.geom.Area
@@ -66,7 +68,7 @@ private data class RunToolbarData(val project: Project,
 private val runToolbarDataKey = Key.create<RunToolbarData>("run-toolbar-data")
 
 private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
-  override fun getActionUpdateThread(): ActionUpdateThread  = ActionUpdateThread.BGT
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent): Unit = error("Should not be invoked")
 
@@ -85,7 +87,7 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
     }
     e.presentation.isEnabled = false
     val project = e.project ?: return
-    val selectedConfiguration: RunnerAndConfigurationSettings? = RunManager.getInstance(project).selectedConfiguration
+    val selectedConfiguration: RunnerAndConfigurationSettings? = RunManager.getInstanceIfCreated(project)?.selectedConfiguration
     val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { it === selectedConfiguration }
     val someRunning = !runningDescriptors.isEmpty()
     e.presentation.putClientProperty(runToolbarDataKey, RunToolbarData(project, selectedConfiguration, someRunning))
@@ -170,15 +172,10 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     if (icon.iconWidth == 0 || icon.iconHeight == 0) {
       return
     }
-    // TODO: need more magic about icons
-    var targetIcon = icon
-    if (targetIcon is DeferredIcon) {
-      targetIcon = targetIcon.evaluate()
-
-    } else {
-      targetIcon = IconLoader.filterIcon(icon, { UIUtil.GrayFilter(100, 100, 100) }, null)
-    }
-    super.paintIcon(g, actionButton, targetIcon, x, y)
+    val targetIcon = (icon as? DeferredIcon)?.baseIcon ?: icon
+    val patcher = SVGLoader.getStrokePatcher(listOf("#767a8a", "#6c707e", "#ced0d6", "#6e6e6e", "#afb1b3"), backgroundColors = listOf("#ebecf0"),
+                                             resultColor = Color.WHITE)
+    super.paintIcon(g, actionButton, IconLoader.colorPatchedIcon(targetIcon, patcher), x, y)
   }
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
@@ -194,22 +191,25 @@ private abstract class TogglePopupAction : ToggleAction {
               @NlsActions.ActionDescription description: String?,
               icon: Icon?) : super(text, description, icon)
 
-  private var selectedState: Boolean = false
-
   override fun isSelected(e: AnActionEvent): Boolean {
-    return selectedState
+    return Toggleable.isSelected(e.presentation)
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    selectedState = state
-    if (!selectedState) return
+    val presentation = e.presentation
+    Toggleable.setSelected(presentation, state)
+    if (!state) return
     val component = e.inputEvent?.component as? JComponent ?: return
     val actionGroup = getActionGroup(e) ?: return
-    val function = { selectedState = false }
-    val popup = JBPopupFactory.getInstance().createActionGroupPopup(
-      null, actionGroup, e.dataContext, false, false, false, function, 30, null)
+    val disposeCallback = { Toggleable.setSelected(presentation, false) }
+    val popup = createPopup(actionGroup, e, disposeCallback)
     popup.showUnderneathOf(component)
   }
+
+  open fun createPopup(actionGroup: ActionGroup,
+                          e: AnActionEvent,
+                          disposeCallback: () -> Unit) = JBPopupFactory.getInstance().createActionGroupPopup(
+    null, actionGroup, e.dataContext, false, false, false, disposeCallback, 30, null)
 
   abstract fun getActionGroup(e: AnActionEvent): ActionGroup?
 }
@@ -252,8 +252,11 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
 
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
-    return createRunConfigurationsActionGroup(project, addHeader = false)
+    return createRunConfigurationsActionGroup(project, extendableAllConfigurations = true, addHeader = false)
   }
+
+  override fun createPopup(actionGroup: ActionGroup, e: AnActionEvent, disposeCallback: () -> Unit): ListPopup =
+    RunConfigurationsActionGroupPopup(actionGroup, e.dataContext, disposeCallback)
 
   override fun update(e: AnActionEvent) {
     super.update(e)
@@ -283,13 +286,15 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
 private class RunToolbarSeparator(private val isCurrentConfigurationRunning: () -> Boolean) : JComponent() {
   override fun paint(g: Graphics) {
     super.paint(g)
-    g.color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
-    g.drawLine(0, 0, 0, JBUI.scale(TOOLBAR_HEIGHT))
-    g.color = Color.WHITE.addAlpha(0.4)
-    g.drawLine(0, JBUI.scale(5), 0, JBUI.scale(25))
+    val g2 = g.create() as Graphics2D
+    g2.color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
+    g2.fill(Rectangle(size))
+    g2.color = Color.WHITE.addAlpha(0.4)
+    g2.stroke = BasicStroke(JBUIScale.scale(1f));
+    g2.drawLine(0, JBUI.scale(5), 0, JBUI.scale(25))
   }
 
-  override fun getPreferredSize(): Dimension = Dimension(1, JBUI.scale(TOOLBAR_HEIGHT))
+  override fun getPreferredSize(): Dimension = Dimension(JBUI.scale(1), JBUI.scale(TOOLBAR_HEIGHT))
 }
 
 private fun Color.addAlpha(alpha: Double): Color {

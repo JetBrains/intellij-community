@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.negate
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
@@ -37,8 +38,6 @@ import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.OperatorChecks
 import org.jetbrains.kotlin.util.OperatorNameConventions
-
-
 
 fun KtCallExpression.isMethodCall(fqMethodName: String): Boolean {
     val resolvedCall = this.resolveToCall() ?: return false
@@ -89,10 +88,14 @@ fun KtQualifiedExpression.isReceiverExpressionWithValue(): Boolean {
     return analyze().getType(receiver) != null
 }
 
+fun KtExpression.isBooleanExpression(): Boolean {
+    val bindingContext = analyze(BodyResolveMode.PARTIAL)
+    val type = bindingContext.getType(this) ?: return false
+    return KotlinBuiltIns.isBoolean(type)
+}
+
 fun KtExpression.negate(reformat: Boolean = true): KtExpression {
-    val specialNegation = specialNegation(reformat)
-    if (specialNegation != null) return specialNegation
-    return KtPsiFactory(this).createExpressionByPattern("!$0", this, reformat = reformat)
+    return negate(reformat) { it.isBooleanExpression() }
 }
 
 fun KtExpression?.hasResultingIfWithoutElse(): Boolean = when (this) {
@@ -102,78 +105,6 @@ fun KtExpression?.hasResultingIfWithoutElse(): Boolean = when (this) {
     is KtUnaryExpression -> baseExpression.hasResultingIfWithoutElse()
     is KtBlockExpression -> statements.lastOrNull().hasResultingIfWithoutElse()
     else -> false
-}
-
-private fun KtExpression.specialNegation(reformat: Boolean): KtExpression? {
-    val factory = KtPsiFactory(this)
-    when (this) {
-        is KtPrefixExpression -> {
-            if (operationReference.getReferencedName() == "!") {
-                val baseExpression = baseExpression
-                if (baseExpression != null) {
-                    val bindingContext = baseExpression.analyze(BodyResolveMode.PARTIAL)
-                    val type = bindingContext.getType(baseExpression)
-                    if (type != null && KotlinBuiltIns.isBoolean(type)) {
-                        return KtPsiUtil.safeDeparenthesize(baseExpression)
-                    }
-                }
-            }
-        }
-
-        is KtBinaryExpression -> {
-            val operator = operationToken
-            if (operator !in NEGATABLE_OPERATORS) return null
-            val left = left ?: return null
-            val right = right ?: return null
-            return factory.createExpressionByPattern(
-                "$0 $1 $2", left, getNegatedOperatorText(operator), right,
-                reformat = reformat
-            )
-        }
-
-        is KtIsExpression -> {
-            return factory.createExpressionByPattern(
-                "$0 $1 $2",
-                leftHandSide,
-                if (isNegated) "is" else "!is",
-                typeReference ?: return null,
-                reformat = reformat
-            )
-        }
-
-        is KtConstantExpression -> {
-            return when (text) {
-                "true" -> factory.createExpression("false")
-                "false" -> factory.createExpression("true")
-                else -> null
-            }
-        }
-    }
-    return null
-}
-
-private val NEGATABLE_OPERATORS = setOf(
-    KtTokens.EQEQ, KtTokens.EXCLEQ, KtTokens.EQEQEQ,
-    KtTokens.EXCLEQEQEQ, KtTokens.IS_KEYWORD, KtTokens.NOT_IS, KtTokens.IN_KEYWORD,
-    KtTokens.NOT_IN, KtTokens.LT, KtTokens.LTEQ, KtTokens.GT, KtTokens.GTEQ
-)
-
-private fun getNegatedOperatorText(token: IElementType): String {
-    return when (token) {
-        KtTokens.EQEQ -> KtTokens.EXCLEQ.value
-        KtTokens.EXCLEQ -> KtTokens.EQEQ.value
-        KtTokens.EQEQEQ -> KtTokens.EXCLEQEQEQ.value
-        KtTokens.EXCLEQEQEQ -> KtTokens.EQEQEQ.value
-        KtTokens.IS_KEYWORD -> KtTokens.NOT_IS.value
-        KtTokens.NOT_IS -> KtTokens.IS_KEYWORD.value
-        KtTokens.IN_KEYWORD -> KtTokens.NOT_IN.value
-        KtTokens.NOT_IN -> KtTokens.IN_KEYWORD.value
-        KtTokens.LT -> KtTokens.GTEQ.value
-        KtTokens.LTEQ -> KtTokens.GT.value
-        KtTokens.GT -> KtTokens.LTEQ.value
-        KtTokens.GTEQ -> KtTokens.LT.value
-        else -> throw IllegalArgumentException("The token $token does not have a negated equivalent.")
-    }
 }
 
 internal fun KotlinType.isFlexibleRecursive(): Boolean {

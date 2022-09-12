@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.JobLauncher;
@@ -23,6 +24,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -373,7 +375,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     myPassExecutorService.cancelAll(false);
 
     FileStatusMap fileStatusMap = getFileStatusMap();
-    fileStatusMap.allowDirt(canChangeDocument);
+    boolean old = fileStatusMap.allowDirt(canChangeDocument);
     for (int ignoreId : passesToIgnore) {
       fileStatusMap.markFileUpToDate(document, ignoreId);
     }
@@ -383,7 +385,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
     finally {
       DaemonProgressIndicator.setDebug(false);
-      fileStatusMap.allowDirt(true);
+      fileStatusMap.allowDirt(old);
     }
   }
 
@@ -435,7 +437,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         ((HighlightingSessionImpl)session).waitForHighlightInfosApplied();
         EDT.dispatchAllInvocationEvents();
         EDT.dispatchAllInvocationEvents();
-        assert progress.isCanceled() && progress.isDisposed();
+        assert progress.isCanceled();
       }
       catch (Throwable e) {
         Throwable unwrapped = ExceptionUtilRt.unwrapException(e, ExecutionException.class);
@@ -746,6 +748,33 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     return processor.getResult();
   }
 
+  @ApiStatus.Internal
+  public static void waitForUnresolvedReferencesQuickFixesUnderCaret(@NotNull PsiFile file, @NotNull Editor editor) {
+    CaretModel caretModel = editor.getCaretModel();
+    int offset = caretModel.getOffset();
+    Project project = file.getProject();
+    List<HighlightInfo> relevantInfos = new ArrayList<>();
+    Document document = editor.getDocument();
+    int logicalLine = caretModel.getLogicalPosition().line;
+    processHighlights(document, project, null, 0, document.getTextLength(), info -> {
+      if (info.containsOffset(offset, true)) {
+        relevantInfos.add(info);
+        return true;
+      }
+      // since we don't know fix ranges of potentially not-yet-added quick fixes, consider all highlight infos at the same line
+      boolean atTheSameLine = editor.offsetToLogicalPosition(info.getActualStartOffset()).line <= logicalLine && logicalLine <= editor.offsetToLogicalPosition(info.getActualEndOffset()).line;
+      if (atTheSameLine) {
+        relevantInfos.add(info);
+      }
+      return true;
+    });
+    for (HighlightInfo info : relevantInfos) {
+      if (info.isUnresolvedReference()) {
+        UnresolvedReferenceQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(info, file, editor);
+      }
+    }
+  }
+
   static class HighlightByOffsetProcessor implements Processor<HighlightInfo> {
     private final List<HighlightInfo> foundInfoList = new SmartList<>();
     private final boolean highestPriorityOnly;
@@ -1052,7 +1081,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   // return list of document/virtualFile/opened fileEditors for these (with preferred file editor in the head)
   private @NotNull List<FileEditorInfo> createPreferredFileEditorMap(@NotNull Collection<? extends FileEditor> fileEditors,
-                                                            @NotNull Map<? extends FileEditor, ? extends BackgroundEditorHighlighter> highlighters) {
+                                                                     @NotNull Map<? extends FileEditor, ? extends BackgroundEditorHighlighter> highlighters) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<FileEditorInfo> result = new ArrayList<>(fileEditors.size());
     MultiMap<Pair<Document, VirtualFile>, FileEditor> map = ContainerUtil.groupBy(fileEditors, fileEditor -> {

@@ -29,7 +29,7 @@ import org.jetbrains.deft.annotations.Open
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class EntityWithSoftLinksImpl : EntityWithSoftLinks, WorkspaceEntityBase() {
+open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : EntityWithSoftLinks, WorkspaceEntityBase() {
 
   companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(EntityWithSoftLinks::class.java,
@@ -42,70 +42,44 @@ open class EntityWithSoftLinksImpl : EntityWithSoftLinks, WorkspaceEntityBase() 
 
   }
 
-  @JvmField
-  var _link: OnePersistentId? = null
   override val link: OnePersistentId
-    get() = _link!!
+    get() = dataSource.link
 
-  @JvmField
-  var _manyLinks: List<OnePersistentId>? = null
   override val manyLinks: List<OnePersistentId>
-    get() = _manyLinks!!
+    get() = dataSource.manyLinks
 
-  @JvmField
-  var _optionalLink: OnePersistentId? = null
   override val optionalLink: OnePersistentId?
-    get() = _optionalLink
+    get() = dataSource.optionalLink
 
-  @JvmField
-  var _inContainer: Container? = null
   override val inContainer: Container
-    get() = _inContainer!!
+    get() = dataSource.inContainer
 
-  @JvmField
-  var _inOptionalContainer: Container? = null
   override val inOptionalContainer: Container?
-    get() = _inOptionalContainer
+    get() = dataSource.inOptionalContainer
 
-  @JvmField
-  var _inContainerList: List<Container>? = null
   override val inContainerList: List<Container>
-    get() = _inContainerList!!
+    get() = dataSource.inContainerList
 
-  @JvmField
-  var _deepContainer: List<TooDeepContainer>? = null
   override val deepContainer: List<TooDeepContainer>
-    get() = _deepContainer!!
+    get() = dataSource.deepContainer
 
-  @JvmField
-  var _sealedContainer: SealedContainer? = null
   override val sealedContainer: SealedContainer
-    get() = _sealedContainer!!
+    get() = dataSource.sealedContainer
 
-  @JvmField
-  var _listSealedContainer: List<SealedContainer>? = null
   override val listSealedContainer: List<SealedContainer>
-    get() = _listSealedContainer!!
+    get() = dataSource.listSealedContainer
 
-  @JvmField
-  var _justProperty: String? = null
   override val justProperty: String
-    get() = _justProperty!!
+    get() = dataSource.justProperty
 
-  @JvmField
-  var _justNullableProperty: String? = null
   override val justNullableProperty: String?
-    get() = _justNullableProperty
+    get() = dataSource.justNullableProperty
 
-  @JvmField
-  var _justListProperty: List<String>? = null
   override val justListProperty: List<String>
-    get() = _justListProperty!!
+    get() = dataSource.justListProperty
 
-  @JvmField
-  var _deepSealedClass: DeepSealedOne? = null
   override val deepSealedClass: DeepSealedOne
-    get() = _deepSealedClass!!
+    get() = dataSource.deepSealedClass
 
   override val children: List<SoftLinkReferencedChild>
     get() = snapshot.extractOneToManyChildren<SoftLinkReferencedChild>(CHILDREN_CONNECTION_ID, this)!!.toList()
@@ -1072,24 +1046,13 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
   }
 
   override fun createEntity(snapshot: EntityStorage): EntityWithSoftLinks {
-    val entity = EntityWithSoftLinksImpl()
-    entity._link = link
-    entity._manyLinks = manyLinks.toList()
-    entity._optionalLink = optionalLink
-    entity._inContainer = inContainer
-    entity._inOptionalContainer = inOptionalContainer
-    entity._inContainerList = inContainerList.toList()
-    entity._deepContainer = deepContainer.toList()
-    entity._sealedContainer = sealedContainer
-    entity._listSealedContainer = listSealedContainer.toList()
-    entity._justProperty = justProperty
-    entity._justNullableProperty = justNullableProperty
-    entity._justListProperty = justListProperty.toList()
-    entity._deepSealedClass = deepSealedClass
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = EntityWithSoftLinksImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): EntityWithSoftLinksData {

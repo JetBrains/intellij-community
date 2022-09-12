@@ -241,7 +241,14 @@ object CommunityRepositoryModules {
     simplePlugin("intellij.vcs.github"),
     simplePlugin("intellij.java.i18n"),
     simplePlugin("intellij.java.debugger.streams"),
-    simplePlugin("intellij.sh"),
+    plugin("intellij.sh") { spec ->
+      spec.withModules(listOf(
+        "intellij.sh.core",
+        "intellij.sh.terminal",
+        "intellij.sh.copyright",
+        "intellij.sh.markdown")
+      )
+    },
     plugin("intellij.featuresTrainer") { spec ->
       spec.withProjectLibrary("assertJ")
       spec.withProjectLibrary("assertj-swing")

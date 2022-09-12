@@ -49,6 +49,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
 import java.util.*
 import java.util.function.Function
 import javax.swing.JComponent
@@ -155,7 +156,8 @@ class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(proje
   private inner class MyRootChangeListener : WorkspaceModelChangeListener {
     override fun changed(event: VersionedStorageChange) {
       // listen content roots, source roots, excluded roots
-      if (event.getChanges(ContentRootEntity::class.java).isNotEmpty()) {
+      if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() ||
+          event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
         updateNotificationState()
       }
     }

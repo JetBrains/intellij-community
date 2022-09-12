@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("BlockingMethodInNonBlockingContext")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.useWithScope
@@ -90,7 +92,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
       }
       else {
         // TODO: Add snap for aarch64
-        context.messages.info("Skipping building Snap packages for non-x64 arch")
+        Span.current().addEvent("skip building Snap packages for non-x64 arch")
       }
 
       if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
@@ -324,20 +326,15 @@ private fun makeFileExecutable(file: Path) {
   Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rwxr-xr-x"))
 }
 
-fun copyFileSymlinkAware(source: Path, target: Path, vararg options: CopyOption) {
-  val parent = target.parent
-  if (parent != null) {
-    Files.createDirectories(parent)
-  }
-
-  val optionsList = options.toMutableList()
+fun copyFileSymlinkAware(source: Path, target: Path) {
+  target.parent?.let { Files.createDirectories(it) }
   if (Files.isSymbolicLink(source)) {
-    // Append 'NOFOLLOW_LINKS' copy option to be able to copy symbolic links.
-    if (!optionsList.contains(LinkOption.NOFOLLOW_LINKS)) {
-      optionsList.add(LinkOption.NOFOLLOW_LINKS)
-    }
+    // append 'NOFOLLOW_LINKS' copy option to be able to copy symbolic links
+    Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING, LinkOption.NOFOLLOW_LINKS)
   }
-  Files.copy(source, target, *optionsList.toTypedArray())
+  else {
+    Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING, LinkOption.NOFOLLOW_LINKS)
+  }
 }
 
 

@@ -107,7 +107,7 @@ internal class IntentionsMetadataService {
       }
       unique[key] = metadata
     }
-    return allIntentions
+    return unique.values.toList()
   }
 
   @Synchronized

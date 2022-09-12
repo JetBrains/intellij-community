@@ -13,6 +13,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtStatementExpression
 
 class KotlinUsageSimilarityFeaturesProvider : UsageSimilarityFeaturesProvider {
@@ -40,7 +41,9 @@ class KotlinUsageSimilarityFeaturesProvider : UsageSimilarityFeaturesProvider {
         return PsiTreeUtil.findFirstParent(
             element,
             false,
-            Condition { e: PsiElement? -> e is KtStatementExpression || e?.parent is KtBlockExpression },
+            Condition { e: PsiElement? ->
+                e is KtStatementExpression || e?.parent is KtBlockExpression || e is KtImportDirective
+            },
         )
     }
 }

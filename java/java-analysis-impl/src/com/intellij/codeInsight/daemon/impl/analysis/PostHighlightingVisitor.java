@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.UnusedImportProvider;
+import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -26,6 +23,7 @@ import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -48,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -70,29 +69,33 @@ class PostHighlightingVisitor {
 
   private void optimizeImportsOnTheFlyLater(@NotNull ProgressIndicator progress) {
     if ((myHasRedundantImports || myHasMisSortedImports) && !progress.isCanceled()) {
-      // schedule optimise action at the time of session disposal, which is after all applyInformation() calls
-      Disposable invokeFixLater = () -> {
-        // later because should invoke when highlighting is finished
-        AppUIExecutor.onUiThread().later().withDocumentsCommitted(myProject).execute(() -> {
-          if (!myFile.isValid() || !myFile.isWritable()) return;
-          IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true);
-          if (optimizeImportsFix.isAvailable(myProject, null, myFile)) {
-            optimizeImportsFix.invoke(myProject, null, myFile);
-          }
-        });
-      };
-      try {
-        Disposer.register((DaemonProgressIndicator)progress, invokeFixLater);
-      }
-      catch (Exception ignored) {
-        // suppress "parent already has been disposed" exception here
-      }
-      if (progress.isCanceled()) {
-        Disposer.dispose(invokeFixLater);
-        Disposer.dispose((DaemonProgressIndicator)progress);
-        progress.checkCanceled();
-      }
+      scheduleOptimizeOnDaemonFinished();
     }
+  }
+
+  private void scheduleOptimizeOnDaemonFinished() {
+    Disposable daemonDisposable = Disposer.newDisposable();
+    // schedule optimise action after all applyInformation() calls
+    myProject.getMessageBus().connect(daemonDisposable)
+      .subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+        @Override
+        public void daemonFinished(@NotNull Collection<? extends FileEditor> incomingFileEditors) {
+          Disposer.dispose(daemonDisposable);
+          if (((DaemonCodeAnalyzerEx)DaemonCodeAnalyzer.getInstance(myProject)).isErrorAnalyzingFinished(myFile)) {
+            // later because should invoke when highlighting is finished (OptimizeImportsFix relies on that)
+            AppUIExecutor.onUiThread().later().withDocumentsCommitted(myProject).execute(() -> {
+              if (!myFile.isValid() || !myFile.isWritable()) return;
+              IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true);
+              if (optimizeImportsFix.isAvailable(myProject, null, myFile)) {
+                optimizeImportsFix.invoke(myProject, null, myFile);
+              }
+            });
+          }
+          else {
+            scheduleOptimizeOnDaemonFinished();
+          }
+        }
+      });
   }
 
   PostHighlightingVisitor(@NotNull PsiFile file,

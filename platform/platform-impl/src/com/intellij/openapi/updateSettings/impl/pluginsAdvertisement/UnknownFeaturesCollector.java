@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -21,7 +22,7 @@ public final class UnknownFeaturesCollector implements PersistentStateComponent<
   private static final @NonNls String FEATURE_ID = "featureType";
   private static final @NonNls String IMPLEMENTATION_NAME = "implementationName";
 
-  private final Set<UnknownFeature> myUnknownFeatures = new HashSet<>();
+  private final Set<UnknownFeature> myUnknownFeatures = ContainerUtil.newConcurrentSet();
   private final Set<UnknownFeature> myIgnoredUnknownFeatures = new HashSet<>();
 
   public static @NotNull UnknownFeaturesCollector getInstance(@NotNull Project project) {

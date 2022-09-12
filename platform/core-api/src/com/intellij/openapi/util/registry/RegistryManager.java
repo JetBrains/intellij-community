@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface RegistryManager {
+
   @Topic.AppLevel
   @ApiStatus.Experimental
   @ApiStatus.Internal
@@ -26,6 +27,5 @@ public interface RegistryManager {
 
   int intValue(@NotNull String key, int defaultValue);
 
-  @NotNull
-  RegistryValue get(@NotNull String key);
+  @NotNull RegistryValue get(@NotNull String key);
 }

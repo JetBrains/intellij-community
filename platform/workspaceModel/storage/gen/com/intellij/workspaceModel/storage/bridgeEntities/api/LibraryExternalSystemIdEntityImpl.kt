@@ -25,7 +25,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class LibraryExternalSystemIdEntityImpl : LibraryExternalSystemIdEntity, WorkspaceEntityBase() {
+open class LibraryExternalSystemIdEntityImpl(val dataSource: LibraryExternalSystemIdEntityData) : LibraryExternalSystemIdEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java,
@@ -38,10 +38,8 @@ open class LibraryExternalSystemIdEntityImpl : LibraryExternalSystemIdEntity, Wo
 
   }
 
-  @JvmField
-  var _externalSystemId: String? = null
   override val externalSystemId: String
-    get() = _externalSystemId!!
+    get() = dataSource.externalSystemId
 
   override val library: LibraryEntity
     get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!
@@ -184,12 +182,13 @@ class LibraryExternalSystemIdEntityData : WorkspaceEntityData<LibraryExternalSys
   }
 
   override fun createEntity(snapshot: EntityStorage): LibraryExternalSystemIdEntity {
-    val entity = LibraryExternalSystemIdEntityImpl()
-    entity._externalSystemId = externalSystemId
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = LibraryExternalSystemIdEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

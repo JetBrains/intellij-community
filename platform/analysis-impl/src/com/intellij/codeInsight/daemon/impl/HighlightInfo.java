@@ -32,11 +32,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
 
@@ -60,12 +62,17 @@ public class HighlightInfo implements Segment {
   private static final byte AFTER_END_OF_LINE_MASK = 0x4;
   private static final byte FILE_LEVEL_ANNOTATION_MASK = 0x8;
   private static final byte NEEDS_UPDATE_ON_TYPING_MASK = 0x10;
+  /** true if this HighlightInfo was created as an error for some unresolved reference, so there likely will be some "Import" quickfixes after {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider} being asked about em */
+  private static final byte UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK = 0x20;
+
   // this HighlightInfo was created during visiting PsiElement 'element' with element.getTextRange() = TextRange(startOffset+visitingRangeDeltaStartOffset, endOffset+visitingRangeDeltaEndOffset)
   private int visitingRangeDeltaStartOffset;
   private int visitingRangeDeltaEndOffset;
 
-  @MagicConstant(intValues = {HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK})
-  private @interface FlagConstant { }
+  @MagicConstant(intValues = {HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK,
+    UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK})
+  private @interface FlagConstant {
+  }
 
   public final TextAttributes forcedTextAttributes;
   public final TextAttributesKey forcedTextAttributesKey;
@@ -140,6 +147,10 @@ public class HighlightInfo implements Segment {
   volatile RangeHighlighterEx highlighter; // modified in EDT only
   @Nullable
   PsiElement psiElement;
+  /**
+   * in case this HighlightInfo is created to highlight unresolved reference, store this reference here to be able to call {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider} later
+   */
+  PsiReference unresolvedReference;
 
   @ApiStatus.Internal
   protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
@@ -1099,6 +1110,12 @@ public class HighlightInfo implements Segment {
     if (action instanceof HintAction) {
       setHint(true);
     }
+    RangeHighlighterEx myHighlighter = highlighter;
+    if (myHighlighter != null) {
+      // highlighter already has been created, we need to update quickFixActionMarkers
+      updateQuickFixFields(myHighlighter.getDocument(), new Long2ObjectOpenHashMap<>(),
+                           TextRangeScalarUtil.toScalarRange(myHighlighter.getStartOffset(), myHighlighter.getEndOffset()));
+    }
   }
 
   public void unregisterQuickFix(@NotNull Condition<? super IntentionAction> condition) {
@@ -1165,5 +1182,22 @@ public class HighlightInfo implements Segment {
     else {
       fixMarker = getOrCreate(document, ranges2markersCache, fixRange);
     }
+  }
+
+  @ApiStatus.Internal
+  public void setUnresolvedReference(@NotNull PsiReference reference) {
+    unresolvedReference = reference;
+  }
+
+  @ApiStatus.Internal
+  boolean isUnresolvedReference() {
+    return unresolvedReference != null || type.getAttributesKey().equals(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
+  }
+
+  boolean isUnresolvedReferenceQuickFixesComputed() {
+    return isFlagSet(UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK);
+  }
+  void setUnresolvedReferenceQuickFixesComputed() {
+    setFlag(UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK, true);
   }
 }

@@ -20,34 +20,44 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun KtExpression.isLambdaReturnValueHintsApplicable(allowOneLiner: Boolean = false): Boolean {
-    if (this is KtWhenExpression || this is KtBlockExpression) {
+    //if (allowOneLiner && this.isOneLiner()) {
+    //    val literalWithBody = this is KtBlockExpression && isFunctionalLiteralWithBody()
+    //    return literalWithBody
+    //}
+
+    if (this is KtWhenExpression) {
         return false
     }
 
-    if (!allowOneLiner) {
-        if (this is KtIfExpression && !this.isOneLiner()) {
-            return false
+    if (this is KtBlockExpression) {
+        if (allowOneLiner && this.isOneLiner()) {
+            return isFunctionalLiteralWithBody()
         }
+        return false
+    }
 
-        if (this.getParentOfType<KtIfExpression>(true)?.isOneLiner() == true) {
-            return false
-        }
+    if (this is KtIfExpression && !this.isOneLiner()) {
+        return false
+    }
+
+    if (this.getParentOfType<KtIfExpression>(true)?.isOneLiner() == true) {
+        return false
     }
 
     if (!KtPsiUtil.isStatement(this)) {
-        if (!allowOneLiner && !allowLabelOnExpressionPart(this)) {
+        if (!allowLabelOnExpressionPart(this)) {
             return false
         }
     } else if (forceLabelOnExpressionPart(this)) {
         return false
     }
+    return isFunctionalLiteralWithBody()
+}
+
+private fun KtExpression.isFunctionalLiteralWithBody(): Boolean {
     val functionLiteral = this.getParentOfType<KtFunctionLiteral>(true)
     val body = functionLiteral?.bodyExpression ?: return false
-    if (body.statements.size == 1 && body.statements[0] == this) {
-        return false
-    }
-
-    return true
+    return !(body.statements.size == 1 && body.statements[0] == this)
 }
 
 fun provideLambdaReturnValueHints(expression: KtExpression): InlayInfoDetails? {

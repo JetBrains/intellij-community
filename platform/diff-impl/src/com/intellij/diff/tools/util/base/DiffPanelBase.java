@@ -47,6 +47,7 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
 
   @NotNull protected final CardLayout myCardLayout;
 
+  @SuppressWarnings("NotNullFieldNotInitialized") // field initialized in concrete constructors
   @NotNull protected String myCurrentCard;
 
   public DiffPanelBase(@Nullable Project project,

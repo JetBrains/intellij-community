@@ -12,11 +12,11 @@ internal fun createCommunityBuildContext(
   communityHome: BuildDependenciesCommunityRoot,
   options: BuildOptions = BuildOptions(),
   projectHome: Path = communityHome.communityRoot,
-): BuildContextImpl {
-  return BuildContextImpl.createContext(communityHome = communityHome,
-                                        projectHome = projectHome,
-                                        productProperties = IdeaCommunityProperties(communityHome),
-                                        options = options)
+): BuildContext {
+  return BuildContextImpl.createContextBlocking(communityHome = communityHome,
+                                                projectHome = projectHome,
+                                                productProperties = IdeaCommunityProperties(communityHome),
+                                                options = options)
 }
 
 open class IdeaCommunityProperties(private val communityHome: BuildDependenciesCommunityRoot) : BaseIdeaProperties() {
@@ -34,8 +34,10 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
     )
   }
 
+  override val baseFileName: String
+    get() = "idea"
+
   init {
-    baseFileName = "idea"
     platformPrefix = "Idea"
     applicationInfoModule = "intellij.idea.community.resources"
     additionalIDEPropertiesFilePaths = persistentListOf(communityHome.communityRoot.resolve("build/conf/ideaCE.properties"))

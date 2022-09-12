@@ -238,6 +238,8 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
       }
     }
 
+    NotebookGutterLineMarkerManager().putHighlighters(editor)
+
     for ((_, controller) in allMatchingInlays) {
       Disposer.dispose(controller.inlay, false)
     }
@@ -322,7 +324,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
           textAttributesForHighlighter(),
           HighlighterTargetArea.LINES_IN_RANGE
         )
-        highlighter.customRenderer = NotebookCellHighlighterRenderer
+          highlighter.customRenderer = NotebookCellHighlighterRenderer
       }
     }
   }

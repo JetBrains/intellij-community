@@ -20,7 +20,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SampleEntity2Impl : SampleEntity2, WorkspaceEntityBase() {
+open class SampleEntity2Impl(val dataSource: SampleEntity2Data) : SampleEntity2, WorkspaceEntityBase() {
 
   companion object {
 
@@ -30,16 +30,12 @@ open class SampleEntity2Impl : SampleEntity2, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
-  override var boolData: Boolean = false
-  @JvmField
-  var _optionalData: String? = null
+  override val boolData: Boolean get() = dataSource.boolData
   override val optionalData: String?
-    get() = _optionalData
+    get() = dataSource.optionalData
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -154,14 +150,13 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): SampleEntity2 {
-    val entity = SampleEntity2Impl()
-    entity._data = data
-    entity.boolData = boolData
-    entity._optionalData = optionalData
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SampleEntity2Impl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

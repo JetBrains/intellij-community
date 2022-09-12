@@ -273,11 +273,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/redundantSamConstructor/inspectionData/inspections.test");
         }
 
-        @TestMetadata("redundantSemicolon/inspectionData/inspections.test")
-        public void testRedundantSemicolon_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/redundantSemicolon/inspectionData/inspections.test");
-        }
-
         @TestMetadata("redundantSuspendModifier/inspectionData/inspections.test")
         public void testRedundantSuspendModifier_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/redundantSuspendModifier/inspectionData/inspections.test");
@@ -341,16 +336,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("suspiciousEqualsCombination/inspectionData/inspections.test")
         public void testSuspiciousEqualsCombination_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/suspiciousEqualsCombination/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("trailingCommaOff/inspectionData/inspections.test")
-        public void testTrailingCommaOff_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/trailingCommaOff/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("trailingCommaOn/inspectionData/inspections.test")
-        public void testTrailingCommaOn_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/trailingCommaOn/inspectionData/inspections.test");
         }
 
         @TestMetadata("twoSetOfTypeparameters/inspectionData/inspections.test")

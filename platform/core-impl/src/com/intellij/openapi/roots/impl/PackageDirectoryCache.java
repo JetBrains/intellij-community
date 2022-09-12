@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.SmartList;
@@ -53,16 +54,16 @@ public class PackageDirectoryCache {
     return info == null ? Collections.emptyList() : Collections.unmodifiableList(info.myPackageDirectories);
   }
 
-  private @Nullable PackageInfo getPackageInfo(final @NotNull String packageName) {
+  private @Nullable PackageInfo getPackageInfo(@NotNull String packageName) {
     PackageInfo info = myDirectoriesByPackageNameCache.get(packageName);
     if (info == null && !myNonExistentPackages.contains(packageName)) {
-      if (packageName.length() > Registry.intValue("java.max.package.name.length") || StringUtil.containsAnyChar(packageName, ";[/")) {
+      if (packageName.length() > Registry.intValue("java.max.package.name.length", 100) || Strings.containsAnyChar(packageName, ";[/")) {
         return null;
       }
 
       List<VirtualFile> result = new SmartList<>();
 
-      if (StringUtil.isNotEmpty(packageName) && !StringUtil.startsWithChar(packageName, '.')) {
+      if (Strings.isNotEmpty(packageName) && !StringUtil.startsWithChar(packageName, '.')) {
         int i = packageName.lastIndexOf('.');
         while (true) {
           PackageInfo parentInfo = getPackageInfo(i > 0 ? packageName.substring(0, i) : "");

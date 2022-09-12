@@ -1,4 +1,4 @@
-// "Fix all 'Constant conditions & exceptions' problems in file" "true"
+// "Fix all 'Constant values' problems in file" "true"
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -11,7 +11,7 @@ public class MethodReferenceConstantValue {
   }
 
   public void test(Optional<String> opt) {
-    X x = MethodReferenceConstantValue::strangeMethod;
+    X x = (methodReferenceConstantValue, s1) -> false;
     Boolean aBoolean = opt.map(s -> false)
       .map(o1 -> true)
       .map(o -> false)

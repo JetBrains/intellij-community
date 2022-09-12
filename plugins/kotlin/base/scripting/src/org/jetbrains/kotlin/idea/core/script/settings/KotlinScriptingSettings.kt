@@ -27,6 +27,8 @@ class KotlinScriptingSettings(private val project: Project) : PersistentStateCom
 
     var showSupportWarning = true
 
+    var decideOnRemainingInSourceRootLater = false
+
     private var scriptDefinitions = linkedMapOf<KotlinScriptDefinitionKey, KotlinScriptDefinitionValue>()
 
     override fun getState(): Element {

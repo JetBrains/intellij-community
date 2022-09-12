@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
@@ -18,6 +17,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.io.write
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
@@ -26,7 +26,8 @@ import java.util.concurrent.TimeoutException
 abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
   @JvmField
   protected var manager: FileEditorManagerImpl? = null
-  protected @JvmField var initialContainers = 0
+  @JvmField
+  protected var initialContainers = 0
 
   @Throws(Exception::class)
   public override fun setUp() {
@@ -78,7 +79,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
     map.addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, testDataPath)
     map.substitute(rootElement, true, true)
     manager!!.loadState(rootElement)
-    val future = ApplicationManager.getApplication().executeOnPooledThread { manager!!.mainSplitters.openFiles() }
+    val future = manager!!.mainSplitters.openFilesAsync().asCompletableFuture()
     while (true) {
       try {
         future.get(100, TimeUnit.MILLISECONDS)

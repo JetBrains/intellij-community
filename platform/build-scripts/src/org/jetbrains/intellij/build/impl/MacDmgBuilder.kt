@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("BlockingMethodInNonBlockingContext")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.useWithScope
@@ -8,18 +10,22 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
+import org.apache.commons.compress.archivers.zip.Zip64Mode
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
+import org.apache.commons.compress.archivers.zip.ZipFile
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.runProcess
-import org.jetbrains.intellij.build.tasks.prepareMacZip
-import org.jetbrains.intellij.build.tasks.signMacApp
+import org.jetbrains.intellij.build.io.writeNewFile
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.TimeUnit
+import java.util.zip.Deflater
 import kotlin.io.path.exists
 
 internal val BuildContext.publishSitArchive: Boolean
@@ -214,3 +220,28 @@ private fun buildDmgLocally(tempDir: Path, targetFileName: String, customizer: M
   runProcess(args = listOf("./makedmg.sh", targetFileName, context.fullBuildNumber, dmgFile.toString()), workingDir = tempDir)
   context.notifyArtifactBuilt(dmgFile)
 }
+
+// our zip for JARs, but here we need to support file permissions - that's why apache compress is used
+private fun prepareMacZip(macZip: Path,
+                          sitFile: Path,
+                          productJson: String,
+                          zipRoot: String) {
+  Files.newByteChannel(macZip, StandardOpenOption.READ).use { sourceFileChannel ->
+    ZipFile(sourceFileChannel).use { zipFile ->
+      writeNewFile(sitFile) { targetFileChannel ->
+        NoDuplicateZipArchiveOutputStream(targetFileChannel).use { out ->
+          // file is used only for transfer to mac builder
+          out.setLevel(Deflater.BEST_SPEED)
+          out.setUseZip64(Zip64Mode.Never)
+
+          // exclude existing product-info.json as a custom one will be added
+          val productJsonZipPath = "$zipRoot/Resources/product-info.json"
+          zipFile.copyRawEntries(out, ZipArchiveEntryPredicate { it.name != productJsonZipPath })
+
+          out.entry(productJsonZipPath, productJson.encodeToByteArray())
+        }
+      }
+    }
+  }
+}
+

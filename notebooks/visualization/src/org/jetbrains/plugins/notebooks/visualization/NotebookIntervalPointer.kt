@@ -6,54 +6,32 @@ import com.intellij.util.EventDispatcher
 import java.util.*
 
 /**
- * Pointer becomes invalid when code cell is removed
- * Invalid pointer returns null
+ * Pointer becomes invalid when code cell is removed.
+ * It may become valid again when action is undone or redone.
+ * Invalid pointer returns null.
  */
 interface NotebookIntervalPointer {
+  /** should be called in read-action */
   fun get(): NotebookCellLines.Interval?
 }
 
 private val key = Key.create<NotebookIntervalPointerFactory>(NotebookIntervalPointerFactory::class.java.name)
 
 interface NotebookIntervalPointerFactory {
-  /** interval should be valid, return pointer to it */
+  /**
+   * Interval should be valid, return pointer to it.
+   * Should be called in read-action.
+   */
   fun create(interval: NotebookCellLines.Interval): NotebookIntervalPointer
 
   /**
-   * if action changes document, hints applied instantly at document change
-   * if doesn't - hints applied after action
-   * hint should contain pointers created by this factory
+   * Can be called only inside write-action.
+   * Undo and redo will be added automatically.
    */
-  fun <T> modifyingPointers(changes: Iterable<Change>, modifyDocumentAction: () -> T): T
-
-  fun invalidateCell(cell: NotebookCellLines.Interval) {
-    modifyingPointers(listOf(Invalidate(create(cell)))) {}
-  }
-
-  fun swapCells(swapped: List<Swap>) {
-    modifyingPointers(swapped) {}
-  }
+  fun modifyPointers(changes: Iterable<Change>)
 
   interface ChangeListener : EventListener {
-    fun onUpdated(event: NotebookIntervalPointersEvent) {
-      for(change in event.changes) {
-        when (change) {
-          is NotebookIntervalPointersEvent.OnEdited -> onEdited(change.ordinal)
-          is NotebookIntervalPointersEvent.OnInserted -> onInserted(change.ordinals)
-          is NotebookIntervalPointersEvent.OnRemoved -> onRemoved(change.ordinals)
-          is NotebookIntervalPointersEvent.OnSwapped -> onSwapped(change.firstOrdinal, change.secondOrdinal)
-        }
-      }
-    }
-
-    fun onInserted(ordinals: IntRange)
-
-    fun onEdited(ordinal: Int)
-
-    fun onRemoved(ordinals: IntRange)
-
-    /** [firstOrdinal] and [secondOrdinal] are never equal */
-    fun onSwapped(firstOrdinal: Int, secondOrdinal: Int)
+    fun onUpdated(event: NotebookIntervalPointersEvent)
   }
 
   val changeListeners: EventDispatcher<ChangeListener>
@@ -74,29 +52,9 @@ interface NotebookIntervalPointerFactory {
 
   sealed interface Change
 
-  /** invalidate pointer, create new pointer for interval if necessary */
-  data class Invalidate(val ptr: NotebookIntervalPointer) : Change
+  /** invalidate pointer to interval, create new pointer */
+  data class Invalidate(val interval: NotebookCellLines.Interval) : Change
 
   /** swap two pointers */
   data class Swap(val firstOrdinal: Int, val secondOrdinal: Int) : Change
 }
-
-fun <T> NotebookIntervalPointerFactory?.invalidatingCell(cell: NotebookCellLines.Interval, action: () -> T): T =
-  if (this == null) {
-    action()
-  }
-  else {
-    modifyingPointers(listOf(NotebookIntervalPointerFactory.Invalidate(create(cell)))) {
-      action()
-    }
-  }
-
-fun <T> NotebookIntervalPointerFactory?.swappingCells(swapedCells: List<NotebookIntervalPointerFactory.Swap>, action: () -> T): T =
-  if (this == null) {
-    action()
-  }
-  else {
-    modifyingPointers(swapedCells) {
-      action()
-    }
-  }

@@ -1,0 +1,4 @@
+// LANGUAGE_VERSION: 1.8
+data object<caret> Foo {
+    fun readResolve(): Any = Foo
+}

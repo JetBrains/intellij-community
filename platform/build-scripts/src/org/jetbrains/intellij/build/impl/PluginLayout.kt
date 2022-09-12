@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext", "ReplacePutWithAssignment", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.util.containers.MultiMap
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.BuildContext
@@ -19,10 +21,13 @@ import java.util.function.*
 /**
  * Describes layout of a plugin in the product distribution
  */
-class PluginLayout(val mainModule: String): BaseLayout() {
-  private var mainJarName = "${convertModuleNameToFileName(mainModule)}.jar"
+class PluginLayout private constructor(val mainModule: String, mainJarNameWithoutExtension: String): BaseLayout() {
+  constructor(mainModule: String) : this(mainModule, convertModuleNameToFileName(mainModule))
 
-  lateinit var directoryName: String
+  private var mainJarName = "$mainJarNameWithoutExtension.jar"
+
+  var directoryName: String = mainJarNameWithoutExtension
+    private set
 
   var versionEvaluator: VersionEvaluator = object : VersionEvaluator {
     override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext) = ideBuildVersion
@@ -30,8 +35,8 @@ class PluginLayout(val mainModule: String): BaseLayout() {
 
   var pluginXmlPatcher: (String, BuildContext) -> String = { s, _ -> s }
   var directoryNameSetExplicitly: Boolean = false
-  @JvmField
-  internal var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
+  var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
+    internal set
   var pathsToScramble: PersistentList<String> = persistentListOf()
   val scrambleClasspathPlugins: MutableList<Pair<String /*plugin name*/, String /*relative path*/>> = mutableListOf()
   var scrambleClasspathFilter: BiPredicate<BuildContext, Path> = BiPredicate { _, _ -> true }
@@ -44,7 +49,7 @@ class PluginLayout(val mainModule: String): BaseLayout() {
   var retainProductDescriptorForBundledPlugin = false
 
   internal val resourceGenerators: MutableList<BiFunction<Path, BuildContext, Path?>> = mutableListOf()
-  internal val patchers: MutableList<BiConsumer<ModuleOutputPatcher, BuildContext>> = mutableListOf()
+  internal var patchers: PersistentList<suspend (ModuleOutputPatcher, BuildContext) -> Unit> = persistentListOf()
 
   fun getMainJarName() = mainJarName
 
@@ -76,27 +81,28 @@ class PluginLayout(val mainModule: String): BaseLayout() {
       if (!layout.includedModuleNames.contains(mainModuleName)) {
         layout.withModule(mainModuleName, layout.mainJarName)
       }
-      if (spec.mainJarNameSetExplicitly) {
-        layout.explicitlySetJarPaths.add(layout.mainJarName)
-      }
-      else {
-        layout.explicitlySetJarPaths.remove(layout.mainJarName)
-      }
       layout.directoryNameSetExplicitly = spec.directoryNameSetExplicitly
       layout.bundlingRestrictions = spec.bundlingRestrictions.build()
       return layout
     }
 
-    @JvmStatic
-    fun simplePlugin(mainModuleName: String): PluginLayout {
-      if (mainModuleName.isEmpty()) {
-        error("mainModuleName must be not empty")
-      }
+    fun plugin(modules: List<String>, builder: Consumer<PluginLayoutBuilder>): PluginLayout {
+      val layout = plugin(modules)
+      builder.accept(PluginLayoutSpec(layout))
+      return layout
+    }
 
-      val layout = PluginLayout(mainModuleName)
-      layout.directoryName = convertModuleNameToFileName(layout.mainModule)
-      layout.withModuleImpl(mainModuleName, layout.mainJarName)
-      layout.bundlingRestrictions = PluginBundlingRestrictions.NONE
+    @JvmStatic
+    fun plugin(modules: List<String>): PluginLayout {
+      val layout = PluginLayout(mainModule = modules.first())
+      layout.setModules(modules)
+      return layout
+    }
+
+    @JvmStatic
+    fun simplePlugin(mainModule: String): PluginLayout {
+      val layout = PluginLayout(mainModule)
+      layout.setModules(listOf(mainModule))
       return layout
     }
   }
@@ -113,43 +119,29 @@ class PluginLayout(val mainModule: String): BaseLayout() {
     }
   }
 
-  fun withGeneratedResources(generator: BiConsumer<Path, BuildContext>) {
+  private fun withGeneratedResources(generator: BiConsumer<Path, BuildContext>) {
     resourceGenerators.add(BiFunction<Path, BuildContext, Path?> { targetDir, context ->
-          generator.accept(targetDir, context)
-          null
-        })
-  }
-
-  fun mergeServiceFiles() {
-    patchers.add(BiConsumer { patcher, context ->
-      val discoveredServiceFiles: MultiMap<String, Pair<String, Path>> = MultiMap.createLinkedSet()
-
-      for (moduleName in jarToModules.get(mainJarName)!!) {
-        val path = context.findFileInModuleSources(moduleName, "META-INF/services") ?: continue
-        Files.list(path).use { stream ->
-          stream
-            .filter { Files.isRegularFile(it) }
-            .forEach { serviceFile: Path ->
-              discoveredServiceFiles.putValue(serviceFile.fileName.toString(), Pair(moduleName, serviceFile))
-            }
-        }
-      }
-
-      for ((serviceFileName, serviceFiles) in discoveredServiceFiles.entrySet()) {
-        if (serviceFiles.size <= 1) {
-          continue
-        }
-
-        val content = serviceFiles.joinToString("\n") { Files.readString(it.second) }
-        context.messages.info("Merging service file $serviceFileName (${serviceFiles.joinToString(", ") { it.first }})")
-        patcher.patchModuleOutput(moduleName = serviceFiles.first().first, // first one wins
-                                  path = "META-INF/services/$serviceFileName",
-                                  content = content)
-      }
+      generator.accept(targetDir, context)
+      null
     })
   }
 
-  class PluginLayoutSpec(private val layout: PluginLayout): BaseLayoutSpec(layout) {
+  open class PluginLayoutBuilder(@JvmField protected val layout: PluginLayout) : BaseLayoutSpec(layout) {
+    /**
+     * @param resourcePath path to resource file or directory relative to the plugin's main module content root
+     * @param relativeOutputPath target path relative to the plugin root directory
+     */
+    fun withResource(resourcePath: String, relativeOutputPath: String) {
+      layout.withResourceFromModule(layout.mainModule, resourcePath, relativeOutputPath)
+    }
+
+    fun withGeneratedResources(generator: BiConsumer<Path, BuildContext>) {
+      layout.withGeneratedResources(generator)
+    }
+  }
+
+  // as a builder for PluginLayout, that ideally should be immutable
+  class PluginLayoutSpec(layout: PluginLayout): PluginLayoutBuilder(layout) {
     var directoryName: String = convertModuleNameToFileName(layout.mainModule)
       /**
        * Custom name of the directory (under 'plugins' directory) where the plugin should be placed. By default, the main module name is used
@@ -161,8 +153,6 @@ class PluginLayout(val mainModule: String): BaseLayout() {
         directoryNameSetExplicitly = true
       }
 
-    var mainJarNameSetExplicitly: Boolean = false
-      private set
     var directoryNameSetExplicitly: Boolean = false
       private set
 
@@ -205,7 +195,6 @@ class PluginLayout(val mainModule: String): BaseLayout() {
        */
       set(value) {
         layout.mainJarName = value
-        mainJarNameSetExplicitly = true
       }
 
     /**
@@ -233,22 +222,11 @@ class PluginLayout(val mainModule: String): BaseLayout() {
     }
 
     /**
-     * @param resourcePath path to resource file or directory relative to the plugin's main module content root
-     * @param relativeOutputPath target path relative to the plugin root directory
-     */
-    fun withResource(resourcePath: String, relativeOutputPath: String) {
-      withResourceFromModule(layout.mainModule, resourcePath, relativeOutputPath)
-    }
-
-    /**
      * @param resourcePath path to resource file or directory relative to {@code moduleName} module content root
      * @param relativeOutputPath target path relative to the plugin root directory
      */
     fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
-      layout.resourcePaths = layout.resourcePaths.add(ModuleResourceData(moduleName = moduleName,
-                                                                         resourcePath = resourcePath,
-                                                                         relativeOutputPath = relativeOutputPath,
-                                                                         packToZip = false))
+      layout.withResourceFromModule(moduleName, resourcePath, relativeOutputPath)
     }
 
     /**
@@ -271,11 +249,7 @@ class PluginLayout(val mainModule: String): BaseLayout() {
     }
 
     fun withPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext>) {
-      layout.patchers.add(patcher)
-    }
-
-    fun withGeneratedResources(generator: BiConsumer<Path, BuildContext>) {
-      layout.withGeneratedResources(generator)
+      layout.patchers = layout.patchers.add(patcher::accept)
     }
 
     /**
@@ -367,11 +341,59 @@ class PluginLayout(val mainModule: String): BaseLayout() {
      * By default, the first service file silently wins.
      */
     fun mergeServiceFiles() {
-      layout.mergeServiceFiles()
+      withPatch { patcher, context ->
+        val discoveredServiceFiles = LinkedHashMap<String, LinkedHashSet<Pair<String, Path>>>()
+
+        for (moduleName in layout.jarToModules.get(layout.mainJarName)!!) {
+          val path = context.findFileInModuleSources(moduleName, "META-INF/services") ?: continue
+          Files.list(path).use { stream ->
+            stream
+              .filter { Files.isRegularFile(it) }
+              .forEach { serviceFile ->
+                discoveredServiceFiles.computeIfAbsent(serviceFile.fileName.toString()) { LinkedHashSet() }
+                  .add(Pair(moduleName, serviceFile))
+              }
+          }
+        }
+
+        for ((serviceFileName, serviceFiles) in discoveredServiceFiles) {
+          if (serviceFiles.size <= 1) {
+            continue
+          }
+
+          val content = serviceFiles.joinToString(separator = "\n") { Files.readString(it.second) }
+          Span.current().addEvent("merge service file)", Attributes.of(
+            AttributeKey.stringKey("serviceFile"), serviceFileName,
+            AttributeKey.stringArrayKey("serviceFiles"), serviceFiles.map { it.first },
+          ))
+          patcher.patchModuleOutput(moduleName = serviceFiles.first().first, // first one wins
+                                    path = "META-INF/services/$serviceFileName",
+                                    content = content)
+        }
+      }
     }
   }
 
   interface VersionEvaluator {
     fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String
+  }
+
+  internal fun setModules(modules: List<String>) {
+    check(moduleNameToJarPath.isEmpty())
+    check(_jarToModules.isEmpty())
+
+    for (module in modules) {
+      check(!module.isEmpty()) {
+        "module name must be not empty"
+      }
+
+      if (module.endsWith(".jps") || module.endsWith(".rt")) {
+        // must be in a separate JAR
+        withModuleImpl(module, "${convertModuleNameToFileName(module)}.jar")
+      }
+      else {
+        withModuleImpl(module, mainJarName)
+      }
+    }
   }
 }

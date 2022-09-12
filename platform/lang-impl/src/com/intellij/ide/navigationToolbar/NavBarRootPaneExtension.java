@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarCentralWidget;
@@ -53,8 +52,6 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   private Boolean myNavToolbarGroupExist;
   private JScrollPane myScrollPane;
 
-  private NavBarService myNavBarService;
-
   public NavBarRootPaneExtension(@NotNull Project project) {
     myProject = project;
 
@@ -63,10 +60,6 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
       toggleNavPanel(uiSettings);
     });
 
-    if (NavigationBarKt.getNavbarV2Enabled()) {
-      myNavBarService = new NavBarService(myProject);
-      Disposer.register(myProject, myNavBarService);
-    }
   }
 
   @Override
@@ -261,7 +254,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
     if (myNavBarPanel != null) return myNavBarPanel;
 
     if (NavigationBarKt.getNavbarV2Enabled()) {
-      myNavigationBar = myNavBarService.getPanel();
+      myNavigationBar = myProject.getService(NavBarService.class).getStaticNavbarPanel();
     }
     else {
       myNavigationBar = new ReusableNavBarPanel(myProject, true);
@@ -304,6 +297,11 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
 
   @Override
   public void uiSettingsChanged(@NotNull UISettings settings) {
+
+    if (NavigationBarKt.getNavbarV2Enabled()) {
+      myProject.getService(NavBarService.class).uiSettingsChanged(settings);
+    }
+
     if (myNavigationBar == null) {
       return;
     }

@@ -5,10 +5,7 @@ import com.intellij.ProjectTopics
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.debug
@@ -16,6 +13,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.*
 import com.intellij.openapi.module.impl.*
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
@@ -80,7 +78,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
   val entityStore = WorkspaceModel.getInstance(project).entityStorage
 
-  suspend fun loadModules(entities: Sequence<ModuleEntity>) {
+  suspend fun loadModules(entities: Sequence<ModuleEntity>, initializeFacets: Boolean) {
     val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
     val corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID }
     val result = coroutineScope {
@@ -129,12 +127,18 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
           .registerModuleLibraryInstances(builder)
       }
     }
+
     // Facets that are loaded from the cache do not generate "EntityAdded" event and aren't initialized
     // We initialize the facets manually here (after modules loading).
-    //
-    // Possible issue - if we'll initialize facets here and after that we'll get "EntityAdded" event, the facet will be initialized twice
-    // But 1. That seems impossible as we don't create facets before the modules are loaded 2. I hope that facets initialization is idempotent
-    modules.forEach(ModuleBridge::initFacets)
+    if (initializeFacets) {
+      blockingContext {
+        invokeLater {
+          for (module in modules) {
+            module.initFacets()
+          }
+        }
+      }
+    }
   }
 
   override fun unloadNewlyAddedModulesIfPossible(storage: EntityStorage) {
@@ -258,7 +262,9 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
     // we need to save module configurations before unloading, otherwise their settings will be lost
     if (modulesToUnload.isNotEmpty()) {
-      project.save()
+      blockingContext {
+        project.save()
+      }
     }
 
     withContext(Dispatchers.EDT) {
@@ -285,8 +291,8 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
           // Remove Facet bridges to recreate them. String constant is taken from
           // com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.FACET_BRIDGE_MAPPING_ID
-          WorkspaceModel.getInstance(
-            project).updateProjectModelSilent { builder ->
+          WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
+            // TODO:: Fix fo external entities associated with facets
             moduleEntitiesToLoad.flatMap { it.facets }.forEach {
               builder.getMutableExternalMapping<Any>(
                 "intellij.facets.bridge").removeMapping(it)
@@ -294,7 +300,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
           }
           // todo why we load modules in a write action
           runBlocking {
-            loadModules(moduleEntitiesToLoad.asSequence())
+            loadModules(moduleEntitiesToLoad.asSequence(), true)
           }
         }
       }

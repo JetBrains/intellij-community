@@ -5,7 +5,6 @@ import com.intellij.collaboration.api.ServerPath
 import com.intellij.collaboration.async.*
 import com.intellij.collaboration.auth.AccountManager
 import com.intellij.collaboration.auth.ServerAccount
-import com.intellij.collaboration.auth.createAccountsFlow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -70,9 +69,8 @@ abstract class DiscoveringAuthenticatingServersStateSupplier<A : ServerAccount, 
   final override val serversState: StateFlow<Set<S>>
 
   init {
-    @Suppress("LeakingThis")
-    val accountsServersFlow: StateFlow<Set<S>> = accountManager.createAccountsFlow(this).mapState(scope) { accounts ->
-      accounts.map(::getServer).toSet()
+    val accountsServersFlow: StateFlow<Set<S>> = accountManager.accountsState.mapState(scope) { accounts ->
+      accounts.keys.map(::getServer).toSet()
     }
 
     @Suppress("LeakingThis")

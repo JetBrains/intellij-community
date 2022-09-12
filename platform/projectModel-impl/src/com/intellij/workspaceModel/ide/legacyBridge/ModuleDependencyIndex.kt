@@ -21,7 +21,7 @@ interface ModuleDependencyIndex {
 
   /**
    * Registers a listener to track dependencies on project-level, application-level libraries and libraries from custom application-level
-   * tables. [ModuleDependencyListener.removedDependencyOn] methods are automatically called when the project is disposed. 
+   * tables. 
    */
   fun addListener(listener: ModuleDependencyListener)
 
@@ -36,6 +36,16 @@ interface ModuleDependencyIndex {
    * Return `true` if at least one module has dependency on [libraryId]
    */
   fun hasDependencyOn(libraryId: LibraryId): Boolean
+
+  /**
+   * Return `true` if at least one module has dependency on [library]
+   */
+  fun hasDependencyOn(library: Library): Boolean
+
+  /**
+   * Return `true` if at least one module has dependency on [sdk]
+   */
+  fun hasDependencyOn(sdk: Sdk): Boolean
 }
 
 /**
@@ -46,17 +56,26 @@ interface ModuleDependencyListener : EventListener {
   /** 
    * Called when [library] is added to dependency of some module, and there were no dependencies on this library before 
    */
-  fun addedDependencyOn(library: Library)
+  @JvmDefault
+  fun addedDependencyOn(library: Library) {
+  }
 
   /**
    * Called when [library] is removed from dependencies of some module, and there are no dependencies on this library anymore 
    */
-  fun removedDependencyOn(library: Library)
+  @JvmDefault
+  fun removedDependencyOn(library: Library) {
+  }
 
   /**
    * Called when [library] is created and some module has a dependency on this library (it was unresolved before) 
    */
   fun referencedLibraryAdded(library: Library)
+
+  /**
+   * Called when configuration of [library] is changed if some module has a dependency on this library
+   */
+  fun referencedLibraryChanged(library: Library)
 
   /**
    * Called when [library] is removed and some module has a dependency on this library (it will become unresolved)
@@ -66,17 +85,26 @@ interface ModuleDependencyListener : EventListener {
   /**
    * Called when [sdk] is added to dependency of some module, and there were no dependencies on this SDK before
    */
-  fun addedDependencyOn(sdk: Sdk)
+  @JvmDefault
+  fun addedDependencyOn(sdk: Sdk) {
+  }
 
   /**
    * Called when [sdk] is removed from dependencies of some module, and there are no dependencies on this SDK anymore
    */
-  fun removedDependencyOn(sdk: Sdk)
+  @JvmDefault
+  fun removedDependencyOn(sdk: Sdk) {
+  }
 
   /**
    * Called when [sdk] is created and some module has a dependency on this SDK (it was unresolved before)
    */
   fun referencedSdkAdded(sdk: Sdk)
+
+  /**
+   * Called when configuration of [sdk] is changed if some module has a dependency on this SDK
+   */
+  fun referencedSdkChanged(sdk: Sdk)
 
   /**
    * Called when [sdk] is removed and some module has a dependency on this SDK (it will become unresolved)

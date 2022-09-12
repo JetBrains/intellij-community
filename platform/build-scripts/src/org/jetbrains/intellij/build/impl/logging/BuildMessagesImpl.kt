@@ -25,10 +25,7 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
       val underTeamCity = System.getenv("TEAMCITY_VERSION") != null
       val mainLoggerFactory = if (underTeamCity) TeamCityBuildMessageLogger.FACTORY else ConsoleBuildMessageLogger.FACTORY
       val debugLogger = DebugLogger()
-      val loggerFactory: () -> BuildMessageLogger = {
-        CompositeBuildMessageLogger(listOf(mainLoggerFactory(), debugLogger.createLogger()))
-      }
-      return BuildMessagesImpl(logger = loggerFactory(),
+      return BuildMessagesImpl(logger = CompositeBuildMessageLogger(listOf(mainLoggerFactory(), debugLogger.createLogger())),
                                debugLogger = debugLogger)
     }
   }

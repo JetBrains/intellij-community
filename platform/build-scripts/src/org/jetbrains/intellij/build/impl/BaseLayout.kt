@@ -3,10 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.containers.MultiMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.*
 import java.util.*
 
 /**
@@ -18,9 +15,12 @@ open class BaseLayout {
   }
 
   // one module can be packed into several JARs, that's why we have map "jar to modules" and not "module to jar"
-  private val _jarToModules = TreeMap<String, MutableList<String>>()
+  @Suppress("PropertyName")
+  @JvmField
+  protected val _jarToModules = TreeMap<String, MutableList<String>>()
   // only as guard for checkAndAssociateModuleNameWithJarPath - do not use it, because strictly speaking for one module maybe several JARs
-  private val moduleNameToJarPath = HashMap<String, String>()
+  @JvmField
+  protected val moduleNameToJarPath = HashMap<String, String>()
 
   /** JAR name (or path relative to 'lib' directory) to names of modules */
   val jarToModules: Map<String, List<String>>
@@ -33,7 +33,8 @@ open class BaseLayout {
   internal var resourcePaths: PersistentList<ModuleResourceData> = persistentListOf()
 
   /** module name to entries which should be excluded from its output */
-  val moduleExcludes: MultiMap<String, String> = MultiMap.createLinked()
+  var moduleExcludes: PersistentMap<String, MutableList<String>> = persistentMapOf()
+    private set
 
   @Suppress("SSBasedInspection")
   internal val includedProjectLibraries = ObjectOpenHashSet<ProjectLibraryData>()
@@ -46,15 +47,11 @@ open class BaseLayout {
   val projectLibrariesToUnpack: MultiMap<String, String> = MultiMap.createLinked()
   val modulesWithExcludedModuleLibraries: MutableList<String> = mutableListOf()
 
-  /** set of keys in {@link #moduleJars} which are set explicitly, not automatically derived from modules names */
-  val explicitlySetJarPaths: MutableSet<String> = LinkedHashSet()
+  val includedModuleNames: Sequence<String>
+    get() = _jarToModules.values.asSequence().flatten().distinct()
 
-  val includedModuleNames: Collection<String>
-    get() = _jarToModules.values.asSequence().flatten().distinct().toList()
-
-  open fun withModule(moduleName: String, relativeJarPath: String) {
+  fun withModule(moduleName: String, relativeJarPath: String) {
     checkAndAssociateModuleNameWithJarPath(moduleName, relativeJarPath)
-    explicitlySetJarPaths.add(relativeJarPath)
   }
 
   private fun checkAndAssociateModuleNameWithJarPath(moduleName: String, relativeJarPath: String) {
@@ -88,7 +85,15 @@ open class BaseLayout {
   }
 
   fun excludeFromModule(moduleName: String, excludedPattern: String) {
-    moduleExcludes.putValue(moduleName, excludedPattern)
+    moduleExcludes = moduleExcludes.mutate {
+      it.computeIfAbsent(moduleName) { mutableListOf() }.add(excludedPattern)
+    }
+  }
+
+  fun excludeFromModule(moduleName: String, excludedPatterns: List<String>) {
+    moduleExcludes = moduleExcludes.mutate {
+      it.computeIfAbsent(moduleName) { mutableListOf() }.addAll(excludedPatterns)
+    }
   }
 
   fun withProjectLibrary(libraryName: String) {
@@ -110,6 +115,17 @@ open class BaseLayout {
       moduleName = moduleName,
       libraryName = libraryName,
       relativeOutputPath = relativeOutputPath))
+  }
+
+  /**
+   * @param resourcePath path to resource file or directory relative to {@code moduleName} module content root
+   * @param relativeOutputPath target path relative to the plugin root directory
+   */
+  fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
+    resourcePaths = resourcePaths.add(ModuleResourceData(moduleName = moduleName,
+                                                         resourcePath = resourcePath,
+                                                         relativeOutputPath = relativeOutputPath,
+                                                         packToZip = false))
   }
 }
 

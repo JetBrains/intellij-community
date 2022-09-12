@@ -5,6 +5,7 @@ import com.intellij.configurationStore.deserializeInto
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.packaging.artifacts.*
@@ -14,18 +15,14 @@ import com.intellij.packaging.impl.artifacts.InvalidArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.impl.toVirtualFile
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArchivePackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.CompositePackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.util.JpsPathUtil
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 open class ArtifactBridge(
   _artifactId: ArtifactId,
@@ -108,9 +105,7 @@ open class ArtifactBridge(
     else type
   }
 
-  override fun getName(): String {
-    return artifactId.name
-  }
+  final override fun getName(): @NlsSafe String = artifactId.name
 
   override fun isBuildOnMake(): Boolean {
     val artifactEntity = entityStorage.base.get(artifactId)
@@ -166,7 +161,7 @@ open class ArtifactBridge(
   override fun getOutputFile(): VirtualFile? {
     val artifactEntity = entityStorage.base.get(artifactId)
     val outputUrl = artifactEntity.outputUrl
-    return outputUrl?.virtualFile
+    return outputUrl?.toVirtualFile()
   }
 
   override fun getOutputFilePath(): String? {

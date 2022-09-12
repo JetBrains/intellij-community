@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.synthetic.JavaSyntheticPropertiesScope
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
 
 class DebuggerFieldKotlinIndicesHelperExtension : KotlinIndicesHelperExtension {
     override fun appendExtensionCallables(
@@ -22,6 +23,7 @@ class DebuggerFieldKotlinIndicesHelperExtension : KotlinIndicesHelperExtension {
         val javaPropertiesScope = JavaSyntheticPropertiesScope(
             storageManager = LockBasedStorageManager.NO_LOCKS,
             lookupTracker = LookupTracker.DO_NOTHING,
+            KotlinTypeRefiner.Default,
             supportJavaRecords = true,
         )
 

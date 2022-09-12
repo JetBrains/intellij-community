@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.*
-import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
@@ -37,10 +36,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.IncorrectOperationException
 import org.jdom.Element
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.resolvedPromise
 import java.awt.Component
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -255,7 +253,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
 
   override fun getCurrentWindow(): EditorWindow? = null
 
-  override fun getActiveWindow(): Promise<EditorWindow> = resolvedPromise()
+  override fun getActiveWindow(): CompletableFuture<EditorWindow?> = CompletableFuture.completedFuture(null)
 
   override fun setCurrentWindow(window: EditorWindow) {}
 
@@ -270,8 +268,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
 
   override fun getSelectedEditor(file: VirtualFile): FileEditor? {
     if (!isCurrentlyUnderLocalId) {
-      val clientManager = clientFileEditorManager
-      return clientManager?.getSelectedEditor()
+      return clientFileEditorManager?.getSelectedEditor()
     }
 
     getEditor(file)?.let { return TextEditorProvider.getInstance().getTextEditor(it) }

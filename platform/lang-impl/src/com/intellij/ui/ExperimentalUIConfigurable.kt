@@ -26,7 +26,6 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
         .comment(IdeBundle.message("checkbox.enable.new.ui.description"))
     }
 
-    row { browserLink(IdeBundle.message("new.ui.blog.post.link"), "https://blog.jetbrains.com/idea/2022/05/take-part-in-the-new-ui-preview-for-your-jetbrains-ide/") }
     row { browserLink(IdeBundle.message("new.ui.blog.changes.and.issues"), "https://youtrack.jetbrains.com/articles/IDEA-A-156/Main-changes-and-known-issues") }
     row { link(IdeBundle.message("new.ui.submit.feedback")) { SendFeedbackAction.submit(null) } }
 

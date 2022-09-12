@@ -18,6 +18,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageToPsiElementProvider;
+import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -44,9 +45,11 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
   final Usage USAGES_FILTERED_OUT_SEPARATOR = new UsageAdapter();
 
   private final ShowUsagesTableCellRenderer myRenderer;
+  private final UsageView myUsageView;
 
-  ShowUsagesTable(@NotNull ShowUsagesTableCellRenderer renderer) {
+  ShowUsagesTable(@NotNull ShowUsagesTableCellRenderer renderer, UsageView usageView) {
     myRenderer = renderer;
+    myUsageView = usageView;
     ScrollingUtil.installActions(this);
     HintUpdateSupply.installDataContextHintUpdateSupply(this);
   }
@@ -162,7 +165,8 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
 
             PsiElement element = usageInfo.getElement();
             if (element != null) {
-              UsageViewStatisticsCollector.logItemChosen(element.getProject(), CodeNavigateSource.ShowUsagesPopup, element.getLanguage());
+              UsageViewStatisticsCollector.logItemChosen(element.getProject(), myUsageView, CodeNavigateSource.ShowUsagesPopup,
+                                                         element.getLanguage());
             }
           }
           else if (usage instanceof Navigatable) {

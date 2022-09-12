@@ -43,7 +43,9 @@ dependencies {
   implementation "org.kodein.di:kodein-di-jvm:7.13.0"
 
   implementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
+
   testImplementation 'com.jetbrains.intellij.tools:ide-starter:LATEST-TRUNK-SNAPSHOT'
+  testImplementation 'com.jetbrains.intellij.tools:ide-starter-junit5:LATEST-TRUNK-SNAPSHOT'
 
   testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
   testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.1'

@@ -13,10 +13,13 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-class MarkdownPreviewSecurityTest: MarkdownJcefTestCase(enableOsr = false) {
+@RunWith(Parameterized::class)
+class MarkdownPreviewSecurityTest(enableOsr: Boolean): MarkdownJcefTestCase(enableOsr) {
   @Before
   fun disablePreviewExtensions() {
     ExtensionTestUtil.maskExtensions(MarkdownBrowserPreviewExtension.Provider.EP, emptyList(), disposable)
@@ -125,5 +128,10 @@ class MarkdownPreviewSecurityTest: MarkdownJcefTestCase(enableOsr = false) {
 
   companion object {
     private const val latchAwaitTimeout = 10L
+
+    @Suppress("unused")
+    @JvmStatic
+    @get:Parameterized.Parameters(name = "enableOsr = {0}")
+    val modes = listOf(true)
   }
 }

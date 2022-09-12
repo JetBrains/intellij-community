@@ -8,14 +8,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.util.indexing.EntityIndexingServiceEx
 import com.intellij.util.indexing.roots.IndexableEntityProvider
+import com.intellij.util.indexing.roots.IndexableFilesIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.CustomSourceRootPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleGroupPathEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 
 internal class ProjectRootsChangeListener(private val project: Project) {
   fun beforeChanged(event: VersionedStorageChange) {
@@ -30,6 +28,9 @@ internal class ProjectRootsChangeListener(private val project: Project) {
   fun changed(event: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
+    if (IndexableFilesIndex.shouldBeUsed()) {
+      IndexableFilesIndex.getInstance(project).workspaceModelChanged(event)
+    }
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is ProjectRootManagerBridge) return
     val performUpdate = shouldFireRootsChanged(event, project)

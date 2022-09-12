@@ -175,6 +175,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.navigationBarLocation = value
     }
 
+  val showNavigationBarInBottom : Boolean
+    get() = showNavigationBar && navBarLocation == NavBarLocation.BOTTOM
+
   var showMembersInNavigationBar: Boolean
     get() = state.showMembersInNavigationBar
     set(value) {

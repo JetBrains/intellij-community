@@ -590,6 +590,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/createExpect/dataClass/");
         }
 
+        @TestMetadata("dataObject")
+        public void testDataObject() throws Exception {
+            runTest("testData/multiModuleQuickFix/createExpect/dataObject/");
+        }
+
         @TestMetadata("enum")
         public void testEnum() throws Exception {
             runTest("testData/multiModuleQuickFix/createExpect/enum/");

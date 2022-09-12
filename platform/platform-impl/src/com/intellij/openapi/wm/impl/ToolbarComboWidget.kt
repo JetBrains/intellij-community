@@ -1,8 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.Color
+import java.awt.Point
 import java.awt.event.ActionListener
 import java.awt.event.InputEvent
 import javax.swing.Icon
@@ -40,6 +44,14 @@ abstract class ToolbarComboWidget: JComponent() {
 
   fun addPressListener(action: ActionListener) {
     pressListeners += action
+  }
+
+  protected fun JBPopup.showAligned() {
+    val widget = this@ToolbarComboWidget
+    val widgetLeftInset = UIManager.getInsets("MainToolbar.Dropdown.borderInsets").left
+    val popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() +
+                         JBUI.CurrentTheme.Popup.Selection.innerInsets().left
+    show(RelativePoint(widget, Point(widgetLeftInset - popupLeftInset, widget.height)))
   }
 
   private fun fireUpdateEvents(prop: KProperty<*>, oldValue: Any?, newValue: Any?) {
