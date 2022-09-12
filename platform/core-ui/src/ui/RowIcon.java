@@ -52,6 +52,16 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
     myScaledIcons = null;
   }
 
+  @NotNull
+  @Override
+  public RowIcon replaceBy(@NotNull IconReplacer replacer) {
+    RowIcon icon = new RowIcon(this);
+    for (int i = 0; i < icon.myIcons.length; i++) {
+      icon.myIcons[i] = icon.myIcons[i] == null ? null : replacer.replaceIcon(icon.myIcons[i]);
+    }
+    return icon;
+  }
+
   @Override
   public @NotNull RowIcon copy() {
     return new RowIcon(this);

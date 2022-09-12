@@ -59,9 +59,13 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
   private final @Nullable BiConsumer<? super DeferredIcon, ? super Icon> myEvalListener;
 
   private DeferredIconImpl(@NotNull DeferredIconImpl<T> icon) {
+    this(icon, icon.myDelegateIcon);
+  }
+
+  private DeferredIconImpl(@NotNull DeferredIconImpl<T> icon, @NotNull Icon delegateIcon) {
     super(icon);
-    myDelegateIcon = icon.myDelegateIcon;
-    myScaledDelegateIcon = icon.myDelegateIcon;
+    myDelegateIcon = delegateIcon;
+    myScaledDelegateIcon = delegateIcon;
     myScaledIconCache = null;
     myEvaluator = icon.myEvaluator;
     myIsScheduled = icon.myIsScheduled;
@@ -93,6 +97,12 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
 
   public DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, @NotNull Function<? super T, ? extends Icon> evaluator) {
     this(baseIcon, param, needReadAction, false, t -> evaluator.fun(t), null);
+  }
+
+  @NotNull
+  @Override
+  public DeferredIconImpl<T> replaceBy(@NotNull IconReplacer replacer) {
+    return new DeferredIconImpl<>(this, replacer.replaceIcon(myDelegateIcon));
   }
 
   @Override

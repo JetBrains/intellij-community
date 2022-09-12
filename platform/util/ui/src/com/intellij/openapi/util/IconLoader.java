@@ -671,6 +671,12 @@ public final class IconLoader {
         return icon.getIconWidth();
       }
 
+      @NotNull
+      @Override
+      public Icon replaceBy(@NotNull IconReplacer replacer) {
+        return getTransparentIcon(replacer.replaceIcon(icon), alpha);
+      }
+
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
         GraphicsUtil.paintWithAlpha(g, alpha,() -> icon.paintIcon(c, g, x, y));
@@ -1150,6 +1156,12 @@ public final class IconLoader {
 
   public static @NotNull Icon createLazy(@NotNull Supplier<? extends @NotNull Icon> producer) {
     return new LazyIcon() {
+      @NotNull
+      @Override
+      public Icon replaceBy(@NotNull IconReplacer replacer) {
+        return createLazy(() -> replacer.replaceIcon(producer.get()));
+      }
+
       @Override
       protected @NotNull Icon compute() {
         return producer.get();

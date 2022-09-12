@@ -282,5 +282,11 @@ final class DummyIconManager implements IconManager {
     public String toString() {
       return "Row icon. myIcons=" + Arrays.asList(icons);
     }
+
+    @NotNull
+    @Override
+    public Icon replaceBy(@NotNull IconReplacer replacer) {
+      return this;
+    }
   }
 }
