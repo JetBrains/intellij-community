@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -323,10 +324,16 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     public void showNotify() {
       ComponentWithBrowseButton<?> component = reference.get();
       if (component == null) return; // component is collected
-      Disposable disposable = ApplicationManager.getApplication() == null ? null :
-                              UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(component));
-      if (disposable == null) return; // parent disposable not found
-      Disposer.register(disposable, component);
+      Application app = ApplicationManager.getApplication();
+      if (app != null) {
+        DataManager dataManager = app.getServiceIfCreated(DataManager.class);
+        if (dataManager != null) {
+          Disposable disposable = UI_DISPOSABLE.getData(dataManager.getDataContext(component));
+          if (disposable != null) {
+            Disposer.register(disposable, component);
+          }
+        }
+      }
     }
   }
 }

@@ -527,7 +527,7 @@ class MarketplaceRequests : PluginInfoProvider {
  */
 fun RequestBuilder.setHeadersViaTuner(): RequestBuilder {
   return ApplicationManager.getApplication()
-           ?.getService(PluginRepositoryAuthService::class.java)
+           ?.getServiceIfCreated(PluginRepositoryAuthService::class.java)
            ?.connectionTuner
            ?.let(::tuner)
          ?: this
