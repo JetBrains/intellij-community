@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.openapi.Disposable;
@@ -154,10 +155,13 @@ final class ActionUpdater {
 
   private <T> T callAction(@NotNull AnAction action, @NotNull Op operation, @NotNull Supplier<? extends T> call) {
     String operationName = Utils.operationName(action, operation.name(), myPlace);
-    return callAction(operationName, action.getActionUpdateThread(), call);
+    return callAction(action, operationName, action.getActionUpdateThread(), call);
   }
 
-  <T> T callAction(@NotNull String operationName, @NotNull ActionUpdateThread updateThreadOrig, @NotNull Supplier<? extends T> call) {
+  private <T> T callAction(@NotNull Object action,
+                           @NotNull String operationName,
+                           @NotNull ActionUpdateThread updateThreadOrig,
+                           @NotNull Supplier<? extends T> call) {
     ActionUpdateThread updateThread = myForcedUpdateThread != null ? myForcedUpdateThread : updateThreadOrig;
     boolean canAsync = Utils.isAsyncDataContext(myDataContext);
     boolean shallAsync = updateThread == ActionUpdateThread.BGT;
@@ -187,13 +191,16 @@ final class ActionUpdater {
       throw new ComputeOnEDTSkipped();
     }
     if (myPreCacheSlowDataKeys && updateThread == ActionUpdateThread.OLD_EDT) {
-      ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> ensureSlowDataKeysPreCached(operationName));
+      ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> ensureSlowDataKeysPreCached(action, operationName));
     }
-    return computeOnEdt(operationName, call, updateThread == ActionUpdateThread.EDT);
+    return computeOnEdt(action, operationName, call, updateThread == ActionUpdateThread.EDT);
   }
 
   /** @noinspection AssignmentToStaticFieldFromInstanceMethod*/
-  private <T> T computeOnEdt(@NotNull String operationName, @NotNull Supplier<? extends T> call, boolean noRulesInEDT) {
+  private <T> T computeOnEdt(@NotNull Object action,
+                             @NotNull String operationName,
+                             @NotNull Supplier<? extends T> call,
+                             boolean noRulesInEDT) {
     myCurEDTWaitMillis = myCurEDTPerformMillis = 0L;
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
     AtomicReference<FList<Throwable>> edtTracesRef = new AtomicReference<>();
@@ -241,7 +248,7 @@ final class ActionUpdater {
           for (Throwable trace : edtTraces) {
             throwable.addSuppressed(trace);
           }
-          LOG.error(throwable);
+          LOG.error(PluginException.createByClass(throwable, action.getClass()));
         }
         else {
           LOG.warn(throwable);
@@ -438,7 +445,7 @@ final class ActionUpdater {
     }
   }
 
-  private void ensureSlowDataKeysPreCached(@NotNull String targetOperationName) {
+  private void ensureSlowDataKeysPreCached(@NotNull Object action, @NotNull String targetOperationName) {
     if (!myPreCacheSlowDataKeys) return;
     String operationName = "precache-slow-data@" + targetOperationName;
     long start = System.nanoTime();
@@ -456,7 +463,7 @@ final class ActionUpdater {
     myPreCacheSlowDataKeys = false;
     long elapsed = TimeoutUtil.getDurationMillis(start);
     if (elapsed > 200 && ActionPlaces.isShortcutPlace(myPlace)) {
-      LOG.error(elapsedReport(elapsed, false, operationName) + OLD_EDT_MSG_SUFFIX);
+      LOG.error(PluginException.createByClass(elapsedReport(elapsed, false, operationName) + OLD_EDT_MSG_SUFFIX, null, action.getClass()));
     }
     else if (elapsed > 3000) {
       LOG.warn(elapsedReport(elapsed, false, operationName));
@@ -656,7 +663,7 @@ final class ActionUpdater {
     return elapsed + (isEDT ? " ms to call on EDT " : " ms to call on BGT ") + operationName;
   }
 
-  private static void handleException(@NotNull Op op, @NotNull AnAction action, @Nullable AnActionEvent event, @NotNull Throwable ex) {
+  private static void handleException(@NotNull AnAction action, @NotNull Op op, @Nullable AnActionEvent event, @NotNull Throwable ex) {
     if (ex instanceof ProcessCanceledException) throw (ProcessCanceledException)ex;
     String id = ActionManager.getInstance().getId(action);
     String place = event == null ? null : event.getPlace();
@@ -691,7 +698,7 @@ final class ActionUpdater {
       return !ActionUtil.performDumbAwareUpdate(action, e, false);
     }
     catch (Throwable ex) {
-      handleException(Op.update, action, e, ex);
+      handleException(action, Op.update, e, ex);
       return false;
     }
   }
@@ -701,7 +708,7 @@ final class ActionUpdater {
       return group.getChildren(e);
     }
     catch (Throwable ex) {
-      handleException(Op.getChildren, group, e, ex);
+      handleException(group, Op.getChildren, e, ex);
       return AnAction.EMPTY_ARRAY;
     }
   }
@@ -797,7 +804,7 @@ final class ActionUpdater {
                          @NotNull ActionUpdateThread updateThread,
                          @NotNull Supplier<? extends T> supplier) {
       String operationNameFull = Utils.operationName(action, operationName, updater.myPlace);
-      return updater.callAction(operationNameFull, updateThread, supplier);
+      return updater.callAction(action, operationNameFull, updateThread, supplier);
     }
   }
 
