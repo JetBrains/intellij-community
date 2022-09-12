@@ -7,6 +7,7 @@ import java.nio.file.*
 import java.util.*
 import java.util.zip.Deflater
 
+@Suppress("PrivatePropertyName")
 private val W_OVERWRITE = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)
 
 enum class AddDirEntriesMode {
@@ -26,32 +27,53 @@ fun zip(targetFile: Path,
   // note - dirs contain duplicated directories (you cannot simply add directory entry on visit - uniqueness must be preserved)
   // anyway, directory entry are not added
   Files.createDirectories(targetFile.parent)
+  val packageIndexBuilder = if (compress) null else PackageIndexBuilder()
   ZipFileWriter(channel = FileChannel.open(targetFile, if (overwrite) W_OVERWRITE else W_CREATE_NEW),
                 deflater = if (compress) Deflater(compressionLevel, true) else null).use {
     val fileAdded: ((String) -> Boolean)?
     val dirNameSetToAdd: Set<String>
-    if (addDirEntriesMode != AddDirEntriesMode.NONE) {
-      dirNameSetToAdd = LinkedHashSet()
-      fileAdded = { name ->
-        if (addDirEntriesMode == AddDirEntriesMode.ALL ||
-            (addDirEntriesMode == AddDirEntriesMode.RESOURCE_ONLY && !name.endsWith(".class") && !name.endsWith(
-              "/package.html") && name != "META-INF/MANIFEST.MF")) {
-          var slashIndex = name.lastIndexOf('/')
-          if (slashIndex != -1) {
-            while (dirNameSetToAdd.add(name.substring(0, slashIndex))) {
-              slashIndex = name.lastIndexOf('/', slashIndex - 2)
-              if (slashIndex == -1) {
-                break
-              }
-            }
+    if (addDirEntriesMode == AddDirEntriesMode.NONE) {
+      if (fileFilter == null) {
+        if (packageIndexBuilder == null) {
+          fileAdded = null
+        }
+        else {
+          fileAdded = { name ->
+            packageIndexBuilder.addFile(name)
+            true
           }
         }
-        true
       }
+      else {
+        fileAdded = { name ->
+          val included = fileFilter(name)
+          if (included) {
+            packageIndexBuilder?.addFile(name)
+          }
+          included
+        }
+      }
+
+      dirNameSetToAdd = emptySet()
     }
     else {
-      fileAdded = fileFilter?.let { { name -> it(name) } }
-      dirNameSetToAdd = emptySet()
+      dirNameSetToAdd = LinkedHashSet()
+      fileAdded = { name ->
+        if (fileFilter != null && !fileFilter(name)) {
+          false
+        }
+        else {
+          if (addDirEntriesMode == AddDirEntriesMode.ALL ||
+              (addDirEntriesMode == AddDirEntriesMode.RESOURCE_ONLY &&
+               !name.endsWith(".class") && !name.endsWith("/package.html") && name != "META-INF/MANIFEST.MF")) {
+            addDirWithParents(name, dirNameSetToAdd)
+          }
+
+          packageIndexBuilder?.addFile(name)
+
+          true
+        }
+      }
     }
     val archiver = ZipArchiver(it, fileAdded)
     for ((dir, prefix) in dirs.entries) {
@@ -68,6 +90,18 @@ fun zip(targetFile: Path,
 private fun addDirForResourceFiles(out: ZipFileWriter, dirNameSetToAdd: Set<String>) {
   for (dir in dirNameSetToAdd) {
     out.dir(dir)
+  }
+}
+
+private fun addDirWithParents(name: String, dirNameSetToAdd: MutableSet<String>) {
+  var slashIndex = name.lastIndexOf('/')
+  if (slashIndex != -1) {
+    while (dirNameSetToAdd.add(name.substring(0, slashIndex))) {
+      slashIndex = name.lastIndexOf('/', slashIndex - 2)
+      if (slashIndex == -1) {
+        break
+      }
+    }
   }
 }
 

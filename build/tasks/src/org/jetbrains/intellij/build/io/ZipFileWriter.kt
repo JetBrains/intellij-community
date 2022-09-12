@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ConstPropertyName")
+
 package org.jetbrains.intellij.build.io
 
 import java.nio.ByteBuffer
@@ -20,10 +22,14 @@ private const val compressThreshold = 8 * 1024
 // 8 MB (as JDK)
 private const val mappedTransferSize = 8L * 1024L * 1024L
 
-inline fun writeNewZip(file: Path, compress: Boolean = false, withOptimizedMetadataEnabled: Boolean = compress, task: (ZipFileWriter) -> Unit) {
+inline fun writeNewZip(file: Path,
+                       compress: Boolean = false,
+                       withOptimizedMetadataEnabled: Boolean = !compress,
+                       task: (ZipFileWriter) -> Unit) {
   Files.createDirectories(file.parent)
   ZipFileWriter(channel = FileChannel.open(file, W_CREATE_NEW),
-                deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use {
+                deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null,
+                withOptimizedMetadataEnabled = !compress && withOptimizedMetadataEnabled).use {
     task(it)
   }
 }

@@ -89,7 +89,7 @@ fun buildJar(targetFile: Path,
     return
   }
 
-  val packageIndexBuilder = if (!compress) PackageIndexBuilder() else null
+  val packageIndexBuilder = if (compress) null else PackageIndexBuilder()
   writeNewFile(targetFile) { outChannel ->
     ZipFileWriter(outChannel, if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use { zipCreator ->
       val uniqueNames = HashSet<String>()
