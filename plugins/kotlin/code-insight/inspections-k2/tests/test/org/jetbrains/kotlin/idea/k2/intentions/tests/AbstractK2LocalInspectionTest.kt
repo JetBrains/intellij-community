@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
+import org.jetbrains.kotlin.idea.highlighting.KotlinHighLevelDiagnosticHighlightingPass
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
@@ -17,9 +18,9 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
 
     override fun checkForUnexpectedErrors(fileText: String) {}
 
-    //override fun collectHighlightInfos(): List<HighlightInfo> {
-    //    return KotlinHighLevelDiagnosticHighlightingPass.ignoreThisPassInTests { super.collectHighlightInfos() }
-    //}
+    override fun collectHighlightInfos(): List<HighlightInfo> {
+        return KotlinHighLevelDiagnosticHighlightingPass.ignoreThisPassInTests { super.collectHighlightInfos() }
+    }
 
     override fun tearDown() {
         runAll(
