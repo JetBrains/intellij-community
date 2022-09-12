@@ -395,7 +395,6 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     Int2ObjectMap<RandomAccessIntContainer> invertedIndex = new Int2ObjectOpenHashMap<>();
     forwardIndex.processEntries((inputId, data) -> {
       if (data != 0) {
-        setForwardIndexData(forwardIndex, inputId, data);
         invertedIndex.computeIfAbsent(data, __ -> createContainerForInvertedIndex()).add(inputId);
       }
     });
