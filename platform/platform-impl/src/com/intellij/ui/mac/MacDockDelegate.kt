@@ -24,7 +24,9 @@ internal class MacDockDelegate private constructor(private val recentProjectsMen
       val recentProjectsMenu = Menu("Recent Projects")
       try {
         dockMenu.add(recentProjectsMenu)
-        Taskbar.getTaskbar().menu = dockMenu
+        if (Taskbar.isTaskbarSupported() /* not supported in CWM/Projector environment */) {
+          Taskbar.getTaskbar().menu = dockMenu
+        }
       }
       catch (e: Exception) {
         LOG.error(e)
