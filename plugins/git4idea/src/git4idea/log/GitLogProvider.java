@@ -649,7 +649,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   static @Nullable GitRepository getRepository(@NotNull GitRepositoryManager manager, @NotNull VirtualFile root) {
     GitRepository repository = manager.getRepositoryForRoot(root);
     if (repository == null) {
-      LOG.error("Repository not found for root " + root);
+      LOG.warn("Repository not found for root " + root);
       return null;
     }
     else if (repository.isFresh()) {
