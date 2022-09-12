@@ -24,14 +24,13 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
         ) {
             return
         }
-        if (event.isOutOfBlockChange()) {
+        if (event.isGlobalChange()) {
             project.getService(FirIdeModificationTrackerService::class.java).increaseModificationCountForAllModules()
             return
         }
 
         val rootElement = event.parent
-        val child = if (event.code == PsiTreeChangeEventImpl.PsiEventType.CHILD_REMOVED) rootElement
-        else event.child
+        val child = if (event.code == PsiTreeChangeEventImpl.PsiEventType.CHILD_REMOVED) rootElement else event.child
 
         if (rootElement == null || !rootElement.isPhysical) {
             /**
@@ -78,7 +77,7 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
     // Copy logic from PsiModificationTrackerImpl.treeChanged(). Some out-of-code-block events are written to language modification
     // tracker in PsiModificationTrackerImpl but don't have correspondent PomModelEvent. Increase kotlinOutOfCodeBlockTracker
     // manually if needed.
-    private fun PsiTreeChangeEventImpl.isOutOfBlockChange() = when (code) {
+    private fun PsiTreeChangeEventImpl.isGlobalChange() = when (code) {
         PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED ->
             propertyName === PsiTreeChangeEvent.PROP_UNLOADED_PSI || propertyName === PsiTreeChangeEvent.PROP_ROOTS
         PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED -> oldParent is PsiDirectory || newParent is PsiDirectory
