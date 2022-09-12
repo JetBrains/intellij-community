@@ -121,7 +121,7 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
             ApplicationManager.getApplication().invokeLater(() -> {
               DaemonProgressIndicator sessionIndicator = new DaemonProgressIndicator();
               ProgressManager.getInstance().executeProcessUnderProgress(() ->
-                HighlightingSessionImpl.runInsideHighlightingSession(file, sessionIndicator, null, ProperTextRange.create(file.getTextRange()), CanISilentlyChange.thisFile(file),
+                HighlightingSessionImpl.runInsideHighlightingSession(file, null, ProperTextRange.create(file.getTextRange()), CanISilentlyChange.thisFile(file),
                                                                      () -> DefaultHighlightInfoProcessor.showAutoImportHints(editor, file, sessionIndicator))
               , sessionIndicator);
             }, __->editor.isDisposed() || file.getProject().isDisposed());
