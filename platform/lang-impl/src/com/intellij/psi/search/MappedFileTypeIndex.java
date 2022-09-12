@@ -137,6 +137,8 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
 
   private static class ForwardIndexFileController {
     private static final int ELEMENT_BYTES = Short.BYTES;
+    public static final int DEFAULT_FILE_ALLOCATION_BYTES = 512;
+    public static final int DEFAULT_FULL_SCAN_BUFFER_BYTES = 1024;
 
     private final @NotNull FileChannel myFileChannel;
     private volatile long myElementsCount;
@@ -155,20 +157,25 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         myElementsCount = fileSize / ELEMENT_BYTES;
       }
       catch (IOException e) {
+        closeNoThrow();
         throw new StorageException(e);
       }
+    }
+
+    private static long offsetInFile(long inputId) {
+      return inputId * ELEMENT_BYTES;
     }
 
     public long getModificationStamp() {
       return myModificationsCounter;
     }
 
-    public short get(int index) throws StorageException {
+    public short get(int inputId) throws StorageException {
       try {
         myDataBuffer.clear();
         int bytesLeft = ELEMENT_BYTES;
         while (bytesLeft > 0) {
-          int result = myFileChannel.read(myDataBuffer, (long)index * ELEMENT_BYTES + myDataBuffer.position());
+          int result = myFileChannel.read(myDataBuffer, offsetInFile(inputId) + myDataBuffer.position());
           if (result == -1 && bytesLeft == ELEMENT_BYTES) {
             return 0; // read after EOF
           }
@@ -181,37 +188,40 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         return myDataBuffer.getShort();
       }
       catch (IOException e) {
+        closeNoThrow();
         throw new StorageException(e);
       }
     }
 
-    public void set(int index, short value) throws StorageException {
+    public void set(int inputId, short value) throws StorageException {
       try {
-        ensureSize(index + 1);
+        ensureCapacity(inputId);
         myDataBuffer.clear();
         myDataBuffer.putShort(value);
         myDataBuffer.flip();
         int bytesWritten = 0;
         while (bytesWritten < ELEMENT_BYTES) {
-          bytesWritten += myFileChannel.write(myDataBuffer, (long)index * ELEMENT_BYTES + bytesWritten);
+          bytesWritten += myFileChannel.write(myDataBuffer, offsetInFile(inputId) + bytesWritten);
         }
       }
       catch (IOException e) {
+        closeNoThrow();
         throw new StorageException(e);
       }
       //noinspection NonAtomicOperationOnVolatileField
       myModificationsCounter++;
     }
 
-    private void ensureSize(int indexAfterLastElement) throws StorageException {
-      if (myElementsCount >= indexAfterLastElement) {
+    private void ensureCapacity(int inputIdToStore) throws StorageException {
+      final int elementsToStore = inputIdToStore + 1;
+      if (myElementsCount >= elementsToStore) {
         return;
       }
       try {
-        final int zeroBufSize = 512;
+        final int zeroBufSize = DEFAULT_FILE_ALLOCATION_BYTES;
         ByteBuffer zeroBuf = ByteBuffer.allocate(zeroBufSize);
-        while (myElementsCount < indexAfterLastElement) {
-          myFileChannel.write(zeroBuf, myElementsCount * ELEMENT_BYTES + zeroBuf.position());
+        while (myElementsCount < elementsToStore) {
+          myFileChannel.write(zeroBuf, offsetInFile(myElementsCount) + zeroBuf.position());
           if (!zeroBuf.hasRemaining()) {
             zeroBuf.position(0);
             //noinspection NonAtomicOperationOnVolatileField
@@ -220,6 +230,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         }
       }
       catch (IOException e) {
+        closeNoThrow();
         throw new StorageException(e);
       }
     }
@@ -233,7 +244,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
       try {
         boolean isReadAction = ApplicationManager.getApplication().isReadAccessAllowed();
 
-        final int bufferSize = 1024;
+        final int bufferSize = DEFAULT_FULL_SCAN_BUFFER_BYTES;
         final ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
         for (int i = 0; i < myElementsCount; ) {
           if (isReadAction) {
@@ -241,7 +252,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           }
           buffer.clear();
           while (buffer.position() < bufferSize) {
-            int cur = myFileChannel.read(buffer, (long)i * ELEMENT_BYTES + buffer.position());
+            int cur = myFileChannel.read(buffer, offsetInFile(i) + buffer.position());
             if (cur == -1) break; // EOF
           }
           buffer.flip();
@@ -255,6 +266,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         }
       }
       catch (IOException e) {
+        closeNoThrow();
         throw new StorageException(e);
       }
     }
@@ -267,6 +279,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         myModificationsCounter++;
       }
       catch (IOException e) {
+        closeNoThrow();
         throw new StorageException(e);
       }
     }
@@ -276,6 +289,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         myFileChannel.force(true);
       }
       catch (IOException e) {
+        closeNoThrow();
         throw new StorageException(e);
       }
     }
@@ -286,6 +300,14 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
       }
       catch (IOException e) {
         throw new StorageException(e);
+      }
+    }
+
+    private void closeNoThrow() {
+      try {
+        myFileChannel.close();
+      } catch (IOException e) {
+        LOG.error(e);
       }
     }
   }
