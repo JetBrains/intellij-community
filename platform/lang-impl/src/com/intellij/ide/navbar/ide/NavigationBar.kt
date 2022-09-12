@@ -263,6 +263,7 @@ internal class NavigationBar(
 
       when (popupResult) {
         PopupEventCancel -> {
+          FloatingModeHelper.hideHint(true)
           return
         }
         PopupEventLeft -> {

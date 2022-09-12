@@ -49,7 +49,7 @@ public class FloatingModeHelper {
       panel.setBackground(UIUtil.getListBackground());
     }
 
-    LightweightHint myHint = new LightweightHint(panel) {
+    myHint = new LightweightHint(panel) {
       @Override
       public void hide() {
         super.hide();
