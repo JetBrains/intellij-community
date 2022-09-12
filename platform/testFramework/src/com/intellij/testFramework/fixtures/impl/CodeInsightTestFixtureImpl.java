@@ -92,9 +92,13 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.ProjectRootManagerComponent;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -153,6 +157,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1327,6 +1332,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void tearDown() throws Exception {
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
+    AtomicReference<ProjectRootManagerComponent> projectRootManagerComponentRef = new AtomicReference<>();
     runAll(
       () -> EdtTestUtil.runInEdtAndWait(() -> {
         if (ApplicationManager.getApplication() == null) {
@@ -1362,6 +1368,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
           // needed for myVirtualFilePointerTracker check below
           ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
+          projectRootManagerComponentRef.set(ObjectUtils.tryCast(ProjectRootManager.getInstance(project), ProjectRootManagerComponent.class));
         }
       }),
       () -> {
@@ -1373,6 +1380,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       () -> EdtTestUtil.runInEdtAndWait(() -> myTempDirFixture.tearDown()),
       () -> super.tearDown(),
       () -> {
+        // Even ProjectRootManagerComponent is a project service implementing Disposable, it might be not disposed in test light projects.
+        // Virtual file pointers could be created too late - during `myProjectFixture.tearDown()` - on
+        // `fixture.getTestRootDisposable()` disposing or on project files cleanup.
+        // Need to dispose virtual file pointers after that moment.
+        // It wouldn't be needed if `ProjectRootManagerComponent.dispose()` would get called in tests, like in production.
+        ProjectRootManagerComponent projectRootManagerComponent = projectRootManagerComponentRef.getAndSet(null);
+        if (projectRootManagerComponent != null) {
+          projectRootManagerComponent.disposeVirtualFilePointersAfterTest();
+        }
         if (myVirtualFilePointerTracker != null) {
           myVirtualFilePointerTracker.assertPointersAreDisposed();
         }

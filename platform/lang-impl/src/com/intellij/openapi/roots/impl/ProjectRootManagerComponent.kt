@@ -39,6 +39,7 @@ import com.intellij.util.indexing.EntityIndexingService
 import com.intellij.util.indexing.roots.IndexableFilesIndex
 import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.TestOnly
 import java.lang.Runnable
 import java.util.concurrent.atomic.AtomicReference
 
@@ -342,6 +343,11 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   }
 
   override fun dispose() {}
+
+  @TestOnly
+  fun disposeVirtualFilePointersAfterTest() {
+    Disposer.dispose(rootPointersDisposable)
+  }
 
   private inner class AppListener : ApplicationListener {
     override fun beforeWriteActionStart(action: Any) {
