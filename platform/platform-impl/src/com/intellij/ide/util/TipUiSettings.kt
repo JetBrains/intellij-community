@@ -12,6 +12,12 @@ internal object TipUiSettings {
   const val imageHeight = 248
 
   @JvmStatic
+  val tipPanelMinHeight: Int
+    get() = JBUI.scale(190)
+  @JvmStatic
+  val tipPanelMaxHeight: Int
+    get() = JBUI.scale(540)
+  @JvmStatic
   val tipPanelLeftIndent: Int
     get() = JBUI.scale(24)
   @JvmStatic
