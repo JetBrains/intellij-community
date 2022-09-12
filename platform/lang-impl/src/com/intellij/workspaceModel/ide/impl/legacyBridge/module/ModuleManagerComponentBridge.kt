@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
@@ -117,30 +116,28 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
           val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
           val changes = event.getChanges(ModuleEntity::class.java)
           if (changes.isNotEmpty() || moduleLibraryChanges.isNotEmpty()) {
-            executeOrQueueOnDispatchThread {
-              LOG.debug("Process changed modules and facets")
-              incModificationCount()
-              for (change in moduleLibraryChanges) {
-                when (change) {
-                  is EntityChange.Removed -> processModuleLibraryChange(change, event)
-                  is EntityChange.Replaced -> processModuleLibraryChange(change, event)
-                  is EntityChange.Added -> Unit
-                }
+            LOG.debug("Process changed modules and facets")
+            incModificationCount()
+            for (change in moduleLibraryChanges) {
+              when (change) {
+                is EntityChange.Removed -> processModuleLibraryChange(change, event)
+                is EntityChange.Replaced -> processModuleLibraryChange(change, event)
+                is EntityChange.Added -> Unit
               }
-
-              val oldModuleNames = mutableMapOf<Module, String>()
-              val unloadedModulesSet = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames
-              for (change in changes) {
-                processModuleChange(change, unloadedModulesSet, oldModuleNames, event)
-              }
-
-              for (change in moduleLibraryChanges) {
-                if (change is EntityChange.Added) processModuleLibraryChange(change, event)
-              }
-              // After every change processed
-              postProcessModules(oldModuleNames)
-              incModificationCount()
             }
+
+            val oldModuleNames = mutableMapOf<Module, String>()
+            val unloadedModulesSet = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames
+            for (change in changes) {
+              processModuleChange(change, unloadedModulesSet, oldModuleNames, event)
+            }
+
+            for (change in moduleLibraryChanges) {
+              if (change is EntityChange.Added) processModuleLibraryChange(change, event)
+            }
+            // After every change processed
+            postProcessModules(oldModuleNames)
+            incModificationCount()
           }
           // Roots changed should be sent after syncing with legacy bridge
           if (!VirtualFileUrlWatcher.getInstance(project).isInsideFilePointersUpdate) {
