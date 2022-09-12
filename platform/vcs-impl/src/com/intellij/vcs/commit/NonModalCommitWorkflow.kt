@@ -52,14 +52,14 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
         .map { it.asCommitCheck(commitInfo) }
         .groupBy { it.getExecutionOrder() }
 
-      runCommitChecks(commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
+      runCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
 
       runMetaHandlers(handlers.filterIsInstance<CheckinMetaHandler>())
 
-      runCommitChecks(commitChecks[CommitCheck.ExecutionOrder.MODIFICATION])?.let { return it }
+      runCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION])?.let { return it }
       FileDocumentManager.getInstance().saveAllDocuments()
 
-      runCommitChecks(commitChecks[CommitCheck.ExecutionOrder.LATE])?.let { return it }
+      runCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE])?.let { return it }
 
       return null // checks passed
     }
@@ -73,9 +73,9 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     }
   }
 
-  private suspend fun runCommitChecks(commitChecks: List<CommitCheck>?): CommitProblem? {
+  private suspend fun runCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>?): CommitProblem? {
     for (commitCheck in commitChecks.orEmpty()) {
-      val problem = runCommitCheck(project, commitCheck)
+      val problem = runCommitCheck(project, commitCheck, commitInfo)
       if (problem != null) return problem
     }
     return null

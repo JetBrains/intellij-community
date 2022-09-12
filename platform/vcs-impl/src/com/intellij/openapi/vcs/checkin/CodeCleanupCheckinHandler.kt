@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.util.SequentialModalProgressTask
@@ -33,18 +34,20 @@ import kotlinx.coroutines.withContext
 import kotlin.coroutines.coroutineContext
 
 class CodeCleanupCheckinHandlerFactory : CheckinHandlerFactory() {
-  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler = CodeCleanupCheckinHandler(panel)
+  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+    return CodeCleanupCheckinHandler(panel.project)
+  }
 }
 
-private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) :
+private class CodeCleanupCheckinHandler(private val project: Project) :
   CheckinHandler(),
   CommitCheck {
 
-  private val project = panel.project
   private val settings get() = VcsConfiguration.getInstance(project)
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    ProfileChooser(panel, settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT,
+    ProfileChooser(project,
+                   settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT,
                    settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_LOCAL,
                    settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_PROFILE,
                    "before.checkin.cleanup.code",
@@ -54,10 +57,10 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
 
   override fun isEnabled(): Boolean = settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT
 
-  override suspend fun runCheck(): CommitProblem? {
+  override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     val sink = coroutineContext.progressSink
     sink?.text(message("progress.text.inspecting.code"))
-    val cleanupProblems = findProblems()
+    val cleanupProblems = findProblems(commitInfo.committedVirtualFiles)
 
     sink?.text(message("progress.text.applying.fixes"))
     sink?.details("")
@@ -66,8 +69,8 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
     return null
   }
 
-  private suspend fun findProblems(): CleanupProblems {
-    val files = filterOutGeneratedAndExcludedFiles(panel.virtualFiles, project)
+  private suspend fun findProblems(committedFiles: List<VirtualFile>): CleanupProblems {
+    val files = filterOutGeneratedAndExcludedFiles(committedFiles, project)
     val globalContext = InspectionManager.getInstance(project).createNewGlobalContext() as GlobalInspectionContextImpl
     val profile = getProfile()
     val scope = AnalysisScope(project, files)

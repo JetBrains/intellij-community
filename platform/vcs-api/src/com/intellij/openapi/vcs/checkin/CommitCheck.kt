@@ -8,8 +8,10 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -52,7 +54,7 @@ interface CommitCheck : PossiblyDumbAware {
    * @return a commit problem found by the commit check or `null` if no problems found
    */
   @RequiresEdt
-  suspend fun runCheck(): CommitProblem?
+  suspend fun runCheck(commitInfo: CommitInfo): CommitProblem?
 
   enum class ExecutionOrder {
     /**
@@ -161,3 +163,5 @@ interface CommitInfo {
    */
   val commitActionText: @Nls String
 }
+
+val CommitInfo.committedVirtualFiles: List<VirtualFile> get() = ChangesUtil.iterateFiles(committedChanges).toList()

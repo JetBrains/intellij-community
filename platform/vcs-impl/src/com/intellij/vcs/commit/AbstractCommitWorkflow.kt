@@ -261,7 +261,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
                                            commitChecks: List<CommitCheck>?): CommitChecksResult? {
     for (commitCheck in commitChecks.orEmpty()) {
       try {
-        val problem = runCommitCheck(project, commitCheck)
+        val problem = runCommitCheck(project, commitCheck, commitInfo)
         if (problem == null) continue
 
         val result = blockingContext {
@@ -347,7 +347,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
     }
 
-    suspend fun runCommitCheck(project: Project, commitCheck: CommitCheck): CommitProblem? {
+    suspend fun runCommitCheck(project: Project, commitCheck: CommitCheck, commitInfo: CommitInfo): CommitProblem? {
       if (!commitCheck.isEnabled()) {
         LOG.debug("Commit check disabled $commitCheck")
         return null
@@ -362,7 +362,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       ctx.ensureActive()
       ctx.progressSink?.update(text = "", details = "")
 
-      return commitCheck.runCheck()
+      return commitCheck.runCheck(commitInfo)
     }
   }
 }
@@ -390,11 +390,11 @@ sealed class CommitSessionInfo {
 
 internal fun CheckinHandler.asCommitCheck(commitInfo: CommitInfo): CommitCheck {
   if (this is CommitCheck) return this
-  return ProxyCommitCheck(this, commitInfo)
+  return ProxyCommitCheck(this, commitInfo.executor)
 }
 
 private class ProxyCommitCheck(private val checkinHandler: CheckinHandler,
-                               private val commitInfo: CommitInfo) : CommitCheck {
+                               private val executor: CommitExecutor?) : CommitCheck {
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder {
     if (checkinHandler is CheckinModificationHandler) return CommitCheck.ExecutionOrder.MODIFICATION
     return CommitCheck.ExecutionOrder.LATE
@@ -404,9 +404,9 @@ private class ProxyCommitCheck(private val checkinHandler: CheckinHandler,
     return DumbService.isDumbAware(checkinHandler)
   }
 
-  override fun isEnabled(): Boolean = checkinHandler.acceptExecutor(commitInfo.executor)
+  override fun isEnabled(): Boolean = checkinHandler.acceptExecutor(executor)
 
-  override suspend fun runCheck(): CommitProblem? {
+  override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     val result = blockingContext {
       checkinHandler.beforeCheckin(commitInfo.executor, commitInfo.commitContext.additionalDataConsumer)
     }

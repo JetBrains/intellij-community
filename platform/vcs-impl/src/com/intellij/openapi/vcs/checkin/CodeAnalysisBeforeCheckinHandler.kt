@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.CodeSmellDetector
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles
@@ -64,7 +65,7 @@ import kotlin.reflect.KMutableProperty0
 
 class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
-    CodeAnalysisBeforeCheckinHandler(panel)
+    CodeAnalysisBeforeCheckinHandler(panel.project)
 }
 
 class CodeAnalysisCommitProblem(private val codeSmells: List<CodeSmellInfo>) : CommitProblemWithDetails {
@@ -92,19 +93,19 @@ class CodeAnalysisCommitProblem(private val codeSmells: List<CodeSmellInfo>) : C
  * The check-in handler which performs code analysis before check-in. Source code for this class
  * is provided as a sample of using the [CheckinHandler] API.
  */
-class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel) :
+class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
   CheckinHandler(), CommitCheck {
 
-  private val project: Project get() = commitPanel.project
   private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
 
   override fun isEnabled(): Boolean = settings.CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT
 
-  override suspend fun runCheck(): CodeAnalysisCommitProblem? {
+  override suspend fun runCheck(commitInfo: CommitInfo): CodeAnalysisCommitProblem? {
     val sink = coroutineContext.progressSink
     sink?.text(message("progress.text.analyzing.code"))
 
-    val files = filterOutGeneratedAndExcludedFiles(commitPanel.virtualFiles, project)
+    val changes = commitInfo.committedChanges
+    val files = filterOutGeneratedAndExcludedFiles(commitInfo.committedVirtualFiles, project)
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
     lateinit var codeSmells: List<CodeSmellInfo>
@@ -114,14 +115,14 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
       val progressIndicatorEx = ProgressSinkIndicatorEx(text2DetailsSink, coroutineContext.contextModality() ?: ModalityState.NON_MODAL)
       runUnderIndicator(coroutineContext.job, progressIndicatorEx) {
         // TODO suspending [findCodeSmells]
-        codeSmells = findCodeSmells(files)
+        codeSmells = findCodeSmells(changes, files)
       }
     }
     return if (codeSmells.isNotEmpty()) CodeAnalysisCommitProblem(codeSmells) else null
   }
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    ProfileChooser(commitPanel,
+    ProfileChooser(project,
                    settings::CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT,
                    settings::CODE_SMELLS_PROFILE_LOCAL,
                    settings::CODE_SMELLS_PROFILE,
@@ -134,7 +135,7 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
    * The closure accepts a class instance and returns a set of PsiElement elements that are changed or added.
    * The PsiFile elements are returned as a result.
    */
-  private fun processPsiFiles(files: List<VirtualFile>): List<PsiFile> {
+  private fun processPsiFiles(changes: List<Change>, files: List<VirtualFile>): List<PsiFile> {
     val analyzeOnlyChangedProperties = Registry.`is`("vcs.code.analysis.before.checkin.check.unused.only.changed.properties", false)
     val psiFiles =
       if (!analyzeOnlyChangedProperties) emptyList()
@@ -142,7 +143,7 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
 
     for (file in psiFiles) {
       file.putUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED,
-                       ConcurrentFactoryMap.createMap { getBeingCommittedPsiElements(it) })
+                       ConcurrentFactoryMap.createMap { getBeingCommittedPsiElements(changes, it) })
     }
     return psiFiles
   }
@@ -150,21 +151,20 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
   /**
    * Returns a set of PsiElements that are being committed
    */
-  private fun getBeingCommittedPsiElements(clazz: Class<out PsiElement>): Set<PsiElement> {
+  private fun getBeingCommittedPsiElements(changes: List<Change>, clazz: Class<out PsiElement>): Set<PsiElement> {
     val vcs = VcsFacadeImpl.getVcsInstance()
-    val changes = commitPanel.selectedChanges.toTypedArray()
     val elementsExtractor = { virtualFile: VirtualFile ->
       val psiFile = runReadAction {
         PsiManager.getInstance(project).findFile(virtualFile)
       }
       PsiTreeUtil.findChildrenOfType(psiFile, clazz).toList()
     }
-    val beingCommittedPsiElements = vcs.getChangedElements(project, changes, elementsExtractor)
+    val beingCommittedPsiElements = vcs.getChangedElements(project, changes.toTypedArray(), elementsExtractor)
     return beingCommittedPsiElements.toSet()
   }
 
-  private fun findCodeSmells(files: List<VirtualFile>): List<CodeSmellInfo> {
-    val psiFiles = processPsiFiles(files)
+  private fun findCodeSmells(changes: List<Change>, files: List<VirtualFile>): List<CodeSmellInfo> {
+    val psiFiles = processPsiFiles(changes, files)
     try {
       val indicator = ProgressManager.getGlobalProgressIndicator()
       val newAnalysisThreshold = Registry.intValue("vcs.code.analysis.before.checkin.show.only.new.threshold", 0)
@@ -200,15 +200,13 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
   }
 }
 
-class ProfileChooser(commitPanel: CheckinProjectPanel,
+class ProfileChooser(private val project: Project,
                      property: KMutableProperty0<Boolean>,
                      private val isLocalProperty: KMutableProperty0<Boolean>,
                      private val profileProperty: KMutableProperty0<String?>,
                      private val emptyTitleKey: @PropertyKey(resourceBundle = "messages.VcsBundle") String,
                      private val profileTitleKey: @PropertyKey(resourceBundle = "messages.VcsBundle") String)
-  : BooleanCommitOption(commitPanel, message(emptyTitleKey), true, property) {
-
-  private val project = commitPanel.project
+  : BooleanCommitOption(project, message(emptyTitleKey), true, property) {
 
   override fun getComponent(): JComponent {
     var profile: InspectionProfileImpl? = null
