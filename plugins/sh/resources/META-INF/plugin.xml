@@ -8,6 +8,7 @@
     <module name="intellij.sh.terminal"/>
     <module name="intellij.sh.copyright"/>
     <module name="intellij.sh.markdown"/>
+    <module name="intellij.sh.python"/>
   </content>
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>

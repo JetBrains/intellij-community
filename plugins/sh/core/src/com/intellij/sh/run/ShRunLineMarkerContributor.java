@@ -23,6 +23,10 @@ final class ShRunLineMarkerContributor extends RunLineMarkerContributor implemen
   public Info getInfo(@NotNull PsiElement element) {
     if (element instanceof OuterLanguageElementImpl || !(element instanceof LeafElement ) || element.getTextRange().getStartOffset() != 0)
       return null;
+    var contributionProhibited = ContainerUtil.exists(ShRunnerAdditionalCondition.EP.getExtensionsIfPointIsRegistered(), additionalCondition -> {
+      return additionalCondition.isRunningProhibitedForElement(element);
+    });
+    if (contributionProhibited) return null;
     PsiFile psiFile = element.getContainingFile();
     if (!(psiFile instanceof ShFile) && !element.getText().startsWith("#!")) return null;
 

@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 final class ShRunFileAction extends DumbAwareAction {
@@ -95,6 +96,11 @@ final class ShRunFileAction extends DumbAwareAction {
     if (e.getProject() != null) {
       PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
       if (file != null) {
+        var runningProhibited = ContainerUtil.exists(ShRunnerAdditionalCondition.EP.getExtensionsIfPointIsRegistered(),
+                                                     runningCondition -> {
+                                                       return runningCondition.isRunningProhibitedForFile(file);
+                                                     });
+        if (runningProhibited) return false;
         if (file instanceof ShFile) return true;
         PsiElement firstChild = file.findElementAt(0);
         return firstChild instanceof PsiComment && firstChild.getText().startsWith("#!");

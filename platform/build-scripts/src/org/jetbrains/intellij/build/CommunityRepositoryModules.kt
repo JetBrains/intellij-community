@@ -246,6 +246,7 @@ object CommunityRepositoryModules {
         "intellij.sh.core",
         "intellij.sh.terminal",
         "intellij.sh.copyright",
+        "intellij.sh.python",
         "intellij.sh.markdown")
       )
     },

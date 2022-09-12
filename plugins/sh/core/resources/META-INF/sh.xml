@@ -1,6 +1,12 @@
 <idea-plugin>
   <resource-bundle>messages.ShBundle</resource-bundle>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.runMarkerContributionAdditionalCondition"
+                    interface="com.intellij.sh.run.ShRunnerAdditionalCondition"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <fileType language="Shell Script" extensions="bash;sh;zsh" hashBangs="bash;sh;zsh" fieldName="INSTANCE" name="Shell Script"
               implementationClass="com.intellij.sh.ShFileType"/>
