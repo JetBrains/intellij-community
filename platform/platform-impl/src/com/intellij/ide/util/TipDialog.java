@@ -34,6 +34,9 @@ public final class TipDialog extends DialogWrapper {
     setTitle(IdeBundle.message("title.tip.of.the.day"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
     myTipPanel = new TipPanel(project, tips, getDisposable());
+    myTipPanel.addPropertyChangeListener(TipPanel.CURRENT_TIP_KEY.toString(), event -> {
+      SwingUtilities.invokeLater(() -> adjustSizeToContent());
+    });
     myShowActions = tips.size() > 1;
     if (myShowActions) {
       setDoNotAskOption(myTipPanel);
@@ -47,13 +50,14 @@ public final class TipDialog extends DialogWrapper {
     super.show();
     // For some reason OS reduces the height of the dialog after showing (XDecoratedPeer#handleCorrectInsets)
     // So we need to return preferred height back
-    SwingUtilities.invokeLater(() -> {
-      Dimension curSize = getSize();
-      Dimension prefSize = getPreferredSize();
-      Dimension minSize = getRootPane().getMinimumSize();
-      int height = Math.max(prefSize.height, minSize.height);
-      setSize(curSize.width, height);
-    });
+    SwingUtilities.invokeLater(() -> adjustSizeToContent());
+  }
+
+  private void adjustSizeToContent() {
+    Dimension prefSize = getPreferredSize();
+    Dimension minSize = getRootPane().getMinimumSize();
+    int height = Math.max(prefSize.height, minSize.height);
+    setSize(prefSize.width, height);
   }
 
   @NotNull

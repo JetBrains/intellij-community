@@ -22,7 +22,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
@@ -46,6 +48,8 @@ import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
 public final class TipPanel extends JPanel implements DoNotAskOption {
+  public static final Key<String> CURRENT_TIP_KEY = Key.create("CURRENT_TIP");
+
   private static final Logger LOG = Logger.getInstance(TipPanel.class);
 
   private @NotNull final Project myProject;
@@ -256,6 +260,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
 
     myPreviousTipAction.setEnabled(myTips.indexOf(myCurrentTip) > 0);
     myNextTipAction.setEnabled(myTips.indexOf(myCurrentTip) < myTips.size() - 1);
+    ClientProperty.put(this, CURRENT_TIP_KEY, myCurrentTip.fileName);
   }
 
   private void setPromotionForCurrentTip() {
