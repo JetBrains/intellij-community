@@ -50,7 +50,9 @@ public final class TipDialog extends DialogWrapper {
     SwingUtilities.invokeLater(() -> {
       Dimension curSize = getSize();
       Dimension prefSize = getPreferredSize();
-      setSize(curSize.width, prefSize.height);
+      Dimension minSize = getRootPane().getMinimumSize();
+      int height = Math.max(prefSize.height, minSize.height);
+      setSize(curSize.width, height);
     });
   }
 

@@ -286,13 +286,15 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   @Override
   public Dimension getPreferredSize() {
     Dimension baseSize = super.getPreferredSize();
-    return new Dimension(getDefaultWidth(), baseSize.height);
+    int height = Math.min(baseSize.height, TipUiSettings.getTipPanelMaxHeight());
+    return new Dimension(getDefaultWidth(), height);
   }
 
   @Override
   public Dimension getMinimumSize() {
     Dimension baseSize = super.getMinimumSize();
-    return new Dimension(getDefaultWidth(), baseSize.height);
+    int height = Math.max(baseSize.height, TipUiSettings.getTipPanelMinHeight());
+    return new Dimension(getDefaultWidth(), height);
   }
 
   private static int getDefaultWidth() {
