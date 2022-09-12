@@ -2,6 +2,8 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventObject;
@@ -15,9 +17,23 @@ public abstract class ModuleRootEvent extends EventObject {
   public abstract boolean isCausedByFileTypesChange();
 
   /**
-   * For more fine-grained events one may add {@link com.intellij.workspaceModel.ide.WorkspaceModelChangeListener}
-   * to get incremental workspace model changes and then ignore any {@link ModuleRootEvent}
-   * with {@code isCausedByWorkspaceModelChangesOnly == true}.
+   * If you migrate {@link ModuleRootListener} to {@link com.intellij.workspaceModel.ide.WorkspaceModelChangeListener},
+   * you should still keep {@link ModuleRootListener} implementation in the following cases:
+   * <ul>
+   * <li> your code depends on changes in {@link SyntheticLibrary} or {@link AdditionalLibraryRootsProvider},</li>
+   * <li> your code depends on explicit calls of {@link ProjectRootManagerEx#makeRootsChange(Runnable, RootsChangeRescanningInfo)}.</li>
+   * </ul>
+   * <br/>
+   * These APIs are deprecated and are being removed from IJ codebase. But since there are plugins that use these APIs, you should make sure
+   * your code works with such plugins as well.
+   * <br/>
+   * If it's your case, add the following check to your {@link ModuleRootListener}:
+   *  <pre>
+   *  void rootsChanged(@NotNull ModuleRootEvent event) {
+   *    if(event.isCausedByWorkspaceModelChangesOnly()) return;
+   *  }
+   *  </pre>
+   *  This way it will only handle the legacy events, while new more granular Workspace events will be handled by your {@link com.intellij.workspaceModel.ide.WorkspaceModelChangeListener}.
    */
   public abstract boolean isCausedByWorkspaceModelChangesOnly();
 
