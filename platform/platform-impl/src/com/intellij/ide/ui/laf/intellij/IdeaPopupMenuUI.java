@@ -4,10 +4,9 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.WindowRoundedCornersManager;
 import com.intellij.util.ui.JBValue;
 
 import javax.swing.*;
@@ -74,7 +73,7 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
   }
 
   public static boolean isRoundBorder() {
-    return SystemInfoRt.isMac && ExperimentalUI.isNewUI() && Registry.is("ide.mac.rounded.corners");
+    return WindowRoundedCornersManager.isAvailable();
   }
 
   public static boolean hideEmptyIcon(Component c) {
