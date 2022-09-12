@@ -13,8 +13,8 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.commit.AbstractCommitWorkflowHandler.Companion.getDefaultCommitActionName
 import com.intellij.vcs.commit.CommitModeManager
-import com.intellij.vcs.commit.getDefaultCommitActionName
 import com.intellij.vcs.commit.message.CommitMessageInspectionsPanel
 import org.jetbrains.annotations.NonNls
 
@@ -50,7 +50,7 @@ class CommitDialogConfigurable(private val project: Project)
         }.resizableRow()
       }
 
-      val actionName = UIUtil.removeMnemonic(getDefaultCommitActionName())
+      val actionName = UIUtil.removeMnemonic(getDefaultCommitActionName(emptyList()))
       group(VcsBundle.message("border.standard.checkin.options.group", actionName)) {
         val panel = CommitOptionsConfigurable(project)
         Disposer.register(disposable, panel)

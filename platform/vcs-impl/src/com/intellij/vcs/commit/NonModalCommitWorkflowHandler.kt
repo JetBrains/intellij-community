@@ -20,12 +20,12 @@ import com.intellij.openapi.project.DumbService.DumbModeListener
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.text.StringUtil.*
+import com.intellij.openapi.util.text.StringUtil.capitalize
+import com.intellij.openapi.util.text.StringUtil.toLowerCase
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
@@ -104,44 +104,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   override fun updateDefaultCommitActionName() {
     val isAmend = amendCommitHandler.isAmendCommitMode
     val isSkipCommitChecks = isCommitChecksResultUpToDate == RecentCommitChecks.FAILED
-    ui.defaultCommitActionName = getCommitActionName(isAmend, isSkipCommitChecks)
-  }
-
-  private fun getCommitActionName(isAmend: Boolean, isSkipCommitChecks: Boolean): @Nls String {
-    val commitText = getCommitActionName()
-    return when {
-      isAmend && isSkipCommitChecks -> message("action.amend.commit.anyway.text")
-      isAmend && !isSkipCommitChecks -> message("amend.action.name", commitText)
-      !isAmend && isSkipCommitChecks -> message("action.commit.anyway.text", commitText)
-      else -> commitText
-    }
-  }
-
-  private fun getActionTextWithoutEllipsis(executor: CommitExecutor?,
-                                           isAmend: Boolean,
-                                           isSkipCommitChecks: Boolean): @Nls String {
-    if (executor == null) {
-      val actionText = getCommitActionName(isAmend, isSkipCommitChecks)
-      return removeEllipsisSuffix(actionText)
-    }
-
-    if (executor is CommitExecutorWithRichDescription) {
-      val state = CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
-      val actionText = executor.getText(state)
-      if (actionText != null) {
-        return removeEllipsisSuffix(actionText)
-      }
-    }
-
-    // We ignore 'isAmend == true' for now - unclear how to handle without CommitExecutorWithRichDescription.
-    // Ex: executor might not support this flag.
-    val actionText = executor.actionText
-    if (isSkipCommitChecks) {
-      return message("commit.checks.failed.notification.commit.anyway.action", removeEllipsisSuffix(actionText))
-    }
-    else {
-      return removeEllipsisSuffix(actionText)
-    }
+    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses, isAmend, isSkipCommitChecks)
   }
 
   private fun getCommitActionTextForNotification(
@@ -149,7 +112,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     isSkipCommitChecks: Boolean
   ): @Nls(capitalization = Nls.Capitalization.Sentence) String {
     val isAmend = amendCommitHandler.isAmendCommitMode
-    val actionText: @Nls String = getActionTextWithoutEllipsis(executor, isAmend, isSkipCommitChecks)
+    val actionText: @Nls String = getActionTextWithoutEllipsis(workflow.vcses, executor, isAmend, isSkipCommitChecks)
     return capitalize(toLowerCase(actionText))
   }
 
@@ -293,7 +256,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   override fun doExecuteSession(sessionInfo: CommitSessionInfo): Boolean {
     val isAmend = amendCommitHandler.isAmendCommitMode
-    val actionName = getActionTextWithoutEllipsis(sessionInfo.executor, isAmend, false)
+    val actionName = getActionTextWithoutEllipsis(workflow.vcses, sessionInfo.executor, isAmend, false)
     val commitInfo = CommitInfoImpl(actionName)
 
     if (!sessionInfo.isVcsCommit) {
@@ -363,7 +326,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =
-    ui.showCommitOptions(ensureCommitOptions(), getCommitActionName(), isFromToolbar, dataContext)
+    ui.showCommitOptions(ensureCommitOptions(), getDefaultCommitActionName(workflow.vcses), isFromToolbar, dataContext)
 
   override fun saveCommitOptionsOnCommit(): Boolean {
     ensureCommitOptions()

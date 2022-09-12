@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
@@ -31,13 +32,6 @@ private val LOG = logger<AbstractCommitWorkflowHandler<*, *>>()
 // Need to support '_' for mnemonics as it is supported in DialogWrapper internally
 @Nls
 private fun String.fixUnderscoreMnemonic() = replace('_', '&')
-
-internal fun getDefaultCommitActionName(vcses: Collection<AbstractVcs> = emptyList()): @Nls String =
-  replaceMnemonicAmpersand(
-    (vcses.mapNotNull { it.checkinEnvironment?.checkinOperationName }.distinct().singleOrNull()
-     ?: VcsBundle.message("commit.dialog.default.commit.operation.name")
-    ).fixUnderscoreMnemonic()
-  )
 
 internal fun CommitWorkflowUi.getDisplayedPaths(): List<FilePath> =
   getDisplayedChanges().map { getFilePath(it) } + getDisplayedUnversionedFiles()
@@ -76,10 +70,8 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   private val commitHandlers get() = workflow.commitHandlers
   protected val commitOptions get() = workflow.commitOptions
 
-  fun getCommitActionName() = getDefaultCommitActionName(workflow.vcses)
-
   open fun updateDefaultCommitActionName() {
-    ui.defaultCommitActionName = getCommitActionName()
+    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
   }
 
   protected open fun createDataProvider() = DataProvider { dataId ->
@@ -165,7 +157,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   protected open fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean = true
 
   protected open fun doExecuteSession(sessionInfo: CommitSessionInfo): Boolean {
-    val actionName = sessionInfo.executor?.actionText ?: getCommitActionName()
+    val actionName = sessionInfo.executor?.actionText ?: getDefaultCommitActionName(workflow.vcses)
     val commitInfo = CommitInfoImpl(actionName)
     return workflow.executeSession(sessionInfo, commitInfo)
   }
@@ -202,6 +194,51 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   override fun dispose() = Unit
 
   companion object {
+    fun getDefaultCommitActionName(vcses: Collection<AbstractVcs>): @Nls String =
+      replaceMnemonicAmpersand(
+        (vcses.mapNotNull { it.checkinEnvironment?.checkinOperationName }.distinct().singleOrNull()
+         ?: VcsBundle.message("commit.dialog.default.commit.operation.name")
+        ).fixUnderscoreMnemonic()
+      )
+
+    fun getDefaultCommitActionName(vcses: Collection<AbstractVcs>, isAmend: Boolean, isSkipCommitChecks: Boolean): @Nls String {
+      val commitText = getDefaultCommitActionName(vcses)
+      return when {
+        isAmend && isSkipCommitChecks -> VcsBundle.message("action.amend.commit.anyway.text")
+        isAmend && !isSkipCommitChecks -> VcsBundle.message("amend.action.name", commitText)
+        !isAmend && isSkipCommitChecks -> VcsBundle.message("action.commit.anyway.text", commitText)
+        else -> commitText
+      }
+    }
+
+    fun getActionTextWithoutEllipsis(vcses: Collection<AbstractVcs>,
+                                     executor: CommitExecutor?,
+                                     isAmend: Boolean,
+                                     isSkipCommitChecks: Boolean): @Nls String {
+      if (executor == null) {
+        val actionText = getDefaultCommitActionName(vcses, isAmend, isSkipCommitChecks)
+        return StringUtil.removeEllipsisSuffix(actionText)
+      }
+
+      if (executor is CommitExecutorWithRichDescription) {
+        val state = CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
+        val actionText = executor.getText(state)
+        if (actionText != null) {
+          return StringUtil.removeEllipsisSuffix(actionText)
+        }
+      }
+
+      // We ignore 'isAmend == true' for now - unclear how to handle without CommitExecutorWithRichDescription.
+      // Ex: executor might not support this flag.
+      val actionText = executor.actionText
+      if (isSkipCommitChecks) {
+        return VcsBundle.message("commit.checks.failed.notification.commit.anyway.action", StringUtil.removeEllipsisSuffix(actionText))
+      }
+      else {
+        return StringUtil.removeEllipsisSuffix(actionText)
+      }
+    }
+
     fun configureCommitSession(project: Project,
                                sessionInfo: CommitSessionInfo,
                                changes: List<Change>,
