@@ -74,6 +74,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private Component[] myFocusOwners = new Component[0];
 
   private @NlsContexts.PopupAdvertisement String myAd;
+  private JComponent myAdvertiser;
   private boolean myShowShadow = true;
   private boolean myShowBorder = true;
   private boolean myFocusable = true;
@@ -244,7 +245,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
       myProject, myComponent, myPreferredFocusedComponent, myRequestFocus, myFocusable, myMovable, myDimensionServiceKey,
       myResizable, myTitle, myCallback, myCancelOnClickOutside, myListeners, myUseDimServiceForXYLocation, myCommandButton,
       myCancelButton, myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
-      myPlaceWithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd, myAdAlignment,
+      myPlaceWithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd, myAdAlignment, myAdvertiser,
       false, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent,
       myShowShadow, myShowBorder, myBorderColor, myCancelOnWindowDeactivation, myKeyEventHandler
     );
@@ -360,6 +361,13 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   public ComponentPopupBuilder setAdText(@Nullable String text, int textAlignment) {
     myAd = text;
     myAdAlignment = textAlignment;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public ComponentPopupBuilder setAdvertiser(@NotNull JComponent advertiser) {
+    myAdvertiser = advertiser;
     return this;
   }
 

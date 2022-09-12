@@ -235,6 +235,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
                                         Component @NotNull [] focusOwners,
                                         @Nullable @NlsContexts.PopupAdvertisement String adText,
                                         int adTextAlignment,
+                                        @Nullable JComponent advertiser,
                                         boolean headerAlwaysFocusable,
                                         @NotNull List<? extends Pair<ActionListener, KeyStroke>> keyboardActions,
                                         Component settingsButtons,
@@ -266,6 +267,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myContent.add(component, BorderLayout.CENTER);
     if (adText != null) {
       setAdText(adText, adTextAlignment);
+    }
+
+    if (advertiser != null) {
+      setFooterComponent(advertiser);
     }
 
     myCancelKeyEnabled = cancelKeyEnabled;

@@ -53,6 +53,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   private final List<JBPopupListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private @NlsContexts.PopupAdvertisement String myAd;
+  private JComponent myAdvertiser;
+
   private Dimension myMinSize;
   private ActiveComponent myCommandButton;
   private final List<Pair<ActionListener,KeyStroke>> myKeyboardActions = new ArrayList<>();
@@ -403,6 +405,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       .setFocusOwners(myFocusOwners)
       .setCancelKeyEnabled(myCancelKeyEnabled)
       .setAdText(myAd, myAdAlignment)
+      .setAdvertiser(myAdvertiser)
       .setKeyboardActions(myKeyboardActions)
       .setMayBeParent(myMayBeParent)
       .setLocateWithinScreenBounds(true)
@@ -529,6 +532,12 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   @Override
   public PopupChooserBuilder<T> setAdText(String ad) {
     setAdText(ad, SwingConstants.LEFT);
+    return this;
+  }
+
+  @Override
+  public PopupChooserBuilder<T> setAdvertiser(JComponent advertiser) {
+    myAdvertiser = advertiser;
     return this;
   }
 

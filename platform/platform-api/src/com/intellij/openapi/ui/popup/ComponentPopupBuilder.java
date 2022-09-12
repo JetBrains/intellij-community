@@ -117,6 +117,9 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setAdText(@Nullable @PopupAdvertisement String text, int textAlignment);
 
   @NotNull
+  ComponentPopupBuilder setAdvertiser(@NotNull JComponent advertiser);
+
+  @NotNull
   ComponentPopupBuilder setShowShadow(boolean show);
 
   @NotNull

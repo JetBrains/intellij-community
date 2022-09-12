@@ -74,10 +74,7 @@ import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -692,9 +689,16 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     @NotNull Project project = parameters.project;
     @NotNull DialogPanel headerPanel = showUsagesPopupData.header.panel;
 
+    SpeedSearchAdvertiser advertiser = new SpeedSearchAdvertiser();
+    String hint = getSecondInvocationHint(actionHandler);
+    if (hint != null) {
+      advertiser.addAdvertisement(hint);
+    }
+    advertiser.addSpeedSearchAdvertisement();
+
     PopupChooserBuilder<?> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table).
       setTitle(showUsagesPopupData.header.getTitle()).
-      setAdText(getSecondInvocationHint(actionHandler)).
+      setAdvertiser(advertiser.getComponent()).
       setMovable(true).
       setResizable(true).
       setCancelKeyEnabled(true).
