@@ -29,7 +29,7 @@ fun zip(targetFile: Path,
   Files.createDirectories(targetFile.parent)
   val packageIndexBuilder = if (compress) null else PackageIndexBuilder()
   ZipFileWriter(channel = FileChannel.open(targetFile, if (overwrite) W_OVERWRITE else W_CREATE_NEW),
-                deflater = if (compress) Deflater(compressionLevel, true) else null).use {
+                deflater = if (compress) Deflater(compressionLevel, true) else null).use { zipFileWriter ->
     val fileAdded: ((String) -> Boolean)?
     val dirNameSetToAdd: Set<String>
     if (addDirEntriesMode == AddDirEntriesMode.NONE) {
@@ -53,10 +53,10 @@ fun zip(targetFile: Path,
           included
         }
       }
-
       dirNameSetToAdd = emptySet()
     }
-    else {
+
+else {
       dirNameSetToAdd = LinkedHashSet()
       fileAdded = { name ->
         if (fileFilter != null && !fileFilter(name)) {
@@ -75,21 +75,16 @@ fun zip(targetFile: Path,
         }
       }
     }
-    val archiver = ZipArchiver(it, fileAdded)
+    val archiver = ZipArchiver(zipFileWriter, fileAdded)
     for ((dir, prefix) in dirs.entries) {
       val normalizedDir = dir.toAbsolutePath().normalize()
       archiver.setRootDir(normalizedDir, prefix)
       compressDir(normalizedDir, archiver, excludes = null)
     }
-    if (dirNameSetToAdd.isNotEmpty()) {
-      addDirForResourceFiles(it, dirNameSetToAdd)
-    }
-  }
-}
 
-private fun addDirForResourceFiles(out: ZipFileWriter, dirNameSetToAdd: Set<String>) {
-  for (dir in dirNameSetToAdd) {
-    out.dir(dir)
+    for (dir in dirNameSetToAdd) {
+      zipFileWriter.dir(dir)
+    }
   }
 }
 

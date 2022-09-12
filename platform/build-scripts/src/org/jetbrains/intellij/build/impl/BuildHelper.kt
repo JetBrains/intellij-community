@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceNegatedIsEmptyWithIsNotEmpty", "LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build.impl
 
@@ -9,13 +9,15 @@ import com.intellij.util.JavaModuleOptions
 import com.intellij.util.system.OS
 import com.intellij.util.xml.dom.readXmlAsModel
 import io.opentelemetry.api.trace.SpanBuilder
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildScriptsLoggedError
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.runJava
 import java.io.File
@@ -59,15 +61,11 @@ fun copyDirWithFileFilter(fromDir: Path, targetDir: Path, fileFilter: Predicate<
   copyDir(sourceDir = fromDir, targetDir = targetDir, fileFilter = fileFilter)
 }
 
-fun zip(context: CompilationContext, targetFile: Path, dir: Path, compress: Boolean, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE) {
-  zipWithPrefixes(context, targetFile, mapOf(dir to ""), compress, addDirEntriesMode)
-}
-
-fun zipWithPrefixes(context: CompilationContext, targetFile: Path, map: Map<Path, String>, compress: Boolean, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE) {
+fun zip(context: CompilationContext, targetFile: Path, dir: Path) {
   spanBuilder("pack")
     .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
     .useWithScope {
-      org.jetbrains.intellij.build.io.zip(targetFile = targetFile, dirs = map, compress = compress, addDirEntriesMode = addDirEntriesMode)
+      org.jetbrains.intellij.build.io.zip(targetFile = targetFile, dirs = mapOf(dir to ""), compress = false)
     }
 }
 
@@ -147,7 +145,7 @@ fun runApplicationStarter(context: BuildContext,
       try {
         context.messages.error("Log file: ${logFileToPublish.canonicalPath} attached to build artifacts")
       }
-      catch (_: BuildScriptsLoggedError) {
+      catch (ignored: BuildScriptsLoggedError) {
         // skip exception thrown by logger.error
       }
     }
