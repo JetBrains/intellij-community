@@ -9340,6 +9340,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantOverride/abstractClassAndInterface.kt");
         }
 
+        @TestMetadata("abstractHiddenByFakeOverride.kt")
+        public void testAbstractHiddenByFakeOverride() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/abstractHiddenByFakeOverride.kt");
+        }
+
         @TestMetadata("annotated.kt")
         public void testAnnotated() throws Exception {
             runTest("testData/inspectionsLocal/redundantOverride/annotated.kt");
