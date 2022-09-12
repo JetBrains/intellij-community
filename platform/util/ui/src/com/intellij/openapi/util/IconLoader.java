@@ -594,8 +594,11 @@ public final class IconLoader {
     if (icon instanceof CachedImageIcon) {
       return ((CachedImageIcon)icon).createWithPatcher(colorPatcher);
     }
+    else if (icon instanceof RetrievableIcon) {
+      return colorPatchedIcon(((RetrievableIcon)icon).retrieveIcon(), colorPatcher);
+    }
     else {
-      LOG.warn("Cannot patch " + icon.getClass());
+      LOG.error("Cannot patch " + icon.getClass());
       return icon;
     }
   }
