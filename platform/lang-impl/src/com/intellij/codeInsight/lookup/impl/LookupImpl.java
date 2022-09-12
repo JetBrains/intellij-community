@@ -15,9 +15,6 @@ import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction;
 import com.intellij.codeInsight.template.impl.actions.NextVariableAction;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.ide.ui.IdeUiService;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -83,19 +80,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final Project myProject;
   private final Editor myEditor;
   private final Object myUiLock = new Object();
-  private final JBList<LookupElement> myList = new JBList<LookupElement>(new CollectionListModelWithBatchUpdate<>()) {
-    // 'myList' is focused when "Screen Reader" mode is enabled
-    @Override
-    protected void processKeyEvent(@NotNull final KeyEvent e) {
-      myEditor.getContentComponent().dispatchEvent(e); // let the editor handle actions properly for the lookup list
-    }
-
-    @NotNull
-    @Override
-    protected ExpandableItemsHandler<Integer> createExpandableItemsHandler() {
-      return new CompletionExtender(this);
-    }
-  };
+  private final JBList<LookupElement> myList = new LookupList();
   final LookupCellRenderer myCellRenderer;
 
   private final List<LookupListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -174,9 +159,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     addListeners();
 
     myCreatedTimestamp = System.currentTimeMillis();
-    // When Screen Reader is supported, Lookup is focused instead of editor, and actions in lookup
-    // get the lookup component as event source. So we need to delegate data provider to make actions working
-    DataManager.registerDataProvider(getComponent(), IdeUiService.getInstance().createUiDataContext(editor.getComponent())::getData);
   }
 
   private CollectionListModelWithBatchUpdate<LookupElement> getListModel() {
@@ -1274,6 +1256,30 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       Font font = StartupUiUtil.getLabelFont();
       RelativeFont relativeFont = RelativeFont.NORMAL.scale(JBUI.CurrentTheme.CompletionPopup.Advertiser.fontSizeOffset());
       return relativeFont.derive(font);
+    }
+  }
+
+  /**
+   * List implementation for lookup. Normally, this list is not focused. However,
+   * it gains focus when "Screen Reader" mode is enabled. So we need to delegate
+   * key events and declare a permanent component to provide proper data context for actions.
+   */
+  private class LookupList extends JBList<LookupElement> implements DependentTransientComponent {
+    LookupList() { super(new CollectionListModelWithBatchUpdate<>()); }
+
+    @Override
+    protected void processKeyEvent(@NotNull final KeyEvent e) {
+      myEditor.getContentComponent().dispatchEvent(e);
+    }
+
+    @Override
+    protected @NotNull ExpandableItemsHandler<Integer> createExpandableItemsHandler() {
+      return new CompletionExtender(this);
+    }
+
+    @Override
+    public @NotNull Component getPermanentComponent() {
+      return myEditor.getContentComponent();
     }
   }
 }
