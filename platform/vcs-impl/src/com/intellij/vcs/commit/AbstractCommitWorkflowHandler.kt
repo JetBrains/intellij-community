@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
 import com.intellij.openapi.vcs.changes.ui.SessionDialog
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CommitInfo
 import com.intellij.openapi.vcs.ui.Refreshable
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -24,6 +25,7 @@ import com.intellij.util.containers.forEachLoggingErrors
 import com.intellij.util.containers.mapNotNullLoggingErrors
 import com.intellij.util.ui.UIUtil.replaceMnemonicAmpersand
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitHandlers
+import com.intellij.vcs.commit.AbstractCommitWorkflowHandler.Companion.getActionTextWithoutEllipsis
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -122,9 +124,10 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     logCommitEvent(sessionInfo)
 
     refreshChanges {
+      val commitInfo = DynamicCommitInfoImpl(commitContext, sessionInfo, ui, workflow)
       workflow.continueExecution {
         updateWorkflow(sessionInfo) &&
-        doExecuteSession(sessionInfo)
+        doExecuteSession(sessionInfo, commitInfo)
       }
     }
     return true
@@ -154,9 +157,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   @RequiresEdt
   protected open fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean = true
 
-  protected open fun doExecuteSession(sessionInfo: CommitSessionInfo): Boolean {
-    val actionName = sessionInfo.executor?.actionText ?: getDefaultCommitActionName(workflow.vcses)
-    val commitInfo = CommitInfoImpl(actionName)
+  protected open fun doExecuteSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
     return workflow.executeSession(sessionInfo, commitInfo)
   }
 
@@ -257,5 +258,34 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
       return ScheduleForAdditionAction.addUnversionedFilesToVcs(project, changeList, unversionedFiles,
                                                                 { newChanges -> inclusionModel.addInclusion(newChanges) }, null)
     }
+  }
+}
+
+class StaticCommitInfo(
+  override val commitContext: CommitContext,
+  override val executor: CommitExecutor?,
+  override val commitActionText: String,
+  override val committedChanges: List<Change>,
+  override val affectedVcses: List<AbstractVcs>,
+  override val commitMessage: String,
+) : CommitInfo
+
+class DynamicCommitInfoImpl(
+  override val commitContext: CommitContext,
+  private val sessionInfo: CommitSessionInfo,
+  private val workflowUi: CommitWorkflowUi,
+  private val workflow: AbstractCommitWorkflow
+) : DynamicCommitInfo {
+  override val executor: CommitExecutor? get() = sessionInfo.executor
+
+  override val committedChanges: List<Change> get() = workflowUi.getIncludedChanges()
+  override val affectedVcses: List<AbstractVcs> get() = workflow.vcses.toList()
+  override val commitMessage: String get() = workflowUi.commitMessageUi.text
+
+  override val commitActionText: String
+    get() = getActionTextWithoutEllipsis(workflow.vcses, executor, commitContext.isAmendCommitMode, false)
+
+  override fun asStaticInfo(): CommitInfo {
+    return StaticCommitInfo(commitContext, executor, commitActionText, committedChanges, affectedVcses, commitMessage)
   }
 }

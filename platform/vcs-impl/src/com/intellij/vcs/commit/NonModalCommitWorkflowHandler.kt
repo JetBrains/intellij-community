@@ -254,11 +254,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
   }
 
-  override fun doExecuteSession(sessionInfo: CommitSessionInfo): Boolean {
-    val isAmend = amendCommitHandler.isAmendCommitMode
-    val actionName = getActionTextWithoutEllipsis(workflow.vcses, sessionInfo.executor, isAmend, false)
-    val commitInfo = CommitInfoImpl(actionName)
-
+  override fun doExecuteSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
     if (!sessionInfo.isVcsCommit) {
       return workflow.executeSession(sessionInfo, commitInfo)
     }
@@ -273,8 +269,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       }
 
       ui.commitProgressUi.runWithProgress(isOnlyRunCommitChecks) {
-        val problem = workflow.runBackgroundBeforeCommitChecks(sessionInfo)
-        handleCommitProblem(problem, isOnlyRunCommitChecks, commitInfo)
+        val problem = workflow.runBackgroundBeforeCommitChecks(commitInfo)
+        handleCommitProblem(problem, isOnlyRunCommitChecks, commitInfo.asStaticInfo())
       }
     }
 

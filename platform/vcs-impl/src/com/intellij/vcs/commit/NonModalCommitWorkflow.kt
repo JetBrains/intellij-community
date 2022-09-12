@@ -39,17 +39,17 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     }
   }
 
-  suspend fun runBackgroundBeforeCommitChecks(sessionInfo: CommitSessionInfo): CommitProblem? {
+  suspend fun runBackgroundBeforeCommitChecks(commitInfo: DynamicCommitInfo): CommitProblem? {
     return PartialChangesUtil.underChangeList(project, getBeforeCommitChecksChangelist()) {
-      runCommitHandlers(sessionInfo)
+      runCommitHandlers(commitInfo)
     }
   }
 
-  private suspend fun runCommitHandlers(sessionInfo: CommitSessionInfo): CommitProblem? {
+  private suspend fun runCommitHandlers(commitInfo: DynamicCommitInfo): CommitProblem? {
     try {
       val handlers = commitHandlers
       val commitChecks = handlers
-        .map { it.asCommitCheck(sessionInfo, commitContext) }
+        .map { it.asCommitCheck(commitInfo) }
         .groupBy { it.getExecutionOrder() }
 
       runCommitChecks(commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }

@@ -5,7 +5,11 @@ import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -29,6 +33,7 @@ interface CommitCheck : PossiblyDumbAware {
   /**
    * Indicates if commit check should be run for the commit.
    * E.g. if the corresponding option is enabled in settings.
+   * See [CheckinHandler.getBeforeCheckinConfigurationPanel] and [CheckinHandler.getBeforeCheckinSettings].
    *
    * @return `true` if commit check should be run for the commit and `false` otherwise
    */
@@ -144,6 +149,13 @@ interface CommitProblemWithDetails : CommitProblem {
 class TextCommitProblem(override val text: String) : CommitProblem
 
 interface CommitInfo {
+  val commitContext: CommitContext
+  val executor: CommitExecutor?
+
+  val committedChanges: List<Change>
+  val affectedVcses: List<AbstractVcs>
+  val commitMessage: @Nls String
+
   /**
    * Commit action name, without mnemonics and ellipsis. Ex: 'Amend Commit'.
    */
