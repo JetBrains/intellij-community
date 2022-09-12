@@ -46,7 +46,7 @@ import java.util.function.Consumer;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool {
-  @NonNls private static final String SHORT_NAME = "ConstantConditions";
+  @NonNls private static final String SHORT_NAME = "DataFlowIssue";
   public boolean SUGGEST_NULLABLE_ANNOTATIONS;
   public boolean TREAT_UNKNOWN_MEMBERS_AS_NULLABLE;
   public boolean IGNORE_ASSERT_STATEMENTS;

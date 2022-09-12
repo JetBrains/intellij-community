@@ -1790,13 +1790,15 @@
     <localInspection groupPath="Java" language="JAVA" shortName="UnusedAssignment" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
                      level="WARNING" implementationClass="com.intellij.codeInspection.defUse.DefUseInspection" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.unused.assignment.display.name" bundle="messages.JavaBundle"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ConstantConditions" bundle="messages.JavaBundle" key="inspection.data.flow.display.name"
+    <localInspection groupPath="Java" language="JAVA" shortName="DataFlowIssue"
+                     bundle="messages.JavaBundle" key="inspection.data.flow.display.name"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.dataFlow.DataFlowInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConstantValue" bundle="messages.JavaBundle" key="inspection.data.flow.constant.values.display.name"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.dataFlow.ConstantValueInspection"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.dataFlow.ConstantValueInspectionMerger" />
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.dataFlow.DataFlowInspectionMerger" />
     <localInspection groupPath="Java" language="JAVA" shortName="Java9UndeclaredServiceUsage"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues"
                      enabledByDefault="true" level="WARNING"
