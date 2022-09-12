@@ -91,10 +91,10 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   @NotNull
   @Override
   public DetailedLogData readFirstBlock(@NotNull VirtualFile root, @NotNull Requirements requirements) throws VcsException {
-    if (!isRepositoryReady(root)) {
+    GitRepository repository = getRepository(root);
+    if (repository == null) {
       return LogDataImpl.empty();
     }
-    GitRepository repository = Objects.requireNonNull(myRepositoryManager.getRepositoryForRoot(root));
 
     // need to query more to sort them manually; this doesn't affect performance: it is equal for -1000 and -2000
     int commitCount = requirements.getCommitCount() * 2;
@@ -307,7 +307,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   @NotNull
   public LogData readAllHashes(@NotNull VirtualFile root, @NotNull final Consumer<? super TimedVcsCommit> commitConsumer)
     throws VcsException {
-    if (!isRepositoryReady(root)) {
+    if (getRepository(root) == null) {
       return LogDataImpl.empty();
     }
 
@@ -327,20 +327,18 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
                               @NotNull List<String> hashes,
                               @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer)
     throws VcsException {
-    if (!isRepositoryReady(root)) {
+    GitRepository repository = getRepository(root);
+    if (repository == null) {
       return;
     }
 
-    GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(myRepositoryManager, root),
+    GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(repository),
                                                                    DiffRenameLimit.GitConfig.INSTANCE,
                                                                    DiffInMergeCommits.DIFF_TO_PARENTS);
     GitLogUtil.readFullDetailsForHashes(myProject, root, hashes, requirements, commitConsumer);
   }
 
-  static boolean shouldIncludeRootChanges(@NotNull GitRepositoryManager manager,
-                                          @NotNull VirtualFile root) {
-    GitRepository repository = manager.getRepositoryForRoot(root);
-    if (repository == null) return true;
+  static boolean shouldIncludeRootChanges(@NotNull GitRepository repository) {
     return !repository.getInfo().isShallow();
   }
 
@@ -435,7 +433,8 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
                                                         @Nullable VcsLogRangeFilter.RefRange range,
                                                         int maxCount) throws VcsException {
 
-    if (!isRepositoryReady(root)) {
+    GitRepository repository = getRepository(root);
+    if (repository == null) {
       return Collections.emptyList();
     }
 
@@ -447,9 +446,6 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       boolean atLeastOneBranchExists = false;
 
       if (branchFilter != null) {
-        GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-        assert repository != null : "repository is null for root " + root + " but was previously reported as 'ready'";
-
         Collection<GitBranch> branches = ContainerUtil
           .newArrayList(ContainerUtil.concat(repository.getBranches().getLocalBranches(), repository.getBranches().getRemoteBranches()));
         Collection<String> branchNames = GitBranchUtil.convertBranchesToNames(branches);
@@ -646,20 +642,20 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     return "--" + paramName + "=" + value; // no value quoting needed, because the parameter itself will be quoted by GeneralCommandLine
   }
 
-  private boolean isRepositoryReady(@NotNull VirtualFile root) {
-    return isRepositoryReady(myRepositoryManager, root);
+  private @Nullable GitRepository getRepository(@NotNull VirtualFile root) {
+    return getRepository(myRepositoryManager, root);
   }
 
-  static boolean isRepositoryReady(@NotNull GitRepositoryManager manager, @NotNull VirtualFile root) {
+  static @Nullable GitRepository getRepository(@NotNull GitRepositoryManager manager, @NotNull VirtualFile root) {
     GitRepository repository = manager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);
-      return false;
+      return null;
     }
     else if (repository.isFresh()) {
       LOG.info("Fresh repository: " + root);
-      return false;
+      return null;
     }
-    return true;
+    return repository;
   }
 }
