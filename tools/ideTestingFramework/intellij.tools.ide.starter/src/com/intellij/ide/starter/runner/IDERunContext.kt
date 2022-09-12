@@ -49,7 +49,7 @@ data class IDERunContext(
   val commands: Iterable<MarshallableCommand> = listOf(),
   val codeBuilder: (CodeInjector.() -> Unit)? = null,
   val runTimeout: Duration = 10.minutes,
-  val dumpThreadInterval: Duration = 10.minutes,
+  val dumpThreadInterval: Duration = 5.minutes,
   val useStartupScript: Boolean = true,
   val closeHandlers: List<IDERunCloseContext.() -> Unit> = listOf(),
   val verboseOutput: Boolean = false,
