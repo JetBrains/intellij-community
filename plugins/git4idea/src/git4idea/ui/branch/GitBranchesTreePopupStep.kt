@@ -128,20 +128,22 @@ class GitBranchesTreePopupStep(private val project: Project, internal val reposi
   override fun getTitle(): String =
     DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", repository.vcs.displayName, DvcsUtil.getShortRepositoryName(repository))
 
-  fun getIcon(treeNode: Any?): Icon? {
+  fun getIcon(treeNode: Any?, isSelected: Boolean): Icon? {
     val value = treeNode ?: return null
     return when (value) {
       is GitBranchesTreeModel.BranchesPrefixGroup -> PlatformIcons.FOLDER_ICON
-      is GitBranch -> getBranchIcon(value)
+      is GitBranch -> getBranchIcon(value, isSelected)
       else -> null
     }
   }
 
-  private fun getBranchIcon(branch: GitBranch): Icon {
+  private fun getBranchIcon(branch: GitBranch, isSelected: Boolean): Icon {
     val isCurrent = repository.currentBranch == branch
     val isFavorite = project.service<GitBranchManager>().isFavorite(GitBranchType.of(branch), repository, branch.name)
 
     return when {
+      isSelected && isFavorite -> AllIcons.Nodes.Favorite
+      isSelected -> AllIcons.Nodes.NotFavoriteOnHover
       isCurrent && isFavorite -> DvcsImplIcons.CurrentBranchFavoriteLabel
       isCurrent -> DvcsImplIcons.CurrentBranchLabel
       isFavorite -> AllIcons.Nodes.Favorite

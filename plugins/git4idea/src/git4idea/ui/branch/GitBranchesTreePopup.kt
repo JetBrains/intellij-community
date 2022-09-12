@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
@@ -17,11 +18,13 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.TreePopup
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.ui.ActiveComponent
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
 import com.intellij.ui.TreeActions
+import com.intellij.ui.components.panels.FlowLayoutWrapper
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
@@ -34,7 +37,10 @@ import com.intellij.util.FontUtil
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
+import git4idea.GitBranch
+import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchesTreeUtil.overrideBuiltInAction
@@ -82,6 +88,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     dimensionServiceKey = GitBranchPopup.DIMENSION_SERVICE_KEY
     userResized = WindowStateService.getInstance(project).getSizeFor(project, dimensionServiceKey) != null
     setSpeedSearchAlwaysShown()
+    installGeneralShortcutActions()
     installShortcutActions(step.treeModel)
     installHeaderToolbar()
     installResizeListener()
@@ -143,6 +150,12 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
                        treeStep.setPrefixGrouping(state)
                      }
                    }
+
+                   override fun branchFavoriteSettingsChanged() {
+                     runInEdt {
+                       tree.repaint()
+                     }
+                   }
                  })
   }
 
@@ -150,6 +163,23 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     if (userResized) {
       super.storeDimensionSize()
     }
+  }
+
+  private fun toggleFavorite(branch: GitBranch) {
+    val repository = treeStep.repository
+    val branchType = GitBranchType.of(branch)
+    val branchManager = project.service<GitBranchManager>()
+    val isFavorite = branchManager.isFavorite(branchType, repository, branch.name)
+
+    branchManager.setFavorite(branchType, repository, branch.name, !isFavorite)
+  }
+
+  private fun installGeneralShortcutActions() {
+    registerAction("toggle_favorite", KeyStroke.getKeyStroke("SPACE"), object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
+        (tree.lastSelectedPathComponent?.let(TreeUtil::getUserObject) as? GitBranch)?.run(::toggleFavorite)
+      }
+    })
   }
 
   private fun installShortcutActions(model: TreeModel) {
@@ -341,6 +371,11 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     val selected = tree.lastSelectedPathComponent
     if (selected != null) {
       val userObject = TreeUtil.getUserObject(selected)
+      val point = e?.point
+      if (point != null && userObject is GitBranch && isMainIconAt(point, userObject)) {
+        toggleFavorite(userObject)
+        return
+      }
       if (treeStep.isSelectable(userObject)) {
         disposeChildren()
 
@@ -366,6 +401,21 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
         }
       }
     }
+  }
+
+  private fun isMainIconAt(point: Point, selected: Any): Boolean {
+    val row = tree.getRowForLocation(point.x, point.y)
+    val rowBounds = tree.getRowBounds(row)
+    point.translate(-rowBounds.x, -rowBounds.y)
+
+    val rowComponent = tree.cellRenderer
+                     .getTreeCellRendererComponent(tree, selected, true, false, true, row, false) as? JComponent
+                       ?: return false
+    val iconComponent = UIUtil.uiTraverser(rowComponent)
+                          .filter { ClientProperty.get(it, Renderer.MAIN_ICON) == true }
+                          .firstOrNull() ?: return false
+
+    return iconComponent.bounds.contains(point)
   }
 
   override fun handleNextStep(nextStep: PopupStep<*>?, parentValue: Any) {
@@ -420,6 +470,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
 
     private class Renderer(private val step: GitBranchesTreePopupStep) : TreeCellRenderer {
 
+      private val mainIconComponent = JLabel().apply {
+        ClientProperty.put(this, MAIN_ICON, true)
+        border = JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap())
+      }
       private val mainLabel = JLabel().apply {
         border = JBUI.Borders.emptyBottom(1)
       }
@@ -433,7 +487,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
       }
 
       private val textPanel = JBUI.Panels.simplePanel()
-        .addToLeft(mainLabel)
+        .addToLeft(FlowLayoutWrapper(mainIconComponent).also { it.add(mainLabel) })
         .addToCenter(secondaryLabel)
         .andTransparent()
 
@@ -450,8 +504,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
                                                 row: Int,
                                                 hasFocus: Boolean): Component {
         val userObject = TreeUtil.getUserObject(value)
+
+        mainIconComponent.icon = step.getIcon(userObject, selected)
+
         mainLabel.apply {
-          icon = step.getIcon(userObject)
           text = step.getText(userObject)
           foreground = JBUI.CurrentTheme.Tree.foreground(selected, true)
         }
@@ -467,6 +523,11 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
           icon = if (selected) AllIcons.Icons.Ide.MenuArrowSelected else AllIcons.Icons.Ide.MenuArrow
         }
         return mainPanel
+      }
+
+      companion object {
+        @JvmField
+        internal val MAIN_ICON = Key.create<Boolean>("MAIN_ICON")
       }
     }
   }
