@@ -1,17 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.auth.ui.login
 
+import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.ExceptionUtil
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.IdeFocusManager
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import java.awt.Component
 import javax.swing.JComponent
 
@@ -22,8 +25,7 @@ class TokenLoginDialog(
   private val centerPanelSupplier: () -> DialogPanel
 ) : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
 
-  private val uiScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    .also { Disposer.register(disposable) { it.cancel() } }
+  private val uiScope = DisposingMainScope(disposable) + ModalityState.stateForComponent(rootPane).asContextElement()
 
   init {
     setOKButtonText(CollaborationToolsBundle.message("login.button"))
