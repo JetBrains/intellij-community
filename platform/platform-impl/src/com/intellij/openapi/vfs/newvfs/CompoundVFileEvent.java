@@ -48,6 +48,7 @@ public class CompoundVFileEvent {
   private void calculateAdditionalEvents() {
     if (!myInducedEventsCalculated) {
       myInducedEvents.addAll(VfsImplUtil.getJarInvalidationEvents(myFileEvent, myApplyActions));
+      myInducedEvents.addAll(AdditionalVfsEventsProvider.getAllAdditionalEvents(myFileEvent));
       myInducedEventsCalculated = true;
     }
   }
