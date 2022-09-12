@@ -83,14 +83,10 @@ public class AnnotateFix implements LocalQuickFix {
 
         final String argList;
         if (myArgList == null) {
-          switch (requirement) {
-            case VALUE_REQUIRED:
-            case OTHER_REQUIRED:
-              argList = "(\"\")";
-              break;
-            default:
-              argList = "";
-          }
+          argList = switch (requirement) {
+            case VALUE_REQUIRED, OTHER_REQUIRED -> "(\"\")";
+            default -> "";
+          };
         }
         else {
           argList = myArgList;
