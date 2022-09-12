@@ -26,8 +26,8 @@ class FullLineContributor : CompletionContributor(), DumbAware {
     }
   }
 
-  override fun handleAutoCompletionPossibility(context: AutoCompletionContext): AutoCompletionDecision {
-    return AutoCompletionDecision.SHOW_LOOKUP
+  override fun handleAutoCompletionPossibility(context: AutoCompletionContext): AutoCompletionDecision? {
+    return if (FullLineRequest.of(context.parameters) is FullLineRequest.Applicable)  AutoCompletionDecision.SHOW_LOOKUP else null
   }
 
   private fun startCompletion(
