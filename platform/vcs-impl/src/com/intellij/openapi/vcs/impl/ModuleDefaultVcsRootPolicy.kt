@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.stateStore
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.impl.toVirtualFile
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 
 open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(project) {
@@ -36,7 +36,7 @@ open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(p
     result += runReadAction {
       WorkspaceModel.getInstance(myProject).entityStorage.current
         .entities(ContentRootEntity::class.java)
-        .mapNotNull { it.url.virtualFile }
+        .mapNotNull { it.url.toVirtualFile() }
         .filter { it.isInLocalFileSystem }
         .filter { it.isDirectory }
     }

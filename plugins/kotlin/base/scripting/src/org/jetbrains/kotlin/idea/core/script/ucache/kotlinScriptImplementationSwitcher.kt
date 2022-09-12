@@ -8,7 +8,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope
 import com.intellij.util.applyIf
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.impl.toVirtualFile
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRootTypeId
@@ -101,7 +101,7 @@ private fun EntityStorage.listDependenciesOfAllScriptEntities(rootTypeId: Librar
 private fun KotlinScriptEntity.listDependencies(rootTypeId: LibraryRootTypeId): List<VirtualFile> = dependencies.asSequence()
     .flatMap { it.roots }
     .filter { it.type == rootTypeId }
-    .mapNotNull { it.url.virtualFile }
+    .mapNotNull { it.url.toVirtualFile() }
     .filter { it.isValid }
     .toList()
 

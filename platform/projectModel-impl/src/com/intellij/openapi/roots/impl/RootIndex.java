@@ -391,7 +391,7 @@ class RootIndex {
     for (CustomEntityProjectModelInfoProvider.@NotNull ExcludeStrategy<T> excludeStrategy :
       SequencesKt.asIterable(provider.getExcludeSdkRootStrategies(entities))) {
       T entity = excludeStrategy.generativeEntity;
-      List<VirtualFile> files = ContainerUtil.mapNotNull(excludeStrategy.excludeUrls, UtilsKt::getVirtualFile);
+      List<VirtualFile> files = ContainerUtil.mapNotNull(excludeStrategy.excludeUrls, UtilsKt::toVirtualFile);
       info.excludedFromProject.addAll(ContainerUtil.filter(files, file -> RootFileSupplier.ensureValid(file, entity, provider)));
 
       java.util.function.@Nullable Function<Sdk, List<VirtualFile>> fun = excludeStrategy.excludeSdkRootsStrategy;

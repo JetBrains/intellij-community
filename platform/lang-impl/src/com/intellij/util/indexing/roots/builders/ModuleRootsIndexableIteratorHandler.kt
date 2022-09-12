@@ -7,8 +7,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.IndexableFilesIterator
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
-import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.impl.toVirtualFile
 import com.intellij.workspaceModel.ide.isEqualOrParentOf
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
@@ -46,7 +45,7 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
 
   private fun resolveRoots(builders: List<ModuleRootsIteratorBuilder>): List<VirtualFile> {
     if (PlatformUtils.isRider() || PlatformUtils.isCLion()) {
-      return builders.flatMap { builder -> builder.urls }.mapNotNull { url -> url.virtualFile }
+      return builders.flatMap { builder -> builder.urls }.mapNotNull { url -> url.toVirtualFile() }
     }
     val roots = mutableListOf<VirtualFileUrl>()
     for (builder in builders) {
@@ -68,6 +67,6 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
         }
       }
     }
-    return roots.mapNotNull { url -> url.virtualFile }
+    return roots.mapNotNull { url -> url.toVirtualFile() }
   }
 }
