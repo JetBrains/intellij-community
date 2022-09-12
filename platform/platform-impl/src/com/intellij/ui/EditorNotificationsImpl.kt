@@ -201,7 +201,7 @@ class EditorNotificationsImpl(private val project: Project) : EditorNotification
           }
 
           val componentProvider = readAction {
-            if (file.isValid) {
+            if (file.isValid && !project.isDisposed) {
               provider.collectNotificationData(project, file)
             }
             else {
