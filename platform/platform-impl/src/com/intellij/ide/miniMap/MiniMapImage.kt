@@ -47,9 +47,11 @@ class MiniMapImage(parentDisposable: Disposable) {
       buWidth = contentVisibleWidth
     }
 
+    val bufferUnscaled = this.bufferUnscaled!!
+
     val blocks = ceil(contentHeight.toDouble() / buHeight).toInt()
 
-    val g = bufferUnscaled!!.createGraphics()
+    val g = bufferUnscaled.createGraphics()
 
     val g2d = preview!!.createGraphics()
 
@@ -64,7 +66,7 @@ class MiniMapImage(parentDisposable: Disposable) {
 
       g2d.drawImage(bufferUnscaled,
                     0, i * miniMapHeightEx, imgWidth, (i + 1) * miniMapHeightEx,
-                    0, 0, buWidth, buHeight,
+                    0, 0, bufferUnscaled.width, bufferUnscaled.height,
                     null)
 
       g.translate(0, -buHeight)

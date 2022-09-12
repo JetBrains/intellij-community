@@ -12,7 +12,7 @@ package com.intellij.ide.miniMap.settings
  */
 data class MiniMapSettingsState(var filterType: FilterType = FilterType.Nearest,
                                 var enabled: Boolean = true,
-                                var resizable: Boolean = false,
+                                var resizable: Boolean = true,
                                 var width: Int = 200,
                                 var rightAligned: Boolean = true,
                                 var fileTypes: List<String> = listOf("zpln"))
