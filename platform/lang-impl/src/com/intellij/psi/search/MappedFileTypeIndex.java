@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.IntConsumer;
 
 public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void, FileContent, Void>, FileTypeNameEnumerator,
                                                   MeasurableIndexStore {
@@ -63,6 +64,8 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
   private final @NotNull MappedFileTypeIndex.MemorySnapshot mySnapshot;
   private final @NotNull ForwardIndexFileController myForwardIndexController;
 
+  private final @NotNull FileTypeIndex.IndexChangeListener myIndexChangedPublisher;
+
   public MappedFileTypeIndex(@NotNull FileBasedIndexExtension<FileType, Void> extension) throws IOException, StorageException {
     myExtension = extension;
     myIndexId = extension.getName();
@@ -77,7 +80,12 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
       throw new IllegalArgumentException(myExtension.getName() + " should not depend on content");
     }
 
-    mySnapshot = loadIndexToMemory(myForwardIndexController);
+    myIndexChangedPublisher =
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(FileTypeIndex.INDEX_CHANGE_TOPIC);
+
+    mySnapshot = loadIndexToMemory(myForwardIndexController, id -> {
+      myIndexChangedPublisher.changedForFileType(getFileTypeById(id));
+    });
   }
 
   @Override
@@ -481,11 +489,14 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
 
     private final @NotNull Int2ObjectMap<RandomAccessIntContainer> myInvertedIndex;
     private final @NotNull ForwardIndexFileController myForwardIndex;
+    private final @NotNull IntConsumer myInvertedIndexChangeCallback;
 
     private MemorySnapshot(@NotNull Int2ObjectMap<RandomAccessIntContainer> invertedIndex,
-                           @NotNull ForwardIndexFileController forwardIndex) {
+                           @NotNull ForwardIndexFileController forwardIndex,
+                           @NotNull IntConsumer invertedIndexChangeCallback) {
       myInvertedIndex = invertedIndex;
       myForwardIndex = forwardIndex;
+      myInvertedIndexChangeCallback = invertedIndexChangeCallback;
     }
 
     @Override
@@ -499,6 +510,18 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
       setForwardIndexData(myForwardIndex, inputId, data);
       if (data != 0) {
         myInvertedIndex.computeIfAbsent(data, __ -> createContainerForInvertedIndex()).add(inputId);
+      }
+      notifyInvertedIndexChanged(data, indexedData);
+    }
+
+    private void notifyInvertedIndexChanged(short newData, short oldData) {
+      if (oldData != newData) {
+        if (oldData != 0) {
+          myInvertedIndexChangeCallback.accept(oldData);
+        }
+        if (newData != 0) {
+          myInvertedIndexChangeCallback.accept(newData);
+        }
       }
     }
 
@@ -535,7 +558,8 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
     );
   }
 
-  private static @NotNull MappedFileTypeIndex.MemorySnapshot loadIndexToMemory(@NotNull ForwardIndexFileController forwardIndex)
+  private static @NotNull MappedFileTypeIndex.MemorySnapshot loadIndexToMemory(@NotNull ForwardIndexFileController forwardIndex,
+                                                                               @NotNull IntConsumer invertedIndexChangeCallback)
     throws StorageException {
     Int2ObjectMap<RandomAccessIntContainer> invertedIndex = new Int2ObjectOpenHashMap<>();
     forwardIndex.processEntries((inputId, data) -> {
@@ -544,7 +568,10 @@ public final class MappedFileTypeIndex implements UpdatableIndex<FileType, Void,
         invertedIndex.computeIfAbsent(data, __ -> createContainerForInvertedIndex()).add(inputId);
       }
     });
-    return new MappedFileTypeIndex.MemorySnapshot(invertedIndex, forwardIndex);
+    invertedIndex.forEach((id, __) -> {
+      invertedIndexChangeCallback.accept(id);
+    });
+    return new MappedFileTypeIndex.MemorySnapshot(invertedIndex, forwardIndex, invertedIndexChangeCallback);
   }
 
   private static void setForwardIndexData(@NotNull ForwardIndexFileController forwardIndex, int inputId, short data)
