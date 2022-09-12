@@ -20,6 +20,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabPersistentAccounts"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager"
+                        serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.PersistentGitLabAccountManager"/>
 
     <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
                          instance="org.jetbrains.plugins.gitlab.GitLabSettingsConfigurable"/>
