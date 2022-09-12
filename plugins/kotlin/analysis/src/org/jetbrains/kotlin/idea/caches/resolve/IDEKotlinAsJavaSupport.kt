@@ -19,20 +19,9 @@ import org.jetbrains.kotlin.asJava.classes.KtDescriptorBasedFakeLightClass
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
-import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
-import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
-import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
-import org.jetbrains.kotlin.idea.caches.project.getPlatformModuleInfo
+import org.jetbrains.kotlin.idea.caches.project.*
+import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -43,6 +32,7 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtScript
+import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 
 class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaModuleInfo>(project) {
@@ -91,7 +81,7 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
             project
         )
 
-    override fun KtFile.findModule(): IdeaModuleInfo = getPlatformModuleInfo(JvmPlatforms.unspecifiedJvmPlatform) ?: moduleInfo
+    override fun KtFile.findModule(): IdeaModuleInfo = getPlatformModuleInfo(JvmPlatforms.unspecifiedJvmPlatform) ?: getModuleInfo()
 
     override fun facadeIsApplicable(module: IdeaModuleInfo, file: KtFile): Boolean = when (module) {
         is ModuleSourceInfo, is PlatformModuleInfo -> true
@@ -133,19 +123,17 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
     override fun declarationLocation(file: KtFile): DeclarationLocation? {
         val virtualFile = file.virtualFile ?: return null
         return when {
-            RootKindFilter.projectSources.matches(project, virtualFile) -> DeclarationLocation.ProjectSources
-            RootKindFilter.libraryClasses.matches(project, virtualFile) -> DeclarationLocation.LibraryClasses
-            RootKindFilter.librarySources.matches(project, virtualFile) -> DeclarationLocation.LibrarySources
+            ProjectRootsUtil.isProjectSourceFile(project, virtualFile) ->
+                DeclarationLocation.ProjectSources
+
+            ProjectRootsUtil.isLibraryClassFile(project, virtualFile) ->
+                DeclarationLocation.LibraryClasses
+
+            ProjectRootsUtil.isLibrarySourceFile(project, virtualFile) ->
+                DeclarationLocation.LibrarySources
+
             else -> null
         }
-
-        if ((classOrObject.containingFile as? KtFile)?.analysisContext != null ||
-            classOrObject.containingFile.originalFile.virtualFile != null
-        ) {
-            return KotlinLightClassFactory.createClass(classOrObject)
-        }
-
-        return null
     }
 
     override fun createInstanceOfLightScript(script: KtScript): KtLightClass? {
@@ -194,7 +182,7 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
     }
 
     override fun getFakeLightClass(classOrObject: KtClassOrObject): KtFakeLightClass = KtDescriptorBasedFakeLightClass(classOrObject)
-    override val IdeaModuleInfo.contentSearchScope: GlobalSearchScope get() = this.contentScope
+    override val IdeaModuleInfo.contentSearchScope: GlobalSearchScope get() = this.contentScope()
 
     override fun createInstanceOfLightFacade(facadeFqName: FqName, files: List<KtFile>): KtLightClassForFacade {
         return LightClassGenerationSupport.getInstance(project).createUltraLightClassForFacade(facadeFqName, files)
