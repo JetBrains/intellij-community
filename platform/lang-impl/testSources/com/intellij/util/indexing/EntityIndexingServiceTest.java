@@ -5,7 +5,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -26,8 +25,8 @@ import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
-import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
+import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId;
@@ -208,11 +207,6 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
 
   private static class MyWorkspaceModelChangeListener implements WorkspaceModelChangeListener {
     final List<VersionedStorageChange> myEvents = new ArrayList<>();
-
-    @Override
-    public void beforeChanged(@NotNull VersionedStorageChange event) {
-      //ignore
-    }
 
     @Override
     public void changed(@NotNull VersionedStorageChange event) {
