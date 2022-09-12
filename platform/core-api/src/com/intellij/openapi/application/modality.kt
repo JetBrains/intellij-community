@@ -23,4 +23,9 @@ private object ModalityStateElementKey
   : CoroutineContext.Key<ModalityStateElement>
 
 private class ModalityStateElement(val modalityState: ModalityState)
-  : AbstractCoroutineContextElement(ModalityStateElementKey)
+  : AbstractCoroutineContextElement(ModalityStateElementKey) {
+
+  override fun toString(): String {
+    return modalityState.toString()
+  }
+}
