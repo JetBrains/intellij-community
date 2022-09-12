@@ -151,13 +151,13 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     JScrollPane lazyLoadingScrollPane = ScrollPaneFactory.createScrollPane(myMainPanel, true);
     lazyLoadingScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     BoundedRangeModelThresholdListener.install(lazyLoadingScrollPane.getVerticalScrollBar(), () -> {
-      loadMoreSnippets();
+      loadMoreSnippets(lazyLoadingScrollPane.getVerticalScrollBar().getValue() != 0);
       return Unit.INSTANCE;
     });
     return lazyLoadingScrollPane;
   }
 
-  private void loadMoreSnippets() {
+  private void loadMoreSnippets(boolean logMoreSnippetsLoaded) {
     if (mySortedClusters.isNull()) return;
     Collection<UsageCluster> sortedClusters = mySortedClusters.get();
     if (myAlreadyRenderedSnippets < sortedClusters.size()) {
@@ -166,7 +166,9 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
           cluster.getUsages().stream().filter(e -> (e instanceof UsageInfo2UsageAdapter)).collect(Collectors.toSet());
         renderClusterDescription(ContainerUtil.getFirstItem(filteredUsages), filteredUsages);
       });
-      SimilarUsagesCollector.logMoreClustersLoaded(myProject, mySession, myAlreadyRenderedSnippets);
+      if (logMoreSnippetsLoaded) {
+        SimilarUsagesCollector.logMoreClustersLoaded(myProject, mySession, myAlreadyRenderedSnippets);
+      }
     }
     if (myAlreadyRenderedSnippets >= sortedClusters.size()) {
       int numberOfAlreadyRenderedNonClusteredUsages = myAlreadyRenderedSnippets - sortedClusters.size();
@@ -176,7 +178,9 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
             renderNonClusteredUsage((UsageInfo2UsageAdapter)e);
           }
         });
-        SimilarUsagesCollector.logMoreNonClusteredUsagesLoaded(myProject, mySession, myAlreadyRenderedSnippets);
+        if (logMoreSnippetsLoaded) {
+          SimilarUsagesCollector.logMoreNonClusteredUsagesLoaded(myProject, mySession, myAlreadyRenderedSnippets);
+        }
       }
     }
     myMainPanel.revalidate();
@@ -257,7 +261,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
           myMainPanel.removeAll();
           myMainPanel.revalidate();
           updateToolbar();
-          loadMoreSnippets();
+          loadMoreSnippets(false);
           myMainPanel.revalidate();
           isRefreshing.set(false);
           lastUsagesNumber.set(mySelectedUsages.size());
