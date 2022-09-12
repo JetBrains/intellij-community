@@ -82,16 +82,6 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         registerProblem(statement, true);
       }
 
-      private boolean isChangedInLoop(@NotNull CountingLoop loop, @NotNull PsiExpression rValue) {
-        if (VariableAccessUtils.collectUsedVariables(rValue).contains(loop.getCounter()) ||
-            SideEffectChecker.mayHaveSideEffects(rValue)) {
-          return true;
-        }
-        return ExpressionUtils.nonStructuralChildren(rValue)
-          .filter(c -> c instanceof PsiCallExpression)
-          .anyMatch(call -> !ClassUtils.isImmutable(call.getType()) && !ConstructionUtils.isEmptyArrayInitializer(call));
-      }
-
       private boolean isDefaultValue(@NotNull PsiExpression expression, @Nullable Object defaultValue, @Nullable PsiType lType) {
         if (ExpressionUtils.isNullLiteral(expression) && defaultValue == null) return true;
         Object constantValue = ExpressionUtils.computeConstantExpression(expression);
@@ -235,6 +225,16 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         return range;
       }
     };
+  }
+
+  public static boolean isChangedInLoop(@NotNull CountingLoop loop, @NotNull PsiExpression rValue) {
+    if (VariableAccessUtils.collectUsedVariables(rValue).contains(loop.getCounter()) ||
+        SideEffectChecker.mayHaveSideEffects(rValue)) {
+      return true;
+    }
+    return ExpressionUtils.nonStructuralChildren(rValue)
+      .filter(c -> c instanceof PsiCallExpression)
+      .anyMatch(call -> !ClassUtils.isImmutable(call.getType()) && !ConstructionUtils.isEmptyArrayInitializer(call));
   }
 
   private static final class ReplaceWithArraysCallFix implements LocalQuickFix {

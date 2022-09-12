@@ -1,18 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.StringRepeatCanBeUsedInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_11;
-
-public class StringRepeatCanBeUsedInspectionTest extends LightQuickFixParameterizedTestCase {
+public class StringRepeatCanBeUsedInspectionTest extends LightJavaInspectionTestCase {
   @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new StringRepeatCanBeUsedInspection()};
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/stringRepeatCanBeUsed/";
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new StringRepeatCanBeUsedInspection();
   }
 
   @NotNull
@@ -21,8 +27,5 @@ public class StringRepeatCanBeUsedInspectionTest extends LightQuickFixParameteri
     return JAVA_11;
   }
 
-  @Override
-  protected String getBasePath() {
-    return "/inspection/stringRepeat";
-  }
+  public void testStringRepeatCanBeUsed() { doTest(); }
 }

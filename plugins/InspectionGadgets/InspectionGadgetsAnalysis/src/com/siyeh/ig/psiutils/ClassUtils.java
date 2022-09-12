@@ -16,6 +16,9 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.concurrencyAnnotations.JCiPUtil;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -256,6 +259,34 @@ public final class ClassUtils {
       aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true, PsiFile.class);
     }
     return aClass;
+  }
+
+  /**
+   * Returns true if the implementation of the class is inevitably an implementation from the Java API.
+   * So we are sure the specifications are followed and the behaviour is predictable.
+   *
+   * @param objectOfUnknownImplementation The object
+   * @return true if the implementation is known
+   */
+  public static boolean isKnownClassImplementation(@Nullable PsiExpression objectOfUnknownImplementation) {
+    if (objectOfUnknownImplementation == null) return false;
+    PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(objectOfUnknownImplementation);
+    if (qualifier == null) return false;
+    if (isKnownClassImplementation(qualifier.getType(), false)) return true;
+    PsiType guessedPsiType = TypeConstraint.fromDfType(CommonDataflow.getDfType(qualifier)).getPsiType(qualifier.getProject());
+    return isKnownClassImplementation(guessedPsiType, true);
+  }
+
+  private static boolean isKnownClassImplementation(@Nullable PsiType psiType, boolean isInstanceType) {
+    if (psiType instanceof PsiClassType) {
+      PsiClass callerClass = ((PsiClassType)psiType).resolve();
+      if (callerClass != null
+          && !callerClass.isWritable()
+          && (isInstanceType || callerClass.hasModifier(JvmModifier.FINAL))
+          && callerClass.getQualifiedName() != null
+          && callerClass.getQualifiedName().startsWith("java.")) return true;
+    }
+    return false;
   }
 
   public static boolean isNonStaticClass(@Nullable PsiClass aClass) {
