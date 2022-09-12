@@ -179,16 +179,18 @@ private class Uploader(serverUrl: String) {
     val url = pathToUrl(path)
     spanBuilder("head").setAttribute("url", url).use { span ->
       val code = retryWithExponentialBackOff {
-        httpClient.head(url).use { it.code }
+        httpClient.head(url).use {
+          check(it.code == 200 || it.code == 404) {
+            "HEAD $url responded with unexpected ${it.code}"
+          }
+          it.code
+        }
       }
       if (code == 200) {
         if (logIfExists) {
           span.addEvent("File '$path' already exists on server, nothing to upload")
         }
         return true
-      }
-      check(code == 404) {
-        "HEAD $url responded with unexpected $code"
       }
     }
     return false
