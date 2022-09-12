@@ -21,6 +21,7 @@ import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
@@ -72,7 +73,10 @@ abstract class AbstractJavaAgainstKotlinBinariesCheckerTest : AbstractJavaAgains
 
         assertNotEmpty(classFiles)
         val lightClasses = classFiles.flatMap { file ->
-            file.declarations.filterIsInstance<KtClassOrObject>().map { it.toLightClass()!! }
+            file.declarations
+                .filterIsInstance<KtClassOrObject>()
+                .map { it.toLightClass()!! }
+                .plus(listOfNotNull(file.findFacadeClass()))
         }
 
         classFiles.forEach { assertFalse(it.isContentsLoaded) }
