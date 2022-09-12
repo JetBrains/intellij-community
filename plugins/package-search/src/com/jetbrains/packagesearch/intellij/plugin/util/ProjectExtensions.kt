@@ -159,22 +159,6 @@ internal val Project.lookAndFeelFlow: Flow<LafManager>
         LafManagerListener { trySend(it) }
     }
 
-val <T : Any> ExtensionPointName<T>.extensionsFlow: Flow<List<T>>
-    get() = callbackFlow {
-        val listener = object : ExtensionPointListener<T> {
-            override fun extensionAdded(extension: T, pluginDescriptor: PluginDescriptor) {
-                trySendBlocking(extensions.toList())
-            }
-
-            override fun extensionRemoved(extension: T, pluginDescriptor: PluginDescriptor) {
-                trySendBlocking(extensions.toList())
-            }
-        }
-        send(extensions.toList())
-        addExtensionPointListener(listener)
-        awaitClose { removeExtensionPointListener(listener) }
-    }
-
 fun Project.hasKotlinModules(): Boolean = ModuleManager.getInstance(this).modules.any { it.hasKotlinFacet() }
 
 internal fun Module.hasKotlinFacet(): Boolean {

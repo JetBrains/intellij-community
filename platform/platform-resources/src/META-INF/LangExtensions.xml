@@ -1,4 +1,9 @@
 <idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.dependenciesToolWindow.tabProvider"
+                    interface="com.intellij.dependencytoolwindow.DependenciesToolWindowTabProvider"
+                    dynamic="true"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
                         serviceImplementation="com.intellij.configurationStore.PlatformLangProjectStoreFactory"
@@ -1536,6 +1541,7 @@
 
     <postStartupActivity implementation="com.intellij.lang.documentation.ide.impl.DocumentationAutoPopup"/>
     <postStartupActivity implementation="com.intellij.codeInsight.documentation.DocumentationSettingsListener"/>
+    <backgroundPostStartupActivity implementation="com.intellij.dependencytoolwindow.DependencyToolWindowFactory"/>
     <lang.documentation implementation="com.intellij.lang.documentation.symbol.impl.DefaultTargetSymbolDocumentationTargetProvider"/>
     <lang.documentationLinkHandler implementation="com.intellij.lang.documentation.psi.PsiDocumentationLinkHandler"/>
     <projectService serviceInterface="com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider"

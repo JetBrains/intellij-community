@@ -18,6 +18,8 @@ package com.jetbrains.packagesearch.intellij.plugin.intentions
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.dependencytoolwindow.DependencyToolWindowFactory
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
@@ -25,7 +27,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackagesListPanelProvider
 import com.jetbrains.packagesearch.intellij.plugin.util.pkgsUiStateModifier
 
 class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : IntentionAction, LowPriorityAction, Iconable {
@@ -34,7 +36,7 @@ class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : 
         Regex("(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{Lu}\\p{javaJavaIdentifierPart}+")
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-        PackageSearchToolWindowFactory.activateToolWindow(project) {
+        DependencyToolWindowFactory.activateToolWindow(project, project.service<PackagesListPanelProvider.PanelContainer>().packageManagementPanel) {
             project.pkgsUiStateModifier.setSearchQuery(ref.canonicalText)
         }
     }

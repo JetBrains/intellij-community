@@ -16,11 +16,11 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels
 
+import com.intellij.dependencytoolwindow.HasToolWindowActions
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.ui.JBColor
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
@@ -37,7 +37,7 @@ internal class SimpleToolWindowWithTwoToolbarsPanel(
     private val leftToolbar: JComponent,
     private val topToolbar: JComponent,
     override val gearActions: ActionGroup?,
-    override val titleActions: Array<AnAction>?,
+    override val titleActions: List<AnAction>,
     val content: JComponent
 ) : JPanel(), QuickActionProvider, DataProvider, HasToolWindowActions {
 

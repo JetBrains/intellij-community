@@ -17,6 +17,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.data
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.dependencytoolwindow.DependencyToolWindowFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -26,7 +27,6 @@ import com.intellij.psi.PsiManager
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
@@ -61,7 +61,6 @@ import com.jetbrains.packagesearch.intellij.plugin.util.whileLoading
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asFlow
@@ -71,11 +70,9 @@ import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
@@ -170,7 +167,7 @@ internal class PackageSearchProjectService(private val project: Project) {
     val projectModulesStateFlow = projectModulesSharedFlow.stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
     val isAvailable
-        get() = projectModulesStateFlow.value.isNotEmpty() || !isComputationAllowed
+        get() = projectModulesStateFlow.value.isNotEmpty()
 
     private val knownRepositoriesFlow = timer(1.hours)
         .mapLatestTimedWithLoading("knownRepositoriesFlow", knownRepositoriesLoadingFlow) { dataProvider.fetchKnownRepositories() }
@@ -306,7 +303,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         var controller: BackgroundLoadingBarController? = null
 
         project.toolWindowManagerFlow
-            .filter { it.id == PackageSearchToolWindowFactory.ToolWindowId }
+            .filter { it.id == DependencyToolWindowFactory.toolWindowId }
             .take(1)
             .onEach { canShowLoadingBar.emit(true) }
             .launchIn(project.lifecycleScope)

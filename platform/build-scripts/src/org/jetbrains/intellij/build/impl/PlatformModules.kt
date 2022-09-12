@@ -101,6 +101,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.core.ui",
   "intellij.platform.credentialStore",
   "intellij.platform.credentialStore.ui",
+  "intellij.platform.dependenciesToolwindow",
   "intellij.platform.rd.community",
   "intellij.platform.ml.impl",
   "intellij.remoteDev.util",
