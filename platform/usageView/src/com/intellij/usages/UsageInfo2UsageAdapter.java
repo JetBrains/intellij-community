@@ -110,8 +110,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   private TextChunk @NotNull [] computeText() {
     TextChunk[] chunks;
-    VirtualFile file = getFile();
-    boolean isNullOrBinary = file == null || file.getFileType().isBinary();
+    PsiFile psiFile = getPsiFile();
+    boolean isNullOrBinary = psiFile == null || psiFile.getFileType().isBinary();
 
     PsiElement element = getElement();
     if (element != null && isNullOrBinary) {
@@ -123,7 +123,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
       };
     }
     else {
-      PsiFile psiFile = getPsiFile();
       Document document = psiFile == null ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
       if (document == null) {
         // element over light virtual file
@@ -499,8 +498,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   @NotNull
   public String getPlainText() {
     PsiElement element = getElement();
-    VirtualFile file = getFile();
-    boolean isNullOrBinary = file == null || file.getFileType().isBinary();
+    PsiFile psiFile = getPsiFile();
+    boolean isNullOrBinary = psiFile == null || psiFile.getFileType().isBinary();
     if (element != null && isNullOrBinary) {
       return clsType(element) + " " + clsName(element);
     }
