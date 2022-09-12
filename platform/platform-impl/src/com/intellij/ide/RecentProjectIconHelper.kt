@@ -132,7 +132,7 @@ internal class RecentProjectIconHelper {
           icon = IconLoader.getDarkIcon(icon, true)
         }
 
-        iconWrapper = MyIcon(icon, timestamp)
+        iconWrapper = MyIcon(icon, timestamp, projectIconSize())
 
         projectIcons[path] = iconWrapper
         return iconWrapper.icon
@@ -147,7 +147,11 @@ internal class RecentProjectIconHelper {
   fun getProjectIcon(path: @SystemIndependent String, generateFromName: Boolean = false): Icon {
     val icon = projectIcons[path]
     if (icon != null) {
-      return icon.icon
+      if (icon.lastUsedProjectIconSize == projectIconSize()) {
+        return icon.icon
+      } else {
+        projectIcons.remove(path)
+      }
     }
     if (!RecentProjectsManagerBase.isFileSystemPath(path)) {
       return EmptyIcon.create(projectIconSize())
@@ -166,7 +170,7 @@ internal class RecentProjectIconHelper {
   }
 }
 
-private data class MyIcon(val icon: Icon, val timestamp: Long?)
+private data class MyIcon(val icon: Icon, val timestamp: Long?, val lastUsedProjectIconSize: Int)
 
 private object ProjectIconPalette : ColorPalette() {
   override val gradients: Array<kotlin.Pair<Color, Color>>
