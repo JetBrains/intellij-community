@@ -39,7 +39,7 @@ internal class GHPRToolWindowTabControllerImpl(scope: CoroutineScope,
         else {
           JPanel(null)
         }
-        setComponentPreservingFocus(content, nestedComponent)
+        CollaborationToolsUIUtil.setComponentPreservingFocus(content, nestedComponent)
       }
     }
   }
@@ -74,12 +74,4 @@ internal class GHPRToolWindowTabControllerImpl(scope: CoroutineScope,
   override fun canResetRemoteOrAccount(): Boolean = tabVm.canSelectDifferentRepoOrAccount()
 
   override fun resetRemoteAndAccount() = tabVm.selectDifferentRepoOrAccount()
-}
-
-private fun setComponentPreservingFocus(content: Content, component: JComponent) {
-  val focused = CollaborationToolsUIUtil.isFocusParent(content.component)
-  content.component = component
-  if (focused) {
-    CollaborationToolsUIUtil.focusPanel(content.component)
-  }
 }
