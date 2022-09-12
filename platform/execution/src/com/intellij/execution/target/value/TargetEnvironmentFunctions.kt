@@ -88,6 +88,18 @@ fun <T> Iterable<TargetEnvironmentFunction<T>>.joinToStringFunction(separator: C
                                                                     transform: ((T) -> CharSequence)? = null): TargetEnvironmentFunction<String> =
   JoinedStringTargetEnvironmentFunction(iterable = this, separator = separator, transform = transform)
 
+/**
+ * Equivalent to `.andThen { it.joinToString(separator = ", ", transform = String::toStringLiteral) }` while providing better string
+ * representation.
+ *
+ * @see Function.andThen
+ * @see joinToString
+ */
+@JvmOverloads
+fun <T> TargetEnvironmentFunction<out Iterable<T>>.andThenJoinToString(separator: CharSequence,
+                                                                       transform: ((T) -> CharSequence)? = null): TargetEnvironmentFunction<String> =
+  AndThenJoinToStringTargetEnvironmentFunction(function = this, separator = separator, transform = transform)
+
 @Deprecated("Do not use strings for local path",
             ReplaceWith("getTargetEnvironmentForLocalPath(Paths.get(localPath))", "java.nio.file.Paths"))
 fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> = getTargetEnvironmentValueForLocalPath(
@@ -283,6 +295,16 @@ private class JoinedStringTargetEnvironmentFunction<T>(private val iterable: Ite
   }
 }
 
+private class AndThenJoinToStringTargetEnvironmentFunction<T>(private val function: TargetEnvironmentFunction<out Iterable<T>>,
+                                                              private val separator: CharSequence,
+                                                              private val transform: ((T) -> CharSequence)?)
+  : TraceableTargetEnvironmentFunction<String>() {
+  override fun applyInner(t: TargetEnvironment): String = function.apply(t).joinToString(separator = separator, transform = transform)
+
+  override fun toString(): String =
+    "AndThenJoinToStringTargetEnvironmentFunction(function=$function, separator=$separator, transform=$transform)"
+}
+
 private class ConcatTargetEnvironmentFunction(private val left: TargetEnvironmentFunction<String>,
                                               private val right: TargetEnvironmentFunction<String>)
   : TraceableTargetEnvironmentFunction<String>() {
@@ -295,3 +317,13 @@ operator fun TargetEnvironmentFunction<String>.plus(f: TargetEnvironmentFunction
   ConcatTargetEnvironmentFunction(this, f)
 
 operator fun TargetEnvironmentFunction<String>.plus(str: String): TargetEnvironmentFunction<String> = this + constant(str)
+
+fun <T> Iterable<TargetEnvironmentFunction<T>>.toLinkedSetFunction(): TargetEnvironmentFunction<Set<T>> =
+  LinkedSetTargetEnvironmentFunction(this)
+
+private class LinkedSetTargetEnvironmentFunction<T>(private val iterable: Iterable<TargetEnvironmentFunction<T>>)
+  : TraceableTargetEnvironmentFunction<Set<T>>() {
+  override fun applyInner(t: TargetEnvironment): Set<T> = iterable.mapTo(linkedSetOf()) { it.apply(t) }
+
+  override fun toString(): String = "LinkedSetTargetEnvironmentFunction(iterable=$iterable)"
+}
