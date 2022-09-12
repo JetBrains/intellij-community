@@ -269,6 +269,9 @@
     <applicationService serviceInterface="com.intellij.ide.util.scopeChooser.ScopeIdMapper"
                         serviceImplementation="com.intellij.ide.util.scopeChooser.ScopeIdMapperImpl"/>
 
+    <applicationService serviceInterface="com.intellij.formatting.InjectedFormattingOptionsService"
+                        serviceImplementation="com.intellij.formatting.InjectedFormattingOptionsServiceImpl"/>
+    
     <projectConfigurable groupId="editor"
                          id="editor.reader.mode" key="title.reader.mode"
                          bundle="messages.LangBundle"
