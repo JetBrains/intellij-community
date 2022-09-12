@@ -1,9 +1,9 @@
 package org.jetbrains.completion.full.line.local
 
+import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
-import org.junit.jupiter.api.Assertions.assertEquals
 
-abstract class XmlSerializationTest {
+abstract class XmlSerializationTest : TestCase() {
   /**
    * This function is only needed to enable highlighting for xml in a parameter.
    */

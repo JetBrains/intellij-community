@@ -1,10 +1,7 @@
 package org.jetbrains.completion.full.line.local
 
-import org.junit.jupiter.api.Test
-
 class CustomJacksonPolicyTest : XmlSerializationTest() {
-  @Test
-  fun `ensure support versionless schema`() {
+  fun `test ensure support versionless schema`() {
     val xmlString = xml(
       """
             <models/>
@@ -15,8 +12,7 @@ class CustomJacksonPolicyTest : XmlSerializationTest() {
     assertEqualsWithoutIndent(LocalModelsSchema(null, mutableListOf()), schema)
   }
 
-  @Test
-  fun `encode & decode LocalModelsSchema`() {
+  fun `test encode & decode LocalModelsSchema`() {
     val pyModel = ModelSchema(
       "1.2.3",
       1234567890,
@@ -54,7 +50,6 @@ class CustomJacksonPolicyTest : XmlSerializationTest() {
     assertEqualsWithoutIndent(xmlString, raw)
   }
 
-  @Test
   fun `test pattern in test`() {
     val schema = ModelSchema(
       "snapshot",

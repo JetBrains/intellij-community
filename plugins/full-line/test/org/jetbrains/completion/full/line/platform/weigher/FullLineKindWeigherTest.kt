@@ -1,21 +1,20 @@
 package org.jetbrains.completion.full.line.platform.weigher
 
+import junit.framework.TestCase
 import org.jetbrains.completion.full.line.AnalyzedFullLineProposal
 import org.jetbrains.completion.full.line.FullLineProposal
 import org.jetbrains.completion.full.line.ReferenceCorrectness
 import org.jetbrains.completion.full.line.platform.FullLineLookupElement
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 
-internal class FullLineKindWeigherTest {
+internal class FullLineKindWeigherTest : TestCase() {
   private val tabWeigher = FullLineTabWeigher()
   private val syntaxWeigher = FullLineSyntaxCorrectnessWeigher()
   private val refWeigher = FullLineReferenceCorrectnessWeigher()
   private val scoreWeigher = FullLineScoreWeigher()
 
-  @Test
-  fun `weighFullLineLookup by tabSelected`() {
+  fun `test weighFullLineLookup by tabSelected`() {
     val lookups = listOf(
       // ref correct
       getMockedFLLookup(100.0, false, ReferenceCorrectness.CORRECT, true),
@@ -39,8 +38,7 @@ internal class FullLineKindWeigherTest {
     )
   }
 
-  @Test
-  fun `weighFullLineLookup by ref correctness`() {
+  fun `test weighFullLineLookup by ref correctness`() {
     val lookups = testKindWeigher(refWeigher::weighFullLineLookup)
     // Expected ref correctness order
     val expected = listOf(
@@ -62,8 +60,7 @@ internal class FullLineKindWeigherTest {
     assertEquals(expected, lookups.map { it.proposal.refCorrectness })
   }
 
-  @Test
-  fun `weighFullLineLookup by syntax correctness`() {
+  fun `test weighFullLineLookup by syntax correctness`() {
     val lookups = testKindWeigher(syntaxWeigher::weighFullLineLookup)
     assertAll(
       // Check that the first half is syntax-correct
@@ -80,8 +77,7 @@ internal class FullLineKindWeigherTest {
     )
   }
 
-  @Test
-  fun `weighFullLineLookup by score`() {
+  fun `test weighFullLineLookup by score`() {
     val initLookups = listOf(
       getMockedFLLookup(100.0, false, ReferenceCorrectness.CORRECT, true),
       getMockedFLLookup(50.0, false, ReferenceCorrectness.INCORRECT, true),
@@ -107,8 +103,7 @@ internal class FullLineKindWeigherTest {
     )
   }
 
-  @Test
-  fun `weighFullLineLookup by kind and score`() {
+  fun `test weighFullLineLookup by kind and score`() {
     val lookups = listOf(
       // with score 100
       getMockedFLLookup(100.0, false, ReferenceCorrectness.CORRECT, true),

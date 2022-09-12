@@ -1,11 +1,9 @@
 package org.jetbrains.completion.full.line.local
 
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Test
 
 class MavenMetadataTest : XmlSerializationTest() {
-  @Test
-  fun `encode & decode MavenMetadata`() {
+  fun `test encode & decode MavenMetadata`() {
     val schema = MavenMetadata(
       Versioning(
         "a.b.c",
@@ -32,7 +30,6 @@ class MavenMetadataTest : XmlSerializationTest() {
     assertEqualsWithoutIndent(xmlString, fixed)
   }
 
-  @Test
   fun `test pattern in test`() {
     val schema = MavenMetadata(
       Versioning(

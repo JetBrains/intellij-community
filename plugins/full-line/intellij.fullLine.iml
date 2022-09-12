@@ -44,6 +44,5 @@
     <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
     <orderEntry type="library" scope="TEST" name="jaxb-api" level="project" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
   </component>
 </module>

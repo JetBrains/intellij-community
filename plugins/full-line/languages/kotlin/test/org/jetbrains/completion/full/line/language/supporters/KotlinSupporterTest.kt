@@ -5,7 +5,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.completion.full.line.FilesTest
 import org.jetbrains. kotlin.idea.KotlinFileType
 import org.junit.jupiter.api.Assertions.assertAll
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.function.Executable
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
