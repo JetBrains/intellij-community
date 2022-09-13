@@ -15,7 +15,7 @@ internal class GitLabAccountsPanelActionsController(private val project: Project
 
   override fun addAccount(parentComponent: JComponent, point: RelativePoint?) {
     // ignoring the point since we know there will be a simple dialog for now
-    val (account, token) = GitLabLoginUtil.logInViaToken(project, parentComponent, ::isAccountUnique) ?: return
+    val (account, token) = GitLabLoginUtil.logInViaToken(project, parentComponent, uniqueAccountPredicate = ::isAccountUnique) ?: return
     model.add(account, token)
   }
 
