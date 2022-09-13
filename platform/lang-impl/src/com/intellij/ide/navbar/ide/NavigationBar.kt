@@ -21,6 +21,7 @@ import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
@@ -132,13 +133,15 @@ internal class NavigationBar(
             try {
               if (modelChangesAllowed.get()) {
                 val focusedData = getFocusedData()
-                val model = readAction {
-                  buildModel(focusedData).ifEmpty {
-                    val item = ProjectNavBarItem(myProject)
-                    listOf(UiNavBarItem(item.createPointer(), item.presentation(), item.javaClass))
+                val focusedProject = CommonDataKeys.PROJECT.getData(focusedData)
+                if (focusedProject == myProject) {
+                  val model = readAction {
+                    buildModel(focusedData)
+                  }
+                  if (model.isNotEmpty()) {
+                    myItems.emit(model)
                   }
                 }
-                myItems.emit(model)
               }
             }
             catch (ce: CancellationException) {
