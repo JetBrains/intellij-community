@@ -118,6 +118,10 @@ data class VMOptions(
       .addLine("-agentpath:${vmTraceFile.toAbsolutePath()}=${filePath.toAbsolutePath()}")
   }
 
+  fun enableExitMetrics(filePath: Path): VMOptions {
+    return this.addSystemProperty("idea.log.exit.metrics.file", filePath)
+  }
+
   fun configureLoggers(
     debugLoggers: List<String> = emptyList(),
     traceLoggers: List<String> = emptyList()
