@@ -572,8 +572,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/ide-features-trainer/intellij.featuresTrainer.iml" filepath="$PROJECT_DIR$/plugins/ide-features-trainer/intellij.featuresTrainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/filePrediction/intellij.filePrediction.iml" filepath="$PROJECT_DIR$/plugins/filePrediction/intellij.filePrediction.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/full-line/intellij.fullLine.iml" filepath="$PROJECT_DIR$/plugins/full-line/intellij.fullLine.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/full-line/intellij.fullLine.tests.iml" filepath="$PROJECT_DIR$/plugins/full-line/intellij.fullLine.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/full-line/core/intellij.fullLine.core.iml" filepath="$PROJECT_DIR$/plugins/full-line/core/intellij.fullLine.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/full-line/core/intellij.fullLine.core.tests.iml" filepath="$PROJECT_DIR$/plugins/full-line/core/intellij.fullLine.core.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/full-line/java/intellij.fullLine.java.iml" filepath="$PROJECT_DIR$/plugins/full-line/java/intellij.fullLine.java.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/full-line/kotlin/intellij.fullLine.kotlin.iml" filepath="$PROJECT_DIR$/plugins/full-line/kotlin/intellij.fullLine.kotlin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/full-line/python/intellij.fullLine.python.iml" filepath="$PROJECT_DIR$/plugins/full-line/python/intellij.fullLine.python.iml" />
