@@ -1408,7 +1408,7 @@
                              provider="com.intellij.ide.minimap.settings.MinimapConfigurableProvider"
                              key="settings.name" bundle="messages.MinimapBundle"/>
     <applicationService serviceImplementation="com.intellij.ide.minimap.MinimapService"/>
-    <registryKey key="popup.advertiser.speed.search" defaultValue="true" description="Shows speed search advertiser in popups"/>
+    <registryKey key="popup.advertiser.speed.search" defaultValue="false" description="Shows speed search advertiser in popups"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
