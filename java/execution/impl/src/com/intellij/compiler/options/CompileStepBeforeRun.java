@@ -9,17 +9,17 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -122,68 +122,68 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     try {
       final Semaphore done = new Semaphore(1);
-      final Application app = ApplicationManager.getApplication();
-      app.executeOnPooledThread(() -> {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
         if (!myProject.isDisposed()) {
           final ProjectTaskManager projectTaskManager = ProjectTaskManager.getInstance(myProject);
-          final Pair<ProjectTaskContext, ProjectTask> pair = app.runReadAction(((Computable<Pair<ProjectTaskContext, ProjectTask>>)() -> {
-            if (myProject.isDisposed()) {
-              return null;
-            }
-            final ProjectTask projectTask;
-            if (forceMakeProject) {
-              // user explicitly requested whole-project make
-              projectTask = projectTaskManager.createAllModulesBuildTask(true, myProject);
-            }
-            else {
-              final Module[] modules = runConfiguration.getModules();
-              if (modules.length > 0) {
-                for (Module module : modules) {
-                  if (module == null) {
-                    LOG.error("RunConfiguration should not return null modules. Configuration=" + runConfiguration.getName() + "; class=" +
-                              runConfiguration.getClass().getName());
-                  }
-                }
 
-                final Ref<Boolean> includeTests = new Ref<>(true); // use the biggest scope by default
-                if (configuration instanceof JavaRunConfigurationBase) {
-                  try {
-                    // use more fine-grained compilation scope avoiding compiling classes, not relevant for running this configuration
-                    final JavaRunConfigurationBase conf = (JavaRunConfigurationBase)configuration;
-                    final String runClass = conf.getRunClass();
-                    final JavaRunConfigurationModule confModule = conf.getConfigurationModule();
-                    if (runClass != null && confModule != null) {
-                      DumbService.getInstance(confModule.getProject()).runWithAlternativeResolveEnabled(
-                        () -> includeTests.set((JavaParametersUtil.getClasspathType(confModule, runClass, false, true) & JavaParameters.TESTS_ONLY) != 0)
-                      );
-                    }
-                  }
-                  catch (CantRunException ignored) {
-                  }
-                }
-
-                projectTask = projectTaskManager.createModulesBuildTask(modules, true, true, true, includeTests.get());
-              }
-              else if (runConfiguration.isBuildProjectOnEmptyModuleList()){
+          final Pair<ProjectTaskContext, ProjectTask> pair;
+          try {
+            pair = ReadAction.nonBlocking(() -> {
+              final ProjectTask projectTask;
+              if (forceMakeProject) {
+                // user explicitly requested whole-project make
                 projectTask = projectTaskManager.createAllModulesBuildTask(true, myProject);
               }
               else {
-                projectTask = new EmptyCompileScopeBuildTaskImpl(true);
-              }
-            }
-            ProjectTaskContext context = new ProjectTaskContext(ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env), configuration);
-            env.copyUserDataTo(context);
-            return Pair.create(context, projectTask);
-          }));
+                final Module[] modules = runConfiguration.getModules();
+                if (modules.length > 0) {
+                  for (Module module : modules) {
+                    if (module == null) {
+                      LOG.error("RunConfiguration should not return null modules. Configuration=" + runConfiguration.getName() + "; class=" +
+                                runConfiguration.getClass().getName());
+                    }
+                  }
 
-          if (pair != null) {
+                  final Ref<Boolean> includeTests = new Ref<>(true); // use the biggest scope by default
+                  if (configuration instanceof JavaRunConfigurationBase) {
+                    try {
+                      // use more fine-grained compilation scope avoiding compiling classes, not relevant for running this configuration
+                      final JavaRunConfigurationBase conf = (JavaRunConfigurationBase)configuration;
+                      final String runClass = conf.getRunClass();
+                      final JavaRunConfigurationModule confModule = conf.getConfigurationModule();
+                      if (runClass != null && confModule != null) {
+                        DumbService.getInstance(confModule.getProject()).runWithAlternativeResolveEnabled(
+                          () -> includeTests.set((JavaParametersUtil.getClasspathType(confModule, runClass, false, true) & JavaParameters.TESTS_ONLY) != 0)
+                        );
+                      }
+                    }
+                    catch (CantRunException ignored) {
+                    }
+                  }
+
+                  projectTask = projectTaskManager.createModulesBuildTask(modules, true, true, true, includeTests.get());
+                }
+                else if (runConfiguration.isBuildProjectOnEmptyModuleList()){
+                  projectTask = projectTaskManager.createAllModulesBuildTask(true, myProject);
+                }
+                else {
+                  projectTask = new EmptyCompileScopeBuildTaskImpl(true);
+                }
+              }
+              ProjectTaskContext context = new ProjectTaskContext(ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env), configuration);
+              env.copyUserDataTo(context);
+              return Pair.create(context, projectTask);
+
+            }).expireWhen(myProject::isDisposed).executeSynchronously();
+
             projectTaskManager.run(pair.first, pair.second).onSuccess(taskResult -> {
               if ((!taskResult.hasErrors() || ignoreErrors) && !taskResult.isAborted()) {
                  result.set(Boolean.TRUE);
               }
             }).onProcessed(taskResult -> done.up());
+            
           }
-          else {
+          catch (ProcessCanceledException e) {
             done.up();
           }
         }
