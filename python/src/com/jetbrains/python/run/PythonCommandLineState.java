@@ -61,13 +61,11 @@ import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.library.PythonLibraryType;
 import com.jetbrains.python.remote.PyRemotePathMapper;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.run.target.PySdkTargetPaths;
 import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvider;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
@@ -278,7 +276,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * <p>
    * Patches the command line parameters applying patchers from first to last, and then runs it.
    *
-   * @param patchers       any number of patchers; any patcher may be null, and the whole argument may be null.
+   * @param patchers any number of patchers; any patcher may be null, and the whole argument may be null.
    * @return handler of the started process
    */
   @NotNull
@@ -381,10 +379,15 @@ public abstract class PythonCommandLineState extends CommandLineState {
   protected final PythonProcessStarter getDefaultPythonProcessStarter() {
     return (config, commandLine) -> {
       Sdk sdk = PythonSdkUtil.findSdkByPath(myConfig.getInterpreterPath());
+      assert sdk != null : "No SDK For " + myConfig.getInterpreterPath();
       final ProcessHandler processHandler;
-      if (PythonSdkUtil.isRemote(sdk)) {
+      var additionalData = sdk.getSdkAdditionalData();
+      if (additionalData instanceof PyRemoteSdkAdditionalDataMarker) {
+        assert additionalData instanceof PyRemoteSdkAdditionalData : "additionalData is remote, but not legacy. Is it a target-based? " +
+                                                                     additionalData;
         PyRemotePathMapper pathMapper = createRemotePathMapper();
-        processHandler = createRemoteProcessStarter().startRemoteProcess(sdk, commandLine, myConfig.getProject(), pathMapper);
+        processHandler = PyRemoteProcessStarter.startLegacyRemoteProcess((PyRemoteSdkAdditionalData)additionalData, commandLine,
+                                                                         myConfig.getProject(), pathMapper);
       }
       else {
         EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(commandLine);
@@ -416,10 +419,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
     else {
       return PyRemotePathMapper.fromSettings(myConfig.getMappingSettings(), PyRemotePathMapper.PyPathMappingType.USER_DEFINED);
     }
-  }
-
-  protected PyRemoteProcessStarter createRemoteProcessStarter() {
-    return new PyRemoteProcessStarter();
   }
 
   /**
@@ -579,7 +578,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * Creates a number of parameter groups in the command line:
    * GROUP_EXE_OPTIONS, GROUP_DEBUGGER, GROUP_SCRIPT.
    * These are necessary for command line patchers to work properly.
-   *
    */
   public static void createStandardGroups(GeneralCommandLine commandLine) {
     ParametersList params = commandLine.getParametersList();
