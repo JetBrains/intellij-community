@@ -68,6 +68,7 @@ import com.intellij.util.ui.PositionTracker
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.JdkConstants
 import org.jetbrains.annotations.ApiStatus
@@ -476,15 +477,15 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
   }
 
-  suspend fun init(frameHelper: ProjectFrameHelper, editorComponent: JComponent) {
+  suspend fun init(frameHelper: ProjectFrameHelper, editorComponent: JComponent, reopeningEditorsJob: Job) {
     // Make sure we haven't already created the root tool window pane. We might have created panes for secondary frames, as they get
     // registered differently, but we shouldn't have the main pane yet
     LOG.assertTrue(!toolWindowPanes.containsKey(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID))
-    doInit(frameHelper, project.messageBus.connect(this), editorComponent)
+    doInit(frameHelper, project.messageBus.connect(this), editorComponent, reopeningEditorsJob)
   }
 
   @VisibleForTesting
-  suspend fun doInit(frameHelper: ProjectFrameHelper, connection: MessageBusConnection, editorComponent: JComponent) {
+  suspend fun doInit(frameHelper: ProjectFrameHelper, connection: MessageBusConnection, editorComponent: JComponent, reopeningEditorsJob: Job) {
     connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       frameState = frameHelper
@@ -497,7 +498,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       toolWindowPanes.put(toolWindowPane.paneId, toolWindowPane)
     }
 
-    toolWindowSetInitializer.initUi()
+    toolWindowSetInitializer.initUi(reopeningEditorsJob)
 
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
