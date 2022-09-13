@@ -15,11 +15,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.Graphics
 import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.util.function.Consumer
 import javax.swing.JPanel
 
 
@@ -30,6 +32,8 @@ internal class NavBarPanel(
 ) : JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)) {
 
   private val myItemComponents = arrayListOf<NavBarItemComponent>()
+
+  var onSizeChange: Consumer<Dimension>? = null
 
   init {
     EDT.assertIsEdt()
@@ -75,6 +79,9 @@ internal class NavBarPanel(
 
     revalidate()
     repaint()
+
+    onSizeChange?.accept(preferredSize)
+
   }
 
   fun getItemPopupLocation(i: Int): Point {

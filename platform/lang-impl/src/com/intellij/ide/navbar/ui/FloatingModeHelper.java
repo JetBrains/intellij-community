@@ -37,7 +37,7 @@ public class FloatingModeHelper {
 
   public static LightweightHint showHint(DataContext dataContext, NavigationBar navigationBar, Project project) {
     final JPanel panel = new JPanel(new BorderLayout());
-    JComponent component = navigationBar.getPanel();
+    NavBarPanel component = navigationBar.getPanel();
     panel.add(component);
     panel.setOpaque(true);
 
@@ -82,6 +82,10 @@ public class FloatingModeHelper {
         HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editor, p, HintManager.HIDE_BY_ESCAPE, 0, true, hintInfo);
       });
     }
+
+    component.setOnSizeChange(size -> {
+      myHint.setSize(size);
+    });
 
     return myHint;
   }

@@ -179,7 +179,7 @@ internal class NavigationBar(
   }
 
 
-  fun getPanel(): JComponent {
+  fun getPanel(): NavBarPanel {
     EDT.assertIsEdt()
     myComponent = NavBarPanel(myItemClickEvents, myItems.asStateFlow(), cs)
     return myComponent
