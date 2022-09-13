@@ -40,10 +40,6 @@ public class ScratchFileTypeIcon extends IconWithOverlay {
   @NotNull
   @Override
   public ScratchFileTypeIcon replaceBy(@NotNull IconReplacer replacer) {
-    Icon mainIcon = getIcon(0);
-    Icon overlayIcon = getIcon(1);
-
-    return new ScratchFileTypeIcon(mainIcon != null ? replacer.replaceIcon(mainIcon) : null,
-                                   overlayIcon != null ? replacer.replaceIcon(overlayIcon) : null);
+    return new ScratchFileTypeIcon(replacer.replaceIcon(getIcon(0)), replacer.replaceIcon(getIcon(1)));
   }
 }
