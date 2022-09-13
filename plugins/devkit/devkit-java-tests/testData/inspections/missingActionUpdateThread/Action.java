@@ -4,7 +4,7 @@ import com.intellij.openapi.actionSystem.*;
 import static com.intellij.openapi.actionSystem.ActionUpdateThread.*;
 
 // plain
-class <warning descr="Override 'getActionUpdateThread' and chose 'EDT' or 'BGT'">ActionError</warning> extends AnAction {
+class <warning descr="Override 'getActionUpdateThread' and choose 'EDT' or 'BGT'">ActionError</warning> extends AnAction {
   public void update(AnActionEvent e) { }
 }
 
@@ -15,12 +15,12 @@ class ActionNoError extends AnAction {
 }
 
 // inherited
-class <warning descr="Override 'getActionUpdateThread' and chose 'EDT' or 'BGT'">ActionChildError</warning> extends ActionError { }
+class <warning descr="Override 'getActionUpdateThread' and choose 'EDT' or 'BGT'">ActionChildError</warning> extends ActionError { }
 class ActionChildNoError extends ActionNoError { }
 
 // anonymous
 class Holder {
-  AnAction actionError = new <warning descr="Override 'getActionUpdateThread' and chose 'EDT' or 'BGT'">ActionError</warning>() {
+  AnAction actionError = new <warning descr="Override 'getActionUpdateThread' and choose 'EDT' or 'BGT'">ActionError</warning>() {
   };
 
   AnAction actionNoError = new ActionError() {
@@ -35,5 +35,5 @@ interface WithDefaultMethod extends ActionUpdateThreadAware {
   }
 }
 
-class <warning descr="Override 'getActionUpdateThread' and chose 'EDT' or 'BGT'">ActionErrorAnyway</warning> extends ActionError implements WithDefaultMethod {
+class <warning descr="Override 'getActionUpdateThread' and choose 'EDT' or 'BGT'">ActionErrorAnyway</warning> extends ActionError implements WithDefaultMethod {
 }
