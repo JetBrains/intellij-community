@@ -41,12 +41,16 @@ abstract class LibraryInfo(
 
     override fun dependencies(): List<IdeaModuleInfo> {
         val dependencies = LibraryDependenciesCache.getInstance(project).getLibraryDependencies(this)
-
-        return LinkedHashSet<IdeaModuleInfo>(dependencies.libraries.size + dependencies.sdk.size + 1).apply {
+        return buildList {
             add(this@LibraryInfo)
             addAll(dependencies.sdk)
-            addAll(dependencies.libraries)
-        }.toList()
+
+            for (dependency in dependencies.libraries) {
+                if (!library.hasSameContent(dependency.library)) {
+                    add(dependency)
+                }
+            }
+        }
     }
 
     abstract override val platform: TargetPlatform // must override
