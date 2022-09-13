@@ -17,7 +17,6 @@
     <orderEntry type="module" module-name="intellij.fullLine.languages" />
     <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.community.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.plugin.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.fullLine.languages.tests" scope="TEST" />
   </component>
