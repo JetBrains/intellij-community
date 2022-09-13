@@ -166,7 +166,8 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
     configConfirmationForYesAnswer();
 
     getMavenImporterSettings().setCreateModulesForAggregators(false);
-    myProjectsManager.performScheduledImportInTests();
+    importProject();
+    //myProjectsManager.performScheduledImportInTests();
     if (supportsCreateAggregatorOption()) {
       assertModules(mn("project", "m2"));
     }
@@ -175,7 +176,7 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
     }
 
     getMavenImporterSettings().setCreateModulesForAggregators(true);
-    myProjectsManager.performScheduledImportInTests();
+    importProject();
     assertModules("project", "m1", "m2");
   }
 
