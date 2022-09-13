@@ -3,6 +3,7 @@ package com.intellij.util.ui
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.ActionLink
 import java.awt.FlowLayout
 import javax.swing.JComponent
@@ -11,6 +12,10 @@ import javax.swing.JPanel
 
 class SpeedSearchAdvertiser : ComponentAdvertiser() {
   fun addSpeedSearchAdvertisement(): JComponent? {
+    if (!Registry.`is`("popup.advertiser.speed.search")) {
+      return null
+    }
+
     if (PropertiesComponent.getInstance().getBoolean(SPEED_SEARCH_GOT_IT)) {
       return null
     }
