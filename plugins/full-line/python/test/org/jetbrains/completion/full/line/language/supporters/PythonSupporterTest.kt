@@ -14,7 +14,7 @@ import java.util.stream.Stream
 class PythonSupporterTest : BasePlatformTestCase() {
 
   fun `test string template`() {
-    val file = myFixture.configureByText(PythonFileType.INSTANCE, FilesTest.readFile("supporter/string-formats.py","python"))
+    val file = myFixture.configureByText(PythonFileType.INSTANCE, FilesTest.readFile("supporter/string-formats.py", "python"))
     val supporter = PythonSupporter()
     Regex("[^\r\n]+").findAll(file.text).map {
       Executable {

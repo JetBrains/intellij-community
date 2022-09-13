@@ -13,7 +13,6 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
-    <orderEntry type="module" module-name="intellij.fullLine.languages" />
     <orderEntry type="module" module-name="intellij.completionMlRanking" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
@@ -31,9 +30,10 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.fullLine.languages.java" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.fullLine.languages.python" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.fullLine.languages.kotlin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.fullLine.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.fullLine.java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.fullLine.python" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.fullLine.kotlin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.psi" scope="TEST" />
