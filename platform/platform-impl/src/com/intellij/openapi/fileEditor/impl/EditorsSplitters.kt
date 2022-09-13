@@ -988,15 +988,13 @@ private fun getSplittersToFocus(project: Project?): EditorsSplitters? {
     if (project == null) {
       project = lastFocusedFrame?.project
     }
-    val fileEditorManager = (if (project == null || project.isDisposed) null else FileEditorManagerEx.getInstanceEx(project))
-                            ?: return null
-    return fileEditorManager.getSplittersFor(activeWindow) ?: fileEditorManager.splitters
+    return getSplittersForProject(activeWindow, project)
   }
   if (activeWindow is IdeFrame.Child) {
     if (project == null) {
       project = (activeWindow as IdeFrame.Child).project
     }
-    return getSplittersForProject(WindowManager.getInstance().getFrame(project), project)
+    return getSplittersForProject(activeWindow, project)
   }
   val frame = FocusManagerImpl.getInstance().lastFocusedFrame
   if (frame is IdeFrameImpl && frame.isActive) {
