@@ -128,11 +128,10 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       val entries = ArrayList<String>(registerTasks.size)
       registerTasks.forEach { task ->
         try {
-          manager.getLayout().getInfo(task.id)?.safeToolWindowPaneId?.let { paneId ->
-            if (shouldRegister(paneId)) {
-              val toolWindowPane = manager.getToolWindowPane(paneId)
-              entries.add(manager.registerToolWindow(task, toolWindowPane.buttonManager).id)
-            }
+          val paneId = manager.getLayout().getInfo(task.id)?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+          if (shouldRegister(paneId)) {
+            val toolWindowPane = manager.getToolWindowPane(paneId)
+            entries.add(manager.registerToolWindow(task, toolWindowPane.buttonManager).id)
           }
         }
         catch (e: ProcessCanceledException) {
