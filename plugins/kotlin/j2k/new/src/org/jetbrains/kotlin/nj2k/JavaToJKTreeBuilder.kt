@@ -243,13 +243,25 @@ class JavaToJKTreeBuilder constructor(
             }
         }
 
-        fun PsiInstanceOfExpression.toJK(): JKIsExpression =
-            JKIsExpression(
-                operand.toJK(),
-                with(declarationMapper) { JKTypeElement(checkType?.type?.toJK() ?: JKNoType, checkType.annotationList()) }
-            ).also {
-                it.withFormattingFrom(this)
+        fun PsiInstanceOfExpression.toJK(): JKIsExpression {
+            val pattern = pattern.safeAs<PsiTypeTestPattern>()
+            val psiTypeElement = checkType ?: pattern?.checkType
+            val type = psiTypeElement?.type?.toJK() ?: JKNoType
+            val typeElement = with(declarationMapper) { JKTypeElement(type, psiTypeElement.annotationList()) }
+            val expr = JKIsExpression(operand.toJK(), typeElement).also { it.withFormattingFrom(this) }
+            val patternVariable = pattern?.patternVariable
+            if (patternVariable != null) {
+                val name = expr.expression.safeAs<JKFieldAccessExpression>()?.identifier?.name ?: patternVariable.name
+                val typeElementForPattern =
+                    with(declarationMapper) { JKTypeElement(type, psiTypeElement.annotationList()) }
+                // Executed for the side effect of binding the symbol to a valid target
+                JKParameter(typeElementForPattern, JKNameIdentifier(name)).also {
+                    symbolProvider.provideUniverseSymbol(patternVariable, it)
+                    it.psi = this
+                }
             }
+            return expr
+        }
 
         fun PsiAssignmentExpression.toJK(): JKJavaAssignmentExpression {
             return JKJavaAssignmentExpression(
