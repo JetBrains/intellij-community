@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.analysis
 
@@ -30,7 +30,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
-import org.jetbrains.kotlin.idea.base.util.caching.*
+import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
+import org.jetbrains.kotlin.idea.base.util.caching.findModuleWithHack
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.idea.configuration.isMavenized
@@ -108,16 +110,9 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
             override fun visitLibraryOrderEntry(libraryOrderEntry: LibraryOrderEntry, value: Unit) {
                 checkCanceled()
-                libraryOrderEntry.library.safeAs<LibraryEx>()?.takeIf { !it.isDisposed }?.let { library ->
-                    for (libraryInfo in LibraryInfoCache.getInstance(project)[library]) {
-                        LibraryDependencyCandidate.fromLibraryOrNull(
-                            project,
-                            libraryInfo.library
-                        )?.let {
-                            libraries += it
-                        }
-                    }
-                }
+                val libraryEx = libraryOrderEntry.library.safeAs<LibraryEx>()?.takeUnless { it.isDisposed } ?: return
+                val candidate = LibraryDependencyCandidate.fromLibraryOrNull(LibraryInfoCache.getInstance(project)[libraryEx]) ?: return
+                libraries += candidate
             }
 
             override fun visitJdkOrderEntry(jdkOrderEntry: JdkOrderEntry, value: Unit) {
