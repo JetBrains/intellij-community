@@ -49,9 +49,6 @@ internal class SettingsSyncPluginManager : Disposable {
 
       logChangedState(oldPlugins, newPlugins)
       state = SettingsSyncPluginsState(newPlugins)
-      if (oldPlugins != newPlugins) {
-        firePluginsStateChangeEvent(state)
-      }
       return state
     }
   }
