@@ -69,7 +69,9 @@ internal class RecentProjectFilteringTree(
     treeComponent.addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItem(treeComponent) }
     treeComponent.addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)) { removeItem(treeComponent) }
 
-    val mouseListener = ProjectActionMouseListener(treeComponent, projectActionButtonViewModel, filePathChecker::isValid)
+    val group = ActionManager.getInstance().getAction("WelcomeScreenRecentProjectActionGroup") as ActionGroup
+    val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group)
+    val mouseListener = ProjectActionMouseListener(treeComponent, projectActionButtonViewModel, filePathChecker::isValid, popupMenu)
     treeComponent.addMouseListener(mouseListener)
     treeComponent.addMouseMotionListener(mouseListener)
     treeComponent.addTreeWillExpandListener(ToggleStateListener())
@@ -81,7 +83,7 @@ internal class RecentProjectFilteringTree(
     )
 
     SmartExpander.installOn(treeComponent)
-    TreeHoverToSelectionListener().addTo(treeComponent)
+    TreeHoverToSelectionListener(popupMenu).addTo(treeComponent)
 
     treeComponent.isRootVisible = false
     treeComponent.cellRenderer = ProjectActionRenderer(filePathChecker::isValid, projectActionButtonViewModel)
@@ -192,9 +194,9 @@ internal class RecentProjectFilteringTree(
     }
   }
 
-  private class TreeHoverToSelectionListener : TreeHoverListener() {
+  private class TreeHoverToSelectionListener(private val popupMenu: ActionPopupMenu) : TreeHoverListener() {
     override fun onHover(tree: JTree, row: Int) {
-      if (row != -1) {
+      if (row != -1 && !popupMenu.component.isVisible) {
         tree.setSelectionRow(row)
       }
     }
@@ -204,6 +206,7 @@ internal class RecentProjectFilteringTree(
     private val tree: Tree,
     private val projectActionButtonViewModel: ProjectActionButtonViewModel,
     private val isProjectPathValid: (String) -> Boolean,
+    private val popupMenu: ActionPopupMenu
   ) : PopupHandler() {
 
     override fun mouseMoved(mouseEvent: MouseEvent) {
@@ -266,9 +269,6 @@ internal class RecentProjectFilteringTree(
     }
 
     private fun invokePopup(component: Component, x: Int, y: Int, item: RecentProjectTreeItem) {
-      val group = ActionManager.getInstance().getAction("WelcomeScreenRecentProjectActionGroup") as ActionGroup
-      val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group)
-
       popupMenu.setDataContext {
         SimpleDataContext.builder()
           .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEM_KEY, item)
