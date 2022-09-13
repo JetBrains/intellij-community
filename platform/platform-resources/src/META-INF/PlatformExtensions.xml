@@ -1400,14 +1400,14 @@
     <applicationService serviceInterface="com.intellij.diagnostic.PerformanceWatcher"
                         serviceImplementation="com.intellij.diagnostic.PerformanceWatcherImpl" preload="notHeadless"/>
 
-    <!-- MiniMap -->
-    <registryKey key="editor.minimap.enabled" defaultValue="false" description="Enables MiniMap"/>
-    <editorFactoryListener implementation="com.intellij.ide.miniMap.MiniMapEditorFactoryListener"/>
-    <applicationService serviceImplementation="com.intellij.ide.miniMap.settings.MiniMapSettings"/>
-    <applicationConfigurable id="com.intellij.miniMap" parentId="editor"
-                             provider="com.intellij.ide.miniMap.settings.MiniMapConfigurableProvider"
-                             key="settings.name" bundle="messages.MiniMapBundle"/>
-    <applicationService serviceImplementation="com.intellij.ide.miniMap.MiniMapService"/>
+    <!-- Minimap -->
+    <registryKey key="editor.minimap.enabled" defaultValue="false" description="Enables Minimap"/>
+    <editorFactoryListener implementation="com.intellij.ide.minimap.MinimapEditorFactoryListener"/>
+    <applicationService serviceImplementation="com.intellij.ide.minimap.settings.MinimapSettings"/>
+    <applicationConfigurable id="com.intellij.minimap" parentId="editor"
+                             provider="com.intellij.ide.minimap.settings.MinimapConfigurableProvider"
+                             key="settings.name" bundle="messages.MinimapBundle"/>
+    <applicationService serviceImplementation="com.intellij.ide.minimap.MinimapService"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

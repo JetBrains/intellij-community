@@ -1,15 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.miniMap.settings
+package com.intellij.ide.minimap.settings
 
-import com.intellij.ide.miniMap.utils.WeakDelegate
+import com.intellij.ide.minimap.utils.WeakDelegate
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.util.xmlb.XmlSerializerUtil
 
-@State(name = "MiniMap", storages = [Storage(value = "MiniMap.xml")])
-class MiniMapSettings : PersistentStateComponent<MiniMapSettingsState> {
+@State(name = "Minimap", storages = [Storage(value = "Minimap.xml")])
+class MinimapSettings : PersistentStateComponent<MinimapSettingsState> {
 
   enum class SettingsChangeType {
     Normal,
@@ -17,19 +17,19 @@ class MiniMapSettings : PersistentStateComponent<MiniMapSettingsState> {
   }
 
   companion object {
-    fun getInstance() = service<MiniMapSettings>()
+    fun getInstance() = service<MinimapSettings>()
   }
 
   val settingsChangeCallback = WeakDelegate<SettingsChangeType, Unit>()
 
-  private var state = MiniMapSettingsState()
+  private var state = MinimapSettingsState()
 
-  override fun getState(): MiniMapSettingsState = state
-  fun setState(state: MiniMapSettingsState) {
+  override fun getState(): MinimapSettingsState = state
+  fun setState(state: MinimapSettingsState) {
     this.state = state
   }
 
-  override fun loadState(state: MiniMapSettingsState) {
+  override fun loadState(state: MinimapSettingsState) {
     try {
       XmlSerializerUtil.copyBean(state, this.state)
     }

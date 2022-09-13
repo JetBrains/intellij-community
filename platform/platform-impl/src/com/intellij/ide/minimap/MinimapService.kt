@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.miniMap
+package com.intellij.ide.minimap
 
-import com.intellij.ide.miniMap.settings.MiniMapSettings
+import com.intellij.ide.minimap.settings.MinimapSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -13,39 +13,39 @@ import com.intellij.openapi.util.Key
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
-class MiniMapService : Disposable {
+class MinimapService : Disposable {
 
   companion object {
-    fun getInstance() = service<MiniMapService>()
-    private val MINI_MAP_PANEL_KEY: Key<MiniMapPanel> = Key.create("com.intellij.ide.minimap.panel")
+    fun getInstance() = service<MinimapService>()
+    private val MINI_MAP_PANEL_KEY: Key<MinimapPanel> = Key.create("com.intellij.ide.minimap.panel")
   }
 
-  private val settings = MiniMapSettings.getInstance()
+  private val settings = MinimapSettings.getInstance()
   private var state = settings.state
 
-  private val onSettingsChange = { type: MiniMapSettings.SettingsChangeType ->
-    if (type == MiniMapSettings.SettingsChangeType.WithUiRebuild) {
+  private val onSettingsChange = { type: MinimapSettings.SettingsChangeType ->
+    if (type == MinimapSettings.SettingsChangeType.WithUiRebuild) {
       updateAllEditors()
     }
   }
 
   init {
-    MiniMapSettings.getInstance().settingsChangeCallback += onSettingsChange
+    MinimapSettings.getInstance().settingsChangeCallback += onSettingsChange
   }
 
   fun updateAllEditors() {
     EditorFactory.getInstance().allEditors.forEach { editor ->
       getEditorImpl(editor)?.let {
-        removeMiniMap(it)
+        removeMinimap(it)
         if (settings.state.enabled) {
-          addMiniMap(it)
+          addMinimap(it)
         }
       }
     }
   }
 
   override fun dispose() {
-    MiniMapSettings.getInstance().settingsChangeCallback -= onSettingsChange
+    MinimapSettings.getInstance().settingsChangeCallback -= onSettingsChange
   }
 
   private fun getEditorImpl(editor: Editor): EditorImpl? {
@@ -59,22 +59,22 @@ class MiniMapService : Disposable {
     if (!settings.state.enabled) {
       return
     }
-    getEditorImpl(editor)?.let { addMiniMap(it) }
+    getEditorImpl(editor)?.let { addMinimap(it) }
   }
 
   private fun getPanel(fileEditor: EditorImpl): JPanel? {
     return fileEditor.component as? JPanel
   }
 
-  private fun addMiniMap(textEditor: EditorImpl) {
+  private fun addMinimap(textEditor: EditorImpl) {
     val panel = getPanel(textEditor) ?: return
 
     val where = if (state.rightAligned) BorderLayout.LINE_END else BorderLayout.LINE_START
 
     if ((panel.layout as? BorderLayout)?.getLayoutComponent(where) == null) {
-      val miniMapPanel = MiniMapPanel(textEditor.disposable, textEditor, panel)
-      panel.add(miniMapPanel, where)
-      textEditor.putUserData(MINI_MAP_PANEL_KEY, miniMapPanel)
+      val minimapPanel = MinimapPanel(textEditor.disposable, textEditor, panel)
+      panel.add(minimapPanel, where)
+      textEditor.putUserData(MINI_MAP_PANEL_KEY, minimapPanel)
 
       Disposer.register(textEditor.disposable) {
         textEditor.getUserData(MINI_MAP_PANEL_KEY)?.onClose()
@@ -85,13 +85,13 @@ class MiniMapService : Disposable {
     }
   }
 
-  private fun removeMiniMap(editor: EditorImpl) {
-    val miniMapPanel = editor.getUserData(MINI_MAP_PANEL_KEY) ?: return
-    miniMapPanel.onClose()
+  private fun removeMinimap(editor: EditorImpl) {
+    val minimapPanel = editor.getUserData(MINI_MAP_PANEL_KEY) ?: return
+    minimapPanel.onClose()
     editor.putUserData(MINI_MAP_PANEL_KEY, null)
 
-    miniMapPanel.parent?.apply {
-      remove(miniMapPanel)
+    minimapPanel.parent?.apply {
+      remove(minimapPanel)
       revalidate()
       repaint()
     }

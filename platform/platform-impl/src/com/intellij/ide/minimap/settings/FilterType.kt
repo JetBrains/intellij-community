@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.miniMap.settings
+package com.intellij.ide.minimap.settings
 
-import com.intellij.ide.miniMap.utils.MiniMessagesBundle
+import com.intellij.ide.minimap.utils.MiniMessagesBundle
 import org.jetbrains.annotations.Nls
 
 enum class FilterType(@Nls val title: String) {

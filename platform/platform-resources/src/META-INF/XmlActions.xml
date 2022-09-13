@@ -115,6 +115,6 @@
       </group>
     </group>
 
-    <action id="ToggleMiniMapAction" class="com.intellij.ide.miniMap.actions.ToggleMiniMapAction"/>
+    <action id="ToggleMinimapAction" class="com.intellij.ide.minimap.actions.ToggleMinimapAction"/>
   </actions>
 </idea-plugin>

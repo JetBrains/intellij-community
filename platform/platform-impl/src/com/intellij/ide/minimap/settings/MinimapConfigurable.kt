@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.miniMap.settings
+package com.intellij.ide.minimap.settings
 
-import com.intellij.ide.miniMap.utils.MiniMessagesBundle
+import com.intellij.ide.minimap.utils.MiniMessagesBundle
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBCheckBox
@@ -13,10 +13,10 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.*
 
-class MiniMapConfigurable : Configurable {
+class MinimapConfigurable : Configurable {
 
   companion object {
-    const val ID = "com.intellij.miniMap"
+    const val ID = "com.intellij.minimap"
   }
 
   private val enabled = JBCheckBox(MiniMessagesBundle.message("settings.enable"))
@@ -26,7 +26,7 @@ class MiniMapConfigurable : Configurable {
   private val alignmentLeft = JRadioButton(MiniMessagesBundle.message("settings.left"))
   private val alignmentRight = JRadioButton(MiniMessagesBundle.message("settings.right"))
   private val fileTypes = JBTextField(20)
-  private var lastState: MiniMapSettingsState? = null
+  private var lastState: MinimapSettingsState? = null
 
   override fun getDisplayName() = MiniMessagesBundle.message("settings.name")
 
@@ -95,17 +95,17 @@ class MiniMapConfigurable : Configurable {
                               state.enabled != lastState?.enabled ||
                               state.filterType != lastState?.filterType
 
-    val settings = MiniMapSettings.getInstance()
+    val settings = MinimapSettings.getInstance()
     settings.state = state
 
     settings.settingsChangeCallback.notify(if (needToReconstructUi)
-                                             MiniMapSettings.SettingsChangeType.WithUiRebuild
+                                             MinimapSettings.SettingsChangeType.WithUiRebuild
                                            else
-                                             MiniMapSettings.SettingsChangeType.Normal)
+                                             MinimapSettings.SettingsChangeType.Normal)
   }
 
   override fun reset() {
-    val state = MiniMapSettings.getInstance().state
+    val state = MinimapSettings.getInstance().state
 
     filterComboBox.item = state.filterType
     enabled.isSelected = state.enabled
@@ -120,7 +120,7 @@ class MiniMapConfigurable : Configurable {
 
   override fun disposeUIResources() = Unit
 
-  private fun getState() = MiniMapSettingsState(filterType = filterComboBox.item,
+  private fun getState() = MinimapSettingsState(filterType = filterComboBox.item,
                                                 enabled = enabled.isSelected,
                                                 resizable = resizable.isSelected,
                                                 width = widthField.value as Int,

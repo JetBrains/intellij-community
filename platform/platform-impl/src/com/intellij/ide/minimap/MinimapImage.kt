@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.miniMap
+package com.intellij.ide.minimap
 
-import com.intellij.ide.miniMap.settings.MiniMapSettings
+import com.intellij.ide.minimap.settings.MinimapSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.Alarm
@@ -13,7 +13,7 @@ import kotlin.math.ceil
 /**
  * A rendered minimap of a document.
  */
-class MiniMapImage(parentDisposable: Disposable) {
+class MinimapImage(parentDisposable: Disposable) {
 
   companion object {
     private const val UPDATE_DELAY_MILLIS = 200
@@ -59,13 +59,13 @@ class MiniMapImage(parentDisposable: Disposable) {
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
 
-    val miniMapHeightEx = (buHeight * imgWidth.toDouble() / buWidth).toInt()
+    val minimapHeightEx = (buHeight * imgWidth.toDouble() / buWidth).toInt()
 
     for (i in 0 until blocks) {
       editor.contentComponent.print(g)
 
       g2d.drawImage(bufferUnscaled,
-                    0, i * miniMapHeightEx, imgWidth, (i + 1) * miniMapHeightEx,
+                    0, i * minimapHeightEx, imgWidth, (i + 1) * minimapHeightEx,
                     0, 0, bufferUnscaled.width, bufferUnscaled.height,
                     null)
 
@@ -102,7 +102,7 @@ class MiniMapImage(parentDisposable: Disposable) {
 
   private fun innerUpdate(editor: Editor, visibleHeight: Int, visibleWidth: Int, minimapHeight: Int) {
 
-    val state = MiniMapSettings.getInstance().state
+    val state = MinimapSettings.getInstance().state
 
     if (contentHeight == visibleHeight &&
         contentVisibleWidth == visibleWidth &&

@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.miniMap
+package com.intellij.ide.minimap
 
-import com.intellij.ide.miniMap.actions.MoveMiniMapAction
-import com.intellij.ide.miniMap.actions.OpenMiniMapSettingsAction
-import com.intellij.ide.miniMap.actions.ToggleMiniMapResizableAction
-import com.intellij.ide.miniMap.settings.MiniMapSettings
+import com.intellij.ide.minimap.actions.MoveMinimapAction
+import com.intellij.ide.minimap.actions.OpenMinimapSettingsAction
+import com.intellij.ide.minimap.actions.ToggleMinimapResizableAction
+import com.intellij.ide.minimap.settings.MinimapSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.editor.Editor
@@ -20,7 +20,7 @@ import java.lang.ref.SoftReference
 import javax.swing.JPanel
 import kotlin.math.min
 
-class MiniMapPanel(private val parentDisposable: Disposable, private val editor: Editor, private val container: JPanel) : JPanel() {
+class MinimapPanel(private val parentDisposable: Disposable, private val editor: Editor, private val container: JPanel) : JPanel() {
 
   companion object {
     const val MINIMUM_WIDTH = 50
@@ -67,7 +67,7 @@ class MiniMapPanel(private val parentDisposable: Disposable, private val editor:
         }
         if (state.width != newWidth) {
           state.width = newWidth
-          settings.settingsChangeCallback.notify(MiniMapSettings.SettingsChangeType.Normal)
+          settings.settingsChangeCallback.notify(MinimapSettings.SettingsChangeType.Normal)
         }
       }
       else if (isDragging) {
@@ -88,7 +88,7 @@ class MiniMapPanel(private val parentDisposable: Disposable, private val editor:
     }
   }
 
-  private val settings = MiniMapSettings.getInstance()
+  private val settings = MinimapSettings.getInstance()
   private var state = settings.state
 
   private var isResizing = false
@@ -96,9 +96,9 @@ class MiniMapPanel(private val parentDisposable: Disposable, private val editor:
   private var resizeInitialX = 0
   private var resizeInitialWidth = 0
 
-  private var miniMapImageSoftReference = SoftReference<MiniMapImage>(null)
+  private var minimapImageSoftReference = SoftReference<MinimapImage>(null)
 
-  private var miniMapHeight = 0
+  private var minimapHeight = 0
   private var areaStart = 0
   private var areaEnd = 0
 
@@ -146,7 +146,7 @@ class MiniMapPanel(private val parentDisposable: Disposable, private val editor:
     }
   }
 
-  private val onSettingsChange = { _: MiniMapSettings.SettingsChangeType ->
+  private val onSettingsChange = { _: MinimapSettings.SettingsChangeType ->
     updatePreferredSize()
     revalidate()
     repaint()
@@ -161,7 +161,7 @@ class MiniMapPanel(private val parentDisposable: Disposable, private val editor:
     editor.selectionModel.addSelectionListener(selectionListener)
     editor.contentComponent.addComponentListener(contentComponentListener)
 
-    PopupHandler.installPopupMenu(this, createPopupActionGroup(), "MiniMap")
+    PopupHandler.installPopupMenu(this, createPopupActionGroup(), "Minimap")
 
     updatePreferredSize()
 
@@ -174,19 +174,19 @@ class MiniMapPanel(private val parentDisposable: Disposable, private val editor:
   private fun updateParameters() {
     val visibleArea = editor.scrollingModel.visibleArea
     val componentHeight = editor.contentComponent.height
-    miniMapHeight = (componentHeight * state.width / visibleArea.width.toDouble()).toInt()
+    minimapHeight = (componentHeight * state.width / visibleArea.width.toDouble()).toInt()
 
-    val proportion = miniMapHeight.toDouble() / componentHeight
+    val proportion = minimapHeight.toDouble() / componentHeight
 
     thumbStart = (visibleArea.y * proportion).toInt()
     thumbHeight = (visibleArea.height * proportion).toInt()
 
-    areaStart = ((thumbStart / (miniMapHeight - thumbHeight).toFloat()) * (miniMapHeight - height)).toInt()
+    areaStart = ((thumbStart / (minimapHeight - thumbHeight).toFloat()) * (minimapHeight - height)).toInt()
     if (areaStart < 0) {
       areaStart = 0
     }
 
-    areaEnd = areaStart + min(height, miniMapHeight)
+    areaEnd = areaStart + min(height, minimapHeight)
   }
 
   private fun isInResizeArea(x: Int): Boolean {
@@ -198,7 +198,7 @@ class MiniMapPanel(private val parentDisposable: Disposable, private val editor:
   }
 
   private fun scrollTo(y: Int) {
-    val percentage = (y + areaStart) / miniMapHeight.toFloat()
+    val percentage = (y + areaStart) / minimapHeight.toFloat()
     val offset = editor.component.size.height / 2
     editor.scrollingModel.scrollVertically((percentage * editor.contentComponent.size.height - offset).toInt())
   }
@@ -206,30 +206,30 @@ class MiniMapPanel(private val parentDisposable: Disposable, private val editor:
   override fun updateUI() {
     super.updateUI()
     if (initialized) {
-      miniMapImageSoftReference.get()?.update(editor, editor.contentComponent.height, editor.scrollingModel.visibleArea.width,
-                                              miniMapHeight, true)
+      minimapImageSoftReference.get()?.update(editor, editor.contentComponent.height, editor.scrollingModel.visibleArea.width,
+                                              minimapHeight, true)
     }
   }
 
   private fun createPopupActionGroup() = DefaultActionGroup(
-    ToggleMiniMapResizableAction(),
-    MoveMiniMapAction(),
-    OpenMiniMapSettingsAction(),
+    ToggleMinimapResizableAction(),
+    MoveMinimapAction(),
+    OpenMinimapSettingsAction(),
     // Filters are currently disabled.
-    //MiniMapFilterActionGroup()
+    //MinimapFilterActionGroup()
   )
 
   private fun updatePreferredSize() {
     preferredSize = Dimension(state.width, 0)
   }
 
-  private fun getOrCreateImage(): MiniMapImage {
-    var map = miniMapImageSoftReference.get()
+  private fun getOrCreateImage(): MinimapImage {
+    var map = minimapImageSoftReference.get()
 
     if (map == null) {
-      map = MiniMapImage(parentDisposable)
+      map = MinimapImage(parentDisposable)
       map.onImageReady = { repaint() }
-      miniMapImageSoftReference = SoftReference(map)
+      minimapImageSoftReference = SoftReference(map)
     }
 
     return map
@@ -241,13 +241,13 @@ class MiniMapPanel(private val parentDisposable: Disposable, private val editor:
       initialized = true
     }
 
-    val miniMap = getOrCreateImage()
-    miniMap.update(editor, editor.contentComponent.height, editor.scrollingModel.visibleArea.width, miniMapHeight)
+    val minimap = getOrCreateImage()
+    minimap.update(editor, editor.contentComponent.height, editor.scrollingModel.visibleArea.width, minimapHeight)
 
     g.color = editor.contentComponent.background
     g.fillRect(0, 0, width, height)
 
-    val preview = miniMap.preview
+    val preview = minimap.preview
     if (preview != null) {
       val scaleY = (preview.graphics as Graphics2D).transform.scaleY
 
@@ -269,6 +269,6 @@ class MiniMapPanel(private val parentDisposable: Disposable, private val editor:
     editor.contentComponent.removeComponentListener(contentComponentListener)
     editor.scrollingModel.removeVisibleAreaListener(visibleAreaListener)
 
-    miniMapImageSoftReference.clear()
+    minimapImageSoftReference.clear()
   }
 }
