@@ -35,9 +35,6 @@ import javax.swing.FocusManager;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.FontUIResource;
@@ -49,7 +46,6 @@ import javax.swing.text.*;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
-import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
@@ -341,7 +337,7 @@ public final class UIUtil {
   private static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
 
   public static final Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
-  private static final Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
+
   /**
    * Alt+click does copy text from tooltip or balloon to clipboard.
    * We collect this text from components recursively and this generic approach might 'grab' unexpected text fragments.
@@ -349,25 +345,6 @@ public final class UIUtil {
    * Note, main(root) components of BalloonImpl and AbstractPopup are already marked with this key
    */
   public static final Key<Boolean> TEXT_COPY_ROOT = Key.create("TEXT_COPY_ROOT");
-
-  private static final Action REDO_ACTION = new AbstractAction() {
-    @Override
-    public void actionPerformed(@NotNull ActionEvent e) {
-      UndoManager manager = ClientProperty.get(ObjectUtils.tryCast(e.getSource(), Component.class), UNDO_MANAGER);
-      if (manager != null && manager.canRedo()) {
-        manager.redo();
-      }
-    }
-  };
-  private static final Action UNDO_ACTION = new AbstractAction() {
-    @Override
-    public void actionPerformed(@NotNull ActionEvent e) {
-      UndoManager manager = ClientProperty.get(ObjectUtils.tryCast(e.getSource(), Component.class), UNDO_MANAGER);
-      if (manager != null && manager.canUndo()) {
-        manager.undo();
-      }
-    }
-  };
 
   private static final Color ACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.active", 0xa0bad5);
   private static final Color INACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.inactive", Gray._128);
@@ -2786,57 +2763,13 @@ public final class UIUtil {
     return false;
   }
 
-  public static void resetUndoRedoActions(@NotNull JTextComponent textComponent) {
-    UndoManager undoManager = ClientProperty.get(textComponent, UNDO_MANAGER);
-    if (undoManager != null) {
-      undoManager.discardAllEdits();
-    }
-  }
-
-  private static final DocumentListener SET_TEXT_CHECKER = new DocumentAdapter() {
-    @Override
-    protected void textChanged(@NotNull DocumentEvent e) {
-      Document document = e.getDocument();
-      if (document instanceof AbstractDocument) {
-        StackTraceElement[] stackTrace = new Throwable().getStackTrace();
-        for (StackTraceElement element : stackTrace) {
-          if (!element.getClassName().equals(JTextComponent.class.getName()) || !element.getMethodName().equals("setText")) continue;
-          UndoableEditListener[] undoableEditListeners = ((AbstractDocument)document).getUndoableEditListeners();
-          for (final UndoableEditListener listener : undoableEditListeners) {
-            if (listener instanceof UndoManager) {
-              Runnable runnable = ((UndoManager)listener)::discardAllEdits;
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(runnable);
-              return;
-            }
-          }
-        }
-      }
-    }
-  };
-
-  public static void addUndoRedoActions(final @NotNull JTextComponent textComponent) {
-    if (textComponent.getClientProperty(UNDO_MANAGER) instanceof UndoManager) {
-      return;
-    }
-
-    UndoManager undoManager = new UndoManager();
-    textComponent.putClientProperty(UNDO_MANAGER, undoManager);
-    textComponent.getDocument().addUndoableEditListener(undoManager);
-    textComponent.getDocument().addDocumentListener(SET_TEXT_CHECKER);
-    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfoRt.isMac ? Event.META_MASK : Event.CTRL_MASK), "undoKeystroke");
-    textComponent.getActionMap().put("undoKeystroke", UNDO_ACTION);
-    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfoRt.isMac
-                                                                           ? Event.META_MASK : Event.CTRL_MASK) | Event.SHIFT_MASK), "redoKeystroke");
-    textComponent.getActionMap().put("redoKeystroke", REDO_ACTION);
-  }
-
-  public static @Nullable UndoManager getUndoManager(Component component) {
-    if (component instanceof JTextComponent) {
-      Object o = ((JTextComponent)component).getClientProperty(UNDO_MANAGER);
-      if (o instanceof UndoManager) return (UndoManager)o;
-    }
-    return null;
+  /**
+   * Use {@link SwingUndoUtil#addUndoRedoActions(JTextComponent)}
+   * @param textComponent
+   */
+  @Deprecated
+  public static void addUndoRedoActions(@NotNull JTextComponent textComponent) {
+    SwingUndoUtil.addUndoRedoActions(textComponent);
   }
 
   public static void playSoundFromResource(@NotNull String resourceName) {

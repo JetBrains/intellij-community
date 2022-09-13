@@ -65,7 +65,6 @@ public final class Registry  {
 
   public static boolean is(@NonNls @NotNull String key, boolean defaultValue) {
     if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
-      LoadingState.COMPONENTS_REGISTERED.checkOccurred();
       return defaultValue;
     }
 

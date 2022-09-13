@@ -10,7 +10,7 @@ import com.intellij.util.Function;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.SwingUndoUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -117,7 +117,7 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
     area.setWrapStyleWord(true);
     area.setLineWrap(true);
 
-    UIUtil.addUndoRedoActions(area);
+    SwingUndoUtil.addUndoRedoActions(area);
 
     return area;
   }
