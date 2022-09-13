@@ -10,10 +10,12 @@ import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiReferenceProviderBean;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP;
+import com.intellij.psi.stubs.StubElementTypeHolderEP;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.highlighting.DefineAttributeQuickFix;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
@@ -35,7 +37,18 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
 
     Extension extension = (Extension)element;
     ExtensionPoint extensionPoint = extension.getExtensionPoint();
-    if (extensionPoint == null) {
+    if (extensionPoint == null ||
+        !DomUtil.hasXml(extensionPoint.getBeanClass())) {
+      return;
+    }
+
+    if (StubElementTypeHolderEP.class.getName().equals(extensionPoint.getBeanClass().getStringValue())) {
+      GenericAttributeValue externalPrefixId = getAttribute(extension, "externalIdPrefix");
+      if (externalPrefixId != null && !DomUtil.hasXml(externalPrefixId)) {
+        holder.createProblem(extension,
+                             DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.externalidprefix.attribute"),
+                             new DefineAttributeQuickFix("externalIdPrefix"));
+      }
       return;
     }
 

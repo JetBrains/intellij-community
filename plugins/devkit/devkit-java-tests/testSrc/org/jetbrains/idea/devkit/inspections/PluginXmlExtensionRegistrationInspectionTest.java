@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP;
+import com.intellij.psi.stubs.StubElementTypeHolderEP;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -26,6 +27,7 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibrary("core", PathUtil.getJarPathForClass(Project.class));
+    moduleBuilder.addLibrary("core-api", PathUtil.getJarPathForClass(StubElementTypeHolderEP.class));
     moduleBuilder.addLibrary("core-impl", PathUtil.getJarPathForClass(PsiReferenceContributorEP.class));
     moduleBuilder.addLibrary("analysis-api", PathUtil.getJarPathForClass(IntentionActionBean.class));
     moduleBuilder.addLibrary("platform-rt", PathUtil.getJarPathForClass(IncorrectOperationException.class));
@@ -50,5 +52,9 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
     assertNotNull(action);
     myFixture.checkPreviewAndLaunchAction(action);
     myFixture.checkResultByFile("languageAddLanguageTagFix_after.xml");
+  }
+
+  public void testStubElementTypeHolder() {
+    myFixture.testHighlighting("stubElementTypeHolder.xml");
   }
 }
