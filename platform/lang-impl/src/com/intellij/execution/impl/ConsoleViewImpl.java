@@ -1210,6 +1210,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       e.getPresentation().setEnabled(console != null);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     @Nullable
     private static ConsoleViewImpl getRunningConsole(@NotNull DataContext context) {
       Editor editor = CommonDataKeys.EDITOR.getData(context);
