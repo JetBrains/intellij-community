@@ -51,7 +51,7 @@ class MiniMapService : Disposable {
   private fun getEditorImpl(editor: Editor): EditorImpl? {
     val editorImpl = editor as? EditorImpl ?: return null
     val virtualFile = editorImpl.virtualFile ?: FileDocumentManager.getInstance().getFile(editor.document) ?: return null
-    if (settings.state.fileTypes.isNotEmpty() && !settings.state.fileTypes.contains(virtualFile.extension)) return null
+    if (settings.state.fileTypes.isNotEmpty() && !settings.state.fileTypes.contains(virtualFile.fileType.defaultExtension)) return null
     return editorImpl
   }
 
