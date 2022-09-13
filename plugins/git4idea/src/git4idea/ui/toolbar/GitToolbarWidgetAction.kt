@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.ui.popup.PopupState
 import git4idea.GitUtil
@@ -134,7 +135,8 @@ private class GitToolbarWidget(val presentation: Presentation) : ToolbarComboWid
       val repo = repository
 
       val listPopup: ListPopup
-      val dataContext = DataManager.getInstance().getDataContext(this)
+      val component = IdeFocusManager.getGlobalInstance().focusOwner ?: this
+      val dataContext = DataManager.getInstance().getDataContext(component)
       if (repo != null) {
         listPopup = GitBranchPopup.getInstance(proj, repo, dataContext).asListPopup()
       }
