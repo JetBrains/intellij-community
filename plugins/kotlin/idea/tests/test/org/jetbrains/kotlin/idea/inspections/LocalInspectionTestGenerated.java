@@ -15488,6 +15488,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testReifiedWithClassLiteral3() throws Exception {
             runTest("testData/inspectionsLocal/unusedReceiverParameter/reifiedWithClassLiteral3.kt");
         }
+
+        @TestMetadata("sameSignatureDifferentScope.kt")
+        public void testSameSignatureDifferentScope() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/sameSignatureDifferentScope.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
