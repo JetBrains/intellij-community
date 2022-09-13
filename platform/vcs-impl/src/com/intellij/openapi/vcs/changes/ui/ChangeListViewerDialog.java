@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.CommonBundle;
@@ -12,6 +11,7 @@ import com.intellij.openapi.vcs.changes.DiffPreview;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ui.UIUtil;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class ChangeListViewerDialog extends DialogWrapper {
+public final class ChangeListViewerDialog extends DialogWrapper {
   private static final String CHANGES_DETAILS_WINDOW_KEY = "CommittedChangesDetailsLock";
   public static final String DIMENSION_SERVICE_KEY = "VCS.ChangeListViewerDialog";
 
@@ -77,19 +77,21 @@ public class ChangeListViewerDialog extends DialogWrapper {
 
     if (lock != null) {
       lock.lock();
-      UIUtil.putWindowClientProperty(dlg.getWindow(), CHANGES_DETAILS_WINDOW_KEY, lock);
-      Disposer.register(dlg.getDisposable(), () -> lock.unlock());
+      ClientProperty.put(dlg.getWindow(), CHANGES_DETAILS_WINDOW_KEY, lock);
+      Disposer.register(dlg.getDisposable(), lock::unlock);
     }
 
     dlg.show();
   }
 
   public static boolean tryFocusExistingDialog(@Nullable BackgroundableActionLock lock) {
-    if (lock == null || !lock.isLocked()) return false;
+    if (lock == null || !lock.isLocked()) {
+      return false;
+    }
 
     for (Window window : Window.getWindows()) {
-      Object windowLock = UIUtil.getWindowClientProperty(window, CHANGES_DETAILS_WINDOW_KEY);
-      if (windowLock != null && lock.equals(windowLock)) {
+      Object windowLock = ClientProperty.get(window, CHANGES_DETAILS_WINDOW_KEY);
+      if (lock.equals(windowLock)) {
         UIUtil.toFront(window);
         return true;
       }

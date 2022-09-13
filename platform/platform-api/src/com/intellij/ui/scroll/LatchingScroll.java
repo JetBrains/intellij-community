@@ -2,8 +2,8 @@
 package com.intellij.ui.scroll;
 
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +32,7 @@ public final class LatchingScroll {
   public boolean shouldBeIgnored(MouseWheelEvent event) {
     var source = (JScrollPane)event.getSource();
     // do not process any event from JBScrollPane with this option
-    if (UIUtil.isClientPropertyTrue(getViewportView(source), JBScrollPane.IGNORE_SCROLL_LATCHING)) {
+    if (ClientProperty.isTrue(getViewportView(source), JBScrollPane.IGNORE_SCROLL_LATCHING)) {
       return false;
     }
 

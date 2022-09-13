@@ -8,13 +8,9 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.IconDeferrer;
-import com.intellij.ui.PlaceProvider;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.content.AlertIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,7 +173,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
   }
 
   public boolean isPinned() {
-    return UIUtil.isClientPropertyTrue(getComponent(), PINNED);
+    return ClientProperty.isTrue(getComponent(), PINNED);
   }
 
   @NotNull

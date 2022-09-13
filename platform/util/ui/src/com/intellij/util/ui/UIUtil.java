@@ -99,12 +99,8 @@ public final class UIUtil {
         pane.putClientProperty("jetbrains.awt.windowDarkAppearance", isUnderDarcula());
       }
       else {
-        if (isUnderDarcula()) {
-          pane.putClientProperty("apple.awt.windowAppearance", "NSAppearanceNameVibrantDark");
-        }
-        else {
-          pane.putClientProperty("apple.awt.windowAppearance", "NSAppearanceNameVibrantLight");
-        }
+        pane.putClientProperty("apple.awt.windowAppearance",
+                               isUnderDarcula() ? "NSAppearanceNameVibrantDark" : "NSAppearanceNameVibrantLight");
       }
     }
   }
@@ -159,18 +155,23 @@ public final class UIUtil {
     {"8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36", "48", "72"};
 
   public static void applyStyle(@NotNull ComponentStyle componentStyle, @NotNull Component comp) {
-    if (!(comp instanceof JComponent)) return;
-
-    JComponent c = (JComponent)comp;
+    if (!(comp instanceof JComponent c)) {
+      return;
+    }
 
     if (isUnderAquaBasedLookAndFeel()) {
       c.putClientProperty("JComponent.sizeVariant", StringUtil.toLowerCase(componentStyle.name()));
     }
-    FontSize fontSize = componentStyle == ComponentStyle.MINI
-                        ? FontSize.MINI
-                        : componentStyle == ComponentStyle.SMALL
-                          ? FontSize.SMALL
-                          : FontSize.NORMAL;
+    FontSize fontSize;
+    if (componentStyle == ComponentStyle.MINI) {
+      fontSize = FontSize.MINI;
+    }
+    else if (componentStyle == ComponentStyle.SMALL) {
+      fontSize = FontSize.SMALL;
+    }
+    else {
+      fontSize = FontSize.NORMAL;
+    }
     c.setFont(getFont(fontSize, c.getFont()));
     Container p = c.getParent();
     if (p != null) {
@@ -282,7 +283,7 @@ public final class UIUtil {
     }
 
     public static @NotNull GrayFilter namedFilter(@NotNull String resourceName, @NotNull GrayFilter defaultFilter) {
-      return ObjectUtils.notNull((GrayFilter)UIManager.get(resourceName), defaultFilter);
+      return Objects.requireNonNullElse((GrayFilter)UIManager.get(resourceName), defaultFilter);
     }
   }
 
@@ -321,7 +322,7 @@ public final class UIUtil {
   /**
    * Prevent component DataContext from returning parent editor
    * Useful for components that are manually painted over the editor to prevent shortcuts from falling-through to editor
-   *
+   * <p>
    * Usage: {@code component.putClientProperty(HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE)}
    */
   public static final @NonNls String HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY = "AuxEditorComponent";
@@ -372,10 +373,6 @@ public final class UIUtil {
     return SystemInfoRt.isMac ? DetectRetinaKit.isMacRetina(graphics) : isRetina();
   }
 
-  //public static boolean isMacRetina(Graphics2D g) {
-  //  return DetectRetinaKit.isMacRetina(g);
-  //}
-
   public static boolean isRetina() {
     if (GraphicsEnvironment.isHeadless()) return false;
 
@@ -396,7 +393,7 @@ public final class UIUtil {
             GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
             final GraphicsDevice device = env.getDefaultScreenDevice();
             Integer scale = ReflectionUtil.getField(device.getClass(), device, int.class, "scale");
-            if (scale != null && scale.intValue() == 2) {
+            if (scale != null && scale == 2) {
               ourRetina.set(true);
               return true;
             }
@@ -408,14 +405,6 @@ public final class UIUtil {
         return ourRetina.get();
       }
     }
-  }
-
-  /**
-   * @deprecated use {@link ClientProperty#isTrue(Component, Object)} instead
-   */
-  @Deprecated
-  public static boolean isWindowClientPropertyTrue(Window window, @NotNull Object key) {
-    return ClientProperty.isTrue(window, key);
   }
 
   /**
@@ -460,8 +449,9 @@ public final class UIUtil {
    * @param component a Swing component that may hold a client property value
    * @return the property value from the specified component or {@code null}
    */
-  public static <T> T getClientProperty(Object component, @NotNull Class<T> type) {
-    return ObjectUtils.tryCast(ClientProperty.get(ObjectUtils.tryCast(component, Component.class), type), type);
+  public static <T> T getClientProperty(Component component, @NotNull Class<T> type) {
+    Object obj = ClientProperty.get(component, type);
+    return type.isInstance(obj) ? type.cast(obj) : null;
   }
 
   /**
@@ -997,19 +987,19 @@ public final class UIUtil {
   }
 
   public static @NotNull Icon getErrorIcon() {
-    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.errorIcon"), AllIcons.General.ErrorDialog);
+    return Objects.requireNonNullElse(UIManager.getIcon("OptionPane.errorIcon"), AllIcons.General.ErrorDialog);
   }
 
   public static @NotNull Icon getInformationIcon() {
-    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.informationIcon"), AllIcons.General.InformationDialog);
+    return Objects.requireNonNullElse(UIManager.getIcon("OptionPane.informationIcon"), AllIcons.General.InformationDialog);
   }
 
   public static @NotNull Icon getQuestionIcon() {
-    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.questionIcon"), AllIcons.General.QuestionDialog);
+    return Objects.requireNonNullElse(UIManager.getIcon("OptionPane.questionIcon"), AllIcons.General.QuestionDialog);
   }
 
   public static @NotNull Icon getWarningIcon() {
-    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.warningIcon"), AllIcons.General.WarningDialog);
+    return Objects.requireNonNullElse(UIManager.getIcon("OptionPane.warningIcon"), AllIcons.General.WarningDialog);
   }
 
   public static @NotNull Icon getBalloonInformationIcon() {
@@ -1055,12 +1045,12 @@ public final class UIUtil {
 
   public static @NotNull Icon getTreeSelectedCollapsedIcon() {
     Icon icon = UIManager.getIcon("Tree.collapsedSelectedIcon");
-    return icon != null ? icon : getTreeCollapsedIcon();
+    return icon == null ? getTreeCollapsedIcon() : icon;
   }
 
   public static @NotNull Icon getTreeSelectedExpandedIcon() {
     Icon icon = UIManager.getIcon("Tree.expandedSelectedIcon");
-    return icon != null ? icon : getTreeExpandedIcon();
+    return icon == null ? getTreeExpandedIcon() : icon;
   }
 
   public static Color getWindowColor() {
@@ -1503,7 +1493,7 @@ public final class UIUtil {
       LinePainter2D.paint(g, startX, lineY + 2, endX, lineY + 2);
     }
 
-    AppleBoldDottedPainter painter = AppleBoldDottedPainter.forColor(ObjectUtils.notNull(fgColor, oldColor));
+    AppleBoldDottedPainter painter = AppleBoldDottedPainter.forColor(Objects.requireNonNullElse(fgColor, oldColor));
     painter.paint(g, startX, endX, lineY);
   }
 
@@ -1812,8 +1802,7 @@ public final class UIUtil {
   //x and y should be from {0, 0} to {parent.getWidth(), parent.getHeight()}
   public static @Nullable Component getDeepestComponentAt(@NotNull Component parent, int x, int y) {
     Component component = SwingUtilities.getDeepestComponentAt(parent, x, y);
-    if (component != null && component.getParent() instanceof JRootPane) { // GlassPane case
-      JRootPane rootPane = (JRootPane)component.getParent();
+    if (component != null && component.getParent() instanceof JRootPane rootPane) { // GlassPane case
       component = getDeepestComponentAtForComponent(parent, x, y, rootPane.getLayeredPane());
       if (component == null) {
         component = getDeepestComponentAtForComponent(parent, x, y, rootPane.getContentPane());
@@ -2301,8 +2290,7 @@ public final class UIUtil {
   }
 
   public static @NotNull JBIterable<Component> uiChildren(@Nullable Component component) {
-    if (!(component instanceof Container)) return JBIterable.empty();
-    Container container = (Container)component;
+    if (!(component instanceof Container container)) return JBIterable.empty();
     return JBIterable.of(container.getComponents());
   }
 
@@ -2320,8 +2308,7 @@ public final class UIUtil {
     else {
       result = uiChildren(c);
     }
-    if (c instanceof JComponent) {
-      JComponent jc = (JComponent)c;
+    if (c instanceof JComponent jc) {
       Iterable<? extends Component> orphans = ClientProperty.get(jc, NOT_IN_HIERARCHY_COMPONENTS);
       if (orphans != null) {
         result = result.append(orphans);
@@ -2856,8 +2843,7 @@ public final class UIUtil {
         return true;
       }
     }
-    if (component instanceof Container) {
-      Container container = (Container)component;
+    if (component instanceof Container container) {
       for (int i = 0; i < container.getComponentCount(); i++) {
         if (hasComponentOfType(container.getComponent(i), types)) {
           return true;
@@ -3469,21 +3455,25 @@ public final class UIUtil {
     if (focusOwner == null || !SwingUtilities.isDescendingFrom(focusOwner, window)) {
       return;
     }
-    ObjectUtils.consumeIfCast(focusOwner, JFormattedTextField.class, field -> {
+    if (focusOwner instanceof JFormattedTextField) {
       try {
         ((JFormattedTextField)focusOwner).commitEdit();
       }
       catch (ParseException ignored) {
       }
-    });
-    ObjectUtils.consumeIfCast(focusOwner.getParent(), JTable.class, table -> TableUtil.stopEditing(table));
-    ObjectUtils.consumeIfCast(focusOwner.getParent(), JTree.class, tree -> tree.stopEditing());
+    }
+    Object obj = focusOwner.getParent();
+    if (obj instanceof JTable) {
+      TableUtil.stopEditing((JTable)obj);
+    }
+    Object obj1 = focusOwner.getParent();
+    if (obj1 instanceof JTree) {
+      ((JTree)obj1).stopEditing();
+    }
   }
 
   public static String colorToHex(final Color color) {
-    return to2DigitsHex(color.getRed())
-           + to2DigitsHex(color.getGreen())
-           + to2DigitsHex(color.getBlue());
+    return to2DigitsHex(color.getRed()) + to2DigitsHex(color.getGreen()) + to2DigitsHex(color.getBlue());
   }
 
   private static String to2DigitsHex(int i) {

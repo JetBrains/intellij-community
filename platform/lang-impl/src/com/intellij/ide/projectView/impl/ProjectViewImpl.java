@@ -1448,7 +1448,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (pane == null) return false;
     JTree tree = pane.getTree();
     if (tree == null || !tree.isShowing()) return false;
-    return !UIUtil.isClientPropertyTrue(tree, MOUSE_PRESSED_NON_FOCUSED);
+    return !ClientProperty.isTrue(tree, MOUSE_PRESSED_NON_FOCUSED);
   }
 
   public void setAutoscrollFromSource(boolean autoscrollMode, String paneId) {
