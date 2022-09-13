@@ -45,7 +45,6 @@ import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
@@ -1878,10 +1877,6 @@ public final class UIUtil {
     return JBColor.border();
   }
 
-  public static @NotNull Color getBoundsColor(boolean focused) {
-    return focused ? getFocusedBoundsColor() : getBoundsColor();
-  }
-
   public static @NotNull Color toAlpha(final Color color, final int alpha) {
     Color actual = color != null ? color : Color.black;
     return new Color(actual.getRed(), actual.getGreen(), actual.getBlue(), alpha);
@@ -1966,14 +1961,6 @@ public final class UIUtil {
 
   public static @NotNull Font getTitledBorderFont() {
     return StartupUiUtil.getLabelFont();
-  }
-
-  /**
-   * @deprecated use {@link StyleSheetUtil#loadStyleSheet(InputStream)}
-   */
-  @Deprecated
-  public static @Nullable StyleSheet loadStyleSheet(@Nullable URL url) {
-    return url == null ? null : StyleSheetUtil.INSTANCE.loadStyleSheet(url);
   }
 
   /**
