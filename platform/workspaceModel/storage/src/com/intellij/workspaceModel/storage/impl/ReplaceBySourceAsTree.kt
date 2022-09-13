@@ -62,6 +62,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   @set:TestOnly
   internal var shuffleEntities: Long = -1L
 
+  private val replaceWithProcessingCache = HashMap<Pair<EntityId?, Int>, Pair<DataCache, MutableList<ChildEntityId>>>()
+
   override fun replace(
     targetStorage: MutableEntityStorageImpl,
     replaceWithStorage: AbstractEntityStorage,
@@ -594,15 +596,17 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         var index = 0
         for (i in entriesList.indices) {
           index = i
-          val replaceWithEntityIds = childrenInReplaceWith(entriesList[i].value, targetEntityTrack.entity.clazz).toMutableList()
-          val caching = makeEntityDataCache(replaceWithEntityIds)
+
+          val (caching, replaceWithEntityIds) =
+            replaceWithProcessingCache.getOrPut(entriesList[i].value to targetEntityTrack.entity.clazz) {
+              val ids = LinkedList(childrenInReplaceWith(entriesList[i].value, targetEntityTrack.entity.clazz))
+              DataCache(ids.size, EntityDataStrategy()) to ids
+            }
+
           replaceWithEntity = replaceWithEntityIds.removeSomeWithCaching(targetEntityData, caching, replaceWithStorage)
             ?.createEntity(replaceWithStorage) as? WorkspaceEntityBase
-          while (replaceWithEntity != null && replaceWithState[replaceWithEntity.id] != null) {
-            replaceWithEntity = replaceWithEntityIds.removeSomeWithCaching(targetEntityData, caching, replaceWithStorage)
-              ?.createEntity(replaceWithStorage) as? WorkspaceEntityBase
-          }
           if (replaceWithEntity != null) {
+            assert(replaceWithState[replaceWithEntity.id] == null)
             targetParents += ParentsRef.TargetRef(entriesList[i].key.entity)
             break
           }
@@ -610,8 +614,9 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
         // Here we know our "associated" entity, so we just check what parents remain with it.
         entriesList.drop(index + 1).forEach { tailItem ->
+          // Should we use cache as in above?
           val replaceWithEntityIds = childrenInReplaceWith(tailItem.value, targetEntityTrack.entity.clazz).toMutableList()
-          val caching = makeEntityDataCache(replaceWithEntityIds)
+          val caching = DataCache(replaceWithEntityIds.size, EntityDataStrategy())
           var replaceWithMyEntityData = replaceWithEntityIds.removeSomeWithCaching(targetEntityData, caching, replaceWithStorage)
           while (replaceWithMyEntityData != null && replaceWithEntity!!.id != replaceWithMyEntityData.createEntityId()) {
             replaceWithMyEntityData = replaceWithEntityIds.removeSomeWithCaching(targetEntityData, caching, replaceWithStorage)
@@ -634,11 +639,6 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       }
       return Pair(targetParents, replaceWithEntity)
     }
-
-    private fun makeEntityDataCache(replaceWithEntityIds: MutableList<ChildEntityId>) =
-      Object2ObjectOpenCustomHashMap<WorkspaceEntityData<out WorkspaceEntity>, List<WorkspaceEntityData<out WorkspaceEntity>>>(
-        replaceWithEntityIds.size,
-        EntityDataStrategy())
 
     /**
      * Process root entity of the storage
@@ -682,6 +682,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         thisIterator.remove()
         return value
       }
+      thisIterator.remove()
       addValueToMap(cache, value)
     }
     return null
@@ -859,6 +860,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
   }
 }
+
+typealias DataCache = Object2ObjectOpenCustomHashMap<WorkspaceEntityData<out WorkspaceEntity>, List<WorkspaceEntityData<out WorkspaceEntity>>>
 
 internal data class RelabelElement(val targetEntityId: EntityId, val replaceWithEntityId: EntityId, val parents: Set<ParentsRef>?)
 internal data class RemoveElement(val targetEntityId: EntityId)
