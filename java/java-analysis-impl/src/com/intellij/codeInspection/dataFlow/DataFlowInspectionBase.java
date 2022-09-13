@@ -581,6 +581,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
     NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(scope.getProject()).findOwnNullabilityInfo(method);
     if (info == null || info.getNullability() != Nullability.NULLABLE) return;
+    if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_VOID, method.getReturnType())) return;
 
     PsiAnnotation annotation = info.getAnnotation();
     if (!annotation.isPhysical() || alsoAppliesToInternalSubType(annotation, method)) return;
@@ -768,15 +769,15 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (info == null) info = DfaPsiUtil.getTypeNullabilityInfo(PsiTypesUtil.getMethodReturnType(block));
     PsiAnnotation anno = info == null ? null : info.getAnnotation();
     Nullability nullability = info == null ? Nullability.UNKNOWN : info.getNullability();
+    PsiType returnType = method.getReturnType();
     if (nullability == Nullability.NULLABLE) {
-      if (!info.isInferred() || DfaPsiUtil.getTypeNullability(method.getReturnType()) == Nullability.NULLABLE) return;
+      if (!info.isInferred() || DfaPsiUtil.getTypeNullability(returnType) == Nullability.NULLABLE) return;
     }
     // In rare cases, inference may produce different result (e.g. if nullable method overrides non-null method)
     if (nullability == Nullability.NOT_NULL && info.isInferred()) return;
 
     if (nullability != Nullability.NOT_NULL && (!SUGGEST_NULLABLE_ANNOTATIONS || block.getParent() instanceof PsiLambdaExpression)) return;
 
-    PsiType returnType = method.getReturnType();
     // no warnings in void lambdas, where the expression is not returned anyway
     if (block instanceof PsiExpression && block.getParent() instanceof PsiLambdaExpression && PsiType.VOID.equals(returnType)) return;
 
