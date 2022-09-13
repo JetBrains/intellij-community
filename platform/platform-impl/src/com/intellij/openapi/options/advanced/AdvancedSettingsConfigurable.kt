@@ -25,6 +25,7 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
 import javax.swing.AbstractButton
@@ -85,7 +86,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
           .horizontalAlign(HorizontalAlign.CENTER)
           .verticalAlign(VerticalAlign.CENTER)
           .applyToComponent {
-            foreground = UIUtil.getInactiveTextColor()
+            foreground = NamedColorUtil.getInactiveTextColor()
           }
       }.visible(false)
 

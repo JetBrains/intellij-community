@@ -33,6 +33,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -56,8 +57,8 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   private static final Logger LOG = Logger.getInstance(PsiElementListCellRenderer.class);
   private static final String LEFT = BorderLayout.WEST;
   private static final Pattern CONTAINER_PATTERN = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?");
-  private static final SimpleTextAttributes DEFAULT_ERROR_ATTRIBUTES =
-    new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, UIUtil.getInactiveTextColor(), JBColor.RED);
+  private static final SimpleTextAttributes DEFAULT_ERROR_ATTRIBUTES
+    = new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, NamedColorUtil.getInactiveTextColor(), JBColor.RED);
 
   protected int myRightComponentWidth;
 
@@ -230,7 +231,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       locationComponent = new JLabel(itemLocation.getText(), itemLocation.getIcon(), SwingConstants.RIGHT);
       locationComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, UIUtil.getListCellHPadding()));
       locationComponent.setHorizontalTextPosition(SwingConstants.LEFT);
-      locationComponent.setForeground(isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
+      locationComponent.setForeground(isSelected ? NamedColorUtil.getListSelectionForeground(true) : NamedColorUtil.getInactiveTextColor());
 
       add(locationComponent, BorderLayout.EAST);
       spacer = new JPanel();

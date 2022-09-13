@@ -11,10 +11,7 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.SimpleComboboxWithActionsFactory
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.ide.plugins.newui.HorizontalLayout
-import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import git4idea.remote.hosting.HostedGitRepositoryMapping
 import kotlinx.coroutines.CoroutineScope
 import net.miginfocom.layout.CC
@@ -80,7 +77,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
     }
 
     val credsMissingLabel = JLabel(credsMissingText).apply {
-      foreground = UIUtil.getErrorForeground()
+      foreground = NamedColorUtil.getErrorForeground()
       isVisible = false
       bindVisibility(scope, vm.missingCredentialsState)
     }

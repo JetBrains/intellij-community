@@ -81,7 +81,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
     Color fileBgColor = getBackgroundColor(false, usage);
     Color selectionBg = UIUtil.getListSelectionBackground(true);
-    Color selectionFg = UIUtil.getListSelectionForeground(true);
+    Color selectionFg = NamedColorUtil.getListSelectionForeground(true);
     Color rowBackground =  fileBgColor == null ? list.getBackground() : fileBgColor;
     Color rowSelectionBackground = isSelected ? selectionBg : null;
     Color rowForeground = isSelected ? selectionFg : list.getForeground();

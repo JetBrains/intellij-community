@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -123,7 +124,7 @@ public class LabeledIcon implements Icon {
 
       if (myMnemonic != null) {
         y -= fontMetrics.getHeight();
-        g.setColor(UIUtil.getInactiveTextColor());
+        g.setColor(NamedColorUtil.getInactiveTextColor());
         int offset = getTextWidth() - fontMetrics.stringWidth(myMnemonic);
         g.drawString(myMnemonic, x + offset, y);
       }

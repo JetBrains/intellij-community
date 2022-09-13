@@ -30,6 +30,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.VcsLogHighlighter.VcsCommitStyle;
@@ -99,10 +100,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
                                                                                 UIUtil.getListSelectionBackground(false));
 
   private static final Color SELECTION_FOREGROUND = JBColor.namedColor("VersionControl.Log.Commit.selectionForeground",
-                                                                       UIUtil.getListSelectionForeground(true));
+                                                                       NamedColorUtil.getListSelectionForeground(true));
 
   private static final Color SELECTION_FOREGROUND_INACTIVE = JBColor.namedColor("VersionControl.Log.Commit.selectionInactiveForeground",
-                                                                                UIUtil.getListSelectionForeground(false));
+                                                                                NamedColorUtil.getListSelectionForeground(false));
   @NotNull private final VcsLogData myLogData;
   @NotNull private final String myId;
   @NotNull private final VcsLogUiProperties myProperties;

@@ -39,6 +39,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.castSafelyTo
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -364,7 +365,7 @@ internal class RecentProjectFilteringTree(
 
       private val projectNameLabel = JLabel()
       private val projectPathLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("").apply {
-        foreground = UIUtil.getInactiveTextColor()
+        foreground = NamedColorUtil.getInactiveTextColor()
       }
       private val projectIconLabel = JLabel().apply {
         border = JBUI.Borders.empty(8, 0, 0, 8)
@@ -397,7 +398,7 @@ internal class RecentProjectFilteringTree(
         val isPathValid = isProjectPathValid(item.projectPath)
         projectNameLabel.apply {
           text = item.displayName
-          foreground = if (isPathValid) UIUtil.getListForeground() else UIUtil.getInactiveTextColor()
+          foreground = if (isPathValid) UIUtil.getListForeground() else NamedColorUtil.getInactiveTextColor()
         }
         projectPathLabel.apply {
           text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
@@ -470,10 +471,10 @@ internal class RecentProjectFilteringTree(
         get() = RecentProjectsManagerBase.getInstanceEx()
 
       private val projectNameLabel = JLabel().apply {
-        foreground = UIUtil.getInactiveTextColor()
+        foreground = NamedColorUtil.getInactiveTextColor()
       }
       private val projectPathLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("").apply {
-        foreground = UIUtil.getInactiveTextColor()
+        foreground = NamedColorUtil.getInactiveTextColor()
       }
       private val projectNamePanel = JPanel(VerticalLayout(4)).apply {
         isOpaque = false
@@ -496,7 +497,7 @@ internal class RecentProjectFilteringTree(
       }
       private val projectActionButton = Wrapper()
       private val projectProgressLabel = JLabel().apply {
-        foreground = UIUtil.getInactiveTextColor()
+        foreground = NamedColorUtil.getInactiveTextColor()
       }
       private val projectProgressBar = JProgressBar().apply {
         isOpaque = false

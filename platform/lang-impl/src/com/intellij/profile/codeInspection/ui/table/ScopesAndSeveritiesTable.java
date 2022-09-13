@@ -35,7 +35,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +102,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
               setText((String) value);
             } else {
               setText(LangBundle.message("scopes.table.missing.scope", value));
-              component.setForeground(UIUtil.getErrorForeground());
+              component.setForeground(NamedColorUtil.getErrorForeground());
             }
           }
         }

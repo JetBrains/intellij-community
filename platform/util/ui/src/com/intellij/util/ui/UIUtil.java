@@ -183,11 +183,6 @@ public final class UIUtil {
     }
   }
 
-  public static @NotNull Cursor getTextCursor(@NotNull Color backgroundColor) {
-    return SystemInfoRt.isMac && ColorUtil.isDark(backgroundColor) ?
-           MacUIUtil.getInvertedTextCursor() : Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
-  }
-
   public static @Nullable Cursor cursorIfNotDefault(@Nullable Cursor cursorToSet) {
     return cursorToSet != null && cursorToSet.getType() != Cursor.DEFAULT_CURSOR ? cursorToSet : null;
   }
@@ -802,7 +797,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getErrorForeground() {
-    return JBColor.namedColor("Label.errorForeground", new JBColor(new Color(0xC7222D), JBColor.RED));
+    return NamedColorUtil.getErrorForeground();
   }
 
   public static @NotNull Color getLabelDisabledForeground() {
@@ -860,7 +855,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getInactiveTextColor() {
-    return JBColor.namedColor("Component.infoForeground", new JBColor(Gray.x99, Gray.x78));
+    return NamedColorUtil.getInactiveTextColor();
   }
 
   public static Color getInactiveTextFieldBackgroundColor() {
@@ -1106,10 +1101,12 @@ public final class UIUtil {
   }
 
   public static boolean isUnderDefaultMacTheme() {
-    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-    if (SystemInfoRt.isMac && lookAndFeel instanceof UserDataHolder) {
-      UserDataHolder dh = (UserDataHolder)lookAndFeel;
+    if (!SystemInfoRt.isMac) {
+      return false;
+    }
 
+    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+    if (lookAndFeel instanceof UserDataHolder dh) {
       return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
              Objects.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "macOS Light");
     }
@@ -1117,12 +1114,14 @@ public final class UIUtil {
   }
 
   public static boolean isUnderWin10LookAndFeel() {
-    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-    if (SystemInfoRt.isWindows && lookAndFeel instanceof UserDataHolder) {
-      UserDataHolder dh = (UserDataHolder)lookAndFeel;
+    if (!SystemInfoRt.isWindows) {
+      return false;
+    }
 
-      return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
-             Objects.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "Windows 10 Light");
+    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+    if (lookAndFeel instanceof UserDataHolder dataHolder) {
+      return Boolean.TRUE != dataHolder.getUserData(LAF_WITH_THEME_KEY) &&
+             Objects.equals(dataHolder.getUserData(PLUGGABLE_LAF_KEY), "Windows 10 Light");
     }
     return false;
   }
@@ -3081,14 +3080,14 @@ public final class UIUtil {
    * @see RenderingUtil#getSelectionForeground(JList)
    */
   public static @NotNull Color getListSelectionForeground(boolean focused) {
-    return JBUI.CurrentTheme.List.Selection.foreground(focused);
+    return NamedColorUtil.getListSelectionForeground(focused);
   }
 
   /**
    * @see RenderingUtil#getForeground(JList, boolean)
    */
   public static @NotNull Color getListForeground(boolean selected, boolean focused) {
-    return !selected ? getListForeground() : getListSelectionForeground(focused);
+    return !selected ? getListForeground() : NamedColorUtil.getListSelectionForeground(focused);
   }
 
   /**
@@ -3104,7 +3103,7 @@ public final class UIUtil {
    */
   @Deprecated
   public static @NotNull Color getListSelectionForeground() {
-    return getListSelectionForeground(true);
+    return NamedColorUtil.getListSelectionForeground(true);
   }
 
   // Tree

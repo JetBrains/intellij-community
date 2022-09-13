@@ -29,6 +29,7 @@ import com.intellij.util.animation.*
 import com.intellij.util.animation.components.BezierPainter
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.*
@@ -590,7 +591,7 @@ internal class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel"
           }
           catch (ignore: NumberFormatException) {
             JBAnimator().animate(
-              animation(UIUtil.getErrorForeground(), UIUtil.getTextFieldForeground(), display::setForeground).apply {
+              animation(NamedColorUtil.getErrorForeground(), UIUtil.getTextFieldForeground(), display::setForeground).apply {
                 duration = 800
                 easing = Easing { x -> x * x * x }
               }

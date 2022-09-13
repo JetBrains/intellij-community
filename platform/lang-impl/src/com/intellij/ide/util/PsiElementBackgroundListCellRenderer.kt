@@ -10,6 +10,7 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.speedSearch.SpeedSearchUtil
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Deferred
 import java.awt.BorderLayout
@@ -67,7 +68,7 @@ internal class PsiElementBackgroundListCellRenderer(
                                                   isSelected: Boolean,
                                                   cellHasFocus: Boolean): Component {
           val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-          foreground = if (isSelected) UIUtil.getListSelectionForeground(cellHasFocus) else UIUtil.getInactiveTextColor()
+          foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(cellHasFocus) else NamedColorUtil.getInactiveTextColor()
           isOpaque = false
           icon = presentation.locationIcon
           text = locationText

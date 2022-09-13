@@ -36,8 +36,8 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.HtmlPanel
 import com.intellij.util.ui.JBUI.Borders.empty
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil.getErrorForeground
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -55,7 +55,7 @@ import kotlin.properties.ReadWriteProperty
 private fun JBLabel.setError(@NlsContexts.Label errorText: String) {
   text = errorText
   icon = AllIcons.General.Error
-  foreground = getErrorForeground()
+  foreground = NamedColorUtil.getErrorForeground()
   isVisible = true
 }
 

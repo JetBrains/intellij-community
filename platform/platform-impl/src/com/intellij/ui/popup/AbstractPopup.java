@@ -163,7 +163,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     private void updateColors(boolean error) {
       JBTextField textEditor = mySpeedSearchPatternField.getTextEditor();
       if (ExperimentalUI.isNewUI()) {
-        textEditor.setForeground(error ? UIUtil.getErrorForeground() : UIUtil.getLabelForeground());
+        textEditor.setForeground(error ? NamedColorUtil.getErrorForeground() : UIUtil.getLabelForeground());
       }
       else {
         textEditor.setBackground(error ? LightColors.RED : UIUtil.getTextFieldBackground());

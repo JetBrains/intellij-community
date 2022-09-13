@@ -135,7 +135,7 @@ public abstract class DialogWrapper {
    * @deprecated use {@link UIUtil#getErrorForeground()}
    */
   @Deprecated
-  public static final Color ERROR_FOREGROUND_COLOR = UIUtil.getErrorForeground();
+  public static final Color ERROR_FOREGROUND_COLOR = NamedColorUtil.getErrorForeground();
 
   /**
    * The shared instance of default border for dialog's content pane.
@@ -1995,7 +1995,8 @@ public abstract class DialogWrapper {
         continue;
       }
 
-      Color color = info.warning ? MessageType.WARNING.getTitleForeground() : UIUtil.getErrorForeground();
+      Color color;
+      color = info.warning ? MessageType.WARNING.getTitleForeground() : NamedColorUtil.getErrorForeground();
       htmlBuilder
         .append(
           HtmlChunk.raw(info.message)

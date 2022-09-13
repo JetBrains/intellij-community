@@ -41,6 +41,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
@@ -189,7 +190,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
 
     if (model.isOperationsEnabled()) {
       final JBLabel label = new JBLabel(DiffBundle.message("use.space.button.or.mouse.click"), SwingConstants.CENTER);
-      label.setForeground(UIUtil.getInactiveTextColor());
+      label.setForeground(NamedColorUtil.getInactiveTextColor());
       UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
       filesPanel.addToBottom(label);
     }

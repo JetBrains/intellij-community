@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,7 +33,7 @@ public abstract class MoreAction extends DumbAwareAction implements CustomCompon
     myLoadMoreBtn.addActionListener(__ -> perform());
     myPanel.add(myLoadMoreBtn);
     myLabel = new JLabel(CommonBundle.getLoadingTreeNodeText());
-    myLabel.setForeground(UIUtil.getInactiveTextColor());
+    myLabel.setForeground(NamedColorUtil.getInactiveTextColor());
     myLabel.setBorder(JBUI.Borders.empty(1, 3, 1, 1));
     myPanel.add(myLabel);
   }

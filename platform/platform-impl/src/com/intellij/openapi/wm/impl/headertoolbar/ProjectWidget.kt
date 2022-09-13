@@ -6,7 +6,10 @@ import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.ui.popup.ListPopupStep
+import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
@@ -24,6 +27,7 @@ import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import java.awt.BorderLayout
@@ -149,7 +153,7 @@ internal class ProjectWidget(private val presentation: Presentation) : ToolbarCo
                 nameLbl = label(action.projectNameToDisplay ?: "")
                   .customize(JBGaps(bottom = 4))
                   .applyToComponent {
-                    foreground = if (isSelected) UIUtil.getListSelectionForeground(true) else UIUtil.getListForeground()
+                    foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(true) else UIUtil.getListForeground()
                   }.component
               }
               row {

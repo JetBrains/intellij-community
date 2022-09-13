@@ -39,6 +39,7 @@ import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -790,7 +791,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       setBorder(myPadding);
       setIcon(value.icon);
       setText(value.name);
-      setForeground(selected ? UIUtil.getListSelectionForeground(true) : UIUtil.getListForeground());
+      setForeground(selected ? NamedColorUtil.getListSelectionForeground(true) : UIUtil.getListForeground());
       setEnabled(value.selectable || FsItem.UPLINK.equals(value.name));
     }
   }

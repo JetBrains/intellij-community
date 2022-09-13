@@ -8,10 +8,7 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.avatar.IconsProvider
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
-import com.intellij.util.ui.GridBag
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.ListUiUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.*
@@ -90,7 +87,7 @@ internal class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
     }
     loadingError.apply {
       text = getError(account)
-      foreground = UIUtil.getErrorForeground()
+      foreground = NamedColorUtil.getErrorForeground()
     }
     reloginLink.apply {
       isVisible = getError(account) != null && needReLogin(account)

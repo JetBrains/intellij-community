@@ -747,7 +747,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       AllIcons.Chooser.Left.paintIcon(component, g, forLeftRightIcons.x - arrowsHShift, forLeftRightIcons.y)
       val textVShift = Registry.intValue("ide.splitter.chooser.info.panel.text.shift")
       val textY = forUpDownIcons.y + AllIcons.Chooser.Bottom.iconHeight + textVShift
-      g.color = UIUtil.getInactiveTextColor()
+      g.color = NamedColorUtil.getInactiveTextColor()
       g.font = font
       g.drawString(openShortcuts, centerX - openShortcutsWidth / 2, textY)
       if (owner.getWindows().size > 1) {

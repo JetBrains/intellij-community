@@ -4,19 +4,17 @@ package com.intellij.ui.tree.ui;
 import com.intellij.ui.render.LabelBasedRenderer;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.Color;
-import java.awt.Component;
+import java.awt.*;
 
 final class LoadingNodeRenderer extends LabelBasedRenderer.Tree {
   static final TreeCellRenderer SHARED = new LoadingNodeRenderer();
-  private static final Color COLOR = UIUtil.getInactiveTextColor();
+  private static final Color COLOR = NamedColorUtil.getInactiveTextColor();
   private static final Icon ICON = JBUIScale.scaleIcon(EmptyIcon.create(8, 16));
 
   @NotNull

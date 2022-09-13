@@ -4,6 +4,7 @@ package com.intellij.ui.list
 import com.intellij.navigation.TargetPresentation
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Component
@@ -49,7 +50,7 @@ internal class TargetPresentationRenderer<T>(
 
     myLocationComponent.text = locationText
     myLocationComponent.icon = presentation.locationIcon
-    myLocationComponent.foreground = if (isSelected) UIUtil.getListSelectionForeground(cellHasFocus) else UIUtil.getInactiveTextColor()
+    myLocationComponent.foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(cellHasFocus) else NamedColorUtil.getInactiveTextColor()
 
     myComponent.add(mainComponent, BorderLayout.WEST)
     myComponent.add(mySpacerComponent, BorderLayout.CENTER)
