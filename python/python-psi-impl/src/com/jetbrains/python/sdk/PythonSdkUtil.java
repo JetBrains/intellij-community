@@ -142,10 +142,11 @@ public class PythonSdkUtil {
   }
 
 
-  public static boolean isRemote(@Nullable String sdkPath) {
-    return isRemote(findSdkByPath(sdkPath));
-  }
-
+  /**
+   * Checks if SDK is legacy remote or remote bases on targets.
+   * Never assume {@link Sdk#getSdkAdditionalData()} has certain type if this method returns true.
+   * In most cases you are encouraged to obtain additional data and check it explicitly
+   */
   public static boolean isRemote(@Nullable Sdk sdk) {
     return sdk != null && sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataMarker;
   }

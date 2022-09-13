@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.newProject.steps;
 
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
@@ -30,6 +31,7 @@ import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel;
 import com.jetbrains.python.sdk.add.PyAddSdkPanel;
@@ -171,8 +173,18 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final Map<Boolean, List<String>> errorsAndWarnings = StreamEx
       .of(myInterpreterPanel == null ? Collections.emptyList() : myInterpreterPanel.validateAll())
       .groupingBy(it -> it.warning, Collectors.mapping(it -> it.message, Collectors.toList()));
-    final List<String> validationErrors = errorsAndWarnings.getOrDefault(false, Collections.emptyList());
+    List<String> validationErrors = errorsAndWarnings.getOrDefault(false, Collections.emptyList());
     final List<String> validationWarnings = errorsAndWarnings.getOrDefault(true, Collections.emptyList());
+
+    if (validationErrors.isEmpty()) {
+      // Once can't create anything on immutable SDK
+      var sdk = myInterpreterPanel.getSdk();
+      if (sdk != null && isImmutableSdk(sdk)) {
+        validationErrors = List.of(
+          PyBundle.message("python.unknown.project.synchronizer.this.interpreter.type.does.not.support.remote.project.creation"));
+      }
+    }
+
     if (!validationErrors.isEmpty()) {
       setErrorText(StringUtil.join(validationErrors, "\n"));
       return false;
@@ -232,6 +244,17 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
                        .toString());
     }
     return true;
+  }
+
+  /**
+   * See {@link PythonInterpreterTargetEnvironmentFactory#isMutable(TargetEnvironmentConfiguration)}
+   */
+  private static boolean isImmutableSdk(@NotNull Sdk sdk) {
+    var targetConfig = PySdkExtKt.getTargetEnvConfiguration(sdk);
+    if (targetConfig == null) {
+      return false;
+    }
+    return !PythonInterpreterTargetEnvironmentFactory.Companion.isMutable(targetConfig);
   }
 
   private static @Nls String validateFrameworkSupportsPython3(@NotNull PyFrameworkProjectGenerator generator, @NotNull Sdk sdk) {

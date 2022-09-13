@@ -60,6 +60,7 @@ public enum PythonHelper implements HelperPackage {
 
   DJANGO_TEST_MANAGE("pycharm", "django_test_manage"),
   DJANGO_MANAGE("pycharm", "django_manage"),
+  DJANGO_PROJECT_CREATOR("pycharm", "_jb_django_project_creator"),
   MANAGE_TASKS_PROVIDER("pycharm", "_jb_manage_tasks_provider"),
 
   APPCFG_CONSOLE("pycharm", "appcfg_fetcher"),
@@ -233,7 +234,7 @@ public enum PythonHelper implements HelperPackage {
     @NotNull
     private final String myPythonPath;
 
-    private HelperDependency(@NotNull String pythonPath) {myPythonPath = pythonPath;}
+    private HelperDependency(@NotNull String pythonPath) { myPythonPath = pythonPath; }
 
     public void addToPythonPath(@NotNull Map<String, String> environment) {
       PythonEnvUtil.addToPythonPath(environment, myPythonPath);
