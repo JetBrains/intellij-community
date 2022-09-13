@@ -69,10 +69,6 @@ import java.util.regex.Pattern;
 
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil {
-  static {
-    LoadingState.COMPONENTS_REGISTERED.checkOccurred();
-  }
-
   public static final @NlsSafe String BORDER_LINE = "<hr size=1 noshade>";
   public static final @NlsSafe String BR = "<br/>";
   public static final @NlsSafe String HR = "<hr/>";
