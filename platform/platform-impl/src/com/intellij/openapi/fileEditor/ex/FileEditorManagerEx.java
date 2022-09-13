@@ -103,6 +103,10 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
     return FileEditorProviderManager.getInstance().getProviderList(getProject(), file).size() > 0;
   }
 
+  protected boolean canOpenFile(@NotNull VirtualFile file, @NotNull List<FileEditorProvider> providers) {
+    return !providers.isEmpty();
+  }
+
   public abstract @Nullable VirtualFile getCurrentFile();
 
   public abstract @Nullable FileEditorWithProvider getSelectedEditorWithProvider(@NotNull VirtualFile file);
@@ -168,11 +172,10 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   }
 
   public void refreshIcons() {
-    if (this instanceof FileEditorManagerImpl) {
-      final FileEditorManagerImpl mgr = (FileEditorManagerImpl)this;
-      Set<EditorsSplitters> splitters = mgr.getAllSplitters();
+    if (this instanceof FileEditorManagerImpl manager) {
+      Set<EditorsSplitters> splitters = manager.getAllSplitters();
       for (EditorsSplitters each : splitters) {
-        for (VirtualFile file : mgr.getOpenFiles()) {
+        for (VirtualFile file : manager.getOpenFiles()) {
           each.updateFileIcon(file);
         }
       }

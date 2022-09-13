@@ -229,8 +229,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
           Component comp = editor1.getComponent();
           while (comp != getMainSplitters() && comp != null) {
             Component parent = comp.getParent();
-            if (parent instanceof Splitter) {
-              Splitter splitter = (Splitter)parent;
+            if (parent instanceof Splitter splitter) {
               if ((splitter.getFirstComponent() == comp &&
                    (splitter.getProportion() == splitter.getMinProportion(true) ||
                     splitter.getProportion() == splitter.getMinimumProportion())) ||
@@ -676,9 +675,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @Override
   public @NotNull CompletableFuture<@Nullable EditorWindow> getActiveWindow() {
-    return getActiveSplittersAsync().thenApply(splitters -> {
-      return splitters == null ? null : splitters.getCurrentWindow();
-    });
+    return getActiveSplittersAsync().thenApply(splitters -> splitters == null ? null : splitters.getCurrentWindow());
   }
 
   @Override
@@ -904,8 +901,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       }
     }
 
-    if (event instanceof KeyEvent) {
-      KeyEvent ke = (KeyEvent)event;
+    if (event instanceof KeyEvent ke) {
       KeymapManager keymapManager = KeymapManager.getInstance();
       if (keymapManager != null) {
         Keymap keymap = keymapManager.getActiveKeymap();
@@ -1030,11 +1026,13 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     }
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (myProject.isDisposed() || !file.isValid()) return;
+      if (myProject.isDisposed() || !file.isValid()) {
+        return;
+      }
 
       runBulkTabChange(window.getOwner(), splitters -> {
-        EditorComposite composite = openFileImpl4Edt(window, file, entry, options, newProviders, builders);
-        compositeRef.set(composite);
+        compositeRef.set(openFileImpl4Edt(window, file, entry, options, newProviders,
+                                          builders == null ? Collections.emptyList() : Arrays.asList(builders)));
       });
     });
 
@@ -1046,7 +1044,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
                                                              @Nullable HistoryEntry entry,
                                                              @NotNull FileEditorOpenOptions options,
                                                              @Nullable List<FileEditorProvider> newProviders,
-                                                             AsyncFileEditorProvider.Builder @Nullable [] builders) {
+                                                             @NotNull List<AsyncFileEditorProvider. @Nullable Builder> builders) {
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
     LOG.assertTrue(file.isValid(), "Invalid file: " + file);
 
@@ -1064,9 +1062,11 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     EditorComposite composite = window.getComposite(file);
     boolean newEditor = composite == null;
     if (newEditor) {
-      LOG.assertTrue(newProviders != null && builders != null);
+      LOG.assertTrue(newProviders != null);
       composite = createComposite(file, newProviders, builders);
-      if (composite == null) return null;
+      if (composite == null) {
+        return null;
+      }
 
       getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(this, file);
       myOpenedComposites.add(composite);
@@ -1159,7 +1159,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   protected @Nullable EditorComposite createComposite(@NotNull VirtualFile file,
                                                       @NotNull List<FileEditorProvider> providers,
-                                                      AsyncFileEditorProvider.Builder @NotNull [] builders) {
+                                                      @NotNull List<AsyncFileEditorProvider. @Nullable Builder> builders) {
     List<FileEditorWithProvider> editorsWithProviders = new ArrayList<>(providers.size());
     for (int i = 0; i < providers.size(); i++) {
       try {
@@ -1168,7 +1168,8 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
           continue;
         }
 
-        FileEditor editor = builders[i] == null ? provider.createEditor(myProject, file) : builders[i].build();
+        AsyncFileEditorProvider.Builder builder = builders.isEmpty() ? null : builders.get(i);
+        FileEditor editor = builder == null ? provider.createEditor(myProject, file) : builder.build();
         LOG.assertTrue(editor.isValid(), "Invalid editor created by provider " + provider.getClass().getName());
         editorsWithProviders.add(new FileEditorWithProvider(editor, provider));
       }
@@ -1271,7 +1272,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     if (!canOpenFile(file)) return null;
 
     List<FileEditorProvider> providers = FileEditorProviderManager.getInstance().getProviderList(myProject, file);
-    EditorComposite newComposite = createComposite(file, providers, new AsyncFileEditorProvider.Builder[providers.size()]);
+    EditorComposite newComposite = createComposite(file, providers, Collections.emptyList());
     if (newComposite == null) {
       return null;
     }
@@ -1301,9 +1302,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   private Pair<List<FileEditor>, FileEditor> openEditorImpl(@NotNull FileEditorNavigatable descriptor, boolean focusEditor) {
     assertDispatchThread();
     FileEditorNavigatable realDescriptor;
-    if (descriptor instanceof OpenFileDescriptor && descriptor.getFile() instanceof VirtualFileWindow) {
-      OpenFileDescriptor openFileDescriptor = (OpenFileDescriptor)descriptor;
-      VirtualFileWindow delegate = (VirtualFileWindow)descriptor.getFile();
+    if (descriptor instanceof OpenFileDescriptor openFileDescriptor && descriptor.getFile() instanceof VirtualFileWindow delegate) {
       int hostOffset = delegate.getDocumentWindow().injectedToHost(openFileDescriptor.getOffset());
       OpenFileDescriptor fixedDescriptor = new OpenFileDescriptor(openFileDescriptor.getProject(), delegate.getDelegate(), hostOffset);
       fixedDescriptor.setUseCurrentWindow(openFileDescriptor.isUseCurrentWindow());
@@ -1990,7 +1989,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
         }
       }
       else if (FileEditor.PROP_VALID.equals(propertyName)) {
-        boolean valid = ((Boolean)e.getNewValue()).booleanValue();
+        boolean valid = (Boolean)e.getNewValue();
         if (!valid) {
           FileEditor editor = (FileEditor)e.getSource();
           LOG.assertTrue(editor != null);

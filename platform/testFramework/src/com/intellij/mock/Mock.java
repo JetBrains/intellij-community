@@ -301,6 +301,11 @@ public class Mock {
     }
 
     @Override
+    protected boolean canOpenFile(@NotNull VirtualFile file, @NotNull List<FileEditorProvider> providers) {
+      return false;
+    }
+
+    @Override
     public VirtualFile @NotNull [] getOpenFiles() {
       return VirtualFile.EMPTY_ARRAY;
     }

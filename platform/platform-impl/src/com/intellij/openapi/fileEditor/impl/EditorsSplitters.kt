@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty", "PrivatePropertyName")
 
 package com.intellij.openapi.fileEditor.impl
 
@@ -141,7 +141,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     }
   }
 
-  var lastFocusGainedTime = 0L
+  var lastFocusGainedTime: Long = 0L
     private set
 
   private val windows = CopyOnWriteArraySet<EditorWindow>()
@@ -150,7 +150,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   private var splittersElement: Element? = null
 
   @JvmField
-  var insideChange = 0
+  internal var insideChange: Int = 0
 
   private val focusWatcher: MyFocusWatcher
   private val iconUpdaterAlarm = Alarm(this)
@@ -308,12 +308,18 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
       val component = UIBuilder(this).process(element, topPanel) ?: return
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        validate()
+        val windows = windows.toList()
+        for (window in windows) {
+          (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
+        }
+
         component.isFocusable = false
 
         removeAll()
         add(component, BorderLayout.CENTER)
         // clear empty splitters
-        for (window in windows.toList()) {
+        for (window in windows) {
           if (window.tabCount == 0) {
             window.removeFromSplitter()
           }
@@ -495,17 +501,12 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   fun updateFileBackgroundColor(file: VirtualFile) {
     val windows = getWindows()
     for (i in windows.indices) {
-      windows[i].updateFileBackgroundColor(file)
+      windows.get(i).updateFileBackgroundColor(file)
     }
   }
 
   val splitCount: Int
-    get() {
-      if (componentCount > 0) {
-        return getSplitCount(getComponent(0) as JPanel)
-      }
-      return 0
-    }
+    get() = if (componentCount > 0) getSplitCount(getComponent(0) as JPanel) else 0
 
   internal open fun afterFileClosed(file: VirtualFile) {}
 
@@ -869,27 +870,33 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
         index = i,
         isReopeningOnStartup = true,
       )
+
+      val isCurrentTab = try {
+        fileElement.getAttributeValue(CURRENT_IN_TAB).toBoolean()
+      }
+      catch (e: InvalidDataException) {
+        if (ApplicationManager.getApplication().isUnitTestMode) {
+          LOG.error(e)
+        }
+        false
+      }
+
+      val fileDocumentManager = FileDocumentManager.getInstance()
       try {
         virtualFile.putUserData(OPENED_IN_BULK, true)
         val document = readAction {
-          if (virtualFile.isValid) FileDocumentManager.getInstance().getDocument(virtualFile) else null
+          if (virtualFile.isValid) fileDocumentManager.getDocument(virtualFile) else null
         }
-        val isCurrentTab = fileElement.getAttributeValue(CURRENT_IN_TAB).toBoolean()
-        (fileEditorManager as AsyncFileEditorOpener).openFileImpl5(window = window,
-                                                                   virtualFile = virtualFile,
-                                                                   entry = entry,
-                                                                   options = openOptions)
+        (fileEditorManager as FileEditorManagerExImpl).openFileOnStartup(window = window,
+                                                                         virtualFile = virtualFile,
+                                                                         entry = entry,
+                                                                         options = openOptions)
         // This is just to make sure document reference is kept on stack till this point
         // so that document is available for folding state deserialization in HistoryEntry constructor
         // and that document will be created only once during file opening
         Reference.reachabilityFence(document)
         if (isCurrentTab) {
           focusedFile = virtualFile
-        }
-      }
-      catch (e: InvalidDataException) {
-        if (ApplicationManager.getApplication().isUnitTestMode) {
-          LOG.error(e)
         }
       }
       finally {
