@@ -357,7 +357,7 @@ public final class Document extends CloneBase implements Parent, Serializable {
   @Override
   public List<Content> cloneContent() {
     int size = getContentSize();
-    List<Content> list = new ArrayList<Content>(size);
+    List<Content> list = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       Content child = getContent(i);
       list.add(child.clone());
@@ -399,7 +399,7 @@ public final class Document extends CloneBase implements Parent, Serializable {
    */
   @Override
   public List<Content> removeContent() {
-    List<Content> old = new ArrayList<Content>(content);
+    List<Content> old = new ArrayList<>(content);
     content.clear();
     return old;
   }
@@ -661,7 +661,7 @@ public final class Document extends CloneBase implements Parent, Serializable {
   @SuppressWarnings("JavadocLinkAsPlainText")
   public void setProperty(String id, Object value) {
     if (propertyMap == null) {
-      propertyMap = new HashMap<String, Object>();
+      propertyMap = new HashMap<>();
     }
     propertyMap.put(id, value);
   }

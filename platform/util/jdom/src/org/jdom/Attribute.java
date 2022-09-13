@@ -648,7 +648,7 @@ public class Attribute extends CloneBase implements NamespaceAware, Serializable
   @Override
   public List<Namespace> getNamespacesInScope() {
     if (getParent() == null) {
-      List<Namespace> ret = new ArrayList<Namespace>(3);
+      List<Namespace> ret = new ArrayList<>(3);
       ret.add(getNamespace());
       ret.add(Namespace.XML_NAMESPACE);
       return Collections.unmodifiableList(ret);
@@ -671,13 +671,13 @@ public class Attribute extends CloneBase implements NamespaceAware, Serializable
 
     // OK, we have our namespace list, but ours is not the first.
     // we need the Attribute's Namespace to be up front.
-    TreeMap<String, Namespace> tm = new TreeMap<String, Namespace>();
+    TreeMap<String, Namespace> tm = new TreeMap<>();
     for (Namespace ns : nsl) {
       if (ns != nsa) {
         tm.put(ns.getPrefix(), ns);
       }
     }
-    ArrayList<Namespace> ret = new ArrayList<Namespace>(tm.size() + 1);
+    ArrayList<Namespace> ret = new ArrayList<>(tm.size() + 1);
     ret.add(nsa);
     ret.addAll(tm.values());
     return Collections.unmodifiableList(ret);
