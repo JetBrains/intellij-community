@@ -99,7 +99,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
                     arrayOf("6.8.2", V_1_4_32.toString()),
                     arrayOf("7.3.3", V_1_5_31.toString()),
                     arrayOf("7.3.3", V_1_6_10.toString()),
-                    arrayOf("6.8.2", "master"),
+                    arrayOf("6.8.3", "master"),
                 ).plus(safePushParams)
         }
     }
