@@ -92,9 +92,12 @@ open class SimpleChildAbstractEntityImpl(val dataSource: SimpleChildAbstractEnti
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SimpleChildAbstractEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
-        this.parentInList = parents.filterIsInstance<CompositeAbstractEntity>().single()
+        val parentInListNew = parents.filterIsInstance<CompositeAbstractEntity>().single()
+        if ((this.parentInList as WorkspaceEntityBase).id != (parentInListNew as WorkspaceEntityBase).id) {
+          this.parentInList = parentInListNew
+        }
       }
     }
 

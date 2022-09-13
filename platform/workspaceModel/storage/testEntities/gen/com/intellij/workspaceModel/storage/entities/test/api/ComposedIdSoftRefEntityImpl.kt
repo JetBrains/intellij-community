@@ -88,9 +88,9 @@ open class ComposedIdSoftRefEntityImpl(val dataSource: ComposedIdSoftRefEntityDa
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ComposedIdSoftRefEntity
-      this.entitySource = dataSource.entitySource
-      this.myName = dataSource.myName
-      this.link = dataSource.link
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.myName != dataSource.myName) this.myName = dataSource.myName
+      if (this.link != dataSource.link) this.link = dataSource.link
       if (parents != null) {
       }
     }

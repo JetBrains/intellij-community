@@ -80,9 +80,12 @@ open class SelfLinkedEntityImpl(val dataSource: SelfLinkedEntityData) : SelfLink
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SelfLinkedEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<SelfLinkedEntity>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<SelfLinkedEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 

@@ -82,10 +82,10 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as DefaultValueEntity
-      this.entitySource = dataSource.entitySource
-      this.name = dataSource.name
-      this.isGenerated = dataSource.isGenerated
-      this.anotherName = dataSource.anotherName
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.name != dataSource.name) this.name = dataSource.name
+      if (this.isGenerated != dataSource.isGenerated) this.isGenerated = dataSource.isGenerated
+      if (this.anotherName != dataSource.anotherName) this.anotherName = dataSource.anotherName
       if (parents != null) {
       }
     }

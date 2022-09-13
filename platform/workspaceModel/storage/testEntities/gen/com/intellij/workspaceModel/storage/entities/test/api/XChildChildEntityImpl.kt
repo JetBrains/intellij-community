@@ -106,10 +106,16 @@ open class XChildChildEntityImpl(val dataSource: XChildChildEntityData) : XChild
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as XChildChildEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
-        this.parent1 = parents.filterIsInstance<XParentEntity>().single()
-        this.parent2 = parents.filterIsInstance<XChildEntity>().single()
+        val parent1New = parents.filterIsInstance<XParentEntity>().single()
+        if ((this.parent1 as WorkspaceEntityBase).id != (parent1New as WorkspaceEntityBase).id) {
+          this.parent1 = parent1New
+        }
+        val parent2New = parents.filterIsInstance<XChildEntity>().single()
+        if ((this.parent2 as WorkspaceEntityBase).id != (parent2New as WorkspaceEntityBase).id) {
+          this.parent2 = parent2New
+        }
       }
     }
 

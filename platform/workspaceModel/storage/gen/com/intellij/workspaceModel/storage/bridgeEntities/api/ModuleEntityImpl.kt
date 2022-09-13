@@ -159,10 +159,10 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleEntity
-      this.entitySource = dataSource.entitySource
-      this.name = dataSource.name
-      this.type = dataSource.type
-      this.dependencies = dataSource.dependencies.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.name != dataSource.name) this.name = dataSource.name
+      if (this.type != dataSource?.type) this.type = dataSource.type
+      if (this.dependencies != dataSource.dependencies) this.dependencies = dataSource.dependencies.toMutableList()
       if (parents != null) {
       }
     }

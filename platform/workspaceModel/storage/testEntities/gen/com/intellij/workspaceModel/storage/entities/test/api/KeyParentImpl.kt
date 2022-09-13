@@ -104,9 +104,9 @@ open class KeyParentImpl(val dataSource: KeyParentData) : KeyParent, WorkspaceEn
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as KeyParent
-      this.entitySource = dataSource.entitySource
-      this.keyField = dataSource.keyField
-      this.notKeyField = dataSource.notKeyField
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.keyField != dataSource.keyField) this.keyField = dataSource.keyField
+      if (this.notKeyField != dataSource.notKeyField) this.notKeyField = dataSource.notKeyField
       if (parents != null) {
       }
     }

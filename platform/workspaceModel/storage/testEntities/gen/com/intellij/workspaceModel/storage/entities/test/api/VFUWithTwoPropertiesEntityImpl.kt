@@ -95,10 +95,10 @@ open class VFUWithTwoPropertiesEntityImpl(val dataSource: VFUWithTwoPropertiesEn
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as VFUWithTwoPropertiesEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
-      this.fileProperty = dataSource.fileProperty
-      this.secondFileProperty = dataSource.secondFileProperty
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.fileProperty != dataSource.fileProperty) this.fileProperty = dataSource.fileProperty
+      if (this.secondFileProperty != dataSource.secondFileProperty) this.secondFileProperty = dataSource.secondFileProperty
       if (parents != null) {
       }
     }

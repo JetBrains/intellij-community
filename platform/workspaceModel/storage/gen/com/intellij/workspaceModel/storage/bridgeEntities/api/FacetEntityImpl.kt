@@ -121,14 +121,20 @@ open class FacetEntityImpl(val dataSource: FacetEntityData) : FacetEntity, Works
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FacetEntity
-      this.entitySource = dataSource.entitySource
-      this.name = dataSource.name
-      this.facetType = dataSource.facetType
-      this.configurationXmlTag = dataSource.configurationXmlTag
-      this.moduleId = dataSource.moduleId
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.name != dataSource.name) this.name = dataSource.name
+      if (this.facetType != dataSource.facetType) this.facetType = dataSource.facetType
+      if (this.configurationXmlTag != dataSource?.configurationXmlTag) this.configurationXmlTag = dataSource.configurationXmlTag
+      if (this.moduleId != dataSource.moduleId) this.moduleId = dataSource.moduleId
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleEntity>().single()
-        this.underlyingFacet = parents.filterIsInstance<FacetEntity>().singleOrNull()
+        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
+        val underlyingFacetNew = parents.filterIsInstance<FacetEntity?>().singleOrNull()
+        if ((underlyingFacetNew == null && this.underlyingFacet != null) || (underlyingFacetNew != null && this.underlyingFacet == null) || (underlyingFacetNew != null && this.underlyingFacet != null && (this.underlyingFacet as WorkspaceEntityBase).id != (underlyingFacetNew as WorkspaceEntityBase).id)) {
+          this.underlyingFacet = underlyingFacetNew
+        }
       }
     }
 

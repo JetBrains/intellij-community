@@ -130,16 +130,19 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as EclipseProjectPropertiesEntity
-      this.entitySource = dataSource.entitySource
-      this.variablePaths = dataSource.variablePaths.toMutableMap()
-      this.eclipseUrls = dataSource.eclipseUrls.toMutableList()
-      this.unknownCons = dataSource.unknownCons.toMutableList()
-      this.knownCons = dataSource.knownCons.toMutableList()
-      this.forceConfigureJdk = dataSource.forceConfigureJdk
-      this.expectedModuleSourcePlace = dataSource.expectedModuleSourcePlace
-      this.srcPlace = dataSource.srcPlace.toMutableMap()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.variablePaths != dataSource.variablePaths) this.variablePaths = dataSource.variablePaths.toMutableMap()
+      if (this.eclipseUrls != dataSource.eclipseUrls) this.eclipseUrls = dataSource.eclipseUrls.toMutableList()
+      if (this.unknownCons != dataSource.unknownCons) this.unknownCons = dataSource.unknownCons.toMutableList()
+      if (this.knownCons != dataSource.knownCons) this.knownCons = dataSource.knownCons.toMutableList()
+      if (this.forceConfigureJdk != dataSource.forceConfigureJdk) this.forceConfigureJdk = dataSource.forceConfigureJdk
+      if (this.expectedModuleSourcePlace != dataSource.expectedModuleSourcePlace) this.expectedModuleSourcePlace = dataSource.expectedModuleSourcePlace
+      if (this.srcPlace != dataSource.srcPlace) this.srcPlace = dataSource.srcPlace.toMutableMap()
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 

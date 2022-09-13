@@ -120,9 +120,12 @@ open class ContentRootTestEntityImpl(val dataSource: ContentRootTestEntityData) 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ContentRootTestEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleTestEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleTestEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 

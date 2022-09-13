@@ -80,11 +80,11 @@ open class DefaultFieldEntityImpl(val dataSource: DefaultFieldEntityData) : Defa
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as DefaultFieldEntity
-      this.entitySource = dataSource.entitySource
-      this.version = dataSource.version
-      this.data = dataSource.data
-      this.anotherVersion = dataSource.anotherVersion
-      this.description = dataSource.description
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.version != dataSource.version) this.version = dataSource.version
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.anotherVersion != dataSource.anotherVersion) this.anotherVersion = dataSource.anotherVersion
+      if (this.description != dataSource.description) this.description = dataSource.description
       if (parents != null) {
       }
     }

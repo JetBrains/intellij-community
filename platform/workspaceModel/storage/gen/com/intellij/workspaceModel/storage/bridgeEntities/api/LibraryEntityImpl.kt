@@ -129,11 +129,11 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LibraryEntity
-      this.entitySource = dataSource.entitySource
-      this.name = dataSource.name
-      this.tableId = dataSource.tableId
-      this.roots = dataSource.roots.toMutableList()
-      this.excludedRoots = dataSource.excludedRoots.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.name != dataSource.name) this.name = dataSource.name
+      if (this.tableId != dataSource.tableId) this.tableId = dataSource.tableId
+      if (this.roots != dataSource.roots) this.roots = dataSource.roots.toMutableList()
+      if (this.excludedRoots != dataSource.excludedRoots) this.excludedRoots = dataSource.excludedRoots.toMutableList()
       if (parents != null) {
       }
     }

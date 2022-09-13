@@ -95,10 +95,13 @@ open class AttachedEntityImpl(val dataSource: AttachedEntityData) : AttachedEnti
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as AttachedEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
       if (parents != null) {
-        this.ref = parents.filterIsInstance<MainEntity>().single()
+        val refNew = parents.filterIsInstance<MainEntity>().single()
+        if ((this.ref as WorkspaceEntityBase).id != (refNew as WorkspaceEntityBase).id) {
+          this.ref = refNew
+        }
       }
     }
 

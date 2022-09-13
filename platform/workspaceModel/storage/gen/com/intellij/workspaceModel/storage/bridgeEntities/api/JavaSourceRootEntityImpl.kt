@@ -101,11 +101,14 @@ open class JavaSourceRootEntityImpl(val dataSource: JavaSourceRootEntityData) : 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as JavaSourceRootEntity
-      this.entitySource = dataSource.entitySource
-      this.generated = dataSource.generated
-      this.packagePrefix = dataSource.packagePrefix
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.generated != dataSource.generated) this.generated = dataSource.generated
+      if (this.packagePrefix != dataSource.packagePrefix) this.packagePrefix = dataSource.packagePrefix
       if (parents != null) {
-        this.sourceRoot = parents.filterIsInstance<SourceRootEntity>().single()
+        val sourceRootNew = parents.filterIsInstance<SourceRootEntity>().single()
+        if ((this.sourceRoot as WorkspaceEntityBase).id != (sourceRootNew as WorkspaceEntityBase).id) {
+          this.sourceRoot = sourceRootNew
+        }
       }
     }
 

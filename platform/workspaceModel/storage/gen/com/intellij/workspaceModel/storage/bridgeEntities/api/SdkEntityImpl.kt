@@ -101,10 +101,13 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SdkEntity
-      this.entitySource = dataSource.entitySource
-      this.homeUrl = dataSource.homeUrl
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.homeUrl != dataSource.homeUrl) this.homeUrl = dataSource.homeUrl
       if (parents != null) {
-        this.library = parents.filterIsInstance<LibraryEntity>().single()
+        val libraryNew = parents.filterIsInstance<LibraryEntity>().single()
+        if ((this.library as WorkspaceEntityBase).id != (libraryNew as WorkspaceEntityBase).id) {
+          this.library = libraryNew
+        }
       }
     }
 

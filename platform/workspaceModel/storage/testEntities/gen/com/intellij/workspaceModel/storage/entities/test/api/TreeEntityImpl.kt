@@ -115,10 +115,13 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as TreeEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<TreeEntity>().single()
+        val parentEntityNew = parents.filterIsInstance<TreeEntity>().single()
+        if ((this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 

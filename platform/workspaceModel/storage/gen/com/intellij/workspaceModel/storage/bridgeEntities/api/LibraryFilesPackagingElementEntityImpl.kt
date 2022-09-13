@@ -90,10 +90,13 @@ open class LibraryFilesPackagingElementEntityImpl(val dataSource: LibraryFilesPa
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LibraryFilesPackagingElementEntity
-      this.entitySource = dataSource.entitySource
-      this.library = dataSource.library
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.library != dataSource?.library) this.library = dataSource.library
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<CompositePackagingElementEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 

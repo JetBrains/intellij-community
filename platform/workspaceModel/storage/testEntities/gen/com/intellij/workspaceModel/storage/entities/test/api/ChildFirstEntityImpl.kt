@@ -103,11 +103,14 @@ open class ChildFirstEntityImpl(val dataSource: ChildFirstEntityData) : ChildFir
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ChildFirstEntity
-      this.entitySource = dataSource.entitySource
-      this.commonData = dataSource.commonData
-      this.firstData = dataSource.firstData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.commonData != dataSource.commonData) this.commonData = dataSource.commonData
+      if (this.firstData != dataSource.firstData) this.firstData = dataSource.firstData
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<ParentAbEntity>().single()
+        val parentEntityNew = parents.filterIsInstance<ParentAbEntity>().single()
+        if ((this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 

@@ -132,8 +132,8 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as XParentEntity
-      this.entitySource = dataSource.entitySource
-      this.parentProperty = dataSource.parentProperty
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.parentProperty != dataSource.parentProperty) this.parentProperty = dataSource.parentProperty
       if (parents != null) {
       }
     }

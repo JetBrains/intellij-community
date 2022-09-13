@@ -90,10 +90,13 @@ open class ArtifactOutputPackagingElementEntityImpl(val dataSource: ArtifactOutp
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ArtifactOutputPackagingElementEntity
-      this.entitySource = dataSource.entitySource
-      this.artifact = dataSource.artifact
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.artifact != dataSource?.artifact) this.artifact = dataSource.artifact
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<CompositePackagingElementEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 

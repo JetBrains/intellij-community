@@ -102,10 +102,13 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SourceRootOrderEntity
-      this.entitySource = dataSource.entitySource
-      this.orderOfSourceRoots = dataSource.orderOfSourceRoots.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.orderOfSourceRoots != dataSource.orderOfSourceRoots) this.orderOfSourceRoots = dataSource.orderOfSourceRoots.toMutableList()
       if (parents != null) {
-        this.contentRootEntity = parents.filterIsInstance<ContentRootEntity>().single()
+        val contentRootEntityNew = parents.filterIsInstance<ContentRootEntity>().single()
+        if ((this.contentRootEntity as WorkspaceEntityBase).id != (contentRootEntityNew as WorkspaceEntityBase).id) {
+          this.contentRootEntity = contentRootEntityNew
+        }
       }
     }
 

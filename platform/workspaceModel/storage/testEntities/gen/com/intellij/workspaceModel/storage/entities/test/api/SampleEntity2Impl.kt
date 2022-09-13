@@ -82,10 +82,10 @@ open class SampleEntity2Impl(val dataSource: SampleEntity2Data) : SampleEntity2,
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SampleEntity2
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
-      this.boolData = dataSource.boolData
-      this.optionalData = dataSource.optionalData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.boolData != dataSource.boolData) this.boolData = dataSource.boolData
+      if (this.optionalData != dataSource?.optionalData) this.optionalData = dataSource.optionalData
       if (parents != null) {
       }
     }

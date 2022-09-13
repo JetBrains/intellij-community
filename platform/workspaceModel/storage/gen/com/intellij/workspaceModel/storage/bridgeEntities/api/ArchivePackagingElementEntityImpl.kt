@@ -120,11 +120,17 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ArchivePackagingElementEntity
-      this.entitySource = dataSource.entitySource
-      this.fileName = dataSource.fileName
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.fileName != dataSource.fileName) this.fileName = dataSource.fileName
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
-        this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<CompositePackagingElementEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
+        val artifactNew = parents.filterIsInstance<ArtifactEntity?>().singleOrNull()
+        if ((artifactNew == null && this.artifact != null) || (artifactNew != null && this.artifact == null) || (artifactNew != null && this.artifact != null && (this.artifact as WorkspaceEntityBase).id != (artifactNew as WorkspaceEntityBase).id)) {
+          this.artifact = artifactNew
+        }
       }
     }
 

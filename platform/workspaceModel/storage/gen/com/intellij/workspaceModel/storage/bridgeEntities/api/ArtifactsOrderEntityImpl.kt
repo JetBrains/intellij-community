@@ -81,8 +81,8 @@ open class ArtifactsOrderEntityImpl(val dataSource: ArtifactsOrderEntityData) : 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ArtifactsOrderEntity
-      this.entitySource = dataSource.entitySource
-      this.orderOfArtifacts = dataSource.orderOfArtifacts.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.orderOfArtifacts != dataSource.orderOfArtifacts) this.orderOfArtifacts = dataSource.orderOfArtifacts.toMutableList()
       if (parents != null) {
       }
     }

@@ -102,11 +102,14 @@ open class ModuleCustomImlDataEntityImpl(val dataSource: ModuleCustomImlDataEnti
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleCustomImlDataEntity
-      this.entitySource = dataSource.entitySource
-      this.rootManagerTagCustomData = dataSource.rootManagerTagCustomData
-      this.customModuleOptions = dataSource.customModuleOptions.toMutableMap()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.rootManagerTagCustomData != dataSource?.rootManagerTagCustomData) this.rootManagerTagCustomData = dataSource.rootManagerTagCustomData
+      if (this.customModuleOptions != dataSource.customModuleOptions) this.customModuleOptions = dataSource.customModuleOptions.toMutableMap()
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 

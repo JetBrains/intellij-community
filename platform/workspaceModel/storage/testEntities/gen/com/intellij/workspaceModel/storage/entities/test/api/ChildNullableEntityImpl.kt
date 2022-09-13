@@ -96,10 +96,13 @@ open class ChildNullableEntityImpl(val dataSource: ChildNullableEntityData) : Ch
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ChildNullableEntity
-      this.entitySource = dataSource.entitySource
-      this.childData = dataSource.childData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.childData != dataSource.childData) this.childData = dataSource.childData
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<ParentNullableEntity>().single()
+        val parentEntityNew = parents.filterIsInstance<ParentNullableEntity>().single()
+        if ((this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 

@@ -102,9 +102,9 @@ open class NamedEntityImpl(val dataSource: NamedEntityData) : NamedEntity, Works
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as NamedEntity
-      this.entitySource = dataSource.entitySource
-      this.myName = dataSource.myName
-      this.additionalProperty = dataSource.additionalProperty
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.myName != dataSource.myName) this.myName = dataSource.myName
+      if (this.additionalProperty != dataSource?.additionalProperty) this.additionalProperty = dataSource.additionalProperty
       if (parents != null) {
       }
     }

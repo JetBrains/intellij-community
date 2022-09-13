@@ -98,10 +98,13 @@ open class FacetExternalSystemIdEntityImpl(val dataSource: FacetExternalSystemId
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FacetExternalSystemIdEntity
-      this.entitySource = dataSource.entitySource
-      this.externalSystemId = dataSource.externalSystemId
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.externalSystemId != dataSource.externalSystemId) this.externalSystemId = dataSource.externalSystemId
       if (parents != null) {
-        this.facet = parents.filterIsInstance<FacetEntity>().single()
+        val facetNew = parents.filterIsInstance<FacetEntity>().single()
+        if ((this.facet as WorkspaceEntityBase).id != (facetNew as WorkspaceEntityBase).id) {
+          this.facet = facetNew
+        }
       }
     }
 

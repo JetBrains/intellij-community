@@ -96,11 +96,14 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ExtractedDirectoryPackagingElementEntity
-      this.entitySource = dataSource.entitySource
-      this.filePath = dataSource.filePath
-      this.pathInArchive = dataSource.pathInArchive
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.filePath != dataSource.filePath) this.filePath = dataSource.filePath
+      if (this.pathInArchive != dataSource.pathInArchive) this.pathInArchive = dataSource.pathInArchive
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<CompositePackagingElementEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 

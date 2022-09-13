@@ -73,8 +73,8 @@ open class AssertConsistencyEntityImpl(val dataSource: AssertConsistencyEntityDa
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as AssertConsistencyEntity
-      this.entitySource = dataSource.entitySource
-      this.passCheck = dataSource.passCheck
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.passCheck != dataSource.passCheck) this.passCheck = dataSource.passCheck
       if (parents != null) {
       }
     }

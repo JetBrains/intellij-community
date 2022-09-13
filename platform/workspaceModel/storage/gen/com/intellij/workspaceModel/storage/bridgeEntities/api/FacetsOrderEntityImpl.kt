@@ -99,10 +99,13 @@ open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : Facets
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FacetsOrderEntity
-      this.entitySource = dataSource.entitySource
-      this.orderOfFacets = dataSource.orderOfFacets.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.orderOfFacets != dataSource.orderOfFacets) this.orderOfFacets = dataSource.orderOfFacets.toMutableList()
       if (parents != null) {
-        this.moduleEntity = parents.filterIsInstance<ModuleEntity>().single()
+        val moduleEntityNew = parents.filterIsInstance<ModuleEntity>().single()
+        if ((this.moduleEntity as WorkspaceEntityBase).id != (moduleEntityNew as WorkspaceEntityBase).id) {
+          this.moduleEntity = moduleEntityNew
+        }
       }
     }
 

@@ -87,9 +87,9 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as CollectionFieldEntity
-      this.entitySource = dataSource.entitySource
-      this.versions = dataSource.versions.toMutableSet()
-      this.names = dataSource.names.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.versions != dataSource.versions) this.versions = dataSource.versions.toMutableSet()
+      if (this.names != dataSource.names) this.names = dataSource.names.toMutableList()
       if (parents != null) {
       }
     }

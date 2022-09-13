@@ -84,9 +84,9 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ProjectModelTestEntity
-      this.entitySource = dataSource.entitySource
-      this.info = dataSource.info
-      this.descriptor = dataSource.descriptor
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.info != dataSource.info) this.info = dataSource.info
+      if (this.descriptor != dataSource.descriptor) this.descriptor = dataSource.descriptor
       if (parents != null) {
       }
     }

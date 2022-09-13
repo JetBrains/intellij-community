@@ -83,10 +83,10 @@ open class FinalFieldsEntityImpl(val dataSource: FinalFieldsEntityData) : FinalF
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FinalFieldsEntity
-      this.entitySource = dataSource.entitySource
-      this.descriptor = dataSource.descriptor
-      this.description = dataSource.description
-      this.anotherVersion = dataSource.anotherVersion
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.descriptor != dataSource.descriptor) this.descriptor = dataSource.descriptor
+      if (this.description != dataSource.description) this.description = dataSource.description
+      if (this.anotherVersion != dataSource.anotherVersion) this.anotherVersion = dataSource.anotherVersion
       if (parents != null) {
       }
     }

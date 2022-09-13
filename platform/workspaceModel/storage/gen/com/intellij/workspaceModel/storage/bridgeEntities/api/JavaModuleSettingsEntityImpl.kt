@@ -106,14 +106,17 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as JavaModuleSettingsEntity
-      this.entitySource = dataSource.entitySource
-      this.inheritedCompilerOutput = dataSource.inheritedCompilerOutput
-      this.excludeOutput = dataSource.excludeOutput
-      this.compilerOutput = dataSource.compilerOutput
-      this.compilerOutputForTests = dataSource.compilerOutputForTests
-      this.languageLevelId = dataSource.languageLevelId
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.inheritedCompilerOutput != dataSource.inheritedCompilerOutput) this.inheritedCompilerOutput = dataSource.inheritedCompilerOutput
+      if (this.excludeOutput != dataSource.excludeOutput) this.excludeOutput = dataSource.excludeOutput
+      if (this.compilerOutput != dataSource?.compilerOutput) this.compilerOutput = dataSource.compilerOutput
+      if (this.compilerOutputForTests != dataSource?.compilerOutputForTests) this.compilerOutputForTests = dataSource.compilerOutputForTests
+      if (this.languageLevelId != dataSource?.languageLevelId) this.languageLevelId = dataSource.languageLevelId
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 

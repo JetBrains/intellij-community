@@ -99,10 +99,13 @@ open class LibraryExternalSystemIdEntityImpl(val dataSource: LibraryExternalSyst
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LibraryExternalSystemIdEntity
-      this.entitySource = dataSource.entitySource
-      this.externalSystemId = dataSource.externalSystemId
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.externalSystemId != dataSource.externalSystemId) this.externalSystemId = dataSource.externalSystemId
       if (parents != null) {
-        this.library = parents.filterIsInstance<LibraryEntity>().single()
+        val libraryNew = parents.filterIsInstance<LibraryEntity>().single()
+        if ((this.library as WorkspaceEntityBase).id != (libraryNew as WorkspaceEntityBase).id) {
+          this.library = libraryNew
+        }
       }
     }
 

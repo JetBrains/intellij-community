@@ -115,16 +115,19 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ExternalSystemModuleOptionsEntity
-      this.entitySource = dataSource.entitySource
-      this.externalSystem = dataSource.externalSystem
-      this.externalSystemModuleVersion = dataSource.externalSystemModuleVersion
-      this.linkedProjectPath = dataSource.linkedProjectPath
-      this.linkedProjectId = dataSource.linkedProjectId
-      this.rootProjectPath = dataSource.rootProjectPath
-      this.externalSystemModuleGroup = dataSource.externalSystemModuleGroup
-      this.externalSystemModuleType = dataSource.externalSystemModuleType
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.externalSystem != dataSource?.externalSystem) this.externalSystem = dataSource.externalSystem
+      if (this.externalSystemModuleVersion != dataSource?.externalSystemModuleVersion) this.externalSystemModuleVersion = dataSource.externalSystemModuleVersion
+      if (this.linkedProjectPath != dataSource?.linkedProjectPath) this.linkedProjectPath = dataSource.linkedProjectPath
+      if (this.linkedProjectId != dataSource?.linkedProjectId) this.linkedProjectId = dataSource.linkedProjectId
+      if (this.rootProjectPath != dataSource?.rootProjectPath) this.rootProjectPath = dataSource.rootProjectPath
+      if (this.externalSystemModuleGroup != dataSource?.externalSystemModuleGroup) this.externalSystemModuleGroup = dataSource.externalSystemModuleGroup
+      if (this.externalSystemModuleType != dataSource?.externalSystemModuleType) this.externalSystemModuleType = dataSource.externalSystemModuleType
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 

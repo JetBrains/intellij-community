@@ -100,10 +100,13 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleGroupPathEntity
-      this.entitySource = dataSource.entitySource
-      this.path = dataSource.path.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.path != dataSource.path) this.path = dataSource.path.toMutableList()
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 

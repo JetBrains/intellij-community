@@ -104,11 +104,14 @@ open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestE
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FacetTestEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
-      this.moreData = dataSource.moreData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.moreData != dataSource.moreData) this.moreData = dataSource.moreData
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleTestEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleTestEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 

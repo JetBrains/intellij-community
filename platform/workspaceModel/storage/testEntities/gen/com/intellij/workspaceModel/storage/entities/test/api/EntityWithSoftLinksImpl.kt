@@ -167,20 +167,20 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as EntityWithSoftLinks
-      this.entitySource = dataSource.entitySource
-      this.link = dataSource.link
-      this.manyLinks = dataSource.manyLinks.toMutableList()
-      this.optionalLink = dataSource.optionalLink
-      this.inContainer = dataSource.inContainer
-      this.inOptionalContainer = dataSource.inOptionalContainer
-      this.inContainerList = dataSource.inContainerList.toMutableList()
-      this.deepContainer = dataSource.deepContainer.toMutableList()
-      this.sealedContainer = dataSource.sealedContainer
-      this.listSealedContainer = dataSource.listSealedContainer.toMutableList()
-      this.justProperty = dataSource.justProperty
-      this.justNullableProperty = dataSource.justNullableProperty
-      this.justListProperty = dataSource.justListProperty.toMutableList()
-      this.deepSealedClass = dataSource.deepSealedClass
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.link != dataSource.link) this.link = dataSource.link
+      if (this.manyLinks != dataSource.manyLinks) this.manyLinks = dataSource.manyLinks.toMutableList()
+      if (this.optionalLink != dataSource?.optionalLink) this.optionalLink = dataSource.optionalLink
+      if (this.inContainer != dataSource.inContainer) this.inContainer = dataSource.inContainer
+      if (this.inOptionalContainer != dataSource?.inOptionalContainer) this.inOptionalContainer = dataSource.inOptionalContainer
+      if (this.inContainerList != dataSource.inContainerList) this.inContainerList = dataSource.inContainerList.toMutableList()
+      if (this.deepContainer != dataSource.deepContainer) this.deepContainer = dataSource.deepContainer.toMutableList()
+      if (this.sealedContainer != dataSource.sealedContainer) this.sealedContainer = dataSource.sealedContainer
+      if (this.listSealedContainer != dataSource.listSealedContainer) this.listSealedContainer = dataSource.listSealedContainer.toMutableList()
+      if (this.justProperty != dataSource.justProperty) this.justProperty = dataSource.justProperty
+      if (this.justNullableProperty != dataSource?.justNullableProperty) this.justNullableProperty = dataSource.justNullableProperty
+      if (this.justListProperty != dataSource.justListProperty) this.justListProperty = dataSource.justListProperty.toMutableList()
+      if (this.deepSealedClass != dataSource.deepSealedClass) this.deepSealedClass = dataSource.deepSealedClass
       if (parents != null) {
       }
     }

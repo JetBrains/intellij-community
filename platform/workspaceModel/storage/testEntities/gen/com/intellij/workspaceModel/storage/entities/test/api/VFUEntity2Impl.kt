@@ -97,11 +97,11 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as VFUEntity2
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
-      this.filePath = dataSource.filePath
-      this.directoryPath = dataSource.directoryPath
-      this.notNullRoots = dataSource.notNullRoots.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.filePath != dataSource?.filePath) this.filePath = dataSource.filePath
+      if (this.directoryPath != dataSource.directoryPath) this.directoryPath = dataSource.directoryPath
+      if (this.notNullRoots != dataSource.notNullRoots) this.notNullRoots = dataSource.notNullRoots.toMutableList()
       if (parents != null) {
       }
     }

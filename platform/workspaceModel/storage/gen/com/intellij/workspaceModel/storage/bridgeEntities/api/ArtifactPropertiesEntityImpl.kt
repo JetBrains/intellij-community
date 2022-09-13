@@ -103,11 +103,14 @@ open class ArtifactPropertiesEntityImpl(val dataSource: ArtifactPropertiesEntity
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ArtifactPropertiesEntity
-      this.entitySource = dataSource.entitySource
-      this.providerType = dataSource.providerType
-      this.propertiesXmlTag = dataSource.propertiesXmlTag
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.providerType != dataSource.providerType) this.providerType = dataSource.providerType
+      if (this.propertiesXmlTag != dataSource?.propertiesXmlTag) this.propertiesXmlTag = dataSource.propertiesXmlTag
       if (parents != null) {
-        this.artifact = parents.filterIsInstance<ArtifactEntity>().single()
+        val artifactNew = parents.filterIsInstance<ArtifactEntity>().single()
+        if ((this.artifact as WorkspaceEntityBase).id != (artifactNew as WorkspaceEntityBase).id) {
+          this.artifact = artifactNew
+        }
       }
     }
 

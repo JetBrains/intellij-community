@@ -127,14 +127,14 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SampleEntity
-      this.entitySource = dataSource.entitySource
-      this.booleanProperty = dataSource.booleanProperty
-      this.stringProperty = dataSource.stringProperty
-      this.stringListProperty = dataSource.stringListProperty.toMutableList()
-      this.stringMapProperty = dataSource.stringMapProperty.toMutableMap()
-      this.fileProperty = dataSource.fileProperty
-      this.nullableData = dataSource.nullableData
-      this.randomUUID = dataSource.randomUUID
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.booleanProperty != dataSource.booleanProperty) this.booleanProperty = dataSource.booleanProperty
+      if (this.stringProperty != dataSource.stringProperty) this.stringProperty = dataSource.stringProperty
+      if (this.stringListProperty != dataSource.stringListProperty) this.stringListProperty = dataSource.stringListProperty.toMutableList()
+      if (this.stringMapProperty != dataSource.stringMapProperty) this.stringMapProperty = dataSource.stringMapProperty.toMutableMap()
+      if (this.fileProperty != dataSource.fileProperty) this.fileProperty = dataSource.fileProperty
+      if (this.nullableData != dataSource?.nullableData) this.nullableData = dataSource.nullableData
+      if (this.randomUUID != dataSource?.randomUUID) this.randomUUID = dataSource.randomUUID
       if (parents != null) {
       }
     }

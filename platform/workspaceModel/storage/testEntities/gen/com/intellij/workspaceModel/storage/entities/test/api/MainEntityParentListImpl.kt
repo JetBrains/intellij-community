@@ -97,8 +97,8 @@ open class MainEntityParentListImpl(val dataSource: MainEntityParentListData) : 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as MainEntityParentList
-      this.entitySource = dataSource.entitySource
-      this.x = dataSource.x
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.x != dataSource.x) this.x = dataSource.x
       if (parents != null) {
       }
     }

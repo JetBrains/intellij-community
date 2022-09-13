@@ -78,8 +78,8 @@ open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : Seco
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SecondSampleEntity
-      this.entitySource = dataSource.entitySource
-      this.intProperty = dataSource.intProperty
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.intProperty != dataSource.intProperty) this.intProperty = dataSource.intProperty
       if (parents != null) {
       }
     }

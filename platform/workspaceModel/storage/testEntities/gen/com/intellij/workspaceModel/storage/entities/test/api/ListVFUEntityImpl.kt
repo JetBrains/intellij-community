@@ -89,9 +89,9 @@ open class ListVFUEntityImpl(val dataSource: ListVFUEntityData) : ListVFUEntity,
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ListVFUEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
-      this.fileProperty = dataSource.fileProperty.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.fileProperty != dataSource.fileProperty) this.fileProperty = dataSource.fileProperty.toMutableList()
       if (parents != null) {
       }
     }

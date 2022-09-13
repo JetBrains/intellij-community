@@ -82,8 +82,8 @@ open class ComposedLinkEntityImpl(val dataSource: ComposedLinkEntityData) : Comp
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ComposedLinkEntity
-      this.entitySource = dataSource.entitySource
-      this.link = dataSource.link
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.link != dataSource.link) this.link = dataSource.link
       if (parents != null) {
       }
     }

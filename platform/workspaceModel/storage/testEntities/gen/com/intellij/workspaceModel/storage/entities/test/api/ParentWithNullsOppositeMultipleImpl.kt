@@ -78,8 +78,8 @@ open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOp
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ParentWithNullsOppositeMultiple
-      this.entitySource = dataSource.entitySource
-      this.parentData = dataSource.parentData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.parentData != dataSource.parentData) this.parentData = dataSource.parentData
       if (parents != null) {
       }
     }

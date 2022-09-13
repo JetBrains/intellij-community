@@ -93,9 +93,12 @@ open class SoftLinkReferencedChildImpl(val dataSource: SoftLinkReferencedChildDa
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SoftLinkReferencedChild
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<EntityWithSoftLinks>().single()
+        val parentEntityNew = parents.filterIsInstance<EntityWithSoftLinks>().single()
+        if ((this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 

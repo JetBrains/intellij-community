@@ -92,7 +92,7 @@ open class ParentAbEntityImpl(val dataSource: ParentAbEntityData) : ParentAbEnti
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ParentAbEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
       }
     }

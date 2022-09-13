@@ -77,10 +77,10 @@ ${
             type = type.type
           }
           when (type) {
-            is ValueType.List<*> -> lineBuilder.line("this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableList()")
-            is ValueType.Set<*> -> lineBuilder.line("this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableSet()")
-            is ValueType.Map<*, *> -> lineBuilder.line("this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableMap()")
-            else -> lineBuilder.line("this.${field.name} = dataSource.${field.name}")
+            is ValueType.List<*> -> lineBuilder.line("if (this.${field.name} != dataSource${qm}.${field.name}) this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableList()")
+            is ValueType.Set<*> -> lineBuilder.line("if (this.${field.name} != dataSource${qm}.${field.name}) this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableSet()")
+            is ValueType.Map<*, *> -> lineBuilder.line("if (this.${field.name} != dataSource${qm}.${field.name}) this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableMap()")
+            else -> lineBuilder.line("if (this.${field.name} != dataSource${qm}.${field.name}) this.${field.name} = dataSource.${field.name}")
           }
         }
 
@@ -88,9 +88,15 @@ ${
           allRefsFields.filterNot { it.valueType.getRefType().child }.forEach {
             val parentType = it.valueType
             if (parentType is ValueType.Optional) {
-              line("this.${it.name} = parents.filterIsInstance<${parentType.type.javaType}>().singleOrNull()")
+              line("val ${it.name}New = parents.filterIsInstance<${parentType.javaType}>().singleOrNull()")
+              `if`("(${it.name}New == null && this.${it.name} != null) || (${it.name}New != null && this.${it.name} == null) || (${it.name}New != null && this.${it.name} != null && (this.${it.name} as WorkspaceEntityBase).id != (${it.name}New as WorkspaceEntityBase).id)") {
+                line("this.${it.name} = ${it.name}New")
+              }
             } else {
-              line("this.${it.name} = parents.filterIsInstance<${parentType.javaType}>().single()")
+              line("val ${it.name}New = parents.filterIsInstance<${parentType.javaType}>().single()")
+              `if`("(this.${it.name} as WorkspaceEntityBase).id != (${it.name}New as WorkspaceEntityBase).id") {
+                line("this.${it.name} = ${it.name}New")
+              }
             }
           }
         }

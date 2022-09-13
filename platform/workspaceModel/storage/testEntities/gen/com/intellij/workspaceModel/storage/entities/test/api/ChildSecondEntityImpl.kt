@@ -103,11 +103,14 @@ open class ChildSecondEntityImpl(val dataSource: ChildSecondEntityData) : ChildS
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ChildSecondEntity
-      this.entitySource = dataSource.entitySource
-      this.commonData = dataSource.commonData
-      this.secondData = dataSource.secondData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.commonData != dataSource.commonData) this.commonData = dataSource.commonData
+      if (this.secondData != dataSource.secondData) this.secondData = dataSource.secondData
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<ParentAbEntity>().single()
+        val parentEntityNew = parents.filterIsInstance<ParentAbEntity>().single()
+        if ((this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 

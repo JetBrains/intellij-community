@@ -95,11 +95,11 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as EntityWithUrls
-      this.entitySource = dataSource.entitySource
-      this.simpleUrl = dataSource.simpleUrl
-      this.nullableUrl = dataSource.nullableUrl
-      this.listOfUrls = dataSource.listOfUrls.toMutableList()
-      this.dataClassWithUrl = dataSource.dataClassWithUrl
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.simpleUrl != dataSource.simpleUrl) this.simpleUrl = dataSource.simpleUrl
+      if (this.nullableUrl != dataSource?.nullableUrl) this.nullableUrl = dataSource.nullableUrl
+      if (this.listOfUrls != dataSource.listOfUrls) this.listOfUrls = dataSource.listOfUrls.toMutableList()
+      if (this.dataClassWithUrl != dataSource.dataClassWithUrl) this.dataClassWithUrl = dataSource.dataClassWithUrl
       if (parents != null) {
       }
     }

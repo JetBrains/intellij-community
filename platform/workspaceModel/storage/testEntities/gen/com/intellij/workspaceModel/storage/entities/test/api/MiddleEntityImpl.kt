@@ -87,10 +87,13 @@ open class MiddleEntityImpl(val dataSource: MiddleEntityData) : MiddleEntity, Wo
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as MiddleEntity
-      this.entitySource = dataSource.entitySource
-      this.property = dataSource.property
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.property != dataSource.property) this.property = dataSource.property
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<CompositeBaseEntity>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<CompositeBaseEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 

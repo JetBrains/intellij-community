@@ -89,9 +89,9 @@ open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityDa
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as WithListSoftLinksEntity
-      this.entitySource = dataSource.entitySource
-      this.myName = dataSource.myName
-      this.links = dataSource.links.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.myName != dataSource.myName) this.myName = dataSource.myName
+      if (this.links != dataSource.links) this.links = dataSource.links.toMutableList()
       if (parents != null) {
       }
     }

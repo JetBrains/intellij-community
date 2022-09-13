@@ -153,11 +153,14 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SourceRootEntity
-      this.entitySource = dataSource.entitySource
-      this.url = dataSource.url
-      this.rootType = dataSource.rootType
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.url != dataSource.url) this.url = dataSource.url
+      if (this.rootType != dataSource.rootType) this.rootType = dataSource.rootType
       if (parents != null) {
-        this.contentRoot = parents.filterIsInstance<ContentRootEntity>().single()
+        val contentRootNew = parents.filterIsInstance<ContentRootEntity>().single()
+        if ((this.contentRoot as WorkspaceEntityBase).id != (contentRootNew as WorkspaceEntityBase).id) {
+          this.contentRoot = contentRootNew
+        }
       }
     }
 

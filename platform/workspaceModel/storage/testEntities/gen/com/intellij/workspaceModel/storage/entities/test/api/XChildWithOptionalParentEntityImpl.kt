@@ -87,10 +87,13 @@ open class XChildWithOptionalParentEntityImpl(val dataSource: XChildWithOptional
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as XChildWithOptionalParentEntity
-      this.entitySource = dataSource.entitySource
-      this.childProperty = dataSource.childProperty
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.childProperty != dataSource.childProperty) this.childProperty = dataSource.childProperty
       if (parents != null) {
-        this.optionalParent = parents.filterIsInstance<XParentEntity>().singleOrNull()
+        val optionalParentNew = parents.filterIsInstance<XParentEntity?>().singleOrNull()
+        if ((optionalParentNew == null && this.optionalParent != null) || (optionalParentNew != null && this.optionalParent == null) || (optionalParentNew != null && this.optionalParent != null && (this.optionalParent as WorkspaceEntityBase).id != (optionalParentNew as WorkspaceEntityBase).id)) {
+          this.optionalParent = optionalParentNew
+        }
       }
     }
 

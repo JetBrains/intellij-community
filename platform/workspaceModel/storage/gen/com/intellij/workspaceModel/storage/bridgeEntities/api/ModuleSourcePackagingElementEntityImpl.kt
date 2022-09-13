@@ -90,10 +90,13 @@ open class ModuleSourcePackagingElementEntityImpl(val dataSource: ModuleSourcePa
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleSourcePackagingElementEntity
-      this.entitySource = dataSource.entitySource
-      this.module = dataSource.module
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.module != dataSource?.module) this.module = dataSource.module
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<CompositePackagingElementEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 

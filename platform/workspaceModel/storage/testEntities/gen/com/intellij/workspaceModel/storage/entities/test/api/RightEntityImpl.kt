@@ -110,10 +110,16 @@ open class RightEntityImpl(val dataSource: RightEntityData) : RightEntity, Works
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as RightEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<CompositeBaseEntity>().singleOrNull()
-        this.parent = parents.filterIsInstance<HeadAbstractionEntity>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<CompositeBaseEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
+        val parentNew = parents.filterIsInstance<HeadAbstractionEntity?>().singleOrNull()
+        if ((parentNew == null && this.parent != null) || (parentNew != null && this.parent == null) || (parentNew != null && this.parent != null && (this.parent as WorkspaceEntityBase).id != (parentNew as WorkspaceEntityBase).id)) {
+          this.parent = parentNew
+        }
       }
     }
 
