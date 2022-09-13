@@ -706,7 +706,7 @@ internal sealed class AbstractEntityStorage : EntityStorage {
   internal fun entityDataByIdOrDie(id: EntityId): WorkspaceEntityData<out WorkspaceEntity> {
     val entityFamily = entitiesByType[id.clazz] ?: error(
       "Entity family doesn't exist or has no entities: ${id.clazz.findWorkspaceEntity()}")
-    return entityFamily.get(id.arrayId) ?: error("Cannot find an entity by id $id")
+    return entityFamily.getOrFail(id.arrayId) ?: error("Cannot find an entity by id $id")
   }
 
   override fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>,

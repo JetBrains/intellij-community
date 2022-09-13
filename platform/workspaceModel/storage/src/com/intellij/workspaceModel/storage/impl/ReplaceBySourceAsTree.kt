@@ -594,11 +594,13 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         var index = 0
         for (i in entriesList.indices) {
           index = i
-          val replaceWithEntityIds = childrenInStorage(entriesList[i].value, targetEntityTrack.entity.clazz, replaceWithStorage)
-          val replaceWithChildrenMap = makeEntityDataCollection(replaceWithEntityIds, replaceWithStorage)
-          replaceWithEntity = replaceWithChildrenMap.removeSome(targetEntityData)?.createEntity(replaceWithStorage) as? WorkspaceEntityBase
+          val replaceWithEntityIds = childrenInReplaceWith(entriesList[i].value, targetEntityTrack.entity.clazz).toMutableList()
+          val caching = makeEntityDataCache(replaceWithEntityIds)
+          replaceWithEntity = replaceWithEntityIds.removeSomeWithCaching(targetEntityData, caching, replaceWithStorage)
+            ?.createEntity(replaceWithStorage) as? WorkspaceEntityBase
           while (replaceWithEntity != null && replaceWithState[replaceWithEntity.id] != null) {
-            replaceWithEntity = replaceWithChildrenMap.removeSome(targetEntityData)?.createEntity(replaceWithStorage) as? WorkspaceEntityBase
+            replaceWithEntity = replaceWithEntityIds.removeSomeWithCaching(targetEntityData, caching, replaceWithStorage)
+              ?.createEntity(replaceWithStorage) as? WorkspaceEntityBase
           }
           if (replaceWithEntity != null) {
             targetParents += ParentsRef.TargetRef(entriesList[i].key.entity)
@@ -608,11 +610,11 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
         // Here we know our "associated" entity, so we just check what parents remain with it.
         entriesList.drop(index + 1).forEach { tailItem ->
-          val replaceWithEntityIds = childrenInStorage(tailItem.value, targetEntityTrack.entity.clazz, replaceWithStorage)
-          val replaceWithChildrenMap = makeEntityDataCollection(replaceWithEntityIds, replaceWithStorage)
-          var replaceWithMyEntityData = replaceWithChildrenMap.removeSome(targetEntityData)
+          val replaceWithEntityIds = childrenInReplaceWith(tailItem.value, targetEntityTrack.entity.clazz).toMutableList()
+          val caching = makeEntityDataCache(replaceWithEntityIds)
+          var replaceWithMyEntityData = replaceWithEntityIds.removeSomeWithCaching(targetEntityData, caching, replaceWithStorage)
           while (replaceWithMyEntityData != null && replaceWithEntity!!.id != replaceWithMyEntityData.createEntityId()) {
-            replaceWithMyEntityData = replaceWithChildrenMap.removeSome(targetEntityData)
+            replaceWithMyEntityData = replaceWithEntityIds.removeSomeWithCaching(targetEntityData, caching, replaceWithStorage)
           }
           if (replaceWithMyEntityData != null) {
             targetParents += ParentsRef.TargetRef(tailItem.key.entity)
@@ -632,6 +634,11 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       }
       return Pair(targetParents, replaceWithEntity)
     }
+
+    private fun makeEntityDataCache(replaceWithEntityIds: MutableList<ChildEntityId>) =
+      Object2ObjectOpenCustomHashMap<WorkspaceEntityData<out WorkspaceEntity>, List<WorkspaceEntityData<out WorkspaceEntity>>>(
+        replaceWithEntityIds.size,
+        EntityDataStrategy())
 
     /**
      * Process root entity of the storage
@@ -659,6 +666,25 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     override fun hashCode(o: WorkspaceEntityData<out WorkspaceEntity>?): Int {
       return o?.hashCodeByKey() ?: 0
     }
+  }
+
+  private fun MutableList<ChildEntityId>.removeSomeWithCaching(key: WorkspaceEntityData<out WorkspaceEntity>,
+                                                               cache: Object2ObjectOpenCustomHashMap<WorkspaceEntityData<out WorkspaceEntity>, List<WorkspaceEntityData<out WorkspaceEntity>>>,
+                                                               storage: AbstractEntityStorage): WorkspaceEntityData<out WorkspaceEntity>? {
+    val foundInCache = cache.removeSome(key)
+    if (foundInCache != null) return foundInCache
+
+    val thisIterator = this.iterator()
+    while (thisIterator.hasNext()) {
+      val id = thisIterator.next()
+      val value = storage.entityDataByIdOrDie(id.id)
+      if (value.equalsByKey(key)) {
+        thisIterator.remove()
+        return value
+      }
+      addValueToMap(cache, value)
+    }
+    return null
   }
 
   private fun <K, V> Object2ObjectOpenCustomHashMap<K, List<V>>.removeSome(key: K): V? {
@@ -714,7 +740,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
                                       targetParentEntityId: EntityId,
                                       childClazz: Int): WorkspaceEntityData<out WorkspaceEntity>? {
     var targetEntityData1: WorkspaceEntityData<out WorkspaceEntity>?
-    val targetEntityIds = childrenInStorage(targetParentEntityId, childClazz, targetStorage)
+    val targetEntityIds = childrenInTarget(targetParentEntityId, childClazz)
     val targetChildrenMap = makeEntityDataCollection(targetEntityIds, targetStorage)
     targetEntityData1 = targetChildrenMap.removeSome(replaceWithEntityData)
     while (targetEntityData1 != null && replaceWithState[targetEntityData1.createEntityId()] != null) {
@@ -727,13 +753,30 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   private fun makeEntityDataCollection(targetChildEntityIds: List<ChildEntityId>,
                                        storage: AbstractEntityStorage): Object2ObjectOpenCustomHashMap<WorkspaceEntityData<out WorkspaceEntity>, List<WorkspaceEntityData<out WorkspaceEntity>>> {
     val targetChildrenMap = Object2ObjectOpenCustomHashMap<WorkspaceEntityData<out WorkspaceEntity>, List<WorkspaceEntityData<out WorkspaceEntity>>>(
+      targetChildEntityIds.size,
       EntityDataStrategy())
     targetChildEntityIds.forEach { id ->
       val value = storage.entityDataByIdOrDie(id.id)
-      val existingValue = targetChildrenMap[value]
-      targetChildrenMap[value] = if (existingValue != null) existingValue + value else listOf(value)
+      addValueToMap(targetChildrenMap, value)
     }
     return targetChildrenMap
+  }
+
+  private fun addValueToMap(targetChildrenMap: Object2ObjectOpenCustomHashMap<WorkspaceEntityData<out WorkspaceEntity>, List<WorkspaceEntityData<out WorkspaceEntity>>>,
+                            value: WorkspaceEntityData<out WorkspaceEntity>) {
+    val existingValue = targetChildrenMap[value]
+    targetChildrenMap[value] = if (existingValue != null) existingValue + value else listOf(value)
+  }
+
+  private val targetChildrenCache = HashMap<EntityId, Map<ConnectionId, List<ChildEntityId>>>()
+  private val replaceWithChildrenCache = HashMap<EntityId, Map<ConnectionId, List<ChildEntityId>>>()
+
+  private fun childrenInReplaceWith(entityId: EntityId?, childClazz: Int): List<ChildEntityId> {
+    return childrenInStorage(entityId, childClazz, replaceWithStorage, replaceWithChildrenCache)
+  }
+
+  private fun childrenInTarget(entityId: EntityId?, childClazz: Int): List<ChildEntityId> {
+    return childrenInStorage(entityId, childClazz, targetStorage, targetChildrenCache)
   }
 
   companion object {
@@ -751,9 +794,12 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       }
     }
 
-    private fun childrenInStorage(entityId: EntityId?, childrenClass: Int, storage: AbstractEntityStorage): List<ChildEntityId> {
+    private fun childrenInStorage(entityId: EntityId?,
+                                  childrenClass: Int,
+                                  storage: AbstractEntityStorage,
+                                  childrenCache: HashMap<EntityId, Map<ConnectionId, List<ChildEntityId>>>): List<ChildEntityId> {
       val targetEntityIds = if (entityId != null) {
-        val targetChildren = storage.refs.getChildrenRefsOfParentBy(entityId.asParent())
+        val targetChildren = childrenCache.getOrPut(entityId) { storage.refs.getChildrenRefsOfParentBy(entityId.asParent()) }
 
         val targetFoundChildren = targetChildren.filterKeys {
           sameClass(it.childClass, childrenClass, it.connectionType)
