@@ -318,13 +318,13 @@ public class TabLabel extends JPanel implements Accessible {
 
       Rectangle contentRect = myLabelPlaceholder.getBounds();
       // Fadeout for right side before pin/close button (needed only in side placements)
-      if (contentRect.width < myLabelPlaceholder.getPreferredSize().width) {
+      if (contentRect.width < myLabelPlaceholder.getPreferredSize().width + myTabs.getTabHGap()) {
         Rectangle rightRect =
           new Rectangle(contentRect.x + contentRect.width - width, borderThickness, width, myRect.height - 2 * borderThickness);
         paintGradientRect(g2d, rightRect, transparent, tabBg);
       }
       // Fadeout for right side
-      else if (myRect.width < getPreferredSize().width) {
+      else if (myRect.width < getPreferredSize().width + myTabs.getTabHGap()) {
         Rectangle rightRect = new Rectangle(myRect.width - width, borderThickness, width, myRect.height - 2 * borderThickness);
         paintGradientRect(g2d, rightRect, transparent, tabBg);
       }
