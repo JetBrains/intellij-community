@@ -3,6 +3,7 @@ package com.intellij.collaboration.async
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -69,18 +70,15 @@ fun <T, M> StateFlow<T>.mapState(
 ): StateFlow<M> = map { mapper(it) }.stateIn(scope, SharingStarted.Eagerly, mapper(value))
 
 @ApiStatus.Experimental
-fun <T, R> StateFlow<T>.mapStateScoped(scope: CoroutineScope, mapper: (CoroutineScope, T) -> R): StateFlow<R?> {
-  val result = MutableStateFlow<R?>(null)
-  scope.launch {
-    collectLatest { state ->
-      coroutineScope {
-        val nestedScope = this
-        result.value = mapper(nestedScope, state)
-        awaitCancellation()
-      }
+fun <T, R> StateFlow<T>.mapStateScoped(scope: CoroutineScope, mapper: (CoroutineScope, T) -> R): StateFlow<R> {
+  var nestedScope: CoroutineScope? = null
+  return mapState(scope) {value ->
+    nestedScope?.cancel()
+    scope.childScope(Dispatchers.Main).let {
+      nestedScope = it
+      mapper(scope, value)
     }
   }
-  return result
 }
 
 @ApiStatus.Experimental

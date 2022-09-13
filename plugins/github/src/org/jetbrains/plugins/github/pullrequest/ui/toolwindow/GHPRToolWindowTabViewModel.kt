@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import git4idea.remote.hosting.HostedGitRepositoryAutoConnector
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
@@ -25,7 +26,7 @@ internal class GHPRToolWindowTabViewModel(private val scope: CoroutineScope,
 
   private val autoConnector = HostedGitRepositoryAutoConnector(scope, connectionManager, repositoriesManager, accountManager)
 
-  val viewState = connectionManager.state.mapStateScoped(scope) { scope, connection ->
+  val viewState: StateFlow<GHPRTabContentViewModel> = connectionManager.state.mapStateScoped(scope) { scope, connection ->
     if (connection != null) {
       createConnectedVm(scope, connection)
     }
