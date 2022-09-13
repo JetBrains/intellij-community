@@ -31,6 +31,7 @@ public class VcsLogToolbarPopupActionGroup extends DefaultActionGroup implements
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, this, e.getDataContext(),
                                                                           JBPopupFactory.ActionSelectionAid.MNEMONICS, true,
                                                                           ActionPlaces.VCS_LOG_TOOLBAR_POPUP_PLACE);
+    popup.setShowSubmenuOnHover(true);
     myPopupState.prepareToShow(popup);
     PopupUtil.showForActionButtonEvent(popup, e);
   }
