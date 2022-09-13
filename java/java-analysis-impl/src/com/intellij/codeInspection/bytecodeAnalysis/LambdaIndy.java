@@ -39,17 +39,13 @@ final class LambdaIndy {
    * @return an opcode which corresponds to target method handle or -1 if method handle tag has no corresponding opcode
    */
   public int getAssociatedOpcode() {
-    switch (myTag) {
-      case H_INVOKESTATIC:
-        return INVOKESTATIC;
-      case H_INVOKESPECIAL:
-        return INVOKESPECIAL;
-      case H_INVOKEINTERFACE:
-        return INVOKEINTERFACE;
-      case H_INVOKEVIRTUAL:
-        return INVOKEVIRTUAL;
-    }
-    return -1;
+    return switch (myTag) {
+      case H_INVOKESTATIC -> INVOKESTATIC;
+      case H_INVOKESPECIAL -> INVOKESPECIAL;
+      case H_INVOKEINTERFACE -> INVOKEINTERFACE;
+      case H_INVOKEVIRTUAL -> INVOKEVIRTUAL;
+      default -> -1;
+    };
   }
 
   public Type getFunctionalMethodType() {

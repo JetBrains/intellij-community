@@ -779,24 +779,16 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static String getThreadStatusText(int statusId) {
-    switch (statusId) {
-      case ThreadReference.THREAD_STATUS_MONITOR:
-        return JavaDebuggerBundle.message("status.thread.monitor");
-      case ThreadReference.THREAD_STATUS_NOT_STARTED:
-        return JavaDebuggerBundle.message("status.thread.not.started");
-      case ThreadReference.THREAD_STATUS_RUNNING:
-        return JavaDebuggerBundle.message("status.thread.running");
-      case ThreadReference.THREAD_STATUS_SLEEPING:
-        return JavaDebuggerBundle.message("status.thread.sleeping");
-      case ThreadReference.THREAD_STATUS_UNKNOWN:
-        return JavaDebuggerBundle.message("status.thread.unknown");
-      case ThreadReference.THREAD_STATUS_WAIT:
-        return JavaDebuggerBundle.message("status.thread.wait");
-      case ThreadReference.THREAD_STATUS_ZOMBIE:
-        return JavaDebuggerBundle.message("status.thread.zombie");
-      default:
-        return JavaDebuggerBundle.message("status.thread.undefined");
-    }
+    return switch (statusId) {
+      case ThreadReference.THREAD_STATUS_MONITOR -> JavaDebuggerBundle.message("status.thread.monitor");
+      case ThreadReference.THREAD_STATUS_NOT_STARTED -> JavaDebuggerBundle.message("status.thread.not.started");
+      case ThreadReference.THREAD_STATUS_RUNNING -> JavaDebuggerBundle.message("status.thread.running");
+      case ThreadReference.THREAD_STATUS_SLEEPING -> JavaDebuggerBundle.message("status.thread.sleeping");
+      case ThreadReference.THREAD_STATUS_UNKNOWN -> JavaDebuggerBundle.message("status.thread.unknown");
+      case ThreadReference.THREAD_STATUS_WAIT -> JavaDebuggerBundle.message("status.thread.wait");
+      case ThreadReference.THREAD_STATUS_ZOMBIE -> JavaDebuggerBundle.message("status.thread.zombie");
+      default -> JavaDebuggerBundle.message("status.thread.undefined");
+    };
   }
 
   public static String prepareValueText(String text, Project project) {

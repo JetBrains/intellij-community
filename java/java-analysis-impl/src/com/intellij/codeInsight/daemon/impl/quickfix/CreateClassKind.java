@@ -74,13 +74,12 @@ public enum CreateClassKind implements ClassKind {
    */
   public @NotNull PsiClass createInDirectory(PsiDirectory directory, String name) {
     JavaDirectoryService service = JavaDirectoryService.getInstance();
-    switch (this) {
-      case INTERFACE:  return service.createInterface(directory, name);
-      case CLASS:      return service.createClass(directory, name);
-      case ENUM:       return service.createEnum(directory, name);
-      case RECORD:     return service.createRecord(directory, name);
-      case ANNOTATION: return service.createAnnotationType(directory, name);
-      default:         throw new IllegalStateException("Unexpected value: " + this);
-    }
+    return switch (this) {
+      case INTERFACE -> service.createInterface(directory, name);
+      case CLASS -> service.createClass(directory, name);
+      case ENUM -> service.createEnum(directory, name);
+      case RECORD -> service.createRecord(directory, name);
+      case ANNOTATION -> service.createAnnotationType(directory, name);
+    };
   }
 }

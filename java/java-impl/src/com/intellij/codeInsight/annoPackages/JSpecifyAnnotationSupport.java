@@ -64,14 +64,11 @@ public class JSpecifyAnnotationSupport implements AnnotationPackageSupport {
     if (!isAvailable()) {
       return Collections.emptyList();
     }
-    switch (nullability) {
-      case NOT_NULL:
-        return Collections.singletonList(NOT_NULL);
-      case NULLABLE:
-        return Collections.singletonList(NULLABLE);
-      default:
-        return Collections.singletonList(NULLNESS_UNKNOWN);
-    }
+    return switch (nullability) {
+      case NOT_NULL -> Collections.singletonList(NOT_NULL);
+      case NULLABLE -> Collections.singletonList(NULLABLE);
+      case UNKNOWN -> Collections.singletonList(NULLNESS_UNKNOWN);
+    };
   }
 
   @Override

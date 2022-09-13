@@ -332,18 +332,12 @@ public class BuildOutputService implements BuildViewService {
 
   @NotNull
   private static MessageEvent.Kind convertCategory(@NotNull CompilerMessageCategory category) {
-    switch (category) {
-      case ERROR:
-        return MessageEvent.Kind.ERROR;
-      case WARNING:
-        return MessageEvent.Kind.WARNING;
-      case INFORMATION:
-        return MessageEvent.Kind.INFO;
-      case STATISTICS:
-        return MessageEvent.Kind.STATISTICS;
-      default:
-        return MessageEvent.Kind.SIMPLE;
-    }
+    return switch (category) {
+      case ERROR -> MessageEvent.Kind.ERROR;
+      case WARNING -> MessageEvent.Kind.WARNING;
+      case INFORMATION -> MessageEvent.Kind.INFO;
+      case STATISTICS -> MessageEvent.Kind.STATISTICS;
+    };
   }
 
   private static class ConsolePrinter {

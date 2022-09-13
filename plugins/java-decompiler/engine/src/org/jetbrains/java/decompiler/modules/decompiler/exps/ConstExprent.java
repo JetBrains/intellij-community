@@ -350,54 +350,36 @@ public class ConstExprent extends Exprent {
 
   public boolean hasBooleanValue() {
     switch (constType.getType()) {
-      case CodeConstants.TYPE_BOOLEAN:
-      case CodeConstants.TYPE_CHAR:
-      case CodeConstants.TYPE_BYTE:
-      case CodeConstants.TYPE_BYTECHAR:
-      case CodeConstants.TYPE_SHORT:
-      case CodeConstants.TYPE_SHORTCHAR:
-      case CodeConstants.TYPE_INT:
+      case CodeConstants.TYPE_BOOLEAN, CodeConstants.TYPE_CHAR, CodeConstants.TYPE_BYTE, CodeConstants.TYPE_BYTECHAR,
+        CodeConstants.TYPE_SHORT, CodeConstants.TYPE_SHORTCHAR, CodeConstants.TYPE_INT -> {
         int value = (Integer)this.value;
         return value == 0 || (DecompilerContext.getOption(IFernflowerPreferences.BOOLEAN_TRUE_ONE) && value == 1);
+      }
     }
 
     return false;
   }
 
   public boolean hasValueOne() {
-    switch (constType.getType()) {
-      case CodeConstants.TYPE_BOOLEAN:
-      case CodeConstants.TYPE_CHAR:
-      case CodeConstants.TYPE_BYTE:
-      case CodeConstants.TYPE_BYTECHAR:
-      case CodeConstants.TYPE_SHORT:
-      case CodeConstants.TYPE_SHORTCHAR:
-      case CodeConstants.TYPE_INT:
-        return (Integer)value == 1;
-      case CodeConstants.TYPE_LONG:
-        return ((Long)value).intValue() == 1;
-      case CodeConstants.TYPE_DOUBLE:
-        return ((Double)value).intValue() == 1;
-      case CodeConstants.TYPE_FLOAT:
-        return ((Float)value).intValue() == 1;
-    }
-
-    return false;
+    return switch (constType.getType()) {
+      case CodeConstants.TYPE_BOOLEAN, CodeConstants.TYPE_CHAR, CodeConstants.TYPE_BYTE, CodeConstants.TYPE_BYTECHAR,
+        CodeConstants.TYPE_SHORT, CodeConstants.TYPE_SHORTCHAR, CodeConstants.TYPE_INT ->
+        (Integer)value == 1;
+      case CodeConstants.TYPE_LONG -> ((Long)value).intValue() == 1;
+      case CodeConstants.TYPE_DOUBLE -> ((Double)value).intValue() == 1;
+      case CodeConstants.TYPE_FLOAT -> ((Float)value).intValue() == 1;
+      default -> false;
+    };
   }
 
   public static ConstExprent getZeroConstant(int type) {
-    switch (type) {
-      case CodeConstants.TYPE_INT:
-        return new ConstExprent(VarType.VARTYPE_INT, 0, null);
-      case CodeConstants.TYPE_LONG:
-        return new ConstExprent(VarType.VARTYPE_LONG, 0L, null);
-      case CodeConstants.TYPE_DOUBLE:
-        return new ConstExprent(VarType.VARTYPE_DOUBLE, 0d, null);
-      case CodeConstants.TYPE_FLOAT:
-        return new ConstExprent(VarType.VARTYPE_FLOAT, 0f, null);
-    }
-
-    throw new RuntimeException("Invalid argument: " + type);
+    return switch (type) {
+      case CodeConstants.TYPE_INT -> new ConstExprent(VarType.VARTYPE_INT, 0, null);
+      case CodeConstants.TYPE_LONG -> new ConstExprent(VarType.VARTYPE_LONG, 0L, null);
+      case CodeConstants.TYPE_DOUBLE -> new ConstExprent(VarType.VARTYPE_DOUBLE, 0d, null);
+      case CodeConstants.TYPE_FLOAT -> new ConstExprent(VarType.VARTYPE_FLOAT, 0f, null);
+      default -> throw new RuntimeException("Invalid argument: " + type);
+    };
   }
 
   public VarType getConstType() {

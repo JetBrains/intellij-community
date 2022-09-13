@@ -96,7 +96,7 @@ public class FlattenStatementsHelper {
       if (statEntry.succEdges == null) {
 
         switch (stat.type) {
-          case BASIC_BLOCK:
+          case BASIC_BLOCK -> {
             node = new DirectNode(DirectNodeType.DIRECT, stat, (BasicBlockStatement)stat);
             if (stat.getExprents() != null) {
               node.exprents = stat.getExprents();
@@ -124,10 +124,8 @@ public class FlattenStatementsHelper {
             if (stat.getLastBasicType() == StatementType.IF) {
               mapPosIfBranch.put(sourcenode.id, lstSuccEdges.get(0).getDestination().id);
             }
-
-            break;
-          case CATCH_ALL:
-          case TRY_CATCH:
+          }
+          case CATCH_ALL, TRY_CATCH -> {
             DirectNode firstnd = new DirectNode(DirectNodeType.TRY, stat, stat.id + "_try");
 
             mapDestinationNodes.put(stat.id, new String[]{firstnd.id, null});
@@ -154,8 +152,8 @@ public class FlattenStatementsHelper {
             }
 
             lstStackStatements.addAll(0, lst);
-            break;
-          case DO:
+          }
+          case DO -> {
             if (statementBreakIndex == 0) {
               statEntry.statementIndex = 1;
               lstStackStatements.addFirst(statEntry);
@@ -239,12 +237,8 @@ public class FlattenStatementsHelper {
 
                 sourcenode = nodecond;
             }
-            break;
-          case SYNCHRONIZED:
-          case SWITCH:
-          case IF:
-          case SEQUENCE:
-          case ROOT:
+          }
+          case SYNCHRONIZED, SWITCH, IF, SEQUENCE, ROOT -> {
             int statsize = stat.getStats().size();
             if (stat.type == StatementType.SYNCHRONIZED) {
               statsize = 2;  // exclude the handler if synchronized
@@ -282,6 +276,7 @@ public class FlattenStatementsHelper {
                 sourcenode = tailexprlst.get(0) == null ? node : graph.nodes.getWithKey(node.id + "_tail");
               }
             }
+          }
         }
       }
 

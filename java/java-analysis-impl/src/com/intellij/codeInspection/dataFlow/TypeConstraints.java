@@ -371,26 +371,17 @@ public final class TypeConstraints {
     public DfType getUnboxedType() {
       String name = classDef.getQualifiedName();
       if (name == null) return DfType.BOTTOM;
-      switch (name) {
-        case JAVA_LANG_BOOLEAN:
-          return DfTypes.BOOLEAN;
-        case JAVA_LANG_INTEGER:
-          return DfTypes.INT;
-        case JAVA_LANG_LONG:
-          return DfTypes.LONG;
-        case JAVA_LANG_DOUBLE:
-          return DfTypes.DOUBLE;
-        case JAVA_LANG_FLOAT:
-          return DfTypes.FLOAT;
-        case JAVA_LANG_BYTE:
-          return DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.BYTE)));
-        case JAVA_LANG_SHORT:
-          return DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.SHORT)));
-        case JAVA_LANG_CHARACTER:
-          return DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.CHAR)));
-        default:
-          return DfType.BOTTOM;
-      }
+      return switch (name) {
+        case JAVA_LANG_BOOLEAN -> DfTypes.BOOLEAN;
+        case JAVA_LANG_INTEGER -> DfTypes.INT;
+        case JAVA_LANG_LONG -> DfTypes.LONG;
+        case JAVA_LANG_DOUBLE -> DfTypes.DOUBLE;
+        case JAVA_LANG_FLOAT -> DfTypes.FLOAT;
+        case JAVA_LANG_BYTE -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.BYTE)));
+        case JAVA_LANG_SHORT -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.SHORT)));
+        case JAVA_LANG_CHARACTER -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.CHAR)));
+        default -> DfType.BOTTOM;
+      };
     }
 
     @Override

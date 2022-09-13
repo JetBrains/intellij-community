@@ -126,43 +126,25 @@ public class VarType implements Type {  // TODO: optimize switch
   }
 
   private static String getChar(int type) {
-    switch (type) {
-      case CodeConstants.TYPE_BYTE:
-        return "B";
-      case CodeConstants.TYPE_CHAR:
-        return "C";
-      case CodeConstants.TYPE_DOUBLE:
-        return "D";
-      case CodeConstants.TYPE_FLOAT:
-        return "F";
-      case CodeConstants.TYPE_INT:
-        return "I";
-      case CodeConstants.TYPE_LONG:
-        return "J";
-      case CodeConstants.TYPE_SHORT:
-        return "S";
-      case CodeConstants.TYPE_BOOLEAN:
-        return "Z";
-      case CodeConstants.TYPE_VOID:
-        return "V";
-      case CodeConstants.TYPE_GROUP2EMPTY:
-        return "G";
-      case CodeConstants.TYPE_NOTINITIALIZED:
-        return "N";
-      case CodeConstants.TYPE_ADDRESS:
-        return "A";
-      case CodeConstants.TYPE_BYTECHAR:
-        return "X";
-      case CodeConstants.TYPE_SHORTCHAR:
-        return "Y";
-      case CodeConstants.TYPE_UNKNOWN:
-        return "U";
-      case CodeConstants.TYPE_NULL:
-      case CodeConstants.TYPE_OBJECT:
-        return null;
-      default:
-        throw new RuntimeException("Invalid type");
-    }
+    return switch (type) {
+      case CodeConstants.TYPE_BYTE -> "B";
+      case CodeConstants.TYPE_CHAR -> "C";
+      case CodeConstants.TYPE_DOUBLE -> "D";
+      case CodeConstants.TYPE_FLOAT -> "F";
+      case CodeConstants.TYPE_INT -> "I";
+      case CodeConstants.TYPE_LONG -> "J";
+      case CodeConstants.TYPE_SHORT -> "S";
+      case CodeConstants.TYPE_BOOLEAN -> "Z";
+      case CodeConstants.TYPE_VOID -> "V";
+      case CodeConstants.TYPE_GROUP2EMPTY -> "G";
+      case CodeConstants.TYPE_NOTINITIALIZED -> "N";
+      case CodeConstants.TYPE_ADDRESS -> "A";
+      case CodeConstants.TYPE_BYTECHAR -> "X";
+      case CodeConstants.TYPE_SHORTCHAR -> "Y";
+      case CodeConstants.TYPE_UNKNOWN -> "U";
+      case CodeConstants.TYPE_NULL, CodeConstants.TYPE_OBJECT -> null;
+      default -> throw new RuntimeException("Invalid type");
+    };
   }
 
   private static int getStackSize(int type, int arrayDim) {
@@ -170,16 +152,11 @@ public class VarType implements Type {  // TODO: optimize switch
       return 1;
     }
 
-    switch (type) {
-      case CodeConstants.TYPE_DOUBLE:
-      case CodeConstants.TYPE_LONG:
-        return 2;
-      case CodeConstants.TYPE_VOID:
-      case CodeConstants.TYPE_GROUP2EMPTY:
-        return 0;
-      default:
-        return 1;
-    }
+    return switch (type) {
+      case CodeConstants.TYPE_DOUBLE, CodeConstants.TYPE_LONG -> 2;
+      case CodeConstants.TYPE_VOID, CodeConstants.TYPE_GROUP2EMPTY -> 0;
+      default -> 1;
+    };
   }
 
   private static int getFamily(int type, int arrayDim) {
@@ -187,28 +164,16 @@ public class VarType implements Type {  // TODO: optimize switch
       return CodeConstants.TYPE_FAMILY_OBJECT;
     }
 
-    switch (type) {
-      case CodeConstants.TYPE_BYTE:
-      case CodeConstants.TYPE_BYTECHAR:
-      case CodeConstants.TYPE_SHORTCHAR:
-      case CodeConstants.TYPE_CHAR:
-      case CodeConstants.TYPE_SHORT:
-      case CodeConstants.TYPE_INT:
-        return CodeConstants.TYPE_FAMILY_INTEGER;
-      case CodeConstants.TYPE_DOUBLE:
-        return CodeConstants.TYPE_FAMILY_DOUBLE;
-      case CodeConstants.TYPE_FLOAT:
-        return CodeConstants.TYPE_FAMILY_FLOAT;
-      case CodeConstants.TYPE_LONG:
-        return CodeConstants.TYPE_FAMILY_LONG;
-      case CodeConstants.TYPE_BOOLEAN:
-        return CodeConstants.TYPE_FAMILY_BOOLEAN;
-      case CodeConstants.TYPE_NULL:
-      case CodeConstants.TYPE_OBJECT:
-        return CodeConstants.TYPE_FAMILY_OBJECT;
-      default:
-        return CodeConstants.TYPE_FAMILY_UNKNOWN;
-    }
+    return switch (type) {
+      case CodeConstants.TYPE_BYTE, CodeConstants.TYPE_BYTECHAR, CodeConstants.TYPE_SHORTCHAR, CodeConstants.TYPE_CHAR,
+        CodeConstants.TYPE_SHORT, CodeConstants.TYPE_INT -> CodeConstants.TYPE_FAMILY_INTEGER;
+      case CodeConstants.TYPE_DOUBLE -> CodeConstants.TYPE_FAMILY_DOUBLE;
+      case CodeConstants.TYPE_FLOAT -> CodeConstants.TYPE_FAMILY_FLOAT;
+      case CodeConstants.TYPE_LONG -> CodeConstants.TYPE_FAMILY_LONG;
+      case CodeConstants.TYPE_BOOLEAN -> CodeConstants.TYPE_FAMILY_BOOLEAN;
+      case CodeConstants.TYPE_NULL, CodeConstants.TYPE_OBJECT -> CodeConstants.TYPE_FAMILY_OBJECT;
+      default -> CodeConstants.TYPE_FAMILY_UNKNOWN;
+    };
   }
 
   public VarType decreaseArrayDim() {
@@ -373,60 +338,36 @@ public class VarType implements Type {  // TODO: optimize switch
   }
 
   public static VarType getMinTypeInFamily(int family) {
-    switch (family) {
-      case CodeConstants.TYPE_FAMILY_BOOLEAN:
-        return VARTYPE_BOOLEAN;
-      case CodeConstants.TYPE_FAMILY_INTEGER:
-        return VARTYPE_BYTECHAR;
-      case CodeConstants.TYPE_FAMILY_OBJECT:
-        return VARTYPE_NULL;
-      case CodeConstants.TYPE_FAMILY_FLOAT:
-        return VARTYPE_FLOAT;
-      case CodeConstants.TYPE_FAMILY_LONG:
-        return VARTYPE_LONG;
-      case CodeConstants.TYPE_FAMILY_DOUBLE:
-        return VARTYPE_DOUBLE;
-      case CodeConstants.TYPE_FAMILY_UNKNOWN:
-        return VARTYPE_UNKNOWN;
-      default:
-        throw new IllegalArgumentException("Invalid type family: " + family);
-    }
+    return switch (family) {
+      case CodeConstants.TYPE_FAMILY_BOOLEAN -> VARTYPE_BOOLEAN;
+      case CodeConstants.TYPE_FAMILY_INTEGER -> VARTYPE_BYTECHAR;
+      case CodeConstants.TYPE_FAMILY_OBJECT -> VARTYPE_NULL;
+      case CodeConstants.TYPE_FAMILY_FLOAT -> VARTYPE_FLOAT;
+      case CodeConstants.TYPE_FAMILY_LONG -> VARTYPE_LONG;
+      case CodeConstants.TYPE_FAMILY_DOUBLE -> VARTYPE_DOUBLE;
+      case CodeConstants.TYPE_FAMILY_UNKNOWN -> VARTYPE_UNKNOWN;
+      default -> throw new IllegalArgumentException("Invalid type family: " + family);
+    };
   }
 
   public static int getType(char c) {
-    switch (c) {
-      case 'B':
-        return CodeConstants.TYPE_BYTE;
-      case 'C':
-        return CodeConstants.TYPE_CHAR;
-      case 'D':
-        return CodeConstants.TYPE_DOUBLE;
-      case 'F':
-        return CodeConstants.TYPE_FLOAT;
-      case 'I':
-        return CodeConstants.TYPE_INT;
-      case 'J':
-        return CodeConstants.TYPE_LONG;
-      case 'S':
-        return CodeConstants.TYPE_SHORT;
-      case 'Z':
-        return CodeConstants.TYPE_BOOLEAN;
-      case 'V':
-        return CodeConstants.TYPE_VOID;
-      case 'G':
-        return CodeConstants.TYPE_GROUP2EMPTY;
-      case 'N':
-        return CodeConstants.TYPE_NOTINITIALIZED;
-      case 'A':
-        return CodeConstants.TYPE_ADDRESS;
-      case 'X':
-        return CodeConstants.TYPE_BYTECHAR;
-      case 'Y':
-        return CodeConstants.TYPE_SHORTCHAR;
-      case 'U':
-        return CodeConstants.TYPE_UNKNOWN;
-      default:
-        throw new IllegalArgumentException("Invalid type: " + c);
-    }
+    return switch (c) {
+      case 'B' -> CodeConstants.TYPE_BYTE;
+      case 'C' -> CodeConstants.TYPE_CHAR;
+      case 'D' -> CodeConstants.TYPE_DOUBLE;
+      case 'F' -> CodeConstants.TYPE_FLOAT;
+      case 'I' -> CodeConstants.TYPE_INT;
+      case 'J' -> CodeConstants.TYPE_LONG;
+      case 'S' -> CodeConstants.TYPE_SHORT;
+      case 'Z' -> CodeConstants.TYPE_BOOLEAN;
+      case 'V' -> CodeConstants.TYPE_VOID;
+      case 'G' -> CodeConstants.TYPE_GROUP2EMPTY;
+      case 'N' -> CodeConstants.TYPE_NOTINITIALIZED;
+      case 'A' -> CodeConstants.TYPE_ADDRESS;
+      case 'X' -> CodeConstants.TYPE_BYTECHAR;
+      case 'Y' -> CodeConstants.TYPE_SHORTCHAR;
+      case 'U' -> CodeConstants.TYPE_UNKNOWN;
+      default -> throw new IllegalArgumentException("Invalid type: " + c);
+    };
   }
 }

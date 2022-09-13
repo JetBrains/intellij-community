@@ -307,8 +307,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
 
     static final String[] COLUMN_NAMES = getColumns();
 
-    @NotNull
-    private static String[] getColumns() {
+    private static @NotNull String @NotNull [] getColumns() {
       return new String[]{"",
         JavaDebuggerBundle.message("settings.capture.column.capture.class.name"),
         JavaDebuggerBundle.message("settings.capture.column.capture.method.name"),
@@ -414,23 +413,16 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     @Override
     public Object getValueAt(int row, int col) {
       CapturePoint point = myCapturePoints.get(row);
-      switch (col) {
-        case ENABLED_COLUMN:
-          return point.myEnabled;
-        case CLASS_COLUMN:
-          return point.myClassName;
-        case METHOD_COLUMN:
-          return point.myMethodName;
-        case PARAM_COLUMN:
-          return point.myCaptureKeyExpression;
-        case INSERT_CLASS_COLUMN:
-          return point.myInsertClassName;
-        case INSERT_METHOD_COLUMN:
-          return point.myInsertMethodName;
-        case INSERT_KEY_EXPR:
-          return point.myInsertKeyExpression;
-      }
-      return null;
+      return switch (col) {
+        case ENABLED_COLUMN -> point.myEnabled;
+        case CLASS_COLUMN -> point.myClassName;
+        case METHOD_COLUMN -> point.myMethodName;
+        case PARAM_COLUMN -> point.myCaptureKeyExpression;
+        case INSERT_CLASS_COLUMN -> point.myInsertClassName;
+        case INSERT_METHOD_COLUMN -> point.myInsertMethodName;
+        case INSERT_KEY_EXPR -> point.myInsertKeyExpression;
+        default -> null;
+      };
     }
 
     @Override
@@ -442,33 +434,19 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     public void setValueAt(Object value, int row, int col) {
       CapturePoint point = myCapturePoints.get(row);
       switch (col) {
-        case ENABLED_COLUMN:
-          point.myEnabled = (boolean)value;
-          break;
-        case CLASS_COLUMN:
-          point.myClassName = (String)value;
-          break;
-        case METHOD_COLUMN:
-          point.myMethodName = (String)value;
-          break;
-        case PARAM_COLUMN:
-          point.myCaptureKeyExpression = (String)value;
-          break;
-        case INSERT_CLASS_COLUMN:
-          point.myInsertClassName = (String)value;
-          break;
-        case INSERT_METHOD_COLUMN:
-          point.myInsertMethodName = (String)value;
-          break;
-        case INSERT_KEY_EXPR:
-          point.myInsertKeyExpression = (String)value;
-          break;
+        case ENABLED_COLUMN -> point.myEnabled = (boolean)value;
+        case CLASS_COLUMN -> point.myClassName = (String)value;
+        case METHOD_COLUMN -> point.myMethodName = (String)value;
+        case PARAM_COLUMN -> point.myCaptureKeyExpression = (String)value;
+        case INSERT_CLASS_COLUMN -> point.myInsertClassName = (String)value;
+        case INSERT_METHOD_COLUMN -> point.myInsertMethodName = (String)value;
+        case INSERT_KEY_EXPR -> point.myInsertKeyExpression = (String)value;
       }
       fireTableCellUpdated(row, col);
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
+    public Class<?> getColumnClass(int columnIndex) {
       return columnIndex == ENABLED_COLUMN ? Boolean.class : String.class;
     }
 
@@ -629,9 +607,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       super.doOKAction();
     }
 
-    @Nullable
     @Override
-    protected String getHelpId() {
+    protected @NotNull String getHelpId() {
       return "reference.idesettings.debugger.customAsyncAnnotations";
     }
   }

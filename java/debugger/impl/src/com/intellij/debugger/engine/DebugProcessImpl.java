@@ -1451,13 +1451,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public void clearCashes(@MagicConstant(flagsFromClass = EventRequest.class) int suspendPolicy) {
     if (!isAttached()) return;
     switch (suspendPolicy) {
-      case EventRequest.SUSPEND_ALL:
-        getVirtualMachineProxy().clearCaches();
-        break;
-      case EventRequest.SUSPEND_EVENT_THREAD:
-        getVirtualMachineProxy().clearCaches();
-        //suspendContext.getThread().clearAll();
-        break;
+      case EventRequest.SUSPEND_ALL, EventRequest.SUSPEND_EVENT_THREAD -> getVirtualMachineProxy().clearCaches();
     }
   }
 

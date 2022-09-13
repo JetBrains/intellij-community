@@ -473,13 +473,11 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   private static CompilerMessageCategory kindToCategory(Diagnostic.Kind kind) {
-    switch (kind) {
-      case ERROR: return CompilerMessageCategory.ERROR;
-      case MANDATORY_WARNING:
-      case WARNING: return CompilerMessageCategory.WARNING;
-      case NOTE:
-      default: return CompilerMessageCategory.INFORMATION;
-    }
+    return switch (kind) {
+      case ERROR -> CompilerMessageCategory.ERROR;
+      case MANDATORY_WARNING, WARNING -> CompilerMessageCategory.WARNING;
+      default -> CompilerMessageCategory.INFORMATION;
+    };
   }
 
 

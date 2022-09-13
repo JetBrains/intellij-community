@@ -146,19 +146,12 @@ public class GenericType implements Type {
     while (value.length() > 0) {
       String typeStr = getNextType(value);
       int len = typeStr.length();
-      int wildcard = WILDCARD_NO;
-
-      switch (typeStr.charAt(0)) {
-        case '*':
-          wildcard = WILDCARD_UNBOUND;
-          break;
-        case '+':
-          wildcard = WILDCARD_EXTENDS;
-          break;
-        case '-':
-          wildcard = WILDCARD_SUPER;
-          break;
-      }
+      int wildcard = switch (typeStr.charAt(0)) {
+        case '*' -> WILDCARD_UNBOUND;
+        case '+' -> WILDCARD_EXTENDS;
+        case '-' -> WILDCARD_SUPER;
+        default -> WILDCARD_NO;
+      };
 
       type.getWildcards().add(wildcard);
 

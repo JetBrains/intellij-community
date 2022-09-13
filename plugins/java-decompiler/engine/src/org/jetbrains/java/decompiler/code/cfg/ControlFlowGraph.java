@@ -307,13 +307,12 @@ public class ControlFlowGraph implements CodeConstants {
       BasicBlock bTemp;
 
       switch (instr.group) {
-        case GROUP_JUMP:
+        case GROUP_JUMP -> {
           int dest = ((JumpInstruction)instr).destination;
           bTemp = mapInstrBlocks.get(dest);
           block.addSuccessor(bTemp);
-
-          break;
-        case GROUP_SWITCH:
+        }
+        case GROUP_SWITCH -> {
           SwitchInstruction sinstr = (SwitchInstruction)instr;
           int[] dests = sinstr.getDestinations();
 
@@ -323,6 +322,7 @@ public class ControlFlowGraph implements CodeConstants {
             bTemp = mapInstrBlocks.get(dest1);
             block.addSuccessor(bTemp);
           }
+        }
       }
 
       if (fallthrough && i < lstbb.size() - 1) {
@@ -393,10 +393,8 @@ public class ControlFlowGraph implements CodeConstants {
           setVisited.add(node);
 
           switch (node.getSeq().getLastInstr().opcode) {
-            case CodeConstants.opc_jsr:
-              jsrstack.add(node);
-              break;
-            case CodeConstants.opc_ret:
+            case CodeConstants.opc_jsr -> jsrstack.add(node);
+            case CodeConstants.opc_ret -> {
               BasicBlock enter = jsrstack.getLast();
               BasicBlock exit = blocks.getWithKey(enter.id + 1); // FIXME: find successor in a better way
 
@@ -410,6 +408,7 @@ public class ControlFlowGraph implements CodeConstants {
               else {
                 throw new RuntimeException("ERROR: last instruction jsr");
               }
+            }
           }
 
           if (!jsrstack.isEmpty()) {

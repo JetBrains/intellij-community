@@ -273,20 +273,18 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
     int opcode = insnNode.getOpcode();
     switch (opcode) {
-      case ARETURN:
-      case IRETURN:
-      case LRETURN:
-      case FRETURN:
-      case DRETURN:
-      case RETURN:
+      case ARETURN, IRETURN, LRETURN, FRETURN, DRETURN, RETURN -> {
         if (!hasCompanions) {
           earlyResult = Return;
-        } else {
+        }
+        else {
           results.set(stateIndex, Return);
           addComputed(insnIndex, state);
         }
         return;
-      default:
+      }
+      default -> {
+      }
     }
 
     if (opcode == ATHROW) {
@@ -360,17 +358,16 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
   private void execute(Frame<BasicValue> frame, AbstractInsnNode insnNode) throws AnalyzerException {
     switch (insnNode.getType()) {
-      case AbstractInsnNode.LABEL:
-      case AbstractInsnNode.LINE:
-      case AbstractInsnNode.FRAME:
+      case AbstractInsnNode.LABEL, AbstractInsnNode.LINE, AbstractInsnNode.FRAME -> {
         nextFrame = frame;
         subResult = Identity;
-        break;
-      default:
+      }
+      default -> {
         nextFrame = new Frame<>(frame);
         interpreter.reset(false);
         nextFrame.execute(insnNode, interpreter);
         subResult = interpreter.getSubResult();
+      }
     }
   }
 }
@@ -538,19 +535,18 @@ class NullableInAnalysis extends Analysis<PResult> {
 
   private void execute(Frame<BasicValue> frame, AbstractInsnNode insnNode, boolean taken) throws AnalyzerException {
     switch (insnNode.getType()) {
-      case AbstractInsnNode.LABEL:
-      case AbstractInsnNode.LINE:
-      case AbstractInsnNode.FRAME:
+      case AbstractInsnNode.LABEL, AbstractInsnNode.LINE, AbstractInsnNode.FRAME -> {
         nextFrame = frame;
         subResult = Identity;
         top = false;
-        break;
-      default:
+      }
+      default -> {
         nextFrame = new Frame<>(frame);
         interpreter.reset(taken);
         nextFrame.execute(insnNode, interpreter);
         subResult = interpreter.getSubResult();
         top = interpreter.top;
+      }
     }
   }
 }

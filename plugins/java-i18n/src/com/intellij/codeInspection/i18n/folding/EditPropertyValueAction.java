@@ -237,25 +237,13 @@ public final class EditPropertyValueAction extends BaseRefactoringAction {
       }
       else if (escaped) {
         escaped = false;
-        String replacement;
-        switch (c) {
-          case '\n':
-            replacement = "";
-            break;
-          case 'r':
-            replacement = "\n";
-            break;
-          case 'n':
-            replacement = "\r";
-            break;
-          case 'u':
-          case 'U':
-            replacement = null;
-            break;
-          default:
-            replacement = Character.toString(c);
-            break;
-        }
+        String replacement = switch (c) {
+          case '\n' -> "";
+          case 'r' -> "\n";
+          case 'n' -> "\r";
+          case 'u', 'U' -> null;
+          default -> Character.toString(c);
+        };
         if (replacement != null) {
           i = replaceEscapePair(b, i, replacement, offsets);
         }

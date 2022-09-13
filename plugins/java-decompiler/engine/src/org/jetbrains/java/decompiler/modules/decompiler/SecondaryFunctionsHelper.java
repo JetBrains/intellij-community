@@ -121,21 +121,16 @@ public final class SecondaryFunctionsHelper {
       FunctionExprent fexpr = (FunctionExprent)exprent;
 
       switch (fexpr.getFuncType()) {
-        case FunctionExprent.FUNCTION_BOOL_NOT:
+        case FunctionExprent.FUNCTION_BOOL_NOT -> {
 
           Exprent retparam = propagateBoolNot(fexpr);
 
           if (retparam != null) {
             return retparam;
           }
-
-          break;
-        case FunctionExprent.FUNCTION_EQ:
-        case FunctionExprent.FUNCTION_NE:
-        case FunctionExprent.FUNCTION_GT:
-        case FunctionExprent.FUNCTION_GE:
-        case FunctionExprent.FUNCTION_LT:
-        case FunctionExprent.FUNCTION_LE:
+        }
+        case FunctionExprent.FUNCTION_EQ, FunctionExprent.FUNCTION_NE, FunctionExprent.FUNCTION_GT,
+          FunctionExprent.FUNCTION_GE, FunctionExprent.FUNCTION_LT, FunctionExprent.FUNCTION_LE -> {
           Exprent expr1 = fexpr.getLstOperands().get(0);
           Exprent expr2 = fexpr.getLstOperands().get(1);
 
@@ -174,7 +169,7 @@ public final class SecondaryFunctionsHelper {
                   if (trueForNan) {
                     List<Exprent> operands = new ArrayList<>();
                     operands.add(new FunctionExprent(funcsnot[desttype - FunctionExprent.FUNCTION_EQ],
-                      funcexpr.getLstOperands(), funcexpr.bytecode));
+                                                     funcexpr.getLstOperands(), funcexpr.bytecode));
                     return new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, operands, funcexpr.bytecode);
                   }
                 }
@@ -182,6 +177,7 @@ public final class SecondaryFunctionsHelper {
               }
             }
           }
+        }
       }
     }
 

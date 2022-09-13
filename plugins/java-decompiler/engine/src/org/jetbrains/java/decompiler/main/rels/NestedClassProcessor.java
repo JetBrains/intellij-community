@@ -863,22 +863,18 @@ public class NestedClassProcessor {
       boolean res = false;
 
       switch (expr.type) {
-        case Exprent.EXPRENT_CONST:
+        case Exprent.EXPRENT_CONST -> {
           ConstExprent constExpr = (ConstExprent)expr;
           res = (VarType.VARTYPE_CLASS.equals(constExpr.getConstType()) && classname.equals(constExpr.getValue()) ||
                  classType.equals(constExpr.getConstType()));
-          break;
-        case Exprent.EXPRENT_FIELD:
-          res = classname.equals(((FieldExprent)expr).getClassname());
-          break;
-        case Exprent.EXPRENT_INVOCATION:
-          res = classname.equals(((InvocationExprent)expr).getClassName());
-          break;
-        case Exprent.EXPRENT_NEW:
+        }
+        case Exprent.EXPRENT_FIELD -> res = classname.equals(((FieldExprent)expr).getClassname());
+        case Exprent.EXPRENT_INVOCATION -> res = classname.equals(((InvocationExprent)expr).getClassName());
+        case Exprent.EXPRENT_NEW -> {
           VarType newType = expr.getExprType();
           res = newType.getType() == CodeConstants.TYPE_OBJECT && classname.equals(newType.getValue());
-          break;
-        case Exprent.EXPRENT_VAR:
+        }
+        case Exprent.EXPRENT_VAR -> {
           VarExprent varExpr = (VarExprent)expr;
           if (varExpr.isDefinition()) {
             VarType varType = varExpr.getVarType();
@@ -886,6 +882,7 @@ public class NestedClassProcessor {
               res = true;
             }
           }
+        }
       }
 
       if (res) {

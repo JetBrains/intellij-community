@@ -331,22 +331,15 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
 
     private static DataValue readDataValue(@NotNull DataInput in) throws IOException {
       int dataI = DataInputOutputUtil.readINT(in);
-      switch (dataI) {
-        case -1:
-          return DataValue.ThisDataValue;
-        case -2:
-          return DataValue.LocalDataValue;
-        case -3:
-          return DataValue.OwnedDataValue;
-        case -4:
-          return DataValue.UnknownDataValue1;
-        case -5:
-          return DataValue.UnknownDataValue2;
-        case -6:
-          return new DataValue.ReturnDataValue(readKey(in));
-        default:
-          return DataValue.ParameterDataValue.create(dataI);
-      }
+      return switch (dataI) {
+        case -1 -> DataValue.ThisDataValue;
+        case -2 -> DataValue.LocalDataValue;
+        case -3 -> DataValue.OwnedDataValue;
+        case -4 -> DataValue.UnknownDataValue1;
+        case -5 -> DataValue.UnknownDataValue2;
+        case -6 -> new DataValue.ReturnDataValue(readKey(in));
+        default -> DataValue.ParameterDataValue.create(dataI);
+      };
     }
   }
 }

@@ -260,23 +260,15 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
   @Override
   public BasicValue binaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2) throws AnalyzerException {
     switch (insn.getOpcode()) {
-      case PUTFIELD:
-      case IALOAD:
-      case LALOAD:
-      case FALOAD:
-      case DALOAD:
-      case AALOAD:
-      case BALOAD:
-      case CALOAD:
-      case SALOAD:
+      case PUTFIELD, IALOAD, LALOAD, FALOAD, DALOAD, AALOAD, BALOAD, CALOAD, SALOAD -> {
         if (value1 instanceof Calls) {
           delta = ((Calls)value1).mergedLabels;
         }
-        if (value1 instanceof LabeledNull){
+        if (value1 instanceof LabeledNull) {
           nullsDelta = ((LabeledNull)value1).origins;
         }
-        break;
-      default:
+      }
+      default -> { }
     }
     return super.binaryOperation(insn, value1, value2);
   }
@@ -296,24 +288,20 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
   public BasicValue naryOperation(AbstractInsnNode insn, List<? extends BasicValue> values) throws AnalyzerException {
     int opCode = insn.getOpcode();
     switch (opCode) {
-      case INVOKESPECIAL:
-      case INVOKEINTERFACE:
-      case INVOKEVIRTUAL:
+      case INVOKESPECIAL, INVOKEINTERFACE, INVOKEVIRTUAL -> {
         BasicValue receiver = values.get(0);
-        if (receiver instanceof Calls) {
-          delta = ((Calls)receiver).mergedLabels;
+        if (receiver instanceof Calls calls) {
+          delta = calls.mergedLabels;
         }
-        if (receiver instanceof LabeledNull){
-          nullsDelta = ((LabeledNull)receiver).origins;
+        if (receiver instanceof LabeledNull labeledNull) {
+          nullsDelta = labeledNull.origins;
         }
-        break;
-      default:
+      }
+      default -> { }
     }
 
     switch (opCode) {
-      case INVOKESTATIC:
-      case INVOKESPECIAL:
-      case INVOKEVIRTUAL:
+      case INVOKESTATIC, INVOKESPECIAL, INVOKEVIRTUAL -> {
         int insnIndex = insns.indexOf(insn);
         if (origins[insnIndex]) {
           boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
@@ -325,8 +313,8 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
           }
           return new Calls(label);
         }
-        break;
-      default:
+      }
+      default -> { }
     }
     return super.naryOperation(insn, values);
   }

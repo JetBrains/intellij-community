@@ -34,16 +34,12 @@ public final class OptionalUtil {
   @NotNull
   @Contract(pure = true)
   public static String getOptionalClass(String type) {
-    switch (type) {
-      case "int":
-        return OPTIONAL_INT;
-      case "long":
-        return OPTIONAL_LONG;
-      case "double":
-        return OPTIONAL_DOUBLE;
-      default:
-        return JAVA_UTIL_OPTIONAL;
-    }
+    return switch (type) {
+      case "int" -> OPTIONAL_INT;
+      case "long" -> OPTIONAL_LONG;
+      case "double" -> OPTIONAL_DOUBLE;
+      default -> JAVA_UTIL_OPTIONAL;
+    };
   }
 
   public static boolean isJdkOptionalClassName(String className) {

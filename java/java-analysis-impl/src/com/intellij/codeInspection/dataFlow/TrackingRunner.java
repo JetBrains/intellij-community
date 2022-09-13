@@ -1153,16 +1153,11 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       CauseItem causeItem = fromMemberNullability(nullability, method, JavaElementKind.METHOD,
                                                   call.getMethodExpression().getReferenceNameElement());
       if (causeItem == null) {
-        switch (nullability) {
-          case NULL:
-          case NULLABLE:
-            causeItem = fromCallContract(factUse, call, ContractReturnValue.returnNull());
-            break;
-          case NOT_NULL:
-            causeItem = fromCallContract(factUse, call, ContractReturnValue.returnNotNull());
-            break;
-          default:
-        }
+        causeItem = switch (nullability) {
+          case NULL, NULLABLE -> fromCallContract(factUse, call, ContractReturnValue.returnNull());
+          case NOT_NULL -> fromCallContract(factUse, call, ContractReturnValue.returnNotNull());
+          default -> null;
+        };
       }
       if (causeItem != null) {
         return causeItem;

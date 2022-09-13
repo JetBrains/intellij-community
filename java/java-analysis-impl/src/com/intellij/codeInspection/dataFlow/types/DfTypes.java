@@ -187,25 +187,17 @@ public final class DfTypes {
    * @return resulting DfType.
    */
   public static @NotNull DfType rangeClamped(@NotNull LongRangeSet range, @NotNull LongRangeType lrType) {
-    switch (lrType) {
-      case INT32:
-        return intRangeClamped(range);
-      case INT64:
-        return longRange(range);
-      default:
-        throw new IllegalStateException("Unexpected value: " + lrType);
-    }
+    return switch (lrType) {
+      case INT32 -> intRangeClamped(range);
+      case INT64 -> longRange(range);
+    };
   }
 
   static @NotNull DfType range(@NotNull LongRangeSet range, @Nullable LongRangeSet wideRange, @NotNull LongRangeType lrType) {
-    switch (lrType) {
-      case INT32:
-        return intRange(range, wideRange);
-      case INT64:
-        return longRange(range, wideRange);
-      default:
-        throw new IllegalStateException("Unexpected value: " + lrType);
-    }
+    return switch (lrType) {
+      case INT32 -> intRange(range, wideRange);
+      case INT64 -> longRange(range, wideRange);
+    };
   }
 
   /**

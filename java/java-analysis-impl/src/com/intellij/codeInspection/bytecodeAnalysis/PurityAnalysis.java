@@ -138,13 +138,12 @@ abstract class DataValue implements org.jetbrains.org.objectweb.asm.tree.analysi
     }
 
     static ParameterDataValue create(int n) {
-      switch (n) {
-        case 0: return PARAM0;
-        case 1: return PARAM1;
-        case 2: return PARAM2;
-        default:
-          return new ParameterDataValue(n);
-      }
+      return switch (n) {
+        case 0 -> PARAM0;
+        case 1 -> PARAM1;
+        case 2 -> PARAM2;
+        default -> new ParameterDataValue(n);
+      };
     }
 
     @Override

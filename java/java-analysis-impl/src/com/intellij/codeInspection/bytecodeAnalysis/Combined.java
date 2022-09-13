@@ -512,7 +512,7 @@ final class CombinedInterpreter extends BasicInterpreter {
   @Override
   public BasicValue binaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2) throws AnalyzerException {
     switch (insn.getOpcode()) {
-      case PUTFIELD:
+      case PUTFIELD -> {
         if (value1 instanceof NthParamValue) {
           dereferencedParams[((NthParamValue)value1).n] = true;
         }
@@ -522,23 +522,15 @@ final class CombinedInterpreter extends BasicInterpreter {
         if (value2 instanceof NthParamValue) {
           notNullableParams[((NthParamValue)value2).n] = true;
         }
-        break;
-      case IALOAD:
-      case LALOAD:
-      case FALOAD:
-      case DALOAD:
-      case AALOAD:
-      case BALOAD:
-      case CALOAD:
-      case SALOAD:
+      }
+      case IALOAD, LALOAD, FALOAD, DALOAD, AALOAD, BALOAD, CALOAD, SALOAD -> {
         if (value1 instanceof NthParamValue) {
           dereferencedParams[((NthParamValue)value1).n] = true;
         }
         if (value1 instanceof Trackable) {
           dereferencedValues[((Trackable)value1).getOriginInsnIndex()] = true;
         }
-        break;
-      default:
+      }
     }
     return track(insnIndex(insn), super.binaryOperation(insn, value1, value2));
   }
@@ -546,21 +538,15 @@ final class CombinedInterpreter extends BasicInterpreter {
   @Override
   public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3) {
     switch (insn.getOpcode()) {
-      case IASTORE:
-      case LASTORE:
-      case FASTORE:
-      case DASTORE:
-      case BASTORE:
-      case CASTORE:
-      case SASTORE:
+      case IASTORE, LASTORE, FASTORE, DASTORE, BASTORE, CASTORE, SASTORE -> {
         if (value1 instanceof NthParamValue) {
           dereferencedParams[((NthParamValue)value1).n] = true;
         }
         if (value1 instanceof Trackable) {
           dereferencedValues[((Trackable)value1).getOriginInsnIndex()] = true;
         }
-        break;
-      case AASTORE:
+      }
+      case AASTORE -> {
         if (value1 instanceof NthParamValue) {
           dereferencedParams[((NthParamValue)value1).n] = true;
         }
@@ -570,8 +556,7 @@ final class CombinedInterpreter extends BasicInterpreter {
         if (value3 instanceof NthParamValue) {
           notNullableParams[((NthParamValue)value3).n] = true;
         }
-        break;
-      default:
+      }
     }
     return null;
   }
@@ -682,15 +667,11 @@ final class NegationAnalysis {
     while (true) {
       AbstractInsnNode insnNode = methodNode.instructions.get(insnIndex);
       switch (insnNode.getType()) {
-        case AbstractInsnNode.LABEL:
-        case AbstractInsnNode.LINE:
-        case AbstractInsnNode.FRAME:
+        case AbstractInsnNode.LABEL, AbstractInsnNode.LINE, AbstractInsnNode.FRAME ->
           insnIndex = controlFlow.transitions[insnIndex][0];
-          break;
-        default:
+        default -> {
           switch (insnNode.getOpcode()) {
-            case IFEQ:
-            case IFNE:
+            case IFEQ, IFNE -> {
               BasicValue conValue = popValue(frame);
               checkAssertion(conValue instanceof TrackableCallValue);
               frame.execute(insnNode, interpreter);
@@ -702,10 +683,13 @@ final class NegationAnalysis {
               checkAssertion(FalseValue == trueBranchValue);
               checkAssertion(TrueValue == falseBranchValue);
               return;
-            default:
+            }
+            default -> {
               frame.execute(insnNode, interpreter);
               insnIndex = controlFlow.transitions[insnIndex][0];
+            }
           }
+        }
       }
     }
   }
@@ -804,14 +788,11 @@ final class NegationInterpreter extends BasicInterpreter {
 
   @Override
   public BasicValue newOperation(AbstractInsnNode insn) throws AnalyzerException {
-    switch (insn.getOpcode()) {
-      case ICONST_0:
-        return FalseValue;
-      case ICONST_1:
-        return TrueValue;
-      default:
-        return super.newOperation(insn);
-    }
+    return switch (insn.getOpcode()) {
+      case ICONST_0 -> FalseValue;
+      case ICONST_1 -> TrueValue;
+      default -> super.newOperation(insn);
+    };
   }
 
   @Override

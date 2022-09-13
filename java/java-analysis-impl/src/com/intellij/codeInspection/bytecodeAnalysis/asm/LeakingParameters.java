@@ -165,21 +165,13 @@ class ParametersUsage extends Interpreter<ParamsValue> {
   public ParamsValue newOperation(final AbstractInsnNode insn) {
     int size;
     switch (insn.getOpcode()) {
-      case LCONST_0:
-      case LCONST_1:
-      case DCONST_0:
-      case DCONST_1:
-        size = 2;
-        break;
-      case LDC:
-        Object cst = ((LdcInsnNode) insn).cst;
+      case LCONST_0, LCONST_1, DCONST_0, DCONST_1 -> size = 2;
+      case LDC -> {
+        Object cst = ((LdcInsnNode)insn).cst;
         size = cst instanceof Long || cst instanceof Double ? 2 : 1;
-        break;
-      case GETSTATIC:
-        size = Type.getType(((FieldInsnNode) insn).desc).getSize();
-        break;
-      default:
-        size = 1;
+      }
+      case GETSTATIC -> size = Type.getType(((FieldInsnNode)insn).desc).getSize();
+      default -> size = 1;
     }
     return size == 1 ? val1 : val2;
   }
@@ -216,31 +208,10 @@ class ParametersUsage extends Interpreter<ParamsValue> {
 
   @Override
   public ParamsValue binaryOperation(AbstractInsnNode insn, ParamsValue value1, ParamsValue value2) {
-    int size;
-    switch (insn.getOpcode()) {
-      case LALOAD:
-      case DALOAD:
-      case LADD:
-      case DADD:
-      case LSUB:
-      case DSUB:
-      case LMUL:
-      case DMUL:
-      case LDIV:
-      case DDIV:
-      case LREM:
-      case DREM:
-      case LSHL:
-      case LSHR:
-      case LUSHR:
-      case LAND:
-      case LOR:
-      case LXOR:
-        size = 2;
-        break;
-      default:
-        size = 1;
-    }
+    int size = switch (insn.getOpcode()) {
+      case LALOAD, DALOAD, LADD, DADD, LSUB, DSUB, LMUL, DMUL, LDIV, DDIV, LREM, DREM, LSHL, LSHR, LUSHR, LAND, LOR, LXOR -> 2;
+      default -> 1;
+    };
     return size == 1 ? val1 : val2;
   }
 
@@ -313,24 +284,15 @@ class IParametersUsage extends Interpreter<IParamsValue> {
 
   @Override
   public IParamsValue newOperation(final AbstractInsnNode insn) {
-    int size;
-    switch (insn.getOpcode()) {
-      case LCONST_0:
-      case LCONST_1:
-      case DCONST_0:
-      case DCONST_1:
-        size = 2;
-        break;
-      case LDC:
-        Object cst = ((LdcInsnNode) insn).cst;
-        size = cst instanceof Long || cst instanceof Double ? 2 : 1;
-        break;
-      case GETSTATIC:
-        size = ASMUtils.getSizeFast(((FieldInsnNode)insn).desc);
-        break;
-      default:
-        size = 1;
-    }
+    int size = switch (insn.getOpcode()) {
+      case LCONST_0, LCONST_1, DCONST_0, DCONST_1 -> 2;
+      case LDC -> {
+        Object cst = ((LdcInsnNode)insn).cst;
+        yield cst instanceof Long || cst instanceof Double ? 2 : 1;
+      }
+      case GETSTATIC -> ASMUtils.getSizeFast(((FieldInsnNode)insn).desc);
+      default -> 1;
+    };
     return size == 1 ? val1 : val2;
   }
 
@@ -381,45 +343,21 @@ class IParametersUsage extends Interpreter<IParamsValue> {
   public IParamsValue binaryOperation(AbstractInsnNode insn, IParamsValue value1, IParamsValue value2) {
     int size;
     switch (insn.getOpcode()) {
-      case LALOAD:
-      case DALOAD:
+      case LALOAD, DALOAD -> {
         size = 2;
         leaking |= value1.params;
-        break;
-      case LADD:
-      case DADD:
-      case LSUB:
-      case DSUB:
-      case LMUL:
-      case DMUL:
-      case LDIV:
-      case DDIV:
-      case LREM:
-      case DREM:
-      case LSHL:
-      case LSHR:
-      case LUSHR:
-      case LAND:
-      case LOR:
-      case LXOR:
-        size = 2;
-        break;
-      case IALOAD:
-      case FALOAD:
-      case AALOAD:
-      case BALOAD:
-      case CALOAD:
-      case SALOAD:
+      }
+      case LADD, DADD, LSUB, DSUB, LMUL, DMUL, LDIV, DDIV, LREM, DREM, LSHL, LSHR, LUSHR, LAND, LOR, LXOR -> size = 2;
+      case IALOAD, FALOAD, AALOAD, BALOAD, CALOAD, SALOAD -> {
         leaking |= value1.params;
         size = 1;
-        break;
-      case PUTFIELD:
+      }
+      case PUTFIELD -> {
         leaking |= value1.params;
         nullableLeaking |= value2.params;
         size = 1;
-        break;
-      default:
-        size = 1;
+      }
+      default -> size = 1;
     }
     return size == 1 ? val1 : val2;
   }
@@ -427,20 +365,13 @@ class IParametersUsage extends Interpreter<IParamsValue> {
   @Override
   public IParamsValue ternaryOperation(AbstractInsnNode insn, IParamsValue value1, IParamsValue value2, IParamsValue value3) {
     switch (insn.getOpcode()) {
-      case IASTORE:
-      case LASTORE:
-      case FASTORE:
-      case DASTORE:
-      case BASTORE:
-      case CASTORE:
-      case SASTORE:
-        leaking |= value1.params;
-        break;
-      case AASTORE:
+      case IASTORE, LASTORE, FASTORE, DASTORE, BASTORE, CASTORE, SASTORE -> leaking |= value1.params;
+      case AASTORE -> {
         leaking |= value1.params;
         nullableLeaking |= value3.params;
-        break;
-      default:
+      }
+      default -> {
+      }
     }
     return null;
   }
@@ -493,22 +424,14 @@ class LeakingParametersCollector extends ParametersUsage {
   @Override
   public ParamsValue unaryOperation(AbstractInsnNode insn, ParamsValue value) {
     switch (insn.getOpcode()) {
-      case GETFIELD:
-      case ARRAYLENGTH:
-      case MONITORENTER:
-      case INSTANCEOF:
-      case IRETURN:
-      case ARETURN:
-      case IFNONNULL:
-      case IFNULL:
-      case IFEQ:
-      case IFNE:
+      case GETFIELD, ARRAYLENGTH, MONITORENTER, INSTANCEOF, IRETURN, ARETURN, IFNONNULL, IFNULL, IFEQ, IFNE -> {
         boolean[] params = value.params;
         for (int i = 0; i < arity; i++) {
           leaking[i] |= params[i];
         }
-        break;
-      default:
+      }
+      default -> {
+      }
     }
     return super.unaryOperation(insn, value);
   }
@@ -516,21 +439,13 @@ class LeakingParametersCollector extends ParametersUsage {
   @Override
   public ParamsValue binaryOperation(AbstractInsnNode insn, ParamsValue value1, ParamsValue value2) {
     switch (insn.getOpcode()) {
-      case IALOAD:
-      case LALOAD:
-      case FALOAD:
-      case DALOAD:
-      case AALOAD:
-      case BALOAD:
-      case CALOAD:
-      case SALOAD: {
+      case IALOAD, LALOAD, FALOAD, DALOAD, AALOAD, BALOAD, CALOAD, SALOAD -> {
         boolean[] params = value1.params;
         for (int i = 0; i < arity; i++) {
           leaking[i] |= params[i];
         }
-        break;
       }
-      case PUTFIELD: {
+      case PUTFIELD -> {
         boolean[] params = value1.params;
         for (int i = 0; i < arity; i++) {
           leaking[i] |= params[i];
@@ -539,9 +454,8 @@ class LeakingParametersCollector extends ParametersUsage {
         for (int i = 0; i < arity; i++) {
           nullableLeaking[i] |= params[i];
         }
-        break;
       }
-      default:
+      default -> {}
     }
     return super.binaryOperation(insn, value1, value2);
   }
@@ -550,19 +464,13 @@ class LeakingParametersCollector extends ParametersUsage {
   public ParamsValue ternaryOperation(AbstractInsnNode insn, ParamsValue value1, ParamsValue value2, ParamsValue value3) {
     boolean[] params;
     switch (insn.getOpcode()) {
-      case IASTORE:
-      case LASTORE:
-      case FASTORE:
-      case DASTORE:
-      case BASTORE:
-      case CASTORE:
-      case SASTORE:
+      case IASTORE, LASTORE, FASTORE, DASTORE, BASTORE, CASTORE, SASTORE -> {
         params = value1.params;
         for (int i = 0; i < arity; i++) {
           leaking[i] |= params[i];
         }
-        break;
-      case AASTORE:
+      }
+      case AASTORE -> {
         params = value1.params;
         for (int i = 0; i < arity; i++) {
           leaking[i] |= params[i];
@@ -571,8 +479,8 @@ class LeakingParametersCollector extends ParametersUsage {
         for (int i = 0; i < arity; i++) {
           nullableLeaking[i] |= params[i];
         }
-        break;
-      default:
+      }
+      default -> {}
     }
     return null;
   }
