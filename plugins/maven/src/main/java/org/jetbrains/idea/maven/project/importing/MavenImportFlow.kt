@@ -286,7 +286,8 @@ class MavenImportFlow {
     val projectImporter = MavenProjectImporter.createImporter(context.project, context.readContext.projectsTree,
                                                               context.projectsToImport.map {
                                                                 it to MavenProjectChanges.ALL
-                                                              }.toMap(), false, modelsProvider, context.initialContext.importingSettings,
+                                                              }.toMap(), context.initialContext.importingSettings.isCreateModuleGroups,
+                                                              modelsProvider, context.initialContext.importingSettings,
                                                               context.initialContext.dummyModule, importingActivity)
     val postImportTasks = projectImporter.importProject()
     val modulesCreated = projectImporter.createdModules()

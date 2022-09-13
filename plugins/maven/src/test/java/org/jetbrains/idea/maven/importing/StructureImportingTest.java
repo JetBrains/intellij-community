@@ -679,7 +679,13 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     assertModuleGroupPath("module2");
 
     getMavenImporterSettings().setCreateModuleGroups(true);
-    myProjectsManager.performScheduledImportInTests();
+    if (isNewImportingProcess) {
+      importViaNewFlow(Collections.singletonList(myProjectPom), true, Collections.emptyList());
+    }
+    else {
+      myProjectsManager.performScheduledImportInTests();
+    }
+
     assertModuleGroupPath("module2", "module1 and modules");
   }
 
@@ -982,7 +988,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
-    if(isNewImportingProcess){
+    if (isNewImportingProcess) {
       PlatformTestUtil.waitForPromise(myImportingResult.getVfsRefreshPromise());
     }
 
@@ -990,7 +996,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
-  public void  testErrorImportArtifactVersionCannotBeEmpty() {
+  public void testErrorImportArtifactVersionCannotBeEmpty() {
     assumeVersionMoreThan("3.0.5");
     createProjectPom("<groupId>test</groupId>\n" +
                      "  <artifactId>parent</artifactId>\n" +
@@ -1119,7 +1125,12 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
                      "</profiles>");
 
     List<String> disabledProfiles = Collections.singletonList("one");
-    doImportProjects(Collections.singletonList(myProjectPom), true, disabledProfiles);
+    if (isNewImportingProcess) {
+      importViaNewFlow(Collections.singletonList(myProjectPom), true, Collections.emptyList());
+    }
+    else {
+      doImportProjectsLegacyWay(Collections.singletonList(myProjectPom), true, disabledProfiles);
+    }
     assertModules("project-two");
   }
 }

@@ -1256,14 +1256,22 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @TestOnly
   public boolean hasScheduledImportsInTests() {
+    checkNoLegacyImportInNewTests();
     if (!isInitialized()) return false;
     return !myImportingQueue.isEmpty();
   }
 
   @TestOnly
   public void performScheduledImportInTests() {
+    checkNoLegacyImportInNewTests();
     if (!isInitialized()) return;
     runWhenFullyOpen(() -> myImportingQueue.flush());
+  }
+
+  private static void checkNoLegacyImportInNewTests() {
+    if (ApplicationManager.getApplication().isUnitTestMode() && MavenUtil.isLinearImportEnabled()) {
+      throw new IllegalStateException("Do not call this API in tests");
+    }
   }
 
   private void runWhenFullyOpen(final Runnable runnable) {
