@@ -16,12 +16,20 @@ class AvatarIcon(private val targetSize: Int,
                  private val avatarName: String,
                  private val palette: ColorPalette = AvatarPalette) : JBCachingScalableIcon<AvatarIcon>() {
   private var myCachedImage: BufferedImage? = null
+  private var myCachedImageScale: Double? = null
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    g as Graphics2D
     val iconSize = getIconSize()
+    val scale = g.transform.scaleX
+
+    if (scale != myCachedImageScale) {
+      myCachedImage = null
+    }
 
     if (myCachedImage == null) {
-      myCachedImage = generateColoredAvatar(iconSize, arcRatio, gradientSeed, avatarName, palette)
+      myCachedImage = generateColoredAvatar(g.deviceConfiguration, iconSize, arcRatio, gradientSeed, avatarName, palette)
+      myCachedImageScale = scale
     }
 
     val gg = g.create() as Graphics2D
@@ -43,10 +51,11 @@ class AvatarIcon(private val targetSize: Int,
 
 object AvatarUtils {
   fun generateColoredAvatar(gradientSeed: String, name: String, palette: ColorPalette = AvatarPalette): BufferedImage {
-    return generateColoredAvatar(64, 0.0, gradientSeed, name, palette)
+    return generateColoredAvatar(null, 64, 0.0, gradientSeed, name, palette)
   }
 
-  internal fun generateColoredAvatar(size: Int,
+  internal fun generateColoredAvatar(gc: GraphicsConfiguration?,
+                                     size: Int,
                                      arcRatio: Double,
                                      gradientSeed: String,
                                      name: String,
@@ -54,7 +63,7 @@ object AvatarUtils {
     val (color1, color2) = palette.gradient(gradientSeed)
 
     val shortName = Avatars.initials(name)
-    val image = ImageUtil.createImage(size, size, BufferedImage.TYPE_INT_ARGB)
+    val image = ImageUtil.createImage(gc, size, size, BufferedImage.TYPE_INT_ARGB)
     val g2 = image.createGraphics()
     applyQualityRenderingHints(g2)
     g2.paint = GradientPaint(0.0f, 0.0f, color2,
