@@ -18,7 +18,6 @@ import com.intellij.profile.ProfileChangeAdapter
 import com.intellij.project.isDirectoryBased
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
-import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -33,7 +32,7 @@ private val defaultSchemeDigest = JDOMUtil.load("""<component name="InspectionPr
   </profile>
 </component>""").digest()
 
-const val PROFILE_DIR = "inspectionProfiles"
+const val PROFILE_DIR: String = "inspectionProfiles"
 
 @State(name = "InspectionProjectProfileManager", storages = [(Storage(value = "$PROFILE_DIR/profiles_settings.xml", exclusive = true))])
 open class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponentWithModificationTracker<Element>, Disposable {

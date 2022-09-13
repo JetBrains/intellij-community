@@ -850,8 +850,8 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
     var focusedFile: VirtualFile? = null
     val fileEditorManager = splitters.manager
     for (i in fileElements.indices) {
-      val file = fileElements.get(i)
-      val historyElement = file.getChild(HistoryEntry.TAG)
+      val fileElement = fileElements.get(i)
+      val historyElement = fileElement.getChild(HistoryEntry.TAG)
       val fileName = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR)
       val activity = StartUpMeasurer.startActivity(PathUtil.getFileName(fileName), ActivityCategory.REOPENING_EDITOR)
       val entry = HistoryEntry.createLight(fileEditorManager.project, historyElement)
@@ -865,7 +865,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
 
       val openOptions = FileEditorOpenOptions(
         selectAsCurrent = false,
-        pin = file.getAttributeValue(PINNED).toBoolean(),
+        pin = fileElement.getAttributeValue(PINNED).toBoolean(),
         index = i,
         isReopeningOnStartup = true,
       )
@@ -874,7 +874,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
         val document = readAction {
           if (virtualFile.isValid) FileDocumentManager.getInstance().getDocument(virtualFile) else null
         }
-        val isCurrentTab = file.getAttributeValue(CURRENT_IN_TAB).toBoolean()
+        val isCurrentTab = fileElement.getAttributeValue(CURRENT_IN_TAB).toBoolean()
         (fileEditorManager as AsyncFileEditorOpener).openFileImpl5(window = window,
                                                                    virtualFile = virtualFile,
                                                                    entry = entry,

@@ -44,6 +44,7 @@ fun Element.addOptionTag(@NonNls name: String, value: String, @NonNls elementNam
   addContent(element)
 }
 
+@Deprecated("Use Element.getAttributeBooleanValue", ReplaceWith("getAttributeBooleanValue(name))"))
 fun Element.getAttributeBooleanValue(name: String): Boolean = java.lang.Boolean.parseBoolean(getAttributeValue(name))
 
 private val cachedSpecialSaxBuilder = ThreadLocal<SoftReference<SAXBuilder>>()
