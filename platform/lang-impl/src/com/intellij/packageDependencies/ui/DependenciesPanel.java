@@ -16,6 +16,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -28,6 +29,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -827,12 +829,21 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
+      Pair<Set<PsiFile>, Set<PsiFile>> scopes =
+        Utils.getOrCreateUpdateSession(e).compute(this, "getSelectedScopes", ActionUpdateThread.EDT, () -> {
+          return Pair.create(getSelectedScope(myLeftTree), getSelectedScope(myRightTree));
+        });
       final boolean[] direct = new boolean[]{true};
-      processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), path -> {
+      processDependencies(scopes.first, scopes.second, path -> {
         direct [0] = false;
         return false;
       });
       e.getPresentation().setEnabled(!direct[0]);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
