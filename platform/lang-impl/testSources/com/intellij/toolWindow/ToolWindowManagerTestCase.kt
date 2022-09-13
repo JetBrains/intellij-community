@@ -12,6 +12,7 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
@@ -38,7 +39,8 @@ abstract class ToolWindowManagerTestCase : LightPlatformTestCase() {
         frame
       }
 
-      manager!!.doInit(frame, project.messageBus.connect(testRootDisposable), FileEditorManagerEx.getInstanceEx(project).component)
+      val reopeningEditorsJob = Job().also { it.complete() }
+      manager!!.doInit(frame, project.messageBus.connect(testRootDisposable), FileEditorManagerEx.getInstanceEx(project).component, reopeningEditorsJob)
     }
   }
 

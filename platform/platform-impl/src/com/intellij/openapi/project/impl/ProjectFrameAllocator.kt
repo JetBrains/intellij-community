@@ -180,7 +180,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
 
     launchAndMeasure("tool window pane creation") {
       val toolWindowManager = ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl ?: return@launchAndMeasure
-      toolWindowManager.init(frameHelper, editorSplitters)
+      toolWindowManager.init(frameHelper, editorSplitters, reopeningEditorJob)
     }
     launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val rootPane = frameHelper.rootPane!!
