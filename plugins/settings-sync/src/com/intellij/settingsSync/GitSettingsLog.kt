@@ -143,7 +143,8 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     }
 
     if (snapshot.plugins != null) {
-      val pluginsState = json.encodeToString(snapshot.plugins)
+      val sortedState = SettingsSyncPluginsState(snapshot.plugins.plugins.toSortedMap())
+      val pluginsState = json.encodeToString(sortedState)
       pluginsFile.write(pluginsState)
       addCommand.addFilepattern("$METAINFO_FOLDER/$PLUGINS_FILE")
     }
