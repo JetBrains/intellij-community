@@ -9,13 +9,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.actions.createSingleImportAction
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.core.targetDescriptors
-import org.jetbrains.kotlin.idea.quickfix.ImportFix
-import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.references.resolveToDescriptors
+import org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider
+import org.jetbrains.kotlin.idea.quickfix.ImportFixBase
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -57,15 +57,33 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
         fun KtSimpleNameExpression.autoImport(): Boolean {
             if (hasUnresolvedImportWhichCanImport(getReferencedName())) return false
 
-            val bindingContext = analyze(BodyResolveMode.PARTIAL)
-            if (mainReference.resolveToDescriptors(bindingContext).isNotEmpty()) return false
+            val bindingContext = analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
+            val diagnostics = bindingContext.diagnostics.filter {
+                it.severity == Severity.ERROR
+            }.ifEmpty { return false }
 
-            val suggestions = filterSuggestions(file, ImportFix(this).collectSuggestions())
-            val suggestion = suggestions.singleOrNull() ?: return false
-            val descriptors = file.resolveImportReference(suggestion)
+            val importFixBases = buildList {
+                diagnostics.groupBy { it.psiElement }.forEach { (_, sameElement) ->
+                    sameElement.groupBy { it.factory }.forEach { (_, sameTypeDiagnostic) ->
+                        val quickFixes = Fe10QuickFixProvider.getInstance(project).createUnresolvedReferenceQuickFixes(sameTypeDiagnostic)
+                        for (entry in quickFixes.entrySet()) {
+                            for (action in entry.value) {
+                                if (action is ImportFixBase<*>) {
+                                    add(action)
+                                }
+                            }
+                        }
+                    }
+                }
+            }.ifEmpty { return false }
 
-            // we do not auto-import nested classes because this will probably add qualification into the text and this will confuse the user
-            if (descriptors.any { it is ClassDescriptor && it.containingDeclaration is ClassDescriptor }) return false
+            val suggestions = filterSuggestions(file, importFixBases.flatMap { it.collectSuggestions() })
+                .filter { suggestion ->
+                    val descriptors = file.resolveImportReference(suggestion)
+
+                    // we do not auto-import nested classes because this will probably add qualification into the text and this will confuse the user
+                    !(descriptors.any { it is ClassDescriptor && it.containingDeclaration is ClassDescriptor })
+                }
 
             var result = false
             CommandProcessor.getInstance().runUndoTransparentAction {

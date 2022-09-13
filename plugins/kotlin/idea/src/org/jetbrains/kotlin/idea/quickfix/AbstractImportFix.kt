@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.getResolveScope
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeInsight.KotlinAutoImportsFilter
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.UnresolvedReferenceQuickFixFactory
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
@@ -283,7 +284,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
         }
     }
 
-    abstract class Factory : KotlinSingleIntentionActionFactory() {
+    abstract class Factory : KotlinSingleIntentionActionFactory(), UnresolvedReferenceQuickFixFactory {
         val supportedErrors: Collection<DiagnosticFactory<*>> by lazy { QuickFixes.getInstance().getDiagnostics(this) }
 
         override fun isApplicableForCodeFragment() = true
@@ -299,13 +300,13 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
                         computeSuggestions()
                     }
                 }
-            }
-            catch(ex: KotlinExceptionWithAttachments) {
+            } catch (ex: KotlinExceptionWithAttachments) {
                 // Sometimes fails with
                 // <production sources for module light_idea_test_case> is a module[ModuleDescriptorImpl@508c55a2] is not contained in resolver...
                 // TODO: remove try-catch when the problem is fixed
                 if (AbstractImportFixInfo.IGNORE_MODULE_ERROR &&
-                    ex.message?.contains("<production sources for module light_idea_test_case>") == true) null
+                    ex.message?.contains("<production sources for module light_idea_test_case>") == true
+                ) null
                 else throw ex
             }
         }

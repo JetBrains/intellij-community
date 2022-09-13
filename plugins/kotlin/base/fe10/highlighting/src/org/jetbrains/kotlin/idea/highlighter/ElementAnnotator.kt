@@ -128,10 +128,11 @@ internal class ElementAnnotator(
                     else -> {
                         AnnotationPresentationInfo(
                             ranges,
-                            highlightType = if (factory == Errors.INVISIBLE_REFERENCE)
-                                ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
-                            else
-                                null
+                            highlightType =
+                            when (factory) {
+                                Errors.INVISIBLE_REFERENCE, Errors.DELEGATE_SPECIAL_FUNCTION_MISSING, Errors.DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE, Errors.TOO_MANY_ARGUMENTS -> ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
+                                else -> null
+                            }
                         )
                     }
                 }

@@ -18,6 +18,8 @@ interface Fe10QuickFixProvider {
 
     fun createQuickFixes(diagnostics: Collection<Diagnostic>): MultiMap<Diagnostic, IntentionAction>
 
+    fun createUnresolvedReferenceQuickFixes(diagnostics: Collection<Diagnostic>): MultiMap<Diagnostic, IntentionAction>
+
     fun createSuppressFix(element: KtElement, suppressionKey: String, hostKind: AnnotationHostKind): SuppressIntentionAction
 }
 

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.highlighter.AnnotationHostKind
 import org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider
+import org.jetbrains.kotlin.idea.quickfix.KotlinIntentionActionsFactory
 import org.jetbrains.kotlin.idea.quickfix.KotlinSuppressIntentionAction
 import org.jetbrains.kotlin.idea.quickfix.QuickFixes
 import org.jetbrains.kotlin.psi.KtElement
@@ -19,17 +20,16 @@ import java.lang.reflect.*
 import java.util.*
 
 class Fe10QuickFixProviderImpl : Fe10QuickFixProvider {
-    override fun createQuickFixes(diagnostics: Collection<Diagnostic>): MultiMap<Diagnostic, IntentionAction> {
-        val first = diagnostics.minByOrNull { it.toString() }
-        val factory = diagnostics.first().getRealDiagnosticFactory()
-
-        val actions = MultiMap<Diagnostic, IntentionAction>()
-
-        val intentionActionsFactories = QuickFixes.getInstance().getActionFactories(factory)
+    private fun createQuickFixes(
+        intentionActionsFactories: Collection<KotlinIntentionActionsFactory>,
+        diagnostics: Collection<Diagnostic>,
+        actions: MultiMap<Diagnostic, IntentionAction>,
+        firstDiagnostic: Diagnostic?
+    ): MultiMap<Diagnostic, IntentionAction> {
         for (intentionActionsFactory in intentionActionsFactories) {
             val allProblemsActions = intentionActionsFactory.createActionsForAllProblems(diagnostics)
             if (allProblemsActions.isNotEmpty()) {
-                actions.putValues(first, allProblemsActions)
+                actions.putValues(firstDiagnostic, allProblemsActions)
             } else {
                 for (diagnostic in diagnostics) {
                     actions.putValues(diagnostic, intentionActionsFactory.createActions(diagnostic))
@@ -44,6 +44,26 @@ class Fe10QuickFixProviderImpl : Fe10QuickFixProvider {
         actions.values().forEach { NoDeclarationDescriptorsChecker.check(it::class.java) }
 
         return actions
+    }
+
+    override fun createQuickFixes(diagnostics: Collection<Diagnostic>): MultiMap<Diagnostic, IntentionAction> {
+        val firstDiagnostic = diagnostics.minByOrNull { it.toString() }
+        val factory = diagnostics.first().getRealDiagnosticFactory()
+
+        val actions = MultiMap<Diagnostic, IntentionAction>()
+
+        val intentionActionsFactories = QuickFixes.getInstance().getActionFactories(factory)
+        return createQuickFixes(intentionActionsFactories, diagnostics, actions, firstDiagnostic)
+    }
+
+    override fun createUnresolvedReferenceQuickFixes(diagnostics: Collection<Diagnostic>): MultiMap<Diagnostic, IntentionAction> {
+        val firstDiagnostic = diagnostics.minByOrNull { it.toString() }
+        val factory = diagnostics.first().getRealDiagnosticFactory()
+
+        val actions = MultiMap<Diagnostic, IntentionAction>()
+
+        val intentionActionsFactories = QuickFixes.getInstance().getUnresolvedReferenceActionFactories(factory)
+        return createQuickFixes(intentionActionsFactories, diagnostics, actions, firstDiagnostic)
     }
 
     override fun createSuppressFix(element: KtElement, suppressionKey: String, hostKind: AnnotationHostKind): SuppressIntentionAction {
