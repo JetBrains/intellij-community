@@ -13,6 +13,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,8 @@ public abstract class ExperimentalUI {
   private static final String KEY = "ide.experimental.ui";
 
   public static boolean isNewUI() {
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY);
+    // CWM-7348 thin client does not support new UI
+    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && !PlatformUtils.isJetBrainsClient();
   }
 
   public static boolean isNewNavbar() {
