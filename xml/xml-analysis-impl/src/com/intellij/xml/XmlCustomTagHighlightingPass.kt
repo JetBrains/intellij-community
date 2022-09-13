@@ -44,7 +44,10 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
       override fun visitXmlTag(tag: XmlTag) {
         super.visitXmlTag(tag)
         val descriptor = tag.descriptor ?: return
+
+        //e.g. for unresolved tags
         if (descriptor is AnyXmlElementDescriptor) return
+
         if (isCustomTag(descriptor, tag)) {
           tag.node?.let {
             for (child in it.getChildren(null)) {
@@ -57,7 +60,7 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
   }
 
   private fun isCustomTag(descriptor: XmlElementDescriptor, tag: XmlTag): Boolean {
-    if (descriptor is XmlCustomElementDescriptor) return descriptor.isCustomElement()
+    if (descriptor is XmlCustomElementDescriptor) return descriptor.isCustomElement
     
     return isHtmlLikeFile() && !isHtmlTagName(descriptor, tag)
   }
@@ -69,7 +72,10 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
     val nsDescriptor = tag.getNSDescriptor(tag.namespace, true)
     if (nsDescriptor is HtmlNSDescriptorImpl) {
       val htmlDescriptor = nsDescriptor.getElementDescriptorByName(tag.name)
-      if (htmlDescriptor != null) return true
+      if (htmlDescriptor != null) {
+        //make it case-sensitive
+        return descriptor.name.equals(htmlDescriptor.name)
+      }
     }
     return false
   }
