@@ -90,7 +90,7 @@ object GHUIUtil {
   fun getFontEM(component: JComponent): Float {
     val metrics = component.getFontMetrics(component.font)
     //em dash character
-    return FontLayoutService.getInstance().charWidth2D(metrics, '\u2014'.toInt())
+    return FontLayoutService.getInstance().charWidth2D(metrics, '\u2014'.code)
   }
 
   fun formatActionDate(date: Date): String {

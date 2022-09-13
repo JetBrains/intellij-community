@@ -47,7 +47,7 @@ class ResizeController(
       val context = FontInfo.getFontRenderContext(editor.contentComponent)
       val fm = FontInfo.getFontMetrics(font, context)
 
-      val width = FontLayoutService.getInstance().charWidth2D(fm, ' '.toInt())
+      val width = FontLayoutService.getInstance().charWidth2D(fm, ' '.code)
 
       val rightMargin = editor.settings.getRightMargin(editor.project) * width
 

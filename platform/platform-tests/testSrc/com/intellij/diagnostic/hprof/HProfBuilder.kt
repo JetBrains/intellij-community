@@ -214,7 +214,7 @@ class HProfBuilder(dos: DataOutputStream, val classNameMapping: ((Class<*>) -> S
             java.lang.Long.TYPE -> dos.writeLong(field.getLong(o))
             Integer.TYPE -> dos.writeInt(field.getInt(o))
             Short.TYPE -> dos.writeShort(field.getShort(o).toInt())
-            Character.TYPE -> dos.writeChar(field.getChar(o).toInt())
+            Character.TYPE -> dos.writeChar(field.getChar(o).code)
             Byte.TYPE -> dos.writeByte(field.getByte(o).toInt())
             Boolean.TYPE -> dos.writeBoolean(field.getBoolean(o))
             Double.TYPE -> dos.writeDouble(field.getDouble(o))
