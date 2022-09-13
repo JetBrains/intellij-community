@@ -7,7 +7,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
@@ -31,7 +30,6 @@ import javax.swing.JComponent
 private val projectKey = Key.create<Project>("git-widget-project")
 private val repositoryKey = Key.create<GitRepository>("git-widget-repository")
 private val changesKey = Key.create<MyRepoChanges>("git-widget-changes")
-private val editorKey = Key.create<Editor>("editor")
 
 internal class GitToolbarWidgetAction : AnAction(), CustomComponentAction {
 
@@ -44,8 +42,7 @@ internal class GitToolbarWidgetAction : AnAction(), CustomComponentAction {
   override fun update(e: AnActionEvent) {
     val project = e.project
     val repository = project?.let { GitBranchUtil.guessWidgetRepository(project, e.dataContext) }
-    val editor = e.getData(CommonDataKeys.EDITOR)
-    e.presentation.putClientProperty(editorKey, editor)
+
     e.presentation.putClientProperty(projectKey, project)
     e.presentation.putClientProperty(repositoryKey, repository)
     e.presentation.text = repository?.calcText() ?: GitBundle.message("git.toolbar.widget.no.repo")
@@ -113,8 +110,6 @@ private class GitToolbarWidget(val presentation: Presentation) : ToolbarComboWid
     get() = presentation.getClientProperty(projectKey)
   val repository: GitRepository?
     get() = presentation.getClientProperty(repositoryKey)
-  private val editor: Editor?
-    get() = presentation.getClientProperty(editorKey)
 
   init {
     presentation.addPropertyChangeListener { updateWidget() }
@@ -139,8 +134,7 @@ private class GitToolbarWidget(val presentation: Presentation) : ToolbarComboWid
       val repo = repository
 
       val listPopup: ListPopup
-
-      val dataContext = DataManager.getInstance().getDataContext(editor?.component ?: this)
+      val dataContext = DataManager.getInstance().getDataContext(this)
       if (repo != null) {
         listPopup = GitBranchPopup.getInstance(proj, repo, dataContext).asListPopup()
       }
