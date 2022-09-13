@@ -89,6 +89,10 @@ internal class MutableEntityStorageImpl(
   override val modificationCount: Long
     get() = this.changeLog.modificationCount
 
+  override fun setUseNewRbs(value: Boolean) {
+    useNewRbs = value
+  }
+
   private val writingFlag = AtomicBoolean()
 
   @Volatile

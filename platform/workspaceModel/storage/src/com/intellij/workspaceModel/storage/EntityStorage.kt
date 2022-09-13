@@ -7,6 +7,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityExtensionDelegate
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.annotations.Abstract
 import kotlin.reflect.KClass
@@ -236,6 +237,9 @@ interface MutableEntityStorage : EntityStorage {
   fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex
 
   val modificationCount: Long
+
+  @ApiStatus.Internal
+  fun setUseNewRbs(value: Boolean)
 
   companion object {
     @JvmStatic
