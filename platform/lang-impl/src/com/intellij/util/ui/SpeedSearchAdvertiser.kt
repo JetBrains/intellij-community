@@ -5,13 +5,14 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ui.components.ActionLink
 import java.awt.FlowLayout
+import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
 class SpeedSearchAdvertiser : ComponentAdvertiser() {
-  fun addSpeedSearchAdvertisement(): Boolean {
+  fun addSpeedSearchAdvertisement(): JComponent? {
     if (PropertiesComponent.getInstance().getBoolean(SPEED_SEARCH_GOT_IT)) {
-      return false
+      return null
     }
 
     val panel = JPanel(FlowLayout(FlowLayout.LEFT, 5, 0))
@@ -46,7 +47,8 @@ class SpeedSearchAdvertiser : ComponentAdvertiser() {
     panel.background  = JBUI.CurrentTheme.Advertiser.background();
 
     addComponentAdvertiser(panel)
-    return true
+
+    return component
   }
 }
 

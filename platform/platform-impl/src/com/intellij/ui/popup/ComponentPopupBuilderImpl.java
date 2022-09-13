@@ -252,7 +252,9 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
     popup.setNormalWindowLevel(myNormalWindowLevel);
     popup.setOkHandler(myOkHandler);
-    popup.setFooterComponent(myAdvertiser);
+    if (myAdvertiser != null) {
+      popup.setFooterComponent(myAdvertiser);
+    }
 
     if (myUserData != null) {
       popup.setUserData(myUserData);
@@ -367,7 +369,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @NotNull
   @Override
-  public ComponentPopupBuilder setAdvertiser(@NotNull JComponent advertiser) {
+  public ComponentPopupBuilder setAdvertiser(@Nullable JComponent advertiser) {
     myAdvertiser = advertiser;
     return this;
   }

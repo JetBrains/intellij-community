@@ -275,6 +275,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       .setCancelKeyEnabled(false)
       .setDimensionServiceKey(myProject, getDimensionServiceKey(), true)
       .setCancelCallback(() -> myCanClose)
+      .setAdvertiser(new SpeedSearchAdvertiser().addSpeedSearchAdvertisement())
       .createPopup();
 
     Disposer.register(myPopup, this);
@@ -536,12 +537,6 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
         myPopup.cancel();
       }
     });
-
-    SpeedSearchAdvertiser advertiser = new SpeedSearchAdvertiser();
-    boolean added = advertiser.addSpeedSearchAdvertisement();
-    if (added) {
-      panel.add(advertiser.getComponent(), BorderLayout.SOUTH);
-    }
 
     return panel;
   }

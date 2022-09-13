@@ -75,7 +75,7 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setAdText(@PopupAdvertisement String ad, int alignment);
 
-  IPopupChooserBuilder<T> setAdvertiser(@NotNull JComponent advertiser);
+  IPopupChooserBuilder<T> setAdvertiser(@Nullable JComponent advertiser);
 
   IPopupChooserBuilder<T> setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation);
 

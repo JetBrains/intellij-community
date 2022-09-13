@@ -536,7 +536,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   }
 
   @Override
-  public PopupChooserBuilder<T> setAdvertiser(JComponent advertiser) {
+  public PopupChooserBuilder<T> setAdvertiser(@Nullable JComponent advertiser) {
     myAdvertiser = advertiser;
     return this;
   }
