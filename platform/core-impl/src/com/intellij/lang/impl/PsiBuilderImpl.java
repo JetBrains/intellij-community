@@ -668,6 +668,11 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return cached;
   }
 
+  @Override
+  public boolean isWhitespaceOrComment(@NotNull IElementType elementType) {
+    return myWhitespaces.contains(elementType) || myComments.contains(elementType);
+  }
+
   private void clearCachedTokenType() {
     myCachedTokenType = null;
   }
