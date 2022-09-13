@@ -139,8 +139,8 @@ abstract class NotebookLineMarkerRenderer : LineMarkerRendererEx {
   }
   protected fun getInlayBounds(editor: EditorEx, linesRange: IntRange, inlayId: Long) : Rectangle? {
     val startOffset = editor.document.getLineStartOffset(linesRange.first)
-    val endOffset = editor.document.getLineStartOffset(linesRange.last)
-    val inlays = editor.inlayModel.getBlockElementsInRange(startOffset, endOffset + 1)
+    val endOffset = editor.document.getLineEndOffset(linesRange.last)
+    val inlays = editor.inlayModel.getBlockElementsInRange(startOffset, endOffset)
 
     val inlay = inlays.firstOrNull { it is RangeMarkerEx && it.id == inlayId }
     return inlay?.bounds
