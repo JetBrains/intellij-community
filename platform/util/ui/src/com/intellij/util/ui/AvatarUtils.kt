@@ -1,40 +1,71 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui
 
-import com.intellij.openapi.util.Couple
 import com.intellij.ui.JBColor
-import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.ui.AvatarUtils.generateColoredAvatar
 import com.intellij.util.ui.ImageUtil.applyQualityRenderingHints
-import java.awt.Color
-import java.awt.Font
-import java.awt.GradientPaint
-import java.awt.Rectangle
+import java.awt.*
+import java.awt.geom.Area
+import java.awt.geom.RoundRectangle2D
 import java.awt.image.BufferedImage
-import javax.swing.ImageIcon
 import kotlin.math.abs
-import kotlin.math.min
 
-object AvatarUtils {
-  fun createRoundRectIcon(image: BufferedImage, targetSize: Int): ImageIcon {
-    val size: Int = min(image.width, image.height)
-    val baseArcSize = 6.0 * size / targetSize
+class AvatarIcon(private val targetSize: Int,
+                 private val arcRatio: Double,
+                 private val gradientSeed: String,
+                 private val avatarName: String,
+                 private val palette: ColorPalette = AvatarPalette) : JBCachingScalableIcon<AvatarIcon>() {
+  private var myCachedImage: BufferedImage? = null
 
-    val rounded = ImageUtil.createRoundedImage(image, baseArcSize)
-    val hiDpi = ImageUtil.ensureHiDPI(rounded, ScaleContext.create())
-    return JBImageIcon(ImageUtil.scaleImage(hiDpi, targetSize, targetSize))
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    val iconSize = getIconSize()
+
+    if (myCachedImage == null) {
+      myCachedImage = generateColoredAvatar(iconSize, arcRatio, gradientSeed, avatarName, palette)
+    }
+
+    val gg = g.create() as Graphics2D
+    UIUtil.drawImage(gg, myCachedImage!!, x, y, null)
+
+    gg.dispose()
   }
 
+  private fun getIconSize() = scaleVal(targetSize.toDouble()).toInt()
+
+  override fun getIconWidth(): Int = getIconSize()
+
+  override fun getIconHeight(): Int = getIconSize()
+
+  override fun copy(): AvatarIcon {
+    return AvatarIcon(targetSize, arcRatio, gradientSeed, avatarName, palette)
+  }
+}
+
+object AvatarUtils {
   fun generateColoredAvatar(gradientSeed: String, name: String, palette: ColorPalette = AvatarPalette): BufferedImage {
+    return generateColoredAvatar(64, 0.0, gradientSeed, name, palette)
+  }
+
+  internal fun generateColoredAvatar(size: Int,
+                                     arcRatio: Double,
+                                     gradientSeed: String,
+                                     name: String,
+                                     palette: ColorPalette = AvatarPalette): BufferedImage {
     val (color1, color2) = palette.gradient(gradientSeed)
 
     val shortName = Avatars.initials(name)
-    val size = 64
     val image = ImageUtil.createImage(size, size, BufferedImage.TYPE_INT_ARGB)
     val g2 = image.createGraphics()
     applyQualityRenderingHints(g2)
     g2.paint = GradientPaint(0.0f, 0.0f, color2,
                              size.toFloat(), size.toFloat(), color1)
-    g2.fillRect(0, 0, size, size)
+
+    val arcSize = arcRatio * size
+    val avatarOvalArea = Area(RoundRectangle2D.Double(0.0, 0.0,
+                                                      size.toDouble(), size.toDouble(),
+                                                      arcSize, arcSize))
+    g2.fill(avatarOvalArea)
+
     g2.paint = JBColor.WHITE
     g2.font = JBFont.create(Font("Segoe UI", Font.PLAIN, (size / 2.2).toInt()))
     UIUtil.drawCenteredString(g2, Rectangle(0, 0, size, size), shortName)

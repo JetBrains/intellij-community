@@ -101,8 +101,7 @@ internal class RecentProjectIconHelper {
         else -> displayName
       }
 
-      val coloredImage = AvatarUtils.generateColoredAvatar(name, name, ProjectIconPalette)
-      var generatedProjectIcon: Icon = AvatarUtils.createRoundRectIcon(coloredImage, projectIconSize())
+      var generatedProjectIcon: Icon = JBUIScale.scaleIcon(AvatarIcon(Registry.intValue("ide.project.icon.size", 20), 0.3, name, name, ProjectIconPalette))
 
       if (!isProjectValid) {
         generatedProjectIcon = IconUtil.desaturate(generatedProjectIcon)
