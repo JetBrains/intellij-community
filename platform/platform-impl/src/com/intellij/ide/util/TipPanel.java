@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TipsOfTheDayUsagesCollector;
 import com.intellij.ide.ui.text.StyledTextPane;
 import com.intellij.ide.ui.text.paragraph.TextParagraph;
+import com.intellij.ide.ui.text.parts.IllustrationTextPart;
 import com.intellij.ide.ui.text.parts.RegularTextPart;
 import com.intellij.ide.ui.text.parts.TextPart;
 import com.intellij.openapi.Disposable;
@@ -253,6 +254,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
 
     List<TextParagraph> tipContent = TipUIUtil.loadAndParseTip(tip);
     myTextPane.setParagraphs(tipContent);
+    adjustTextPaneBorder(tipContent);
     setPromotionForCurrentTip();
 
     TipsOfTheDayUsagesCollector.triggerTipShown(tip, myAlgorithm, myAlgorithmVersion);
@@ -261,6 +263,15 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     myPreviousTipAction.setEnabled(myTips.indexOf(myCurrentTip) > 0);
     myNextTipAction.setEnabled(myTips.indexOf(myCurrentTip) < myTips.size() - 1);
     ClientProperty.put(this, CURRENT_TIP_KEY, myCurrentTip.fileName);
+  }
+
+  private void adjustTextPaneBorder(List<TextParagraph> tipContent) {
+    if (tipContent.isEmpty()) return;
+    TextParagraph last = tipContent.get(tipContent.size() - 1);
+    List<TextPart> parts = last.getTextParts();
+    Border border = parts.size() == 1 && parts.get(0) instanceof IllustrationTextPart
+                    ? null : JBUI.Borders.emptyBottom((int)TextParagraph.LARGE_INDENT);
+    myTextPane.setBorder(border);
   }
 
   private void setPromotionForCurrentTip() {
