@@ -218,7 +218,7 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as CustomSourceRootPropertiesEntityData
 
@@ -229,7 +229,7 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as CustomSourceRootPropertiesEntityData
 

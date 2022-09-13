@@ -160,7 +160,7 @@ class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<S
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SecondEntityWithPIdData
 
@@ -171,7 +171,7 @@ class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<S
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SecondEntityWithPIdData
 

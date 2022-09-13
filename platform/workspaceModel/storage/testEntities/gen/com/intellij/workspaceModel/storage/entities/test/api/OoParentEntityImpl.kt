@@ -240,7 +240,7 @@ class OoParentEntityData : WorkspaceEntityData<OoParentEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as OoParentEntityData
 
@@ -251,7 +251,7 @@ class OoParentEntityData : WorkspaceEntityData<OoParentEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as OoParentEntityData
 

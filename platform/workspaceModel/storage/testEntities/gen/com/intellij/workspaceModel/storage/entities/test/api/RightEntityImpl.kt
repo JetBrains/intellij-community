@@ -291,7 +291,7 @@ class RightEntityData : WorkspaceEntityData<RightEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as RightEntityData
 
@@ -301,7 +301,7 @@ class RightEntityData : WorkspaceEntityData<RightEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as RightEntityData
 

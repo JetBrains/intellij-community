@@ -202,7 +202,7 @@ class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferencedChild>
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SoftLinkReferencedChildData
 
@@ -212,7 +212,7 @@ class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferencedChild>
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SoftLinkReferencedChildData
 

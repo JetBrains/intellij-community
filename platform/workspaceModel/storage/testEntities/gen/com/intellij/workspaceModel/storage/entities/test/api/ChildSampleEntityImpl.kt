@@ -209,7 +209,7 @@ class ChildSampleEntityData : WorkspaceEntityData<ChildSampleEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ChildSampleEntityData
 
@@ -220,7 +220,7 @@ class ChildSampleEntityData : WorkspaceEntityData<ChildSampleEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ChildSampleEntityData
 

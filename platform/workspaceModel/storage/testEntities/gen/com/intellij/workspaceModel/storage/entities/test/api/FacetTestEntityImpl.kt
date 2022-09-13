@@ -239,7 +239,7 @@ class FacetTestEntityData : WorkspaceEntityData.WithCalculablePersistentId<Facet
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FacetTestEntityData
 
@@ -251,7 +251,7 @@ class FacetTestEntityData : WorkspaceEntityData.WithCalculablePersistentId<Facet
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FacetTestEntityData
 

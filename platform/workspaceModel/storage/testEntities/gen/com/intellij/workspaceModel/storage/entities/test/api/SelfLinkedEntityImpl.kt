@@ -188,7 +188,7 @@ class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SelfLinkedEntityData
 
@@ -198,7 +198,7 @@ class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SelfLinkedEntityData
 

@@ -388,7 +388,7 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ContentRootEntityData
 
@@ -401,7 +401,7 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ContentRootEntityData
 
@@ -429,7 +429,7 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
 
   override fun equalsByKey(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ContentRootEntityData
 
