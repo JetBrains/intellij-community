@@ -11,5 +11,8 @@
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinPackageProviderFactory"/>
     <projectService
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateTrackerProvider"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.providers.PackagePartProviderFactory"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.PackagePartProviderFactoryIdeImpl"/>
   </extensions>
 </idea-plugin>
