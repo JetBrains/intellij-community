@@ -120,7 +120,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private boolean refreshNeeded() {
     return !isScrolled() &&
            !isRefreshing.get() && !isShowingSimilarUsagesComponent.get() &&
-           !myUsageView.isSearchInProgress();
+           (myUsageView.isSearchInProgress() || mySelectedUsages.size() != myUsageView.getSelectedUsages().size());
   }
 
   private boolean isScrolled() {
