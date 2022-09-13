@@ -286,7 +286,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       // This was just checked before this call
       assert(currentState == null)
 
-      val targetEntity = findEntityInStorage(replaceWithEntity, targetStorage, replaceWithStorage, targetState)
+      val targetEntity = findRootEntityInStorage(replaceWithEntity, targetStorage, replaceWithStorage, targetState)
       val parents = null
 
       return processExactEntity(targetEntity, replaceWithEntity, parents)
@@ -364,7 +364,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         null -> Unit
       }
 
-      val targetEntity = findEntityInStorage(replaceWithRootEntity, targetStorage, replaceWithStorage, targetState)
+      val targetEntity = findRootEntityInStorage(replaceWithRootEntity, targetStorage, replaceWithStorage, targetState)
 
       return processExactEntity(targetEntity, replaceWithRootEntity, null)
     }
@@ -648,8 +648,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       val currentTargetState = targetState[targetRootEntityId]
       assert(currentTargetState == null) { "This state was already checked before this function" }
 
-      val replaceWithEntity = findEntityInStorage(targetEntityData.createEntity(targetStorage) as WorkspaceEntityBase, replaceWithStorage,
-                                                  targetStorage, replaceWithState) as? WorkspaceEntityBase
+      val replaceWithEntity = findRootEntityInStorage(targetEntityData.createEntity(targetStorage) as WorkspaceEntityBase, replaceWithStorage,
+                                                      targetStorage, replaceWithState) as? WorkspaceEntityBase
 
       return processExactEntity(null, targetEntityData, replaceWithEntity)
     }
@@ -824,10 +824,10 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     /**
      * Search entity from [oppositeStorage] in [goalStorage]
      */
-    private fun findEntityInStorage(rootEntity: WorkspaceEntityBase,
-                                    goalStorage: AbstractEntityStorage,
-                                    oppositeStorage: AbstractEntityStorage,
-                                    goalState: Long2ObjectMap<out Any>): WorkspaceEntity? {
+    private fun findRootEntityInStorage(rootEntity: WorkspaceEntityBase,
+                                        goalStorage: AbstractEntityStorage,
+                                        oppositeStorage: AbstractEntityStorage,
+                                        goalState: Long2ObjectMap<out Any>): WorkspaceEntity? {
       return if (rootEntity is WorkspaceEntityWithPersistentId) {
         val persistentId = rootEntity.persistentId
         goalStorage.resolve(persistentId)
@@ -838,7 +838,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           .filter {
             val itId = (it as WorkspaceEntityBase).id
             if (goalState[itId] != null) return@filter false
-            goalStorage.entityDataByIdOrDie(itId).equalsByKey(oppositeEntityData)
+            goalStorage.entityDataByIdOrDie(itId).equalsByKey(oppositeEntityData) && goalStorage.refs.getParentRefsOfChild(itId.asChild())
+              .isEmpty()
           }
           .firstOrNull()
       }

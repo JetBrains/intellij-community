@@ -1523,6 +1523,29 @@ class ReplaceBySourceTest {
     assertEquals(1, builder.changeLog.changeLog.size)
   }
 
+  @RepeatedTest(10)
+  fun `replace same entities should produce in case of source chang2e`() {
+    builder add OoParentEntity("prop", MySource)
+
+    val parent = replacement add OoParentEntity("prop", MySource)
+    replacement add OoChildWithNullableParentEntity(AnotherSource) {
+      this.parentEntity = parent
+    }
+    replacement add OoChildWithNullableParentEntity(AnotherSource) {
+      this.parentEntity = parent
+    }
+    replacement add OoChildWithNullableParentEntity(AnotherSource) {
+      this.parentEntity = parent
+    }
+
+    builder.changeLog.clear()
+
+    builder.replaceBySource({ it is AnotherSource }, replacement)
+    builder.replaceBySource({ true }, builder.toSnapshot())
+
+    builder.assertConsistency()
+  }
+
   private inner class ThisStateChecker {
     infix fun WorkspaceEntity.assert(state: ReplaceState) {
       val thisState = engine.targetState[this.base.id]
