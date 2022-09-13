@@ -135,7 +135,7 @@ class ItemsDecoratorInitializer : LookupTracker() {
     override fun withDelegate(icon: Icon?): LookupCellRenderer.IconDecorator = LeftDecoratedIcon(leftIcon, icon)
 
     override fun replaceBy(replacer: IconReplacer): LeftDecoratedIcon {
-      return LeftDecoratedIcon(replacer.replaceIcon(leftIcon), baseIcon?.let { replacer.replaceIcon(it) })
+      return LeftDecoratedIcon(replacer.replaceIcon(leftIcon), replacer.replaceIcon(baseIcon))
     }
   }
 

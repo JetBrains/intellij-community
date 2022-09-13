@@ -579,9 +579,13 @@ public final class IconLoader {
    */
   public static @NotNull Icon colorPatchedIcon(@NotNull Icon icon, @NotNull SVGLoader.SvgElementColorPatcherProvider colorPatcher) {
     IconReplacer replacer = new IconReplacer() {
-      @NotNull
       @Override
-      public Icon replaceIcon(@NotNull Icon icon) {
+      @Contract("null -> null; !null -> !null")
+      public Icon replaceIcon(Icon icon) {
+        if (icon == null) {
+          return null;
+        }
+
         if (icon instanceof DummyIcon) {
           return icon;
         }
