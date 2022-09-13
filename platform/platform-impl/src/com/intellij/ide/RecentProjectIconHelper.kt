@@ -89,7 +89,9 @@ internal class RecentProjectIconHelper {
     }
 
     @JvmStatic
-    fun projectIconSize() = JBUIScale.scale(Registry.intValue("ide.project.icon.size", 20))
+    fun projectIconSize() = JBUIScale.scale(unscaledProjectIconSize())
+
+    private fun unscaledProjectIconSize() = Registry.intValue("ide.project.icon.size", 20)
 
     @JvmStatic
     fun generateProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean): Icon {
@@ -100,8 +102,7 @@ internal class RecentProjectIconHelper {
         displayName.contains(",") -> iconTextForCommaSeparatedName(displayName)
         else -> displayName
       }
-
-      var generatedProjectIcon: Icon = JBUIScale.scaleIcon(AvatarIcon(Registry.intValue("ide.project.icon.size", 20), 0.3, name, name, ProjectIconPalette))
+      var generatedProjectIcon: Icon = JBUIScale.scaleIcon(AvatarIcon(unscaledProjectIconSize(), 0.3, name, name, ProjectIconPalette))
 
       if (!isProjectValid) {
         generatedProjectIcon = IconUtil.desaturate(generatedProjectIcon)

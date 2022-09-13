@@ -99,10 +99,13 @@ internal object Avatars {
       return generateFromCamelCase(words.first())
     }
     return words.map { it.first() }
-      .joinToString("").toUpperCase()
+        .joinToString("").uppercase()
   }
 
-  private fun generateFromCamelCase(text: String) = text.filterIndexed { index, c -> index == 0 || c.isUpperCase() }.take(2).toUpperCase()
+  private fun generateFromCamelCase(text: String) =
+    text.filterIndexed { index, c -> index == 0 || c.isUpperCase() }
+      .take(2)
+      .uppercase()
 
   fun initials(firstName: String, lastName: String): String {
     return listOf(firstName, lastName).joinToString("") { it.first().toString() }
@@ -113,7 +116,7 @@ abstract class ColorPalette {
 
   abstract val gradients: Array<Pair<Color, Color>>
 
-  public fun gradient(seed: String? = null): Pair<Color, Color> {
+  fun gradient(seed: String? = null): Pair<Color, Color> {
     val keyCode = if (seed != null) {
       abs(seed.hashCode()) % gradients.size
     }
