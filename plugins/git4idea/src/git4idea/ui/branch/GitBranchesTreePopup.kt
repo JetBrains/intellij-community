@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -46,9 +47,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
+import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.Point
+import java.awt.datatransfer.DataFlavor
 import java.awt.event.*
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -62,7 +65,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
   : WizardPopup(project, null, step),
     TreePopup, NextStepHandler {
 
-  private lateinit var tree: JTree
+  private lateinit var tree: BranchesTree
 
   private var showingChildPath: TreePath? = null
   private var pendingChildPath: TreePath? = null
@@ -87,7 +90,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
   }
 
   override fun createContent(): JComponent {
-    tree = Tree(treeStep.treeModel).also {
+    tree = BranchesTree(treeStep.treeModel).also {
       configureTreePresentation(it)
       overrideTreeActions(it)
       addTreeMouseControlsListeners(it)
@@ -244,6 +247,12 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
       if (speedSearch.isHoldingFilter) selectLastLeaf()
       else false
     }
+
+    overrideBuiltInAction(TransferHandler.getPasteAction().getValue(Action.NAME) as String) {
+      speedSearch.type(CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor))
+      speedSearch.update()
+      true
+    }
   }
 
   private fun addTreeMouseControlsListeners(tree: JTree) = with(tree) {
@@ -254,6 +263,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
   override fun getActionMap(): ActionMap = tree.actionMap
 
   override fun getInputMap(): InputMap = tree.inputMap
+
+  override fun process(e: KeyEvent?) {
+    tree.processEvent(e)
+  }
 
   override fun afterShow() {
     selectPreferred()
@@ -395,6 +408,15 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
       CoroutineScope(SupervisorJob() + Dispatchers.Main).also {
         Disposer.register(parent) { it.cancel() }
       }
+
+    private class BranchesTree(model: TreeModel): Tree(model) {
+      //Change visibility of processEvent to be able to delegate key events dispatched in WizardPopup directly to tree
+      //This will allow to handle events like "copy-paste" in AbstractPopup.speedSearch
+      public override fun processEvent(e: AWTEvent?) {
+        e?.source = this
+        super.processEvent(e)
+      }
+    }
 
     private class Renderer(private val step: GitBranchesTreePopupStep) : TreeCellRenderer {
 
