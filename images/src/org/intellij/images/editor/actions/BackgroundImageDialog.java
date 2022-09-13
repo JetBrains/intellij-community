@@ -276,6 +276,11 @@ public class BackgroundImageDialog extends DialogWrapper {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         targetChanged(target);
         myToolbar.updateActionsImmediately();
