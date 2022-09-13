@@ -110,21 +110,21 @@
       }
     },
     "bundledPlugins": {
-      "description": "Plugins bundled into this distribution",
+      "description": "IDs of plugins bundled into this distribution, e.g. 'JUnit' or 'com.intellij.java'",
       "type": "array",
       "items": {
         "type": "string"
       }
     },
     "fileExtensions": {
-      "description": "File extensions reported to be handled by this distribution",
+      "description": "Patterns of file names supported by this IDE and its bundled plugins, e.g. '*.java', '*.html' or 'Dockerfile'",
       "type": "array",
       "items": {
         "type": "string"
       }
     },
     "modules": {
-      "description": "Product modules (non-removable bundled plugins) contained in this distribution, see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules",
+      "description": "IDs of product modules (non-removable bundled plugins) contained in this distribution, e.g. 'com.intellij.modules.lang'; see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules",
       "type": "array",
       "items": {
         "type": "string"
