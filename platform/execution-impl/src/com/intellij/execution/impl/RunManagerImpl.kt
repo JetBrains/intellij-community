@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -77,13 +78,13 @@ interface RunConfigurationTemplateProvider {
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
 open class RunManagerImpl @JvmOverloads constructor(val project: Project, sharedStreamProvider: StreamProvider? = null) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
   companion object {
-    const val CONFIGURATION = "configuration"
-    const val NAME_ATTR = "name"
+    const val CONFIGURATION: String = "configuration"
+    const val NAME_ATTR: String = "name"
 
-    internal val LOG = logger<RunManagerImpl>()
+    internal val LOG: Logger = logger<RunManagerImpl>()
 
     @JvmStatic
-    fun getInstanceImpl(project: Project) = getInstance(project) as RunManagerImpl
+    fun getInstanceImpl(project: Project): RunManagerImpl = getInstance(project) as RunManagerImpl
 
     fun canRunConfiguration(environment: ExecutionEnvironment): Boolean {
       return environment.runnerAndConfigurationSettings?.let { canRunConfiguration(it, environment.executor) } ?: false
@@ -170,7 +171,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
   })
 
-  internal val schemeManagerIprProvider = if (project.isDirectoryBased || sharedStreamProvider != null) null else SchemeManagerIprProvider("configuration")
+  internal val schemeManagerIprProvider: SchemeManagerIprProvider? = if (project.isDirectoryBased || sharedStreamProvider != null) null else SchemeManagerIprProvider("configuration")
 
   @Suppress("LeakingThis")
   private val templateDifferenceHelper = TemplateDifferenceHelper(this)
@@ -1022,8 +1023,10 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         }
       }
       else {
-        configuration.beforeRunTasks = getEffectiveBeforeRunTaskList(result ?: emptyList(), getConfigurationTemplate(configuration.factory!!).configuration.beforeRunTasks,
-                                                                     ownIsOnlyEnabled = true, isDisableTemplateTasks = false)
+        configuration.beforeRunTasks = getEffectiveBeforeRunTaskList(ownTasks = result ?: emptyList(),
+                                                                     templateTasks = getConfigurationTemplate(configuration.factory!!).configuration.beforeRunTasks,
+                                                                     ownIsOnlyEnabled = true,
+                                                                     isDisableTemplateTasks = false)
         return
       }
     }
@@ -1031,23 +1034,25 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     configuration.beforeRunTasks = result ?: emptyList()
   }
 
-  @JvmOverloads
   fun getFactory(
     typeId: String?,
     factoryId: String?,
     checkUnknown: Boolean = false,
   ): ConfigurationFactory {
-    return idToType.value[typeId]?.let { getFactory(it, factoryId) }
-           ?: UnknownConfigurationType.getInstance().also {
-             if (checkUnknown && typeId != null) {
-               UnknownFeaturesCollector.getInstance(project)
-                 .registerUnknownFeature(UnknownFeature(
-                   CONFIGURATION_TYPE_FEATURE_ID,
-                   ExecutionBundle.message("plugins.advertiser.feature.run.configuration"),
-                   typeId,
-                 ))
-             }
-           }
+    var factory = idToType.value.get(typeId)?.let { getFactory(it, factoryId) }
+    if (factory != null) {
+      return factory
+    }
+
+    factory = UnknownConfigurationType.getInstance()
+    if (checkUnknown && typeId != null) {
+      UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(UnknownFeature(
+        CONFIGURATION_TYPE_FEATURE_ID,
+        ExecutionBundle.message("plugins.advertiser.feature.run.configuration"),
+        typeId,
+      ))
+    }
+    return factory
   }
 
   fun getFactory(type: ConfigurationType, factoryId: String?): ConfigurationFactory? {
