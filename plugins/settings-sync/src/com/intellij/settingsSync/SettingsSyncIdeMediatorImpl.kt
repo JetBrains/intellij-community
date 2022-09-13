@@ -90,14 +90,15 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     componentStore.storageManager.removeStreamProvider(this::class.java)
   }
 
-  override fun getInitialSnapshot(appConfigPath: Path): SettingsSnapshot {
+  override fun getInitialSnapshot(appConfigPath: Path, lastSavedSnapshot: SettingsSnapshot): SettingsSnapshot {
     val exportableItems = getExportableComponentsMap(isComputePresentableNames = false, componentStore.storageManager,
                                                      withExportable = false)
     val filesToExport = getExportableItemsFromLocalStorage(exportableItems, componentStore.storageManager).keys
 
     val fileStates = collectFileStatesFromFiles(filesToExport, appConfigPath)
     LOG.debug("Collected files for the following fileSpecs: $fileStates")
-    val pluginsState = SettingsSyncPluginManager.getInstance().updateStateFromIde()
+
+    val pluginsState = SettingsSyncPluginManager.getInstance().updateStateFromIdeOnStart(lastSavedSnapshot.plugins)
     LOG.debug("Collected following plugin state: $pluginsState")
     return SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), fileStates, pluginsState)
   }

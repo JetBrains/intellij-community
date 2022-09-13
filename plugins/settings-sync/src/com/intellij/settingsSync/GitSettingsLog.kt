@@ -33,7 +33,7 @@ import kotlin.io.path.div
 internal class GitSettingsLog(private val settingsSyncStorage: Path,
                               private val rootConfigPath: Path,
                               parentDisposable: Disposable,
-                              private val initialSnapshotProvider: () -> SettingsSnapshot
+                              private val initialSnapshotProvider: (SettingsSnapshot) -> SettingsSnapshot
 ) : SettingsLog, Disposable {
 
   private lateinit var repository: Repository
@@ -84,7 +84,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
   private fun copyExistingSettings() {
     LOG.info("Copying existing settings from $rootConfigPath to $settingsSyncStorage")
-    val snapshot = initialSnapshotProvider()
+    val snapshot = initialSnapshotProvider(collectCurrentSnapshot())
     applyState(IDE_REF_NAME, snapshot, "Copy current configs")
   }
 

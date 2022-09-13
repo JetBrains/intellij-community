@@ -32,17 +32,21 @@ internal class SettingsSyncPluginManager : Disposable {
     PluginManagerProxy.getInstance().addDisablePluginListener(pluginEnabledStateListener, this)
   }
 
-  internal fun updateStateFromIde() : SettingsSyncPluginsState {
+  internal fun updateStateFromIdeOnStart(lastSavedPluginsState: SettingsSyncPluginsState?): SettingsSyncPluginsState {
     synchronized(LOCK) {
-      val newPlugins = mutableMapOf<PluginId, PluginData>()
+      val oldPlugins = lastSavedPluginsState?.plugins ?: emptyMap()
+      val newPlugins = oldPlugins.toMutableMap()
+
       for (plugin in PluginManagerProxy.getInstance().getPlugins()) {
         val id = plugin.pluginId
         if (shouldSaveState(plugin)) {
           newPlugins[id] = getPluginData(plugin)
         }
+        else {
+          newPlugins -= id
+        }
       }
 
-      val oldPlugins = state.plugins
       logChangedState(oldPlugins, newPlugins)
       state = SettingsSyncPluginsState(newPlugins)
       if (oldPlugins != newPlugins) {

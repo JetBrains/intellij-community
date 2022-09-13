@@ -34,7 +34,7 @@ internal class MockSettingsSyncIdeMediator : SettingsSyncIdeMediator {
   override fun removeStreamProvider() {
   }
 
-  override fun getInitialSnapshot(appConfigPath: Path): SettingsSnapshot {
+  override fun getInitialSnapshot(appConfigPath: Path, lastSavedSnapshot: SettingsSnapshot): SettingsSnapshot {
     return getAllFilesFromSettingsAsSnapshot(appConfigPath)
   }
 
