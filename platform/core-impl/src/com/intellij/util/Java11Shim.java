@@ -12,24 +12,24 @@ public abstract class Java11Shim {
   @SuppressWarnings("StaticNonFinalField")
   public static @NotNull Java11Shim INSTANCE = new Java11Shim() {
     @Override
-    public <K, V> Map<K, V> copyOf(Map<? extends K, ? extends V> map) {
+    public <K extends @NotNull Object, V extends @NotNull Object> Map<K, V> copyOf(Map<? extends K, ? extends V> map) {
       return Collections.unmodifiableMap(map);
     }
 
     @Override
-    public <E> @NotNull Set<E> copyOf(Set<? extends E> collection) {
+    public <E extends @NotNull Object> @NotNull Set<E> copyOf(Set<? extends E> collection) {
       return Collections.unmodifiableSet(collection);
     }
 
     @Override
-    public <E> @NotNull List<E> copyOfCollection(Collection<? extends E> collection) {
+    public <E extends @NotNull Object> @NotNull List<E> copyOfCollection(Collection<? extends E> collection) {
       return Collections.unmodifiableList(new ArrayList<>(collection));
     }
   };
 
-  public abstract <K, V> Map<K, V> copyOf(Map<? extends @NotNull K, ? extends @NotNull V> map);
+  public abstract <K extends @NotNull Object, V extends @NotNull Object> Map<K, V> copyOf(Map<? extends @NotNull K, ? extends @NotNull V> map);
 
-  public abstract <E> @NotNull Set<E> copyOf(Set<? extends @NotNull E> collection);
+  public abstract <E extends @NotNull Object> @NotNull Set<E> copyOf(Set<? extends @NotNull E> collection);
 
-  public abstract <E> @NotNull List<E> copyOfCollection(Collection<? extends @NotNull E> collection);
+  public abstract <E extends @NotNull Object> @NotNull List<E> copyOfCollection(Collection<? extends @NotNull E> collection);
 }
