@@ -71,11 +71,10 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
     val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
     context.executeStep(spanBuilder("build linux .tar.gz").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
-      if (customizer.buildTarGzWithoutBundledRuntime &&
-          (arch == JvmArchitecture.x64 || !context.shouldBuildDistributionForOS(OsFamily.LINUX, JvmArchitecture.x64))) {
+      if (customizer.buildTarGzWithoutBundledRuntime) {
         context.executeStep(spanBuilder("Build Linux .tar.gz without bundled Runtime").setAttribute("arch", arch.name),
                             BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP) {
-          val tarGzPath = buildTarGz(runtimeDir = null, unixDistPath = osAndArchSpecificDistPath, suffix = NO_JBR_SUFFIX)
+          val tarGzPath = buildTarGz(runtimeDir = null, unixDistPath = osAndArchSpecificDistPath, suffix = NO_JBR_SUFFIX + suffix)
           checkExecutablePermissions(tarGzPath, rootDirectoryName, includeRuntime = false)
         }
       }
