@@ -11,7 +11,7 @@ object FilesTest {
   fun readFile(filename: String, lang: String): String {
     return StringBuilder().apply {
       BufferedReader(FileReader(
-        PluginPathManager.getPluginHome("full-line").resolve("languages/$lang/testResources/$filename").path
+        PluginPathManager.getPluginHome("full-line").resolve("$lang/testResources/$filename").path
       ))
         .lineSequence()
         .forEach { append(it).append('\n') }
