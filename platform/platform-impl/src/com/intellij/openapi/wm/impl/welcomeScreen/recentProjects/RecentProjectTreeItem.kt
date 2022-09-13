@@ -98,8 +98,10 @@ internal data class RecentProjectItem(
     }
 
     val modifiers = event.modifiers
-    val forceOpenInNewFrame = BitUtil.isSet(modifiers, InputEvent.CTRL_DOWN_MASK) ||
-                              BitUtil.isSet(modifiers, InputEvent.SHIFT_DOWN_MASK) ||
+    // Deprecated constants are used because com.intellij.openapi.actionSystem.AnActionEvent
+    // doesn't work with java.awt.event.InputEvent.getModifiersEx API
+    val forceOpenInNewFrame = BitUtil.isSet(modifiers, InputEvent.CTRL_MASK) ||
+                              BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK) ||
                               event.place == ActionPlaces.WELCOME_SCREEN ||
                               LightEdit.owns(null)
     openProjectAndLogRecent(file, OpenProjectTask {

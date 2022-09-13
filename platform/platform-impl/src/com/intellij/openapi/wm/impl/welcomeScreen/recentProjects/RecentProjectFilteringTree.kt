@@ -256,7 +256,7 @@ internal class RecentProjectFilteringTree(
           }
         }
         else {
-          activateItem(tree, item)
+          activateItem(tree, item, mouseEvent)
         }
       }
 
@@ -653,7 +653,7 @@ internal class RecentProjectFilteringTree(
   companion object {
     private val TREE_CURSOR = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
 
-    private fun createActionEvent(tree: Tree, inputEvent: InputEvent? = null): AnActionEvent {
+    private fun createActionEvent(tree: Tree, inputEvent: InputEvent?): AnActionEvent {
       val dataContext = DataManager.getInstance().getDataContext(tree)
       val actionPlace =
         if (UIUtil.uiParents(tree, true).filter(FlatWelcomeFrame::class.java).isEmpty) ActionPlaces.POPUP
@@ -669,10 +669,10 @@ internal class RecentProjectFilteringTree(
       activateItem(tree, item)
     }
 
-    private fun activateItem(tree: Tree, item: RecentProjectTreeItem) {
+    private fun activateItem(tree: Tree, item: RecentProjectTreeItem, inputEvent: InputEvent? = null) {
       when (item) {
         is RecentProjectItem -> {
-          val actionEvent = createActionEvent(tree)
+          val actionEvent = createActionEvent(tree, inputEvent)
           item.openProject(actionEvent)
         }
         is ProjectsGroupItem -> {
