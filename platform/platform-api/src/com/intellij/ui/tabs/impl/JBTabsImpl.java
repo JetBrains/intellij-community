@@ -3979,27 +3979,7 @@ public class JBTabsImpl extends JComponent
   public void dispose() {
   }
 
-  /**
-   * @deprecated unused in current realization.
-   */
-  @Deprecated(forRemoval = true)
-  protected static class ShapeInfo {
-    public ShapeInfo() {
-    }
-
-    public ShapeTransform path;
-    public ShapeTransform fillPath;
-    public ShapeTransform labelPath;
-    public int labelBottomY;
-    public int labelTopY;
-    public int labelLeftX;
-    public int labelRightX;
-    public Insets insets;
-    public Color from;
-    public Color to;
-  }
-
-  private class TitleAction extends AnAction implements CustomComponentAction {
+  private final class TitleAction extends AnAction implements CustomComponentAction {
     private final Producer<Pair<Icon, String>> myTitleProvider;
     private final JLabel myLabel = new JLabel() {
       @Override
