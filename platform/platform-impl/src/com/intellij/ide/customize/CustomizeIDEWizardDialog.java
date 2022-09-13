@@ -26,6 +26,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.text.HtmlChunk.*;
 
+@Deprecated
 public class CustomizeIDEWizardDialog extends DialogWrapper implements CommonCustomizeIDEWizardDialog {
   protected static final String BUTTONS = "BUTTONS";
   protected static final String NO_BUTTONS = "NO_BUTTONS";

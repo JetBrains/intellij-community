@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
+import com.intellij.diagnostic.LoadingStateUtilKt;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.DataManager;
@@ -899,7 +900,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           setupSelectionOnPreferredComponent(toFocus);
 
           if (toFocus != null) {
-            if (isShowing() && (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isActive())) {
+            if (isShowing() && (ApplicationManager.getApplication() == null || !LoadingStateUtilKt.getAreComponentsInitialized() || ApplicationManager.getApplication().isActive())) {
               toFocus.requestFocus();
             } else {
               toFocus.requestFocusInWindow();

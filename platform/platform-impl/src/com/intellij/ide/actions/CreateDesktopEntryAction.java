@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.diagnostic.LoadingStateUtilKt;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
@@ -180,7 +181,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
     return new CapturingProcessHandler(cmd) {
       @Override
       public boolean hasPty() {
-        if (ApplicationManager.getApplication() == null) return false;
+        if (!LoadingStateUtilKt.getAreComponentsInitialized()) return false;
         return super.hasPty();
       }
     }.runProcess();

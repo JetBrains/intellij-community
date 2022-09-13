@@ -10,6 +10,8 @@ import com.intellij.ide.plugins.auth.PluginRepositoryAuthService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -152,11 +154,9 @@ class MarketplaceRequests : PluginInfoProvider {
           if (eTag != null) {
             connection.setRequestProperty("If-None-Match", eTag)
           }
-          if (ApplicationManager.getApplication() != null) {
-            serviceOrNull<PluginRepositoryAuthService>()
-              ?.connectionTuner
-              ?.tune(connection)
-          }
+          serviceIfCreated<PluginRepositoryAuthService>()
+            ?.connectionTuner
+            ?.tune(connection)
         }
         .productNameAsUserAgent()
         .connect { request ->

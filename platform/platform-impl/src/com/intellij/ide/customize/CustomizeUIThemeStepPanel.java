@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Deprecated
 public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
   public static class ThemeInfo {
     public final @NonNls String name;
