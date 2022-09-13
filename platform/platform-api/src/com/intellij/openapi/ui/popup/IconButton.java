@@ -17,6 +17,8 @@
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.util.NlsContexts.Tooltip;
+import com.intellij.ui.IconReplacer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,6 +31,12 @@ public class IconButton extends ActiveIcon {
 
   public IconButton(@Tooltip String tooltip, @Nullable final Icon regular, @Nullable final Icon hovered, @Nullable final Icon inactive) {
     super(regular, inactive);
+    myTooltip = tooltip;
+    setHovered(hovered);
+  }
+
+  private IconButton(@Tooltip String tooltip, @NotNull final ActiveIcon base, @Nullable final Icon hovered) {
+    super(base);
     myTooltip = tooltip;
     setHovered(hovered);
   }
@@ -57,5 +65,10 @@ public class IconButton extends ActiveIcon {
 
   public @Tooltip String getTooltip() {
     return myTooltip;
+  }
+
+  @Override
+  public @NotNull IconButton replaceBy(@NotNull IconReplacer replacer) {
+    return new IconButton(myTooltip, super.replaceBy(replacer), replacer.replaceIcon(myHovered));
   }
 }

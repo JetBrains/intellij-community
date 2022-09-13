@@ -21,6 +21,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.ui.*;
 import com.intellij.ui.hover.HoverListener;
+import com.intellij.ui.icons.ReplaceableIcon;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -617,7 +618,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     }
   }
 
-  private static class XDebuggerPopFrameIcon extends JBScalableIcon {
+  private static class XDebuggerPopFrameIcon extends JBScalableIcon implements ReplaceableIcon {
 
     private final @NotNull Icon myIcon;
     private final @Nullable Icon mySelectedIcon;
@@ -631,6 +632,16 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       mySelectedIcon = selectedIcon;
       myIconWidth = width;
       myIconHeight = height;
+    }
+
+    @Override
+    public @NotNull XDebuggerPopFrameIcon replaceBy(@NotNull IconReplacer replacer) {
+      XDebuggerPopFrameIcon icon = new XDebuggerPopFrameIcon(replacer.replaceIcon(myIcon),
+                                                             replacer.replaceIcon(mySelectedIcon),
+                                                             myIconWidth,
+                                                             myIconHeight);
+      icon.isSelected = isSelected;
+      return icon;
     }
 
     private @Nullable Color getBackground() {
