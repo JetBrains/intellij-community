@@ -28,7 +28,9 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.NaturalComparator
@@ -146,6 +148,9 @@ internal class NavigationBar(
             }
             catch (ce: CancellationException) {
               throw ce
+            }
+            catch (pce: ProcessCanceledException) {
+              throw pce  // TODO find out why it is being actually thrown
             }
             catch (t: Throwable) {
               LOG.error(t)
