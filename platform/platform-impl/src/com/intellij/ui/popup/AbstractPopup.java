@@ -14,7 +14,8 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -1544,23 +1545,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myMouseOutCanceller = null;
 
     if (myFinalRunnable != null) {
-      ModalityState modalityState = ModalityState.current();
       Runnable finalRunnable = myFinalRunnable;
-
       getFocusManager().doWhenFocusSettlesDown(() -> {
-        if (ModalityState.current().equals(modalityState)) {
-          ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
-            try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
-              finalRunnable.run();
-            }
-          });
+        try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+          finalRunnable.run();
         }
-        else {
-          LOG.debug("Final runnable of popup is skipped");
-        }
-        // Otherwise the UI has changed unexpectedly and the action is likely not applicable.
-        // And we don't want finalRunnable to perform potentially destructive actions
-        //   in the context of a suddenly appeared modal dialog.
       });
       myFinalRunnable = null;
     }
