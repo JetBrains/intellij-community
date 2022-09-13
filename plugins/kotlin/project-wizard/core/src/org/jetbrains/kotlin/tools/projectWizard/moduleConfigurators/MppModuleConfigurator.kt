@@ -64,20 +64,20 @@ object MppModuleConfigurator : ModuleConfigurator,
 
     private fun shouldApplyHmppGradleProperties(configurationData: ModulesToIrConversionData): Boolean {
         val kotlinVersionText = configurationData.kotlinVersion.version.text
-        val kotlinVersion = kotlinVersionText.toKotlinVersion() ?: return false
+        val kotlinVersion = kotlinVersionFromString(kotlinVersionText) ?: return false
         return kotlinVersion < HMPP_BY_DEFAULT_VERSION
     }
 
-    private fun String.toKotlinVersion(): KotlinVersion? {
-        val semanticParts = split(".").takeIf { it.size >= 3 }?.take(3) ?: return null
-        val (major, minor, patch) = semanticParts.map { partString ->
-            try {
-                partString.toInt()
-            } catch (_: NumberFormatException) {
-                return null
-            }
-        }
-        return KotlinVersion(major, minor, patch)
+    private val KOTLIN_COMPILER_VERSION_PATTERN = "(\\d+)\\.(\\d+)(?:\\.(\\d+))?.*".toRegex()
+
+    // basically a duplicate of the org.jetbrains.kotlin.idea.versions.KotlinRuntimeLibraryUtilKt.fromString
+    // I've copied it, so we won't have the whole kotlin.idea module in the dependencies.
+    private fun kotlinVersionFromString(version: String): KotlinVersion? {
+        val (major, minor, patch) = KOTLIN_COMPILER_VERSION_PATTERN.matchEntire(version)?.destructured ?: return null
+        val majorValue = major.toIntOrNull() ?: return null
+        val minorValue = minor.toIntOrNull() ?: return null
+        val patchValue = patch.toIntOrNull() ?: 0
+        return KotlinVersion(majorValue, minorValue, patchValue)
     }
 
     private val HMPP_BY_DEFAULT_VERSION = KotlinVersion(1, 6, 20)
