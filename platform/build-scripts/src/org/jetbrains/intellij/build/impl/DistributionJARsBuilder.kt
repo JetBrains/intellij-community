@@ -901,8 +901,8 @@ private suspend fun buildKeymapPlugins(targetDir: Path, context: BuildContext): 
 
 suspend fun layoutDistribution(layout: BaseLayout,
                                targetDirectory: Path,
-                               copyFiles: Boolean,
-                               simplify: Boolean,
+                               copyFiles: Boolean = true,
+                               simplify: Boolean = false,
                                moduleOutputPatcher: ModuleOutputPatcher,
                                jarToModule: Map<String, List<String>>,
                                context: BuildContext): Pair<List<DistributionFileEntry>, Path> {
@@ -1078,7 +1078,7 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
   }
 }
 
-private fun checkModuleExcludes(moduleExcludes: Map<String, List<String>>, context: BuildContext) {
+private fun checkModuleExcludes(moduleExcludes: Map<String, List<String>>, context: CompilationContext) {
   for ((module, value) in moduleExcludes) {
     for (pattern in value) {
       check(Files.exists(context.getModuleOutputDir(context.findRequiredModule(module)))) {

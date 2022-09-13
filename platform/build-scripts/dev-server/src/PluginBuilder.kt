@@ -1,11 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("BlockingMethodInNonBlockingContext")
+@file:Suppress("BlockingMethodInNonBlockingContext", "PrivatePropertyName")
 
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.diagnostic.telemetry.useWithScope2
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
@@ -17,6 +21,7 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.*
+import java.util.concurrent.atomic.LongAdder
 
 private val TOUCH_OPTIONS = EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE)
 
@@ -40,11 +45,19 @@ internal data class PluginBuildDescriptor(
   }
 }
 
-internal fun CoroutineScope.initialBuild(pluginBuildDescriptors: List<PluginBuildDescriptor>, pluginBuilder: PluginBuilder) {
-  for (plugin in pluginBuildDescriptors) {
-    launch {
-      pluginBuilder.buildPlugin(plugin = plugin)
+internal suspend fun buildPlugins(pluginBuildDescriptors: List<PluginBuildDescriptor>, pluginBuilder: PluginBuilder) {
+  spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope2 { span ->
+    val counter = LongAdder()
+    coroutineScope {
+      for (plugin in pluginBuildDescriptors) {
+        launch {
+          if (pluginBuilder.buildPlugin(plugin = plugin)) {
+            counter.add(1)
+          }
+        }
+      }
     }
+    span.setAttribute("reusedCount", counter.toLong())
   }
 }
 
@@ -99,10 +112,10 @@ internal class PluginBuilder(private val outDir: Path,
     return "Plugins ${dirtyPlugins.joinToString { it.dir.fileName.toString() }} were updated"
   }
 
-  internal suspend fun buildPlugin(plugin: PluginBuildDescriptor) {
+  internal suspend fun buildPlugin(plugin: PluginBuildDescriptor): Boolean {
     val mainModule = plugin.layout.mainModule
     val moduleOutputPatcher = ModuleOutputPatcher()
-    spanBuilder("build plugin")
+    return spanBuilder("build plugin")
       .setAttribute("mainModule", mainModule)
       .setAttribute("dir", plugin.layout.directoryName)
       .useWithScope2 { span ->
@@ -122,19 +135,19 @@ internal class PluginBuilder(private val outDir: Path,
         }
 
         if (isCached) {
-          return@useWithScope2
+          return@useWithScope2 true
         }
 
         layoutDistribution(layout = plugin.layout,
                            targetDirectory = plugin.dir,
-                           copyFiles = true,
-                           simplify = true,
                            moduleOutputPatcher = moduleOutputPatcher,
                            jarToModule = plugin.layout.jarToModules,
                            context = context)
         withContext(Dispatchers.IO) {
           plugin.markAsBuilt(outDir)
         }
+
+        false
       }
   }
 
@@ -151,7 +164,7 @@ internal class PluginBuilder(private val outDir: Path,
       else {
         Files.move(cacheDir!!, plugin.dir)
       }
-      span.addEvent("reuse $dirName from cache")
+      span.setAttribute("reused", true)
       return true
     }
     return false

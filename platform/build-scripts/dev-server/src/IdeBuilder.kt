@@ -125,8 +125,8 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     withContext(Dispatchers.IO) {
       Files.createDirectories(pluginRootDir)
     }
-    spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope2 {
-      initialBuild(pluginBuildDescriptors = pluginBuildDescriptors, pluginBuilder = pluginBuilder)
+    launch {
+      buildPlugins(pluginBuildDescriptors = pluginBuildDescriptors, pluginBuilder = pluginBuilder)
     }
     launch {
       computeLibClassPath(targetFile = runDir.resolve(if (isServerMode) "libClassPath.txt" else "core-classpath.txt"),
@@ -231,6 +231,10 @@ private fun checkBuildModulesModificationAndMark(productConfiguration: ProductCo
     }
 
     createMarkFile(markFile)
+  }
+
+  if (isApplicable) {
+    Span.current().addEvent("plugin cache will be reused (build modules were not changed)")
   }
   return isApplicable
 }
