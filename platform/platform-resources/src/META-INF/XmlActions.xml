@@ -115,6 +115,10 @@
       </group>
     </group>
 
-    <action id="ToggleMinimapAction" class="com.intellij.ide.minimap.actions.ToggleMinimapAction"/>
+    <action id="ToggleMinimap" class="com.intellij.ide.minimap.actions.ToggleMinimapAction"/>
+    <action id="MinimapFilter" class="com.intellij.ide.minimap.actions.MinimapFilterActionGroup"/>
+    <action id="OpenMinimapSettings" class="com.intellij.ide.minimap.actions.OpenMinimapSettingsAction"/>
+    <action id="MoveMinimap" class="com.intellij.ide.minimap.actions.MoveMinimapAction"/>
+    <action id="ToggleMinimapResizable" class="com.intellij.ide.minimap.actions.ToggleMinimapResizableAction"/>
   </actions>
 </idea-plugin>

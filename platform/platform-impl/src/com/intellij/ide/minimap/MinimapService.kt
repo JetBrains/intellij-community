@@ -21,7 +21,6 @@ class MinimapService : Disposable {
   }
 
   private val settings = MinimapSettings.getInstance()
-  private var state = settings.state
 
   private val onSettingsChange = { type: MinimapSettings.SettingsChangeType ->
     if (type == MinimapSettings.SettingsChangeType.WithUiRebuild) {
@@ -69,7 +68,7 @@ class MinimapService : Disposable {
   private fun addMinimap(textEditor: EditorImpl) {
     val panel = getPanel(textEditor) ?: return
 
-    val where = if (state.rightAligned) BorderLayout.LINE_END else BorderLayout.LINE_START
+    val where = if (settings.state.rightAligned) BorderLayout.LINE_END else BorderLayout.LINE_START
 
     if ((panel.layout as? BorderLayout)?.getLayoutComponent(where) == null) {
       val minimapPanel = MinimapPanel(textEditor.disposable, textEditor, panel)

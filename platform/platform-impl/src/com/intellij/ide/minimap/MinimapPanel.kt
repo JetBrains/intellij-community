@@ -1,11 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.minimap
 
-import com.intellij.ide.minimap.actions.MoveMinimapAction
-import com.intellij.ide.minimap.actions.OpenMinimapSettingsAction
-import com.intellij.ide.minimap.actions.ToggleMinimapResizableAction
 import com.intellij.ide.minimap.settings.MinimapSettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.SelectionEvent
@@ -212,11 +210,11 @@ class MinimapPanel(private val parentDisposable: Disposable, private val editor:
   }
 
   private fun createPopupActionGroup() = DefaultActionGroup(
-    ToggleMinimapResizableAction(),
-    MoveMinimapAction(),
-    OpenMinimapSettingsAction(),
+    ActionManager.getInstance().getAction("ToggleMinimapResizable"),
+    ActionManager.getInstance().getAction("MoveMinimap"),
+    ActionManager.getInstance().getAction("OpenMinimapSettings"),
     // Filters are currently disabled.
-    //MinimapFilterActionGroup()
+    // ActionManager.getInstance().getAction("MinimapFilter")
   )
 
   private fun updatePreferredSize() {
