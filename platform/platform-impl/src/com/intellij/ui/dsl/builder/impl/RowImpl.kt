@@ -265,7 +265,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun label(text: String): CellImpl<JLabel> {
-    return cell(Label(text))
+    return cell(JLabel(text))
   }
 
   override fun text(@NlsContexts.Label text: String, maxLineLength: Int, action: HyperlinkEventAction): Cell<JEditorPane> {
