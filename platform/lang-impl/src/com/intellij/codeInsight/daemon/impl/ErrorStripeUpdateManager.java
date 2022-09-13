@@ -46,7 +46,6 @@ public final class ErrorStripeUpdateManager implements Disposable {
   public void dispose() {
   }
 
-  @SuppressWarnings("WeakerAccess") // Used in Rider
   public void repaintErrorStripePanel(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myProject.isInitialized()) return;
@@ -59,7 +58,6 @@ public final class ErrorStripeUpdateManager implements Disposable {
     setOrRefreshErrorStripeRenderer(markup, file);
   }
 
-  @SuppressWarnings("WeakerAccess") // Used in Rider
   void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, @Nullable PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!editorMarkupModel.isErrorStripeVisible() || file == null || !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
