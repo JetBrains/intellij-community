@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.build.BuildViewManager;
@@ -270,12 +270,10 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       if (!GradleProjectSettings.isDelegatedBuildEnabled(module)) return false;
       return isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
     }
-    if (projectTask instanceof ProjectModelBuildTask) {
-      ProjectModelBuildTask<?> buildTask = (ProjectModelBuildTask<?>)projectTask;
-      if (buildTask.getBuildableElement() instanceof Artifact) {
-        for (GradleBuildTasksProvider buildTasksProvider : GradleBuildTasksProvider.EP_NAME.getExtensions()) {
-          if (buildTasksProvider.isApplicable(buildTask)) return true;
-        }
+    if (projectTask instanceof BuildTask) {
+      BuildTask buildTask = (BuildTask)projectTask;
+      for (GradleBuildTasksProvider buildTasksProvider : GradleBuildTasksProvider.EP_NAME.getExtensions()) {
+        if (buildTasksProvider.isApplicable(buildTask)) return true;
       }
     }
 
