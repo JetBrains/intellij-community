@@ -29,7 +29,7 @@ data class LibrarySourceInfo(override val project: Project, val library: Library
     }
 
     override fun modulesWhoseInternalsAreVisible(): Collection<ModuleInfo> {
-        return LibraryInfoCache.getInstance(project).get(library)
+        return LibraryInfoCache.getInstance(project)[library]
     }
 
     override val platform: TargetPlatform

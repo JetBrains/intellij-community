@@ -114,7 +114,7 @@ class ModuleDependencyCollector(private val project: Project) {
             }
             is LibraryOrderEntry -> {
                 val library = orderEntry.library ?: return listOf()
-                LibraryInfoCache.getInstance(project).get(library)
+                LibraryInfoCache.getInstance(project)[library]
             }
             is JdkOrderEntry -> {
                 val sdk = orderEntry.jdk ?: return listOf()
