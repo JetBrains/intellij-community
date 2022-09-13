@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.*;
@@ -30,10 +29,6 @@ import java.util.Map;
  */
 @SuppressWarnings("UseJBColor")
 public final class JBUI {
-  static {
-    LoadingState.COMPONENTS_REGISTERED.checkOccurred();
-  }
-
   /**
    * Returns the pixel scale factor, corresponding to the default monitor device.
    */

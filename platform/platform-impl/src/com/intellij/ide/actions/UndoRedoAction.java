@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ui.SwingUndoUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,7 +121,8 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
 
     @Nullable
     static UndoManager fromContext(DataContext dataContext) {
-      javax.swing.undo.UndoManager swingUndoManager = UIUtil.getUndoManager(PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext));
+      javax.swing.undo.UndoManager swingUndoManager =
+        SwingUndoUtil.getUndoManager(PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext));
       return swingUndoManager != null ? new SwingUndoManagerWrapper(swingUndoManager) : null;
     }
 
