@@ -18,8 +18,9 @@ import java.awt.event.*;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-class ActionButton extends IconButton implements ActionListener {
-  private final InplaceButton myButton;
+class ActionButton implements ActionListener {
+  private final IconButton myIconButton;
+  private final InplaceButton myInplaceButton;
   private Presentation myPrevPresentation;
   private final AnAction myAction;
   private final String myPlace;
@@ -28,7 +29,7 @@ class ActionButton extends IconButton implements ActionListener {
   private boolean myToShow;
 
   ActionButton(TabInfo tabInfo, AnAction action, String place, Consumer<? super MouseEvent> pass, Consumer<? super Boolean> hover, TimedDeadzone.Length deadzone) {
-    super(null, action.getTemplatePresentation().getIcon());
+    myIconButton = new IconButton(null, action.getTemplatePresentation().getIcon());
     myTabInfo = tabInfo;
     myAction = action;
     myPlace = place;
@@ -45,7 +46,7 @@ class ActionButton extends IconButton implements ActionListener {
       }
     };
 
-    myButton = new InplaceButton(this, this, pass, deadzone) {
+    myInplaceButton = new InplaceButton(myIconButton, this, pass, deadzone) {
       @Override
       protected void doRepaintComponent(Component c) {
         repaintComponent(c);
@@ -54,21 +55,21 @@ class ActionButton extends IconButton implements ActionListener {
       @Override
       public void addNotify() {
         super.addNotify();
-        myButton.addMouseListener(myListener);
+        myInplaceButton.addMouseListener(myListener);
       }
 
       @Override
       public void removeNotify() {
         super.removeNotify();
-        myButton.removeMouseListener(myListener);
+        myInplaceButton.removeMouseListener(myListener);
       }
     };
-    myButton.setVisible(false);
-    myButton.setFillBg(false);
+    myInplaceButton.setVisible(false);
+    myInplaceButton.setFillBg(false);
   }
 
   public InplaceButton getComponent() {
-    return myButton;
+    return myInplaceButton;
   }
 
   public Presentation getPrevPresentation() {
@@ -80,7 +81,7 @@ class ActionButton extends IconButton implements ActionListener {
   }
 
   public void setMouseDeadZone(TimedDeadzone.Length deadZone) {
-    myButton.setMouseDeadzone(deadZone);
+    myInplaceButton.setMouseDeadzone(deadZone);
   }
 
   public boolean update() {
@@ -90,13 +91,13 @@ class ActionButton extends IconButton implements ActionListener {
     Presentation p = event.getPresentation();
     boolean changed = !areEqual(p, myPrevPresentation);
 
-    setIcons(p.getIcon(), p.getDisabledIcon(), p.getHoveredIcon());
+    myIconButton.setIcons(p.getIcon(), p.getDisabledIcon(), p.getHoveredIcon());
 
     if (changed) {
-      myButton.setIcons(this);
+      myInplaceButton.setIcons(myIconButton);
       String tooltipText = KeymapUtil.createTooltipText(p.getText(), myAction);
-      myButton.setToolTipText(tooltipText.length() > 0 ? tooltipText : null);
-      myButton.setVisible(p.isEnabled() && p.isVisible());
+      myInplaceButton.setToolTipText(tooltipText.length() > 0 ? tooltipText : null);
+      myInplaceButton.setVisible(p.isEnabled() && p.isVisible());
     }
 
     myPrevPresentation = p;
@@ -133,7 +134,7 @@ class ActionButton extends IconButton implements ActionListener {
 
   private @NotNull AnActionEvent createAnEvent(InputEvent inputEvent, int modifiers) {
     Presentation presentation = myAction.getTemplatePresentation().clone();
-    DataContext context = DataManager.getInstance().getDataContext(myButton);
+    DataContext context = DataManager.getInstance().getDataContext(myInplaceButton);
     DataContext compound = dataId -> {
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
         Object object = myTabInfo.getObject();
@@ -154,9 +155,9 @@ class ActionButton extends IconButton implements ActionListener {
 
   public void toggleShowActions(boolean show) {
     if (myAutoHide) {
-      myButton.setPainting(show);
+      myInplaceButton.setPainting(show);
     } else {
-      myButton.setPainting(true);
+      myInplaceButton.setPainting(true);
     }
 
     myToShow = show;
