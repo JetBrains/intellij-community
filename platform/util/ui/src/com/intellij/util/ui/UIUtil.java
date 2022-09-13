@@ -1870,11 +1870,11 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getFocusedBoundsColor() {
-    return getBoundsColor();
+    return NamedColorUtil.getBoundsColor();
   }
 
   public static @NotNull Color getBoundsColor() {
-    return JBColor.border();
+    return NamedColorUtil.getBoundsColor();
   }
 
   public static @NotNull Color toAlpha(final Color color, final int alpha) {
@@ -2054,11 +2054,11 @@ public final class UIUtil {
           scrollPane.setBorder(new SideBorder(color, keepBorderSides.intValue()));
         }
         else {
-          scrollPane.setBorder(new SideBorder(getBoundsColor(), keepBorderSides.intValue()));
+          scrollPane.setBorder(new SideBorder(NamedColorUtil.getBoundsColor(), keepBorderSides.intValue()));
         }
       }
       else {
-        scrollPane.setBorder(new SideBorder(getBoundsColor(), SideBorder.NONE));
+        scrollPane.setBorder(new SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.NONE));
       }
     }
   }

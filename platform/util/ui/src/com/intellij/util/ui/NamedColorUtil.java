@@ -31,4 +31,8 @@ public final class NamedColorUtil {
     return SystemInfoRt.isMac && ColorUtil.isDark(backgroundColor) ?
            MacUIUtil.getInvertedTextCursor() : Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
   }
+
+  public static @NotNull Color getBoundsColor() {
+    return JBColor.border();
+  }
 }

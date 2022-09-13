@@ -27,6 +27,7 @@ import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle.message
 import java.awt.BorderLayout
@@ -236,7 +237,7 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
 
     mainPanel = borderPanel {
       val topToolbar = boxPanel {
-        border = SideBorder(UIUtil.getBoundsColor(), SideBorder.BOTTOM)
+        border = SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM)
         preferredSize = Dimension(preferredSize.width, 30)
         minimumSize = Dimension(minimumSize.width, 30)
         maximumSize = Dimension(maximumSize.width, 30)

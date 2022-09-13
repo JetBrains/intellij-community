@@ -573,7 +573,7 @@ internal class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel"
     }
 
     init {
-      border = JBUI.Borders.customLine(UIUtil.getBoundsColor(), 1)
+      border = JBUI.Borders.customLine(NamedColorUtil.getBoundsColor(), 1)
       painter.addPropertyChangeListener { e ->
         if (e.propertyName.endsWith("ControlPoint")) {
           display.text = getControlPoints(painter).joinToString(transform = format::format)
