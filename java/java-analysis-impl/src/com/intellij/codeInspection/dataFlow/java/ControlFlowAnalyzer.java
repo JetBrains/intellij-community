@@ -1018,21 +1018,24 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                 }
               }
               else if (expressionValue != null && targetType != null) {
-                if (labelElement instanceof PsiPattern) {
-                  processPatternInSwitch(((PsiPattern)labelElement), expressionValue, targetType);
-
+                if (labelElement instanceof PsiPattern pattern) {
+                  processPatternInSwitch(pattern, expressionValue, targetType);
+                  addInstruction(new ResultOfInstruction(new JavaSwitchLabelTakenAnchor(pattern)));
                   addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
                 }
-                else if (labelElement instanceof PsiPatternGuard) {
-                  processPatternInSwitch(((PsiPatternGuard)labelElement).getPattern(), expressionValue, targetType);
-                  PsiExpression guard = ((PsiPatternGuard)labelElement).getGuardingExpression();
+                else if (labelElement instanceof PsiPatternGuard patternGuard) {
+                  processPatternInSwitch(patternGuard.getPattern(), expressionValue, targetType);
+                  PsiExpression guard = patternGuard.getGuardingExpression();
                   DeferredOffset endGuardOffset = new DeferredOffset();
                   if (guard != null) {
+                    addInstruction(new DupInstruction());
                     addInstruction(new ConditionalGotoInstruction(endGuardOffset, DfTypes.FALSE));
+                    addInstruction(new PopInstruction());
                     guard.accept(this);
                   }
-                  addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
                   endGuardOffset.setOffset(getInstructionCount());
+                  addInstruction(new ResultOfInstruction(new JavaSwitchLabelTakenAnchor(patternGuard)));
+                  addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
                 }
               }
             }
@@ -1065,7 +1068,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     DeferredOffset endPatternOffset = new DeferredOffset();
     processPattern(pattern, pattern, expressionValue, checkType, null, endPatternOffset);
     endPatternOffset.setOffset(getInstructionCount());
-    addInstruction(new ResultOfInstruction(new JavaSwitchLabelTakenAnchor(pattern)));
   }
 
   private void processPatternInInstanceof(@NotNull PsiPattern pattern, @NotNull PsiInstanceOfExpression expression,
