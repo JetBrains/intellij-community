@@ -71,6 +71,7 @@ public class StreamChainInliner implements CallInliner {
   private static final CallMatcher COLLECT_TERMINAL =
     instanceCall(JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.stream.Collector");
   private static final CallMatcher TO_LIST_TERMINAL = instanceCall(JAVA_UTIL_STREAM_STREAM, "toList")
+    .parameterCount(0)
     .withLanguageLevelAtLeast(LanguageLevel.JDK_16);
   private static final CallMatcher COLLECT3_TERMINAL =
     instanceCall(JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.function.Supplier",
@@ -217,9 +218,11 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     void before(CFGBuilder builder) {
+      builder.pushUnknown(); // qualifier
       for (PsiExpression arg : myCall.getArgumentList().getExpressions()) {
-        builder.pushExpression(arg).pop();
+        builder.pushExpression(arg);
       }
+      builder.call(myCall).pop();
       super.before(builder);
     }
 
