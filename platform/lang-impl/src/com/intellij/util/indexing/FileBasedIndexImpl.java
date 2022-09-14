@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VfsData;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiBinaryFile;
@@ -2035,6 +2036,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Override
   public boolean isFileIndexedInCurrentSession(@NotNull VirtualFile file, @NotNull ID<?, ?> indexId) {
+    if (VfsData.isIsIndexedFlagDisabled) {
+      return false;
+    }
     if (!file.isValid() ||
         !(file instanceof VirtualFileSystemEntry) ||
         !(((VirtualFileSystemEntry)file).isFileIndexed())) {

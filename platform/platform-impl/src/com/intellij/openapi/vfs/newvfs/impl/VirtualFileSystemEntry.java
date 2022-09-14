@@ -202,10 +202,16 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public boolean isFileIndexed() {
+    if (VfsData.isIsIndexedFlagDisabled) {
+      return false;
+    }
     return getSegment().isIndexed(myId);
   }
 
   public void setFileIndexed(boolean indexed) {
+    if (VfsData.isIsIndexedFlagDisabled) {
+      return;
+    }
     getSegment().setIndexed(myId, indexed);
   }
 
