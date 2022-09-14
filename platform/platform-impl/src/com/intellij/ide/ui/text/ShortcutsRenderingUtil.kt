@@ -85,7 +85,7 @@ object ShortcutsRenderingUtil {
       key = key + "\u00A0" + it
     }
 
-    val separator = "\u00A0\u00A0\u00A0\u00A0"
+    val separator = "\u00A0\u00A0\u00A0"
     val intervals = mutableListOf<IntRange>()
     val builder = StringBuilder()
 
@@ -116,12 +116,12 @@ object ShortcutsRenderingUtil {
    */
   fun getRawShortcutData(shortcut: String): Pair<@NlsSafe String, List<IntRange>> {
     val parts = shortcut.split(Regex(""" *\+ *"""))
-    val separator = "\u00A0\u00A0\u00A0\u00A0"
+    val separator = "\u00A0\u00A0\u00A0"
     val builder = StringBuilder()
     val ranges = mutableListOf<IntRange>()
     var curInd = 0
     for ((ind, part) in parts.withIndex()) {
-      builder.append(part)
+      builder.append(part.replace(' ', '\u00A0'))
       ranges.add(curInd until builder.length)
       if (ind != parts.lastIndex) {
         builder.append(separator)

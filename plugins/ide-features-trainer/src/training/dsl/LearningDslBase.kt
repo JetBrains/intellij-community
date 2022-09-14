@@ -10,12 +10,12 @@ import javax.swing.Icon
 interface LearningDslBase {
   /** Show shortcut for [actionId] inside lesson step message */
   fun action(actionId: String): String {
-    return " <action>$actionId</action> "
+    return "\u00A0\u00A0<action>$actionId</action>\u00A0\u00A0"
   }
 
   /** Highlight as code inside lesson step message */
   fun code(sourceSample: String): String {
-    return " <code>${StringUtil.escapeXmlEntities(sourceSample).replaceSpacesWithNonBreakSpace()}</code> "
+    return "\u00A0\u00A0<code>${StringUtil.escapeXmlEntities(sourceSample).replaceSpacesWithNonBreakSpace()}</code>\u00A0\u00A0"
   }
 
   /** Highlight some [text] */
@@ -30,6 +30,6 @@ interface LearningDslBase {
   }
 
   fun shortcut(key: String): String {
-    return " <shortcut>${key}</shortcut> "
+    return "\u00A0\u00A0<shortcut>${key}</shortcut>\u00A0\u00A0"
   }
 }

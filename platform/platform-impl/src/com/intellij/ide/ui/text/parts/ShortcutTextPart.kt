@@ -9,7 +9,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
-import java.awt.Graphics2D
 import java.awt.Point
 import javax.swing.JTextPane
 import javax.swing.KeyStroke
@@ -54,7 +53,7 @@ open class ShortcutTextPart(text: String, val isRaw: Boolean, private val addSpa
     val shortcutAttributes = attributes
     val sepAttributes = separatorAttributes
     if (addSpaceAround) {
-      curOffset = insertText(textPane, "\u00A0", curOffset, shortcutAttributes)
+      curOffset = insertText(textPane, "\u00A0\u00A0", curOffset, sepAttributes)
     }
     for (part in split) {
       curOffset = insertText(textPane, shortcut.substring(start, part.first), curOffset, sepAttributes)
@@ -64,13 +63,13 @@ open class ShortcutTextPart(text: String, val isRaw: Boolean, private val addSpa
       val partEnd = curOffset
 
       textPane.highlighter.addHighlight(partStart, partEnd) { g, _, _, _, c ->
-        c.drawRectangleAroundText(partStart, partEnd, g as Graphics2D, backgroundColor, fill = true)
+        c.drawRectangleAroundText(partStart, partEnd, g, backgroundColor, fontGetter(), fill = true)
       }
       start = part.last + 1
     }
     curOffset = insertText(textPane, shortcut.substring(start), curOffset, sepAttributes)
     if (addSpaceAround) {
-      curOffset = insertText(textPane, "\u00A0", curOffset, shortcutAttributes)
+      curOffset = insertText(textPane, "\u00A0\u00A0", curOffset, sepAttributes)
     }
     return curOffset
   }

@@ -122,7 +122,8 @@ internal class TipContentConverter(private val tipContent: Element,
             else ShortcutTextPart(text, isRaw = true, addSpaceAround = true)
           }
           node.tagName() == "span" && node.hasClass("code_emphasis") -> {
-            CodeTextPart(getElementInnerText(node), addSpaceAround = true)
+            val text = getElementInnerText(node).replace(' ', '\u00A0')
+            CodeTextPart(text, addSpaceAround = true)
           }
           node.tagName() == "span" -> {
             // any other span elements: inlined product information

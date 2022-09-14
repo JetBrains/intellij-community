@@ -232,7 +232,7 @@ object LessonUtil {
   fun rawKeyStroke(keyCode: Int): String = rawKeyStroke(KeyStroke.getKeyStroke(keyCode, 0))
 
   fun rawKeyStroke(keyStroke: KeyStroke): String {
-    return " <raw_shortcut>$keyStroke</raw_shortcut> "
+    return "\u00A0\u00A0<raw_shortcut>$keyStroke</raw_shortcut>\u00A0\u00A0"
   }
 
   fun rawEnter(): String = rawKeyStroke(KeyEvent.VK_ENTER)
