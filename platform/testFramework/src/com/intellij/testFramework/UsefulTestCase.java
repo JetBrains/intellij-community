@@ -70,10 +70,14 @@ import static com.intellij.testFramework.common.TestEnvironmentKt.initializeTest
 import static org.junit.Assume.assumeTrue;
 
 /**
- * This class is compatible with both JUnit 3 and JUnit 4. To use JUnit 4, just annotate your test subclass
- * with {@code @RunWith(JUnit4.class)} or any other (like {@code Parametrized.class}), and you are all set.
+ * This class is compatible with both JUnit 3 and JUnit 4,
+ * but not JUnit 5 (see the module intellij.platform.testFramework.junit5 instead).
  * <p>
- * Don't annotate the JUnit 3 {@linkplain #setUp()}/{@linkplain #tearDown()} methods as {@code @Before}/{@code @After}, and don't call them from other {@code @Before}/{@code @After} methods.
+ * To use JUnit 4, annotate your test subclass with {@code @RunWith(JUnit4.class)} or any other (like {@code Parametrized.class}),
+ * and you are all set.
+ * <p>
+ * Don't annotate the JUnit 3 {@linkplain #setUp()}/{@linkplain #tearDown()} methods as {@code @Before}/{@code @After},
+ * and don't call them from other {@code @Before}/{@code @After} methods.
  * <p>
  * Don't define {@code @Rule}s calling {@linkplain #runBare()}, just subclassing this class (directly or indirectly) is enough.
  * <p>
