@@ -152,6 +152,7 @@
       <reference id="Vcs.Log.HighlightersActionGroup"/>
       <separator/>
       <separator key="action.vcs.log.branches.separator"/>
+      <reference ref="Vcs.Log.IntelliSortChooser"/>
       <reference id="Vcs.Log.CollapseAll"/>
       <reference id="Vcs.Log.ExpandAll"/>
     </group>
@@ -256,8 +257,6 @@
       <reference ref="Vcs.Log.GoToChild"/>
       <reference ref="Vcs.Log.FocusTextFilter"/>
       <reference ref="Vcs.Log.TextFilterSettings"/>
-      <separator/>
-      <reference ref="Vcs.Log.IntelliSortChooser"/>
       <separator/>
       <reference ref="Vcs.Log.PresentationSettings"/>
       <separator/>

@@ -213,8 +213,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   private JComponent createActionsToolbar() {
     ActionManager actionManager = ActionManager.getInstance();
 
-    DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-    toolbarGroup.copyFromGroup((DefaultActionGroup)actionManager.getAction(VcsLogActionIds.TOOLBAR_ACTION_GROUP));
+    DefaultActionGroup toolbarGroup = (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.TOOLBAR_ACTION_GROUP);
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
     mainGroup.add(actionManager.getAction(VcsLogActionIds.TEXT_FILTER_SETTINGS_ACTION_GROUP));
@@ -230,9 +229,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     String vcsDisplayName = VcsLogUtil.getVcsDisplayName(myLogData.getProject(), myLogData.getLogProviders().values());
     textFilter.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.text.filter.accessible.name", vcsDisplayName));
 
-    DefaultActionGroup rightCornerGroup = new DefaultActionGroup();
-    rightCornerGroup.copyFromGroup((DefaultActionGroup)actionManager.getAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
-    addIntelliSortAction(rightCornerGroup);
+    DefaultActionGroup presentationSettingsGroup = (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.PRESENTATION_SETTINGS_ACTION_GROUP);
+    configureIntelliSortAction(presentationSettingsGroup);
+
+    DefaultActionGroup rightCornerGroup = (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP);
     ActionToolbar rightCornerToolbar = actionManager.createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, rightCornerGroup, true);
     rightCornerToolbar.setTargetComponent(myGraphTable);
     rightCornerToolbar.setReservePlaceAutoPopupIcon(false);
@@ -245,17 +245,16 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return panel;
   }
 
-  private static void addIntelliSortAction(@NotNull DefaultActionGroup toolbarGroup) {
+  private static void configureIntelliSortAction(@NotNull DefaultActionGroup group) {
+    AnAction intelliSortAction = ActionManager.getInstance().getAction(VcsLogActionIds.VCS_LOG_INTELLI_SORT_ACTION);
     if (BekUtil.isBekEnabled()) {
-      Constraints constraint = new Constraints(Anchor.BEFORE, VcsLogActionIds.PRESENTATION_SETTINGS_ACTION_GROUP);
       if (BekUtil.isLinearBekEnabled()) {
-        toolbarGroup.add(new IntelliSortChooserPopupAction(), constraint);
-        // can not register both of the actions in xml file, choosing to register an action for the "outer world"
-        // I can of course if linear bek is enabled replace the action on start but why bother
+        group.replaceAction(intelliSortAction, new IntelliSortChooserPopupAction());
       }
-      else {
-        toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionIds.VCS_LOG_INTELLI_SORT_ACTION), constraint);
-      }
+    }
+    else {
+      // drop together with com.intellij.vcs.log.util.BekUtil.isBekEnabled
+      group.remove(intelliSortAction);
     }
   }
 
