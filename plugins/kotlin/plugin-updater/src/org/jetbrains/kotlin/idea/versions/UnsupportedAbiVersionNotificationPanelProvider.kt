@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.versions
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.plugins.PluginUpdateStatus
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.fileEditor.FileEditor
