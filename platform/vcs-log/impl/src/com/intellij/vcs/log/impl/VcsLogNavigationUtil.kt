@@ -199,6 +199,12 @@ object VcsLogNavigationUtil {
     }
   }
 
+  /**
+   * Asynchronously selects the commit node at the given [row].
+   * @param row      target row
+   * @param silently skip showing notification when the target is not found
+   * @param focus    focus the table
+   */
   @JvmStatic
   fun VcsLogUiEx.jumpToRow(row: Int, silently: Boolean, focus: Boolean) {
     jumpTo(row, { visiblePack, r ->
@@ -207,6 +213,12 @@ object VcsLogNavigationUtil {
     }, SettableFuture.create(), silently, focus)
   }
 
+  /**
+   * Asynchronously selects the commit node at the given branch head.
+   * @param branchName name of the target branch
+   * @param silently   skip showing notification when the target is not found
+   * @param focus      focus the table
+   */
   @JvmStatic
   fun VcsLogUiEx.jumpToBranch(branchName: String, silently: Boolean, focus: Boolean) {
     jumpTo(branchName, { visiblePack, branch ->
@@ -214,6 +226,17 @@ object VcsLogNavigationUtil {
     }, SettableFuture.create(), silently, focus)
   }
 
+  /**
+   * Asynchronously selects the commit node defined by the given reference (commit hash, branch or tag).
+   *
+   * Note: this function decides if the provided reference is a hash or a branch/tag once at the start.
+   * This may not work as expected when log is not up-to-date, since all the branches and tags are not available yet.
+   *
+   * @param reference target reference (commit hash, branch or tag)
+   * @param silently  skip showing notification when the target is not found
+   * @param focus     focus the table
+   * @return future result (success or failure)
+   */
   @JvmStatic
   fun VcsLogUiEx.jumpToRefOrHash(reference: String, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
     if (StringUtil.isEmptyOrSpaces(reference)) return Futures.immediateFuture(false)
@@ -253,6 +276,15 @@ object VcsLogNavigationUtil {
     return mapToJumpSuccess(future)
   }
 
+  /**
+   * Asynchronously selects the given commit node.
+   *
+   * @param commitHash target commit hash
+   * @param root       target commit repository root
+   * @param silently   skip showing notification when the target is not found
+   * @param focus      focus the table
+   * @return future result (success or failure)
+   */
   @JvmStatic
   fun VcsLogUiEx.jumpToCommit(commitHash: Hash, root: VirtualFile, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
     return mapToJumpSuccess(jumpToCommitInternal(commitHash, root, silently, focus))
