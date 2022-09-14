@@ -285,6 +285,7 @@ internal class MutableRefsTable(
   ) {
     val copiedMap = getAbstractOneToOneMutableMap(connectionId)
     copiedMap.remove(childId)
+    copiedMap.inverse().remove(parentId)
     copiedMap[childId] = parentId
   }
 
