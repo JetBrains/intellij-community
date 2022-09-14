@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.InjectionUtils;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -273,7 +274,7 @@ class InspectionRunner {
                              Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
     processInOrder(init, elements, inVisibleRange, finalPriorityRange, TOMB_STONE, afterProcessCallback);
 
-    if (myInspectInjected) {
+    if (myInspectInjected && InjectionUtils.shouldInspectInjectedFiles(myPsiFile)) {
       inspectInjectedPsi(elements, toolWrappers, foundInjected, injectedInsideContexts, applyIncrementallyCallback, enabledToolsPredicate);
     }
   }

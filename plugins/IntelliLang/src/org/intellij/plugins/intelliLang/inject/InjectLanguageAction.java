@@ -45,6 +45,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.InjectionUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -61,8 +62,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.util.InjectActionsUtils.ENABLED_FOR_HOST;
 
 public class InjectLanguageAction implements IntentionAction, LowPriorityAction {
   public static final String LAST_INJECTED_LANGUAGE = "LAST_INJECTED_LANGUAGE";
@@ -108,7 +107,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
   public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     if (host == null) return false;
-    if (Boolean.FALSE.equals(host.getUserData(ENABLED_FOR_HOST))) return false;
+    if (!InjectionUtils.isInjectLanguageActionEnabled(host)) return false;
     List<Pair<PsiElement, TextRange>> injectedPsi = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(host);
     if (injectedPsi == null || injectedPsi.isEmpty()) {
       return !InjectedReferencesContributor.isInjected(file.findReferenceAt(editor.getCaretModel().getOffset()));
