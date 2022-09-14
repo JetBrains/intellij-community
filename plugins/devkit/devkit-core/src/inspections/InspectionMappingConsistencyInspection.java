@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.InsertRequiredAttributeFix;
@@ -10,7 +10,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.highlighting.AddDomElementQuickFix;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
@@ -61,11 +60,6 @@ public class InspectionMappingConsistencyInspection extends DevKitPluginXmlInspe
                       DevKitBundle.message("inspections.inspection.mapping.consistency.specify.groupName.or.groupKey"),
                       "groupName", "groupKey");
     }
-  }
-
-  private static boolean hasDefinedAttribute(DomElement element, @NonNls String attributeName) {
-    final GenericAttributeValue attribute = DevKitPluginXmlInspectionBase.getAttribute(element, attributeName);
-    return attribute != null && DomUtil.hasXml(attribute);
   }
 
   private static void checkDefaultBundle(DomElement element, DomElementAnnotationHolder holder) {

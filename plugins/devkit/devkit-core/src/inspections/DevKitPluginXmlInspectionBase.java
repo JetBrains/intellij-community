@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
@@ -17,6 +18,11 @@ public abstract class DevKitPluginXmlInspectionBase extends BasicDomElementsInsp
 
   protected DevKitPluginXmlInspectionBase() {
     super(IdeaPlugin.class);
+  }
+
+  protected static boolean hasDefinedAttribute(DomElement element, @NonNls String attributeName) {
+    final GenericAttributeValue attribute = getAttribute(element, attributeName);
+    return attribute != null && DomUtil.hasXml(attribute);
   }
 
   @Nullable

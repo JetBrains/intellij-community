@@ -44,8 +44,7 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
     }
 
     if (StubElementTypeHolderEP.class.getName().equals(extensionPoint.getBeanClass().getStringValue())) {
-      GenericAttributeValue externalPrefixId = getAttribute(extension, "externalIdPrefix");
-      if (externalPrefixId != null && !DomUtil.hasXml(externalPrefixId)) {
+      if (!hasDefinedAttribute(extension, "externalIdPrefix")) {
         holder.createProblem(extension,
                              DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.externalidprefix.attribute"),
                              new DefineAttributeQuickFix("externalIdPrefix"));

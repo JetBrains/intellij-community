@@ -112,8 +112,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     else if (InheritanceUtil.isInheritor(beanClass, SchemeConvertorEPBase.class.getName())) {
       checkNonLocalizableAttribute(holder, extension, "name", null);
     } else if (NotificationGroupEP.class.getName().equals(beanClass.getQualifiedName())){
-      GenericAttributeValue keyAttribute = getAttribute(extension, "key");
-      if (keyAttribute != null && !DomUtil.hasXml(keyAttribute)) {
+      if (!hasDefinedAttribute(extension, "key")) {
         holder.createProblem(extension, DevKitI18nBundle.message("inspections.plugin.xml.i18n.name"),
                              new NotificationGroupI18NQuickFix());
       }

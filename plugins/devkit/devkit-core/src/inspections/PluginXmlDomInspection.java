@@ -892,9 +892,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       GenericAttributeValue serviceImplementation = getAttribute(extension, "serviceImplementation");
       if (serviceInterface != null && serviceImplementation != null &&
           StringUtil.equals(serviceInterface.getStringValue(), serviceImplementation.getStringValue())) {
-        GenericAttributeValue<?> testServiceImplementation = getAttribute(extension, "testServiceImplementation");
-        if (testServiceImplementation != null &&
-            !DomUtil.hasXml(testServiceImplementation)) {
+        if (!hasDefinedAttribute(extension, "testServiceImplementation")) {
           highlightRedundant(serviceInterface,
                              DevKitBundle.message("inspections.plugin.xml.service.interface.class.redundant"),
                              ProblemHighlightType.WARNING, holder);
