@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.addIfNotNull
 import java.awt.Component
 import java.awt.event.MouseEvent
@@ -40,7 +39,7 @@ private class EditorsWithOffsetsDataRule : GetDataRule {
     // If the focused component is the editor, it's assumed that the current cell is the cell under the caret.
     result.addIfNotNull(
       contextComponent
-        ?.castSafelyTo<EditorComponentImpl>()
+        ?.let { it as? EditorComponentImpl }
         ?.editor
         ?.let { contextEditor ->
           contextEditor to contextEditor.getOffsetFromCaretImpl()

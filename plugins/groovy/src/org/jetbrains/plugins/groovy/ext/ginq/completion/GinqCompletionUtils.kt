@@ -14,7 +14,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
-import com.intellij.util.castSafelyTo
 import icons.JetgroovyIcons
 import org.jetbrains.plugins.groovy.ext.ginq.*
 import org.jetbrains.plugins.groovy.ext.ginq.ast.*
@@ -148,7 +147,7 @@ object GinqCompletionUtils {
       partition.windows
     } ?: return
     val overRoot = overRoots.find {
-      PsiTreeUtil.isAncestor(it.overKw.parent.parent.castSafelyTo<GrMethodCall>()?.argumentList, position, false)
+      PsiTreeUtil.isAncestor((it.overKw.parent.parent as? GrMethodCall)?.argumentList, position, false)
     }
     if (overRoot != null) {
       if (overRoot.partitionKw == null) {

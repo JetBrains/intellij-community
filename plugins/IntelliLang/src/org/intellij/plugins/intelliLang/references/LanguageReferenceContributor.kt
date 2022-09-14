@@ -22,14 +22,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SmartList
-import com.intellij.util.castSafelyTo
 import com.intellij.util.text.findTextRange
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
 
 class LanguageReferenceContributor : PsiSymbolReferenceProvider {
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> {
-    val psiComment = element.castSafelyTo<PsiComment>() ?: return emptyList()
+    val psiComment = element as? PsiComment ?: return emptyList()
     val languageRange = getLanguageRange(psiComment) ?: return emptyList()
     return listOf(object : PsiCompletableReference {
 
@@ -47,7 +46,7 @@ class LanguageReferenceContributor : PsiSymbolReferenceProvider {
   }
 
   override fun getSearchRequests(project: Project, target: Symbol): Collection<SearchRequest> =
-    listOfNotNull(target.castSafelyTo<LanguageSymbol>()?.let { SearchRequest.of(it.name) })
+    listOfNotNull((target as? LanguageSymbol)?.let { SearchRequest.of(it.name) })
 
 }
 
@@ -71,7 +70,7 @@ class LanguageWordInCommentCompletionContributor : CompletionContributor() {
       override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         if (parameters.invocationCount < 2) return
         if (!Registry.`is`("org.intellij.intelliLang.comment.completion")) return
-        val psiComment = parameters.originalPosition?.castSafelyTo<PsiComment>() ?: return
+        val psiComment = parameters.originalPosition?.let { it as? PsiComment } ?: return
         val trimmedBody = psiComment.commentBody.trim()
         if (trimmedBody.isBlank() ||
             trimmedBody.length != LANGUAGE_PREFIX.length && LANGUAGE_PREFIX.startsWith(trimmedBody, true)) {
@@ -97,7 +96,7 @@ class LanguageCommentFolding : FoldingBuilderEx() {
   }
 
   override fun getPlaceholderText(node: ASTNode): String? {
-    val psiComment = node.psi.castSafelyTo<PsiComment>() ?: return null
+    val psiComment = node.psi as? PsiComment ?: return null
     val languageRange = getLanguageRange(psiComment) ?: return null
     val writtenText = languageRange.substring(psiComment.text)
     return InjectorUtils.getLanguageByString(writtenText)?.id ?: writtenText

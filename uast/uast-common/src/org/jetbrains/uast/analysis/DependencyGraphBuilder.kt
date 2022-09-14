@@ -10,7 +10,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
-import com.intellij.util.castSafelyTo
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -308,7 +307,7 @@ internal class DependencyGraphBuilder private constructor(
     val firstExpression = (node.expressions.first() as? UDeclarationsExpression)
                             ?.declarations
                             ?.first()
-                            ?.castSafelyTo<ULocalVariable>()
+                            ?.let { it as? ULocalVariable }
                             ?.uastInitializer
                             ?.extractBranchesResultAsDependency() ?: return@checkedDepthCall super.visitExpressionList(node)
     val ifExpression = node.expressions.getOrNull(1)

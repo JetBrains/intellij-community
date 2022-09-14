@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.Processor
 import com.intellij.util.SmartList
-import com.intellij.util.castSafelyTo
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.TestOnly
@@ -78,7 +77,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
             controller.onViewportChange()
 
             // Many UI instances has overridden getPreferredSize relying on editor dimensions.
-            inlay.renderer?.castSafelyTo<JComponent>()?.updateUI()
+            (inlay.renderer as? JComponent)?.updateUI()
           }
         }
       })
@@ -262,7 +261,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
 
   private fun rememberController(controller: NotebookCellInlayController, interval: NotebookCellLines.Interval) {
     val inlay = controller.inlay
-    inlay.renderer.castSafelyTo<JComponent>()?.let { component ->
+    (inlay.renderer as? JComponent)?.let { component ->
       val oldProvider = DataManager.getDataProvider(component)
       if (oldProvider != null && oldProvider !is NotebookCellDataProvider) {
         LOG.error("Overwriting an existing CLIENT_PROPERTY_DATA_PROVIDER. Old provider: $oldProvider")
@@ -272,12 +271,13 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
     }
     if (inlays.put(inlay, controller) !== controller) {
       val disposable = Disposable {
-        inlay.renderer.castSafelyTo<JComponent>()?.let { DataManager.removeDataProvider(it) }
+        (inlay.renderer as? JComponent)?.let { DataManager.removeDataProvider(it) }
         inlays.remove(inlay)
       }
       if (Disposer.isDisposed(inlay)) {
         disposable.dispose()
-      } else {
+      }
+      else {
         Disposer.register(inlay, disposable)
       }
     }

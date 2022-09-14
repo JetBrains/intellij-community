@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.resolve
 import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
-import com.intellij.util.castSafelyTo
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
@@ -69,7 +68,7 @@ class GradleMiscContributor : GradleMethodContextContributor {
     // resolve closure type to delegate based on return method type, e.g.
     // FlatDirectoryArtifactRepository flatDir(Closure configureClosure)
     if (parent is GrMethodCall) {
-      val methodResult = parent.advancedResolve().castSafelyTo<GroovyMethodResult>() ?: return null
+      val methodResult = parent.advancedResolve() as? GroovyMethodResult ?: return null
       val closureParameter = methodResult.candidate?.argumentMapping?.expectedType(ExpressionArgument(closure))
       if (closureParameter?.equalsToText(GROOVY_LANG_CLOSURE) == true) {
         val returnType = methodResult.substitutor.substitute(methodResult.element.returnType)

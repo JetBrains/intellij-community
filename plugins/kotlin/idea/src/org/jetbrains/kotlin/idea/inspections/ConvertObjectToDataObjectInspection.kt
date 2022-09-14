@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.util.castSafelyTo
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -85,10 +84,10 @@ private fun isCompatibleReadResolve(ktObject: KtObjectDeclaration, ktObjectFqn: 
     val readResolve = ktObject.findReadResolve() ?: return true
     if (!readResolve.isPrivate()) return false
     val fqn = readResolve.singleExpressionBody()
-        ?.castSafelyTo<KtNameReferenceExpression>()
-        ?.resolveType()
-        ?.fqName
-        ?: return false
+                ?.let { it as? KtNameReferenceExpression }
+                ?.resolveType()
+                ?.fqName
+              ?: return false
     return ktObjectFqn.value == fqn
 }
 
@@ -103,13 +102,13 @@ private fun isCompatibleToString(
     val callChain = body.tryUnwrapElvisOrDoubleBang(context).getCallChain()
     if (callChain.size !in 2..3) return false
     val fqn = callChain.firstOrNull()
-        ?.castSafelyTo<KtClassLiteralExpression>()
-        ?.receiverExpression
-        ?.castSafelyTo<KtNameReferenceExpression>()
-        ?.resolveType(context.value)
-        ?.fqName
-        ?: return false
-    val methods = callChain.drop(1).map { it.castSafelyTo<KtNameReferenceExpression>()?.text ?: return false }
+                ?.let { it as? KtClassLiteralExpression }
+                ?.receiverExpression
+                ?.let { it as? KtNameReferenceExpression }
+                ?.resolveType(context.value)
+                ?.fqName
+              ?: return false
+    val methods = callChain.drop(1).map { (it as? KtNameReferenceExpression)?.text ?: return false }
     return fqn == ktObjectFqn.value && (methods == listOf("java", "simpleName") || methods == listOf("simpleName"))
 }
 
@@ -120,11 +119,11 @@ private fun KtExpression.tryUnwrapElvisOrDoubleBang(context: Lazy<BindingContext
 } ?: this
 
 private fun isCompatibleEquals(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<FqName?>): Boolean {
-    val equals = ktObject.findEquals() ?: return true
-    val isExpr = equals.singleExpressionBody().castSafelyTo<KtIsExpression>() ?: return false
-    val typeReference = isExpr.typeReference ?: return false
-    return typeReference.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)
-        .get(BindingContext.TYPE, typeReference)?.fqName == ktObjectFqn.value
+  val equals = ktObject.findEquals() ?: return true
+  val isExpr = equals.singleExpressionBody() as? KtIsExpression ?: return false
+  val typeReference = isExpr.typeReference ?: return false
+  return typeReference.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)
+    .get(BindingContext.TYPE, typeReference)?.fqName == ktObjectFqn.value
 }
 
 private fun isCompatibleHashCode(ktObject: KtObjectDeclaration): Boolean {
@@ -136,13 +135,13 @@ private class ConvertToDataObjectQuickFix(private val isSerializable: Boolean) :
     override fun getFamilyName(): String = KotlinBundle.message("convert.to.data.object")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val ktObject = descriptor.psiElement.parent.castSafelyTo<KtObjectDeclaration>() ?: return
-        ktObject.findToString()?.delete()
-        ktObject.findEquals()?.delete()
-        ktObject.findHashCode()?.delete()
-        if (isSerializable) ktObject.findReadResolve()?.delete()
-        if (ktObject.body?.functions?.isEmpty() == true) ktObject.body?.delete()
-        ktObject.addModifier(KtTokens.DATA_KEYWORD)
+      val ktObject = descriptor.psiElement.parent as? KtObjectDeclaration ?: return
+      ktObject.findToString()?.delete()
+      ktObject.findEquals()?.delete()
+      ktObject.findHashCode()?.delete()
+      if (isSerializable) ktObject.findReadResolve()?.delete()
+      if (ktObject.body?.functions?.isEmpty() == true) ktObject.body?.delete()
+      ktObject.addModifier(KtTokens.DATA_KEYWORD)
     }
 }
 
@@ -151,10 +150,10 @@ private fun KtClassOrObject.findEquals(): KtNamedFunction? = findMemberFunction(
 private fun KtClassOrObject.findHashCode(): KtNamedFunction? = findMemberFunction(FunctionDescriptor::isAnyHashCode)
 private fun KtClassOrObject.findReadResolve(): KtNamedFunction? =
     body?.functions?.singleOrNull { function ->
-        function.name == "readResolve" && function.descriptor?.castSafelyTo<FunctionDescriptor>()?.returnType?.isAnyOrNullableAny() == true
+      function.name == "readResolve" && function.descriptor?.let { it as? FunctionDescriptor }?.returnType?.isAnyOrNullableAny() == true
     }
 
 private fun KtClassOrObject.findMemberFunction(predicate: (FunctionDescriptor) -> Boolean): KtNamedFunction? =
     body?.functions?.singleOrNull { function ->
-        function.descriptor?.castSafelyTo<FunctionDescriptor>()?.let(predicate) == true
+      function.descriptor?.let { it as? FunctionDescriptor }?.let(predicate) == true
     }

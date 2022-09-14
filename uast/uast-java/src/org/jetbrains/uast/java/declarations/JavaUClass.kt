@@ -6,7 +6,6 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.util.SmartList
-import com.intellij.util.castSafelyTo
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
@@ -121,7 +120,7 @@ class JavaUAnonymousClass(
 
   private val fakeConstructor: JavaUMethod? by lz {
     val psiClass = this.javaPsi
-    val physicalNewExpression = psiClass.parent.castSafelyTo<PsiNewExpression>() ?: return@lz null
+    val physicalNewExpression = psiClass.parent as? PsiNewExpression ?: return@lz null
     val superConstructor = physicalNewExpression.resolveMethod()
     val lightMethodBuilder = object : LightMethodBuilder(psiClass.manager, psiClass.language, "<anon-init>") {
       init {
@@ -129,8 +128,9 @@ class JavaUAnonymousClass(
         isConstructor = true
       }
 
-      override fun getNavigationElement(): PsiElement = 
+      override fun getNavigationElement(): PsiElement =
         superConstructor?.navigationElement ?: psiClass.superClass?.navigationElement ?: super.getNavigationElement()
+
       override fun getParent(): PsiElement = psiClass
       override fun getModifierList(): PsiModifierList = superConstructor?.modifierList ?: super.getModifierList()
       override fun getParameterList(): PsiParameterList = superConstructor?.parameterList ?: super.getParameterList()

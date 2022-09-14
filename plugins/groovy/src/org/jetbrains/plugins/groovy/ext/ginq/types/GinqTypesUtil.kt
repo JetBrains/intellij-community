@@ -5,7 +5,6 @@ import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.ext.ginq.GROOVY_GINQ_TRANSFORM_GQ
 import org.jetbrains.plugins.groovy.ext.ginq.GinqRootPsiElement
 import org.jetbrains.plugins.groovy.ext.ginq.ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD
@@ -50,7 +49,7 @@ fun inferGeneralGinqType(macroCall: GrMethodCall?, ginq: GinqExpression, psiGinq
 
 private fun getContainerType(macroCall: GrMethodCall?, isTop: Boolean, ginq: GinqExpression, psiGinq: GrExpression, facade: JavaPsiFacade): PsiClass? {
   return if (macroCall != null) {
-    val invokedCall = macroCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
+    val invokedCall = (macroCall.invokedExpression as? GrReferenceExpression)?.referenceName
     val containerCanonicalType =
       if (invokedCall == "GQL" && isTop) CommonClassNames.JAVA_UTIL_LIST
       else ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE
@@ -78,7 +77,7 @@ private fun getComponentType(facade: JavaPsiFacade,
 }
 
 fun inferOverType(expression: GrMethodCall) : PsiType? {
-  return expression.invokedExpression.castSafelyTo<GrReferenceExpression>()?.qualifierExpression?.type
+  return (expression.invokedExpression as? GrReferenceExpression)?.qualifierExpression?.type
 }
 
 fun inferLocalReferenceExpressionType(root: GinqRootPsiElement, refExpr: GrReferenceExpression): PsiType? {

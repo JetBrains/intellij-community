@@ -10,7 +10,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.castSafelyTo
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
@@ -42,7 +41,7 @@ class GrChangeModifiersFix(@FileModifier.SafeFieldForPreview private val modifie
     val elementUnderCaret = file.findElementAt(editor.caretModel.offset) ?: return
     val owner = elementUnderCaret.parentOfType<PsiModifierListOwner>() ?: return
     val elementUnderCaretRepresentation = elementUnderCaret.text
-    val modifiers = owner.modifierList?.castSafelyTo<GrModifierList>()?.modifiers ?: return
+    val modifiers = owner.modifierList?.let { it as? GrModifierList }?.modifiers ?: return
 
     var hasRequiredModifier = false
 

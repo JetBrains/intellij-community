@@ -14,7 +14,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.layout.*
-import com.intellij.util.castSafelyTo
 import com.intellij.util.ui.JBUI
 import javax.swing.JPanel
 import javax.swing.JSpinner
@@ -45,7 +44,7 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
             it.skipParenthesesAndPostfixOperatorsDown()?.safeCastUsing(dotQualifiedClass)?.getReceiver()
           }
             .drop(1) // Except last to avoid builder.build() which has obvious type
-            .filter { it.nextSibling.castSafelyTo<PsiWhiteSpace>()?.textContains('\n') == true }
+            .filter { (it.nextSibling as? PsiWhiteSpace)?.textContains('\n') == true }
             .map { it to it.getType(context) }
             .takeWhile { (_, type) -> (type != null).also { if (!it) someTypeIsUnknown = true } }
             .map { (expression, type) -> ExpressionWithType(expression, type!!) }

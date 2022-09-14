@@ -26,7 +26,6 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.castSafelyTo
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
@@ -117,19 +116,19 @@ internal class ModulesTree(
             .launchIn(project.lifecycleScope)
     }
 
-    fun display(treeModel: TreeModel) {
-        if (treeModel == model) return
-        setPaintBusy(true)
-        val wasEmpty = model.root == null || model.getChildCount(model.root) == 0
-        val lastSelected = selectionPath?.lastPathComponent?.castSafelyTo<DefaultMutableTreeNode>()
-            ?.userObject?.castSafelyTo<TargetModules>()
-        // Swapping model resets the selection — but, we set the right selection just afterwards
-        model = treeModel
-        if (wasEmpty) TreeUtil.expandAll(this)
-        selectionPath = lastSelected?.let { model.root.castSafelyTo<DefaultMutableTreeNode>()?.findPathWithData(it) } ?: TreePath(model.root)
-        updateUI()
-        setPaintBusy(false)
-    }
+  fun display(treeModel: TreeModel) {
+    if (treeModel == model) return
+    setPaintBusy(true)
+    val wasEmpty = model.root == null || model.getChildCount(model.root) == 0
+    val lastSelected = selectionPath?.lastPathComponent?.let { it as? DefaultMutableTreeNode }
+      ?.userObject?.let { it as? TargetModules }
+    // Swapping model resets the selection — but, we set the right selection just afterwards
+    model = treeModel
+    if (wasEmpty) TreeUtil.expandAll(this)
+    selectionPath = lastSelected?.let { (model.root as? DefaultMutableTreeNode)?.findPathWithData(it) } ?: TreePath(model.root)
+    updateUI()
+    setPaintBusy(false)
+  }
 
     private fun getTargetModulesFrom(treePath: TreePath?): TargetModules {
         val item = treePath?.lastPathComponent as? DefaultMutableTreeNode?
@@ -185,10 +184,10 @@ private operator fun TreeModel.contains(treeNode: DefaultMutableTreeNode) =
     treeNode in treeNodesSequence().map { it.userObject }
 
 fun TreeModel.treeNodesSequence() = sequence {
-    val queue = mutableListOf(root.castSafelyTo<DefaultMutableTreeNode>() ?: return@sequence)
+    val queue = mutableListOf(root as? DefaultMutableTreeNode ?: return@sequence)
     while (queue.isNotEmpty()) {
         val next = queue.removeAt(0)
         yield(next)
-        queue.addAll(next.children().toList().mapNotNull { it.castSafelyTo<DefaultMutableTreeNode>() })
+        queue.addAll(next.children().toList().mapNotNull { it as? DefaultMutableTreeNode })
     }
 }

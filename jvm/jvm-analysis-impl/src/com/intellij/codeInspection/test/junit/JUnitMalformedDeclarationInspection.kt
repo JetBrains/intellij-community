@@ -30,7 +30,6 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.isAncestor
 import com.intellij.uast.UastHintedVisitorAdapter
-import com.intellij.util.castSafelyTo
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
 import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.uast.*
@@ -214,7 +213,7 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   private fun checkMalformedExtension(field: UField) {
-    val javaField = field.javaPsi?.castSafelyTo<PsiField>() ?: return
+    val javaField = field.javaPsi?.let { it as? PsiField } ?: return
     val type = javaField.type
     if (javaField.hasAnnotation(ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION)) {
       if (!type.isInheritorOf(ORG_JUNIT_JUPITER_API_EXTENSION)) {
@@ -236,7 +235,7 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   private fun UMethod.isNoArg(): Boolean = uastParameters.isEmpty() || uastParameters.all { param ->
-    param.javaPsi?.castSafelyTo<PsiParameter>()?.let { AnnotationUtil.isAnnotated(it, ignorableAnnotations, 0) } == true
+    param.javaPsi?.let { it as? PsiParameter }?.let { AnnotationUtil.isAnnotated(it, ignorableAnnotations, 0) } == true
   }
 
   private fun checkSuspendFunction(method: UMethod): Boolean {
@@ -295,7 +294,7 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   private fun checkIllegalCombinedAnnotations(decl: UDeclaration) {
-    val javaPsi = decl.javaPsi.castSafelyTo<PsiModifierListOwner>() ?: return
+    val javaPsi = decl.javaPsi as? PsiModifierListOwner ?: return
     val annotatedTest = NON_COMBINED_TEST.filter { MetaAnnotationUtil.isMetaAnnotated(javaPsi, listOf(it)) }
     if (annotatedTest.size > 1) {
       val last = annotatedTest.last().substringAfterLast('.')
@@ -743,7 +742,7 @@ private class JUnitMalformedSignatureVisitor(
     }
 
     fun report(holder: ProblemsHolder, element: UField) {
-      val javaPsi = element.javaPsi.castSafelyTo<PsiField>() ?: return
+      val javaPsi = element.javaPsi as? PsiField ?: return
       val annotation = annotations.firstOrNull { MetaAnnotationUtil.isMetaAnnotated(javaPsi, annotations) } ?: return
       val visibility = validVisibility?.invoke(element)
       val problems = modifierProblems(visibility, element.visibility, element.isStatic, false)
@@ -798,7 +797,7 @@ private class JUnitMalformedSignatureVisitor(
     }
 
     fun report(holder: ProblemsHolder, element: UMethod) {
-      val javaPsi = element.javaPsi.castSafelyTo<PsiMethod>() ?: return
+      val javaPsi = element.javaPsi as? PsiMethod ?: return
       val sourcePsi = element.sourcePsi ?: return
       val annotation = annotations.firstOrNull { AnnotationUtil.isAnnotated(javaPsi, it, AnnotationUtil.CHECK_HIERARCHY) } ?: return
       val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
@@ -964,16 +963,16 @@ private class JUnitMalformedSignatureVisitor(
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val containingFile = descriptor.psiElement.containingFile ?: return
-      val javaDeclaration = getUParentForIdentifier(descriptor.psiElement)?.castSafelyTo<UField>()?.javaPsi ?: return
+      val javaDeclaration = getUParentForIdentifier(descriptor.psiElement)?.let { it as? UField }?.javaPsi ?: return
       val declPtr = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(javaDeclaration)
       if (newVisibility != null) {
-        declPtr.element?.castSafelyTo<JvmModifiersOwner>()?.let { jvmMethod ->
+        declPtr.element?.let { it as? JvmModifiersOwner }?.let { jvmMethod ->
           createModifierActions(jvmMethod, modifierRequest(newVisibility, true)).forEach {
             it.invoke(project, null, containingFile)
           }
         }
       }
-      declPtr.element?.castSafelyTo<JvmModifiersOwner>()?.let { jvmMethod ->
+      declPtr.element?.let { it as? JvmModifiersOwner }?.let { jvmMethod ->
         createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic)).forEach {
           it.invoke(project, null, containingFile)
         }
@@ -994,30 +993,30 @@ private class JUnitMalformedSignatureVisitor(
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val containingFile = descriptor.psiElement.containingFile ?: return
-      val javaDeclaration = getUParentForIdentifier(descriptor.psiElement)?.castSafelyTo<UMethod>()?.javaPsi ?: return
+      val javaDeclaration = getUParentForIdentifier(descriptor.psiElement)?.let { it as? UMethod }?.javaPsi ?: return
       val declPtr = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(javaDeclaration)
       if (shouldBeVoidType == true) {
-        declPtr.element?.castSafelyTo<JvmMethod>()?.let { jvmMethod ->
+        declPtr.element?.let { it as? JvmMethod }?.let { jvmMethod ->
           createChangeTypeActions(jvmMethod, typeRequest(JvmPrimitiveTypeKind.VOID.name, emptyList())).forEach {
             it.invoke(project, null, containingFile)
           }
         }
       }
       if (newVisibility != null) {
-        declPtr.element?.castSafelyTo<JvmModifiersOwner>()?.let { jvmMethod ->
+        declPtr.element?.let { it as? JvmModifiersOwner }?.let { jvmMethod ->
           createModifierActions(jvmMethod, modifierRequest(newVisibility, true)).forEach {
             it.invoke(project, null, containingFile)
           }
         }
       }
       if (inCorrectParams != null) {
-        declPtr.element?.castSafelyTo<JvmMethod>()?.let { jvmMethod ->
+        declPtr.element?.let { it as? JvmMethod }?.let { jvmMethod ->
           createChangeParametersActions(jvmMethod, setMethodParametersRequest(inCorrectParams.entries)).forEach {
             it.invoke(project, null, containingFile)
           }
         }
       }
-      declPtr.element?.castSafelyTo<JvmModifiersOwner>()?.let { jvmMethod ->
+      declPtr.element?.let { it as? JvmModifiersOwner }?.let { jvmMethod ->
         createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic)).forEach {
           it.invoke(project, null, containingFile)
         }

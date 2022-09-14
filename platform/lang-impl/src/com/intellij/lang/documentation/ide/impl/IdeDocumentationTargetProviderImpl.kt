@@ -13,14 +13,13 @@ import com.intellij.model.Symbol
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.intellij.util.castSafelyTo
 
 open class IdeDocumentationTargetProviderImpl(private val project: Project) : IdeDocumentationTargetProvider {
 
   override fun documentationTarget(editor: Editor, file: PsiFile, lookupElement: LookupElement): DocumentationTarget? {
     val symbolTargets = (lookupElement.`object` as? Pointer<*>)
       ?.dereference()
-      ?.castSafelyTo<Symbol>()
+      ?.let { it as? Symbol }
       ?.let { symbolDocumentationTargets(file.project, listOf(it)) }
     if (!symbolTargets.isNullOrEmpty()) {
       return symbolTargets.first()

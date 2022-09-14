@@ -11,7 +11,6 @@ import com.intellij.psi.*
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.*
-import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
@@ -36,7 +35,7 @@ class GroovyMacroRegistryServiceImpl(val project: Project) : GroovyMacroRegistry
 
   override fun resolveAsMacro(call: GrMethodCall): PsiMethod? {
     val module = ModuleUtilCore.findModuleForPsiElement(call) ?: return null
-    val invokedName = call.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName ?: return null
+    val invokedName = (call.invokedExpression as? GrReferenceExpression)?.referenceName ?: return null
     val candidates = getModuleRegistry(module).filter { it.element?.name == invokedName }
     return candidates.find { it.element?.canBeAppliedTo(call) == true }?.element
   }
@@ -62,7 +61,7 @@ class GroovyMacroRegistryServiceImpl(val project: Project) : GroovyMacroRegistry
         val extensionClassFiles = mutableListOf<VirtualFile>()
         for (extensionVirtualFile in extensionFiles) {
           val psi = PsiUtilBase.getPsiFile(module.project, extensionVirtualFile)
-          val inst = psi.castSafelyTo<PropertiesFile>()?.findPropertyByKey("extensionClasses")
+          val inst = (psi as? PropertiesFile)?.findPropertyByKey("extensionClasses")
           val extensionClassName = inst?.value ?: continue
           val extensionClass = JavaPsiFacade.getInstance(module.project).findClass(extensionClassName, scope) ?: continue
           extensionClassFiles.addIfNotNull(extensionClass.containingFile.virtualFile)
@@ -91,8 +90,8 @@ private fun PsiMethod.canBeAppliedTo(call: GrMethodCall): Boolean {
     val type = parameter.typeElement?.type ?: return false
     when {
       type.equalsToText("org.codehaus.groovy.ast.expr.ClosureExpression") && argument !is GrClosableBlock -> return false
-      type.equalsToText("org.codehaus.groovy.ast.expr.ListExpression") && argument.castSafelyTo<GrListOrMap>()?.isMap != false -> return false
-      type.equalsToText("org.codehaus.groovy.ast.expr.MapExpression") && argument.castSafelyTo<GrListOrMap>()?.isMap != true -> return false
+      type.equalsToText("org.codehaus.groovy.ast.expr.ListExpression") && (argument as? GrListOrMap)?.isMap != false -> return false
+      type.equalsToText("org.codehaus.groovy.ast.expr.MapExpression") && (argument as? GrListOrMap)?.isMap != true -> return false
       type.equalsToText("org.codehaus.groovy.ast.expr.TupleExpression") && argument !is GrTuple -> return false
       type.equalsToText("org.codehaus.groovy.ast.expr.MethodCallExpression") && argument !is GrMethodCallExpression -> return false
     }

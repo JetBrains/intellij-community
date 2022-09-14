@@ -2,7 +2,6 @@
 package org.jetbrains.uast.java.expressions
 
 import com.intellij.psi.*
-import com.intellij.util.castSafelyTo
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UMultiResolvable
 import org.jetbrains.uast.USimpleNameReferenceExpression
@@ -17,7 +16,7 @@ internal class JavaUModuleReferenceExpression(
     get() = sourcePsi.referenceText
 
   override val resolvedName: String?
-    get() = resolve().castSafelyTo<PsiNamedElement>()?.name
+    get() = (resolve() as? PsiNamedElement)?.name
 
   override fun resolve(): PsiElement? {
     return sourcePsi.reference?.resolve()

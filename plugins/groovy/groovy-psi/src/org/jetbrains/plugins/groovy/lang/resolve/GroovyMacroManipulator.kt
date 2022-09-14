@@ -3,13 +3,12 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.AbstractElementManipulator
-import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
 class GroovyMacroManipulator : AbstractElementManipulator<GrReferenceExpression>() {
   override fun handleContentChange(element: GrReferenceExpression, range: TextRange, newContent: String): GrReferenceExpression? {
     val refExpr = GroovyPsiElementFactory.getInstance(element.project).createReferenceExpressionFromText(newContent)
-    return element.replace(refExpr)?.castSafelyTo<GrReferenceExpression>()
+    return element.replace(refExpr) as? GrReferenceExpression
   }
 }

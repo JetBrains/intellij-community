@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.parentsOfType
-import com.intellij.util.castSafelyTo
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
@@ -122,8 +121,8 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
     }
 
     private fun checkFunctionWithDefaultDispatcher(callExpression: KtCallExpression): ContextType {
-        val classDescriptor =
-            callExpression.receiverValue().castSafelyTo<ImplicitClassReceiver>()?.classDescriptor ?: return Unsure
+      val classDescriptor =
+        (callExpression.receiverValue() as? ImplicitClassReceiver)?.classDescriptor ?: return Unsure
         if (classDescriptor.typeConstructor.supertypes.none { it.fqName?.asString() == COROUTINE_SCOPE }) return Unsure
         val propertyDescriptor = classDescriptor
             .unsubstitutedMemberScope
@@ -132,7 +131,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
             .singleOrNull { it.isOverridableOrOverrides && it.type.isCoroutineContext() }
             ?: return Unsure
 
-        val initializer = propertyDescriptor.findPsi().castSafelyTo<KtProperty>()?.initializer ?: return Unsure
+      val initializer = (propertyDescriptor.findPsi() as? KtProperty)?.initializer ?: return Unsure
         return initializer.hasBlockFriendlyDispatcher()
     }
 
@@ -152,13 +151,13 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
 
             override fun visitElement(element: PsiElement) {
                 if (element is KtExpression) {
-                    val callableDescriptor = element.getCallableDescriptor()
-                    val allowsBlocking = callableDescriptor.castSafelyTo<DeclarationDescriptor>()
-                        ?.isBlockFriendlyDispatcher()
-                    if (allowsBlocking != null && allowsBlocking != Unsure) {
-                        this.allowsBlocking = allowsBlocking
-                        return
-                    }
+                  val callableDescriptor = element.getCallableDescriptor()
+                  val allowsBlocking = (callableDescriptor as? DeclarationDescriptor)
+                    ?.isBlockFriendlyDispatcher()
+                  if (allowsBlocking != null && allowsBlocking != Unsure) {
+                    this.allowsBlocking = allowsBlocking
+                    return
+                  }
                 }
                 super.visitElement(element)
             }
@@ -168,20 +167,20 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
     }
 
     private fun DeclarationDescriptor?.isBlockFriendlyDispatcher(): ContextType {
-        if (this == null) return Unsure
+      if (this == null) return Unsure
 
-        val returnTypeDescriptor = this.castSafelyTo<CallableDescriptor>()?.returnType
-        val typeConstructor = returnTypeDescriptor?.constructor?.declarationDescriptor
+      val returnTypeDescriptor = (this as? CallableDescriptor)?.returnType
+      val typeConstructor = returnTypeDescriptor?.constructor?.declarationDescriptor
 
-        if (isTypeOrUsageAnnotatedWith(returnTypeDescriptor, typeConstructor, BLOCKING_EXECUTOR_ANNOTATION)) return Blocking
-        if (isTypeOrUsageAnnotatedWith(returnTypeDescriptor, typeConstructor, NONBLOCKING_EXECUTOR_ANNOTATION)) return NonBlocking.INSTANCE
+      if (isTypeOrUsageAnnotatedWith(returnTypeDescriptor, typeConstructor, BLOCKING_EXECUTOR_ANNOTATION)) return Blocking
+      if (isTypeOrUsageAnnotatedWith(returnTypeDescriptor, typeConstructor, NONBLOCKING_EXECUTOR_ANNOTATION)) return NonBlocking.INSTANCE
 
-        val fqnOrNull = fqNameOrNull()?.asString() ?: return NonBlocking.INSTANCE
-        return when(fqnOrNull) {
-            IO_DISPATCHER_FQN -> Blocking
-            MAIN_DISPATCHER_FQN, DEFAULT_DISPATCHER_FQN -> NonBlocking.INSTANCE
-            else -> Unsure
-        }
+      val fqnOrNull = fqNameOrNull()?.asString() ?: return NonBlocking.INSTANCE
+      return when (fqnOrNull) {
+        IO_DISPATCHER_FQN -> Blocking
+        MAIN_DISPATCHER_FQN, DEFAULT_DISPATCHER_FQN -> NonBlocking.INSTANCE
+        else -> Unsure
+      }
     }
 
     private fun isTypeOrUsageAnnotatedWith(type: KotlinType?, typeConstructor: ClassifierDescriptor?, annotationFqn: String): Boolean {

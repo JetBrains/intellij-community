@@ -15,7 +15,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.DefaultInjectedLanguageBlockBuilder
 import com.intellij.psi.templateLanguages.OuterLanguageElement
 import com.intellij.util.SmartList
-import com.intellij.util.castSafelyTo
 import com.intellij.util.text.TextRangeUtil
 import com.intellij.util.text.escLBr
 import org.jetbrains.yaml.YAMLFileType
@@ -133,7 +132,7 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings, val 
                                                blockRange,
                                                outerNodes,
                                                replaceAbsoluteIndent(block),
-                                               block.castSafelyTo<BlockEx>()?.language ?: injectionLanguage)
+                                               (block as? BlockEx)?.language ?: injectionLanguage)
             
             result.addAll(outerBlocksQueue.popWhile { it.textRange.endOffset <= blockRangeInHost.startOffset })
             if (block.subBlocks.isNotEmpty()) {
@@ -155,8 +154,11 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings, val 
       }
     }
 
-    private fun replaceAbsoluteIndent(block: Block): Indent? = block.indent.castSafelyTo<IndentImpl>()?.takeIf { it.isAbsolute }
-      ?.run { IndentImpl(type, false, spaces, isRelativeToDirectParent, isEnforceIndentToChildren) } ?:block.indent
+    private fun replaceAbsoluteIndent(block: Block): Indent? = (block.indent as? IndentImpl)?.takeIf { it.isAbsolute }
+                                                                 ?.run {
+                                                                   IndentImpl(type, false, spaces, isRelativeToDirectParent,
+                                                                              isEnforceIndentToChildren)
+                                                                 } ?: block.indent
 
     override fun getSubBlocks(): List<Block> = myBlocks
 
@@ -170,7 +172,7 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings, val 
     override fun getLanguage(): Language? = language
   }
 
-  private fun Block.unwrap() = this.castSafelyTo<YamlInjectedLanguageBlockWrapper>()?.original ?: this
+  private fun Block.unwrap() = (this as? YamlInjectedLanguageBlockWrapper)?.original ?: this
 
   private fun <T> ArrayDeque<T>.popWhile(pred: (T) -> Boolean): List<T> {
     if (this.isEmpty()) return emptyList()

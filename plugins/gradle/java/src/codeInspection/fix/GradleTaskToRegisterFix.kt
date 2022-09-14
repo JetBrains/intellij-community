@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
@@ -59,7 +58,7 @@ class GradleTaskToRegisterFix : LocalQuickFix {
       return argument
     }
     if (inspectFirstArg) {
-      val firstArgument = callParent.expressionArguments.firstOrNull()?.castSafelyTo<GrMethodCall>() ?: return null
+      val firstArgument = callParent.expressionArguments.firstOrNull()?.let { it as? GrMethodCall } ?: return null
       return inferSecondArgument(firstArgument, false)
     }
     return null

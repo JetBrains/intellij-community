@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.parentsOfType
-import com.intellij.util.castSafelyTo
 import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -151,14 +150,14 @@ fun KtPropertyAccessor.deleteBody() {
 }
 
 fun KtDeclarationWithBody.singleExpressionBody(): KtExpression? =
-    when (val body = bodyExpression) {
-        is KtBlockExpression -> body.statements.singleOrNull()?.castSafelyTo<KtReturnExpression>()?.returnedExpression
-        else -> body
-    }
+  when (val body = bodyExpression) {
+    is KtBlockExpression -> body.statements.singleOrNull()?.let { it as? KtReturnExpression }?.returnedExpression
+    else -> body
+  }
 
 fun KtExpression.getCallChain(): List<KtExpression> =
     generateSequence<Pair<KtExpression?, KtExpression?>>(this to null) { (receiver, _) ->
-        receiver.castSafelyTo<KtDotQualifiedExpression>()?.let { it.receiverExpression to it.selectorExpression } ?: (null to receiver)
+      (receiver as? KtDotQualifiedExpression)?.let { it.receiverExpression to it.selectorExpression } ?: (null to receiver)
     }
         .drop(1)
         .map { (_, selector) -> selector }

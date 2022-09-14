@@ -17,7 +17,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.InjectionTestFixture
 import com.intellij.testFramework.fixtures.injectionForHost
-import com.intellij.util.castSafelyTo
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema
 import junit.framework.TestCase
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
@@ -295,7 +294,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     testNewLineInInjectedXMLinNested()
 
     // then undo and try again to check that all editors are disposed properly
-    val hostEditor = myFixture.editor.let { it.castSafelyTo<EditorWindow>()?.delegate ?: it }
+    val hostEditor = myFixture.editor.let { (it as? EditorWindow)?.delegate ?: it }
     val hostFile = PsiDocumentManager.getInstance(project).getPsiFile(hostEditor.document) ?: throw AssertionError("no psi file")
     val hostVFile = hostFile.virtualFile
     myFixture.openFileInEditor(hostVFile)
@@ -1039,7 +1038,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
   val literalTextAtTheCaret: String
     get() {
       val elementAt = myInjectionFixture.topLevelFile.findElementAt(myInjectionFixture.topLevelCaretPosition)
-      return elementAt?.parents(true)?.mapNotNull { it.castSafelyTo<YAMLScalarImpl>() }?.firstOrNull()
+      return elementAt?.parents(true)?.mapNotNull { it as? YAMLScalarImpl }?.firstOrNull()
                ?.let { psi -> psi.contentRanges.joinToString("") { it.subSequence(psi.text) } }
              ?: throw AssertionError("no literal element at the caret position, only $elementAt were found")
     }

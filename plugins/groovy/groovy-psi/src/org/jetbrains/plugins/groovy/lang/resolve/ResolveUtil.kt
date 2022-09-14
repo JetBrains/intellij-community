@@ -11,7 +11,6 @@ import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager.getCachedValue
-import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -152,7 +151,7 @@ fun GrCodeReferenceElement.isAnnotationReference(): Boolean {
 }
 
 fun getName(state: ResolveState, element: PsiElement): String? {
-  return state[importedNameKey] ?: element.castSafelyTo<PsiNamedElement>()?.name ?: element.castSafelyTo<GrReferenceElement<*>>()?.referenceName
+  return state[importedNameKey] ?: (element as? PsiNamedElement)?.name ?: (element as? GrReferenceElement<*>)?.referenceName
 }
 
 fun <T : GroovyResolveResult> valid(allCandidates: Collection<T>): List<T> = allCandidates.filter {

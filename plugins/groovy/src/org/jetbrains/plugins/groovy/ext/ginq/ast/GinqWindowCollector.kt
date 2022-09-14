@@ -2,8 +2,6 @@
 package org.jetbrains.plugins.groovy.ext.ginq.ast
 
 import com.intellij.psi.PsiElement
-import com.intellij.util.castSafelyTo
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
@@ -16,7 +14,8 @@ class GinqWindowCollector : GroovyRecursiveElementVisitor() {
   val windows: List<GinqWindowFragment> get() = myWindows
 
   override fun visitMethodCallExpression(methodCallExpression: GrMethodCallExpression) {
-    val invoked = methodCallExpression.invokedExpression.castSafelyTo<GrReferenceExpression>()?.takeIf { it.referenceName == "over" } ?: return super.visitMethodCallExpression(methodCallExpression)
+    val invoked = (methodCallExpression.invokedExpression as? GrReferenceExpression)?.takeIf { it.referenceName == "over" }
+                  ?: return super.visitMethodCallExpression(methodCallExpression)
     val qualifier = invoked.qualifierExpression ?: return super.visitMethodCallExpression(methodCallExpression)
     val argument = methodCallExpression.argumentList.allArguments.takeIf { it.size <= 1 } ?: return super.visitMethodCallExpression(methodCallExpression)
     val overKw = invoked.referenceNameElement ?: return super.visitMethodCallExpression(methodCallExpression)
@@ -30,32 +29,33 @@ class GinqWindowCollector : GroovyRecursiveElementVisitor() {
       var rowsOrRangeArguments: List<GrExpression> = emptyList()
       var localQualifier = argument.single()
       while (localQualifier != null) {
-        val call = localQualifier.castSafelyTo<GrMethodCall>()
+        val call = localQualifier as? GrMethodCall
         if (call == null) {
           if (localQualifier is GrReferenceExpression) {
             localQualifier = localQualifier.qualifierExpression
             continue
-          } else {
+          }
+          else {
             break
           }
         }
-        val invokedInner = call.invokedExpression.castSafelyTo<GrReferenceExpression>() ?: break
+        val invokedInner = call.invokedExpression as? GrReferenceExpression ?: break
         when (invokedInner.referenceName) {
           "range", "rows" -> {
             rowsOrRangeKw = invokedInner.referenceNameElement
-            rowsOrRangeArguments = call.argumentList.allArguments.toList().mapNotNull(GroovyPsiElement?::castSafelyTo)
+            rowsOrRangeArguments = call.argumentList.allArguments.toList().mapNotNull { it as? GrExpression? }
             rowsOrRangeArguments.forEach { it.markAsGinqUntransformed() }
             localQualifier = invokedInner.qualifier
           }
           "partitionby" -> {
             partitionKw = invokedInner.referenceNameElement
-            partitionArguments = call.argumentList.allArguments.toList().mapNotNull(GroovyPsiElement?::castSafelyTo)
+            partitionArguments = call.argumentList.allArguments.toList().mapNotNull { it as? GrExpression? }
             partitionArguments.forEach { it.markAsGinqUntransformed() }
             localQualifier = invokedInner.qualifier
           }
           "orderby" -> {
             val orderByKw = invokedInner.referenceNameElement!!
-            val fields = call.argumentList.allArguments.toList().mapNotNull { it.castSafelyTo<GrExpression>()?.let(::getOrdering) }
+            val fields = call.argumentList.allArguments.toList().mapNotNull { (it as? GrExpression)?.let(::getOrdering) }
             orderBy = GinqOrderByFragment(orderByKw, fields)
             orderBy.sortingFields.forEach { it.sorter.markAsGinqUntransformed() }
             localQualifier = invokedInner.qualifier

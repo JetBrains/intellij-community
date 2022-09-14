@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.Urls
-import com.intellij.util.castSafelyTo
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
@@ -21,10 +20,7 @@ import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
-import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMember
-import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.KotlinDocumentationProvider
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
@@ -171,10 +167,10 @@ object KotlinExternalDocUrlsProvider {
     }
 
     private fun getContainingLightClassForKtDeclaration(declaration: KtDeclaration): PsiClass? {
-        return when {
-            declaration is KtFunction && declaration.isLocal -> null
-            else -> declaration.toUElementOfType<UMethod>()?.uastParent?.javaPsi?.castSafelyTo<PsiClass>()
-        }
+      return when {
+        declaration is KtFunction && declaration.isLocal -> null
+        else -> declaration.toUElementOfType<UMethod>()?.uastParent?.javaPsi?.let { it as? PsiClass }
+      }
     }
 }
 
