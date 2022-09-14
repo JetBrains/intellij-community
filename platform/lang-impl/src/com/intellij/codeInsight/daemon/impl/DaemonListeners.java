@@ -161,7 +161,7 @@ public final class DaemonListeners implements Disposable {
         if (UIUtil.isShowing(editor.getContentComponent()) && worthBothering(editor.getDocument(), editor.getProject())) {
           ApplicationManager.getApplication().invokeLater(() -> {
             if (!myProject.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
-              IntentionsUI.getInstance(myProject).invalidate();
+              IntentionsUI.getInstance(myProject).invalidateForEditor(editor);
             }
           }, ModalityState.current(), myProject.getDisposed());
         }
@@ -218,7 +218,7 @@ public final class DaemonListeners implements Disposable {
           UIUtil.invokeLaterIfNeeded(() -> {
             IntentionsUI intentionUI = myProject.getServiceIfCreated(IntentionsUI.class);
             if (intentionUI != null) {
-              intentionUI.invalidate();
+              intentionUI.invalidateForEditor(event.getEditor());
             }
           });
         }
