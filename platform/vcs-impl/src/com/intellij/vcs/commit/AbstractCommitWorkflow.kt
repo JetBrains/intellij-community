@@ -126,7 +126,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   @RequiresEdt
   internal fun startExecution(block: () -> Boolean) {
-    check(!isExecuting)
+    check(!isExecuting) { "Commit session is already started" }
 
     isExecuting = true
     continueExecution {
@@ -136,7 +136,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   }
 
   internal fun continueExecution(block: () -> Boolean) {
-    check(isExecuting)
+    check(isExecuting) { "Commit session has already finished" }
 
     try {
       val continueExecution = block()
@@ -156,7 +156,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   @RequiresEdt
   internal fun endExecution() {
-    check(isExecuting)
+    check(isExecuting) { "Commit session has already finished" }
 
     isExecuting = false
     eventDispatcher.multicaster.executionEnded()

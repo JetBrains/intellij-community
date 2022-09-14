@@ -14,7 +14,7 @@ import java.nio.file.Path
  */
 internal class ProjectDirCheckoutListener : CheckoutListener {
   override fun processCheckedOutDirectory(project: Project, directory: Path): Boolean {
-    check(!ApplicationManager.getApplication().isDispatchThread)
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     val dotIdea = directory.resolve(Project.DIRECTORY_STORE_FOLDER)
     // todo Rider project layout - several.idea.solution-name names

@@ -18,7 +18,7 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
   internal fun asyncSession(scope: CoroutineScope,
                             sessionInfo: CommitSessionInfo,
                             commitChecks: suspend () -> CommitChecksResult) {
-    check(isExecuting)
+    check(isExecuting) { "Commit session has already finished" }
     scope.launch {
       try {
         fireBeforeCommitChecksStarted(sessionInfo)
