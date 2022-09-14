@@ -798,6 +798,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return myTree;
   }
 
+  @Deprecated
   public PsiDirectory @NotNull [] getSelectedDirectories() {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return PsiDirectory.EMPTY_ARRAY;
@@ -806,7 +807,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return getSelectedDirectories(selectedUserObjects);
   }
 
-  
+  @RequiresBackgroundThread(generateAssertion = false)
   protected PsiDirectory @NotNull [] getSelectedDirectories(Object @NotNull[] selectedUserObjects) {
     List<PsiDirectory> directories = new ArrayList<>();
     for (Object obj : selectedUserObjects) {

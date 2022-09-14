@@ -40,6 +40,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -119,6 +120,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     return super.getSlowDataFromSelection(selectedUserObjects, singleSelectedPathUserObjects, dataId);
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   @Override
   protected PsiDirectory @NotNull [] getSelectedDirectories(Object @NotNull[] objects) {
     List<PsiDirectory> directories = new ArrayList<>();
@@ -299,7 +301,8 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
 
     @Override
     public void deleteElement(@NotNull DataContext dataContext) {
-      PsiDirectory[] allElements = getSelectedDirectories();
+      Object[] objs = PlatformCoreDataKeys.SELECTED_ITEMS.getData(dataContext);
+      PsiDirectory[] allElements = objs != null ? getSelectedDirectories(objs) : PsiDirectory.EMPTY_ARRAY;
       List<PsiElement> validElements = new ArrayList<>();
       for (PsiElement psiElement : allElements) {
         if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
