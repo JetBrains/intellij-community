@@ -259,7 +259,6 @@ object KotlinPluginBuilder {
       if (ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES && kind == KotlinPluginKind.IJ) {
         spec.withModules(persistentListOf(
           "kotlin-ultimate.common-native",
-          "kotlin-ultimate.common-for-kotlin",
           //noinspection SpellCheckingInspection
           "kotlin-ultimate.javascript.debugger",
           "kotlin-ultimate.javascript.nodeJs",
