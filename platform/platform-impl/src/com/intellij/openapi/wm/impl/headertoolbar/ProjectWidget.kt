@@ -76,7 +76,7 @@ internal class ProjectWidget(private val presentation: Presentation) : ToolbarCo
       }
     }
 
-    project?.let { createPopup(it, step, renderer) }?.showAligned()
+    project?.let { createPopup(it, step, renderer) }?.showUnderneathOf(this)
   }
 
   private fun createPopup(it: Project, step: ListPopupStep<Any>, renderer: Function<ListCellRenderer<Any>, ListCellRenderer<out Any>>): ListPopup {

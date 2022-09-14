@@ -12,6 +12,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
 import com.intellij.openapi.application.AccessToken;
@@ -500,7 +501,19 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   @Override
   public void showUnderneathOf(@NotNull Component aComponent) {
-    show(new RelativePoint(aComponent, new Point(JBUIScale.scale(2), aComponent.getHeight())));
+    int x = Registry.is("ide.popup.align.by.content") ? calcHorizontalAlignment(aComponent) : JBUIScale.scale(2);
+    show(new RelativePoint(aComponent, new Point(x, aComponent.getHeight())));
+  }
+
+  private static int calcHorizontalAlignment(@NotNull Component comp) {
+    if (!(comp instanceof JComponent jcomp)) return JBUIScale.scale(2);
+    if (comp instanceof ActionButton) return JBUIScale.scale(2);
+
+    int componentLeftInset = jcomp.getInsets().left;
+    int popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left;
+    int res = componentLeftInset - popupLeftInset;
+    if (jcomp instanceof AbstractButton button) res += button.getMargin().left;
+    return res;
   }
 
   @Override

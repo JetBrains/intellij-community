@@ -595,6 +595,7 @@ private class RunDropDownButtonUI : BasicButtonUI() {
     b.hoverBackground = ColorUtil.fromHex("#3369D6")
     b.pressedBackground = ColorUtil.fromHex("#315FBD")
     b.horizontalAlignment = SwingConstants.LEFT
+    b.margin = JBInsets.emptyInsets()
   }
 
   override fun createButtonListener(b: AbstractButton?): BasicButtonListener {
@@ -775,7 +776,7 @@ private class RunDropDownButtonUI : BasicButtonUI() {
                 }
               })
             }
-            ?.showAlignedTo(e.component)
+            ?.showUnderneathOf(e.component)
           return
         }
       }
@@ -783,16 +784,6 @@ private class RunDropDownButtonUI : BasicButtonUI() {
       super.mousePressed(e)
     }
   }
-}
-
-private fun JBPopup.showAlignedTo(widget: Component) {
-  val widgetLeftInset = if (widget is JComponent)
-    widget.border.getBorderInsets(widget).left
-  else
-    0
-  val popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() +
-                       JBUI.CurrentTheme.Popup.Selection.innerInsets().left
-  show(RelativePoint(widget, Point(widgetLeftInset - popupLeftInset, widget.height)))
 }
 
 private fun RunnerAndConfigurationSettings.isRunning(project: Project, execId: String? = null) : Boolean {

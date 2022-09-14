@@ -148,7 +148,7 @@ private class GitToolbarWidget(val presentation: Presentation) : ToolbarComboWid
       }
       popupState.prepareToShow(listPopup)
       listPopup.setRequestFocus(false)
-      listPopup.showAligned()
+      listPopup.showUnderneathOf(this)
     }
   }
 }
