@@ -13,6 +13,8 @@ import java.awt.Color
 import javax.swing.JPanel
 
 object DiffNotifications {
+  private val DEFAULT_NOTIFICATION_STATUS: EditorNotificationPanel.Status = EditorNotificationPanel.Status.Warning
+
   @JvmStatic
   fun createInsertedContent(): JPanel {
     return createNotification(DiffBundle.message("notification.status.content.added"), TextDiffType.INSERTED.getColor(null))
@@ -54,14 +56,19 @@ object DiffNotifications {
   //
   @JvmStatic
   @JvmOverloads
-  fun createNotificationProvider(text: @Nls String, background: Color? = null): DiffNotificationProvider {
-    return DiffNotificationProvider { _: DiffViewer? -> createNotification(text, background) }
+  fun createNotificationProvider(text: @Nls String,
+                                 background: Color? = null,
+                                 status: EditorNotificationPanel.Status = DEFAULT_NOTIFICATION_STATUS): DiffNotificationProvider {
+    return DiffNotificationProvider { _: DiffViewer? -> createNotification(text, background, status = status) }
   }
 
+  @JvmStatic
   @JvmOverloads
-  fun createNotification(text: @Nls String, background: Color? = null, showHideAction: Boolean = true): JPanel {
-    // TODO: add status parameter or replace color parameter to status
-    val panel = EditorNotificationPanel(background, EditorNotificationPanel.Status.Warning)
+  fun createNotification(text: @Nls String,
+                         background: Color? = null,
+                         status: EditorNotificationPanel.Status = DEFAULT_NOTIFICATION_STATUS,
+                         showHideAction: Boolean = true): JPanel {
+    val panel = EditorNotificationPanel(background, status)
     panel.text(text)
     if (showHideAction) {
       val link = panel.createActionLabel(DiffBundle.message("button.hide.notification")) { hideNotification(panel) }
