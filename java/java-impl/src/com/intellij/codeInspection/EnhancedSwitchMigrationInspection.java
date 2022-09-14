@@ -190,9 +190,9 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     return completenessResult == CompletenessResult.COMPLETE_WITHOUT_TOTAL || completenessResult == CompletenessResult.COMPLETE_WITH_TOTAL;
   }
 
-  private static boolean isConvertibleBranch(OldSwitchStatementBranch branch, boolean allowMultipleStatements) {
+  private static boolean isConvertibleBranch(OldSwitchStatementBranch branch, boolean allowMultipleStatements, boolean hasNext) {
     int length = branch.getStatements().length;
-    if (length == 0) return branch.isFallthrough() || branch.isDefault();
+    if (length == 0) return branch.isFallthrough() && hasNext;
     if (branch.isFallthrough()) return false;
     if (allowMultipleStatements) return true;
     return length == 1;
@@ -301,14 +301,16 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   }
 
   /**
+   * <pre>
    * switch (n) {
-   * case 1:
-   * return "a";
-   * case 2:
-   * return "b";
-   * default:
-   * return "?";
+   *   case 1:
+   *     return "a";
+   *   case 2:
+   *     return "b";
+   *   default:
+   *     return "?";
    * }
+   * </pre>
    */
 
   @Nullable
@@ -320,9 +322,16 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     if (returnAfterSwitch == null && !isExhaustive) return null;
     List<SwitchBranch> newBranches = new ArrayList<>();
     boolean hasReturningBranch = false;
-    for (OldSwitchStatementBranch branch : branches) {
-      if (!isConvertibleBranch(branch, false)) return null;
-      if (branch.isFallthrough()) continue;
+    boolean forceNextDefaultBranch = false;
+    for (int i = 0, size = branches.size(); i < size; i++) {
+      OldSwitchStatementBranch branch = branches.get(i);
+      if (!isConvertibleBranch(branch, false, i != size - 1)) return null;
+      if (branch.isFallthrough()) {
+        if (branch.isDefault() && i < size - 1) {
+          forceNextDefaultBranch = true;
+        }
+        continue;
+      }
       PsiStatement[] statements = branch.getStatements();
       if (statements.length != 1) return null;
       PsiReturnStatement returnStmt = tryCast(statements[0], PsiReturnStatement.class);
@@ -331,16 +340,25 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         PsiThrowStatement throwStatement = tryCast(statements[0], PsiThrowStatement.class);
         if (throwStatement == null) return null;
         result = new SwitchStatementBranch(new PsiStatement[]{throwStatement});
-      } else {
+      }
+      else {
         PsiExpression returnExpr = returnStmt.getReturnValue();
         if (returnExpr == null) return null;
         result = new SwitchRuleExpressionResult(returnExpr);
         hasReturningBranch = true;
       }
-      newBranches.add(new SwitchBranch(branch.isDefault(),
-                                       branch.getCaseLabelElements(),
-                                       result,
-                                       branch.getUsedElements()));
+      if (forceNextDefaultBranch) {
+        newBranches.add(  new SwitchBranch(true,
+                         Collections.emptyList(),
+                         result,
+                         branch.getUsedElements()));
+      } else {
+        newBranches.add(new SwitchBranch(forceNextDefaultBranch || branch.isDefault(),
+                                         branch.getCaseLabelElements(),
+                                         result,
+                                         branch.getUsedElements()));
+      }
+      forceNextDefaultBranch = false;
     }
     if (!hasReturningBranch) return null;
     if (!isExhaustive) {
@@ -421,12 +439,14 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   }
 
   /**
+   * <pre>
    * int result;
    * switch(s) {
-   * case "a": result = 1; break;
-   * case "b": result = 2; break;
-   * default: result = 0;
+   *   case "a": result = 1; break;
+   *   case "b": result = 2; break;
+   *   default: result = 0;
    * }
+   * </pre>
    */
   @Nullable
   private static SwitchReplacer inspectVariableAssigningSwitch(@NotNull PsiStatement statement,
@@ -438,8 +458,9 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     List<SwitchBranch> newBranches = new ArrayList<>();
     boolean hasAssignedBranch = false;
     boolean wasDefault = false;
-    for (OldSwitchStatementBranch branch : branches) {
-      if (!isConvertibleBranch(branch, false)) return null;
+    for (int i = 0, size = branches.size(); i < size; i++) {
+      OldSwitchStatementBranch branch = branches.get(i);
+      if (!isConvertibleBranch(branch, false, i != size - 1)) return null;
       PsiStatement[] statements = branch.getStatements();
       if (branch.isFallthrough() && statements.length == 0) continue;
       // Only single statement branches are convertible now
@@ -452,7 +473,8 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         if (var == null) return null;
         if (assignedVariable == null) {
           assignedVariable = var;
-        } else if (assignedVariable != var) {
+        }
+        else if (assignedVariable != var) {
           return null;
         }
       }
@@ -461,7 +483,8 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         PsiThrowStatement throwStatement = tryCast(first, PsiThrowStatement.class);
         if (throwStatement == null) return null;
         result = new SwitchStatementBranch(new PsiStatement[]{throwStatement});
-      } else {
+      }
+      else {
         hasAssignedBranch = true;
         result = new SwitchRuleExpressionResult(rExpression);
       }
@@ -559,8 +582,9 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   private static SwitchReplacer inspectReplacementWithStatement(@NotNull PsiStatement statement,
                                                                 @NotNull List<OldSwitchStatementBranch> branches,
                                                                 boolean isExhaustive) {
-    for (OldSwitchStatementBranch branch : branches) {
-      if (!isConvertibleBranch(branch, true)) return null;
+    for (int i = 0, size = branches.size(); i < size; i++) {
+      OldSwitchStatementBranch branch = branches.get(i);
+      if (!isConvertibleBranch(branch, true, i != size - 1)) return null;
     }
     List<SwitchBranch> switchRules = new ArrayList<>();
     for (int i = 0, branchesSize = branches.size(); i < branchesSize; i++) {
