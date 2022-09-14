@@ -6,9 +6,13 @@ import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import com.intellij.uast.UastHintedVisitorAdapter
-import com.siyeh.ig.junit.JUnitCommonClassNames.*
-import org.jetbrains.uast.*
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_IGNORE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_DISABLED
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import javax.swing.JComponent
 
@@ -20,13 +24,17 @@ class JUnitIgnoredTestInspection : AbstractBaseUastLocalInspectionTool() {
     JvmAnalysisBundle.message("jvm.inspections.junit.ignored.test.ignore.reason.option"), this, "onlyReportWithoutReason"
   )
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
-    UastHintedVisitorAdapter.create(
+  private fun shouldInspect(file: PsiFile) = isJUnit4InScope(file) || isJUnit5InScope(file)
+
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+    if (!shouldInspect(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
+    return UastHintedVisitorAdapter.create(
       holder.file.language,
       JUnitIgnoredTestVisitor(holder, onlyReportWithoutReason),
       arrayOf(UClass::class.java, UMethod::class.java),
       directOnly = true
     )
+  }
 }
 
 private class JUnitIgnoredTestVisitor(

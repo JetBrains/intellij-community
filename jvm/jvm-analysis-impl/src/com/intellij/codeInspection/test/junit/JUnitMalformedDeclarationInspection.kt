@@ -45,13 +45,17 @@ class JUnitMalformedDeclarationInspection : AbstractBaseUastLocalInspectionTool(
     ignorableAnnotations, JvmAnalysisBundle.message("jvm.inspections.junit.malformed.option.ignore.test.parameter.if.annotated.by")
   )
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
-    UastHintedVisitorAdapter.create(
+  private fun shouldInspect(file: PsiFile) = isJUnit3InScope(file) || isJUnit4InScope(file) || isJUnit5InScope(file)
+
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+    if (!shouldInspect(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
+    return UastHintedVisitorAdapter.create(
       holder.file.language,
       JUnitMalformedSignatureVisitor(holder, isOnTheFly, ignorableAnnotations),
       arrayOf(UClass::class.java, UField::class.java, UMethod::class.java),
       directOnly = true
     )
+  }
 }
 
 private class JUnitMalformedSignatureVisitor(
