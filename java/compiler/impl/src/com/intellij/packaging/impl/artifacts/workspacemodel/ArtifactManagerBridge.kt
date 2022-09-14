@@ -311,8 +311,6 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
     private val LOG = logger<ArtifactManagerBridge>()
 
-    const val FEATURE_TYPE = "com.intellij.packaging.artifacts.ArtifactType";
-
     val VALID_ARTIFACT_CONDITION: Condition<Artifact> = Condition { it !is InvalidArtifact }
   }
 

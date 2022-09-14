@@ -27,9 +27,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
+import java.util.logging.StreamHandler;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -79,7 +80,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static void configureLogToStdoutIfDebug(@NotNull java.util.logging.Logger julLogger) {
     if (julLogger.isLoggable(Level.FINE) &&
         ContainerUtil.findInstance(julLogger.getHandlers(), LogToStdoutJulHandler.class) == null) {
-      julLogger.addHandler(LogToStdoutJulHandler.create());
+      julLogger.addHandler(new LogToStdoutJulHandler());
     }
   }
 
@@ -123,6 +124,10 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void dumpLogToStdout(@NotNull String testStartMarker) {
+    dumpLogTo(testStartMarker, System.out);
+  }
+
+  public static void dumpLogTo(@NotNull String testStartMarker, PrintStream out) {
     Path logFile = getTestLogDir().resolve(LOG_FILE_NAME);
     if (Files.exists(logFile)) {
       try {
@@ -141,12 +146,12 @@ public final class TestLoggerFactory implements Logger.Factory {
           logText = Files.readString(logFile);
         }
 
-        System.out.println("\n\nIdea Log:");
+        out.println("\n\nIdea Log:");
         Pattern logStart = Pattern.compile("[\\d\\-, :\\[\\]]+(DEBUG|INFO|ERROR) - ");
         for (String line : StringUtil.splitByLines(logText.substring(Math.max(0, logText.lastIndexOf(testStartMarker))))) {
           Matcher matcher = logStart.matcher(line);
           int lineStart = matcher.lookingAt() ? matcher.end() : 0;
-          System.out.println(line.substring(lineStart));
+          out.println(line.substring(lineStart));
         }
       }
       catch (IOException e) {
@@ -488,27 +493,40 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  private static class LogToStdoutJulHandler extends ConsoleHandler {
+  // Cannot extend from ConsoleHandler since it is hard-coded to System.err,
+  // and calling setOutputStream(System.out) after the constructor would close System.err.
+  private static class LogToStdoutJulHandler extends StreamHandler {
+
+    private boolean initialized;
+
     LogToStdoutJulHandler() {
-      setFormatter(new WithTimeSinceTestStartedJulFormatter());
-      setOutputStream(System.out);
+      super(System.out, new WithTimeSinceTestStartedJulFormatter());
       setLevel(Level.ALL);
     }
 
-    /*
-     * The constructor of ConsoleHandler takes and stores System.err,
-     * and when setOutputStream is called later, the original stream is closed.
-     * Prevent System.err from being closed.
-     */
-    private static LogToStdoutJulHandler create() {
-      PrintStream stderr = System.err;
-      try {
-        System.setErr(new PrintStream(OutputStream.nullOutputStream(), true, StandardCharsets.UTF_8));
-        return new LogToStdoutJulHandler();
-      }
-      finally {
-        System.setErr(stderr);
-      }
+    @Override
+    public synchronized void publish(LogRecord record) {
+      super.publish(record);
+      // Flushing after every published record is useful for getting immediate feedback during debugging.
+      // It is not time-critical since typically only warnings and errors reach this console handler.
+      flush();
+    }
+
+    @Override
+    protected synchronized void setOutputStream(OutputStream out) throws SecurityException {
+      // This method is called once from the constructor.
+      // Any later call would close the current output stream, in this case System.out.
+      // Prevent that.
+      // See https://stackoverflow.com/a/51642136.
+      if (initialized) throw new UnsupportedOperationException("TestLoggerFactory.setOutputStream");
+      super.setOutputStream(out);
+      initialized = true;
+    }
+
+    @Override
+    public synchronized void close() {
+      // Prevent closing System.out.
+      flush();
     }
   }
 

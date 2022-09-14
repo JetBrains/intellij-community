@@ -96,12 +96,6 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract boolean isFocusTransferEnabled();
 
   /**
-   * @deprecated This method does nothing currently
-   */
-  @Deprecated(forRemoval = true)
-  public void setTypeaheadEnabled(boolean enabled) {}
-
-  /**
    * Computes effective focus owner.
    */
   public abstract Component getFocusOwner();

@@ -27,7 +27,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleMo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
-import com.jetbrains.packagesearch.intellij.plugin.util.uiStateModifier
+import com.jetbrains.packagesearch.intellij.plugin.util.pkgsUiStateModifier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -84,8 +84,8 @@ class DependencyNavigationService(private val project: Project) {
     private fun onSuccess(moduleModel: ModuleModel, dependency: UnifiedDependency): NavigationResult.Success {
         project.lifecycleScope.launch(Dispatchers.EDT) {
             PackageSearchToolWindowFactory.activateToolWindow(project) {
-                project.uiStateModifier.setTargetModules(TargetModules.from(moduleModel))
-                project.uiStateModifier.setDependency(dependency)
+                project.pkgsUiStateModifier.setTargetModules(TargetModules.from(moduleModel))
+                project.pkgsUiStateModifier.setDependency(dependency)
             }
         }
         return NavigationResult.Success

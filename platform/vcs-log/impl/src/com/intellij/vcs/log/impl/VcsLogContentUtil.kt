@@ -122,13 +122,4 @@ object VcsLogContentUtil {
     val component = ContentUtilEx.findContentComponent(manager) { c: JComponent -> ui === getLogUi(c) } ?: return
     ContentUtilEx.updateTabbedContentDisplayName(manager, component)
   }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("use VcsProjectLog#runWhenLogIsReady(Project, Consumer) instead.")
-  @JvmStatic
-  @RequiresBackgroundThread
-  fun getOrCreateLog(project: Project): VcsLogManager? {
-    VcsProjectLog.ensureLogCreated(project)
-    return VcsProjectLog.getInstance(project).logManager
-  }
 }

@@ -119,6 +119,14 @@ class EventId3<in T1, in T2, in T3>(
   override fun getFields(): List<EventField<*>> = listOf(field1, field2, field3)
 }
 
+class EventDataCollector() : ArrayList<EventPair<*>>() {
+  var skipped = false
+
+  fun skip() {
+    skipped = true
+  }
+}
+
 class VarargEventId internal constructor(
   private val group: EventLogGroup,
   eventId: String,
@@ -141,6 +149,19 @@ class VarargEventId internal constructor(
 
   fun log(project: Project?, pairs: List<EventPair<*>>) {
     getLogger().logAsync(group, eventId, buildUsageData(pairs).addProject(project).build(), false)
+  }
+
+  fun log(project: Project?, dataBuilder: EventDataCollector.() -> Unit) {
+    getLogger().logAsync(group, eventId, {
+      val list = EventDataCollector()
+      list.dataBuilder()
+      if (!list.skipped) {
+        buildUsageData(list).addProject(project).build()
+      }
+      else {
+        null
+      }
+    }, false)
   }
 
   fun metric(vararg pairs: EventPair<*>): MetricEvent {

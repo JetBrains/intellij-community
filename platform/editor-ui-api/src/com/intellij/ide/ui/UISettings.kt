@@ -115,7 +115,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var separateMainMenu: Boolean
-    get() = SystemInfoRt.isWindows && state.separateMainMenu
+    get() = (SystemInfoRt.isWindows || SystemInfoRt.isXWindow) && state.separateMainMenu
     set(value) {
       state.separateMainMenu = value
       state.showMainToolbar = value
@@ -174,6 +174,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     set(value) {
       state.navigationBarLocation = value
     }
+
+  val showNavigationBarInBottom : Boolean
+    get() = showNavigationBar && navBarLocation == NavBarLocation.BOTTOM
 
   var showMembersInNavigationBar: Boolean
     get() = state.showMembersInNavigationBar

@@ -57,10 +57,10 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
   @Override
   protected void initTree() {
     super.initTree();
-    new TreeSpeedSearch(myTree, treePath -> {
+    new TreeSpeedSearch(myTree, true, treePath -> {
       MasterDetailsComponent.MyNode obj = (MyNode)treePath.getLastPathComponent();
       return obj == null ? null : obj.getDisplayName();
-    }, true);
+    });
 
     StatusText emptyText = myTree.getEmptyText();
     emptyText.setText(CopyrightBundle.message("copyright.profiles.empty"));

@@ -87,16 +87,14 @@ class ReportingTest {
   private lateinit var runContextMock: IDERunContext
 
   @Test
-  fun `validate default error details generation`(testInfo: TestInfo) {
+  fun `validate default error failure details generation`(testInfo: TestInfo) {
     val testName = testInfo.hyphenateWithClass()
     Mockito.doReturn(testName).`when`(runContextMock).contextName
 
-    val failureDetails = di.direct.instance<FailureDetailsOnCI>().getFailureDetails(runContext = runContextMock,
-                                                                                    stackTraceContent = "Stacktrace content")
+    val failureDetails = di.direct.instance<FailureDetailsOnCI>().getFailureDetails(runContext = runContextMock)
     failureDetails.shouldBe("""
       Test: $testName
       You can find logs and other useful info in CI artifacts under the path $testName
-      Stacktrace content
     """.trimIndent())
   }
 }

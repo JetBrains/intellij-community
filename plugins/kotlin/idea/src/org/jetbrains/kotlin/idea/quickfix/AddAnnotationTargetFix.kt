@@ -18,20 +18,17 @@ import org.jetbrains.kotlin.diagnostics.Errors.WRONG_ANNOTATION_TARGET_WITH_USE_
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgressIfEdt
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.resolve.*
-import org.jetbrains.kotlin.resolve.AnnotationTargetLists.EMPTY
-import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_CLASSIFIER
-import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_CONSTRUCTOR
-import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_EXPRESSION
-import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_LOCAL_VARIABLE
-import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_MEMBER_FUNCTION
-import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_MEMBER_PROPERTY
-import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_VALUE_PARAMETER_WITHOUT_VAL
+import org.jetbrains.kotlin.resolve.AnnotationChecker
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.BindingTraceContext
+import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -41,6 +38,8 @@ class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFi
 
     override fun getFamilyName() = text
 
+    override fun startInWriteAction(): Boolean = false
+
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val annotationEntry = element ?: return
 
@@ -49,9 +48,12 @@ class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFi
         val requiredAnnotationTargets = annotationEntry.getRequiredAnnotationTargets(annotationClass, annotationClassDescriptor, project)
         if (requiredAnnotationTargets.isEmpty()) return
 
-        val psiFactory = KtPsiFactory(annotationEntry)
         annotationClass.runOnExpectAndAllActuals(useOnSelf = true) {
-            it.safeAs<KtClass>()?.addAnnotationTargets(requiredAnnotationTargets, psiFactory)
+            val ktClass = it.safeAs<KtClass>() ?: return@runOnExpectAndAllActuals
+            val psiFactory = KtPsiFactory(annotationEntry)
+            runWriteAction {
+                ktClass.addAnnotationTargets(requiredAnnotationTargets, psiFactory)
+            }
         }
     }
 
@@ -95,44 +97,43 @@ private fun KtAnnotationEntry.getRequiredAnnotationTargets(
     if (requiredTargets.isEmpty()) return emptyList()
 
     val searchScope = GlobalSearchScope.allScope(project)
-    val otherReferenceRequiredTargets = ReferencesSearch.search(annotationClass, searchScope).mapNotNull { reference ->
-        if (reference.element is KtNameReferenceExpression) {
-            // Kotlin annotation
-            reference.element.getNonStrictParentOfType<KtAnnotationEntry>()?.takeIf { it != this }?.getActualTargetList()
-        } else {
-            // Java annotation
-            (reference.element.parent as? PsiAnnotation)?.getActualTargetList()
-        }
-    }.flatten().toSet()
+    return project.runSynchronouslyWithProgressIfEdt(KotlinBundle.message("progress.looking.up.add.annotation.usage"), true) {
+        val otherReferenceRequiredTargets = ReferencesSearch.search(annotationClass, searchScope).mapNotNull { reference ->
+            if (reference.element is KtNameReferenceExpression) {
+                // Kotlin annotation
+                reference.element.getNonStrictParentOfType<KtAnnotationEntry>()?.takeIf { it != this }?.getActualTargetList()
+            } else {
+                // Java annotation
+                (reference.element.parent as? PsiAnnotation)?.getActualTargetList()
+            }
+        }.flatten().toSet()
 
-    return (requiredTargets + otherReferenceRequiredTargets).asSequence()
-        .distinct()
-        .filter { it.name in annotationTargetValueNames }
-        .sorted()
-        .toList()
+        (requiredTargets + otherReferenceRequiredTargets).asSequence()
+            .distinct()
+            .filter { it.name in annotationTargetValueNames }
+            .sorted()
+            .toList()
+    } ?: emptyList()
 }
 
 private fun ClassDescriptor.hasRequiresOptInAnnotation() = annotations.any { it.fqName == FqName("kotlin.RequiresOptIn") }
 
-private fun getActualTargetList(annotated: PsiTarget): AnnotationTargetList {
-    return when (annotated) {
-        is PsiClass -> T_CLASSIFIER
-        is PsiMethod ->
-            when {
-                annotated.isConstructor -> T_CONSTRUCTOR
-                else -> T_MEMBER_FUNCTION
-            }
-        is PsiExpression -> T_EXPRESSION
-        is PsiField -> T_MEMBER_PROPERTY(backingField = true, delegate = false)
-        is PsiLocalVariable -> T_LOCAL_VARIABLE
-        is PsiParameter -> T_VALUE_PARAMETER_WITHOUT_VAL
-        else -> EMPTY
-    }
-}
-
 private fun PsiAnnotation.getActualTargetList(): List<KotlinTarget> {
-    val annotated = parent.parent as? PsiTarget ?: return emptyList()
-    return getActualTargetList(annotated).defaultTargets
+    val target = when (val annotated = this.parent.parent) {
+        is PsiClass -> KotlinTarget.CLASS
+        is PsiMethod -> when {
+            annotated.isConstructor -> KotlinTarget.CONSTRUCTOR
+            else -> KotlinTarget.FUNCTION
+        }
+        is PsiExpression -> KotlinTarget.EXPRESSION
+        is PsiField -> KotlinTarget.FIELD
+        is PsiLocalVariable -> KotlinTarget.LOCAL_VARIABLE
+        is PsiParameter -> KotlinTarget.VALUE_PARAMETER
+        is PsiTypeParameterList -> KotlinTarget.TYPE
+        is PsiReferenceList -> KotlinTarget.TYPE_PARAMETER
+        else -> null
+    }
+    return listOfNotNull(target)
 }
 
 private fun KtAnnotationEntry.getActualTargetList(): List<KotlinTarget> {

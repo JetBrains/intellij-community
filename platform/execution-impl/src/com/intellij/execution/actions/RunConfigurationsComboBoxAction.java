@@ -179,6 +179,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   @Override
   public JComponent createCustomComponent(@NotNull final Presentation presentation, @NotNull String place) {
     ComboBoxButton button = new RunConfigurationsComboBoxButton(presentation);
+    if (isNoWrapping(place)) return button;
+
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
     Border border = UIUtil.isUnderDefaultMacTheme() ?
                     JBUI.Borders.empty(0, 2) : JBUI.Borders.empty(0, 5, 0, 4);
@@ -217,14 +219,25 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     allActionsGroup.add(new RunCurrentFileAction(executor -> true));
     allActionsGroup.addSeparator(ExecutionBundle.message("run.configurations.popup.existing.configurations.separator.text"));
 
+    addRunConfigurations(allActionsGroup, project,
+                         settings -> createFinalAction(settings, project),
+                         folderName -> DefaultActionGroup.createPopupGroup(() -> folderName));
+    return allActionsGroup;
+  }
+
+  @ApiStatus.Internal
+  public static void addRunConfigurations(DefaultActionGroup allActionsGroup,
+                                          Project project,
+                                          Function<RunnerAndConfigurationSettings, AnAction> createAction,
+                                          Function<@NlsSafe String, DefaultActionGroup> createFolder) {
     for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true).values()) {
       final DefaultActionGroup actionGroup = new DefaultActionGroup();
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
         @NlsSafe String folderName = entry.getKey();
-        DefaultActionGroup group = folderName == null ? actionGroup : DefaultActionGroup.createPopupGroup(() -> folderName);
+        DefaultActionGroup group = folderName == null ? actionGroup : createFolder.apply(folderName);
         group.getTemplatePresentation().setIcon(AllIcons.Nodes.Folder);
         for (RunnerAndConfigurationSettings settings : entry.getValue()) {
-          group.add(createFinalAction(settings, project));
+          group.add(createAction.apply(settings));
         }
         if (group != actionGroup) {
           actionGroup.add(group);
@@ -234,7 +247,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       allActionsGroup.add(actionGroup);
       allActionsGroup.addSeparator();
     }
-    return allActionsGroup;
   }
 
   protected void addTargetGroup(Project project, DefaultActionGroup allActionsGroup) {

@@ -59,7 +59,7 @@ public class TrimZenCodingFilter extends ZenCodingFilter {
     if (tag != null && !tag.getText().isEmpty()) {
       tag.accept(new XmlElementVisitor() {
         @Override
-        public void visitXmlTag(final XmlTag tag) {
+        public void visitXmlTag(final @NotNull XmlTag tag) {
           if (!tag.isEmpty()) {
             final XmlTagValue tagValue = tag.getValue();
             final Matcher matcher = PATTERN.matcher(tagValue.getText());

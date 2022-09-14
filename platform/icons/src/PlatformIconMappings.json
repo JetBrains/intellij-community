@@ -219,6 +219,8 @@
       "help.svg": "actions/help.svg",
       "hide.svg": "general/hideToolWindow.svg",
       "history.svg": "vcs/history.svg",
+      "ideUpdate.svg": "ide/notification/ideUpdate.svg",
+      "pluginUpdate.svg": "ide/notification/pluginUpdate.svg",
       "import.svg": "toolbarDecorator/import.svg",
       "layout.svg": "debugger/restoreLayout.svg",
       "left.svg": "actions/back.svg",
@@ -485,7 +487,9 @@
       "muteBreakpoints.svg": "debugger/muteBreakpoints.svg",
       "pause.svg": "actions/pause.svg",
       "profile.svg": "actions/profile.svg",
+      "rerun.svg": "actions/rerun.svg",
       "restart.svg": "actions/restart.svg",
+      "restartDebug.svg": "actions/restartDebugger.svg",
       "restartFailedTests.svg": "runConfigurations/rerunFailedTests.svg",
       "restartFrame.svg": "actions/restartFrame.svg",
       "resume.svg": "actions/resume.svg",
@@ -589,7 +593,8 @@
       "revert.svg": "actions/rollback.svg",
       "stash.svg": [
         "vcs/Shelve.svg",
-        "vcs/shelveSilent.svg"
+        "vcs/shelveSilent.svg",
+        "vcs/Stash.svg"
       ],
       "update.svg": "actions/checkOut.svg"
     }

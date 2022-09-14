@@ -96,7 +96,7 @@ abstract class ClientSessionImpl(
   }
 
   fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean, fallbackToShared: Boolean): T? {
-    val clientService = super.doGetService(serviceClass, createIfNeeded)
+    val clientService = ClientId.withClientId(clientId) { super.doGetService(serviceClass, createIfNeeded) }
     if (clientService != null || !fallbackToShared) return clientService
 
     if (createIfNeeded && !isLocal) {

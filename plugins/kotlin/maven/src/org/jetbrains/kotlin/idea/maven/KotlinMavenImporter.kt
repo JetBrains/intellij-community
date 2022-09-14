@@ -315,12 +315,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         // TODO There should be a way to figure out the correct platform version
         val platform = detectPlatform(mavenProject)?.defaultPlatform
 
-        kotlinFacet.configureFacet(
-            compilerVersion,
-            platform,
-            modifiableModelsProvider,
-            emptySet()
-        )
+        kotlinFacet.configureFacet(compilerVersion, platform, modifiableModelsProvider)
 
         val facetSettings = kotlinFacet.configuration.settings
         val configuredPlatform = kotlinFacet.configuration.settings.targetPlatform!!

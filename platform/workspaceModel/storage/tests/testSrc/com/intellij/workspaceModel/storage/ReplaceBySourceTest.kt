@@ -1473,6 +1473,56 @@ class ReplaceBySourceTest {
     assertTrue(leftEntities.all { it.entitySource == MySource })
   }
 
+  @RepeatedTest(10)
+  fun `replace same entities should produce no events`() {
+    builder add NamedEntity("name", MySource) {
+      children = listOf(
+        NamedChildEntity("info1", MySource),
+        NamedChildEntity("info2", MySource),
+      )
+    }
+
+    replacement add NamedEntity("name", MySource) {
+      children = listOf(
+        NamedChildEntity("info1", MySource),
+        NamedChildEntity("info2", MySource),
+      )
+    }
+
+    builder.changeLog.clear()
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+
+    assertEquals(0, builder.changeLog.changeLog.size)
+  }
+
+  @RepeatedTest(10)
+  fun `replace same entities should produce in case of source change`() {
+    builder add NamedEntity("name", MySource) {
+      children = listOf(
+        NamedChildEntity("info1", MySource),
+        NamedChildEntity("info2", MySource),
+      )
+    }
+
+    replacement add NamedEntity("name", MySource) {
+      children = listOf(
+        NamedChildEntity("info1", AnotherSource),
+        NamedChildEntity("info2", MySource),
+      )
+    }
+
+    builder.changeLog.clear()
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+
+    assertEquals(1, builder.changeLog.changeLog.size)
+  }
+
   private inner class ThisStateChecker {
     infix fun WorkspaceEntity.assert(state: ReplaceState) {
       val thisState = engine.targetState[this.base.id]

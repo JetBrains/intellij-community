@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.codeInsight.actions.ReaderModeSettings;
@@ -6,9 +6,9 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.AllowedItemsResourceStorage;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalFileCustomValidationRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.AllowedItemsResourceStorage;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -25,6 +25,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.FileEditorComposite;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -47,12 +49,13 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
     new ExtensionPointName<>("com.intellij.fileTypeUsageSchemaDescriptor");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 66);
+  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 67);
 
   private static final ClassEventField FILE_EDITOR = EventFields.Class("file_editor");
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final EventField<Boolean> IS_WRITABLE = EventFields.Boolean("is_writable");
   private static final EventField<Boolean> IS_IN_READER_MODE = EventFields.Boolean("is_in_reader_mode");
+  private static final EventField<Boolean> IS_PREVIEW_TAB = EventFields.Boolean("is_preview_tab");
   private static final String FILE_EXTENSION = "file_extension";
   private static final EventField<String> FILE_EXTENSION_FIELD =
     EventFields.StringValidatedByCustomRule(FILE_EXTENSION, ExtensionLocalFileCustomValidationRule.class);
@@ -71,7 +74,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
   private static final VarargEventId CREATE_BY_NEW_FILE = registerFileTypeEvent("create_by_new_file");
   private static final VarargEventId EDIT = registerFileTypeEvent("edit", FILE_EXTENSION_FIELD);
   private static final VarargEventId OPEN = registerFileTypeEvent(
-    "open", FILE_EDITOR, EventFields.TimeToShowMs, EventFields.DurationMs, IS_WRITABLE, IS_IN_READER_MODE, FILE_EXTENSION_FIELD
+    "open", FILE_EDITOR, EventFields.TimeToShowMs, EventFields.DurationMs, IS_WRITABLE, IS_IN_READER_MODE, IS_PREVIEW_TAB, FILE_EXTENSION_FIELD
   );
   private static final VarargEventId CLOSE = registerFileTypeEvent("close", IS_WRITABLE, IS_IN_READER_MODE);
 
@@ -123,6 +126,10 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     List<@NotNull EventPair<?>> data = buildCommonEventPairs(project, file, true);
     if (fileEditor != null) {
       data.add(FILE_EDITOR.with(fileEditor.getClass()));
+      FileEditorComposite composite = FileEditorManagerEx.getInstanceEx(project).getComposite(file);
+      if (composite != null) {
+        data.add(IS_PREVIEW_TAB.with(composite.isPreview()));
+      }
     }
     data.add(EventFields.TimeToShowMs.with(timeToShow));
     if (durationMs != -1) {

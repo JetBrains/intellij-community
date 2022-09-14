@@ -23,7 +23,7 @@ import org.jetbrains.deft.annotations.Open
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class OneEntityWithPersistentIdImpl : OneEntityWithPersistentId, WorkspaceEntityBase() {
+open class OneEntityWithPersistentIdImpl(val dataSource: OneEntityWithPersistentIdData) : OneEntityWithPersistentId, WorkspaceEntityBase() {
 
   companion object {
 
@@ -33,10 +33,8 @@ open class OneEntityWithPersistentIdImpl : OneEntityWithPersistentId, WorkspaceE
 
   }
 
-  @JvmField
-  var _myName: String? = null
   override val myName: String
-    get() = _myName!!
+    get() = dataSource.myName
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -130,12 +128,13 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
   }
 
   override fun createEntity(snapshot: EntityStorage): OneEntityWithPersistentId {
-    val entity = OneEntityWithPersistentIdImpl()
-    entity._myName = myName
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = OneEntityWithPersistentIdImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {

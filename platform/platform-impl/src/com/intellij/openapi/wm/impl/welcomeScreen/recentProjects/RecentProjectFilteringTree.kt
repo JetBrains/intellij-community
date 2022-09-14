@@ -10,6 +10,7 @@ import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.addKeyboardAction
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
@@ -22,6 +23,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
+import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RecentProjectsWelcomeScreenActionBase
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
@@ -57,10 +59,8 @@ internal class RecentProjectFilteringTree(
   treeComponent: Tree,
   parentDisposable: Disposable,
   collectors: List<() -> List<RecentProjectTreeItem>>
-) : FilteringTree<DefaultMutableTreeNode, RecentProjectTreeItem>(
-  treeComponent,
-  DefaultMutableTreeNode(RootItem(collectors))
-) {
+) : FilteringTree<DefaultMutableTreeNode, RecentProjectTreeItem>(treeComponent, DefaultMutableTreeNode(RootItem(collectors))),
+    DataProvider {
   init {
     val projectActionButtonViewModel = ProjectActionButtonViewModel()
     val filePathChecker = createFilePathChecker()
@@ -136,6 +136,12 @@ internal class RecentProjectFilteringTree(
 
   override fun useIdentityHashing(): Boolean = false
 
+  override fun getData(dataId: String): Any? = when {
+    RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEM_KEY.`is`(dataId) -> getSelectedItem(tree)
+    RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_TREE_KEY.`is`(dataId) -> tree
+    else -> null
+  }
+
   private fun createFilePathChecker(): RecentProjectPanel.FilePathChecker {
     val recentProjectTreeItems: List<RecentProjectTreeItem> = RecentProjectListActionProvider.getInstance().collectProjects()
     val recentProjects = mutableListOf<RecentProjectItem>()
@@ -205,8 +211,8 @@ internal class RecentProjectFilteringTree(
       projectActionButtonViewModel.isButtonHovered = intersectWithActionIcon(point)
     }
 
-    override fun mousePressed(mouseEvent: MouseEvent) {
-      super.mousePressed(mouseEvent)
+    override fun mouseReleased(mouseEvent: MouseEvent) {
+      super.mouseReleased(mouseEvent)
 
       if (mouseEvent.isConsumed) {
         return
@@ -226,21 +232,21 @@ internal class RecentProjectFilteringTree(
           when (item) {
             is CloneableProjectItem -> {
               when (item.cloneableProject.cloneStatus) {
-                CloneStatus.SUCCESS -> invokePopup(mouseEvent.component, point.x, point.y)
+                CloneStatus.SUCCESS -> invokePopup(mouseEvent.component, point.x, point.y, item)
                 CloneStatus.PROGRESS -> cancelCloneProject(item.cloneableProject)
-                CloneStatus.FAILURE -> item.removeItem(createActionEvent(tree, mouseEvent))
-                CloneStatus.CANCEL -> item.removeItem(createActionEvent(tree, mouseEvent))
+                CloneStatus.FAILURE -> item.removeItem()
+                CloneStatus.CANCEL -> item.removeItem()
               }
             }
             is RecentProjectItem -> {
               if (isProjectPathValid(item.projectPath)) {
-                invokePopup(mouseEvent.component, point.x, point.y)
+                invokePopup(mouseEvent.component, point.x, point.y, item)
               }
               else {
-                item.removeItem(createActionEvent(tree, mouseEvent))
+                item.removeItem()
               }
             }
-            else -> invokePopup(mouseEvent.component, point.x, point.y)
+            else -> invokePopup(mouseEvent.component, point.x, point.y, item)
           }
         }
         else {
@@ -252,8 +258,21 @@ internal class RecentProjectFilteringTree(
     }
 
     override fun invokePopup(component: Component, x: Int, y: Int) {
+      val item = getSelectedItem(tree) ?: return
+      invokePopup(component, x, y, item)
+    }
+
+    private fun invokePopup(component: Component, x: Int, y: Int, item: RecentProjectTreeItem) {
       val group = ActionManager.getInstance().getAction("WelcomeScreenRecentProjectActionGroup") as ActionGroup
-      ActionManager.getInstance().createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group).component.show(component, x, y)
+      val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group)
+
+      popupMenu.setDataContext {
+        SimpleDataContext.builder()
+          .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEM_KEY, item)
+          .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_TREE_KEY, tree)
+          .build()
+      }
+      popupMenu.component.show(component, x, y)
     }
 
     private fun intersectWithArrowIcon(point: Point): Boolean {
@@ -666,8 +685,11 @@ internal class RecentProjectFilteringTree(
     private fun removeItem(tree: Tree) {
       val node = tree.lastSelectedPathComponent.castSafelyTo<DefaultMutableTreeNode>() ?: return
       val item = node.userObject as RecentProjectTreeItem
-      val actionEvent = createActionEvent(tree)
-      item.removeItem(actionEvent)
+      item.removeItem()
+    }
+
+    private fun getSelectedItem(tree: Tree): RecentProjectTreeItem? {
+      return TreeUtil.getLastUserObject(RecentProjectTreeItem::class.java, tree.selectionPath)
     }
   }
 }

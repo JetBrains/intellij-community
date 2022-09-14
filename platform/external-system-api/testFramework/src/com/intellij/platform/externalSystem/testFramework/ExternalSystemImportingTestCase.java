@@ -179,6 +179,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   private void doAssertContentFolders(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... expected) {
     final ContentEntry[] contentRoots = getContentRoots(moduleName);
+    Arrays.sort(contentRoots, Comparator.comparing(ContentEntry::getUrl));
     final String rootUrl = contentRoots.length > 1 ? ExternalSystemApiUtil.getExternalProjectPath(getModule(moduleName)) : null;
     doAssertContentFolders(rootUrl, contentRoots, rootType, expected);
   }

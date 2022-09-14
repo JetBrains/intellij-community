@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.MoveToPackageFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -48,6 +49,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UI;
 import com.intellij.util.xml.*;
@@ -586,8 +588,11 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
                                  @Override
                                  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-                                   extensionPoint.getQualifiedName().undefine();
-                                   extensionPoint.getName().setStringValue(StringUtil.substringAfter(epQualifiedName, pluginId + "."));
+                                   ExtensionPoint fixExtensionPoint = DomUtil.findDomElement(descriptor.getPsiElement(), ExtensionPoint.class);
+                                   if (fixExtensionPoint == null) return;
+
+                                   fixExtensionPoint.getQualifiedName().undefine();
+                                   fixExtensionPoint.getName().setStringValue(StringUtil.substringAfter(epQualifiedName, pluginId + "."));
                                  }
                                }).highlightWholeElement();
         }
@@ -674,14 +679,14 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
 
     List<String> fragments = StringUtil.split(name, ".");
-    if (fragments.stream().anyMatch(f -> Character.isUpperCase(f.charAt(0)))) {
+    if (ContainerUtil.exists(fragments, f -> Character.isUpperCase(f.charAt(0)))) {
       return false;
     }
 
     String epName = fragments.get(fragments.size() - 1);
     fragments.remove(fragments.size() - 1);
     List<String> words = StringUtil.getWordsIn(epName);
-    return words.stream().noneMatch(w -> fragments.stream().anyMatch(f -> StringUtil.equalsIgnoreCase(w, f)));
+    return !ContainerUtil.exists(words, w -> ContainerUtil.exists(fragments, f -> StringUtil.equalsIgnoreCase(w, f)));
   }
 
   private static void annotateExtensions(Extensions extensions, DomElementAnnotationHolder holder) {
@@ -740,7 +745,10 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final IdeaPlugin ideaPlugin = extensions.getParentOfType(IdeaPlugin.class, true);
+        DomElement domElement = DomUtil.getDomElement(descriptor.getPsiElement());
+        if (domElement == null) return;
+
+        final IdeaPlugin ideaPlugin = domElement.getParentOfType(IdeaPlugin.class, true);
         assert ideaPlugin != null;
         final Dependency dependency = ideaPlugin.addDependency();
         dependency.setStringValue(dependencyId);
@@ -1329,7 +1337,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
           addedTag = (XmlTag)rootTag.addAfter(missingTag, after);
         }
 
-        if (StringUtil.isEmpty(myTagValue)) {
+        if (StringUtil.isEmpty(myTagValue) && !IntentionPreviewUtils.isPreviewElement(descriptor.getPsiElement())) {
           int valueStartOffset = addedTag.getValue().getTextRange().getStartOffset();
           NavigatableAdapter.navigate(project, file.getVirtualFile(), valueStartOffset, true);
         }

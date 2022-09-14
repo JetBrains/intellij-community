@@ -176,18 +176,30 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }, getModalityState(), myDelayInMillis, TimeUnit.MILLISECONDS);
   }
 
-  final void enterModality() {
-    if (isModalEntity() && !myModalityEntered) {
-      LaterInvocator.enterModal(this, (ModalityStateEx)getModalityState());
-      myModalityEntered = true;
+  final AccessToken enterModality() {
+    if (!isModalEntity()) {
+      return AccessToken.EMPTY_ACCESS_TOKEN;
     }
-  }
 
-  final void exitModality() {
-    if (isModalEntity() && myModalityEntered) {
-      myModalityEntered = false;
-      LaterInvocator.leaveModal(this);
+    if (myModalityEntered) {
+      throw new IllegalStateException("Modality already entered: " + getModalityState());
     }
+    LaterInvocator.enterModal(this, (ModalityStateEx)getModalityState());
+    myModalityEntered = true;
+
+    return new AccessToken() {
+
+      private boolean myModalityLeft = false;
+
+      @Override
+      public void finish() {
+        if (myModalityLeft) {
+          throw new IllegalStateException("Modality already left: " + getModalityState());
+        }
+        myModalityLeft = true;
+        LaterInvocator.leaveModal(ProgressWindow.this);
+      }
+    };
   }
 
   @Override
@@ -199,10 +211,8 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       LOG.assertTrue(!myStoppedAlready);
     }
 
-    enterModality();
-    init.run();
-
-    try {
+    try (var ignoredModalityToken = enterModality()) {
+      init.run();
       app.runUnlockingIntendedWrite(() -> {
         initializeOnEdtIfNeeded();
         // guarantee AWT event after the future is done will be pumped and loop exited
@@ -211,16 +221,13 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
           IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.getPanel(), stopCondition, event -> {
             if (isCancellationEvent(event)) {
               cancel();
-              return true;
             }
-            return false;
           });
         }
         return null;
       });
     }
     finally {
-      exitModality();
       // make sure focus returns to the original component (at least requested to do so)
       // before other code is executed after showing modal progress
       myDialog.hideImmediately();

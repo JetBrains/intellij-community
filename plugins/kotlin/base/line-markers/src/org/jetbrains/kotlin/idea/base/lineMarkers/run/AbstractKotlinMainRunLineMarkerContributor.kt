@@ -3,8 +3,9 @@ package org.jetbrains.kotlin.idea.base.lineMarkers.run
 
 import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
-import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
+import com.intellij.ui.IconManager
+import com.intellij.ui.PlatformIcons
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
@@ -29,6 +30,6 @@ abstract class AbstractKotlinMainRunLineMarkerContributor : RunLineMarkerContrib
 
         if (!acceptEntryPoint(function)) return null
 
-        return Info(AllIcons.RunConfigurations.TestState.Run, null, *ExecutorAction.getActions(Int.MAX_VALUE))
+        return Info(IconManager.getInstance().getPlatformIcon(PlatformIcons.TestStateRun), null, *ExecutorAction.getActions(Int.MAX_VALUE))
     }
 }

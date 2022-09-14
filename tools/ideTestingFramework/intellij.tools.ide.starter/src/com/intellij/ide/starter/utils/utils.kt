@@ -8,7 +8,9 @@ import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.system.SystemInfo
 import org.kodein.di.direct
 import org.kodein.di.instance
-import java.io.*
+import java.io.File
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.lang.Long.numberOfLeadingZeros
 import java.nio.charset.Charset
 import java.nio.file.FileStore
@@ -166,11 +168,11 @@ private fun quoteArg(arg: String): String {
  * Writes list of Java arguments to the Java Command-Line Argument File
  * See https://docs.oracle.com/javase/9/tools/java.htm, section "java Command-Line Argument Files"
  **/
-fun writeJvmArgsFile(argFile: File,
+fun writeJvmArgsFile(argFile: Path,
                      args: List<String>,
                      lineSeparator: String = System.lineSeparator(),
                      charset: Charset = Charsets.UTF_8) {
-  BufferedWriter(OutputStreamWriter(FileOutputStream(argFile), charset)).use { writer ->
+  Files.newBufferedWriter(argFile, charset).use { writer ->
     for (arg in args) {
       writer.write(quoteArg(arg))
       writer.write(lineSeparator)

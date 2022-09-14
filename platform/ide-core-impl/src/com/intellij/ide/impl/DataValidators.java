@@ -68,7 +68,7 @@ public abstract class DataValidators {
     if (data instanceof PsiElement && !(data instanceof FakePsiElement) &&
         EDT.isCurrentThreadEdt() &&
         SlowOperations.isInsideActivity(SlowOperations.FORCE_ASSERT)) {
-      LOG.error(data.getClass().getName() + " is provided on EDT by " + source.getClass().getName() + ".getData(\"" + dataId + "\"). " +
+      LOG.error("PSI element is provided on EDT by " + source.getClass().getName() + ".getData(\"" + dataId + "\"). " +
                 "Please move that to a BGT data provider using PlatformCoreDataKeys.BGT_DATA_PROVIDER");
     }
     try {

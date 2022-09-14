@@ -2,20 +2,21 @@
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
-import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.ProgressDetails
+import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.coroutineContext
 
 /**
- * [CheckinMetaHandler] is only implemented for correct execution order of [CheckinHandler]-s.
- * To allow running handlers provided by [CheckinHandlerFactory] before the ones provided by [VcsCheckinHandlerFactory].
- *
  * Should only be used in Commit Tool Window. Commit Dialog is not supported.
  *
  * @see com.intellij.openapi.vcs.impl.CheckinHandlersManagerImpl.getRegisteredCheckinHandlerFactories
@@ -24,41 +25,48 @@ import kotlinx.coroutines.withContext
 abstract class CodeProcessorCheckinHandler(
   val commitPanel: CheckinProjectPanel
 ) : CheckinHandler(),
-    CheckinMetaHandler,
-    CommitCheck<CommitProblem> {
+    CommitCheck {
 
   val project: Project get() = commitPanel.project
   val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
 
-  abstract fun createCodeProcessor(): AbstractLayoutCodeProcessor
+  protected open fun getProgressMessage(): @NlsContexts.ProgressText String? = null
+  protected abstract fun createCodeProcessor(): AbstractLayoutCodeProcessor
 
-  override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION
+
+  override suspend fun runCheck(): CommitProblem? {
+    val sink = coroutineContext.progressSink
+    getProgressMessage()?.let {
+      sink?.text(it)
+    }
+
     val processor = createCodeProcessor()
 
-    withContext(Dispatchers.Default) {
-      val noTextIndicator = NoTextIndicator(indicator)
-
-      ProgressManager.getInstance().executeProcessUnderProgress(
-        { processor.processFilesUnderProgress(noTextIndicator) },
-        noTextIndicator
-      )
+    withContext(Dispatchers.Default + noTextSinkContext(sink)) {
+      // TODO suspending code processor
+      runUnderIndicator {
+        processor.processFilesUnderProgress(ProgressManager.getGlobalProgressIndicator())
+      }
     }
     FileDocumentManager.getInstance().saveAllDocuments()
 
     return null
   }
-
-  /**
-   * Does nothing as no problem is reported in [runCheck].
-   */
-  override fun showDetails(problem: CommitProblem) = Unit
-
-  /**
-   * Do nothing - interface is implemented to override execution order.
-   */
-  override fun runCheckinHandlers(runnable: Runnable) = runnable.run()
 }
 
-internal class NoTextIndicator(indicator: ProgressIndicator) : DelegatingProgressIndicator(indicator) {
-  override fun setText(text: String?) = Unit
+internal fun noTextSinkContext(sink: ProgressSink?): CoroutineContext {
+  if (sink == null) {
+    return EmptyCoroutineContext
+  }
+  else {
+    return NoTextProgressSink(sink).asContextElement()
+  }
+}
+
+internal class NoTextProgressSink(private val sink: ProgressSink) : ProgressSink {
+
+  override fun update(text: @ProgressText String?, details: @ProgressDetails String?, fraction: Double?) {
+    sink.update(text = null, details, fraction)
+  }
 }

@@ -623,7 +623,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public boolean isMavenizedModule(@NotNull Module m) {
-    return ReadAction.compute(() -> !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized());
+    return MavenUtil.isMavenizedModule(m);
   }
 
   @TestOnly
@@ -1052,7 +1052,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         return;
       }
 
-      final ResolveContext context = new ResolveContext();
+      final ResolveContext context = new ResolveContext(getProjectsTree());
       Runnable onCompletion = () -> {
         if (hasScheduledProjects()) {
           scheduleImportChangedProjects().processed(result);

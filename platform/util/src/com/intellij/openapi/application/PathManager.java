@@ -182,7 +182,7 @@ public final class PathManager {
         dir = dir.resolve(osSuffix);
         if (Files.isDirectory(dir)) {
           binDirs.add(dir);
-          if (SystemInfoRt.isLinux) {
+          if (SystemInfoRt.isWindows || SystemInfoRt.isLinux) {
             String arch = CpuArch.isIntel64() ? "amd64" : CpuArch.isArm64() ? "aarch64" : null;
             if (arch != null) {
               dir = dir.resolve(arch);
@@ -448,7 +448,7 @@ public final class PathManager {
    */
   public static @Nullable String getResourceRoot(@NotNull ClassLoader classLoader, @NotNull String resourcePath) {
     URL url = classLoader.getResource(resourcePath);
-    return url == null ? null : extractRoot(url, "/"+resourcePath);
+    return url == null ? null : extractRoot(url, "/" + resourcePath);
   }
 
   /**

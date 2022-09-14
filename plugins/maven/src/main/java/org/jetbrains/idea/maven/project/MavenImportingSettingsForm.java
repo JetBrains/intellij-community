@@ -57,6 +57,7 @@ public class MavenImportingSettingsForm {
   private JCheckBox myAutoDetectCompilerCheckBox;
 
   private final ComponentValidator myImporterJdkValidator;
+  private volatile boolean myMuteJdkValidation = false;
 
   public MavenImportingSettingsForm(Project project, @NotNull Disposable disposable) {
     myJdkForImporterComboBox.setProject(project);
@@ -193,10 +194,21 @@ public class MavenImportingSettingsForm {
     myDependencyTypes.setText(data.getDependencyTypes());
 
     myVMOptionsForImporter.setText(data.getVmOptionsForImporter());
-    myJdkForImporterComboBox.refreshData(data.getJdkForImporter());
+    skipValidationDuring(() -> myJdkForImporterComboBox.refreshData(data.getJdkForImporter()));
 
     updateImportControls();
     updateModuleDirControls();
+  }
+
+
+  private void skipValidationDuring(Runnable r) {
+    myMuteJdkValidation = true;
+    try {
+      r.run();
+    } finally {
+      myMuteJdkValidation = false;
+      validateImporterJDK();
+    }
   }
 
   private static boolean isCurrentlyStoredExternally(@Nullable Project project) {
@@ -222,6 +234,9 @@ public class MavenImportingSettingsForm {
   }
 
   private void validateImporterJDK() {
+    if (myMuteJdkValidation) {
+      return;
+    }
     myImporterJdkValidator.revalidate();
     if (myImporterJdkValidator.getValidationInfo() == null) {
       myImporterJdkWarning.setVisible(false);

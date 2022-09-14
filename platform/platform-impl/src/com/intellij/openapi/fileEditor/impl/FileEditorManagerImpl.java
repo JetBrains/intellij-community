@@ -110,9 +110,7 @@ import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_NEW_WI
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT;
 
 /**
- * @author Anton Katilin
  * @author Eugene Belyaev
- * @author Vladimir Kondratyev
  */
 @State(name = "FileEditorManager", storages = {
   @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
@@ -680,7 +678,11 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @Override
   public EditorWindow getCurrentWindow() {
-    if (!ApplicationManager.getApplication().isDispatchThread() || !ClientId.isCurrentlyUnderLocalId()) return null;
+    if (!ClientId.isCurrentlyUnderLocalId()) return null;
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      LOG.warn("Requesting getCurrentWindow() on BGT, returning null", new Throwable());
+      return null;
+    }
     return getActiveSplittersSync().getCurrentWindow();
   }
 
@@ -1049,6 +1051,9 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
         // allow focus switching only within a project
         options = options.clone().withRequestFocus(false);
       }
+    }
+    if (entry != null && entry.isPreview()) {
+      options = options.clone().withUsePreviewTab();
     }
 
     EditorComposite composite = window.getComposite(file);
@@ -1595,6 +1600,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     return result.toArray(FileEditor.EMPTY_ARRAY);
   }
 
+  @Override
   public @Nullable EditorComposite getComposite(@NotNull VirtualFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!ClientId.isCurrentlyUnderLocalId()) {

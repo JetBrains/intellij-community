@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView;
 
 import com.intellij.ide.util.treeView.smartTree.*;
@@ -124,8 +124,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     return o1;
   }
 
-  @Nullable
-  protected Object findAcceptableElement(PsiElement element) {
+  protected @Nullable Object findAcceptableElement(PsiElement element) {
     while (element != null && !(element instanceof PsiFile)) {
       if (isSuitable(element)) return element;
       element = element.getParent();
@@ -138,9 +137,11 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   }
 
   protected boolean isSuitable(final PsiElement element) {
-    if (element == null) return false;
-    final Class[] suitableClasses = getSuitableClasses();
-    for (Class suitableClass : suitableClasses) {
+    if (element == null) {
+      return false;
+    }
+    Class<?>[] suitableClasses = getSuitableClasses();
+    for (Class<?> suitableClass : suitableClasses) {
       if (ReflectionUtil.isAssignable(suitableClass, element.getClass())) return true;
     }
     return false;
@@ -163,7 +164,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
    *
    * @return the array of classes
    */
-  protected Class @NotNull [] getSuitableClasses() {
+  protected Class<?> @NotNull [] getSuitableClasses() {
     return ArrayUtil.EMPTY_CLASS_ARRAY;
   }
 
@@ -186,14 +187,13 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     return Filter.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public Collection<NodeProvider> getNodeProviders() {
+  public @NotNull Collection<NodeProvider<?>> getNodeProviders() {
     return Collections.emptyList();
   }
 
   @Override
-  public boolean isEnabled(@NotNull NodeProvider provider) {
+  public boolean isEnabled(@NotNull NodeProvider<?> provider) {
     return false;
   }
 }

@@ -185,6 +185,15 @@ fun MultiplePluginVersionGradleImportingTestCase.kotlinPluginVersionMatches(vers
     return parseKotlinVersionRequirement(versionRequirement).matches(kotlinPluginVersion)
 }
 
+/**
+ * Since 1.8.0, because we no longer support 1.6 jvm target, we are going to merge
+ * kotlin-stdlib-jdk[7|8] into kotlin-stdlib. So we won't add the dependency to -jdk[7|8] by default.
+ * That was implemented in the kotlin/4441033134a383b718 commit
+ */
+fun MultiplePluginVersionGradleImportingTestCase.isStdlibJdk78AddedByDefault() =
+    kotlinPluginVersion < KotlinToolingVersion("1.8.0-dev-2380") &&
+            kotlinPluginVersion >= KotlinToolingVersion("1.5.0-M1")
+
 fun MultiplePluginVersionGradleImportingTestCase.gradleVersionMatches(version: String): Boolean {
     return VersionMatcher(GradleVersion.version(gradleVersion)).isVersionMatch(version, true)
 }

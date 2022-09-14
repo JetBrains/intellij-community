@@ -1,25 +1,25 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic;
 
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.LightPlatform4TestCase;
 import com.intellij.util.indexing.IndexId;
+import com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationAggregatesCollector;
 import org.junit.After;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashSet;
-import java.util.Stack;
 
-import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.*;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationFusCollector.*;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.MAX_LOOKUP_DEPTH;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 /**
- * Tests for {@linkplain IndexOperationFusCollector}
+ * Tests for {@linkplain IndexOperationFUS.IndexOperationFusCollector}
  */
-@RunWith(JUnit4.class)
-public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCase {
+public class IndexOperationFusCollectorTest extends LightPlatform4TestCase/*JavaCodeInsightFixtureTestCase*/ {
 
   //This class mostly checks methods contracts. It would be nice to check reported events also, but there
   //     is no simple way to do it (so it seems)
@@ -63,8 +63,8 @@ public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCa
 
   @Test
   public void reportingCouldBeReEnteredUpToMaxDepthAndDifferentTracesProvidedForEachReEntrantCall() {
-    //check for 'allKeys' only because all them have same superclass
-    final Stack<LookupAllKeysTrace> tracesStack = new Stack<>();
+    //check for 'allKeys' only, because all them have same superclass
+    final Deque<LookupAllKeysTrace> tracesStack = new ArrayDeque<>();
     try {
       for (int i = 0; i < MAX_LOOKUP_DEPTH; i++) {
         final LookupAllKeysTrace trace = lookupAllKeysStarted(INDEX_ID);
@@ -108,7 +108,7 @@ public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCa
   @Test
   public void reportingDontThrowExceptionIfStartedCalledMoreThanMaxDepth_without_THROW_ON_INCORRECT_USAGE() {
     assumeFalse("Check only if !THROW_ON_INCORRECT_USAGE",
-                THROW_ON_INCORRECT_USAGE);
+                IndexOperationFUS.THROW_ON_INCORRECT_USAGE);
     //check for 'allKeys' only because all them have same superclass
     try {
       for (int i = 0; i <= MAX_LOOKUP_DEPTH; i++) {
@@ -125,7 +125,7 @@ public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCa
   @Test
   public void reportingDontThrowAnythingIfReportingMethodsCalledWithoutStartedFirst_without_THROW_ON_INCORRECT_USAGE() {
     assumeFalse("Check only if !THROW_ON_INCORRECT_USAGE",
-                THROW_ON_INCORRECT_USAGE);
+                IndexOperationFUS.THROW_ON_INCORRECT_USAGE);
     //check for 'allKeys' only because all them have same superclass
     try (var trace = TRACE_OF_ALL_KEYS_LOOKUP.get()) {
       trace.withProject(null);
@@ -140,7 +140,7 @@ public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCa
   @Test
   public void lookupFinishedThrowExceptionIfCalledWithoutStartedFirst_with_THROW_ON_INCORRECT_USAGE() {
     assumeTrue("Check only if THROW_ON_INCORRECT_USAGE",
-               THROW_ON_INCORRECT_USAGE);
+               IndexOperationFUS.THROW_ON_INCORRECT_USAGE);
     //check for 'allKeys' only because all them have same superclass
     var trace = TRACE_OF_ALL_KEYS_LOOKUP.get();
     boolean finishWithoutStartFails;
@@ -155,6 +155,22 @@ public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCa
     assumeTrue(
       ".started() must be called throw exception if THROW_ON_INCORRECT_USAGE=true",
       finishWithoutStartFails
+    );
+  }
+
+  /** Checks IDEA-300630 */
+  @Test
+  public void bigValuesReportingDoesntThrowExceptions() {
+    IndexOperationAggregatesCollector.recordAllKeysLookup(
+      INDEX_ID, false, IndexOperationAggregatesCollector.MAX_TRACKABLE_DURATION_MS + 1
+    );
+  }
+
+  /** Checks IDEA-300630 */
+  @Test
+  public void negativeValuesReportingDoesntThrowExceptions() {
+    IndexOperationAggregatesCollector.recordAllKeysLookup(
+      INDEX_ID, false, -1
     );
   }
 
@@ -177,4 +193,6 @@ public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCa
       }
     }
   }
+
+
 }

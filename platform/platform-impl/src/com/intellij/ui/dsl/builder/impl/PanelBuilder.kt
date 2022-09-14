@@ -219,7 +219,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
                                               gaps = gaps)
         cell.init(panel, constraints, spacingConfiguration)
       }
-      null -> {
+      else -> {
         builder.skip(1)
       }
     }

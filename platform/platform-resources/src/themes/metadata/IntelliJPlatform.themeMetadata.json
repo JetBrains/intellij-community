@@ -1197,6 +1197,16 @@
       "description": "Hover background for list item in list popups (when inline buttons are shown)"
     },
     {
+      "key": "List.Tag.background",
+      "since": "2022.3",
+      "description": "Background for tags in list items"
+    },
+    {
+      "key": "List.Tag.foreground",
+      "since": "2022.3",
+      "description": "Foreground for tags in list items"
+    },
+    {
       "key": "TabbedPane.tabSelectionArc",
       "since": "2022.2",
       "description": "Selection border corners radius of TabbedPane underline"
@@ -1749,6 +1759,11 @@
     },
     {
       "key": "Tag.background"
+    },
+    {
+      "key": "MainToolbar.separatorColor",
+      "description": "Color of the Main Toolbar separators",
+      "since": "2022.3"
     }
   ]
 }

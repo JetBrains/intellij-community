@@ -1,13 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Experimental
 
 package com.intellij.openapi.progress
 
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.util.NlsContexts.ProgressDetails
+import com.intellij.openapi.util.NlsContexts.ProgressText
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
 
 /**
  * Usage example:
@@ -31,23 +33,32 @@ fun ProgressSink.asContextElement(): CoroutineContext.Element {
   return ProgressSinkElement(this)
 }
 
-internal val CoroutineContext.progressSink: ProgressSink? get() = this[ProgressSinkKey]?.sink
+val CoroutineContext.progressSink: ProgressSink? get() = this[ProgressSinkKey]?.sink
 
 val CoroutineScope.progressSink: ProgressSink? get() = coroutineContext.progressSink
-
-// kotlin doesn't allow 'suspend' modifier on properties
-suspend fun progressSink(): ProgressSink? = coroutineContext.progressSink
 
 private object ProgressSinkKey : CoroutineContext.Key<ProgressSinkElement>
 private class ProgressSinkElement(val sink: ProgressSink) : AbstractCoroutineContextElement(ProgressSinkKey)
 
 internal class ProgressIndicatorSink(private val indicator: ProgressIndicator) : ProgressSink {
 
-  override fun text(text: String) {
+  override fun update(text: @ProgressText String?, details: @ProgressDetails String?, fraction: Double?) {
+    if (text != null) {
+      indicator.text = text
+    }
+    if (details != null) {
+      indicator.text2 = details
+    }
+    if (fraction != null) {
+      indicator.fraction = fraction
+    }
+  }
+
+  override fun text(text: @ProgressText String) {
     indicator.text = text
   }
 
-  override fun details(details: String) {
+  override fun details(details: @ProgressDetails String) {
     indicator.text2 = details
   }
 
@@ -56,7 +67,10 @@ internal class ProgressIndicatorSink(private val indicator: ProgressIndicator) :
   }
 }
 
-internal class ProgressSinkIndicator(private val sink: ProgressSink) : EmptyProgressIndicator() {
+internal class ProgressSinkIndicator(
+  private val sink: ProgressSink,
+  contextModality: ModalityState,
+) : EmptyProgressIndicator(contextModality) {
 
   override fun setText(text: String?) {
     if (text != null) {

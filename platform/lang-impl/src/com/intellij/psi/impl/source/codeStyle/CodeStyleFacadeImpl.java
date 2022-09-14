@@ -68,11 +68,6 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
   }
 
   @Override
-  public int getTabSize(final FileType fileType) {
-    return CodeStyle.getProjectOrDefaultSettings(myProject).getTabSize(fileType);
-  }
-
-  @Override
   public boolean useTabCharacter(final FileType fileType) {
     return CodeStyle.getProjectOrDefaultSettings(myProject).useTabCharacter(fileType);
   }

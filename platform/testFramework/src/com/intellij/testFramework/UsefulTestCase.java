@@ -203,6 +203,8 @@ public abstract class UsefulTestCase extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
+    GlobalState.checkSystemStreams();
+
     setupTempDir();
 
     boolean isStressTest = isStressTest();
@@ -215,7 +217,7 @@ public abstract class UsefulTestCase extends TestCase {
     Disposer.setDebugMode(!isStressTest);
 
     if (isIconRequired()) {
-      // ensure that IconLoader will use dummy empty icon
+      // ensure that IconLoader will not use dummy empty icon
       try {
         IconManager.activate(new CoreIconManager());
       }
@@ -286,6 +288,7 @@ public abstract class UsefulTestCase extends TestCase {
         }
       },
       () -> disposeRootDisposable(),
+      () -> GlobalState.checkSystemStreams(),
       () -> cleanupSwingDataStructures(),
       () -> Disposer.setDebugMode(true),
       () -> {
@@ -329,7 +332,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings, @NotNull CodeStyleSettings currentCodeStyleSettings) {
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
@@ -477,7 +480,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    var wrappedRunnable = wrapTestRunnable(testRunnable);
+    ThrowableRunnable<Throwable> wrappedRunnable = wrapTestRunnable(testRunnable);
     if (runInDispatchThread()) {
       UITestUtil.replaceIdeEventQueueSafely();
       EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(wrappedRunnable));
@@ -488,7 +491,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected @NotNull ThrowableRunnable<Throwable> wrapTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) {
-    var testDescription = Description.createTestDescription(getClass(), getName());
+    Description testDescription = Description.createTestDescription(getClass(), getName());
     return () -> {
       boolean success = false;
       TestLoggerFactory.onTestStarted();
@@ -699,7 +702,7 @@ public abstract class UsefulTestCase extends TestCase {
     Collections.sort(list);
     StringBuilder builder = new StringBuilder();
     boolean flag = false;
-    for (final String o : list) {
+    for (String o : list) {
       if (flag) {
         builder.append(separator);
       }
@@ -715,7 +718,7 @@ public abstract class UsefulTestCase extends TestCase {
       Assert.fail(toString(collection));
     }
     int i = 0;
-    for (final T actual : collection) {
+    for (T actual : collection) {
       try {
         checkers[i].consume(actual);
       }
@@ -741,9 +744,9 @@ public abstract class UsefulTestCase extends TestCase {
     Set<Consumer<? super T>> checkerSet = ContainerUtil.set(checkers);
     int i = 0;
     Throwable lastError = null;
-    for (final T actual : collection) {
+    for (T actual : collection) {
       boolean flag = true;
-      for (final Consumer<? super T> condition : checkerSet) {
+      for (Consumer<? super T> condition : checkerSet) {
         Throwable error = accepts(condition, actual);
         if (error == null) {
           checkerSet.remove(condition);
@@ -763,7 +766,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private static <T> Throwable accepts(@NotNull Consumer<? super T> condition, final T actual) {
+  private static <T> Throwable accepts(@NotNull Consumer<? super T> condition, T actual) {
     try {
       condition.consume(actual);
       return null;
@@ -782,12 +785,16 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static <T> T assertOneElement(@NotNull Collection<? extends T> collection) {
-    Assert.assertEquals(collection.toString(), 1, collection.size());
+    if (collection.size() != 1) {
+      Assert.assertEquals(collection.toString(), 1, collection.size());
+    }
     return collection.iterator().next();
   }
 
   public static <T> T assertOneElement(T @NotNull [] ts) {
-    Assert.assertEquals(Arrays.toString(ts), 1, ts.length);
+    if (ts.length != 1) {
+      Assert.assertEquals(Arrays.toString(ts), 1, ts.length);
+    }
     return ts[0];
   }
 
@@ -814,13 +821,15 @@ public abstract class UsefulTestCase extends TestCase {
     assertOrderedEquals(array);
   }
 
-  public static void assertNotEmpty(final Collection<?> collection) {
+  public static void assertNotEmpty(Collection<?> collection) {
     assertNotNull(collection);
     assertFalse(collection.isEmpty());
   }
 
   public static void assertEmpty(@NotNull Collection<?> collection) {
-    assertEmpty(collection.toString(), collection);
+    if (!collection.isEmpty()) {
+      assertEmpty(collection.toString(), collection);
+    }
   }
 
   public static void assertNullOrEmpty(@Nullable Collection<?> collection) {
@@ -828,7 +837,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertEmpty("", collection);
   }
 
-  public static void assertEmpty(final String s) {
+  public static void assertEmpty(String s) {
     assertTrue(s, StringUtil.isEmpty(s));
   }
 
@@ -897,8 +906,9 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected static void checkCaseSensitiveFS(@NotNull String fullOrRelativePath, @NotNull File ioFile) throws IOException {
     fullOrRelativePath = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(fullOrRelativePath));
-    if (!ioFile.getCanonicalPath().endsWith(fullOrRelativePath)) {
-      throw new RuntimeException("Queried for: " + fullOrRelativePath + "; but found: " + ioFile.getCanonicalPath());
+    var canonicalPath = ioFile.getCanonicalPath();
+    if (!canonicalPath.endsWith(fullOrRelativePath) && StringUtil.endsWithIgnoreCase(canonicalPath, fullOrRelativePath)) {
+      throw new RuntimeException("Queried for: " + fullOrRelativePath + "; but found: " + canonicalPath);
     }
   }
 
@@ -940,10 +950,10 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void clearDeclaredFields(@NotNull Object test, @NotNull Class<?> aClass) throws IllegalAccessException {
-    for (final Field field : aClass.getDeclaredFields()) {
-      final String name = field.getDeclaringClass().getName();
+    for (Field field : aClass.getDeclaredFields()) {
+      String name = field.getDeclaringClass().getName();
       if (!name.startsWith("junit.framework.") && !name.startsWith("com.intellij.testFramework.")) {
-        final int modifiers = field.getModifiers();
+        int modifiers = field.getModifiers();
         if ((modifiers & Modifier.FINAL) == 0 && (modifiers & Modifier.STATIC) == 0 && !field.getType().isPrimitive()) {
           field.setAccessible(true);
           field.set(test, null);
@@ -978,7 +988,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   /**
    * @return true for a test which performs a lot of computations to test resource consumption, not correctness.
-   * Such test should avoid performing expensive consistency checks, e.g. data structure consistency complex validations.
+   * Such test should avoid performing expensive consistency checks, e.g., data structure consistency complex validations.
    * If you want your test to be treated as "Performance", mention "Performance" word in its class/method name.
    * For example: {@code public void testHighlightingPerformance()}
    */
@@ -988,12 +998,13 @@ public abstract class UsefulTestCase extends TestCase {
 
   /**
    * @return true for a test which performs a lot of computations <b>and</b> does care about the correctness of operations it performs.
-   * Such test should typically avoid performing expensive checks, e.g. data structure consistency complex validations.
+   * Such test should typically avoid performing expensive checks, e.g., data structure consistency complex validations.
    * If you want your test to be treated as "Stress", please mention one of these words in its name: "Stress", "Slow".
    * For example: {@code public void testStressPSIFromDifferentThreads()}
    */
   public final boolean isStressTest() {
-    String testName = getName(), className = getClass().getSimpleName();
+    String testName = getName();
+    String className = getClass().getSimpleName();
     return TestFrameworkUtil.isPerformanceTest(testName, className) ||
            containsStressWords(testName) ||
            containsStressWords(className);
@@ -1045,7 +1056,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
     finally {
       if (!wasThrown) {
-        fail(exceptionClass + " must be thrown.");
+        fail("'"+exceptionClass.getName()+"' must have been thrown, but the computation completed successfully instead");
       }
     }
   }
@@ -1118,11 +1129,11 @@ public abstract class UsefulTestCase extends TestCase {
     file.refresh(false, true);
   }
 
-  public static VirtualFile refreshAndFindFile(final @NotNull File file) {
+  public static VirtualFile refreshAndFindFile(@NotNull File file) {
     return UIUtil.invokeAndWaitIfNeeded(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
   }
 
-  public static void waitForAppLeakingThreads(long timeout, @NotNull TimeUnit timeUnit) throws Exception {
+  public static void waitForAppLeakingThreads(long timeout, @NotNull TimeUnit timeUnit) {
     EdtTestUtil.runInEdtAndWait(() -> {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
@@ -1159,9 +1170,9 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected void allowAccessToDirsIfExists(@NotNull String @NotNull ... dirNames) {
     for (String dirName : dirNames) {
-      final Path usrShareDir = Paths.get(dirName);
+      Path usrShareDir = Paths.get(dirName);
       if (Files.exists(usrShareDir)) {
-        final String absolutePath = usrShareDir.toAbsolutePath().toString();
+        String absolutePath = usrShareDir.toAbsolutePath().toString();
         LOG.debug(usrShareDir.toString(), " exists, adding to the list of allowed root: ", absolutePath);
         VfsRootAccess.allowRootAccess(getTestRootDisposable(), absolutePath);
       }

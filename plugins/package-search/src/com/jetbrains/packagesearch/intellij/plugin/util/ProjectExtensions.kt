@@ -31,7 +31,7 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSi
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.lifecycle.PackageSearchLifecycleScope
-import com.jetbrains.packagesearch.intellij.plugin.ui.UiCommandsService
+import com.jetbrains.packagesearch.intellij.plugin.ui.PkgsUiCommandsService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateModifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateSource
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchCachesService
@@ -136,11 +136,11 @@ internal val Project.lifecycleScope: PackageSearchLifecycleScope
 internal val ProjectModule.lifecycleScope: PackageSearchLifecycleScope
     get() = nativeModule.project.lifecycleScope
 
-internal val Project.uiStateModifier: UiStateModifier
-    get() = service<UiCommandsService>()
+internal val Project.pkgsUiStateModifier: UiStateModifier
+    get() = service<PkgsUiCommandsService>()
 
 internal val Project.uiStateSource: UiStateSource
-    get() = service<UiCommandsService>()
+    get() = service<PkgsUiCommandsService>()
 
 val Project.dumbService: DumbService
     get() = DumbService.getInstance(this)

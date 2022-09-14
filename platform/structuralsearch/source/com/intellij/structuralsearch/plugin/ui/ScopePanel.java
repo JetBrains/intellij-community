@@ -78,14 +78,14 @@ public class ScopePanel extends JPanel {
     final Module[] allModules = ModuleManager.getInstance(project).getModules();
     myModulesComboBox.setModules(Arrays.asList(allModules));
     if (allModules.length > 0) myModulesComboBox.setSelectedModule(allModules[0]);
-    myModulesComboBox.addItemListener(e -> setScopeFromUI());
+    myModulesComboBox.addActionListener(e -> setScopeFromUI());
     myModulesComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(300));
     myScopesComboBox.initialize(project, true, false, "", SCOPE_FILTER).onSuccess(o -> {
+      myScopesComboBox.getComboBox().addActionListener(e -> setScopeFromUI());
       if (myCurrentNamedScope != null) {
         myScopesComboBox.selectItem(myCurrentNamedScope);
         myCurrentNamedScope = null;
       }
-      myScopesComboBox.getComboBox().addItemListener(e -> setScopeFromUI());
     });
     Disposer.register(parent, myScopesComboBox);
     myDirectoryComboBox = new DirectoryComboBoxWithButtons(myProject);

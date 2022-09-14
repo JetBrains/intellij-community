@@ -71,10 +71,10 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   private void addElementsForTagWithManyQuickFixes(XmlTag tag,
                                                    @NotNull @InspectionMessage String localizedMessage,
                                                    HighlightInfoType type, IntentionAction... quickFixActions) {
-    bindMessageToTag(tag, type, -1, localizedMessage, quickFixActions);
+    bindMessageToTag(tag, type, localizedMessage, quickFixActions);
   }
 
-  @Override public void visitXmlToken(XmlToken token) {
+  @Override public void visitXmlToken(@NotNull XmlToken token) {
     IElementType tokenType = token.getTokenType();
     if (tokenType == XmlTokenType.XML_NAME || tokenType == XmlTokenType.XML_TAG_NAME) {
       PsiElement element = token.getPrevSibling();
@@ -118,7 +118,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
   }
 
-  private void checkTag(XmlTag tag) {
+  private void checkTag(@NotNull XmlTag tag) {
     if (ourDoJaxpTesting) return;
 
     if (!myHolder.hasErrorResults()) {
@@ -144,19 +144,18 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   private void bindMessageToTag(final XmlTag tag,
                                 final HighlightInfoType warning,
-                                final int messageLength,
                                 @NotNull @InspectionMessage String localizedMessage,
                                 IntentionAction... quickFixActions) {
     XmlToken childByRole = XmlTagUtil.getStartTagNameElement(tag);
 
-    bindMessageToAstNode(childByRole, warning, messageLength, localizedMessage, quickFixActions);
+    bindMessageToAstNode(childByRole, warning, localizedMessage, quickFixActions);
     childByRole = XmlTagUtil.getEndTagNameElement(tag);
-    bindMessageToAstNode(childByRole, warning, messageLength, localizedMessage, quickFixActions);
+    bindMessageToAstNode(childByRole, warning, localizedMessage, quickFixActions);
   }
 
 
   @Override
-  public void visitXmlProcessingInstruction(XmlProcessingInstruction processingInstruction) {
+  public void visitXmlProcessingInstruction(@NotNull XmlProcessingInstruction processingInstruction) {
     super.visitXmlProcessingInstruction(processingInstruction);
     PsiElement parent = processingInstruction.getParent();
 
@@ -179,12 +178,11 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   private void bindMessageToAstNode(final PsiElement childByRole,
                                     final HighlightInfoType warning,
-                                    int length,
                                     @NotNull @InspectionMessage String localizedMessage,
                                     IntentionAction... quickFixActions) {
     if(childByRole != null) {
       final TextRange textRange = childByRole.getTextRange();
-      if (length == -1) length = textRange.getLength();
+      int length = textRange.getLength();
       final int startOffset = textRange.getStartOffset();
 
       HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(warning).range(childByRole, startOffset, startOffset + length).descriptionAndTooltip(localizedMessage).create();
@@ -274,7 +272,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     element.putUserData(XmlElement.DO_NOT_VALIDATE, Boolean.TRUE);
   }
 
-  @Override public void visitXmlAttribute(XmlAttribute attribute) {}
+  @Override public void visitXmlAttribute(@NotNull XmlAttribute attribute) {}
 
   private void checkAttribute(XmlAttribute attribute) {
     XmlTag tag = attribute.getParent();
@@ -396,7 +394,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
   }
 
-  @Override public void visitXmlDocument(final XmlDocument document) {
+  @Override public void visitXmlDocument(final @NotNull XmlDocument document) {
     if (document.getLanguage() == DTDLanguage.INSTANCE) {
       final PsiMetaData psiMetaData = document.getMetaData();
       if (psiMetaData instanceof Validator) {
@@ -406,10 +404,10 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
   }
 
-  @Override public void visitXmlTag(XmlTag tag) {
+  @Override public void visitXmlTag(@NotNull XmlTag tag) {
   }
 
-  @Override public void visitXmlAttributeValue(XmlAttributeValue value) {
+  @Override public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
     checkReferences(value);
 
     final PsiElement parent = value.getParent();
@@ -445,7 +443,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     doCheckRefs(value, value.getReferences(), 0);
   }
 
-  private void doCheckRefs(final PsiElement value, final PsiReference[] references, int start) {
+  private void doCheckRefs(@NotNull PsiElement value, final PsiReference @NotNull [] references, int start) {
     for (int i = start; i < references.length; ++i) {
       PsiReference reference = references[i];
       ProgressManager.checkCanceled();
@@ -495,7 +493,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
   }
 
-  public static boolean isUrlReference(PsiReference reference) {
+  static boolean isUrlReference(PsiReference reference) {
     return reference instanceof FileReferenceOwner || reference instanceof AnchorReference;
   }
 
@@ -530,7 +528,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     return reference.resolve() == null;
   }
 
-  @Override public void visitXmlDoctype(XmlDoctype xmlDoctype) {
+  @Override public void visitXmlDoctype(@NotNull XmlDoctype xmlDoctype) {
     if (skipValidation(xmlDoctype)) return;
     checkReferences(xmlDoctype);
   }

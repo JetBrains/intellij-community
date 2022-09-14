@@ -1,3 +1,5 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 abstract class A {
     abstract fun memberFunInA()
     abstract val memberValInA: Int
@@ -43,9 +45,9 @@ class C {
 // EXIST: { itemText: "memberValInA", attributes: "bold", icon: "org/jetbrains/kotlin/idea/icons/field_value.svg" }
 // EXIST: { itemText: "InnerInA", attributes: "bold", icon: "org/jetbrains/kotlin/idea/icons/classKotlin.svg" }
 // EXIST: { itemText: "NestedInA", attributes: "", icon: "org/jetbrains/kotlin/idea/icons/classKotlin.svg" }
-// EXIST: { itemText: "extensionFun", attributes: "bold", icon: "nodes/function.svg" }
+// EXIST: { itemText: "extensionFun", attributes: "bold", icon: "Function" }
 // EXIST: { itemText: "extensionVal", attributes: "bold", icon: "org/jetbrains/kotlin/idea/icons/field_value.svg" }
-// EXIST: { itemText: "anyExtensionFun", attributes: "", icon: "nodes/function.svg" }
+// EXIST: { itemText: "anyExtensionFun", attributes: "", icon: "Function" }
 // ABSENT: wrongExtensionFun
 // ABSENT: globalFun
 // ABSENT: globalVal

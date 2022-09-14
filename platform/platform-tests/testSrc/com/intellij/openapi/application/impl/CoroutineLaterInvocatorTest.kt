@@ -4,6 +4,7 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.progress.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ConcurrencyUtil

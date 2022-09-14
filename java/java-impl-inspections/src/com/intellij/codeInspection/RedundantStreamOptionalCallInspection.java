@@ -75,6 +75,8 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     );
   private static final CallMatcher STREAM_MAP =
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "map").parameterTypes(CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION);
+  private static final CallMatcher COLLECTION_STREAM_SOURCE =
+    instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "parallelStream", "stream").parameterCount(0);
 
   @SuppressWarnings("PublicField")
   public boolean USELESS_BOXING_IN_STREAM_MAP = true;
@@ -211,6 +213,26 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
               if (furtherCall != null && furtherCall.getArgumentList().isEmpty()) {
                 register(call, JavaBundle.message("inspection.redundant.stream.optional.call.explanation.parallel",
                                                          furtherCall.getMethodExpression().getReferenceName()));
+              } else {
+                PsiMethodCallExpression previousCall = MethodCallUtils.getQualifierMethodCall(call);
+                while (true) {
+                  if (previousCall == null) break;
+                  String prevName = previousCall.getMethodExpression().getReferenceName();
+                  if (prevName == null) break;
+                  if (CALLS_AFFECTING_PARALLELIZATION.contains(prevName)) break; // already reported on previous call
+                  if (COLLECTION_STREAM_SOURCE.test(previousCall)) {
+                    boolean previousParallel = prevName.equals("parallelStream");
+                    boolean curParallel = name.equals("parallel");
+                    if (previousParallel == curParallel) {
+                      register(call,
+                               JavaBundle.message(curParallel ? "inspection.redundant.stream.optional.call.explanation.parallel.source" :
+                                                  "inspection.redundant.stream.optional.call.explanation.sequential.source"));
+                      break;
+                    }
+                  }
+                  if (StreamApiUtil.getStreamElementType(previousCall.getType()) == null) break;
+                  previousCall = MethodCallUtils.getQualifierMethodCall(previousCall);
+                }
               }
             }
             break;

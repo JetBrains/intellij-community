@@ -185,11 +185,12 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   protected void installHandlers() {
     EditSourceOnDoubleClickHandler.install(this);
     EditSourceOnEnterKeyHandler.install(this);
-    new TreeSpeedSearch(this, path -> {
+    boolean canExpand = Registry.is("tests.view.node.expanding.search");
+    new TreeSpeedSearch(this, canExpand, path -> {
       final AbstractTestProxy testProxy = getSelectedTest(path);
       if (testProxy == null) return null;
       return getPresentableName(testProxy);
-    }, Registry.is("tests.view.node.expanding.search"));
+    });
     TreeUtil.installActions(this);
     PopupHandler.installPopupMenu(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
     HintUpdateSupply.installHintUpdateSupply(this, obj -> {

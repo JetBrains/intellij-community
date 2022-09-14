@@ -63,9 +63,12 @@ class ScriptClassRootsCache(
 
     class HeavyScriptInfo(
         val scriptConfiguration: ScriptCompilationConfigurationWrapper,
+        val classFiles: List<VirtualFile>,
         val classFilesScope: GlobalSearchScope,
         val sdk: Sdk?
     )
+
+    fun scriptsPaths() = scripts.keys
 
     fun getLightScriptInfo(file: String) = scripts[file]
 
@@ -91,10 +94,14 @@ class ScriptClassRootsCache(
         val sdk = sdks[SdkId(configuration.javaHome?.toPath())]
 
         return if (sdk == null) {
-            HeavyScriptInfo(configuration, compose(toVfsRoots(roots)), null)
+            HeavyScriptInfo(configuration, toVfsRoots(roots), compose(toVfsRoots(roots)), null)
         } else {
             val sdkClasses = sdk.rootProvider.getFiles(OrderRootType.CLASSES).toList()
-            HeavyScriptInfo(configuration, compose(sdkClasses + toVfsRoots(roots)), sdk)
+            if (scriptsAsEntities) {
+                HeavyScriptInfo(configuration, toVfsRoots(roots), compose(toVfsRoots(roots)), sdk)
+            } else {
+                HeavyScriptInfo(configuration, sdkClasses + toVfsRoots(roots), compose(sdkClasses + toVfsRoots(roots)), sdk)
+            }
         }
     }
 
@@ -127,6 +134,21 @@ class ScriptClassRootsCache(
 
     fun getScriptDependenciesClassFilesScope(file: VirtualFile): GlobalSearchScope =
         getHeavyScriptInfo(file.path)?.classFilesScope ?: GlobalSearchScope.EMPTY_SCOPE
+
+    fun getScriptDependenciesClassFiles(file: VirtualFile): List<VirtualFile> =
+        getHeavyScriptInfo(file.path)?.classFiles ?: emptyList()
+
+    fun getScriptDependenciesSourceFiles(file: VirtualFile): List<VirtualFile> {
+        val scriptInfo = getLightScriptInfo(file.path) ?: return emptyList()
+        val configuration = scriptInfo.buildConfiguration() ?: return emptyList()
+        return configuration.dependenciesSources.mapNotNull { classpathEntryToVfs(it.toPath()) }
+    }
+
+    fun getScriptDependenciesSdkFiles(file: VirtualFile, rootType: OrderRootType): List<VirtualFile> {
+        val scriptInfo = getHeavyScriptInfo(file.path) ?: return emptyList()
+        val sdk = scriptInfo.sdk ?: return emptyList()
+        return sdk.rootProvider.getFiles(rootType).toList()
+    }
 
     fun diff(project: Project, old: ScriptClassRootsCache?): Updates =
         when (old) {

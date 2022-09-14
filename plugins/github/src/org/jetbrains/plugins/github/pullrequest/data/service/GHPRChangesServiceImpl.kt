@@ -7,6 +7,7 @@ import com.google.common.graph.ImmutableGraph
 import com.google.common.graph.Traverser
 import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
+import git4idea.remote.GitRemoteUrlCoordinates
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.PatchReader
@@ -27,7 +28,6 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProviderImpl
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHServiceUtil.logError
-import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException

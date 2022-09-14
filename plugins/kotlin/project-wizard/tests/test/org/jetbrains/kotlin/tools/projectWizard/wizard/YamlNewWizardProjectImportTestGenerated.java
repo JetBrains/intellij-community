@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class YamlNewWizardProjectImportTestGenerated extends AbstractYamlNewWizardProjectImportTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../cli/testData/buildFileGeneration")
+    @TestMetadata("testData/buildFileGeneration")
     public static class GradleKts extends AbstractYamlNewWizardProjectImportTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
@@ -27,67 +27,67 @@ public abstract class YamlNewWizardProjectImportTestGenerated extends AbstractYa
 
         @TestMetadata("android")
         public void testAndroid() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/android/");
+            runTest("testData/buildFileGeneration/android/");
         }
 
         @TestMetadata("jsNodeAndBrowserTargets")
         public void testJsNodeAndBrowserTargets() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/jsNodeAndBrowserTargets/");
+            runTest("testData/buildFileGeneration/jsNodeAndBrowserTargets/");
         }
 
         @TestMetadata("jvmTarget")
         public void testJvmTarget() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/jvmTarget/");
+            runTest("testData/buildFileGeneration/jvmTarget/");
         }
 
         @TestMetadata("jvmTargetWithJava")
         public void testJvmTargetWithJava() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/jvmTargetWithJava/");
+            runTest("testData/buildFileGeneration/jvmTargetWithJava/");
         }
 
         @TestMetadata("jvmToJvmDependency")
         public void testJvmToJvmDependency() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/jvmToJvmDependency/");
+            runTest("testData/buildFileGeneration/jvmToJvmDependency/");
         }
 
         @TestMetadata("jvmToJvmDependencyWithSingleRoot")
         public void testJvmToJvmDependencyWithSingleRoot() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/jvmToJvmDependencyWithSingleRoot/");
+            runTest("testData/buildFileGeneration/jvmToJvmDependencyWithSingleRoot/");
         }
 
         @TestMetadata("kotlinJvm")
         public void testKotlinJvm() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/kotlinJvm/");
+            runTest("testData/buildFileGeneration/kotlinJvm/");
         }
 
         @TestMetadata("nativeForCurrentSystem")
         public void testNativeForCurrentSystem() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/nativeForCurrentSystem/");
+            runTest("testData/buildFileGeneration/nativeForCurrentSystem/");
         }
 
         @TestMetadata("simpleMultiplatform")
         public void testSimpleMultiplatform() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/simpleMultiplatform/");
+            runTest("testData/buildFileGeneration/simpleMultiplatform/");
         }
 
         @TestMetadata("simpleNativeTarget")
         public void testSimpleNativeTarget() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/simpleNativeTarget/");
+            runTest("testData/buildFileGeneration/simpleNativeTarget/");
         }
 
         @TestMetadata("singlePlatformJsBrowser")
         public void testSinglePlatformJsBrowser() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/singlePlatformJsBrowser/");
+            runTest("testData/buildFileGeneration/singlePlatformJsBrowser/");
         }
 
         @TestMetadata("singlePlatformJsNode")
         public void testSinglePlatformJsNode() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/singlePlatformJsNode/");
+            runTest("testData/buildFileGeneration/singlePlatformJsNode/");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../cli/testData/buildFileGeneration")
+    @TestMetadata("testData/buildFileGeneration")
     public static class GradleGroovy extends AbstractYamlNewWizardProjectImportTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
@@ -95,67 +95,67 @@ public abstract class YamlNewWizardProjectImportTestGenerated extends AbstractYa
 
         @TestMetadata("android")
         public void testAndroid() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/android/");
+            runTest("testData/buildFileGeneration/android/");
         }
 
         @TestMetadata("jsNodeAndBrowserTargets")
         public void testJsNodeAndBrowserTargets() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/jsNodeAndBrowserTargets/");
+            runTest("testData/buildFileGeneration/jsNodeAndBrowserTargets/");
         }
 
         @TestMetadata("jvmTarget")
         public void testJvmTarget() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/jvmTarget/");
+            runTest("testData/buildFileGeneration/jvmTarget/");
         }
 
         @TestMetadata("jvmTargetWithJava")
         public void testJvmTargetWithJava() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/jvmTargetWithJava/");
+            runTest("testData/buildFileGeneration/jvmTargetWithJava/");
         }
 
         @TestMetadata("jvmToJvmDependency")
         public void testJvmToJvmDependency() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/jvmToJvmDependency/");
+            runTest("testData/buildFileGeneration/jvmToJvmDependency/");
         }
 
         @TestMetadata("jvmToJvmDependencyWithSingleRoot")
         public void testJvmToJvmDependencyWithSingleRoot() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/jvmToJvmDependencyWithSingleRoot/");
+            runTest("testData/buildFileGeneration/jvmToJvmDependencyWithSingleRoot/");
         }
 
         @TestMetadata("kotlinJvm")
         public void testKotlinJvm() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/kotlinJvm/");
+            runTest("testData/buildFileGeneration/kotlinJvm/");
         }
 
         @TestMetadata("nativeForCurrentSystem")
         public void testNativeForCurrentSystem() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/nativeForCurrentSystem/");
+            runTest("testData/buildFileGeneration/nativeForCurrentSystem/");
         }
 
         @TestMetadata("simpleMultiplatform")
         public void testSimpleMultiplatform() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/simpleMultiplatform/");
+            runTest("testData/buildFileGeneration/simpleMultiplatform/");
         }
 
         @TestMetadata("simpleNativeTarget")
         public void testSimpleNativeTarget() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/simpleNativeTarget/");
+            runTest("testData/buildFileGeneration/simpleNativeTarget/");
         }
 
         @TestMetadata("singlePlatformJsBrowser")
         public void testSinglePlatformJsBrowser() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/singlePlatformJsBrowser/");
+            runTest("testData/buildFileGeneration/singlePlatformJsBrowser/");
         }
 
         @TestMetadata("singlePlatformJsNode")
         public void testSinglePlatformJsNode() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/singlePlatformJsNode/");
+            runTest("testData/buildFileGeneration/singlePlatformJsNode/");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../cli/testData/buildFileGeneration")
+    @TestMetadata("testData/buildFileGeneration")
     public static class Maven extends AbstractYamlNewWizardProjectImportTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
@@ -163,62 +163,62 @@ public abstract class YamlNewWizardProjectImportTestGenerated extends AbstractYa
 
         @TestMetadata("android")
         public void testAndroid() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/android/");
+            runTest("testData/buildFileGeneration/android/");
         }
 
         @TestMetadata("jsNodeAndBrowserTargets")
         public void testJsNodeAndBrowserTargets() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/jsNodeAndBrowserTargets/");
+            runTest("testData/buildFileGeneration/jsNodeAndBrowserTargets/");
         }
 
         @TestMetadata("jvmTarget")
         public void testJvmTarget() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/jvmTarget/");
+            runTest("testData/buildFileGeneration/jvmTarget/");
         }
 
         @TestMetadata("jvmTargetWithJava")
         public void testJvmTargetWithJava() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/jvmTargetWithJava/");
+            runTest("testData/buildFileGeneration/jvmTargetWithJava/");
         }
 
         @TestMetadata("jvmToJvmDependency")
         public void testJvmToJvmDependency() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/jvmToJvmDependency/");
+            runTest("testData/buildFileGeneration/jvmToJvmDependency/");
         }
 
         @TestMetadata("jvmToJvmDependencyWithSingleRoot")
         public void testJvmToJvmDependencyWithSingleRoot() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/jvmToJvmDependencyWithSingleRoot/");
+            runTest("testData/buildFileGeneration/jvmToJvmDependencyWithSingleRoot/");
         }
 
         @TestMetadata("kotlinJvm")
         public void testKotlinJvm() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/kotlinJvm/");
+            runTest("testData/buildFileGeneration/kotlinJvm/");
         }
 
         @TestMetadata("nativeForCurrentSystem")
         public void testNativeForCurrentSystem() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/nativeForCurrentSystem/");
+            runTest("testData/buildFileGeneration/nativeForCurrentSystem/");
         }
 
         @TestMetadata("simpleMultiplatform")
         public void testSimpleMultiplatform() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/simpleMultiplatform/");
+            runTest("testData/buildFileGeneration/simpleMultiplatform/");
         }
 
         @TestMetadata("simpleNativeTarget")
         public void testSimpleNativeTarget() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/simpleNativeTarget/");
+            runTest("testData/buildFileGeneration/simpleNativeTarget/");
         }
 
         @TestMetadata("singlePlatformJsBrowser")
         public void testSinglePlatformJsBrowser() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/singlePlatformJsBrowser/");
+            runTest("testData/buildFileGeneration/singlePlatformJsBrowser/");
         }
 
         @TestMetadata("singlePlatformJsNode")
         public void testSinglePlatformJsNode() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/singlePlatformJsNode/");
+            runTest("testData/buildFileGeneration/singlePlatformJsNode/");
         }
     }
 }

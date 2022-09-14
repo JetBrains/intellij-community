@@ -6,14 +6,16 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.ModuleStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
@@ -36,7 +38,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   private static final Logger LOG = Logger.getInstance(ModuleImpl.class);
@@ -93,7 +98,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
       registerService(IComponentStore.class,
                       NonPersistentModuleStore.class,
                       ComponentManagerImpl.fakeCorePluginDescriptor,
-                      true, ServiceDescriptor.PreloadMode.FALSE);
+                      true);
     }
     if (beforeComponentCreation != null) {
       beforeComponentCreation.run();
@@ -221,7 +226,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   public void moduleAdded(List<com.intellij.openapi.module.ModuleComponent> oldComponents) {
     isModuleAdded = true;
     //noinspection removal,UnnecessaryFullyQualifiedName
-    processInitializedComponents(com.intellij.openapi.module.ModuleComponent.class, (component, __) -> {
+    processInitializedComponents(com.intellij.openapi.module.ModuleComponent.class, (component) -> {
       oldComponents.add(component);
       return Unit.INSTANCE;
     });

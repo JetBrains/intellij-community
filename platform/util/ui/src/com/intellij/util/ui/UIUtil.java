@@ -43,7 +43,6 @@ import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
-import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
@@ -86,6 +85,8 @@ public final class UIUtil {
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
   public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
+
+  private static final Key<WeakReference<Component>> FOSTER_PARENT = Key.create("Component.fosterParent");
   private static final Key<Boolean> IS_SHOWING = Key.create("Component.isShowing");
   private static final Key<Boolean> HAS_FOCUS = Key.create("Component.hasFocus");
 
@@ -146,23 +147,6 @@ public final class UIUtil {
       return (Integer)property;
     }
     return 500;
-  }
-
-  /**
-   * A public method from BasicHTML
-   *
-   * @see BasicHTML#getBaseline(JComponent, int, int, int, int)
-   */
-  public static int getBaseline(@NotNull JComponent c, int y, int ascent, int w, int h) {
-    View view = (View)c.getClientProperty(BasicHTML.propertyKey);
-    if (view != null) {
-      int baseline = BasicHTML.getHTMLBaseline(view, w, h);
-      if (baseline < 0) {
-        return baseline;
-      }
-      return y + baseline;
-    }
-    return y + ascent;
   }
 
   private static final NotNullLazyValue<Boolean> X_RENDER_ACTIVE = NotNullLazyValue.atomicLazy(() -> {
@@ -359,8 +343,6 @@ public final class UIUtil {
   public static final @NonNls String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
 
   private static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
-
-  private static final @NonNls String FOCUS_PROXY_KEY = "isFocusProxy";
 
   public static final Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
   private static final Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
@@ -1625,9 +1607,8 @@ public final class UIUtil {
     EDT.dispatchAllInvocationEvents();
   }
 
-  public static void addAwtListener(final @NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
-    Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask);
-    Disposer.register(parent, () -> Toolkit.getDefaultToolkit().removeAWTEventListener(listener));
+  public static void addAwtListener(@NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
+    StartupUiUtil.addAwtListener(listener, mask, parent);
   }
 
   public static void addParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
@@ -1733,6 +1714,48 @@ public final class UIUtil {
       if (hasFocus(component)) return true;
       component = component.getParent();
     }
+    return false;
+  }
+
+  /**
+   * Get the parent of a component in a more general sense than UI parent, i.e.,
+   * if it doesn't have a real UI parent, use a foster one instead.
+   * @see UIUtil#setFosterParent(JComponent, Component)
+   */
+  @ApiStatus.Experimental
+  public static @Nullable Component getParent(@NotNull Component component) {
+    Component realParent = component.getParent();
+    if (realParent != null) {
+      return realParent;
+    }
+    WeakReference<Component> ref = ClientProperty.get(component, FOSTER_PARENT);
+    return ref != null ? ref.get() : null;
+  }
+
+  /**
+   * Set a foster parent for a component, i.e., explicitly specify what should be treated
+   * as the component's parent if it doesn't have a real UI one.
+   * @throws IllegalArgumentException if the establishment of requested link
+   * will form a cycle in a generalized hierarchy graph.
+   * @see UIUtil#getParent(Component)
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static void setFosterParent(@NotNull JComponent component, @Nullable Component parent) {
+    if (parent != null && isGeneralizedAncestor(component, parent)) {
+      throw new IllegalArgumentException("Setting this component as a foster parent will form a cycle in a hierarchy graph");
+    }
+    WeakReference<Component> ref = parent != null ? new WeakReference<>(parent) : null;
+    ClientProperty.put(component, FOSTER_PARENT, ref);
+  }
+
+  private static boolean isGeneralizedAncestor(@NotNull Component ancestor, @NotNull Component descendant) {
+    do {
+      if (descendant == ancestor) {
+        return true;
+      }
+      descendant = getParent(descendant);
+    } while (descendant != null);
     return false;
   }
 
@@ -2190,10 +2213,6 @@ public final class UIUtil {
     }
   }
 
-  public static boolean isFocusProxy(@Nullable Component c) {
-    return c instanceof JComponent && Boolean.TRUE.equals(((JComponent)c).getClientProperty(FOCUS_PROXY_KEY));
-  }
-
   public static void maybeInstall(@NotNull InputMap map, String action, KeyStroke stroke) {
     if (map.get(stroke) == null) {
       map.put(stroke, action);
@@ -2511,12 +2530,6 @@ public final class UIUtil {
 
   public static void setFutureRootPane(@NotNull JComponent c, @NotNull JRootPane pane) {
     c.putClientProperty(ROOT_PANE, new WeakReference<>(pane));
-  }
-
-  public static boolean isMeaninglessFocusOwner(@Nullable Component c) {
-    if (c == null || !c.isShowing()) return true;
-
-    return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane || isFocusProxy(c);
   }
 
   public static boolean isDialogRootPane(JRootPane rootPane) {

@@ -212,13 +212,17 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
-  public @Nullable PopupStep<?> onChosen(PopupFactoryImpl.ActionItem item, boolean finalChoice, @Nullable InputEvent inputEvent) {
+  public @Nullable PopupStep<?> onChosen(@NotNull PopupFactoryImpl.ActionItem item, boolean finalChoice, @Nullable InputEvent inputEvent) {
     if (!item.isEnabled()) return FINAL_CHOICE;
     AnAction action = item.getAction();
     if (action instanceof ActionGroup && (!finalChoice || !item.isPerformGroup())) {
       return createActionsStep(
         (ActionGroup)action, myContext.get(), myEnableMnemonics, true, myShowDisabledActions, null,
         false, false, myContext, myActionPlace, myPreselectActionCondition, -1, myPresentationFactory);
+    }
+    else if (action instanceof ToggleAction && item.isKeepPopupOpen()) {
+      performAction(action, inputEvent);
+      return FINAL_CHOICE;
     }
     else {
       myFinalRunnable = () -> performAction(action, inputEvent);

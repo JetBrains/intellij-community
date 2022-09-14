@@ -13,7 +13,6 @@ abstract class AbstractFirLegacyUastIdentifiersTest : AbstractFirUastIdentifiers
         "uast-kotlin/tests/testData/DestructuringDeclaration.kt",
         "uast-kotlin/tests/testData/LambdaReturn.kt",
         "uast-kotlin/tests/testData/WhenAndDestructing.kt",
-        "uast-kotlin/tests/testData/ManyAlternatives.kt",
 
         // TODO: this file fails 'testIdentifiersParents' check
         "uast-kotlin/tests/testData/DataClassInheritsAbstractClassWithEquals.kt",

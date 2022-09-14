@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.textRangeIn
@@ -89,7 +90,7 @@ class ReplaceGuardClauseWithFunctionCallInspection : AbstractApplicabilityBasedI
                 val newCall = (replaced as? KtDotQualifiedExpression)?.callExpression
                 val negatedExpression = newCall?.valueArguments?.firstOrNull()?.getArgumentExpression() as? KtPrefixExpression
                 if (negatedExpression != null) {
-                    SimplifyNegatedBinaryExpressionInspection.simplifyNegatedBinaryExpressionIfNeeded(negatedExpression)
+                    NegatedBinaryExpressionSimplificationUtils.simplifyNegatedBinaryExpressionIfNeeded(negatedExpression)
                 }
                 replaced
             }

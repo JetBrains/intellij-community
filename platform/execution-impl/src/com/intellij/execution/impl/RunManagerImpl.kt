@@ -28,6 +28,7 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Condition
@@ -444,7 +445,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
             selectedConfigurationId = newId
           }
 
-          listManager.updateConfigurationId(it, newId)
+ //         listManager.updateConfigurationId(it, newId)
         }
       }
 
@@ -1039,12 +1040,12 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     return idToType.value[typeId]?.let { getFactory(it, factoryId) }
            ?: UnknownConfigurationType.getInstance().also {
              if (checkUnknown && typeId != null) {
-               UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(
-                 CONFIGURATION_TYPE_FEATURE_ID,
-                 ExecutionBundle.message("plugins.advertiser.feature.run.configuration"),
-                 typeId,
-                 null
-               )
+               UnknownFeaturesCollector.getInstance(project)
+                 .registerUnknownFeature(UnknownFeature(
+                   CONFIGURATION_TYPE_FEATURE_ID,
+                   ExecutionBundle.message("plugins.advertiser.feature.run.configuration"),
+                   typeId,
+                 ))
              }
            }
   }

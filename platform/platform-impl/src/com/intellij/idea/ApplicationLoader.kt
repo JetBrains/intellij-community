@@ -16,6 +16,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -26,7 +27,6 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
@@ -41,12 +41,15 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.AsyncProcessIcon
+import com.jetbrains.rd.util.forEachReversed
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
+import java.awt.Frame
+import java.awt.Window
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -72,7 +75,7 @@ suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>)
     PluginManagerCore.getInitPluginFuture().await()
   }
 
-  val (app, patchHtmlStyleJob) = initAppActivity.runChild("app waiting") {
+  val (app, initLafJob) = initAppActivity.runChild("app waiting") {
     @Suppress("UNCHECKED_CAST")
     appDeferred.await() as Pair<ApplicationImpl, Job?>
   }
@@ -89,11 +92,15 @@ suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>)
   }
 
   coroutineScope {
+    // LaF must be initialized before app init because icons maybe requested and as result,
+    // scale must be already initialized (especially important for Linux)
+    runActivity("init laf waiting") {
+      initLafJob?.join()
+    }
+
     // executed in main thread
     launch {
-      patchHtmlStyleJob?.join()
-
-      val lafManagerDeferred = launch(CoroutineName("laf initialization") + SwingDispatcher) {
+      val lafManagerDeferred = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
         // don't wait for result - we just need to trigger initialization if not yet created
         app.getServiceAsync(LafManager::class.java)
       }
@@ -133,7 +140,7 @@ private suspend fun initApplicationImpl(args: List<String>,
     launch {
       initAppActivity.runChild("old component init task creating", app::createInitOldComponentsTask)?.let { loadComponentInEdtTask ->
         val placeOnEventQueueActivity = initAppActivity.startChild("place on event queue")
-        withContext(SwingDispatcher) {
+        withContext(RawSwingDispatcher) {
           placeOnEventQueueActivity.end()
           loadComponentInEdtTask()
         }
@@ -345,6 +352,17 @@ private fun addActivateAndWindowsCliListeners() {
   })
 }
 
+// find a frame to activate
+private fun findVisibleFrame(): Window? {
+  // we assume that the most recently created frame is the most relevant one
+  Frame.getFrames().forEachReversed {
+    if (it.isVisible) {
+      return it
+    }
+  }
+  return null
+}
+
 private suspend fun handleExternalCommand(args: List<String>, currentDirectory: String?): CommandLineProcessorResult {
   val result = if (args.isNotEmpty() && args[0].contains(URLUtil.SCHEME_SEPARATOR)) {
     CommandLineProcessorResult(project = null, result = CommandLineProcessor.processProtocolCommand(args[0]))
@@ -359,15 +377,13 @@ private suspend fun handleExternalCommand(args: List<String>, currentDirectory: 
       return@launch
     }
 
-    val windowManager = WindowManager.getInstance()
     if (result.project == null) {
-      windowManager.findVisibleFrame()?.let { frame ->
-        frame.toFront()
-        DialogEarthquakeShaker.shake(frame)
+      findVisibleFrame()?.let { frame ->
+        AppIcon.getInstance().requestFocus(frame)
       }
     }
     else {
-      windowManager.getIdeFrame(result.project)?.let {
+      WindowManager.getInstance().getIdeFrame(result.project)?.let {
         AppIcon.getInstance().requestFocus(it)
       }
     }
@@ -447,10 +463,10 @@ fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedList
 }
 
 @Internal
-internal inline fun <T> ExtensionPointName<T>.processExtensions(consumer: (extension: T, pluginDescriptor: PluginDescriptor) -> Unit) {
+internal inline fun <T : Any> ExtensionPointName<T>.processExtensions(consumer: (extension: T, pluginDescriptor: PluginDescriptor) -> Unit) {
   val app = ApplicationManager.getApplication()
   val extensionArea = app.extensionArea as ExtensionsAreaImpl
-  for (adapter in extensionArea.getExtensionPoint<T>(name).getSortedAdapters()) {
+  for (adapter in extensionArea.getExtensionPoint<T>(name).sortedAdapters) {
     val extension: T = try {
       adapter.createInstance(app) ?: continue
     }

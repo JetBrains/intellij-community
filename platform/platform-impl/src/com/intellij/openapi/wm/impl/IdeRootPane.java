@@ -53,10 +53,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 @ApiStatus.Internal
 public class IdeRootPane extends JRootPane implements UISettingsListener {
   /**
@@ -625,7 +621,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
    */
   @ApiStatus.Internal
   public static boolean isMenuButtonInToolbar() {
-    return SystemInfoRt.isLinux && ExperimentalUI.isNewUI() && FrameInfoHelper.isFloatingMenuBarSupported();
+    UISettings uiSettings = UISettings.getShadowInstance();
+    return SystemInfoRt.isXWindow && ExperimentalUI.isNewUI() && !uiSettings.getSeparateMainMenu() && FrameInfoHelper.isFloatingMenuBarSupported();
   }
 
   private static boolean isDecoratedMenu() {

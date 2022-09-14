@@ -31,7 +31,7 @@
 
   <extensionPoints>
     <extensionPoint name="ift.language.extension"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+                    beanClass="training.lang.LangSupportBean" dynamic="true">
       <with attribute="implementationClass" implements="training.lang.LangSupport"/>
     </extensionPoint>
 

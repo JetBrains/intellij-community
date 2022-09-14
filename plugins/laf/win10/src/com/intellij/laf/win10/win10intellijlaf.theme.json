@@ -75,7 +75,8 @@
 
     "ComboBoxButton": {
       "arrowIcon": "/icons/comboDropTriangle.svg",
-      "arrowIconDisabled": "/icons/comboDropTriangleDisabled.svg"
+      "arrowIconDisabled": "/icons/comboDropTriangleDisabled.svg",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ComboBoxButtonUI"
     },
 
     "CompletionPopup.nonFocusedState": true,

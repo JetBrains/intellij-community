@@ -57,7 +57,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
     @Override
     @NotNull
     public String getName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", deepHashCode ? "Arrays.deepHashCode()" : "Arrays.hashCode()");
+      return CommonQuickFixBundle.message("fix.replace.with.x.call", deepHashCode ? "Arrays.deepHashCode()" : "Arrays.hashCode()");
     }
 
     @NotNull

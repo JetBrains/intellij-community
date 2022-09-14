@@ -547,9 +547,15 @@ public final class FindInProjectUtil {
       return ActionManager.getInstance().getKeyboardShortcut("FindInPath");
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
+    public @Nullable Object getData(@NotNull String dataId) {
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)slowId -> getSlowData(slowId);
+      }
+      return null;
+    }
+
+    private @Nullable Object getSlowData(@NotNull String dataId) {
       if (UsageView.USAGE_SCOPE.is(dataId)) {
         return getScopeFromModel(myProject, myFindModel);
       }

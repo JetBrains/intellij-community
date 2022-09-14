@@ -26,10 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class ShowJavadocAction extends AnAction {
 
   @Override

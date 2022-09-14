@@ -153,7 +153,9 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   }
 
   override fun overridePort(port: Int?) {
-    portOverride = port
+    if (port != this.port) {
+      portOverride = port
+    }
   }
 
   override fun configureRequestToWebServer(connection: URLConnection) {

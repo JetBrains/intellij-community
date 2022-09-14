@@ -31,21 +31,26 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
     private val LOG = logger<ModuleBridgeLoaderService>()
   }
 
-  private suspend fun loadModules(project: Project, activity: Activity?) {
+  private suspend fun loadModules(project: Project, activity: Activity?, loadedFromCache: Boolean) {
+    val componentManager = project as ComponentManagerEx
+
     val childActivity = activity?.startChild("modules instantiation")
-    val componentManagerEx = project as ComponentManagerEx
-    val moduleManager = componentManagerEx.getServiceAsync(ModuleManager::class.java).await() as ModuleManagerComponentBridge
+    // ModuleManagerComponentBridge calls WorkspaceModel in init - getting entityStorage
+    componentManager.getServiceAsync(WorkspaceModel::class.java).await()
+
+    val moduleManager = componentManager.getServiceAsync(ModuleManager::class.java).await() as ModuleManagerComponentBridge
     val entities = moduleManager.entityStore.current.entities(ModuleEntity::class.java)
-    moduleManager.loadModules(entities)
+    moduleManager.loadModules(entities, loadedFromCache)
     childActivity?.setDescription("modules count: ${moduleManager.modules.size}")
     childActivity?.end()
-    val librariesActivity = StartUpMeasurer.startActivity("libraries instantiation")
-    (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries()
-    librariesActivity.end()
+
+    runActivity("libraries instantiation") {
+      (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries()
+    }
     activity?.end()
   }
 
-  override suspend fun containerConfigured(project: Project) {
+  override suspend fun execute(project: Project) {
     val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
     val componentManagerEx = project as ComponentManagerEx
     val workspaceModel = componentManagerEx.getServiceAsync(WorkspaceModel::class.java).await() as WorkspaceModelImpl
@@ -57,7 +62,7 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
         workspaceModel.ignoreCache() // sets `WorkspaceModelImpl#loadedFromCache` to `false`
         project.putUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES, true)
       }
-      loadModules(project, activity)
+      loadModules(project, activity, workspaceModel.loadedFromCache)
     }
     else {
       LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
@@ -66,7 +71,7 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
 
       projectModelSynchronizer.applyLoadedStorage(storeToEntitySources)
       project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
-      loadModules(project, activity)
+      loadModules(project, activity, workspaceModel.loadedFromCache)
     }
 
     runActivity("tracked libraries setup") {

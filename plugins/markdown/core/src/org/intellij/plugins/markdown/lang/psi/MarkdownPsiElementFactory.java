@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
@@ -160,8 +161,17 @@ public final class MarkdownPsiElementFactory {
     builder.append('\n');
     builder.append(text);
     final var file = createFile(project, builder.toString());
-    final var table = Objects.requireNonNull(file.findElementAt(0)).getParent().getParent();
-    return Objects.requireNonNull(PsiTreeUtil.getChildOfType(table, MarkdownTableSeparatorRow.class));
+    final var table = PsiTreeUtil.getParentOfType(file.findElementAt(0), MarkdownTable.class);
+    if (table == null) {
+      final var psi = DebugUtil.psiToString(file, true, true);
+      throw new IllegalStateException("Failed to find table. PSI:\n" + psi);
+    }
+    final var separatorRowElement = PsiTreeUtil.getChildOfType(table, MarkdownTableSeparatorRow.class);
+    if (separatorRowElement == null) {
+      final var psi = DebugUtil.psiToString(file, true, true);
+      throw new IllegalStateException("Failed to find separator row. PSI:\n" + psi);
+    }
+    return separatorRowElement;
   }
 
   @ApiStatus.Experimental

@@ -25,6 +25,16 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("delegationExtFunction")
+        public void testDelegationExtFunction() throws Exception {
+            runTest("testData/editor/autoImport/delegationExtFunction/");
+        }
+
+        @TestMetadata("extFunctionWithGenerics")
+        public void testExtFunctionWithGenerics() throws Exception {
+            runTest("testData/editor/autoImport/extFunctionWithGenerics/");
+        }
+
         @TestMetadata("javaClass")
         public void testJavaClass() throws Exception {
             runTest("testData/editor/autoImport/javaClass/");
@@ -46,6 +56,16 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
     public static class WithoutAutoImport extends AbstractAutoImportTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestWithoutAutoImport, this, testDataFilePath);
+        }
+
+        @TestMetadata("delegationExtFunction")
+        public void testDelegationExtFunction() throws Exception {
+            runTest("testData/editor/autoImport/delegationExtFunction/");
+        }
+
+        @TestMetadata("extFunctionWithGenerics")
+        public void testExtFunctionWithGenerics() throws Exception {
+            runTest("testData/editor/autoImport/extFunctionWithGenerics/");
         }
 
         @TestMetadata("javaClass")

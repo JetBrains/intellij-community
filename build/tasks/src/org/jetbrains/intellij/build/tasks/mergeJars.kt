@@ -3,21 +3,17 @@
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 package org.jetbrains.intellij.build.tasks
 
-import com.intellij.diagnostic.telemetry.use
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.context.Context
 import org.jetbrains.intellij.build.io.*
-import org.jetbrains.intellij.build.tracer
 import java.nio.file.Path
 import java.nio.file.PathMatcher
-import java.util.concurrent.ForkJoinTask
 import java.util.function.IntConsumer
 import java.util.zip.Deflater
 
-private const val DO_NOT_EXPORT_TO_CONSOLE = "_CES_"
-
 sealed interface Source {
   val sizeConsumer: IntConsumer?
+
+  val filter: ((String) -> Boolean)?
+    get() = null
 }
 
 private val USER_HOME = Path.of(System.getProperty("user.home"))
@@ -25,6 +21,7 @@ private val MAVEN_REPO = USER_HOME.resolve(".m2/repository")
 
 data class ZipSource(val file: Path,
                      val excludes: List<Regex> = emptyList(),
+                     override val filter: ((String) -> Boolean)? = null,
                      override val sizeConsumer: IntConsumer? = null) : Source, Comparable<ZipSource> {
   override fun compareTo(other: ZipSource) = file.compareTo(other.file)
 
@@ -79,47 +76,12 @@ data class InMemoryContentSource(val relativePath: String, val data: ByteArray, 
   }
 }
 
-fun createZipSource(file: Path, sizeConsumer: IntConsumer?): ZipSource {
-  return ZipSource(file = file, sizeConsumer = sizeConsumer)
-}
-
-fun buildJars(descriptors: List<Triple<Path, String, List<Source>>>, dryRun: Boolean) {
-  val uniqueFiles = HashMap<Path, List<Source>>()
-  for (descriptor in descriptors) {
-    val existing = uniqueFiles.putIfAbsent(descriptor.first, descriptor.third)
-    if (existing != null) {
-      throw IllegalStateException(
-        "File ${descriptor.first} is already associated." +
-        "\nPrevious:\n  ${existing.joinToString(separator = "\n  ")}" +
-        "\nCurrent:\n  ${descriptor.third.joinToString(separator = "\n  ")}"
-      )
-    }
-  }
-
-  val traceContext = Context.current()
-
-  ForkJoinTask.invokeAll(descriptors.map { item ->
-    ForkJoinTask.adapt {
-      val file = item.first
-      tracer.spanBuilder("build jar")
-        .setParent(traceContext)
-        .setAttribute(DO_NOT_EXPORT_TO_CONSOLE, true)
-        .setAttribute("jar", file.toString())
-        .setAttribute(AttributeKey.stringArrayKey("sources"), item.third.map { item.toString() })
-        .use {
-          buildJar(file, item.third, dryRun = dryRun)
-        }
-
-      // app.jar is combined later with other JARs and then re-ordered
-      if (!dryRun && item.second.isNotEmpty() && item.second != "lib/app.jar") {
-        reorderJar(relativePath = item.second, file = file, traceContext = traceContext)
-      }
-    }
-  })
-}
-
 @JvmOverloads
-fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false, dryRun: Boolean = false) {
+fun buildJar(targetFile: Path,
+             sources: List<Source>,
+             compress: Boolean = false,
+             dryRun: Boolean = false,
+             nativeFiles: MutableMap<ZipSource, MutableList<String>>? = null) {
   if (dryRun) {
     for (source in sources) {
       source.sizeConsumer?.accept(0)
@@ -127,7 +89,6 @@ fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false,
     return
   }
 
-  val forbidNativeFiles = targetFile.fileName.toString() == "app.jar"
   val packageIndexBuilder = if (!compress) PackageIndexBuilder() else null
   writeNewFile(targetFile) { outChannel ->
     ZipFileWriter(outChannel, if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use { zipCreator ->
@@ -167,14 +128,26 @@ fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false,
             val sourceFile = source.file
             val requiresMavenFiles = targetFile.fileName.toString().startsWith("junixsocket-")
             readZipFile(sourceFile) { name, entry ->
-              if (forbidNativeFiles && (name.endsWith(".jnilib") || name.endsWith(".dylib") || name.endsWith(".so"))) {
-                throw IllegalStateException("Library with native files must be packed separately " +
-                                            "(sourceFile=$sourceFile, targetFile=$targetFile, fileName=${name})")
+              if (nativeFiles != null && isNative(name)) {
+                nativeFiles.computeIfAbsent(source) { mutableListOf() }.add(name)
               }
+              else {
+                val filter = source.filter
+                val isIncluded = if (filter == null) {
+                  checkName(name = name,
+                            uniqueNames = uniqueNames,
+                            excludes = source.excludes,
+                            includeManifest = sources.size == 1,
+                            requiresMavenFiles = requiresMavenFiles)
+                }
+                else {
+                  filter(name)
+                }
 
-              if (checkName(name, uniqueNames, source.excludes, includeManifest = sources.size == 1, requiresMavenFiles = requiresMavenFiles)) {
-                packageIndexBuilder?.addFile(name)
-                zipCreator.uncompressedData(name, entry.getByteBuffer())
+                if (isIncluded) {
+                  packageIndexBuilder?.addFile(name)
+                  zipCreator.uncompressedData(name, entry.getByteBuffer())
+                }
               }
             }
           }
@@ -186,6 +159,13 @@ fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false,
       packageIndexBuilder?.writePackageIndex(zipCreator)
     }
   }
+}
+
+private fun isNative(name: String): Boolean {
+  return name.endsWith(".jnilib") ||
+         name.endsWith(".dylib") ||
+         name.endsWith(".so") ||
+         name.endsWith(".tbd")
 }
 
 private fun getIgnoredNames(): Set<String> {
@@ -232,6 +212,7 @@ private fun checkName(name: String,
          !name.endsWith(".kotlin_metadata") &&
          (includeManifest || name != "META-INF/MANIFEST.MF") &&
          !name.startsWith("license/") &&
+         !name.startsWith("META-INF/license/") &&
          !name.startsWith("native-image/") &&
          !name.startsWith("native/") &&
          !name.startsWith("licenses/") &&

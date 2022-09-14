@@ -24,7 +24,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
+open class ListVFUEntityImpl(val dataSource: ListVFUEntityData) : ListVFUEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -34,15 +34,11 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
-  @JvmField
-  var _fileProperty: List<VirtualFileUrl>? = null
   override val fileProperty: List<VirtualFileUrl>
-    get() = _fileProperty!!
+    get() = dataSource.fileProperty
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -161,13 +157,13 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): ListVFUEntity {
-    val entity = ListVFUEntityImpl()
-    entity._data = data
-    entity._fileProperty = fileProperty.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ListVFUEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): ListVFUEntityData {

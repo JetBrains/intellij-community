@@ -4,8 +4,6 @@ package com.intellij.codeInsight.inspections;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -324,11 +322,11 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.enableInspections(new GuavaInspection());
     for (HighlightInfo info : myFixture.doHighlighting())
       if (TypeMigrationBundle.message("guava.functional.primitives.can.be.replaced.by.java.api.problem.description").equals(info.getDescription())) {
-        final Pair<HighlightInfo.IntentionActionDescriptor, TextRange> marker = info.quickFixActionRanges.get(0);
+        HighlightInfo.IntentionActionDescriptor desc = info.findRegisteredQuickFix((descriptor, range) -> descriptor);
         final PsiElement someElement = myFixture.getFile().findElementAt(0);
         assertNotNull(someElement);
         boolean doBreak = false;
-        for (IntentionAction option : marker.getFirst().getOptions(someElement, myFixture.getEditor())) {
+        for (IntentionAction option : desc.getOptions(someElement, myFixture.getEditor())) {
           if (option instanceof CleanupInspectionIntention) {
             myFixture.launchAction(option);
             doBreak = true;

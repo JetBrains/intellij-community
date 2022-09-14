@@ -7,7 +7,6 @@ import static com.intellij.json.JsonElementTypes.*;
 import static com.intellij.json.JsonElementTypes.LINE_COMMENT;
 
 public class JsonTokenSets {
-  public static final TokenSet WHITE_SPACES = TokenSet.WHITE_SPACE;
   public static final TokenSet STRING_LITERALS = TokenSet.create(SINGLE_QUOTED_STRING, DOUBLE_QUOTED_STRING);
 
   public static final TokenSet JSON_CONTAINERS = TokenSet.create(OBJECT, ARRAY);

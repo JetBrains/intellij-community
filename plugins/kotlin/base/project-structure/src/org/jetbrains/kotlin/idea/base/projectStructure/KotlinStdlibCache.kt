@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -120,10 +121,10 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
     override fun dispose() = Unit
 
     private abstract class BaseStdLibCache(project: Project) : SynchronizedFineGrainedEntityCache<LibraryInfo, Boolean>(project, cleanOnLowMemory = true),
-                                                               OutdatedLibraryInfoListener {
+                                                               LibraryInfoListener {
         override fun subscribe() {
             val busConnection = project.messageBus.connect(this)
-            busConnection.subscribe(OutdatedLibraryInfoListener.TOPIC, this)
+            busConnection.subscribe(LibraryInfoListener.TOPIC, this)
         }
 
         override fun checkKeyValidity(key: LibraryInfo) {
@@ -170,13 +171,13 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         override fun dispose() = Unit
 
         private abstract inner class AbstractCache<Key : IdeaModuleInfo> :
-            SynchronizedFineGrainedEntityCache<Key, StdlibDependency>(project, cleanOnLowMemory = true),
-            OutdatedLibraryInfoListener,
-            ProjectJdkTable.Listener,
-            ModuleRootListener {
+          SynchronizedFineGrainedEntityCache<Key, StdlibDependency>(project, cleanOnLowMemory = true),
+          LibraryInfoListener,
+          ProjectJdkTable.Listener,
+          ModuleRootListener {
             override fun subscribe() {
                 val connection = project.messageBus.connect(this)
-                connection.subscribe(OutdatedLibraryInfoListener.TOPIC, this)
+                connection.subscribe(LibraryInfoListener.TOPIC, this)
                 connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
                 connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
                 subscribe(connection)
@@ -190,8 +191,13 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             } as LibraryInfo?
 
             protected fun LibraryInfo?.toStdlibDependency(): StdlibDependency {
-                if (this == null && runReadAction { project.isDisposed || DumbService.isDumb(project) }) {
-                    throw ProcessCanceledException()
+                if (this == null) {
+                    if (runReadAction { project.isDisposed }) {
+                        throw ProcessCanceledException()
+                    }
+                    if (runReadAction { DumbService.isDumb(project) }) {
+                        throw IndexNotReadyException.create()
+                    }
                 }
 
                 return StdlibDependency(this)
@@ -279,20 +285,22 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
                     null
                 } ?: key.findStdLib()
 
-                val stdlibDependency = stdLib.toStdlibDependency()
+                return stdLib.toStdlibDependency()
+            }
+
+            override fun postProcessNewValue(key: IdeaModuleInfo, value: StdlibDependency) {
+                val moduleSourceInfo = key.safeAs<ModuleSourceInfo>()
 
                 moduleSourceInfo?.let {
                     val result = hashMapOf<LibraryInfo, StdlibDependency>()
                     // all module dependencies have same stdlib as module itself
                     key.dependencies().forEach {
                         if (it is LibraryInfo) {
-                            result[it] = stdlibDependency
+                            result[it] = value
                         }
                     }
                     libraryCache.putExtraValues(result)
                 }
-
-                return stdlibDependency
             }
 
             override fun checkKeyValidity(key: IdeaModuleInfo) {

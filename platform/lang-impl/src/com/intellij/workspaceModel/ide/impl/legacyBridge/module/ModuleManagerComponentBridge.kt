@@ -7,8 +7,8 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.AutomaticModuleUnloader
@@ -101,10 +101,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
             //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
             rootsChangeListener.beforeChanged(event)
           }
-          for (change in event.getChanges(FacetEntity::class.java)) {
-            LOG.debug { "Fire 'before' events for facet change $change" }
-            FacetEntityChangeListener.getInstance(project).processBeforeChange(change, event)
-          }
           val moduleMap = event.storageBefore.moduleMap
           for (change in event.getChanges(ModuleEntity::class.java)) {
             if (change is EntityChange.Removed) {
@@ -120,9 +116,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         override fun changed(event: VersionedStorageChange) {
           val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
           val changes = event.getChanges(ModuleEntity::class.java)
-          val facetChanges = event.getChanges(FacetEntity::class.java)
-          val addedModulesNames = changes.filterIsInstance<EntityChange.Added<ModuleEntity>>().mapTo(HashSet()) { it.entity.name }
-          if (changes.isNotEmpty() || moduleLibraryChanges.isNotEmpty() || facetChanges.isNotEmpty()) {
+          if (changes.isNotEmpty() || moduleLibraryChanges.isNotEmpty()) {
             executeOrQueueOnDispatchThread {
               LOG.debug("Process changed modules and facets")
               incModificationCount()
@@ -130,16 +124,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
                 when (change) {
                   is EntityChange.Removed -> processModuleLibraryChange(change, event)
                   is EntityChange.Replaced -> processModuleLibraryChange(change, event)
-                  is EntityChange.Added -> Unit
-                }
-              }
-
-              for (change in facetChanges) {
-                when (change) {
-                  is EntityChange.Removed -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore,
-                                                                                                          addedModulesNames)
-                  is EntityChange.Replaced -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore,
-                                                                                                           addedModulesNames)
                   is EntityChange.Added -> Unit
                 }
               }
@@ -153,13 +137,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
               for (change in moduleLibraryChanges) {
                 if (change is EntityChange.Added) processModuleLibraryChange(change, event)
               }
-
-              for (change in facetChanges) {
-                if (change is EntityChange.Added) {
-                  FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
-                }
-              }
-
               // After every change processed
               postProcessModules(oldModuleNames)
               incModificationCount()
@@ -172,6 +149,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
           }
         }
       })
+      // Instantiate facet change listener as early as possible
+      project.service<FacetEntityChangeListener>()
     }
   }
 
@@ -328,8 +307,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     (module as ModuleBridgeImpl).registerService(serviceInterface = IComponentStore::class.java,
                                                  implementation = NonPersistentModuleStore::class.java,
                                                  pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor,
-                                                 override = true,
-                                                 preloadMode = ServiceDescriptor.PreloadMode.FALSE)
+                                                 override = true)
   }
 
   override fun loadModuleToBuilder(moduleName: String, filePath: String, diff: MutableEntityStorage): ModuleEntity {

@@ -145,8 +145,6 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
   override val testScriptProperties: TaskTestContext.TestScriptProperties
     get() = TaskTestContext.TestScriptProperties(duration = 20)
 
-  override val suitableTips = listOf("SelectRunDebugConfiguration")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("run.configuration.help.link"),
          LessonUtil.getHelpLink("run-debug-configuration.html")),

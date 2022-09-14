@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.PlatformIcons
+import com.intellij.ui.IconManager
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
@@ -123,7 +123,7 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
           LookupElementBuilder
             .create(if (addQuotes) "'$key'" else key)
             .withTypeText("dict key")
-            .withIcon(PlatformIcons.PARAMETER_ICON)
+            .withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter))
         )
       }
     }

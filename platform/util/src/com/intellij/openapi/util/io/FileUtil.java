@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.UtilBundle;
@@ -13,7 +13,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.*;
@@ -39,17 +38,6 @@ public class FileUtil extends FileUtilRt {
   public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
   public static final int REGEX_PATTERN_FLAGS = SystemInfoRt.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
-
-  /**
-   * @deprecated use {@link com.intellij.util.containers.CollectionFactory#createFilePathSet()}, or other createFilePath*() methods from there
-   */
-  @SuppressWarnings("unchecked")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY = 
-    SystemInfoRt.isFileSystemCaseSensitive
-    ? TObjectHashingStrategy.CANONICAL
-    : CaseInsensitiveStringHashingStrategy.INSTANCE;
 
   /**
    * @deprecated use {@link com.intellij.util.containers.CollectionFactory#createFilePathSet()}, or other createFilePath*() methods from there
@@ -389,7 +377,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void delete(@NotNull Path path) throws IOException {
-    FileUtilRt.deleteRecursivelyNIO(path, null);
+    deleteRecursively(path, null);
   }
 
   public static boolean createParentDirs(@NotNull File file) {

@@ -328,7 +328,6 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     private static final CallMatcher AS_LIST = staticCall(JAVA_UTIL_ARRAYS, "asList").parameterCount(1);
     private static final CallMatcher ENUMSET_OF = staticCall("java.util.EnumSet", "of");
     private static final CallMatcher LIST_OF = staticCall(JAVA_UTIL_LIST, "of");
-    private static final CallMatcher SET_OF = staticCall(JAVA_UTIL_SET, "of");
 
     private static final CallMapper<ReplaceCollectionStreamFix> COLLECTION_TO_STREAM_MAPPER = new CallMapper<ReplaceCollectionStreamFix>()
       .register(EMPTY_LIST,
@@ -345,8 +344,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       .register(ENUMSET_OF, call ->
         isEnumSetReplaceableWithStream(call) ? new ReplaceCollectionStreamFix("EnumSet.of()", JAVA_UTIL_STREAM_STREAM,
                                                                               OF_METHOD) : null)
-      .register(LIST_OF, call -> new ReplaceCollectionStreamFix("List.of()", JAVA_UTIL_STREAM_STREAM, OF_METHOD))
-      .register(SET_OF, call -> new ReplaceCollectionStreamFix("Set.of()", JAVA_UTIL_STREAM_STREAM, OF_METHOD));
+      .register(LIST_OF, call -> new ReplaceCollectionStreamFix("List.of()", JAVA_UTIL_STREAM_STREAM, OF_METHOD));
 
     private static final String STREAM_SUFFIX = ".stream()";
 

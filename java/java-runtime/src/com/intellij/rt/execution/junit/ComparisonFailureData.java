@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -147,7 +148,7 @@ public class ComparisonFailureData {
         File tempFile = File.createTempFile(expectedOrActualPrefix, "");
         OutputStream stream = new FileOutputStream(tempFile);
         try {
-          stream.write(text.getBytes("UTF-8"), 0, text.length());
+          stream.write(text.getBytes(StandardCharsets.UTF_8), 0, text.length());
         }
         finally {
           stream.close();
@@ -191,11 +192,19 @@ public class ComparisonFailureData {
   public static ComparisonFailureData create(Throwable assertion) {
     if (assertion instanceof FileComparisonData) {
       final FileComparisonData comparisonFailure = (FileComparisonData)assertion;
-      Object actual = comparisonFailure.getActual();
-      Object expected = comparisonFailure.getExpected();
+      String actual = comparisonFailure.getActualStringPresentation();
+      String expected = comparisonFailure.getExpectedStringPresentation();
       if (actual != null && expected != null) {
-        return new ComparisonFailureData(expected.toString(), actual.toString(),
-                                         comparisonFailure.getFilePath(), comparisonFailure.getActualFilePath());
+        return new ComparisonFailureData(expected, actual, comparisonFailure.getFilePath(), comparisonFailure.getActualFilePath());
+      }
+    }
+
+    if (assertion instanceof FileComparisonFailure) {
+      final FileComparisonFailure comparisonFailure = (FileComparisonFailure)assertion;
+      String actual = comparisonFailure.getActual();
+      String expected = comparisonFailure.getExpected();
+      if (actual != null && expected != null) {
+        return new ComparisonFailureData(expected, actual, comparisonFailure.getFilePath(), comparisonFailure.getActualFilePath());
       }
     }
 

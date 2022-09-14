@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.execution.ExecutionBundle
@@ -42,7 +42,10 @@ import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.*
+import com.intellij.util.Alarm
+import com.intellij.util.ArrayUtilRt
+import com.intellij.util.IconUtil
+import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.EditableModel
@@ -191,7 +194,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       override fun getSourceActions(c: JComponent) = COPY_OR_MOVE
     }
     TreeUtil.installActions(tree)
-    TreeSpeedSearch(tree) { o ->
+    TreeSpeedSearch(tree, false) { o ->
       val node = o.lastPathComponent as DefaultMutableTreeNode
       when (val userObject = node.userObject) {
         is RunnerAndConfigurationSettingsImpl -> return@TreeSpeedSearch userObject.name
@@ -1093,7 +1096,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
   protected inner class MyCopyAction : AnAction(ExecutionBundle.message("copy.configuration.action.name"),
                                                 ExecutionBundle.message("copy.configuration.action.name"),
-                                                PlatformIcons.COPY_ICON), PossiblyDumbAware {
+                                                IconManager.getInstance().getPlatformIcon(PlatformIcons.Copy)), PossiblyDumbAware {
     init {
       val action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_DUPLICATE)
       registerCustomShortcutSet(action.shortcutSet, tree)

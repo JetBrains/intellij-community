@@ -73,7 +73,8 @@ internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     internal val myModel = ApplicationNotificationModel()
 
     fun addNotification(project: Project?, notification: Notification) {
-      if (ActionCenter.isEnabled() && notification.canShowFor(project)) {
+      if (ActionCenter.isEnabled() && notification.canShowFor(project) && NotificationsConfigurationImpl.getSettings(
+          notification.groupId).isShouldLog) {
         myModel.addNotification(project, notification)
       }
     }
@@ -411,9 +412,9 @@ private fun JComponent.mediumFontFunction() {
 }
 
 private fun JComponent.smallFontFunction() {
-  font = JBFont.small()
+  font = JBFont.smallOrNewUiMedium()
   val f: (JComponent) -> Unit = {
-    it.font = JBFont.small()
+    it.font = JBFont.smallOrNewUiMedium()
   }
   putClientProperty(NotificationGroupComponent.FONT_KEY, f)
 }

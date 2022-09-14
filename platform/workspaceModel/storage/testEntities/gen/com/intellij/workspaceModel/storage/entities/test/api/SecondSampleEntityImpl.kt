@@ -24,7 +24,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SecondSampleEntityImpl : SecondSampleEntity, WorkspaceEntityBase() {
+open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : SecondSampleEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -34,7 +34,7 @@ open class SecondSampleEntityImpl : SecondSampleEntity, WorkspaceEntityBase() {
 
   }
 
-  override var intProperty: Int = 0
+  override val intProperty: Int get() = dataSource.intProperty
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -124,12 +124,13 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): SecondSampleEntity {
-    val entity = SecondSampleEntityImpl()
-    entity.intProperty = intProperty
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SecondSampleEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

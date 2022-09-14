@@ -140,7 +140,7 @@ class RunBlockingCancellableTest : CancellationTest() {
       runBlockingCancellable {
         progressSink?.text("Hello")
         progressSink?.details("World")
-        progressSink()?.fraction(0.42)
+        coroutineContext.progressSink?.fraction(0.42)
       }
     }
 

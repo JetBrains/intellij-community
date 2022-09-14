@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RemoveEmptyClassBodyInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SortModifiersInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.KotlinInspectionFacade
 import org.jetbrains.kotlin.idea.inspections.*
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToElvisInspection
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToSafeAccessInspection
@@ -54,16 +54,19 @@ class NewJ2kPostProcessor : PostProcessor {
     ) {
         if (converterContext !is NewJ2kConverterContext) error("Invalid converter context for new J2K")
         for ((i, group) in processings.withIndex()) {
+            ProgressManager.checkCanceled()
             onPhaseChanged?.invoke(i, group.description)
             for (processing in group.processings) {
+                ProgressManager.checkCanceled()
                 try {
                     processing.runProcessingConsideringOptions(target, converterContext)
+
+                    target.files().forEach(::commitFile)
                 } catch (e: ProcessCanceledException) {
                     throw e
                 } catch (t: Throwable) {
-                    LOG.error(t)
-                } finally {
                     target.files().forEach(::commitFile)
+                    LOG.error(t)
                 }
             }
         }
@@ -178,7 +181,7 @@ private val removeRedundantElementsProcessingGroup =
           RemoveJavaStreamsCollectCallTypeArgumentsProcessing(),
           ExplicitThisInspectionBasedProcessing(),
           RemoveOpenModifierOnTopLevelDeclarationsProcessing(),
-          inspectionBasedProcessing(RemoveEmptyClassBodyInspection())
+          inspectionBasedProcessing(KotlinInspectionFacade.instance.removeEmptyClassBody)
         )
     )
 
@@ -214,7 +217,7 @@ private val inspectionLikePostProcessingGroup =
         },
       inspectionBasedProcessing(IfThenToSafeAccessInspection(inlineWithPrompt = false), writeActionNeeded = false),
       inspectionBasedProcessing(IfThenToElvisInspection(highlightStatement = true, inlineWithPrompt = false), writeActionNeeded = false),
-      inspectionBasedProcessing(SimplifyNegatedBinaryExpressionInspection()),
+      inspectionBasedProcessing(KotlinInspectionFacade.instance.simplifyNegatedBinaryExpression),
       inspectionBasedProcessing(ReplaceGetOrSetInspection()),
       intentionBasedProcessing(ObjectLiteralToLambdaIntention(), writeActionNeeded = true),
       intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()),
@@ -228,7 +231,7 @@ private val inspectionLikePostProcessingGroup =
       RemoveForExpressionLoopParameterTypeProcessing(),
       intentionBasedProcessing(ReplaceMapGetOrDefaultIntention()),
       inspectionBasedProcessing(ReplaceGuardClauseWithFunctionCallInspection()),
-      inspectionBasedProcessing(SortModifiersInspection()),
+      inspectionBasedProcessing(KotlinInspectionFacade.instance.sortModifiers),
       intentionBasedProcessing(ConvertToRawStringTemplateIntention()) { element ->
             element.parents.none {
                 (it as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true

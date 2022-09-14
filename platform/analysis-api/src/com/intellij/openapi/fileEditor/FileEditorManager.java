@@ -26,6 +26,8 @@ public abstract class FileEditorManager {
     return project.getComponent(FileEditorManager.class);
   }
 
+  public abstract @Nullable FileEditorComposite getComposite(@NotNull VirtualFile file);
+
   /**
    * @param file file to open. File should be valid.
    *             Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.

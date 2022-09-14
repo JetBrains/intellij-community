@@ -46,10 +46,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class FormEditingUtil {
   private FormEditingUtil() {
   }

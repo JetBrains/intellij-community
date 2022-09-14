@@ -341,20 +341,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(file.getProject()).getFileLevelHighlights(file.getProject(), file);
     for (HighlightInfo info : infos) {
-      List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> fixRanges = info.quickFixActionRanges;
-      if (fixRanges != null) {
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : fixRanges) {
-          HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
-          if (actionInGroup.getAction().isAvailable(file.getProject(), editor, file)) {
-            result.add(actionInGroup.getAction());
-            for (IntentionAction subAction : actionInGroup.getOptions(file, editor)) {
-              if (subAction.isAvailable(file.getProject(), editor, file)) {
-                result.add(subAction);
-              }
+      info.findRegisteredQuickFix((descriptor, range) -> {
+        if (descriptor.getAction().isAvailable(file.getProject(), editor, file)) {
+          result.add(descriptor.getAction());
+          for (IntentionAction subAction : descriptor.getOptions(file, editor)) {
+            if (subAction.isAvailable(file.getProject(), editor, file)) {
+              result.add(subAction);
             }
           }
         }
-      }
+        return null;
+      });
     }
     return result;
   }

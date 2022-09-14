@@ -1,5 +1,5 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import extension function 'X.foo'" "true"
 // ERROR: No value passed for parameter 'p'
 // ERROR: Type mismatch: inferred type is Unit but String was expected
 /* IGNORE_FIR */
@@ -23,7 +23,7 @@ import main.X
 fun <T> X.foo(): T = TODO()
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import extension function 'X.foo'" "true"
 // ERROR: No value passed for parameter 'p'
 // ERROR: Type mismatch: inferred type is Unit but String was expected
 /* IGNORE_FIR */

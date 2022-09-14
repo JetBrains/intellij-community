@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
@@ -839,6 +840,10 @@ public final class ContainerUtil {
 
   @Contract(mutates = "param2")
   public static <T, V> V @NotNull [] map2Array(@NotNull Collection<? extends T> collection, V @NotNull [] to, @NotNull Function<? super T, ? extends V> mapper) {
+    return map2List(collection, mapper).toArray(to);
+  }
+  @Contract(mutates = "param2")
+  public static <T, V> V @NotNull [] map2Array(T @NotNull [] collection, V @NotNull [] to, @NotNull Function<? super T, ? extends V> mapper) {
     return map2List(collection, mapper).toArray(to);
   }
 
@@ -2781,5 +2786,22 @@ public final class ContainerUtil {
     int numberOfChunks = listSize / chunkSize;
     return IntStream.range(0, numberOfChunks * chunkSize == listSize ? numberOfChunks : numberOfChunks + 1)
       .mapToObj(i -> list.subList(i * chunkSize, Math.min(listSize, i * chunkSize + chunkSize)));
+  }
+
+  public static <T> @NotNull List<List<T>> groupSublistRuns(@NotNull List<T> list,
+                                                            @NotNull BiPredicate<? super T, ? super T> equality) {
+    if (list.isEmpty()) {
+      return emptyList();
+    }
+
+    List<List<T>> result = new ArrayList<>();
+    int lastIndex = 0;
+    for (int i = 0, size = list.size(); i < size; i++) {
+      if (i == size - 1 || !equality.test(list.get(i), list.get(i + 1))) {
+        result.add(list.subList(lastIndex, i + 1));
+        lastIndex = i + 1;
+      }
+    }
+    return result;
   }
 }

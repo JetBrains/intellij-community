@@ -215,6 +215,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/delegateExtensionSet.test");
         }
 
+        @TestMetadata("delegateGetValueFunction.before.Main.kt")
+        public void testDelegateGetValueFunction() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/delegateGetValueFunction.before.Main.kt");
+        }
+
         @TestMetadata("delegateNoOperator.test")
         public void testDelegateNoOperator() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/delegateNoOperator.test");

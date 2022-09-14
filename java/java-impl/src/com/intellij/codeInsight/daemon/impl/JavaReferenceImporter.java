@@ -31,6 +31,15 @@ public class JavaReferenceImporter implements ReferenceImporter {
     }
 
     int caretOffset = editor.getCaretModel().getOffset();
+    return autoImportReferenceAtOffset(editor, file, allowCaretNearRef, caretOffset);
+  }
+
+  @Override
+  public boolean autoImportReferenceAtOffset(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+    return autoImportReferenceAtOffset(editor, file, true, offset);
+  }
+
+  private static boolean autoImportReferenceAtOffset(@NotNull Editor editor, @NotNull PsiFile file, boolean allowCaretNearRef, int caretOffset) {
     Document document = editor.getDocument();
     int lineNumber = document.getLineNumber(caretOffset);
     int startOffset = document.getLineStartOffset(lineNumber);

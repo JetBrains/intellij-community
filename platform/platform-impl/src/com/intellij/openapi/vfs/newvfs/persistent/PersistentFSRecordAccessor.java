@@ -47,6 +47,7 @@ final class PersistentFSRecordAccessor {
     }
     // DbConnection.addFreeRecord(id); // important! Do not add fileId to free list until restart
     myFSConnection.getRecords().setFlags(id, FREE_RECORD_FLAG);
+    //TODO RC: should we call FSRecords.incModCount(id); here?
   }
 
   // todo: Address  / capacity store in records table, size store with payload

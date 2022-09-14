@@ -15,13 +15,13 @@
  */
 package git4idea.ui.branch;
 
-import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -52,8 +52,7 @@ public class GitBranchesAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     e.getPresentation().setEnabledAndVisible(project != null && !project.isDisposed() &&
-                                             !GitRepositoryManager.getInstance(project).getRepositories().isEmpty() &&
-                                             !ToolbarSettings.getInstance().isAvailable());
+                                             !GitRepositoryManager.getInstance(project).getRepositories().isEmpty());
   }
 
   @Override

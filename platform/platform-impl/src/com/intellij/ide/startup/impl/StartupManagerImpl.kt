@@ -4,7 +4,7 @@
 package com.intellij.ide.startup.impl
 
 import com.intellij.diagnostic.*
-import com.intellij.diagnostic.opentelemetry.TraceManager
+import com.intellij.diagnostic.telemetry.TraceManager
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.lightEdit.LightEdit
@@ -68,28 +68,28 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
   companion object {
     @VisibleForTesting
     fun addActivityEpListener(project: Project) {
-      StartupActivity.POST_STARTUP_ACTIVITY.addExtensionPointListener(object : ExtensionPointListener<StartupActivity?> {
-        override fun extensionAdded(activity: StartupActivity, descriptor: PluginDescriptor) {
-          if (project is LightEditCompatible && activity !is LightEditCompatible) {
+      StartupActivity.POST_STARTUP_ACTIVITY.addExtensionPointListener(object : ExtensionPointListener<StartupActivity> {
+        override fun extensionAdded(extension: StartupActivity, pluginDescriptor: PluginDescriptor) {
+          if (project is LightEditCompatible && extension !is LightEditCompatible) {
             return
           }
 
           val startupManager = getInstance(project) as StartupManagerImpl
-          val pluginId = descriptor.pluginId
+          val pluginId = pluginDescriptor.pluginId
           @Suppress("SSBasedInspection")
-          if (activity is DumbAware) {
+          if (extension is DumbAware) {
             project.coroutineScope.launch {
-              if (activity is ProjectPostStartupActivity) {
-                activity.execute(project)
+              if (extension is ProjectPostStartupActivity) {
+                extension.execute(project)
               }
               else {
-                startupManager.runActivityAndMeasureDuration(activity, pluginId)
+                startupManager.runActivityAndMeasureDuration(extension, pluginId)
               }
             }
           }
           else {
             DumbService.getInstance(project).unsafeRunWhenSmart {
-              startupManager.runActivityAndMeasureDuration(activity, pluginId)
+              startupManager.runActivityAndMeasureDuration(extension, pluginId)
             }
           }
         }
@@ -203,7 +203,8 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
                                                   && pluginId.idString != "com.intellij.clion-makefile"
                                                   && pluginId.idString != "com.intellij.clion-swift"
                                                   && pluginId.idString != "com.intellij.appcode"
-                                                  && pluginId.idString != "com.intellij.clion-compdb") {
+                                                  && pluginId.idString != "com.intellij.clion-compdb"
+                                                  && pluginId.idString != "com.intellij.kmm") {
         LOG.error("Only bundled plugin can define ${extensionPoint.name}: ${adapter.pluginDescriptor}")
         continue
       }
@@ -274,7 +275,9 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         @Suppress("SSBasedInspection")
         if (activity is DumbAware) {
           dumbService.runWithWaitForSmartModeDisabled().use {
-            runActivityAndMeasureDuration(activity, pluginDescriptor.pluginId)
+            blockingContext {
+              runActivityAndMeasureDuration(activity, pluginDescriptor.pluginId)
+            }
           }
           return@processExtensions
         }
@@ -286,13 +289,15 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
           // DumbService.unsafeRunWhenSmart throws an assertion in LightEdit mode, see LightEditDumbService.unsafeRunWhenSmart
           if (!isProjectLightEditCompatible) {
             counter.incrementAndGet()
-            dumbService.unsafeRunWhenSmart {
-              traceContext.makeCurrent()
-              val duration = runActivityAndMeasureDuration(activity, pluginDescriptor.pluginId)
-              if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
-                reportUiFreeze(uiFreezeWarned)
+            blockingContext {
+              dumbService.unsafeRunWhenSmart {
+                traceContext.makeCurrent()
+                val duration = runActivityAndMeasureDuration(activity, pluginDescriptor.pluginId)
+                if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
+                  reportUiFreeze(uiFreezeWarned)
+                }
+                dumbUnawarePostActivitiesPassed(edtActivity, counter.decrementAndGet())
               }
-              dumbUnawarePostActivitiesPassed(edtActivity, counter.decrementAndGet())
             }
           }
         }
@@ -378,7 +383,9 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
           .setAttribute(AttributeKey.stringKey("class"), runnableClass.name)
           .setAttribute(AttributeKey.stringKey("plugin"), pluginId.idString)
           .useWithScope {
-            runnable.run()
+            blockingContext {
+              runnable.run()
+            }
           }
       }
       catch (e: CancellationException) {

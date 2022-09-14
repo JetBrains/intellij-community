@@ -510,6 +510,11 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES = flag;
       mySettings.UI_FLATTEN_PACKAGES = flag;
@@ -526,6 +531,11 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     @Override
     public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_SHOW_FILES;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -551,6 +561,11 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_SHOW_MODULES = flag;
       mySettings.UI_SHOW_MODULES = flag;
@@ -567,6 +582,11 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     @Override
     public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_SHOW_MODULE_GROUPS;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -593,6 +613,11 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     @Override
     public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_GROUP_BY_SCOPE_TYPE;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -757,7 +782,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
       }
       if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
         TreePath[] paths = getSelectionPaths();
-        return paths != null ? ContainerUtil.map(paths, p -> p.getLastPathComponent()) : null;
+        return paths != null ? ContainerUtil.map2Array(paths, p -> p.getLastPathComponent()) : null;
       }
       if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
         TreePath path = getSelectionPath();

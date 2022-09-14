@@ -2,15 +2,19 @@
 package git4idea.ui.branch
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.TreePopup
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.WindowStateService
+import com.intellij.ui.ActiveComponent
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
 import com.intellij.ui.TreeActions
@@ -65,11 +69,17 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
 
   private lateinit var searchPatternStateFlow: MutableStateFlow<String?>
 
+  private var userResized: Boolean
+
   init {
     setMinimumSize(JBDimension(200, 200))
     dimensionServiceKey = GitBranchPopup.DIMENSION_SERVICE_KEY
+    userResized = WindowStateService.getInstance(project).getSizeFor(project, dimensionServiceKey) != null
     setSpeedSearchAlwaysShown()
     installShortcutActions(step.treeModel)
+    installHeaderToolbar()
+    installResizeListener()
+    DataManager.registerDataProvider(component, DataProvider { dataId -> if (POPUP_KEY.`is`(dataId)) this else null })
   }
 
   override fun createContent(): JComponent {
@@ -96,6 +106,33 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     return tree
   }
 
+  internal fun restoreDefaultSize() {
+    userResized = false
+    WindowStateService.getInstance(project).putSizeFor(project, dimensionServiceKey, null)
+    pack(true, true)
+  }
+
+  private fun installResizeListener() {
+    val popupWindow = popupWindow ?: return
+    val windowListener: ComponentListener = object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent) {
+        userResized = true
+      }
+    }
+    popupWindow.addComponentListener(windowListener)
+    addListener(object : JBPopupListener {
+      override fun onClosed(event: LightweightWindowEvent) {
+        popupWindow.removeComponentListener(windowListener)
+      }
+    })
+  }
+
+  override fun storeDimensionSize() {
+    if (userResized) {
+      super.storeDimensionSize()
+    }
+  }
+
   private fun installShortcutActions(model: TreeModel) {
     val root = model.root
     (0 until model.getChildCount(root))
@@ -106,6 +143,21 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
       .forEach { action ->
         registerAction(ActionManager.getInstance().getId(action), KeymapUtil.getKeyStroke(action.shortcutSet), createShortcutAction(action))
       }
+  }
+
+  private fun installHeaderToolbar() {
+    val settingsGroup = ActionManager.getInstance().getAction(GitBranchesTreePopupStep.HEADER_SETTINGS_ACTION_GROUP)
+    val toolbarGroup = DefaultActionGroup(GitBranchPopupFetchAction(javaClass), settingsGroup)
+    val toolbar = ActionManager.getInstance()
+      .createActionToolbar(GitBranchesTreePopupStep.ACTION_PLACE, toolbarGroup, true)
+      .apply {
+        targetComponent = this@GitBranchesTreePopup.component
+        setReservePlaceAutoPopupIcon(false)
+        component.isOpaque = false
+      }
+    title.setButtonComponent(object : ActiveComponent.Adapter() {
+      override fun getComponent(): JComponent = toolbar.component
+    }, JBUI.Borders.emptyRight(2))
   }
 
   private fun createShortcutAction(action: AnAction) = object : AbstractAction() {
@@ -315,6 +367,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
   }
 
   companion object {
+
+    internal val POPUP_KEY = DataKey.create<GitBranchesTreePopup>("GIT_BRANCHES_TREE_POPUP")
 
     @JvmStatic
     fun show(project: Project, repository: GitRepository) {

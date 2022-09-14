@@ -1,17 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ObjectUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public final class JavaPsiPatternUtil {
   /**
@@ -20,6 +22,23 @@ public final class JavaPsiPatternUtil {
    */
   @Contract(pure = true)
   public static @NotNull List<PsiPatternVariable> getExposedPatternVariables(@NotNull PsiExpression expression) {
+    List<PatternVariableWrapper> list = collectPatternVariableWrappers(expression);
+    return StreamEx.of(list).filter(base -> !base.isFake()).map(PatternVariableWrapper::getVariable).toList();
+  }
+
+  /**
+   * @param expression expression to collect pattern variable wrappers for
+   * @return list of pattern variable wrappers for:
+   * <ul>
+   *   <li>pattern variables declared within an expression that could be visible outside of given expression</li>
+   *   <li>fake pattern variables. They are needed for extracting nested patterns from expression.</li>
+   * <p>
+   * {@code if (obj instanceof Point(double x, doubly y))  } - to extract x and y from the condition
+   * we need a fake pattern variable for Point
+   * </ul>
+   */
+  @Contract(pure = true)
+  public static @NotNull List<PatternVariableWrapper> collectPatternVariableWrappers(@NotNull PsiExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     boolean parentMayAccept =
       parent instanceof PsiPrefixExpression && ((PsiPrefixExpression)parent).getOperationTokenType().equals(JavaTokenType.EXCL) ||
@@ -29,7 +48,7 @@ public final class JavaPsiPatternUtil {
     if (!parentMayAccept) {
       return Collections.emptyList();
     }
-    List<PsiPatternVariable> list = new ArrayList<>();
+    List<PatternVariableWrapper> list = new ArrayList<>();
     collectPatternVariableCandidates(expression, expression, list, false);
     return list;
   }
@@ -41,29 +60,41 @@ public final class JavaPsiPatternUtil {
    */
   @Contract(pure = true)
   public static @NotNull List<PsiPatternVariable> getExposedPatternVariablesIgnoreParent(@NotNull PsiExpression expression) {
-    List<PsiPatternVariable> list = new ArrayList<>();
+    List<PatternVariableWrapper> list = new ArrayList<>();
     collectPatternVariableCandidates(expression, expression, list, true);
-    return list;
+    return StreamEx.of(list).filter(base -> !base.isFake()).map(PatternVariableWrapper::getVariable).toList();
   }
 
   /**
    * @param variable pattern variable
-   * @return effective initializer expression for the variable; null if cannot be determined
+   * @return effective initializer expression for the variable; null if cannot be determined.
+   * Returns null for inner record patterns because an instanceof operand may not be safely recomputable expression
+   * @see com.siyeh.ig.psiutils.ExpressionUtils#isSafelyRecomputableExpression(PsiExpression)
+   * For inner record patterns consider using
+   * @see JavaPsiPatternUtil#collectPatternVariableWrappers(PsiExpression)
+   * @see DestructionComponent#getEffectiveInitializerText()
+   *
    */
   public static @Nullable String getEffectiveInitializerText(@NotNull PsiPatternVariable variable) {
     PsiPattern pattern = variable.getPattern();
     PsiInstanceOfExpression instanceOf = ObjectUtils.tryCast(pattern.getParent(), PsiInstanceOfExpression.class);
     if (instanceOf == null) return null;
+    PsiExpression operand = instanceOf.getOperand();
+    PsiTypeElement checkType;
     if (pattern instanceof PsiTypeTestPattern) {
-      PsiExpression operand = instanceOf.getOperand();
-      PsiTypeElement checkType = ((PsiTypeTestPattern)pattern).getCheckType();
-      if (checkType == null) return null;
-      if (checkType.getType().equals(operand.getType())) {
-        return operand.getText();
-      }
-      return "(" + checkType.getText() + ")" + operand.getText();
+      checkType = ((PsiTypeTestPattern)pattern).getCheckType();
     }
-    return null;
+    else if (pattern instanceof PsiDeconstructionPattern) {
+      checkType = ((PsiDeconstructionPattern)pattern).getTypeElement();
+    }
+    else {
+      checkType = null;
+    }
+    if (checkType == null) return null;
+    if (checkType.getType().equals(operand.getType())) {
+      return operand.getText();
+    }
+    return "(" + checkType.getText() + ")" + operand.getText();
   }
 
   @Contract(value = "null -> null", pure = true)
@@ -86,15 +117,21 @@ public final class JavaPsiPatternUtil {
    */
   @Contract(value = "null -> null", pure = true)
   @Nullable
-  public static PsiPatternVariable getPatternVariable(@Nullable PsiPattern pattern) {
+  public static PsiPatternVariable getPatternVariable(@Nullable PsiCaseLabelElement pattern) {
     if (pattern instanceof PsiGuardedPattern) {
       return getPatternVariable(((PsiGuardedPattern)pattern).getPrimaryPattern());
+    }
+    if (pattern instanceof PsiPatternGuard) {
+      return getPatternVariable(((PsiPatternGuard)pattern).getPattern());
     }
     if (pattern instanceof PsiParenthesizedPattern) {
       return getPatternVariable(((PsiParenthesizedPattern)pattern).getPattern());
     }
     if (pattern instanceof PsiTypeTestPattern) {
       return ((PsiTypeTestPattern)pattern).getPatternVariable();
+    }
+    if (pattern instanceof PsiDeconstructionPattern) {
+      return ((PsiDeconstructionPattern)pattern).getPatternVariable();
     }
     return null;
   }
@@ -275,7 +312,7 @@ public final class JavaPsiPatternUtil {
   }
 
   private static void collectPatternVariableCandidates(@NotNull PsiExpression scope, @NotNull PsiExpression expression,
-                                                       Collection<PsiPatternVariable> candidates, boolean strict) {
+                                                       Collection<PatternVariableWrapper> candidates, boolean strict) {
     while (true) {
       if (expression instanceof PsiParenthesizedExpression) {
         expression = ((PsiParenthesizedExpression)expression).getExpression();
@@ -290,11 +327,8 @@ public final class JavaPsiPatternUtil {
     }
     if (expression instanceof PsiInstanceOfExpression) {
       PsiPattern pattern = ((PsiInstanceOfExpression)expression).getPattern();
-      if (pattern instanceof PsiTypeTestPattern) {
-        PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
-        if (variable != null && !PsiTreeUtil.isAncestor(scope, variable.getDeclarationScope(), strict)) {
-          candidates.add(variable);
-        }
+      if (pattern instanceof PsiTypeTestPattern || pattern instanceof PsiDeconstructionPattern) {
+        collectPatternVariableCandidates(pattern, scope, null, candidates, strict);
       }
     }
     if (expression instanceof PsiPolyadicExpression) {
@@ -305,6 +339,118 @@ public final class JavaPsiPatternUtil {
           collectPatternVariableCandidates(scope, operand, candidates, strict);
         }
       }
+    }
+  }
+
+  private static void collectPatternVariableCandidates(@NotNull PsiPattern pattern,
+                                                       @NotNull PsiExpression scope,
+                                                       @Nullable Pair<PsiPatternVariable, PsiRecordComponent> parent,
+                                                       Collection<PatternVariableWrapper> candidates,
+                                                       boolean strict) {
+    if (pattern instanceof PsiTypeTestPattern) {
+      PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
+      if (variable != null && !PsiTreeUtil.isAncestor(scope, variable.getDeclarationScope(), strict)) {
+        if (parent == null) {
+          candidates.add(new PatternVariableWrapper(variable, false));
+        }
+        else {
+          candidates.add(new DestructionComponent(variable, parent.getFirst(), parent.getSecond(), false));
+        }
+      }
+    }
+    else if (pattern instanceof PsiDeconstructionPattern) {
+      PsiDeconstructionPattern deconstruction = (PsiDeconstructionPattern)pattern;
+      PsiTypeElement typeElement = deconstruction.getTypeElement();
+      PsiType type = typeElement.getType();
+      PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+      PsiPatternVariable variable = deconstruction.getPatternVariable();
+      boolean isFake = variable == null;
+      if (aClass != null) {
+        PsiRecordComponent[] recordComponents = aClass.getRecordComponents();
+        PsiPattern[] components = deconstruction.getDeconstructionList().getDeconstructionComponents();
+        if (recordComponents.length == components.length && recordComponents.length != 0) {
+          if (isFake) {
+            variable = createFakePatternVariable(pattern, typeElement, type);
+          }
+          PatternVariableWrapper patternVariableWrapper =
+            parent == null
+            ? new PatternVariableWrapper(variable, isFake)
+            : new DestructionComponent(variable, parent.getFirst(), parent.getSecond(), isFake);
+          candidates.add(patternVariableWrapper);
+          for (int i = 0; i < components.length; i++) {
+            collectPatternVariableCandidates(components[i], scope, Pair.pair(variable, recordComponents[i]), candidates, strict);
+          }
+        }
+      }
+    }
+  }
+
+  @NotNull
+  private static PsiPatternVariable createFakePatternVariable(@NotNull PsiPattern pattern,
+                                                              @NotNull PsiTypeElement typeElement,
+                                                              @NotNull PsiType type) {
+    Project project = pattern.getProject();
+    PsiElementFactory factory = PsiElementFactory.getInstance(project);
+    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
+    String name = styleManager.suggestVariableName(VariableKind.PARAMETER, null, null, type).names[0];
+    name = styleManager.suggestUniqueVariableName(name, pattern, true);
+    /*
+     If the pattern is not nested, we use the text of the operand matched against the pattern because the operand text
+     of the created instanceof expression will be used in com.intellij.psi.util.JavaPsiPatternUtil.getEffectiveInitializerText.
+     If the pattern is nested, we can use random text as operand text.
+    */
+    PsiElement parent = pattern.getParent();
+    String operand = parent instanceof PsiInstanceOfExpression ? ((PsiInstanceOfExpression)parent).getOperand().getText() : "x";
+    String text = operand + " instanceof " + typeElement.getText() + " " + name;
+    PsiInstanceOfExpression instanceOf = (PsiInstanceOfExpression)factory.createExpressionFromText(text, null);
+    PsiPatternVariable variable = ((PsiTypeTestPattern)Objects.requireNonNull(instanceOf.getPattern())).getPatternVariable();
+    assert variable != null;
+    return variable;
+  }
+
+  public static class PatternVariableWrapper {
+    private final @NotNull PsiPatternVariable myVariable;
+    private final boolean myIsFake;
+
+    PatternVariableWrapper(@NotNull PsiPatternVariable variable, boolean isFake) {
+      myVariable = variable;
+      myIsFake = isFake;
+    }
+
+    public @NotNull PsiPatternVariable getVariable() {
+      return myVariable;
+    }
+
+    boolean isFake() {
+      return myIsFake;
+    }
+
+    public String getEffectiveInitializerText() {
+      return JavaPsiPatternUtil.getEffectiveInitializerText(myVariable);
+    }
+  }
+
+  public static class DestructionComponent extends PatternVariableWrapper {
+    private final @NotNull PsiPatternVariable myParent;
+    private final @NotNull PsiRecordComponent myRecordComponent;
+
+    DestructionComponent(@NotNull PsiPatternVariable variable,
+              @NotNull PsiPatternVariable parent,
+              @NotNull PsiRecordComponent recordComponent,
+              boolean isFake) {
+      super(variable, isFake);
+      myParent = parent;
+      myRecordComponent = recordComponent;
+    }
+
+    @Override
+    public String getEffectiveInitializerText() {
+      String text = myParent.getName() + "." + myRecordComponent.getName() + "()";
+      PsiType type = getVariable().getType();
+      if (!type.equals(myRecordComponent.getType())) {
+        return "(" + type.getCanonicalText() + ")" + text;
+      }
+      return text;
     }
   }
 

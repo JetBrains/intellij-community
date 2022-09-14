@@ -90,7 +90,8 @@ internal class CheckBoxRadioButtonPanel {
       }
       row {
         radioButton("Base line check")
-        comment("Some comment")
+        comment("Some small comment")
+          .applyToComponent { font = font.deriveFont(font.size - 2.0f) }
       }
     }
   }

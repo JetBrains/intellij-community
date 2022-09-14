@@ -117,6 +117,11 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         //doOKAction(); // do not evaluate on add to watches
         addToWatches();

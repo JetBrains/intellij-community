@@ -152,9 +152,7 @@ public final class TypeConstraints {
       PsiType normalized = normalizeType(psiType.getDeepComponentType());
       int dimensions = psiType.getArrayDimensions();
       if (normalized instanceof PsiIntersectionType) {
-        PsiType[] types = StreamEx.of(((PsiIntersectionType)normalized).getConjuncts())
-          .map(t -> PsiTypesUtil.createArrayType(t, dimensions))
-          .toArray(PsiType.EMPTY_ARRAY);
+        PsiType[] types = ContainerUtil.map2Array(((PsiIntersectionType)normalized).getConjuncts(), PsiType.EMPTY_ARRAY, t -> PsiTypesUtil.createArrayType(t, dimensions));
         return PsiIntersectionType.createIntersection(true, types);
       }
       return PsiTypesUtil.createArrayType(normalized, dimensions);
@@ -166,8 +164,7 @@ public final class TypeConstraints {
       return normalizeType(wildcardType.getUpperBound());
     }
     if (psiType instanceof PsiIntersectionType intersectionType) {
-      PsiType[] types =
-        StreamEx.of(intersectionType.getConjuncts()).map(TypeConstraints::normalizeType).toArray(PsiType.EMPTY_ARRAY);
+      PsiType[] types = ContainerUtil.map2Array(intersectionType.getConjuncts(), PsiType.EMPTY_ARRAY, TypeConstraints::normalizeType);
       if (types.length > 0) {
         return PsiIntersectionType.createIntersection(true, types);
       }

@@ -11,7 +11,7 @@ import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.diagnostic.opentelemetry.TraceManager;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
@@ -142,15 +142,10 @@ public class CodeCompletionHandlerBase {
 
   public final void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers) {
     clearCaretMarkers(editor);
-    invokeCompletion(project, editor, time, hasModifiers, editor.getCaretModel().getPrimaryCaret());
+    invokeCompletionWithTracing(project, editor, time, hasModifiers, editor.getCaretModel().getPrimaryCaret());
   }
 
   private void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers, @NotNull Caret caret) {
-    Span invokeCompletionSpan = completionTracer.spanBuilder("invokeCompletion")
-      .setAttribute("project", project.getName())
-      .setAttribute("caretOffset", caret.hasSelection() ? caret.getSelectionStart() : caret.getOffset())
-      .startSpan();
-    try (Scope ignored = invokeCompletionSpan.makeCurrent()) {
       markCaretAsProcessed(caret);
 
       if (invokedExplicitly) {
@@ -165,12 +160,10 @@ public class CodeCompletionHandlerBase {
       if (editor.isViewer() || editor.getDocument().getRangeGuard(offset, offset) != null) {
         editor.getDocument().fireReadOnlyModificationAttempt();
         EditorModificationUtil.checkModificationAllowed(editor);
-        invokeCompletionSpan.setAttribute("readOnly", true);
         return;
       }
 
       if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
-        invokeCompletionSpan.setAttribute("readOnly", true);
         return;
       }
       CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
@@ -204,6 +197,7 @@ public class CodeCompletionHandlerBase {
 
         doComplete(context, hasModifiers, hasValidContext, startingTime);
       };
+    try {
       if (autopopup) {
         CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
       }
@@ -212,10 +206,22 @@ public class CodeCompletionHandlerBase {
       }
     }
     catch (IndexNotReadyException e) {
-      invokeCompletionSpan.recordException(e);
       if (invokedExplicitly) {
         DumbService.getInstance(project).showDumbModeNotification(CodeInsightBundle.message("completion.not.available.during.indexing"));
       }
+      throw e;
+    }
+  }
+
+  private void invokeCompletionWithTracing(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers, @NotNull Caret caret) {
+    Span invokeCompletionSpan = completionTracer.spanBuilder("invokeCompletion")
+      .setAttribute("project", project.getName())
+      .setAttribute("caretOffset", caret.hasSelection() ? caret.getSelectionStart() : caret.getOffset())
+      .startSpan();
+    try (Scope ignored = invokeCompletionSpan.makeCurrent()) {
+      invokeCompletion(project, editor, time, hasModifiers, caret);
+    } catch (IndexNotReadyException e) {
+      invokeCompletionSpan.recordException(e);
     }
     finally {
       invokeCompletionSpan.end();
@@ -444,7 +450,7 @@ public class CodeCompletionHandlerBase {
 
       Caret nextCaret = getNextCaretToProcess(indicator.getEditor());
       if (nextCaret != null) {
-        invokeCompletion(indicator.getProject(), indicator.getEditor(), indicator.getInvocationCount(), hasModifiers, nextCaret);
+        invokeCompletionWithTracing(indicator.getProject(), indicator.getEditor(), indicator.getInvocationCount(), hasModifiers, nextCaret);
       }
       else {
         indicator.handleEmptyLookup(true);

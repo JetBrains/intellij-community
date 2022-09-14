@@ -1,0 +1,13 @@
+accepted = [
+    "Apache-2.0",
+    "MIT",
+    "ISC", # libloading, MIT / Apache 2.0 alike
+    "Unicode-DFS-2016" # simplelog -> [..] -> unicode-ident
+]
+
+# do not warn for our own crates
+private = { ignore = true }
+
+# build / dev dependencies are not shipped as part of the launcher
+ignore-build-dependencies = true
+ignore-dev-dependencies = true

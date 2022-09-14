@@ -799,7 +799,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         try {
           if (!RebuildStatus.isOk(indexId)) {
             if (getCurrentDumbModeAccessType_NoDumbChecks() == null) {
-              throw new ServiceNotReadyException();
+              throw new ServiceNotReadyException("index " + indexId + " has status " + RebuildStatus.getStatus(indexId));
             }
             return false;
           }

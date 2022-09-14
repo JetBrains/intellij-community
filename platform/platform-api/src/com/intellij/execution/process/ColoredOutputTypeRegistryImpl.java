@@ -47,13 +47,15 @@ public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegist
 
   /*
     Description
-     0	Cancel all attributes except foreground/background color
+     0	Cancel all attributes
      1	Bright (bold)
      2	Normal (not bold)
+     3	Italic
      4	Underline
      5	Blink
      7	Reverse video
      8	Concealed (don't display characters)
+     9	Strike through
      30	Make foreground (the characters) black
      31	Make foreground red
      32	Make foreground green

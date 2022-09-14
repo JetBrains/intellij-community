@@ -183,6 +183,9 @@ final class ActionUpdater {
         }
       }
     }
+    if (PopupMenuPreloader.isToSkipComputeOnEDT(myPlace)) {
+      throw new ComputeOnEDTSkipped();
+    }
     if (myPreCacheSlowDataKeys && updateThread == ActionUpdateThread.OLD_EDT) {
       ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> ensureSlowDataKeysPreCached(operationName));
     }
@@ -359,7 +362,7 @@ final class ActionUpdater {
           promise.setResult(result);
         }
         catch (Throwable e) {
-          promise.setError(e);
+          cancelPromise(promise, e);
         }
         return null;
       };
@@ -382,7 +385,7 @@ final class ActionUpdater {
       }
       catch (Throwable e) {
         if (!promise.isDone()) {
-          promise.setError(e);
+          cancelPromise(promise, e);
         }
       }
       finally {
@@ -468,7 +471,7 @@ final class ActionUpdater {
     Disposable disposable = Disposer.newDisposable("Action Update");
     Disposer.register(disposableParent, disposable);
     IdeEventQueue.getInstance().addPreprocessor(event -> {
-      if (event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
+      if (event instanceof KeyEvent && ((KeyEvent)event).getKeyCode() != 0 ||
           event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
         cancelPromise(promise, event);
       }
@@ -498,14 +501,20 @@ final class ActionUpdater {
   }
 
   private List<AnAction> getGroupChildren(ActionGroup group, UpdateStrategy strategy) {
-    return myGroupChildren.computeIfAbsent(group, __ -> {
+    Function<ActionGroup, List<AnAction>> function = __ -> {
       AnAction[] children = strategy.getChildren.fun(group);
       int nullIndex = ArrayUtil.indexOf(children, null);
       if (nullIndex < 0) return Arrays.asList(children);
 
       LOG.error("action is null: i=" + nullIndex + " group=" + group + " group id=" + ActionManager.getInstance().getId(group));
       return ContainerUtil.filter(children, Conditions.notNull());
-    });
+    };
+    try {
+      return myGroupChildren.computeIfAbsent(group, function);
+    }
+    catch (ComputeOnEDTSkipped ignore) {
+    }
+    return Collections.emptyList();
   }
 
   private List<AnAction> expandGroupChild(AnAction child, boolean hideDisabledBase, UpdateStrategy strategy) {
@@ -663,12 +672,16 @@ final class ActionUpdater {
     if (cached != null) {
       return cached;
     }
-
-    Presentation presentation = strategy.update.fun(action);
-    if (presentation != null) {
-      myUpdatedPresentations.put(action, presentation);
+    try {
+      Presentation presentation = strategy.update.fun(action);
+      if (presentation != null) {
+        myUpdatedPresentations.put(action, presentation);
+        return presentation;
+      }
     }
-    return presentation;
+    catch (ComputeOnEDTSkipped ignore) {
+    }
+    return null;
   }
 
   // returns false if exception was thrown and handled
@@ -709,7 +722,12 @@ final class ActionUpdater {
       String place = ourDebugPromisesMap.remove(promise);
       if (place == null && promise.isDone()) return;
       String message = "'" + place + "' update cancelled: " + reason;
-      LOG.debug(message, message.contains("fast-track") || message.contains("all updates") ? null : new ProcessCanceledException());
+      if (reason instanceof String && (message.contains("fast-track") || message.contains("all updates"))) {
+        LOG.debug(message);
+      }
+      else {
+        LOG.debug(message, reason instanceof Throwable ? (Throwable)reason : new ProcessCanceledException());
+      }
     }
     boolean nestedWA = reason instanceof String && ((String)reason).startsWith(NESTED_WA_REASON_PREFIX);
     if (nestedWA) {
@@ -718,7 +736,7 @@ final class ActionUpdater {
                                    "See CustomComponentAction.createCustomComponent javadoc, if caused by a custom component."));
     }
     if (!nestedWA && promise instanceof AsyncPromise) {
-      ((AsyncPromise<?>)promise).setError(new Utils.ProcessCanceledWithReasonException(reason));
+      ((AsyncPromise<?>)promise).setError(reason instanceof Throwable ? (Throwable)reason : new Utils.ProcessCanceledWithReasonException(reason));
     }
     else {
       promise.cancel();
@@ -788,5 +806,8 @@ final class ActionUpdater {
     Compact(@NotNull ActionGroup action) {
       super(action);
     }
+  }
+
+  private static class ComputeOnEDTSkipped extends ProcessCanceledException {
   }
 }

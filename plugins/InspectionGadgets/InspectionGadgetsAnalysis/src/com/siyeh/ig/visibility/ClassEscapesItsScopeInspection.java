@@ -29,7 +29,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -79,7 +79,7 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
               Module module = ProjectFileIndex.getInstance(holder.getProject()).getModuleForFile(vFile);
               if (module != null) {
                 Set<String> exportedPackageNames =
-                  new THashSet<>(ContainerUtil.mapNotNull(psiModule.getExports(), PsiPackageAccessibilityStatement::getPackageName));
+                  new HashSet<>(ContainerUtil.mapNotNull(psiModule.getExports(), PsiPackageAccessibilityStatement::getPackageName));
                 if (exportedPackageNames.contains(javaFile.getPackageName())) {
                   checkers.add(new Java9NonAccessibleTypeExposedVisitor(holder, module, psiModule.getName(), exportedPackageNames));
                 }

@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.picocontainer.ComponentAdapter
-import org.picocontainer.PicoContainer
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
 
@@ -69,7 +68,7 @@ internal sealed class BaseComponentAdapter(
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use")
-  final override fun getComponentInstance(container: PicoContainer): Any? {
+  final override fun getComponentInstance(): Any? {
     //LOG.error("Use getInstance() instead")
     return getInstance(componentManager, null)
   }
@@ -84,8 +83,7 @@ internal sealed class BaseComponentAdapter(
     }
 
     LoadingState.COMPONENTS_REGISTERED.checkOccurred()
-    val indicator: ProgressIndicator? = ProgressIndicatorProvider.getGlobalProgressIndicator()
-    checkContainerIsActive(componentManager, indicator)
+    checkContainerIsActive(componentManager)
 
     val activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null
     val beforeLockTime = if (activityCategory == null) -1 else StartUpMeasurer.getCurrentTime()
@@ -183,26 +181,26 @@ internal sealed class BaseComponentAdapter(
   /**
    * Indicator must be always passed - if under progress, then ProcessCanceledException will be thrown instead of AlreadyDisposedException.
    */
-  private fun checkContainerIsActive(componentManager: ComponentManagerImpl, indicator: ProgressIndicator?) {
-    if (indicator != null) {
+  private fun checkContainerIsActive(componentManager: ComponentManagerImpl) {
+    if (isUnderIndicatorOrJob()) {
       checkCanceledIfNotInClassInit()
     }
 
     if (componentManager.isDisposed) {
-      throwAlreadyDisposedError(toString(), componentManager, indicator)
+      throwAlreadyDisposedError(toString(), componentManager)
     }
     if (!isGettingServiceAllowedDuringPluginUnloading(pluginDescriptor)) {
       componentManager.componentContainerIsReadonly?.let {
         val error = AlreadyDisposedException(
           "Cannot create ${toString()} because container in read-only mode (reason=$it, container=${componentManager})"
         )
-        throw if (indicator == null) error else ProcessCanceledException(error)
+        throw if (!isUnderIndicatorOrJob()) error else ProcessCanceledException(error)
       }
     }
   }
 
-  internal fun throwAlreadyDisposedError(componentManager: ComponentManagerImpl, indicator: ProgressIndicator?) {
-    throwAlreadyDisposedError(toString(), componentManager, indicator)
+  internal fun throwAlreadyDisposedError(componentManager: ComponentManagerImpl) {
+    throwAlreadyDisposedError(toString(), componentManager)
   }
 
   protected abstract fun getActivityCategory(componentManager: ComponentManagerImpl): ActivityCategory?

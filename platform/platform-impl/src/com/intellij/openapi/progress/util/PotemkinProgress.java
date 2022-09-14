@@ -159,9 +159,8 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   /** Executes the action in a background thread, block Swing thread, handles selected input events and paints itself periodically. */
   public void runInBackground(@NotNull Runnable action) {
     myApp.assertIsDispatchThread();
-    enterModality();
 
-    try {
+    try (var ignoredModalityToken = enterModality()) {
       ensureBackgroundThreadStarted(action);
 
       while (isRunning()) {
@@ -170,7 +169,6 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
       }
     }
     finally {
-      exitModality();
       progressFinished();
     }
   }

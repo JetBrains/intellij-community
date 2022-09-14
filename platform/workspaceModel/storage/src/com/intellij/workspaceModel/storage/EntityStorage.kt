@@ -141,42 +141,6 @@ interface EntitySource {
 interface DummyParentEntitySource : EntitySource
 
 /**
- * Base interface for entities which may need to find all entities referring to them.
- */
-@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
-@Abstract
-interface ReferableWorkspaceEntity : WorkspaceEntity {
-  /**
-   * Returns all entities of type [R] which [propertyName] property refers to this entity. Consider using type-safe variant referrers(KProperty1) instead.
-   */
-  fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R>
-}
-
-@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
-@Abstract
-interface ModifiableReferableWorkspaceEntity : ReferableWorkspaceEntity  {
-  fun linkExternalEntity(entityClass: KClass<out WorkspaceEntity>, isThisFieldChild: Boolean, entities: List<WorkspaceEntity?>)
-}
-
-/**
- * Returns all entities of type [R] which [property] refers to this entity.
- */
-@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
-inline fun <E : ReferableWorkspaceEntity, reified R : WorkspaceEntity> E.referrersx(property: KProperty1<R, E?>): Sequence<R> {
-  return referrers(R::class.java, property.name)
-}
-
-@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
-inline fun <E : WorkspaceEntity, reified R : WorkspaceEntity> E.referrersx(property: KProperty1<R, E?>): List<R> {
-  return (this as ReferableWorkspaceEntity).referrers(R::class.java, property.name).toList()
-}
-
-@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
-inline fun <E : WorkspaceEntity, reified R : WorkspaceEntity, reified X : List<E>> E.referrersy(property: KProperty1<R, X?>): List<R> {
-  return (this as ReferableWorkspaceEntity).referrers(R::class.java, property.name).toList()
-}
-
-/**
  * Represents a reference to an entity inside of [WorkspaceEntity].
  *
  * The reference can be obtained via [EntityStorage.createReference].
@@ -216,6 +180,7 @@ interface EntityStorage {
   fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>, property: KProperty1<R, EntityReference<E>>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E?
+  operator fun <E : WorkspaceEntityWithPersistentId> contains(id: PersistentEntityId<E>): Boolean
 
   /**
    * Please select a name for your mapping in a form `<product_id>.<mapping_name>`.

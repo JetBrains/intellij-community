@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiClass
+import com.intellij.ui.IconManager
 import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -54,7 +56,7 @@ object KtIconProvider {
     private fun KtAnalysisSession.getBaseIcon(symbol: KtSymbol): Icon? {
         val isAbstract = (symbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT
         return when (symbol) {
-            is KtPackageSymbol -> PlatformIcons.PACKAGE_ICON
+            is KtPackageSymbol -> AllIcons.Nodes.Package
             is KtFunctionLikeSymbol -> {
                 val isExtension = symbol.isExtension
                 val isMember = symbol.symbolKind == KtSymbolKind.CLASS_MEMBER
@@ -62,7 +64,7 @@ object KtIconProvider {
                     isExtension && isAbstract -> KotlinIcons.ABSTRACT_EXTENSION_FUNCTION
                     isExtension && !isAbstract -> KotlinIcons.EXTENSION_FUNCTION
                     isMember && isAbstract -> PlatformIcons.ABSTRACT_METHOD_ICON
-                    isMember && !isAbstract -> PlatformIcons.METHOD_ICON
+                    isMember && !isAbstract -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
                     else -> KotlinIcons.FUNCTION
                 }
             }
@@ -87,7 +89,7 @@ object KtIconProvider {
                 symbol.isVal -> KotlinIcons.FIELD_VAL
                 else -> KotlinIcons.FIELD_VAR
             }
-            is KtTypeParameterSymbol -> PlatformIcons.CLASS_ICON
+            is KtTypeParameterSymbol -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class)
             is KtTypeAliasSymbol -> KotlinIcons.TYPE_ALIAS
 
             else -> {
@@ -100,9 +102,10 @@ object KtIconProvider {
     private fun KtAnalysisSession.getVisibilityIcon(symbol: KtSymbol): Icon? {
         return when ((symbol as? KtSymbolWithVisibility)?.visibility?.normalize()) {
             Visibilities.Public -> PlatformIcons.PUBLIC_ICON
-            Visibilities.Protected -> PlatformIcons.PROTECTED_ICON
-            Visibilities.Private, Visibilities.PrivateToThis -> PlatformIcons.PRIVATE_ICON
-            Visibilities.Internal -> PlatformIcons.PACKAGE_LOCAL_ICON
+            Visibilities.Protected -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Protected)
+            Visibilities.Private, Visibilities.PrivateToThis -> IconManager.getInstance()
+                .getPlatformIcon(com.intellij.ui.PlatformIcons.Private)
+            Visibilities.Internal -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Local)
             else -> null
         }
     }

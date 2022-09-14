@@ -250,7 +250,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     return fileElement
   }
 
-  suspend fun restoreEditors() {
+  suspend fun restoreEditors(requestFocus: Boolean) {
     val element = splittersElement ?: return
     splittersElement = null
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
@@ -266,6 +266,10 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
           if (window.tabCount == 0) {
             window.removeFromSplitter()
           }
+        }
+
+        if (requestFocus) {
+          currentWindow?.selectedComposite?.preferredFocusedComponent?.requestFocusInWindow()
         }
       }
     }
@@ -298,7 +302,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   }
 
   fun openFiles() {
-    runUnderModalProgressIfIsEdt { restoreEditors() }
+    runUnderModalProgressIfIsEdt { restoreEditors(requestFocus = false) }
   }
 
   fun readExternal(element: Element) {

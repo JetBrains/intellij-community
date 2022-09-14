@@ -75,12 +75,6 @@ public final class EditorWindow {
   private final EditorsSplitters myOwner;
 
   private boolean myIsDisposed;
-  /**
-   * @deprecated Use file opening methods taking {@link FileEditorOpenOptions} instead
-   * and pass the index through {@link FileEditorOpenOptions#withIndex(int)}.
-   */
-  @Deprecated(forRemoval = true)
-  public static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
   // Metadata to support editor tab drag&drop process: initial index
   public static final Key<Integer> DRAG_START_INDEX_KEY = KeyWithDefaultValue.create("drag start editor index", -1);
   // Metadata to support editor tab drag&drop process: hash of source container
@@ -559,7 +553,7 @@ public final class EditorWindow {
   }
 
   public void setComposite(@NotNull EditorComposite composite, boolean focusEditor) {
-    setComposite(composite, new FileEditorOpenOptions().withRequestFocus(focusEditor));
+    setComposite(composite, new FileEditorOpenOptions().withRequestFocus(focusEditor).withUsePreviewTab(composite.isPreview()));
   }
 
   public void setComposite(@NotNull EditorComposite composite, @NotNull FileEditorOpenOptions options) {
@@ -581,7 +575,7 @@ public final class EditorWindow {
       VirtualFile file = composite.getFile();
       Icon template = AllIcons.FileTypes.Text;
       EmptyIcon emptyIcon = EmptyIcon.create(template.getIconWidth(), template.getIconHeight());
-      myTabbedPane.insertTab(file, emptyIcon, new TComp(this, composite), null, indexToInsert, composite);
+      myTabbedPane.insertTab(file, emptyIcon, new TComp(this, composite), null, indexToInsert, composite, composite);
 
       Integer dragStartIndex = null;
       Integer hash = file.getUserData(DRAG_START_LOCATION_HASH_KEY);
@@ -1298,7 +1292,7 @@ public final class EditorWindow {
     }
     boolean wasPinned = composite.isPinned();
     composite.setPinned(pinned);
-    if (composite.isPreview()) {
+    if (composite.isPreview() && pinned) {
       composite.setPreview(false);
       myOwner.updateFileColor(file);
     }
@@ -1324,12 +1318,11 @@ public final class EditorWindow {
       closingOrder.remove(selectedFile);
     }
 
-    // close all preview tabs except one if exists
+    // close all preview tabs
     Set<VirtualFile> previews =
       getAllComposites().stream().filter(EditorComposite::isPreview).map(EditorComposite::getFile).collect(Collectors.toSet());
-    var survivedPreviewFile = previews.contains(fileToIgnore) ? fileToIgnore : previews.stream().findAny().orElse(null);
     for (VirtualFile preview : previews) {
-      if (!Objects.equals(preview, survivedPreviewFile)) defaultCloseFile(preview, transferFocus);
+      if (!Objects.equals(preview, fileToIgnore)) defaultCloseFile(preview, transferFocus);
     }
 
     for (VirtualFile file : closingOrder) {

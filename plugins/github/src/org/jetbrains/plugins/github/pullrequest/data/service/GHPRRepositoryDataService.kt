@@ -9,7 +9,7 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
-import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
+import git4idea.remote.GitRemoteUrlCoordinates
 import java.util.concurrent.CompletableFuture
 
 interface GHPRRepositoryDataService : Disposable {

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -579,26 +580,24 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
   }
 
-  private int getNavigationKeyCode(KeyEvent e) {
+  private static int getNavigationKeyCode(KeyEvent e) {
     KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
     if (isUpDownHomeEnd(e.getKeyCode())) {
       return e.getKeyCode();
     }
     KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager != null) {
-      @NotNull String[] actionIds = keymapManager.getActiveKeymap().getActionIds(keyStroke);
+      @NotNull String @NotNull[] actionIds = keymapManager.getActiveKeymap().getActionIds(keyStroke);
       for (String id : actionIds) {
-        if (id.equals(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) {
-          return KeyEvent.VK_UP;
-        }
-        else if (id.equals(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) {
-          return KeyEvent.VK_DOWN;
-        }
-        else if (id.equals(IdeActions.ACTION_EDITOR_MOVE_LINE_START)) {
-          return KeyEvent.VK_HOME;
-        }
-        else if (id.equals(IdeActions.ACTION_EDITOR_MOVE_LINE_END)) {
-          return KeyEvent.VK_END;
+        switch (id) {
+          case IdeActions.ACTION_EDITOR_MOVE_CARET_UP:
+            return KeyEvent.VK_UP;
+          case IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN:
+            return KeyEvent.VK_DOWN;
+          case IdeActions.ACTION_EDITOR_MOVE_LINE_START:
+            return KeyEvent.VK_HOME;
+          case IdeActions.ACTION_EDITOR_MOVE_LINE_END:
+            return KeyEvent.VK_END;
         }
       }
     }
@@ -630,6 +629,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       };
 
       addExtension(leftExtension);
+
+      Extension rightExtension = createSearchFieldExtension();
+      if (rightExtension != null) {
+        addExtension(rightExtension);
+      }
     }
 
     @Override
@@ -685,6 +689,17 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     }
 
+  }
+
+  /**
+   * Creates an additional extension.
+   * SpeedSearch calls this method when creating the search text field.
+   * If the result of this method is not null, the caller adds it as a serach text field extension.
+   * @return an extension, or null.
+   */
+  @Nullable
+  protected ExtendableTextComponent.Extension createSearchFieldExtension() {
+    return null;
   }
 
   private static boolean isUpDownHomeEnd(int keyCode) {

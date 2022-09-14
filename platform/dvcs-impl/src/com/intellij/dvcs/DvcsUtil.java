@@ -284,6 +284,22 @@ public final class DvcsUtil {
     return null;
   }
 
+  @Nullable
+  @CalledInAny
+  public static <T extends Repository> T guessWidgetRepository(@NotNull Project project,
+                                                               @NotNull AbstractRepositoryManager<T> manager,
+                                                               @Nullable @NonNls @SystemIndependent String recentRootPath,
+                                                               @NotNull DataContext dataContext) {
+    VirtualFile file = getSelectedFile(dataContext);
+    T repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, file));
+    if (repository != null) return repository;
+
+    repository = manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), recentRootPath));
+    if (repository != null) return repository;
+
+    return null;
+  }
+
   /**
    * Find the VCS root on which a repository-wide AnAction is to be invoked in an unspecified context.
    * <p>

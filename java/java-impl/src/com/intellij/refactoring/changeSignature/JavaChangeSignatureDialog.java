@@ -8,6 +8,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -58,7 +59,6 @@ import com.intellij.util.ui.table.EditorTextFieldJBTableRowRenderer;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import com.intellij.util.ui.table.JBTableRowRenderer;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -228,6 +228,11 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
                                           myExceptionPropagationTree,
                                           callback));
         chooser.get().show();
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
     myPropExceptionsButton.setShortcut(CustomShortcutSet.fromString("alt X"));
@@ -747,9 +752,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   static String getModifiersText(PsiModifierList list, String newVisibility) {
     final String oldVisibility = VisibilityUtil.getVisibilityModifier(list);
-    List<String> modifierKeywords = StreamEx.of(PsiTreeUtil.findChildrenOfType(list, PsiKeyword.class))
-                                            .map(PsiElement::getText)
-                                            .toList();
+    List<String> modifierKeywords = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(list, PsiKeyword.class), PsiElement::getText);
     if (!oldVisibility.equals(newVisibility)) {
       if (oldVisibility.equals(PsiModifier.PACKAGE_LOCAL)) {
         modifierKeywords.add(0, PsiModifier.PACKAGE_LOCAL);

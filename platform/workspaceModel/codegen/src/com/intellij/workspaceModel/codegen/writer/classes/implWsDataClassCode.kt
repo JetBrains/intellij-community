@@ -10,7 +10,6 @@ import com.intellij.workspaceModel.codegen.fields.implWsDataFieldInitializedCode
 import com.intellij.workspaceModel.codegen.fields.javaType
 import com.intellij.workspaceModel.codegen.utils.*
 import com.intellij.workspaceModel.codegen.writer.allFields
-import com.intellij.workspaceModel.codegen.writer.hasSetter
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
@@ -64,24 +63,13 @@ fun ObjClass<*>.implWsDataClassCode(): String {
 
       // --- createEntity
       sectionNl("override fun createEntity(snapshot: ${EntityStorage::class.fqn}): $javaFullName") {
-        line("val entity = $javaImplName()")
-        list(allFields.noRefs().noEntitySource().noPersistentId()) {
-          if (hasSetter) {
-            if (this.valueType is ValueType.Set<*> && !this.valueType.isRefType()) {
-              "entity.$implFieldName = $name.toSet()"
-            } else if (this.valueType is ValueType.List<*> && !this.valueType.isRefType()) {
-              "entity.$implFieldName = $name.toList()"
-            } else {
-              "entity.$implFieldName = $name"
-            }
-          } else {
-            "entity.$name = $name"
-          }
+        section("return getCached(snapshot)") {
+          line("val entity = $javaImplName(this)")
+          line("entity.entitySource = entitySource")
+          line("entity.snapshot = snapshot")
+          line("entity.id = createEntityId()")
+          line("entity")
         }
-        line("entity.entitySource = entitySource")
-        line("entity.snapshot = snapshot")
-        line("entity.id = createEntityId()")
-        line("return entity")
       }
 
       val collectionFields = allFields.noRefs().filter { it.valueType is ValueType.Collection<*, *> }
@@ -249,7 +237,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
 fun List<ObjProperty<*, *>>.noRefs(): List<ObjProperty<*, *>> = this.filterNot { it.valueType.isRefType() }
 fun List<ObjProperty<*, *>>.noEntitySource() = this.filter { it.name != "entitySource" }
 fun List<ObjProperty<*, *>>.noPersistentId() = this.filter { it.name != "persistentId" }
-fun List<ObjProperty<*, *>>.noOptional() = this.filter { it.valueType !is com.intellij.workspaceModel.codegen.deft.meta.ValueType.Optional<*> }
+fun List<ObjProperty<*, *>>.noOptional() = this.filter { it.valueType !is ValueType.Optional<*> }
 fun List<ObjProperty<*, *>>.noDefaultValue() = this.filter { it.valueKind == ObjProperty.ValueKind.Plain }
 
 private fun ObjClass<*>.cacheCollector(linesBuilder: LinesBuilder) {
@@ -295,7 +283,7 @@ private fun ValueType<*>.getClasses(fieldName: String, clazzes: HashSet<String>,
     is ValueType.Blob -> {
       val className = this.javaClassName
       if (className !in setOf(VirtualFileUrl::class.java.name, EntitySource::class.java.name, PersistentEntityId::class.java.name)) {
-        clazzes.add(className)
+        accessors.add("this.$fieldName?.let { collector.addDataToInspect(it) }")
         return res
       }
       if (className == VirtualFileUrl::class.java.name) {
@@ -303,6 +291,11 @@ private fun ValueType<*>.getClasses(fieldName: String, clazzes: HashSet<String>,
         return false
       }
       return true
+    }
+    is ValueType.Enum -> {
+      val className = this.javaClassName
+      clazzes.add(className)
+      return res
     }
     is ValueType.DataClass -> {
       // Here we might filter PersistentIds and get them from the index, but in this case we would need to inspect their fields on the fly

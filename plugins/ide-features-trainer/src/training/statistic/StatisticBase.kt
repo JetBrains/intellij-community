@@ -248,8 +248,8 @@ internal class StatisticBase : CounterUsagesCollector() {
 
     fun logLearnProjectOpenedForTheFirstTime(way: LearnProjectOpeningWay) {
       val langManager = LangManager.getInstance()
-      val langSupport = langManager.getLangSupport() ?: return
-      if (langManager.getLearningProjectPath(langSupport) == null) {
+      val languageId = langManager.getLanguageId() ?: return
+      if (langManager.getLearningProjectPath(languageId) == null) {
         LearnProjectState.instance.firstTimeOpenedWay = way
         learnProjectOpenedFirstTimeEvent.log(way, courseLanguage())
       }

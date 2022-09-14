@@ -36,7 +36,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
   // guarded by this
   private static Set<ExtensionPointImpl<?>> POINTS_IN_READONLY_MODE;
 
-  private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY = n -> n == 0 ? ExtensionPointListener.emptyArray() : new ExtensionPointListener[n];
+  private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY = n -> n == 0 ? ExtensionPointListener.Companion.emptyArray() : new ExtensionPointListener[n];
 
   private final String name;
   private final String className;
@@ -57,7 +57,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
   private volatile boolean adaptersAreSorted = true;
 
   // guarded by this
-  private ExtensionPointListener<T> @NotNull [] listeners = ExtensionPointListener.emptyArray();
+  private ExtensionPointListener<T> @NotNull [] listeners = ExtensionPointListener.Companion.emptyArray();
 
   private @Nullable Class<T> extensionClass;
 
@@ -92,8 +92,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
     return name;
   }
 
-  @Override
-  public final  @NotNull String getClassName() {
+  public final @NotNull String getClassName() {
     return className;
   }
 
@@ -103,8 +102,8 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
   }
 
   @Override
-  public final void registerExtension(@NotNull T extension, @NotNull LoadingOrder order) {
-    doRegisterExtension(extension, order, getPluginDescriptor(), null);
+  public final void registerExtension(@NotNull T extension) {
+    doRegisterExtension(extension, LoadingOrder.ANY, getPluginDescriptor(), null);
   }
 
   @Override
@@ -622,15 +621,6 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
   }
 
   @Override
-  public final synchronized void unregisterExtensions(@NotNull Predicate<? super T> filter) {
-    getExtensionList();
-    unregisterExtensions((clsName, adapter) -> {
-      @Nullable T extension = adapter.createInstance(componentManager);
-      return !filter.test(extension);
-    }, false);
-  }
-
-  @Override
   public final synchronized void unregisterExtension(@NotNull T extension) {
     if (!unregisterExtensions((__, adapter) ->
                                 !adapter.isInstanceCreated$intellij_platform_extensions() ||
@@ -716,12 +706,12 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
     List<ExtensionComponentAdapter> finalRemovedAdapters = removedAdapters;
     if (!priorityListeners.isEmpty()) {
       priorityListenerCallbacks.add((Runnable)() ->
-        notifyListeners(true, finalRemovedAdapters, priorityListeners.toArray(ExtensionPointListener.emptyArray()))
+        notifyListeners(true, finalRemovedAdapters, priorityListeners.toArray(ExtensionPointListener.Companion.emptyArray()))
       );
     }
     if (!regularListeners.isEmpty()) {
       listenerCallbacks.add((Runnable)() ->
-        notifyListeners(true, finalRemovedAdapters, regularListeners.toArray(ExtensionPointListener.emptyArray()))
+        notifyListeners(true, finalRemovedAdapters, regularListeners.toArray(ExtensionPointListener.Companion.emptyArray()))
       );
     }
     return true;
@@ -855,7 +845,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
     }
 
     // help GC
-    listeners = ExtensionPointListener.emptyArray();
+    listeners = ExtensionPointListener.Companion.emptyArray();
     extensionClass = null;
   }
 
@@ -919,9 +909,9 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
    *
    * myAdapters is modified directly without copying - method must be called only during start-up.
    */
-  public final synchronized void registerExtensions(@NotNull List<? extends ExtensionDescriptor> extensionElements,
+  public final synchronized void registerExtensions(@NotNull List<ExtensionDescriptor> extensionElements,
                                                     @NotNull PluginDescriptor pluginDescriptor,
-                                                    @Nullable List<? super Runnable> listenerCallbacks) {
+                                                    @Nullable /* Mutable */ List<? super Runnable> listenerCallbacks) {
     List<ExtensionComponentAdapter> adapters = this.adapters;
     if (adapters == Collections.<ExtensionComponentAdapter>emptyList()) {
       adapters = new ArrayList<>(extensionElements.size());

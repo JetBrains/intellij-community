@@ -16,7 +16,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValueProvider;
@@ -34,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.kotlin.config.KotlinFacetSettings;
+import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker;
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle;
 import org.jetbrains.kotlin.idea.facet.KotlinFacet;
 import org.jetbrains.kotlin.platform.TargetPlatformKt;
@@ -285,10 +285,8 @@ class KotlinMPPGradleProjectTaskRunner extends ProjectTaskRunner
         return CachedValuesManager.getManager(project).getCachedValue(
                 project,
                 () -> new CachedValueProvider.Result<>(
-                        Arrays.stream(ModuleManager.getInstance(project).getModules()).anyMatch(
-                                module -> isNativeSourceModule(module) || isCommonProductionSourceModule(module)
-                        ),
-                        ProjectRootModificationTracker.getInstance(project)
+                        ContainerUtil.exists(ModuleManager.getInstance(project).getModules(), module -> isNativeSourceModule(module) || isCommonProductionSourceModule(module)),
+                        KotlinFacetModificationTracker.getInstance(project)
                 ));
     }
 

@@ -29,7 +29,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   }
 
   /**
-   * Prefer to use {@link #getExtensionList()}.
+   * Consider using {@link #getExtensionList()}.
    */
   public T @NotNull [] getExtensions() {
     return getPointImpl(null).getExtensions();
@@ -61,7 +61,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   public @NotNull List<T> getExtensionsIfPointIsRegistered(@Nullable AreaInstance areaInstance) {
     //noinspection deprecation
     ExtensionsArea area = areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea();
-    ExtensionPoint<T> point = area == null ? null : area.getExtensionPointIfRegistered(getName());
+    ExtensionPoint<@NotNull T> point = area == null ? null : area.getExtensionPointIfRegistered(getName());
     return point == null ? Collections.emptyList() : point.getExtensionList();
   }
 
@@ -92,10 +92,11 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   }
 
   /**
-   * Consider using {@link ProjectExtensionPointName#extensions(AreaInstance)}
+   * @deprecated Use app-level app extension point.
    */
+  @Deprecated
   public @NotNull Stream<T> extensions(@Nullable AreaInstance areaInstance) {
-    return getPointImpl(areaInstance).extensions();
+    return getPointImpl(areaInstance).getExtensionList().stream();
   }
 
   /**
@@ -103,11 +104,11 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
    * to access project-level and module-level extensions
    */
   @Deprecated
-  public @NotNull ExtensionPoint<T> getPoint(@Nullable AreaInstance areaInstance) {
+  public @NotNull ExtensionPoint<@NotNull T> getPoint(@Nullable AreaInstance areaInstance) {
     return getPointImpl(areaInstance);
   }
 
-  public @NotNull ExtensionPoint<T> getPoint() {
+  public @NotNull ExtensionPoint<@NotNull T> getPoint() {
     return getPointImpl(null);
   }
 

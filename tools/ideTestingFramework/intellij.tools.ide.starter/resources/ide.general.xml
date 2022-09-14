@@ -6,8 +6,6 @@
   </component>
   <component name="Registry">
     <entry key="compiler.automake.allow.parallel" value="true"/>
-    <entry key="vcs.log.index.git" value="false"/>
-    <entry key="vcs.log.keep.up.to.date" value="false"/>
     <entry key="actionSystem.playback.typecommand.delay" value="0"/>
   </component>
 </application>

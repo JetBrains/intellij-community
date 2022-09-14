@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
-import com.intellij.application.options.RegistryManager;
 import com.intellij.core.CoreBundle;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeBundle;
@@ -29,6 +28,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -43,7 +44,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -52,9 +52,6 @@ import java.util.zip.ZipFile;
 
 import static com.intellij.ide.startup.StartupActionScriptManager.*;
 
-/**
- * @author stathik
- */
 public final class PluginInstaller {
   private static final Logger LOG = Logger.getInstance(PluginInstaller.class);
 
@@ -204,7 +201,7 @@ public final class PluginInstaller {
     }
     else {
       target = targetPath.resolve(rootEntryName(sourceFile));
-      FileUtilRt.delete(target.toFile());
+      NioFiles.deleteRecursively(target);
       new Decompressor.Zip(sourceFile).extract(targetPath);
     }
     return target;
@@ -212,15 +209,16 @@ public final class PluginInstaller {
 
   public static String rootEntryName(@NotNull Path zip) throws IOException {
     try (ZipFile zipFile = new ZipFile(zip.toFile())) {
-      Enumeration<? extends ZipEntry> entries = zipFile.entries();
+      var entries = zipFile.entries();
       while (entries.hasMoreElements()) {
         ZipEntry zipEntry = entries.nextElement();
         // we do not necessarily get a separate entry for the subdirectory when the file
-        // in the ZIP archive is placed in a subdirectory, so we need to check if the slash
-        // is found anywhere in the path
+        // in the ZIP archive is placed in a subdirectory, so we need to check if the slash  is found anywhere in the path
         String name = zipEntry.getName();
         int i = name.indexOf('/');
-        if (i > 0) return name.substring(0, i);
+        if (i > 0) {
+          return name.substring(0, i);
+        }
       }
     }
 
@@ -472,7 +470,7 @@ public final class PluginInstaller {
   }
 
   private static @NotNull Path getPluginsPath() {
-    return Paths.get(PathManager.getPluginsPath());
+    return Path.of(PathManager.getPluginsPath());
   }
 
   private static void installPluginFromCallbackData(@NotNull PluginInstallCallbackData callbackData) {

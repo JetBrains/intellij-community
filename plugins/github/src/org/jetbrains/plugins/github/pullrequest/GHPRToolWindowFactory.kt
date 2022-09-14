@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.collaboration.async.DisposingMainScope
+import git4idea.remote.hosting.HostedGitRepositoryConnectionValidator
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.EmptyAction
@@ -11,16 +12,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.ui.content.Content
+import com.intellij.util.childScope
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSelectPullRequestForFileAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSwitchRemoteAction
-import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabControllerImpl
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHRepositoryConnectionManager
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import javax.swing.JPanel
 
@@ -34,24 +36,36 @@ internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
     }
   }
 
-  override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) = with(toolWindow as ToolWindowEx) {
-    setTitleActions(listOf(EmptyAction.registerWithShortcutSet("Github.Create.Pull.Request", CommonShortcuts.getNew(), component),
-                           GHPRSelectPullRequestForFileAction()))
-    setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
-    component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
-    with(contentManager) {
-      addContent(factory.createContent(JPanel(null), null, false).apply {
+  override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+    toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
+    configureToolWindow(toolWindow)
+    with(toolWindow.contentManager) {
+      val content = factory.createContent(JPanel(null), null, false).apply {
         isCloseable = false
-        setDisposer(Disposer.newDisposable("GHPR tab disposable"))
-      }.also {
-        val authManager = GithubAuthenticationManager.getInstance()
-        val repositoryManager = project.service<GHHostedRepositoriesManager>()
-        val dataContextRepository = GHPRDataContextRepository.getInstance(project)
-        val projectString = GithubPullRequestsProjectUISettings.getInstance(project)
-        it.putUserData(GHPRToolWindowTabController.KEY,
-                       GHPRToolWindowTabControllerImpl(project, authManager, repositoryManager, dataContextRepository, projectString, it))
-      })
+        setDisposer(Disposer.newDisposable("reviews tab disposable"))
+      }
+      configureContent(project, content)
+      addContent(content)
     }
+  }
+
+  private fun configureToolWindow(toolWindow: ToolWindow) {
+    with(toolWindow) {
+      setTitleActions(listOf(EmptyAction.registerWithShortcutSet("Github.Create.Pull.Request", CommonShortcuts.getNew(), component),
+                             GHPRSelectPullRequestForFileAction()))
+      setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
+    }
+  }
+
+  private fun configureContent(project: Project, content: Content) {
+    val scope = DisposingMainScope(content)
+    val repositoriesManager = project.service<GHHostedRepositoriesManager>()
+    val accountManager = service<GHAccountManager>()
+    val connectionManager = GHRepositoryConnectionManager(scope, repositoriesManager, accountManager, service(), project.service())
+    val vm = GHPRToolWindowTabViewModel(scope, project, repositoriesManager, accountManager, connectionManager)
+
+    val controller = GHPRToolWindowTabControllerImpl(scope.childScope(), project, vm, content)
+    content.putUserData(GHPRToolWindowTabController.KEY, controller)
   }
 
   override fun shouldBeAvailable(project: Project): Boolean = false

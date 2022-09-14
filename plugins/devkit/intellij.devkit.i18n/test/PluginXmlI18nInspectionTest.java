@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.i18n;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.notification.impl.NotificationGroupEP;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -31,6 +32,7 @@ public class PluginXmlI18nInspectionTest extends JavaCodeInsightFixtureTestCase 
     moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP.class))
       .resolveSibling("intellij.platform.resources").toString());
     moduleBuilder.addLibrary("ide-core", PathUtil.getJarPathForClass(Configurable.class));
+    moduleBuilder.addLibrary("ide-core-impl", PathUtil.getJarPathForClass(NotificationGroupEP.class));
   }
 
   @Override

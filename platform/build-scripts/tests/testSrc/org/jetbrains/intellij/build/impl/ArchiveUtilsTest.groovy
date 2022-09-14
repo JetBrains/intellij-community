@@ -39,7 +39,7 @@ class ArchiveUtilsTest {
   @Test
   void tarTest() {
     testTarReproducibility { archive, rootDir, paths, buildDateInSeconds ->
-      ArchiveUtils.tar(archive, rootDir, paths, buildDateInSeconds)
+      ArchiveUtils.INSTANCE.tar(archive, rootDir, paths, buildDateInSeconds)
     }
   }
 
@@ -61,7 +61,7 @@ class ArchiveUtilsTest {
     def archive = iterationDir.resolve(archiveName)
     tar.invoke(archive, prefix, shouldBeArchived, time)
     def extractionDir = iterationDir.resolve("result")
-    ArchiveUtils.unTar(archive, extractionDir)
+    ArchiveUtils.INSTANCE.unTar(archive, extractionDir, null)
     def extracted = Files.walk(extractionDir).withCloseable {
       it.filter { Files.isRegularFile(it) }
         .map { extractionDir.relativize(it).toString() }

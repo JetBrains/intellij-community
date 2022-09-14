@@ -310,13 +310,6 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     if (e.isConsumed()) return true;
     return super.processKeyBinding(ks, e, condition, pressed);
   }
-  /**
-   * @deprecated use {@link #addActionListener(ActionListener)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener, boolean autoRemoveOnHide) {
-    addActionListener(actionListener);
-  }
 
   private static final class LazyDisposable implements Activatable {
     private final WeakReference<ComponentWithBrowseButton<?>> reference;

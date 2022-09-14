@@ -67,12 +67,6 @@ data class IDETestContext(
       addSystemProperty("uiLockTempFile", paths.tempDir / fileName)
     }
 
-  fun disableJcef(): IDETestContext =
-    addVMOptionsPatch {
-      // Disable JCEF (IDEA-243147). Otherwise, tests will fail with LOG.error
-      addSystemProperty("ide.browser.jcef.enabled", false)
-    }
-
   fun disableLinuxNativeMenuForce(): IDETestContext =
     addVMOptionsPatch {
       addSystemProperty("linux.native.menu.force.disable", true)
@@ -164,6 +158,7 @@ data class IDETestContext(
       addSystemProperty("ide.plugins.per.project", true)
     }
 
+  // seems, doesn't work for Maven
   fun disableAutoImport(disabled: Boolean = true) = addVMOptionsPatch {
     addSystemProperty("external.system.auto.import.disabled", disabled)
   }
@@ -182,12 +177,20 @@ data class IDETestContext(
     addSystemProperty("idea.skip.indices.initialization", value)
   }
 
+  fun doRefreshAfterJpsLibraryDownloaded(value: Boolean = true) = addVMOptionsPatch {
+    addSystemProperty("idea.do.refresh.after.jps.library.downloaded", value)
+  }
+
   fun collectImportProjectPerfMetrics() = addVMOptionsPatch {
     addSystemProperty("idea.collect.project.import.performance", true)
   }
 
   fun collectOpenTelemetry() = addVMOptionsPatch {
     addSystemProperty("idea.diagnostic.opentelemetry.file", paths.logsDir.resolve(OPENTELEMETRY_FILE))
+  }
+
+  fun enableVerboseOpenTelemetry() = addVMOptionsPatch {
+    addSystemProperty("idea.diagnostic.opentelemetry.verbose", true)
   }
 
   fun enableWorkspaceModelVerboseLogs() = addVMOptionsPatch {
@@ -265,7 +268,7 @@ data class IDETestContext(
     return this
   }
 
-  fun internalMode() = addVMOptionsPatch { addSystemProperty("idea.is.internal", true) }
+  fun internalMode(value: Boolean = true) = addVMOptionsPatch { addSystemProperty("idea.is.internal", value) }
 
   fun prepareProjectCleanImport(): IDETestContext {
     return removeIdeaProjectDirectory().removeAllImlFilesInProject()

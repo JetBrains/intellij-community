@@ -48,6 +48,7 @@
     <module name="kotlin.gradle.gradle-java"/>
     <module name="kotlin.maven"/>
     <module name="kotlin.project-wizard.idea"/>
+    <module name="kotlin.project-wizard.idea-k1"/>
     <module name="kotlin.project-wizard.gradle"/>
     <module name="kotlin.project-wizard.maven"/>
     <module name="kotlin.project-wizard.compose"/>
@@ -87,5 +88,7 @@
     <module name="kotlin.code-insight.inspections-shared"/>
     <module name="kotlin.code-insight.live-templates-shared"/>
     <module name="kotlin.code-insight.live-templates-k1"/>
+    <module name="kotlin.code-insight.postfix-templates-k1"/>
+    <module name="kotlin.code-insight.structural-search-k1"/>
   </content>
 </idea-plugin>

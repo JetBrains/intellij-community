@@ -23,6 +23,7 @@ import com.intellij.ui.EditorNotificationProvider
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils.findFilesWithExactPackage
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinAllFilesScopeProvider
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.js.isJs
@@ -148,13 +149,16 @@ private fun findAlternativeKtFiles(ktFile: KtFile, project: Project, javaSession
     val packageFqName = ktFile.packageFqName
     val fileName = ktFile.name
     val platform = ktFile.platform
-    return findFilesWithExactPackage(
-        packageFqName,
-        javaSession.searchScope,
-        project,
-    ).filterTo(HashSet()) {
-        it.name == fileName && it.platformMatches(platform)
-    }
+    val allFilesSearchScope = KotlinAllFilesScopeProvider.getInstance(project).getAllKotlinFilesScope()
+
+    fun matches(file: KtFile): Boolean =
+        file.name == fileName && file.platformMatches(platform)
+
+    val result = HashSet<KtFile>()
+    findFilesWithExactPackage(packageFqName, javaSession.searchScope, project).filterTo(result, ::matches)
+    findFilesWithExactPackage(packageFqName, allFilesSearchScope, project).filterTo(result, ::matches)
+
+    return result
 }
 
 private fun KtFile.platformMatches(otherPlatform: TargetPlatform): Boolean =

@@ -10,12 +10,12 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixture.PythonCommonTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1941,9 +1941,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
       myFixture.copyDirectoryToProject(getTestName(true), "");
       myFixture.runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
         myFixture.configureByFile("root1/pkg/test.py");
-        List<String> lookupStrings = StreamEx.of(myFixture.completeBasic())
-          .map(LookupElement::getLookupString)
-          .toList();
+        List<String> lookupStrings = ContainerUtil.map(myFixture.completeBasic(), LookupElement::getLookupString);
         assertContainsElements(lookupStrings, "foo", "bar", "baz");
       });
     });

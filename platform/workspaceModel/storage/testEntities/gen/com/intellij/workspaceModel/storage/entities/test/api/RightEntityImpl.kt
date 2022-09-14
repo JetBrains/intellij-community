@@ -29,7 +29,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class RightEntityImpl : RightEntity, WorkspaceEntityBase() {
+open class RightEntityImpl(val dataSource: RightEntityData) : RightEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeBaseEntity::class.java, BaseEntity::class.java,
@@ -258,11 +258,13 @@ class RightEntityData : WorkspaceEntityData<RightEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): RightEntity {
-    val entity = RightEntityImpl()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = RightEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

@@ -671,7 +671,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
           @Override
           public void visitElement(@NotNull PsiElement element) {
             final String type = element.getText();
-            if (StructuralSearchUtil.isTypedVariable(type)) {
+            if (MatchUtil.isTypedVariable(type)) {
               final ParameterInfo typeInfo = builder.findParameterization(element);
               if (typeInfo != null) {
                 typeInfo.setArgumentContext(false);

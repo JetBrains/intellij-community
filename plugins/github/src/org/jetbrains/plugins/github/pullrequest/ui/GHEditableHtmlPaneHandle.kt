@@ -3,11 +3,11 @@ package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.panels.VerticalLayout
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldModel
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -40,7 +40,9 @@ internal class GHEditableHtmlPaneHandle(private val project: Project,
       panel.repaint()
     }
 
-    editor?.let { GHUIUtil.focusPanel(it) }
+    editor?.let {
+      CollaborationToolsUIUtil.focusPanel(it)
+    }
   }
 
   private fun hideEditor() {

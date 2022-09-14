@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -179,7 +180,7 @@ public class UsageViewImpl implements UsageViewEx {
       ContainerUtil.filter(navigatables, n -> n.canNavigateToSource() && n instanceof PsiElementUsage).
         forEach(n -> {
           PsiElement psiElement = ((PsiElementUsage)n).getElement();
-          if (psiElement != null) UsageViewStatisticsCollector.logItemChosen(getProject(), CodeNavigateSource.FindToolWindow, psiElement.getLanguage());
+          if (psiElement != null) UsageViewStatisticsCollector.logItemChosen(getProject(), this, CodeNavigateSource.FindToolWindow, psiElement.getLanguage());
       });
     }
   };
@@ -726,7 +727,7 @@ public class UsageViewImpl implements UsageViewEx {
           UsageContextPanel.Provider selectedProvider = myUsageContextPanelProviders.get(currentIndex);
           if (selectedProvider != myCurrentUsageContextProvider) {
             tabSelected(selectedProvider);
-            UsageViewStatisticsCollector.logTabSwitched(myProject);
+            UsageViewStatisticsCollector.logTabSwitched(myProject, this);
           }
         });
         panel.add(tabbedPane, BorderLayout.CENTER);
@@ -1359,6 +1360,9 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     for (UsageViewElementsListener listener : UsageViewElementsListener.EP_NAME.getExtensionList()) {
+      if (listener.skipUsage(this, usage)) {
+        return null;
+      }
       listener.beforeUsageAdded(this, usage);
     }
 
@@ -1390,7 +1394,7 @@ public class UsageViewImpl implements UsageViewEx {
     if (element != null && referenceClass != null) {
       Language language = element.getLanguage();
       if (myReportedReferenceClasses.add(Pair.create(referenceClass, language))) {
-        UsageViewStatisticsCollector.logUsageShown(myProject, referenceClass, language);
+        UsageViewStatisticsCollector.logUsageShown(myProject, referenceClass, language, this);
       }
     }
   }
@@ -1871,14 +1875,16 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @Nullable
-  private static Navigatable getNavigatableForNode(@NotNull DefaultMutableTreeNode node, boolean allowRequestFocus) {
+  private Navigatable getNavigatableForNode(@NotNull DefaultMutableTreeNode node, boolean allowRequestFocus) {
     Object userObject = node.getUserObject();
     if (userObject instanceof Navigatable) {
       Navigatable navigatable = (Navigatable)userObject;
       return navigatable.canNavigate() ? new Navigatable() {
         @Override
         public void navigate(boolean requestFocus) {
-          navigatable.navigate(allowRequestFocus && requestFocus);
+          if (Registry.is("ide.usages.next.previous.occurrence.only.show.in.preview") &&
+              isPreviewUsages() && myRootPanel.isShowing()) select();
+          else navigatable.navigate(allowRequestFocus && requestFocus);
         }
 
         @Override

@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -33,7 +34,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -59,7 +60,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   public EditorBasedStatusBarPopup(@NotNull Project project, boolean writeableFileRequired) {
     super(project);
     myWriteableFileRequired = writeableFileRequired;
-    update = new Alarm(this);
+    update = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     myComponent = createComponent();
     myComponent.setVisible(false);
 
@@ -204,10 +205,6 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     return myComponent;
   }
 
-  protected Alarm getUpdateAlarm() {
-    return update;
-  }
-
   protected boolean isEmpty() {
     Boolean result = ObjectUtils.doIfCast(myComponent, TextPanel.WithIconAndArrows.class,
                                           textPanel -> StringUtil.isEmpty(textPanel.getText()) && !textPanel.hasIcon());
@@ -245,6 +242,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   @TestOnly
   public void flushUpdateInTests() {
     update.drainRequestsInTest();
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   public void update() {
@@ -260,37 +258,42 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
 
       VirtualFile file = getSelectedFile();
 
-      WidgetState state = SlowOperations.allowSlowOperations(() -> getWidgetState(file));
+      WidgetState state = ReadAction.compute(() -> getWidgetState(file));
       if (state == WidgetState.NO_CHANGE) {
         return;
       }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        applyUpdate(finishUpdate, file, state);
+      }, ModalityState.any(), (x) -> isDisposed());
+    }, 200);
+  }
 
-      if (state == WidgetState.NO_CHANGE_MAKE_VISIBLE) {
-        myComponent.setVisible(true);
-        return;
-      }
-
-      if (state == WidgetState.HIDDEN) {
-        myComponent.setVisible(false);
-        return;
-      }
-
+  private void applyUpdate(@Nullable Runnable finishUpdate, VirtualFile file, WidgetState state) {
+    if (state == WidgetState.NO_CHANGE_MAKE_VISIBLE) {
       myComponent.setVisible(true);
+      return;
+    }
 
-      actionEnabled = state.actionEnabled && isEnabledForFile(file);
+    if (state == WidgetState.HIDDEN) {
+      myComponent.setVisible(false);
+      return;
+    }
 
-      myComponent.setEnabled(actionEnabled);
-      updateComponent(state);
+    myComponent.setVisible(true);
 
-      if (myStatusBar != null && !myComponent.isValid()) {
-        myStatusBar.updateWidget(ID());
-      }
+    actionEnabled = state.actionEnabled && isEnabledForFile(file);
 
-      if (finishUpdate != null) {
-        finishUpdate.run();
-      }
-      afterVisibleUpdate(state);
-    }, 200, ModalityState.any());
+    myComponent.setEnabled(actionEnabled);
+    updateComponent(state);
+
+    if (myStatusBar != null && !myComponent.isValid()) {
+      myStatusBar.updateWidget(ID());
+    }
+
+    if (finishUpdate != null) {
+      finishUpdate.run();
+    }
+    afterVisibleUpdate(state);
   }
 
   protected void afterVisibleUpdate(@NotNull WidgetState state) {}
@@ -364,6 +367,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   }
 
   @NotNull
+  @RequiresBackgroundThread
   protected abstract WidgetState getWidgetState(@Nullable VirtualFile file);
 
   /**

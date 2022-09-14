@@ -25,7 +25,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ModuleTestEntityImpl : ModuleTestEntity, WorkspaceEntityBase() {
+open class ModuleTestEntityImpl(val dataSource: ModuleTestEntityData) : ModuleTestEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val CONTENTROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleTestEntity::class.java,
@@ -41,10 +41,8 @@ open class ModuleTestEntityImpl : ModuleTestEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _name: String? = null
   override val name: String
-    get() = _name!!
+    get() = dataSource.name
 
   override val contentRoots: List<ContentRootTestEntity>
     get() = snapshot.extractOneToManyChildren<ContentRootTestEntity>(CONTENTROOTS_CONNECTION_ID, this)!!.toList()
@@ -245,12 +243,13 @@ class ModuleTestEntityData : WorkspaceEntityData.WithCalculablePersistentId<Modu
   }
 
   override fun createEntity(snapshot: EntityStorage): ModuleTestEntity {
-    val entity = ModuleTestEntityImpl()
-    entity._name = name
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ModuleTestEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {

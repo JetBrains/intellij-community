@@ -1659,7 +1659,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myScrollingModel.onBulkDocumentUpdateStarted();
 
-    myScrollingPositionKeeper.savePosition();
+    if (myScrollingPositionKeeper != null) myScrollingPositionKeeper.savePosition();
 
     myCaretModel.onBulkDocumentUpdateStarted();
     mySoftWrapModel.onBulkDocumentUpdateStarted();
@@ -1682,7 +1682,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     repaintToScreenBottom(0);
     updateCaretCursor();
 
-    if (!Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING))) {
+    if (!Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING)) && myScrollingPositionKeeper != null) {
       myScrollingPositionKeeper.restorePosition(true);
     }
   }
@@ -1703,7 +1703,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myRangeToRepaintEnd = 0;
     myRestoreScrollingPosition = getCaretModel().getOffset() < e.getOffset() ||
                                  getCaretModel().getOffset() > e.getOffset() + e.getOldLength();
-    if (myRestoreScrollingPosition) {
+    if (myRestoreScrollingPosition && myScrollingPositionKeeper != null) {
       myScrollingPositionKeeper.savePosition();
     }
   }
@@ -1755,7 +1755,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     updateCaretCursor();
 
-    if (myRestoreScrollingPosition && !Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING))) {
+    if (myRestoreScrollingPosition &&
+        !Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING)) &&
+        myScrollingPositionKeeper != null) {
       myScrollingPositionKeeper.restorePosition(true);
     }
   }
@@ -4701,15 +4703,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (font != null) return font;
       }
       return getDelegate().getFont(key);
-    }
-
-    @Override
-    public void setFont(EditorFontType key, Font font) {
-      if (myFontsMap == null) {
-        reinitFontsAndSettings();
-      }
-      myFontsMap.put(key, font);
-      reinitSettings();
     }
 
     @Override

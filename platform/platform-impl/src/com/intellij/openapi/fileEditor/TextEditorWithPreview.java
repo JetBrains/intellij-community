@@ -5,11 +5,14 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -23,6 +26,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.Nls;
@@ -169,8 +173,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     return Registry.is("ide.text.editor.with.preview.show.floating.toolbar") && myToolbarWrapper.isLeftToolbarEmpty();
   }
 
+  protected boolean isShowActionsInTabs() {
+    return ExperimentalUI.isNewUI() && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE;
+  }
+
   private void registerToolbarListeners(JComponent actualComponent, LayoutActionsFloatingToolbar toolbar) {
-    UIUtil.addAwtListener(new MyMouseListener(toolbar), AWTEvent.MOUSE_MOTION_EVENT_MASK, toolbar);
+    StartupUiUtil.addAwtListener(new MyMouseListener(toolbar), AWTEvent.MOUSE_MOTION_EVENT_MASK, toolbar);
     final var actualEditor = UIUtil.findComponentOfType(actualComponent, EditorComponentImpl.class);
     if (actualEditor != null) {
       final var editorKeyListener = new KeyAdapter() {
@@ -453,6 +461,43 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     return null;
   }
 
+  @Override
+  @Nullable
+  public ActionGroup getTabActions() {
+    if (!isShowActionsInTabs()) return null;
+    return new DefaultActionGroup(
+      getSingleChangeViewModeAction(),
+      Separator.create(),
+      createTabViewModesPopupActionGroup()
+    );
+  }
+
+  @NotNull
+  private ActionGroup createTabViewModesPopupActionGroup() {
+    ActionGroup group = createTabViewModesActionGroup();
+    group.setPopup(true);
+    Presentation presentation = group.getTemplatePresentation();
+    presentation.setText(IdeBundle.message("tab.view.modes"));
+    presentation.setIcon(AllIcons.Toolbar.Expand);
+    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+    return group;
+  }
+
+  @NotNull
+  protected ActionGroup createTabViewModesActionGroup() {
+    return new DefaultActionGroup(
+      createViewActionGroup(),
+      Separator.create(),
+      new ChangeEditorSplitAction(IdeBundle.message("tab.vertical.split"), false),
+      new ChangeEditorSplitAction(IdeBundle.message("tab.horizontal.split"), true)
+    );
+  }
+
+  @NotNull
+  protected AnAction getSingleChangeViewModeAction() {
+    return new SingleChangeViewModeAction();
+  }
+
   @NotNull
   protected ToggleAction getShowEditorAction() {
     return new ChangeViewModeAction(Layout.SHOW_EDITOR);
@@ -528,7 +573,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
       if (state) {
         setLayout(myActionLayout);
       }
-      else {
+      else if (!isShowActionsInTabs()) {
         if (myActionLayout == Layout.SHOW_EDITOR_AND_PREVIEW) {
           mySplitter.setOrientation(!myIsVerticalSplit);
           myIsVerticalSplit = !myIsVerticalSplit;
@@ -540,6 +585,64 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setIcon(myActionLayout.getIcon(TextEditorWithPreview.this));
+    }
+  }
+
+  private class SingleChangeViewModeAction extends DumbAwareAction {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      setLayout(getTargetLayout());
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Layout targetLayout = getTargetLayout();
+      Presentation presentation = e.getPresentation();
+      presentation.setIcon(targetLayout.getIcon(TextEditorWithPreview.this));
+      presentation.setText(targetLayout.getName());
+      presentation.setDescription(targetLayout.getName());
+    }
+
+    @NotNull
+    private Layout getTargetLayout() {
+      Layout curLayout = getLayout();
+      return switch (curLayout) {
+        case SHOW_EDITOR, SHOW_PREVIEW -> Layout.SHOW_EDITOR_AND_PREVIEW;
+        case SHOW_EDITOR_AND_PREVIEW -> Layout.SHOW_EDITOR;
+      };
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+  }
+
+  private class ChangeEditorSplitAction extends DumbAwareAction {
+    private final boolean myVerticalSplit;
+
+    protected ChangeEditorSplitAction(@Nls String text, boolean isVerticalSplit) {
+      super(text);
+      myVerticalSplit = isVerticalSplit;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      if (TextEditorWithPreview.this.myIsVerticalSplit != myVerticalSplit) {
+        TextEditorWithPreview.this.myIsVerticalSplit = myVerticalSplit;
+        mySplitter.setOrientation(myVerticalSplit);
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Icon icon = TextEditorWithPreview.this.myIsVerticalSplit == myVerticalSplit ? AllIcons.Actions.Checked : null;
+      e.getPresentation().setIcon(icon);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
@@ -638,6 +741,8 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
     @Override
     public void eventDispatched(AWTEvent event) {
+      if (isShowActionsInTabs()) return;
+
       try {
         var isMouseOutsideToolbar = toolbar.getMousePosition() == null;
         if (myComponent.getMousePosition() != null) {

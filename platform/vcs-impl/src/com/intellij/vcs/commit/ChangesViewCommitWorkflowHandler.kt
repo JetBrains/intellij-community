@@ -30,6 +30,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
   override val amendCommitHandler: NonModalAmendCommitHandler = NonModalAmendCommitHandler(this)
+  override val commitAuthorTracker: CommitAuthorTracker get() = ui
 
   private fun getCommitState(): ChangeListCommitState {
     val changes = getIncludedChanges()
@@ -92,7 +93,7 @@ internal class ChangesViewCommitWorkflowHandler(
       }
     })
 
-    DelayedCommitMessageProvider.init(project, ui, getCommitMessage())
+    DelayedCommitMessageProvider.init(project, ui, getCommitMessageFromPolicy(currentChangeList))
   }
 
   override fun createDataProvider(): DataProvider = object : DataProvider {
@@ -172,7 +173,13 @@ internal class ChangesViewCommitWorkflowHandler(
 
   val isActive: Boolean get() = ui.isActive
   fun activate(): Boolean = fireActivityStateChanged { ui.activate() }
-  fun deactivate(isRestoreState: Boolean) = fireActivityStateChanged { ui.deactivate(isRestoreState) }
+  fun deactivate(isRestoreState: Boolean) {
+    fireActivityStateChanged { ui.deactivate(isRestoreState) }
+    if (isToggleMode()) {
+      resetCommitChecksResult()
+      ui.commitProgressUi.clearCommitCheckFailures()
+    }
+  }
 
   fun addActivityListener(listener: ActivityListener) = activityEventDispatcher.addListener(listener)
 

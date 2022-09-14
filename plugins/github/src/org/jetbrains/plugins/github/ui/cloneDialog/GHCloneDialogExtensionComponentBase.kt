@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
-import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.collaboration.auth.ui.CompactAccountsPanelFactory
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
-import com.intellij.collaboration.ui.util.JListHoveredRowMaterialiser
+import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
-import com.intellij.ui.SingleSelectionModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.panel
@@ -40,6 +39,7 @@ import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import git4idea.remote.GitRememberedInputs
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -371,23 +371,29 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   }
 
   private fun createAccountsModel(): ListModel<GithubAccount> {
-    val model = CollectionListModel(authenticationManager.getAccounts().filter(::isAccountHandled))
-    authenticationManager.addListener(this, object : AccountsListener<GithubAccount> {
-      override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
-        val oldList = old.filter(::isAccountHandled)
-        val newList = new.filter(::isAccountHandled)
-        val delta = CollectionDelta(oldList, newList)
-        model.add(delta.newItems.toList())
-        for (account in delta.removedItems) {
-          model.remove(account)
+    val accountsState = authenticationManager.accountManager.accountsState
+    val model = CollectionListModel(accountsState.value.keys.filter(::isAccountHandled))
+    disposingMainScope().launch {
+      val prev = accountsState.value.filterKeys(::isAccountHandled)
+      accountsState.collect {
+        val new = it.filterKeys(::isAccountHandled)
+
+        new.forEach { (acc, token) ->
+          if (!prev.containsKey(acc)) {
+            model.add(acc)
+          }
+          else if (prev[acc] != token) {
+            model.contentsChanged(acc)
+          }
+        }
+
+        prev.forEach { (acc, _) ->
+          if (!new.containsKey(acc)) {
+            model.remove(acc)
+          }
         }
       }
-
-      override fun onAccountCredentialsChanged(account: GithubAccount) {
-        if (!isAccountHandled(account)) return
-        model.contentsChanged(account)
-      }
-    })
+    }
     return model
   }
 

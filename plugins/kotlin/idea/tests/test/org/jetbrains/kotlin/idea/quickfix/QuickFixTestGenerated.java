@@ -1191,6 +1191,19 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/addJvmInline")
+    public static class AddJvmInline extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("valueClass.kt")
+        public void testValueClass() throws Exception {
+            runTest("testData/quickfix/addJvmInline/valueClass.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/addJvmStaticAnnotation")
     public static class AddJvmStaticAnnotation extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -1890,19 +1903,69 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/addValVar")
-    public static class AddValVar extends AbstractQuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class AddValVar extends AbstractQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/addValVar/inline")
+        public static class Inline extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("basic.kt")
+            public void testBasic() throws Exception {
+                runTest("testData/quickfix/addValVar/inline/basic.kt");
+            }
+
+            @TestMetadata("var.kt")
+            public void testVar() throws Exception {
+                runTest("testData/quickfix/addValVar/inline/var.kt");
+            }
         }
 
-        @TestMetadata("addVal.kt")
-        public void testAddVal() throws Exception {
-            runTest("testData/quickfix/addValVar/addVal.kt");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/addValVar")
+        public static class Uncategorized extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("addVal.kt")
+            public void testAddVal() throws Exception {
+                runTest("testData/quickfix/addValVar/addVal.kt");
+            }
+
+            @TestMetadata("addValAfterVarArg.kt")
+            public void testAddValAfterVarArg() throws Exception {
+                runTest("testData/quickfix/addValVar/addValAfterVarArg.kt");
+            }
+
+            @TestMetadata("annotation.kt")
+            public void testAnnotation() throws Exception {
+                runTest("testData/quickfix/addValVar/annotation.kt");
+            }
+
+            @TestMetadata("expectAnnotation.kt")
+            public void testExpectAnnotation() throws Exception {
+                runTest("testData/quickfix/addValVar/expectAnnotation.kt");
+            }
         }
 
-        @TestMetadata("addValAfterVarArg.kt")
-        public void testAddValAfterVarArg() throws Exception {
-            runTest("testData/quickfix/addValVar/addValAfterVarArg.kt");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/addValVar/value")
+        public static class Value extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("basic.kt")
+            public void testBasic() throws Exception {
+                runTest("testData/quickfix/addValVar/value/basic.kt");
+            }
+
+            @TestMetadata("var.kt")
+            public void testVar() throws Exception {
+                runTest("testData/quickfix/addValVar/value/var.kt");
+            }
         }
     }
 
@@ -8980,24 +9043,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/inlineClassConstructorNotValParameter")
-    public static class InlineClassConstructorNotValParameter extends AbstractQuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("basic.kt")
-        public void testBasic() throws Exception {
-            runTest("testData/quickfix/inlineClassConstructorNotValParameter/basic.kt");
-        }
-
-        @TestMetadata("var.kt")
-        public void testVar() throws Exception {
-            runTest("testData/quickfix/inlineClassConstructorNotValParameter/var.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/inlineTypeParameterFix")
     public static class InlineTypeParameterFix extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -11466,6 +11511,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/redundantIf/negate.kt");
         }
 
+        @TestMetadata("negate2.kt")
+        public void testNegate2() throws Exception {
+            runTest("testData/quickfix/redundantIf/negate2.kt");
+        }
+
+        @TestMetadata("negate3.kt")
+        public void testNegate3() throws Exception {
+            runTest("testData/quickfix/redundantIf/negate3.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/quickfix/redundantIf/simple.kt");
@@ -11513,24 +11568,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/quickfix/redundantModalityModifier/simple.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/redundantSemicolon")
-    public static class RedundantSemicolon extends AbstractQuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("afterImport.kt")
-        public void testAfterImport() throws Exception {
-            runTest("testData/quickfix/redundantSemicolon/afterImport.kt");
-        }
-
-        @TestMetadata("afterStatement.kt")
-        public void testAfterStatement() throws Exception {
-            runTest("testData/quickfix/redundantSemicolon/afterStatement.kt");
         }
     }
 
@@ -11720,19 +11757,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("suspend.kt")
         public void testSuspend() throws Exception {
             runTest("testData/quickfix/removeNoConstructor/suspend.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/removePrivateFromSealedConstructor")
-    public static class RemovePrivateFromSealedConstructor extends AbstractQuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("base.kt")
-        public void testBase() throws Exception {
-            runTest("testData/quickfix/removePrivateFromSealedConstructor/base.kt");
         }
     }
 

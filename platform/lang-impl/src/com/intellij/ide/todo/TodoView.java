@@ -187,7 +187,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     if (myChangeListTodosPanel != null) {
       Disposer.register(this, myChangeListTodosPanel);
       myChangeListTodosContent.setComponent(myChangeListTodosPanel);
-      myChangeListTodosContent.setPreferredFocusableComponent(myCurrentFileTodosPanel.getTree());
+      myChangeListTodosContent.setPreferredFocusableComponent(myChangeListTodosPanel.getTree());
     }
 
     Content scopeBasedTodoContent = contentFactory.createContent(null, LangBundle.message("tab.title.scope.based"), false);

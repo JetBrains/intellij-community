@@ -43,7 +43,6 @@
     <action id="ChangeSplitOrientation">
         <keyboard-shortcut first-keystroke="meta alt 0" />
     </action>
-    <action id="ChangesView.Diff" />
     <action id="ChangesView.GroupBy.Directory" />
     <action id="ChangesView.Move" />
     <action id="ChangesView.Rename">

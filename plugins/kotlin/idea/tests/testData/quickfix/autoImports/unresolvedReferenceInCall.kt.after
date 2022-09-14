@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import class 'ArrayList'" "true"
 // ERROR: Classifier 'ArrayList' does not have a companion object, and thus must be initialized here
 
 // KT-4000

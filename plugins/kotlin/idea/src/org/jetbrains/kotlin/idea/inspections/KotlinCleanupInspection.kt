@@ -123,7 +123,8 @@ class KotlinCleanupInspection : LocalInspectionTool(), CleanupLocalInspectionToo
             ErrorsJs.WRONG_EXTERNAL_DECLARATION,
             Errors.YIELD_IS_RESERVED,
             Errors.DEPRECATED_MODIFIER_FOR_TARGET,
-            Errors.DEPRECATED_MODIFIER
+            Errors.DEPRECATED_MODIFIER,
+            ErrorsJvm.VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION
         )
     }
 

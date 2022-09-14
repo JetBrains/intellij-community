@@ -138,7 +138,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
       deleteObsoletePhase.finished();
 
       StructuredIdeActivity importersPhase = MavenImportCollector.LEGACY_IMPORTERS_PHASE.startedWithParent(myProject, activity);
-      importExtensions(myProject, myIdeModifiableModelsProvider, extensionImporters, postTasks);
+      importExtensions(myProject, myIdeModifiableModelsProvider, extensionImporters, postTasks, importersPhase);
       importersPhase.finished();
     }
     else {
@@ -245,13 +245,12 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
     List<Pair<MavenProject, Module>> incompatibleMavenized = new ArrayList<>();
     List<Pair<MavenProject, Module>> incompatibleNotMavenized = new ArrayList<>();
 
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(myProject);
     for (MavenProject each : myAllProjects) {
       Module module = myFileToModuleMapping.get(each.getFile());
       if (module == null) continue;
 
       if (shouldCreateModuleFor(each) && !(ModuleType.get(module).equals(each.getModuleType()))) {
-        (manager.isMavenizedModule(module) ? incompatibleMavenized : incompatibleNotMavenized).add(Pair.create(each, module));
+        (MavenUtil.isMavenizedModule(module) ? incompatibleMavenized : incompatibleNotMavenized).add(Pair.create(each, module));
       }
     }
     return Pair.create(incompatibleMavenized, incompatibleNotMavenized);

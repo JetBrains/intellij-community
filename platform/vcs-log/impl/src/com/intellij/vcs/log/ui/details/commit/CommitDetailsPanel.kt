@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.details.commit
 
 import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -131,6 +132,10 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
 
   private fun statusToAction(status: VcsCommitExternalStatusPresentation) =
     object : DumbAwareAction(status.text, null, status.icon) {
+      override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+      }
+
       override fun update(e: AnActionEvent) {
         e.presentation.apply {
           isVisible = true

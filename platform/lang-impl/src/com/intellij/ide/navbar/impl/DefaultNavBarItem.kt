@@ -61,12 +61,15 @@ open class DefaultNavBarItem<out T>(val data: T) : NavBarItem {
     val textAttributes = getTextAttributes(selected = false)
     val selectedTextAttributes = getTextAttributes(selected = true)
 
+    val hasContainingFile = (data as? PsiElement)?.containingFile != null
+
     return NavBarItemPresentation(
       icon,
       text,
       popupText,
       textAttributes,
-      selectedTextAttributes
+      selectedTextAttributes,
+      hasContainingFile
     )
   }
 

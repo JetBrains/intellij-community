@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LeakHunter;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -22,6 +23,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
 
@@ -624,5 +626,43 @@ public class DisposerTest  {
     Disposer.dispose(parent);
     assertFalse(Disposer.tryRegister(parent, child));
     Disposer.dispose(child);
+  }
+  
+  @Test
+  public void testRegisterManyChildren() {
+    Disposable parent = new MyLoggingDisposable("parent");
+    List<Disposable> children = new ArrayList<>();
+    for (int i = 0; i < ObjectNode.REASONABLY_BIG * 2; i++) {
+      Disposable child = new MyLoggingDisposable("child #" + i);
+      Disposer.register(parent, child);
+      children.add(child);
+    }
+    Disposer.dispose(parent);
+
+    for (Disposable child : children) {
+      assertTrue(Disposer.isDisposed(child));
+    }
+  }
+
+  @Test
+  public void testPerformanceOfRegisterOrDisposeManyChildrenMustBeGood() {
+    Disposer.setDebugMode(false); // avoid expensive checks
+    int N = 1_000_000;
+    Disposable root = Disposer.newDisposable("test_root");
+
+    Disposable[] children = IntStream.range(0, N).mapToObj(i -> Disposer.newDisposable("child "+i)).toArray(Disposable[]::new);
+    PlatformTestUtil.startPerformanceTest(name.getMethodName(), 10_000, () -> {
+        for (Disposable child : children) {
+          Disposer.register(root, child);
+        }
+        for (Disposable child : children) {
+          Disposer.dispose(child);
+        }
+      })
+      .setup(() -> {
+        Disposer.dispose(root);
+        Disposer.register(myRoot, root);
+      })
+      .assertTiming();
   }
 }

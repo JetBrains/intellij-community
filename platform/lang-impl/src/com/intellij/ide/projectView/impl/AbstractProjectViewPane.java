@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.*;
@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -97,12 +96,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   private static final Logger LOG = Logger.getInstance(AbstractProjectViewPane.class);
   public static final ProjectExtensionPointName<AbstractProjectViewPane> EP
     = new ProjectExtensionPointName<>("com.intellij.projectViewPane");
-
-  /**
-   * @deprecated use {@link #EP} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static final ExtensionPointName<AbstractProjectViewPane> EP_NAME = new ExtensionPointName<>("com.intellij.projectViewPane");
 
   protected final @NotNull Project myProject;
   protected DnDAwareTree myTree;
@@ -399,6 +392,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
 
     Object[] selectedUserObjects = getSelectedUserObjects();
+
+    if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
+      return selectedUserObjects;
+    }
 
     if (BGT_DATA_PROVIDER.is(dataId)) {
       return slowProviders(selectedUserObjects);
@@ -802,19 +799,31 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public PsiDirectory @NotNull [] getSelectedDirectories() {
+    TreePath[] paths = getSelectionPaths();
+    if (paths == null) return PsiDirectory.EMPTY_ARRAY;
+    Object [] selectedUserObjects = ContainerUtil.map2Array(paths, TreeUtil::getLastUserObject);
+    if (selectedUserObjects.length == 0) return PsiDirectory.EMPTY_ARRAY;
+    return getSelectedDirectories(selectedUserObjects);
+  }
+
+  
+  protected PsiDirectory @NotNull [] getSelectedDirectories(Object @NotNull[] selectedUserObjects) {
     List<PsiDirectory> directories = new ArrayList<>();
-    for (PsiDirectoryNode node : getSelectedNodes(PsiDirectoryNode.class)) {
-      PsiDirectory directory = node.getValue();
-      if (directory != null) {
-        directories.add(directory);
-        Object parentValue = node.getParent().getValue();
-        if (parentValue instanceof PsiDirectory && Registry.is("projectView.choose.directory.on.compacted.middle.packages")) {
-          while (true) {
-            directory = directory.getParentDirectory();
-            if (directory == null || directory.equals(parentValue)) {
-              break;
+    for (Object obj : selectedUserObjects) {
+      PsiDirectoryNode node = ObjectUtils.tryCast(obj, PsiDirectoryNode.class);
+      if (node != null) {
+        PsiDirectory directory = node.getValue();
+        if (directory != null) {
+          directories.add(directory);
+          Object parentValue = node.getParent().getValue();
+          if (parentValue instanceof PsiDirectory && Registry.is("projectView.choose.directory.on.compacted.middle.packages")) {
+            while (true) {
+              directory = directory.getParentDirectory();
+              if (directory == null || directory.equals(parentValue)) {
+                break;
+              }
+              directories.add(directory);
             }
-            directories.add(directory);
           }
         }
       }
@@ -823,9 +832,13 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       return directories.toArray(PsiDirectory.EMPTY_ARRAY);
     }
 
-    final PsiElement[] elements = getSelectedPSIElements();
-    if (elements.length == 1) {
-      final PsiElement element = elements[0];
+    List<PsiElement> elements = new ArrayList<>(selectedUserObjects.length);
+    for (Object node : selectedUserObjects) {
+      elements.addAll(getElementsFromNode(node));
+    }
+
+    if (elements.size() == 1) {
+      final PsiElement element = elements.get(0);
       if (element instanceof PsiDirectory) {
         return new PsiDirectory[]{(PsiDirectory)element};
       }
@@ -844,22 +857,15 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
             final VirtualFile delegate = ((VirtualFileWindow)file).getDelegate();
             final PsiFile delegatePsiFile = containingFile.getManager().findFile(delegate);
             if (delegatePsiFile != null && delegatePsiFile.getContainingDirectory() != null) {
-              return new PsiDirectory[] { delegatePsiFile.getContainingDirectory() };
+              return new PsiDirectory[]{delegatePsiFile.getContainingDirectory()};
             }
           }
           return PsiDirectory.EMPTY_ARRAY;
         }
       }
     }
-    else {
-      TreePath path = getSelectedPath();
-      if (path != null) {
-        Object component = path.getLastPathComponent();
-        if (component instanceof DefaultMutableTreeNode) {
-          return getSelectedDirectoriesInAmbiguousCase(((DefaultMutableTreeNode)component).getUserObject());
-        }
-        return getSelectedDirectoriesInAmbiguousCase(component);
-      }
+    else if (selectedUserObjects.length == 1) {
+      return getSelectedDirectoriesInAmbiguousCase(selectedUserObjects[0]);
     }
     return PsiDirectory.EMPTY_ARRAY;
   }

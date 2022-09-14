@@ -41,8 +41,6 @@ final public class BuildDependenciesDownloader {
   private static final Logger LOG = Logger.getLogger(BuildDependenciesDownloader.class.getName());
 
   private static final String HTTP_HEADER_CONTENT_LENGTH = "Content-Length";
-  private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
-    .version(HttpClient.Version.HTTP_1_1).build();
   private static final Striped<Lock> fileLocks = Striped.lock(1024);
   private static final AtomicBoolean cleanupFlag = new AtomicBoolean(false);
 
@@ -59,6 +57,12 @@ final public class BuildDependenciesDownloader {
   @SuppressWarnings("StaticNonFinalField")
   @NotNull
   public static BuildDependenciesTracer TRACER = BuildDependenciesNoopTracer.INSTANCE;
+
+  // init is very expensive due to SSL initialization
+  private static final class HttpClientHolder {
+    private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
+      .version(HttpClient.Version.HTTP_1_1).build();
+  }
 
   public static DependenciesProperties getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
     try {
@@ -339,7 +343,7 @@ final public class BuildDependenciesDownloader {
 
           LOG.info(" * Downloading " + uri + " -> " + target);
 
-          HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
+          HttpResponse<Path> response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
           if (response.statusCode() != 200) {
             StringBuilder builder =
               new StringBuilder("Error downloading " + uri + ": non-200 http status code " + response.statusCode() + "\n");

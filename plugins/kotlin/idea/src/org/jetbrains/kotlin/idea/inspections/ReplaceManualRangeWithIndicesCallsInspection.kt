@@ -10,12 +10,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
-import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
+import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.inspections.collections.isMap
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.idea.intentions.receiverTypeIfSelectorIsSizeOrLength
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.RangeKtExpressionType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType

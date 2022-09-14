@@ -358,14 +358,9 @@ public abstract class AbstractDependencyVisitor extends ClassVisitor {
 
   private void addType(Type t) {
     switch (t.getSort()) {
-      case Type.ARRAY:
-        addType(t.getElementType());
-        break;
-      case Type.OBJECT:
-        addName(t.getClassName().replace('.', '/'));
-        break;
-      case Type.METHOD:
-        addMethodDesc(t.getDescriptor());
+      case Type.ARRAY -> addType(t.getElementType());
+      case Type.OBJECT -> addName(t.getClassName().replace('.', '/'));
+      case Type.METHOD -> addMethodDesc(t.getDescriptor());
     }
   }
 

@@ -20,10 +20,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class BaseRevisionTextPatchEP implements PatchEP {
-  public static final Key<Boolean> ourPutBaseRevisionTextKey =
-    Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey");
+  public static final Key<Boolean> ourProvideStoredBaseRevisionTextKey =
+    Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourProvideStoredBaseRevisionTextKey");
   public static final Key<Map<FilePath, ContentRevision>> ourBaseRevisions =
     Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourBaseRevisionPaths");
+
   private static final Key<Map<String, String>> ourStoredTexts =
     Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourStoredTexts");
   private static final Logger LOG = Logger.getInstance(BaseRevisionTextPatchEP.class);
@@ -40,20 +41,26 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
       return null;
     }
 
-    if (Boolean.TRUE.equals(commitContext.getUserData(ourPutBaseRevisionTextKey))) {
-      Path file = ProjectKt.getStateStore(project).getProjectBasePath().resolve(path);
+    Map<FilePath, ContentRevision> baseRevisions = commitContext.getUserData(ourBaseRevisions);
+    if (baseRevisions != null) {
+      Path file = resolvePatchPath(project, path);
       FilePath filePath = VcsContextFactory.getInstance().createFilePath(file, Files.isDirectory(file));
-      Map<FilePath, ContentRevision> baseRevisions = commitContext.getUserData(ourBaseRevisions);
-      ContentRevision baseRevision = baseRevisions == null ? null : baseRevisions.get(filePath);
-      if (baseRevision == null) {
-        return null;
+      ContentRevision baseRevision = baseRevisions.get(filePath);
+      if (baseRevision != null) {
+        try {
+          return baseRevision.getContent();
+        }
+        catch (VcsException e) {
+          LOG.info(e);
+        }
       }
+    }
 
-      try {
-        return baseRevision.getContent();
-      }
-      catch (VcsException e) {
-        LOG.info(e);
+    if (Boolean.TRUE.equals(commitContext.getUserData(ourProvideStoredBaseRevisionTextKey))) {
+      Map<String, String> map = commitContext.getUserData(ourStoredTexts);
+      if (map != null) {
+        String content = map.get(getStoredTextKey(project, path));
+        if (content != null) return content;
       }
     }
     return null;
@@ -73,7 +80,7 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
       map = new HashMap<>();
       commitContext.putUserData(ourStoredTexts, map);
     }
-    map.put(ProjectKt.getStateStore(project).getProjectBasePath().resolve(path).toString(), content.toString());
+    map.put(getStoredTextKey(project, path), content.toString());
   }
 
   /**
@@ -86,10 +93,20 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
 
     Map<String, String> map = commitContext.getUserData(ourStoredTexts);
     if (map != null) {
-      String content = map.get(ProjectKt.getStateStore(project).getProjectBasePath().resolve(path).toString());
+      String content = map.get(getStoredTextKey(project, path));
       if (content == null) return null;
       return StringUtil.convertLineSeparators(content);
     }
     return null;
+  }
+
+  @NotNull
+  private static String getStoredTextKey(@NotNull Project project, @NotNull String path) {
+    return resolvePatchPath(project, path).toString();
+  }
+
+  @NotNull
+  private static Path resolvePatchPath(@NotNull Project project, @NotNull String path) {
+    return ProjectKt.getStateStore(project).getProjectBasePath().resolve(path);
   }
 }

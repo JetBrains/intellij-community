@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
@@ -13,9 +14,6 @@ import java.util.Set;
 import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_ABSTRACT;
 import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_NATIVE;
 
-/**
- * @author lambdamix
- */
 public final class ControlFlowGraph {
   public static final class Edge {
     public final int from, to;
@@ -50,7 +48,7 @@ public final class ControlFlowGraph {
   /**
    * Where execution goes if NPE occurs at given instruction
    */
-  public final TIntIntHashMap npeTransitions;
+  public final Int2IntMap npeTransitions;
 
   ControlFlowGraph(String className,
                    MethodNode methodNode,
@@ -58,7 +56,7 @@ public final class ControlFlowGraph {
                    int edgeCount,
                    boolean[] errors,
                    Set<Edge> errorTransitions,
-                   TIntIntHashMap npeTransitions) {
+                   Int2IntMap npeTransitions) {
     this.className = className;
     this.methodNode = methodNode;
     this.transitions = transitions;
@@ -76,9 +74,9 @@ public final class ControlFlowGraph {
 final class ControlFlowBuilder implements FramelessAnalyzer.EdgeCreator {
   final String className;
   final MethodNode methodNode;
-  final TIntArrayList[] transitions;
-  final Set<ControlFlowGraph.Edge> errorTransitions;
-  final TIntIntHashMap npeTransitions;
+  final IntArrayList[] transitions;
+  final Set<Edge> errorTransitions;
+  final Int2IntMap npeTransitions;
   final FramelessAnalyzer myAnalyzer;
   private final boolean[] errors;
   private int edgeCount;
@@ -87,13 +85,13 @@ final class ControlFlowBuilder implements FramelessAnalyzer.EdgeCreator {
     myAnalyzer = jsr ? new FramelessAnalyzer(this) : new LiteFramelessAnalyzer(this);
     this.className = className;
     this.methodNode = methodNode;
-    transitions = new TIntArrayList[methodNode.instructions.size()];
+    transitions = new IntArrayList[methodNode.instructions.size()];
     errors = new boolean[methodNode.instructions.size()];
     for (int i = 0; i < transitions.length; i++) {
-      transitions[i] = new TIntArrayList();
+      transitions[i] = new IntArrayList();
     }
     errorTransitions = new HashSet<>();
-    npeTransitions = new TIntIntHashMap();
+    npeTransitions = new Int2IntOpenHashMap();
   }
 
   ControlFlowGraph buildCFG() throws AnalyzerException {
@@ -102,7 +100,7 @@ final class ControlFlowBuilder implements FramelessAnalyzer.EdgeCreator {
     }
     int[][] resultTransitions = new int[transitions.length][];
     for (int i = 0; i < resultTransitions.length; i++) {
-      resultTransitions[i] = transitions[i].toNativeArray();
+      resultTransitions[i] = transitions[i].toIntArray();
     }
     return new ControlFlowGraph(className, methodNode, resultTransitions, edgeCount, errors, errorTransitions, npeTransitions);
   }

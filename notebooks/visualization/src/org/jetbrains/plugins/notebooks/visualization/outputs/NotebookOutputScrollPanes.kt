@@ -249,11 +249,12 @@ open class NotebookOutputNonStickyScrollPane(
     }
 
     private fun contentFitsViewport(): Boolean {
+      val view = viewport.view ?: return true
       val viewRect = viewport.viewRect
       return viewRect.x == 0
              && viewRect.y == 0
-             && viewRect.height == viewport.view.height
-             && viewRect.width == viewport.view.width
+             && viewRect.height == view.height
+             && viewRect.width == view.width
     }
   }
 

@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelJvmBasicComplet
 import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelMultiFileJvmBasicCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractFirKeywordCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelBasicCompletionHandlerTest
+import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelJavaCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeigherTest
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesFirTest
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDecla
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
+import org.jetbrains.kotlin.idea.fir.refactoring.rename.AbstractFirSimpleRenameTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
@@ -145,6 +147,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("handlers/basic", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
         }
 
+        testClass<AbstractHighLevelJavaCompletionHandlerTest> {
+            model("handlers/injava", pattern = Patterns.JAVA)
+        }
+
         testClass<AbstractFirKeywordCompletionHandlerTest> {
             model("handlers/keywords", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
         }
@@ -165,6 +171,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
                 isRecursive = false,
                 pattern = KT_WITHOUT_FIR_PREFIX
             )
+        }
+    }
+
+    testGroup("refactorings/rename.k2") {
+        testClass<AbstractFirSimpleRenameTest> {
+            model("refactoring/rename", pattern = KT_WITHOUT_DOTS)
         }
     }
 
@@ -205,11 +217,14 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("uast/uast-kotlin-fir") {
         testClass<AbstractFirUastDeclarationTest> {
             model("declaration")
-            model("legacy")
         }
 
         testClass<AbstractFirUastTypesTest> {
             model("type")
+        }
+
+        testClass<AbstractFirUastValuesTest> {
+            model("value")
         }
     }
 

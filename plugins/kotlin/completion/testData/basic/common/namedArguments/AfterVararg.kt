@@ -4,4 +4,4 @@ fun bar(s: String){
     foo("", "", <caret>)
 }
 
-// EXIST: { lookupString:"option =", itemText:"option =", icon: "nodes/parameter.svg"}
+// EXIST: { lookupString:"option =", itemText:"option =", icon: "Parameter"}

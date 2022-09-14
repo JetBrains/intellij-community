@@ -275,13 +275,11 @@ public final class ActionMenu extends JBMenu {
 
     if (mySubElementSelector != null) {
       switch (e.getID()) {
-        case MouseEvent.MOUSE_PRESSED:
+        case MouseEvent.MOUSE_PRESSED -> {
           mySubElementSelector.ignoreNextSelectionRequest();
           shouldCancelIgnoringOfNextSelectionRequest = true;
-          break;
-        case MouseEvent.MOUSE_ENTERED:
-          mySubElementSelector.ignoreNextSelectionRequest(getDelay() * 2);
-          break;
+        }
+        case MouseEvent.MOUSE_ENTERED -> mySubElementSelector.ignoreNextSelectionRequest(getDelay() * 2);
       }
     }
 

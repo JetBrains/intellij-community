@@ -284,9 +284,15 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
+  /**
+   * (Dis)Allows file modifications during highlighting testing. Might be useful to catch unexpected modification requests.
+   * @return the old value: true if modifications were allowed, false otherwise
+   */
   @TestOnly
-  void allowDirt(boolean allow) {
+  boolean allowDirt(boolean allow) {
+    boolean old = myAllowDirt;
     myAllowDirt = allow;
+    return old;
   }
 
   private static final RangeMarker WHOLE_FILE_DIRTY_MARKER =

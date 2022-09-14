@@ -4,12 +4,15 @@ package org.jetbrains.idea.devkit.codeInsight
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.diagnostic.ITNReporter
+import com.intellij.icons.AllIcons
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.notification.impl.NotificationGroupEP
@@ -108,6 +111,8 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("ide-core", ideCore)
     String ideCoreImpl = PathUtil.getJarPathForClass(NotificationGroupEP.class)
     moduleBuilder.addLibrary("ide-core-impl", ideCoreImpl);
+
+    moduleBuilder.addLibrary("util-ui", PathUtil.getJarPathForClass(AllIcons.class));
   }
 
   // Gradle-like setup, but JBList not in Library
@@ -807,10 +812,10 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     assertSize(5, highlightInfos)
 
     for (info in highlightInfos) {
-      def ranges = info.quickFixActionRanges
-      assertNotNull(ranges)
+
+      def ranges = actions(info)
       assertSize(1, ranges)
-      def quickFix = ranges.get(0).getFirst().getAction()
+      def quickFix = ranges.get(0)
       myFixture.launchAction(quickFix)
     }
 
@@ -821,6 +826,15 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                                 "registrationCheck/module/MainModulePlugin_after.xml",
                                 true)
   }
+  static List<IntentionAction> actions(HighlightInfo info) {
+    List<IntentionAction> result = new ArrayList<IntentionAction>();
+    info.findRegisteredQuickFix((descriptor,range) -> {
+      result.add(descriptor.getAction())
+      return null;
+    });
+    return result;
+  }
+
 
   void testValuesMaxLengths() {
     doHighlightingTest("ValuesMaxLengths.xml")

@@ -186,6 +186,9 @@ public class ExeReader extends Bin.Structure{
     if (machine == 0x8664) {
       return ExeFormat.X64;
     }
+    if (machine == 0xAA64) {
+      return ExeFormat.ARM64;
+    }
     throw new UnsupportedOperationException("Unsupported machine code " + machine);
   }
 }

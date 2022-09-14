@@ -61,8 +61,8 @@ public final class CharArrayUtil {
         return;
       }
       else if (src instanceof CharBuffer) {
-        final CharBuffer buffer = (CharBuffer)src;
-        final int i = buffer.position();
+        CharBuffer buffer = (CharBuffer)src;
+        int i = buffer.position();
         buffer.position(i + srcOffset);
         buffer.get(dst, dstOffset, len);
         buffer.position(i);
@@ -93,7 +93,7 @@ public final class CharArrayUtil {
     }
 
     if (seq instanceof CharBuffer) {
-      final CharBuffer buffer = (CharBuffer)seq;
+      CharBuffer buffer = (CharBuffer)seq;
       if (buffer.hasArray() && !buffer.isReadOnly() && buffer.arrayOffset() == 0 && buffer.position() == 0) {
         return buffer.array();
       }
@@ -138,7 +138,7 @@ public final class CharArrayUtil {
    *                     as that that symbol is not contained at the given 'chars';
    *                     {@code endOffset} otherwise
    */
-  public static int shiftForward(@NotNull CharSequence buffer, final int startOffset, final int endOffset, @NotNull String chars) {
+  public static int shiftForward(@NotNull CharSequence buffer, int startOffset, int endOffset, @NotNull String chars) {
     for (int offset = startOffset, limit = Math.min(endOffset, buffer.length()); offset < limit; offset++) {
       char c = buffer.charAt(offset);
       int i;
@@ -164,7 +164,7 @@ public final class CharArrayUtil {
     }
   }
 
-  private static boolean isSuitable(@NotNull String chars, final char c) {
+  private static boolean isSuitable(@NotNull String chars, char c) {
     for (int i = 0; i < chars.length(); i++) {
       if (c == chars.charAt(i)) return true;
     }
@@ -231,7 +231,7 @@ public final class CharArrayUtil {
    * <p/>
    * Example: suppose that this method is called with buffer that holds {@code 'test data'} symbols, offset that points
    * to the last symbols and {@code 'sf'} as a chars to exclude. Offset that points to {@code 's'} symbol
-   * is returned then, i.e. all symbols of the given buffer that are located after it and not after given offset
+   * is returned then, i.e., all symbols of the given buffer that are located after it and not after given offset
    * ({@code 't data'}) are guaranteed to not contain given chars ({@code 'sf'}).
    *
    * @param buffer      symbols buffer to check
@@ -259,7 +259,7 @@ public final class CharArrayUtil {
   }
 
   public static boolean regionMatches(char @NotNull [] buffer, int start, int end, @NotNull CharSequence s) {
-    final int len = s.length();
+    int len = s.length();
     if (start + len > end) return false;
     if (start < 0) return false;
     for (int i = 0; i < len; i++) {
@@ -269,7 +269,7 @@ public final class CharArrayUtil {
   }
 
   public static boolean regionMatches(@NotNull CharSequence buffer, int start, int end, @NotNull CharSequence s) {
-    final int len = s.length();
+    int len = s.length();
     if (start + len > end) return false;
     if (start < 0) return false;
 
@@ -354,8 +354,8 @@ public final class CharArrayUtil {
    * @param toIndex      end index (exclusive)
    * @return             index of the given pattern at the given buffer if the match is found; {@code -1} otherwise
    */
-  public static int indexOf(@NotNull CharSequence buffer, @NotNull CharSequence pattern, int fromIndex, final int toIndex) {
-    final int patternLength = pattern.length();
+  public static int indexOf(@NotNull CharSequence buffer, @NotNull CharSequence pattern, int fromIndex, int toIndex) {
+    int patternLength = pattern.length();
     if (fromIndex < 0) {
       fromIndex = 0;
     }
@@ -381,7 +381,7 @@ public final class CharArrayUtil {
    *                    {@code [from; to)} if target symbol is found;
    *                    {@code -1} otherwise
    */
-  public static int indexOf(char @NotNull [] buffer, final char symbol, int fromIndex, final int toIndex) {
+  public static int indexOf(char @NotNull [] buffer, char symbol, int fromIndex, int toIndex) {
     if (fromIndex < 0) {
       fromIndex = 0;
     }
@@ -404,7 +404,7 @@ public final class CharArrayUtil {
    *                    {@code [from; to)} if target symbol is found;
    *                    {@code -1} otherwise
    */
-  public static int lastIndexOf(char @NotNull [] buffer, final char symbol, int fromIndex, final int toIndex) {
+  public static int lastIndexOf(char @NotNull [] buffer, char symbol, int fromIndex, int toIndex) {
     if (fromIndex < 0) {
       fromIndex = 0;
     }
@@ -451,7 +451,7 @@ public final class CharArrayUtil {
   public static boolean containsOnlyWhiteSpaces(@Nullable CharSequence chars) {
     if (chars == null) return true;
     for (int i = 0; i < chars.length(); i++) {
-      final char c = chars.charAt(i);
+      char c = chars.charAt(i);
       if (c == ' ' || c == '\t' || c == '\n' || c == '\r') continue;
       return false;
     }
@@ -463,8 +463,8 @@ public final class CharArrayUtil {
     int whitespaceEnd = -1;
     int lastTextFound = 0;
     for(int i = charsSequence.length() - 1; i >= 0; i--){
-      final char charAt = charsSequence.charAt(i);
-      final boolean isWhitespace = Character.isWhitespace(charAt);
+      char charAt = charsSequence.charAt(i);
+      boolean isWhitespace = Character.isWhitespace(charAt);
       if(charAt == '\n'){
         result.add(new TextRange(i, (whitespaceEnd >= 0 ? whitespaceEnd : i) + 1).shiftRight(shift));
         whitespaceEnd = -1;
@@ -494,7 +494,7 @@ public final class CharArrayUtil {
   public static boolean containLineBreaks(@Nullable CharSequence seq, int fromOffset, int endOffset) {
     if (seq == null) return false;
     for (int i = fromOffset; i < endOffset; i++) {
-      final char c = seq.charAt(i);
+      char c = seq.charAt(i);
       if (c == '\n' || c == '\r') return true;
     }
     return false;
@@ -525,7 +525,7 @@ public final class CharArrayUtil {
   }
 
   @NotNull
-  //TODO: move to a better place or inline, because it creates excesive dependencies
+  //TODO: move to a better place or inline, because it creates excessive dependencies
   public static ImmutableCharSequence createImmutableCharSequence(@NotNull CharSequence sequence) {
     return ImmutableText.valueOf(sequence);
   }

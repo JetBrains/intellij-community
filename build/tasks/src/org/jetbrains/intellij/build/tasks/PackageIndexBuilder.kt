@@ -5,7 +5,7 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import org.jetbrains.intellij.build.io.ZipFileWriter
 import org.jetbrains.xxh3.Xx3UnencodedString
 
-internal class PackageIndexBuilder {
+class PackageIndexBuilder {
   val classPackageHashSet = LongOpenHashSet()
   val resourcePackageHashSet = LongOpenHashSet()
 

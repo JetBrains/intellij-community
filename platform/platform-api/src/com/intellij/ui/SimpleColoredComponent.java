@@ -45,8 +45,6 @@ import java.util.Objects;
  * This is high performance Swing component which represents an icon
  * with a colored text. The text consists of fragments. Each
  * text fragment has its own color (foreground) and font style.
- *
- * @author Vladimir Kondratyev
  */
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized"})
 public class SimpleColoredComponent extends JComponent implements Accessible, ColoredTextContainer {
@@ -485,7 +483,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   @NotNull
-  private Font getBaseFont() {
+  protected Font getBaseFont() {
     Font font = getFont();
     if (font == null) font = StartupUiUtil.getLabelFont();
     return font;

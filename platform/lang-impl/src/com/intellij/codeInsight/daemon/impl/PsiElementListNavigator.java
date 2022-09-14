@@ -249,7 +249,7 @@ public final class PsiElementListNavigator {
             for (int i = 0; i < selectedValues.length; i++) {
               copy[i] = (PsiElement)selectedValues[i];
             }
-            return new PsiCopyPasteManager.MyTransferable(copy);
+            return PsiCopyPasteManager.newTransferable(copy);
           }
 
           @Override

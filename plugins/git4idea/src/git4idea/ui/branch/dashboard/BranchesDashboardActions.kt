@@ -356,6 +356,10 @@ internal object BranchesDashboardActions {
       uiController.showOnlyMy = state
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
     override fun update(e: AnActionEvent) {
       super.update(e)
       val project = e.getData(CommonDataKeys.PROJECT)
@@ -412,7 +416,7 @@ internal object BranchesDashboardActions {
       super.actionPerformed(e)
     }
 
-    override fun onFetchFinished(result: GitFetchResult) {
+    override fun onFetchFinished(project: Project, result: GitFetchResult) {
       ui.stopLoadingBranches()
     }
   }
@@ -555,6 +559,10 @@ internal object BranchesDashboardActions {
 
     open fun update(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>) {}
     abstract fun doAction(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>)
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
 
     override fun update(e: AnActionEvent) {
       val project = e.project

@@ -21,7 +21,7 @@ public final class BuildDependenciesCommunityRoot {
 
   public BuildDependenciesCommunityRoot(@NotNull Path communityRoot) {
     Path probeFile = communityRoot.resolve("intellij.idea.community.main.iml");
-    if (!Files.exists(probeFile)) {
+    if (Files.notExists(probeFile)) {
       throw new IllegalStateException("community root was not found at " + communityRoot);
     }
 

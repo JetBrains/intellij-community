@@ -825,15 +825,9 @@ class ModuleBridgesTest {
     }
 
     fun catchLog(): String {
-      return try {
-        val outCatcher = OutCatcher(System.out)
-        System.setOut(outCatcher)
-        TestLoggerFactory.dumpLogToStdout(logLine)
-        outCatcher.catcher
-      }
-      finally {
-        System.setOut(System.out)
-      }
+      val outCatcher = OutCatcher(System.out)
+      TestLoggerFactory.dumpLogTo(logLine, outCatcher)
+      return outCatcher.catcher
     }
   }
 }

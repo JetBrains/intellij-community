@@ -63,7 +63,7 @@ public class UnusedDefineInspection extends BaseInspection {
 
     private final XmlElementVisitor myXmlVisitor = new XmlElementVisitor() {
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         MyElementVisitor.this.visitXmlTag(tag);
       }
     };

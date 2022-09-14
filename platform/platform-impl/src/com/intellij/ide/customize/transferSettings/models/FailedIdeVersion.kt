@@ -6,5 +6,5 @@ import javax.swing.Icon
 
 class FailedIdeVersion(id: String, icon: Icon, name: String, subName: String? = null,
                        @Nls val potentialReason: String? = null,
-                       @Nls val stepsToFix: String? = null, val canBeRetried: Boolean = true,
+                       @Nls var stepsToFix: String? = null, val canBeRetried: Boolean = true,
                        val throwable: Throwable? = null) : BaseIdeVersion(id, icon, name, subName)

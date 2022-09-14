@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.completion
 
+import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
-import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -21,6 +21,6 @@ data class PackageLookupObject(val fqName: FqName) : DescriptorBasedDeclarationL
     override val name: Name get() = fqName.shortName()
     override val importableFqName: FqName get() = fqName
     override val isDeprecated: Boolean get() = false
-    override fun getIcon(flags: Int): Icon = PlatformIcons.PACKAGE_ICON
+    override fun getIcon(flags: Int): Icon = AllIcons.Nodes.Package
 }
 

@@ -10,7 +10,7 @@ internal fun interface SettingsChangeListener : EventListener {
 
 internal sealed class SyncSettingsEvent {
   class IdeChange(snapshot: SettingsSnapshot) : EventWithSnapshot(snapshot)
-  class CloudChange(snapshot: SettingsSnapshot) : EventWithSnapshot(snapshot)
+  class CloudChange(snapshot: SettingsSnapshot, val serverVersionId: String?) : EventWithSnapshot(snapshot)
   object MustPushRequest : SyncSettingsEvent()
   object LogCurrentSettings : SyncSettingsEvent()
 

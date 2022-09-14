@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.extensions
 
+import git4idea.remote.hosting.findKnownRepositories
 import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
@@ -40,8 +41,8 @@ internal class GHProtectedBranchRulesLoader : GitFetchHandler {
   private fun loadProtectionRules(indicator: ProgressIndicator,
                                   fetches: Map<GitRepository, List<GitRemote>>,
                                   project: Project) {
-    val githubAuthenticationManager = GithubAuthenticationManager.getInstance()
-    if (!GitSharedSettings.getInstance(project).isSynchronizeBranchProtectionRules || !githubAuthenticationManager.hasAccounts()) {
+    val authenticationManager = GithubAuthenticationManager.getInstance()
+    if (!GitSharedSettings.getInstance(project).isSynchronizeBranchProtectionRules || !authenticationManager.hasAccounts()) {
       runInEdt {
         project.service<GithubProjectSettings>().branchProtectionPatterns = arrayListOf()
       }
@@ -57,23 +58,30 @@ internal class GHProtectedBranchRulesLoader : GitFetchHandler {
       for (remote in remotes) {
         indicator.checkCanceled()
 
-        val account =
-          githubAuthenticationManager.getAccounts().find { it.server.matches(remote.firstUrl.orEmpty()) } ?: continue
-
-        val requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account)
-
-        val githubRepositoryMapping =
+        val repositoryMapping =
           project.service<GHHostedRepositoriesManager>().findKnownRepositories(repository)
-            .find { it.gitRemoteUrlCoordinates.remote == remote }
+            .find { it.remote.remote == remote }
           ?: continue
 
-        val repositoryCoordinates = githubRepositoryMapping.ghRepositoryCoordinates
+        val serverPath = repositoryMapping.repository.serverPath
+        val defaultAccount = authenticationManager.getDefaultAccount(repository.project)
 
-        SimpleGHGQLPagesLoader(requestExecutor, { GHGQLRequests.Repo.getProtectionRules(repositoryCoordinates) })
+        val account =
+          if (defaultAccount != null
+              && defaultAccount.server.equals(serverPath, true)) {
+            defaultAccount
+          }
+          else {
+            authenticationManager.getAccounts().find {
+              it.server.equals(serverPath, true)
+            }
+          } ?: continue
+
+        val requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account)
+        SimpleGHGQLPagesLoader(requestExecutor, { GHGQLRequests.Repo.getProtectionRules(repositoryMapping.repository) })
           .loadAll(SensitiveProgressWrapper((indicator)))
           .forEach { rule -> branchProtectionPatterns.add(PatternUtil.convertToRegex(rule.pattern)) }
       }
-
     }
 
     runInEdt {

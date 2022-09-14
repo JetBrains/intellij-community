@@ -42,8 +42,8 @@ internal sealed interface RecentProjectTreeItem {
 
   fun children(): List<RecentProjectTreeItem>
 
-  fun removeItem(event: AnActionEvent) {
-    RemoveSelectedProjectsAction().actionPerformed(event)
+  fun removeItem() {
+    RemoveSelectedProjectsAction.removeItem(this)
   }
 }
 

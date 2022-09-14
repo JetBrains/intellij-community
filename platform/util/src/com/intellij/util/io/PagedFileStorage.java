@@ -175,7 +175,7 @@ public class PagedFileStorage implements Forceable {
   public int getInt(long addr) throws IOException {
     if (myValuesAreBufferAligned) {
       long page = addr / myPageSize;
-      int page_offset = (int) (addr % myPageSize);
+      int page_offset = (int)(addr % myPageSize);
       DirectBufferWrapper buffer = getReadOnlyBuffer(page, true);
       try {
         return buffer.getInt(page_offset);
@@ -195,7 +195,7 @@ public class PagedFileStorage implements Forceable {
 
   public DirectBufferWrapper getByteBuffer(long address, boolean modify) throws IOException {
     long page = address / myPageSize;
-    assert page >= 0 && page <= FilePageCache.MAX_PAGES_COUNT: address + " in " + myFile;
+    assert page >= 0 && page <= FilePageCache.MAX_PAGES_COUNT : address + " in " + myFile;
     return getBufferWrapper(page, modify, true);
   }
 
@@ -283,7 +283,7 @@ public class PagedFileStorage implements Forceable {
 
     while (l > 0) {
       long page = i / myPageSize;
-      int page_offset = (int) (i % myPageSize);
+      int page_offset = (int)(i % myPageSize);
 
       int page_len = Math.min(l, myPageSize - page_offset);
       final DirectBufferWrapper buffer = getReadOnlyBuffer(page, checkAccess);
@@ -307,7 +307,7 @@ public class PagedFileStorage implements Forceable {
 
     while (l > 0) {
       long page = i / myPageSize;
-      int page_offset = (int) (i % myPageSize);
+      int page_offset = (int)(i % myPageSize);
 
       int page_len = Math.min(l, myPageSize - page_offset);
       DirectBufferWrapper buffer = getBuffer(page);

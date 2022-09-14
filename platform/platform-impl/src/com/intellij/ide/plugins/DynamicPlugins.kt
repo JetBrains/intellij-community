@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
-import com.intellij.application.options.RegistryManager
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveProjectsAndApp
@@ -63,6 +62,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -1043,15 +1043,10 @@ private fun optionalDependenciesOnPlugin(
 private fun loadModules(
   modules: Collection<IdeaPluginDescriptorImpl>,
   app: ApplicationImpl,
-  listenerCallbacks: MutableList<Runnable>,
+  listenerCallbacks: MutableList<in Runnable>,
 ) {
   fun registerComponents(componentManager: ComponentManager) {
-    (componentManager as ComponentManagerImpl).registerComponents(
-      modules = modules.toList(),
-      app = app,
-      precomputedExtensionModel = null,
-      listenerCallbacks = listenerCallbacks,
-    )
+    (componentManager as ComponentManagerImpl).registerComponents(modules.toList(), app, null, listenerCallbacks)
   }
 
   registerComponents(app)
@@ -1068,8 +1063,8 @@ private fun loadModules(
 
 private fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {
   FileChannel.open(Paths.get(hprofPath), StandardOpenOption.READ).use { channel ->
-    val analysis = HProfAnalysis(channel, SystemTempFilenameSupplier()) { analysisContext, progressIndicator ->
-      AnalyzeClassloaderReferencesGraph(analysisContext, pluginId.idString).analyze(progressIndicator)
+    val analysis = HProfAnalysis(channel, SystemTempFilenameSupplier()) { analysisContext, listProvider, progressIndicator ->
+      AnalyzeClassloaderReferencesGraph(analysisContext, listProvider, pluginId.idString).analyze(progressIndicator).mainReport.toString()
     }
     analysis.onlyStrongReferences = true
     analysis.includeClassesAsRoots = false

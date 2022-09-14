@@ -59,16 +59,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
    **/
   @Deprecated(forRemoval = true)
   public Set<String> getGroupIds() {
-    return getGroupIds("");
-  }
-
-  /**
-   * @deprecated use {@link DependencySearchService}
-   * or use {@link MavenGroupIdCompletionContributor} for example to fill async completion variants.
-   **/
-  @Deprecated(forRemoval = true)
-  public Set<String> getGroupIds(String pattern) {
-    return DependencySearchService.getInstance(myProject).getGroupIds(pattern);
+    return DependencySearchService.getInstance(myProject).getGroupIds("");
   }
 
   /**

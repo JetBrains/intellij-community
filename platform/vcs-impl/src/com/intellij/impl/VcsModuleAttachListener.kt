@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDirectoryMapping
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ModuleAttachListener
@@ -27,6 +28,7 @@ class VcsModuleAttachListener : ModuleAttachListener {
   }
 
   private fun addVcsMapping(primaryModule: Module, addedModuleContentRoot: VirtualFile) {
+    MAPPING_DETECTION_LOG.debug("VcsModuleAttachListener.addVcsMapping", primaryModule, addedModuleContentRoot)
     val project = primaryModule.project
     val vcsManager = ProjectLevelVcsManager.getInstance(project)
     val mappings = vcsManager.directoryMappings
@@ -53,6 +55,7 @@ class VcsModuleAttachListener : ModuleAttachListener {
   }
 
   private fun removeVcsMapping(module: Module) {
+    MAPPING_DETECTION_LOG.debug("VcsModuleAttachListener.removeVcsMapping", module)
     val project = module.project
     val vcsManager = ProjectLevelVcsManager.getInstance(project)
     val mappings = vcsManager.directoryMappings

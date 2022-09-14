@@ -26,7 +26,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class JavaModuleSettingsEntityImpl : JavaModuleSettingsEntity, WorkspaceEntityBase() {
+open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntityData) : JavaModuleSettingsEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, JavaModuleSettingsEntity::class.java,
@@ -41,22 +41,16 @@ open class JavaModuleSettingsEntityImpl : JavaModuleSettingsEntity, WorkspaceEnt
   override val module: ModuleEntity
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
-  override var inheritedCompilerOutput: Boolean = false
-  override var excludeOutput: Boolean = false
-  @JvmField
-  var _compilerOutput: VirtualFileUrl? = null
+  override val inheritedCompilerOutput: Boolean get() = dataSource.inheritedCompilerOutput
+  override val excludeOutput: Boolean get() = dataSource.excludeOutput
   override val compilerOutput: VirtualFileUrl?
-    get() = _compilerOutput
+    get() = dataSource.compilerOutput
 
-  @JvmField
-  var _compilerOutputForTests: VirtualFileUrl? = null
   override val compilerOutputForTests: VirtualFileUrl?
-    get() = _compilerOutputForTests
+    get() = dataSource.compilerOutputForTests
 
-  @JvmField
-  var _languageLevelId: String? = null
   override val languageLevelId: String?
-    get() = _languageLevelId
+    get() = dataSource.languageLevelId
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -238,16 +232,13 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
   }
 
   override fun createEntity(snapshot: EntityStorage): JavaModuleSettingsEntity {
-    val entity = JavaModuleSettingsEntityImpl()
-    entity.inheritedCompilerOutput = inheritedCompilerOutput
-    entity.excludeOutput = excludeOutput
-    entity._compilerOutput = compilerOutput
-    entity._compilerOutputForTests = compilerOutputForTests
-    entity._languageLevelId = languageLevelId
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = JavaModuleSettingsEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

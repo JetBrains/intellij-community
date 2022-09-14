@@ -14,7 +14,6 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.android-extensions-compiler-plugin" level="project" />
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="library" scope="TEST" name="Guava" level="project" />
-    <orderEntry type="library" scope="TEST" name="Trove4j" level="project" />
     <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="TEST" />
@@ -118,5 +117,7 @@
     <orderEntry type="module" module-name="kotlin.base.resources" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k1" scope="TEST" />
   </component>
 </module>

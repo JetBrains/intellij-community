@@ -316,9 +316,9 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
   public String getLibraryName() {
     String res = myLibraryNameCache;
     if (res == null) {
-      StringBuilder builder = new StringBuilder();
+      StringBuilder builder = new StringBuilder(MAVEN_LIB_PREFIX);
 
-      MavenId.append(builder, myGroupId);
+      MavenId.appendFirst(builder, myGroupId);
       MavenId.append(builder, myArtifactId);
 
       if (!StringUtilRt.isEmptyOrSpaces(myType) && !MavenConstants.TYPE_JAR.equals(myType)) MavenId.append(builder, myType);
@@ -326,8 +326,6 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
 
       String version = !StringUtilRt.isEmptyOrSpaces(myBaseVersion) ? myBaseVersion : myVersion;
       if (!StringUtilRt.isEmptyOrSpaces(version)) MavenId.append(builder, version);
-
-      builder.insert(0, MAVEN_LIB_PREFIX);
 
       res = builder.toString();
       myLibraryNameCache = res;

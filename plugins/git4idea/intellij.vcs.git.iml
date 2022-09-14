@@ -83,8 +83,8 @@
     <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper" exported="" />
     <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper.rt" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic" />
-    <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.collaborationTools" />
   </component>
 </module>

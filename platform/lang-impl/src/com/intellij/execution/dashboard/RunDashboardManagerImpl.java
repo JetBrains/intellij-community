@@ -103,20 +103,36 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     CUSTOMIZER_EP_NAME.addExtensionPointListener(dashboardUpdater, myProject);
     GROUPING_RULE_EP_NAME.addExtensionPointListener(dashboardUpdater, myProject);
 
-    ExtensionPointListener typeUpdater = new ExtensionPointListener() {
+    DEFAULT_TYPES_PROVIDER_EP_NAME.addExtensionPointListener(new ExtensionPointListener<RunDashboardDefaultTypesProvider>() {
       @Override
-      public void extensionAdded(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(RunDashboardDefaultTypesProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        Set<String> types = new HashSet<>(getTypes());
+        types.addAll(extension.getDefaultTypeIds(myProject));
+        setTypes(types);
+      }
+
+      @Override
+      public void extensionRemoved(RunDashboardDefaultTypesProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        Set<String> types = new HashSet<>(getTypes());
+        types.removeAll(extension.getDefaultTypeIds(myProject));
+        setTypes(types);
+        dashboardUpdater.extensionRemoved(extension, pluginDescriptor);
+      }
+    }, myProject);
+    ConfigurationType.CONFIGURATION_TYPE_EP.addExtensionPointListener(new ExtensionPointListener<ConfigurationType>() {
+      @Override
+      public void extensionAdded(ConfigurationType extension, @NotNull PluginDescriptor pluginDescriptor) {
         setTypes(new HashSet<>(getTypes()));
       }
 
       @Override
-      public void extensionRemoved(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
-        setTypes(new HashSet<>(getTypes()));
+      public void extensionRemoved(ConfigurationType extension, @NotNull PluginDescriptor pluginDescriptor) {
+        Set<String> types = new HashSet<>(getTypes());
+        types.remove(extension.getId());
+        setTypes(types);
         dashboardUpdater.extensionRemoved(extension, pluginDescriptor);
       }
-    };
-    DEFAULT_TYPES_PROVIDER_EP_NAME.addExtensionPointListener(typeUpdater, myProject);
-    ConfigurationType.CONFIGURATION_TYPE_EP.addExtensionPointListener(typeUpdater, myProject);
+    }, myProject);
   }
 
   private void initServiceContentListeners() {
@@ -294,7 +310,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
   private void moveAddedContent(Condition<? super RunnerAndConfigurationSettings> condition) {
     RunContentManagerImpl runContentManager = (RunContentManagerImpl)RunContentManager.getInstance(myProject);
-    List<RunContentDescriptor> descriptors = ((ExecutionManagerImpl)ExecutionManager.getInstance(myProject)).getRunningDescriptors(condition);
+    List<RunContentDescriptor> descriptors =
+      ((ExecutionManagerImpl)ExecutionManager.getInstance(myProject)).getRunningDescriptors(condition);
     for (RunContentDescriptor descriptor : descriptors) {
       Content content = descriptor.getAttachedContent();
       if (content == null) continue;

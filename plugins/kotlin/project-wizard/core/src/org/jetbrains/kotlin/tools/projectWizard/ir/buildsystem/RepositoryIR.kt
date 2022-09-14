@@ -36,8 +36,9 @@ data class RepositoryIR(override val repository: Repository) : BuildSystemIR, Re
             }
             else -> Unit
         }
-        is MavenPrinter -> {
-            node("repository") {
+        is MavenPrinter -> when (repository) {
+            DefaultRepository.MAVEN_LOCAL -> {}
+            else -> node("repository") {
                 singleLineNode("id") { +repository.idForMaven }
                 singleLineNode("url") { +repository.url }
             }

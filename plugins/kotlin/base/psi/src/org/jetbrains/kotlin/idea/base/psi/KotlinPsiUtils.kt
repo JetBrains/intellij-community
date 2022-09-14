@@ -9,12 +9,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.parentsOfType
+import com.intellij.util.castSafelyTo
 import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
+import org.jetbrains.kotlin.util.takeWhileNotNull
 
 val KtClassOrObject.classIdIfNonLocal: ClassId?
     get() {
@@ -134,3 +136,20 @@ fun KtPropertyAccessor.deleteBody() {
     val leftParenthesis = leftParenthesis ?: return
     deleteChildRange(leftParenthesis, lastChild)
 }
+
+fun KtDeclarationWithBody.singleExpressionBody(): KtExpression? =
+    when (val body = bodyExpression) {
+        is KtBlockExpression -> body.statements.singleOrNull()?.castSafelyTo<KtReturnExpression>()?.returnedExpression
+        else -> body
+    }
+
+fun KtExpression.getCallChain(): List<KtExpression> =
+    generateSequence<Pair<KtExpression?, KtExpression?>>(this to null) { (receiver, _) ->
+        receiver.castSafelyTo<KtDotQualifiedExpression>()?.let { it.receiverExpression to it.selectorExpression } ?: (null to receiver)
+    }
+        .drop(1)
+        .map { (_, selector) -> selector }
+        .takeWhileNotNull()
+        .toList()
+        .reversed()
+

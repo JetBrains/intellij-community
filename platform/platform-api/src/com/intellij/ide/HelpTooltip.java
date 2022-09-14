@@ -113,6 +113,7 @@ public class HelpTooltip {
 
   private static final String PARAGRAPH_SPLITTER = "<p/?>";
   private static final String TOOLTIP_PROPERTY = "JComponent.helpTooltip";
+  private static final String TOOLTIP_DISABLED_PROPERTY = "JComponent.helpTooltipDisabled";
 
   private @TooltipTitle String title;
   private @NlsSafe String shortcut;
@@ -559,9 +560,30 @@ public class HelpTooltip {
     }
   }
 
+  public static void disableTooltip(Component source) {
+    if (source instanceof JComponent component) {
+      component.putClientProperty(TOOLTIP_DISABLED_PROPERTY, Boolean.TRUE);
+    }
+  }
+
+  public static void enableTooltip(Component source) {
+    if (source instanceof JComponent component) {
+      component.putClientProperty(TOOLTIP_DISABLED_PROPERTY, null);
+    }
+  }
+
+  private static boolean isTooltipDisabled(Component component) {
+    if (component instanceof JComponent jComponent) {
+      Boolean disabled = (Boolean)jComponent.getClientProperty(TOOLTIP_DISABLED_PROPERTY);
+      return disabled == Boolean.TRUE;
+    } else {
+      return false;
+    }
+  }
+
   private void scheduleShow(MouseEvent e, int delay) {
     popupAlarm.cancelAllRequests();
-
+    if (isTooltipDisabled(e.getComponent())) return;
     if (ScreenReader.isActive()) return; // Disable HelpTooltip in screen reader mode.
 
     popupAlarm.addRequest(() -> {

@@ -25,7 +25,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, WorkspaceEntityBase() {
+open class FacetExternalSystemIdEntityImpl(val dataSource: FacetExternalSystemIdEntityData) : FacetExternalSystemIdEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val FACET_CONNECTION_ID: ConnectionId = ConnectionId.create(FacetEntity::class.java, FacetExternalSystemIdEntity::class.java,
@@ -37,10 +37,8 @@ open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, Worksp
 
   }
 
-  @JvmField
-  var _externalSystemId: String? = null
   override val externalSystemId: String
-    get() = _externalSystemId!!
+    get() = dataSource.externalSystemId
 
   override val facet: FacetEntity
     get() = snapshot.extractOneToOneParent(FACET_CONNECTION_ID, this)!!
@@ -183,12 +181,13 @@ class FacetExternalSystemIdEntityData : WorkspaceEntityData<FacetExternalSystemI
   }
 
   override fun createEntity(snapshot: EntityStorage): FacetExternalSystemIdEntity {
-    val entity = FacetExternalSystemIdEntityImpl()
-    entity._externalSystemId = externalSystemId
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = FacetExternalSystemIdEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

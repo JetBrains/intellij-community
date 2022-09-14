@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -168,6 +169,19 @@ public class PythonDataViewerTest extends PyEnvTestCase {
           assertEquals("'(1, 2, 3)'", data[0][2].toString());
           assertEquals("'()'", data[1][2].toString());
           assertEquals("'(4,)'", data[2][2].toString());
+        });
+      }
+    });
+  }
+
+  @Test
+  public void testNumpyArrayWithComplexNumbers() {
+    runPythonTest(new PyDataFrameDebuggerTask("/debug", "test_sci_data_with_complex_numbers.py", Collections.singleton(2)) {
+      @Override
+      public void testing() throws Exception {
+        doTest("arr", 1, 10, chunk -> {
+          assertEquals("(9.000000000000001e-09+1.8000000000000002e-08j)",  chunk.getMax());
+          assertEquals("0j", chunk.getMin());
         });
       }
     });

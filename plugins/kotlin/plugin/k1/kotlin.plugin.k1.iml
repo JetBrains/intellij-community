@@ -115,6 +115,7 @@
     <orderEntry type="module" module-name="kotlin.native" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.idea-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.maven" scope="RUNTIME" />
@@ -141,5 +142,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k1" scope="RUNTIME" />
   </component>
 </module>

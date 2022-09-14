@@ -10,21 +10,33 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ArtifactLoadingErrorDescription extends ConfigurationErrorDescription {
-  private static final ConfigurationErrorType ARTIFACT_ERROR = new ConfigurationErrorType(false) {
+public final class ArtifactLoadingErrorDescription extends ConfigurationErrorDescription {
+
+  public static final class ArtifactErrorType extends ConfigurationErrorType {
+
+    private static final ArtifactErrorType INSTANCE = new ArtifactErrorType();
+
+    private ArtifactErrorType() { super(false); }
+
+    @Override
+    public @NotNull @NonNls String getFeatureType() {
+      return ArtifactManager.FEATURE_TYPE;
+    }
+
     @Override
     public @Nls @NotNull String getErrorText(int errorCount, @NlsSafe String firstElementName) {
       return JavaCompilerBundle.message("artifact.configuration.problem.text", errorCount, firstElementName);
     }
-  };
+  }
 
   private final Project myProject;
   private final InvalidArtifact myArtifact;
 
   public ArtifactLoadingErrorDescription(Project project, InvalidArtifact artifact) {
-    super(artifact.getName(), artifact.getErrorMessage(), ARTIFACT_ERROR);
+    super(artifact.getName(), artifact.getErrorMessage());
     myProject = project;
     myArtifact = artifact;
   }
@@ -44,5 +56,10 @@ public class ArtifactLoadingErrorDescription extends ConfigurationErrorDescripti
   @Override
   public boolean isValid() {
     return ArtifactManager.getInstance(myProject).getAllArtifactsIncludingInvalid().contains(myArtifact);
+  }
+
+  @Override
+  public @NotNull ArtifactErrorType getErrorType() {
+    return ArtifactErrorType.INSTANCE;
   }
 }

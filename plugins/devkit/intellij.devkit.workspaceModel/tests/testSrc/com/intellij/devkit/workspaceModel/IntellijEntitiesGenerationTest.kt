@@ -7,10 +7,26 @@ import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.SystemProperties
+import com.intellij.workspaceModel.storage.CodeGeneratorVersions
 import java.io.File
 import java.nio.file.Path
 
 class IntellijEntitiesGenerationTest : CodeGenerationTestBase() {
+
+  override fun setUp() {
+    CodeGeneratorVersions.checkApiInInterface = false
+    CodeGeneratorVersions.checkApiInImpl = false
+    CodeGeneratorVersions.checkImplInImpl = false
+    super.setUp()
+  }
+
+  override fun tearDown() {
+    super.tearDown()
+    CodeGeneratorVersions.checkApiInInterface = true
+    CodeGeneratorVersions.checkApiInImpl = true
+    CodeGeneratorVersions.checkImplInImpl = true
+  }
+
   private enum class IntellijEntitiesPackage(val apiRootRelativePath: String, val implRootRelativePath: String, val pathToPackage: String, val keepPropertiesWithUnknownType: Boolean = false) {
     Bridges("platform/workspaceModel/storage/src",
             "platform/workspaceModel/storage/gen",
@@ -19,7 +35,7 @@ class IntellijEntitiesGenerationTest : CodeGenerationTestBase() {
             "plugins/eclipse/gen",
             "org/jetbrains/idea/eclipse/workspaceModel"),
     Tests("platform/workspaceModel/storage/testEntities/testSrc",
-          "platform/workspaceModel/storage/testEntities/gen", 
+          "platform/workspaceModel/storage/testEntities/gen",
           "com/intellij/workspaceModel/storage/entities/test/api", true);
     
     val apiRootPath: Path

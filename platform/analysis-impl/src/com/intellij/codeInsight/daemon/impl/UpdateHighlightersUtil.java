@@ -406,7 +406,7 @@ public final class UpdateHighlightersUtil {
     int layer = getLayer(info, severityRegistrar);
     RangeHighlighterEx highlighter = infosToRemove == null ? null : (RangeHighlighterEx)infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
 
-    long finalInfoRange = TextRange.toScalarRange(infoStartOffset, infoEndOffset);
+    long finalInfoRange = TextRangeScalarUtil.toScalarRange(infoStartOffset, infoEndOffset);
     TextAttributes infoAttributes = info.getTextAttributes(psiFile, colorsScheme);
     Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
       TextAttributesKey textAttributesKey = info.forcedTextAttributesKey == null ? info.type.getAttributesKey() : info.forcedTextAttributesKey;
@@ -433,24 +433,8 @@ public final class UpdateHighlightersUtil {
       GutterMark renderer = info.getGutterIconRenderer();
       finalHighlighter.setGutterIconRenderer((GutterIconRenderer)renderer);
 
-      ranges2markersCache.put(finalInfoRange, info.getHighlighter());
-      if (info.quickFixActionRanges != null) {
-        List<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>> list =
-          new ArrayList<>(info.quickFixActionRanges.size());
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-          TextRange textRange = pair.second;
-          RangeMarker marker = getOrCreate(document, ranges2markersCache, textRange);
-          list.add(Pair.create(pair.first, marker));
-        }
-        info.quickFixActionMarkers = ContainerUtil.createLockFreeCopyOnWriteList(list);
-      }
-      ProperTextRange fixRange = info.getFixTextRange();
-      if (fixRange.equalsToRange(finalInfoRange)) {
-        info.fixMarker = null; // null means it the same as highlighter's range
-      }
-      else {
-        info.fixMarker = getOrCreate(document, ranges2markersCache, fixRange);
-      }
+      ranges2markersCache.put(finalInfoRange, finalHighlighter);
+      info.updateQuickFixFields(document, ranges2markersCache, finalInfoRange);
     };
 
     if (highlighter == null) {
@@ -500,11 +484,6 @@ public final class UpdateHighlightersUtil {
       layer = HighlighterLayer.ADDITIONAL_SYNTAX;
     }
     return layer;
-  }
-
-  @NotNull
-  private static RangeMarker getOrCreate(@NotNull Document document, @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache, @NotNull TextRange textRange) {
-    return ranges2markersCache.computeIfAbsent(textRange.toScalarRange(), __ -> document.createRangeMarker(textRange));
   }
 
   private static final Key<Boolean> TYPING_INSIDE_HIGHLIGHTER_OCCURRED = Key.create("TYPING_INSIDE_HIGHLIGHTER_OCCURRED");

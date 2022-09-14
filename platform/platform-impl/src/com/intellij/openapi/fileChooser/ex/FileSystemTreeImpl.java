@@ -131,7 +131,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     });
 
     if (speedSearchConverter != null) {
-      new TreeSpeedSearch(myTree, speedSearchConverter);
+      new TreeSpeedSearch(myTree, false, speedSearchConverter.asFunction());
     }
     else {
       new TreeSpeedSearch(myTree);

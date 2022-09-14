@@ -2,19 +2,15 @@
 
 package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
 
-import com.intellij.lang.ASTNode
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.pom.PomManager
-import com.intellij.pom.PomModelAspect
-import com.intellij.pom.event.PomModelEvent
-import com.intellij.pom.event.PomModelListener
-import com.intellij.pom.tree.TreeAspect
-import com.intellij.pom.tree.events.TreeChangeEvent
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.source.tree.FileElement
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiTreeChangeAdapter
+import com.intellij.psi.PsiTreeChangeEvent
+import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.getNonLocalContainingInBodyDeclarationWith
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.isReanalyzableContainer
@@ -25,7 +21,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 internal class FirIdeModificationTrackerService(project: Project) : Disposable {
     init {
-        PomManager.getModel(project).addModelListener(Listener())
+        PsiManager.getInstance(project).addPsiTreeChangeListener(Listener(), this)
     }
 
     private val _projectGlobalOutOfBlockInKotlinFilesModificationCount = AtomicLong()
@@ -36,7 +32,6 @@ internal class FirIdeModificationTrackerService(project: Project) : Disposable {
         moduleModificationsState.getModificationsCountForModule(module)
 
     private val moduleModificationsState = ModuleModificationsState()
-    private val treeAspect = TreeAspect.getInstance(project)
 
     override fun dispose() {}
 
@@ -50,78 +45,66 @@ internal class FirIdeModificationTrackerService(project: Project) : Disposable {
         moduleModificationsState.increaseModificationCountForModule(module)
     }
 
-    private inner class Listener : PomModelListener {
-        override fun isAspectChangeInteresting(aspect: PomModelAspect): Boolean =
-            treeAspect == aspect
-
-        override fun modelChanged(event: PomModelEvent) {
-            val changeSet = event.getChangeSet(treeAspect) as TreeChangeEvent? ?: return
-            val psi = changeSet.rootElement.psi
-            val changedElements = changeSet.changedElements
-
-            handleChangedElementsInAllModules(changedElements, changeSet, psi)
+    private inner class Listener : PsiTreeChangeAdapter() {
+        override fun childAdded(event: PsiTreeChangeEvent) {
+            processChange(event)
         }
 
-        private fun handleChangedElementsInAllModules(
-            changedElements: Array<out ASTNode>,
-            changeSet: TreeChangeEvent,
-            changeSetRootElementPsi: PsiElement
-        ) {
-            if (!changeSetRootElementPsi.isPhysical) {
+        override fun childReplaced(event: PsiTreeChangeEvent) {
+            processChange(event)
+        }
+
+        override fun childMoved(event: PsiTreeChangeEvent) {
+            processChange(event)
+        }
+
+        override fun childRemoved(event: PsiTreeChangeEvent) {
+            processChange(event)
+        }
+
+        override fun childrenChanged(event: PsiTreeChangeEvent) {
+            if ((event as PsiTreeChangeEventImpl).isGenericChange) return
+            processChange(event)
+        }
+
+        override fun propertyChanged(event: PsiTreeChangeEvent) {
+            processChange(event)
+        }
+
+        private fun processChange(event: PsiTreeChangeEvent) {
+            val rootElement = event.parent ?: return
+
+            if (!rootElement.isPhysical) {
                 /**
                  * Element which do not belong to a project should not cause OOBM
                  */
                 return
             }
-            if (changedElements.isEmpty()) {
-                incrementModificationCountForFileChange(changeSet)
-            } else {
-                incrementModificationCountForSpecificElements(changedElements, changeSet, changeSetRootElementPsi)
-            }
+
+            incrementModificationCountForSpecificElements(event.child, rootElement)
         }
 
-        private fun incrementModificationCountForSpecificElements(
-            changedElements: Array<out ASTNode>,
-            changeSet: TreeChangeEvent,
-            changeSetRootElementPsi: PsiElement
-        ) {
-            require(changedElements.isNotEmpty())
-            var isOutOfBlockChangeInAnyModule = false
-
-            changedElements.forEach { element ->
-                val isOutOfBlock = element.isOutOfBlockChange(changeSet, changeSetRootElementPsi)
-                isOutOfBlockChangeInAnyModule = isOutOfBlockChangeInAnyModule || isOutOfBlock
-                if (isOutOfBlock) {
-                    incrementModificationTrackerForContainingModule(element)
+        private fun incrementModificationCountForSpecificElements(child: PsiElement?, rootElement: PsiElement) {
+            val isOutOfBlock = isOutOfBlockChange(rootElement, child)
+            if (isOutOfBlock) {
+                val module = rootElement.module
+                if (module != null) {
+                    moduleModificationsState.increaseModificationCountForModule(module)
                 }
-            }
-
-            if (isOutOfBlockChangeInAnyModule) {
                 _projectGlobalOutOfBlockInKotlinFilesModificationCount.incrementAndGet()
             }
         }
 
-        private fun incrementModificationCountForFileChange(changeSet: TreeChangeEvent) {
-            val fileElement = changeSet.rootElement as FileElement ?: return
-            incrementModificationTrackerForContainingModule(fileElement)
-            _projectGlobalOutOfBlockInKotlinFilesModificationCount.incrementAndGet()
-        }
-
-        private fun incrementModificationTrackerForContainingModule(element: ASTNode) {
-            element.psi.module?.let { module ->
-                moduleModificationsState.increaseModificationCountForModule(module)
-            }
-        }
-
-        private fun ASTNode.isOutOfBlockChange(changeSet: TreeChangeEvent, changeSetRootElementPsi: PsiElement): Boolean {
-            return when (changeSetRootElementPsi.language) {
+        private fun isOutOfBlockChange(rootElement: PsiElement, child: PsiElement?): Boolean {
+            return when (rootElement.language) {
                 KotlinLanguage.INSTANCE -> {
-                    val nodes = changeSet.getChangesByElement(this).affectedChildren
-                     nodes.any(::isOutOfBlockChange)
+                    isOutOfBlockChange(child ?: rootElement)
                 }
+
                 JavaLanguage.INSTANCE -> {
                     true // TODO improve for Java KTIJ-21684
                 }
+
                 else -> {
                     // Any other language may cause OOBM in Kotlin too
                     true
@@ -130,8 +113,7 @@ internal class FirIdeModificationTrackerService(project: Project) : Disposable {
 
         }
 
-        private fun isOutOfBlockChange(node: ASTNode): Boolean {
-            val psi = node.psi ?: return true
+        private fun isOutOfBlockChange(psi: PsiElement): Boolean {
             if (!psi.isValid) {
                 /**
                  * If PSI is not valid, well something bad happened, OOBM won't hurt

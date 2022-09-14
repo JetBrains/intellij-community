@@ -7,6 +7,14 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.concurrent.ConcurrentHashMap
@@ -233,17 +241,37 @@ abstract class SynchronizedFineGrainedEntityCache<Key: Any, Value: Any>(project:
             checkValueValidity(newValue)
         }
 
-        ProgressManager.checkCanceled()
-
         useCache { cache ->
             cache.putIfAbsent(key, newValue)
         }?.let { return it }
 
+        postProcessNewValue(key, newValue)
+
         return newValue
     }
 
+    /**
+     * it has to be a pure function w/o side effects as a value could be recalculated
+     */
     abstract fun calculate(key: Key): Value
+
+    /**
+     * side effect function on a newly calculated value
+     */
+    open fun postProcessNewValue(key: Key, value: Value) {}
 }
+
+fun EntityStorage.findModuleByEntityWithHack(entity: ModuleEntity, project: Project) = entity.findModule(this) ?:
+// TODO: workaround to bypass bug with new modules not present in storageAfter
+entity.findModule(WorkspaceModel.getInstance(project).entityStorage.current)
+
+fun EntityStorage.findLibraryByEntityWithHack(entity: LibraryEntity, project: Project) = entity.findLibraryBridge(this) ?:
+// TODO: workaround to bypass bug with new modules not present in storageAfter
+entity.findLibraryBridge(WorkspaceModel.getInstance(project).entityStorage.current)
+
+fun EntityStorage.findModuleWithHack(entity: ModuleEntity, project: Project) = entity.findModule(this) ?:
+// TODO: workaround to bypass bug with new modules not present in storageAfter
+entity.findModule(WorkspaceModel.getInstance(project).entityStorage.current)
 
 abstract class LockFreeFineGrainedEntityCache<Key: Any, Value: Any>(project: Project, cleanOnLowMemory: Boolean): FineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory) {
     override val cache: MutableMap<Key, Value> by StorageProvider(project, javaClass) { ConcurrentHashMap() }
@@ -292,3 +320,18 @@ class StorageProvider<Storage: Any>(
 }
 
 fun <T: Any> SynchronizedFineGrainedEntityCache<Unit, T>.get() = get(Unit)
+
+
+fun <T: WorkspaceEntity> EntityChange<T>.oldEntity() =
+    when (this) {
+        is EntityChange.Added -> null
+        is EntityChange.Removed -> entity
+        is EntityChange.Replaced -> oldEntity
+    }
+
+fun <T: WorkspaceEntity> EntityChange<T>.newEntity() =
+    when (this) {
+        is EntityChange.Added -> newEntity
+        is EntityChange.Removed -> null
+        is EntityChange.Replaced -> newEntity
+    }

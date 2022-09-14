@@ -4,5 +4,5 @@ pluginManagement {
         id("me.filippov.gradle.jvm.wrapper") version jvmWrapperVersion apply false
     }
 }
-rootProject.name = "TestProject"
 
+rootProject.name = "TestProject"

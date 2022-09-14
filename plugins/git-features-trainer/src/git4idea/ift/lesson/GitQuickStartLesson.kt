@@ -324,8 +324,6 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     backupSearchEverywhereLocation = null
   }
 
-  override val suitableTips = listOf("VCS_general")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(GitLessonsBundle.message("git.quick.start.help.link"),
          LessonUtil.getHelpLink("set-up-a-git-repository.html")),

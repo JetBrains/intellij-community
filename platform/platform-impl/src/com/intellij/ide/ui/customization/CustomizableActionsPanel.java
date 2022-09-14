@@ -22,7 +22,6 @@ import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -37,6 +36,7 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.intellij.ide.ui.customization.ActionUrl.*;
@@ -94,7 +94,7 @@ public class CustomizableActionsPanel {
   }
 
   static FilterComponent setupFilterComponent(JTree tree) {
-    final TreeSpeedSearch mySpeedSearch = new TreeSpeedSearch(tree, new TreePathStringConvertor(), true) {
+    final TreeSpeedSearch mySpeedSearch = new TreeSpeedSearch(tree, true, new TreePathStringFunction()) {
       @Override
       public boolean isPopupActive() {
         return /*super.isPopupActive()*/true;
@@ -266,9 +266,9 @@ public class CustomizableActionsPanel {
     ((DefaultTreeModel)myActionsTree.getModel()).reload();
   }
 
-  private static class TreePathStringConvertor implements Convertor<TreePath, String> {
+  private static class TreePathStringFunction implements Function<TreePath, String> {
     @Override
-    public String convert(TreePath o) {
+    public String apply(TreePath o) {
       Object node = o.getLastPathComponent();
       if (node instanceof DefaultMutableTreeNode) {
         Object object = ((DefaultMutableTreeNode)node).getUserObject();

@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.KotlinInspectionFacade
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.inspections.*
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToElvisInspection
@@ -76,7 +77,7 @@ object J2KPostProcessingRegistrarImpl : J2KPostProcessingRegistrar {
 
         registerInspectionBasedProcessing(IfThenToSafeAccessInspection())
         registerInspectionBasedProcessing(IfThenToElvisInspection(true))
-        registerInspectionBasedProcessing(SimplifyNegatedBinaryExpressionInspection())
+        registerInspectionBasedProcessing(KotlinInspectionFacade.instance.simplifyNegatedBinaryExpression)
         registerInspectionBasedProcessing(ReplaceGetOrSetInspection())
         registerInspectionBasedProcessing(AddOperatorModifierInspection())
         registerIntentionBasedProcessing(ObjectLiteralToLambdaIntention())

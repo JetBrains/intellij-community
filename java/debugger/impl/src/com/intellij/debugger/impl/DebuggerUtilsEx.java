@@ -72,6 +72,7 @@ import com.sun.jdi.event.EventSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -636,8 +637,11 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return "void".equals(method.returnTypeName());
   }
 
-  @Nullable
-  public static Method getMethod(Location location) {
+  @Contract("null -> null")
+  public static Method getMethod(@Nullable Location location) {
+    if (location == null) {
+      return null;
+    }
     try {
       return location.method();
     }
@@ -884,7 +888,17 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @Nullable
     @Override
     public TextRange getHighlightRange() {
-      return intersectWithLine(SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition), mySourcePosition.getFile(), getLine());
+      TextRange range = SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
+      PsiFile file = mySourcePosition.getFile();
+      if (range != null) {
+        Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+        if (document != null) {
+          TextRange lineRange = DocumentUtil.getLineTextRange(document, getLine());
+          TextRange res = range.intersection(lineRange);
+          return res.equals(lineRange) ? null : res; // highlight the whole line for multiline lambdas
+        }
+      }
+      return range;
     }
   }
 

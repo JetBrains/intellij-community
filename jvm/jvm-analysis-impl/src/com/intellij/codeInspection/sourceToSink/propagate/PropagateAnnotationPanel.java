@@ -204,7 +204,7 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
       @Override
       public void update(@NotNull AnActionEvent e) {
         TreePath[] selectionPaths = tree.getSelectionPaths();
-        if (selectionPaths == null || selectionPaths.length <= 0) return;
+        if (selectionPaths == null || selectionPaths.length == 0) return;
         TaintNode[] roots = tree.getSelectedNodes(TaintNode.class, null);
         Deque<TaintNode> nodes = new ArrayDeque<>(Arrays.asList(roots));
         boolean enable = false;
@@ -221,10 +221,15 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
         e.getPresentation().setEnabled(enable);
       }
 
-      private Stream<TaintNode> nodes(TaintNode[] roots) {
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        // getSelectedNodes used
+        return ActionUpdateThread.EDT;
+      }
+
+      private static Stream<TaintNode> nodes(TaintNode[] roots) {
         return StreamEx.of(roots)
-          .flatMap(
-            root -> StreamEx.ofTree(root, n -> StreamEx.of(n.myCachedChildren == null ? Collections.emptyList() : n.myCachedChildren)));
+          .flatMap(root -> StreamEx.ofTree(root, n -> n.myCachedChildren == null ? null : StreamEx.of(n.myCachedChildren)));
       }
 
       @Override

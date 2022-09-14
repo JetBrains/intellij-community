@@ -577,39 +577,6 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/addConstModifier")
-    public static class AddConstModifier extends AbstractIntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("inapplicableToConst.kt")
-        public void testInapplicableToConst() throws Exception {
-            runTest("testData/intentions/addConstModifier/inapplicableToConst.kt");
-        }
-
-        @TestMetadata("inapplicableToOverride.kt")
-        public void testInapplicableToOverride() throws Exception {
-            runTest("testData/intentions/addConstModifier/inapplicableToOverride.kt");
-        }
-
-        @TestMetadata("removeJvmField.kt")
-        public void testRemoveJvmField() throws Exception {
-            runTest("testData/intentions/addConstModifier/removeJvmField.kt");
-        }
-
-        @TestMetadata("removeJvmStatic.kt")
-        public void testRemoveJvmStatic() throws Exception {
-            runTest("testData/intentions/addConstModifier/removeJvmStatic.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/addConstModifier/simple.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addForLoopIndices")
     public static class AddForLoopIndices extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -983,19 +950,6 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             public void testTypeAlias() throws Exception {
                 runTest("testData/intentions/addFullQualifier/userTypes/TypeAlias.kt");
             }
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/addJvmInline")
-    public static class AddJvmInline extends AbstractIntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("valueClass.kt")
-        public void testValueClass() throws Exception {
-            runTest("testData/intentions/addJvmInline/valueClass.kt");
         }
     }
 
@@ -4996,6 +4950,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public void testOutOfRange() throws Exception {
             runTest("testData/intentions/convertEnumToSealedClass/outOfRange.kt");
         }
+
+        @TestMetadata("useDataObjectSince18.kt")
+        public void testUseDataObjectSince18() throws Exception {
+            runTest("testData/intentions/convertEnumToSealedClass/useDataObjectSince18.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -7183,6 +7142,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertPropertyInitializerToGetter/errorType.kt");
         }
 
+        @TestMetadata("hasReferenceToPrimaryCtorParameter.kt")
+        public void testHasReferenceToPrimaryCtorParameter() throws Exception {
+            runTest("testData/intentions/convertPropertyInitializerToGetter/hasReferenceToPrimaryCtorParameter.kt");
+        }
+
+        @TestMetadata("hasReferenceToPrimaryCtorProperty.kt")
+        public void testHasReferenceToPrimaryCtorProperty() throws Exception {
+            runTest("testData/intentions/convertPropertyInitializerToGetter/hasReferenceToPrimaryCtorProperty.kt");
+        }
+
         @TestMetadata("inapplicableIfExtensionProperty.kt")
         public void testInapplicableIfExtensionProperty() throws Exception {
             runTest("testData/intentions/convertPropertyInitializerToGetter/inapplicableIfExtensionProperty.kt");
@@ -7548,6 +7517,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("companionNoImport.kt")
         public void testCompanionNoImport() throws Exception {
             runTest("testData/intentions/convertReferenceToLambda/companionNoImport.kt");
+        }
+
+        @TestMetadata("companionNoImport2.kt")
+        public void testCompanionNoImport2() throws Exception {
+            runTest("testData/intentions/convertReferenceToLambda/companionNoImport2.kt");
         }
 
         @TestMetadata("constructor.kt")
@@ -9401,6 +9375,92 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("unescapeSingleQuote.kt")
         public void testUnescapeSingleQuote() throws Exception {
             runTest("testData/intentions/convertToStringTemplate/unescapeSingleQuote.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/convertTrimIndentToTrimMargin")
+    public static class ConvertTrimIndentToTrimMargin extends AbstractIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("differentIndent.kt")
+        public void testDifferentIndent() throws Exception {
+            runTest("testData/intentions/convertTrimIndentToTrimMargin/differentIndent.kt");
+        }
+
+        @TestMetadata("notBlankFirst.kt")
+        public void testNotBlankFirst() throws Exception {
+            runTest("testData/intentions/convertTrimIndentToTrimMargin/notBlankFirst.kt");
+        }
+
+        @TestMetadata("notBlankLast.kt")
+        public void testNotBlankLast() throws Exception {
+            runTest("testData/intentions/convertTrimIndentToTrimMargin/notBlankLast.kt");
+        }
+
+        @TestMetadata("notRawString.kt")
+        public void testNotRawString() throws Exception {
+            runTest("testData/intentions/convertTrimIndentToTrimMargin/notRawString.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/intentions/convertTrimIndentToTrimMargin/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/convertTrimMarginToTrimIndent")
+    public static class ConvertTrimMarginToTrimIndent extends AbstractIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("differentIndent.kt")
+        public void testDifferentIndent() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/differentIndent.kt");
+        }
+
+        @TestMetadata("escapedMarginPrefixArgument.kt")
+        public void testEscapedMarginPrefixArgument() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/escapedMarginPrefixArgument.kt");
+        }
+
+        @TestMetadata("noMarginPrefix.kt")
+        public void testNoMarginPrefix() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/noMarginPrefix.kt");
+        }
+
+        @TestMetadata("notBlankFirst.kt")
+        public void testNotBlankFirst() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/notBlankFirst.kt");
+        }
+
+        @TestMetadata("notBlankLast.kt")
+        public void testNotBlankLast() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/notBlankLast.kt");
+        }
+
+        @TestMetadata("notRawString.kt")
+        public void testNotRawString() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/notRawString.kt");
+        }
+
+        @TestMetadata("referenceMarginPrefixArgument.kt")
+        public void testReferenceMarginPrefixArgument() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/referenceMarginPrefixArgument.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/simple.kt");
+        }
+
+        @TestMetadata("simple2.kt")
+        public void testSimple2() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/simple2.kt");
         }
     }
 
@@ -15848,6 +15908,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("callInsideCallWithLambdaOnly.kt")
         public void testCallInsideCallWithLambdaOnly() throws Exception {
             runTest("testData/intentions/removeUnnecessaryParentheses/callInsideCallWithLambdaOnly.kt");
+        }
+
+        @TestMetadata("condition.kt")
+        public void testCondition() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/condition.kt");
+        }
+
+        @TestMetadata("condition2.kt")
+        public void testCondition2() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/condition2.kt");
         }
 
         @TestMetadata("elvisRhs.kt")

@@ -27,7 +27,7 @@ import com.intellij.vcs.commit.CommitModeManager
 import javax.swing.JPanel
 
 private val IS_CONTENT_CREATED = Key.create<Boolean>("ToolWindow.IsContentCreated")
-private val CHANGES_VIEW_EXTENSION = Key.create<ChangesViewContentEP>("Content.ChangesViewExtension")
+internal val CHANGES_VIEW_EXTENSION = Key.create<ChangesViewContentEP>("Content.ChangesViewExtension")
 
 abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(window: ToolWindow) {

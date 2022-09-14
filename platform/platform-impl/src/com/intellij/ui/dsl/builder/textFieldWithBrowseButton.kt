@@ -28,10 +28,6 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.columns(columns: Int): Cell<T> {
   return this
 }
 
-@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval
-fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(property: GraphProperty<String>) = bindText(property)
-
 fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(property: ObservableMutableProperty<String>): Cell<T> {
   installValidationRequestor(property)
   return applyToComponent { bind(property) }

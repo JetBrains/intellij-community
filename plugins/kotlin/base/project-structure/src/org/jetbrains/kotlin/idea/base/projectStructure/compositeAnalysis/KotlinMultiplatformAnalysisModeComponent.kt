@@ -3,10 +3,13 @@
 package org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.kotlin.config.isHmpp
+import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 
 object KotlinMultiplatformAnalysisModeComponent {
@@ -20,8 +23,9 @@ object KotlinMultiplatformAnalysisModeComponent {
 
     @JvmStatic
     fun getMode(project: Project): Mode {
-        val explicitIdeaSetting = PropertiesComponent.getInstance(project).getValue(resolutionModeOption)
-        if (explicitIdeaSetting != null) return Mode.valueOf(explicitIdeaSetting)
+        PropertiesComponent.getInstance(project).getValue(resolutionModeOption)?.let { explicitIdeaSetting ->
+            return Mode.valueOf(explicitIdeaSetting)
+        }
 
         if (project.containsImportedHmppModules()) return Mode.COMPOSITE
 
@@ -29,11 +33,18 @@ object KotlinMultiplatformAnalysisModeComponent {
     }
 
     private fun Project.containsImportedHmppModules(): Boolean =
-        cacheByClassInvalidatingOnRootModifications(KotlinMultiplatformAnalysisModeComponent::class.java) {
-            ModuleManager.getInstance(this).modules.asSequence()
-                .mapNotNull { KotlinFacet.get(it) }
-                .any { it.configuration.settings.mppVersion.isHmpp }
-        }
+        CachedValuesManager.getManager(this).getCachedValue(this) {
+            val containsImportedHmppModules = runReadAction {
+                ModuleManager.getInstance(this).modules.asSequence()
+                    .mapNotNull { KotlinFacet.get(it) }
+                    .any { it.configuration.settings.mppVersion.isHmpp }
+            }
+            CachedValueProvider.Result(
+                containsImportedHmppModules,
+                KotlinFacetModificationTracker.getInstance(this)
+            )
+        }!!
+
 
     enum class Mode {
         // Analyses each platform in a separate [GlobalFacade]

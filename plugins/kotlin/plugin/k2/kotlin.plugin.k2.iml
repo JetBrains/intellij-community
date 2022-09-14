@@ -86,9 +86,11 @@
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.navigation" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.refactorings.rename.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.highlighting" scope="RUNTIME" />
   </component>

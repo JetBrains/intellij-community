@@ -116,12 +116,10 @@ class Context private constructor(
             get() = this@Context.isUnitTestMode
 
         inline fun <reified S : WizardService> service(noinline filter: (S) -> Boolean = { true }): S =
-            serviceByClass(S::class, filter)
+            serviceOrNull(filter) ?: error("Service ${S::class.simpleName} was not found")
 
-
-        fun <S : WizardService> serviceByClass(klass: KClass<S>, filter: (S) -> Boolean = { true }): S =
-            servicesManager.serviceByClass(klass, filter) ?: error("Service ${klass.simpleName} was not found")
-
+        inline fun <reified S : WizardService> serviceOrNull(noinline filter: (S) -> Boolean = { true }): S? =
+            servicesManager.serviceByClass(S::class, filter)
 
         val <T : Any> PluginProperty<T>.reference: PluginPropertyReference<T>
             get() = PluginPropertyReference(this)

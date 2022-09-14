@@ -7,4 +7,5 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
     generateK2InspectionTests()
     generateK2IntentionTests()
     generateK2StructureViewTests()
+    generateK2PostfixTemplateTests()
 }

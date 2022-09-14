@@ -31,4 +31,11 @@ interface TaskSupport {
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
   ): T
+
+  fun <T> runBlockingModalInternal(
+    owner: ModalTaskOwner,
+    title: @ProgressTitle String,
+    cancellation: TaskCancellation,
+    action: suspend CoroutineScope.() -> T,
+  ): T
 }

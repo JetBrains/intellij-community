@@ -23,7 +23,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ChildSubSubEntityImpl : ChildSubSubEntity, WorkspaceEntityBase() {
+open class ChildSubSubEntityImpl(val dataSource: ChildSubSubEntityData) : ChildSubSubEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ChildSubEntity::class.java, ChildSubSubEntity::class.java,
@@ -38,10 +38,8 @@ open class ChildSubSubEntityImpl : ChildSubSubEntity, WorkspaceEntityBase() {
   override val parentEntity: ChildSubEntity
     get() = snapshot.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _childData: String? = null
   override val childData: String
-    get() = _childData!!
+    get() = dataSource.childData
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -181,12 +179,13 @@ class ChildSubSubEntityData : WorkspaceEntityData<ChildSubSubEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): ChildSubSubEntity {
-    val entity = ChildSubSubEntityImpl()
-    entity._childData = childData
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ChildSubSubEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

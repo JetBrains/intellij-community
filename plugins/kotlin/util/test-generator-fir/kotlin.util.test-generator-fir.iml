@@ -61,8 +61,10 @@
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k2.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k2" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.navigation.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test.k2" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.refactorings.rename.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.highlighting" scope="TEST" />
   </component>

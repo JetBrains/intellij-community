@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
+import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
@@ -19,6 +20,7 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -34,11 +36,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.NetUtils;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PyBundle;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.PydevConsoleRunnerFactory;
 import com.jetbrains.python.console.PythonConsoleView;
@@ -68,7 +72,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.jetbrains.python.inspections.quickfix.sdk.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
+import static com.jetbrains.python.inspections.PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
 
 
 public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
@@ -200,7 +204,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   private @NotNull XDebugSession createXDebugSession(@NotNull ExecutionEnvironment environment,
                                                      PythonCommandLineState pyState,
                                                      ServerSocket serverSocket, ExecutionResult result) throws ExecutionException {
-    return XDebuggerManager.getInstance(environment.getProject()).
+    XDebugSession session = XDebuggerManager.getInstance(environment.getProject()).
       startSession(environment, new XDebugProcessStarter() {
         @Override
         @NotNull
@@ -211,6 +215,13 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
           return pyDebugProcess;
         }
       });
+
+    if (ExperimentalUI.isNewUI()) {
+      session.getUI().getDefaults().initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT,
+                                                          XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION,
+                                                          new LayoutAttractionPolicy.FocusOnce());
+    }
+    return session;
   }
 
   /**

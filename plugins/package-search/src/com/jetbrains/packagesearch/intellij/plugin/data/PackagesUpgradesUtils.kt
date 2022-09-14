@@ -77,7 +77,7 @@ internal suspend fun computePackageUpgrades(
     return PackagesToUpgrade(updatesByModule)
 }
 
-internal inline fun computeUpgradeOperationsForSingleModule(
+private fun computeUpgradeOperationsForSingleModule(
     packageModel: PackageModel.Installed,
     targetModule: ModuleModel,
     knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,

@@ -8,9 +8,6 @@ import javax.swing.*;
 /**
  * [vova] This class should be inner but due to bugs in "beta" generics compiler
  * I need to use "static" modifier.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 final class VisibilityWatcherImpl extends VisibilityWatcher{
   private final QuickFixManager myManager;

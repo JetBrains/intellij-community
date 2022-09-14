@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
@@ -474,20 +475,17 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   override fun getPreferredFocusedComponent(): JComponent = throw UnsupportedOperationException()
 
   override fun getEditorsWithProviders(file: VirtualFile): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+    return EditorComposite.retrofit(getComposite(file))
+  }
+
+  override fun getComposite(file: VirtualFile): FileEditorComposite? {
     if (!isCurrentlyUnderLocalId) {
-      val clientManager = clientFileEditorManager
-                          ?: return Pair(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY)
-      return EditorComposite.retrofit(clientManager.getComposite(file))
+      return clientFileEditorManager?.getComposite(file)
     }
 
-    val editorAndProvider = testEditorSplitter.getEditorAndProvider(file)
-    var fileEditor = FileEditor.EMPTY_ARRAY
-    var fileEditorProvider = FileEditorProvider.EMPTY_ARRAY
-    if (editorAndProvider != null) {
-      fileEditor = arrayOf(editorAndProvider.first)
-      fileEditorProvider = arrayOf(editorAndProvider.second)
+    return testEditorSplitter.getEditorAndProvider(file)?.let {
+      TestEditorComposite(it.first, it.second)
     }
-    return Pair(fileEditor, fileEditorProvider)
   }
 
   override fun getWindowSplitCount() = 0
@@ -512,4 +510,13 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
       }
     }
   }
+}
+
+data class TestEditorComposite(val editor: FileEditor, val provider: FileEditorProvider) : FileEditorComposite() {
+  override val allEditors: List<FileEditor>
+    get() = listOf(editor)
+  override val allProviders: List<FileEditorProvider>
+    get() = listOf(provider)
+  override val isPreview: Boolean
+    get() = false
 }

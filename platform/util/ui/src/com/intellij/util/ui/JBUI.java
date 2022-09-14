@@ -824,6 +824,21 @@ public final class JBUI {
       }
     }
 
+    public static final class Toolbar {
+
+      public static Insets toolbarButtonInsets(boolean isMainToolbar) {
+        return isMainToolbar ? mainToolbarButtonInsets() : toolbarButtonInsets();
+      }
+
+      public static Insets toolbarButtonInsets() {
+        return insets("Toolbar.Button.buttonInsets", JBInsets.create(1, 2));
+      }
+
+      public static Insets mainToolbarButtonInsets() {
+        return insets("MainToolbar.Button.buttonInsets", JBInsets.create(1, 2));
+      }
+    }
+
     public static final class Label {
       public static @NotNull Color foreground(boolean selected) {
         return selected ? JBColor.namedColor("Label.selectedForeground", 0xFFFFFF)
@@ -1178,30 +1193,6 @@ public final class JBUI {
       public static @NotNull Color linkColor() {
         return Foreground.ENABLED;
       }
-
-      /**
-       * @deprecated use {@link Foreground#HOVERED} instead
-       */
-      @Deprecated(forRemoval = true)
-      public static @NotNull Color linkHoverColor() {
-        return Foreground.HOVERED;
-      }
-
-      /**
-       * @deprecated use {@link Foreground#PRESSED} instead
-       */
-      @Deprecated(forRemoval = true)
-      public static @NotNull Color linkPressedColor() {
-        return Foreground.PRESSED;
-      }
-
-      /**
-       * @deprecated use {@link Foreground#VISITED} instead
-       */
-      @Deprecated(forRemoval = true)
-      public static @NotNull Color linkVisitedColor() {
-        return Foreground.VISITED;
-      }
     }
 
     public static final class Tooltip {
@@ -1421,6 +1412,11 @@ public final class JBUI {
         private interface Inactive {
           Color BACKGROUND = JBColor.namedColor("List.hoverInactiveBackground", DEFAULT_RENDERER_HOVER_INACTIVE_BACKGROUND);
         }
+      }
+
+      interface Tag {
+        Color BACKGROUND = JBColor.namedColor("List.Tag.background", new JBColor(0xEBECF0, 0x393B40));
+        Color FOREGROUND = JBColor.namedColor("List.Tag.foreground", new JBColor(0x494B57, 0xA8ADBD));
       }
     }
 

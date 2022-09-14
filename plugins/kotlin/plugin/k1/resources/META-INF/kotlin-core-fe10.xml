@@ -112,9 +112,6 @@
             order="last"
             implementation="org.jetbrains.kotlin.idea.actions.KotlinDefaultTemplatePropertiesProvider"/>
 
-    <codeInsight.template.postfixTemplateProvider
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.codeInsight.postfix.KtPostfixTemplateProvider"/>
     <lang.psiStructureViewFactory
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.structureView.KotlinStructureViewFactory"/>
@@ -206,9 +203,6 @@
     <targetElementEvaluator language="kotlin"
                             implementationClass="org.jetbrains.kotlin.idea.search.ideaExtensions.FE10KotlinTargetElementEvaluator"/>
     <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FE10KotlinTargetElementEvaluator"/>
-
-    <structuralsearch.profile implementation="org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchProfile"/>
-    <structuralsearch.filterProvider implementation="org.jetbrains.kotlin.idea.structuralsearch.filters.KotlinFilterProvider"/>
 
     <lang.findUsagesProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesProvider"/>
     <classInheritorsSearch implementation="org.jetbrains.kotlin.idea.findUsages.KotlinInnerClassInheritorsSearcher"/>

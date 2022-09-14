@@ -4,17 +4,19 @@ package com.intellij.openapi.application
 
 import com.intellij.openapi.diagnostic.Logger
 import java.io.IOException
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.nio.file.Paths
 
 /**
  * Absolute canonical path to system cache dir.
  */
 val appSystemDir: Path
   get() {
-    val path = Paths.get(PathManager.getSystemPath())
+    val path = Path.of(PathManager.getSystemPath())
     try {
       return path.toRealPath()
+    }
+    catch (ignore: NoSuchFileException) {
     }
     catch (e: IOException) {
       Logger.getInstance(PathManager::class.java).warn(e)

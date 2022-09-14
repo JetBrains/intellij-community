@@ -330,6 +330,11 @@ public class StructureFilterPopupComponent
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return isVisible(myRoot);
     }
@@ -430,6 +435,11 @@ public class StructureFilterPopupComponent
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(e.getProject() != null);
     }
@@ -464,6 +474,11 @@ public class StructureFilterPopupComponent
         }
       });
       popup.showUnderneathOf(StructureFilterPopupComponent.this);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -503,6 +518,11 @@ public class StructureFilterPopupComponent
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myFilterModel.setFilter(new FilterPair<>(myFilter, null));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

@@ -2,7 +2,6 @@ package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
-import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
@@ -26,7 +25,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class XChildEntityImpl : XChildEntity, WorkspaceEntityBase() {
+open class XChildEntityImpl(val dataSource: XChildEntityData) : XChildEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(XParentEntity::class.java, XChildEntity::class.java,
@@ -41,15 +40,11 @@ open class XChildEntityImpl : XChildEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _childProperty: String? = null
   override val childProperty: String
-    get() = _childProperty!!
+    get() = dataSource.childProperty
 
-  @JvmField
-  var _dataClass: DataClassX? = null
   override val dataClass: DataClassX?
-    get() = _dataClass
+    get() = dataSource.dataClass
 
   override val parentEntity: XParentEntity
     get() = snapshot.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this)!!
@@ -261,13 +256,13 @@ class XChildEntityData : WorkspaceEntityData<XChildEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): XChildEntity {
-    val entity = XChildEntityImpl()
-    entity._childProperty = childProperty
-    entity._dataClass = dataClass
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = XChildEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -331,8 +326,8 @@ class XChildEntityData : WorkspaceEntityData<XChildEntity>() {
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(EntityReference::class.java)
     collector.add(DataClassX::class.java)
+    this.dataClass?.let { collector.addDataToInspect(it) }
     collector.sameForAllEntities = true
   }
 }

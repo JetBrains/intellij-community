@@ -208,6 +208,11 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public boolean isDumbAware() {
         return true;
       }
@@ -243,6 +248,11 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
             presentation.setEnabled(true);
           }
         }
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
     navigateAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(),
@@ -697,6 +707,11 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     @Override
     protected boolean isEnabled() {
       return getSelectedElement() != null;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

@@ -17,7 +17,7 @@ import java.util.Date
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class UnknownPropertyTypeEntityImpl : UnknownPropertyTypeEntity, WorkspaceEntityBase() {
+open class UnknownPropertyTypeEntityImpl(val dataSource: UnknownPropertyTypeEntityData) : UnknownPropertyTypeEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -27,10 +27,8 @@ open class UnknownPropertyTypeEntityImpl : UnknownPropertyTypeEntity, WorkspaceE
 
   }
 
-  @JvmField
-  var _date: Date? = null
   override val date: Date
-    get() = _date!!
+    get() = dataSource.date
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -125,12 +123,13 @@ class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownPropertyTypeEnt
   }
 
   override fun createEntity(snapshot: EntityStorage): UnknownPropertyTypeEntity {
-    val entity = UnknownPropertyTypeEntityImpl()
-    entity._date = date
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = UnknownPropertyTypeEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -187,7 +186,7 @@ class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownPropertyTypeEnt
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(Date::class.java)
+    this.date?.let { collector.addDataToInspect(it) }
     collector.sameForAllEntities = true
   }
 }

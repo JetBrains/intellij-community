@@ -939,6 +939,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       public void actionPerformed(@NotNull AnActionEvent e) {
         stopAndRerunConsole(false, PyBundle.message("console.stopping.console"), null);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     };
   }
 
@@ -966,6 +971,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       isSelected = state;
       updateEditors();
       myConsoleSettings.setUseSoftWraps(isSelected);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
@@ -1189,6 +1199,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySelected = state;
 
@@ -1228,6 +1243,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, e.getData(PlatformCoreDataKeys.MODULE));
         runner.run(true);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 

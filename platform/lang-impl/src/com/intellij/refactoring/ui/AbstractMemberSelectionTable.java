@@ -5,6 +5,7 @@ package com.intellij.refactoring.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
@@ -149,9 +150,17 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       M item = ContainerUtil.getFirstItem(getSelectedMemberInfos());
-      return item == null ? null : item.getMember();
+      if (item == null) return null;
+      return (DataProvider)slowId -> getSlowData(slowId, item);
+    }
+    return null;
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull M item) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      return item.getMember();
     }
     return null;
   }
@@ -283,27 +292,21 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
 
     @Override
     public String getColumnName(int column) {
-      switch (column) {
-        case CHECKED_COLUMN:
-          return " ";
-        case ABSTRACT_COLUMN:
-          return myTable.myAbstractColumnHeader;
-        case DISPLAY_NAME_COLUMN:
-          return getDisplayNameColumnHeader();
-        default:
-          throw new RuntimeException("Incorrect column index");
-      }
+      return switch (column) {
+        case CHECKED_COLUMN -> " ";
+        case ABSTRACT_COLUMN -> myTable.myAbstractColumnHeader;
+        case DISPLAY_NAME_COLUMN -> getDisplayNameColumnHeader();
+        default -> throw new RuntimeException("Incorrect column index");
+      };
     }
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      switch (columnIndex) {
-        case CHECKED_COLUMN:
-          return myTable.myMemberInfoModel.isMemberEnabled(myTable.myMemberInfos.get(rowIndex));
-        case ABSTRACT_COLUMN:
-          return myTable.isAbstractColumnEditable(rowIndex);
-      }
-      return false;
+      return switch (columnIndex) {
+        case CHECKED_COLUMN -> myTable.myMemberInfoModel.isMemberEnabled(myTable.myMemberInfos.get(rowIndex));
+        case ABSTRACT_COLUMN -> myTable.isAbstractColumnEditable(rowIndex);
+        default -> false;
+      };
     }
 
 

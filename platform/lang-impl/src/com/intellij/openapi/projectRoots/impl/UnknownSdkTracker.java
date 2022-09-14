@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
@@ -26,6 +27,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.openapi.progress.PerformInBackgroundOption.ALWAYS_BACKGROUND;
 
+@Service(Service.Level.PROJECT)
 public final class UnknownSdkTracker {
   private static final Logger LOG = Logger.getInstance(UnknownSdkTracker.class);
 
@@ -51,8 +53,7 @@ public final class UnknownSdkTracker {
 
     var snapshot = collector.collectSdksBlocking();
     var action = createProcessSdksAction(snapshot);
-    if (action == null) return List.of();
-    return action.apply(indicator);
+    return action == null ? List.of() : action.apply(indicator);
   }
 
   private @NotNull UnknownSdkTrackerTask newUpdateTask(@NotNull ShowStatusCallback showStatus,
@@ -69,10 +70,14 @@ public final class UnknownSdkTracker {
 
       @Override
       public void onLookupCompleted(@NotNull UnknownSdkSnapshot snapshot) {
-        if (!shouldProcessSnapshot.test(snapshot)) return;
+        if (!shouldProcessSnapshot.test(snapshot)) {
+          return;
+        }
 
         var action = createProcessSdksAction(snapshot, showStatus);
-        if (action == null) return;
+        if (action == null) {
+          return;
+        }
 
         ProgressManager.getInstance()
           .run(new Task.Backgroundable(myProject, ProjectBundle.message("progress.title.resolving.sdks"), false, ALWAYS_BACKGROUND) {
@@ -211,9 +216,11 @@ public final class UnknownSdkTracker {
 
   private @Nullable Progressive createProcessSdksAction(@NotNull UnknownSdkSnapshot snapshot,
                                                         @NotNull ShowStatusCallback showStatus) {
-    //it may run on EDT, for the standard task
+    // it may run on EDT, for the standard task
     var task = createProcessSdksAction(snapshot);
-    if (task == null) return null;
+    if (task == null) {
+      return null;
+    }
 
     return indicator -> {
       try {
@@ -260,7 +267,8 @@ public final class UnknownSdkTracker {
       var action = fix.getSuggestedFixAction();
       if (action instanceof UnknownMissingSdkFixLocal) {
         localFixes.add((UnknownMissingSdkFixLocal)action);
-      } else {
+      }
+      else {
         otherFixes.add(fix);
       }
     }

@@ -36,7 +36,7 @@ public class FakeRerunAction extends AnAction {
                                                           StringUtil.escapeMnemonics(environment.getRunProfile().getName())));
       presentation.setIcon(
         ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) || ExecutionManagerImpl.isProcessRunning(getDescriptor(event)) ?
-        AllIcons.Actions.Restart : environment.getExecutor().getIcon());
+        AllIcons.Actions.Restart : environment.getExecutor().getRerunIcon());
       presentation.setEnabled(isEnabled(event));
       return;
     }

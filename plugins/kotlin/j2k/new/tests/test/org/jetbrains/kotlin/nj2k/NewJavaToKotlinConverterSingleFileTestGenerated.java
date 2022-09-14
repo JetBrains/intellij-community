@@ -610,6 +610,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/binaryExpression/and.java");
         }
 
+        @TestMetadata("complexParentheses-ktij-22682.java")
+        public void testComplexParentheses_ktij_22682() throws Exception {
+            runTest("testData/newJ2k/binaryExpression/complexParentheses-ktij-22682.java");
+        }
+
         @TestMetadata("conditionalAnd.java")
         public void testConditionalAnd() throws Exception {
             runTest("testData/newJ2k/binaryExpression/conditionalAnd.java");
@@ -986,6 +991,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("kt-639.java")
         public void testKt_639() throws Exception {
             runTest("testData/newJ2k/class/kt-639.java");
+        }
+
+        @TestMetadata("ktij-22007.java")
+        public void testKtij_22007() throws Exception {
+            runTest("testData/newJ2k/class/ktij-22007.java");
         }
 
         @TestMetadata("notUtilityClass.java")

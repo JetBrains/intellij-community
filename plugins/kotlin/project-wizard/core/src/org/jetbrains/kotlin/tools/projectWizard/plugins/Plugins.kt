@@ -38,6 +38,7 @@ object Plugins {
             +TemplatesPlugin(context)
             +ProjectTemplatesPlugin(context)
             +RunConfigurationsPlugin(context)
+            +InspectionsPlugin(context)
             +AndroidPlugin(context)
 
             // templates

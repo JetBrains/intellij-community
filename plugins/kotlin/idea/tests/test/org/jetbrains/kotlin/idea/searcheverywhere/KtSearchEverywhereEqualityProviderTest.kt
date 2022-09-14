@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.searcheverywhere
 
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.*
@@ -8,12 +8,12 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
-import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
 import org.jetbrains.kotlin.asJava.findFacadeClass
+import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 
 /**
@@ -97,7 +97,7 @@ abstract class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixt
     }
 
     protected val KtClassOrObject.ulc
-        get() = LightClassGenerationSupport.getInstance(project).createUltraLightClass(this)!!
+        get() = this.toLightClass()!!
 
     protected val PsiFile.ktFile
         get() = findElementAt(myFixture.caretOffset)?.parentOfType<KtFile>()!!

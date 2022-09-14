@@ -159,6 +159,7 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
             target is KtParameter && target.ownerFunction is KtPrimaryConstructor ||
             target is KtProperty && !target.hasDelegate() && target.getter == null && target.setter == null &&
                     !target.hasModifier(KtTokens.ABSTRACT_KEYWORD) &&
+                    !target.hasModifier(KtTokens.OPEN_KEYWORD) &&
                     target.findAnnotation(VOLATILE_ANNOTATION_FQ_NAME) == null &&
                     target.containingClass()?.isInterface() != true &&
                     !target.isExtensionDeclaration()

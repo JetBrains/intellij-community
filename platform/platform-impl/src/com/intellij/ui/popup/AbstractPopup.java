@@ -15,10 +15,7 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -1270,7 +1267,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (myCancelOnMouseOutCallback != null || myCancelOnWindow) {
       myMouseOutCanceller = new Canceller();
       Toolkit.getDefaultToolkit().addAWTEventListener(myMouseOutCanceller,
-                                                      MOUSE_EVENT_MASK | WINDOW_ACTIVATED | WINDOW_GAINED_FOCUS | MOUSE_MOTION_EVENT_MASK);
+                                                      WINDOW_EVENT_MASK | MOUSE_EVENT_MASK | MOUSE_MOTION_EVENT_MASK);
     }
 
 
@@ -1552,10 +1549,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       Runnable finalRunnable = myFinalRunnable;
 
       getFocusManager().doWhenFocusSettlesDown(() -> {
-
         if (ModalityState.current().equals(modalityState)) {
-          ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(finalRunnable);
-        } else {
+          ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
+            try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+              finalRunnable.run();
+            }
+          });
+        }
+        else {
           LOG.debug("Final runnable of popup is skipped");
         }
         // Otherwise the UI has changed unexpectedly and the action is likely not applicable.
@@ -2167,17 +2168,13 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   }
 
   /**
-   * @param event a {@code WindowEvent} for the activated or focused window
-   * @param popup a window that corresponds to the current popup
-   * @return {@code false} if a focus moved to a popup window or its child window in the whole hierarchy
+   * Tells whether popup should be closed when some window becomes activated/focused
    */
-  private static boolean isCancelNeeded(@NotNull WindowEvent event, @Nullable Window popup) {
+  private boolean isCancelNeeded(@NotNull WindowEvent event, @Nullable Window popup) {
     Window window = event.getWindow(); // the activated or focused window
-    while (window != null) {
-      if (popup == window) return false; // do not close a popup, which child is activated or focused
-      window = window.getOwner(); // consider a window owner as activated or focused
-    }
-    return true;
+    return window == null ||
+           popup == null ||
+           !SwingUtilities.isDescendingFrom(window, popup) && (myFocusable || !SwingUtilities.isDescendingFrom(popup, window));
   }
 
   private @Nullable Point getStoredLocation() {

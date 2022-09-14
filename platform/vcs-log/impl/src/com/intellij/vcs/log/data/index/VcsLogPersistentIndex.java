@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.diagnostic.opentelemetry.TraceManager;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -108,7 +108,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                      VcsLogStorageImpl.VERSION + VERSION);
     myIndexStorage = createIndexStorage(myIndexStorageId, errorHandler, userRegistry);
     if (myIndexStorage != null) {
-      myDataGetter = new IndexDataGetter(myProject, myRoots, myIndexStorage, myStorage, myErrorHandler);
+      myDataGetter = new IndexDataGetter(myProject, ContainerUtil.filter(providers, root -> myRoots.contains(root)),
+                                         myIndexStorage, myStorage, myErrorHandler);
     }
     else {
       myDataGetter = null;

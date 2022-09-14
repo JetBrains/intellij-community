@@ -38,22 +38,17 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.InplaceButton;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.docking.impl.DockManagerImpl;
-import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.TimedDeadzone;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -263,6 +258,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
                         @NotNull JComponent component,
                         @Nullable @NlsContexts.Tooltip String tooltip,
                         int indexToInsert,
+                        @NotNull EditorComposite composite,
                         @NotNull Disposable parentDisposable) {
     TabInfo existing = myTabs.findInfo(file);
     if (existing != null) {
@@ -301,6 +297,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     group.addAction(closeTab, Constraints.LAST);
 
     tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB);
+    tab.setTabPaneActions(composite.getSelectedEditor().getTabActions());
 
     myTabs.addTabSilently(tab, indexToInsert);
   }
@@ -347,6 +344,10 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       }
       if (EditorWindow.DATA_KEY.is(dataId)) {
         return myWindow;
+      }
+      if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
+        EditorComposite selectedComposite = myWindow.getSelectedComposite();
+        return selectedComposite != null ? selectedComposite.getSelectedEditor() : null;
       }
       if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return HELP_ID;
@@ -682,7 +683,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       super(project, parentDisposable);
 
       myWindow = window;
-      UIUtil.addAwtListener(e -> updateActive(), AWTEvent.FOCUS_EVENT_MASK, parentDisposable);
+      StartupUiUtil.addAwtListener(e -> updateActive(), AWTEvent.FOCUS_EVENT_MASK, parentDisposable);
       setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.CurrentTheme.EditorTabs.tabInsets()));
 
       project.getMessageBus().connect(parentDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
@@ -710,20 +711,12 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     @Override
     protected void paintChildren(Graphics g) {
-      if (!isHideTabs() && ExperimentalUI.isNewUI() && paintBorder()) {
-        TabLabel label = getSelectedLabel();
-        if (label != null) {
-          int h = label.getHeight();
-          Color color = JBColor.namedColor("EditorTabs.underTabsBorderColor", myTabPainter.getTabTheme().getBorderColor());
-          g.setColor(color);
-          LinePainter2D.paint(((Graphics2D)g), 0, h, getWidth(), h); // XXX
-        }
-      }
       super.paintChildren(g);
       drawBorder(g);
     }
 
-    private boolean paintBorder() {
+    @Override
+    public boolean shouldPaintBottomBorder() {
       TabInfo info = getSelectedInfo();
       if (info == null) {
         return true;

@@ -266,12 +266,6 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return new ItemMatchers(MatcherHolder.getAssociatedMatcher(list), null);
   }
 
-  /**
-   * @deprecated method has no effect
-   */
-  @Deprecated(forRemoval = true)
-  protected final void setFocusBorderEnabled(boolean enabled) { }
-
   protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
                                                        JList list,
                                                        Object value,

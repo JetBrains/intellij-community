@@ -468,6 +468,12 @@
     </intentionAction>
     <intentionAction>
       <language>JAVA</language>
+      <className>com.siyeh.ipp.datetime.ShowDateTimeExampleOutputIntention</className>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <language>JAVA</language>
       <className>com.siyeh.ipp.opassign.PostfixPrefixIntention</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.expressions</categoryKey>

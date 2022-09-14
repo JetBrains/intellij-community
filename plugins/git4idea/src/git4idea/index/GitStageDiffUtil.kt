@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
@@ -107,7 +108,8 @@ private fun stagedDiffContent(project: Project, root: VirtualFile, status: GitFi
   }
 
   val indexFile = stagedContentFile(project, root, status)
-  return DiffContentFactory.getInstance().create(project, indexFile)
+  val highlightFile = if (!Registry.`is`("git.stage.navigate.to.index.file")) status.path.virtualFile else indexFile
+  return DiffContentFactory.getInstance().create(project, indexFile, highlightFile)
 }
 
 @Throws(VcsException::class)

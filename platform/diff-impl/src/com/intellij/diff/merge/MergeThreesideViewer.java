@@ -929,6 +929,11 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
   private abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
         // consume shortcut even if there are nothing to do - avoid calling some other action
@@ -1163,6 +1168,11 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(hasNonConflictedChanges(mySide));
     }
@@ -1186,6 +1196,11 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   public class MagicResolvedConflictsAction extends DumbAwareAction {
     public MagicResolvedConflictsAction() {
       ActionUtil.copyFrom(this, "Diff.MagicResolveConflicts");
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -1342,6 +1357,11 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       myGoToNext = goToNext;
       // TODO: reuse ShowChangeMarkerAction
       ActionUtil.copyFrom(this, myGoToNext ? "VcsShowNextChangeMarker" : "VcsShowPrevChangeMarker");
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

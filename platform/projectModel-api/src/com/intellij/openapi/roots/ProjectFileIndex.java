@@ -37,6 +37,17 @@ public interface ProjectFileIndex extends FileIndex {
   }
 
   /**
+   * Returns {@code true} if {@code file} is located under project content or library roots and not excluded or ignored
+   */
+  boolean isInProject(@NotNull VirtualFile file);
+
+  /**
+   * Returns {@code true} if {@code file} is located under project content or library roots, regardless of whether it's marked as excluded or not,
+   * and returns {@code false} if {@code file} is located outside or it or one of its parent directories is ignored.
+   */
+  boolean isInProjectOrExcluded(@NotNull VirtualFile file);
+
+  /**
    * Returns module to which content the specified file belongs or null if the file does not belong to content of any module.
    */
   @Nullable
@@ -88,17 +99,19 @@ public interface ProjectFileIndex extends FileIndex {
   VirtualFile getContentRootForFile(@NotNull VirtualFile file, final boolean honorExclusion);
 
   /**
-   * Returns the name of the package corresponding to the specified directory.
-   *
-   * @return the package name, or null if the directory does not correspond to any package.
+   * @deprecated use {@link com.intellij.openapi.roots.PackageIndex#getPackageNameByDirectory(VirtualFile)} from Java plugin instead.
    */
+  @Deprecated
   @Nullable
-  String getPackageNameByDirectory(@NotNull VirtualFile dir); //Q: move to FileIndex?
+  String getPackageNameByDirectory(@NotNull VirtualFile dir);
 
   /**
    * Returns true if {@code file} is a file which belongs to the classes (not sources) of some library which is included into dependencies
    * of some module.
+   * @deprecated name of this method may be misleading, actually it doesn't check that {@code file} has the 'class' extension. 
+   * Use {@link #isInLibraryClasses} with additional {@code !file.isDirectory()} check instead.   
    */
+  @Deprecated
   boolean isLibraryClassFile(@NotNull VirtualFile file);
 
   /**

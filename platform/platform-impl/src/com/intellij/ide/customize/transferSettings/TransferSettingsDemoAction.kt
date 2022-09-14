@@ -8,6 +8,7 @@ import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.models.Settings
 import com.intellij.ide.customize.transferSettings.providers.testProvider.TestTransferSettingsProvider
 import com.intellij.ide.customize.transferSettings.providers.vscode.VSCodeTransferSettingsProvider
+import com.intellij.ide.customize.transferSettings.providers.vsmac.VSMacTransferSettingsProvider
 import com.intellij.ide.customize.transferSettings.ui.TransferSettingsProgressIndicatorBase
 import com.intellij.ide.customize.transferSettings.ui.TransferSettingsView
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -26,7 +27,7 @@ class TransferSettingsDemoAction : DumbAwareAction("Test transfer settings") {
 }
 
 private class TransferSettingsDemoDialog(private val project: Project) : DialogWrapper(project) {
-  private val config = DefaultTransferSettingsConfiguration(TransferSettingsDataProvider(TestTransferSettingsProvider(), VSCodeTransferSettingsProvider()), false)
+  private val config = DefaultTransferSettingsConfiguration(TransferSettingsDataProvider(TestTransferSettingsProvider(), VSCodeTransferSettingsProvider(), VSMacTransferSettingsProvider()), false)
   private val pnl = TransferSettingsView(config)
 
   init {
@@ -50,8 +51,7 @@ private class TransferSettingsDemoDialog(private val project: Project) : DialogW
 
       config.controller.addListener(object : TransferSettingsListener {
         override fun importStarted(ideVersion: IdeVersion, settings: Settings) {
-          successOrFailureLabel.isVisible = false
-          btn.isEnabled = false
+          close(0)
         }
 
         override fun importFailed(ideVersion: IdeVersion, settings: Settings, throwable: Throwable) {

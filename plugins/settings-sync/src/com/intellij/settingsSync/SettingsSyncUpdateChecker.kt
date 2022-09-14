@@ -17,7 +17,7 @@ class SettingsSyncUpdateChecker(private val remoteCommunicator: SettingsSyncRemo
     when(updateResult) {
       is UpdateResult.Success -> {
         val snapshot = updateResult.settingsSnapshot
-        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.CloudChange(snapshot))
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.CloudChange(snapshot, updateResult.serverVersionId))
       }
       is UpdateResult.NoFileOnServer -> {
         LOG.info("Settings update requested, but there was no file on the server.")

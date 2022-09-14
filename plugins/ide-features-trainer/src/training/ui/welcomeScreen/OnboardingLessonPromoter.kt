@@ -64,7 +64,8 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
       logger<OnboardingLessonPromoter>().error("No lesson with id $lessonId")
       return
     }
-    val primaryLanguage = lesson.module.primaryLanguage ?: error("No primary language for promoting lesson ${lesson.name}")
+    val primaryLanguage: String = lesson.module.primaryLanguage?.primaryLanguage
+                                  ?: error("No primary language for promoting lesson ${lesson.name}")
     resetPrimaryLanguage(primaryLanguage)
     LangManager.getInstance().getLangSupport()?.startFromWelcomeFrame { selectedSdk: Sdk? ->
       OpenLessonActivities.openOnboardingFromWelcomeScreen(lesson, selectedSdk)

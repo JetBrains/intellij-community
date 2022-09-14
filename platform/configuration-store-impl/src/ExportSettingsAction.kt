@@ -214,7 +214,9 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
     var thereIsExportableStorage = false
     for (storage in storages) {
       val isRoamable = getEffectiveRoamingType(storage.roamingType, storage.path) != RoamingType.DISABLED
-      if (isStorageExportable(storage, isRoamable, withExportable)) {
+      val exportable = isStorageExportable(storage, isRoamable, withExportable)
+      LOG.debug("Storage for class ${aClass.simpleName} is ${stringify(isRoamable, "roamable")}, ${stringify(exportable, "exportable")}: $storage")
+      if (exportable) {
         thereIsExportableStorage = true
         val paths = getRelativePaths(storage, storageManager, withDeprecated)
         for (path in paths) {
@@ -244,6 +246,8 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
   }
   return result
 }
+
+private fun stringify(value: Boolean, name: String): String = if (value) name else "not $name"
 
 fun looksLikeDirectory(storage: Storage): Boolean {
   return storage.stateSplitter.java != StateSplitterEx::class.java

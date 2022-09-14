@@ -4,8 +4,12 @@ import com.intellij.configurationStore.getDefaultStoragePathSpec
 import com.intellij.configurationStore.serializeStateInto
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
+import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
+import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.PluginData
 import com.intellij.util.toBufferExposingByteArray
 import com.intellij.util.xmlb.Constants
 import org.jdom.Element
@@ -57,12 +61,13 @@ internal fun settingsSnapshot(metaInfo: MetaInfo = MetaInfo(Instant.now(), getLo
                               build: SettingsSnapshotBuilder.() -> Unit) : SettingsSnapshot {
   val builder = SettingsSnapshotBuilder()
   builder.build()
-  return SettingsSnapshot(metaInfo, builder.fileStates.toSet())
+  return SettingsSnapshot(metaInfo, builder.fileStates.toSet(), SettingsSyncPluginsState(builder.plugins))
 }
 
 @ApiStatus.Internal
 class SettingsSnapshotBuilder {
   val fileStates = mutableListOf<FileState>()
+  val plugins = mutableMapOf<PluginId, PluginData>()
 
   fun fileState(function: () -> PersistentStateComponent<*>) {
     val component : PersistentStateComponent<*> = function()
@@ -76,5 +81,12 @@ class SettingsSnapshotBuilder {
   fun fileState(file: String, content: String) {
     val byteArray = content.toByteArray()
     fileState(FileState.Modified(file, byteArray, byteArray.size))
+  }
+
+  fun plugin(id: String,
+             enabled: Boolean = true,
+             category: SettingsCategory = SettingsCategory.PLUGINS,
+             dependencies: Set<String> = emptySet()) {
+    plugins[PluginId.getId(id)] = PluginData(enabled, category, dependencies)
   }
 }

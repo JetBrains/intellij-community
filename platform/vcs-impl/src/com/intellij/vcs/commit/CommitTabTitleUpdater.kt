@@ -35,7 +35,10 @@ open class CommitTabTitleUpdater(val tree: ChangesTree,
 
     val branch = branchComponent.text
     tab.displayName = when {
-      ExperimentalUI.isNewUI() -> message("tab.title.commit")
+      ExperimentalUI.isNewUI() -> {
+        val contentsCount = ChangesViewContentManager.getToolWindowFor(project, tabName)?.contentManager?.contentCount ?: 0
+        if (contentsCount == 1) null else message("tab.title.commit")
+      }
       branch?.isNotBlank() == true -> message("tab.title.commit.to.branch", branch)
       else -> message("tab.title.commit")
     }

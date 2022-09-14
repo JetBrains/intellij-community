@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public class ReplaceWithConstantValueFixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new DataFlowInspection()};
+    return new LocalInspectionTool[]{new ConstantValueInspection()};
   }
 
   @NotNull

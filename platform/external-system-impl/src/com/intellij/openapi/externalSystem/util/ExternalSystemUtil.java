@@ -35,6 +35,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
@@ -67,6 +68,7 @@ import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -668,6 +670,26 @@ public final class ExternalSystemUtil {
   public static boolean isNewProject(Project project) {
     return project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE ||
            project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) == Boolean.TRUE;
+  }
+
+  // To be used only in internal New Project Wizard/Project Opening machinery
+  @ApiStatus.Internal
+  public static void configureNewModule(@NotNull Module module, boolean isCreatingNewProject, boolean isMavenModule) {
+    Project project = module.getProject();
+
+    // Postpone project refresh, disable unwanted notifications
+    project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, isCreatingNewProject ? Boolean.TRUE : null);
+    project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, isCreatingNewProject ? Boolean.TRUE : null);
+
+    markModuleAsMaven(module, isMavenModule);
+  }
+
+  // To be used only in internal New Project Wizard/Project Opening machinery
+  @ApiStatus.Internal
+  public static void markModuleAsMaven(@NotNull Module module, boolean isMavenModule) {
+    // This module will be replaced after import
+    // Make sure the .iml file is not created under the project dir, if 'Store generated project files externally' setting is on.
+    ExternalSystemModulePropertyManager.getInstance(module).setMavenized(isMavenModule);
   }
 
   @ApiStatus.Internal

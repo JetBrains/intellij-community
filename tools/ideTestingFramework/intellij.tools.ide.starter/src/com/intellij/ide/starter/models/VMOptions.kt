@@ -87,7 +87,7 @@ data class VMOptions(
     return VMOptionsDiff(originalLines = this.data, actualLines = loadedOptions)
   }
 
-  fun writeJavaArgsFile(theFile: File) {
+  fun writeJavaArgsFile(theFile: Path) {
     writeJvmArgsFile(theFile, this.data)
   }
 
@@ -228,6 +228,10 @@ data class VMOptions(
 
   fun withXmx(sizeMb: Int) = this
     .addLine("-Xmx" + sizeMb + "m", "-Xmx")
+
+  fun withClassFileVerification() = this
+    .addLine("-XX:+UnlockDiagnosticVMOptions")
+    .addLine("-XX:+BytecodeVerificationLocal")
 
   fun withG1GC() = this
     .filterKeys { it == "-XX:+UseConcMarkSweepGC" }

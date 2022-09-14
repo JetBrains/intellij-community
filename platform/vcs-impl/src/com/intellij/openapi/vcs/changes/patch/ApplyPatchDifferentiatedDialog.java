@@ -684,6 +684,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
       e.getPresentation().setEnabled((selectedChanges.size() >= 1) && (sameBase(selectedChanges)));
@@ -854,7 +859,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    public PopupStep onChosen(final VirtualFile selectedValue, boolean finalChoice) {
+    public PopupStep<?> onChosen(final VirtualFile selectedValue, boolean finalChoice) {
       if (selectedValue == null) {
         myNewBaseSelector.run();
         return null;
@@ -1068,6 +1073,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       boolean isEnabled = ContainerUtil.exists(myChangesTreeList.getSelectedChanges(), change -> change.getPatchInProgress().canDown());
       e.getPresentation().setEnabled(isEnabled);
@@ -1083,6 +1093,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private class StripUp extends DumbAwareAction {
     StripUp(Supplier<String> text) {
       super(text);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -1116,6 +1131,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private MyShowDiff() {
       super(VcsBundle.message("action.name.show.difference"),null, AllIcons.Actions.Diff);
       myMyChangeComparator = new MyChangeComparator();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

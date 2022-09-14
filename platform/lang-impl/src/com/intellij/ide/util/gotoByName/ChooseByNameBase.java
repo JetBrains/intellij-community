@@ -270,7 +270,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
       if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
         List<Object> selection = getChosenElements();
-        return (DataProvider)slowId -> getSlowData(dataId, selection);
+        return (DataProvider)slowId -> getSlowData(slowId, selection);
       }
       else if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
         return getBounds();
@@ -1639,6 +1639,11 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
       PsiElement[] elements = getElements();
       e.getPresentation().setEnabled(elements.length > 0);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     public abstract PsiElement @NotNull [] getElements();

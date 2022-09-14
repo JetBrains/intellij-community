@@ -8,13 +8,10 @@ import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.ReferenceImporter;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,20 +25,17 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -77,22 +71,20 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     if (DumbService.isDumb(myProject) || !myFile.isValid()) return;
     if (myEditor.isDisposed() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) return;
 
-    SlowOperations.allowSlowOperations(() -> doShowImports());
-  }
-
-  private void doShowImports() {
-    int caretOffset = myEditor.getCaretModel().getOffset();
-    importUnambiguousImports(caretOffset);
-    if (isImportHintEnabled()) {
-      List<HighlightInfo> visibleHighlights = getVisibleHighlights(myVisibleRange.getStartOffset(), myVisibleRange.getEndOffset(), myProject, myEditor, hasDirtyTextRange);
-      // sort by distance to the caret
-      visibleHighlights.sort(Comparator.comparingInt(info -> Math.abs(info.getActualStartOffset() - caretOffset)));
-      for (HighlightInfo visibleHighlight : visibleHighlights) {
-        if (showAddImportHint(visibleHighlight)) {
-          break;
+    SlowOperations.allowSlowOperations(() -> {
+      int caretOffset = myEditor.getCaretModel().getOffset();
+      importUnambiguousImports(caretOffset);
+      if (isImportHintEnabled()) {
+        List<HighlightInfo> visibleHighlights = getVisibleHighlights(myVisibleRange, myProject, myEditor, hasDirtyTextRange);
+        // sort by distance to the caret
+        visibleHighlights.sort(Comparator.comparingInt(info -> Math.abs(info.getActualStartOffset() - caretOffset)));
+        for (HighlightInfo visibleHighlight : visibleHighlights) {
+          if (showAddImportHint(visibleHighlight)) {
+            break;
+          }
         }
       }
-    }
+    });
   }
 
   private void importUnambiguousImports(int caretOffset) {
@@ -100,7 +92,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     Document document = myEditor.getDocument();
     List<HighlightInfo> infos = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(document, myProject, null, 0, document.getTextLength(), info -> {
-      if (info.hasHint() && info.getSeverity() == HighlightSeverity.ERROR && !info.getFixTextRange().containsOffset(caretOffset)) {
+      if (info.hasHint() && info.getSeverity() == HighlightSeverity.ERROR && !info.containsOffset(caretOffset, true)) {
         infos.add(info);
       }
       return true;
@@ -108,12 +100,12 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
     for (HighlightInfo info : infos) {
       for (HintAction action : extractHints(info)) {
-        if (action.isAvailable(myProject, myEditor, myFile) &&
-            action.fixSilently(myEditor)) {
+        if (action.isAvailable(myProject, myEditor, myFile) && action.fixSilently(myEditor)) {
           break;
         }
       }
     }
+
   }
 
   public static boolean mayAutoImportNow(@NotNull PsiFile psiFile) {
@@ -135,16 +127,15 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   @NotNull
-  private static List<HighlightInfo> getVisibleHighlights(int startOffset,
-                                                          int endOffset,
+  private static List<HighlightInfo> getVisibleHighlights(@NotNull TextRange visibleRange,
                                                           @NotNull Project project,
                                                           @NotNull Editor editor,
                                                           boolean isDirty) {
     List<HighlightInfo> highlights = new ArrayList<>();
     int offset = editor.getCaretModel().getOffset();
-    DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, startOffset, endOffset, info -> {
+    DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, visibleRange.getStartOffset(), visibleRange.getEndOffset(), info -> {
       //no changes after escape => suggest imports under caret only
-      if (!isDirty && !info.getFixTextRange().contains(offset)) {
+      if (!isDirty && !info.containsOffset(offset, true)) {
         return true;
       }
       if (info.hasHint() && !editor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
@@ -156,9 +147,6 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   private boolean showAddImportHint(@NotNull HighlightInfo info) {
-    PsiElement element = myFile.findElementAt(info.startOffset);
-    if (element == null || !element.isValid()) return false;
-
     for (HintAction action : extractHints(info)) {
       if (action.isAvailable(myProject, myEditor, myFile) && action.showHint(myEditor)) {
         return true;
@@ -177,88 +165,23 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     }
   }
 
-  /**
-   * Run syntax highlighting and extract hint actions from resulting quick fixes. e.g. import suggestions.
-   * Must be run outside EDT.
-   */
-  @NotNull
-  public static List<HintAction> getImportHints(@NotNull PsiFile file) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      // really can't run highlighting from within EDT
-      // also, guard against recursive call optimize imports->add imports->optimize imports (in AddImportAction.doAddImport())
-      throw new IllegalStateException("Must not be run from within EDT");
-    }
-    Project project = file.getProject();
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document == null || InjectedLanguageManager.getInstance(project).isInjectedFragment(file) || !hasUnresolvedReferences(file)) {
-      return Collections.emptyList();
-    }
-
-    List<HintAction> result = new ArrayList<>();
-    HighlightInfo fakeInfo = new HighlightInfo(null, null, HighlightInfoType.ERROR, 0, 0,
-                                           null, null, HighlightSeverity.ERROR, false,
-                                           null, false, 0, null,
-                                           null, null, -1);
-    QuickFixActionRegistrarImpl registrar = new QuickFixActionRegistrarImpl(fakeInfo);
-    file.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(@NotNull PsiElement element) {
-        ProgressManager.checkCanceled();
-        if (element instanceof PsiReference && ((PsiReference)element).resolve() == null) {
-          UnresolvedReferenceQuickFixProvider.registerReferenceFixes((PsiReference)element, registrar);
-        }
-        super.visitElement(element);
-      }
-    });
-    if (fakeInfo.quickFixActionRanges != null) {
-      for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> marker : fakeInfo.quickFixActionRanges) {
-        ProgressManager.checkCanceled();
-        IntentionAction action = marker.first.getAction();
-        if (action instanceof HintAction && action.isAvailable(project, null, file)) {
-          result.add((HintAction)action);
-        }
-      }
-    }
-    return result;
-  }
-
-  private static boolean hasUnresolvedReferences(@NotNull PsiFile file) {
-    if (file instanceof PsiCompiledElement) return false;
-    Ref<Boolean> result = new Ref<>(false);
-    file.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(@NotNull PsiElement element) {
-        for (PsiReference reference : element.getReferences()) {
-          if (reference.resolve() == null) {
-            result.set(true);
-            stopWalking();
-            break;
-          }
-        }
-        super.visitElement(element);
-      }
-    });
-    return result.get();
-  }
-
   private boolean isImportHintEnabled() {
     return DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled() &&
            DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(myFile);
   }
 
   @NotNull
-  private static List<HintAction> extractHints(@NotNull HighlightInfo info) {
-    List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> list = info.quickFixActionRanges;
-    if (list == null) return Collections.emptyList();
-
-    List<HintAction> hintActions = new SmartList<>();
-    for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : list) {
-      IntentionAction action = pair.getFirst().getAction();
+  public static List<HintAction> extractHints(@NotNull HighlightInfo info) {
+    List<HintAction> result = new ArrayList<>();
+    info.findRegisteredQuickFix((descriptor, range) -> {
+      ProgressManager.checkCanceled();
+      IntentionAction action = descriptor.getAction();
       if (action instanceof HintAction) {
-        hintActions.add((HintAction)action);
+        result.add((HintAction)action);
       }
-    }
-    return hintActions;
+      return null;
+    });
+    return result;
   }
 
 

@@ -21,6 +21,7 @@ import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -40,6 +41,7 @@ public abstract class StructuralSearchProfile {
   public static final ExtensionPointName<StructuralSearchProfile> EP_NAME =
     ExtensionPointName.create("com.intellij.structuralsearch.profile");
   @NonNls protected static final String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
+  private Boolean myReplaceSupported;
 
   /**
    * Creates the pattern PSI tree which is stored inside CompiledPattern.
@@ -237,8 +239,17 @@ public abstract class StructuralSearchProfile {
   public void checkSearchPattern(@NotNull CompiledPattern pattern) {}
 
   public void checkReplacementPattern(@NotNull Project project, @NotNull ReplaceOptions options) {
-    final String fileType = StringUtil.toLowerCase(options.getMatchOptions().getFileType().getName());
-    throw new UnsupportedPatternException(SSRBundle.message("replacement.not.supported.for.filetype", fileType));
+    if (isReplaceSupported()) return;
+    final LanguageFileType fileType = options.getMatchOptions().getFileType();
+    if (fileType == null) return;
+    final String fileTypeName = StringUtil.toLowerCase(fileType.getName());
+    throw new UnsupportedPatternException(SSRBundle.message("replacement.not.supported.for.filetype", fileTypeName));
+  }
+
+  private boolean isReplaceSupported() {
+    if (myReplaceSupported != null) return myReplaceSupported;
+    Class<?> declaringClass = ReflectionUtil.getMethodDeclaringClass(getClass(), "getReplaceHandler", Project.class, ReplaceOptions.class);
+    return myReplaceSupported = !StructuralSearchProfile.class.equals(declaringClass);
   }
 
   public boolean shouldShowProblem(@NotNull PsiErrorElement error) {

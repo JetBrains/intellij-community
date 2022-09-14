@@ -57,7 +57,9 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.action.*;
+import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction;
+import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction;
+import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
@@ -237,7 +239,9 @@ public final class TerminalView implements Disposable {
       contentManager.setSelectedContent(content, requestFocus);
     };
     if (requestFocus && !toolWindow.isActive()) {
-      LOG.info("Activating " + toolWindow.getId() + " tool window");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Activating " + toolWindow.getId() + " tool window");
+      }
       toolWindow.activate(selectRunnable, true, true);
     }
     else {

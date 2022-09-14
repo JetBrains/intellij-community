@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.RemoteFilePath
@@ -78,7 +79,7 @@ object RepositoryBrowser {
   }
 
   private fun getIcon(): Icon? = when {
-    ExperimentalUI.isNewUI() -> IconManager.getInstance().getIcon("expui/toolwindow/repositories.svg", AllIcons::class.java)
+    ExperimentalUI.isNewUI() -> IconLoader.getIcon("expui/toolwindow/repositories.svg", AllIcons::class.java)
     else -> null
   }
 }

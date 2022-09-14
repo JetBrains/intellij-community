@@ -578,7 +578,7 @@ internal class SingleContentLayout(
    *
    * All unused methods throw [IllegalStateException].
    */
-  private class FakeContent(val supplier: SingleContentSupplier, val info: TabInfo) : Content {
+  internal class FakeContent(val supplier: SingleContentSupplier, val info: TabInfo) : Content {
 
     private val pcs = PropertyChangeSupport(this)
 

@@ -32,10 +32,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 @ApiStatus.Internal
 public final class FloatingDecorator extends JDialog implements FloatingDecoratorMarker {
   private static final Logger LOG = Logger.getInstance(FloatingDecorator.class);

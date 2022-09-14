@@ -104,11 +104,11 @@ internal fun clearTrainingProgress() {
   LearningUiManager.activeToolWindow = null
 }
 
-internal fun resetPrimaryLanguage(activeLangSupport: LangSupport): Boolean {
-  val old = LangManager.getInstance().getLangSupport()
-  if (activeLangSupport != old) {
+internal fun resetPrimaryLanguage(newLanguageId: String): Boolean {
+  val oldLanguageId = LangManager.getInstance().getLanguageId()
+  if (newLanguageId != oldLanguageId) {
     LessonManager.instance.stopLesson()
-    LangManager.getInstance().updateLangSupport(activeLangSupport)
+    LangManager.getInstance().updateLangSupport(newLanguageId)
     LearningUiManager.activeToolWindow?.setModulesPanel()
     return true
   }
@@ -116,15 +116,15 @@ internal fun resetPrimaryLanguage(activeLangSupport: LangSupport): Boolean {
 }
 
 fun findLanguageSupport(project: Project): LangSupport? {
-  val langSupport = LangManager.getInstance().getLangSupport() ?: return null
-  if (isLearningProject(project, langSupport)) {
-    return langSupport
+  val languageId = LangManager.getInstance().getLanguageId() ?: return null
+  if (isLearningProject(project, languageId)) {
+    return LangManager.getInstance().getLangSupport()
   }
   return null
 }
 
-fun isLearningProject(project: Project, langSupport: LangSupport): Boolean {
-  return FileUtil.pathsEqual(project.basePath, LangManager.getInstance().getLearningProjectPath(langSupport))
+fun isLearningProject(project: Project, languageId: String): Boolean {
+  return FileUtil.pathsEqual(project.basePath, LangManager.getInstance().getLearningProjectPath(languageId))
 }
 
 fun getFeedbackLink(langSupport: LangSupport, ownRegistry: Boolean): String? {

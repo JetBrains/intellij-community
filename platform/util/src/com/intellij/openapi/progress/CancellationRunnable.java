@@ -43,4 +43,9 @@ public final class CancellationRunnable implements Runnable {
       throw e;
     }
   }
+
+  @Override
+  public String toString() {
+    return myRunnable.toString();
+  }
 }

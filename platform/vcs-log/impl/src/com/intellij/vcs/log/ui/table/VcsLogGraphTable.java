@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
@@ -655,8 +656,16 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(commitId);
     if (details != null) {
       int columnModelIndex = convertColumnIndexToModel(column);
-      List<VcsCommitStyle> styles =
-        ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(commitId, details, columnModelIndex, selected));
+      List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> {
+          try {
+            return highlighter.getStyle(commitId, details, columnModelIndex, selected);
+          } catch (ProcessCanceledException e) {
+            return VcsCommitStyle.DEFAULT;
+          } catch (Throwable t) {
+            LOG.error("Exception while getting style from highlighter " + highlighter, t);
+            return VcsCommitStyle.DEFAULT;
+          }
+        });
       style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
     }
 

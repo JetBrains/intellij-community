@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -179,5 +180,10 @@ class AnalyzeModuleDependencyAction extends AnAction {
     final OrderEntry entry = myPanel.getSelectedEntry();
     e.getPresentation().setEnabledAndVisible(entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getModule() != null
                                              || entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

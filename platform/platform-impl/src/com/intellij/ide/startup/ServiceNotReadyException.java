@@ -2,10 +2,18 @@
 package com.intellij.ide.startup;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * If thrown during startup process, indicates that a given service (e.g. index) isn't yet available,
  * and the query should be re-attempted later.
  */
 public final class ServiceNotReadyException extends ProcessCanceledException {
+  public ServiceNotReadyException() {
+
+  }
+
+  public ServiceNotReadyException(@NotNull String message) {
+    super(message);
+  }
 }

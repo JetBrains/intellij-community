@@ -26,7 +26,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.HardcodedMethodConstants;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -413,7 +412,7 @@ public final class MethodCallUtils {
       return false;
     }
     PsiMethod method = (PsiMethod)scope;
-    final Set<PsiMethod> checked = new THashSet<>();
+    final Set<PsiMethod> checked = new HashSet<>();
 
     while (true) {
       ProgressManager.checkCanceled();

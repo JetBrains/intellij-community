@@ -235,6 +235,13 @@ public class PySectionBasedDocStringTest extends PyTestCase {
                  "Line after single break", param1.getDescription());
   }
 
+  // PY-21883
+  public void testNumpyCombinesParamsAndOtherParamsSections() {
+    final NumpyDocString docString = findAndParseNumpyStyleDocString();
+    final List<String> parameters = docString.getParameters();
+    assertEquals(List.of("x", "y", "z"), parameters);
+  }
+
   public void testGoogleEmptyParamTypeInParenthesis() {
     final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
     assertSize(1, docString.getSections());
@@ -394,12 +401,11 @@ public class PySectionBasedDocStringTest extends PyTestCase {
                                                                           "    Example:\n" +
                                                                           "        addresses = field.Collection(AddressObject)\n" +
                                                                           "\"\"\""));
-    
+
     assertEquals(DocStringFormat.REST, DocStringUtil.guessDocStringFormat("\"\"\"\n" +
                                                                           "Args:\n" +
                                                                           "    :param Tuple[int, int] name: Some description\n" +
                                                                           "\"\"\""));
-    
   }
 
   // PY-31025

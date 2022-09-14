@@ -195,7 +195,11 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doMultiOverrideFileTest()
     }
 
-   open fun testLocalClass() {
+    open fun testNoAnyMembersInValueClass() {
+        doMultiOverrideFileTest()
+    }
+
+    open fun testLocalClass() {
         doImplementFileTest()
     }
 

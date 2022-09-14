@@ -3,7 +3,9 @@ package com.intellij.internal.statistic.libraryUsage
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface LibraryUsageImportProcessor<T : PsiElement> {
   fun imports(file: PsiFile): List<T>
 

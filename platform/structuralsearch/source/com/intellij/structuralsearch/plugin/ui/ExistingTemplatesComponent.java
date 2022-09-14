@@ -7,6 +7,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -17,10 +18,15 @@ import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +85,6 @@ public final class ExistingTemplatesComponent {
     }
 
     patternTreeModel.reload();
-    TreeUtil.expandAll(patternTree);
     final TreeExpander treeExpander = new DefaultTreeExpander(patternTree);
 
     // Toolbar actions
@@ -177,6 +182,19 @@ public final class ExistingTemplatesComponent {
     scrollPane.setBorder(JBUI.Borders.empty());
     panel.add(scrollPane, constraints.nextLine().weighty(1.0).fillCell());
     panel.setBorder(JBUI.Borders.empty());
+  }
+
+  public TreeState getTreeState() {
+    return TreeState.createOn(patternTree, true, true);
+  }
+
+  public void setTreeState(TreeState treeState) {
+    if (treeState == null) {
+      TreeUtil.expandAll(patternTree);
+    }
+    else {
+      treeState.applyTo(patternTree);
+    }
   }
 
   private void reloadUserTemplates(ConfigurationManager configurationManager) {
@@ -280,14 +298,6 @@ public final class ExistingTemplatesComponent {
     return result;
   }
 
-  public void selectConfiguration(String name) {
-    final DefaultMutableTreeNode node = TreeUtil.findNode((DefaultMutableTreeNode)patternTreeModel.getRoot(), n -> {
-      final Object object = n.getUserObject();
-      return object instanceof Configuration && name.equals(((Configuration)object).getName());
-    });
-    TreeUtil.selectInTree(node, false, patternTree, false);
-  }
-
   public DefaultMutableTreeNode getSelectedNode() {
     final Object selection = patternTree.getLastSelectedPathComponent();
     if (!(selection instanceof DefaultMutableTreeNode)) {
@@ -327,6 +337,7 @@ public final class ExistingTemplatesComponent {
 
     final TreeSpeedSearch speedSearch = new TreeSpeedSearch(
       tree,
+      false,
       treePath -> {
         final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)treePath.getLastPathComponent();
         if (treeNode instanceof DraftTemplateNode) return SSRBundle.message("draft.template.node");

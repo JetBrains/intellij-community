@@ -25,7 +25,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class NamedEntityImpl : NamedEntity, WorkspaceEntityBase() {
+open class NamedEntityImpl(val dataSource: NamedEntityData) : NamedEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(NamedEntity::class.java, NamedChildEntity::class.java,
@@ -37,15 +37,11 @@ open class NamedEntityImpl : NamedEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _myName: String? = null
   override val myName: String
-    get() = _myName!!
+    get() = dataSource.myName
 
-  @JvmField
-  var _additionalProperty: String? = null
   override val additionalProperty: String?
-    get() = _additionalProperty
+    get() = dataSource.additionalProperty
 
   override val children: List<NamedChildEntity>
     get() = snapshot.extractOneToManyChildren<NamedChildEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
@@ -203,13 +199,13 @@ class NamedEntityData : WorkspaceEntityData.WithCalculablePersistentId<NamedEnti
   }
 
   override fun createEntity(snapshot: EntityStorage): NamedEntity {
-    val entity = NamedEntityImpl()
-    entity._myName = myName
-    entity._additionalProperty = additionalProperty
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = NamedEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {

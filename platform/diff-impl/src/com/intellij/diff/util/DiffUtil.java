@@ -11,7 +11,6 @@ import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
-import com.intellij.diff.editor.DiffVirtualFile;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
@@ -145,7 +144,6 @@ public final class DiffUtil {
 
   public static boolean isFileWithoutContent(@NotNull VirtualFile file) {
     if (file instanceof VirtualFileWithoutContent) return true;
-    if (file instanceof DiffVirtualFile) return true;
     return false;
   }
 
@@ -205,7 +203,7 @@ public final class DiffUtil {
       ReadAction
         .nonBlocking(() -> {
           CharSequence text = editor.getDocument().getImmutableCharSequence();
-          return initEditorHighlighter(project, content, text);
+          return initEditorHighlighter(null, content, text);
         })
         .finishOnUiThread(ModalityState.any(), result -> {
           if (result != null) editor.setHighlighter(result);
@@ -1402,7 +1400,7 @@ public final class DiffUtil {
 
   public static void refreshOnFrameActivation(VirtualFile @NotNull ... files) {
     if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
-      DiffUtil.markDirtyAndRefresh(true, false, false, files);
+      markDirtyAndRefresh(true, false, false, files);
     }
   }
 
@@ -1546,9 +1544,7 @@ public final class DiffUtil {
 
   @NotNull
   private static List<DiffNotificationProvider> getNotificationProviders(@NotNull UserDataHolder holder) {
-    List<DiffNotificationProvider> providers = ContainerUtil.notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATION_PROVIDERS));
-    List<JComponent> components = ContainerUtil.notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATIONS));
-    return ContainerUtil.concat(providers, ContainerUtil.map(components, component -> (viewer) -> component));
+    return ContainerUtil.notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATION_PROVIDERS));
   }
 
   @NotNull

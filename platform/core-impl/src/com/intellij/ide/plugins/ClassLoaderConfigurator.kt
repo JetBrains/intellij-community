@@ -342,7 +342,7 @@ private fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDes
 
     for (prefix in contentPackagePrefixes) {
       if (name.startsWith(prefix)) {
-        return@ResolveScopeManager "Class $name must be not requested from main classloader of $pluginId plugin"
+        return@ResolveScopeManager "Class $name must not be requested from main classloader of $pluginId plugin"
       }
     }
 

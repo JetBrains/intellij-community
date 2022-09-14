@@ -80,8 +80,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
                       "MavenProjectsManagerTest.testUpdatingProjectsWhenAbsentManagedProjectFileAppears",
                       "MavenProjectsManagerTest.testAddingManagedFileAndChangingAggregation",
                       "MavenProjectsManagerWatcherTest.testChangeConfigInOurProjectShouldCallUpdatePomFile",
-                      "MavenProjectsManagerWatcherTest.testIncrementalAutoReload",
-                      "InvalidEnvironmentImportingTest.testShouldShowLogsOfMavenServerIfNotStarted");
+                      "MavenProjectsManagerWatcherTest.testIncrementalAutoReload");
 
   @Override
   protected void setUp() throws Exception {
@@ -121,40 +120,44 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     );
   }
 
+  @Override
+  protected boolean useDirectoryBasedProjectFormat() {
+    return true;
+  }
+
+  public boolean isWorkspaceImport() {
+    return MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
+  }
+
   public boolean supportModuleGroups() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject)
+    return !isWorkspaceImport()
            && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
   }
 
   public boolean supportsKeepingManualChanges() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
+    return !isWorkspaceImport();
   }
 
   public boolean supportsImportOfNonExistingFolders() {
-    return MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
+    return isWorkspaceImport();
   }
 
   public boolean supportsKeepingModulesFromPreviousImport() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject)
+    return !isWorkspaceImport()
            && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
   }
 
   public boolean supportsLegacyKeepingFoldersFromPreviousImport() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
+    return !isWorkspaceImport();
   }
 
   public boolean supportsKeepingFacetsFromPreviousImport() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
+    return !isWorkspaceImport();
   }
 
   public boolean supportsCreateAggregatorOption() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject)
+    return !isWorkspaceImport()
            && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
-  }
-
-  public boolean supportsZeroEventsOnNoProjectChange() {
-    // IDEA-297902 WorkspaceModel#updateProjectModel should not trigger VersionedStorageChange events, if nothing actually changes
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
   }
 
   protected void stopMavenImportManager() {

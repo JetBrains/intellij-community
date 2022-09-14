@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -211,6 +212,11 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
           final Sdk sdk = getSelectedSdk();
           return sdk != null && PythonSdkUtil.isConda(sdk);
         }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
+        }
       };
 
     final ToggleActionButton showEarlyReleasesButton =
@@ -224,6 +230,11 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         public void setSelected(AnActionEvent e, boolean state) {
           PyPackagingSettings.getInstance(myProject).earlyReleasesAsUpgrades = state;
           updatePackages(myPackageManagementService);
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
         }
       };
 

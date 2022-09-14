@@ -20,7 +20,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ParentWithNullsOppositeMultipleImpl : ParentWithNullsOppositeMultiple, WorkspaceEntityBase() {
+open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOppositeMultipleData) : ParentWithNullsOppositeMultiple, WorkspaceEntityBase() {
 
   companion object {
 
@@ -30,10 +30,8 @@ open class ParentWithNullsOppositeMultipleImpl : ParentWithNullsOppositeMultiple
 
   }
 
-  @JvmField
-  var _parentData: String? = null
   override val parentData: String
-    get() = _parentData!!
+    get() = dataSource.parentData
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -129,12 +127,13 @@ class ParentWithNullsOppositeMultipleData : WorkspaceEntityData<ParentWithNullsO
   }
 
   override fun createEntity(snapshot: EntityStorage): ParentWithNullsOppositeMultiple {
-    val entity = ParentWithNullsOppositeMultipleImpl()
-    entity._parentData = parentData
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ParentWithNullsOppositeMultipleImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

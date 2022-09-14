@@ -53,6 +53,9 @@ internal class IdeScriptDependenciesProvider(project: Project) : ScriptDependenc
 }
 
 /**
+ * **Please, note** that [ScriptConfigurationManager] should not be used directly.
+ * Instead, consider using [org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptImplementationSwitcher].
+ *
  * Facade for loading and caching Kotlin script files configuration.
  *
  * This service also starts indexing of new dependency roots and runs highlighting
@@ -101,6 +104,12 @@ interface ScriptConfigurationManager {
     fun getFirstScriptsSdk(): Sdk?
 
     fun getScriptDependenciesClassFilesScope(file: VirtualFile): GlobalSearchScope
+
+    fun getScriptDependenciesClassFiles(file: VirtualFile): Collection<VirtualFile>
+    fun getScriptDependenciesSourceFiles(file: VirtualFile): Collection<VirtualFile>
+
+    fun getScriptSdkDependenciesClassFiles(file: VirtualFile): Collection<VirtualFile>
+    fun getScriptSdkDependenciesSourceFiles(file: VirtualFile): Collection<VirtualFile>
 
     fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope
     fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope

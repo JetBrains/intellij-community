@@ -226,6 +226,11 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public ShortcutSet getShortcut() {
         return CommonShortcuts.getDelete();
       }
@@ -594,6 +599,11 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         myLastChosen = files[0];
         libraryChanged(true);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }

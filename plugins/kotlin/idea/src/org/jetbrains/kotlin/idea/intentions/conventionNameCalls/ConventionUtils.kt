@@ -17,3 +17,13 @@ fun FunctionDescriptor.isAnyEquals(): Boolean {
     val overriddenDescriptors = findOriginalTopMostOverriddenDescriptors()
     return overriddenDescriptors.any { it.fqNameUnsafe.asString() == "kotlin.Any.equals" }
 }
+
+fun FunctionDescriptor.isAnyHashCode(): Boolean {
+    val overriddenDescriptors = findOriginalTopMostOverriddenDescriptors()
+    return overriddenDescriptors.any { it.fqNameUnsafe.asString() == "kotlin.Any.hashCode" }
+}
+
+fun FunctionDescriptor.isAnyToString(): Boolean {
+    val overriddenDescriptors = findOriginalTopMostOverriddenDescriptors()
+    return overriddenDescriptors.any { it.fqNameUnsafe.asString() == "kotlin.Any.toString" }
+}

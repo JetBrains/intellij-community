@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Vladimir Kondratyev
  * @author Konstantin Bulenkov
  */
 public abstract class SplitAction extends AnAction implements DumbAware {

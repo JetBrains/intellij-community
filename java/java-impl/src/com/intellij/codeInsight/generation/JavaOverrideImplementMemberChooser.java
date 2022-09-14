@@ -232,6 +232,11 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       mySortedByOverriding = state;
       if (state) {
@@ -260,6 +265,11 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myMerge;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

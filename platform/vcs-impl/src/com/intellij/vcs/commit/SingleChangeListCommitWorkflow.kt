@@ -28,8 +28,7 @@ internal fun CommitOptions.saveChangeListSpecificOptions() = changeListSpecificO
 @Nls
 internal fun String.removeEllipsisSuffix() = StringUtil.removeEllipsisSuffix(this)
 
-@Nls
-internal fun CommitExecutor.getPresentableText() = removeMnemonic(actionText).removeEllipsisSuffix()
+internal fun cleanActionText(text: @Nls String): @Nls String = removeMnemonic(text).removeEllipsisSuffix()
 
 class SingleChangeListCommitWorkflow(
   project: Project,

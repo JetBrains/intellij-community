@@ -16,6 +16,7 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
 
 
   private void checkHighlighting() {
-    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.enableInspections(new DataFlowInspection(), new ConstantValueInspection());
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 

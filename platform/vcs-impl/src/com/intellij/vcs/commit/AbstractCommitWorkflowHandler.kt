@@ -165,7 +165,9 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   protected open fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean = true
 
   protected open fun doExecuteSession(sessionInfo: CommitSessionInfo): Boolean {
-    return workflow.executeSession(sessionInfo)
+    val actionName = sessionInfo.executor?.actionText ?: getCommitActionName()
+    val commitInfo = CommitInfoImpl(actionName)
+    return workflow.executeSession(sessionInfo, commitInfo)
   }
 
   protected open fun saveCommitOptionsOnCommit(): Boolean {
@@ -205,7 +207,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
                                changes: List<Change>,
                                commitMessage: String): Boolean {
       if (sessionInfo is CommitSessionInfo.Custom) {
-        val title = sessionInfo.executor.getPresentableText()
+        val title = cleanActionText(sessionInfo.executor.actionText)
         return SessionDialog.configureCommitSession(project, title, sessionInfo.session, changes, commitMessage)
       }
       return true

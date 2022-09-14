@@ -59,6 +59,11 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     Toggleable.setSelected(e.getPresentation(), !myInspectionsFilter.isEmptyFilter());
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   private void tune(InspectionProfileImpl profile, Project project) {
     addAction(new ResetFilterAction());
     addSeparator();

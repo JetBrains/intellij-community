@@ -20,7 +20,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class BooleanEntityImpl : BooleanEntity, WorkspaceEntityBase() {
+open class BooleanEntityImpl(val dataSource: BooleanEntityData) : BooleanEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -30,7 +30,7 @@ open class BooleanEntityImpl : BooleanEntity, WorkspaceEntityBase() {
 
   }
 
-  override var data: Boolean = false
+  override val data: Boolean get() = dataSource.data
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -120,12 +120,13 @@ class BooleanEntityData : WorkspaceEntityData<BooleanEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): BooleanEntity {
-    val entity = BooleanEntityImpl()
-    entity.data = data
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = BooleanEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

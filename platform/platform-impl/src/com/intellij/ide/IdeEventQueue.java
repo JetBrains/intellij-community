@@ -61,7 +61,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 public final class IdeEventQueue extends EventQueue {
   private static final ExtensionPointName<EventDispatcher> DISPATCHERS_EP =
@@ -950,7 +949,7 @@ public final class IdeEventQueue extends EventQueue {
 
   public void pumpEventsForHierarchy(@NotNull Component modalComponent,
                                      @NotNull Future<?> exitCondition,
-                                     @NotNull Predicate<? super AWTEvent> isCancelEvent) {
+                                     @NotNull Consumer<? super AWTEvent> eventConsumer) {
     assert EventQueue.isDispatchThread();
     if (Logs.LOG.isDebugEnabled()) {
       Logs.LOG.debug("pumpEventsForHierarchy(" + modalComponent + ", " + exitCondition + ")");
@@ -962,9 +961,7 @@ public final class IdeEventQueue extends EventQueue {
         if (!consumed) {
           dispatchEvent(event);
         }
-        if (isCancelEvent.test(event)) {
-          break;
-        }
+        eventConsumer.accept(event);
       }
       catch (Throwable e) {
         Logs.LOG.error(e);
@@ -976,7 +973,8 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   // return true if consumed
-  private static boolean consumeUnrelatedEvent(@NotNull Component modalComponent, @NotNull AWTEvent event) {
+  @ApiStatus.Internal
+  public static boolean consumeUnrelatedEvent(@NotNull Component modalComponent, @NotNull AWTEvent event) {
     boolean consumed = false;
     if (event instanceof InputEvent) {
       Object s = event.getSource();

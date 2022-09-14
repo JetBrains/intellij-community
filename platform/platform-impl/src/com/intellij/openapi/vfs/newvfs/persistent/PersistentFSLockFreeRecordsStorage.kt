@@ -110,8 +110,12 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
   }
 
   @Throws(IOException::class)
-  override fun setFlags(id: Int, flags: @PersistentFS.Attributes Int) = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
-    flags(flags)
+  override fun setFlags(id: Int, flags: @PersistentFS.Attributes Int): Boolean = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
+    if(flags!=flags()) {
+      flags(flags)
+      return true
+    }
+    return false
   }
 
   @Throws(IOException::class)
@@ -146,8 +150,12 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
   }
 
   @Throws(IOException::class)
-  override fun putTimestamp(id: Int, value: Long) = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
-    timeStamp(value)
+  override fun putTimestamp(id: Int, value: Long): Boolean = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
+    if(timeStamp()!=value) {
+      timeStamp(value)
+      return true
+    }
+    return false
   }
 
   @Throws(IOException::class)
@@ -156,8 +164,13 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
   }
 
   @Throws(IOException::class)
-  override fun putLength(id: Int, value: Long) = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
-    length(value)
+  override fun putLength(id: Int, value: Long): Boolean = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
+    if(value != length()) {
+      length(value)
+      return true;
+    }else{
+      return false;
+    }
   }
 
   @Throws(IOException::class)
@@ -176,6 +189,7 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
                                            nameId: Int,
                                            parentId: Int,
                                            overwriteMissed: Boolean) = acquireRecord(id, AccessType.WRITE) {
+    //FIXME RC: method name setAttributesAndIncModCount, but there is no modCount increment here!
     setup(parentId, nameId, flags, 0, 0, timestamp, length, overwriteMissed)
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
@@ -13,6 +14,7 @@ import com.intellij.util.containers.FileCollectionFactory
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -22,6 +24,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.importing.*
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportContext
 import org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider
@@ -29,6 +33,7 @@ import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
 import java.util.function.Function
@@ -37,6 +42,10 @@ internal val WORKSPACE_CONFIGURATOR_EP: ExtensionPointName<MavenWorkspaceConfigu
   "org.jetbrains.idea.maven.importing.workspaceConfigurator")
 internal val AFTER_IMPORT_CONFIGURATOR_EP: ExtensionPointName<MavenAfterImportConfigurator> = ExtensionPointName.create(
   "org.jetbrains.idea.maven.importing.afterImportConfigurator")
+
+@TestOnly
+@Internal
+var WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE = false
 
 internal class WorkspaceProjectImporter(
   private val myProjectsTree: MavenProjectsTree,
@@ -49,7 +58,9 @@ internal class WorkspaceProjectImporter(
   private val createdModulesList = java.util.ArrayList<Module>()
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
-    val (hasChanges, projectToImport) = collectProjectsAndChanges(projectsToImportWithChanges)
+    val storageBeforeImport = WorkspaceModel.getInstance(myProject).entityStorage.current
+
+    val (hasChanges, projectToImport) = collectProjectsAndChanges(storageBeforeImport, projectsToImportWithChanges)
     if (!hasChanges) return emptyList()
 
     val postTasks = ArrayList<MavenProjectsProcessorTask>()
@@ -61,14 +72,16 @@ internal class WorkspaceProjectImporter(
     val contextData = UserDataHolderBase()
 
     val projectsWithModuleEntities = stats.recordPhase(MavenImportCollector.WORKSPACE_POPULATE_PHASE) {
-      importModules(builder, projectToImport, mavenProjectToModuleName, contextData, stats)
+      importModules(storageBeforeImport, builder, projectToImport, mavenProjectToModuleName, contextData, stats).also {
+        beforeModelApplied(it, builder, contextData, stats)
+      }
     }
     val appliedProjectsWithModules = stats.recordPhase(MavenImportCollector.WORKSPACE_COMMIT_PHASE) {
-      applyModulesToWorkspaceModel(projectsWithModuleEntities, builder, contextData, stats)
+      commitModulesToWorkspaceModel(projectsWithModuleEntities, builder, contextData, stats)
     }
 
-    stats.recordPhase(MavenImportCollector.WORKSPACE_LEGACY_IMPORTERS_PHASE) {
-      configLegacyFacets(appliedProjectsWithModules, mavenProjectToModuleName, postTasks)
+    stats.recordPhase(MavenImportCollector.WORKSPACE_LEGACY_IMPORTERS_PHASE) { activity ->
+      configLegacyFacets(appliedProjectsWithModules, mavenProjectToModuleName, postTasks, activity)
     }
 
     val changedProjectsOnly = projectToImport
@@ -81,23 +94,15 @@ internal class WorkspaceProjectImporter(
 
     stats.finish(numberOfModules = projectsWithModuleEntities.sumOf { it.modules.size })
 
-    postTasks.add(MavenProjectsProcessorTask { _, _, _, indicator ->
-      val context = object : MavenAfterImportConfigurator.Context, UserDataHolder by contextData {
-        override val project = myProject
-        override val mavenProjectsWithModules = appliedProjectsWithModules.asSequence()
-      }
-      for (configurator in AFTER_IMPORT_CONFIGURATOR_EP.extensionList) {
-        indicator.checkCanceled()
-        configurator.afterImport(context)
-      }
-    })
+    postTasks.add(AfterImportConfiguratorsTask(contextData, appliedProjectsWithModules))
 
     return postTasks
 
   }
 
-  private fun collectProjectsAndChanges(originalProjectsChanges: Map<MavenProject, MavenProjectChanges>): Pair<Boolean, Map<MavenProject, MavenProjectChanges>> {
-    val projectFilesFromPreviousImport = readMavenExternalSystemData(WorkspaceModel.getInstance(myProject).entityStorage.current)
+  private fun collectProjectsAndChanges(storageBeforeImport: EntityStorage,
+                                        originalProjectsChanges: Map<MavenProject, MavenProjectChanges>): Pair<Boolean, Map<MavenProject, MavenProjectChanges>> {
+    val projectFilesFromPreviousImport = readMavenExternalSystemData(storageBeforeImport)
       .mapTo(FileCollectionFactory.createCanonicalFilePathSet()) { it.mavenProjectFilePath }
 
     val allProjectToImport = myProjectsTree.projects
@@ -123,7 +128,8 @@ internal class WorkspaceProjectImporter(
     return mavenProjectToModuleName
   }
 
-  private fun importModules(builder: MutableEntityStorage,
+  private fun importModules(storageBeforeImport: EntityStorage,
+                            builder: MutableEntityStorage,
                             projectsToImport: Map<MavenProject, MavenProjectChanges>,
                             mavenProjectToModuleName: java.util.HashMap<MavenProject, String>,
                             contextData: UserDataHolderBase,
@@ -131,7 +137,7 @@ internal class WorkspaceProjectImporter(
     val context = MavenProjectImportContextProvider(myProject, myProjectsTree, myImportingSettings,
                                                     mavenProjectToModuleName).getContext(projectsToImport)
 
-    val dependenciesImportingContext = WorkspaceModuleImporter.DependenciesImportingContext()
+    val entitySourceNamesBeforeImport = FileInDirectorySourceNames.from(storageBeforeImport)
     val folderImportingContext = WorkspaceFolderImporter.FolderImportingContext()
 
     class PartialModulesData(val changes: MavenProjectChanges,
@@ -143,8 +149,8 @@ internal class WorkspaceProjectImporter(
                                                  importData,
                                                  virtualFileUrlManager,
                                                  builder,
+                                                 entitySourceNamesBeforeImport,
                                                  myImportingSettings,
-                                                 dependenciesImportingContext,
                                                  folderImportingContext,
                                                  stats).importModule()
 
@@ -187,49 +193,58 @@ internal class WorkspaceProjectImporter(
     return context.allModules.sortedWith(comparator)
   }
 
-  private fun applyModulesToWorkspaceModel(mavenProjectsWithModules: List<MavenProjectWithModulesData<ModuleEntity>>,
-                                           builder: MutableEntityStorage,
-                                           contextData: UserDataHolderBase,
-                                           stats: WorkspaceImportStats)
-    : List<MavenProjectWithModulesData<Module>> {
+  private fun commitModulesToWorkspaceModel(mavenProjectsWithModules: List<MavenProjectWithModulesData<ModuleEntity>>,
+                                            newStorage: MutableEntityStorage,
+                                            contextData: UserDataHolderBase,
+                                            stats: WorkspaceImportStats): List<MavenProjectWithModulesData<Module>> {
+    val appliedModulesResult = mutableListOf<MavenProjectWithModulesData<Module>>()
+    updateProjectModelFastOrSlow(myProject, stats,
+                                 { snapshot -> applyToCurrentStorage(mavenProjectsWithModules, snapshot, newStorage) },
+                                 { applied ->
+                                   mapEntitiesToModulesAndRunAfterModelApplied(applied,
+                                                                               mavenProjectsWithModules,
+                                                                               appliedModulesResult,
+                                                                               contextData,
+                                                                               stats)
+                                 })
+    return appliedModulesResult
+  }
 
-    beforeModelApplied(mavenProjectsWithModules, builder, contextData, stats)
+  private fun applyToCurrentStorage(mavenProjectsWithModules: List<MavenProjectWithModulesData<ModuleEntity>>,
+                                    currentStorage: MutableEntityStorage,
+                                    newStorage: MutableEntityStorage) {
+    // remove modules which should be replaced with Maven modules, in order to clean them from pre-existing sources, dependencies etc.
+    // It's needed since otherwise 'replaceBySource' will merge pre-existing Module content with imported module content, resulting in
+    // unexpected module configuration.
+    val importedModuleNames = mavenProjectsWithModules
+      .flatMapTo(mutableSetOf()) { it.modules.asSequence().map { it.module.name } }
+    currentStorage
+      .entities(ModuleEntity::class.java)
+      .filter { !isMavenEntity(it.entitySource) && it.name in importedModuleNames }
+      .forEach { currentStorage.removeEntity(it) }
 
-    val result = mutableListOf<MavenProjectWithModulesData<Module>>()
-    MavenUtil.invokeAndWaitWriteAction(myProject) {
-      WorkspaceModel.getInstance(myProject).updateProjectModel { storage ->
-        // remove modules which should be replaced with Maven modules, in order to clean them from pre-existing sources, dependencies etc.
-        // It's needed since otherwise 'replaceBySource' will merge pre-existing Module content with imported module content, resulting in
-        // unexpected module configuration.
-        val importedModuleNames = mavenProjectsWithModules
-          .flatMapTo(mutableSetOf()) { it.modules.asSequence().map { it.module.name } }
+    currentStorage.replaceBySource({ isMavenEntity(it) }, newStorage)
+  }
 
-        storage
-          .entities(ModuleEntity::class.java)
-          .filter { !isMavenEntity(it.entitySource) && it.name in importedModuleNames }
-          .forEach { storage.removeEntity(it) }
-
-        storage.replaceBySource({ isMavenEntity(it) }, builder)
+  private fun mapEntitiesToModulesAndRunAfterModelApplied(appliedStorage: EntityStorage,
+                                                          mavenProjectsWithModules: List<MavenProjectWithModulesData<ModuleEntity>>,
+                                                          result: MutableList<MavenProjectWithModulesData<Module>>,
+                                                          contextData: UserDataHolderBase,
+                                                          stats: WorkspaceImportStats) {
+    for (each in mavenProjectsWithModules) {
+      val appliedModules = each.modules.mapNotNull<ModuleWithTypeData<ModuleEntity>, ModuleWithTypeData<Module>> {
+        val originalEntity = it.module
+        val appliedEntity = appliedStorage.resolve(originalEntity.persistentId) ?: return@mapNotNull null
+        val module = appliedStorage.findModuleByEntity(appliedEntity) ?: return@mapNotNull null
+        ModuleWithTypeData(module, it.type)
       }
-      val storage = WorkspaceModel.getInstance(myProject).entityStorage.current
 
-      // map ModuleEntities to the created Modules
-      for (each in mavenProjectsWithModules) {
-        val appliedModules = each.modules.mapNotNull {
-          val originalEntity = it.module
-          val appliedEntity = storage.resolve(originalEntity.persistentId) ?: return@mapNotNull null
-          val module = storage.findModuleByEntity(appliedEntity) ?: return@mapNotNull null
-          ModuleWithTypeData<Module>(module, it.type)
-        }
-
-        if (appliedModules.isNotEmpty()) {
-          result.add(MavenProjectWithModulesData(each.mavenProject, each.changes, appliedModules))
-        }
+      if (appliedModules.isNotEmpty()) {
+        result.add(MavenProjectWithModulesData(each.mavenProject, each.changes, appliedModules))
       }
-
-      afterModelApplied(result, storage, contextData, stats)
     }
-    return result
+
+    afterModelApplied(result, appliedStorage, contextData, stats)
   }
 
   private fun configureModules(projectsWithModules: List<MavenWorkspaceConfigurator.MavenProjectWithModules<ModuleEntity>>,
@@ -265,7 +280,7 @@ internal class WorkspaceProjectImporter(
       override val storage = builder
       override val mavenProjectsTree = myProjectsTree
       override val mavenProjectsWithModules = projectsWithModules.asSequence()
-      override fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T> = Companion.importedEntities(builder, clazz)
+      override fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T> = importedEntities(builder, clazz)
     }
     WORKSPACE_CONFIGURATOR_EP.extensions.forEach { configurator ->
       stats.recordConfigurator(configurator, MavenImportCollector.BEFORE_APPLY_DURATION_MS) {
@@ -288,7 +303,7 @@ internal class WorkspaceProjectImporter(
       override val storage = builder
       override val mavenProjectsTree = myProjectsTree
       override val mavenProjectsWithModules = projectsWithModules.asSequence()
-      override fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T> = Companion.importedEntities(builder, clazz)
+      override fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T> = importedEntities(builder, clazz)
     }
     WORKSPACE_CONFIGURATOR_EP.extensions.forEach { configurator ->
       stats.recordConfigurator(configurator, MavenImportCollector.AFTER_APPLY_DURATION_MS) {
@@ -304,7 +319,8 @@ internal class WorkspaceProjectImporter(
 
   private fun configLegacyFacets(mavenProjectsWithModules: List<MavenProjectWithModulesData<Module>>,
                                  moduleNameByProject: Map<MavenProject, String>,
-                                 postTasks: List<MavenProjectsProcessorTask>) {
+                                 postTasks: List<MavenProjectsProcessorTask>,
+                                 activity: StructuredIdeActivity) {
     val legacyFacetImporters = mavenProjectsWithModules.flatMap { projectWithModules ->
       projectWithModules.modules.asSequence().mapNotNull { moduleWithType ->
         MavenLegacyModuleImporter.ExtensionImporter.createIfApplicable(projectWithModules.mavenProject,
@@ -316,7 +332,7 @@ internal class WorkspaceProjectImporter(
                                                                        /* isWorkspaceImport = */true)
       }
     }
-    MavenProjectImporterBase.importExtensions(myProject, myModifiableModelsProvider, legacyFacetImporters, postTasks)
+    MavenProjectImporterBase.importExtensions(myProject, myModifiableModelsProvider, legacyFacetImporters, postTasks, activity)
   }
 
   override fun createdModules(): List<Module> {
@@ -335,23 +351,16 @@ internal class WorkspaceProjectImporter(
         .mapNotNull { WorkspaceModuleImporter.ExternalSystemData.tryRead(it) }
 
     @JvmStatic
-    fun tryUpdateTargetFolders(project: Project) {
-      val snapshot = WorkspaceModel.getInstance(project).getBuilderSnapshot()
-      val builder = snapshot.builder
-
-      repeat(2) {
-        updateTargetFoldersInSnapshot(project, builder)
-
-        var replaced = false
-        MavenUtil.invokeAndWaitWriteAction(project) {
-          replaced = WorkspaceModel.getInstance(project).replaceProjectModel(snapshot.getStorageReplacement())
-        }
-        if (replaced) return
-      }
-      MavenLog.LOG.info("Cannot update project folders: workspace is already modified")
+    fun updateTargetFolders(project: Project) {
+      val stats = WorkspaceImportStats.startFoldersUpdate(project)
+      var numberOfModules = 0
+      updateProjectModelFastOrSlow(project, stats, { snapshot ->
+        numberOfModules = updateTargetFoldersInSnapshot(project, snapshot, stats)
+      })
+      stats.finish(numberOfModules)
     }
 
-    private fun updateTargetFoldersInSnapshot(project: Project, builder: MutableEntityStorage) {
+    private fun updateTargetFoldersInSnapshot(project: Project, builder: MutableEntityStorage, stats: WorkspaceImportStats): Int {
       val folderImportingContext = WorkspaceFolderImporter.FolderImportingContext()
 
       val mavenManager = MavenProjectsManager.getInstance(project)
@@ -361,7 +370,6 @@ internal class WorkspaceProjectImporter(
                                              mavenManager.importingSettings,
                                              folderImportingContext)
 
-      val stats = WorkspaceImportStats.startFoldersUpdate(project)
       var numberOfModules = 0
       readMavenExternalSystemData(builder).forEach { data ->
         val pomVirtualFile = VfsUtil.findFile(Path.of(data.mavenProjectFilePath), false) ?: return@forEach
@@ -376,7 +384,74 @@ internal class WorkspaceProjectImporter(
         importer.createContentRoots(mavenProject, data.mavenModuleType, data.moduleEntity, stats)
         numberOfModules++
       }
-      stats.finish(numberOfModules)
+
+      return numberOfModules
+    }
+
+    private fun updateProjectModelFastOrSlow(project: Project,
+                                             stats: WorkspaceImportStats,
+                                             prepareInBackground: (current: MutableEntityStorage) -> Unit,
+                                             afterApplyInWriteAction: (storage: EntityStorage) -> Unit = {}) {
+      val workspaceModel = WorkspaceModel.getInstance(project)
+
+      var attempts = 0
+      var durationInBackground = 0L
+      var durationInWriteAction = 0L
+
+      var updated = false
+      if (!WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE) {
+        while (!updated && attempts < 2) {
+          attempts++
+          val beforeBG = System.nanoTime()
+
+          val snapshot = workspaceModel.getBuilderSnapshot()
+          val builder = snapshot.builder
+          prepareInBackground(builder)
+          durationInBackground += System.nanoTime() - beforeBG
+
+          MavenUtil.invokeAndWaitWriteAction(project) {
+            val beforeWA = System.nanoTime()
+            updated = workspaceModel.replaceProjectModel(snapshot.getStorageReplacement())
+            if (updated) afterApplyInWriteAction(workspaceModel.entityStorage.current)
+            durationInWriteAction += System.nanoTime() - beforeWA
+          }
+          if (updated) break
+          MavenLog.LOG.info("Retrying to fast-apply to Workspace Model...")
+        }
+      }
+      WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE = false
+
+      if (!updated) {
+        MavenLog.LOG.info("Failed to fast-apply to Workspace Model in $attempts attempts, fallback to slower apply in WriteAction")
+        attempts++
+        MavenUtil.invokeAndWaitWriteAction(project) {
+          val beforeWA = System.nanoTime()
+          workspaceModel.updateProjectModel { builder -> prepareInBackground(builder) }
+          afterApplyInWriteAction(workspaceModel.entityStorage.current)
+          durationInWriteAction += System.nanoTime() - beforeWA
+        }
+      }
+
+      stats.recordCommitPhaseStats(durationInBackgroundNano = durationInBackground,
+                                   durationInWriteActionNano = durationInWriteAction,
+                                   attempts = attempts)
+    }
+  }
+}
+
+private class AfterImportConfiguratorsTask(private val contextData: UserDataHolderBase,
+                                           private val appliedProjectsWithModules: List<MavenProjectWithModulesData<Module>>) : MavenProjectsProcessorTask {
+  override fun perform(project: Project,
+                       embeddersManager: MavenEmbeddersManager,
+                       console: MavenConsole,
+                       indicator: MavenProgressIndicator) {
+    val context = object : MavenAfterImportConfigurator.Context, UserDataHolder by contextData {
+      override val project = project
+      override val mavenProjectsWithModules = appliedProjectsWithModules.asSequence()
+    }
+    for (configurator in AFTER_IMPORT_CONFIGURATOR_EP.extensionList) {
+      indicator.checkCanceled()
+      configurator.afterImport(context)
     }
   }
 }

@@ -131,18 +131,10 @@ public class GitLineHandler extends GitTextHandler {
   }
 
   /**
-   * @deprecated Do not inherit {@link GitLineHandler}.
-   */
-  @Deprecated(forRemoval = true)
-  protected void onTextAvailable(String text, Key outputType) {
-  }
-
-  /**
    * @param line line content without separators
    * @param isCr whether this line is CR-only separated (typically, a progress message)
    */
   private void onLineAvailable(@NotNull String line, boolean isCr, @NotNull Key outputType) {
-    onTextAvailable(line, outputType);
     if (outputType == ProcessOutputTypes.SYSTEM) return;
 
     // do not log git remote progress

@@ -114,5 +114,7 @@
         </action>
       </group>
     </group>
+
+    <action id="ToggleMiniMapAction" class="com.intellij.ide.miniMap.actions.ToggleMiniMapAction"/>
   </actions>
 </idea-plugin>

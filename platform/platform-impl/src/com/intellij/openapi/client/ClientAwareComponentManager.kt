@@ -6,7 +6,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.throwAlreadyDisposedError
@@ -28,7 +27,7 @@ abstract class ClientAwareComponentManager constructor(
   override fun <T : Any> postGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     val sessionsManager = if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
       if (createIfNeeded) {
-        throwAlreadyDisposedError(serviceClass.name, this, ProgressIndicatorProvider.getGlobalProgressIndicator())
+        throwAlreadyDisposedError(serviceClass.name, this)
       }
       super.doGetService(ClientSessionsManager::class.java, false)
     }

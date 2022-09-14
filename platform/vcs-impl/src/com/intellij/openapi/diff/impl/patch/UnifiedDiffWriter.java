@@ -24,6 +24,8 @@ import static com.intellij.openapi.vcs.changes.patch.PatchWriter.shouldForceUnix
 
 public final class UnifiedDiffWriter {
   @NonNls private static final String INDEX_SIGNATURE = "Index: {0}{1}";
+  @NonNls public static final String SUBJECT_HEADER = "Subject: [PATCH] ";
+  @NonNls public static final String HEADER_END_MARKER = "---";
   @NonNls public static final String ADDITIONAL_PREFIX = "IDEA additional info:";
   @NonNls public static final String ADD_INFO_HEADER = "Subsystem: ";
   @NonNls public static final String ADD_INFO_LINE_START = "<+>";
@@ -43,6 +45,21 @@ public final class UnifiedDiffWriter {
                            @Nullable CommitContext commitContext) throws IOException {
     write(project, project == null ? null : ProjectKt.getStateStore(project).getProjectBasePath(), patches, writer, lineSeparator,
           commitContext, null);
+  }
+
+  public static void writeCommitMessageHeader(@Nullable Project project,
+                                              @NotNull Writer writer,
+                                              @NotNull String lineSeparator,
+                                              @Nullable String commitMessage) throws IOException {
+    if (StringUtil.isEmpty(commitMessage)) return;
+    boolean forceUnixSeparators = shouldForceUnixLineSeparator(project);
+    String headerLineSeparator = forceUnixSeparators ? LineSeparator.LF.getSeparatorString()
+                                                     : lineSeparator;
+    writer.append(SUBJECT_HEADER);
+    writer.append(StringUtil.convertLineSeparators(commitMessage.trim(), headerLineSeparator));
+    writer.append(headerLineSeparator);
+    writer.append(HEADER_END_MARKER);
+    writer.append(headerLineSeparator);
   }
 
   /**

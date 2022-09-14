@@ -4,11 +4,24 @@ package com.intellij.ide.ui.html
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.impl.FontFamilyService
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.StyleSheet
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Holds a reference to global CSS style sheet that should be used by [HTMLEditorKit] to properly render everything
@@ -59,13 +72,33 @@ object GlobalStyleSheetHolder {
     }
   }
 
+  @OptIn(FlowPreview::class)
   internal class UpdateListener : EditorColorsListener, LafManagerListener {
+    private val updateRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    init {
+      ApplicationManager.getApplication().coroutineScope.launch {
+        updateRequests
+          .debounce(5.milliseconds)
+          .collectLatest {
+            val componentManager = ApplicationManager.getApplication() as ComponentManagerEx
+            listOf(
+              componentManager.getServiceAsync(EditorColorsManager::class.java),
+              componentManager.getServiceAsync(FontFamilyService::class.java),
+            ).awaitAll()
+            withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+              updateGlobalStyleSheet()
+            }
+          }
+      }
+    }
+
     override fun lookAndFeelChanged(source: LafManager) {
-      updateGlobalStyleSheet()
+      check(updateRequests.tryEmit(Unit))
     }
 
     override fun globalSchemeChange(scheme: EditorColorsScheme?) {
-      updateGlobalStyleSheet()
+      check(updateRequests.tryEmit(Unit))
     }
   }
 }

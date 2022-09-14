@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.sho
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.*
@@ -120,10 +121,12 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
         .showUnderneathOf(parentComponent)
     }
 
-    private inner class FilterPopupMenuAction(private val quickFilters: List<Q>) : AnActionButton() {
+    private inner class FilterPopupMenuAction(private val quickFilters: List<Q>) : AnActionButton(), DumbAware {
       override fun updateButton(e: AnActionEvent) {
         e.presentation.icon = FILTER_ICON.getLiveIndicatorIcon(vm.searchState.value.filterCount != 0)
       }
+
+      override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
       override fun actionPerformed(e: AnActionEvent) {
         showQuickFiltersPopup(e.inputEvent.component as JComponent, quickFilters)

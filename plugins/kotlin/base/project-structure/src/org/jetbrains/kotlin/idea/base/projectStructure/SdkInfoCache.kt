@@ -42,19 +42,19 @@ interface SdkInfoCache {
 }
 
 internal class SdkInfoCacheImpl(project: Project) :
-    SdkInfoCache,
-    LockFreeFineGrainedEntityCache<ModuleInfo, SdkInfoCacheImpl.SdkDependency>(project, true),
-    ProjectJdkTable.Listener,
-    ModuleRootListener,
-    OutdatedLibraryInfoListener,
-    WorkspaceModelChangeListener {
+  SdkInfoCache,
+  LockFreeFineGrainedEntityCache<ModuleInfo, SdkInfoCacheImpl.SdkDependency>(project, true),
+  ProjectJdkTable.Listener,
+  ModuleRootListener,
+  LibraryInfoListener,
+  WorkspaceModelChangeListener {
 
     @JvmInline
     value class SdkDependency(val sdk: SdkInfo?)
 
     override fun subscribe() {
         val connection = project.messageBus.connect(this)
-        connection.subscribe(OutdatedLibraryInfoListener.TOPIC, this)
+        connection.subscribe(LibraryInfoListener.TOPIC, this)
         connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
         connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
         WorkspaceModelTopics.getInstance(project).subscribeImmediately(connection, this)

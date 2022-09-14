@@ -28,6 +28,8 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToIntFunction;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "TestOnlyProblems"})
@@ -40,15 +42,27 @@ public class TestCaseLoader {
   public static final String TEST_RUNNER_INDEX_FLAG = "idea.test.runner.index";
   public static final String HARDWARE_AGENT_REQUIRED_FLAG = "idea.hardware.agent.required";
 
+  public static final String FAIR_BUCKETING_FLAG = "idea.fair.bucketing";
+
   private static final boolean PERFORMANCE_TESTS_ONLY = "true".equals(System.getProperty(PERFORMANCE_TESTS_ONLY_FLAG));
   private static final boolean INCLUDE_PERFORMANCE_TESTS = "true".equals(System.getProperty(INCLUDE_PERFORMANCE_TESTS_FLAG));
-  private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS = "true".equals(System.getProperty(INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG));
+  private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS =
+    "true".equals(System.getProperty(INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG));
   private static final boolean RUN_ONLY_AFFECTED_TESTS = "true".equals(System.getProperty(RUN_ONLY_AFFECTED_TEST_FLAG));
   private static final boolean RUN_WITH_TEST_DISCOVERY = System.getProperty("test.discovery.listener") != null;
   private static final boolean HARDWARE_AGENT_REQUIRED = "true".equals(System.getProperty(HARDWARE_AGENT_REQUIRED_FLAG));
 
   private static final int TEST_RUNNERS_COUNT = Integer.parseInt(System.getProperty(TEST_RUNNERS_COUNT_FLAG, "1"));
   private static final int TEST_RUNNER_INDEX = Integer.parseInt(System.getProperty(TEST_RUNNER_INDEX_FLAG, "0"));
+
+
+  private static final AtomicInteger CYCLIC_BUCKET_COUNTER = new AtomicInteger(0);
+  private static final ConcurrentHashMap<String, Integer> BUCKETS = new ConcurrentHashMap<>();
+
+  /**
+   * Split tests into buckets equally across all the buckets
+   */
+  private static final boolean IS_FAIR_BUCKETING = "true".equals(System.getProperty(FAIR_BUCKETING_FLAG));
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.
@@ -178,7 +192,42 @@ public class TestCaseLoader {
    * @see TestCaseLoader#TEST_RUNNER_INDEX
    */
   public static boolean matchesCurrentBucket(@NotNull String testIdentifier) {
-    return MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
+    if (!IS_FAIR_BUCKETING) {
+      return MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
+    }
+
+    return matchesCurrentBucketFair(testIdentifier, TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX);
+  }
+
+  public static boolean matchesCurrentBucketFair(@NotNull String testIdentifier,
+                                                 int testRunnerCount,
+                                                 int testRunnerIndex) {
+    // TODO: if (BUCKETS.isEmpty()) sort filtered test classes and populate buckets
+
+    var value = BUCKETS.get(testIdentifier);
+
+    if (value != null) {
+      var isMatchedBucket = value == testRunnerIndex;
+
+      System.out.printf(
+        "Fair bucket matching: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s" + System.lineSeparator(),
+        testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
+
+      return isMatchedBucket;
+    }
+    else {
+      BUCKETS.put(testIdentifier, CYCLIC_BUCKET_COUNTER.getAndIncrement());
+    }
+
+    if (CYCLIC_BUCKET_COUNTER.get() == testRunnerCount) CYCLIC_BUCKET_COUNTER.set(0);
+
+    var isMatchedBucket = BUCKETS.get(testIdentifier) == testRunnerIndex;
+
+    System.out.printf(
+      "Fair bucket matching: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s" + System.lineSeparator(),
+      testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
+
+    return isMatchedBucket;
   }
 
   /**
@@ -219,7 +268,8 @@ public class TestCaseLoader {
         return true;
       }
     }
-    catch (NoSuchMethodException ignored) { }
+    catch (NoSuchMethodException ignored) {
+    }
 
     return TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false);
   }
@@ -351,9 +401,7 @@ public class TestCaseLoader {
   }
 
   public static boolean shouldIncludePerformanceTestCase(String className) {
-    if (isIncludingPerformanceTestsRun()) return true;
-    boolean isPerformanceTest = isPerformanceTest(null, className);
-    return isPerformanceTestsRun() == isPerformanceTest;
+    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null, className);
   }
 
   static boolean isPerformanceTest(String methodName, String className) {
@@ -361,8 +409,9 @@ public class TestCaseLoader {
   }
 
   private static TestClassesFilter ourFilter;
+
   public static boolean isClassIncluded(String className) {
-    if (!INCLUDE_UNCONVENTIONALLY_NAMED_TESTS && 
+    if (!INCLUDE_UNCONVENTIONALLY_NAMED_TESTS &&
         !className.endsWith("Test")) {
       return false;
     }
@@ -370,11 +419,12 @@ public class TestCaseLoader {
     if (ourFilter == null) {
       ourFilter = calcTestClassFilter("tests/testGroups.properties");
     }
-    return shouldIncludePerformanceTestCase(className) &&
-           matchesCurrentBucket(className) &&
-           ourFilter.matches(className);
+    return (isIncludingPerformanceTestsRun() || isPerformanceTestsRun() == isPerformanceTest(null, className)) &&
+           // no need to calculate bucket matching (especially that may break fair bucketing), if test will not pass the filter
+           ourFilter.matches(className) &&
+           matchesCurrentBucket(className);
   }
-  
+
   public void fillTestCases(String rootPackage, List<Path> classesRoots) {
     long t = System.nanoTime();
 
@@ -398,9 +448,10 @@ public class TestCaseLoader {
     if (!RUN_ONLY_AFFECTED_TESTS && getClassesCount() == 0 && !Boolean.getBoolean("idea.tests.ignoreJUnit3EmptySuite")) {
       // Specially formatted error message will fail the build
       // See https://www.jetbrains.com/help/teamcity/build-script-interaction-with-teamcity.html#BuildScriptInteractionwithTeamCity-ReportingMessagesForBuildLog
-      System.out.println("##teamcity[message text='Expected some junit 3 or junit 4 tests to be executed, but no test classes were found. " +
-                         "If all your tests are junit 5 and you do not expect old junit tests to be executed, please pass vm option " +
-                         "-Didea.tests.ignoreJUnit3EmptySuite=true' status='ERROR']");
+      System.out.println(
+        "##teamcity[message text='Expected some junit 3 or junit 4 tests to be executed, but no test classes were found. " +
+        "If all your tests are junit 5 and you do not expect old junit tests to be executed, please pass vm option " +
+        "-Didea.tests.ignoreJUnit3EmptySuite=true' status='ERROR']");
     }
   }
 

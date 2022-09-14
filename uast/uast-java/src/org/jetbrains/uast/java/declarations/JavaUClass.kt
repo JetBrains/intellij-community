@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.java
 
@@ -119,7 +119,7 @@ class JavaUAnonymousClass(
   override fun getFields(): Array<UField> = super<AbstractJavaUClass>.getFields()
   override fun getInitializers(): Array<UClassInitializer> = super<AbstractJavaUClass>.getInitializers()
 
-  val fakeConstructor: JavaUMethod? by lz {
+  private val fakeConstructor: JavaUMethod? by lz {
     val psiClass = this.javaPsi
     val physicalNewExpression = psiClass.parent.castSafelyTo<PsiNewExpression>() ?: return@lz null
     val superConstructor = physicalNewExpression.resolveMethod()
@@ -141,9 +141,9 @@ class JavaUAnonymousClass(
   }
 
   override fun getMethods(): Array<UMethod> {
-    val contsructor = fakeConstructor ?: return super<AbstractJavaUClass>.getMethods()
+    val constructor = fakeConstructor ?: return super<AbstractJavaUClass>.getMethods()
     val uMethods = SmartList<UMethod>()
-    uMethods.add(contsructor)
+    uMethods.add(constructor)
     uMethods.addAll(super<AbstractJavaUClass>.getMethods())
     return uMethods.toTypedArray()
   }

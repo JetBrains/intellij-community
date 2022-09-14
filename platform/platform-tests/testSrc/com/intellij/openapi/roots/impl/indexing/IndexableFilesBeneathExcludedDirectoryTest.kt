@@ -93,7 +93,7 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
       }
     }
 
-    val sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdkName")) { sdkModificator ->
+    val sdk = projectModelRule.addSdk("sdkName") { sdkModificator ->
       sdkModificator.addRoot(sdkRoot.file, OrderRootType.CLASSES)
     }
     ModuleRootModificationUtil.setModuleSdk(module, sdk)

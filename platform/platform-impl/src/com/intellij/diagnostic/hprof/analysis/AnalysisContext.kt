@@ -20,6 +20,8 @@ import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
 import com.intellij.diagnostic.hprof.util.IntList
 import com.intellij.diagnostic.hprof.util.UByteList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.longs.LongArrayList
 
 class AnalysisContext(
   val navigator: ObjectNavigator,
@@ -32,4 +34,6 @@ class AnalysisContext(
 ) {
   val classStore = navigator.classStore
   val disposedObjectsIDs = IntOpenHashSet()
+  val disposerParentToChildren = Long2ObjectOpenHashMap<LongArrayList>()
+  var disposerTreeObjectId = 0
 }

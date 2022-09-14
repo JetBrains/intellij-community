@@ -1,3 +1,6 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 // FIR_IDENTICAL
 // FIR_COMPARISON
 fun String?.forNullableString(){}
@@ -11,8 +14,8 @@ fun foo(o: Any?) {
     }
 }
 
-// EXIST: { lookupString: "forNullableString", attributes: "", icon: "nodes/function.svg"}
-// EXIST: { lookupString: "forNullableAny", attributes: "", icon: "nodes/function.svg"}
-// EXIST: { lookupString: "forString", attributes: "bold", icon: "nodes/function.svg"}
-// EXIST: { lookupString: "forAny", attributes: "", icon: "nodes/function.svg"}
-// EXIST: { lookupString: "compareTo", attributes: "", icon: "nodes/method.svg"}
+// EXIST: { lookupString: "forNullableString", attributes: "", icon: "Function"}
+// EXIST: { lookupString: "forNullableAny", attributes: "", icon: "Function"}
+// EXIST: { lookupString: "forString", attributes: "bold", icon: "Function"}
+// EXIST: { lookupString: "forAny", attributes: "", icon: "Function"}
+// EXIST: { lookupString: "compareTo", attributes: "", icon: "Method"}

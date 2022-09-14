@@ -6,8 +6,10 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.intention.EmptyIntentionAction
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.PsiTestUtil
@@ -25,7 +27,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Files
-import kotlin.io.path.Path
+import java.nio.file.Path
 import kotlin.io.path.createFile
 import kotlin.io.path.div
 
@@ -190,7 +192,13 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             )
         }
 
-        val allLocalFixActions = highlightInfos.flatMap { it.quickFixActionMarkers ?: emptyList() }.map { it.first.action }
+        val allLocalFixActions:MutableList<IntentionAction> = ArrayList()
+        highlightInfos.forEach { info ->
+            info.findRegisteredQuickFix<Any?> { desc, _ ->
+                allLocalFixActions.add(desc.action)
+                null
+            }
+        }
 
         val localFixActions = if (localFixTextString == null || localFixTextString == "none") {
             allLocalFixActions
@@ -257,28 +265,28 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             fileText, "// $fixTextDirectiveName: "
         )
 
+        val canonicalPathToExpectedFile = mainFilePath + afterFileNameSuffix
+        val canonicalPathToExpectedPath = testDataDirectory.toPath() / canonicalPathToExpectedFile
         if (!runInspectionWithFixesAndCheck(inspection, expectedProblemString, expectedHighlightString, localFixTextString)) {
+            assertFalse("$canonicalPathToExpectedFile should not exists as no action could be applied", Files.exists(canonicalPathToExpectedPath))
             return
         }
 
-        val canonicalPathToExpectedFile = mainFilePath + afterFileNameSuffix
-        createAfterFileIfItDoesNotExist(canonicalPathToExpectedFile)
+        createAfterFileIfItDoesNotExist(canonicalPathToExpectedPath)
         try {
             myFixture.checkResultByFile(canonicalPathToExpectedFile)
         } catch (e: ComparisonFailure) {
             KotlinTestUtils.assertEqualsToFile(
-                File(testDataPath, canonicalPathToExpectedFile),
+                File(testDataDirectory, canonicalPathToExpectedFile),
                 editor.document.text
             )
         }
     }
 
-    private fun createAfterFileIfItDoesNotExist(canonicalPathToExpectedFile: String) {
-        val path = Path(testDataPath) / canonicalPathToExpectedFile
-
+    private fun createAfterFileIfItDoesNotExist(path: Path) {
         if (!Files.exists(path)) {
             path.createFile().write(editor.document.text)
-            error("File $canonicalPathToExpectedFile was not found and thus was generated")
+            error("File $path was not found and thus was generated")
         }
     }
 

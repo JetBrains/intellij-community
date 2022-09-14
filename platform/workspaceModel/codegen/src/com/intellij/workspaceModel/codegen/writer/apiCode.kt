@@ -25,9 +25,7 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
 val SKIPPED_TYPES: Set<String> = setOfNotNull(WorkspaceEntity::class.simpleName,
-                                              ReferableWorkspaceEntity::class.simpleName,
                                               ModifiableWorkspaceEntity::class.simpleName,
-                                              ModifiableReferableWorkspaceEntity::class.simpleName,
                                               WorkspaceEntityWithPersistentId::class.simpleName)
 
 fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {

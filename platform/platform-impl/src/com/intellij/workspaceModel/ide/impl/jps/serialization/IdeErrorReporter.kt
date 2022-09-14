@@ -32,7 +32,8 @@ internal class IdeErrorReporter(private val project: Project) : ErrorReporter {
   }
 }
 
-private val MODULE_ERROR: ConfigurationErrorType = object : ConfigurationErrorType(false) {
+private object ModuleErrorType : ConfigurationErrorType(false) {
+
   override fun getErrorText(errorCount: Int, firstElementName: @NlsSafe String?): @Nls String {
     return ProjectModelBundle.message("module.configuration.problem.text", errorCount, firstElementName)
   }
@@ -41,7 +42,8 @@ private val MODULE_ERROR: ConfigurationErrorType = object : ConfigurationErrorTy
 private class ModuleLoadingErrorDescriptionBridge(@NlsContexts.DetailedDescription description: String,
                                                   private val moduleFile: VirtualFileUrl,
                                                   private val project: Project)
-  : ConfigurationErrorDescription(FileUtil.getNameWithoutExtension(moduleFile.fileName), description, MODULE_ERROR) {
+  : ConfigurationErrorDescription(FileUtil.getNameWithoutExtension(moduleFile.fileName), description) {
+
   override fun ignoreInvalidElement() {
     runWriteAction {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
@@ -56,4 +58,6 @@ private class ModuleLoadingErrorDescriptionBridge(@NlsContexts.DetailedDescripti
   override fun getIgnoreConfirmationMessage(): String {
     return ProjectModelBundle.message("module.remove.from.project.confirmation", elementName)
   }
+
+  override fun getErrorType(): ModuleErrorType = ModuleErrorType
 }

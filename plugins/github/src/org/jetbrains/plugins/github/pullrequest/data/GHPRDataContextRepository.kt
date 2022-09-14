@@ -26,7 +26,7 @@ import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModelImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
-import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
+import git4idea.remote.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.io.IOException

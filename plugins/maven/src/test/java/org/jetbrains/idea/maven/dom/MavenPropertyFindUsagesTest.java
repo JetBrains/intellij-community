@@ -141,7 +141,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
                      "<description>${version}</description>");
 
     assertHighlighted(myProjectPom,
-                      new HighlightInfo(findTag("project.name"), "project.version"),
-                      new HighlightInfo(findTag("project.description"), "version"));
+                      new HighlightPointer(findTag("project.name"), "project.version"),
+                      new HighlightPointer(findTag("project.description"), "version"));
   }
 }

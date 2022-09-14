@@ -2,13 +2,13 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.ResizeableMappedFile;
 import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -17,23 +17,35 @@ import java.nio.file.Path;
 abstract class PersistentFSRecordsStorage {
   private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT_RW = new StorageLockContext(true, true, true);
 
-  static boolean useLockFreeRecordsStorage = SystemProperties.getBooleanProperty("idea.use.lock.free.record.storage.for.vfs", false);
+  enum RecordsStorageKind {
+    REGULAR,
+    LOCK_FREE,
+    IN_MEMORY
+  }
+  //static final boolean useLockFreeRecordsStorage = SystemProperties.getBooleanProperty("idea.use.lock.free.record.storage.for.vfs", false);
+  static final RecordsStorageKind
+    RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("idea.records-storage-kind", RecordsStorageKind.REGULAR.name()));
 
   static int recordsLength() {
-    return useLockFreeRecordsStorage ? PersistentFSLockFreeRecordsStorage.RECORD_SIZE : PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
+    //return useLockFreeRecordsStorage ? PersistentFSLockFreeRecordsStorage.RECORD_SIZE : PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
+    return RECORDS_STORAGE_KIND == RecordsStorageKind.LOCK_FREE ? PersistentFSLockFreeRecordsStorage.RECORD_SIZE : PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
   }
 
   static PersistentFSRecordsStorage createStorage(@NotNull Path file) throws IOException {
     ResizeableMappedFile resizeableMappedFile = createFile(file, recordsLength());
 
-    FSRecords.LOG.info("using " + (useLockFreeRecordsStorage ? "synchronized" : "lock-free") + " storage for VFS records");
+    //FSRecords.LOG.info("using " + (useLockFreeRecordsStorage ? "synchronized" : "lock-free") + " storage for VFS records");
+    FSRecords.LOG.info("using " + RECORDS_STORAGE_KIND + " storage for VFS records");
 
-    return useLockFreeRecordsStorage
-           ? new PersistentFSLockFreeRecordsStorage(resizeableMappedFile)
-           : new PersistentFSSynchronizedRecordsStorage(resizeableMappedFile);
+    return switch (RECORDS_STORAGE_KIND){
+      case REGULAR -> new PersistentFSSynchronizedRecordsStorage(resizeableMappedFile);
+      case LOCK_FREE -> new PersistentFSLockFreeRecordsStorage(resizeableMappedFile);
+      case IN_MEMORY -> new PersistentInMemoryFSRecordsStorage(file, 1<<24);
+    };
   }
 
-  private static @NotNull ResizeableMappedFile createFile(@NotNull Path file, int recordLength) throws IOException {
+  @VisibleForTesting
+  static @NotNull ResizeableMappedFile createFile(@NotNull Path file, int recordLength) throws IOException {
     int pageSize = PagedFileStorage.BUFFER_SIZE * recordLength / PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
 
     boolean aligned = pageSize % recordLength == 0;
@@ -49,29 +61,46 @@ abstract class PersistentFSRecordsStorage {
                                     IOUtil.useNativeByteOrderForByteBuffers());
   }
 
+  /**
+   * @return id of newly allocated record
+   */
   abstract int allocateRecord();
 
+  //TODO RC: offset constant named ATTR_REF, but accessor is attributeRecord -- which one is correct, REFERENCE or RECORD?
   abstract void setAttributeRecordId(int fileId, int recordId) throws IOException;
 
   abstract int getAttributeRecordId(int fileId) throws IOException;
 
   abstract int getParent(int fileId) throws IOException;
 
-  abstract void setParent(int fileIf, int parentId) throws IOException;
+  abstract void setParent(int fileId, int parentId) throws IOException;
 
   abstract int getNameId(int fileId) throws IOException;
 
   abstract void setNameId(int fileId, int nameId) throws IOException;
 
-  abstract void setFlags(int fileId, int flags) throws IOException;
+  /**
+   * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
+   */
+  abstract boolean setFlags(int fileId, int flags) throws IOException;
 
   abstract long getLength(int fileId) throws IOException;
 
-  abstract void putLength(int fileId, long length) throws IOException;
+
+  /**
+   * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
+   */
+  //RC: why 'put' not 'set'?
+  abstract boolean putLength(int fileId, long length) throws IOException;
 
   abstract long getTimestamp(int fileId) throws IOException;
 
-  abstract void putTimestamp(int fileId, long timestamp) throws IOException;
+
+  /**
+   * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
+   */
+  //RC: why 'put' not 'set'?
+  abstract boolean putTimestamp(int fileId, long timestamp) throws IOException;
 
   abstract int getModCount(int fileId) throws IOException;
 
@@ -83,6 +112,9 @@ abstract class PersistentFSRecordsStorage {
 
   abstract @PersistentFS.Attributes int getFlags(int fileId) throws IOException;
 
+  //TODO RC: what semantics is assumed for the method in concurrent context? If it is 'update atomically' than
+  //         it makes it harder to implement a storage in a lock-free way
+  //FIXME RC: method name setAttributesAndIncModCount, but no implementation really increments modCount!
   abstract void setAttributesAndIncModCount(int fileId,
                                             long timestamp,
                                             long length,
@@ -91,7 +123,9 @@ abstract class PersistentFSRecordsStorage {
                                             int parentId,
                                             boolean overwriteMissed) throws IOException;
 
-  abstract boolean isDirty();
+  abstract void cleanRecord(int fileId) throws IOException;
+
+  /* ======================== STORAGE HEADER ============================================================================== */
 
   abstract long getTimestamp() throws IOException;
 
@@ -107,11 +141,14 @@ abstract class PersistentFSRecordsStorage {
 
   abstract int incGlobalModCount();
 
+  /**
+   * @return length of underlying file storage, in bytes
+   */
   abstract long length();
 
-  abstract void cleanRecord(int fileId) throws IOException;
+  abstract boolean isDirty();
 
-  // TODO add a synchronization or requireement to be called on the loading
+  // TODO add a synchronization or requirement to be called on the loading
   @SuppressWarnings("UnusedReturnValue")
   abstract boolean processAllRecords(@NotNull PersistentFSRecordsStorage.FsRecordProcessor processor) throws IOException;
 

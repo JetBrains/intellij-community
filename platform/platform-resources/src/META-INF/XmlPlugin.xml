@@ -451,6 +451,10 @@
                      bundle="messages.XmlBundle" key="html.inspections.unknown.boolean.attribute"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownBooleanAttributeInspection"/>
+    <localInspection language="HtmlCompatible" shortName="HtmlWrongAttributeValue" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="html.inspections.wrong.attribute.value"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlWrongAttributeValueInspection"/>
     <localInspection language="HTML" enabledByDefault="true" level="INFORMATION"
                      bundle="messages.XmlBundle" key="html.inspections.missing.closing.tag"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
@@ -505,6 +509,12 @@
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix</className>
+    </intentionAction>
+    <intentionAction>
+      <language>XML</language>
+      <categoryKey>xml.category</categoryKey>
+      <bundleName>messages.XmlBundle</bundleName>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.XmlChangeAttributeValueIntentionFix</className>
     </intentionAction>
     <intentionAction>
       <language>XML</language>

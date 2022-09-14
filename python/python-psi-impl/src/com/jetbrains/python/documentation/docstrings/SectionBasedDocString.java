@@ -54,29 +54,29 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   protected static final Map<String, String> SECTION_ALIASES =
     ImmutableMap.<String, String>builder()
-                .put("arguments", PARAMETERS_SECTION)
-                .put("args", PARAMETERS_SECTION)
-                .put("parameters", PARAMETERS_SECTION)
-                .put("keyword args", KEYWORD_ARGUMENTS_SECTION)
-                .put("keyword arguments", KEYWORD_ARGUMENTS_SECTION)
-                .put("other parameters", OTHER_PARAMETERS_SECTION)
-                .put("attributes", ATTRIBUTES_SECTION)
-                .put("methods", METHODS_SECTION)
-                .put("note", "notes")
-                .put("notes", "notes")
-                .put("example", "examples")
-                .put("examples", "examples")
-                .put("return", RETURNS_SECTION)
-                .put("returns", RETURNS_SECTION)
-                .put("yield", YIELDS_SECTION)
-                .put("yields", "yields")
-                .put("raises", RAISES_SECTION)
-                .put("references", "references")
-                .put("see also", "see also")
-                .put("warning", "warnings")
-                .put("warns", "warnings")
-                .put("warnings", "warnings")
-                .build();
+      .put("arguments", PARAMETERS_SECTION)
+      .put("args", PARAMETERS_SECTION)
+      .put("parameters", PARAMETERS_SECTION)
+      .put("keyword args", KEYWORD_ARGUMENTS_SECTION)
+      .put("keyword arguments", KEYWORD_ARGUMENTS_SECTION)
+      .put("other parameters", OTHER_PARAMETERS_SECTION)
+      .put("attributes", ATTRIBUTES_SECTION)
+      .put("methods", METHODS_SECTION)
+      .put("note", "notes")
+      .put("notes", "notes")
+      .put("example", "examples")
+      .put("examples", "examples")
+      .put("return", RETURNS_SECTION)
+      .put("returns", RETURNS_SECTION)
+      .put("yield", YIELDS_SECTION)
+      .put("yields", "yields")
+      .put("raises", RAISES_SECTION)
+      .put("references", "references")
+      .put("see also", "see also")
+      .put("warning", "warnings")
+      .put("warns", "warnings")
+      .put("warnings", "warnings")
+      .build();
   private static final Pattern SPHINX_REFERENCE_RE = Pattern.compile("(:\\w+:\\S+:`.+?`|:\\S+:`.+?`|`.+?`)");
 
   public static final Set<String> SECTION_NAMES = SECTION_ALIASES.keySet();
@@ -365,7 +365,10 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   public List<Section> getParameterSections() {
-    return getSectionsWithNormalizedTitle(PARAMETERS_SECTION);
+    final List<Section> parameters = new ArrayList<>();
+    parameters.addAll(getSectionsWithNormalizedTitle(PARAMETERS_SECTION));
+    parameters.addAll(getSectionsWithNormalizedTitle(OTHER_PARAMETERS_SECTION));
+    return parameters;
   }
 
   @NotNull

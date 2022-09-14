@@ -18,16 +18,13 @@ import com.intellij.debugger.requests.ClassPrepareRequestor
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
-import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
@@ -43,7 +40,6 @@ import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.psi.getEndLineOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.psi.getStartLineOffset
@@ -72,21 +68,9 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
     private val stackFrameInterceptor: StackFrameInterceptor? = debugProcess.project.serviceOrNull()
 
-    private val allKotlinFilesScope = object : DelegatingGlobalSearchScope(
-        KotlinSourceFilterScope.projectAndLibrarySources(GlobalSearchScope.allScope(debugProcess.project), debugProcess.project)
-    ) {
-        private val projectIndex = ProjectRootManager.getInstance(debugProcess.project).fileIndex
-        private val scopeComparator = Comparator
-            .comparing<VirtualFile?, Boolean?> { projectIndex.isInSourceContent(it) }
-            .thenComparing<Boolean?> { projectIndex.isInLibrarySource(it) }
-            .thenComparing { file1, file2 -> super.compare(file1, file2) }
-
-        override fun compare(file1: VirtualFile, file2: VirtualFile): Int = scopeComparator.compare(file1, file2)
-    }
-
     private val sourceSearchScopes: List<GlobalSearchScope> = listOf(
         debugProcess.searchScope,
-        allKotlinFilesScope
+        KotlinAllFilesScopeProvider.getInstance(debugProcess.project).getAllKotlinFilesScope()
     )
 
     override fun getAcceptedFileTypes(): Set<FileType> = KOTLIN_FILE_TYPES
@@ -532,8 +516,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 //
 // Now we should highlight the line before the curly brace, since we are still inside the `also` inline lambda.
 private fun decorateSourcePosition(location: Location, sourcePosition: SourcePosition): SourcePosition {
-    val lambda = sourcePosition.elementAt.parent
-    if (lambda !is KtFunctionLiteral) return sourcePosition
+    val lambda = sourcePosition.elementAt?.parent as? KtFunctionLiteral ?: return sourcePosition
     val lines = lambda.getLineRange() ?: return sourcePosition
     if (!location.hasVisibleInlineLambdasOnLines(lines)) {
         return KotlinSourcePositionWithEntireLineHighlighted(sourcePosition)

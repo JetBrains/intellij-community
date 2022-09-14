@@ -77,8 +77,9 @@ class MarketplaceRequests : PluginInfoProvider {
     fun loadLastCompatiblePluginDescriptors(
       pluginIds: Set<PluginId>,
       buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false
     ): List<PluginNode> {
-      return getLastCompatiblePluginUpdate(pluginIds, buildNumber)
+      return getLastCompatiblePluginUpdate(pluginIds, buildNumber, throwExceptions)
         .map { loadPluginDescriptor(it.pluginId, it, null) }
     }
 
@@ -89,6 +90,7 @@ class MarketplaceRequests : PluginInfoProvider {
     fun getLastCompatiblePluginUpdate(
       ids: Set<PluginId>,
       buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false
     ): List<IdeCompatibleUpdate> {
       try {
         if (ids.isEmpty()) {
@@ -96,14 +98,15 @@ class MarketplaceRequests : PluginInfoProvider {
         }
 
         val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(ids, buildNumber))
-        return HttpRequests
-          .post(Urls.newFromEncoded(compatibleUpdateUrl).toExternalForm(), HttpRequests.JSON_CONTENT_TYPE)
-          .productNameAsUserAgent()
-          .throwStatusCodeException(false)
-          .connect {
+        return HttpRequests.post(Urls.newFromEncoded(compatibleUpdateUrl).toExternalForm(), HttpRequests.JSON_CONTENT_TYPE).run {
+          productNameAsUserAgent()
+          throwStatusCodeException(throwExceptions)
+          connect {
             it.write(data)
             objectMapper.readValue(it.inputStream, object : TypeReference<List<IdeCompatibleUpdate>>() {})
           }
+        }
+
       }
       catch (e: Exception) {
         LOG.infoOrDebug("Can not get compatible updates from Marketplace", e)

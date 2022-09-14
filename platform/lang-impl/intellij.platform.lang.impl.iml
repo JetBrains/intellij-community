@@ -59,7 +59,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="library" name="jackson-jr-objects" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic" />
     <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
   </component>
 </module>

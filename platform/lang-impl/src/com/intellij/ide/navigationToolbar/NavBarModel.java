@@ -79,15 +79,17 @@ public class NavBarModel {
   }
 
   @Nullable
-  public Object getSelectedValue() {
-    return getElement(mySelectedIndex);
+  public Object getElement(int index) {
+    Object raw = getRawElement(index);
+    if (raw == null) return null;
+    return unwrapRaw(raw);
   }
 
   @Nullable
-  public Object getElement(int index) {
+  public Object getRawElement(int index) {
     List<Object> model = myModel;
     if (index != -1 && index < model.size()) {
-      return get(model, index);
+      return model.get(index);
     }
     return null;
   }

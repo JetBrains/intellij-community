@@ -468,12 +468,6 @@ public class Notification {
     addActions((Collection<? extends AnAction>)actions);
   }
 
-  /** @deprecated use {@link #getCollapseDirection} */
-  @Deprecated(forRemoval = true)
-  public CollapseActionsDirection getCollapseActionsDirection() {
-    return myCollapseDirection;
-  }
-
   /** @deprecated use {@link #setCollapseDirection} */
   @Deprecated(forRemoval = true)
   public void setCollapseActionsDirection(CollapseActionsDirection collapseDirection) {

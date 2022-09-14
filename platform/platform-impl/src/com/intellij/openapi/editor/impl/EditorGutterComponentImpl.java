@@ -1347,17 +1347,22 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
     for (GutterMark r : row) {
       if (!checkDumbAware(r)) continue;
-      final GutterIconRenderer.Alignment alignment = ((GutterIconRenderer)r).getAlignment();
       final Icon icon = scaleIcon(r.getIcon());
-      if (alignment == GutterIconRenderer.Alignment.LEFT) {
-        processor.process(x, y + getTextAlignmentShift(icon), r);
-        x += icon.getIconWidth() + getGapBetweenIcons();
+      GutterIconRenderer.Alignment alignment = ((GutterIconRenderer)r).getAlignment();
+      if (alignment == GutterIconRenderer.Alignment.LINE_NUMBERS && !isLineNumbersShown()) {
+        alignment = GutterIconRenderer.Alignment.LEFT;
       }
-      else if (alignment == GutterIconRenderer.Alignment.CENTER) {
-        middleCount++;
-        middleSize += icon.getIconWidth() + getGapBetweenIcons();
-      } else if (alignment == GutterIconRenderer.Alignment.LINE_NUMBERS) {
-        processor.process(getLineNumberAreaOffset() + getLineNumberAreaWidth() - icon.getIconWidth(), y + getTextAlignmentShift(icon), r);
+      switch (alignment) {
+        case LEFT -> {
+          processor.process(x, y + getTextAlignmentShift(icon), r);
+          x += icon.getIconWidth() + getGapBetweenIcons();
+        }
+        case CENTER -> {
+          middleCount++;
+          middleSize += icon.getIconWidth() + getGapBetweenIcons();
+        }
+        case LINE_NUMBERS -> processor.process(getLineNumberAreaOffset() + getLineNumberAreaWidth() - icon.getIconWidth(),
+                                               y + getTextAlignmentShift(icon), r);
       }
     }
 

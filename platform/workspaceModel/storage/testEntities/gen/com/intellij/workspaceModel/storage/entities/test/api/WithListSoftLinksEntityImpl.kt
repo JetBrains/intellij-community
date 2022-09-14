@@ -25,7 +25,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class WithListSoftLinksEntityImpl : WithListSoftLinksEntity, WorkspaceEntityBase() {
+open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityData) : WithListSoftLinksEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -35,15 +35,11 @@ open class WithListSoftLinksEntityImpl : WithListSoftLinksEntity, WorkspaceEntit
 
   }
 
-  @JvmField
-  var _myName: String? = null
   override val myName: String
-    get() = _myName!!
+    get() = dataSource.myName
 
-  @JvmField
-  var _links: List<NameId>? = null
   override val links: List<NameId>
-    get() = _links!!
+    get() = dataSource.links
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -211,13 +207,13 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
   }
 
   override fun createEntity(snapshot: EntityStorage): WithListSoftLinksEntity {
-    val entity = WithListSoftLinksEntityImpl()
-    entity._myName = myName
-    entity._links = links.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = WithListSoftLinksEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): WithListSoftLinksEntityData {

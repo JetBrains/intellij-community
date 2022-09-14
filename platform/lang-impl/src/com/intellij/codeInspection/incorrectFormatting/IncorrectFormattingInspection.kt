@@ -10,7 +10,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.LangBundle
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
@@ -26,7 +25,6 @@ class IncorrectFormattingInspection(
   val isKotlinPlugged: Boolean by lazy { PluginManagerCore.getPlugin(PluginId.getId("org.jetbrains.kotlin")) != null }
 
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
-    file.project.service<IncorrectFormattingInspectionCodeStyleSettingsListenerService>()
 
     // Skip files we are not able to fix
     if (!file.isWritable) return null

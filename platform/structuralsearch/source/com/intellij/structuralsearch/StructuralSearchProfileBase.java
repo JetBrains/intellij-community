@@ -278,7 +278,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       if (StringUtil.isQuotedString(value)) {
         if (mySubstitutionPatterns == null) {
           final String[] prefixes = myGlobalVisitor.getContext().getPattern().getTypedVarPrefixes();
-          mySubstitutionPatterns = StructuralSearchUtil.createPatterns(prefixes);
+          mySubstitutionPatterns = MatchUtil.createPatterns(prefixes);
         }
 
         for (Pattern substitutionPattern : mySubstitutionPatterns) {
@@ -406,7 +406,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
     private void visitLiteral(PsiElement literal) {
       final PsiElement l2 = myGlobalVisitor.getElement();
-      final MatchingHandler handler = (MatchingHandler)literal.getUserData(CompiledPattern.HANDLER_KEY);
+      final MatchingHandler handler = literal.getUserData(CompiledPattern.HANDLER_KEY);
 
       if (handler instanceof SubstitutionHandler) {
         int offset = 0;

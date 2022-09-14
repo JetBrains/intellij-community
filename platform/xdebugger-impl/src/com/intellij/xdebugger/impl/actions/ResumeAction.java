@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.actions.ChooseDebugConfigurationPopupAction;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -34,11 +33,6 @@ public class ResumeAction extends XDebuggerActionBase implements DumbAware {
       return super.isHidden(event);
     }
     return super.isHidden(event) || !isEnabled(event);
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
   }
 
   @Override

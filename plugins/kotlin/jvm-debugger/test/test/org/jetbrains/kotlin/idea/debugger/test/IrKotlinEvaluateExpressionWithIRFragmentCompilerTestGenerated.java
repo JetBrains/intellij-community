@@ -947,6 +947,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/callableBug.kt");
             }
 
+            @TestMetadata("capturedVariablesInSamLambda.kt")
+            public void testCapturedVariablesInSamLambda() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/capturedVariablesInSamLambda.kt");
+            }
+
             @TestMetadata("classFromAnotherPackage.kt")
             public void testClassFromAnotherPackage() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/classFromAnotherPackage.kt");

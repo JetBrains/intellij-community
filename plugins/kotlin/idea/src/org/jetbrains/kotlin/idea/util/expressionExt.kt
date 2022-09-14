@@ -29,13 +29,17 @@ fun KtCallElement.replaceOrCreateTypeArgumentList(newTypeArgumentList: KtTypeArg
     )
 }
 
+fun KtClass.mustHaveOnlyPropertiesInPrimaryConstructor(): Boolean = isData() || isAnnotation() || isInlineOrValue()
+
+fun KtClass.mustHaveOnlyValPropertiesInPrimaryConstructor(): Boolean = isAnnotation() || isInlineOrValue()
+
+fun KtClass.isInlineOrValue(): Boolean = isInline() || isValue()
+
 fun KtModifierListOwner.hasInlineModifier() = hasModifier(KtTokens.INLINE_KEYWORD)
 
 fun KtModifierListOwner.hasPrivateModifier() = hasModifier(KtTokens.PRIVATE_KEYWORD)
 
-fun KtPrimaryConstructor.mustHaveValOrVar(): Boolean = containingClass()?.let {
-    it.isAnnotation() || it.hasInlineModifier()
-} ?: false
+fun KtPrimaryConstructor.mustHaveValOrVar(): Boolean = containingClass()?.mustHaveOnlyPropertiesInPrimaryConstructor() ?: false
 
 // TODO: add cases
 fun KtExpression.hasNoSideEffects(): Boolean = when (this) {

@@ -397,10 +397,7 @@
 
     <extensionPoint name="codeInsight.codeVisionSettingsPreviewLanguage"
                     beanClass="com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsPreviewLanguage"
-                    dynamic="true">
-      <with attribute="modelId"/>
-      <with attribute="language"/>
-    </extensionPoint>
+                    dynamic="true"/>
 
     <extensionPoint name="codeInsight.typeInfo" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.ExpressionTypeProvider"/>

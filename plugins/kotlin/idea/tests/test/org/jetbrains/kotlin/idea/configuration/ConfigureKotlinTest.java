@@ -342,13 +342,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         try {
             KotlinFacet facet = FacetUtilsKt.getOrCreateFacet(getModule(), modelsProvider, false, null, false);
             TargetPlatform platform = JvmPlatforms.INSTANCE.jvmPlatformByTargetVersion(jvmTarget);
-            FacetUtilsKt.configureFacet(
-                    facet,
-                    IdeKotlinVersion.get("1.4.0"),
-                    platform,
-                    modelsProvider,
-                    emptySet()
-            );
+            FacetUtilsKt.configureFacet(facet, IdeKotlinVersion.get("1.4.0"), platform, modelsProvider);
             assertEquals(platform, facet.getConfiguration().getSettings().getTargetPlatform());
             assertEquals(jvmTarget.getDescription(),
                          ((K2JVMCompilerArguments) facet.getConfiguration().getSettings().getCompilerArguments()).getJvmTarget());

@@ -8,9 +8,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class BorderType {
   public static final BorderType NONE = new BorderType("none", "None",null,null);
   private static final BorderType BEVEL_LOWERED = new BorderType("bevel-lowered", "Bevel Lowered", BorderFactory.createLoweredBevelBorder(), "createLoweredBevelBorder");

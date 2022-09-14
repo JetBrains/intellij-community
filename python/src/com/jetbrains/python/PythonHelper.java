@@ -3,18 +3,13 @@ package com.jetbrains.python;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -307,18 +302,4 @@ public enum PythonHelper implements HelperPackage {
   public GeneralCommandLine newCommandLine(@NotNull Sdk pythonSdk, @NotNull List<String> parameters) {
     return myModule.newCommandLine(pythonSdk, parameters);
   }
-
-  @Nullable
-  public static Module guessModule(@NotNull PsiElement element) {
-    Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    if (module == null) {
-      Module[] modules = ModuleManager.getInstance(element.getProject()).getModules();
-      if (modules.length != 1) {
-        return null;
-      }
-      module = modules[0];
-    }
-    return module;
-  }
-
 }

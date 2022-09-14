@@ -53,7 +53,7 @@ import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.*;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationFusCollector.*;
 import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIfPossible;
 
 @ApiStatus.Internal
@@ -876,7 +876,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   public static @NotNull Iterable<VirtualFile> toFileIterable(int @NotNull [] fileIds) {
     if (fileIds.length == 0) return Collections.emptyList();
-    return () -> new Iterator<VirtualFile>() {
+    return () -> new Iterator<>() {
       int myId;
       VirtualFile myNext;
 

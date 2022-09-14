@@ -23,7 +23,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ArtifactsOrderEntityImpl : ArtifactsOrderEntity, WorkspaceEntityBase() {
+open class ArtifactsOrderEntityImpl(val dataSource: ArtifactsOrderEntityData) : ArtifactsOrderEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -33,10 +33,8 @@ open class ArtifactsOrderEntityImpl : ArtifactsOrderEntity, WorkspaceEntityBase(
 
   }
 
-  @JvmField
-  var _orderOfArtifacts: List<String>? = null
   override val orderOfArtifacts: List<String>
-    get() = _orderOfArtifacts!!
+    get() = dataSource.orderOfArtifacts
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -139,12 +137,13 @@ class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): ArtifactsOrderEntity {
-    val entity = ArtifactsOrderEntityImpl()
-    entity._orderOfArtifacts = orderOfArtifacts.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ArtifactsOrderEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): ArtifactsOrderEntityData {

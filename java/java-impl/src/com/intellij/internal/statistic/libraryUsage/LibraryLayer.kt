@@ -2,7 +2,9 @@
 package com.intellij.internal.statistic.libraryUsage
 
 import com.intellij.openapi.diagnostic.thisLogger
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class LibraryLayer private constructor(
   /**
    * Library on this layer. Must be no more than one per layer.

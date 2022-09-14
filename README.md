@@ -46,11 +46,8 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
    "**MAVEN_REPOSITORY**" pointing to `<USER_HOME>/.m2/repository` directory.
 3. _**Speed Tip:**_ If you have enough RAM on your computer,
    [configure the compiler settings](https://www.jetbrains.com/help/idea/specifying-compilation-settings.html)
-   to enable the "Compile independent modules in parallel" option. Also, increase build process heap size:
-   * if you use IntelliJ IDEA 2020.3 or newer, set "User-local build process heap size" to 2048. 
-   * if you use IntelliJ IDEA 2020.2 or older, copy value from "Shared build process VM options" to "User-local build process VM options" and add `-Xmx2G` to it.
-    
-    These changes will greatly reduce compilation time.
+   to enable the "Compile independent modules in parallel" option and set "User-local build process heap size" to 3000.
+   These changes will greatly reduce compilation time.
 
 ### Building the IntelliJ Application Source Code
 To build IntelliJ IDEA Community Edition from source, choose **Build | Build Project** from the main menu.
@@ -58,7 +55,7 @@ To build IntelliJ IDEA Community Edition from source, choose **Build | Build Pro
 To build installation packages, run the `installers.cmd` command in `<IDEA_HOME>` directory. `installers.cmd` will work on both Windows and Unix systems.
 
 Options to build installers are passed as system properties to `installers.cmd` command.
-You may find the list of available properties in [BuildOptions.groovy](platform/build-scripts/groovy/org/jetbrains/intellij/build/BuildOptions.groovy)
+You may find the list of available properties in [BuildOptions.kt](platform/build-scripts/src/org/jetbrains/intellij/build/BuildOptions.kt)
 
 Examples (`./` should be added only for Linux/macOS):
  * Build installers only for current operating system: `./installers.cmd -Dintellij.build.target.os=current`
@@ -83,7 +80,7 @@ The "Contribute Code" section of that site describes how you can contribute to I
 To run tests outside of IntelliJ IDEA, run the `tests.cmd` command in `<IDEA_HOME>` directory. `tests.cmd` will work on both Windows and Unix systems.
 
 Options to run tests are passed as system properties to `tests.cmd` command.
-You may find the list of available properties in [TestingOptions.groovy](platform/build-scripts/groovy/org/jetbrains/intellij/build/TestingOptions.groovy)
+You may find the list of available properties in [TestingOptions.kt](platform/build-scripts/src/org/jetbrains/intellij/build/TestingOptions.kt)
 
 Examples (`./` should be added only for Linux/macOS):
 * Build source code _incrementally_ (do not build what was already built before): `./tests.cmd -Dintellij.build.incremental.compilation=true`

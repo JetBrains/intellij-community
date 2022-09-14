@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'H.unaryPlus'" "true"
 // ERROR: Unresolved reference. None of the following candidates is applicable because of receiver type mismatch: <br>public operator fun A.unaryPlus(): Int defined in h in file unaryPlusOperator.before.Main.kt
 
 package h

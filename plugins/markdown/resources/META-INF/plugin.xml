@@ -325,6 +325,8 @@ Includes the following features:</p>
     <codeInsight.lineMarkerProvider language="Markdown"
                                     implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureTextHtmlImageLineMarkerProvider"/>
 
+    <focusModeProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownFocusModeProvider"/>
+
     <intentionAction>
       <language>Markdown</language>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
@@ -352,7 +354,7 @@ Includes the following features:</p>
                  defaultValue="600000"
                  description="Interval in milliseconds defining how often Markdown plugin caches (e.g. PlantUML diagrams) should be cleared"/>
     <registryKey key="markdown.plantuml.download.link"
-                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/plantuml/plantuml-1.2021.12-3.jar"
+                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/plantuml/plantuml-1.2022.7-5.jar"
                  description="Link which Markdown plugin will use to download PlantUML JAR"/>
     <registryKey key="markdown.mermaid.download.link"
                  defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/mermaid/mermaid-9.1.3-6.js"

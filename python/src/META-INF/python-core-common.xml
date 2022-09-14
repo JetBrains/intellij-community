@@ -18,10 +18,10 @@
 
   <projectListeners>
     <listener
-      class="com.jetbrains.python.sdk.PyEditorNotificationProvider$CacheCleaner"
+      class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
       topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
     <listener
-      class="com.jetbrains.python.sdk.PyEditorNotificationProvider$CacheCleaner"
+      class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
       topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
   </projectListeners>
 
@@ -172,6 +172,7 @@
                      implementationClass="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspection"/>
     <localInspection shortName="PyPackageRequirementsInspection" suppressId="PyPackageRequirements" bundle="messages.PyPsiBundle" key="INSP.NAME.requirements" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsInspection"/>
     <localInspection language="Python" shortName="PyPep8Inspection" suppressId="PyPep8" bundle="messages.PyPsiBundle" key="INSP.pep8.coding.style.violation" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyPep8Inspection" unfair="true"/>
+    <localInspection language="Python" shortName="PyInterpreterInspection" suppressId="PyInterpreter" bundle="messages.PyPsiBundle" key="INSP.NAME.invalid.interpreter" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyInterpreterInspection"/>
     <localInspection language="Python" shortName="PyStubPackagesCompatibilityInspection" suppressId="PyStubPackagesCompatibility" bundle="messages.PyPsiBundle" key="INSP.stub.packages.compatibility" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.codeInsight.typing.PyStubPackagesCompatibilityInspection"/>
     <localInspection language="Python" shortName="PyStubPackagesAdvertiser" suppressId="PyStubPackagesAdvertiser" bundle="messages.PyPsiBundle" key="INSP.stub.packages" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiser"/>
     <localInspection language="Python" shortName="PyRelativeImportInspection" suppressId="PyPackages" bundle="messages.PyPsiBundle" key="INSP.NAME.relative.import" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyRelativeImportInspection"/>
@@ -184,8 +185,6 @@
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyClassNameMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyFunctionNameMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyIterableVariableMacro"/>
-
-    <editorNotificationProvider implementation="com.jetbrains.python.sdk.PyEditorNotificationProvider"/>
 
     <codeInsight.overrideMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.override.PyOverrideMethodsHandler"/>
     <codeInsight.implementMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.implement.PyImplementMethodsHandler"/>

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
-import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataValidators;
@@ -262,8 +262,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   @Override
-  @Nullable
-  public Container getContentPane() {
+  public @Nullable Container getContentPane() {
     return getRootPane() != null ? myDialog.getContentPane() : null;
   }
 
@@ -366,9 +365,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myDialog.setResizable(resizable);
   }
 
-  @NotNull
   @Override
-  public Point getLocation() {
+  public @NotNull Point getLocation() {
     return myDialog.getLocation();
   }
 
@@ -559,8 +557,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
         @Override
         public boolean accept(Component aComponent) {
-          if (UIUtil.isFocusProxy(aComponent)) return false;
-          return super.accept(aComponent);
+          return !ComponentUtil.isFocusProxy(aComponent) && super.accept(aComponent);
         }
       });
 
@@ -594,6 +591,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     @Override
     public Object getData(@NotNull String dataId) {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        Project project = getProject();
+        if (project != null && project.isInitialized()) {
+          return project;
+        }
+      }
       DialogWrapper wrapper = myDialogWrapper.get();
       Object wrapperData = wrapper instanceof DataProvider ? ((DataProvider)wrapper).getData(dataId) : null;
       if (wrapperData != null) {
@@ -637,9 +640,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       super.setBounds(r);
     }
 
-    @NotNull
     @Override
-    protected JRootPane createRootPane() {
+    protected @NotNull JRootPane createRootPane() {
       return new DialogRootPane();
     }
 
@@ -749,14 +751,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return size;
     }
 
-    @Nullable
-    private Project getProject() {
+    private @Nullable Project getProject() {
       return SoftReference.dereference(myProject);
     }
 
-    @NotNull
     @Override
-    public IdeFocusManager getFocusManager() {
+    public @NotNull IdeFocusManager getFocusManager() {
       Project project = getProject();
       if (project != null && !project.isDisposed()) {
         return IdeFocusManager.getInstance(project);
@@ -938,9 +938,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         setBorder(UIManager.getBorder("Window.border"));
       }
 
-      @NotNull
       @Override
-      protected JLayeredPane createLayeredPane() {
+      protected @NotNull JLayeredPane createLayeredPane() {
         JLayeredPane p = new JBLayeredPane();
         p.setName(this.getName()+".layeredPane");
         return p;
@@ -1007,8 +1006,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
 
-    @NotNull
-    private static WindowStateService getWindowStateService(@Nullable Project project) {
+    private static @NotNull WindowStateService getWindowStateService(@Nullable Project project) {
       return project == null ? WindowStateService.getInstance() : WindowStateService.getInstance(project);
     }
   }

@@ -31,7 +31,7 @@ import java.util.*
  *
  * # Implementation details
  *
- * The operations are collected in two separate data structures: one for add operations and second for relabel and remove.
+ * The operations are collected in separate data structures: For adding, replacing and removing.
  * Relabel operation is also known as "Replace".
  * Add operations should be applied in order, while for other operations the order is not determined.
  *

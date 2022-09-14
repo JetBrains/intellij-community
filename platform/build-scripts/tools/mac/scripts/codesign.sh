@@ -1,7 +1,8 @@
 #!/bin/bash
 # Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-set -euox pipefail
+set -euo pipefail
+set -x
 
 function isForced() {
   for arg in "$@"; do
@@ -79,6 +80,9 @@ elif [[ "$JETSIGN_CLIENT" == "null" ]]; then
 elif ! isMacOsBinary "$pathToBeSigned" && [[ "$pathToBeSigned" != *.sit ]]; then
   echo "$pathToBeSigned won't be signed, assumed not to be a macOS executable"
 else
+  if isMacOsBinary "$pathToBeSigned" && ! isSigned "$pathToBeSigned" ; then
+    echo "Unsigned macOS binary: $pathToBeSigned"
+  fi
   workDir=$(dirname "$pathToBeSigned")
   pathSigned="$workDir/signed/${pathToBeSigned##*/}"
   jetSignExtensions=$(jetSignExtensions "${jetSignArgs[@]}")

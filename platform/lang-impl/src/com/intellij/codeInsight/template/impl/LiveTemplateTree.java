@@ -52,7 +52,7 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
 
   @Override
   protected void installSpeedSearch() {
-    new TreeSpeedSearch(this, o -> {
+    new TreeSpeedSearch(this, true, o -> {
       Object object = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
       if (object instanceof TemplateGroup) {
         return ((TemplateGroup)object).getName();
@@ -65,7 +65,7 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
                template.getTemplateText();
       }
       return "";
-    }, true).setComparator(new SubstringSpeedSearchComparator());
+    }).setComparator(new SubstringSpeedSearchComparator());
   }
 
   @Nullable

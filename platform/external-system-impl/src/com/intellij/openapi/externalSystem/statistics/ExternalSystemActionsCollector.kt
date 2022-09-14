@@ -60,7 +60,9 @@ class ExternalSystemActionsCollector : CounterUsagesCollector() {
                 systemId: ProjectSystemId?,
                 action: AnAction,
                 event: AnActionEvent) {
-      ActionsCollectorImpl.record(ACTION_INVOKED, project, action, event, listOf(EXTERNAL_SYSTEM_ID with anonymizeSystemId(systemId)))
+      ActionsCollectorImpl.record(ACTION_INVOKED, project, action, event) {
+        add(EXTERNAL_SYSTEM_ID with anonymizeSystemId(systemId))
+      }
     }
 
     @JvmStatic

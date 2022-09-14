@@ -17,18 +17,38 @@ import org.junit.runner.RunWith;
 @TestRoot("code-insight/inspections-k2/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../../idea/tests/testData/inspections/redundantUnitReturnType")
 public abstract class K2InspectionTestGenerated extends AbstractK2InspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/inspections/redundantUnitReturnType/inspectionData")
-    public static class InspectionData extends AbstractK2InspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
+    @TestMetadata("../../../idea/tests/testData/inspections/redundantUnitReturnType")
+    public abstract static class RedundantUnitReturnType extends AbstractK2InspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/redundantUnitReturnType/inspectionData")
+        public static class InspectionData extends AbstractK2InspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("inspections.test")
-        public void testInspections_test() throws Exception {
-            runTest("../../../idea/tests/testData/inspections/redundantUnitReturnType/inspectionData/inspections.test");
+            @TestMetadata("inspections.test")
+            public void testInspections_test() throws Exception {
+                runTest("../../../idea/tests/testData/inspections/redundantUnitReturnType/inspectionData/inspections.test");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspections/redundantIf")
+    public abstract static class RedundantIf extends AbstractK2InspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/redundantIf/inspectionData")
+        public static class InspectionData extends AbstractK2InspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inspections.test")
+            public void testInspections_test() throws Exception {
+                runTest("../../../idea/tests/testData/inspections/redundantIf/inspectionData/inspections.test");
+            }
         }
     }
 }

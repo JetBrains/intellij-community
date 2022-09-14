@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 
 interface CommitWorkflowHandler {
   val amendCommitHandler: AmendCommitHandler
+  val commitAuthorTracker: CommitAuthorTracker? get() = null
 
   /**
    * @see CommitExecutor.getId

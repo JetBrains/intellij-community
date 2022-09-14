@@ -16,6 +16,7 @@ object CodeGeneratorVersions {
 
   var checkApiInInterface = true
   var checkApiInImpl = true
+  var checkImplInImpl = true
 }
 
 @Target(AnnotationTarget.CLASS)
@@ -65,18 +66,19 @@ object GeneratedCodeCompatibilityChecker {
       }
     }
 
-    // Check that impl class has the correct impl version
-    val entityImplImplVersion = implAnnotations.filterIsInstance<GeneratedCodeImplVersion>().singleOrNull()?.version
-                               ?: error("Generated class '$implClass' doesn't have an impl version marker. " +
-                                        "You should regenerate the code of your entities")
-    assert(entityImplImplVersion == CodeGeneratorVersions.IMPL_VERSION) {
-      """
-        Current IMPL version of the generator is '${CodeGeneratorVersions.IMPL_VERSION}',
-        but the generated code is marked as version '$entityImplImplVersion'.
-        Please, regenerate your entities.
-        
-        Checked entity: $implClass
-      """.trimIndent()
+    if (CodeGeneratorVersions.checkImplInImpl) { // Check that impl class has the correct impl version
+      val entityImplImplVersion = implAnnotations.filterIsInstance<GeneratedCodeImplVersion>().singleOrNull()?.version
+                                 ?: error("Generated class '$implClass' doesn't have an impl version marker. " +
+                                          "You should regenerate the code of your entities")
+      assert(entityImplImplVersion == CodeGeneratorVersions.IMPL_VERSION) {
+        """
+          Current IMPL version of the generator is '${CodeGeneratorVersions.IMPL_VERSION}',
+          but the generated code is marked as version '$entityImplImplVersion'.
+          Please, regenerate your entities.
+          
+          Checked entity: $implClass
+        """.trimIndent()
+      }
     }
   }
 }

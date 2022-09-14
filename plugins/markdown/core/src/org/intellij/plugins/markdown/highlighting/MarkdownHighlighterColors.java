@@ -40,7 +40,7 @@ public final class MarkdownHighlighterColors {
   public static final TextAttributesKey CODE_FENCE_MARKER_ATTR_KEY = createTextAttributesKey("MARKDOWN_CODE_FENCE_MARKER", KEYWORD);
   public static final TextAttributesKey CODE_FENCE_LANGUAGE_ATTR_KEY = createTextAttributesKey("MARKDOWN_CODE_FENCE_LANGUAGE", CONSTANT);
 
-  public static final TextAttributesKey LIST_ITEM_ATTR_KEY = createTextAttributesKey("MARKDOWN_LIST_ITEM", TEXT);
+  public static final TextAttributesKey LIST_ITEM_ATTR_KEY = createTextAttributesKey("MARKDOWN_LIST_ITEM");
   public static final TextAttributesKey TABLE_SEPARATOR_ATTR_KEY = createTextAttributesKey("MARKDOWN_TABLE_SEPARATOR", KEYWORD);
   public static final TextAttributesKey STRIKE_THROUGH_ATTR_KEY = createTextAttributesKey("MARKDOWN_STRIKE_THROUGH", DEPRECATED_ATTRIBUTES);
 

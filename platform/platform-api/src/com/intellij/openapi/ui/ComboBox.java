@@ -30,8 +30,6 @@ import java.awt.event.*;
  * As the result of our patch, combo box has an internal wrapper for {@link ComboBoxEditor}.
  * It means that {@link #getEditor()} method always returns not the same value you set by {@link #setEditor(ComboBoxEditor)} method.
  * Moreover, adding and removing of action listeners isn't supported by the wrapper.
- *
- * @author Vladimir Kondratyev
  */
 public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventListener {
   public static final String TABLE_CELL_EDITOR_PROPERTY = "tableCellEditor";

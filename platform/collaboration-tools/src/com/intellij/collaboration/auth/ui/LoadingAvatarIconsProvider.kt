@@ -9,9 +9,9 @@ import java.awt.Image
 import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
-internal class LoadingAvatarIconsProvider<A : Account>(private val detailsLoader: AccountsDetailsLoader<A, *>,
-                                                       private val defaultAvatarIcon: Icon,
-                                                       private val avatarUrlSupplier: (A) -> String?)
+class LoadingAvatarIconsProvider<A : Account>(private val detailsLoader: AccountsDetailsLoader<A, *>,
+                                              private val defaultAvatarIcon: Icon,
+                                              private val avatarUrlSupplier: (A) -> String?)
   : IconsProvider<A> {
 
   private val cachingDelegate = object : CachingCircleImageIconsProvider<Pair<A, String>>(defaultAvatarIcon) {

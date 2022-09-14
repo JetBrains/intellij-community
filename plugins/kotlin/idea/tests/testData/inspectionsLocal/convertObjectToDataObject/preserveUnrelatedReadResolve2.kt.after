@@ -1,0 +1,6 @@
+// LANGUAGE_VERSION: 1.8
+import java.io.Serializable
+
+data object Foo : Serializable {
+    fun readResolve(): Foo = Foo
+}

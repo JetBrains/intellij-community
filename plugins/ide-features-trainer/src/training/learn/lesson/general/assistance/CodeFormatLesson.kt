@@ -69,8 +69,6 @@ class CodeFormatLesson(private val sample: LessonSample, private val optimizeImp
     }
   }
 
-  override val suitableTips = listOf("LayoutCode")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("code.format.help.link"),
          LessonUtil.getHelpLink("configuring-code-style.html")),

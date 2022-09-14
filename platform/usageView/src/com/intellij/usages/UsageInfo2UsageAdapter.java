@@ -347,8 +347,11 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
       List<SyntheticLibrary> list = new ArrayList<>();
       for (AdditionalLibraryRootsProvider e : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
         for (SyntheticLibrary library : e.getAdditionalProjectLibraries(project)) {
-          if (library.getSourceRoots().contains(sourcesRoot) && !library.isExcludedByConditions(virtualFile)) {
-            list.add(library);
+          if (library.getSourceRoots().contains(sourcesRoot)) {
+            Condition<VirtualFile> excludeFileCondition = library.getUnitedExcludeCondition();
+            if (excludeFileCondition == null || !excludeFileCondition.value(virtualFile)) {
+              list.add(library);
+            }
           }
         }
       }

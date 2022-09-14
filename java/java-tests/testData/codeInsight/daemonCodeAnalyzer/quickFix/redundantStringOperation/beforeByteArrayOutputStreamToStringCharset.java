@@ -27,6 +27,6 @@ class Main {
         String s4 = new String((out4.toByteArray()), (charset));
 
         String s5 = new String(foo().toByteArray(), charset);
-        String s6 = new String((foo().toByteArray()), (charset<caret>));
+        String s6 = new <caret>String((foo().toByteArray()), (charset));
     }
 }

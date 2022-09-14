@@ -1161,11 +1161,11 @@
   </action>
 
   <action id="GitNewBranchAction">
-    <keyboard-shortcut first-keystroke="shift N"/>
+    <keyboard-shortcut first-keystroke="control alt N"/>
   </action>
 
-  <action id="GitCheckoutFromInputAction">
-    <keyboard-shortcut first-keystroke="shift U"/>
+  <action id="Git.New.Branch.In.Log">
+    <keyboard-shortcut first-keystroke="control alt N"/>
   </action>
 
   <action id="ChangesView.SetDefault">

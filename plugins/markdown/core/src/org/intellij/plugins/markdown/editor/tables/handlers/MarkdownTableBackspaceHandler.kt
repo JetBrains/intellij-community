@@ -6,25 +6,20 @@ import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.reformatColumnOnChange
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.modifyColumn
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
-import org.intellij.plugins.markdown.lang.MarkdownFileType
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
-import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 internal class MarkdownTableBackspaceHandler: BackspaceHandlerDelegate() {
   override fun beforeCharDeleted(c: Char, file: PsiFile, editor: Editor) = Unit
 
   override fun charDeleted(char: Char, file: PsiFile, editor: Editor): Boolean {
-    if (!Registry.`is`("markdown.tables.editing.support.enable") || !MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled) {
-      return false
-    }
-    if (file.fileType != MarkdownFileType.INSTANCE) {
+    if (!TableUtils.isFormattingEnabledForTables(file) || !file.fileType.isMarkdownType()) {
       return false
     }
     val caretOffset = editor.caretModel.currentCaret.offset

@@ -152,6 +152,7 @@ class RunToolbarSlotManager(private val project: Project) {
 
   private fun clear() {
     dataIds.clear()
+    mainSlotData.clear()
 
     slotsData.clear()
     slotsData[mainSlotData.id] = mainSlotData

@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.CONTINUE;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_CHILDREN;
 
@@ -37,6 +38,7 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
   @Override
   @NotNull
   public Collection<VcsRoot> detect() {
+    MAPPING_DETECTION_LOG.debug("VcsRootDetectorImpl.detect");
     synchronized (LOCK) {
       Collection<VcsRoot> roots = scanForRootsInContentRoots();
       myDetectedRoots = ContainerUtil.map(roots, DetectedVcsRoot::new);
@@ -47,12 +49,14 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
   @Override
   @NotNull
   public Collection<VcsRoot> detect(@Nullable VirtualFile startDir) {
+    MAPPING_DETECTION_LOG.debug("VcsRootDetectorImpl.detect root", startDir);
     if (startDir == null || !startDir.isInLocalFileSystem()) return Collections.emptyList();
     return Collections.unmodifiableSet(scanForDirectory(startDir));
   }
 
   @Override
   public @NotNull Collection<VcsRoot> getOrDetect() {
+    MAPPING_DETECTION_LOG.debug("VcsRootDetectorImpl.getOrDetect");
     synchronized (LOCK) {
       if (myDetectedRoots != null) {
         return ContainerUtil.mapNotNull(myDetectedRoots, it -> it.toVcsRoot(myProject));
@@ -83,6 +87,7 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
 
     List<VirtualFile> contentRoots = ContainerUtil.filter(ProjectRootManager.getInstance(myProject).getContentRoots(),
                                                           file -> file.isInLocalFileSystem());
+    MAPPING_DETECTION_LOG.debug("VcsRootDetectorImpl.scanForRootsInContentRoots - contentRoots", contentRoots);
 
     VirtualFile baseDir = myProject.getBaseDir();
     if (baseDir != null && !contentRoots.contains(baseDir)) {

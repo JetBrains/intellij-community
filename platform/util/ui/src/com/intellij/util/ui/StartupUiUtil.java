@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -17,6 +19,7 @@ import javax.swing.plaf.FontUIResource;
 import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.StyleContext;
 import java.awt.*;
+import java.awt.event.AWTEventListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.geom.AffineTransform;
@@ -328,5 +331,10 @@ public final class StartupUiUtil {
     // in headless mode just use fallback in order to avoid font loading
     Font fontWithFallback = (SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) ? new Font(familyName, style, (int)size).deriveFont(size) : new StyleContext().getFont(familyName, style, (int)size).deriveFont(size);
     return fontWithFallback instanceof FontUIResource ? (FontUIResource)fontWithFallback : new FontUIResource(fontWithFallback);
+  }
+
+  public static void addAwtListener(final @NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
+    Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask);
+    Disposer.register(parent, () -> Toolkit.getDefaultToolkit().removeAWTEventListener(listener));
   }
 }

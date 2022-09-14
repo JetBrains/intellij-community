@@ -2,6 +2,7 @@
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
@@ -48,6 +49,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("SameParameterValue")
 public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsModifier {
@@ -84,6 +86,20 @@ public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSet
             });
         }
         catch (TimeoutException toe) {
+          StackTraceElement[] trace = psiFile.getUserData(CodeStyleCachingService.CALL_TRACE);
+          StringBuilder messageBuilder = new StringBuilder();
+          if (trace != null) {
+            messageBuilder.append("Timeout which searching .editorconfig for ").append(file.getName()).append("\n        at ");
+            messageBuilder.append(Arrays.stream(trace)
+                                    .skip(1)
+                                    .limit(15)
+                                    .map(e->e.toString())
+                                    .collect(Collectors.joining("\n        at ")));
+            LOG.warn(messageBuilder.toString());
+          }
+          else {
+            LOG.warn(toe);
+          }
           if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
             error(project, "timeout", EditorConfigBundle.message("error.timeout"), new DisableEditorConfigAction(project), true);
           }
@@ -376,7 +392,7 @@ public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSet
       }
       else {
         providers.clear();
-        providers.addAll(LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList());
+        providers.addAll(LanguageCodeStyleSettingsProvider.getAllProviders());
         break;
       }
     }

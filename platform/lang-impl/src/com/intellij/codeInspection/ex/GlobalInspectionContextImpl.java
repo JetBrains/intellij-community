@@ -21,7 +21,7 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.diagnostic.opentelemetry.TraceManager;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.ProblemGroup;

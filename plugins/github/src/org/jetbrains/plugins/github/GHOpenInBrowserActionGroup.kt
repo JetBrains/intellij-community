@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github
 
+import git4idea.remote.hosting.findKnownRepositories
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.*
@@ -43,7 +44,7 @@ open class GHOpenInBrowserActionGroup
                 GithubBundle.messagePointer("open.on.github.action.description"),
                 AllIcons.Vcs.Vendors.Github), DumbAware {
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.OLD_EDT
 
   override fun update(e: AnActionEvent) {
     val data = getData(e.dataContext)
@@ -92,7 +93,7 @@ open class GHOpenInBrowserActionGroup
     val accessibleRepositories = project.service<GHHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
-    return accessibleRepositories.map { Data.Revision(project, it.ghRepositoryCoordinates, fileRevision.revisionNumber.asString()) }
+    return accessibleRepositories.map { Data.Revision(project, it.repository, fileRevision.revisionNumber.asString()) }
   }
 
   private fun getDataFromLog(project: Project, dataContext: DataContext): List<Data>? {
@@ -110,7 +111,7 @@ open class GHOpenInBrowserActionGroup
     val accessibleRepositories = project.service<GHHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
-    return accessibleRepositories.map { Data.Revision(project, it.ghRepositoryCoordinates, commit.hash.asString()) }
+    return accessibleRepositories.map { Data.Revision(project, it.repository, commit.hash.asString()) }
   }
 
   private fun getDataFromVirtualFile(project: Project, dataContext: DataContext): List<Data>? {
@@ -128,7 +129,7 @@ open class GHOpenInBrowserActionGroup
 
     val change = changeListManager.getChange(virtualFile)
     return if (change != null && change.type == Change.Type.NEW) null
-    else accessibleRepositories.map { Data.File(project, it.ghRepositoryCoordinates, repository.root, virtualFile) }
+    else accessibleRepositories.map { Data.File(project, it.repository, repository.root, virtualFile) }
   }
 
   protected sealed class Data(val project: Project) {

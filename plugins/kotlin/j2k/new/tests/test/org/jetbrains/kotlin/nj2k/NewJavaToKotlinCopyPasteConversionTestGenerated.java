@@ -108,6 +108,11 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
         runTest("testData/copyPaste/FileWithNoPackageStatement.java");
     }
 
+    @TestMetadata("ForRangeToRangeUntil.java")
+    public void testForRangeToRangeUntil() throws Exception {
+        runTest("testData/copyPaste/ForRangeToRangeUntil.java");
+    }
+
     @TestMetadata("GetterWithError.java")
     public void testGetterWithError() throws Exception {
         runTest("testData/copyPaste/GetterWithError.java");
@@ -231,5 +236,10 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
     @TestMetadata("UnconvertedMethodReference.java")
     public void testUnconvertedMethodReference() throws Exception {
         runTest("testData/copyPaste/UnconvertedMethodReference.java");
+    }
+
+    @TestMetadata("Until.java")
+    public void testUntil() throws Exception {
+        runTest("testData/copyPaste/Until.java");
     }
 }

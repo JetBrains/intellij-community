@@ -622,16 +622,6 @@
              show-in-guide="false">
       <track-action id="LocalHistory.ShowHistory"/>
     </feature>
-    <feature id="vcs.show.quick.list"
-             tip-file="VcsQuickList.html"
-             show-in-guide="false">
-      <track-action id="Vcs.QuickListPopupAction"/>
-    </feature>
-    <feature id="vcs.pull.requests"
-             tip-file="pull_requests.html"
-             show-in-guide="false">
-      <track-action id="Github.View.Pull.Request"/>
-    </feature>
   </group>
 
   <group id="intentions">

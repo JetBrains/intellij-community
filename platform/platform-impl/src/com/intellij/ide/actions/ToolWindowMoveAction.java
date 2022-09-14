@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowInfo;
+import com.intellij.openapi.wm.impl.ToolWindowMoveToAction;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nls;
@@ -134,7 +135,7 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
   }
 
   @Nullable
-  private static ToolWindow getToolWindow(@NotNull AnActionEvent e) {
+  public static ToolWindow getToolWindow(@NotNull AnActionEvent e) {
     ToolWindowManager manager = getToolWindowManager(e);
     if (manager == null) {
       return null;
@@ -200,8 +201,13 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (!isInitialized) {
-        for (ToolWindowMoveAction.Anchor anchor : ToolWindowMoveAction.Anchor.values()) {
-          add(new ToolWindowMoveAction(anchor));
+        if (ExperimentalUI.isNewUI()) {
+          addAll(new ToolWindowMoveToAction.Group().getChildren(e));
+        }
+        else {
+          for (Anchor anchor : Anchor.values()) {
+            add(new ToolWindowMoveAction(anchor));
+          }
         }
         isInitialized = true;
       }

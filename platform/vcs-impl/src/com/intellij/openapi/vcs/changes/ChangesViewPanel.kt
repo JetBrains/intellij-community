@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.HoverIcon
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
@@ -77,12 +78,14 @@ class ChangesViewPanel(project: Project) : BorderLayoutPanel() {
   private fun addToolbar(isHorizontal: Boolean) {
     if (isHorizontal) {
       toolbar.setOrientation(SwingConstants.HORIZONTAL)
-      centerPanel.border = createBorder(JBColor.border(), SideBorder.TOP)
+      val sideBorder = if (ExperimentalUI.isNewUI()) SideBorder.NONE else SideBorder.TOP
+      centerPanel.border = createBorder(JBColor.border(), sideBorder)
       addToTop(toolbar.component)
     }
     else {
       toolbar.setOrientation(SwingConstants.VERTICAL)
-      centerPanel.border = createBorder(JBColor.border(), SideBorder.LEFT)
+      val sideBorder = if (ExperimentalUI.isNewUI()) SideBorder.NONE else SideBorder.LEFT
+      centerPanel.border = createBorder(JBColor.border(), sideBorder)
       addToLeft(toolbar.component)
     }
   }

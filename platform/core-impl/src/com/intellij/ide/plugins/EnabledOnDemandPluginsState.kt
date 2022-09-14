@@ -3,7 +3,8 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -21,15 +22,10 @@ class EnabledOnDemandPluginsState : PluginEnabler {
     private val defaultFilePath: Path
       get() = PathManager.getConfigDir().resolve(ENABLED_PLUGINS_FILENAME)
 
-    private val logger
-      get() = Logger.getInstance(EnabledOnDemandPluginsState::class.java)
+    private val LOG get() = logger<EnabledOnDemandPluginsState>()
 
     @JvmStatic
-    fun getInstance(): EnabledOnDemandPluginsState? =
-      if (IdeaPluginDescriptorImpl.isOnDemandEnabled)
-        ApplicationManager.getApplication().getService(EnabledOnDemandPluginsState::class.java)
-      else
-        null
+    fun getInstance(): EnabledOnDemandPluginsState = ApplicationManager.getApplication().service()
 
     @JvmStatic
     val enabledPluginIds: Set<PluginId>
@@ -42,7 +38,7 @@ class EnabledOnDemandPluginsState : PluginEnabler {
           var result = enabledPluginIds_
           if (result == null) {
             result = if (IdeaPluginDescriptorImpl.isOnDemandEnabled)
-              LinkedHashSet(PluginManagerCore.tryReadPluginIdsFromFile(defaultFilePath, logger))
+              LinkedHashSet(PluginManagerCore.tryReadPluginIdsFromFile(defaultFilePath, LOG))
             else
               mutableSetOf()
             enabledPluginIds_ = result
@@ -62,17 +58,17 @@ class EnabledOnDemandPluginsState : PluginEnabler {
 
       val pluginIds = descriptors.filter { it.isOnDemand }
         .toPluginIdSet()
-      logger.info(pluginIds.joinedPluginIds("load on demand"))
+      LOG.info(pluginIds.joinedPluginIds("load on demand"))
 
       val enabledPluginIds = enabledPluginIds as MutableSet
       return (if (enabled) enabledPluginIds.addAll(pluginIds) else enabledPluginIds.removeAll(pluginIds))
-             && PluginManagerCore.tryWritePluginIdsToFile(defaultFilePath, pluginIds, logger)
+             && PluginManagerCore.tryWritePluginIdsToFile(defaultFilePath, pluginIds, LOG)
     }
   }
 
   init {
     if (IdeaPluginDescriptorImpl.isOnDemandEnabled) {
-      logger.info(enabledPluginIds.joinedPluginIds("load"))
+      LOG.info(enabledPluginIds.joinedPluginIds("load"))
     }
   }
 

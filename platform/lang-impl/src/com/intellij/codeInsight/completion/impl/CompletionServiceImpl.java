@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.ClassifierFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeWithMe.ClientId;
-import com.intellij.diagnostic.opentelemetry.TraceManager;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.AccessToken;
@@ -320,13 +320,21 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   }
 
   @Override
-  protected void doPerform(Set<LookupElement> lookupSet, CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
+  public void performCompletion(CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
     Span span = completionTracer.spanBuilder("performCompletion").startSpan();
+    var countingConsumer = new Consumer<CompletionResult>() {
+      int count = 0;
+      @Override
+      public void consume(CompletionResult result) {
+        count++;
+        consumer.consume(result);
+      }
+    };
     try (Scope ignored = span.makeCurrent()) {
-      super.doPerform(lookupSet, parameters, consumer);
+      super.performCompletion(parameters, countingConsumer);
     }
     finally {
-      span.setAttribute("lookupsFound", lookupSet.size());
+      span.setAttribute("lookupsFound", countingConsumer.count);
       span.end();
     }
   }

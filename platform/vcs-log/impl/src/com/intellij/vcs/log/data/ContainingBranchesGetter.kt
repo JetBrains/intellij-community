@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.data
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.intellij.diagnostic.opentelemetry.TraceManager
+import com.intellij.diagnostic.telemetry.TraceManager
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager

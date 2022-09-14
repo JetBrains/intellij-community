@@ -46,9 +46,6 @@
             serviceInterface="org.jetbrains.kotlin.resolve.LanguageVersionSettingsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.compiler.IdeLanguageVersionSettingsProvider"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.psi.KtFileClassProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.caches.resolve.KtFileClassProviderImpl"/>
-    <projectService
             serviceInterface="org.jetbrains.kotlin.resolve.CodeAnalyzerInitializer"
             serviceImplementation="org.jetbrains.kotlin.resolve.DummyCodeAnalyzerInitializer"/>
     <projectService
