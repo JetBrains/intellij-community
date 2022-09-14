@@ -126,7 +126,8 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
   }
 
   private void updateNotifications() {
-    List<JComponent> notifications = ContainerUtil.concat(myPersistentNotifications, myNotifications);
+    List<JComponent> notifications = new ArrayList<>(ContainerUtil.concat(myPersistentNotifications, myNotifications));
+    notifications = DiffUtil.wrapEditorNotificationBorders(notifications);
     myNotificationsPanel.setContent(DiffUtil.createStackedComponents(notifications, DiffUtil.TITLE_GAP));
     validate();
     repaint();
