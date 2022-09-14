@@ -156,7 +156,7 @@ private fun selectRowWhenOpen(logManager: VcsLogManager, hash: Hash?, root: Virt
     ui.jumpToNearestCommit(logManager.dataManager.storage, hash, root, true)
   }
   else if (firstTime) {
-    ui.jumpToRow(0, true)
+    ui.jumpToRow(0, true, true)
   }
 }
 

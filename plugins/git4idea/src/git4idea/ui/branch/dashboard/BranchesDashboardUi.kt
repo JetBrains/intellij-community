@@ -129,7 +129,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   internal fun navigateToSelectedBranch(focus: Boolean) {
     val selectedReference = filteringTree.getSelectedBranchFilters().singleOrNull() ?: return
 
-    logUi.jumpToBranch(selectedReference, focus)
+    logUi.jumpToBranch(selectedReference, false, focus)
   }
 
   internal fun toggleGrouping(key: GroupingKey, state: Boolean) {

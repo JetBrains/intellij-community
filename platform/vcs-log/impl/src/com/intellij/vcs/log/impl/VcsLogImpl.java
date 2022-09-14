@@ -57,13 +57,13 @@ public class VcsLogImpl implements VcsLog {
   @NotNull
   @Override
   public ListenableFuture<Boolean> jumpToReference(@NotNull String reference, boolean focus) {
-    return VcsLogNavigationUtil.jumpToRefOrHash(myUi, reference, focus);
+    return VcsLogNavigationUtil.jumpToRefOrHash(myUi, reference, false, focus);
   }
 
   @Override
   @NotNull
   public ListenableFuture<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root, boolean focus) {
-    return VcsLogNavigationUtil.jumpToCommit(myUi, commitHash, root, focus);
+    return VcsLogNavigationUtil.jumpToCommit(myUi, commitHash, root, false, focus);
   }
 
   @NotNull

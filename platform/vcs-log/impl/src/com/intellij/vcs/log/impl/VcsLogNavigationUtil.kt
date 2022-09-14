@@ -20,7 +20,10 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.data.*
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
@@ -139,7 +142,7 @@ object VcsLogNavigationUtil {
 
   private suspend fun MainVcsLogUi.showCommit(hash: Hash, root: VirtualFile,
                                               requestFocus: Boolean): Boolean {
-    val jumpResult = jumpToCommit(hash, root, true, requestFocus).await()
+    val jumpResult = jumpToCommitInternal(hash, root, true, requestFocus).await()
     return when (jumpResult) {
       JumpResult.SUCCESS -> true
       null, JumpResult.COMMIT_NOT_FOUND -> {
@@ -197,22 +200,22 @@ object VcsLogNavigationUtil {
   }
 
   @JvmStatic
-  fun VcsLogUiEx.jumpToRow(row: Int, silently: Boolean) {
+  fun VcsLogUiEx.jumpToRow(row: Int, silently: Boolean, focus: Boolean) {
     jumpTo(row, { visiblePack, r ->
       if (visiblePack.visibleGraph.visibleCommitCount <= r) return@jumpTo -1
       r
-    }, SettableFuture.create(), silently, true)
+    }, SettableFuture.create(), silently, focus)
   }
 
   @JvmStatic
-  fun VcsLogUiEx.jumpToBranch(branchName: String, focus: Boolean) {
+  fun VcsLogUiEx.jumpToBranch(branchName: String, silently: Boolean, focus: Boolean) {
     jumpTo(branchName, { visiblePack, branch ->
       return@jumpTo getBranchRow(logData, visiblePack, branch)
-    }, SettableFuture.create(), false, focus)
+    }, SettableFuture.create(), silently, focus)
   }
 
   @JvmStatic
-  fun VcsLogUiEx.jumpToRefOrHash(reference: String, focus: Boolean): ListenableFuture<Boolean> {
+  fun VcsLogUiEx.jumpToRefOrHash(reference: String, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
     if (StringUtil.isEmptyOrSpaces(reference)) return Futures.immediateFuture(false)
     val future = SettableFuture.create<Boolean>()
     val refs = dataPack.refs
@@ -220,41 +223,46 @@ object VcsLogNavigationUtil {
       val matchingRefs = refs.stream().filter { ref -> ref.name.startsWith(reference) }.toList()
       ApplicationManager.getApplication().invokeLater {
         if (matchingRefs.isEmpty()) {
-          future.setFuture(jumpToHash(reference, focus))
+          future.setFuture(jumpToHash(reference, silently, focus))
         }
         else {
           val ref = matchingRefs.minWith(VcsGoToRefComparator(dataPack.logProviders))
-          future.setFuture(jumpToCommit(ref.commitHash, ref.root, focus))
+          future.setFuture(jumpToCommit(ref.commitHash, ref.root, silently, focus))
         }
       }
     }
     return future
   }
 
-  private fun VcsLogUiEx.jumpToHash(commitHash: String, focus: Boolean): ListenableFuture<Boolean> {
+  private fun VcsLogUiEx.jumpToHash(commitHash: String, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
     val future = SettableFuture.create<JumpResult>()
     val trimmed = StringUtil.trim(commitHash) { ch -> !StringUtil.containsChar("()'\"`", ch) }
     if (!VcsLogUtil.HASH_REGEX.matcher(trimmed).matches()) {
-      VcsBalloonProblemNotifier.showOverChangesView(logData.project,
-                                                    VcsLogBundle.message("vcs.log.commit.or.reference.not.found", commitHash),
-                                                    MessageType.WARNING)
+      if (!silently) {
+        VcsBalloonProblemNotifier.showOverChangesView(logData.project,
+                                                      VcsLogBundle.message("vcs.log.commit.or.reference.not.found", commitHash),
+                                                      MessageType.WARNING)
+      }
       future.set(JumpResult.COMMIT_NOT_FOUND)
     }
     else {
       jumpTo(trimmed, { visiblePack, partialHash ->
         getCommitRow(logData, visiblePack, partialHash)
-      }, future, false, focus)
+      }, future, silently, focus)
     }
     return mapToJumpSuccess(future)
   }
 
   @JvmStatic
-  fun VcsLogUiEx.jumpToCommit(commitHash: Hash, root: VirtualFile, focus: Boolean): ListenableFuture<Boolean> {
-    return mapToJumpSuccess(jumpToCommit(commitHash, root, false, focus))
+  fun VcsLogUiEx.jumpToCommit(commitHash: Hash, root: VirtualFile, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
+    return mapToJumpSuccess(jumpToCommitInternal(commitHash, root, silently, focus))
   }
 
   @JvmStatic
-  fun VcsLogUiEx.jumpToCommit(commitHash: Hash, root: VirtualFile, silently: Boolean, focus: Boolean): ListenableFuture<JumpResult> {
+  private fun VcsLogUiEx.jumpToCommitInternal(commitHash: Hash,
+                                              root: VirtualFile,
+                                              silently: Boolean,
+                                              focus: Boolean): ListenableFuture<JumpResult> {
     val future = SettableFuture.create<JumpResult>()
     jumpTo(commitHash, { visiblePack, hash ->
       if (!logData.storage.containsCommit(CommitId(hash, root))) return@jumpTo VcsLogUiEx.COMMIT_NOT_FOUND

@@ -53,7 +53,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
     }
 
     if (rows.size == 1) {
-      ui.jumpToRow(rows.single(), false)
+      ui.jumpToRow(rows.single(), false, true)
     }
     else {
       val popup = JBPopupFactory.getInstance().createActionGroupPopup(
@@ -71,7 +71,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
       object : DumbAwareAction(text, VcsLogBundle.message("action.go.to.navigate.to", text), null) {
         override fun actionPerformed(e: AnActionEvent) {
           triggerUsage(e)
-          ui.jumpToRow(row, false)
+          ui.jumpToRow(row, false, true)
         }
       }
     }
