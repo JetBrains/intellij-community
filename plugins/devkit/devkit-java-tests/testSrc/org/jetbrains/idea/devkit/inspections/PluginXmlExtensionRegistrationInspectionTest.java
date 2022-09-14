@@ -54,6 +54,17 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
     myFixture.checkResultByFile("languageAddLanguageTagFix_after.xml");
   }
 
+   public void testLanguageAddLanguageAttributeForCompletionContributorEPFix() {
+    IntentionAction action =
+      myFixture.getAvailableIntention("Define language attribute",
+                                      "addLanguageAttributeForCompletionContributorEPFix.xml");
+    assertNotNull(action);
+    myFixture.checkPreviewAndLaunchAction(action);
+    myFixture.checkResultByFile("addLanguageAttributeForCompletionContributorEPFix_after.xml");
+  }
+
+
+
   public void testStubElementTypeHolder() {
     myFixture.testHighlighting("stubElementTypeHolder.xml");
   }

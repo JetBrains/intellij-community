@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.impl.LanguageResolvingUtil;
 
 public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInspectionBase {
 
@@ -59,7 +60,7 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
           holder.createProblem(extension,
                                DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.language.attribute",
                                                     extensionPoint.getEffectiveQualifiedName()),
-                               new DefineAttributeQuickFix("language"));
+                               new DefineAttributeQuickFix("language", "", LanguageResolvingUtil.getAnyLanguageValue(extensionPoint)));
         }
         return;
       }
@@ -72,27 +73,7 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
           holder.createProblem(extension,
                                DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.language.tag",
                                                     extensionPoint.getEffectiveQualifiedName()),
-                               new LocalQuickFix() {
-                                 @Override
-                                 public @NotNull String getFamilyName() {
-                                   return DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.language.tag.family.name");
-                                 }
-
-                                 @Override
-                                 public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-                                   Extension fixExtension = DomUtil.findDomElement(descriptor.getPsiElement(), Extension.class, false);
-                                   if (fixExtension == null) return;
-
-                                   XmlTag xmlTag = fixExtension.getXmlTag();
-                                   XmlTag languageTag = xmlTag.createChildTag("language", null, "", false);
-                                   XmlTag addedLanguageTag = xmlTag.addSubTag(languageTag, true);
-                                   if (!IntentionPreviewUtils.isPreviewElement(addedLanguageTag)) {
-                                     PsiNavigationSupport.getInstance()
-                                       .createNavigatable(project, addedLanguageTag.getContainingFile().getVirtualFile(),
-                                                          addedLanguageTag.getValue().getTextRange().getEndOffset()).navigate(true);
-                                   }
-                                 }
-                               });
+                               new AddLanguageTagQuickFix(LanguageResolvingUtil.getAnyLanguageValue(extensionPoint)));
         }
       }
     }
@@ -104,5 +85,34 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
            PsiReferenceProviderBean.class.getName().equals(extensionBeanClass) ||
            IntentionActionBean.class.getName().equals(extensionBeanClass) ||
            InheritanceUtil.isInheritor(extensionPoint.getBeanClass().getValue(), LanguageExtensionPoint.class.getName());
+  }
+
+  private static class AddLanguageTagQuickFix implements LocalQuickFix {
+
+    private final String myAnyLanguageID;
+
+    private AddLanguageTagQuickFix(String anyLanguageId) {
+      myAnyLanguageID = anyLanguageId;
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.language.tag.family.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      Extension fixExtension = DomUtil.findDomElement(descriptor.getPsiElement(), Extension.class, false);
+      if (fixExtension == null) return;
+
+      XmlTag xmlTag = fixExtension.getXmlTag();
+      XmlTag languageTag = xmlTag.createChildTag("language", null, myAnyLanguageID, false);
+      XmlTag addedLanguageTag = xmlTag.addSubTag(languageTag, true);
+      if (!IntentionPreviewUtils.isPreviewElement(addedLanguageTag)) {
+        PsiNavigationSupport.getInstance()
+          .createNavigatable(project, addedLanguageTag.getContainingFile().getVirtualFile(),
+                             addedLanguageTag.getValue().getTextRange().getEndOffset()).navigate(true);
+      }
+    }
   }
 }
