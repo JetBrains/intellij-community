@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.BinaryLightVirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
@@ -832,7 +833,8 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       textContent.isBom = isBom;
       if (malformedContent) {
         String notificationText = DiffBundle.message("error.content.decoded.with.wrong.charset", charset.name());
-        textContent.notification = DiffNotifications.createNotificationProvider(notificationText, LightColors.RED);
+        textContent.notification =
+          DiffNotifications.createNotificationProvider(notificationText, LightColors.RED, EditorNotificationPanel.Status.Error);
       }
       return textContent;
     }

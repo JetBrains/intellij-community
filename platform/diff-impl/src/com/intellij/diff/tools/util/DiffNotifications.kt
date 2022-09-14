@@ -17,12 +17,12 @@ object DiffNotifications {
 
   @JvmStatic
   fun createInsertedContent(): JPanel {
-    return createNotification(DiffBundle.message("notification.status.content.added"), TextDiffType.INSERTED.getColor(null))
+    return createNotification(DiffBundle.message("notification.status.content.added"), TextDiffType.INSERTED.getColor(null), status = EditorNotificationPanel.Status.Info)
   }
 
   @JvmStatic
   fun createRemovedContent(): JPanel {
-    return createNotification(DiffBundle.message("notification.status.content.removed"), TextDiffType.DELETED.getColor(null))
+    return createNotification(DiffBundle.message("notification.status.content.removed"), TextDiffType.DELETED.getColor(null), status = EditorNotificationPanel.Status.Info)
   }
 
   @JvmStatic
