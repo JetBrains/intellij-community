@@ -1602,6 +1602,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getHyperlinks().getLinkNavigationRunnable(getEditor().getCaretModel().getLogicalPosition()) != null);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   @NotNull
