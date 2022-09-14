@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.DiffPreview;
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
@@ -139,6 +140,8 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   public void setViewerBorder(@NotNull Border border) {
+    if(ExperimentalUI.isNewUI()) return;
+
     myViewerScrollPane.setBorder(border);
   }
 
