@@ -58,9 +58,8 @@ fun KtNamedDeclaration.nameIdentifierTextRangeInThis(): TextRange? = nameIdentif
 fun PsiElement.hasComments(): Boolean = anyDescendantOfType<PsiComment>()
 
 fun KtDotQualifiedExpression.hasNotReceiver(): Boolean {
-    val selector = getQualifiedElementSelector() ?: return false
-    val element = selector.mainReference?.resolve() ?: return false
-    return element is KtClassOrObject && selector.text !in listOf("copy", "toString", "hashCode", "equals") ||
+    val element = getQualifiedElementSelector()?.mainReference?.resolve() ?: return false
+    return element is KtClassOrObject ||
             element is KtConstructor<*> ||
             element is KtCallableDeclaration && element.receiverTypeReference == null && (element.containingClassOrObject is KtObjectDeclaration?) ||
             element is PsiMember && element.hasModifier(JvmModifier.STATIC) ||

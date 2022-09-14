@@ -10612,21 +10612,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableSameNameVariableWithCopy.kt");
         }
 
-        @TestMetadata("notApplicableSameNameVariableWithEquals.kt")
-        public void testNotApplicableSameNameVariableWithEquals() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableSameNameVariableWithEquals.kt");
-        }
-
-        @TestMetadata("notApplicableSameNameVariableWithHashCode.kt")
-        public void testNotApplicableSameNameVariableWithHashCode() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableSameNameVariableWithHashCode.kt");
-        }
-
-        @TestMetadata("notApplicableSameNameVariableWithToString.kt")
-        public void testNotApplicableSameNameVariableWithToString() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableSameNameVariableWithToString.kt");
-        }
-
         @TestMetadata("notApplicableThis.kt")
         public void testNotApplicableThis() throws Exception {
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableThis.kt");
