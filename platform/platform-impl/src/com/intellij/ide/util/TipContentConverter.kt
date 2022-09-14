@@ -6,6 +6,7 @@ import com.intellij.ide.ui.text.paragraph.TextParagraph
 import com.intellij.ide.ui.text.parts.*
 import com.intellij.ide.util.TipUIUtil.IconWithRoundedBorder
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ui.JBFont
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
@@ -122,7 +123,7 @@ internal class TipContentConverter(private val tipContent: Element,
             else ShortcutTextPart(text, isRaw = true, addSpaceAround = true)
           }
           node.tagName() == "span" && node.hasClass("code_emphasis") -> {
-            val text = getElementInnerText(node).replace(' ', '\u00A0')
+            val text = getElementInnerText(node).replace(" ", StringUtil.NON_BREAK_SPACE)
             CodeTextPart(text, addSpaceAround = true)
           }
           node.tagName() == "span" -> {

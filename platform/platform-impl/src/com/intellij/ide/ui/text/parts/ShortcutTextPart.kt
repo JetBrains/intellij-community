@@ -4,6 +4,7 @@ package com.intellij.ide.ui.text.parts
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.ide.ui.text.StyledTextPaneUtils.drawRectangleAroundText
 import com.intellij.ide.ui.text.showActionKeyPopup
+import com.intellij.openapi.util.text.StringUtil.NON_BREAK_SPACE
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -53,7 +54,7 @@ open class ShortcutTextPart(text: String, val isRaw: Boolean, private val addSpa
     val shortcutAttributes = attributes
     val sepAttributes = separatorAttributes
     if (addSpaceAround) {
-      curOffset = insertText(textPane, "\u00A0\u00A0", curOffset, sepAttributes)
+      curOffset = insertText(textPane, "$NON_BREAK_SPACE$NON_BREAK_SPACE", curOffset, sepAttributes)
     }
     for (part in split) {
       curOffset = insertText(textPane, shortcut.substring(start, part.first), curOffset, sepAttributes)
@@ -69,7 +70,7 @@ open class ShortcutTextPart(text: String, val isRaw: Boolean, private val addSpa
     }
     curOffset = insertText(textPane, shortcut.substring(start), curOffset, sepAttributes)
     if (addSpaceAround) {
-      curOffset = insertText(textPane, "\u00A0\u00A0", curOffset, sepAttributes)
+      curOffset = insertText(textPane, "$NON_BREAK_SPACE$NON_BREAK_SPACE", curOffset, sepAttributes)
     }
     return curOffset
   }

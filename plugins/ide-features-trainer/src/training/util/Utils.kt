@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.labels.LinkLabel
@@ -239,7 +240,12 @@ private fun excludeNullCheck(value: String?): String? {
   return value
 }
 
-fun String.replaceSpacesWithNonBreakSpace(): String = this.replace(" ", "\u00A0")
+fun String.replaceSpacesWithNonBreakSpace(): String = this.replace(" ", StringUtil.NON_BREAK_SPACE)
+
+fun String.surroundWithNonBreakSpaces(): String {
+  val spaces = "${StringUtil.NON_BREAK_SPACE}${StringUtil.NON_BREAK_SPACE}"
+  return spaces + this + spaces
+}
 
 internal val iftPluginIsUsing: Boolean get() = LessonStateManager.getPassedLessonsNumber() >= 5
 

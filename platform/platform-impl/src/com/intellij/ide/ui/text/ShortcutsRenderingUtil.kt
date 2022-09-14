@@ -8,6 +8,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.StringUtil.NON_BREAK_SPACE
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
@@ -62,7 +63,7 @@ object ShortcutsRenderingUtil {
     val firstKeyStrokeData = getKeyStrokeData(shortcut.firstKeyStroke)
     val secondKeyStroke = shortcut.secondKeyStroke ?: return firstKeyStrokeData
     val secondKeyStrokeData = getKeyStrokeData(secondKeyStroke)
-    val firstPartString = firstKeyStrokeData.first + "\u00A0\u00A0\u00A0,\u00A0\u00A0\u00A0"
+    val firstPartString = firstKeyStrokeData.first + "${NON_BREAK_SPACE.repeat(3)},${NON_BREAK_SPACE.repeat(3)}"
     val firstPartLength = firstPartString.length
 
     val shiftedList = secondKeyStrokeData.second.map { IntRange(it.first + firstPartLength, it.last + firstPartLength) }
@@ -78,14 +79,14 @@ object ShortcutsRenderingUtil {
               ?: if (SystemInfo.isMac) MacKeymapUtil.getKeyText(keyCode) else KeyEvent.getKeyText(keyCode)
 
     if (key.contains(' ')) {
-      key = key.replace(' ', '\u00A0')
+      key = key.replace(" ", NON_BREAK_SPACE)
     }
 
     if (key.length == 1) getStringForMacSymbol(key[0])?.let {
-      key = key + "\u00A0" + it
+      key = key + NON_BREAK_SPACE + it
     }
 
-    val separator = "\u00A0\u00A0\u00A0"
+    val separator = NON_BREAK_SPACE.repeat(3)
     val intervals = mutableListOf<IntRange>()
     val builder = StringBuilder()
 
@@ -98,7 +99,7 @@ object ShortcutsRenderingUtil {
     for (m in modifiers.getModifiers()) {
       val part = if (SystemInfo.isMac) {
         val modifierName = if (m.length == 1) getStringForMacSymbol(m[0]) else null
-        if (modifierName != null) m + "\u00A0" + modifierName else m
+        if (modifierName != null) m + NON_BREAK_SPACE + modifierName else m
       }
       else m
 
@@ -116,12 +117,12 @@ object ShortcutsRenderingUtil {
    */
   fun getRawShortcutData(shortcut: String): Pair<@NlsSafe String, List<IntRange>> {
     val parts = shortcut.split(Regex(""" *\+ *"""))
-    val separator = "\u00A0\u00A0\u00A0"
+    val separator = NON_BREAK_SPACE.repeat(3)
     val builder = StringBuilder()
     val ranges = mutableListOf<IntRange>()
     var curInd = 0
     for ((ind, part) in parts.withIndex()) {
-      builder.append(part.replace(' ', '\u00A0'))
+      builder.append(part.replace(" ", NON_BREAK_SPACE))
       ranges.add(curInd until builder.length)
       if (ind != parts.lastIndex) {
         builder.append(separator)
@@ -134,7 +135,7 @@ object ShortcutsRenderingUtil {
   fun getGotoActionData(@NonNls actionId: String): Pair<String, List<IntRange>> {
     val gotoActionShortcut = getShortcutByActionId("GotoAction")
     val gotoAction = getKeyboardShortcutData(gotoActionShortcut)
-    val actionName = ActionManager.getInstance().getAction(actionId).templatePresentation.text.replace(" ", "\u00A0")
+    val actionName = ActionManager.getInstance().getAction(actionId).templatePresentation.text.replace(" ", NON_BREAK_SPACE)
     val updated = ArrayList<IntRange>(gotoAction.second)
     val start = gotoAction.first.length + 5
     updated.add(IntRange(start, start + actionName.length - 1))

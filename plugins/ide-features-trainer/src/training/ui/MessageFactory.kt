@@ -7,6 +7,7 @@ import com.intellij.ide.ui.text.showActionKeyPopup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.ActionLink
@@ -46,7 +47,7 @@ internal object MessageFactory {
         var text = content.getValue()
         if (Pattern.matches(" *\\p{IsPunctuation}.*", text)) {
           val indexOfFirst = text.indexOfFirst { it != ' ' }
-          text = "\u00A0".repeat(indexOfFirst) + text.substring(indexOfFirst)
+          text = StringUtil.NON_BREAK_SPACE.repeat(indexOfFirst) + text.substring(indexOfFirst)
         }
         list.add(RegularTextPart(text))
       }
