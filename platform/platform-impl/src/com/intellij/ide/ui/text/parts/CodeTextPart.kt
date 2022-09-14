@@ -31,15 +31,25 @@ open class CodeTextPart(text: String, private val addSpaceAround: Boolean = fals
   }
 
   override fun insertToTextPane(textPane: JTextPane, startOffset: Int): Int {
-    val textToInsert = if (addSpaceAround) "\u00A0$text\u00A0" else text
-    textPane.document.insertString(startOffset, textToInsert, attributes)
-    val endOffset = startOffset + textToInsert.length
-
-    val highlightStart = if (addSpaceAround) startOffset + 1 else startOffset
-    val highlightEnd = if (addSpaceAround) endOffset - 1 else endOffset
-    textPane.highlighter.addHighlight(highlightStart, highlightEnd) { g, _, _, _, c ->
-      c.drawRectangleAroundText(highlightStart, highlightEnd, g, frameColor, fill = false)
+    var curOffset = startOffset
+    if (addSpaceAround) {
+      curOffset = insertNonBreakSpace(textPane, curOffset)
     }
-    return endOffset
+    textPane.document.insertString(curOffset, text, attributes)
+    curOffset += text.length
+    if (addSpaceAround) {
+      curOffset = insertNonBreakSpace(textPane, curOffset)
+    }
+
+    val highlightStart = if (addSpaceAround) startOffset + 2 else startOffset
+    val highlightEnd = if (addSpaceAround) curOffset - 2 else curOffset
+    textPane.highlighter.addHighlight(highlightStart, highlightEnd) { g, _, _, _, c ->
+      c.drawRectangleAroundText(highlightStart, highlightEnd, g, frameColor, fontGetter(), fill = false)
+    }
+    return curOffset
+  }
+
+  private fun insertNonBreakSpace(textPane: JTextPane, startOffset: Int): Int {
+    return RegularTextPart("\u00A0\u00A0").insertToTextPane(textPane, startOffset)
   }
 }

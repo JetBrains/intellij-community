@@ -22,7 +22,7 @@ open class TextParagraph(val textParts: List<TextPart>) {
     StyleConstants.setLeftIndent(this, NO_INDENT)
     StyleConstants.setSpaceAbove(this, MEDIUM_INDENT)
     StyleConstants.setSpaceBelow(this, NO_INDENT)
-    StyleConstants.setLineSpacing(this, 0.2f)
+    StyleConstants.setLineSpacing(this, 0.3f)
   }
 
   open val attributes: SimpleAttributeSet
