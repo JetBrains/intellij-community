@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.ui.codereview.list.*
+import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.util.NlsSafe
@@ -11,6 +12,7 @@ import com.intellij.ui.components.JBList
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -40,6 +42,7 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
                                       createUserPresentation(avatarIconsProvider, pr.author),
                                       tagGroup = NamedCollection.create(GithubBundle.message("pull.request.labels"),
                                                                         pr.labels.map(::getLabelPresentation)),
+                                      mergeableStatus = getMergeableStatus(pr.mergeable),
                                       state = getStateText(pr.state, pr.isDraft),
                                       userGroup1 = NamedCollection.create(GithubBundle.message("pull.request.assignees"),
                                                                           pr.assignees.map { user ->
@@ -52,6 +55,15 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
   private fun getStateText(state: GHPullRequestState, isDraft: Boolean): @NlsSafe String? {
     if (state == GHPullRequestState.OPEN) return null
     return GHUIUtil.getPullRequestStateText(state, isDraft)
+  }
+
+  private fun getMergeableStatus(mergeableState: GHPullRequestMergeableState): ReviewListItemPresentation.Status? {
+    if (mergeableState == GHPullRequestMergeableState.CONFLICTING) {
+      return ReviewListItemPresentation.Status(AllIcons.RunConfigurations.TestFailed,
+                                               GithubBundle.message("pull.request.conflicts.merge.tooltip"))
+    }
+
+    return null
   }
 
   private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHActor?): UserPresentation? {
