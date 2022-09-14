@@ -81,6 +81,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
   public static final Key<String> WINDOW_DIMENSION_KEY = Key.create("WINDOW_DIMENSION_KEY");
   public static final Key<Boolean> REOPEN_WINDOW = Key.create("REOPEN_WINDOW");
+  public static final Key<Boolean> ALLOW_DOCK_TOOL_WINDOWS = Key.create("ALLOW_DOCK_TOOL_WINDOWS");
 
   public DockManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -412,9 +413,8 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       window.setupNorthPanel();
     }
 
-    boolean canDockToolWindows = container instanceof DockableEditorTabbedContainer &&
-                                 !isSingletonEditorInWindow(((DockableEditorTabbedContainer)container).getSplitters().getSelectedEditors());
-    if (canDockToolWindows) {
+    Boolean canDockToolWindows = content.getPresentation().getClientProperty(ALLOW_DOCK_TOOL_WINDOWS);
+    if (canDockToolWindows == null || canDockToolWindows) {
       window.setupToolWindowPane();
     }
 
@@ -471,7 +471,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     return result;
   }
 
-  private static boolean isSingletonEditorInWindow(FileEditor[] editors) {
+  public static boolean isSingletonEditorInWindow(FileEditor[] editors) {
     for (FileEditor editor : editors) {
       if (FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW.get(editor, false)
         || EditorWindow.HIDE_TABS.get(editor, false)) {
