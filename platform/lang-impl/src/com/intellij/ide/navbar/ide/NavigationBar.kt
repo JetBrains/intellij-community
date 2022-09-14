@@ -150,7 +150,8 @@ internal class NavigationBar(
               throw ce
             }
             catch (pce: ProcessCanceledException) {
-              throw pce  // TODO find out why it is being actually thrown
+              // To throw or not to throw this is a question...
+              // ignore // TODO find out why it is being actually thrown
             }
             catch (t: Throwable) {
               LOG.error(t)
