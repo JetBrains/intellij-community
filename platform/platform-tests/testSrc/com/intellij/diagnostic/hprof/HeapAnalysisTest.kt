@@ -48,7 +48,7 @@ class HeapAnalysisTest {
     }.run(scenario, baselineFileName, nominatedClassNames)
   }
 
-  //@Test
+  @Test
   fun testPathsThroughDifferentFields() {
     class MyRef(val referent: Any)
     class TestString(val s: String)
@@ -133,7 +133,7 @@ class HeapAnalysisTest {
                      listOf("C1"))
   }
 
-  //@Test
+  @Test
   fun testDisposerTreeSummarySection() {
     val objectTree = ObjectTreeTestWrapper()
 
