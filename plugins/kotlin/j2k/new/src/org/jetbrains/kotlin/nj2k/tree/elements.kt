@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.nj2k.tree
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
-
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import org.jetbrains.kotlin.nj2k.types.JKType
 
@@ -157,10 +156,26 @@ class JKAnnotationList(annotations: List<JKAnnotation> = emptyList()) : JKTreeEl
 
 class JKAnnotation(
     var classSymbol: JKClassSymbol,
-    arguments: List<JKAnnotationParameter> = emptyList()
+    arguments: List<JKAnnotationParameter> = emptyList(),
+    var useSiteTarget: UseSiteTarget? = null
 ) : JKAnnotationMemberValue() {
     var arguments: List<JKAnnotationParameter> by children(arguments)
     override fun accept(visitor: JKVisitor) = visitor.visitAnnotation(this)
+
+    @Suppress("unused")
+    enum class UseSiteTarget(renderName: String? = null) {
+        FIELD,
+        FILE,
+        PROPERTY,
+        PROPERTY_GETTER("get"),
+        PROPERTY_SETTER("set"),
+        RECEIVER,
+        CONSTRUCTOR_PARAMETER("param"),
+        SETTER_PARAMETER("setparam"),
+        PROPERTY_DELEGATE_FIELD("delegate");
+
+        val renderName: String = renderName ?: name.lowercase()
+    }
 }
 
 class JKTypeArgumentList(typeArguments: List<JKTypeElement> = emptyList()) : JKTreeElement(), PsiOwner by PsiOwnerImpl() {
