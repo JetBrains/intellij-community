@@ -4,6 +4,7 @@ package com.intellij.ide.ui.text.parts
 import com.intellij.ide.ui.text.StyledTextPaneUtils.drawRectangleAroundText
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.util.text.StringUtil.NON_BREAK_SPACE
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -50,6 +51,6 @@ open class CodeTextPart(text: String, private val addSpaceAround: Boolean = fals
   }
 
   private fun insertNonBreakSpace(textPane: JTextPane, startOffset: Int): Int {
-    return RegularTextPart("\u00A0\u00A0").insertToTextPane(textPane, startOffset)
+    return RegularTextPart("$NON_BREAK_SPACE$NON_BREAK_SPACE").insertToTextPane(textPane, startOffset)
   }
 }

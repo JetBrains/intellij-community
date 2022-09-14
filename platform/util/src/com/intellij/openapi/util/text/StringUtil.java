@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 public class StringUtil extends StringUtilRt {
   public static final String ELLIPSIS = "\u2026";
   public static final String THREE_DOTS = "...";
+  public static final String NON_BREAK_SPACE = "\u00A0";
 
   private static final class Splitters {
     private static final Pattern EOL_SPLIT_KEEP_SEPARATORS = Pattern.compile("(?<=(\r\n|\n))|(?<=\r)(?=[^\n])");
