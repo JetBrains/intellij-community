@@ -24,11 +24,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.Utils
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -49,11 +45,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.swing.JComponent
 import kotlin.coroutines.resume
 
 
-internal val navbarV2Enabled: Boolean = Registry.`is`("ide.navBar.v2", false)
+internal val navbarV2Enabled: Boolean =
+  Registry.`is`("ide.navBar.v2", false)
+  && ApplicationManager.getApplication().isInternal
+
 internal val LOG: Logger = Logger.getInstance("#com.intellij.ide.navbar.ide")
 
 internal class UiNavBarItem(
@@ -150,7 +148,7 @@ internal class NavigationBar(
               throw ce
             }
             catch (pce: ProcessCanceledException) {
-              // To throw or not to throw this is a question...
+              // To throw or not to throw that is a question...
               // ignore // TODO find out why it is being actually thrown
             }
             catch (t: Throwable) {
