@@ -645,7 +645,13 @@ public class StreamlinedBlobStorage implements Cloneable, AutoCloseable, Forceab
 
   @Override
   public void force() throws IOException {
-    pagedStorage.force();
+    pagedStorage.lockWrite();
+    try {
+      pagedStorage.force();
+    }
+    finally {
+      pagedStorage.unlockWrite();
+    }
   }
 
   @Override

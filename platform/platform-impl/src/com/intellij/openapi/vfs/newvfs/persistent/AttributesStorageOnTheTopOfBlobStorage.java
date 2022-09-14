@@ -15,6 +15,8 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -22,6 +24,21 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  */
 public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesStorage {
+  //Persistent format (see AttributesRecord/AttributeEntry):
+  //  attributes directory record: header, entry*
+  //      header:  fileId[4b]   (ref back to file owned attributes)
+  //      entry:  attributeId[4b], inlineSizeOrRefId[4b], inlineData[inlineSizeOrRefId]?
+  //
+  //      Attribute values < INLINE_ATTRIBUTE_MAX_SIZE stored inline, size in .inlineSizeOrRefId,
+  //      Attribute values > INLINE_ATTRIBUTE_MAX_SIZE stored in dedicated records, with
+  //      dedicatedRecordId = (inlineSizeOrRefId-INLINE_ATTRIBUTE_MAX_SIZE), inlineData is absent
+  //      for them.
+  //
+  //  attribute dedicated record: header, data[...]
+  //      header: -fileId[4b], attributeId[4b]
+  //               (fileId refs back to file owned attribute, '-' distinguishes dedicated record
+  //               from directory record)
+  //      data[...]: attribute value, size = record.length-header.size(8)
 
   @NotNull
   private final StreamlinedBlobStorage storage;
@@ -143,6 +160,10 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
   @Override
   public void close() throws IOException {
     storage.close();
+  }
+
+  public static boolean deleteStorageFiles(final Path file) throws IOException {
+    return Files.deleteIfExists(file);
   }
 
   /**

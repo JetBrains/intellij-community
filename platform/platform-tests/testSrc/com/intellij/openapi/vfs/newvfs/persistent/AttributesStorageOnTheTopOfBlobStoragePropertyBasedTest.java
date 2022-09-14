@@ -33,7 +33,7 @@ public class AttributesStorageOnTheTopOfBlobStoragePropertyBasedTest {
   private static final int PAGE_SIZE = 1 << 14;
   private static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);
 
-  private static final int ITERATION_COUNT = 1000;
+  private static final int ITERATION_COUNT = 100;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
