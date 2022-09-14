@@ -248,6 +248,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     Disposer.register(this, summaryRendererComponent);
     myMainPanel.add(createHeaderWithLocationLink(usageInfo));
     myMainPanel.add(summaryRendererComponent);
+    myAlreadyRenderedSnippets++;
   }
 
   private void addMostCommonUsagesForSelectedGroups() {
