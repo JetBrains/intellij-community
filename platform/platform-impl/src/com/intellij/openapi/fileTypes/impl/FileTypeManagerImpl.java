@@ -578,7 +578,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   public void initializeComponent() {
     initStandardFileTypes();
 
-    if (!myUnresolvedMappings.isEmpty()) {
+    if (!myPendingFileTypes.isEmpty()) {
       instantiatePendingFileTypes();
     }
 
