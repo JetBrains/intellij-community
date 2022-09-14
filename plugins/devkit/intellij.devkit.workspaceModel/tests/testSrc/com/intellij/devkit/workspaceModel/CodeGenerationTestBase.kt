@@ -89,7 +89,7 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
     val genPackageDir = genRoot.findFileByRelativePath(pathToPackage) ?: error("Cannot find $pathToPackage under $genRoot")
 
     val expectedApiDirPath = FileUtil.createTempDirectory(CodeGenerationTestBase::class.java.simpleName, "${testDirectoryName}_api", true)
-    val expectedApiDir = VirtualFileManager.getInstance().findFileByNioPath(expectedApiDirPath.toPath())!!
+    val expectedApiDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(expectedApiDirPath.toPath())!!
     if (FileUtil.isAncestor(dirWithExpectedApiFiles, dirWithExpectedImplFiles, true)) {
       runWriteActionAndWait {
         VfsUtil.copyDirectory(this, srcPackageDir, expectedApiDir, null)
@@ -98,7 +98,7 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
     }
     else {
       val expectedImplDirPath: Path = FileUtil.createTempDirectory(CodeGenerationTestBase::class.java.simpleName, "${testDirectoryName}_impl", true).toPath()
-      val expectedImplDir = VirtualFileManager.getInstance().findFileByNioPath(expectedImplDirPath)!!
+      val expectedImplDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(expectedImplDirPath)!!
       runWriteActionAndWait {
         VfsUtil.copyDirectory(this, srcPackageDir, expectedApiDir, VirtualFileFilter { it != genRoot })
         VfsUtil.copyDirectory(this, genPackageDir, expectedImplDir, null)
@@ -133,14 +133,7 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
       contentEntry.addSourceFolder(genFolder, JavaSourceRootType.SOURCE,
                                    JpsJavaExtensionService.getInstance().createSourceRootProperties("", true))
       if (addWorkspaceStorageLibrary) {
-        val library = model.moduleLibraryTable.modifiableModel.createLibrary("workspace-storage")
-        val modifiableModel = library.modifiableModel
-        val workspaceStorageClassesPath = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(WorkspaceEntity::class.java))
-        val workspaceStorageClassesRoot = VirtualFileManager.getInstance().refreshAndFindFileByUrl(workspaceStorageClassesPath)
-        assertNotNull("Cannot find $workspaceStorageClassesPath", workspaceStorageClassesRoot)
-        VfsUtil.markDirtyAndRefresh(false, true, true, workspaceStorageClassesRoot)
-        modifiableModel.addRoot(workspaceStorageClassesRoot!!, OrderRootType.CLASSES)
-        modifiableModel.commit()
+        addWorkspaceStorageLibrary(model)
       }
     }
 
@@ -150,6 +143,26 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
 
     override fun hashCode(): Int {
       return addWorkspaceStorageLibrary.hashCode()
+    }
+  }
+
+  companion object {
+    internal fun removeWorkspaceStorageLibrary(model: ModifiableRootModel) {
+      val moduleLibraryTable = model.moduleLibraryTable
+      val modifiableModel = model.moduleLibraryTable.modifiableModel
+      modifiableModel.removeLibrary(moduleLibraryTable.libraries.first())
+      modifiableModel.commit()
+    }
+
+    internal fun addWorkspaceStorageLibrary(model: ModifiableRootModel) {
+      val library = model.moduleLibraryTable.modifiableModel.createLibrary("workspace-storage")
+      val modifiableModel = library.modifiableModel
+      val workspaceStorageClassesPath = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(WorkspaceEntity::class.java))
+      val workspaceStorageClassesRoot = VirtualFileManager.getInstance().refreshAndFindFileByUrl(workspaceStorageClassesPath)
+      assertNotNull("Cannot find $workspaceStorageClassesPath", workspaceStorageClassesRoot)
+      VfsUtil.markDirtyAndRefresh(false, true, true, workspaceStorageClassesRoot)
+      modifiableModel.addRoot(workspaceStorageClassesRoot!!, OrderRootType.CLASSES)
+      modifiableModel.commit()
     }
   }
 }

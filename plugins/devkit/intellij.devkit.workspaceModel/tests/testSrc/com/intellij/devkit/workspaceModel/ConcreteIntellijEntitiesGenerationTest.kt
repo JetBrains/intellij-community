@@ -11,7 +11,7 @@ import com.intellij.workspaceModel.storage.CodeGeneratorVersions
 import java.io.File
 import java.nio.file.Path
 
-class IntellijEntitiesGenerationTest : CodeGenerationTestBase() {
+class ConcreteIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
 
   override fun setUp() {
     CodeGeneratorVersions.checkApiInInterface = false

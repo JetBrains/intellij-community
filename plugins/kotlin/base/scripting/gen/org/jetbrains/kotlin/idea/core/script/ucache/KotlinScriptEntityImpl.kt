@@ -27,7 +27,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class KotlinScriptEntityImpl : KotlinScriptEntity, WorkspaceEntityBase() {
+open class KotlinScriptEntityImpl(val dataSource: KotlinScriptEntityData) : KotlinScriptEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val DEPENDENCIES_CONNECTION_ID: ConnectionId = ConnectionId.create(KotlinScriptEntity::class.java, LibraryEntity::class.java,
@@ -39,10 +39,8 @@ open class KotlinScriptEntityImpl : KotlinScriptEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _path: String? = null
   override val path: String
-    get() = _path!!
+    get() = dataSource.path
 
   override val dependencies: List<LibraryEntity>
     get() = snapshot.extractOneToManyChildren<LibraryEntity>(DEPENDENCIES_CONNECTION_ID, this)!!.toList()
@@ -103,8 +101,8 @@ open class KotlinScriptEntityImpl : KotlinScriptEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as KotlinScriptEntity
-      this.entitySource = dataSource.entitySource
-      this.path = dataSource.path
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.path != dataSource.path) this.path = dataSource.path
       if (parents != null) {
       }
     }
@@ -190,12 +188,13 @@ class KotlinScriptEntityData : WorkspaceEntityData.WithCalculablePersistentId<Ko
   }
 
   override fun createEntity(snapshot: EntityStorage): KotlinScriptEntity {
-    val entity = KotlinScriptEntityImpl()
-    entity._path = path
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = KotlinScriptEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {
@@ -224,7 +223,7 @@ class KotlinScriptEntityData : WorkspaceEntityData.WithCalculablePersistentId<Ko
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as KotlinScriptEntityData
 
@@ -235,7 +234,7 @@ class KotlinScriptEntityData : WorkspaceEntityData.WithCalculablePersistentId<Ko
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as KotlinScriptEntityData
 
