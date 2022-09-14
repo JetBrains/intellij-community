@@ -202,7 +202,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
     private val modifiedFilesCheckScheduled = AtomicBoolean()
     private val modifiedFiles = ConcurrentLinkedQueue<String>()
 
-    fun scheduleModifiedFilesCheck(filePath: String) {
+    private fun scheduleModifiedFilesCheck(filePath: String) {
         modifiedFiles.add(filePath)
         if (modifiedFilesCheckScheduled.compareAndSet(false, true)) {
             val disposable = KotlinPluginDisposable.getInstance(project)

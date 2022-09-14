@@ -87,7 +87,7 @@ object GHUIUtil {
 
   fun getLabelForeground(bg: Color): Color = if (ColorUtil.isDark(bg)) Color.white else Color.black
 
-  fun getFontEM(component: JComponent): Float {
+  private fun getFontEM(component: JComponent): Float {
     val metrics = component.getFontMetrics(component.font)
     //em dash character
     return FontLayoutService.getInstance().charWidth2D(metrics, '\u2014'.code)

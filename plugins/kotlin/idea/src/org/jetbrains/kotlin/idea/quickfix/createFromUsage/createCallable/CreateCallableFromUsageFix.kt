@@ -83,12 +83,12 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
     protected open val callableInfo: CallableInfo?
         get() = throw UnsupportedOperationException()
 
-    protected fun callableInfos(): List<CallableInfo> =
+    private fun callableInfos(): List<CallableInfo> =
         callableInfoReference?.get() ?: callableInfos.also {
             callableInfoReference = WeakReference(it)
         }
 
-    protected fun notEmptyCallableInfos() = callableInfos().takeIf { it.isNotEmpty() }
+    private fun notEmptyCallableInfos() = callableInfos().takeIf { it.isNotEmpty() }
 
     private var initialized: Boolean = false
 

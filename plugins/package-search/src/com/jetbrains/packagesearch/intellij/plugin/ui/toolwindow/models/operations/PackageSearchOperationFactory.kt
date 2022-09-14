@@ -144,7 +144,7 @@ internal class PackageSearchOperationFactory {
         }
     }
 
-    fun createChangePackageOperations(
+    private fun createChangePackageOperations(
         packageModel: PackageModel.Installed,
         newVersion: PackageVersion,
         newScope: PackageScope? = null,

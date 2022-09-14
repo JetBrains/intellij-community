@@ -21,7 +21,7 @@ fun AbstractWslDistribution.runCommand(vararg commands: String,
 }
 
 
-class ProcessExistedNotZeroException(val stdError: String, val exitCode: Int, val tool: String) :
+class ProcessExistedNotZeroException(private val stdError: String, val exitCode: Int, val tool: String) :
   Exception("Can't execute $tool: $exitCode. $stdError")
 
 /**

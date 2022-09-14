@@ -31,7 +31,7 @@ internal class DependencyGraphBuilder private constructor(
   private fun createVisitor(scope: LocalScopeContext) =
     DependencyGraphBuilder(scope, currentDepth, dependents, dependencies, implicitReceivers, scopesStates, inlinedVariables)
 
-  inline fun <T> checkedDepthCall(node: UElement, body: () -> T): T {
+  private inline fun <T> checkedDepthCall(node: UElement, body: () -> T): T {
     currentDepth++
     try {
       if (currentDepth > maxBuildDepth) {

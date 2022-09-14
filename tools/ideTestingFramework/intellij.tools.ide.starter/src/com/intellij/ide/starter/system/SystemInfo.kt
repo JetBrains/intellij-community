@@ -26,7 +26,7 @@ object SystemInfo {
     return if (Character.isDigit(rtVersion[0])) rtVersion else fallback
   }
 
-  fun getOsName(): String = if (isMac) "macOS" else OS_NAME
+  private fun getOsName(): String = if (isMac) "macOS" else OS_NAME
 
   fun getOsNameAndVersion(): String = getOsName() + ' ' + OS_VERSION
 

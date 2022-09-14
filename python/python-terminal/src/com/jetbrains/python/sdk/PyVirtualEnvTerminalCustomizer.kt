@@ -140,7 +140,7 @@ class SettingsState {
 
 @State(name = "PyVirtualEnvTerminalCustomizer", storages = [(Storage("python-terminal.xml"))])
 class PyVirtualEnvTerminalSettings : PersistentStateComponent<SettingsState> {
-  var myState: SettingsState = SettingsState()
+  private var myState: SettingsState = SettingsState()
 
   var virtualEnvActivate: Boolean
     get() = myState.virtualEnvActivate

@@ -36,8 +36,8 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
   }
 
   val manager = ParameterHintsPresentationManager.getInstance()
-  val inlayPresenter: (Inlay<*>) -> String = { (it.renderer as HintRenderer).text ?: throw IllegalArgumentException("No text set to hint") }
-  val inlayFilter: (Inlay<*>) -> Boolean = { manager.isParameterHint(it) }
+  private val inlayPresenter: (Inlay<*>) -> String = { (it.renderer as HintRenderer).text ?: throw IllegalArgumentException("No text set to hint") }
+  private val inlayFilter: (Inlay<*>) -> Boolean = { manager.isParameterHint(it) }
 
   fun checkParameterHints() = checkInlays(inlayPresenter, inlayFilter)
 

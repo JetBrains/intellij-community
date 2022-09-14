@@ -66,7 +66,7 @@ class SimpleActionDescriptor(
   val defaultShortcut: Any // KeyboardShortcut or DummyKeyboardShortcut
 ) {
   companion object {
-    fun fromKeymap(keymap: Keymap, actionIds: List<String>): List<SimpleActionDescriptor> {
+    private fun fromKeymap(keymap: Keymap, actionIds: List<String>): List<SimpleActionDescriptor> {
       return actionIds.map {
         SimpleActionDescriptor(
           it,

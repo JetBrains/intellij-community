@@ -71,7 +71,7 @@ abstract class DefaultJreSelector {
     override fun isValid(): Boolean = !project.isDisposed
   }
 
-  open class SdkFromModuleDependencies<T: ComboBox<*>>(val moduleComboBox: T, val getSelectedModule: (T) -> Module?, val productionOnly: () -> Boolean): DefaultJreSelector() {
+  open class SdkFromModuleDependencies<T: ComboBox<*>>(private val moduleComboBox: T, val getSelectedModule: (T) -> Module?, val productionOnly: () -> Boolean): DefaultJreSelector() {
     override fun getNameAndDescription(): Pair<String?, String> {
       val moduleNotSpecified = ExecutionBundle.message("module.not.specified")
       val module = getSelectedModule(moduleComboBox) ?: return Pair.create(null, moduleNotSpecified)
@@ -103,7 +103,7 @@ abstract class DefaultJreSelector {
     }
   }
 
-  class SdkFromSourceRootDependencies<T: ComboBox<*>>(moduleComboBox: T, getSelectedModule: (T) -> Module?, val classSelector: EditorTextField)
+  class SdkFromSourceRootDependencies<T: ComboBox<*>>(moduleComboBox: T, getSelectedModule: (T) -> Module?, private val classSelector: EditorTextField)
   : SdkFromModuleDependencies<T>(moduleComboBox, getSelectedModule, { isClassInProductionSources(moduleComboBox, getSelectedModule, classSelector) }) {
     override fun addChangeListener(listener: Runnable) {
       super.addChangeListener(listener)

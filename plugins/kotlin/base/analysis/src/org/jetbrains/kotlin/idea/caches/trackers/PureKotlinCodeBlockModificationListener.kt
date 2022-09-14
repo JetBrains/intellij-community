@@ -317,7 +317,7 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
         Disposer.register(parentDisposable) { removeModelListener(listener) }
     }
 
-    fun removeModelListener(listener: PureKotlinOutOfCodeBlockModificationListener) {
+    private fun removeModelListener(listener: PureKotlinOutOfCodeBlockModificationListener) {
         listeners.remove(listener)
     }
 

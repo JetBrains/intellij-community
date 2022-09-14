@@ -16,7 +16,7 @@ import kotlin.math.log10
 import kotlin.math.pow
 
 class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
-  var daemonStartTime = -1L
+  private var daemonStartTime = -1L
 
   override fun daemonStarting(fileEditors: Collection<FileEditor>) {
     daemonStartTime = System.currentTimeMillis()

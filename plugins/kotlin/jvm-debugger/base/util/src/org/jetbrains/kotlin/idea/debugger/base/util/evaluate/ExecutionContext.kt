@@ -143,13 +143,13 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
     fun invokeMethodAsObject(type: ClassType, methodName: String, vararg params: Value): ObjectReference? =
         invokeMethodAsObject(type, methodName, null, *params)
 
-    fun invokeMethodAsObject(type: ClassType, methodName: String, methodSignature: String?, vararg params: Value): ObjectReference? =
+    private fun invokeMethodAsObject(type: ClassType, methodName: String, methodSignature: String?, vararg params: Value): ObjectReference? =
         findAndInvoke(type, methodName, methodSignature, *params) as? ObjectReference
 
     fun invokeMethodAsObject(instance: ObjectReference, methodName: String, vararg params: Value): ObjectReference? =
         invokeMethodAsObject(instance, methodName, null, *params)
 
-    fun invokeMethodAsObject(
+    private fun invokeMethodAsObject(
         instance: ObjectReference,
         methodName: String,
         methodSignature: String?,
@@ -188,7 +188,7 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
     /**
      * static method invocation
      */
-    fun findAndInvoke(type: ClassType, name: String, methodSignature: String? = null, vararg params: Value): Value? {
+    private fun findAndInvoke(type: ClassType, name: String, methodSignature: String? = null, vararg params: Value): Value? {
         val method =
             if (methodSignature is String)
                 type.methodsByName(name, methodSignature).single()
@@ -197,7 +197,7 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
         return invokeMethod(type, method, params.asList())
     }
 
-    fun findAndInvoke(instance: ObjectReference, name: String, methodSignature: String? = null, vararg params: Value): Value? {
+    private fun findAndInvoke(instance: ObjectReference, name: String, methodSignature: String? = null, vararg params: Value): Value? {
         val type = instance.referenceType()
         type.allMethods()
         val method =

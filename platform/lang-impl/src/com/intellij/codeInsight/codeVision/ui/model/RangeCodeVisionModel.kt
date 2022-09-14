@@ -14,7 +14,7 @@ class RangeCodeVisionModel(
   val project: Project,
   val editor: Editor,
   lensMap: Map<CodeVisionAnchorKind, List<CodeVisionEntry>>,
-  val anchoringRange: TextRange,
+  private val anchoringRange: TextRange,
   @NlsSafe
   val name: String = "Code Vision"
 ) {
@@ -45,7 +45,7 @@ class RangeCodeVisionModel(
     projectModel.handleLensExtraAction(editor, anchoringRange, selectedValue, actionId)
   }
 
-  fun sortedLenses(): List<CodeVisionEntry> {
+  private fun sortedLenses(): List<CodeVisionEntry> {
     return lensForRange.sortedBy { projectModel.getLensIndex(it) }
   }
 

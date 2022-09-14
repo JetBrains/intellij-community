@@ -20,7 +20,7 @@ abstract class IdeRepresentationSection(private val prefs: SettingsPreferences,
                                         private val icon: Icon) : TransferSettingsSection {
   protected val _isSelected = AtomicBooleanProperty(prefs[key])
   protected open val disabledCheckboxText: String? = null
-  protected val leftGap = 20
+  private val leftGap = 20
   private var morePanel: JComponent? = null
   private var moreLabel: String = "More.."
 
@@ -76,12 +76,12 @@ abstract class IdeRepresentationSection(private val prefs: SettingsPreferences,
     }
   }
 
-  protected fun withMoreLabel(moreLbl: String?, pnl: JComponent) {
+  private fun withMoreLabel(moreLbl: String?, pnl: JComponent) {
     morePanel = pnl
     moreLbl?.apply { moreLabel = this }
   }
 
-  protected fun withMoreLabel(pnl: JComponent) = withMoreLabel(null, pnl)
+  private fun withMoreLabel(pnl: JComponent) = withMoreLabel(null, pnl)
   protected fun withMoreLabel(moreLbl: String?, pnl: () -> JComponent) = withMoreLabel(moreLbl, pnl())
   protected fun withMoreLabel(pnl: (AtomicBooleanProperty) -> JComponent) = withMoreLabel(pnl(_isSelected))
 

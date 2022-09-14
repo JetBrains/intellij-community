@@ -19,13 +19,13 @@ object PyNamesMatchingMlCompletionFeatures {
   private val lineLeftTokensKey = Key<Map<String, Int>>("py.ml.completion.line.left.tokens")
 
   val importNamesKey = Key<Map<String, Int>>("py.ml.completion.import.names")
-  val importTokensKey = Key<Map<String, Int>>("py.ml.completion.import.tokens")
+  private val importTokensKey = Key<Map<String, Int>>("py.ml.completion.import.tokens")
 
   val namedArgumentsNamesKey = Key<Map<String, Int>>("py.ml.completion.arguments.names")
-  val namedArgumentsTokensKey = Key<Map<String, Int>>("py.ml.completion.arguments.tokens")
+  private val namedArgumentsTokensKey = Key<Map<String, Int>>("py.ml.completion.arguments.tokens")
 
   val statementListOrFileNamesKey = Key<Map<String, Int>>("py.ml.completion.statement.list.names")
-  val statementListOrFileTokensKey = Key<Map<String, Int>>("py.ml.completion.statement.list.tokens")
+  private val statementListOrFileTokensKey = Key<Map<String, Int>>("py.ml.completion.statement.list.tokens")
 
   private val enclosingMethodName = Key<String>("py.ml.completion.enclosing.method.name")
 
@@ -197,13 +197,13 @@ object PyNamesMatchingMlCompletionFeatures {
     return variables.toMap().filter { !it.key.contains(DUMMY_IDENTIFIER_TRIMMED) }
   }
 
-  fun tokensMatched(firstName: String, secondName: String): Int {
+  private fun tokensMatched(firstName: String, secondName: String): Int {
     val nameTokens = getTokens(firstName)
     val elementNameTokens = getTokens(secondName)
     return nameTokens.sumOf { token1 -> elementNameTokens.count { token2 -> token1 == token2 } }
   }
 
-  fun tokensMatched(name: String, tokens: Map<String, Int>): Int {
+  private fun tokensMatched(name: String, tokens: Map<String, Int>): Int {
     val nameTokens = getTokens(name)
     return nameTokens.sumOf { tokens[it] ?: 0 }
   }

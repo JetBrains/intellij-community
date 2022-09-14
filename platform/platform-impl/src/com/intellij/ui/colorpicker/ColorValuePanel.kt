@@ -65,7 +65,7 @@ enum class ColorFormat {
   }
 }
 
-class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha: Boolean = false, val showAlphaInPercent: Boolean = true)
+class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha: Boolean = false, private val showAlphaInPercent: Boolean = true)
   : JPanel(GridBagLayout()), DocumentListener, ColorListener {
 
   /**
@@ -109,13 +109,13 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
   private val blueDocument = DigitColorDocument(colorField3, COLOR_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
   private val brightnessDocument = DigitColorDocument(colorField3, PERCENT_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
 
-  var currentAlphaFormat by Delegates.observable(if (showAlphaInPercent) AlphaFormat.PERCENTAGE else loadAlphaFormatProperty()) { _, _, newValue ->
+  private var currentAlphaFormat by Delegates.observable(if (showAlphaInPercent) AlphaFormat.PERCENTAGE else loadAlphaFormatProperty()) { _, _, newValue ->
     updateAlphaFormat()
     saveAlphaFormatProperty(newValue)
     repaint()
   }
 
-  var currentColorFormat by Delegates.observable(loadColorFormatProperty()) { _, _, newValue ->
+  private var currentColorFormat by Delegates.observable(loadColorFormatProperty()) { _, _, newValue ->
     updateColorFormat()
     saveColorFormatProperty(newValue)
     repaint()

@@ -36,22 +36,22 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   companion object {
     val GROUP = EventLogGroup("build.gradle.import", 5)
 
-    val activityIdField = EventFields.Long("ide_activity_id")
-    val importPhaseField = EventFields.Enum<Phase>("phase")
+    private val activityIdField = EventFields.Long("ide_activity_id")
+    private val importPhaseField = EventFields.Enum<Phase>("phase")
 
     val syncStartedEvent = GROUP.registerEvent("gradle.sync.started", activityIdField)
     val syncFinishedEvent = GROUP.registerEvent("gradle.sync.finished", activityIdField, Boolean("sync_successful"))
-    val phaseStartedEvent = GROUP.registerEvent("phase.started", activityIdField, importPhaseField)
+    private val phaseStartedEvent = GROUP.registerEvent("phase.started", activityIdField, importPhaseField)
     val phaseFinishedEvent = GROUP.registerVarargEvent("phase.finished",
                                                        activityIdField,
                                                        importPhaseField,
                                                        DurationMs,
                                                        Int("error_count"))
 
-    val errorField = StringValidatedByCustomRule("error", ClassNameRuleValidator::class.java)
-    val severityField = EventFields.String("severity", listOf("fatal", "warning"))
-    val errorHashField = Int("error_hash")
-    val tooManyErrorsField = Boolean("too_many_errors")
+    private val errorField = StringValidatedByCustomRule("error", ClassNameRuleValidator::class.java)
+    private val severityField = EventFields.String("severity", listOf("fatal", "warning"))
+    private val errorHashField = Int("error_hash")
+    private val tooManyErrorsField = Boolean("too_many_errors")
 
     private val errorEvent = GROUP.registerVarargEvent("error",
                                                        activityIdField,

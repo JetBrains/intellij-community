@@ -54,7 +54,7 @@ internal class PsiBuilderFillingVisitor(private val builder: PsiBuilder) : Recur
     }
   }
 
-  fun leadingWhitespaces(): WhitespacesAndCommentsBinder {
+  private fun leadingWhitespaces(): WhitespacesAndCommentsBinder {
     return WhitespacesAndCommentsBinder { tokens, _, getter ->
       var i = 0
       while (i < tokens.size && (tokens[i] != MarkdownTokenTypes.WHITE_SPACE || getter.get(i).isNotBlank())) {

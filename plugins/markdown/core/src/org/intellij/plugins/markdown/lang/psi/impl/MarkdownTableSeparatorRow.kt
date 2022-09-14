@@ -54,7 +54,7 @@ class MarkdownTableSeparatorRow(text: CharSequence): MarkdownLeafPsiElement(Mark
   val cellsRanges: List<TextRange>
     get() = cachedCellsRanges
 
-  val cellsLocalRanges: List<TextRange>
+  private val cellsLocalRanges: List<TextRange>
     get() = cachedCellsRanges.map { it.shiftLeft(startOffset) }
 
   val cellsCount: Int
@@ -107,7 +107,7 @@ class MarkdownTableSeparatorRow(text: CharSequence): MarkdownLeafPsiElement(Mark
     CENTER
   }
 
-  fun getCellAlignment(range: TextRange): CellAlignment {
+  private fun getCellAlignment(range: TextRange): CellAlignment {
     val cellText = text.subSequence(range.startOffset, range.endOffset)
     val firstIndex = cellText.indexOfFirst { it == ':' }
     if (firstIndex == -1) {

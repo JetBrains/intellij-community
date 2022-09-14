@@ -64,7 +64,7 @@ open class JUnit5StarterAssistant : BeforeEachCallback, AfterEachCallback {
     }
   }
 
-  protected fun injectTestInfoProperty(context: ExtensionContext) {
+  private fun injectTestInfoProperty(context: ExtensionContext) {
     val testInstance = context.testInstance.get()
 
     val testInfoProperty = getProperty(testInstance, TestInfo::class)

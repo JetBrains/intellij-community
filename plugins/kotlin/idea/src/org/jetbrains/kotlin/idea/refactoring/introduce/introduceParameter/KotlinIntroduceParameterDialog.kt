@@ -35,13 +35,13 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 class KotlinIntroduceParameterDialog private constructor(
-    project: Project,
-    val editor: Editor,
-    val descriptor: IntroduceParameterDescriptor,
-    val lambdaExtractionDescriptor: ExtractableCodeDescriptor?,
-    nameSuggestions: Array<String>,
-    typeSuggestions: List<KotlinType>,
-    val helper: KotlinIntroduceParameterHelper
+  project: Project,
+  val editor: Editor,
+  val descriptor: IntroduceParameterDescriptor,
+  private val lambdaExtractionDescriptor: ExtractableCodeDescriptor?,
+  nameSuggestions: Array<String>,
+  typeSuggestions: List<KotlinType>,
+  val helper: KotlinIntroduceParameterHelper
 ) : RefactoringDialog(project, true) {
     constructor(
         project: Project,

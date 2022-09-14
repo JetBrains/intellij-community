@@ -11,9 +11,9 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import kotlin.math.min
 
 class ToFromOriginalFileMapper private constructor(
-    val originalFile: KtFile,
-    val syntheticFile: KtFile,
-    val completionOffset: Int
+  val originalFile: KtFile,
+  private val syntheticFile: KtFile,
+  private val completionOffset: Int
 ) {
     companion object {
         fun create(parameters: CompletionParameters): ToFromOriginalFileMapper {

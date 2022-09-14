@@ -57,9 +57,9 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
   private var currentPackageInfo: PackageInfo? = null
   private var documentationUrl: String? = null
 
-  val packageListPanel: JPanel
-  val tablesView: PyPackagingTablesView
-  val noPackagePanel = JBPanelWithEmptyText().apply { emptyText.text = message("python.toolwindow.packages.description.panel.placeholder") }
+  private val packageListPanel: JPanel
+  private val tablesView: PyPackagingTablesView
+  private val noPackagePanel = JBPanelWithEmptyText().apply { emptyText.text = message("python.toolwindow.packages.description.panel.placeholder") }
 
   // layout
   private var mainPanel: JPanel? = null
@@ -361,14 +361,14 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
     progressBar.isVisible = false
   }
 
-  fun showInstalledControls() {
+  private fun showInstalledControls() {
     hideInstallableControls()
     progressBar.isVisible = false
     versionLabel.isVisible = true
     uninstallAction.isVisible = true
   }
 
-  fun showInstallableControls() {
+  private fun showInstallableControls() {
     hideInstalledControls()
     progressBar.isVisible = false
     versionSelector.isVisible = true

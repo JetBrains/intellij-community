@@ -19,7 +19,7 @@ import javax.swing.border.Border
 
 open class SegmentedActionToolbarComponent(place: String,
                                            group: ActionGroup,
-                                           val paintBorderForSingleItem: Boolean = true) : ActionToolbarImpl(place, group, true) {
+                                           private val paintBorderForSingleItem: Boolean = true) : ActionToolbarImpl(place, group, true) {
   companion object {
     internal const val CONTROL_BAR_PROPERTY = "CONTROL_BAR_PROPERTY"
     internal const val CONTROL_BAR_FIRST = "CONTROL_BAR_PROPERTY_FIRST"

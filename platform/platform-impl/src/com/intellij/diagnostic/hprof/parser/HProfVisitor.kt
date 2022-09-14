@@ -42,7 +42,7 @@ open class HProfVisitor {
     return myHeapDumpVisits[type.value]
   }
 
-  fun enableAll() {
+  private fun enableAll() {
     for (recordType in RecordType.values()) {
       myTopLevelVisits[recordType.value] = true
     }

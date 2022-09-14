@@ -58,7 +58,7 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
     class UrlAndAccount private constructor() {
 
       var url: String = ""
-      var accountId: String = ""
+      private var accountId: String = ""
 
       constructor(url: String, accountId: String) : this() {
         this.url = url

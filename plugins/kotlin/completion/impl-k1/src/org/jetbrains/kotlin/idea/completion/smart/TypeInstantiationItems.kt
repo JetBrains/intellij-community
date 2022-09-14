@@ -43,14 +43,14 @@ import org.jetbrains.kotlin.util.kind
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 class TypeInstantiationItems(
-    val resolutionFacade: ResolutionFacade,
-    val bindingContext: BindingContext,
-    val visibilityFilter: (DeclarationDescriptor) -> Boolean,
-    val toFromOriginalFileMapper: ToFromOriginalFileMapper,
-    val inheritorSearchScope: GlobalSearchScope,
-    val lookupElementFactory: LookupElementFactory,
-    val forOrdinaryCompletion: Boolean,
-    val indicesHelper: KotlinIndicesHelper
+  val resolutionFacade: ResolutionFacade,
+  val bindingContext: BindingContext,
+  val visibilityFilter: (DeclarationDescriptor) -> Boolean,
+  val toFromOriginalFileMapper: ToFromOriginalFileMapper,
+  val inheritorSearchScope: GlobalSearchScope,
+  val lookupElementFactory: LookupElementFactory,
+  private val forOrdinaryCompletion: Boolean,
+  val indicesHelper: KotlinIndicesHelper
 ) {
     fun addTo(
         items: MutableCollection<LookupElement>,

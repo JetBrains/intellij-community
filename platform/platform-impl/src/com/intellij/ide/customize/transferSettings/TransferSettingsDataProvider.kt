@@ -10,9 +10,9 @@ import java.util.*
 import java.util.stream.Collectors
 
 class TransferSettingsDataProvider(private val providers: List<TransferSettingsProvider>) {
-  val baseIdeVersions = mutableListOf<BaseIdeVersion>()
-  val ideVersions = mutableListOf<IdeVersion>()
-  val failedIdeVersions = mutableListOf<FailedIdeVersion>()
+  private val baseIdeVersions = mutableListOf<BaseIdeVersion>()
+  private val ideVersions = mutableListOf<IdeVersion>()
+  private val failedIdeVersions = mutableListOf<FailedIdeVersion>()
 
   val orderedIdeVersions get() = ideVersions + failedIdeVersions
 

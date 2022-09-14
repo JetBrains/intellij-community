@@ -325,7 +325,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     return getCurrentDataProvider()?.let(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE::getData)
   }
 
-  internal fun getBlocksIterable(): PrevNextDifferenceIterable = scrollSupport.blockIterable
+  private fun getBlocksIterable(): PrevNextDifferenceIterable = scrollSupport.blockIterable
 
   internal fun getCurrentDiffViewer(): DiffViewer? = getDiffViewer(scrollSupport.blockIterable.index)
 

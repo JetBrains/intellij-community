@@ -87,7 +87,7 @@ object RepositoryBrowser {
 class RepositoryBrowserPanel(
   val project: Project,
   val root: AbstractVcsVirtualFile,
-  val localRoot: VirtualFile
+  private val localRoot: VirtualFile
 ) : JPanel(BorderLayout()), DataProvider, Disposable {
   companion object {
     val REPOSITORY_BROWSER_DATA_KEY = DataKey.create<RepositoryBrowserPanel>("com.intellij.openapi.vcs.impl.RepositoryBrowserPanel")

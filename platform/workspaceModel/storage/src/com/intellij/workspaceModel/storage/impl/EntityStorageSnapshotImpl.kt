@@ -80,7 +80,7 @@ internal class MutableEntityStorageImpl(
   internal val changeLog = WorkspaceBuilderChangeLog()
 
   // Temporal solution for accessing error in deft project.
-  internal var throwExceptionOnError = false
+  private var throwExceptionOnError = false
 
   internal fun incModificationCount() {
     this.changeLog.modificationCount++

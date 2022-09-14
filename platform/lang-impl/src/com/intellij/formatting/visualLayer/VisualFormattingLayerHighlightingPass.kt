@@ -22,7 +22,7 @@ class VisualFormattingLayerHighlightingPass(editor: Editor, file: PsiFile) : Edi
 
   val service: VisualFormattingLayerService by lazy { VisualFormattingLayerService.getInstance() }
 
-  var myVisualFormattingLayerElements: List<VisualFormattingLayerElement>? = null
+  private var myVisualFormattingLayerElements: List<VisualFormattingLayerElement>? = null
 
   override fun doCollectInformation(progress: ProgressIndicator) {
     //progress.start()

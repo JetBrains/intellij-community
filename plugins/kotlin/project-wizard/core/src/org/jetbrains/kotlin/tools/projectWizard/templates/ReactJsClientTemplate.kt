@@ -33,7 +33,7 @@ object ReactJsClientTemplate : JsClientTemplate() {
     private const val clientSourceFile = "Client.kt"
     override val filesToOpenInEditor = listOf(clientSourceFile)
 
-    val useReactRouterDom by booleanSetting(
+    private val useReactRouterDom by booleanSetting(
         KotlinNewProjectWizardBundle.message("module.template.react.use.react.router.dom"),
         GenerationPhase.PROJECT_GENERATION
     ) {
@@ -41,7 +41,7 @@ object ReactJsClientTemplate : JsClientTemplate() {
         description = KotlinNewProjectWizardBundle.message("module.template.react.use.react.router.dom.description")
     }
 
-    val useReactRedux by booleanSetting(
+    private val useReactRedux by booleanSetting(
         KotlinNewProjectWizardBundle.message("module.template.react.use.react.redux"),
         GenerationPhase.PROJECT_GENERATION
     ) {

@@ -16,8 +16,8 @@ import org.jetbrains.plugins.gradle.model.DefaultFileCollectionDependency
 import java.io.File
 
 class KotlinSourceSetProtoBuilder(
-    val androidDeps: Map<String, List<Any>>?,
-    val project: Project
+  private val androidDeps: Map<String, List<Any>>?,
+  val project: Project
 ) : KotlinMultiplatformComponentBuilderBase<KotlinSourceSetProto> {
     private val sourceSetsWithoutNeedOfBuildingDependenciesMetadata: Set<Named> by lazy {
         val isHMPPEnabled = project.getProperty(GradleImportProperties.IS_HMPP_ENABLED)

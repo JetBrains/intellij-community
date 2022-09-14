@@ -73,7 +73,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   fun setCommitMessage(text: String?) = ui.commitMessageUi.setText(text)
 
   protected val commitContext get() = workflow.commitContext
-  protected val commitHandlers get() = workflow.commitHandlers
+  private val commitHandlers get() = workflow.commitHandlers
   protected val commitOptions get() = workflow.commitOptions
 
   fun getCommitActionName() = getDefaultCommitActionName(workflow.vcses)

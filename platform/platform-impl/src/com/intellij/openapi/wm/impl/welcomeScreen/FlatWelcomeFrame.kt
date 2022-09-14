@@ -238,7 +238,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
 
   override fun getCurrentAccessibleContext() = accessibleContext
 
-  protected val welcomeFrameTitle: String
+  private val welcomeFrameTitle: String
     get() = WelcomeScreenComponentFactory.getApplicationTitle()
 
   @Suppress("unused")

@@ -25,7 +25,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Component
 
 class MaximizeEditorInSplitAction : DumbAwareAction() {
-  val myActiveAnimators = SmartList<JBAnimator>()
+  private val myActiveAnimators = SmartList<JBAnimator>()
   init {
     templatePresentation.text = IdeBundle.message("action.maximize.editor") + "/" +IdeBundle.message("action.normalize.splits")
   }

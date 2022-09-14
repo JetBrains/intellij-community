@@ -24,7 +24,7 @@ class VerticalListInlayPresentation(
   override var height: Int = 0
     private set
 
-  var presentationUnderCursor: InlayPresentation? = null
+  private var presentationUnderCursor: InlayPresentation? = null
 
   init {
     calcDimensions()

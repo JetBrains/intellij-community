@@ -338,7 +338,7 @@ object PackageSearchUI {
         init()
     }
 
-    internal fun getTextColorPrimary(isSelected: Boolean = false): Color = when {
+    private fun getTextColorPrimary(isSelected: Boolean = false): Color = when {
         isSelected -> JBColor.lazy { NamedColorUtil.getListSelectionForeground(true) }
         else -> JBColor.lazy { UIUtil.getListForeground() }
     }

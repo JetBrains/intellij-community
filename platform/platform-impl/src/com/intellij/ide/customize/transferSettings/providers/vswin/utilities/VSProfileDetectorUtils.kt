@@ -8,9 +8,9 @@ class VSProfileSettingsFileNotFound(msg: String, cause: Throwable? = null) : Exc
 
 object VSProfileDetectorUtils {
   const val vsInstallDir = "vsspv_vs_install_directory"
-  const val vsLocation = "vsspv_visualstudio_dir"
-  const val userProfile = "vsspv_user_appdata"
-  const val localAppdata = "vsspv_vs_localappdata_dir"
+  private const val vsLocation = "vsspv_visualstudio_dir"
+  private const val userProfile = "vsspv_user_appdata"
+  private const val localAppdata = "vsspv_vs_localappdata_dir"
 
   private val logger = logger<VSProfileDetectorUtils>()
 

@@ -510,7 +510,7 @@ class RunToolbarSlotManager(private val project: Project) {
     return slotOrder.associateWith { slotsData[it]?.configuration }
   }
 
-  fun getConfigurationMap(): Map<String, RunnerAndConfigurationSettings?> {
+  private fun getConfigurationMap(): Map<String, RunnerAndConfigurationSettings?> {
     return getConfigurationMap(getSlotOrder())
   }
 

@@ -29,7 +29,7 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
         }
     }
 
-    fun KtAnalysisSession.collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> {
+    private fun KtAnalysisSession.collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> {
         val classOrObjectSymbol = classOrObject.getClassOrObjectSymbol()
         return getOverridableMembers(classOrObjectSymbol).map { (symbol, bodyType, containingSymbol) ->
             KtClassMember(

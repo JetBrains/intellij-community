@@ -374,7 +374,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     return super.saveCommitOptionsOnCommit()
   }
 
-  protected fun ensureCommitOptions(): CommitOptions {
+  private fun ensureCommitOptions(): CommitOptions {
     if (!areCommitOptionsCreated) {
       areCommitOptionsCreated = true
 

@@ -417,7 +417,7 @@ abstract class Cell : BaseBuilder {
 
   fun scrollableTextArea(getter: () -> String, setter: (String) -> Unit, rows: Int? = null) = scrollableTextArea(PropertyBinding(getter, setter), rows)
 
-  fun scrollableTextArea(binding: PropertyBinding<String>, rows: Int? = null): CellBuilder<JBTextArea> {
+  private fun scrollableTextArea(binding: PropertyBinding<String>, rows: Int? = null): CellBuilder<JBTextArea> {
     val textArea = JBTextArea(binding.get(), rows ?: 0, 0)
     val scrollPane = JBScrollPane(textArea)
     return component(textArea, scrollPane)

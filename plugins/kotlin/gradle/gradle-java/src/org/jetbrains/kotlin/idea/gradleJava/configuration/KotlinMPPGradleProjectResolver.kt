@@ -215,7 +215,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
     }
 
     companion object {
-        val MPP_CONFIGURATION_ARTIFACTS =
+        private val MPP_CONFIGURATION_ARTIFACTS =
             Key.create<MutableMap<String/* artifact path */, MutableList<String> /* module ids*/>>("gradleMPPArtifactsMap")
         val proxyObjectCloningCache = WeakHashMap<Any, Any>()
 
@@ -489,7 +489,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             }
         }
 
-        fun createGradleSourceSetData(
+        private fun createGradleSourceSetData(
             sourceSet: KotlinSourceSet,
             gradleModule: IdeaModule,
             mainModuleNode: DataNode<ModuleData>,
@@ -613,7 +613,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             val compilation: KotlinCompilation,
             val substitutedDependencies: List<ExternalDependency>
         ) {
-            val konanTarget: String?
+            private val konanTarget: String?
                 get() = compilation.nativeExtensions?.konanTarget
 
             val dependencyNames: Map<String, ExternalDependency> by lazy {
@@ -648,7 +648,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             return ideModule.findChildModuleById(usedModuleId)
         }
 
-        fun createContentRootData(
+        private fun createContentRootData(
             sourceDirs: Set<File>,
             sourceType: ExternalSystemSourceType,
             packagePrefix: String?,
@@ -735,7 +735,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             return PathUtilRt.suggestFileName(moduleName.toString(), true, false)
         }
 
-        fun createExternalSourceSet(
+        private fun createExternalSourceSet(
             compilation: KotlinCompilation,
             compilationData: GradleSourceSetData,
             mppModel: KotlinMPPGradleModel
@@ -773,7 +773,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         }
 
 
-        fun createExternalSourceSet(
+        private fun createExternalSourceSet(
             ktSourceSet: KotlinSourceSet,
             ktSourceSetData: GradleSourceSetData,
             mppModel: KotlinMPPGradleModel
@@ -922,7 +922,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         /** Checks if our IDE doesn't support such platform */
         private fun KotlinPlatform.isNotSupported() = IdePlatformKindTooling.getToolingIfAny(this) == null
 
-        internal fun KotlinSourceSetInfo.addSourceSets(
+        private fun KotlinSourceSetInfo.addSourceSets(
             sourceSets: Collection<KotlinComponent>,
             selfName: String,
             gradleModule: IdeaModule,
@@ -949,7 +949,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         internal fun shouldDelegateToOtherPlugin(compilation: KotlinCompilation): Boolean =
             compilation.platform == KotlinPlatform.ANDROID
 
-        internal fun shouldDelegateToOtherPlugin(kotlinTarget: KotlinTarget): Boolean =
+        private fun shouldDelegateToOtherPlugin(kotlinTarget: KotlinTarget): Boolean =
             kotlinTarget.platform == KotlinPlatform.ANDROID
 
         internal fun shouldDelegateToOtherPlugin(kotlinSourceSet: KotlinSourceSet): Boolean =

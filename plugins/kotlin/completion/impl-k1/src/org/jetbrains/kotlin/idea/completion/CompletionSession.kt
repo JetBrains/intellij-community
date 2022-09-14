@@ -102,7 +102,7 @@ abstract class CompletionSession(
     }
 
     protected val bindingContext = CompletionBindingContextProvider.getInstance(project).getBindingContext(position, resolutionFacade)
-    protected val inDescriptor = position.getResolutionScope(bindingContext, resolutionFacade).ownerDescriptor
+    private val inDescriptor = position.getResolutionScope(bindingContext, resolutionFacade).ownerDescriptor
 
     private val kotlinIdentifierStartPattern = StandardPatterns.character().javaIdentifierStart().andNot(singleCharPattern('$'))
     private val kotlinIdentifierPartPattern = StandardPatterns.character().javaIdentifierPart().andNot(singleCharPattern('$'))
@@ -315,7 +315,7 @@ abstract class CompletionSession(
         return sorter
     }
 
-    protected fun calcContextForStatisticsInfo(): String? {
+    private fun calcContextForStatisticsInfo(): String? {
         if (expectedInfos.isEmpty()) return null
 
         var context = expectedInfos

@@ -22,113 +22,113 @@ object IPythonBuiltinConstants {
   const val TRIPLE_UNDERSCORE = "___"
 
   // MAGICS
-  const val AUTOCALL_MAGIC = "autocall"
-  const val AUTOMAGIC_MAGIC = "automagic"
+  private const val AUTOCALL_MAGIC = "autocall"
+  private const val AUTOMAGIC_MAGIC = "automagic"
   val AUTOMAGIC_MAGICS = listOf(AUTOCALL_MAGIC, AUTOMAGIC_MAGIC)
 
-  const val ALIAS_MAGIC_MAGIC = "alias_magic"
-  const val COLORS_MAGIC = "colors"
-  const val DOCTEST_MODE_MAGIC = "doctest_mode"
-  const val GUI_MAGIC = "gui"
-  const val LSMAGIC_MAGIC = "lsmagic"
-  const val MAGIC_MAGIC = "magic"
-  const val NOTEBOOK_MAGIC = "notebook"
-  const val PAGE_MAGIC = "page"
-  const val PPRINT_MAGIC = "pprint"
-  const val PRECISION_MAGIC = "precision"
-  const val QUICKREF_MAGIC = "quickref"
-  const val XMODE_MAGIC = "xmode"
+  private const val ALIAS_MAGIC_MAGIC = "alias_magic"
+  private const val COLORS_MAGIC = "colors"
+  private const val DOCTEST_MODE_MAGIC = "doctest_mode"
+  private const val GUI_MAGIC = "gui"
+  private const val LSMAGIC_MAGIC = "lsmagic"
+  private const val MAGIC_MAGIC = "magic"
+  private const val NOTEBOOK_MAGIC = "notebook"
+  private const val PAGE_MAGIC = "page"
+  private const val PPRINT_MAGIC = "pprint"
+  private const val PRECISION_MAGIC = "precision"
+  private const val QUICKREF_MAGIC = "quickref"
+  private const val XMODE_MAGIC = "xmode"
   val BASIC_MAGICS = listOf(ALIAS_MAGIC_MAGIC, COLORS_MAGIC, DOCTEST_MODE_MAGIC, GUI_MAGIC,
                             LSMAGIC_MAGIC, MAGIC_MAGIC, NOTEBOOK_MAGIC, PAGE_MAGIC,
                             PPRINT_MAGIC, PRECISION_MAGIC, QUICKREF_MAGIC, XMODE_MAGIC)
 
 
-  const val EDIT_MAGIC = "edit"
-  const val LOADPY_MAGIC = "loadpy"
-  const val LOAD_MAGIC = "load"
-  const val PASTEBIN_MAGIC = "pastebin"
-  const val SAVE_MAGIC = "save"
+  private const val EDIT_MAGIC = "edit"
+  private const val LOADPY_MAGIC = "loadpy"
+  private const val LOAD_MAGIC = "load"
+  private const val PASTEBIN_MAGIC = "pastebin"
+  private const val SAVE_MAGIC = "save"
   val CODE_MAGICS = listOf(EDIT_MAGIC, LOADPY_MAGIC, LOAD_MAGIC, PASTEBIN_MAGIC, SAVE_MAGIC)
 
-  const val CONFIG_MAGIC = "config"
+  private const val CONFIG_MAGIC = "config"
   val CONFIG_MAGICS = listOf(CONFIG_MAGIC)
 
-  const val DEBUG_MAGIC = "debug"
-  const val MACRO_MAGIC = "macro"
-  const val PDB_MAGIC = "pdb"
-  const val PRUN_MAGIC = "prun"
-  const val RUN_MAGIC = "run"
-  const val TB_MAGIC = "tb"
-  const val TIMEIT_MAGIC = "timeit"
-  const val TIME_MAGIC = "time"
+  private const val DEBUG_MAGIC = "debug"
+  private const val MACRO_MAGIC = "macro"
+  private const val PDB_MAGIC = "pdb"
+  private const val PRUN_MAGIC = "prun"
+  private const val RUN_MAGIC = "run"
+  private const val TB_MAGIC = "tb"
+  private const val TIMEIT_MAGIC = "timeit"
+  private const val TIME_MAGIC = "time"
   val EXECUTION_MAGICS = listOf(DEBUG_MAGIC, MACRO_MAGIC, PDB_MAGIC, PRUN_MAGIC,
                                 RUN_MAGIC, TB_MAGIC, TIMEIT_MAGIC, TIME_MAGIC)
 
-  const val LOAD_EXT_MAGIC = "load_ext"
-  const val RELOAD_EXT_MAGIC = "reload_ext"
-  const val UNLOAD_EXT_MAGIC = "unload_ext"
+  private const val LOAD_EXT_MAGIC = "load_ext"
+  private const val RELOAD_EXT_MAGIC = "reload_ext"
+  private const val UNLOAD_EXT_MAGIC = "unload_ext"
   val EXTENSION_MAGICS = listOf(LOAD_EXT_MAGIC, RELOAD_EXT_MAGIC, UNLOAD_EXT_MAGIC)
 
-  const val HISTORY_MAGIC = "history"
-  const val RECALL_MAGIC = "recall"
-  const val RERUN_MAGIC = "rerun"
+  private const val HISTORY_MAGIC = "history"
+  private const val RECALL_MAGIC = "recall"
+  private const val RERUN_MAGIC = "rerun"
   val HISTORY_MAGICS = listOf(HISTORY_MAGIC, RECALL_MAGIC, RERUN_MAGIC)
 
-  const val LOGOFF_MAGIC = "logoff"
-  const val LOGON_MAGIC = "logon"
-  const val LOGSTART_MAGIC = "logstart"
-  const val LOGSTATE_MAGIC = "logstate"
-  const val LOGSTOP_MAGIC = "logstop"
+  private const val LOGOFF_MAGIC = "logoff"
+  private const val LOGON_MAGIC = "logon"
+  private const val LOGSTART_MAGIC = "logstart"
+  private const val LOGSTATE_MAGIC = "logstate"
+  private const val LOGSTOP_MAGIC = "logstop"
   val LOGGING_MAGICS = listOf(LOGOFF_MAGIC, LOGON_MAGIC, LOGSTART_MAGIC, LOGSTATE_MAGIC, LOGSTOP_MAGIC)
 
-  const val PDEF_MAGIC = "pdef"
-  const val PDOC_MAGIC = "pdoc"
-  const val PFILE_MAGIC = "pfile"
-  const val PINFO2_MAGIC = "pinfo2"
-  const val PINFO_MAGIC = "pinfo"
-  const val PSEARCH_MAGIC = "psearch"
-  const val PSOURCE_MAGIC = "psource"
-  const val RESET_MAGIC = "reset"
-  const val RESET_SELECTIVE_MAGIC = "reset_selective"
-  const val WHOS_MAGIC = "whos"
-  const val WHO_LS_MAGIC = "who_ls"
-  const val WHO_MAGIC = "who"
-  const val XDEL_MAGIC = "xdel"
+  private const val PDEF_MAGIC = "pdef"
+  private const val PDOC_MAGIC = "pdoc"
+  private const val PFILE_MAGIC = "pfile"
+  private const val PINFO2_MAGIC = "pinfo2"
+  private const val PINFO_MAGIC = "pinfo"
+  private const val PSEARCH_MAGIC = "psearch"
+  private const val PSOURCE_MAGIC = "psource"
+  private const val RESET_MAGIC = "reset"
+  private const val RESET_SELECTIVE_MAGIC = "reset_selective"
+  private const val WHOS_MAGIC = "whos"
+  private const val WHO_LS_MAGIC = "who_ls"
+  private const val WHO_MAGIC = "who"
+  private const val XDEL_MAGIC = "xdel"
   val NAMESPACE_MAGICS = listOf(PDEF_MAGIC, PDOC_MAGIC, PFILE_MAGIC, PINFO2_MAGIC,
                                 PINFO_MAGIC, PSEARCH_MAGIC, PSOURCE_MAGIC, RESET_MAGIC,
                                 RESET_SELECTIVE_MAGIC, WHOS_MAGIC, WHO_LS_MAGIC, WHO_MAGIC,
                                 XDEL_MAGIC)
 
-  const val ALIAS_MAGIC = "alias"
-  const val BOOKMARK_MAGIC = "bookmark"
-  const val CD_MAGIC = "cd"
-  const val DHIST_MAGIC = "dhist"
-  const val DIRS_MAGIC = "dirs"
-  const val ENV_MAGIC = "env"
-  const val POPD_MAGIC = "popd"
-  const val PUSHD_MAGIC = "pushd"
-  const val PWD_MAGIC = "pwd"
-  const val PYCAT_MAGIC = "pycat"
-  const val REGASHX_MAGIC = "rehashx"
-  const val SC_MAGIC = "sc"
-  const val SET_ENV_MAGIC = "set_env"
-  const val SX_MAGIC = "sx"
-  const val UNALIAS_MAGIC = "unalias"
+  private const val ALIAS_MAGIC = "alias"
+  private const val BOOKMARK_MAGIC = "bookmark"
+  private const val CD_MAGIC = "cd"
+  private const val DHIST_MAGIC = "dhist"
+  private const val DIRS_MAGIC = "dirs"
+  private const val ENV_MAGIC = "env"
+  private const val POPD_MAGIC = "popd"
+  private const val PUSHD_MAGIC = "pushd"
+  private const val PWD_MAGIC = "pwd"
+  private const val PYCAT_MAGIC = "pycat"
+  private const val REGASHX_MAGIC = "rehashx"
+  private const val SC_MAGIC = "sc"
+  private const val SET_ENV_MAGIC = "set_env"
+  private const val SX_MAGIC = "sx"
+  private const val UNALIAS_MAGIC = "unalias"
   val OS_MAGICS = listOf(ALIAS_MAGIC, BOOKMARK_MAGIC, CD_MAGIC, DHIST_MAGIC,
                          DIRS_MAGIC, ENV_MAGIC, POPD_MAGIC, PUSHD_MAGIC,
                          PWD_MAGIC, PYCAT_MAGIC, REGASHX_MAGIC, SC_MAGIC,
                          SET_ENV_MAGIC, SX_MAGIC, UNALIAS_MAGIC)
 
-  const val CONDA_MAGIC = "conda"
-  const val PIP_MAGIC = "pip"
+  private const val CONDA_MAGIC = "conda"
+  private const val PIP_MAGIC = "pip"
   val PACKAGING_MAGICS = listOf(CONDA_MAGIC, PIP_MAGIC)
 
-  const val KILLBGSCRIPTS_MAGIC = "killbgscripts"
-  const val MATPLOTLIB_MAGIC = "matplotlib"
-  const val PYLAB_MAGIC = "pylab"
+  private const val KILLBGSCRIPTS_MAGIC = "killbgscripts"
+  private const val MATPLOTLIB_MAGIC = "matplotlib"
+  private const val PYLAB_MAGIC = "pylab"
   val PYLAB_MAGICS = listOf(KILLBGSCRIPTS_MAGIC, MATPLOTLIB_MAGIC, PYLAB_MAGIC)
 
-  const val AUTOAWAITS_MAGIC = "autoawait"
+  private const val AUTOAWAITS_MAGIC = "autoawait"
   val ASYNC_MAGICS = listOf(AUTOAWAITS_MAGIC)
 
   val MAGICS_LIST = listOf(AUTOMAGIC_MAGICS, BASIC_MAGICS, CODE_MAGICS, CONFIG_MAGICS,

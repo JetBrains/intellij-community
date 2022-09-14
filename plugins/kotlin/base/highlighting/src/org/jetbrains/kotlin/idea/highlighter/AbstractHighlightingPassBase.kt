@@ -27,7 +27,7 @@ abstract class AbstractHighlightingPassBase(
 ) : TextEditorHighlightingPass(file.project, document), DumbAware {
     private val highlightInfos: MutableList<HighlightInfo> = mutableListOf()
     protected var annotationCallback: ((Annotation) -> Unit)? = null
-    protected var annotationHolder: AnnotationHolderImpl? = null
+    private var annotationHolder: AnnotationHolderImpl? = null
 
     fun annotationCallback(callback: (Annotation) -> Unit) {
         annotationCallback = callback

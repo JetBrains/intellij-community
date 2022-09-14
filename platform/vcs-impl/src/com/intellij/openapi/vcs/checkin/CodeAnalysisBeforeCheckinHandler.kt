@@ -67,7 +67,7 @@ class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
     CodeAnalysisBeforeCheckinHandler(panel)
 }
 
-class CodeAnalysisCommitProblem(val codeSmells: List<CodeSmellInfo>) : CommitProblemWithDetails {
+class CodeAnalysisCommitProblem(private val codeSmells: List<CodeSmellInfo>) : CommitProblemWithDetails {
   override val text: String
     get() {
       val errors = codeSmells.count { it.severity == HighlightSeverity.ERROR }

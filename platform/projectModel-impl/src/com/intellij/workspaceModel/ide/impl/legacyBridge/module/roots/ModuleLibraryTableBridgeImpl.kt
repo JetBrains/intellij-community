@@ -31,7 +31,7 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
     libraryEntities().forEach { addLibrary(it, builder) }
   }
 
-  internal fun libraryEntities(): Sequence<LibraryEntity> {
+  private fun libraryEntities(): Sequence<LibraryEntity> {
     return moduleBridge.entityStorage.current.referrers(moduleBridge.moduleEntityId, LibraryEntity::class.java)
   }
 

@@ -24,7 +24,7 @@ internal class ExpressionsSmartcastHighlighter(
     }
 
     context(KtAnalysisSession)
-    fun higlightExpression(expression: KtExpression) {
+    private fun higlightExpression(expression: KtExpression) {
         expression.getImplicitReceiverSmartCast().forEach {
             val receiverName = when (it.kind) {
                 KtImplicitReceiverSmartCastKind.EXTENSION -> KotlinBaseHighlightingBundle.message("extension.implicit.receiver")

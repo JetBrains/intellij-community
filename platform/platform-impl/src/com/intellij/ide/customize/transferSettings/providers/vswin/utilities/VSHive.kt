@@ -37,7 +37,7 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
     return "Visual Studio ${productVersionTextRepresentation()} ($hiveString)"
   }
 
-  fun productVersionTextRepresentation(): String {
+  private fun productVersionTextRepresentation(): String {
     return when (version.major) {
       17 -> "2022"
       16 -> "2019"

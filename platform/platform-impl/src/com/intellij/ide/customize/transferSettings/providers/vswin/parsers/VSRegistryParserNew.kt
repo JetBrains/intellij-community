@@ -67,7 +67,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
   }.fromKey("SOFTWARE\\Microsoft\\VisualStudio\\${hive.hiveString}")
   private val registryRootKeyConfig = registryRootKey.withSuffix("_Config")
 
-  fun isRegistryDetourRequired(): Boolean {
+  private fun isRegistryDetourRequired(): Boolean {
     return hive.instanceId != null
   }
 

@@ -187,13 +187,13 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
     override fun startInWriteAction() = false
 
-    fun isOutdated() = modificationCountOnCreate != PsiModificationTracker.getInstance(project).modificationCount
+    private fun isOutdated() = modificationCountOnCreate != PsiModificationTracker.getInstance(project).modificationCount
 
     open fun createAction(project: Project, editor: Editor, element: KtExpression): KotlinAddImportAction {
         return createSingleImportAction(project, editor, element, suggestions())
     }
 
-    fun createActionWithAutoImportsFilter(project: Project, editor: Editor, element: KtExpression): KotlinAddImportAction {
+    private fun createActionWithAutoImportsFilter(project: Project, editor: Editor, element: KtExpression): KotlinAddImportAction {
         val filteredSuggestions =
             KotlinAutoImportsFilter.filterSuggestionsIfApplicable(element.containingKtFile, suggestions())
 

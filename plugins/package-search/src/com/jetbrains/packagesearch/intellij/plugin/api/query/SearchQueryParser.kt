@@ -62,7 +62,7 @@ abstract class SearchQueryParser {
     protected abstract fun handleAttribute(name: String, value: String, invert: Boolean)
 
     @Suppress("ComplexMethod") // Adopted code
-    protected fun splitQuery(query: String): List<String> {
+    private fun splitQuery(query: String): List<String> {
         val words = mutableListOf<String>()
 
         val length = query.length

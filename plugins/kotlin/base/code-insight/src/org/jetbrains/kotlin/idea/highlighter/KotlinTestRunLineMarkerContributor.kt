@@ -55,7 +55,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
             return getTestStateIcon(state, isClass)
         }
 
-        fun SimplePlatform.providesRunnableTests(): Boolean {
+        private fun SimplePlatform.providesRunnableTests(): Boolean {
             if (this is NativePlatformWithTarget) {
                 return when {
                     HostManager.hostIsMac -> target in listOf(

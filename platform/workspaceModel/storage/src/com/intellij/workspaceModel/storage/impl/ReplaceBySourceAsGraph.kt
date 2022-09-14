@@ -37,7 +37,7 @@ internal class ReplaceBySourceAsGraph : ReplaceBySourceOperation {
    *        has a reference to an entity that doesn't exist in current builder.
    *  - Restore references between matched entities.
    */
-  internal fun replaceBySourceAsGraph(
+  private fun replaceBySourceAsGraph(
     thisStorage: MutableEntityStorageImpl,
     replaceWithStorage: AbstractEntityStorage,
     entityFilter: (EntitySource) -> Boolean,

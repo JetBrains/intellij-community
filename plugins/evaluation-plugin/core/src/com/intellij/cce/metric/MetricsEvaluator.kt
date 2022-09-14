@@ -35,7 +35,7 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
     registerMetric(SessionsCountMetric())
   }
 
-  fun registerMetric(metric: Metric) {
+  private fun registerMetric(metric: Metric) {
     metrics.add(metric)
   }
 

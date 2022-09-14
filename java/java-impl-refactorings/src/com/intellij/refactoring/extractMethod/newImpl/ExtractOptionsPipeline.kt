@@ -100,7 +100,7 @@ object ExtractMethodPipeline {
     return extractOptions.copy(inputParameters = parameters)
   }
 
-  fun withMappedParametersInput(extractOptions: ExtractOptions, variablesData: List<VariableData>): ExtractOptions {
+  private fun withMappedParametersInput(extractOptions: ExtractOptions, variablesData: List<VariableData>): ExtractOptions {
     fun findMappedParameter(variableData: VariableData): InputParameter? {
       return extractOptions.inputParameters
         .find { parameter -> parameter.name == variableData.variable.name }
@@ -126,7 +126,7 @@ object ExtractMethodPipeline {
     return options.copy(visibility = visibility, isStatic = isStatic)
   }
 
-  fun withMappedName(extractOptions: ExtractOptions, methodName: String) = if (extractOptions.isConstructor) extractOptions else extractOptions.copy(methodName = methodName)
+  private fun withMappedName(extractOptions: ExtractOptions, methodName: String) = if (extractOptions.isConstructor) extractOptions else extractOptions.copy(methodName = methodName)
 
   fun withDefaultStatic(extractOptions: ExtractOptions): ExtractOptions {
     val expression = extractOptions.elements.singleOrNull() as? PsiExpression
@@ -138,7 +138,7 @@ object ExtractMethodPipeline {
     return extractOptions.copy(isStatic = shouldBeStatic)
   }
 
-  fun findDefaultTargetCandidate(candidates: List<PsiClass>): PsiClass {
+  private fun findDefaultTargetCandidate(candidates: List<PsiClass>): PsiClass {
     return AnonymousTargetClassPreselectionUtil.getPreselection(candidates, candidates.first()) ?: candidates.first()
   }
 

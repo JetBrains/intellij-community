@@ -292,7 +292,7 @@ class PropertyInfo(
         modifierList: KtModifierList?
     ) = copyProperty(receiverTypeInfo, possibleContainers, modifierList)
 
-    fun copyProperty(
+    private fun copyProperty(
         receiverTypeInfo: TypeInfo = this.receiverTypeInfo,
         possibleContainers: List<KtElement> = this.possibleContainers,
         modifierList: KtModifierList? = this.modifierList,

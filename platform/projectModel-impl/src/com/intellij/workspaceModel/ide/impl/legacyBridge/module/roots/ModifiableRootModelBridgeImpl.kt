@@ -345,7 +345,7 @@ class ModifiableRootModelBridgeImpl(
     }
   }
 
-  internal fun appendDependencies(dependencies: List<ModuleDependencyItem>) {
+  private fun appendDependencies(dependencies: List<ModuleDependencyItem>) {
     for (dependency in dependencies) {
       mutableOrderEntries.add(RootModelBridgeImpl.toOrderEntry(dependency, mutableOrderEntries.size, this, this::updateDependencyItem))
     }
@@ -355,7 +355,7 @@ class ModifiableRootModelBridgeImpl(
     }
   }
 
-  internal fun insertDependency(dependency: ModuleDependencyItem, position: Int): OrderEntryBridge {
+  private fun insertDependency(dependency: ModuleDependencyItem, position: Int): OrderEntryBridge {
     val last = position == mutableOrderEntries.size
     val newEntry = RootModelBridgeImpl.toOrderEntry(dependency, position, this, this::updateDependencyItem)
     if (last) {

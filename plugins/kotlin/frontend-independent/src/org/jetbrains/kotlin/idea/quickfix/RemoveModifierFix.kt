@@ -78,7 +78,7 @@ open class RemoveModifierFixBase(
             ).coMap { PsiTreeUtil.getParentOfType(it, KtModifierListOwner::class.java, false) }
 
 
-        fun createRemoveModifierFromListOwnerFactoryByModifierListOwner(
+        private fun createRemoveModifierFromListOwnerFactoryByModifierListOwner(
             modifier: KtModifierKeywordToken,
             isRedundant: Boolean = false
         ) = quickFixesPsiBasedFactory<KtModifierListOwner> {

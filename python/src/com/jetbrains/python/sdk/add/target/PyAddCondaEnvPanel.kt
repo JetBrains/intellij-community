@@ -56,8 +56,8 @@ open class PyAddCondaEnvPanel(
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.conda.environment")
   override val icon: Icon = PythonIcons.Python.Anaconda
 
-  protected val languageLevelsField: JComboBox<String>
-  protected val condaPathField = TextFieldWithBrowseButton().apply {
+  private val languageLevelsField: JComboBox<String>
+  private val condaPathField = TextFieldWithBrowseButton().apply {
     // TODO [targets] Requires target-based discovery
     val path = if (targetEnvironmentConfiguration.isLocal()) PyCondaPackageService.getCondaExecutable(null) else null
     path?.let {

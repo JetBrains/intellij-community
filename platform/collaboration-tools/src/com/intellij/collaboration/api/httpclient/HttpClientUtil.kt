@@ -14,8 +14,8 @@ import java.util.zip.GZIPInputStream
 
 object HttpClientUtil {
 
-  const val CONTENT_ENCODING_HEADER = "Content-Encoding"
-  const val CONTENT_ENCODING_GZIP = "gzip"
+  private const val CONTENT_ENCODING_HEADER = "Content-Encoding"
+  private const val CONTENT_ENCODING_GZIP = "gzip"
 
   const val CONTENT_TYPE_HEADER = "Content-Type"
   const val CONTENT_TYPE_JSON = "application/json"

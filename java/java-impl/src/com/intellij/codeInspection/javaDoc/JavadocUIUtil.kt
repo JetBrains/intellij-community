@@ -27,14 +27,14 @@ data class MasterDetailsItem(@NlsContexts.Checkbox val text: String, val checkbo
 
 object JavadocUIUtil {
 
-  fun Cell<JBCheckBox>.bindCheckbox(get: () -> Boolean, set: (Boolean) -> Unit): Cell<JBCheckBox> = applyToComponent {
+  private fun Cell<JBCheckBox>.bindCheckbox(get: () -> Boolean, set: (Boolean) -> Unit): Cell<JBCheckBox> = applyToComponent {
     isSelected = get()
     addActionListener {
       set(isSelected)
     }
   }
 
-  fun Cell<JBCheckBox>.bindCheckbox(property: KMutableProperty0<Boolean>): Cell<JBCheckBox> = bindCheckbox(property::get, property::set)
+  private fun Cell<JBCheckBox>.bindCheckbox(property: KMutableProperty0<Boolean>): Cell<JBCheckBox> = bindCheckbox(property::get, property::set)
 
   fun <T> Cell<ComboBox<T>>.bindItem(property: KMutableProperty0<T>): Cell<ComboBox<T>> = applyToComponent {
     selectedItem = property.get()
@@ -48,7 +48,7 @@ object JavadocUIUtil {
     return MasterDetailsItem(text, PropertyBinding(checkboxBinding::get, checkboxBinding::set), description)
   }
 
-  fun createMasterDetails(items: List<MasterDetailsItem>): JPanel {
+  private fun createMasterDetails(items: List<MasterDetailsItem>): JPanel {
     val layout = CardLayout()
     val description = JPanel(layout)
     val list = CheckBoxList<MasterDetailsItem>()

@@ -72,7 +72,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
   protected var dropRectangle: Rectangle = Rectangle(-1, -1)
   protected val drawRectangle = Rectangle()
   private var dragButtonImage: JComponent? = null
-  protected var isFinishingDrop = false
+  private var isFinishingDrop = false
   private var lastLayoutData: LayoutData? = null
 
   private val buttons: MutableList<StripeButtonManager> = mutableListOf()

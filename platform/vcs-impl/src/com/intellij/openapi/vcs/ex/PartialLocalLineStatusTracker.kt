@@ -551,7 +551,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
       LineStatusMarkerDrawUtil.paintDefault(editor, g, myTracker, flagsProvider, 0)
     }
 
-    class MyFlagsProvider(val defaultChangelistId: String) : DefaultFlagsProvider() {
+    class MyFlagsProvider(private val defaultChangelistId: String) : DefaultFlagsProvider() {
       override fun getFlags(range: Range): DefaultLineFlags {
         val ignored = range is LocalRange && range.changelistId != defaultChangelistId
         return if (ignored) DefaultLineFlags.IGNORED else DefaultLineFlags.DEFAULT

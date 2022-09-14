@@ -31,7 +31,7 @@ private val LOG = logger<ClientSessionImpl>()
 @ApiStatus.Internal
 abstract class ClientSessionImpl(
   final override val clientId: ClientId,
-  protected val sharedComponentManager: ClientAwareComponentManager
+  private val sharedComponentManager: ClientAwareComponentManager
 ) : ComponentManagerImpl(null, false), ClientSession {
   override val isLocal = clientId.isLocal
 

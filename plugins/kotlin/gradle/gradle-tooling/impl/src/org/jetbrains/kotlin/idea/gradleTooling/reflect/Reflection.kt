@@ -17,9 +17,9 @@ internal fun parameters(vararg parameter: Parameter<*>): ParameterList =
     if (parameter.isEmpty()) ParameterList.empty else ParameterList(parameter.toList())
 
 internal class TypeToken<T> private constructor(
-    val kotlinType: KType?,
-    val kotlinClass: KClass<*>,
-    val isMarkedNullable: Boolean
+  private val kotlinType: KType?,
+  val kotlinClass: KClass<*>,
+  val isMarkedNullable: Boolean
 ) {
     override fun toString(): String {
         return kotlinType?.toString() ?: (kotlinClass.java.name + if (isMarkedNullable) "?" else "")

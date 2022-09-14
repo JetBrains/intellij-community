@@ -17,7 +17,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
 
   protected abstract val label: @NlsContexts.Label String
 
-  val stepsProperty = AtomicProperty<Map<String, NewProjectWizardStep>>(emptyMap())
+  private val stepsProperty = AtomicProperty<Map<String, NewProjectWizardStep>>(emptyMap())
   var steps: Map<String, NewProjectWizardStep> by stepsProperty
 
   val stepProperty = propertyGraph.property("")

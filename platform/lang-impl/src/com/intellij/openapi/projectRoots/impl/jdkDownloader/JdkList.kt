@@ -130,7 +130,7 @@ data class JdkItem(
     return installDir.resolve(packageToBinJavaPrefix)
   }
 
-  val vendorPrefix
+  private val vendorPrefix
     get() = suggestedSdkName.split("-").dropLast(1).joinToString("-")
 
   fun matchesVendor(predicate: String) : Boolean {

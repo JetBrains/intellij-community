@@ -25,7 +25,7 @@ import java.nio.file.Path
  */
 abstract class AbstractPythonTestRunConfiguration<T : AbstractPythonTestRunConfiguration<T>>
 @JvmOverloads
-protected constructor(project: Project, factory: ConfigurationFactory, val requiredPackage: String? = null) :
+protected constructor(project: Project, factory: ConfigurationFactory, private val requiredPackage: String? = null) :
   AbstractPythonRunConfiguration<T>(project, factory) {
   /**
    * Create test spec (string to be passed to runner, probably glued with [TEST_NAME_PARTS_SPLITTER])

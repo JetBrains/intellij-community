@@ -102,7 +102,7 @@ class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "J
     }
   }
 
-  inner class ReplaceObsoleteAssertsFix(val baseClassName: String) : LocalQuickFix {
+  inner class ReplaceObsoleteAssertsFix(private val baseClassName: String) : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val element = descriptor.psiElement
       when (val uElement = element.toUElement()) {

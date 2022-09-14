@@ -245,7 +245,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
 
     fun readLineText(bookmark: LineBookmark?) = bookmark?.let { readLineText(it.file, it.line) }
 
-    fun readLineText(file: VirtualFile, line: Int): String? {
+    private fun readLineText(file: VirtualFile, line: Int): String? {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
       if (line < 0 || document.lineCount <= line) return null
       val start = document.getLineStartOffset(line)

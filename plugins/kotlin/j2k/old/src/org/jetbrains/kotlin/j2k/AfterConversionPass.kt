@@ -8,7 +8,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
 
-class AfterConversionPass(val project: Project, val postProcessor: PostProcessor) {
+class AfterConversionPass(val project: Project, private val postProcessor: PostProcessor) {
     @JvmOverloads
     fun run(
         kotlinFile: KtFile,

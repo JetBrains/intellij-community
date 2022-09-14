@@ -70,7 +70,7 @@ internal class JsonPathEvaluateSnippetView(project: Project) : JsonPathEvaluateV
     initToolbar()
   }
 
-  fun setSource(json: String) {
+  private fun setSource(json: String) {
     WriteAction.run<Throwable> {
       sourceEditor.document.setText(json)
     }
