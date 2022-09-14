@@ -91,6 +91,7 @@
                            implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinPsiDocumentationTargetProvider"/>
     <lang.documentation id="KotlinDocumentationTargetProvider"
                         implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationTargetProvider"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.refactorings.KotlinSafeDeleteHelper"/>
   </extensions>
 
   <xi:include href="scripting-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -153,6 +154,8 @@
     <projectService serviceInterface="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport"
                     serviceImplementation="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupportFirImpl"/>
 
+    <lang.refactoringSupport language="kotlin" 
+                             implementationClass="org.jetbrains.kotlin.idea.refactorings.KotlinFirRefactoringSupportProvider"/>
     <targetElementEvaluator language="kotlin"
                             implementationClass="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
     <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>

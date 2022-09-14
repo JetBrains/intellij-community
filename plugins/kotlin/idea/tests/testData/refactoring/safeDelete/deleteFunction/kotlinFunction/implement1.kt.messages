@@ -1,1 +1,1 @@
-fun foo(): Unit in final class B : A implements fun foo(): Unit in interface A.
+function B.foo() implements function A.foo().

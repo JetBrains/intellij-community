@@ -8,9 +8,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.util.RefactoringDescriptionLocation;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
@@ -18,20 +19,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor;
-import org.jetbrains.kotlin.descriptors.ClassDescriptor;
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor;
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
-import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
-import org.jetbrains.kotlin.idea.refactoring.RenderingUtilsKt;
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers;
-import org.jetbrains.kotlin.psi.KtElement;
-import org.jetbrains.kotlin.psi.KtNamedFunction;
-import org.jetbrains.kotlin.psi.KtProperty;
-import org.jetbrains.kotlin.psi.KtPsiUtil;
-import org.jetbrains.kotlin.renderer.DescriptorRenderer;
-import org.jetbrains.kotlin.resolve.BindingContext;
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -68,34 +56,14 @@ class KotlinOverridingDialog extends DialogWrapper {
 
         myMethodText = new String[myOverridingMethods.size()];
         for (int i = 0; i < myMethodText.length; i++) {
-            myMethodText[i] = formatElement(((KotlinSafeDeleteOverridingUsageInfo) myOverridingMethods.get(i)).getOverridingElement());
+            myMethodText[i] = HtmlChunk.html()
+                    .addRaw(ElementDescriptionUtil.getElementDescription(((KotlinSafeDeleteOverridingUsageInfo) myOverridingMethods.get(i)).getOverridingElement(), 
+                                                                          RefactoringDescriptionLocation.WITH_PARENT))
+                    .toString();
         }
         myUsagePreviewPanel = new UsagePreviewPanel(project, new UsageViewPresentation());
         setTitle(KotlinBundle.message("override.declaration.unused.overriding.methods.title"));
         init();
-    }
-
-    private static String formatElement(PsiElement element) {
-        element = KtPsiUtil.ascendIfPropertyAccessor(element);
-        if (element instanceof KtNamedFunction || element instanceof KtProperty) {
-            BindingContext bindingContext = ResolutionUtils.analyze((KtElement) element, BodyResolveMode.FULL);
-
-            DeclarationDescriptor declarationDescriptor = bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, element);
-            if (declarationDescriptor instanceof CallableMemberDescriptor) {
-                DeclarationDescriptor containingDescriptor = declarationDescriptor.getContainingDeclaration();
-                if (containingDescriptor instanceof ClassDescriptor) {
-                    return KotlinBundle.message(
-                            "override.declaration.x.in.y",
-                            DescriptorRenderer.COMPACT.render(declarationDescriptor),
-                            IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.render(containingDescriptor)
-                    );
-                }
-            }
-        }
-
-        assert element instanceof PsiMethod
-                : "Method accepts only kotlin functions/properties and java methods, but '" + element.getText() + "' was found";
-        return RenderingUtilsKt.formatPsiMethod((PsiMethod) element, true, false);
     }
 
     @Override

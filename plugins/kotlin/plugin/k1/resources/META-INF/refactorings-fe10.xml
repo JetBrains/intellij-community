@@ -93,15 +93,8 @@
 
     <refactoring.overrideMethodProcessor implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinOverrideMethodsProcessor"/>
 
-    <refactoring.safeDeleteProcessor
-            id="kotlinProcessor"
-            implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinSafeDeleteProcessor"
-            order="before javaProcessor"/>
-
-    <refactoring.safeDelete.JavaSafeDeleteDelegate
-            id="kotlinJavaSafeDeleteDelegate"
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinJavaSafeDeleteDelegate"/>
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.refactorings.KotlinSafeDeleteHelper"
+                    serviceImplementation="org.jetbrains.kotlin.idea.refactoring.KotlinK1SafeDeleteHelper"/>
 
     <refactoring.pullUpHelperFactory
             language="kotlin"

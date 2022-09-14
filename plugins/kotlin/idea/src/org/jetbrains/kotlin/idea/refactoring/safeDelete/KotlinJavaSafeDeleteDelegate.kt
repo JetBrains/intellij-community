@@ -9,7 +9,6 @@ import com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -18,7 +17,6 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 
 class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
     override fun createUsageInfoForParameter(
@@ -33,12 +31,14 @@ class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
         val calleeExpression = callExpression.calleeExpression
         if (!(calleeExpression is KtReferenceExpression && calleeExpression.isAncestor(element))) return
 
-        val descriptor = calleeExpression.resolveToCall()?.resultingDescriptor ?: return
+        val target = reference.resolve() ?: return
 
         val originalDeclaration = method.unwrapped
         if (originalDeclaration !is PsiMethod && originalDeclaration !is KtDeclaration) return
 
-        if (originalDeclaration != DescriptorToSourceUtils.descriptorToDeclaration(descriptor)) return
+        if (originalDeclaration != target) {
+            return
+        }
 
         val args = callExpression.valueArguments
 

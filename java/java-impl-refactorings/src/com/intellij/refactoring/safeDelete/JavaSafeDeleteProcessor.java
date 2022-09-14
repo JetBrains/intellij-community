@@ -10,8 +10,10 @@ import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
@@ -137,7 +139,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       psiMethods.add((PsiMethod)element);
       return psiMethods;
     }
-    if (element instanceof PsiParameter && ((PsiParameter) element).getDeclarationScope() instanceof PsiMethod) {
+    if (element instanceof PsiParameter param && ((PsiParameter) element).getDeclarationScope() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) ((PsiParameter) element).getDeclarationScope();
       final Set<PsiElement> parametersToDelete = new HashSet<>();
       parametersToDelete.add(element);
@@ -146,14 +148,19 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       if (superMethods.isEmpty()) {
         superMethods.add(method);
       }
-      ContainerUtil.addAllNotNull(superMethods, FindSuperElementsHelper.getSiblingInheritedViaSubClass(method));
-      for (PsiMethod superMethod : superMethods) {
-        parametersToDelete.add(superMethod.getParameterList().getParameters()[parameterIndex]);
-        OverridingMethodsSearch.search(superMethod).forEach(overrider -> {
-          parametersToDelete.add(overrider.getParameterList().getParameters()[parameterIndex].getNavigationElement());
-          return true;
-        });
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
+        ContainerUtil.addAllNotNull(superMethods, FindSuperElementsHelper.getSiblingInheritedViaSubClass(method));
+        for (PsiMethod superMethod : superMethods) {
+          parametersToDelete.add(superMethod.getParameterList().getParameters()[parameterIndex]);
+          OverridingMethodsSearch.search(superMethod).forEach(overrider -> {
+            parametersToDelete.add(overrider.getParameterList().getParameters()[parameterIndex].getNavigationElement());
+            return true;
+          });
+        }
+      }), JavaRefactoringBundle.message("progress.title.collect.hierarchy", param.getName()), true, project)) {
+        return null;
       }
+      
 
       if (parametersToDelete.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
         String message = JavaRefactoringBundle.message("0.is.a.part.of.method.hierarchy.do.you.want.to.delete.multiple.parameters", UsageViewUtil.getLongName(method));

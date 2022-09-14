@@ -67,5 +67,6 @@
     <orderEntry type="module" module-name="kotlin.refactorings.rename.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.highlighting" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.refactorings.tests.k2" scope="TEST" />
   </component>
 </module>

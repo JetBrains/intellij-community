@@ -3,26 +3,20 @@
 package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMember
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
-import org.jetbrains.kotlin.idea.core.targetDescriptors
-import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtImportDirective
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.doNotAnalyze
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 
 class SafeDeleteImportDirectiveUsageInfo(
     importDirective: KtImportDirective, declaration: PsiElement
 ) : SafeDeleteReferenceSimpleDeleteUsageInfo(importDirective, declaration, importDirective.isSafeToDelete(declaration))
 
 private fun KtImportDirective.isSafeToDelete(element: PsiElement): Boolean {
-    val referencedDescriptor = targetDescriptors().singleOrNull() ?: return false
-    val declarationDescriptor = when (val unwrappedElement = element.unwrapped) {
-        is KtDeclaration -> unwrappedElement.resolveToDescriptorIfAny(BodyResolveMode.FULL)
-        is PsiMember -> unwrappedElement.getJavaMemberDescriptor()
-        else -> return false
-    }
-    return referencedDescriptor == declarationDescriptor
+    if (this.containingKtFile.doNotAnalyze != null) return false
+    val nameExpression = importedReference?.getQualifiedElementSelector() as? KtSimpleNameExpression ?: return false
+    return element.unwrapped == nameExpression.mainReference.resolve()
 }
