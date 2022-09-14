@@ -183,15 +183,14 @@ class AbstractEntitiesTest {
   fun `modifying one to one parent switch`() {
     val builder = MutableEntityStorage.create()
 
-    val child = LeftEntity(AnotherSource)
-    builder.addEntity(child)
+    val child = builder addEntity LeftEntity(AnotherSource)
 
-    builder.addEntity(HeadAbstractionEntity("Info", MySource) {
+    builder addEntity HeadAbstractionEntity("Info", MySource) {
       this.child = child
-    })
-    builder.addEntity(HeadAbstractionEntity("Info2", MySource) {
+    }
+    builder addEntity HeadAbstractionEntity("Info2", MySource) {
       this.child = child
-    })
+    }
 
     builder.assertConsistency()
     assertNull(builder.entities(HeadAbstractionEntity::class.java).single { it.data == "Info" }.child)

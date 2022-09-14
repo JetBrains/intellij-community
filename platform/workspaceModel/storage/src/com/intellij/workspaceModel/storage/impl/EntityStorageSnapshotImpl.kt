@@ -156,7 +156,7 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  override fun <T : WorkspaceEntity> addEntity(entity: T) {
+  override fun <T : WorkspaceEntity> addEntity(entity: T): T {
     try {
       lockWrite()
 
@@ -167,6 +167,8 @@ internal class MutableEntityStorageImpl(
     finally {
       unlockWrite()
     }
+
+    return entity
   }
 
   // This should be removed or not extracted into the interface

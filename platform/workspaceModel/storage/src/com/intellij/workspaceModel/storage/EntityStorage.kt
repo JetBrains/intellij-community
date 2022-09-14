@@ -212,7 +212,7 @@ interface EntityStorageSnapshot : EntityStorage {
  */
 interface MutableEntityStorage : EntityStorage {
   fun isEmpty(): Boolean
-  fun <T : WorkspaceEntity> addEntity(entity: T)
+  infix fun <T : WorkspaceEntity> addEntity(entity: T): T
 
   fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
 
