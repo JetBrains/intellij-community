@@ -405,7 +405,7 @@ class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
     WriteCommandAction.runWriteCommandAction(project) {
       def clazz = myFixture.findClass("A")
       def children = clazz.modifierList.children
-      assert children.length != 0 : clazz.text
+      assert children.length != 0 : clazz.containingFile.text + ";" + clazz.containingFile.virtualFile.path
       children[0].delete()
     }
     PsiTestUtil.checkFileStructure(file)
