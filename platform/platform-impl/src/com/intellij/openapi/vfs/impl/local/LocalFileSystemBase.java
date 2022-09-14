@@ -21,10 +21,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.PathUtilRt;
-import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PreemptiveSafeFileOutputStream;
 import com.intellij.util.io.SafeFileOutputStream;
@@ -152,7 +149,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return file.getFileSystem() == this ? Paths.get(toIoPath(file)) : null;
   }
 
-  private static @NotNull File convertToIOFileAndCheck(@NotNull VirtualFile file) throws FileNotFoundException {
+  private static @NotNull File convertToIOFileAndCheck(@NotNull VirtualFile file, boolean assertSlowOp) throws FileNotFoundException {
+    if (assertSlowOp) { // remove condition when writes are moved to BGT
+      SlowOperations.assertSlowOperationsAreAllowed();
+    }
     File ioFile = convertToIOFile(file);
 
     if (SystemInfo.isUnix && file.is(VFileProperty.SPECIAL)) { // avoid opening fifo files
@@ -454,7 +454,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @NotNull InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
-    File ioFile = convertToIOFileAndCheck(file);
+    File ioFile = convertToIOFileAndCheck(file, true);
 
     for (PluggableLocalFileSystemContentLoader loader : PLUGGABLE_CONTENT_LOADER_EP_NAME.getExtensionList()) {
       InputStream is = loader.getInputStream(ioFile);
@@ -468,7 +468,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
-    File ioFile = convertToIOFileAndCheck(file);
+    File ioFile = convertToIOFileAndCheck(file, true);
 
     for (PluggableLocalFileSystemContentLoader loader : PLUGGABLE_CONTENT_LOADER_EP_NAME.getExtensionList()) {
       byte[] bytes = loader.contentToByteArray(ioFile);
@@ -509,7 +509,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @NotNull OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException {
-    File ioFile = convertToIOFileAndCheck(file);
+    File ioFile = convertToIOFileAndCheck(file, false);
     OutputStream stream = !SafeWriteRequestor.shouldUseSafeWrite(requestor) ? new FileOutputStream(ioFile) :
                           requestor instanceof LargeFileWriteRequestor ? new PreemptiveSafeFileOutputStream(ioFile.toPath()) :
                           new SafeFileOutputStream(ioFile);
