@@ -36,8 +36,7 @@ import java.util.List;
  */
 public class ClassChooserTest extends LightJavaCodeInsightFixtureTestCase {
 
-  public void _testSubclassModel() {
-
+  public void testSubclassModel() {
     myFixture.addClass("class Foo extends Exception {}");
     myFixture.addClass("class Bar {}");
     PsiClass aClass =

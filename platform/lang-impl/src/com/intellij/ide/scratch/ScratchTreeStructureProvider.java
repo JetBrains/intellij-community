@@ -59,6 +59,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
       AbstractProjectViewPane updateTarget;
       @Override
       public void run() {
+        if (project.isDisposed()) return;
         if (updateTarget == null) {
           updateTarget = ProjectView.getInstance(project).getProjectViewPaneById(ProjectViewPane.ID);
         }
