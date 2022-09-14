@@ -14,6 +14,8 @@ import com.jetbrains.JBR
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Rectangle
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -42,6 +44,12 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     val toolbar = MainToolbar()
     toolbar.isOpaque = false
     toolbar.border = JBUI.Borders.empty(0, LEFT_GAP, 0, RIGHT_GAP)
+    toolbar.addComponentListener(object: ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent?) {
+        updateCustomDecorationHitTestSpots()
+        super.componentResized(e)
+      }
+    })
     add(toolbar, BorderLayout.CENTER)
     return toolbar
   }
