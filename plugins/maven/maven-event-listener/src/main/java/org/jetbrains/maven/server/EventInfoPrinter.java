@@ -6,7 +6,7 @@ import static org.jetbrains.maven.server.SpyConstants.*;
 public final class EventInfoPrinter {
   private static void print(Object type, CharSequence... args) {
     //noinspection UseOfSystemOutOrSystemErr
-    System.out.print(printToBuffer(type, args));
+    System.out.println(printToBuffer(type, args));
   }
 
   static StringBuilder printToBuffer(Object type, CharSequence... args) {
