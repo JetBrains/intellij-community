@@ -1,37 +1,62 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
+import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.SpaceAllocationStrategy.WriterDecidesStrategy;
 import com.intellij.util.io.PagedFileStorage;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArraySet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedStorage.NULL_ID;
+import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID;
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.NULL_ID;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 /**
  *
  */
-public class StreamlinedStorageTest extends StorageTestBase<StreamlinedStorage> {
+@RunWith(Parameterized.class)
+public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobStorage> {
 
   /**
    * Use quite small pages, so issues on the page borders have chance to manifest themselves
    */
-  protected static final int PAGE_SIZE = 1 << 13;
+  protected static final int PAGE_SIZE = 1 << 14;
 
+  @Parameterized.Parameters(name = "{0}")
+  public static List<Object[]> allocationStrategiesToTry() {
+    return Arrays.asList(
+      new Object[]{new WriterDecidesStrategy((short)1024)},
+      new Object[]{new WriterDecidesStrategy((short)512)},
+      new Object[]{new WriterDecidesStrategy((short)256)},
+      new Object[]{new DataLengthPlusFixedPercentStrategy((short)1024, (short)256, 30)},
+      new Object[]{new DataLengthPlusFixedPercentStrategy((short)512, (short)128, 30)},
+      new Object[]{new DataLengthPlusFixedPercentStrategy((short)256, (short)64, 30)},
+
+      //put stress on allocation/reallocation code paths
+      new Object[]{new DataLengthPlusFixedPercentStrategy((short)128, (short)64, 0)},
+      new Object[]{new DataLengthPlusFixedPercentStrategy((short)2, (short)2, 0)}
+    );
+  }
+
+  public StreamlinedBlobStorageTest(final StreamlinedBlobStorage.SpaceAllocationStrategy strategy) { allocationStrategy = strategy; }
+
+  private final StreamlinedBlobStorage.SpaceAllocationStrategy allocationStrategy;
 
   @Override
-  protected StreamlinedStorage openStorage(final Path pathToStorage) throws IOException {
+  protected StreamlinedBlobStorage openStorage(final Path pathToStorage) throws IOException {
     final PagedFileStorage pagedStorage = new PagedFileStorage(
       pathToStorage,
       LOCK_CONTEXT,
@@ -39,16 +64,25 @@ public class StreamlinedStorageTest extends StorageTestBase<StreamlinedStorage> 
       true,
       true
     );
-    return new StreamlinedStorage(pagedStorage);
+    return new StreamlinedBlobStorage(
+      pagedStorage,
+      allocationStrategy
+    );
   }
 
   @Override
-  protected void closeStorage(final StreamlinedStorage storage) throws Exception {
+  protected void closeStorage(final StreamlinedBlobStorage storage) throws Exception {
     storage.close();
   }
 
   @Override
-  protected StorageRecord readRecord(final StreamlinedStorage storage,
+  protected boolean hasRecord(final StreamlinedBlobStorage storage,
+                              final int recordId) throws Exception {
+    return storage.hasRecord(recordId);
+  }
+
+  @Override
+  protected StorageRecord readRecord(final StreamlinedBlobStorage storage,
                                      final int recordId) throws Exception {
     final int[] redirectedIdRef = new int[1];
     final String newPayload = storage.readRecord(
@@ -64,7 +98,7 @@ public class StreamlinedStorageTest extends StorageTestBase<StreamlinedStorage> 
 
   @Override
   protected StorageRecord writeRecord(final StorageRecord record,
-                                      final StreamlinedStorage storage) throws Exception {
+                                      final StreamlinedBlobStorage storage) throws Exception {
     final byte[] payloadBytes = record.payload.getBytes(US_ASCII);
     final int recordId = record.recordId;
     final int newRecordId = storage.writeToRecord(
@@ -87,16 +121,36 @@ public class StreamlinedStorageTest extends StorageTestBase<StreamlinedStorage> 
 
   @Override
   protected void deleteRecord(final int recordId,
-                              final StreamlinedStorage storage) throws Exception {
+                              final StreamlinedBlobStorage storage) throws Exception {
     storage.deleteRecord(recordId);
   }
 
+  /* ======================== TESTS =================================================== */
+
+  @Test
+  public void emptyStorageHasNoRecords() throws Exception {
+    final IntArrayList nonExistentIds = new IntArrayList();
+    nonExistentIds.add(NON_EXISTENT_ATTR_RECORD_ID);
+    nonExistentIds.add(Integer.MAX_VALUE);
+    ThreadLocalRandom.current().ints()
+      .filter(i -> i > 0)
+      .limit(1 << 14)
+      .forEach(nonExistentIds::add);
+
+    for (int i = 0; i < nonExistentIds.size(); i++) {
+      final int nonExistentId = nonExistentIds.getInt(i);
+      assertFalse(
+        "Not inserted record is not exists",
+        hasRecord(storage, nonExistentId)
+      );
+    }
+  }
 
   @Test
   public void newStorageHasVersionOfCurrentPersistentFormat() throws Exception {
     assertEquals(
       storage.getVersion(),
-      StreamlinedStorage.VERSION_CURRENT
+      StreamlinedBlobStorage.VERSION_CURRENT
     );
   }
 
@@ -135,6 +189,10 @@ public class StreamlinedStorageTest extends StorageTestBase<StreamlinedStorage> 
     // I just vary payload size _around_ PAGE_SIZE to check that they are either stored OK,
     // or throw IAE without breaking the storage
     final int margin = 16;
+    assumeTrue(
+      "capacity/length are shorts, hence this test is not applicable for PAGE_SIZE>" + (Short.MAX_VALUE - margin),
+      PAGE_SIZE + margin + 1 < Short.MAX_VALUE
+    );
     final List<StorageRecord> recordsActuallyWritten = new ArrayList<>();
     try {
       for (int payloadSize = PAGE_SIZE - margin; payloadSize < PAGE_SIZE + margin; payloadSize++) {
@@ -186,12 +244,12 @@ public class StreamlinedStorageTest extends StorageTestBase<StreamlinedStorage> 
 
     //choose record in the middle, so it will re-allocated quite far away from its origin:
     StorageRecord recordToGoNasty = recordsToWrite[recordsToWrite.length / 2];
-    final int maxAttempts = 5;
+    final int maxAttempts = 6;
     final IntSet subsequentIds = new IntArraySet();
     subsequentIds.add(recordToGoNasty.recordId);
     for (int attemptNo = 0; subsequentIds.size() < 2 && attemptNo < maxAttempts; attemptNo++) {
-      //assume 2^3 is enough to beat capacity reserve:
-      final int newPayloadSize = recordToGoNasty.payload.length() * 4;
+      //assume 4^6 is enough to beat capacity reserve:
+      final int newPayloadSize = (recordToGoNasty.payload.length() + 1) * 4;
       recordToGoNasty = recordToGoNasty
         .withRandomPayloadOfSize(newPayloadSize)
         .writeIntoStorage(this, storage);
@@ -199,7 +257,7 @@ public class StreamlinedStorageTest extends StorageTestBase<StreamlinedStorage> 
       subsequentIds.add(recordToGoNasty.recordId);
     }
     assertTrue(
-      "Record with 4^5=1024x payload increase _must_ be re-allocated at least once, i.e. it's id must change -> something wrong is happening, if it is not",
+      "Record with 4^6=2048x payload increase _must_ be re-allocated at least once, i.e. it's id must change -> something wrong is happening, if it is not",
       subsequentIds.size() > 1
     );
 
@@ -215,18 +273,25 @@ public class StreamlinedStorageTest extends StorageTestBase<StreamlinedStorage> 
   }
 
   @Test
-  public void singleWrittenRecord_AndDeleted_ThrowExceptionIfQueried() throws Exception {
-    final StorageRecord recordToWrite = new StorageRecord("ABC")
+  public void singleWrittenRecord_AndDeleted_NotExistsInStorage_AndThrowExceptionIfQueried() throws Exception {
+    final StorageRecord recordWritten = new StorageRecord("ABC")
       .writeIntoStorage(this, storage);
+
     assertNotEquals(
+      "Inserted record must be assigned valid ID",
       NULL_ID,
-      recordToWrite.recordId
+      recordWritten.recordId
     );
 
-    deleteRecord(recordToWrite.recordId, storage);
+    deleteRecord(recordWritten.recordId, storage);
+
+    assertFalse(
+      "Deleted record is not exists anymore",
+      hasRecord(storage, recordWritten.recordId)
+    );
 
     try {
-      final StorageRecord recordRead = StorageRecord.readFromStorage(this, storage, recordToWrite.recordId);
+      final StorageRecord recordRead = StorageRecord.readFromStorage(this, storage, recordWritten.recordId);
       fail("Read of deleted record should throw IOException");
     }
     catch (IOException e) {

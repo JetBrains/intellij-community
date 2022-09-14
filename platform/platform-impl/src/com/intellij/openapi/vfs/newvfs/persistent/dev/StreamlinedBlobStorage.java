@@ -3,20 +3,23 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.io.DirectBufferWrapper;
 import com.intellij.util.io.PagedFileStorage;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.function.Function;
+import java.nio.ByteOrder;
 
 /**
- * Try to re-implement storage: remove intermediate mapping (id -> offset,length), and
- * directly use offset as recordId
+ * Store blobs, like {@link com.intellij.util.io.storage.AbstractStorage}, but tries to be faster:
+ * remove intermediate mapping (id -> offset,length), and directly use offset as recordId. Also provides
+ * read/write methods direct access to underlying ByteBuffers, to reduce memcopy-ing overhead.
  */
-public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
-  private static final Logger LOG = Logger.getInstance(StreamlinedStorage.class);
+public class StreamlinedBlobStorage implements Cloneable, AutoCloseable, Forceable {
+  private static final Logger LOG = Logger.getInstance(StreamlinedBlobStorage.class);
 
   public static final int NULL_ID = 0;
 
@@ -30,13 +33,32 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
   //
   //  1. capacity is the allocated size of the record (excluding header, only payload, so
   //     nextRecordOffset = currentRecordOffset + recordHeader(8b) + recordCapacity)
-  //  2. actualLength (<=capacity) is actual size of record payload written into the record, so recordData[0..actualLength)
-  //     contains actual data, and recordData[actualLength..capacity) contains trash.
+  //  2. actualLength (<=capacity) is actual size of record payload written into the record, so
+  //     recordData[0..actualLength) contains actual data, and recordData[actualLength..capacity)
+  //     contains trash.
   //     Negative actualLength denote removed/moved records -- to be reclaimed/compacted.
   //  3. redirectToOffset is a 'forwarding pointer' for records that was moved (e.g. re-allocated).
   //  4. records are always allocated on a single page, never break on a page boundary: if record
   //     doesn't fit current page, it is moved to another page (and remaining space filled by placeholder
   //     record)
+
+  //TODO RC: implement space reclamation: re-use space of deleted records for the newly allocated ones.
+  //         Need to keep a free-list.
+  //IDEA RC: store fixed-size free-list (tuples recordId, capacity) right after header on a first page, so on load we
+  //         immediately have some records to choose from.
+  //RC: there is a maintenance work (i.e deleted records reuse, compaction) not implemented yet for the storage. I think
+  //    this maintenance is better to be implemented on the top of the storage, than encapsulated inside it.
+  //    This is because:
+  //    a) encapsulated maintenance makes storage too hard to test, so better to test maintenance in isolation, especially
+  //       because maintenance is likely better to be done async
+  //    b) maintenance highly depend on use of storage: i.e. ability to reclaim space of moved records depends
+  //       on the fact that all references to the old location is already re-linked -- but storage can't guarantee that,
+  //       there should be some external agent responsible for that.
+  //    So my plans are:
+  //    a) inside storage implement some _support_ for maintenance (e.g. ability to store some additional info in storage
+  //       header, to be used for maintenance)
+  //    b) implement something like BlobStorageHousekeeper, which runs in dedicated thread, with some precautions to not
+  //       interrupt frontend work.
 
   public static final int VERSION_CURRENT = 1;
 
@@ -79,13 +101,33 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
 
   @NotNull
   private final PagedFileStorage pagedStorage;
+  /**
+   * To avoid write file status to already closed storage
+   */
+  private boolean closed = false;
 
+  @NotNull
+  private final SpaceAllocationStrategy allocationStrategy;
 
   private int nextRecordId;
 
+  private final ThreadLocal<ByteBuffer> threadLocalBuffer;
 
-  public StreamlinedStorage(final @NotNull PagedFileStorage pagedStorage) throws IOException {
+
+  public StreamlinedBlobStorage(final @NotNull PagedFileStorage pagedStorage,
+                                final @NotNull SpaceAllocationStrategy allocationStrategy) throws IOException {
     this.pagedStorage = pagedStorage;
+    this.allocationStrategy = allocationStrategy;
+
+    final short defaultCapacity = allocationStrategy.defaultCapacity();
+    final boolean useNativeByteOrder = pagedStorage.isNativeBytesOrder();
+    threadLocalBuffer = ThreadLocal.withInitial(() -> {
+      final ByteBuffer buffer = ByteBuffer.allocate(defaultCapacity);
+      if (useNativeByteOrder) {
+        buffer.order(ByteOrder.nativeOrder());
+      }
+      return buffer;
+    });
 
     pagedStorage.lockWrite();
     try {
@@ -142,8 +184,54 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
 
 
   public <Out> Out readRecord(final int recordId,
-                              final @NotNull Function<ByteBuffer, Out> reader) throws IOException {
+                              final @NotNull Reader<Out> reader) throws IOException {
     return readRecord(recordId, reader, null);
+  }
+
+  public boolean hasRecord(final int recordId) throws IOException {
+    return hasRecord(recordId, null);
+  }
+
+  public boolean hasRecord(final int recordId,
+                           final @Nullable int[] redirectToIdRef) throws IOException {
+    if (recordId == NULL_ID) {
+      return false;
+    }
+    pagedStorage.lockRead();
+    try {
+      checkRecordIdValid(recordId);
+      if (!isRecordIdAllocated(recordId)) {
+        return false;
+      }
+
+      final long recordOffset = idToOffset(recordId);
+      final int offsetOnPage = pagedStorage.getOffsetInPage(recordOffset);
+      final DirectBufferWrapper page = pagedStorage.getByteBuffer(recordOffset, false);
+      try {
+        final ByteBuffer buffer = page.getBuffer();
+        final short recordActualLength = readRecordLength(buffer, offsetOnPage);
+        final int recordRedirectedToId = readRecordRedirectToId(buffer, offsetOnPage);
+
+        if (redirectToIdRef != null) {
+          redirectToIdRef[0] = recordId;
+        }
+        if (!isRecordActual(recordActualLength)) {
+          if (!isValidRecordId(recordRedirectedToId)) {
+            return false;
+          }
+          //MAYBE RC: try to avoid recursion here, since we lock >1 pages while really only need to lock 1
+          return hasRecord(recordRedirectedToId, redirectToIdRef);
+        }
+
+        return true;
+      }
+      finally {
+        page.unlock();
+      }
+    }
+    finally {
+      pagedStorage.unlockRead();
+    }
   }
 
   //TODO RC: consider change way of dealing with ByteBuffers: what-if all methods will have same semantics,
@@ -161,7 +249,7 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
    *                        this outdated id with actual one, since it improves performance (at least)
    */
   public <Out> Out readRecord(final int recordId,
-                              final @NotNull Function<ByteBuffer, Out> reader,
+                              final @NotNull Reader<Out> reader,
                               final int[] redirectToIdRef) throws IOException {
     pagedStorage.lockRead();
     try {
@@ -189,7 +277,7 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
         final ByteBuffer slice = buffer.slice(offsetOnPage + RECORD_HEADER_SIZE, recordActualLength)
           .asReadOnlyBuffer()
           .order(buffer.order());
-        return reader.apply(slice);
+        return reader.read(slice);
       }
       finally {
         page.unlock();
@@ -200,6 +288,7 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
     }
   }
 
+
   /**
    * Writer is called with writeable ByteBuffer represented current record content (payload).
    * Buffer is prepared for read: position=0, limit=payload.length, capacity=[current record capacity].
@@ -209,6 +298,7 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
    * <br> <br>
    * NOTE: this implies that even if writer writes nothing, only reads -- it must set
    * buffer.position=limit, because otherwise storage will treat it as if record should be set length=0
+   * For simplicity, if writer change nothing, it could return null.
    * <br> <br>
    * Capacity: if new payload fits into buffer passed in -> it could be written right into it. If new
    * payload requires more space, writer should allocate its own buffer with enough capacity, write
@@ -216,14 +306,35 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
    * in. Storage will re-allocate space for the record with capacity >= returned buffer capacity.
    */
   public int writeToRecord(final int recordId,
-                           final @NotNull Function<ByteBuffer, ByteBuffer> writer) throws IOException {
+                           final @NotNull Writer writer) throws IOException {
     if (!isValidRecordId(recordId)) {
       //insert new record:
-      //TODO RC: reconsider buffer allocation/capacity allocation strategy
-      final ByteBuffer temp = ByteBuffer.allocate(1024).clear();
-      final ByteBuffer bufferWithData = writer.apply(temp);
-      bufferWithData.flip();
-      return allocateRecord(bufferWithData, (short)bufferWithData.capacity());
+      final ByteBuffer temp = acquireTemporaryBuffer();
+      try {
+        final ByteBuffer bufferWithData = writer.write(temp);
+        bufferWithData.flip();
+        final short recordLength = (short)bufferWithData.limit();
+        if (recordLength < 0) {
+          throw new IllegalStateException("Buffer length (" + bufferWithData.limit() + ") not fit in short");
+        }
+        final short capacity = (short)bufferWithData.capacity();
+        if (capacity < 0) {
+          throw new IllegalStateException("Buffer capacity (" + bufferWithData.capacity() + ") not fit in short");
+        }
+        final short recordCapacity = allocationStrategy.capacity(
+          recordLength,
+          capacity
+        );
+        if (recordCapacity < bufferWithData.limit()) {
+          throw new IllegalStateException(
+            "Allocation strategy " + allocationStrategy + "(" + recordLength + ", " + capacity + ")" +
+            " returns " + recordCapacity + " < length(" + recordLength + ")");
+        }
+        return allocateRecord(bufferWithData, recordCapacity);
+      }
+      finally {
+        releaseTemporaryBuffer(temp);
+      }
     }
 
     pagedStorage.lockWrite();
@@ -250,9 +361,13 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
           .limit(recordActualLength)
           .order(buffer.order());
 
-        final ByteBuffer newRecordContent = writer.apply(recordContent);
+        final ByteBuffer newRecordContent = writer.write(recordContent);
+        if (newRecordContent == null) {
+          //writer decides to skip write -> just return current recordId
+          return recordId;
+        }
 
-        if (newRecordContent != null && newRecordContent != recordContent) {
+        if (newRecordContent != recordContent) {
           newRecordContent.flip();
           final int newRecordLength = newRecordContent.remaining();
           if (newRecordLength <= recordCapacity) {
@@ -289,6 +404,19 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
     }
   }
 
+  /**
+   * Delete record by recordId.
+   * <p>
+   * Contrary to read/write methods, this method DOES NOT follow redirectTo chain: record to be deleted
+   * is the record with id=recordId, redirectToId field is ignored. Why is that: because the main use
+   * case of redirectTo chain is to support delayed actual record removal -- to give all clients a chance
+   * to change their stored recordId to the new one, after that record was moved by some reason. But
+   * after all clients have done that, the stale record should be removed (so its space could be reclaimed)
+   * -- but not actual record referred with redirectTo link. If remove method follows redirectTo links
+   * than how to remove stale record without affecting its actual counterpart?
+   *
+   * @throws IllegalStateException if record is already deleted
+   */
   public void deleteRecord(final int recordId) throws IOException {
     pagedStorage.lockWrite();
     try {
@@ -303,11 +431,7 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
         final int recordRedirectedToId = readRecordRedirectToId(buffer, offsetOnPage);
 
         if (isRecordDeleted(recordActualLength)) {//record deleted or moved: check was it moved to a new location?
-          if (!isValidRecordId(recordRedirectedToId)) {
-            throw new IOException("Can't delete record[" + recordId + "]: it was already deleted");
-          }
-          //hope redirect chains are not too long...
-          deleteRecord(recordRedirectedToId);
+          throw new IllegalStateException("Can't delete record[" + recordId + "]: it was already deleted");
         }
         else {
           putRecordLength(buffer, offsetOnPage, DELETED_RECORD_MARK);
@@ -324,6 +448,8 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
       pagedStorage.unlockWrite();
     }
   }
+
+  //TODO int deleteAllForwarders(final int recordId) throws IOException;
 
   /**
    * Scan all records (even deleted one), and deliver their content to processor. ByteBuffer is read-only, and
@@ -380,32 +506,136 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
     return recordActualLength >= 0;
   }
 
+  public interface Reader<T> {
+    public T read(@NotNull final ByteBuffer data) throws IOException;
+  }
+
+  public interface Writer {
+    public ByteBuffer write(@NotNull final ByteBuffer data) throws IOException;
+  }
+
 
   public interface Processor {
     boolean process(final int recordId,
-                           final short recordCapacity,
-                           final short recordLength,
-                           final ByteBuffer payload) throws IOException;
+                    final short recordCapacity,
+                    final short recordLength,
+                    final ByteBuffer payload) throws IOException;
   }
 
-  public interface RecordAllocationStrategy {
+  public interface SpaceAllocationStrategy {
+    /**
+     * @return how long buffers create for a new record (i.e. in {@link #writeToRecord(int, ThrowableNotNullFunction)}
+     * there recordId=NULL_ID)
+     */
+    short defaultCapacity();
+
+    /**
+     * @return given buffer, returned by writer in a {@link #writeToRecord(int, ThrowableNotNullFunction)}, how big
+     * record to allocate? buffer actual size (limit-position) and buffer capacity is considered.
+     * returned value must be >= actualLength
+     */
     short capacity(final short actualLength,
                    final short currentCapacity);
 
-    short defaultCapacity();
+    public static class WriterDecidesStrategy implements SpaceAllocationStrategy {
+      private final short defaultCapacity;
 
-    RecordAllocationStrategy WRITER_DECIDES = new RecordAllocationStrategy() {
+      public WriterDecidesStrategy(final short defaultCapacity) {
+        if (defaultCapacity <= 0) {
+          throw new IllegalArgumentException("defaultCapacity(" + defaultCapacity + ") must be > 0");
+        }
+        this.defaultCapacity = defaultCapacity;
+      }
+
       @Override
       public short defaultCapacity() {
-        return 128;
+        return defaultCapacity;
       }
 
       @Override
       public short capacity(final short actualLength,
                             final short currentCapacity) {
+        if (actualLength < 0) {
+          throw new IllegalArgumentException("actualLength(=" + actualLength + " should be >=0");
+        }
+        if (currentCapacity < actualLength) {
+          throw new IllegalArgumentException("currentCapacity(=" + currentCapacity + ") should be >= actualLength(=" + actualLength + ")");
+        }
         return currentCapacity;
       }
-    };
+
+      @Override
+      public String toString() {
+        return "WriterDecidesStrategy{default: " + defaultCapacity + '}';
+      }
+    }
+
+    public static class DataLengthPlusFixedPercentStrategy implements SpaceAllocationStrategy {
+      private final short defaultCapacity;
+      private final short minCapacity;
+      private final int percentOnTheTop;
+
+      public DataLengthPlusFixedPercentStrategy(final short defaultCapacity,
+                                                final short minCapacity,
+                                                final int percentOnTheTop) {
+        if (defaultCapacity <= 0) {
+          throw new IllegalArgumentException("defaultCapacity(" + defaultCapacity + ") must be > 0");
+        }
+        if (minCapacity <= 0 || minCapacity > defaultCapacity) {
+          throw new IllegalArgumentException("minCapacity(" + minCapacity + ") must be > 0 && <= defaultCapacity(" + defaultCapacity + ")");
+        }
+        if (percentOnTheTop < 0) {
+          throw new IllegalArgumentException("percentOnTheTop(" + percentOnTheTop + ") must be >= 0");
+        }
+        this.defaultCapacity = defaultCapacity;
+        this.minCapacity = minCapacity;
+        this.percentOnTheTop = percentOnTheTop;
+      }
+
+      @Override
+      public short defaultCapacity() {
+        return defaultCapacity;
+      }
+
+      @Override
+      public short capacity(final short actualLength,
+                            final short currentCapacity) {
+        if (actualLength < 0) {
+          throw new IllegalArgumentException("actualLength(=" + actualLength + " should be >=0");
+        }
+        if (currentCapacity < actualLength) {
+          throw new IllegalArgumentException("currentCapacity(=" + currentCapacity + ") should be >= actualLength(=" + actualLength + ")");
+        }
+        final double capacity = actualLength * (1.0 + percentOnTheTop / 100.0);
+        final short advisedCapacity = (short)Math.max(minCapacity, capacity + 1);
+        if (advisedCapacity < 0) {
+          return Short.MAX_VALUE;
+        }
+        return advisedCapacity;
+      }
+
+      @Override
+      public String toString() {
+        return "DataLengthPlusFixedPercentStrategy{" +
+               "length + " + percentOnTheTop + "%" +
+               ", min: " + minCapacity +
+               ", default: " + defaultCapacity + "}";
+      }
+    }
+  }
+
+  public int recordsCount() {
+    //TODO
+    throw new UnsupportedOperationException("Method not implemented yet");
+  }
+
+  public int liveRecordsCount() {
+    //TODO
+    throw new UnsupportedOperationException("Method not implemented yet");
+  }
+
+  public long sizeInBytes() {
+    return pagedStorage.length();
   }
 
   @Override
@@ -419,15 +649,29 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() throws IOException {
     pagedStorage.lockWrite();
     try {
-      putHeaderFileStatus(FILE_STATUS_SAFELY_CLOSED);
-      pagedStorage.close();
+      if (!closed) {
+        //.close() methods are better to be idempotent, i.e. not throw exceptions on repeating calls, but just
+        // silently ignore attempts to close already closed. And pagedStorage (seems to) conforms with that. But
+        // here we try to write file status, and without .close flag we'll try to do that even on already closed
+        // pagedStorage, which leads to exception.
+        putHeaderFileStatus(FILE_STATUS_SAFELY_CLOSED);
+        //MAYBE RC: generally, it should not be this class's responsibility to close pagedStorage, since not this
+        // class creates it -- who creates it, is responsible for closing it.
+        pagedStorage.close();
+        closed = true;
+      }
     }
     finally {
       pagedStorage.unlockWrite();
     }
+  }
+
+  @Override
+  public String toString() {
+    return "StreamlinedBlobStorage{" + pagedStorage + "}{nextRecordId: " + nextRecordId + '}';
   }
 
   /* ============================= implementation ================================================================================= */
@@ -438,7 +682,8 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
   private int allocateRecord(final ByteBuffer content,
                              final short newRecordCapacity) throws IOException {
     final int pageSize = pagedStorage.getPageSize();
-    if (RECORD_HEADER_SIZE + newRecordCapacity > pageSize) {
+    final int totalRecordSize = RECORD_HEADER_SIZE + newRecordCapacity;
+    if (totalRecordSize > pageSize) {
       throw new IllegalArgumentException(
         "record size(header:" + RECORD_HEADER_SIZE + " +capacity:" + newRecordCapacity + ") should be <= pageSize(=" + pageSize + ")");
     }
@@ -452,7 +697,7 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
       // -> we move entire record to the next page, and pad the space remaining on the current page with
       // filler record:
       final long startPage = recordOffset / pageSize;
-      final long endPage = (recordOffset + RECORD_HEADER_SIZE + newRecordCapacity - 1) / pageSize;
+      final long endPage = (recordOffset + totalRecordSize - 1) / pageSize;
       if (startPage != endPage) {
         //insert a space-filler record to occupy space till the end of page:
         putSpaceFillerRecord(recordOffset, pageSize);
@@ -562,6 +807,27 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
     return (headerSize() / OFFSET_BUCKET + 1) * OFFSET_BUCKET;
   }
 
+  @NotNull
+  private ByteBuffer acquireTemporaryBuffer() {
+    final ByteBuffer temp = threadLocalBuffer.get();
+    threadLocalBuffer.set(null);
+    if (temp != null) {
+      return temp.position(0)
+        .limit(0);
+    }
+    else {
+      final ByteBuffer buffer = ByteBuffer.allocate(allocationStrategy.defaultCapacity());
+      if (pagedStorage.isNativeBytesOrder()) {
+        buffer.order(ByteOrder.nativeOrder());
+      }
+      return buffer;
+    }
+  }
+
+  private void releaseTemporaryBuffer(final @NotNull ByteBuffer temp) {
+    threadLocalBuffer.set(temp);
+  }
+
 
   private static short readRecordCapacity(final ByteBuffer pageBuffer,
                                           final int offsetOnPage) {
@@ -649,16 +915,24 @@ public class StreamlinedStorage implements Cloneable, AutoCloseable, Forceable {
   }
 
   private void checkRecordIdExists(final int recordId) {
+    checkRecordIdValid(recordId);
+    if (!isRecordIdAllocated(recordId)) {
+      throw new IllegalArgumentException("recordId(" + recordId + ") is not yet allocated: allocated ids are all < " + nextRecordId);
+    }
+  }
+
+  private boolean isRecordIdAllocated(final int recordId) {
+    return recordId < nextRecordId;
+  }
+
+  private static void checkRecordIdValid(final int recordId) {
     if (!isValidRecordId(recordId)) {
       throw new IllegalArgumentException("recordId(" + recordId + ") is invalid: must be > 0");
-    }
-    if (recordId >= nextRecordId) {
-      throw new IllegalArgumentException("recordId(" + recordId + ") is not yet allocated: must be < " + nextRecordId);
     }
   }
 
   private static boolean isRecordDeleted(final short recordActualLength) {
-    return recordActualLength < 0;
+    return recordActualLength == DELETED_RECORD_MARK;
   }
 
   private static boolean isValidRecordId(final int recordId) {
