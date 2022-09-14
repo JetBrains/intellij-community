@@ -32,7 +32,9 @@ class VcsEditorTabFilesManager :
       override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
         //currently shouldOpenInNewWindow is bound only to diff files
         if (file is DiffContentVirtualFile && source is FileEditorManagerEx) {
-          val isOpenInNewWindow = source.findFloatingWindowForFile(file) != null
+          val isOpenInNewWindow = source.findFloatingWindowForFile(file)?.let {
+            it.tabCount == 1
+          } ?: false
           shouldOpenInNewWindow = isOpenInNewWindow
           messageBus.syncPublisher(VcsEditorTabFilesListener.TOPIC).shouldOpenInNewWindowChanged(file, isOpenInNewWindow)
         }
