@@ -882,12 +882,19 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
-      e.getPresentation().setEnabled(getScope() != null);
+      Set<PsiFile> scope =
+        Utils.getOrCreateUpdateSession(e).compute(this, "getScope", ActionUpdateThread.EDT, () -> getSelectedScope(myRightTree));
+      e.getPresentation().setEnabled(getScope(scope) != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-      final AnalysisScope scope = getScope();
+      final AnalysisScope scope = getScope(getSelectedScope(myRightTree));
       LOG.assertTrue(scope != null);
       final DependenciesBuilder builder;
       if (!myForward) {
@@ -906,8 +913,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Nullable
-    private AnalysisScope getScope() {
-      final Set<PsiFile> selectedScope = getSelectedScope(myRightTree);
+    private AnalysisScope getScope(Set<PsiFile> selectedScope) {
       Set<PsiFile> result = new HashSet<>();
       ((PackageDependenciesNode)myLeftTree.getModel().getRoot()).fillFiles(result, !mySettings.UI_FLATTEN_PACKAGES);
       selectedScope.removeAll(result);
@@ -1043,6 +1049,11 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
         presentation.setEnabled((provider.createPackageSet(leftNode, true) != null || provider.createPackageSet(leftNode, false) != null) &&
                                 (provider.createPackageSet(rightNode, true) != null || provider.createPackageSet(rightNode, false) != null));
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
