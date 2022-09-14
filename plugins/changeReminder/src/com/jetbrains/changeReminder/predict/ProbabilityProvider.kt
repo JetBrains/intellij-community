@@ -65,7 +65,7 @@ object ProbabilityProvider {
     }
 
     factors[Factor.MAX_INTERSECTION.ordinal] = intersectionCounters.values.maxByOrNull { it.sum }?.sum ?: 0.0
-    factors[Factor.SUM_INTERSECTION.ordinal] = intersectionCounters.values.sumByDouble { it.sum }
+    factors[Factor.SUM_INTERSECTION.ordinal] = intersectionCounters.values.sumOf { it.sum }
     factors[Factor.MIN_DISTANCE_TIME.ordinal] = timeDistanceCounter.min
     factors[Factor.COMMIT_SIZE.ordinal] = newCommit.files.size.toDouble()
     factors[Factor.MAX_DISTANCE_TIME.ordinal] = timeDistanceCounter.max

@@ -115,6 +115,7 @@ class NotebookOutputInlayController private constructor(
   }
 
   private fun rankCompatibility(outputDataKeys: List<NotebookOutputDataKey>): Int =
+    @Suppress("DEPRECATION") // for sumBy, see KT-46360
     getComponentsWithFactories().zip(outputDataKeys).sumBy { (pair, outputDataKey) ->
       val (component, factory) = pair
       when (factory.matchWithTypes(component, outputDataKey)) {

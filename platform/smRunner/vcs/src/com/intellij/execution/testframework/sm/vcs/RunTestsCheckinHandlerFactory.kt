@@ -87,12 +87,12 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
   override val text: String
     get() {
       var str = ""
-      val failed = problems.sumBy { it.failed }
+      val failed = problems.sumOf { it.failed }
       if (failed > 0) {
         str = TestRunnerBundle.message("tests.result.failure.summary", failed)
       }
 
-      val ignored = problems.sumBy { it.ignored }
+      val ignored = problems.sumOf { it.ignored }
       if (ignored > 0) {
         str += (if (failed > 0) ", " else "")
         str += TestRunnerBundle.message("tests.result.ignore.summary", ignored)

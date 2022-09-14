@@ -148,7 +148,7 @@ object PyNamesMatchingMlCompletionFeatures {
                                          lookupString: String): PyScopeMatchingFeatures {
     val sumMatches = names[lookupString] ?: 0
     val sumTokensMatches = tokensMatched(lookupString, tokens)
-    val total = names.toList().sumBy { it.second }
+    val total = names.toList().sumOf { it.second }
     return PyScopeMatchingFeatures(sumMatches, sumTokensMatches, total, names.size)
   }
 
@@ -200,12 +200,12 @@ object PyNamesMatchingMlCompletionFeatures {
   fun tokensMatched(firstName: String, secondName: String): Int {
     val nameTokens = getTokens(firstName)
     val elementNameTokens = getTokens(secondName)
-    return nameTokens.sumBy { token1 -> elementNameTokens.count { token2 -> token1 == token2 } }
+    return nameTokens.sumOf { token1 -> elementNameTokens.count { token2 -> token1 == token2 } }
   }
 
   fun tokensMatched(name: String, tokens: Map<String, Int>): Int {
     val nameTokens = getTokens(name)
-    return nameTokens.sumBy { tokens[it] ?: 0 }
+    return nameTokens.sumOf { tokens[it] ?: 0 }
   }
 
   private fun getTokensCounterMap(names: Map<String, Int>): Counter<String> {

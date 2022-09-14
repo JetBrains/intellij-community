@@ -136,7 +136,7 @@ class JavaToKotlinAction : AnAction() {
                     convert()
                 }
                 val linesCount = runReadAction {
-                    javaFiles.sumBy { StringUtil.getLineBreakCount(it.text) }
+                    javaFiles.sumOf { StringUtil.getLineBreakCount(it.text) }
                 }
 
                 J2KFusCollector.log(
