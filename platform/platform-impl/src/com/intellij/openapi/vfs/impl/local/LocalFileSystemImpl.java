@@ -215,31 +215,22 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     myWatchRootsManager.clear();
   }
 
-  private static boolean isRecursiveOrCircularSymlink(@Nullable VirtualFile parent,
-                                                      @NotNull CharSequence name,
-                                                      @NotNull String symlinkTarget) {
+  private static boolean isRecursiveOrCircularSymlink(@Nullable VirtualFile parent, CharSequence name, String symlinkTarget) {
     if (startsWith(parent, name, symlinkTarget)) return true;
-
-    if (!(parent instanceof VirtualFileSystemEntry)) {
-      return false;
-    }
+    if (!(parent instanceof VirtualFileSystemEntry)) return false;
     // check if it's circular - any symlink above resolves to my target too
     for (VirtualFileSystemEntry p = (VirtualFileSystemEntry)parent; p != null; p = p.getParent()) {
-      // optimization: when the file has no symlinks up the hierarchy, it's not circular
+      // if the file has no symlinks up the hierarchy, it's not circular
       if (!p.thisOrParentHaveSymlink()) return false;
       if (p.is(VFileProperty.SYMLINK)) {
         String parentResolved = p.getCanonicalPath();
-        if (symlinkTarget.equals(parentResolved)) {
-          return true;
-        }
+        if (symlinkTarget.equals(parentResolved)) return true;
       }
     }
     return false;
   }
 
-  private static boolean startsWith(@Nullable VirtualFile parent,
-                                    @NotNull CharSequence name,
-                                    @NotNull String symlinkTarget) {
+  private static boolean startsWith(@Nullable VirtualFile parent, CharSequence name, String symlinkTarget) {
     if (parent != null) {
       String symlinkTargetParent = StringUtil.trimEnd(symlinkTarget, "/" + name);
       return VfsUtilCore.isAncestorOrSelf(symlinkTargetParent, parent);
