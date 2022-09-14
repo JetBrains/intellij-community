@@ -40,10 +40,6 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
     ConcurrentCollectionFactory.createConcurrentIntObjectMap(); // Ref is here to store nulls
   protected final @NotNull AtomicBoolean myInMemoryMode = new AtomicBoolean();
 
-  protected Path getStorageFile() throws IOException {
-    return IndexInfrastructure.getStorageFile(myIndexId);
-  }
-
   public FileTypeIndexImplBase(@NotNull FileBasedIndexExtension<FileType, Void> extension) throws IOException {
     myExtension = extension;
     if (myExtension.dependsOnFileContent()) {
@@ -53,8 +49,14 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
     myFileTypeEnumerator = new SimpleStringPersistentEnumerator(getStorageFile().resolveSibling("fileType.enum"));
   }
 
+  protected abstract int getIndexedFileTypeId(int fileId) throws StorageException;
+  protected abstract void processFileIdsForFileTypeId(int fileTypeId, @NotNull IntConsumer consumer);
+
+  protected @NotNull Path getStorageFile() throws IOException {
+    return IndexInfrastructure.getStorageFile(myIndexId);
+  }
+
   protected @Nullable FileType getFileTypeById(int id) {
-    assert id < Short.MAX_VALUE : "file type id = " + id;
     Ref<FileType> fileType = myId2FileTypeCache.get(id);
     if (fileType == null) {
       String fileTypeName = myFileTypeEnumerator.valueOf(id);
@@ -64,8 +66,11 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
     return fileType.get();
   }
 
-  protected abstract int getIndexedFileTypeId(int fileId) throws StorageException;
-  protected abstract void processFileIdsForFileTypeId(int fileTypeId, @NotNull IntConsumer consumer);
+  @Override
+  public String getFileTypeName(int id) {
+    FileType fileType = getFileTypeById(id);
+    return fileType == null ? null : fileType.getName();
+  }
 
   @Override
   public int getFileTypeId(String name) throws IOException {

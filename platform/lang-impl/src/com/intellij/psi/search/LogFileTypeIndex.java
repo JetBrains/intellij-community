@@ -1,13 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.StorageException;
@@ -34,9 +31,6 @@ public final class LogFileTypeIndex extends FileTypeIndexImplBase {
   private static final Logger LOG = Logger.getInstance(LogFileTypeIndex.class);
 
   private final @NotNull LogBasedIntIntIndex myPersistentLog;
-  private final @NotNull ConcurrentIntObjectMap<Ref<String>> myId2FileNameCache =
-    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
-
   private final @NotNull FileTypeIndex.IndexChangeListener myIndexChangedPublisher;
   private final @NotNull MemorySnapshot mySnapshot;
 
@@ -135,17 +129,6 @@ public final class LogFileTypeIndex extends FileTypeIndexImplBase {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  @Override
-  public String getFileTypeName(int id) {
-    assert id < Short.MAX_VALUE;
-    Ref<String> fileType = myId2FileNameCache.get(id);
-    if (fileType == null) {
-      String fileTypeName = myFileTypeEnumerator.valueOf(id);
-      myId2FileNameCache.put(id, fileType = Ref.create(fileTypeName));
-    }
-    return fileType.get();
   }
 
   private interface IntIntIndex {

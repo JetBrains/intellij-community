@@ -3,6 +3,7 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,7 +48,7 @@ final class FileTypeKeyDescriptor implements KeyDescriptor<FileType> {
   public FileType read(@NotNull DataInput in) throws IOException {
     String read = getFileTypeName(DataInputOutputUtil.readINT(in));
     if (read == null) {
-      return new OutDatedFileType("UNKNOWN");
+      return UnknownFileType.INSTANCE;
     }
     FileType fileType = FileTypeRegistry.getInstance().findFileTypeByName(read);
     return fileType == null ? new OutDatedFileType(read) : fileType;

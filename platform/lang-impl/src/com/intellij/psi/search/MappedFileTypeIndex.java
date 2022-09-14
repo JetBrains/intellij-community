@@ -51,6 +51,11 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     });
   }
 
+  private static short checkFileTypeIdIsShort(int fileTypeId) {
+    assert fileTypeId < Short.MAX_VALUE : "file type id = " + fileTypeId;
+    return (short)fileTypeId;
+  }
+
   @Override
   public long getModificationStamp() {
     return myForwardIndexController.getModificationStamp();
@@ -67,18 +72,11 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content) {
     try {
       int fileTypeId = getFileTypeId(content == null ? null : content.getFileType());
-      assert fileTypeId < Short.MAX_VALUE : "fileTypeId overflow";
-      return () -> updateIndex(inputId, (short)fileTypeId);
+      return () -> updateIndex(inputId, checkFileTypeIdIsShort(fileTypeId));
     }
     catch (StorageException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  @Override
-  public String getFileTypeName(int id) {
-    FileType fileType = getFileTypeById(id);
-    return fileType == null ? null : fileType.getName();
   }
 
   @Override
@@ -338,7 +336,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         assert indexedSet != null;
         indexedSet.remove(inputId);
       }
-      setForwardIndexData(myForwardIndex, inputId, data);
+      myForwardIndex.set(inputId, data);
       if (data != 0) {
         myInvertedIndex.computeIfAbsent(data, __ -> createContainerForInvertedIndex()).add(inputId);
       }
@@ -402,10 +400,5 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
       invertedIndexChangeCallback.accept(id);
     });
     return new MappedFileTypeIndex.MemorySnapshot(invertedIndex, forwardIndex, invertedIndexChangeCallback);
-  }
-
-  private static void setForwardIndexData(@NotNull ForwardIndexFileController forwardIndex, int inputId, short data)
-    throws StorageException {
-    forwardIndex.set(inputId, data);
   }
 }
