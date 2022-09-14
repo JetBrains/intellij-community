@@ -55,7 +55,7 @@ object AvatarUtils {
   }
 
   internal fun generateColoredAvatar(gc: GraphicsConfiguration?,
-                                     size: Int,
+                                     fullSize: Int,
                                      arcRatio: Double,
                                      gradientSeed: String,
                                      name: String,
@@ -63,8 +63,15 @@ object AvatarUtils {
     val (color1, color2) = palette.gradient(gradientSeed)
 
     val shortName = Avatars.initials(name)
-    val image = ImageUtil.createImage(gc, size, size, BufferedImage.TYPE_INT_ARGB)
+    val image = ImageUtil.createImage(gc, fullSize, fullSize, BufferedImage.TYPE_INT_ARGB)
     val g2 = image.createGraphics()
+    val size = if (g2.transform.scaleX > 1.0) {
+      // add a transparent 1px border to fix Windows fractional scaling issues
+      g2.translate(1, 1)
+      fullSize - 2
+    } else {
+      fullSize
+    }
     applyQualityRenderingHints(g2)
     g2.paint = GradientPaint(0.0f, 0.0f, color2,
                              size.toFloat(), size.toFloat(), color1)
