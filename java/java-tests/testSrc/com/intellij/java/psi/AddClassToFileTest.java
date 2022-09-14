@@ -33,7 +33,7 @@ public class AddClassToFileTest extends JavaPsiTestCase {
     PsiTestUtil.checkFileStructure(file);
   }
 
-  public void testFileModified() throws Exception {
+  public void _testFileModified() throws Exception {
     VirtualFile root = createTestProjectStructure();
     VirtualFile pkg = createChildDirectory(root, "foo");
     PsiDirectory dir = myPsiManager.findDirectory(pkg);
@@ -50,6 +50,5 @@ public class AddClassToFileTest extends JavaPsiTestCase {
     assertNotNull(doc);
     assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(doc));
     assertFalse(FileDocumentManager.getInstance().isFileModified(virtualFile));
-    WriteAction.run(() -> virtualFile.delete(this));
   }
 }
