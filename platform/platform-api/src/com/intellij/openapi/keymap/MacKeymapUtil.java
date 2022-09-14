@@ -48,7 +48,7 @@ public final class MacKeymapUtil {
   public static final String NUM_PAD     = "\u2328";
 
   @NotNull
-  static String getModifiersText(@JdkConstants.InputEventMask int modifiers, String delimiter) {
+  public static String getModifiersText(@JdkConstants.InputEventMask int modifiers, String delimiter) {
     StringJoiner buf = new StringJoiner(delimiter != null ? delimiter : "");
     if ((modifiers & InputEvent.CTRL_MASK) != 0) buf.add(get(CONTROL, "Ctrl+"));
     if ((modifiers & InputEvent.ALT_MASK) != 0) buf.add(get(OPTION, "Alt+"));
