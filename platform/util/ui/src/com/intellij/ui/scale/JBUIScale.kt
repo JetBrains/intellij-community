@@ -377,6 +377,14 @@ object JBUIScale {
 
   /**
    * Returns the system scale factor, corresponding to the graphics.
+   * This is a convenience method allowing to avoid casting to `Graphics2D`
+   * on the calling side.
+   */
+  @JvmStatic
+  fun sysScale(g: Graphics?): Float = sysScale(g as? Graphics2D?)
+
+  /**
+   * Returns the system scale factor, corresponding to the graphics.
    * For BufferedImage's graphics, the scale is taken from the graphics itself.
    * In the IDE-managed HiDPI mode defaults to [.sysScale]
    */

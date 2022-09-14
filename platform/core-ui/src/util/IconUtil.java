@@ -955,14 +955,17 @@ public final class IconUtil {
 
   @ApiStatus.Internal
   public static Icon toRetinaAwareIcon(BufferedImage image) {
+    return toRetinaAwareIcon(image, JBUIScale.sysScale());
+  }
+
+  @ApiStatus.Internal
+  public static Icon toRetinaAwareIcon(BufferedImage image, float sysScale) {
     return new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        // [tav] todo: the icon is created in def screen scale
-        if (UIUtil.isJreHiDPI()) {
+        if (isJreHiDPI()) {
           Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
-          float s = JBUIScale.sysScale();
-          newG.scale(1.0 / s, 1.0 / s);
+          newG.scale(1.0 / sysScale, 1.0 / sysScale);
           newG.drawImage(image, 0, 0, null);
           newG.scale(1.0, 1.0);
           newG.dispose();
@@ -974,13 +977,18 @@ public final class IconUtil {
 
       @Override
       public int getIconWidth() {
-        return UIUtil.isJreHiDPI() ? (int)(image.getWidth() / JBUIScale.sysScale()) : image.getWidth();
+        return isJreHiDPI() ? (int)(image.getWidth() / sysScale) : image.getWidth();
       }
 
       @Override
       public int getIconHeight() {
-        return UIUtil.isJreHiDPI() ? (int)(image.getHeight() / JBUIScale.sysScale()) : image.getHeight();
+        return isJreHiDPI() ? (int)(image.getHeight() / sysScale) : image.getHeight();
+      }
+
+      private boolean isJreHiDPI() {
+        return JreHiDpiUtil.isJreHiDPI(sysScale);
       }
     };
   }
+
 }

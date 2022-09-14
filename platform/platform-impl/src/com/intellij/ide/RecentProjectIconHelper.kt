@@ -20,7 +20,9 @@ import com.intellij.util.ui.*
 import org.imgscalr.Scalr
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.Color
-import java.net.MalformedURLException
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.*
@@ -29,6 +31,10 @@ import kotlin.io.path.extension
 import kotlin.math.max
 
 private val LOG = logger<RecentProjectIconHelper>()
+
+private fun unscaledProjectIconSize() = Registry.intValue("ide.project.icon.size", 20)
+
+private fun userScaledProjectIconSize() = JBUIScale.scale(unscaledProjectIconSize())
 
 internal class RecentProjectIconHelper {
   companion object {
@@ -55,30 +61,7 @@ internal class RecentProjectIconHelper {
     }
 
     @JvmStatic
-    fun createIcon(file: Path): Icon? {
-      try {
-        if ("svg" == file.extension.lowercase(Locale.ENGLISH)) {
-          return IconDeferrer.getInstance().defer(EmptyIcon.create(projectIconSize()),
-                                                  Pair(file.toAbsolutePath(), StartupUiUtil.isUnderDarcula())) {
-            val icon = IconLoader.findIcon(file.toUri().toURL(), false) ?: return@defer null
-            if (icon is ScaleContextAware) {
-              icon.updateScaleContext(ScaleContext.create())
-            }
-
-            val iconSize = max(icon.iconWidth, icon.iconHeight)
-            if (iconSize == projectIconSize()) return@defer icon
-            return@defer IconUtil.scale(icon, null, projectIconSize().toFloat() / iconSize)
-          }
-        }
-        val image = ImageLoader.loadFromUrl(file.toUri().toURL()) ?: return null
-        val targetSize = if (UIUtil.isRetina()) 32 else JBUI.pixScale(16f).toInt()
-        return IconUtil.toRetinaAwareIcon(Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, targetSize))
-      }
-      catch (e: MalformedURLException) {
-        LOG.debug(e)
-      }
-      return null
-    }
+    fun createIcon(file: Path): Icon = ProjectFileIcon(file, userScaledProjectIconSize())
 
     @JvmStatic
     private val projectIconsCache = HashMap<String, ProjectIcon>()
@@ -89,9 +72,7 @@ internal class RecentProjectIconHelper {
     }
 
     @JvmStatic
-    fun projectIconSize() = JBUIScale.scale(unscaledProjectIconSize())
-
-    private fun unscaledProjectIconSize() = Registry.intValue("ide.project.icon.size", 20)
+    fun projectIconSize() = userScaledProjectIconSize()
 
     @JvmStatic
     fun generateProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean): Icon {
@@ -135,7 +116,7 @@ internal class RecentProjectIconHelper {
         return iconWrapper.icon
       }
 
-      var icon = createIcon(file) ?: return null
+      var icon = createIcon(file)
       if (!isProjectValid) {
         icon = IconUtil.desaturate(icon)
       }
@@ -179,6 +160,74 @@ private data class ProjectIcon(
   val lastUsedProjectIconSize: Int,
   val timestamp: Long? = null
 )
+
+private class ProjectFileIcon(
+  private val file: Path,
+  private val userScaledSize: Int,
+) : JBCachingScalableIcon<ProjectFileIcon>() {
+
+  private var cachedIcon: Icon? = null
+  private var cachedIconSysScale: Float? = null
+  private var cachedIconPixScale: Float? = null
+
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    val sysScale = JBUIScale.sysScale(g)
+    g as Graphics2D
+    val pixScale = JBUI.pixScale(g.deviceConfiguration)
+    val cachedIcon = this.cachedIcon
+    val delegate = if (
+      cachedIcon != null &&
+      cachedIconSysScale == sysScale &&
+      cachedIconPixScale == pixScale
+    ) {
+      cachedIcon
+    } else {
+      createIcon(sysScale, pixScale).also {
+        this.cachedIcon = it
+        this.cachedIconSysScale = sysScale
+        this.cachedIconPixScale = pixScale
+      }
+    }
+    delegate.paintIcon(c, g, x, y)
+  }
+
+  private fun createIcon(sysScale: Float, pixScale: Float): Icon {
+    try {
+      if ("svg" == file.extension.lowercase(Locale.ENGLISH)) {
+        return IconDeferrer.getInstance().defer(EmptyIcon.create(userScaledSize),
+                                         Pair(file.toAbsolutePath(), StartupUiUtil.isUnderDarcula())) {
+          val icon = IconLoader.findIcon(file.toUri().toURL(), false) ?: return@defer null
+          if (icon is ScaleContextAware) {
+            icon.updateScaleContext(ScaleContext.create())
+          }
+
+          val iconSize = max(icon.iconWidth, icon.iconHeight)
+          if (iconSize == userScaledSize) return@defer icon
+          return@defer IconUtil.scale(icon, null, userScaledSize.toFloat() / iconSize)
+        }
+      }
+      else {
+        val image = ImageLoader.loadFromUrl(file.toUri().toURL()) ?: return EmptyIcon.create(userScaledSize)
+        val targetSize = if (UIUtil.isRetina()) 32 else (userScaledSize * pixScale).toInt()
+        return IconUtil.toRetinaAwareIcon(
+          Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, targetSize),
+          sysScale
+        )
+      }
+    }
+    catch (e: Exception) {
+      LOG.debug(e)
+      return EmptyIcon.create(userScaledSize)
+    }
+  }
+
+  override fun getIconWidth(): Int = userScaledSize
+
+  override fun getIconHeight(): Int = userScaledSize
+
+  override fun copy(): ProjectFileIcon = ProjectFileIcon(file, userScaledSize)
+
+}
 
 private object ProjectIconPalette : ColorPalette() {
   override val gradients: Array<kotlin.Pair<Color, Color>>
