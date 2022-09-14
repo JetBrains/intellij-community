@@ -19,6 +19,7 @@ import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
+import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -341,7 +342,7 @@ class DistributionJARsBuilder {
         val moduleOutputPatcher = ModuleOutputPatcher()
         val stageDir = context.paths.tempDir.resolve("non-bundled-plugins-${context.applicationInfo.productCode}")
         NioFiles.deleteRecursively(stageDir)
-        val dirToJar = ConcurrentLinkedQueue<Pair<Path, Path>>()
+        val dirToJar = ConcurrentLinkedQueue<NonBundledPlugin>()
         val defaultPluginVersion = if (context.buildNumber.endsWith(".SNAPSHOT")) {
           "${context.buildNumber}.${pluginDateFormat.format(ZonedDateTime.now())}"
         }
@@ -375,7 +376,7 @@ class DistributionJARsBuilder {
             val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
             pluginsToIncludeInCustomRepository.add(PluginRepositorySpec(destFile, pluginXml))
           }
-          dirToJar.add(pluginDirOrFile to destFile)
+          dirToJar.add(NonBundledPlugin(pluginDirOrFile, destFile, !plugin.enableSymlinksAndExecutableResources))
         }
 
         bulkZipWithPrefix(items = dirToJar, compress = compressPluginArchive, withBlockMap = compressPluginArchive)
@@ -1093,26 +1094,42 @@ private fun checkModuleExcludes(moduleExcludes: Map<String, List<String>>, conte
   }
 }
 
-private suspend fun bulkZipWithPrefix(items: Collection<Pair<Path, Path>>, compress: Boolean, withBlockMap: Boolean) {
+private data class NonBundledPlugin(val sourceDir: Path, val targetZip: Path, val optimizedZip: Boolean)
+
+private suspend fun bulkZipWithPrefix(items: Collection<NonBundledPlugin>, compress: Boolean, withBlockMap: Boolean) {
   spanBuilder("archive directories").setAttribute(AttributeKey.longKey("count"), items.size.toLong()).useWithScope2 {
     val json by lazy { JSON.std.without(JSON.Feature.USE_FIELDS) }
     withContext(Dispatchers.IO) {
-      for (item in items) {
-        val target = item.second
+      for ((source, target, optimized) in items) {
         launch {
           spanBuilder("build plugin archive")
-            .setAttribute("input", item.first.toString())
+            .setAttribute("input", source.toString())
             .setAttribute("outputFile", target.toString())
+            .setAttribute("optimizedZip", optimized)
             .useWithScope2 {
-              writeNewZip(target, compress = compress, withOptimizedMetadataEnabled = false) { zipCreator ->
-                ZipArchiver(zipCreator).use { archiver ->
-                  if (Files.isDirectory(item.first)) {
-                    archiver.setRootDir(item.first, item.first.fileName.toString())
-                    archiveDir(startDir = item.first, archiver = archiver, excludes = null)
+              if (optimized) {
+                writeNewZip(target, compress = compress, withOptimizedMetadataEnabled = false) { zipCreator ->
+                  ZipArchiver(zipCreator).use { archiver ->
+                    if (Files.isDirectory(source)) {
+                      archiver.setRootDir(source, source.fileName.toString())
+                      archiveDir(startDir = source, archiver = archiver, excludes = null)
+                    }
+                    else {
+                      archiver.setRootDir(source.parent)
+                      archiver.addFile(source)
+                    }
                   }
-                  else {
-                    archiver.setRootDir(item.first.parent)
-                    archiver.addFile(item.first)
+                }
+              }
+              else {
+                writeNewFile(target) { outFileChannel ->
+                  NoDuplicateZipArchiveOutputStream(outFileChannel).use { out ->
+                    out.setUseZip64(Zip64Mode.Never)
+                    out.dir(source, "${source.fileName}/", entryCustomizer = { entry, file, _ ->
+                      if (Files.isExecutable(file)) {
+                        entry.unixMode = executableFileUnixMode
+                      }
+                    })
                   }
                 }
               }

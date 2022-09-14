@@ -50,6 +50,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
   var zkmScriptStub: String? = null
   var pluginCompatibilityExactVersion = false
   var retainProductDescriptorForBundledPlugin = false
+  var enableSymlinksAndExecutableResources = false
 
   internal var resourceGenerators: PersistentList<suspend (Path, BuildContext) -> Unit> = persistentListOf()
     private set
@@ -381,6 +382,13 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
                                     content = content)
         }
       }
+    }
+
+    /**
+     * Enables support for symlinks and files with posix executable bit set, such as required by macOS.
+     */
+    fun enableSymlinksAndExecutableResources() {
+      layout.enableSymlinksAndExecutableResources = true
     }
   }
 
