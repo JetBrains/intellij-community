@@ -31,7 +31,7 @@ public abstract class StorageTestBase<S> {
   }
 
   protected static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);
-  protected static final int ENOUGH_RECORDS = 6_000_000;
+  protected static final int ENOUGH_RECORDS = 1_000_000;
 
 
   @Rule
