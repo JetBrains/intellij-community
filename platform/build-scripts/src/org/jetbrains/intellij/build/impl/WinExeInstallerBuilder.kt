@@ -96,8 +96,8 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
     generator.addDirectory(winDistPath.toString(), listOf("**/idea.properties", "**/*.vmoptions"))
     generator.addDirectory(additionalDirectoryToInclude.toString())
     generator.addDirectory(jreDir.toString())
-    generator.generateInstallerFile(nsiConfDir.resolve("idea_win.nsh").toFile())
-    generator.generateUninstallerFile(nsiConfDir.resolve("unidea_win.nsh").toFile())
+    generator.generateInstallerFile(nsiConfDir.resolve("idea_win.nsh"))
+    generator.generateUninstallerFile(nsiConfDir.resolve("unidea_win.nsh"))
 
     prepareConfigurationFiles(nsiConfDir = nsiConfDir, winDistPath = winDistPath, customizer = customizer, context = context)
     for (it in customizer.customNsiConfigurationFiles) {

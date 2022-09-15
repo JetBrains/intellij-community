@@ -2,82 +2,83 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
-import groovy.transform.CompileStatic
+import java.io.File
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
 
 import java.util.regex.Pattern
 
-@CompileStatic
-final class NsisFileListGenerator {
-  private final Map<String, List<File>> directoryToFiles = [:]
-  private final List<String> filesRelativePaths = []
+internal class NsisFileListGenerator {
+  private val directoryToFiles = HashMap<String, MutableList<File>>()
+  private val filesRelativePaths = mutableListOf<String>()
 
-  void addDirectory(String directoryPath, List<String> relativeFileExcludePatterns = []) {
-    def excludePatterns = relativeFileExcludePatterns.collect { Pattern.compile(FileUtil.convertAntToRegexp(it)) }
-    processDirectory(new File(directoryPath), "", excludePatterns)
+  fun addDirectory(directoryPath: String, relativeFileExcludePatterns: List<String> = emptyList()) {
+    val excludePatterns = relativeFileExcludePatterns.map { Pattern.compile(FileUtil.convertAntToRegexp(it)) }
+    processDirectory(File(directoryPath), "", excludePatterns)
   }
 
-  void generateInstallerFile(File outputFile) {
-    outputFile.withWriter { BufferedWriter out ->
-      directoryToFiles.each {
-        if (!it.value.empty) {
+  fun generateInstallerFile(outputFile: Path) {
+    Files.newBufferedWriter(outputFile).use { out ->
+      for (it in directoryToFiles) {
+        if (!it.value.isEmpty()) {
           out.newLine()
-          out.writeLine("SetOutPath \"\$INSTDIR${it.key.isEmpty() ? "" : "\\"}${escapeWinPath(it.key)}\"")
+          @Suppress("SpellCheckingInspection")
+          out.write("SetOutPath \"\$INSTDIR${if (it.key.isEmpty()) "" else "\\"}${escapeWinPath(it.key)}\"\n")
 
-          it.value.each {
-            out.writeLine("File \"${it.absolutePath}\"")
+          it.value.forEach {
+            out.write("File \"${it.absolutePath}\"\n")
           }
         }
       }
     }
   }
 
-  void generateUninstallerFile(String installDir = "\$INSTDIR", File outputFile) {
-    outputFile.withWriter { BufferedWriter out ->
-      filesRelativePaths.toSorted().each {
-        out.writeLine("Delete \"${installDir}\\${escapeWinPath(it)}\"")
+  fun generateUninstallerFile(outputFile: Path, @Suppress("SpellCheckingInspection") installDir: String = "\$INSTDIR") {
+    Files.newBufferedWriter(outputFile).use { out ->
+      filesRelativePaths.sorted().forEach {
+        out.write("Delete \"${installDir}\\${escapeWinPath(it)}\"\n")
         if (it.endsWith(".py")) {
-          out.writeLine("Delete \"${installDir}\\${escapeWinPath(it)}c\"") //.pyc
+          out.write("Delete \"${installDir}\\${escapeWinPath(it)}c\"\n") //.pyc
         }
       }
 
       out.newLine()
 
-      directoryToFiles.keySet().toSorted().reverseEach {
-        if (!it.empty) {
-          out.writeLine("RmDir /r \"${installDir}\\${escapeWinPath(it)}\\__pycache__\"")
-          out.writeLine("RmDir \"${installDir}\\${escapeWinPath(it)}\"")
+      for (it in directoryToFiles.keys.sorted().asReversed()) {
+        if (!it.isEmpty()) {
+          out.write("RmDir /r \"${installDir}\\${escapeWinPath(it)}\\__pycache__\"\n")
+          out.write("RmDir \"${installDir}\\${escapeWinPath(it)}\"\n")
         }
       }
-      out.writeLine("RmDir \"${installDir}\"")
+      out.write("RmDir \"${installDir}\"\n")
     }
   }
 
-  private static String escapeWinPath(String dir) {
-    return dir.replace('/', '\\').replace("\$", "\$\$")
-  }
-
-  private void processDirectory(File directory, String relativePath, List<Pattern> excludePatterns) {
-    def files = directory.listFiles()
-    if (files == null) {
-      throw new IOException("Not a directory: $directory")
-    }
-    files.sort { it.name }
+  private fun processDirectory(directory: File, relativePath: String, excludePatterns: List<Pattern>) {
+    val files = directory.listFiles() ?: throw IOException("Not a directory: $directory")
+    files.sortBy { it.name }
     for (child in files) {
-      String childPath = "${(relativePath.isEmpty() ? "" : "$relativePath/")}$child.name"
+      val childPath = "${(if (relativePath.isEmpty()) "" else "$relativePath/")}$child.name"
       if (excludePatterns.any { it.matcher(childPath).matches() }) {
         continue
       }
-      if (child.isFile()) {
-        filesRelativePaths << childPath
-        directoryToFiles.get(relativePath, []) << child
+
+      if (child.isFile) {
+        filesRelativePaths.add(childPath)
+        directoryToFiles.computeIfAbsent(relativePath) { mutableListOf() }.add(child)
       }
       else {
         processDirectory(child, childPath, excludePatterns)
         if (directoryToFiles.containsKey(childPath)) {
           //register all parent directories for directories with files to ensure that they will be deleted by uninstaller
-          directoryToFiles.putIfAbsent(relativePath, [])
+          directoryToFiles.putIfAbsent(relativePath, mutableListOf())
         }
       }
     }
   }
+}
+
+private fun escapeWinPath(dir: String): String {
+  return dir.replace('/', '\\').replace("\$", "\$\$")
 }
