@@ -6,7 +6,10 @@ import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.RuntimeConfigurationException
 import com.intellij.execution.configurations.RuntimeConfigurationWarning
 import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.value.*
+import com.intellij.execution.target.value.TargetEnvironmentFunction
+import com.intellij.execution.target.value.constant
+import com.intellij.execution.target.value.getTargetEnvironmentValueForLocalPath
+import com.intellij.execution.target.value.joinToStringFunction
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
@@ -15,7 +18,6 @@ import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
-import java.nio.file.Path
 
 /**
  * Parent of all test configurations
@@ -67,7 +69,7 @@ protected constructor(project: Project, factory: ConfigurationFactory, val requi
     val pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction::class.java, false)
     val virtualFile = location.virtualFile
     return virtualFile?.canonicalPath?.let { localPath ->
-      val targetPath = targetPath(Path.of(localPath))
+      val targetPath = request.getTargetEnvironmentValueForLocalPath(localPath)
       (listOf(targetPath) + listOfNotNull(pyClass?.name, pyFunction?.name).map(::constant))
         .joinToStringFunction(separator = TEST_NAME_PARTS_SPLITTER)
     }

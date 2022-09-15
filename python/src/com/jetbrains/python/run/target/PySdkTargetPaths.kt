@@ -6,7 +6,7 @@ package com.jetbrains.python.run.target
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
-import com.intellij.execution.target.value.targetPath
+import com.intellij.execution.target.value.getTargetEnvironmentValueForLocalPath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.remote.RemoteMappingsManager
@@ -39,7 +39,7 @@ fun getTargetPathForPythonScriptExecution(project: Project,
                                           localPath: Path): TargetEnvironmentFunction<String> {
   val initialPathMapper = pathMapper ?: PyRemotePathMapper()
   val targetPath = initialPathMapper.extendPythonSdkPathMapper(project, sdk).convertToRemoteOrNull(localPath)
-  return targetPath?.let { constant(it) } ?: targetPath(localPath)
+  return targetPath?.let { constant(it) } ?: getTargetEnvironmentValueForLocalPath(localPath)
 }
 
 private fun PyRemotePathMapper.extendPythonSdkPathMapper(project: Project, sdk: Sdk?): PyRemotePathMapper {
@@ -69,7 +69,7 @@ fun getTargetPathForPythonConsoleExecution(project: Project,
                                            localPath: Path): TargetEnvironmentFunction<String> {
   val targetPath = pathMapper?.convertToRemoteOrNull(localPath)
                    ?: getPythonConsolePathMapper(project, sdk)?.convertToRemoteOrNull(localPath)
-  return targetPath?.let { constant(it) } ?: targetPath(localPath)
+  return targetPath?.let { constant(it) } ?: getTargetEnvironmentValueForLocalPath(localPath)
 }
 
 /**
