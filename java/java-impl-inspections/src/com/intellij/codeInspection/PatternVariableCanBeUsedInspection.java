@@ -36,10 +36,13 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
         if (qualifier == null) return;
         if (qualifier.resolve() instanceof PsiPatternVariable variable &&
             variable.getPattern() instanceof PsiDeconstructionPattern deconstruction) {
+          if (!isFinalOrEffectivelyFinal(variable)) return;
           PsiPatternVariable existingPatternVariable = findExistingPatternVariable(qualifier, deconstruction, call);
           if (existingPatternVariable == null) return;
+          if (!isFinalOrEffectivelyFinal(existingPatternVariable)) return;
           String patternName = existingPatternVariable.getName();
-          if (PsiUtil.skipParenthesizedExprUp(call.getParent()) instanceof PsiLocalVariable localVariable) {
+          if (PsiUtil.skipParenthesizedExprUp(call.getParent()) instanceof PsiLocalVariable localVariable &&
+              canReplaceLocalVariableWithPatternVariable(localVariable, existingPatternVariable)) {
             String name = localVariable.getName();
             LocalQuickFix fix = new ExistingPatternVariableCanBeUsedFix(name, existingPatternVariable);
             holder.registerProblem(call, InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.existing.message",
@@ -52,6 +55,20 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
                                                                          patternName, callText), fix);
           }
         }
+      }
+
+      private static boolean isFinalOrEffectivelyFinal(@NotNull PsiPatternVariable variable) {
+        return (!(variable.getPattern() instanceof PsiDeconstructionPattern) && variable.hasModifierProperty(PsiModifier.FINAL)) ||
+               !VariableAccessUtils.variableIsAssigned(variable, variable.getDeclarationScope());
+      }
+
+      private static boolean canReplaceLocalVariableWithPatternVariable(@NotNull PsiLocalVariable localVariable,
+                                                                        @NotNull PsiPatternVariable patternVariable) {
+        PsiElement scope = PsiUtil.getVariableCodeBlock(localVariable, null);
+        if (scope == null) return false;
+        return localVariable.hasModifierProperty(PsiModifier.FINAL) ||
+               !patternVariable.hasModifierProperty(PsiModifier.FINAL) ||
+               HighlightControlFlowUtil.isEffectivelyFinal(localVariable, scope, null);
       }
 
       @Nullable
@@ -110,17 +127,18 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
         if (scope == null) return;
         PsiDeclarationStatement declaration = ObjectUtils.tryCast(variable.getParent(), PsiDeclarationStatement.class);
         if (declaration == null) return;
-        if (!PsiUtil.isLanguageLevel16OrHigher(holder.getFile()) &&
-            !variable.hasModifierProperty(PsiModifier.FINAL) &&
-            !HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) return;
         PsiInstanceOfExpression instanceOf = InstanceOfUtils.findPatternCandidate(cast);
         if (instanceOf != null) {
           PsiPattern pattern = instanceOf.getPattern();
           PsiPatternVariable existingPatternVariable = JavaPsiPatternUtil.getPatternVariable(pattern);
           String name = identifier.getText();
           if (existingPatternVariable != null) {
+            if (!canReplaceLocalVariableWithPatternVariable(variable, existingPatternVariable) ||
+                !isFinalOrEffectivelyFinal(existingPatternVariable)) {
+              return;
+            }
             holder.registerProblem(identifier,
-                                   InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.existing.message", 
+                                   InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.existing.message",
                                                                    existingPatternVariable.getName(), name),
                                    new ExistingPatternVariableCanBeUsedFix(name, existingPatternVariable));
           } else {
