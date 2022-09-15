@@ -105,15 +105,8 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
                 val pluginDisposable = KotlinPluginDisposable.getInstance(project)
                 val (templates, classpath) =
                     ReadAction.nonBlocking(Callable {
-                        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-                            val files = mutableSetOf<VirtualFile>()
-                            FileTypeIndex.processFiles(ScriptDefinitionMarkerFileType, {
-                                indicator.checkCanceled()
-                                files.add(it)
-                                true
-                            }, project.allScope())
-                            getTemplateClassPath(files, indicator)
-                        })
+                        val files = FileTypeIndex.getFiles(ScriptDefinitionMarkerFileType, project.allScope())
+                        getTemplateClassPath(files, indicator)
                     })
                         .expireWith(pluginDisposable)
                         .wrapProgress(indicator)
