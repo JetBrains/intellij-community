@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.decompiler.psi.text.DecompiledText
 import org.jetbrains.kotlin.analysis.decompiler.stub.createIncompatibleAbiVersionFileStub
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
+import org.jetbrains.kotlin.psi.stubs.elements.KtFileElementType
 import org.jetbrains.kotlin.serialization.SerializerExtensionProtocol
 import org.jetbrains.kotlin.serialization.deserialization.FlexibleTypeDeserializer
 import org.jetbrains.kotlin.serialization.js.DynamicTypeDeserializer
@@ -59,5 +59,5 @@ private fun createFileStub(project: Project, text: String): PsiFileStub<*> {
 
     val psiFileFactory = PsiFileFactory.getInstance(project) as PsiFileFactoryImpl
     val file = psiFileFactory.trySetupPsiForFile(virtualFile, KotlinLanguage.INSTANCE, false, false)!!
-    return KtStubElementTypes.FILE.builder.buildStubTree(file) as PsiFileStub<*>
+    return KtFileElementType.INSTANCE.builder.buildStubTree(file) as PsiFileStub<*>
 }
