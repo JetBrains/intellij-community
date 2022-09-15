@@ -26,7 +26,7 @@ abstract class LibraryInfo(
     val library: Library
 ) : IdeaModuleInfo, LibraryModuleInfo, BinaryModuleInfo, TrackableModuleInfo {
 
-    private val libraryWrapper = LibraryWrapper(library as LibraryEx)
+    protected val libraryWrapper = LibraryWrapper(library as LibraryEx)
 
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.LIBRARY

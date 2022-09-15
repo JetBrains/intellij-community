@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
@@ -214,6 +214,13 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
 
         c.production.assertDependenciesEqual(c.production)
         c.test.assertDependenciesEqual(c.test, c.production, b.test, b.production, a.test, a.production)
+    }
+
+    fun testKlibEquals() {
+        val lib1 = projectLibraryWithFakeRoot("lib1")
+        val klib1 = NativeKlibLibraryInfo(project, lib1, "one")
+        val klib2 = NativeKlibLibraryInfo(project, lib1, "two")
+        Assert.assertNotEquals(klib1, klib2)
     }
 
     fun testDependents() {
