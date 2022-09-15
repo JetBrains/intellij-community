@@ -1,47 +1,63 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations
 
+import com.intellij.codeInspection.*
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.codeInsight.PsiOnlyKotlinMainFunctionDetector
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.namedFunctionVisitor
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 private val detectorConfiguration = KotlinMainFunctionDetector.Configuration(checkResultType = false)
 
-class MainFunctionReturnUnitInspection : AbstractKotlinApplicatorBasedInspection<KtNamedFunction, CallableReturnTypeUpdaterApplicator.TypeInfo>(KtNamedFunction::class) {
-    override fun getApplicabilityRange() = ApplicabilityRanges.CALLABLE_RETURN_TYPE
+class MainFunctionReturnUnitInspection : LocalInspectionTool() {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+        return namedFunctionVisitor { processFunction(it, holder) }
+    }
 
-    override fun getApplicator(): KotlinApplicator<KtNamedFunction, CallableReturnTypeUpdaterApplicator.TypeInfo> {
-        return CallableReturnTypeUpdaterApplicator.applicator.with {
-            isApplicableByPsi { function ->
-                PsiOnlyKotlinMainFunctionDetector.isMain(function, detectorConfiguration)
-                        && (function.hasDeclaredReturnType() || function.equalsToken != null)
-            }
-            familyName { KotlinBundle.message("change.main.function.return.type.to.unit.fix.text2") }
-            actionName { callable, _ ->
-                if (callable.typeReference != null)
-                    KotlinBundle.message("change.main.function.return.type.to.unit.fix.text2")
-                else
-                    KotlinBundle.message("change.main.function.return.type.to.unit.fix.text")
+    private fun processFunction(function: KtNamedFunction, holder: ProblemsHolder) {
+        if (!PsiOnlyKotlinMainFunctionDetector.isMain(function, detectorConfiguration)) return
+        if (!function.hasDeclaredReturnType() && function.hasBlockBody()) return
+        if (!KotlinMainFunctionDetector.getInstance().isMain(function, detectorConfiguration)) return
+
+        analyze(function) {
+            if (!function.getFunctionLikeSymbol().returnType.isUnit) {
+                holder.registerProblem(
+                    function.typeReference ?: function,
+                    KotlinBundle.message("0.should.return.unit", "'main()'"),
+                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                    ChangeMainFunctionReturnTypeToUnitFix(function.typeReference != null)
+                )
             }
         }
     }
 
-    override fun getInputProvider(): KotlinApplicatorInputProvider<KtNamedFunction, CallableReturnTypeUpdaterApplicator.TypeInfo> {
-        return inputProvider { function ->
-            if (KotlinMainFunctionDetector.getInstance().isMain(function, detectorConfiguration)) {
-                analyze(function) {
-                    if (!function.getFunctionLikeSymbol().returnType.isUnit) {
-                        return@inputProvider CallableReturnTypeUpdaterApplicator.TypeInfo(CallableReturnTypeUpdaterApplicator.TypeInfo.UNIT)
-                    }
-                }
-            }
+    private class ChangeMainFunctionReturnTypeToUnitFix(private val hasExplicitReturnType: Boolean) : LocalQuickFix {
+        override fun getFamilyName() = name
 
-            return@inputProvider null
+        override fun getName(): String {
+            return if (hasExplicitReturnType)
+                KotlinBundle.message("change.main.function.return.type.to.unit.fix.text2")
+            else
+                KotlinBundle.message("change.main.function.return.type.to.unit.fix.text")
+        }
+
+        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+            val function = descriptor.psiElement.getNonStrictParentOfType<KtNamedFunction>() ?: return
+            if (function.hasBlockBody()) {
+                function.typeReference = null
+            } else {
+                val newTypeReference = KtPsiFactory(project).createType(StandardClassIds.Unit.asFqNameString())
+                function.typeReference = newTypeReference
+                ShortenReferencesFacility.getInstance().shorten(newTypeReference)
+            }
         }
     }
 }
