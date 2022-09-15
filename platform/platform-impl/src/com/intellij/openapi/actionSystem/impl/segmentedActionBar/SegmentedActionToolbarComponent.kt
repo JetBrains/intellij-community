@@ -31,7 +31,7 @@ open class SegmentedActionToolbarComponent(place: String,
 
     private val LOG = Logger.getInstance(SegmentedActionToolbarComponent::class.java)
 
-    internal val segmentedButtonLook = object : ActionButtonLook() {
+    val segmentedButtonLook = object : ActionButtonLook() {
       override fun paintBorder(g: Graphics, c: JComponent, state: Int) {
       }
 
