@@ -541,6 +541,144 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/mainFunctionReturnUnit")
+        public abstract static class MainFunctionReturnUnit extends AbstractK2LocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/mainFunctionReturnUnit/insideClass")
+            public static class InsideClass extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/insideClass/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/mainFunctionReturnUnit/insideObject")
+            public static class InsideObject extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("companion.kt")
+                public void testCompanion() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/insideObject/companion.kt");
+                }
+
+                @TestMetadata("companionNamed.kt")
+                public void testCompanionNamed() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/insideObject/companionNamed.kt");
+                }
+
+                @TestMetadata("correct.kt")
+                public void testCorrect() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/insideObject/correct.kt");
+                }
+
+                @TestMetadata("correctVararg.kt")
+                public void testCorrectVararg() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/insideObject/correctVararg.kt");
+                }
+
+                @TestMetadata("nested.kt")
+                public void testNested() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/insideObject/nested.kt");
+                }
+
+                @TestMetadata("noAnnnotation.kt")
+                public void testNoAnnnotation() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/insideObject/noAnnnotation.kt");
+                }
+
+                @TestMetadata("noArguments.kt")
+                public void testNoArguments() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/insideObject/noArguments.kt");
+                }
+
+                @TestMetadata("objectLiteral.kt")
+                public void testObjectLiteral() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/insideObject/objectLiteral.kt");
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/insideObject/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/mainFunctionReturnUnit/topLevel")
+            public static class TopLevel extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("annotatedReturnType.kt")
+                public void testAnnotatedReturnType() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/topLevel/annotatedReturnType.kt");
+                }
+
+                @TestMetadata("correct.kt")
+                public void testCorrect() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/topLevel/correct.kt");
+                }
+
+                @TestMetadata("correctWithArgument.kt")
+                public void testCorrectWithArgument() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/topLevel/correctWithArgument.kt");
+                }
+
+                @TestMetadata("correctWithArgumentVararg.kt")
+                public void testCorrectWithArgumentVararg() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/topLevel/correctWithArgumentVararg.kt");
+                }
+
+                @TestMetadata("differentArgumentType.kt")
+                public void testDifferentArgumentType() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/topLevel/differentArgumentType.kt");
+                }
+
+                @TestMetadata("differentName.kt")
+                public void testDifferentName() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/topLevel/differentName.kt");
+                }
+
+                @TestMetadata("extension.kt")
+                public void testExtension() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/topLevel/extension.kt");
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/topLevel/simple.kt");
+                }
+
+                @TestMetadata("withArgument.kt")
+                public void testWithArgument() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/topLevel/withArgument.kt");
+                }
+
+                @TestMetadata("withArgumentVararg.kt")
+                public void testWithArgumentVararg() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/topLevel/withArgumentVararg.kt");
+                }
+
+                @TestMetadata("withMultipleArguments.kt")
+                public void testWithMultipleArguments() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/topLevel/withMultipleArguments.kt");
+                }
+
+                @TestMetadata("withNullableArgument.kt")
+                public void testWithNullableArgument() throws Exception {
+                    runTest("testData/inspectionsLocal/mainFunctionReturnUnit/topLevel/withNullableArgument.kt");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantVisibilityModifierFir")
         public static class RedundantVisibilityModifierFir extends AbstractK2LocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
