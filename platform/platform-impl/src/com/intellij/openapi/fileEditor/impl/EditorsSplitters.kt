@@ -198,6 +198,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     focusWatcher = MyFocusWatcher()
     Disposer.register(this) { focusWatcher.deinstall(this) }
     focusTraversalPolicy = MyFocusTraversalPolicy(this)
+    isFocusTraversalPolicyProvider = true
     transferHandler = MyTransferHandler(this)
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
       override fun activeKeymapChanged(keymap: Keymap?) {
@@ -778,10 +779,10 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 }
 
 private class MyFocusTraversalPolicy(private val splitters: EditorsSplitters) : IdeFocusTraversalPolicy() {
-  override fun getDefaultComponent(focusCycleRoot: Container): Component {
+  override fun getDefaultComponent(focusCycleRoot: Container): Component? {
     return splitters.currentWindow?.selectedComposite?.focusComponent?.let {
-      getPreferredFocusedComponent(it, this)!!
-    } ?: getPreferredFocusedComponent(splitters, this)!!
+      getPreferredFocusedComponent(it, this)
+    } ?: getPreferredFocusedComponent(splitters, this)
   }
 
   override fun getProject() = splitters.manager.project
