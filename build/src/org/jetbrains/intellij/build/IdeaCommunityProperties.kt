@@ -74,11 +74,11 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
     super.copyAdditionalFiles(context, targetDirectory)
-    FileSet(context.paths.communityHomeDir.communityRoot)
+    FileSet(context.paths.communityHomeDir)
       .include("LICENSE.txt")
       .include("NOTICE.txt")
       .copyToDir(Path.of(targetDirectory))
-     FileSet(context.paths.communityHomeDir.communityRoot.resolve("build/conf/ideaCE/common/bin"))
+     FileSet(context.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"))
       .includeAll()
       .copyToDir(Path.of(targetDirectory, "bin"))
     bundleExternalPlugins(context, targetDirectory)

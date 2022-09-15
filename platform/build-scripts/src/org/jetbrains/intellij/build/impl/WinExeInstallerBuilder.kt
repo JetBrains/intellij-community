@@ -36,7 +36,7 @@ private fun generateInstallationConfigFileForSilentMode(customizer: WindowsDistr
     customConfigPath
   }
   else {
-    context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/resources/win/nsis/silent.config")
+    context.paths.communityHomeDir.resolve("platform/build-scripts/resources/win/nsis/silent.config")
   }
 
   Files.createDirectories(targetFilePath.parent)
@@ -81,7 +81,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
   val nsiConfDir = box.resolve("nsiconf")
   withContext(Dispatchers.IO) {
     Files.createDirectories(nsiConfDir)
-    copyDir(context.paths.communityHomeDir.communityRoot.resolve("build/conf/nsis"), nsiConfDir)
+    copyDir(context.paths.communityHomeDir.resolve("build/conf/nsis"), nsiConfDir)
     generateInstallationConfigFileForSilentMode(customizer, context)
 
     if (SystemInfoRt.isLinux) {
@@ -111,7 +111,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
     deleteDir(nsiLogDir)
     copyDir(nsiConfDir, nsiLogDir)
 
-    Decompressor.Zip(communityHome.communityRoot.resolve("build/tools/NSIS.zip")).withZipExtensions().extract(box)
+    Decompressor.Zip(communityHome.resolve("build/tools/NSIS.zip")).withZipExtensions().extract(box)
     spanBuilder("run NSIS tool to build .exe installer for Windows").useWithScope2 {
       val timeoutMs = TimeUnit.HOURS.toMillis(2)
       if (SystemInfoRt.isWindows) {
@@ -119,7 +119,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
           args = listOf(
             "${box}/NSIS/makensis.exe",
             "/V2",
-            "/DCOMMUNITY_DIR=${communityHome.communityRoot}",
+            "/DCOMMUNITY_DIR=${communityHome}",
             "/DIPR=${customizer.associateIpr}",
             "/DOUT_DIR=${context.paths.artifacts}",
             "/DOUT_FILE=${outFileName}",
@@ -137,7 +137,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
           args = listOf(
             makeNsis,
             "-V2",
-            "-DCOMMUNITY_DIR=${communityHome.communityRoot}",
+            "-DCOMMUNITY_DIR=${communityHome}",
             "-DIPR=${customizer.associateIpr}",
             "-DOUT_DIR=${context.paths.artifacts}",
             "-DOUT_FILE=${outFileName}",

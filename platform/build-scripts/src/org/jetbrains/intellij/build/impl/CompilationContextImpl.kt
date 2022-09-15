@@ -77,7 +77,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
                  options: BuildOptions,
                  buildOutputRootEvaluator: (JpsProject) -> Path): CompilationContextImpl {
     val copy = CompilationContextImpl(model = projectModel,
-                                      communityHome = paths.communityHomeDir,
+                                      communityHome = paths.communityHomeDirRoot,
                                       projectHome = paths.projectHome,
                                       messages = messages,
                                       buildOutputRootEvaluator = buildOutputRootEvaluator,
@@ -272,7 +272,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
     val buildOut = options.outputRootPath ?: buildOutputRootEvaluator(project)
     val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
     paths = BuildPathsImpl(communityHome, projectHome, buildOut, logDir)
-    dependenciesProperties = DependenciesProperties(paths.communityHomeDir)
+    dependenciesProperties = DependenciesProperties(paths.communityHomeDirRoot)
     bundledRuntime = BundledRuntimeImpl(options, paths, dependenciesProperties, messages::error, messages::info)
   }
 }
@@ -318,7 +318,7 @@ private fun <Value : String?> setOutputPath(propOwner: JpsArtifact, outputPath: 
 }
 
 private class BuildPathsImpl(communityHome: BuildDependenciesCommunityRoot, projectHome: Path, buildOut: Path, logDir: Path)
-  : BuildPaths(communityHomeDir = communityHome,
+  : BuildPaths(communityHomeDirRoot = communityHome,
                buildOutputDir = buildOut,
                logDir = logDir,
                projectHome = projectHome) {

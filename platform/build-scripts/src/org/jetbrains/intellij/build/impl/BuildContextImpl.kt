@@ -44,7 +44,7 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
     get() = productProperties.getSystemSelector(applicationInfo, buildNumber)
 
 
-  override val buildNumber: String = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDir)
+  override val buildNumber: String = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDirRoot)
 
   override val xBootClassPathJarNames: List<String>
     get() = productProperties.xBootClassPathJarNames

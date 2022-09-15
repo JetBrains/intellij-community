@@ -156,8 +156,8 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     context.paths.distAllDir = targetDirectory
     context.options.targetOs = currentOs.osId
     context.options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
-    BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDir)
-    BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDir)
+    BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDirRoot)
+    BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
     DistributionJARsBuilder(compileModulesForDistribution(context)).buildJARs(context = context, isUpdateFromSources = true)
     val arch = JvmArchitecture.currentJvmArch
     layoutShared(context)
@@ -227,7 +227,7 @@ private suspend fun buildProvidedModuleList(targetFile: Path, state: Distributio
 }
 
 private fun patchIdeaPropertiesFile(buildContext: BuildContext): Path {
-  val builder = StringBuilder(Files.readString(buildContext.paths.communityHomeDir.communityRoot.resolve("bin/idea.properties")))
+  val builder = StringBuilder(Files.readString(buildContext.paths.communityHomeDir.resolve("bin/idea.properties")))
   for (it in buildContext.productProperties.additionalIDEPropertiesFilePaths) {
     builder.append('\n').append(Files.readString(it))
   }
@@ -264,7 +264,7 @@ private suspend fun layoutShared(context: BuildContext) {
   spanBuilder("copy files shared among all distributions").useWithScope2 {
     val licenseOutDir = context.paths.distAllDir.resolve("license")
     withContext(Dispatchers.IO) {
-      copyDir(context.paths.communityHomeDir.communityRoot.resolve("license"), licenseOutDir)
+      copyDir(context.paths.communityHomeDir.resolve("license"), licenseOutDir)
       for (additionalDirWithLicenses in context.productProperties.additionalDirectoriesWithLicenses) {
         copyDir(additionalDirWithLicenses, licenseOutDir)
       }
@@ -668,7 +668,7 @@ suspend fun buildDistributions(context: BuildContext) {
                   context.messages.error("Toolbox Lite-Gen version is not specified!")
                 }
                 else {
-                  ToolboxLiteGen.runToolboxLiteGen(context.paths.communityHomeDir, context.messages,
+                  ToolboxLiteGen.runToolboxLiteGen(context.paths.communityHomeDirRoot, context.messages,
                                                    toolboxLiteGenVersion, "/artifacts-dir=" + context.paths.artifacts,
                                                    "/product-code=" + context.applicationInfo.productCode,
                                                    "/isEAP=" + context.applicationInfo.isEAP.toString(),

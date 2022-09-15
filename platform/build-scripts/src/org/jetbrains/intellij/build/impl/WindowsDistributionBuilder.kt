@@ -40,7 +40,7 @@ internal class WindowsDistributionBuilder(
     val pty4jNativeDir = withContext(Dispatchers.IO) {
       Files.createDirectories(distBinDir)
 
-      val sourceBinDir = context.paths.communityHomeDir.communityRoot.resolve("bin/win")
+      val sourceBinDir = context.paths.communityHomeDir.resolve("bin/win")
 
       FileSet(sourceBinDir.resolve(arch.dirName))
         .includeAll()
@@ -218,7 +218,7 @@ internal class WindowsDistributionBuilder(
       additionalJvmArguments.add("\"-Xbootclasspath/a:$bootCp\"")
     }
 
-    val winScripts = context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/resources/win/scripts")
+    val winScripts = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/win/scripts")
     val actualScriptNames = Files.newDirectoryStream(winScripts).use { dirStream -> dirStream.map { it.fileName.toString() }.sorted() }
 
     @Suppress("SpellCheckingInspection")

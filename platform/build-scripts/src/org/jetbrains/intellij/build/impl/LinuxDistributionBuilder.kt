@@ -38,7 +38,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     spanBuilder("copy files for os distribution").setAttribute("os", targetOs.osName).setAttribute("arch", arch.name).useWithScope2 {
       withContext(Dispatchers.IO) {
         val distBinDir = targetPath.resolve("bin")
-        val sourceBinDir = context.paths.communityHomeDir.communityRoot.resolve("bin/linux")
+        val sourceBinDir = context.paths.communityHomeDir.resolve("bin/linux")
         copyFileToDir(sourceBinDir.resolve("restart.py"), distBinDir)
         if (arch == JvmArchitecture.x64 || arch == JvmArchitecture.aarch64) {
           @Suppress("SpellCheckingInspection")
@@ -118,7 +118,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
   private fun generateReadme(unixDistPath: Path) {
     val fullName = context.applicationInfo.productName
-    val sourceFile = context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/resources/linux/Install-Linux-tar.txt")
+    val sourceFile = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/Install-Linux-tar.txt")
     val targetFile = unixDistPath.resolve("Install-Linux-tar.txt")
     substituteTemplatePlaceholders(sourceFile, targetFile, "@@", listOf(
       Pair("product_full", fullName),
@@ -206,7 +206,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         val appInfo = context.applicationInfo
         val productName = appInfo.productNameWithEdition
         substituteTemplatePlaceholders(
-          inputFile = context.paths.communityHomeDir.communityRoot.resolve("platform/platform-resources/src/entry.desktop"),
+          inputFile = context.paths.communityHomeDir.resolve("platform/platform-resources/src/entry.desktop"),
           outputFile = snapDir.resolve("$snapName.desktop"),
           placeholder = "$",
           values = listOf(
@@ -218,7 +218,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           )
         )
         moveFile(iconPngPath, snapDir.resolve("$snapName.png"))
-        val snapcraftTemplate = context.paths.communityHomeDir.communityRoot.resolve(
+        val snapcraftTemplate = context.paths.communityHomeDir.resolve(
           "platform/build-scripts/resources/linux/snap/snapcraft-template.yaml")
         val versionSuffix = appInfo.versionSuffix?.replace(' ', '-') ?: ""
         val version = "${appInfo.majorVersion}.${appInfo.minorVersion}${if (versionSuffix.isEmpty()) "" else "-${versionSuffix}"}"
@@ -373,7 +373,7 @@ internal fun generateUnixScripts(context: BuildContext,
   val isRemoteDevEnabled = context.productProperties.productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
 
   Files.createDirectories(distBinDir)
-  val sourceScriptDir = context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/resources/linux/scripts")
+  val sourceScriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/scripts")
 
   when (osFamily) {
     OsFamily.LINUX -> {

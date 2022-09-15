@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 
@@ -51,7 +53,7 @@ abstract class WindowsDistributionCustomizer {
   /**
    * Paths to files which will be used to overwrite the standard *.nsi files
    */
-  var customNsiConfigurationFiles: MutableList<String> = mutableListOf()
+  var customNsiConfigurationFiles: PersistentList<String> = persistentListOf()
 
   /**
    * Path to a file which contains set of properties to manage UI options when installing the product in silent mode. If {@code null}

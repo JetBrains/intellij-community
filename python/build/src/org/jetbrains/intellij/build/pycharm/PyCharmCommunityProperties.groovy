@@ -52,7 +52,7 @@ final class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   void copyAdditionalFilesBlocking(BuildContext context, String targetDirectory) {
     super.copyAdditionalFilesBlocking(context, targetDirectory)
 
-    new FileSet(context.paths.communityHomeDir.communityRoot)
+    new FileSet(context.paths.communityHomeDir)
       .include("LICENSE.txt")
       .include("NOTICE.txt")
       .copyToDir(Path.of(targetDirectory, "license"))

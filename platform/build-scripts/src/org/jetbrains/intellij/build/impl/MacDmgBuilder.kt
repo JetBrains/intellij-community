@@ -126,8 +126,10 @@ private fun buildAndSignWithMacBuilderHost(sitFile: Path,
     password = macHostProperties.password!!,
     codesignString = macHostProperties.codesignString!!,
     fullBuildNumber = context.fullBuildNumber,
-    notarize = notarize, bundleIdentifier = customizer.bundleIdentifier,
-    appArchiveFile = sitFile, communityHome = context.paths.communityHomeDir,
+    notarize = notarize,
+    bundleIdentifier = customizer.bundleIdentifier,
+    appArchiveFile = sitFile,
+    communityHome = context.paths.communityHomeDirRoot,
     artifactDir = Path.of(context.paths.artifacts),
     dmgImage = dmgImage,
     artifactBuilt = context::notifyArtifactWasBuilt,
@@ -172,7 +174,7 @@ private fun signSitLocally(sourceFile: Path,
   val targetFile = tempDir.resolve(sourceFile.fileName)
   Files.copy(sourceFile, targetFile)
 
-  val scripts = context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/tools/mac/scripts")
+  val scripts = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
   Files.walk(scripts).use { stream ->
     stream
       .filter { Files.isRegularFile(it) }
@@ -209,7 +211,7 @@ private fun buildDmgLocally(tempDir: Path, targetFileName: String, customizer: M
   val dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")
   Files.copy(Path.of((if (context.applicationInfo.isEAP) customizer.dmgImagePathForEAP else null) ?: customizer.dmgImagePath),
              dmgImageCopy)
-  val scriptDir = context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/tools/mac/scripts")
+  val scriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
   Files.copy(scriptDir.resolve("makedmg.sh"), tempDir.resolve("makedmg.sh"),
              StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
   Files.copy(scriptDir.resolve("makedmg.py"), tempDir.resolve("makedmg.py"),

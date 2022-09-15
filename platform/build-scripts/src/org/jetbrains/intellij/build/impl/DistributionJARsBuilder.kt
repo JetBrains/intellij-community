@@ -777,7 +777,7 @@ private suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildCon
     val sources = ArrayList<ZipSource>()
     val result = ArrayList<DistributionFileEntry>()
     val libraryData = ProjectLibraryData("Ant", LibraryPackMode.MERGED)
-    copyDir(sourceDir = context.paths.communityHomeDir.communityRoot.resolve("lib/ant"),
+    copyDir(sourceDir = context.paths.communityHomeDir.resolve("lib/ant"),
             targetDir = antDir,
             dirFilter = { !it.endsWith("src") },
             fileFilter = { file ->
@@ -860,11 +860,11 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout,
  *
  * @return predicate to test if the given plugin should be auto-published
  */
-private fun loadPluginAutoPublishList(buildContext: BuildContext): Predicate<PluginLayout> {
-  val file = getPluginAutoUploadFile(buildContext.paths.communityHomeDir)
+private fun loadPluginAutoPublishList(context: BuildContext): Predicate<PluginLayout> {
+  val file = getPluginAutoUploadFile(context.paths.communityHomeDirRoot)
   val config = readPluginAutoUploadFile(file)
 
-  val productCode = buildContext.applicationInfo.productCode
+  val productCode = context.applicationInfo.productCode
   return Predicate<PluginLayout> { plugin ->
     val mainModuleName = plugin.mainModule
 
@@ -873,7 +873,7 @@ private fun loadPluginAutoPublishList(buildContext: BuildContext): Predicate<Plu
     val excludedFromProduct = config.contains("-$productCode:$mainModuleName")
 
     if (includeInProduct && (excludedFromProduct || includeInAllProducts)) {
-      buildContext.messages.error("Unsupported rules combination: " + config.filter {
+      context.messages.error("Unsupported rules combination: " + config.filter {
         it == mainModuleName || it.endsWith(":$mainModuleName")
       })
     }
@@ -883,7 +883,7 @@ private fun loadPluginAutoPublishList(buildContext: BuildContext): Predicate<Plu
 }
 
 private suspend fun buildKeymapPlugins(targetDir: Path, context: BuildContext): List<Pair<Path, ByteArray>> {
-  val keymapDir = context.paths.communityHomeDir.communityRoot.resolve("platform/platform-resources/src/keymaps")
+  val keymapDir = context.paths.communityHomeDir.resolve("platform/platform-resources/src/keymaps")
   Files.createDirectories(targetDir)
   return spanBuilder("build keymap plugins").useWithScope2 {
     withContext(Dispatchers.IO) {

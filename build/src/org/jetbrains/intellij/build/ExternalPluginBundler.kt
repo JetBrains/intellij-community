@@ -7,17 +7,14 @@ import java.nio.file.Path
 import java.util.*
 
 object ExternalPluginBundler {
-  @JvmStatic
-  @JvmOverloads
   fun bundle(pluginName: String,
-             dependenciesPath: String,
+             dependenciesProjectDir: Path,
              context: BuildContext,
              targetDirectory: String,
              buildTaskName: String = pluginName) {
-    val dependenciesProjectDir = Path.of(dependenciesPath)
     GradleRunner(gradleProjectDir = dependenciesProjectDir,
                  options = context.options,
-                 communityRoot = context.paths.communityHomeDir,
+                 communityRoot = context.paths.communityHomeDirRoot,
                  additionalParams = emptyList())
       .run("Downloading $pluginName plugin...", "setup${buildTaskName}Plugin")
     val properties = Properties()
@@ -33,7 +30,6 @@ object ExternalPluginBundler {
     extractPlugin(pluginZip, targetDirectory)
   }
 
-  @JvmStatic
   fun extractPlugin(pluginZip: Path, targetDirectory: String) {
     Decompressor.Zip(pluginZip).extract(Path.of(targetDirectory, "plugins"))
   }

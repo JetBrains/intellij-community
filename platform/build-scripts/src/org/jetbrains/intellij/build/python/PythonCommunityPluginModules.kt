@@ -54,7 +54,7 @@ object PythonCommunityPluginModules {
         val output = targetDir.resolve("helpers")
         Files.createDirectories(output)
         copyDir(
-          sourceDir = context.paths.communityHomeDir.communityRoot.resolve("python/helpers"), targetDir = output,
+          sourceDir = context.paths.communityHomeDir.resolve("python/helpers"), targetDir = output,
           dirFilter = { path ->
             when {
               path.endsWith("tests") || path.endsWith(".idea") -> false

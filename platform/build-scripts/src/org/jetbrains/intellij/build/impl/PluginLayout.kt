@@ -204,7 +204,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     @JvmOverloads
     fun withBin(binPathRelativeToCommunity: String, outputPath: String, skipIfDoesntExist: Boolean = false) {
       withGeneratedResources(BiConsumer { targetDir, context ->
-        val source = context.paths.communityHomeDir.communityRoot.resolve(binPathRelativeToCommunity).normalize()
+        val source = context.paths.communityHomeDir.resolve(binPathRelativeToCommunity).normalize()
         if (Files.notExists(source)) {
           if (skipIfDoesntExist) {
             return@BiConsumer

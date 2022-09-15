@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Predicate
 import kotlin.io.path.copyTo
 
-val DEFAULT_TIMEOUT = TimeUnit.MINUTES.toMillis(10L)
+val DEFAULT_TIMEOUT: Long = TimeUnit.MINUTES.toMillis(10L)
 
 internal fun span(spanBuilder: SpanBuilder, task: Runnable) {
   spanBuilder.useWithScope {
@@ -191,7 +191,7 @@ private fun disableCompatibleIgnoredPlugins(context: BuildContext,
  * @return a list of JVM args for opened packages (JBR17+) in a format `--add-opens=PACKAGE=ALL-UNNAMED` for a specified or current OS
  */
 fun getCommandLineArgumentsForOpenPackages(context: CompilationContext, target: OsFamily? = null): List<String> {
-  val file = context.paths.communityHomeDir.communityRoot.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt")
+  val file = context.paths.communityHomeDir.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt")
   val os = when (target) {
     OsFamily.WINDOWS -> OS.Windows
     OsFamily.MACOS -> OS.macOS

@@ -31,7 +31,7 @@ internal fun configureJetBrainsProduct(properties: ProductProperties) {
     .toMutableList()
   properties.includeIntoSourcesArchiveFilter = BiPredicate { module, context ->
     module.contentRootsList.urls.all { url ->
-      Path.of(JpsPathUtil.urlToPath(url)).startsWith(context.paths.communityHomeDir.communityRoot)
+      Path.of(JpsPathUtil.urlToPath(url)).startsWith(context.paths.communityHomeDir)
     }
   }
 }

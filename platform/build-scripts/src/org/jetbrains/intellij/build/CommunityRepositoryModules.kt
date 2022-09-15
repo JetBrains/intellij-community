@@ -99,10 +99,10 @@ object CommunityRepositoryModules {
       spec.withGeneratedResources(BiConsumer { targetDir, context ->
         val targetLib = targetDir.resolve("lib")
 
-        val mavenLibs = BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDir)
+        val mavenLibs = BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDirRoot)
         copyDir(mavenLibs, targetLib.resolve("maven3-server-lib"))
 
-        val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDir)
+        val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
         copyDir(mavenDist, targetLib.resolve("maven3"))
       })
     },
