@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
-import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
+import org.jetbrains.kotlin.psi.stubs.elements.KtFileElementType
 import org.jetbrains.kotlin.resolve.CompilerDeserializationConfiguration
 import org.jetbrains.kotlin.storage.StorageManager
 import java.io.IOException
@@ -105,7 +105,7 @@ fun createFileStub(project: Project, text: String): PsiFileStub<*> {
 
     val psiFileFactory = PsiFileFactory.getInstance(project) as PsiFileFactoryImpl
     val file = psiFileFactory.trySetupPsiForFile(virtualFile, KotlinLanguage.INSTANCE, false, false)!!
-    return KtStubElementTypes.FILE.builder.buildStubTree(file) as PsiFileStub<*>
+    return KtFileElementType.INSTANCE.builder.buildStubTree(file) as PsiFileStub<*>
 }
 
 fun KotlinLibrary.createKlibPackageFragmentProvider(
