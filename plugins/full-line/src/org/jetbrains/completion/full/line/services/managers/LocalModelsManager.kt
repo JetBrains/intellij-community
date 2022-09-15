@@ -27,13 +27,8 @@ class LocalModelsManager : ConfigurableModelsManager {
 
   private fun initSchema(): LocalModelsSchema {
     return if (modelsFile.exists()) {
-      try {
-        decodeFromXml(modelsFile.readText())
-      }
-      catch (e: Exception) {
-        LOG.error("Can't parse xml. Using default one.", e, modelsFile.readText())
-        LocalModelsSchema(1, mutableListOf())
-      }
+      modelsFile.readText().takeIf { it.isNotBlank() }?.let(::decodeFromXml)
+      ?: LocalModelsSchema(1, mutableListOf())
     }
     else {
       LocalModelsSchema(1, mutableListOf()).also {
