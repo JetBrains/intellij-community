@@ -71,6 +71,12 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
 
   public abstract boolean isDirty();
 
+  @ApiStatus.Experimental
+  public abstract boolean isOffline();
+
+  @ApiStatus.Experimental
+  public abstract void setOffline(boolean offline);
+
   public abstract void markClean();
 
   @Override

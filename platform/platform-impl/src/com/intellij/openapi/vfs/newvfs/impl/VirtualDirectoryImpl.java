@@ -272,14 +272,16 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                    (PersistentFS.isWritable(attributes) ? VfsDataFlags.IS_WRITABLE_FLAG : 0) |
                    (PersistentFS.isHidden(attributes) ? VfsDataFlags.IS_HIDDEN_FLAG : 0) |
                    (sensitivity != FileAttributes.CaseSensitivity.UNKNOWN ? VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
-                   (sensitivity == FileAttributes.CaseSensitivity.SENSITIVE ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0);
+                   (sensitivity == FileAttributes.CaseSensitivity.SENSITIVE ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0) |
+                   (PersistentFS.isOfflineByDefault(attributes) ? VfsDataFlags.IS_OFFLINE : 0);
     int relevantFlagsMask = VfsDataFlags.IS_SYMLINK_FLAG |
                VfsDataFlags.IS_SPECIAL_FLAG |
                VfsDataFlags.STRICT_PARENT_HAS_SYMLINK_FLAG |
                VfsDataFlags.IS_WRITABLE_FLAG |
                VfsDataFlags.IS_HIDDEN_FLAG |
                VfsDataFlags.CHILDREN_CASE_SENSITIVE |
-               VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED;
+               VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED |
+               VfsDataFlags.IS_OFFLINE;
     segment.setFlags(id, relevantFlagsMask, newFlags);
     child.updateLinkStatus(this);
 

@@ -75,11 +75,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
      */
     static final int CHILDREN_CASE_SENSITIVE = 0x8000_0000; // makes sense for directory only
     static final int IS_SPECIAL_FLAG = CHILDREN_CASE_SENSITIVE; // makes sense for non-directory file only
+
+    static final int IS_OFFLINE = 0x0400_0000; // Reusing the freed-up INDEXED_FLAG bit
   }
   static final int ALL_FLAGS_MASK =
     VfsDataFlags.DIRTY_FLAG | VfsDataFlags.IS_SYMLINK_FLAG |
     VfsDataFlags.STRICT_PARENT_HAS_SYMLINK_FLAG | VfsDataFlags.IS_WRITABLE_FLAG | VfsDataFlags.IS_HIDDEN_FLAG | VfsDataFlags.INDEXED_FLAG |
-    VfsDataFlags.CHILDREN_CASE_SENSITIVE | VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED;
+    VfsDataFlags.CHILDREN_CASE_SENSITIVE | VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED | VfsDataFlags.IS_OFFLINE;
 
   @MagicConstant(flagsFromClass = VfsDataFlags.class)
   @interface Flags {}
@@ -181,7 +183,26 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public boolean isDirty() {
-    return getFlagInt(VfsDataFlags.DIRTY_FLAG);
+    return getFlagInt(VfsDataFlags.DIRTY_FLAG) && !isOffline();
+  }
+
+  @Override
+  public boolean isOffline() {
+    if (getFlagInt(VfsDataFlags.IS_OFFLINE)) {
+      return true;
+    }
+
+    VirtualDirectoryImpl parent = getParent();
+    return parent != null && parent.isOffline();
+  }
+
+  @Override
+  public void setOffline(boolean offline) {
+    boolean wasOffline = isOffline();
+    setFlagInt(VfsDataFlags.IS_OFFLINE, offline);
+    if (wasOffline && !isOffline()) {
+      markDirtyRecursively();
+    }
   }
 
   @Override

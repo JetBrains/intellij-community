@@ -1698,6 +1698,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     ((VirtualFileSystemEntry)file).setHiddenFlag(hiddenFlag);
   }
 
+  @ApiStatus.Experimental
+  public static void setOfflineByDefault(@NotNull VirtualFile file, boolean offlineByDefaultFlag) {
+    setFlag(file, Flags.OFFLINE_BY_DEFAULT, offlineByDefaultFlag);
+    if (offlineByDefaultFlag) {
+      ((VirtualFileSystemEntry)file).setOffline(true);
+    }
+  }
+
   private static void executeSetTarget(@NotNull VirtualFile file, @Nullable String target) {
     int id = getFileId(file);
     FSRecords.storeSymlinkTarget(id, target);

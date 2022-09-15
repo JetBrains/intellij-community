@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
@@ -16,7 +15,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.annotation.ElementType;
@@ -39,8 +37,9 @@ public abstract class PersistentFS extends ManagingFS {
     static final int CHILDREN_CASE_SENSITIVE = 0x100;  // 'true' if this directory can contain files differing only in the case
     static final int CHILDREN_CASE_SENSITIVITY_CACHED = 0x200;  // 'true' if this directory's case sensitivity is known
     static final int FREE_RECORD_FLAG = 0x400;
+    static final int OFFLINE_BY_DEFAULT = 0x800;
 
-    static final int MASK = 0x7FF;
+    static final int MASK = 0xFFF;
   }
 
   @MagicConstant(flagsFromClass = Flags.class)
@@ -81,6 +80,7 @@ public abstract class PersistentFS extends ManagingFS {
   public static boolean isSymLink(@Attributes int attributes) { return isSet(attributes, Flags.IS_SYMLINK); }
   public static boolean isSpecialFile(@Attributes int attributes) { return !isDirectory(attributes) && isSet(attributes, Flags.IS_SPECIAL); }
   public static boolean isHidden(@Attributes int attributes) { return isSet(attributes, Flags.IS_HIDDEN); }
+  public static boolean isOfflineByDefault(@Attributes int attributes) { return isSet(attributes, Flags.OFFLINE_BY_DEFAULT); }
 
   public static @NotNull FileAttributes.CaseSensitivity areChildrenCaseSensitive(@Attributes int attributes) {
     if (!isDirectory(attributes)) {

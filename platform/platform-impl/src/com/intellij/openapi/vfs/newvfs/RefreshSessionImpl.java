@@ -138,7 +138,7 @@ final class RefreshSessionImpl extends RefreshSession {
       if (forceRefresh) {
         nvf.markDirty();
       }
-      else if (!nvf.isDirty()) {
+      if (!nvf.isDirty()) {
         continue;
       }
       refreshRoots.add(nvf);
