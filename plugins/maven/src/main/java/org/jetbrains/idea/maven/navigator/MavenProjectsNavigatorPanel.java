@@ -123,10 +123,19 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
   @Override
   @Nullable
   public Object getData(@NotNull @NonNls String dataId) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return (DataProvider)slowId -> getSlowData(slowId);
+    }
     if (PlatformCoreDataKeys.HELP_ID.is(dataId)) return "reference.toolWindows.mavenProjects";
-
     if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
 
+    if (MavenDataKeys.MAVEN_PROJECTS_TREE.is(dataId)) {
+      return myTree;
+    }
+    return super.getData(dataId);
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId) {
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return extractVirtualFile();
     if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return extractVirtualFiles();
 
@@ -140,11 +149,8 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
     if (MavenDataKeys.MAVEN_DEPENDENCIES.is(dataId)) {
       return extractDependencies();
     }
-    if (MavenDataKeys.MAVEN_PROJECTS_TREE.is(dataId)) {
-      return myTree;
-    }
 
-    return super.getData(dataId);
+    return null;
   }
 
   private VirtualFile extractVirtualFile() {
