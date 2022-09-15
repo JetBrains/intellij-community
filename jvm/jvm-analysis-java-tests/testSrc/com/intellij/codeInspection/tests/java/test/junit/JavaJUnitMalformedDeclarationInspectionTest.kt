@@ -930,39 +930,37 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       }
     """.trimIndent())
   }
-
-  fun `test malformed test for JUnit 5 with ParameterResolver`() {
+  fun `test malformed test with parameter resolver`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
-      class SampleClazz {
+      import org.junit.jupiter.api.extension.*;
+      import org.junit.jupiter.api.Test;
+      
+      class MyResolver implements ParameterResolver {
+        @Override
+        public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+          return true;
+        }
+           
+        @Override
+        public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException { 
+          return null;
+        }
+      }
+      
+      @ExtendWith(MyResolver.class)
+      class Foo {
+        @Test
+        void parametersExample(String a, String b) { }
+      }
+      
+      @ExtendWith(MyResolver.class)
+      class Bar {
         @org.junit.jupiter.api.extension.RegisterExtension
-        static final IntegerResolver integerResolver = new IntegerResolver();
-
-        @org.junit.jupiter.params.ParameterizedTest
-        @org.junit.jupiter.params.provider.MethodSource("factoryMethodWithArguments")
-        void testWithArgumentsProviderUsingParameterResolvers(String argument) {}
-
-        static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> factoryMethodWithArguments(int quantity) {
-            return java.util.stream.Stream.of(
-                    org.junit.jupiter.params.provider.Arguments.arguments(quantity + " apple"),
-                    org.junit.jupiter.params.provider.Arguments.arguments(quantity + " lemon")
-            );
-        }
-    
-        static class IntegerResolver implements org.junit.jupiter.api.extension.ParameterResolver {
-    
-            @Override
-            public boolean supportsParameter(org.junit.jupiter.api.extension.ParameterContext parameterContext, org.junit.jupiter.api.extension.ExtensionContext extensionContext)
-                    throws org.junit.jupiter.api.extension.ParameterResolutionException {
-                return parameterContext.getParameter().getType() == int.class;
-            }
-    
-            @Override
-            public Object resolveParameter(org.junit.jupiter.api.extension.ParameterContext parameterContext, org.junit.jupiter.api.extension.ExtensionContext extensionContext)
-                    throws org.junit.jupiter.api.extension.ParameterResolutionException {
-                return 2;
-            }
-        }
-    }
+        static final MyResolver integerResolver = new MyResolver();
+      
+        @Test
+        void parametersExample(String a, String b) { }
+      }
     """.trimIndent())
   }
 }

@@ -12,7 +12,6 @@ import com.intellij.codeInspection.test.junit.references.MethodSourceReference
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil
 import com.intellij.lang.Language
-import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.lang.jvm.actions.*
@@ -140,7 +139,7 @@ private class JUnitMalformedSignatureVisitor(
     validVisibility = ::notPrivate,
     validParameters = { method ->
       if (method.uastParameters.isEmpty()) emptyList()
-      else if (method.hasParameterResolver()) listOf(method.uastParameters.first())
+      else if (method.hasParameterResolver()) method.uastParameters
       else method.uastParameters.filter {
         it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO ||
         it.type.canonicalText == ORG_JUNIT_JUPITER_API_REPETITION_INFO ||
@@ -166,7 +165,7 @@ private class JUnitMalformedSignatureVisitor(
     validVisibility = ::notPrivate,
     validParameters = { method ->
       if (method.uastParameters.isEmpty()) emptyList()
-      else if (method.hasParameterResolver()) listOf(method.uastParameters.first())
+      else if (method.hasParameterResolver()) method.uastParameters
       else method.uastParameters.filter {
         it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO || MetaAnnotationUtil.isMetaAnnotated(it, ignorableAnnotations)
       }
@@ -190,7 +189,7 @@ private class JUnitMalformedSignatureVisitor(
       if (method.uastParameters.isEmpty()) emptyList()
       else if (MetaAnnotationUtil.isMetaAnnotated(method.javaPsi, listOf(
           ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE))) null // handled in parameterized test check
-      else if (method.hasParameterResolver()) listOf(method.uastParameters.first())
+      else if (method.hasParameterResolver()) method.uastParameters
       else method.uastParameters.filter {
         it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO ||
         it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_REPORTER ||
@@ -825,7 +824,6 @@ private class JUnitMalformedSignatureVisitor(
         if (shouldBeSubTypeOf?.any { InheritanceUtil.isInheritor(element.returnType, it) } == false) {
           return holder.methodParameterTypeProblem(element, visibility, annotation, problems, shouldBeSubTypeOf.first(), params)
         }
-        if (params.isNotEmpty()) holder.methodParameterProblem(element, visibility, annotation, problems, params)
         return holder.methodParameterProblem(element, visibility, annotation, problems, params)
       }
       if (shouldBeVoidType == true && element.returnType != PsiType.VOID) {
@@ -1000,27 +998,27 @@ private class JUnitMalformedSignatureVisitor(
       val javaDeclaration = getUParentForIdentifier(descriptor.psiElement)?.let { it as? UMethod }?.javaPsi ?: return
       val declPtr = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(javaDeclaration)
       if (shouldBeVoidType == true) {
-        declPtr.element?.let { it as? JvmMethod }?.let { jvmMethod ->
+        declPtr.element?.let { jvmMethod ->
           createChangeTypeActions(jvmMethod, typeRequest(JvmPrimitiveTypeKind.VOID.name, emptyList())).forEach {
             it.invoke(project, null, containingFile)
           }
         }
       }
       if (newVisibility != null) {
-        declPtr.element?.let { it as? JvmModifiersOwner }?.let { jvmMethod ->
+        declPtr.element?.let { jvmMethod ->
           createModifierActions(jvmMethod, modifierRequest(newVisibility, true)).forEach {
             it.invoke(project, null, containingFile)
           }
         }
       }
       if (inCorrectParams != null) {
-        declPtr.element?.let { it as? JvmMethod }?.let { jvmMethod ->
+        declPtr.element?.let { jvmMethod ->
           createChangeParametersActions(jvmMethod, setMethodParametersRequest(inCorrectParams.entries)).forEach {
             it.invoke(project, null, containingFile)
           }
         }
       }
-      declPtr.element?.let { it as? JvmModifiersOwner }?.let { jvmMethod ->
+      declPtr.element?.let { jvmMethod ->
         createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic)).forEach {
           it.invoke(project, null, containingFile)
         }
