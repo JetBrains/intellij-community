@@ -82,6 +82,7 @@ public class EditorHyperlinkSupport {
           Runnable runnable = getLinkNavigationRunnable(e.getLogicalPosition());
           if (runnable != null) {
             runnable.run();
+            e.consume();
           }
         }
       }
