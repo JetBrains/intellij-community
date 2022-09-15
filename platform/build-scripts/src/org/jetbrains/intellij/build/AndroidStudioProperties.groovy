@@ -169,28 +169,28 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   @CompileDynamic
   Object copyAdditionalFiles(BuildContext buildContext, String targetDirectory, Continuation continuation) {
 
-    new FileSet(buildContext.paths.communityHomeDir.communityRoot)
+    new FileSet(buildContext.paths.communityHomeDir)
       .include("LICENSE.txt")
       .include("NOTICE.txt")
       .copyToDir(Path.of(targetDirectory))
-    new FileSet(buildContext.paths.communityHomeDir.communityRoot.resolve("build/conf/ideaCE/common/bin"))
+    new FileSet(buildContext.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"))
       .includeAll()
       .copyToDir(Path.of(targetDirectory, "bin"))
-    new FileSet(buildContext.paths.communityHomeDir.communityRoot.resolve("../../tools/vendor/intellij/cidr/cidr-debugger/bin/lldb/helpers"))
+    new FileSet(buildContext.paths.communityHomeDir.resolve("../../tools/vendor/intellij/cidr/cidr-debugger/bin/lldb/helpers"))
       .includeAll()
       .copyToDir(Path.of(targetDirectory, "bin/lldb/helpers"))
-    new FileSet(buildContext.paths.communityHomeDir.communityRoot.resolve("../../tools/vendor/intellij/cidr/cidr-debugger/bin/helpers"))
+    new FileSet(buildContext.paths.communityHomeDir.resolve("../../tools/vendor/intellij/cidr/cidr-debugger/bin/helpers"))
       .includeAll()
       .copyToDir(Path.of(targetDirectory, "bin/helpers"))
 
     // Android Studio: copy CIDR license to CIRR plugins
-    new FileSet(buildContext.paths.communityHomeDir.communityRoot)
+    new FileSet(buildContext.paths.communityHomeDir)
       .include("CIDR_LICENSE.txt")
       .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/lib/LICENSE.txt"))
-    new FileSet(buildContext.paths.communityHomeDir.communityRoot)
+    new FileSet(buildContext.paths.communityHomeDir)
       .include("CIDR_LICENSE.txt")
       .copyToDir(Path.of(targetDirectory, "plugins/c-plugin/lib/LICENSE.txt"))
-    new FileSet(buildContext.paths.communityHomeDir.communityRoot)
+    new FileSet(buildContext.paths.communityHomeDir)
       .include("CIDR_LICENSE.txt")
       .copyToDir(Path.of(targetDirectory, "plugins/cidr-base-plugin/lib/LICENSE.txt"))
 
@@ -226,7 +226,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       @Override
       @CompileDynamic
       void copyAdditionalFilesBlocking(BuildContext buildContext, String targetDirectory) {
-        new FileSet(buildContext.paths.communityHomeDir.communityRoot.resolve("../../prebuilts/tools/clion/bin/clang/win"))
+        new FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/win"))
           .includeAll()
           .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/bin/clang/win"))
       }
@@ -249,7 +249,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       @Override
       @CompileDynamic
       void copyAdditionalFiles(BuildContext buildContext, Path targetDirectory, JvmArchitecture arch) {
-        new FileSet(buildContext.paths.communityHomeDir.communityRoot.resolve("../../prebuilts/tools/clion/bin/clang/linux"))
+        new FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/linux"))
           .includeAll()
           .copyToDir(targetDirectory.resolve("plugins/c-clangd/bin/clang/linux"))
       }
@@ -277,7 +277,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     @Override
     @CompileDynamic
     void copyAdditionalFilesBlocking(BuildContext buildContext, String targetDirectory) {
-      new FileSet(buildContext.paths.communityHomeDir.communityRoot.resolve("../../prebuilts/tools/clion/bin/clang/mac"))
+      new FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/mac"))
         .includeAll()
         .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/bin/clang/mac"))
       extraExecutables = ExtensionsKt.persistentListOf("plugins/c-clangd/bin/clang/mac/clangd", "plugins/c-clangd/bin/clang/mac/clang-tidy")
