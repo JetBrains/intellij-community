@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.CachedValueProvider
@@ -74,7 +76,8 @@ class ResolutionAnchorCacheServiceImpl(
                     getLibraryDependencies(libraryDependency).libraries
                 }
             }
-            allTransitiveLibraryDependencies.mapNotNull { resolutionAnchorsForLibraries[it] }.toSet()
+
+            allTransitiveLibraryDependencies.mapNotNullTo(mutableSetOf()) { resolutionAnchorsForLibraries[it] }
         }
     }
 
