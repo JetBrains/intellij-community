@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.memory.action.tracking;
 
-import com.intellij.debugger.memory.action.ActionUtil;
+import com.intellij.debugger.memory.action.DebuggerActionUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.xdebugger.memory.component.InstancesTracker;
 import com.intellij.xdebugger.memory.tracking.TrackingType;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class TrackInstancesToggleAction extends ToggleAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    ReferenceType selectedClass = ActionUtil.getSelectedClass(e);
+    ReferenceType selectedClass = DebuggerActionUtil.getSelectedClass(e);
     if (selectedClass instanceof ArrayType) {
       e.getPresentation().setEnabled(false);
     }
@@ -45,7 +45,7 @@ public class TrackInstancesToggleAction extends ToggleAction {
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
-    ReferenceType selectedClass = ActionUtil.getSelectedClass(e);
+    ReferenceType selectedClass = DebuggerActionUtil.getSelectedClass(e);
     final Project project = e.getProject();
     if (project != null && selectedClass != null && !project.isDisposed()) {
       InstancesTracker tracker = InstancesTracker.getInstance(project);
@@ -57,7 +57,7 @@ public class TrackInstancesToggleAction extends ToggleAction {
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    final ReferenceType selectedClass = ActionUtil.getSelectedClass(e);
+    final ReferenceType selectedClass = DebuggerActionUtil.getSelectedClass(e);
     final Project project = e.getProject();
     if (selectedClass != null && project != null && !project.isDisposed()) {
       InstancesTracker tracker = InstancesTracker.getInstance(project);

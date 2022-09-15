@@ -8,8 +8,8 @@ import com.intellij.xdebugger.memory.ui.TypeInfo;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.Nullable;
 
-public final class ActionUtil {
-  public static TypeInfo getSelectedTypeInfo(AnActionEvent e) {
+public final class DebuggerActionUtil {
+  static TypeInfo getSelectedTypeInfo(AnActionEvent e) {
     return e.getData(ClassesTable.SELECTED_CLASS_KEY);
   }
 
