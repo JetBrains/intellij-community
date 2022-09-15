@@ -19,6 +19,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.ui.RowIcon
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.PlatformIcons
@@ -26,6 +27,7 @@ import com.intellij.util.containers.FList
 import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.actions.branch.GitBranchActionsUtil
+import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
@@ -127,6 +129,28 @@ class GitBranchesTreePopupStep(private val project: Project, internal val reposi
 
   override fun getTitle(): String =
     DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", repository.vcs.displayName, DvcsUtil.getShortRepositoryName(repository))
+
+  fun getIncomingOutgoingIcon(treeNode: Any?): Icon? {
+    val value = treeNode ?: return null
+    return when (value) {
+      is GitBranch -> getIncomingOutgoingBranchIcon(value)
+      else -> null
+    }
+  }
+
+  private fun getIncomingOutgoingBranchIcon(branch: GitBranch): Icon? {
+    val branchName = branch.name
+    val incomingOutgoingManager = project.service<GitBranchIncomingOutgoingManager>()
+    val hasIncoming = incomingOutgoingManager.hasIncomingFor(repository, branchName)
+    val hasOutgoing = incomingOutgoingManager.hasOutgoingFor(repository, branchName)
+
+    return when {
+      hasIncoming && hasOutgoing -> RowIcon(DvcsImplIcons.Incoming, DvcsImplIcons.Outgoing)
+      hasIncoming -> DvcsImplIcons.Incoming
+      hasOutgoing -> DvcsImplIcons.Outgoing
+      else -> null
+    }
+  }
 
   fun getIcon(treeNode: Any?, isSelected: Boolean): Icon? {
     val value = treeNode ?: return null

@@ -20,10 +20,7 @@ import com.intellij.openapi.ui.popup.TreePopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.WindowStateService
-import com.intellij.ui.ActiveComponent
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.JBColor
-import com.intellij.ui.TreeActions
+import com.intellij.ui.*
 import com.intellij.ui.components.panels.FlowLayoutWrapper
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -485,6 +482,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
       private val arrowLabel = JLabel().apply {
         border = JBUI.Borders.empty(0, 2)
       }
+      private val incomingOutgoingLabel = JLabel().apply {
+        border = JBUI.Borders.empty(0, 2)
+      }
 
       private val textPanel = JBUI.Panels.simplePanel()
         .addToLeft(FlowLayoutWrapper(mainIconComponent).also { it.add(mainLabel) })
@@ -493,7 +493,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
 
       private val mainPanel = JBUI.Panels.simplePanel()
         .addToCenter(textPanel)
-        .addToRight(arrowLabel)
+        .addToRight(FlowLayoutWrapper(incomingOutgoingLabel).also { it.add(arrowLabel) })
         .andTransparent()
 
       override fun getTreeCellRendererComponent(tree: JTree?,
@@ -516,6 +516,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
           text = step.getSecondaryText(userObject)
           //todo: LAF color
           foreground = if(selected) JBUI.CurrentTheme.Tree.foreground(true, true) else JBColor.GRAY
+        }
+
+        incomingOutgoingLabel.apply {
+          icon = step.getIncomingOutgoingIcon(userObject)
         }
 
         arrowLabel.apply {
