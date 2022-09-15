@@ -14,7 +14,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.isModuleUnloaded
-import com.intellij.workspaceModel.ide.impl.toVirtualFile
+import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
@@ -76,6 +76,6 @@ object IndexableEntityProviderMethods {
   }
 
   fun getExcludedFiles(entity: ContentRootEntity): List<VirtualFile> {
-    return ContainerUtil.mapNotNull(entity.excludedUrls) { param -> param.toVirtualFile() }
+    return ContainerUtil.mapNotNull(entity.excludedUrls) { param -> param.virtualFile }
   }
 }

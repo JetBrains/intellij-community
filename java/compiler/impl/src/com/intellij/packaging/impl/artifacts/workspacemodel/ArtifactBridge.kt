@@ -15,7 +15,7 @@ import com.intellij.packaging.impl.artifacts.InvalidArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.toVirtualFile
+import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactPropertiesEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
@@ -161,7 +161,7 @@ open class ArtifactBridge(
   override fun getOutputFile(): VirtualFile? {
     val artifactEntity = entityStorage.base.get(artifactId)
     val outputUrl = artifactEntity.outputUrl
-    return outputUrl?.toVirtualFile()
+    return outputUrl?.virtualFile
   }
 
   override fun getOutputFilePath(): String? {

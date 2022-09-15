@@ -65,8 +65,8 @@ class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Paren
     }
     if (isExcluded) {
       return Collections.singletonList(
-        new ModuleRootSelfDependentOriginImpl(module, Collections.singletonList(UtilsKt.toVirtualFile(entity.getUrl())),
-                                              ContainerUtil.map(excludedSourceUrlsFiles, url -> UtilsKt.toVirtualFile(url))));
+        new ModuleRootSelfDependentOriginImpl(module, Collections.singletonList(UtilsKt.getVirtualFile(entity.getUrl())),
+                                              ContainerUtil.map(excludedSourceUrlsFiles, url -> UtilsKt.getVirtualFile(url))));
     }
     else {
       return Collections.emptyList();

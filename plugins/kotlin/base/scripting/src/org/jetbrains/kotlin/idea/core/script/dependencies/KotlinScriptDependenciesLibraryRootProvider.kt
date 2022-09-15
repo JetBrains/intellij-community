@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider.LibraryRoots
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspaceModel.ide.impl.toVirtualFile
+import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRootTypeId
 import org.jetbrains.deft.annotations.Child
@@ -33,8 +33,8 @@ class KotlinScriptProjectModelInfoProvider : CustomEntityProjectModelInfoProvide
         return entities.flatMap { scriptEntity ->
             scriptEntity.dependencies.map<@Child LibraryEntity, LibraryRoots<KotlinScriptEntity>> { libEntity ->
                 val (classes, sources) = libEntity.roots.partition { it.type == LibraryRootTypeId.COMPILED }
-                val classFiles = classes.mapNotNull { it.url.toVirtualFile() }
-                val sourceFiles = sources.mapNotNull { it.url.toVirtualFile() }
+                val classFiles = classes.mapNotNull { it.url.virtualFile }
+                val sourceFiles = sources.mapNotNull { it.url.virtualFile }
                 LibraryRoots(scriptEntity, sourceFiles, classFiles, emptyList(), null)
             }
         }
