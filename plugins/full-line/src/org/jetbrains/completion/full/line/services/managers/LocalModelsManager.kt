@@ -3,6 +3,7 @@ package org.jetbrains.completion.full.line.services.managers
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.io.ZipUtil
 import org.jetbrains.completion.full.line.local.LocalModelsSchema
 import org.jetbrains.completion.full.line.local.ModelSchema
@@ -26,7 +27,13 @@ class LocalModelsManager : ConfigurableModelsManager {
 
   private fun initSchema(): LocalModelsSchema {
     return if (modelsFile.exists()) {
-      decodeFromXml(modelsFile.readText())
+      try {
+        decodeFromXml(modelsFile.readText())
+      }
+      catch (e: Exception) {
+        LOG.error("Can't parse xml. Using default one.", e, modelsFile.readText())
+        LocalModelsSchema(1, mutableListOf())
+      }
     }
     else {
       LocalModelsSchema(1, mutableListOf()).also {
@@ -150,6 +157,7 @@ class LocalModelsManager : ConfigurableModelsManager {
   }
 
   companion object {
+    val LOG = thisLogger()
     val root by lazy {
       if (ApplicationManager.getApplication()?.isUnitTestMode == false) {
         File(PathManager.getSystemPath())
