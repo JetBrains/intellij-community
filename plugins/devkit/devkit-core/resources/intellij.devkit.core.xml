@@ -126,7 +126,7 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PostfixTemplateDescriptionNotFoundInspection"/>
     <!--suppress PluginXmlCapitalization -->
-    <localInspection shortName="ComponentRegistrationProblems"
+    <localInspection language="" shortName="ComponentRegistrationProblems"
                      key="inspections.registration.problems.name"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
@@ -210,7 +210,7 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesEqualsInspection"
                      key="inspection.use.primitive.types.equals.display.name"/>
     <!--suppress PluginXmlCapitalization -->
-    <localInspection shortName="HighlightVisitorInternal"
+    <localInspection language="" shortName="HighlightVisitorInternal"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" isInternal="true"
                      level="ERROR" implementationClass="org.jetbrains.idea.devkit.inspections.internal.HighlightVisitorInternalInspection"
