@@ -25,8 +25,7 @@ abstract class AbstractKotlinMainRunLineMarkerContributor : RunLineMarkerContrib
 
         if (function.nameIdentifier != element) return null
 
-        val mainLocatingService = KotlinMainFunctionDetector.getInstance()
-        if (!mainLocatingService.isMain(function)) return null
+        if (!KotlinMainFunctionDetector.getInstance().isMain(function)) return null
 
         if (!acceptEntryPoint(function)) return null
 

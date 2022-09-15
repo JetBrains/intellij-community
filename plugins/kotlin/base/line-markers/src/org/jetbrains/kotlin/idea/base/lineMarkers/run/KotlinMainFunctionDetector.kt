@@ -2,17 +2,74 @@
 package org.jetbrains.kotlin.idea.base.lineMarkers.run
 
 import com.intellij.openapi.components.service
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector.Configuration
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 @ApiStatus.Internal
 interface KotlinMainFunctionDetector {
-    fun isMain(function: KtNamedFunction): Boolean
+    class Configuration(
+        val checkJvmStaticAnnotation: Boolean = true,
+        val checkParameterType: Boolean = true,
+        val checkResultType: Boolean = true
+    ) {
+        companion object {
+            val DEFAULT = Configuration()
+        }
+    }
 
-    fun hasMain(declarations: List<KtDeclaration>): Boolean
+    /**
+     * Checks if a given function satisfies 'main()' function contracts.
+     *
+     * Service implementations perform resolution.
+     * See 'PsiOnlyKotlinMainFunctionDetector' for PSI-only heuristic-based checker.
+     */
+    fun isMain(function: KtNamedFunction, configuration: Configuration = Configuration.DEFAULT): Boolean
 
     companion object {
         fun getInstance(): KotlinMainFunctionDetector = service()
     }
+}
+
+fun KotlinMainFunctionDetector.hasMain(file: KtFile, configuration: Configuration = Configuration.DEFAULT): Boolean {
+    return file.declarations.any { it is KtNamedFunction && isMain(it, configuration) }
+}
+
+fun KotlinMainFunctionDetector.hasMain(declaration: KtClassOrObject, configuration: Configuration = Configuration.DEFAULT): Boolean {
+    if (declaration is KtObjectDeclaration) {
+        return !declaration.isObjectLiteral()
+                && declaration.declarations.any { it is KtNamedFunction && isMain(it, configuration) }
+    }
+
+    return declaration.companionObjects.any { hasMain(it, configuration) }
+}
+
+fun KotlinMainFunctionDetector.findMainOwner(element: PsiElement): KtDeclarationContainer? {
+    val containingFile = element.containingFile as? KtFile ?: return null
+    if (!RootKindFilter.projectSources.matches(containingFile)) {
+        return null
+    }
+
+    for (parent in element.parentsWithSelf) {
+        if (parent is KtClassOrObject && hasMain(parent)) {
+            return parent
+        }
+    }
+
+    for (descendant in element.descendantsOfType<KtClassOrObject>()) {
+        if (hasMain(descendant)) {
+            return descendant
+        }
+    }
+
+    if (hasMain(containingFile)) {
+        return containingFile
+    }
+
+     return null
 }
