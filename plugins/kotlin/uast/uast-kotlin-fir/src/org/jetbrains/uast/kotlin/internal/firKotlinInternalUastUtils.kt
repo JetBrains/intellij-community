@@ -94,23 +94,55 @@ internal fun KtAnalysisSession.toPsiMethod(
                 return getContainingLightClass(source)?.let { UastFakeLightMethod(source, it) }
             }
 
-            if (psi.isLocal) {
-                handleLocalOrSynthetic(psi)
-            } else {
-                psi.getRepresentativeLightMethod()
-                    ?: handleLocalOrSynthetic(psi)
-                    ?: toPsiMethodForDeserialized(functionSymbol, context, psi)
+            when {
+                psi.isLocal ->
+                    handleLocalOrSynthetic(psi)
+                overriddenUnwrappedSymbolOrigin(functionSymbol) == KtSymbolOrigin.LIBRARY ->
+                    // PSI to regular libraries should be handled by [DecompiledPsiDeclarationProvider]
+                    // That is, this one is a deserialized declaration.
+                    toPsiMethodForDeserialized(functionSymbol, context, psi)
+                else ->
+                    psi.getRepresentativeLightMethod()
+                        ?: handleLocalOrSynthetic(psi)
             }
         }
         else -> psi.getRepresentativeLightMethod()
     }
 }
 
+private fun KtAnalysisSession.overriddenUnwrappedSymbolOrigin(ktSymbol: KtCallableSymbol): KtSymbolOrigin =
+    when (val origin = ktSymbol.origin) {
+        KtSymbolOrigin.INTERSECTION_OVERRIDE,
+        KtSymbolOrigin.SUBSTITUTION_OVERRIDE -> {
+            ktSymbol.originalOverriddenSymbol?.let {
+                overriddenUnwrappedSymbolOrigin(it)
+            } ?: origin
+        }
+        else -> origin
+    }
+
 private fun KtAnalysisSession.toPsiMethodForDeserialized(
     functionSymbol: KtFunctionLikeSymbol,
     context: KtElement,
     psi: KtFunction,
 ): PsiMethod? {
+
+    // NB: no fake generation for member functions, as deserialized source PSI for built-ins can trigger FIR build/resolution
+    fun PsiClass.lookup(fake: Boolean): PsiMethod? {
+        val candidates =
+            if (functionSymbol is KtConstructorSymbol)
+                constructors.filter { it.parameterList.parameters.size == functionSymbol.valueParameters.size }
+            else
+                methods.filter { it.name == psi.name }
+        return when (candidates.size) {
+            0 -> if (fake) UastFakeDeserializedLightMethod(psi, this) else null
+            1 -> candidates.single()
+            else -> {
+                candidates.firstOrNull { it.desc == desc(functionSymbol, it, context) } ?: candidates.first()
+            }
+        }
+    }
+
     // Deserialized member function
     return psi.containingClass()?.getClassId()?.let { classId ->
         toPsiClass(
@@ -119,18 +151,10 @@ private fun KtAnalysisSession.toPsiMethodForDeserialized(
             context,
             TypeOwnerKind.DECLARATION,
             boxed = false
-        )?.let {
-            it.methods.firstOrNull { method ->
-                method.name == psi.name && method.desc == desc(functionSymbol, method, context)
-            } ?: UastFakeDeserializedLightMethod(psi, it) // fake Java-invisible methods
-        }
+        )?.lookup(fake = false)
     } ?:
     // Deserialized top-level function
-    psi.containingKtFile.findFacadeClass()?.let {
-        it.methods.firstOrNull { method ->
-            method.name == psi.name && method.desc == desc(functionSymbol, method, context)
-        } ?: UastFakeDeserializedLightMethod(psi, it) // fake Java-invisible methods
-    }
+    psi.containingKtFile.findFacadeClass()?.lookup(fake = true)
 }
 
 private fun KtAnalysisSession.desc(
