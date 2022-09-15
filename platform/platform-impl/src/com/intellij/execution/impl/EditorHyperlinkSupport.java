@@ -266,6 +266,16 @@ public class EditorHyperlinkSupport {
   }
 
   @Nullable
+  public HyperlinkInfo getHyperlinkInfoByPoint(Point p) {
+    LogicalPosition pos = myEditor.xyToLogicalPosition(new Point(p.x, p.y));
+    if (EditorCoreUtil.inVirtualSpace(myEditor, pos)) {
+      return null;
+    }
+
+    return getHyperlinkInfoByLineAndCol(pos.line, pos.column);
+  }
+
+  @Nullable
   public HyperlinkInfo getHyperlinkInfoByEvent(@NotNull EditorMouseEvent event) {
     return event.isOverText() ? getHyperlinkAt(event.getOffset()) : null;
   }
