@@ -112,7 +112,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     else if (InheritanceUtil.isInheritor(beanClass, SchemeConvertorEPBase.class.getName())) {
       checkNonLocalizableAttribute(holder, extension, "name", null);
     } else if (NotificationGroupEP.class.getName().equals(beanClass.getQualifiedName())){
-      if (!hasDefinedAttribute(extension, "key")) {
+      if (hasMissingAttribute(extension, "key")) {
         holder.createProblem(extension, DevKitI18nBundle.message("inspections.plugin.xml.i18n.name"),
                              new NotificationGroupI18NQuickFix());
       }

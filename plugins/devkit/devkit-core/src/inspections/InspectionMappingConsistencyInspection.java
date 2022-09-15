@@ -36,25 +36,25 @@ public class InspectionMappingConsistencyInspection extends DevKitPluginXmlInspe
       return;
     }
 
-    if (hasDefinedAttribute(element, "key")) {
-      if (!hasDefinedAttribute(element, "bundle")) {
+    if (!hasMissingAttribute(element, "key")) {
+      if (hasMissingAttribute(element, "bundle")) {
         checkDefaultBundle(element, holder);
       }
     }
-    else if (!hasDefinedAttribute(element, "displayName")) {
+    else if (hasMissingAttribute(element, "displayName")) {
       //noinspection DialogTitleCapitalization
       registerProblem(element, holder,
                       DevKitBundle.message("inspections.inspection.mapping.consistency.specify.displayName.or.key"),
                       "displayName", "key");
     }
 
-    if (hasDefinedAttribute(element, "groupKey")) {
-      if (!hasDefinedAttribute(element, "bundle") &&
-          !hasDefinedAttribute(element, "groupBundle")) {
+    if (!hasMissingAttribute(element, "groupKey")) {
+      if (hasMissingAttribute(element, "bundle") &&
+          hasMissingAttribute(element, "groupBundle")) {
         checkDefaultBundle(element, holder);
       }
     }
-    else if (!hasDefinedAttribute(element, "groupName")) {
+    else if (hasMissingAttribute(element, "groupName")) {
       //noinspection DialogTitleCapitalization
       registerProblem(element, holder,
                       DevKitBundle.message("inspections.inspection.mapping.consistency.specify.groupName.or.groupKey"),

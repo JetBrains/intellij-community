@@ -20,9 +20,9 @@ public abstract class DevKitPluginXmlInspectionBase extends BasicDomElementsInsp
     super(IdeaPlugin.class);
   }
 
-  protected static boolean hasDefinedAttribute(DomElement element, @NonNls String attributeName) {
+  protected static boolean hasMissingAttribute(DomElement element, @NonNls String attributeName) {
     final GenericAttributeValue attribute = getAttribute(element, attributeName);
-    return attribute != null && DomUtil.hasXml(attribute);
+    return attribute != null && !DomUtil.hasXml(attribute);
   }
 
   @Nullable
