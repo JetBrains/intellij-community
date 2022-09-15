@@ -158,6 +158,8 @@ class KtScratchFileEditorWithPreview private constructor(
         commonPreviewOutputHandler.clear(scratchFile)
     }
 
+    override fun isShowActionsInTabs(): Boolean = false
+
     override fun createViewActionGroup(): ActionGroup {
         return DefaultActionGroup(showEditorAction, showEditorAndPreviewAction)
     }
