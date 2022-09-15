@@ -86,6 +86,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
       return layout
     }
 
+    @JvmStatic
     fun plugin(modules: List<String>, builder: Consumer<PluginLayoutBuilder>): PluginLayout {
       val layout = plugin(modules)
       builder.accept(PluginLayoutSpec(layout))
