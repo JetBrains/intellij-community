@@ -7,6 +7,7 @@ import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.ui.Splitter;
@@ -209,6 +210,11 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     public void updateButton(@NotNull AnActionEvent e) {
       super.updateButton(e);
       e.getPresentation().setEnabled(myRendererChooser.getSelectedElement() != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

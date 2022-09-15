@@ -10,6 +10,7 @@ import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
@@ -150,6 +151,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         selectedCapturePoints(table).forEach(c -> {
           try {
@@ -172,6 +178,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         selectedCapturePoints(table).forEach(c -> c.myEnabled = true);
         table.repaint();
@@ -186,6 +197,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         selectedCapturePoints(table).forEach(c -> c.myEnabled = false);
         table.repaint();
@@ -196,6 +212,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(table.getSelectedRowCount() == 1 && !table.isEditing());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override
@@ -244,6 +265,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
           }
         }
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     });
     decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.export"),
                                                        JavaDebuggerBundle.messagePointer("action.AnActionButton.description.export"),
@@ -279,6 +305,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       @Override
       public boolean isEnabled() {
         return table.getSelectedRowCount() > 0;
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     });
 
