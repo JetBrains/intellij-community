@@ -11,6 +11,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextAware
+import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
 import com.intellij.util.ImageLoader
 import com.intellij.util.io.basicAttributesIfExists
@@ -198,12 +199,14 @@ private class ProjectFileIcon(
                                          Pair(file.toAbsolutePath(), StartupUiUtil.isUnderDarcula())) {
           val icon = IconLoader.findIcon(file.toUri().toURL(), false) ?: return@defer null
           if (icon is ScaleContextAware) {
-            icon.updateScaleContext(ScaleContext.create())
+            icon.updateScaleContext(ScaleContext.create(ScaleType.SYS_SCALE.of(sysScale.toDouble())))
           }
 
           val iconSize = max(icon.iconWidth, icon.iconHeight)
-          if (iconSize == userScaledSize) return@defer icon
-          return@defer IconUtil.scale(icon, null, userScaledSize.toFloat() / iconSize)
+          // workaround for Windows fractional scaling glitches:
+          val targetSize = if (sysScale > 1.0) userScaledSize - 1 else userScaledSize
+          if (iconSize == targetSize) return@defer icon
+          return@defer IconUtil.scale(icon, null, targetSize.toFloat() / iconSize)
         }
       }
       else {
