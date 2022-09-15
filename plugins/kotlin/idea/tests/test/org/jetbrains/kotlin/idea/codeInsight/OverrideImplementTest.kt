@@ -19,6 +19,10 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
     override val testDataDirectory: File
         get() = IDEA_TEST_DATA_DIR.resolve("codeInsight/overrideImplement")
 
+    open fun testNoCallToAbstractSuper() {
+        doOverrideFileTest()
+    }
+
    open fun testAndroidxNotNull() {
         doOverrideDirectoryTest("foo")
     }

@@ -22,6 +22,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         )
     }
 
+    override fun testNoCallToAbstractSuper() {
+        super.testNoCallToAbstractSuper()
+    }
+
     override fun testAndroidxNotNull() {
         super.testAndroidxNotNull()
     }
