@@ -103,6 +103,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             } ?: true
         }
 
+        val infoCache = LibraryInfoCache.getInstance(project)
         ModuleRootManager.getInstance(module).orderEntries().recursively().satisfying(condition).process(object : RootPolicy<Unit>() {
             override fun visitModuleSourceOrderEntry(moduleSourceOrderEntry: ModuleSourceOrderEntry, value: Unit) {
                 processedModules.add(moduleSourceOrderEntry.ownerModule)
@@ -111,7 +112,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             override fun visitLibraryOrderEntry(libraryOrderEntry: LibraryOrderEntry, value: Unit) {
                 checkCanceled()
                 val libraryEx = libraryOrderEntry.library.safeAs<LibraryEx>()?.takeUnless { it.isDisposed } ?: return
-                val candidate = LibraryDependencyCandidate.fromLibraryOrNull(LibraryInfoCache.getInstance(project)[libraryEx]) ?: return
+                val candidate = LibraryDependencyCandidate.fromLibraryOrNull(infoCache[libraryEx]) ?: return
                 libraries += candidate
             }
 
