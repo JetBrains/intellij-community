@@ -77,8 +77,7 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
     myCompilerOutputWatchRequest = LocalFileSystem.getInstance().replaceWatchedRoot(myCompilerOutputWatchRequest, path, true);
   }
 
-  @NotNull
-  private static Set<String> getRootsToWatch(@NotNull Project project) {
+  private static Set<String> getRootsToWatch(Project project) {
     Set<String> rootsToWatch = new HashSet<>();
 
     for (Module module : ModuleManager.getInstance(project).getModules()) {
