@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.k2.intentions.tests
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.testFramework.common.runAll
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.highlighting.KotlinHighLevelDiagnosticHighlightingPass
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
@@ -29,7 +29,7 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
         )
     }
 
-    override fun doTestFor(mainFile: File, inspection: AbstractKotlinInspection, fileText: String) {
+    override fun doTestFor(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_FIR, "after") {
             super.doTestFor(mainFile, inspection, fileText)
         }

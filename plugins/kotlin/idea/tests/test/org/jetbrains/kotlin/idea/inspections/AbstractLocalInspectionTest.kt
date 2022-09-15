@@ -7,9 +7,9 @@ import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.PsiTestUtil
@@ -18,7 +18,6 @@ import com.intellij.util.io.write
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jdom.Element
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
 import org.jetbrains.kotlin.idea.test.*
@@ -49,7 +48,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     private val fixTextDirectiveName: String
         get() = "FIX"
 
-    private fun createInspection(testDataFile: File): AbstractKotlinInspection {
+    private fun createInspection(testDataFile: File): LocalInspectionTool {
         val candidateFiles = mutableListOf<File>()
 
         var current: File? = testDataFile.parentFile
@@ -75,7 +74,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         }
 
         val className = FileUtil.loadFile(candidateFiles[0]).trim { it <= ' ' }
-        return Class.forName(className).getDeclaredConstructor().newInstance() as AbstractKotlinInspection
+        return Class.forName(className).getDeclaredConstructor().newInstance() as LocalInspectionTool
     }
 
     protected open fun doTest(path: String) {
@@ -141,7 +140,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     protected fun runInspectionWithFixesAndCheck(
-        inspection: AbstractKotlinInspection,
+        inspection: LocalInspectionTool,
         expectedProblemString: String?,
         expectedHighlightString: String?,
         localFixTextString: String?,
@@ -258,7 +257,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         }
     }
 
-    protected open fun doTestFor(mainFile: File, inspection: AbstractKotlinInspection, fileText: String) {
+    protected open fun doTestFor(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
         val mainFilePath = mainFile.name
         val expectedProblemString = InTextDirectivesUtils.findStringWithPrefixes(
             fileText, "// $expectedProblemDirectiveName: "
