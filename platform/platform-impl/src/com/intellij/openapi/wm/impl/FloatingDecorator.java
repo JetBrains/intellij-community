@@ -14,10 +14,7 @@ import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.toolWindow.InternalDecoratorImpl;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.ToolbarUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
@@ -107,6 +104,10 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     //workaround: we need to add this IdeGlassPane instance as dispatcher in IdeEventQueue
     ideGlassPane.addMousePreprocessor(new MouseAdapter() {
     }, myDisposable);
+
+    if (SystemInfo.isWindows && WindowRoundedCornersManager.isAvailable()) {
+      WindowRoundedCornersManager.setRoundedCorners(this);
+    }
   }
 
   @Override
