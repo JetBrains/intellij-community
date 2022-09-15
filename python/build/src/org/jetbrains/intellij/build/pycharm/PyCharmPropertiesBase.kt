@@ -1,19 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
-import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
-
 import java.nio.file.Path
 
-@CompileStatic
-abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
-  @Override
-  String getBaseFileName() {
-    return "pycharm"
-  }
+abstract class PyCharmPropertiesBase : JetBrainsProductProperties() {
+  override val baseFileName: String
+    get() = "pycharm"
 
-  PyCharmPropertiesBase() {
+  init {
     reassignAltClickToMultipleCarets = true
     useSplash = true
     productLayout.mainJarName = "pycharm.jar"
@@ -29,7 +24,7 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
       )
 
     buildCrossPlatformDistribution = true
-    mavenArtifacts.additionalModules = mavenArtifacts.additionalModules.addAll(List.of(
+    mavenArtifacts.additionalModules = mavenArtifacts.additionalModules.addAll(listOf(
       "intellij.java.compiler.antTasks",
       "intellij.platform.testFramework.common",
       "intellij.platform.testFramework.junit5",
@@ -37,22 +32,16 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
       ))
   }
 
-  @Override
-  void copyAdditionalFilesBlocking(BuildContext context, String targetDirectory) {
-    def tasks = BuildTasks.create(context)
-    tasks.zipSourcesOfModulesBlocking(List.of("intellij.python.community", "intellij.python.psi"), Path.of("$targetDirectory/lib/src/pycharm-openapi-src.zip"))
+  override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
+    val tasks = BuildTasks.create(context)
+    tasks.zipSourcesOfModulesBlocking(listOf("intellij.python.community", "intellij.python.psi"), Path.of("$targetDirectory/lib/src/pycharm-openapi-src.zip"))
 
-    new FileSet(Path.of(getKeymapReferenceDirectory(context)))
+    FileSet(Path.of(getKeymapReferenceDirectory(context)))
       .include("*.pdf")
       .copyToDir(Path.of(targetDirectory, "help"))
   }
 
-  @Override
-  String getEnvironmentVariableBaseName(ApplicationInfoProperties applicationInfo) {
-    return "PYCHARM"
-  }
-  
-  String getKeymapReferenceDirectory(BuildContext context) {
-    return "${context.paths.projectHome}/python/help"
-  }
+  override fun getEnvironmentVariableBaseName(appInfo: ApplicationInfoProperties) = "PYCHARM"
+
+  open fun getKeymapReferenceDirectory(context: BuildContext) = "${context.paths.projectHome}/python/help"
 }
