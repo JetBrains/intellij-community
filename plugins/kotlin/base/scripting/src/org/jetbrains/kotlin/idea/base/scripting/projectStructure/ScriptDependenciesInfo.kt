@@ -7,13 +7,14 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.containers.sequenceOfNotNull
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptsDependenciesClassFilesScope
 import org.jetbrains.kotlin.idea.core.script.ucache.getScriptDependenciesClassFilesScope
 import org.jetbrains.kotlin.name.Name
@@ -35,6 +36,7 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
         get() = KotlinBaseScriptingBundle.message("script.dependencies")
 
     override fun dependencies(): List<IdeaModuleInfo> = listOfNotNull(this, sdk?.let { SdkInfo(project, it) })
+    override fun dependenciesWithoutSelf(): Sequence<IdeaModuleInfo> = sequenceOfNotNull(sdk?.let { SdkInfo(project, it) })
 
     // NOTE: intentionally not taking corresponding script info into account
     // otherwise there is no way to implement getModuleInfo
