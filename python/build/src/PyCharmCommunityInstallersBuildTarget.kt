@@ -16,7 +16,7 @@ object PyCharmCommunityInstallersBuildTarget {
       val context = BuildContextImpl.createContext(
         communityHome = communityHome,
         projectHome = communityHome.communityRoot,
-        productProperties = PyCharmCommunityProperties(communityHome),
+        productProperties = PyCharmCommunityProperties(communityHome.communityRoot),
       )
       BuildTasks.create(context).buildDistributions()
     }

@@ -5,7 +5,6 @@ import org.jetbrains.intellij.build.pycharm.PythonCommunityPluginBuilder
 object PythonCommunityPluginBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
-    val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass).toString()
-    PythonCommunityPluginBuilder(communityHome).build()
+    PythonCommunityPluginBuilder(IdeaProjectLoaderUtil.guessCommunityHome(javaClass).communityRoot).build()
   }
 }
