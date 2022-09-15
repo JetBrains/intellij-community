@@ -234,7 +234,9 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
       PsiElement element = usageInfo.getElement();
       if (element != null) {
         UsageCodeSnippetComponent summaryRendererComponent = new UsageCodeSnippetComponent(element);
-        Disposer.register(this, summaryRendererComponent);
+        if (!Disposer.tryRegister(this, summaryRendererComponent)) {
+          Disposer.dispose(summaryRendererComponent);
+        }
         myMainPanel.add(createHeaderPanel(usageInfo, clusterUsages));
         myMainPanel.add(summaryRendererComponent);
       }
@@ -242,10 +244,12 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     myAlreadyRenderedSnippets++;
   }
 
-  private void renderNonClusteredUsage(UsageInfo2UsageAdapter usage) {
+  private void renderNonClusteredUsage(@NotNull UsageInfo2UsageAdapter usage) {
     final UsageInfo usageInfo = usage.getUsageInfo();
     UsageCodeSnippetComponent summaryRendererComponent = new UsageCodeSnippetComponent(Objects.requireNonNull(usageInfo.getElement()));
-    Disposer.register(this, summaryRendererComponent);
+    if (!Disposer.tryRegister(this, summaryRendererComponent)) {
+      Disposer.dispose(summaryRendererComponent);
+    }
     myMainPanel.add(createHeaderWithLocationLink(usageInfo));
     myMainPanel.add(summaryRendererComponent);
     myAlreadyRenderedSnippets++;
