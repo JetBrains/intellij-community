@@ -17,7 +17,7 @@ import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.io.moveFile
 import org.jetbrains.intellij.build.io.retryWithExponentialBackOff
-import org.jetbrains.intellij.build.io.zip
+import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Files
 import java.nio.file.Path
@@ -101,7 +101,7 @@ internal class PortableCompilationCacheUploader(
         }
 
         val zipFile = outputFolder.parent.resolve(compilationOutput.hash)
-        zip(zipFile, mapOf(outputFolder to ""), compress = true)
+        zipWithCompression(zipFile, mapOf(outputFolder to ""))
         if (!uploader.isExist(sourcePath)) {
           uploader.upload(sourcePath, zipFile)
           uploadedOutputCount.incrementAndGet()

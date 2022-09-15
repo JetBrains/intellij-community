@@ -81,7 +81,7 @@ class ZipTest {
     }
 
     val archiveFile = tempDir.resolve("archive.zip")
-    zip(archiveFile, mapOf(dir to ""), compress = false)
+    zip(archiveFile, mapOf(dir to ""))
     return Pair(list, archiveFile)
   }
 
@@ -99,7 +99,7 @@ class ZipTest {
     }
 
     val archiveFile = tempDir.resolve("archive.zip")
-    zip(archiveFile, mapOf(dir to "test"), compress = false)
+    zip(archiveFile, mapOf(dir to "test"))
 
     checkZip(archiveFile) { zipFile ->
       for (name in list) {
@@ -172,7 +172,7 @@ class ZipTest {
     Files.write(dir.resolve("zip-included"), random.nextBytes(random.nextInt(128)))
     Files.write(dir.resolve("zip-excluded"), random.nextBytes(random.nextInt(128)))
     val zip = tempDir.resolve("test.zip")
-    zip(zip, mapOf(dir to ""), false)
+    zip(zip, mapOf(dir to ""))
 
     val archiveFile = tempDir.resolve("archive.zip")
     buildJar(archiveFile, listOf(
@@ -211,7 +211,7 @@ class ZipTest {
     Files.writeString(file, "\n")
 
     val archiveFile = tempDir.resolve("archive.zip")
-    zip(archiveFile, mapOf(dir to ""), compress = true)
+    zipWithCompression(archiveFile, mapOf(dir to ""))
 
     HashMapZipFile.load(archiveFile).use { zipFile ->
       for (name in zipFile.entries) {
@@ -231,7 +231,7 @@ class ZipTest {
     Files.write(dir.resolve("file"), data + data + data)
 
     val archiveFile = tempDir.resolve("archive.zip")
-    zip(archiveFile, mapOf(dir to ""), compress = true)
+    zipWithCompression(archiveFile, mapOf(dir to ""))
 
     HashMapZipFile.load(archiveFile).use { zipFile ->
       val entry = zipFile.getRawEntry("file")
@@ -250,7 +250,7 @@ class ZipTest {
     Files.write(dir.resolve("largeFile3"), random.nextBytes(2 * 1024 * 1024))
 
     val archiveFile = tempDir.resolve("archive.zip")
-    zip(archiveFile, mapOf(dir to ""), compress = false)
+    zip(archiveFile, mapOf(dir to ""))
 
     checkZip(archiveFile) { zipFile ->
       val entry = zipFile.getResource("largeFile1")
@@ -270,7 +270,7 @@ class ZipTest {
     Files.write(dir.resolve("largeFile3"), random.nextBytes(2 * 1024 * 1024))
 
     val archiveFile = tempDir.resolve("archive.zip")
-    zip(archiveFile, mapOf(dir to ""), compress = true)
+    zipWithCompression(archiveFile, mapOf(dir to ""))
 
     checkZip(archiveFile) { zipFile ->
       val entry = zipFile.getResource("largeFile1")
@@ -290,7 +290,7 @@ class ZipTest {
     Files.write(dir.resolve("largeFile3"), data + data)
 
     val archiveFile = tempDir.resolve("archive.zip")
-    zip(archiveFile, mapOf(dir to ""), compress = true)
+    zipWithCompression(archiveFile, mapOf(dir to ""))
 
     checkZip(archiveFile) { zipFile ->
       val entry = zipFile.getResource("largeFile1")

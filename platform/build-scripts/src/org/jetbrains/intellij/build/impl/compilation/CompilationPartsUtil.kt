@@ -154,7 +154,6 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntri
           zip(
             targetFile = item.archive,
             dirs = mapOf(item.output to ""),
-            compress = false,
             overwrite = true,
             fileFilter = { it != "classpath.index" && it != ".unmodified" && it != ".DS_Store" },
             addDirEntriesMode = addDirEntriesMode

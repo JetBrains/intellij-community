@@ -449,7 +449,7 @@ class DistributionJARsBuilder {
                    state = state,
                    context = context,
                    buildPlatformJob = null)
-      zip(targetFile = destFile, dirs = mapOf(pluginsToPublishDir.resolve(directory) to ""), compress = true)
+      zipWithCompression(targetFile = destFile, dirs = mapOf(pluginsToPublishDir.resolve(directory) to ""))
       null
     }
     return PluginRepositorySpec(destFile, moduleOutputPatcher.getPatchedPluginXml(helpPlugin.mainModule))
@@ -986,7 +986,7 @@ private fun layoutAdditionalResources(layout: BaseLayout, context: BuildContext,
     if (resourceData.packToZip) {
       if (Files.isDirectory(source)) {
         // do not compress - doesn't make sense as it is a part of distribution
-        zip(target, mapOf(source to ""), compress = false)
+        zip(target, mapOf(source to ""))
       }
       else {
         target = target.resolve(source.fileName)

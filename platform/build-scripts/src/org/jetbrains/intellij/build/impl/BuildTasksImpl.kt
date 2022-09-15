@@ -33,7 +33,7 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.includedModules
 import org.jetbrains.intellij.build.impl.projectStructureMapping.writeProjectStructureReport
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.writeNewFile
-import org.jetbrains.intellij.build.io.zip
+import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.tasks.*
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsSimpleElement
@@ -525,7 +525,7 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
     spanBuilder("pack")
       .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
       .useWithScope {
-        zip(targetFile, zipFileMap, compress = true)
+        zipWithCompression(targetFile, zipFileMap)
       }
 
     context.notifyArtifactWasBuilt(targetFile)

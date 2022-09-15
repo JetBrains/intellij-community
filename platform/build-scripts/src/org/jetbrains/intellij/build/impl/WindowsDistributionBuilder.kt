@@ -388,7 +388,7 @@ private fun CoroutineScope.createBuildWinZipTask(jreDirectoryPaths: List<Path>,
       val zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
       val dirs = listOf(context.paths.distAllDir, winDistPath, productJsonDir) + jreDirectoryPaths
 
-      zip(targetFile = targetFile, dirs = dirs.associateWithTo(LinkedHashMap(dirs.size)) { zipPrefix }, compress = true)
+      zipWithCompression(targetFile = targetFile, dirs = dirs.associateWithTo(LinkedHashMap(dirs.size)) { zipPrefix })
       checkInArchive(archiveFile = targetFile, pathInArchive = zipPrefix, context = context)
       context.notifyArtifactWasBuilt(targetFile)
       targetFile

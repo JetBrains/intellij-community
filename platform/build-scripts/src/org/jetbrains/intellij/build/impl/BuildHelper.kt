@@ -65,7 +65,7 @@ fun zip(context: CompilationContext, targetFile: Path, dir: Path) {
   spanBuilder("pack")
     .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
     .useWithScope {
-      org.jetbrains.intellij.build.io.zip(targetFile = targetFile, dirs = mapOf(dir to ""), compress = false)
+      org.jetbrains.intellij.build.io.zip(targetFile = targetFile, dirs = mapOf(dir to ""))
     }
 }
 

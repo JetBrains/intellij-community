@@ -14,11 +14,14 @@ class PackageIndexBuilder {
   private val dirsToRegister = LinkedHashSet<String>()
   private var wasWritten = false
 
-  fun addFile(name: String) {
+  fun addFile(name: String, addClassDir: Boolean = false) {
     val i = name.lastIndexOf('/')
     val packageNameHash = if (i == -1) 0 else Xx3UnencodedString.hashUnencodedStringRange(name, 0, i)
     if (name.endsWith(".class")) {
       classPackageHashSet.add(packageNameHash)
+      if (addClassDir) {
+        computeDirsToAddToIndex(name)
+      }
     }
     else {
       resourcePackageHashSet.add(packageNameHash)

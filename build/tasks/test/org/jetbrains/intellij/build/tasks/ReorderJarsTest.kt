@@ -15,7 +15,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.zip
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -48,7 +47,11 @@ class ReorderJarsTest {
     Files.write(dir2.resolve("resource2.txt"), random.nextBytes(random.nextInt(128)))
 
     val archiveFile = fs.root.resolve("archive.jar")
-    zip(archiveFile, mapOf(rootDir to ""), compress = false, addDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY)
+    zip(archiveFile, mapOf(rootDir to ""))
+
+    ImmutableZipFile.load(archiveFile).use { zipFile ->
+      assertThat((zipFile as ImmutableZipFile).resourcePackages).isNotEmpty()
+    }
 
     runBlocking {
       doReorderJars(mapOf(archiveFile to emptyList()), archiveFile.parent, archiveFile.parent)
