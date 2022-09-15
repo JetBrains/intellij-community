@@ -4,12 +4,12 @@ package org.jetbrains.intellij.build.pycharm
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.impl.PluginLayout
 
 import java.nio.file.Files
 import java.nio.file.Path
 
 import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf
-import static org.jetbrains.intellij.build.impl.PluginLayoutGroovy.plugin
 
 @CompileStatic
 final class PyCharmCommunityProperties extends PyCharmPropertiesBase {
@@ -38,13 +38,13 @@ final class PyCharmCommunityProperties extends PyCharmPropertiesBase {
     productLayout.bundledPluginModules.addAll(Files.readAllLines(communityHome.communityRoot.resolve("python/build/plugin-list.txt")))
 
     productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.add(
-      plugin("intellij.pycharm.community.customization") {
-        directoryName = "pythonIDE"
-        mainJarName = "python-ide.jar"
-        withModule("intellij.pycharm.community.ide.impl", mainJarName)
-        withModule("intellij.jupyter.viewOnly")
-        withModule("intellij.jupyter.core")
-      })
+      PluginLayout.plugin(List.of(
+        "intellij.pycharm.community.customization",
+        "intellij.pycharm.community.ide.impl",
+        "intellij.jupyter.viewOnly",
+        "intellij.jupyter.core"
+      )
+      ))
     productLayout.pluginModulesToPublish = persistentListOf("intellij.python.community.plugin")
   }
 

@@ -139,6 +139,14 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     fun withGeneratedResources(generator: BiConsumer<Path, BuildContext>) {
       layout.withGeneratedResources(generator)
     }
+
+    /**
+     * @param resourcePath path to resource file or directory relative to {@code moduleName} module content root
+     * @param relativeOutputPath target path relative to the plugin root directory
+     */
+    fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
+      layout.withResourceFromModule(moduleName, resourcePath, relativeOutputPath)
+    }
   }
 
   // as a builder for PluginLayout, that ideally should be immutable
@@ -220,14 +228,6 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
           copyDir(source, targetDir.resolve(outputPath))
         }
       })
-    }
-
-    /**
-     * @param resourcePath path to resource file or directory relative to {@code moduleName} module content root
-     * @param relativeOutputPath target path relative to the plugin root directory
-     */
-    fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
-      layout.withResourceFromModule(moduleName, resourcePath, relativeOutputPath)
     }
 
     /**
