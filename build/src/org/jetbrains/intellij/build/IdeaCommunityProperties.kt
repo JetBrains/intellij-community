@@ -104,8 +104,8 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
 
       override fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties) = "IntelliJ IDEA Community Edition"
 
-      override fun getUninstallFeedbackPageUrl(applicationInfo: ApplicationInfoProperties): String {
-        return "https://www.jetbrains.com/idea/uninstall/?edition=IC-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
+      override fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String {
+        return "https://www.jetbrains.com/idea/uninstall/?edition=IC-${appInfo.majorVersion}.${appInfo.minorVersion}"
       }
     }
   }

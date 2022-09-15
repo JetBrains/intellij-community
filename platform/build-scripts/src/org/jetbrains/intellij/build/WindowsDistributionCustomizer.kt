@@ -98,7 +98,7 @@ abstract class WindowsDistributionCustomizer {
   open fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties): String =
     appInfo.shortCompanyName + " " + getFullNameIncludingEdition(appInfo)
 
-  open fun getUninstallFeedbackPageUrl(applicationInfo: ApplicationInfoProperties): String? {
+  open fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String? {
     return null
   }
 

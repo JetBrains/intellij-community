@@ -125,10 +125,10 @@ abstract class MacDistributionCustomizer {
 
   /**
    * Custom properties to be added to the properties file. They will be used for launched product, e.g. you can add additional logging in EAP builds
-   * @param applicationInfo application info that can be used to check for EAP and building version
+   * @param appInfo application info that can be used to check for EAP and building version
    * @return map propertyName-&gt;propertyValue
    */
-  open fun getCustomIdeaProperties(applicationInfo: ApplicationInfoProperties): Map<String, String> = emptyMap()
+  open fun getCustomIdeaProperties(appInfo: ApplicationInfoProperties): Map<String, String> = emptyMap()
 
   /**
    * Additional files to be copied to the distribution, e.g. help bundle or debugger binaries

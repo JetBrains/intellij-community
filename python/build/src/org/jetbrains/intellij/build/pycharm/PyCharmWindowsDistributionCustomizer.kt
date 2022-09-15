@@ -10,7 +10,7 @@ open class PyCharmWindowsDistributionCustomizer : WindowsDistributionCustomizer(
     PyCharmBuildUtils.copySkeletons(context, targetDirectory, "skeletons-win*.zip")
   }
 
-  override fun getUninstallFeedbackPageUrl(applicationInfo: ApplicationInfoProperties): String? {
-    return "https://www.jetbrains.com/pycharm/uninstall/?version=${applicationInfo.productCode}-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
+  override fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String? {
+    return "https://www.jetbrains.com/pycharm/uninstall/?version=${appInfo.productCode}-${appInfo.majorVersion}.${appInfo.minorVersion}"
   }
 }
