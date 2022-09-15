@@ -54,7 +54,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Edit = load("actions/edit.svg", -899362068, 2);
     /** 16x16 */ public static final @NotNull Icon EditScheme = load("actions/editScheme.svg", 709078854, 2);
     /** 16x16 */ public static final @NotNull Icon EditSource = load("actions/editSource.svg", -496807981, 2);
-    /** 16x16 */ public static final @NotNull Icon Execute = load("actions/execute.svg", -169607189, 2);
+    /** 16x16 */ public static final @NotNull Icon Execute = load("actions/execute.svg", -169607189, 10);
     /** 16x16 */ public static final @NotNull Icon Exit = load("actions/exit.svg", 1324374708, 2);
     /** 16x16 */ public static final @NotNull Icon Expandall = load("actions/expandall.svg", 1530335218, 2);
     /** 16x16 */ public static final @NotNull Icon Find = load("actions/find.svg", -2137379474, 2);
@@ -109,7 +109,7 @@ public class AllIcons {
     /** 16x16 */ public static final @Deprecated @NotNull Icon Menu_saveall = MenuSaveall;
     /** 16x16 */ public static final @NotNull Icon Minimap = load("actions/minimap.svg", -870417348, 2);
     /** 16x16 */ public static final @NotNull Icon ModuleDirectory = load("actions/moduleDirectory.svg", -1096058350, 2);
-    /** 16x16 */ public static final @NotNull Icon More = load("actions/more.svg", 78501471, 2);
+    /** 16x16 */ public static final @NotNull Icon More = load("actions/more.svg", 78501471, 10);
     /** 16x16 */ public static final @NotNull Icon MoreHorizontal = load("actions/moreHorizontal.svg", 278211526, 2);
     /** 12x12 */ public static final @NotNull Icon MoveToButton = load("actions/move-to-button.svg", 2097241816, 2);
     /** 16x16 */ public static final @NotNull Icon MoveDown = load("actions/moveDown.svg", 394122626, 2);
@@ -165,9 +165,9 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon RegexSelected = load("actions/regexSelected.svg", 880611879, 0);
     /** 16x16 */ public static final @NotNull Icon RemoveMulticaret = load("actions/RemoveMulticaret.svg", 404043519, 2);
     /** 16x16 */ public static final @NotNull Icon Replace = load("actions/replace.svg", -1782554597, 2);
-    /** 16x16 */ public static final @NotNull Icon Rerun = load("actions/rerun.svg", 2065367825, 2);
+    /** 16x16 */ public static final @NotNull Icon Rerun = load("actions/rerun.svg", 2065367825, 10);
     /** 16x16 */ public static final @NotNull Icon Restart = load("actions/restart.svg", -1061587310, 2);
-    /** 16x16 */ public static final @NotNull Icon RestartDebugger = load("actions/restartDebugger.svg", -1909568261, 2);
+    /** 16x16 */ public static final @NotNull Icon RestartDebugger = load("actions/restartDebugger.svg", -1909568261, 10);
     /** 16x16 */ public static final @NotNull Icon RestartFrame = load("actions/restartFrame.svg", 1726549955, 2);
     /** 16x16 */ public static final @NotNull Icon Resume = load("actions/resume.svg", -126449896, 2);
     /** 16x16 */ public static final @NotNull Icon Rollback = load("actions/rollback.svg", 999672860, 2);
@@ -191,14 +191,14 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ShowWriteAccess = load("actions/showWriteAccess.svg", 264206780, 2);
     /** 16x16 */ public static final @NotNull Icon SplitHorizontally = load("actions/splitHorizontally.svg", -423710974, 2);
     /** 16x16 */ public static final @NotNull Icon SplitVertically = load("actions/splitVertically.svg", 1355120566, 2);
-    /** 16x16 */ public static final @NotNull Icon StartDebugger = load("actions/startDebugger.svg", -1608720165, 2);
+    /** 16x16 */ public static final @NotNull Icon StartDebugger = load("actions/startDebugger.svg", -1608720165, 10);
     /** 16x16 */ public static final @NotNull Icon StartMemoryProfile = load("actions/startMemoryProfile.svg", 1887984941, 2);
     /** 16x16 */ public static final @NotNull Icon StepOut = load("actions/stepOut.svg", 418463006, 2);
     /** 16x16 */ public static final @NotNull Icon StepOutCodeBlock = load("actions/stepOutCodeBlock.svg", -1353913440, 2);
     /** 16x16 */ public static final @NotNull Icon StopRefresh = load("actions/stopRefresh.svg", -578474912, 2);
     /** 16x16 */ public static final @NotNull Icon Stub = load("actions/stub.svg", 404335983, 2);
     /** 16x16 */ public static final @NotNull Icon SuggestedRefactoringBulb = load("actions/suggestedRefactoringBulb.svg", 2098375183, 2);
-    /** 16x16 */ public static final @NotNull Icon Suspend = load("actions/suspend.svg", 1645987906, 2);
+    /** 16x16 */ public static final @NotNull Icon Suspend = load("actions/suspend.svg", 1645987906, 10);
     /** 16x16 */ public static final @NotNull Icon SwapPanels = load("actions/swapPanels.svg", 2027907919, 2);
     /** 16x16 */ public static final @NotNull Icon SynchronizeScrolling = load("actions/synchronizeScrolling.svg", -519401023, 2);
     /** 16x16 */ public static final @NotNull Icon SyncPanels = load("actions/syncPanels.svg", 1101642732, 2);
