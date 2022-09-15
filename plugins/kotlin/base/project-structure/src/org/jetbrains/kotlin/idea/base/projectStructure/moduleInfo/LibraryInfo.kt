@@ -34,7 +34,7 @@ abstract class LibraryInfo(
     override val name: Name = Name.special("<library ${library.name}>")
 
     override val displayedName: String
-        get() = KotlinBaseProjectStructureBundle.message("library.0", library.name.toString())
+        get() = KotlinBaseProjectStructureBundle.message("library.0", library.presentableName)
 
     override val contentScope: GlobalSearchScope
         get() = LibraryWithoutSourceScope(project, library)
