@@ -1,7 +1,6 @@
 fragment pullRequestReviewThread on PullRequestReviewThread {
-    ...nodeInfo
-    isResolved
-    isOutdated
+    ...pullRequestReviewThreadShort
+
     path
     diffSide
     line

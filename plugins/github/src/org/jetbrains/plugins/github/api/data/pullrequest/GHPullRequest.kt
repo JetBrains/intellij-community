@@ -22,6 +22,7 @@ class GHPullRequest(id: String,
                     createdAt: Date,
                     @JsonProperty("assignees") assignees: GHNodes<GHUser>,
                     @JsonProperty("labels") labels: GHNodes<GHLabel>,
+                    @JsonProperty("reviewThreads") reviewThreads: GHNodes<GHPullRequestReviewThreadShort>,
                     mergeable: GHPullRequestMergeableState,
                     viewerCanUpdate: Boolean,
                     viewerDidAuthor: Boolean,
@@ -33,8 +34,8 @@ class GHPullRequest(id: String,
                     val headRefName: String,
                     val headRefOid: String,
                     val headRepository: HeadRepository?)
-  : GHPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, assignees, labels, mergeable, viewerCanUpdate,
-                       viewerDidAuthor) {
+  : GHPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, assignees, labels, reviewThreads, mergeable,
+                       viewerCanUpdate, viewerDidAuthor) {
 
   @JsonIgnore
   val reviewRequests = reviewRequests.nodes

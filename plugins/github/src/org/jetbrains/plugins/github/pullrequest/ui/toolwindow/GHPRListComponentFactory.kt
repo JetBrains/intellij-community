@@ -13,6 +13,7 @@ import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThreadShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -47,7 +48,8 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
                                       userGroup1 = NamedCollection.create(GithubBundle.message("pull.request.assignees"),
                                                                           pr.assignees.map { user ->
                                                                             createUserPresentation(avatarIconsProvider, user)
-                                                                          }))
+                                                                          }),
+                                      commentsCounter = getUnresolvedCommentsCount(pr.reviewThreads))
 
   private fun getLabelPresentation(label: GHLabel) =
     TagPresentation.Simple(label.name, ColorHexUtil.fromHex(label.color))
@@ -64,6 +66,12 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
     }
 
     return null
+  }
+
+  private fun getUnresolvedCommentsCount(reviewThreads: List<GHPullRequestReviewThreadShort>): ReviewListItemPresentation.CommentsCounter {
+    val unresolvedCommentsCount = reviewThreads.filter { comment -> !comment.isResolved && !comment.isOutdated }.size
+    return ReviewListItemPresentation.CommentsCounter(unresolvedCommentsCount,
+                                                      GithubBundle.message("pull.request.unresolved.comments", unresolvedCommentsCount))
   }
 
   private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHActor?): UserPresentation? {

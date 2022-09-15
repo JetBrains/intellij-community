@@ -20,6 +20,7 @@ open class GHPullRequestShort(id: String,
                               val createdAt: Date,
                               @JsonProperty("assignees") assignees: GHNodes<GHUser>,
                               @JsonProperty("labels") labels: GHNodes<GHLabel>,
+                              @JsonProperty("reviewThreads") reviewThreads: GHNodes<GHPullRequestReviewThreadShort>,
                               val mergeable: GHPullRequestMergeableState,
                               val viewerCanUpdate: Boolean,
                               val viewerDidAuthor: Boolean) : GHNode(id), GHPRIdentifier {
@@ -29,6 +30,9 @@ open class GHPullRequestShort(id: String,
 
   @JsonIgnore
   val labels = labels.nodes
+
+  @JsonIgnore
+  val reviewThreads = reviewThreads.nodes
 
   override fun toString(): String = "#$number $title"
 }
