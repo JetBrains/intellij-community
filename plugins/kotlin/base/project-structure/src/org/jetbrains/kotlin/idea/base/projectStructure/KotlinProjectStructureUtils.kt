@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.base.util.runWithAlternativeResolveEnabled
 import org.jetbrains.kotlin.psi.UserDataProperty
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Frontend10ApiUsage
 val KtModule.moduleInfo: IdeaModuleInfo
@@ -133,7 +134,7 @@ fun GlobalSearchScope.hasKotlinJvmRuntime(project: Project): Boolean {
 }
 
 fun ModuleInfo.findSdkAcrossDependencies(): SdkInfo? {
-    val project = (this as? IdeaModuleInfo)?.project ?: return null
+    val project = this.safeAs<IdeaModuleInfo>()?.project ?: return null
     return SdkInfoCache.getInstance(project).findOrGetCachedSdk(this)
 }
 
