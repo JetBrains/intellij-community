@@ -40,7 +40,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
@@ -64,16 +63,32 @@ import java.util.concurrent.TimeUnit;
 public final class DfaAssist implements DebuggerContextListener, Disposable {
   private static final int CLEANUP_DELAY_MILLIS = 300;
   private final @NotNull Project myProject;
-  private DfaAssistMarkup myMarkup = new DfaAssistMarkup(null, List.of(), List.of()); // modified from EDT only
+  // modified from EDT only
+  private DfaAssistMarkup myMarkup = new DfaAssistMarkup(null, Collections.emptyList(), Collections.emptyList());
   private volatile CancellablePromise<?> myComputation;
   private volatile ScheduledFuture<?> myScheduledCleanup;
   private final DebuggerStateManager myManager;
-  private volatile boolean myActive;
+  private volatile AssistMode myMode;
 
   private DfaAssist(@NotNull Project project, @NotNull DebuggerStateManager manager) {
     myProject = project;
     myManager = manager;
-    setActive(ViewsGeneralSettings.getInstance().USE_DFA_ASSIST);
+    updateFromSettings();
+  }
+
+  private void updateFromSettings() {
+    AssistMode newMode = AssistMode.fromSettings();
+    if (myMode != newMode) {
+      myMode = newMode;
+      if (newMode == AssistMode.NONE) {
+        cleanUp();
+      } else {
+        DebuggerSession session = myManager.getContext().getDebuggerSession();
+        if (session != null) {
+          session.refresh(false);
+        }
+      }
+    }
   }
 
   private static final class DfaAssistMarkup implements Disposable {
@@ -109,7 +124,7 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
       Disposer.dispose(this);
       return;
     }
-    if (!myActive) return;
+    if (myMode == AssistMode.NONE) return;
     if (event == DebuggerSession.Event.DETACHED) {
       cleanUp();
       return;
@@ -159,20 +174,6 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
     });
   }
 
-  private void setActive(boolean active) {
-    if (myActive != active) {
-      myActive = active;
-      if (!myActive) {
-        cleanUp();
-      } else {
-        DebuggerSession session = myManager.getContext().getDebuggerSession();
-        if (session != null) {
-          session.refresh(false);
-        }
-      }
-    }
-  }
-
   @Override
   public void dispose() {
     myManager.removeListener(this);
@@ -209,7 +210,8 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
     if (expectedFile == null || !expectedFile.equals(editor.getVirtualFile())) return;
     List<Inlay<?>> newInlays = new ArrayList<>();
     List<RangeHighlighter> ranges = new ArrayList<>();
-    if (!hints.isEmpty()) {
+    AssistMode mode = myMode;
+    if (!hints.isEmpty() && mode.displayInlays()) {
       InlayModel model = editor.getInlayModel();
       AnAction turnOffDfaProcessor = new TurnOffDfaProcessorAction();
       hints.forEach((expr, hint) -> {
@@ -222,7 +224,7 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
         newInlays.add(model.addInlineElement(range.getEndOffset(), new PresentationRenderer(presentation)));
       });
     }
-    if (!unreachable.isEmpty() && Registry.is("jvm.debugger.gray.out")) {
+    if (!unreachable.isEmpty() && mode.displayGrayOut()) {
       MarkupModelEx model = editor.getMarkupModel();
       for (TextRange range : unreachable) {
         RangeHighlighter highlighter = model.addRangeHighlighter(HighlightInfoType.UNUSED_SYMBOL.getAttributesKey(),
@@ -295,9 +297,35 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
       session.addSessionListener(new XDebugSessionListener() {
         @Override
         public void settingsChanged() {
-          assist.setActive(ViewsGeneralSettings.getInstance().USE_DFA_ASSIST);
+          assist.updateFromSettings();
         }
       }, assist);
+    }
+  }
+
+  private enum AssistMode {
+    NONE, INLAYS, GRAY_OUT, BOTH;
+
+    boolean displayInlays() {
+      return this == INLAYS || this == BOTH;
+    }
+
+    boolean displayGrayOut() {
+      return this == GRAY_OUT || this == BOTH;
+    }
+
+    static AssistMode fromSettings() {
+      ViewsGeneralSettings settings = ViewsGeneralSettings.getInstance();
+      if (settings.USE_DFA_ASSIST && settings.USE_DFA_ASSIST_GRAY_OUT) {
+        return BOTH;
+      }
+      if (settings.USE_DFA_ASSIST) {
+        return INLAYS;
+      }
+      if (settings.USE_DFA_ASSIST_GRAY_OUT) {
+        return GRAY_OUT;
+      }
+      return NONE;
     }
   }
 }

@@ -1290,8 +1290,6 @@
     <editor.injectedFileChangesHandlerProvider language="JAVA" implementationClass="com.intellij.psi.impl.source.tree.injected.JavaInjectedFileChangesHandlerProvider"/>
     <registryKey key="injections.java.fragment.editor.new" defaultValue="true" restartRequired="false"
                  description="Using new optimised JavaInjectedFileChangesHandler when editing code injected to Java in the fragment editor"/>
-    <registryKey key="jvm.debugger.gray.out" defaultValue="false" restartRequired="false"
-                 description="Gray out unreachable code blocks when debugging Java applications (experimental)"/>
     <registryKey key="java.jspecify.annotations.available" defaultValue="true" restartRequired="true"
                  description="Experimental support for experimental annotations"/>
     <deadCode implementation="com.intellij.codeInspection.deadCode.DeprecatedEntryPoint"/>
