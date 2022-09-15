@@ -37,7 +37,6 @@ internal class IsUpToDateCheckStartupActivity : ProjectPostStartupActivity {
 
     coroutineContext.ensureActive()
 
-    @Suppress("DialogTitleCapitalization")
     val isUpToDate = withBackgroundProgressIndicator(project, JavaCompilerBundle.message("refresh.compiler.ref.index")) {
       CompileDriver(project).nonBlockingIsUpToDate(CompilerManager.getInstance(project).createProjectCompileScope(project))
     }
