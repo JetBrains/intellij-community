@@ -18,7 +18,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.module.Module;
@@ -886,20 +885,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       }
     }
 
-
-    if (ServiceDescriptor.class.getName().equals(extensionPoint.getBeanClass().getStringValue())) {
-      GenericAttributeValue serviceInterface = getAttribute(extension, "serviceInterface");
-      GenericAttributeValue serviceImplementation = getAttribute(extension, "serviceImplementation");
-      if (serviceInterface != null && serviceImplementation != null &&
-          StringUtil.equals(serviceInterface.getStringValue(), serviceImplementation.getStringValue())) {
-        if (hasMissingAttribute(extension, "testServiceImplementation")) {
-          highlightRedundant(serviceInterface,
-                             DevKitBundle.message("inspections.plugin.xml.service.interface.class.redundant"),
-                             ProblemHighlightType.WARNING, holder);
-        }
-      }
-    }
-
     final List<? extends DomAttributeChildDescription> descriptions = extension.getGenericInfo().getAttributeChildrenDescriptions();
     for (DomAttributeChildDescription attributeDescription : descriptions) {
       final GenericAttributeValue attributeValue = attributeDescription.getDomAttributeValue(extension);
@@ -1133,13 +1118,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
   private static void highlightRedundant(DomElement element, @InspectionMessage String message, DomElementAnnotationHolder holder) {
     highlightRedundant(element, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, holder);
-  }
-
-  private static void highlightRedundant(DomElement element,
-                                         @InspectionMessage String message,
-                                         ProblemHighlightType highlightType,
-                                         DomElementAnnotationHolder holder) {
-    holder.createProblem(element, highlightType, message, null, new RemoveDomElementQuickFix(element)).highlightWholeElement();
   }
 
   private static void highlightAttributeNotUsedAnymore(GenericAttributeValue attributeValue,

@@ -6,10 +6,13 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiReferenceProviderBean;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP;
 import com.intellij.psi.stubs.StubElementTypeHolderEP;
@@ -18,6 +21,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.highlighting.AddDomElementQuickFix;
 import com.intellij.util.xml.highlighting.DefineAttributeQuickFix;
@@ -53,6 +57,20 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
         holder.createProblem(extension,
                              DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.externalidprefix.attribute"),
                              new DefineAttributeQuickFix("externalIdPrefix"));
+      }
+      return;
+    }
+
+    if (ServiceDescriptor.class.getName().equals(extensionPoint.getBeanClass().getStringValue())) {
+      GenericAttributeValue serviceInterface = getAttribute(extension, "serviceInterface");
+      GenericAttributeValue serviceImplementation = getAttribute(extension, "serviceImplementation");
+      if (serviceInterface != null && serviceImplementation != null &&
+          StringUtil.equals(serviceInterface.getStringValue(), serviceImplementation.getStringValue())) {
+        if (hasMissingAttribute(extension, "testServiceImplementation")) {
+          highlightRedundant(serviceInterface,
+                             DevKitBundle.message("inspections.plugin.xml.service.interface.class.redundant"),
+                             ProblemHighlightType.WARNING, holder);
+        }
       }
       return;
     }

@@ -76,4 +76,8 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
     myFixture.testHighlighting("inspectionMappingWithDefaultBundle.xml", "bundle.properties");
   }
 
+  public void testRedundantServiceInterfaceClass() {
+    myFixture.testHighlighting("redundantServiceInterfaceClass.xml");
+  }
+
 }
