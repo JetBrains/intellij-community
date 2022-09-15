@@ -4,13 +4,11 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
 import com.intellij.util.execution.ParametersListUtil
-import org.codehaus.groovy.runtime.ProcessGroovyMethods
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesManualRunOnly
-import java.io.OutputStream
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
@@ -37,11 +35,11 @@ internal object ToolboxLiteGen {
     messages.info("Running " + ParametersListUtil.join(command))
     val processBuilder = ProcessBuilder(command)
     processBuilder.directory(liteGenPath.toFile())
-    processBuilder.environment()["JAVA_HOME"] = SystemProperties.getJavaHome()
+    @Suppress("ReplacePutWithAssignment")
+    processBuilder.environment().put("JAVA_HOME", SystemProperties.getJavaHome())
+    processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT)
+    processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT)
     val process = processBuilder.start()
-    // todo get rid of ProcessGroovyMethods
-    ProcessGroovyMethods.consumeProcessOutputStream(process, System.out as OutputStream)
-    ProcessGroovyMethods.consumeProcessErrorStream(process, System.err as OutputStream)
     val rc = process.waitFor()
     check(rc == 0) { "\'${command.joinToString(separator = " ")}\' exited with exit code $rc" }
   }

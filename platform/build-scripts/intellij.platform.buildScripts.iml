@@ -39,7 +39,6 @@
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
-    <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
