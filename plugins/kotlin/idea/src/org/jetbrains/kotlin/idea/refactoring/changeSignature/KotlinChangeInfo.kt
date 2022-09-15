@@ -8,7 +8,6 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.OverridingMethodsSearch
-import com.intellij.psi.util.elementType
 import com.intellij.refactoring.changeSignature.*
 import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.usageView.UsageInfo
@@ -34,6 +33,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -312,11 +312,12 @@ open class KotlinChangeInfo(
                 if (index == lastIndex) {
                     append(parameter.text)
                 } else {
-                    val eolComment = parameter.lastChild.takeIf { it.elementType == KtTokens.EOL_COMMENT }
-                    if (eolComment != null) {
-                        val eolCommentText = eolComment.text
-                        eolComment.delete()
-                        append("${parameter.text}, $eolCommentText\n")
+                    val lastCommentsOrWhiteSpaces =
+                        parameter.allChildren.toList().reversed().takeWhile { it is PsiComment || it is PsiWhiteSpace }
+                    if (lastCommentsOrWhiteSpaces.any { it is PsiComment }) {
+                        val commentsText = lastCommentsOrWhiteSpaces.reversed().joinToString(separator = "") { it.text }
+                        lastCommentsOrWhiteSpaces.forEach { it.delete() }
+                        append("${parameter.text},$commentsText\n")
                     } else {
                         append("${parameter.text}, ")
                     }
