@@ -2,33 +2,32 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
-import java.io.File
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-
 import java.util.regex.Pattern
 
 internal class NsisFileListGenerator {
-  private val directoryToFiles = HashMap<String, MutableList<File>>()
+  private val directoryToFiles = LinkedHashMap<String, MutableList<Path>>()
   private val filesRelativePaths = mutableListOf<String>()
 
   fun addDirectory(directoryPath: String, relativeFileExcludePatterns: List<String> = emptyList()) {
     val excludePatterns = relativeFileExcludePatterns.map { Pattern.compile(FileUtil.convertAntToRegexp(it)) }
-    processDirectory(File(directoryPath), "", excludePatterns)
+    processDirectory(Path.of(directoryPath), "", excludePatterns)
   }
 
   fun generateInstallerFile(outputFile: Path) {
     Files.newBufferedWriter(outputFile).use { out ->
-      for (it in directoryToFiles) {
-        if (!it.value.isEmpty()) {
-          out.newLine()
-          @Suppress("SpellCheckingInspection")
-          out.write("SetOutPath \"\$INSTDIR${if (it.key.isEmpty()) "" else "\\"}${escapeWinPath(it.key)}\"\n")
+      for ((relativePath, files) in directoryToFiles) {
+        if (files.isEmpty()) {
+          continue
+        }
 
-          it.value.forEach {
-            out.write("File \"${it.absolutePath}\"\n")
-          }
+        out.write("\n")
+        @Suppress("SpellCheckingInspection")
+        out.write("SetOutPath \"\$INSTDIR${if (relativePath.isEmpty()) "" else "\\"}${escapeWinPath(relativePath)}\"\n")
+
+        for (file in files) {
+          out.write("File \"${file.toAbsolutePath().normalize()}\"\n")
         }
       }
     }
@@ -55,16 +54,15 @@ internal class NsisFileListGenerator {
     }
   }
 
-  private fun processDirectory(directory: File, relativePath: String, excludePatterns: List<Pattern>) {
-    val files = directory.listFiles() ?: throw IOException("Not a directory: $directory")
-    files.sortBy { it.name }
+  private fun processDirectory(directory: Path, relativePath: String, excludePatterns: List<Pattern>) {
+    val files = Files.newDirectoryStream(directory).use { stream -> stream.sortedBy { it.fileName.toString() } }
     for (child in files) {
-      val childPath = "${(if (relativePath.isEmpty()) "" else "$relativePath/")}$child.name"
+      val childPath = (if (relativePath.isEmpty()) "" else "$relativePath/") + child.fileName.toString()
       if (excludePatterns.any { it.matcher(childPath).matches() }) {
         continue
       }
 
-      if (child.isFile) {
+      if (Files.isRegularFile(child)) {
         filesRelativePaths.add(childPath)
         directoryToFiles.computeIfAbsent(relativePath) { mutableListOf() }.add(child)
       }
