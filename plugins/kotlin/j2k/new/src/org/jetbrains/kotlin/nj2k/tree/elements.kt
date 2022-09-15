@@ -163,18 +163,16 @@ class JKAnnotation(
     override fun accept(visitor: JKVisitor) = visitor.visitAnnotation(this)
 
     @Suppress("unused")
-    enum class UseSiteTarget(renderName: String? = null) {
-        FIELD,
-        FILE,
-        PROPERTY,
+    enum class UseSiteTarget(val renderName: String) {
+        FIELD("field"),
+        FILE("file"),
+        PROPERTY("property"),
         PROPERTY_GETTER("get"),
         PROPERTY_SETTER("set"),
-        RECEIVER,
+        RECEIVER("receiver"),
         CONSTRUCTOR_PARAMETER("param"),
         SETTER_PARAMETER("setparam"),
-        PROPERTY_DELEGATE_FIELD("delegate");
-
-        val renderName: String = renderName ?: name.lowercase()
+        PROPERTY_DELEGATE_FIELD("delegate")
     }
 }
 
