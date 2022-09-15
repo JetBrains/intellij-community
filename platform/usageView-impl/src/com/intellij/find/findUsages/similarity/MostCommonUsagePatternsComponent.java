@@ -164,7 +164,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
       sortedClusters.stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
         final Set<SimilarUsage> filteredUsages =
           cluster.getUsages().stream().filter(e -> (e instanceof UsageInfo2UsageAdapter)).collect(Collectors.toSet());
-        renderClusterDescription(ContainerUtil.getFirstItem(filteredUsages), filteredUsages);
+        renderClusterDescription(filteredUsages);
       });
       if (logMoreSnippetsLoaded) {
         SimilarUsagesCollector.logMoreClustersLoaded(myProject, myUsageView, myAlreadyRenderedSnippets);
@@ -228,30 +228,28 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     isDisposed = true;
   }
 
-  private void renderClusterDescription(@Nullable SimilarUsage usage, @NotNull Set<@NotNull SimilarUsage> clusterUsages) {
-    if (usage instanceof UsageInfo2UsageAdapter) {
-      final UsageInfo usageInfo = usage.getUsageInfo();
-      PsiElement element = usageInfo.getElement();
-      if (element != null) {
-        UsageCodeSnippetComponent summaryRendererComponent = new UsageCodeSnippetComponent(element);
-        if (!Disposer.tryRegister(this, summaryRendererComponent)) {
-          Disposer.dispose(summaryRendererComponent);
-        }
-        myMainPanel.add(createHeaderPanel(usageInfo, clusterUsages));
-        myMainPanel.add(summaryRendererComponent);
-      }
-    }
-    myAlreadyRenderedSnippets++;
+  private void renderClusterDescription(@NotNull Set<@NotNull SimilarUsage> clusterUsages) {
+    SimilarUsage usage = ContainerUtil.getFirstItem(clusterUsages);
+    final UsageInfo usageInfo = usage.getUsageInfo();
+    renderSnippet(usageInfo, createHeaderPanel(usageInfo, clusterUsages));
   }
+
 
   private void renderNonClusteredUsage(@NotNull UsageInfo2UsageAdapter usage) {
     final UsageInfo usageInfo = usage.getUsageInfo();
-    UsageCodeSnippetComponent summaryRendererComponent = new UsageCodeSnippetComponent(Objects.requireNonNull(usageInfo.getElement()));
-    if (!Disposer.tryRegister(this, summaryRendererComponent)) {
-      Disposer.dispose(summaryRendererComponent);
+    renderSnippet(usageInfo, createHeaderWithLocationLink(usageInfo));
+  }
+
+  private void renderSnippet(@NotNull UsageInfo usageInfo, @NotNull JPanel headerPanel) {
+    PsiElement element = usageInfo.getElement();
+    if (element != null) {
+      UsageCodeSnippetComponent summaryRendererComponent = new UsageCodeSnippetComponent(element);
+      if (!Disposer.tryRegister(this, summaryRendererComponent)) {
+        Disposer.dispose(summaryRendererComponent);
+      }
+      myMainPanel.add(headerPanel);
+      myMainPanel.add(summaryRendererComponent);
     }
-    myMainPanel.add(createHeaderWithLocationLink(usageInfo));
-    myMainPanel.add(summaryRendererComponent);
     myAlreadyRenderedSnippets++;
   }
 
@@ -289,8 +287,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     return header;
   }
 
-  @NotNull
-  private static JPanel createHeaderWithLocationLink(@NotNull UsageInfo info) {
+  private static @NotNull JPanel createHeaderWithLocationLink(@NotNull UsageInfo info) {
     final LocationLinkComponent component = new LocationLinkComponent(info);
     final JPanel header = new JPanel();
     header.setBackground(UIUtil.getTextFieldBackground());
