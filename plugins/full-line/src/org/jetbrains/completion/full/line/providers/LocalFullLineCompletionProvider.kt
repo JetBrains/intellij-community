@@ -1,6 +1,7 @@
 package org.jetbrains.completion.full.line.providers
 
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ProjectManager
@@ -66,13 +67,15 @@ class LocalFullLineCompletionProvider private constructor(
   companion object {
     fun create(language: Language): FullLineCompletionProvider? {
       if (!checkedLanguages.contains(language.id)) {
-        service<ConfigurableModelsManager>().run {
-          val project = ProjectManager.getInstance().currentOpenProject() ?: return@run
-          getLatest(language, true).also {
-            checkedLanguages.add(language.id)
-            val cur = modelsSchema.targetLanguage(language)
-            if (cur?.version != it.version) {
-              FullLineNotifications.Local.showAvailableModelUpdate(project, language)
+        ApplicationManager.getApplication().executeOnPooledThread {
+          service<ConfigurableModelsManager>().run {
+            val project = ProjectManager.getInstance().currentOpenProject() ?: return@run
+            getLatest(language, true).also {
+              checkedLanguages.add(language.id)
+              val cur = modelsSchema.targetLanguage(language)
+              if (cur?.version != it.version) {
+                FullLineNotifications.Local.showAvailableModelUpdate(project, language)
+              }
             }
           }
         }
