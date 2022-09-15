@@ -184,6 +184,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
           selectables.add(selectable);
         }
 
+        selectable.setBackground(null);
         selectable.setSelectionColor(isSelected ? UIUtil.getListSelectionBackground(cellHasFocus) : null);
         return selectable;
       }
@@ -208,7 +209,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     list.putClientProperty(DISPOSED_OBJECTS, renderer.selectables);
     list.setCellRenderer(renderer);
     list.setBorder(JBUI.Borders.empty(5));
-    list.setBackground(UIUtil.getPanelBackground());
+    list.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
     list.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
