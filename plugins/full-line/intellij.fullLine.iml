@@ -26,9 +26,21 @@
         <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:fl-inference:0.0.20" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/fl-inference/0.0.20/fl-inference-0.0.20.jar!/" />
+
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference/0.1.2/inference-0.1.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray/0.1.2/ndarray-0.1.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations/0.1.7/primitives-annotations-0.1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/wire/wire-runtime/3.2.2/wire-runtime-3.2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/2.5.0/okio-2.5.0.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference/0.1.2/inference-0.1.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray/0.1.2/ndarray-0.1.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations/0.1.7/primitives-annotations-0.1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/wire/wire-runtime/3.2.2/wire-runtime-3.2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/2.5.0/okio-2.5.0.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
   </component>
