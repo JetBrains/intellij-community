@@ -126,7 +126,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private final Project myProject;
   private final @NlsContexts.TabTitle String myTitle;
   @Nullable private final String myWorkingDir;
-  @Nullable private final Function<TargetEnvironment, String> myWorkingDirFunction;
   @Nullable private Sdk mySdk;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
@@ -156,15 +155,14 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                 @Nullable Sdk sdk,
                                 @NotNull final PyConsoleType consoleType,
                                 @NotNull final @NlsContexts.TabTitle String title,
-                                @Nullable Function<TargetEnvironment, String> workingDirFunction,
+                                @Nullable final String workingDir,
                                 @NotNull Map<String, String> environmentVariables,
                                 @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
                                 @NotNull Function<TargetEnvironment, @NotNull String> statementsToExecuteFunction) {
     myProject = project;
     mySdk = sdk;
     myTitle = title;
-    myWorkingDir = null;
-    myWorkingDirFunction = workingDirFunction;
+    myWorkingDir = workingDir;
     myConsoleType = consoleType;
     myEnvironmentVariables = environmentVariables;
     myConsoleSettings = settingsProvider;
@@ -184,7 +182,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     mySdk = sdk;
     myTitle = title;
     myWorkingDir = workingDir;
-    myWorkingDirFunction = null;
     myConsoleType = consoleType;
     myEnvironmentVariables = environmentVariables;
     myConsoleSettings = settingsProvider;
@@ -454,8 +451,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                     : null;
     PythonCommandLineState.initEnvironment(myProject, pythonConsoleScriptExecution, runParams, helpersAwareTargetRequest, pathMapper);
 
-    if (myWorkingDirFunction != null) {
-      pythonConsoleScriptExecution.setWorkingDir(myWorkingDirFunction);
+    if (myWorkingDir != null) {
+      Function<TargetEnvironment, String> targetWorkingDir = TargetEnvironmentFunctions.targetPath(Path.of(myWorkingDir));
+      pythonConsoleScriptExecution.setWorkingDir(targetWorkingDir);
     }
 
     return pythonConsoleScriptExecution;
