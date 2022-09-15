@@ -1559,36 +1559,39 @@ public final class ExpressionUtils {
       if (containingClass == null) return false;
       final String className = containingClass.getQualifiedName();
       if (className == null) return false;
-      switch (methodName) {
-        case "append":
-          if (arguments.length != 1) return false;
+      return switch (methodName) {
+        case "append" -> {
+          if (arguments.length != 1) yield false;
           if (!className.equals(CommonClassNames.JAVA_LANG_STRING_BUILDER) &&
               !className.equals(CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
-            return false;
+            yield false;
           }
-          return !hasCharArrayParameter(method);
-        case "valueOf":
-          if (arguments.length != 1 || !CommonClassNames.JAVA_LANG_STRING.equals(className)) return false;
-          return !hasCharArrayParameter(method);
-        case "print":
-        case "println":
-          if (arguments.length != 1 || hasCharArrayParameter(method)) return false;
-          return "java.util.Formatter".equals(className) ||
-                 InheritanceUtil.isInheritor(containingClass, "java.io.PrintStream") ||
-                 InheritanceUtil.isInheritor(containingClass, "java.io.PrintWriter");
-        case "printf":
-        case "format":
-          if (arguments.length < 1) return false;
+          yield !hasCharArrayParameter(method);
+        }
+        case "valueOf" -> {
+          if (arguments.length != 1 || !CommonClassNames.JAVA_LANG_STRING.equals(className)) yield false;
+          yield !hasCharArrayParameter(method);
+        }
+        case "print", "println" -> {
+          if (arguments.length != 1 || hasCharArrayParameter(method)) yield false;
+          yield "java.util.Formatter".equals(className) ||
+                InheritanceUtil.isInheritor(containingClass, "java.io.PrintStream") ||
+                InheritanceUtil.isInheritor(containingClass, "java.io.PrintWriter");
+        }
+        case "printf", "format" -> {
+          if (arguments.length < 1) yield false;
           final PsiParameter[] parameters = method.getParameterList().getParameters();
-          if (parameters.length == 0) return false;
+          if (parameters.length == 0) yield false;
           final PsiParameter parameter = parameters[0];
           final PsiType firstParameterType = parameter.getType();
           final int minArguments = firstParameterType.equalsToText("java.util.Locale") ? 4 : 3;
-          if (arguments.length < minArguments) return false;
-          return CommonClassNames.JAVA_LANG_STRING.equals(className) || "java.util.Formatter".equals(className) ||
-                 InheritanceUtil.isInheritor(containingClass, "java.io.PrintStream") ||
-                 InheritanceUtil.isInheritor(containingClass, "java.io.PrintWriter");
-      }
+          if (arguments.length < minArguments) yield false;
+          yield CommonClassNames.JAVA_LANG_STRING.equals(className) || "java.util.Formatter".equals(className) ||
+                InheritanceUtil.isInheritor(containingClass, "java.io.PrintStream") ||
+                InheritanceUtil.isInheritor(containingClass, "java.io.PrintWriter");
+        }
+        default -> false;
+      };
     }
     return false;
   }
@@ -1600,7 +1603,7 @@ public final class ExpressionUtils {
 
   /**
    * Convert initializer expression to a normal expression that could be used in another context.
-   * Currently the only case when initializer cannot be used in another context is array initializer:
+   * Currently, the only case when initializer cannot be used in another context is array initializer:
    * in this case it's necessary to add explicit array creation like {@code new ArrayType[] {...}}.
    *
    * <p>
@@ -1631,7 +1634,7 @@ public final class ExpressionUtils {
    * @param project current project.
    * @return the assignment expression created if the declaration was successfully split.
    * In this case, the declaration is still valid and could be used afterwards.
-   * Returns null if it the splitting wasn't successful (no changes in the document are performed in this case).
+   * Returns null if the splitting wasn't successful (no changes in the document are performed in this case).
    */
   @Nullable
   public static PsiAssignmentExpression splitDeclaration(@NotNull PsiDeclarationStatement declaration, @NotNull Project project) {

@@ -206,12 +206,15 @@ public final class TypeConstraints {
     String name = classDef.getQualifiedName();
     if (name != null) {
       switch (name) {
-        case JAVA_LANG_OBJECT:
+        case JAVA_LANG_OBJECT -> {
           return EXACTLY_OBJECT;
-        case JAVA_LANG_CLONEABLE:
+        }
+        case JAVA_LANG_CLONEABLE -> {
           return ArraySuperInterface.CLONEABLE;
-        case JAVA_IO_SERIALIZABLE:
+        }
+        case JAVA_IO_SERIALIZABLE -> {
           return ArraySuperInterface.SERIALIZABLE;
+        }
       }
     }
     return new ExactClass(classDef, false);

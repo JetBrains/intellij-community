@@ -390,13 +390,13 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
             return new JBTableRow() {
               @Override
               public Object getValueAt(int column) {
-                switch (column) {
-                  case 0: return item.typeCodeFragment;
-                  case 1: return myNameEditor.getText().trim();
-                  case 2: return item.defaultValueCodeFragment;
-                  case 3: return myAnyVar != null && myAnyVar.isSelected();
-                }
-                return null;
+                return switch (column) {
+                  case 0 -> item.typeCodeFragment;
+                  case 1 -> myNameEditor.getText().trim();
+                  case 2 -> item.defaultValueCodeFragment;
+                  case 3 -> myAnyVar != null && myAnyVar.isSelected();
+                  default -> null;
+                };
               }
             };
           }

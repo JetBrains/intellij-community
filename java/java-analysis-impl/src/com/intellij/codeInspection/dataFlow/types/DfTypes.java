@@ -395,21 +395,14 @@ public final class DfTypes {
    */
   public static DfConstantType<?> defaultValue(@NotNull PsiType type) {
     if (type instanceof PsiPrimitiveType) {
-      switch (type.getCanonicalText()) {
-        case "boolean":
-          return FALSE;
-        case "byte":
-        case "char":
-        case "short":
-        case "int":
-          return intValue(0);
-        case "long":
-          return longValue(0L);
-        case "float":
-          return floatValue(0F);
-        case "double":
-          return doubleValue(0D);
-      }
+      return switch (type.getCanonicalText()) {
+        case "boolean" -> FALSE;
+        case "byte", "char", "short", "int" -> intValue(0);
+        case "long" -> longValue(0L);
+        case "float" -> floatValue(0F);
+        case "double" -> doubleValue(0D);
+        default -> NULL;
+      };
     }
     return NULL;
   }

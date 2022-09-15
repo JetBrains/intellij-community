@@ -64,13 +64,13 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
     int tag = data.readUnsignedByte();
 
     switch (tag) {
-      case 'e': // enum constant
+      case 'e' -> { // enum constant
         String className = pool.getPrimitiveConstant(data.readUnsignedShort()).getString();
         String constName = pool.getPrimitiveConstant(data.readUnsignedShort()).getString();
         FieldDescriptor descr = FieldDescriptor.parseDescriptor(className);
         return new FieldExprent(constName, descr.type.getValue(), true, null, descr, null);
-
-      case 'c': // class
+      }
+      case 'c' -> { // class
         String descriptor = pool.getPrimitiveConstant(data.readUnsignedShort()).getString();
         VarType type = FieldDescriptor.parseDescriptor(descriptor).type;
 
@@ -88,8 +88,8 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
           default -> throw new RuntimeException("invalid class type: " + type.getType());
         };
         return new ConstExprent(VarType.VARTYPE_CLASS, value, null);
-
-      case '[': // array
+      }
+      case '[' -> { // array
         List<Exprent> elements = Collections.emptyList();
         int len = data.readUnsignedShort();
         if (len > 0) {
@@ -112,11 +112,11 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
         newExpr.setDirectArrayInit(true);
         newExpr.setLstArrayElements(elements);
         return newExpr;
-
-      case '@': // annotation
+      }
+      case '@' -> { // annotation
         return parseAnnotation(data, pool);
-
-      default:
+      }
+      default -> {
         PrimitiveConstant cn = pool.getPrimitiveConstant(data.readUnsignedShort());
         return switch (tag) {
           case 'B' -> new ConstExprent(VarType.VARTYPE_BYTE, cn.value, null);
@@ -130,6 +130,7 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
           case 's' -> new ConstExprent(VarType.VARTYPE_STRING, cn.value, null);
           default -> throw new RuntimeException("invalid element type!");
         };
+      }
     }
   }
 

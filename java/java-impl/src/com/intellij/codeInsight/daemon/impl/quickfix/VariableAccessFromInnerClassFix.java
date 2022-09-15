@@ -69,21 +69,20 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    switch (myFixType) {
-      case MAKE_FINAL: {
+    return switch (myFixType) {
+      case MAKE_FINAL -> {
         Collection<PsiVariable> vars = getVariablesToFix();
-        return JavaBundle.message("intention.name.make.variable.final", myVariable.getName(), vars.size() == 1 ? 0 : 1);
+        yield JavaBundle.message("intention.name.make.variable.final", myVariable.getName(), vars.size() == 1 ? 0 : 1);
       }
-      case MAKE_ARRAY:
+      case MAKE_ARRAY -> {
         Collection<PsiVariable> vars = getVariablesToFix();
-        return JavaBundle.message("intention.name.transform.variables.into.final.one.element.array", myVariable.getName(),
-                                  vars.size() == 1 ? 0 : 1);
-      case COPY_TO_FINAL:
-        return JavaBundle.message("intention.name.copy.to.final.temp.variable", myVariable.getName(),
-                                  !PsiUtil.isLanguageLevel8OrHigher(myContext) ? 0 : 1);
-      default:
-        return "";
-    }
+        yield JavaBundle.message("intention.name.transform.variables.into.final.one.element.array", myVariable.getName(),
+                                 vars.size() == 1 ? 0 : 1);
+      }
+      case COPY_TO_FINAL -> JavaBundle.message("intention.name.copy.to.final.temp.variable", myVariable.getName(),
+                               !PsiUtil.isLanguageLevel8OrHigher(myContext) ? 0 : 1);
+      default -> "";
+    };
   }
 
   @Override
@@ -110,15 +109,9 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     try {
       switch (myFixType) {
-        case MAKE_FINAL:
-          makeFinal();
-          break;
-        case MAKE_ARRAY:
-          makeArray();
-          break;
-        case COPY_TO_FINAL:
-          copyToFinal(myVariable, myContext);
-          break;
+        case MAKE_FINAL -> makeFinal();
+        case MAKE_ARRAY -> makeArray();
+        case COPY_TO_FINAL -> copyToFinal(myVariable, myContext);
       }
     }
     catch (IncorrectOperationException e) {
@@ -371,15 +364,9 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     int type = getQuickFixType(variable);
     if (type == UNKNOWN) return;
     switch (type) {
-      case MAKE_FINAL:
-        PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
-        break;
-      case MAKE_ARRAY:
-        makeArray(variable, context);
-        break;
-      case COPY_TO_FINAL:
-        copyToFinal(variable, context);
-        break;
+      case MAKE_FINAL -> PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
+      case MAKE_ARRAY -> makeArray(variable, context);
+      case COPY_TO_FINAL -> copyToFinal(variable, context);
     }
   }
 }

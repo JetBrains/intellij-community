@@ -175,8 +175,7 @@ public class FlattenStatementsHelper {
             lstSuccEdges.add(stat.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0));  // exactly one edge
 
             switch (loopType) {
-              case WHILE:
-              case DO_WHILE:
+              case WHILE, DO_WHILE -> {
                 node = new DirectNode(DirectNodeType.CONDITION, stat, stat.id + "_cond");
                 node.exprents = dostat.getConditionExprentList();
                 graph.nodes.putWithKey(node, node.id);
@@ -201,8 +200,8 @@ public class FlattenStatementsHelper {
                   }
                 }
                 sourcenode = node;
-                break;
-              case FOR:
+              }
+              case FOR -> {
                 DirectNode nodeinit = new DirectNode(DirectNodeType.INIT, stat, stat.id + "_init");
                 if (dostat.getInitExprent() != null) {
                   nodeinit.exprents = dostat.getInitExprentList();
@@ -236,6 +235,7 @@ public class FlattenStatementsHelper {
                 }
 
                 sourcenode = nodecond;
+              }
             }
           }
           case SYNCHRONIZED, SWITCH, IF, SEQUENCE, ROOT -> {
@@ -245,18 +245,12 @@ public class FlattenStatementsHelper {
             }
 
             if (statementBreakIndex <= statsize) {
-              List<Exprent> tailexprlst = null;
-
-              switch (stat.type) {
-                case SYNCHRONIZED:
-                  tailexprlst = ((SynchronizedStatement)stat).getHeadexprentList();
-                  break;
-                case SWITCH:
-                  tailexprlst = ((SwitchStatement)stat).getHeadExprentList();
-                  break;
-                case IF:
-                  tailexprlst = ((IfStatement)stat).getHeadexprentList();
-              }
+              List<Exprent> tailexprlst = switch (stat.type) {
+                case SYNCHRONIZED -> ((SynchronizedStatement)stat).getHeadexprentList();
+                case SWITCH -> ((SwitchStatement)stat).getHeadExprentList();
+                case IF -> ((IfStatement)stat).getHeadexprentList();
+                default -> null;
+              };
 
               for (int i = statementBreakIndex; i < statsize; i++) {
                 statEntry.statementIndex = i + 1;

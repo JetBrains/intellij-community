@@ -80,18 +80,13 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
         if (ownerClass != null) {
 
           switch (methodName) {
-            case FIND_CONSTRUCTOR:
-              addConstructorSignatures(ownerClass, position, result);
-              break;
-
-            case FIND_VIRTUAL:
-            case FIND_STATIC:
-            case FIND_SPECIAL:
+            case FIND_CONSTRUCTOR -> addConstructorSignatures(ownerClass, position, result);
+            case FIND_VIRTUAL, FIND_STATIC, FIND_SPECIAL -> {
               final String name = arguments.length > 1 ? computeConstantExpression(arguments[1], String.class) : null;
               if (!StringUtil.isEmpty(name)) {
                 addMethodSignatures(ownerClass, name, FIND_STATIC.equals(methodName), position, result);
               }
-              break;
+            }
           }
         }
       }

@@ -303,11 +303,7 @@ public class SSAUConstructorSparseEx {
       FunctionExprent func = (FunctionExprent)expr;
 
       switch (func.getFuncType()) {
-        case FunctionExprent.FUNCTION_IMM:
-        case FunctionExprent.FUNCTION_MMI:
-        case FunctionExprent.FUNCTION_IPP:
-        case FunctionExprent.FUNCTION_PPI:
-
+        case FunctionExprent.FUNCTION_IMM, FunctionExprent.FUNCTION_MMI, FunctionExprent.FUNCTION_IPP, FunctionExprent.FUNCTION_PPI -> {
           if (func.getLstOperands().get(0).type == Exprent.EXPRENT_VAR) {
             VarExprent var = (VarExprent)func.getLstOperands().get(0);
             Integer varindex = var.getIndex();
@@ -342,6 +338,7 @@ public class SSAUConstructorSparseEx {
             }
             setCurrentVar(varmap, varindex, var.getVersion());
           }
+        }
       }
     }
     else if (expr.type == Exprent.EXPRENT_VAR) {

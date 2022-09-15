@@ -28,24 +28,22 @@ public class SuspiciousArrayMethodCallInspection extends AbstractBaseJavaLocalIn
         if (aClass == null || !CommonClassNames.JAVA_UTIL_ARRAYS.equals(aClass.getQualifiedName())) return;
         PsiExpression[] args = call.getArgumentList().getExpressions();
         switch (name) {
-          case "fill":
-          case "binarySearch":
+          case "fill", "binarySearch" -> {
             if (args.length == 2) {
               handleArrayElement(args[0], args[1]);
             }
             else if (args.length == 4) {
               handleArrayElement(args[0], args[3]);
             }
-            break;
-          case "equals":
-          case "mismatch":
+          }
+          case "equals", "mismatch" -> {
             if (args.length == 2) {
               handleArrays(nameElement, args[0], args[1]);
             }
             else if (args.length == 6) {
               handleArrays(nameElement, args[0], args[3]);
             }
-            break;
+          }
         }
       }
 

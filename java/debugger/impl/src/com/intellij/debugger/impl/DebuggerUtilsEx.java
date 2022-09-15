@@ -495,32 +495,43 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       if (eof()) return "";
 
       switch (get()) {
-        case 'Z':
+        case 'Z' -> {
           return "boolean";
-        case 'B':
+        }
+        case 'B' -> {
           return "byte";
-        case 'C':
+        }
+        case 'C' -> {
           return "char";
-        case 'S':
+        }
+        case 'S' -> {
           return "short";
-        case 'I':
+        }
+        case 'I' -> {
           return "int";
-        case 'J':
+        }
+        case 'J' -> {
           return "long";
-        case 'F':
+        }
+        case 'F' -> {
           return "float";
-        case 'D':
+        }
+        case 'D' -> {
           return "double";
-        case 'V':
+        }
+        case 'V' -> {
           return "void";
-        case 'L':
+        }
+        case 'L' -> {
           int start = pos;
           pos = buffer.indexOf(';', start) + 1;
           LOG.assertTrue(pos > 0);
           return buffer.substring(start, pos - 1).replace('/', '.');
-        case '[':
+        }
+        case '[' -> {
           return getSignature() + "[]";
-        case '(':
+        }
+        case '(' -> {
           StringBuilder result = new StringBuilder("(");
           String separator = "";
           while (peek() != ')') {
@@ -531,9 +542,11 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
           get();
           result.append(")");
           return getSignature() + " " + getClassName() + "." + getMethodName() + " " + result;
-        default:
+        }
+        default -> {
           //          LOG.assertTrue(false, "unknown signature " + buffer);
           return null;
+        }
       }
     }
 

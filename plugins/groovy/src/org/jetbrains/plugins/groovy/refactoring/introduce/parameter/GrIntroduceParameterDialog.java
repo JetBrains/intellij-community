@@ -352,15 +352,10 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     final PsiField[] usedFields = GroovyIntroduceParameterUtil.findUsedFieldsWithGetters(myInfo.getStatements(), getContainingClass());
     myGetterPanel.setVisible(usedFields.length > 0);
     switch (settings.INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS) {
-      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL:
-        myReplaceAllFieldsRadioButton.setSelected(true);
-        break;
-      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE:
+      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL -> myReplaceAllFieldsRadioButton.setSelected(true);
+      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE ->
         myReplaceFieldsInaccessibleInRadioButton.setSelected(true);
-        break;
-      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE:
-        myDoNotReplaceRadioButton.setSelected(true);
-        break;
+      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE -> myDoNotReplaceRadioButton.setSelected(true);
     }
   }
 

@@ -1492,13 +1492,17 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       VariableDescriptor descriptor = ((DfaVariableValue)value).getDescriptor();
       if (descriptor instanceof SpecialField && range.equals(JvmPsiRangeSetUtil.indexRange())) {
         switch (((SpecialField)descriptor)) {
-          case ARRAY_LENGTH:
+          case ARRAY_LENGTH -> {
             return new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.array.length.is.always.non.negative"), factUse);
-          case STRING_LENGTH:
+          }
+          case STRING_LENGTH -> {
             return new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.string.length.is.always.non.negative"), factUse);
-          case COLLECTION_SIZE:
+          }
+          case COLLECTION_SIZE -> {
             return new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.collection.size.is.always.non.negative"), factUse);
-          default:
+          }
+          default -> {
+          }
         }
       }
     }

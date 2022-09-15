@@ -2065,10 +2065,12 @@ public class JavaDocInfoGenerator {
         int pos = text.lastIndexOf("pre>");
         if (pos > 0) {
           switch (text.charAt(pos - 1)) {
-            case '<':
+            case '<' -> {
               return true;
-            case '/':
+            }
+            case '/' -> {
               return false;
+            }
           }
         }
       }

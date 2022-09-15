@@ -120,16 +120,13 @@ public class GenericType implements Type {
     loop:
     while (index < value.length()) {
       switch (value.charAt(index)) {
-        case '<':
-          counter++;
-          break;
-        case '>':
-          counter--;
-          break;
-        case '.':
+        case '<' -> counter++;
+        case '>' -> counter--;
+        case '.' -> {
           if (counter == 0) {
             break loop;
           }
+        }
       }
 
       index++;

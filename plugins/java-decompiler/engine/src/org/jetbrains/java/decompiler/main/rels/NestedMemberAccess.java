@@ -77,7 +77,7 @@ public class NestedMemberAccess {
             }
 
             switch (exprCore.type) {
-              case Exprent.EXPRENT_FIELD:
+              case Exprent.EXPRENT_FIELD -> {
                 FieldExprent fexpr = (FieldExprent)exprCore;
                 if ((parcount == 1 && !fexpr.isStatic()) ||
                     (parcount == 0 && fexpr.isStatic())) {
@@ -88,17 +88,16 @@ public class NestedMemberAccess {
                     }
                   }
                 }
-                break;
-              case Exprent.EXPRENT_VAR:  // qualified this
+              }
+              case Exprent.EXPRENT_VAR -> {  // qualified this
                 if (parcount == 1) {
                   // this or final variable
                   if (((VarExprent)exprCore).getIndex() != 0) {
                     type = MethodAccess.FIELD_GET;
                   }
                 }
-
-                break;
-              case Exprent.EXPRENT_FUNCTION:
+              }
+              case Exprent.EXPRENT_FUNCTION -> {
                 // for now detect only increment/decrement
                 FunctionExprent functionExprent = (FunctionExprent)exprCore;
                 if (functionExprent.getFuncType() >= FunctionExprent.FUNCTION_IMM &&
@@ -107,11 +106,9 @@ public class NestedMemberAccess {
                     type = MethodAccess.FUNCTION;
                   }
                 }
-                break;
-              case Exprent.EXPRENT_INVOCATION:
-                type = MethodAccess.METHOD;
-                break;
-              case Exprent.EXPRENT_ASSIGNMENT:
+              }
+              case Exprent.EXPRENT_INVOCATION -> type = MethodAccess.METHOD;
+              case Exprent.EXPRENT_ASSIGNMENT -> {
                 AssignmentExprent asexpr = (AssignmentExprent)exprCore;
                 if (asexpr.getLeft().type == Exprent.EXPRENT_FIELD && asexpr.getRight().type == Exprent.EXPRENT_VAR) {
                   FieldExprent fexpras = (FieldExprent)asexpr.getLeft();
@@ -127,6 +124,7 @@ public class NestedMemberAccess {
                     }
                   }
                 }
+              }
             }
 
             if (type == MethodAccess.METHOD) { // FIXME: check for private flag of the method

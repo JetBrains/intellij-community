@@ -283,7 +283,7 @@ public class InvocationExprent extends Exprent {
     }
 
     switch (funcType) {
-      case TYPE_GENERAL:
+      case TYPE_GENERAL -> {
         if (VarExprent.VAR_NAMELESS_ENCLOSURE.equals(buf.toString())) {
           buf = new TextBuffer();
         }
@@ -297,12 +297,9 @@ public class InvocationExprent extends Exprent {
           buf.append("<invokedynamic>");
         }
         buf.append("(");
-        break;
-
-      case TYPE_CLINIT:
-        throw new RuntimeException("Explicit invocation of " + CodeConstants.CLINIT_NAME);
-
-      case TYPE_INIT:
+      }
+      case TYPE_CLINIT -> throw new RuntimeException("Explicit invocation of " + CodeConstants.CLINIT_NAME);
+      case TYPE_INIT -> {
         if (super_qualifier != null) {
           buf.append("super(");
         }
@@ -315,6 +312,7 @@ public class InvocationExprent extends Exprent {
         else {
           throw new RuntimeException("Unrecognized invocation of " + CodeConstants.INIT_NAME);
         }
+      }
     }
 
     List<VarVersionPair> mask = null;

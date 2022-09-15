@@ -281,12 +281,10 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
 
     private static EffectQuantum readEffect(@NotNull DataInput in) throws IOException {
       int effectMask = DataInputOutputUtil.readINT(in);
-      switch (effectMask) {
-        case -1:
-          return EffectQuantum.TopEffectQuantum;
-        case -2:
-          return EffectQuantum.ThisChangeQuantum;
-        case -3:
+      return switch (effectMask) {
+        case -1 -> EffectQuantum.TopEffectQuantum;
+        case -2 -> EffectQuantum.ThisChangeQuantum;
+        case -3 -> {
           EKey key = readKey(in);
           boolean isStatic = in.readBoolean();
           int dataLength = DataInputOutputUtil.readINT(in);
@@ -294,14 +292,12 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
           for (int di = 0; di < dataLength; di++) {
             data[di] = readDataValue(in);
           }
-          return new EffectQuantum.CallQuantum(key, data, isStatic);
-        case -4:
-          return new EffectQuantum.ReturnChangeQuantum(readKey(in));
-        case -5:
-          return new EffectQuantum.FieldReadQuantum(readKey(in));
-        default:
-          return new EffectQuantum.ParamChangeQuantum(effectMask);
-      }
+          yield new EffectQuantum.CallQuantum(key, data, isStatic);
+        }
+        case -4 -> new EffectQuantum.ReturnChangeQuantum(readKey(in));
+        case -5 -> new EffectQuantum.FieldReadQuantum(readKey(in));
+        default -> new EffectQuantum.ParamChangeQuantum(effectMask);
+      };
     }
 
     private static void writeDataValue(@NotNull DataOutput out, DataValue dataValue) throws IOException {

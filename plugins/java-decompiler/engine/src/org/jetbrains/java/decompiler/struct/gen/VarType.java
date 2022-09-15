@@ -291,7 +291,7 @@ public class VarType implements Type {  // TODO: optimize switch
     }
     else if (type1.getTypeFamily() == type2.getTypeFamily()) {
       switch (type1.getTypeFamily()) {
-        case CodeConstants.TYPE_FAMILY_INTEGER:
+        case CodeConstants.TYPE_FAMILY_INTEGER -> {
           if ((type1.getType() == CodeConstants.TYPE_CHAR && type2.getType() == CodeConstants.TYPE_SHORT)
               || (type1.getType() == CodeConstants.TYPE_SHORT && type2.getType() == CodeConstants.TYPE_CHAR)) {
             return VARTYPE_SHORTCHAR;
@@ -299,8 +299,10 @@ public class VarType implements Type {  // TODO: optimize switch
           else {
             return VARTYPE_BYTECHAR;
           }
-        case CodeConstants.TYPE_FAMILY_OBJECT:
+        }
+        case CodeConstants.TYPE_FAMILY_OBJECT -> {
           return VARTYPE_NULL;
+        }
       }
     }
 
@@ -321,7 +323,7 @@ public class VarType implements Type {  // TODO: optimize switch
     }
     else if (type1.getTypeFamily() == type2.getTypeFamily()) {
       switch (type1.getTypeFamily()) {
-        case CodeConstants.TYPE_FAMILY_INTEGER:
+        case CodeConstants.TYPE_FAMILY_INTEGER -> {
           if ((type1.getType() == CodeConstants.TYPE_SHORTCHAR && type2.getType() == CodeConstants.TYPE_BYTE)
               || (type1.getType() == CodeConstants.TYPE_BYTE && type2.getType() == CodeConstants.TYPE_SHORTCHAR)) {
             return VARTYPE_SHORT;
@@ -329,8 +331,10 @@ public class VarType implements Type {  // TODO: optimize switch
           else {
             return VARTYPE_INT;
           }
-        case CodeConstants.TYPE_FAMILY_OBJECT:
+        }
+        case CodeConstants.TYPE_FAMILY_OBJECT -> {
           return VARTYPE_OBJECT;
+        }
       }
     }
 

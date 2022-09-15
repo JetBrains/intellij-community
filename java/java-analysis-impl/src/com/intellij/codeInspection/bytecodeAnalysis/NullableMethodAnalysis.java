@@ -224,14 +224,12 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
   @Override
   public BasicValue unaryOperation(AbstractInsnNode insn, BasicValue value) throws AnalyzerException {
     switch (insn.getOpcode()) {
-      case GETFIELD:
-      case ARRAYLENGTH:
-      case MONITORENTER:
+      case GETFIELD, ARRAYLENGTH, MONITORENTER -> {
         if (value instanceof Calls) {
           delta = ((Calls)value).mergedLabels;
         }
-        break;
-      case IFNULL:
+      }
+      case IFNULL -> {
         if (value instanceof Calls) {
           notNullInsn = insns.indexOf(insn) + 1;
           notNullCall = ((Calls)value).mergedLabels;
@@ -240,8 +238,8 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
           notNullInsn = insns.indexOf(insn) + 1;
           notNullNull = ((LabeledNull)value).origins;
         }
-        break;
-      case IFNONNULL:
+      }
+      case IFNONNULL -> {
         if (value instanceof Calls) {
           notNullInsn = insns.indexOf(((JumpInsnNode)insn).label);
           notNullCall = ((Calls)value).mergedLabels;
@@ -250,9 +248,9 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
           notNullInsn = insns.indexOf(((JumpInsnNode)insn).label);
           notNullNull = ((LabeledNull)value).origins;
         }
-        break;
-      default:
-
+      }
+      default -> {
+      }
     }
     return super.unaryOperation(insn, value);
   }

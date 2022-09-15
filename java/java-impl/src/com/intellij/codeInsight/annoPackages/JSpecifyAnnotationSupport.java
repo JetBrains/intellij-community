@@ -38,14 +38,11 @@ public class JSpecifyAnnotationSupport implements AnnotationPackageSupport {
     if (ArrayUtil.contains(PsiAnnotation.TargetType.LOCAL_VARIABLE, types)) return null;
     Nullability nullability;
     switch (name) {
-      case DEFAULT_NOT_NULL:
-        nullability = Nullability.NOT_NULL;
-        break;
-      case DEFAULT_NULLNESS_UNKNOWN:
-        nullability = Nullability.UNKNOWN;
-        break;
-      default:
+      case DEFAULT_NOT_NULL -> nullability = Nullability.NOT_NULL;
+      case DEFAULT_NULLNESS_UNKNOWN -> nullability = Nullability.UNKNOWN;
+      default -> {
         return null;
+      }
     }
     PsiType targetType = null;
     if (context instanceof PsiMethod) {
