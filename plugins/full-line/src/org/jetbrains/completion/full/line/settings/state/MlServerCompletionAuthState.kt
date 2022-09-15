@@ -40,7 +40,7 @@ class MlServerCompletionAuthState : PersistentStateComponent<MlServerCompletionA
   )
 
   enum class FLVerificationStatus {
-    VERIFIED, UNVERIFIED, UNKNOWN;
+    UNKNOWN, VERIFIED, UNVERIFIED;
 
     companion object {
       fun fromBool(value: Boolean) = if (value) VERIFIED else UNVERIFIED
