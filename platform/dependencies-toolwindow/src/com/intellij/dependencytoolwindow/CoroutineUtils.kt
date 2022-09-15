@@ -13,14 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.Topic
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
@@ -46,19 +39,22 @@ val <T : Any> ExtensionPointName<T>.extensionsFlow: Flow<List<T>>
 
 @Service(Service.Level.PROJECT)
 internal class DependencyToolwindowLifecycleScope : CoroutineScope, Disposable {
-  internal val dispatcher =
-    AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()
 
-  private val supervisor = SupervisorJob()
+  val dispatcher = AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()
 
-  override val coroutineContext = SupervisorJob() + CoroutineName(this::class.qualifiedName!!) + dispatcher
+  override val coroutineContext =
+    SupervisorJob() + CoroutineName(this::class.qualifiedName!!) + dispatcher
 
   override fun dispose() {
     cancel("Disposing ${this::class.simpleName}")
   }
 }
 
-internal fun getLifecycleScope(project: Project): DependencyToolwindowLifecycleScope = project.service()
+internal val Project.lifecycleScope: DependencyToolwindowLifecycleScope
+  get() = service()
+
+internal val Project.contentIdMap
+  get() = service<ContentIdMapService>().idMap.value
 
 fun <L : Any, K> Project.messageBusFlow(
   topic: Topic<L>,
@@ -83,4 +79,9 @@ internal fun DependenciesToolWindowTabProvider.isAvailableFlow(project: Project)
     val sub = addIsAvailableChangesListener(project) { trySend(it) }
     awaitClose { sub.unsubscribe() }
   }
+}
+
+@Suppress("UnusedReceiverParameter")
+internal fun Dispatchers.toolWindowManager(project: Project): CoroutineDispatcher = object : CoroutineDispatcher() {
+  override fun dispatch(context: CoroutineContext, block: java.lang.Runnable) = ToolWindowManager.getInstance(project).invokeLater(block)
 }

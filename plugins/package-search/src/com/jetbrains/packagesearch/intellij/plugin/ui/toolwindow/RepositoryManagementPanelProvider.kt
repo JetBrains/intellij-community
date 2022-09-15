@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.stateIn
 
 class RepositoryManagementPanelProvider : DependenciesToolWindowTabProvider {
 
+    companion object : DependenciesToolWindowTabProvider.Id
+
     @Service(Level.PROJECT)
     private class PanelContainer(private val project: Project) {
         val packageManagementPanel by lazy { RepositoryManagementPanel(project).initialize(ContentFactory.getInstance()) }
@@ -32,6 +34,8 @@ class RepositoryManagementPanelProvider : DependenciesToolWindowTabProvider {
             ) { isServiceReady, isFlagEnabled -> isServiceReady && isFlagEnabled }
                 .stateIn(project.lifecycleScope, SharingStarted.Eagerly, false)
     }
+
+    override val id: DependenciesToolWindowTabProvider.Id = Companion
 
     override fun provideTab(project: Project): Content = project.service<PanelContainer>().packageManagementPanel
 

@@ -71,7 +71,7 @@ class AddDependencyAction : AnAction(
 
         val selectedModule = findSelectedModule(e, modules) ?: return
 
-        DependencyToolWindowFactory.activateToolWindow(project, project.service<PackagesListPanelProvider.PanelContainer>().packageManagementPanel) {
+        DependencyToolWindowFactory.activateToolWindow(project, PackagesListPanelProvider) {
             project.pkgsUiStateModifier.setTargetModules(TargetModules.One(selectedModule))
         }
     }

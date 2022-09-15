@@ -84,7 +84,7 @@ internal class DependencyNavigationService(private val project: Project) {
 
     private fun onSuccess(moduleModel: ModuleModel, dependency: UnifiedDependency): NavigationResult.Success {
         project.lifecycleScope.launch(Dispatchers.EDT) {
-            DependencyToolWindowFactory.activateToolWindow(project, project.service<PackagesListPanelProvider.PanelContainer>().packageManagementPanel) {
+            DependencyToolWindowFactory.activateToolWindow(project, PackagesListPanelProvider) {
                 project.pkgsUiStateModifier.setTargetModules(TargetModules.from(moduleModel))
                 project.pkgsUiStateModifier.setDependency(dependency)
             }

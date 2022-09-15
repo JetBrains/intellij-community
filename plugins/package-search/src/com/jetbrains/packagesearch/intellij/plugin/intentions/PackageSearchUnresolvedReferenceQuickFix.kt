@@ -36,7 +36,7 @@ class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : 
         Regex("(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{Lu}\\p{javaJavaIdentifierPart}+")
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-        DependencyToolWindowFactory.activateToolWindow(project, project.service<PackagesListPanelProvider.PanelContainer>().packageManagementPanel) {
+        DependencyToolWindowFactory.activateToolWindow(project, PackagesListPanelProvider) {
             project.pkgsUiStateModifier.setSearchQuery(ref.canonicalText)
         }
     }

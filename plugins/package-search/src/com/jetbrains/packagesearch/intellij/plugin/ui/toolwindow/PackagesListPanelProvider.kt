@@ -16,10 +16,14 @@ import kotlinx.coroutines.flow.onEach
 
 internal class PackagesListPanelProvider : DependenciesToolWindowTabProvider {
 
+    companion object : DependenciesToolWindowTabProvider.Id
+
     @Service(Level.PROJECT)
-    internal class PanelContainer(private val project: Project) {
+    private class PanelContainer(private val project: Project) {
         val packageManagementPanel by lazy { PackageManagementPanel(project).initialize(ContentFactory.getInstance()) }
     }
+
+    override val id: DependenciesToolWindowTabProvider.Id = Companion
 
     override fun provideTab(project: Project): Content = project.service<PanelContainer>().packageManagementPanel
 

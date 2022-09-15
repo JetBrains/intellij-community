@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 
 interface DependenciesToolWindowTabProvider {
+
+  interface Id
+
   companion object {
     private val extensionPointName = ExtensionPointName<DependenciesToolWindowTabProvider>("com.intellij.dependenciesToolWindow.tabProvider")
 
@@ -34,6 +37,8 @@ interface DependenciesToolWindowTabProvider {
       return extensionPointName.extensionList.filter { it.isAvailable(project) }
     }
   }
+
+  val id: Id
 
   fun provideTab(project: Project): Content
 
