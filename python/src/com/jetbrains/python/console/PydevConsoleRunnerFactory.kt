@@ -155,7 +155,7 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
       }
       val pythonPathFuns = collectPythonPath(project, module, settingsProvider.mySdkHome, pathMapper,
                                              settingsProvider.shouldAddContentRoots(), settingsProvider.shouldAddSourceRoots(),
-                                             false).toMutableSet()
+                                             false).toMutableList()
       return constructPyPathAndWorkingDirCommand(pythonPathFuns, workingDir, customStartScript)
     }
   }
