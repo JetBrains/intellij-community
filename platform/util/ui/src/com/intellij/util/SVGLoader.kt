@@ -88,8 +88,7 @@ object SVGLoader {
     var themeDigest: ByteArray?
     var data: ByteArray? = null
     val subPatcher = colorPatcher?.forPath(path)
-    val cache = SvgCache.prebuiltPersistentCache
-    if (cache != null && (subPatcher == null || subPatcher.digest() != null)) {
+    if (subPatcher == null || subPatcher.digest() != null) {
       val start = StartUpMeasurer.getCurrentTimeIfEnabled()
       themeDigest = DEFAULT_THEME
       if (subPatcher != null) {
@@ -99,7 +98,7 @@ object SVGLoader {
         @Suppress("ReplaceArrayEqualityOpWithArraysEquals")
         if (themeDigest == DEFAULT_THEME && rasterizedCacheKey != 0) {
           try {
-            cache.loadFromCache(rasterizedCacheKey, mapper.scale, mapper.isDark, docSize)?.let {
+            SvgCache.prebuiltPersistentCache?.loadFromCache(rasterizedCacheKey, mapper.scale, mapper.isDark, docSize)?.let {
               return it
             }
           }
@@ -108,7 +107,7 @@ object SVGLoader {
           }
         }
         data = ImageLoader.getResourceData(path, resourceClass, classLoader) ?: return null
-        SvgCache.persistentCache!!.loadFromCache(themeDigest, data, mapper, docSize)?.let {
+        SvgCache.persistentCache?.loadFromCache(themeDigest, data, mapper, docSize)?.let {
           return it
         }
       }
