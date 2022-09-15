@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.caching.LockFreeFineGrainedEntityCache
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.ArrayDeque
+import java.util.*
 
 /**
  * Maintains and caches mapping ModuleInfo -> SdkInfo *form its dependencies*
@@ -158,12 +158,11 @@ internal class SdkInfoCacheImpl(project: Project) :
                         }
                         libraryDependencies.libraries
                     } else {
-                        last.dependencies()
-                            .also { dependencies ->
-                                dependencies.firstIsInstanceOrNull<SdkInfo>()?.let {
-                                    return@run graph to SdkDependency(it)
-                                }
+                        last.dependencies().also { dependencies ->
+                            dependencies.firstIsInstanceOrNull<SdkInfo>()?.let {
+                                return@run graph to SdkDependency(it)
                             }
+                        }
                     }
                 }
 
