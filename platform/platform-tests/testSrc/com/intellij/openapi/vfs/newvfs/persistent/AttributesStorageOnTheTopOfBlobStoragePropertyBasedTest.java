@@ -53,7 +53,7 @@ public class AttributesStorageOnTheTopOfBlobStoragePropertyBasedTest {
     );
     final StreamlinedBlobStorage storage = new StreamlinedBlobStorage(
       pagedStorage,
-      new DataLengthPlusFixedPercentStrategy((short)256, (short)64, 30)
+      new DataLengthPlusFixedPercentStrategy(256, 64, 30)
     );
     return new AttributesStorageOnTheTopOfBlobStorage(storage);
   }

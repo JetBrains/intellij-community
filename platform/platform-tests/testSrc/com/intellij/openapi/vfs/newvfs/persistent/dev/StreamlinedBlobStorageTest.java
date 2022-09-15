@@ -1,14 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
+import com.intellij.openapi.util.IntRef;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.SpaceAllocationStrategy;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.SpaceAllocationStrategy.WriterDecidesStrategy;
 import com.intellij.util.io.PagedFileStorage;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
+import org.junit.experimental.theories.DataPoints;
+import org.junit.experimental.theories.Theories;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -27,105 +30,46 @@ import static org.junit.Assume.assumeTrue;
 /**
  *
  */
-@RunWith(Parameterized.class)
+@RunWith(Theories.class)
 public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobStorage> {
 
-  /**
-   * Use quite small pages, so issues on the page borders have chance to manifest themselves
-   */
-  protected static final int PAGE_SIZE = 1 << 14;
-
-  @Parameterized.Parameters(name = "{0}")
-  public static List<Object[]> allocationStrategiesToTry() {
+  @DataPoints
+  public static List<SpaceAllocationStrategy> allocationStrategiesToTry() {
     return Arrays.asList(
-      new Object[]{new WriterDecidesStrategy((short)1024)},
-      new Object[]{new WriterDecidesStrategy((short)512)},
-      new Object[]{new WriterDecidesStrategy((short)256)},
-      new Object[]{new DataLengthPlusFixedPercentStrategy((short)1024, (short)256, 30)},
-      new Object[]{new DataLengthPlusFixedPercentStrategy((short)512, (short)128, 30)},
-      new Object[]{new DataLengthPlusFixedPercentStrategy((short)256, (short)64, 30)},
+      new WriterDecidesStrategy(1024),
+      new WriterDecidesStrategy(512),
+      new WriterDecidesStrategy(256),
+      new DataLengthPlusFixedPercentStrategy(1024, 256, 30),
+      new DataLengthPlusFixedPercentStrategy(512, 128, 30),
+      new DataLengthPlusFixedPercentStrategy(256, 64, 30),
 
       //put stress on allocation/reallocation code paths
-      new Object[]{new DataLengthPlusFixedPercentStrategy((short)128, (short)64, 0)},
-      new Object[]{new DataLengthPlusFixedPercentStrategy((short)2, (short)2, 0)}
+      new DataLengthPlusFixedPercentStrategy(128, 64, 0),
+      new DataLengthPlusFixedPercentStrategy(2, 2, 0)
     );
   }
 
-  public StreamlinedBlobStorageTest(final StreamlinedBlobStorage.SpaceAllocationStrategy strategy) { allocationStrategy = strategy; }
-
-  private final StreamlinedBlobStorage.SpaceAllocationStrategy allocationStrategy;
-
-  @Override
-  protected StreamlinedBlobStorage openStorage(final Path pathToStorage) throws IOException {
-    final PagedFileStorage pagedStorage = new PagedFileStorage(
-      pathToStorage,
-      LOCK_CONTEXT,
-      PAGE_SIZE,
-      true,
-      true
-    );
-    return new StreamlinedBlobStorage(
-      pagedStorage,
-      allocationStrategy
-    );
+  @DataPoints
+  public static Integer[] pageSizesToTry() {
+    return new Integer[]{
+      //Try quite small pages, so issues on the page borders have chance to manifest themselves
+      1 << 14,
+      1 << 18,
+      1 << 22
+    };
   }
 
-  @Override
-  protected void closeStorage(final StreamlinedBlobStorage storage) throws Exception {
-    storage.close();
+
+  private final int pageSize;
+  private final SpaceAllocationStrategy allocationStrategy;
+
+  public StreamlinedBlobStorageTest(final @NotNull Integer pageSize,
+                                    final @NotNull SpaceAllocationStrategy strategy) {
+    this.pageSize = pageSize;
+    this.allocationStrategy = strategy;
   }
 
-  @Override
-  protected boolean hasRecord(final StreamlinedBlobStorage storage,
-                              final int recordId) throws Exception {
-    return storage.hasRecord(recordId);
-  }
-
-  @Override
-  protected StorageRecord readRecord(final StreamlinedBlobStorage storage,
-                                     final int recordId) throws Exception {
-    final int[] redirectedIdRef = new int[1];
-    final String newPayload = storage.readRecord(
-      recordId,
-      buffer -> {
-        return stringFromBuffer(buffer);
-      },
-      redirectedIdRef
-    );
-    final int newRecordId = redirectedIdRef[0];
-    return new StorageRecord(newRecordId, newPayload);
-  }
-
-  @Override
-  protected StorageRecord writeRecord(final StorageRecord record,
-                                      final StreamlinedBlobStorage storage) throws Exception {
-    final byte[] payloadBytes = record.payload.getBytes(US_ASCII);
-    final int recordId = record.recordId;
-    final int newRecordId = storage.writeToRecord(
-      recordId,
-      buffer -> {
-        final ByteBuffer buff = (buffer.capacity() >= payloadBytes.length && recordId != NULL_ID) ?
-                                buffer : ByteBuffer.allocate(payloadBytes.length);
-        return buff
-          .clear()
-          .put(payloadBytes);
-      }
-    );
-    if (recordId == newRecordId) {
-      return record;
-    }
-    else {
-      return new StorageRecord(newRecordId, record.payload);
-    }
-  }
-
-  @Override
-  protected void deleteRecord(final int recordId,
-                              final StreamlinedBlobStorage storage) throws Exception {
-    storage.deleteRecord(recordId);
-  }
-
-  /* ======================== TESTS =================================================== */
+  /* ======================== TESTS (specific for this impl) ===================================== */
 
   @Test
   public void emptyStorageHasNoRecords() throws Exception {
@@ -190,12 +134,12 @@ public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobS
     // or throw IAE without breaking the storage
     final int margin = 16;
     assumeTrue(
-      "capacity/length are shorts, hence this test is not applicable for PAGE_SIZE>" + (Short.MAX_VALUE - margin),
-      PAGE_SIZE + margin + 1 < Short.MAX_VALUE
+      "capacity/length are 2 bytes, hence this test is not applicable for PAGE_SIZE > " + storage.maxPayloadSupported(),
+      pageSize + margin + 1 < storage.maxPayloadSupported()
     );
     final List<StorageRecord> recordsActuallyWritten = new ArrayList<>();
     try {
-      for (int payloadSize = PAGE_SIZE - margin; payloadSize < PAGE_SIZE + margin; payloadSize++) {
+      for (int payloadSize = pageSize - margin; payloadSize < pageSize + margin; payloadSize++) {
         final StorageRecord recordWritten = StorageRecord.recordWithRandomPayload(payloadSize)
           .writeIntoStorage(this, storage);
         recordsActuallyWritten.add(recordWritten);
@@ -214,7 +158,7 @@ public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobS
     }
 
     //now check storage wasn't broken: add one record on the top of it
-    final StorageRecord recordWrittenOnTop = StorageRecord.recordWithRandomPayload(PAGE_SIZE / 2)
+    final StorageRecord recordWrittenOnTop = StorageRecord.recordWithRandomPayload(pageSize / 2)
       .writeIntoStorage(this, storage);
     recordsActuallyWritten.add(recordWrittenOnTop);
 
@@ -286,7 +230,7 @@ public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobS
     deleteRecord(recordWritten.recordId, storage);
 
     assertFalse(
-      "Deleted record is not exists anymore",
+      "Deleted record must not exist anymore",
       hasRecord(storage, recordWritten.recordId)
     );
 
@@ -302,6 +246,77 @@ public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobS
 
   //TODO write/read records of size=0
   //TODO delete records
+
+  /* ========================= adapter implementation ========================================= */
+  @Override
+  protected StreamlinedBlobStorage openStorage(final Path pathToStorage) throws IOException {
+    final PagedFileStorage pagedStorage = new PagedFileStorage(
+      pathToStorage,
+      LOCK_CONTEXT,
+      pageSize,
+      true,
+      true
+    );
+    return new StreamlinedBlobStorage(
+      pagedStorage,
+      allocationStrategy
+    );
+  }
+
+  @Override
+  protected void closeStorage(final StreamlinedBlobStorage storage) throws Exception {
+    storage.close();
+  }
+
+  @Override
+  protected boolean hasRecord(final StreamlinedBlobStorage storage,
+                              final int recordId) throws Exception {
+    return storage.hasRecord(recordId);
+  }
+
+  @Override
+  protected StorageRecord readRecord(final StreamlinedBlobStorage storage,
+                                     final int recordId) throws Exception {
+    final IntRef redirectedIdRef = new IntRef();
+    final String newPayload = storage.readRecord(
+      recordId,
+      buffer -> {
+        return stringFromBuffer(buffer);
+      },
+      redirectedIdRef
+    );
+    final int newRecordId = redirectedIdRef.get();
+    return new StorageRecord(newRecordId, newPayload);
+  }
+
+  @Override
+  protected StorageRecord writeRecord(final StorageRecord record,
+                                      final StreamlinedBlobStorage storage) throws Exception {
+    final byte[] payloadBytes = record.payload.getBytes(US_ASCII);
+    final int recordId = record.recordId;
+    final int newRecordId = storage.writeToRecord(
+      recordId,
+      buffer -> {
+        final ByteBuffer buff = (buffer.capacity() >= payloadBytes.length && recordId != NULL_ID) ?
+                                buffer : ByteBuffer.allocate(payloadBytes.length);
+        return buff
+          .clear()
+          .put(payloadBytes);
+      }
+    );
+    if (recordId == newRecordId) {
+      return record;
+    }
+    else {
+      return new StorageRecord(newRecordId, record.payload);
+    }
+  }
+
+  @Override
+  protected void deleteRecord(final int recordId,
+                              final StreamlinedBlobStorage storage) throws Exception {
+    storage.deleteRecord(recordId);
+  }
 
   @NotNull
   public static String stringFromBuffer(final ByteBuffer buffer) {
