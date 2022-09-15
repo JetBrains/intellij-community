@@ -80,5 +80,5 @@ internal class NsisFileListGenerator {
 }
 
 private fun escapeWinPath(dir: String): String {
-  return dir.replace('/', '\\').replace("\$", "\$\$")
+  return dir.replace('/', '\\').replace("\\$", "\\$\\$")
 }
