@@ -16,7 +16,7 @@ class CodeVisionListData(
   val projectModel: ProjectCodeVisionModel,
   val rangeCodeVisionModel: RangeCodeVisionModel,
   val inlay: Inlay<*>,
-  private val anchoredLens: List<CodeVisionEntry>,
+  val anchoredLens: List<CodeVisionEntry>,
   val anchor: CodeVisionAnchorKind
 ) {
   companion object {
