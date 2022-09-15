@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinNativeCompileReflec
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationOutput
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
 
 class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: String?) :
     KotlinModelComponentBuilder<KotlinCompilationReflection, MultiplatformModelImportingContext, KotlinCompilation> {
@@ -93,6 +94,31 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
                 this += compileDependenciesBuilder.buildComponent(compilationReflection.gradleCompilation, importingContext)
                 this += runtimeDependenciesBuilder.buildComponent(compilationReflection.gradleCompilation, importingContext)
                     .onlyNewDependencies(this)
+
+                /*
+                * We have to add some source set dependencies into compilation dependencies to workaround K/N specifics.
+                * We don't want to simply add all of them, because of KTIJ-20056 and potential other issues
+                * caused by versions of the same dependency coming from compilation and its declared source sets independently.
+                *
+                * First part of the additionally added dependencies are the implicitly assumed (by the compiler)
+                * K/N distribution dependencies that are not put into a native compilation classpath.
+                * IDE can't rely on implicit assumption for building deps, so they are held in a dedicated source set configuration.
+                *
+                * Second part are Gradle project-to-project dependencies, which are not supported properly via affiliated
+                * artifact mapping for native targets. Since native targets are not usable from non-MPP projects right now,
+                * this has no other visible consequences, and so we can manually provide project dependencies from the source sets
+                * without having a correct artifact mapping.
+                */
+                compilationReflection.sourceSets
+                    ?.mapNotNull { importingContext.sourceSetByName(it.name) }
+                    ?.forEach { compilationSourceSet ->
+                        this += compilationSourceSet.intransitiveDependencies.mapNotNull {
+                            importingContext.dependencyMapper.getDependency(it)
+                        }
+                        this += compilationSourceSet.regularDependencies.mapNotNull { dependencyId ->
+                            importingContext.dependencyMapper.getDependency(dependencyId).takeIf { it is ExternalProjectDependency }
+                        }
+                    }
             }
         }
 
