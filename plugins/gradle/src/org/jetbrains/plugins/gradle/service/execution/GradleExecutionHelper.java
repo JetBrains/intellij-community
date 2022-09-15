@@ -518,11 +518,11 @@ public class GradleExecutionHelper {
         && gradleLogLevel != null) {
           try {
             LogLevel logLevel = LogLevel.valueOf(gradleLogLevel.toUpperCase());
-            switch(logLevel) {
-              case DEBUG: settings.withArgument("-d"); break;
-              case INFO: settings.withArgument("-i"); break;
-              case WARN: settings.withArgument("-w"); break;
-              case QUIET: settings.withArgument("-q"); break;
+            switch (logLevel) {
+              case DEBUG -> settings.withArgument("-d");
+              case INFO -> settings.withArgument("-i");
+              case WARN -> settings.withArgument("-w");
+              case QUIET -> settings.withArgument("-q");
             }
           } catch (IllegalArgumentException e) {
             LOG.warn("org.gradle.logging.level must be one of quiet, warn, lifecycle, info, or debug");
