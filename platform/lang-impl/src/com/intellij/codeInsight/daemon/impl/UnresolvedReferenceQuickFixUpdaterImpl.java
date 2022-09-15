@@ -97,9 +97,13 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
     }
     PsiReference reference = info.unresolvedReference;
     if (reference == null) return null;
+    Job<?> job = reference.getElement().getUserData(JOB);
+    if (job != null) {
+      return job;
+    }
     if (info.isUnresolvedReferenceQuickFixesComputed()) return null;
     DaemonProgressIndicator indicator = new DaemonProgressIndicator();
-    Job<?> job = JobLauncher.getInstance().submitToJobThread(() ->
+    job = JobLauncher.getInstance().submitToJobThread(() ->
       ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() ->
         ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
           if (DumbService.getInstance(myProject).isDumb()) {

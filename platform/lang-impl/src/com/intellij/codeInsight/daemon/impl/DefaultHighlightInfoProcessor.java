@@ -3,7 +3,10 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeWithMe.ClientId;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -67,9 +70,11 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ProgressManager.getInstance().executeProcessUnderProgress(() -> {
       ShowAutoImportPassFactory siFactory = TextEditorHighlightingPassRegistrarImpl.EP_NAME.findExtensionOrFail(ShowAutoImportPassFactory.class);
-      TextEditorHighlightingPass highlightingPass = siFactory.createHighlightingPass(psiFile, editor);
-      if (highlightingPass != null) {
-        highlightingPass.doApplyInformationToEditor();
+      try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
+        TextEditorHighlightingPass highlightingPass = siFactory.createHighlightingPass(psiFile, editor);
+        if (highlightingPass != null) {
+          highlightingPass.doApplyInformationToEditor();
+        }
       }
     }, progressIndicator);
   }
