@@ -7,8 +7,7 @@ import org.jetbrains.completion.full.line.language.LangState
 import org.jetbrains.completion.full.line.models.ModelType
 
 data class GeneralState(
-  // General server settings
-  var enable: Boolean = true,
+  var enable: Boolean = false,
 
   @CheckboxFlag
   var useTopN: Boolean = true,
