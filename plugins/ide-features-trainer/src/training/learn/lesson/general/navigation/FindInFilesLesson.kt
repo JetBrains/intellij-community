@@ -58,6 +58,8 @@ class FindInFilesLesson(override val sampleFilePath: String)
     task {
       val wholeWordsButtonText = FindBundle.message("find.whole.words").dropMnemonic()
       text(LessonsBundle.message("find.in.files.whole.words",
+                                 code("apple"),
+                                 code("pineapple"),
                                  icon(AllIcons.Actions.Words),
                                  LessonUtil.rawKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.ALT_DOWN_MASK))))
       highlightAndTriggerWhenButtonSelected(wholeWordsButtonText)
