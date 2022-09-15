@@ -44,13 +44,13 @@ abstract class LibraryInfo(
         return buildList {
             add(this@LibraryInfo)
             addAll(dependencies.sdk)
-
-            for (dependency in dependencies.libraries) {
-                if (!library.hasSameContent(dependency.library)) {
-                    add(dependency)
-                }
-            }
+            addAll(dependencies.librariesWithoutSelf)
         }
+    }
+
+    override fun dependenciesWithoutSelf(): Sequence<IdeaModuleInfo> {
+        val dependencies = LibraryDependenciesCache.getInstance(project).getLibraryDependencies(this)
+        return dependencies.sdk.asSequence() + dependencies.librariesWithoutSelf.asSequence()
     }
 
     abstract override val platform: TargetPlatform // must override

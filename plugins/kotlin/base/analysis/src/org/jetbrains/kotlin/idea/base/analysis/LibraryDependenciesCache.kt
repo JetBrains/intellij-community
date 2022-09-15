@@ -67,7 +67,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         else
             DefaultLibraryDependenciesFilter union SharedNativeLibraryToNativeInteropFallbackDependenciesFilter
         val libraries = libraryDependenciesFilter(libraryInfo.platform, dependencyCandidates).flatMap { it.libraries }
-        return LibraryDependencies(libraries, sdks.toList())
+        return LibraryDependencies(libraryInfo, libraries, sdks.toList())
     }
 
     //NOTE: used LibraryRuntimeClasspathScope as reference
