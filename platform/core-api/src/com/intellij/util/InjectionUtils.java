@@ -22,4 +22,12 @@ public class InjectionUtils {
   public static boolean shouldInspectInjectedFiles(@NotNull PsiFile file) {
     return !Boolean.FALSE.equals(file.getUserData(INSPECT_INJECTED_FILES));
   }
+
+  private static final Key<Boolean> COLLECT_LINE_MARKERS_FOR_INJECTED_FILES = Key.create("collect line markers for files injected into this PSI file");
+  public static void setCollectLineMarkersForInjectedFiles(@NotNull PsiFile topLevelFile, boolean enabled) {
+    topLevelFile.putUserData(COLLECT_LINE_MARKERS_FOR_INJECTED_FILES, enabled);
+  }
+  public static boolean shouldCollectLineMarkersForInjectedFiles(@NotNull PsiFile file) {
+    return !Boolean.FALSE.equals(file.getUserData(COLLECT_LINE_MARKERS_FOR_INJECTED_FILES));
+  }
 }
