@@ -28,6 +28,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RGBImageFilter;
 import java.lang.ref.WeakReference;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -35,6 +36,7 @@ import java.util.function.ToIntFunction;
 
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 import static com.intellij.ui.scale.ScaleType.USR_SCALE;
+import static com.intellij.util.SVGLoader.getStrokePatcher;
 
 /**
  * @author Konstantin Bulenkov
@@ -991,4 +993,10 @@ public final class IconUtil {
     };
   }
 
+  public static @NotNull Icon toStrokeIcon(@NotNull Icon original, @NotNull Color resultColor) {
+    List<String> strokeColors = List.of("#000000", "#6c707e", "#3574f0", "#5fb865", "#e35252", "#eb7171", "#e3ae4d", "#fcc75b", "#f28c35");
+    List<String> backgroundColors = List.of("#ebecf0", "#e7effd", "#dff2e0", "#f2fcf3", "#ffe8e8", "#fff5f5", "#fff8e3", "#fff4eb");
+    SVGLoader.SvgElementColorPatcherProvider patcher = getStrokePatcher(resultColor, strokeColors, backgroundColors);
+    return IconLoader.colorPatchedIcon(original, patcher, false);
+  }
 }

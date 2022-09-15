@@ -39,7 +39,6 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.Icon
-import javax.swing.UIManager
 import kotlin.math.ceil
 
 private val USE_CACHE = java.lang.Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"))
@@ -297,9 +296,10 @@ object SVGLoader {
   }
 
   @JvmStatic
-  fun getStrokePatcher(strokeColors: List<String>,
-                       backgroundColors: List<String> = emptyList(),
-                       resultColor: Color = UIManager.getColor("ToolWindow.Button.selectedForeground")): SvgElementColorPatcherProvider {
+  @ApiStatus.Internal
+  fun getStrokePatcher(resultColor: Color,
+                       strokeColors: List<String>,
+                       backgroundColors: List<String> = emptyList()): SvgElementColorPatcherProvider {
     val fg = ColorUtil.toHtmlColor(resultColor)
     val map: Map<String, String> = strokeColors.associateWith { fg }
     val alpha = HashMap<String, Int>(map.size)

@@ -4,8 +4,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
-import com.intellij.openapi.util.IconLoader
-import com.intellij.util.SVGLoader
+import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
@@ -84,8 +83,7 @@ internal class SquareStripeButtonLook(private val button: ActionButton) : IdeaAc
       return
     }
 
-    val patcher = SVGLoader.getStrokePatcher(listOf("#767a8a", "#6c707e", "#ced0d6", "#6e6e6e", "#afb1b3"))
-    super.paintIcon(g, actionButton, IconLoader.colorPatchedIcon(icon, patcher))
+    super.paintIcon(g, actionButton, IconUtil.toStrokeIcon(icon, UIManager.getColor("ToolWindow.Button.selectedForeground")))
   }
 
   override fun getButtonArc() = JBValue.UIInteger("Button.ToolWindow.arc", 12)

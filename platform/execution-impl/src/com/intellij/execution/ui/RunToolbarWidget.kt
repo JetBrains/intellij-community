@@ -37,7 +37,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.*
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.KeepingPopupOpenAction
@@ -46,7 +45,7 @@ import com.intellij.ui.popup.PopupState
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.SVGLoader
+import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.annotations.*
@@ -80,10 +79,6 @@ private const val DEBUG: String = ToolWindowId.DEBUG
 private const val PROFILER: String = "Profiler"
 private const val LOADING: String = "Loading"
 private const val RESTART: String = "Restart"
-
-private val runUiColorPatcher = SVGLoader.getStrokePatcher(
-  listOf("#ffffff", "white"),
-  resultColor = JBColor.namedColor("RunWidget.iconColor", Color.WHITE))
 
 internal class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableActionGroupProvider() {
   override fun registerGroups(registrar: CustomizableActionGroupRegistrar?) {
@@ -169,7 +164,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
       RESTART -> IconManager.getInstance().getIcon("expui/run/widget/restart.svg", AllIcons::class.java)
       else -> IconManager.getInstance().getIcon("expui/run/widget/run.svg", AllIcons::class.java)
     }
-    return IconLoader.colorPatchedIcon(icon, runUiColorPatcher)
+    return IconUtil.toStrokeIcon(icon, Color.WHITE)
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
