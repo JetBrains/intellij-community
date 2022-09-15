@@ -1263,7 +1263,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @TestOnly
   public void performScheduledImportInTests() {
-    checkNoLegacyImportInNewTests();
     if (!isInitialized()) return;
     runWhenFullyOpen(() -> myImportingQueue.flush());
   }
