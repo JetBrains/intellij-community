@@ -32,16 +32,12 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
 
   private final @NotNull MappedFileTypeIndex.IndexDataController myDataController;
 
-  private final @NotNull FileTypeIndex.IndexChangeListener myIndexChangedPublisher;
-
   public MappedFileTypeIndex(@NotNull FileBasedIndexExtension<FileType, Void> extension) throws IOException, StorageException {
     super(extension);
 
     var storageFile = getStorageFile();
-    myIndexChangedPublisher =
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(FileTypeIndex.INDEX_CHANGE_TOPIC);
     myDataController = loadIndexToMemory(storageFile.resolveSibling(storageFile.getFileName().toString() + ".index"), id -> {
-      myIndexChangedPublisher.changedForFileType(getFileTypeById(id));
+      notifyInvertedIndexChangedForFileTypeId(id);
     });
   }
 
@@ -155,10 +151,10 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
       if (data != 0) {
         myInvertedIndex.computeIfAbsent(data, __ -> createContainerForInvertedIndex()).add(inputId);
       }
-      notifyInvertedIndexChanged(data, indexedData);
+      triggerOnInvertedIndexChangeCallback(data, indexedData);
     }
 
-    private void notifyInvertedIndexChanged(short newData, short oldData) {
+    private void triggerOnInvertedIndexChangeCallback(short newData, short oldData) {
       if (oldData != newData) {
         if (oldData != 0) {
           myInvertedIndexChangeCallback.accept(oldData);

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Computable;
@@ -31,7 +30,6 @@ public final class LogFileTypeIndex extends FileTypeIndexImplBase {
   private static final Logger LOG = Logger.getInstance(LogFileTypeIndex.class);
 
   private final @NotNull LogBasedIntIntIndex myPersistentLog;
-  private final @NotNull FileTypeIndex.IndexChangeListener myIndexChangedPublisher;
   private final @NotNull MemorySnapshot mySnapshot;
 
   public LogFileTypeIndex(@NotNull FileBasedIndexExtension<FileType, Void> extension) throws IOException, StorageException {
@@ -40,12 +38,8 @@ public final class LogFileTypeIndex extends FileTypeIndexImplBase {
     myPersistentLog = new LogBasedIntIntIndex(new IntLog(storageFile.resolveSibling(storageFile.getFileName().toString() + ".log.index"),
                                                          true,
                                                          new StorageLockContext(false, true)));
-
-    myIndexChangedPublisher =
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(FileTypeIndex.INDEX_CHANGE_TOPIC);
-
     mySnapshot = loadIndexToMemory(myPersistentLog, id -> {
-      myIndexChangedPublisher.changedForFileType(getFileTypeById(id));
+      notifyInvertedIndexChangedForFileTypeId(id);
     });
   }
 
@@ -194,11 +188,11 @@ public final class LogFileTypeIndex extends FileTypeIndexImplBase {
       if (data != 0) {
         myInvertedIndex.computeIfAbsent(data, __ -> new BitSet()).set(inputId);
       }
-      notifyInvertedIndexChanged(data, indexedData);
+      triggerOnInvertedIndexChangeCallback(data, indexedData);
       return updated;
     }
 
-    private void notifyInvertedIndexChanged(int newData, int oldData) {
+    private void triggerOnInvertedIndexChangeCallback(int newData, int oldData) {
       if (oldData != newData) {
         if (oldData != 0) {
           myInvertedIndexChangeCallback.accept(oldData);

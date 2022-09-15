@@ -2,6 +2,7 @@
 package com.intellij.psi.search;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -39,6 +40,7 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   private final @NotNull ConcurrentIntObjectMap<Ref<FileType>> myId2FileTypeCache =
     ConcurrentCollectionFactory.createConcurrentIntObjectMap(); // Ref is here to store nulls
   protected final @NotNull AtomicBoolean myInMemoryMode = new AtomicBoolean();
+  protected final @NotNull FileTypeIndex.IndexChangeListener myIndexChangedPublisher;
 
   public FileTypeIndexImplBase(@NotNull FileBasedIndexExtension<FileType, Void> extension) throws IOException {
     myExtension = extension;
@@ -47,9 +49,11 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
     }
     myIndexId = extension.getName();
     myFileTypeEnumerator = new SimpleStringPersistentEnumerator(getStorageFile().resolveSibling("fileType.enum"));
+    myIndexChangedPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(FileTypeIndex.INDEX_CHANGE_TOPIC);
   }
 
   protected abstract int getIndexedFileTypeId(int fileId) throws StorageException;
+
   protected abstract void processFileIdsForFileTypeId(int fileTypeId, @NotNull IntConsumer consumer);
 
   protected @NotNull Path getStorageFile() throws IOException {
@@ -213,5 +217,15 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
     }
 
     return result;
+  }
+
+  protected void notifyInvertedIndexChangedForFileTypeId(int id) {
+    if (id == 0) {
+      return;
+    }
+    var fileType = getFileTypeById(id);
+    if (fileType != null) {
+      myIndexChangedPublisher.changedForFileType(fileType);
+    }
   }
 }
