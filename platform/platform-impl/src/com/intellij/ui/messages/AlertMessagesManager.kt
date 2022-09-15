@@ -207,6 +207,13 @@ private class AlertDialog(project: Project?,
         }
       }.start()
     }
+
+    if (WindowRoundedCornersManager.isAvailable()) {
+      WindowRoundedCornersManager.setRoundedCorners(window)
+      if (SystemInfoRt.isMac && UIUtil.isUnderDarcula()) {
+        rootPane.border = PopupBorder.Factory.createEmpty()
+      }
+    }
   }
 
   override fun getInitialSize(): Dimension {

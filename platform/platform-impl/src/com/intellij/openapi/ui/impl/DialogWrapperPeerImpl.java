@@ -720,7 +720,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         AppIcon.getInstance().requestFocus(frame);
       }
 
-      setBackground(UIUtil.getPanelBackground());
+      if (!SystemInfo.isMac || !WindowRoundedCornersManager.isAvailable()) {
+        setBackground(UIUtil.getPanelBackground());
+      }
       super.show();
     }
 
