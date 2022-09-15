@@ -115,7 +115,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
         getLayeredPane().add(myCustomFrameTitlePane.getComponent(), Integer.valueOf(JLayeredPane.DEFAULT_LAYER - 2));
       }
 
-      if (FrameInfoHelper.isFloatingMenuBarSupported() && !isMenuButtonInToolbar()) {
+      if (FrameInfoHelper.isFloatingMenuBarSupported()) {
         menuBar = menu;
         getLayeredPane().add(menuBar, Integer.valueOf(JLayeredPane.DEFAULT_LAYER - 1));
       }
@@ -174,9 +174,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   private void updateScreenState(@NotNull IdeFrame helper) {
     myFullScreen = helper.isInFullScreen();
+    JMenuBar bar = getJMenuBar();
 
     if (isDecoratedMenu()) {
-      JMenuBar bar = getJMenuBar();
       if (bar != null) {
         bar.setVisible(myFullScreen);
       }
@@ -184,6 +184,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       if (myCustomFrameTitlePane != null) {
         myCustomFrameTitlePane.getComponent().setVisible(!myFullScreen);
       }
+    } else if (SystemInfoRt.isXWindow) {
+      if (bar != null) {
+        bar.setVisible(myFullScreen || !isMenuButtonInToolbar());
+      }
+      updateToolbarVisibility(false);
     }
   }
 
@@ -246,9 +251,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       MainToolbar toolbar = new MainToolbar();
       toolbar.setBorder(JBUI.Borders.empty(0, 10));
 
+      removeToolbar();
       myToolbar = toolbar;
       myNorthPanel.add(myToolbar, 0);
-      updateToolbarVisibility();
+      updateToolbarVisibility(true);
       myContentPane.revalidate();
     }
   }
@@ -285,7 +291,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     removeToolbar();
     myToolbar = createToolbar();
     myNorthPanel.add(myToolbar, 0);
-    updateToolbarVisibility();
+    updateToolbarVisibility(true);
     myContentPane.revalidate();
   }
 
@@ -383,7 +389,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     return (statusBar != null && statusBar.isVisible()) ? statusBar.getHeight() : 0;
   }
 
-  private void updateToolbarVisibility() {
+  private void updateToolbarVisibility(boolean hideInPresentationMode) {
     if (myToolbar == null) {
       myToolbar = createToolbar();
       myNorthPanel.add(myToolbar, 0);
@@ -393,7 +399,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     boolean isNewToolbar = ExperimentalUI.isNewUI();
     boolean visible = ((isNewToolbar && !MainToolbarKt.isToolbarInHeader(uiSettings))
                        || (!isNewToolbar && uiSettings.getShowMainToolbar()))
-                      && !uiSettings.getPresentationMode();
+                      && (hideInPresentationMode ? !uiSettings.getPresentationMode() : !myFullScreen);
     myToolbar.setVisible(visible);
   }
 
@@ -410,7 +416,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     boolean globalMenuVisible = SystemInfoRt.isLinux && GlobalMenuLinux.isPresented();
     // don't show swing-menu when global (system) menu presented
-    boolean visible = SystemInfo.isMacSystemMenu || (!globalMenuVisible && uiSettings.getShowMainMenu());
+    boolean visible = SystemInfo.isMacSystemMenu ||
+                      (!globalMenuVisible && uiSettings.getShowMainMenu() && !isMenuButtonInToolbar());
     if (menuBar != null && visible != menuBar.isVisible()) {
       menuBar.setVisible(visible);
     }
@@ -462,7 +469,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     UIUtil.decorateWindowHeader(this);
-    updateToolbarVisibility();
+    updateToolbarVisibility(true);
     updateStatusBarVisibility();
     updateMainMenuVisibility();
 
@@ -479,9 +486,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     frame.setBackground(UIUtil.getPanelBackground());
 
-    BalloonLayout layout = frame.getBalloonLayout();
-    if (layout instanceof BalloonLayoutImpl) {
-      ((BalloonLayoutImpl)layout).queueRelayout();
+    if (frame.getBalloonLayout() instanceof BalloonLayoutImpl balloonLayout) {
+      balloonLayout.queueRelayout();
     }
   }
 

@@ -47,7 +47,6 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     isOpaque = true
     if (IdeRootPane.isMenuButtonInToolbar()) {
       mainMenuButton = MainMenuButton()
-      Disposer.register(disposable, mainMenuButton.menuShortcutHandler)
     }
     else {
       mainMenuButton = null
@@ -72,7 +71,10 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 
   override fun addNotify() {
     super.addNotify()
-    mainMenuButton?.menuShortcutHandler?.registerShortcuts(rootPane)
+    mainMenuButton?.let {
+      Disposer.register(disposable, it.menuShortcutHandler)
+      it.menuShortcutHandler.registerShortcuts(rootPane)
+    }
   }
 
   override fun removeNotify() {
