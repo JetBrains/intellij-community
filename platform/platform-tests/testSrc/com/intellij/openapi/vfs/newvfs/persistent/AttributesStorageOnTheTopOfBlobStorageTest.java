@@ -55,30 +55,12 @@ public class AttributesStorageOnTheTopOfBlobStorageTest {
   @Before
   public void setUp() throws Exception {
     storagePath = temporaryFolder.newFile().toPath();
-    final PagedFileStorage pagedStorage = new PagedFileStorage(
-      storagePath,
-      LOCK_CONTEXT,
-      PAGE_SIZE,
-      true,
-      true
-    );
-    storage = new StreamlinedBlobStorage(
-      pagedStorage,
-      new DataLengthPlusFixedPercentStrategy((short)256, (short)64, 30)
-    );
-    attributesStorage = new AttributesStorageOnTheTopOfBlobStorage(
-      storage
-    );
+    openStorage();
   }
 
   @After
   public void tearDown() throws Exception {
-    if (attributesStorage != null) {
-      attributesStorage.close();
-    }
-    if (storage != null) {
-      storage.close();
-    }
+    closeStorage();
   }
 
   @Test
@@ -158,6 +140,47 @@ public class AttributesStorageOnTheTopOfBlobStorageTest {
       );
     }
   }
+
+  @Test
+  public void fewAttributesInsertedForFile_ExistsInStorage_AndCouldBeReadBack_EvenAfterReload() throws IOException {
+    final int version = 47;
+    attributesStorage.setVersion(version);
+
+    final AttributeRecord[] records = {
+      newAttributeRecord(ARBITRARY_FILE_ID, 1)
+        .withRandomAttributeBytes(16),
+      newAttributeRecord(ARBITRARY_FILE_ID, 5)
+        .withRandomAttributeBytes(64),
+      newAttributeRecord(ARBITRARY_FILE_ID, 42)
+        .withRandomAttributeBytes(128)
+    };
+
+    for (int i = 0; i < records.length; i++) {
+      records[i] = records[i].store(attributesStorage);
+    }
+
+    closeStorage();
+    openStorage();
+    
+    assertEquals(
+      "Expect to read same version as was written",
+      attributesStorage.getVersion(),
+      version
+    );
+
+    for (AttributeRecord insertedRecord : records) {
+      assertTrue(
+        insertedRecord + ": just inserted -> must exist",
+        insertedRecord.existsInStorage(attributesStorage)
+      );
+      assertArrayEquals(
+        insertedRecord + ": content could be read back as-is",
+        insertedRecord.attributeBytes(),
+        insertedRecord.readValueFromStorage(attributesStorage)
+      );
+    }
+  }
+
 
   @Test
   public void singleAttributeInsertedAndDeleted_IsNotExistInStorage() throws IOException {
@@ -279,6 +302,30 @@ public class AttributesStorageOnTheTopOfBlobStorageTest {
   }
 
   /* ======================== infrastructure ============================================================== */
+
+  private void openStorage() throws IOException {
+    final PagedFileStorage pagedStorage = new PagedFileStorage(
+      storagePath,
+      LOCK_CONTEXT,
+      PAGE_SIZE,
+      true,
+      true
+    );
+    storage = new StreamlinedBlobStorage(
+      pagedStorage,
+      new DataLengthPlusFixedPercentStrategy((short)256, (short)64, 30)
+    );
+    attributesStorage = new AttributesStorageOnTheTopOfBlobStorage(storage);
+  }
+
+  private void closeStorage() throws IOException {
+    if (attributesStorage != null) {
+      attributesStorage.close();
+    }
+    if (storage != null) {
+      storage.close();
+    }
+  }
 
   private static AttributeRecord[] generateManyRandomRecords(final int size,
                                                              final int differentAttributesCount,

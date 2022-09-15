@@ -51,12 +51,12 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
 
   @Override
   public int getVersion() throws IOException {
-    return storage.getVersion();
+    return storage.getDataFormatVersion();
   }
 
   @Override
   public void setVersion(final int version) throws IOException {
-    storage.setVersion(version);
+    storage.setDataFormatVersion(version);
   }
 
   @Override

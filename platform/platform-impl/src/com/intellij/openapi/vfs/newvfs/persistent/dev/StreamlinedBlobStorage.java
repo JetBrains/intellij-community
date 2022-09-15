@@ -60,15 +60,25 @@ public class StreamlinedBlobStorage implements Cloneable, AutoCloseable, Forceab
   //    b) implement something like BlobStorageHousekeeper, which runs in dedicated thread, with some precautions to not
   //       interrupt frontend work.
 
-  public static final int VERSION_CURRENT = 1;
+  public static final int STORAGE_VERSION_CURRENT = 2;
 
   private static final int FILE_STATUS_OPENED = 0;
   private static final int FILE_STATUS_SAFELY_CLOSED = 1;
   private static final int FILE_STATUS_CORRUPTED = 2;
 
-  private static final int HEADER_OFFSET_VERSION = 0;
-  private static final int HEADER_OFFSET_FILE_STATUS = HEADER_OFFSET_VERSION + Integer.BYTES;
-  private static final int HEADER_SIZE = HEADER_OFFSET_FILE_STATUS + Integer.BYTES;
+  /**
+   * Version of this storage persistent format -- i.e. if !=STORAGE_VERSION_CURRENT, this class probably
+   * can't read the file. Managed by the storage itself.
+   */
+  private static final int HEADER_OFFSET_STORAGE_VERSION = 0;
+  private static final int HEADER_OFFSET_FILE_STATUS = HEADER_OFFSET_STORAGE_VERSION + Integer.BYTES;
+  /**
+   * Version of data, stored in a blobs, managed by client code.
+   * MAYBE this probably shouldn't be a part of standard header, but implemented on the top of
+   * 'additional headers' (see below)
+   */
+  private static final int HEADER_OFFSET_EXTERNAL_VERSION = HEADER_OFFSET_FILE_STATUS + Integer.BYTES;
+  private static final int HEADER_SIZE = HEADER_OFFSET_EXTERNAL_VERSION + Integer.BYTES;
   //TODO allow to reserve additional space in header for something implemented on the top of the storage
 
   private static final int RECORD_OFFSET_CAPACITY = 0;
@@ -133,12 +143,12 @@ public class StreamlinedBlobStorage implements Cloneable, AutoCloseable, Forceab
     try {
       final long length = pagedStorage.length();
       if (length >= HEADER_SIZE) {
-        final int version = readHeaderVersion();
-        final int fileStatus = readHeaderFileStatus();
-        if (version != VERSION_CURRENT) {
+        final int version = readHeaderStorageVersion();
+        if (version != STORAGE_VERSION_CURRENT) {
           throw new IOException(
-            "Can't read file[" + pagedStorage + "]: version(" + version + ") != storage version (" + VERSION_CURRENT + ")");
+            "Can't read file[" + pagedStorage + "]: version(" + version + ") != storage version (" + STORAGE_VERSION_CURRENT + ")");
         }
+        final int fileStatus = readHeaderFileStatus();
         if (fileStatus != FILE_STATUS_SAFELY_CLOSED) {
           throw new IOException(
             "Can't read file[" + pagedStorage + "]: status(" + fileStatus + ") != SAFELY_CLOSED (" + FILE_STATUS_SAFELY_CLOSED + ")");
@@ -151,7 +161,7 @@ public class StreamlinedBlobStorage implements Cloneable, AutoCloseable, Forceab
       else {
         nextRecordId = offsetToId(recordsStartOffset());
       }
-      putHeaderVersion(VERSION_CURRENT);
+      putHeaderStorageVersion(STORAGE_VERSION_CURRENT);
       putHeaderFileStatus(FILE_STATUS_OPENED);
     }
     finally {
@@ -159,23 +169,30 @@ public class StreamlinedBlobStorage implements Cloneable, AutoCloseable, Forceab
     }
   }
 
-
-  public int getVersion() throws IOException {
+  public int getStorageVersion() throws IOException {
     pagedStorage.lockRead();
     try {
-      return readHeaderVersion();
+      return readHeaderStorageVersion();
     }
     finally {
       pagedStorage.unlockRead();
     }
   }
 
-  //TODO RC: there are 2 notation of version really -- record storage version, and version of anything implemented on the top of
-  //         record storage. This version is which of the two?
-  public void setVersion(final int expectedVersion) throws IOException {
+  public int getDataFormatVersion() throws IOException {
+    pagedStorage.lockRead();
+    try {
+      return readHeaderExternalVersion();
+    }
+    finally {
+      pagedStorage.unlockRead();
+    }
+  }
+
+  public void setDataFormatVersion(final int expectedVersion) throws IOException {
     pagedStorage.lockWrite();
     try {
-      putHeaderVersion(expectedVersion);
+      putHeaderExternalVersion(expectedVersion);
     }
     finally {
       pagedStorage.unlockWrite();
@@ -793,16 +810,24 @@ public class StreamlinedBlobStorage implements Cloneable, AutoCloseable, Forceab
     pagedStorage.putInt(HEADER_OFFSET_FILE_STATUS, status);
   }
 
-  private void putHeaderVersion(final int version) throws IOException {
-    pagedStorage.putInt(HEADER_OFFSET_VERSION, version);
+  private void putHeaderStorageVersion(final int version) throws IOException {
+    pagedStorage.putInt(HEADER_OFFSET_STORAGE_VERSION, version);
+  }
+
+  private void putHeaderExternalVersion(final int version) throws IOException {
+    pagedStorage.putInt(HEADER_OFFSET_EXTERNAL_VERSION, version);
   }
 
   private int readHeaderFileStatus() throws IOException {
     return this.pagedStorage.getInt(HEADER_OFFSET_FILE_STATUS);
   }
 
-  private int readHeaderVersion() throws IOException {
-    return pagedStorage.getInt(HEADER_OFFSET_VERSION);
+  private int readHeaderStorageVersion() throws IOException {
+    return pagedStorage.getInt(HEADER_OFFSET_STORAGE_VERSION);
+  }
+
+  private int readHeaderExternalVersion() throws IOException {
+    return pagedStorage.getInt(HEADER_OFFSET_EXTERNAL_VERSION);
   }
 
   private long headerSize() {

@@ -147,10 +147,10 @@ public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobS
   }
 
   @Test
-  public void newStorageHasVersionOfCurrentPersistentFormat() throws Exception {
+  public void newStorageHasVersionOfCurrentStorageFormat() throws Exception {
     assertEquals(
-      storage.getVersion(),
-      StreamlinedBlobStorage.VERSION_CURRENT
+      storage.getStorageVersion(),
+      StreamlinedBlobStorage.STORAGE_VERSION_CURRENT
     );
   }
 

@@ -282,6 +282,9 @@ public class VfsUtilPerformanceTest {
 
   @Test
   public void PersistentFS_performance_ofManyFilesCreateDelete() {
+    //RC: adding .warmupIterations(1-2) reduce execution time 5-10x! Probably,
+    //    because of JITing -- if that is true, then times after warm up are
+    //    better represent real-life performance?
     int N = 30_000;
     List<VFileEvent> events = new ArrayList<>(N);
     VirtualDirectoryImpl temp = createTempFsDirectory();
