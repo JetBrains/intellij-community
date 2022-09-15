@@ -23,7 +23,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module-library">
       <library name="fl-inference" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:fl-inference:0.0.20" />
+        <properties include-transitive-deps="true" maven-id="org.jetbrains.intellij.deps.completion:fl-inference:0.0.20" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/fl-inference/0.0.20/fl-inference-0.0.20.jar!/" />
 
