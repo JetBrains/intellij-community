@@ -180,11 +180,13 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     readFiles(myProjectPom);
     resolveDependenciesAndImport();
     assertEquals(1, getRootNodes().size());
-
     MavenUtil.cleanAllRunnables();
+
+    configConfirmationForYesAnswer();
     myProjectsManager.removeManagedFiles(Collections.singletonList(myProjectPom));
     waitForImportCompletion();
-    readFiles();
+    waitForMavenUtilRunnablesComplete();
+    assertEmpty(myProjectsManager.getRootProjects());
     assertEquals(0, getRootNodes().size());
   }
 

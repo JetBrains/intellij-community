@@ -638,7 +638,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void waitForImportCompletion() {
-    edt(() -> waitForPromise(myProjectsManager.waitForImportCompletion()));
+    edt(() -> waitForPromise(myProjectsManager.waitForImportCompletion(), 60_000));
   }
 
   protected void readProjects(List<VirtualFile> files, String... profiles) {

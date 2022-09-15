@@ -1274,6 +1274,20 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertEmpty(myProjectsManager.getIgnoredFilesPaths());
   }
 
+  @Test
+  public void shouldUnsetMavenizedIfManagedFilesWasRemoved(){
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertModules("project");
+    assertSize(1, myProjectsManager.getRootProjects());
+
+    myProjectsManager.removeManagedFiles(Collections.singletonList(myProjectPom));
+    waitForImportCompletion();
+    assertSize(0, myProjectsManager.getRootProjects());
+  }
+
 
 
   private DataContext createTestDataContext(VirtualFile mavenParentPom) {

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.launch
@@ -85,9 +86,12 @@ class MavenImportFlow {
     val ignorePatterns: List<String> = context.ignorePatterns
     val projectsTree = loadOrCreateProjectTree(projectManager)
     MavenProjectsManager.applyStateToTree(projectsTree, projectManager)
-    val rootFiles = MavenProjectsManager.getInstance(context.project).projectsTree.rootProjectsFiles
+    val managedFilesPath = MavenProjectsManager.getInstance(context.project).projectsTree.managedFilesPaths
+
     val pomFiles = LinkedHashSet<VirtualFile>()
-    rootFiles?.let { pomFiles.addAll(it.filterNotNull()) }
+    managedFilesPath.mapNotNull { LocalFileSystem.getInstance().findFileByPath(it) }.also {
+      pomFiles.addAll(it)
+    }
 
     val newPomFiles = when (context.paths) {
       is FilesList -> context.paths.poms

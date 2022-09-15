@@ -169,7 +169,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   private void updateFrom(SimpleNode node) {
     if (node != null) {
-      myTreeBuilder.addSubtreeToUpdateByElement(node);
+     ApplicationManager.getApplication().invokeLater(() -> myTreeBuilder.addSubtreeToUpdateByElement(node));
     }
   }
 
