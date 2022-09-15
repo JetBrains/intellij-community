@@ -1,5 +1,6 @@
 package com.intellij.openapi.rd.util
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -46,7 +47,7 @@ fun Lifetime.launchUnderModalProgress(
   action: suspend ProgressCoroutineScope.() -> Unit
 ): Job {
   return runModalAsync(title, canBeCancelled, isIndeterminate, project) { dispatcher, indicator ->
-    launch(dispatcher) { ProgressCoroutineScope(coroutineContext, this@runModalAsync, indicator()).action() }
+    launch(dispatcher) { ProgressCoroutineScope(coroutineContext, this@runModalAsync, indicator()).execute(action) }
   }
 }
 
@@ -58,7 +59,7 @@ fun Lifetime.launchUnderBackgroundProgress(
   action: suspend ProgressCoroutineScope.() -> Unit
 ): Job {
   return runBackgroundAsync(title, canBeCancelled, isIndeterminate, project) { dispatcher, indicator ->
-    launch(dispatcher) { ProgressCoroutineScope(coroutineContext, this@runBackgroundAsync, indicator()).action() }
+    launch(dispatcher) { ProgressCoroutineScope(coroutineContext, this@runBackgroundAsync, indicator()).execute(action) }
   }
 }
 
@@ -70,7 +71,7 @@ fun <T> Lifetime.startUnderModalProgressAsync(
   action: suspend ProgressCoroutineScope.() -> T
 ): Deferred<T> {
   return runModalAsync(title, canBeCancelled, isIndeterminate, project) { dispatcher, indicator ->
-    startAsync(dispatcher) { ProgressCoroutineScope(coroutineContext, this@runModalAsync, indicator()).action() }
+    startAsync(dispatcher) { ProgressCoroutineScope(coroutineContext, this@runModalAsync, indicator()).execute(action) }
   }
 }
 
@@ -82,7 +83,7 @@ fun <T> Lifetime.startUnderBackgroundProgressAsync(
   action: suspend ProgressCoroutineScope.() -> T
 ): Deferred<T> {
   return runBackgroundAsync(title, canBeCancelled, isIndeterminate, project) { dispatcher, indicator ->
-    startAsync(dispatcher) { ProgressCoroutineScope(coroutineContext, this@runBackgroundAsync, indicator()).action() }
+    startAsync(dispatcher) { ProgressCoroutineScope(coroutineContext, this@runBackgroundAsync, indicator()).execute(action) }
   }
 }
 
@@ -109,7 +110,7 @@ private suspend fun <T> doRunUnderProgress(context: CoroutineProgressContext, ru
   return coroutineScope {
     doRunUnderProgressAsync(context) { dispatcher, indicator ->
       startChildAsync(context.lifetime, dispatcher) {
-        ProgressCoroutineScope(coroutineContext, context.lifetime, indicator()).runCoroutine()
+        ProgressCoroutineScope(coroutineContext, context.lifetime, indicator()).execute(runCoroutine)
       }
     }.await()
   }
@@ -150,6 +151,8 @@ private class CoroutineProgressContext(
         indicator.isIndeterminate = isIndeterminate
         if (indicator is ProgressIndicatorEx)
           indicator.subscribeOnCancel { taskLifetimeDef.terminate() }
+
+        taskLifetimeDef.onTerminationIfAlive { indicator.cancel() }
 
         progressIndicator = indicator
 
@@ -195,6 +198,16 @@ private class CoroutineProgressContext(
 }
 
 class ProgressCoroutineScope(override val coroutineContext: CoroutineContext, val progressLifetime: Lifetime, val indicator: ProgressIndicator) : CoroutineScope {
+
+  internal suspend fun <T> execute(action: suspend ProgressCoroutineScope.() -> T): T {
+    return try {
+      action()
+    }
+    catch (e: ProcessCanceledException) {
+      throw CancellationException(e.message, e)
+    }
+  }
+
   inline fun withTextAboveProgressBar(@Nls(capitalization = Nls.Capitalization.Sentence) text: String, action: ProgressCoroutineScope.() -> Unit) {
     val oldText = indicator.text
     try {
