@@ -50,7 +50,7 @@ class LocalModelsCache {
       }
     }
     else {
-      val project = ProjectManager.getInstance().currentOpenProject()
+      val project = ProjectManager.getInstanceIfCreated()?.currentOpenProject()
       if (project != null) {
         FullLineNotifications.Local.showMissingModel(project, Language.findLanguageByID(languageId)!!)
       }

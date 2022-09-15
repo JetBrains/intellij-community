@@ -1,12 +1,9 @@
 package org.jetbrains.completion.full.line
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiFile
 import com.intellij.util.ExceptionUtil
 import org.jetbrains.completion.full.line.providers.CloudExceptionWithCustomRegistry
@@ -70,13 +67,7 @@ fun Throwable.decoratedMessage(): String {
   }
 }
 
-fun ProjectManager.currentOpenProject(): Project? {
-  if (!ApplicationManager.getApplication().isDispatchThread) return null
-
-  return openProjects.find {
-    WindowManager.getInstance().suggestParentWindow(it)?.isActive == true
-  }
-}
+fun ProjectManager.currentOpenProject() = openProjects.firstOrNull { it.isOpen }
 
 inline fun <T> measureTimeMillisWithResult(block: () -> T): Pair<Long, T> {
   val start = System.currentTimeMillis()
