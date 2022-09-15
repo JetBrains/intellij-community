@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.project
 
@@ -105,13 +105,6 @@ private class IdeaModelInfosCacheImpl(
     override fun getSdkInfoForSdk(sdk: Sdk): SdkInfo? = sdkInfosBySdks[sdk]
 }
 
-internal fun Library.asLibraryEx(): LibraryEx {
-    require(this is LibraryEx) { "Library '${name}' does not implement LibraryEx which is not expected" }
-    return this
-}
-
-internal fun Library.wrap() = LibraryWrapper(this.asLibraryEx())
-
 private fun collectModuleInfosFromIdeaModel(
     project: Project
 ): IdeaModelInfosCache {
@@ -120,7 +113,7 @@ private fun collectModuleInfosFromIdeaModel(
     //TODO: (module refactoring) include libraries that are not among dependencies of any module
     val ideaLibraries = ideaModules.flatMap { module ->
         ModuleRootManager.getInstance(module).orderEntries.filterIsInstance<LibraryOrderEntry>().map { entry ->
-            entry.library?.let { LibraryWrapper(it as LibraryEx) }
+            entry.library?.let { LibraryWrapper.wrapLibrary(it) }
         }
     }.filterNotNull().toSet()
 

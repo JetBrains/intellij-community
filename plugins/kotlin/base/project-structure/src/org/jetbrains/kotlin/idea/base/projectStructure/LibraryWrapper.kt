@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 // Workaround for duplicated libraries, see KT-42607
 @ApiStatus.Internal
-class LibraryWrapper(val library: LibraryEx) {
+class LibraryWrapper private constructor(val library: LibraryEx) {
     private val allRootUrlsByType: Map<OrderRootType, Collection<VirtualFile>> by lazy {
         buildMap {
             val rootProvider = library.rootProvider
@@ -51,6 +51,13 @@ class LibraryWrapper(val library: LibraryEx) {
 
     fun checkValidity() {
         library.checkValidity()
+    }
+
+    companion object {
+        fun wrapLibrary(library: Library): LibraryWrapper {
+            require(library is LibraryEx) { "Library '${library.presentableName}' does not implement LibraryEx which is not expected" }
+            return LibraryWrapper(library)
+        }
     }
 }
 
