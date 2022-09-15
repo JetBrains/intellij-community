@@ -123,7 +123,7 @@ fun constructPyPathAndWorkingDirCommand(pythonPath: MutableCollection<Function<T
   if (workingDirFunction != null) {
     pythonPath.add(workingDirFunction)
   }
-  val path = pythonPath.toLinkedSetFunction().andThenJoinToString(separator = ", ", transform = String::toStringLiteral)
+  val path = pythonPath.joinToStringFunction(separator = ", ", transform = String::toStringLiteral)
   return ReplaceSubstringFunction(command, PydevConsoleRunnerImpl.WORKING_DIR_AND_PYTHON_PATHS, path)
 }
 
