@@ -30,6 +30,7 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
     moduleBuilder.addLibrary("core-api", PathUtil.getJarPathForClass(StubElementTypeHolderEP.class));
     moduleBuilder.addLibrary("core-impl", PathUtil.getJarPathForClass(PsiReferenceContributorEP.class));
     moduleBuilder.addLibrary("analysis-api", PathUtil.getJarPathForClass(IntentionActionBean.class));
+    moduleBuilder.addLibrary("lang-api", PathUtil.getJarPathForClass(LocalInspectionEP.class));
     moduleBuilder.addLibrary("platform-rt", PathUtil.getJarPathForClass(IncorrectOperationException.class));
     moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP.class))
       .resolveSibling("intellij.platform.resources").toString());
@@ -63,9 +64,16 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
     myFixture.checkResultByFile("addLanguageAttributeForCompletionContributorEPFix_after.xml");
   }
 
-
-
   public void testStubElementTypeHolder() {
     myFixture.testHighlighting("stubElementTypeHolder.xml");
   }
+
+  public void testInspectionMappings() {
+    myFixture.testHighlighting("inspectionMapping.xml", "bundle.properties");
+  }
+
+  public void testInspectionMappingsWithDefaultBundle() {
+    myFixture.testHighlighting("inspectionMappingWithDefaultBundle.xml", "bundle.properties");
+  }
+
 }

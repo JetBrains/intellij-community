@@ -1,7 +1,7 @@
 <idea-plugin>
 
   <extensions defaultExtensionNs="com.intellij">
-    <localInspection id="withLanguage" language="XML"/>
+    <localInspection id="withLanguage" language="XML" displayName="dummy" groupName="dummy"/>
     <intentionAction>
       <language>XML</language>
     </intentionAction>
@@ -9,7 +9,7 @@
     <psi.referenceProvider language="XML"/>
 
 
-    <<warning descr="Extension 'com.intellij.localInspection' should define 'language' attribute">localInspection</warning> id="withoutLanguage"/>
+    <<warning descr="Extension 'com.intellij.localInspection' should define 'language' attribute">localInspection</warning> id="withoutLanguage" displayName="dummy" groupName="dummy"/>
 
     <<warning descr="Extension 'com.intellij.intentionAction' should define 'language' tag">intentionAction</warning>>
     </intentionAction>

@@ -131,12 +131,6 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection"/>
-    <localInspection language="XML" shortName="InspectionMappingConsistency" applyToDialects="false"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.InspectionMappingConsistencyInspection"
-                     key="inspection.inspection.mapping.consistency.display.name"/>
 
     <localInspection language="UAST" shortName="UndesirableClassUsage"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"

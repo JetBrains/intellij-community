@@ -3,8 +3,10 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.project.Project;
@@ -13,18 +15,22 @@ import com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP;
 import com.intellij.psi.stubs.StubElementTypeHolderEP;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.highlighting.AddDomElementQuickFix;
 import com.intellij.util.xml.highlighting.DefineAttributeQuickFix;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.impl.LanguageResolvingUtil;
 
 public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInspectionBase {
@@ -51,6 +57,33 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
       return;
     }
 
+    if (InheritanceUtil.isInheritor(extensionPoint.getBeanClass().getValue(), InspectionEP.class.getName())) {
+      if (!hasMissingAttribute(element, "key")) {
+        if (hasMissingAttribute(element, "bundle")) {
+          checkDefaultBundle(element, holder);
+        }
+      }
+      else if (hasMissingAttribute(element, "displayName")) {
+        //noinspection DialogTitleCapitalization
+        registerDefineAttributeProblem(element, holder,
+                                       DevKitBundle.message("inspections.inspection.mapping.consistency.specify.displayName.or.key"),
+                                       "displayName", "key");
+      }
+
+      if (!hasMissingAttribute(element, "groupKey")) {
+        if (hasMissingAttribute(element, "bundle") &&
+            hasMissingAttribute(element, "groupBundle")) {
+          checkDefaultBundle(element, holder);
+        }
+      }
+      else if (hasMissingAttribute(element, "groupName")) {
+        //noinspection DialogTitleCapitalization
+        registerDefineAttributeProblem(element, holder,
+                                       DevKitBundle.message("inspections.inspection.mapping.consistency.specify.groupName.or.groupKey"),
+                                       "groupName", "groupKey");
+      }
+    }
+
     if (isExtensionPointWithLanguage(extensionPoint)) {
       DomAttributeChildDescription<?> languageAttributeDescription = extension.getGenericInfo().getAttributeChildDescription("language");
       if (languageAttributeDescription != null) {
@@ -74,6 +107,27 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
                                new AddLanguageTagQuickFix(LanguageResolvingUtil.getAnyLanguageValue(extensionPoint)));
         }
       }
+    }
+  }
+
+  private static void checkDefaultBundle(DomElement element, DomElementAnnotationHolder holder) {
+    IdeaPlugin plugin = DomUtil.getParentOfType(element, IdeaPlugin.class, true);
+    if (plugin != null && !DomUtil.hasXml(plugin.getResourceBundle())) {
+      holder.createProblem(element, DevKitBundle.message("inspections.inspection.mapping.consistency.specify.bundle"),
+                           new AddDomElementQuickFix<>(plugin.getResourceBundle()));
+    }
+  }
+
+  private static void registerDefineAttributeProblem(DomElement element, DomElementAnnotationHolder holder,
+                                                     @InspectionMessage String message,
+                                                     @NonNls String... attributeNames) {
+    if (holder.isOnTheFly()) {
+      holder.createProblem(element, message, ContainerUtil.map(attributeNames, attributeName -> {
+        return new DefineAttributeQuickFix(attributeName);
+      }, new LocalQuickFix[attributeNames.length]));
+    }
+    else {
+      holder.createProblem(element, message);
     }
   }
 
