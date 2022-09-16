@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class KotlinReferenceImporter : AbstractKotlinReferenceImporter() {
@@ -54,12 +55,12 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
             (it.isAllUnder || it.importPath?.importedName?.asString() == name) && it.targetDescriptors().isEmpty()
         }
 
-        fun KtSimpleNameExpression.autoImport(): Boolean {
+        fun KtSimpleNameExpression.autoImport(startOffset: Int, endOffset: Int): Boolean {
             if (hasUnresolvedImportWhichCanImport(getReferencedName())) return false
 
             val bindingContext = analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
             val diagnostics = bindingContext.diagnostics.filter {
-                it.severity == Severity.ERROR
+                it.severity == Severity.ERROR && startOffset <= it.psiElement.startOffset && it.psiElement.endOffset <= endOffset
             }.ifEmpty { return false }
 
             val importFixBases = buildList {
@@ -85,6 +86,8 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
                     !(descriptors.any { it is ClassDescriptor && it.containingDeclaration is ClassDescriptor })
                 }
 
+            if (suggestions.size != 1) return false
+
             var result = false
             CommandProcessor.getInstance().runUndoTransparentAction {
                 result = createSingleImportAction(project, editor, this, suggestions).execute()
@@ -96,9 +99,9 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
         val lineNumber = document.getLineNumber(offset)
         val startOffset = document.getLineStartOffset(lineNumber)
         val endOffset = document.getLineEndOffset(lineNumber)
-
-        return file.elementsInRange(TextRange(startOffset, endOffset))
+        val nameExpressions = file.elementsInRange(TextRange(startOffset, endOffset))
             .flatMap { it.collectDescendantsOfType<KtSimpleNameExpression>() }
-            .any { it.endOffset != offset && it.autoImport() }
+        return nameExpressions
+            .any { it.endOffset != offset && it.autoImport(startOffset, endOffset) }
     }
 }
