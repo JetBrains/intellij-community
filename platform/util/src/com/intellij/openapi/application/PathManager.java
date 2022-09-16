@@ -724,7 +724,7 @@ public final class PathManager {
     }
 
     Path outClassesDir = rootPath.getParent().getParent();
-    Path artifactsDir = outClassesDir.resolveSibling("project-artifacts");
+    Path artifactsDir = outClassesDir.resolveSibling("jps-artifacts");
     if (!Files.exists(artifactsDir)) {
       // running IDE or tests in IDE
       artifactsDir = outClassesDir.resolve("artifacts");

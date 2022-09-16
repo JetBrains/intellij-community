@@ -34,7 +34,7 @@ abstract class BuildPaths(
   val buildOutputRoot: String = FileUtilRt.toSystemIndependentName(buildOutputDir.toString())
 
   /**
-   * Path to a directory where resulting artifacts will be placed
+   * Path to a directory where resulting artifacts like installer distributions will be placed
    */
   lateinit var artifacts: String
   lateinit var artifactDir: Path
@@ -55,4 +55,12 @@ abstract class BuildPaths(
    * Path to a directory where temporary files required for a particular build step can be stored
    */
   val temp: String = FileUtilRt.toSystemIndependentName(tempDir.toString())
+
+  /**
+   * Build scripts use different folder to store JPS build artifacts
+   * instead of 'out/classes/artifacts' which is IDE default folder for those artifacts.
+   * Different folders are used not to affect incremental build of IDE.
+   * Not to be confused with [artifacts].
+   */
+  val jpsArtifacts: Path = buildOutputDir.resolve("jps-artifacts")
 }

@@ -41,6 +41,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader.loadProject
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.name
 
 @JvmOverloads
 fun createCompilationContextBlocking(communityHome: BuildDependenciesCommunityRoot,
@@ -98,9 +99,8 @@ class CompilationContextImpl private constructor(model: JpsModel,
       )
     }
     overrideProjectOutputDirectory()
-    val baseArtifactsOutput = paths.buildOutputDir.resolve("project-artifacts")
     JpsArtifactService.getInstance().getArtifacts(project).forEach {
-      setOutputPath(it, "$baseArtifactsOutput/${PathUtilRt.getFileName(it.outputPath)}")
+      it.outputPath = "${paths.jpsArtifacts.resolve(PathUtilRt.getFileName(it.outputPath))}"
     }
     suppressWarnings(project)
     TracerProviderManager.flush()
@@ -312,11 +312,6 @@ private fun suppressWarnings(project: JpsProject) {
   compilerOptions.ADDITIONAL_OPTIONS_STRING = compilerOptions.ADDITIONAL_OPTIONS_STRING.replace("-Xlint:unchecked", "")
 }
 
-private fun <Value : String?> setOutputPath(propOwner: JpsArtifact, outputPath: Value): Value {
-  propOwner.outputPath = outputPath
-  return outputPath
-}
-
 private class BuildPathsImpl(communityHome: BuildDependenciesCommunityRoot, projectHome: Path, buildOut: Path, logDir: Path)
   : BuildPaths(communityHomeDirRoot = communityHome,
                buildOutputDir = buildOut,
@@ -378,9 +373,9 @@ private fun CompilationContext.cleanOutput(keepCompilationState: Boolean) {
   val outputDirectoriesToKeep = HashSet<String>(4)
   outputDirectoriesToKeep.add("log")
   if (keepCompilationState) {
-    outputDirectoriesToKeep.add(compilationData.dataStorageRoot.fileName.toString())
+    outputDirectoriesToKeep.add(compilationData.dataStorageRoot.name)
     outputDirectoriesToKeep.add("classes")
-    outputDirectoriesToKeep.add("project-artifacts")
+    outputDirectoriesToKeep.add(paths.jpsArtifacts.name)
   }
   spanBuilder("clean output")
     .setAttribute("path", outDir.toString())
