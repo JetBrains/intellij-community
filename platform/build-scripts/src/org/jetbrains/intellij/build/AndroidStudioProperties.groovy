@@ -37,7 +37,7 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 @CompileStatic
 class AndroidStudioProperties extends BaseIdeaProperties {
 
-  private static final List<String> INHERITED_PLUGINS = ProductModulesLayout.DEFAULT_BUNDLED_PLUGINS + BaseIdeaPropertiesKt.BUNDLED_PLUGIN_MODULES
+  private static final List<String> INHERITED_PLUGINS = BaseIdeaPropertiesKt.IDEA_BUNDLED_PLUGINS + "intellij.javaFX.community"
 
   private static final List<String> EXTRA_PLUGINS = List.of(
     // Android Studio: package CIDR plugins. This list is based on what we have been shipping in Android Studio
@@ -111,7 +111,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
 
-    List<PluginLayout> inheritedPluginLayouts = new ArrayList<>(CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS)
+    List<PluginLayout> inheritedPluginLayouts = new ArrayList<>(CommunityRepositoryModules.INSTANCE.COMMUNITY_REPOSITORY_PLUGINS)
     // Remove plugin layouts that reference modules that do not exist in our fork.
     inheritedPluginLayouts.removeAll {
       it.mainModule in EXCLUDED_PLUGINS || it.mainModule == "intellij.python.community.plugin"
