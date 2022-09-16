@@ -1,5 +1,6 @@
 package com.intellij.javascript.web.webTypes.json
 
+import com.intellij.javascript.web.NameCaseUtils
 import com.intellij.javascript.web.symbols.*
 import com.intellij.javascript.web.symbols.WebSymbol.Companion.KIND_CSS_CLASSES
 import com.intellij.javascript.web.symbols.WebSymbol.Companion.KIND_CSS_FUNCTIONS
@@ -15,8 +16,11 @@ import com.intellij.javascript.web.symbols.WebSymbol.Companion.PROP_DOC_HIDE_PAT
 import com.intellij.javascript.web.symbols.WebSymbol.Companion.PROP_HIDE_FROM_COMPLETION
 import com.intellij.javascript.web.symbols.WebSymbolsContainer.Namespace
 import com.intellij.javascript.web.symbols.impl.WebSymbolsRegistryImpl.Companion.parsePath
+import com.intellij.javascript.web.webTypes.WebTypesSymbolTypeResolver
 import com.intellij.javascript.web.webTypes.json.NameConversionRulesSingle.NameConverter
 import com.intellij.model.Pointer
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import java.util.*
 import java.util.function.Function
 
@@ -401,10 +405,10 @@ private fun NameConverter.toFunction(): Function<String, String> =
     NameConverter.AS_IS -> Function { it }
     NameConverter.LOWERCASE -> Function { it.lowercase(Locale.US) }
     NameConverter.UPPERCASE -> Function { it.uppercase(Locale.US) }
-    NameConverter.PASCAL_CASE -> Function { JSStringUtil.toPascalCase(it) }
-    NameConverter.CAMEL_CASE -> Function { JSStringUtil.toCamelCase(it) }
-    NameConverter.KEBAB_CASE -> Function { JSStringUtil.toKebabCase(it) }
-    NameConverter.SNAKE_CASE -> Function { JSStringUtil.toSnakeCase(it) }
+    NameConverter.PASCAL_CASE -> Function { NameCaseUtils.toPascalCase(it) }
+    NameConverter.CAMEL_CASE -> Function { NameCaseUtils.toCamelCase(it) }
+    NameConverter.KEBAB_CASE -> Function { NameCaseUtils.toKebabCase(it) }
+    NameConverter.SNAKE_CASE -> Function { NameCaseUtils.toSnakeCase(it) }
   }
 
 internal fun mergeConverters(converters: List<NameConverter>): Function<String, List<String>> {
