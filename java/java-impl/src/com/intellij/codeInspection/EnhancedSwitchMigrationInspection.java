@@ -374,6 +374,9 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       PsiElement current = statement.getNextSibling();
       while (current != null) {
         if (current instanceof PsiStatement stmt) {
+          if (current instanceof PsiSwitchLabelStatement) {
+            break;
+          }
           statementsToDelete.add(stmt);
           if (stmt instanceof PsiReturnStatement || stmt instanceof PsiThrowStatement) {
             break;
