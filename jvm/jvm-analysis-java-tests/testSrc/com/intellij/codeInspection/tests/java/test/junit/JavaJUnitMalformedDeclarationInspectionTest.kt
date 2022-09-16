@@ -954,12 +954,20 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       }
       
       @ExtendWith(MyResolver.class)
+      @interface ResolverAnnotation { }
+      
+      @ExtendWith(MyResolver.class)
       class Bar {
         @org.junit.jupiter.api.extension.RegisterExtension
         static final MyResolver integerResolver = new MyResolver();
       
         @Test
         void parametersExample(String a, String b) { }
+      }
+      
+      class FooBar {
+        @Test
+        void parametersExample(@ResolverAnnotation String a, @ResolverAnnotation String b) { }
       }
     """.trimIndent())
   }

@@ -140,11 +140,12 @@ private class JUnitMalformedSignatureVisitor(
     validParameters = { method ->
       if (method.uastParameters.isEmpty()) emptyList()
       else if (method.hasParameterResolver()) method.uastParameters
-      else method.uastParameters.filter {
-        it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO ||
-        it.type.canonicalText == ORG_JUNIT_JUPITER_API_REPETITION_INFO ||
-        it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_REPORTER ||
-        MetaAnnotationUtil.isMetaAnnotated(it, ignorableAnnotations)
+      else method.uastParameters.filter { param ->
+        param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO
+        || param.type.canonicalText == ORG_JUNIT_JUPITER_API_REPETITION_INFO
+        || param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_REPORTER
+        || MetaAnnotationUtil.isMetaAnnotated(param, ignorableAnnotations)
+        || param.hasParameterResolver()
       }
     }
   )
@@ -166,8 +167,10 @@ private class JUnitMalformedSignatureVisitor(
     validParameters = { method ->
       if (method.uastParameters.isEmpty()) emptyList()
       else if (method.hasParameterResolver()) method.uastParameters
-      else method.uastParameters.filter {
-        it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO || MetaAnnotationUtil.isMetaAnnotated(it, ignorableAnnotations)
+      else method.uastParameters.filter { param ->
+        param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO
+        || MetaAnnotationUtil.isMetaAnnotated(param, ignorableAnnotations)
+        || param.hasParameterResolver()
       }
     }
   )
@@ -190,10 +193,11 @@ private class JUnitMalformedSignatureVisitor(
       else if (MetaAnnotationUtil.isMetaAnnotated(method.javaPsi, listOf(
           ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE))) null // handled in parameterized test check
       else if (method.hasParameterResolver()) method.uastParameters
-      else method.uastParameters.filter {
-        it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO ||
-        it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_REPORTER ||
-        MetaAnnotationUtil.isMetaAnnotated(it, ignorableAnnotations)
+      else method.uastParameters.filter { param ->
+        param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO
+        || param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_REPORTER
+        || MetaAnnotationUtil.isMetaAnnotated(param, ignorableAnnotations)
+        || param.hasParameterResolver()
       }
     }
   )
@@ -201,16 +205,26 @@ private class JUnitMalformedSignatureVisitor(
   private fun notPrivate(method: UDeclaration): UastVisibility? =
     if (method.visibility == UastVisibility.PRIVATE) UastVisibility.PUBLIC else null
 
+  private fun UParameter.hasParameterResolver(): Boolean = uAnnotations.any { ann -> ann.resolve()?.hasParameterResolver() == true }
+
   private fun UMethod.hasParameterResolver(): Boolean {
     val sourcePsi = this.sourcePsi ?: return false
     val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
-    val extension = alternatives.mapNotNull { it.javaPsi.containingClass }.flatMap {
-      MetaAnnotationUtil.findMetaAnnotationsInHierarchy(it, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)).asSequence()
-    }.firstOrNull()?.findAttributeValue("value")?.toUElement() ?: return false
-    if (extension is UClassLiteralExpression) return InheritanceUtil.isInheritor(extension.type,
-                                                                                 ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
-    if (extension is UCallExpression && extension.kind == UastCallKind.NESTED_ARRAY_INITIALIZER) return extension.valueArguments.any {
-      it is UClassLiteralExpression && InheritanceUtil.isInheritor(it.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
+    return alternatives.any { it.javaPsi.containingClass?.hasParameterResolver() == true }
+  }
+
+  private fun PsiClass.hasParameterResolver(): Boolean {
+    val annotation = MetaAnnotationUtil.findMetaAnnotationsInHierarchy(this, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH))
+      .asSequence()
+      .firstOrNull()
+    val attrValue = annotation?.findAttributeValue("value")?.toUElement()
+    if (attrValue is UClassLiteralExpression) {
+      return InheritanceUtil.isInheritor(attrValue.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
+    }
+    if (attrValue is UCallExpression && attrValue.kind == UastCallKind.NESTED_ARRAY_INITIALIZER) {
+      return attrValue.valueArguments.any {
+        it is UClassLiteralExpression && InheritanceUtil.isInheritor(it.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
+      }
     }
     return false
   }
