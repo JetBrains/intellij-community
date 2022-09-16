@@ -28,8 +28,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -51,21 +49,13 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
   }
 
   public void waitQuickFixesSynchronously(@NotNull HighlightInfo info, @NotNull PsiFile file, @NotNull Editor editor) {
-    //ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     Job<?> job = startUnresolvedRefsJob(info, editor, file);
     if (job != null) {
-      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        try {
-          job.waitForCompletion(100_000);
-        }
-        catch (InterruptedException ignored) {
-        }
-      });
       try {
-        future.get();
+        job.waitForCompletion(100_000);
       }
-      catch (InterruptedException | ExecutionException e) {
-        throw new RuntimeException(e);
+      catch (InterruptedException ignored) {
       }
     }
   }

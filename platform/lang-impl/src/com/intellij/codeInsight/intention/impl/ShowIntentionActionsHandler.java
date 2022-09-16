@@ -119,6 +119,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   @NotNull
   @ApiStatus.Internal
   public static ShowIntentionsPass.IntentionsInfo calcIntentions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ShowIntentionsPass.IntentionsInfo intentions = ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.searching.for.context.actions"), () -> {
         DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
         return ShowIntentionsPass.getActionsToShow(editor, file, false);

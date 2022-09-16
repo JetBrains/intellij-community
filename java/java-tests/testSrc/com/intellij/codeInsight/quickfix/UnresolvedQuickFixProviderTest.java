@@ -4,13 +4,13 @@ package com.intellij.codeInsight.quickfix;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.UnresolvedReferenceQuickFixUpdaterImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ExceptionUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +68,7 @@ public class UnresolvedQuickFixProviderTest extends LightDaemonAnalyzerTestCase 
     ALLOW_UNRESOLVED_REFERENCE_QUICK_FIXES = true;
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
     errors = highlightErrors();
-    DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(getFile(), getEditor());
+    CodeInsightTestFixtureImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(getFile(), getEditor());
     assertSize(N, errors);
     assertNotEmpty(regFixCalled);
   }
