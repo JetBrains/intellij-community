@@ -273,6 +273,7 @@
         "actions/groupBy.svg",
         "actions/show.svg"
       ],
+      "showAsTree.svg": "actions/showAsTree.svg",
       "splitHorizontally.svg": "actions/splitHorizontally.svg",
       "splitVertically.svg": "actions/splitVertically.svg",
       "unlocked.svg": "ide/readwrite.svg",
