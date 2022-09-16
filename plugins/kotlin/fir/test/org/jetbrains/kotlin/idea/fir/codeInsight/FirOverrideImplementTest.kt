@@ -206,6 +206,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testNoAnyMembersInValueClass()
     }
 
+    override fun testNoAnyMembersInValueClassWithGenerics() {
+        super.testNoAnyMembersInValueClassWithGenerics()
+    }
+
     override fun testLocalClass() {
         super.testLocalClass()
     }
