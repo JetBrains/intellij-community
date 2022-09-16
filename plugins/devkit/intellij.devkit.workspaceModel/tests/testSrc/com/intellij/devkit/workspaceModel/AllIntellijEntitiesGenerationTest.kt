@@ -4,9 +4,13 @@ package com.intellij.devkit.workspaceModel
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
+import com.intellij.util.SystemProperties
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
@@ -20,7 +24,6 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.serialization.PathMacroUtil
-import org.junit.Test
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -28,9 +31,9 @@ import java.nio.file.Paths
 class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   private val LOG = logger<AllIntellijEntitiesGenerationTest>()
 
-  private val MODULES_WITH_UNKNOWN_FIELDS: Set<String> = setOf("intellij.platform.workspaceModel.storage.testEntities")
+  private val modulesWithUnknownFields: Set<String> = setOf("intellij.platform.workspaceModel.storage.testEntities")
 
-  private val SKIPPED_MODULE_PATHS: Set<Pair<String, String>> = setOf(
+  private val skippedModulePaths: Set<Pair<String, String>> = setOf(
     "intellij.platform.workspaceModel.storage.tests" to
       "com/intellij/workspaceModel/storage",
     "intellij.platform.workspaceModel.storage.testEntities" to
@@ -58,11 +61,21 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   override val testDataDirectory: File
     get() = File(IdeaTestExecutionPolicy.getHomePathWithPolicy())
 
-  override val shouldAddWorkspaceStorageLibrary: Boolean
-    get() = true
-
-  @Test
   fun `test generation of all entities in intellij codebase`() {
+    executeEntitiesGeneration(::generateAndCompare)
+  }
+
+  fun `test update code`() {
+    val propertyKey = "intellij.workspace.model.update.entities"
+    if (!SystemProperties.getBooleanProperty(propertyKey, false)) {
+      println("Set ${propertyKey} system property to 'true' to update entities code in the sources")
+      return
+    }
+
+    executeEntitiesGeneration(::generate)
+  }
+
+  private fun executeEntitiesGeneration(generationFunction: (ModuleEntity, SourceRootEntity, String, Boolean) -> Unit) {
     val regex = Regex("interface [a-zA-Z0-9]+\\s*:\\s*WorkspaceEntity[a-zA-Z0-9]*")
     val storage = runBlocking { loadProjectIntellijProject() }
 
@@ -74,7 +87,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
         if (it.isFile && it.extension == "kt") {
           if (regex.containsMatchIn(it.readText())) {
             val relativePath = Path.of(sourceRoot.url.presentableUrl).relativize(Path.of(it.parent)).toString()
-            if (moduleEntity.name to relativePath !in SKIPPED_MODULE_PATHS) {
+            if (moduleEntity.name to relativePath !in skippedModulePaths) {
               modulesToCheck.add(Triple(moduleEntity, sourceRoot, relativePath))
             }
           }
@@ -82,7 +95,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
       }
     }
 
-    modulesToCheck.forEach { (moduleEntity, sourceRoot, pathToPackage) ->
+    modulesToCheck.forEach {(moduleEntity, sourceRoot, pathToPackage) ->
       when (moduleEntity.name) {
         "intellij.platform.workspaceModel.storage" -> {
           runWriteActionAndWait {
@@ -90,22 +103,39 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
             removeWorkspaceStorageLibrary(modifiableModel)
             modifiableModel.commit()
           }
-          generateAndCompare(moduleEntity, sourceRoot, pathToPackage)
+          generationFunction(moduleEntity, sourceRoot, pathToPackage, false)
           runWriteActionAndWait {
             val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
             addWorkspaceStorageLibrary(modifiableModel)
             modifiableModel.commit()
           }
         }
-        in MODULES_WITH_UNKNOWN_FIELDS -> {
-          generateAndCompare(moduleEntity, sourceRoot, pathToPackage, true)
+        in modulesWithUnknownFields -> {
+          generationFunction(moduleEntity, sourceRoot, pathToPackage, true)
         }
         else -> {
-          generateAndCompare(moduleEntity, sourceRoot, pathToPackage)
+          generationFunction(moduleEntity, sourceRoot, pathToPackage, false)
         }
       }
     }
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+  }
+
+  private fun generate(moduleEntity: ModuleEntity, sourceRoot: SourceRootEntity, pathToPackage: String, keepUnknownFields: Boolean = false) {
+    val packagePath = pathToPackage.replace(".", "/")
+    val relativize = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl))
+    myFixture.copyDirectoryToProject(relativize.toString(), "")
+    LOG.info("Generating entities for module: ${moduleEntity.name}")
+    val (srcRoot, genRoot) = generateCode(packagePath, keepUnknownFields)
+    runWriteActionAndWait {
+      val genSourceRoots = sourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.filter { it.generated }
+      val apiRootPath = Path.of(sourceRoot.url.presentableUrl, pathToPackage)
+      val implRootPath = Path.of(genSourceRoots.first().sourceRoot.url.presentableUrl, pathToPackage)
+      val apiDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(apiRootPath)!!
+      val implDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(implRootPath)!!
+      VfsUtil.copyDirectory(this, srcRoot, apiDir, VirtualFileFilter { it != genRoot })
+      VfsUtil.copyDirectory(this, genRoot, implDir, null)
+    }
   }
 
   private fun generateAndCompare(moduleEntity: ModuleEntity, sourceRoot: SourceRootEntity, pathToPackage: String, keepUnknownFields: Boolean = false) {
