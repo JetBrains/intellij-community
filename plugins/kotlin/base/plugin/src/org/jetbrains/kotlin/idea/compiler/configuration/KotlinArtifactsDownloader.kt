@@ -178,12 +178,12 @@ object KotlinArtifactsDownloader {
             .distinct()
     }
 
-    fun downloadArtifactForIdeFromSources(libraryFileName: String, artifactId: String, suffix: String = ".jar"): File {
+    @JvmOverloads
+    fun downloadArtifactForIdeFromSources(artifactId: String, version: String, suffix: String = ".jar"): File {
         check(isRunningFromSources) {
             "${::downloadArtifactForIdeFromSources.name} must be called only for IDE running from sources or tests. " +
                     "Use ${::downloadMavenArtifacts.name} when run in production"
         }
-        val version = KotlinMavenUtils.findLibraryVersion(libraryFileName) ?: error("Can't get '$libraryFileName' version")
 
         // In cooperative development artifacts are already downloaded and stored in $PROJECT_DIR$/../build/repo
         KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, artifactId, version, suffix)?.let {

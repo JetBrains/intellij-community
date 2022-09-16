@@ -19,17 +19,17 @@ const val kotlincStdlibFileName = "kotlinc_kotlin_stdlib.xml"
 object TestKotlinArtifacts {
     private fun getLibraryFile(groupId: String, artifactId: String, libraryFileName: String): File {
         val version = KotlinMavenUtils.findLibraryVersion(libraryFileName)
-            ?: error("Cannot find library version for library $libraryFileName")
 
         return KotlinMavenUtils.findArtifactOrFail(groupId, artifactId, version).toFile()
     }
 
     private fun getJar(artifactId: String): File {
-        return downloadArtifactForIdeFromSources(kotlincStdlibFileName, artifactId)
+        return downloadArtifactForIdeFromSources(artifactId, KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName))
     }
 
     private fun getSourcesJar(artifactId: String): File {
-        return downloadArtifactForIdeFromSources(kotlincStdlibFileName, artifactId, suffix = "-sources.jar")
+        val version = KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName)
+        return downloadArtifactForIdeFromSources(artifactId, version, suffix = "-sources.jar")
             .copyTo(                                       // Some tests hardcode jar names in their test data
                 File(PathManager.getCommunityHomePath())   // (KotlinReferenceTypeHintsProviderTestGenerated).
                     .resolve("out")                        // That's why we need to strip version from the jar name
@@ -99,8 +99,8 @@ object TestKotlinArtifacts {
     @JvmStatic
     val jsIrRuntimeDir: File by lazy {
         downloadArtifactForIdeFromSources(
-            libraryFileName = "kotlinc_kotlin_jps_plugin_tests.xml",
-            artifactId = "js-ir-runtime-for-ide",
+            "js-ir-runtime-for-ide",
+            KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_jps_plugin_tests.xml"),
             suffix = ".klib"
         )
     }
@@ -111,7 +111,7 @@ object TestKotlinArtifacts {
     }
 
     private fun downloadAndUnpack(libraryFileName: String, artifactId: String, dirName: String): File {
-        val jar = downloadArtifactForIdeFromSources(libraryFileName, artifactId)
+        val jar = downloadArtifactForIdeFromSources(artifactId, KotlinMavenUtils.findLibraryVersion(libraryFileName))
         return LazyZipUnpacker(File(PathManager.getCommunityHomePath()).resolve("out").resolve(dirName)).lazyUnpack(jar)
     }
 
