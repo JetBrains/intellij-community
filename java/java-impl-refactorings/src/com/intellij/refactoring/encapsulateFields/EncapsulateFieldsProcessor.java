@@ -16,6 +16,7 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -184,7 +185,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       PsiMethod existing = myClass.findMethodBySignature(prototype, true);
       if (existing != null) {
         final PsiType returnType = existing.getReturnType();
-        if (!equivalentTypes(prototypeReturnType, returnType, myClass.getManager())) {
+        if (!RefactoringUtil.equivalentTypes(prototypeReturnType, returnType, myClass.getManager())) {
           final String descr = PsiFormatUtil.formatMethod(existing,
                                                           PsiSubstitutor.EMPTY,
                                                           PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS | PsiFormatUtilBase.SHOW_TYPE,
@@ -228,43 +229,24 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private static boolean equivalentTypes(PsiType t1, PsiType t2, PsiManager manager) {
-    while (t1 instanceof PsiArrayType) {
-      if (!(t2 instanceof PsiArrayType)) return false;
-      t1 = ((PsiArrayType)t1).getComponentType();
-      t2 = ((PsiArrayType)t2).getComponentType();
-    }
-
-    if (t1 instanceof PsiPrimitiveType) {
-      return t2 instanceof PsiPrimitiveType && t1.equals(t2);
-    }
-
-    return manager.areElementsEquivalent(PsiUtil.resolveClassInType(t1), PsiUtil.resolveClassInType(t2));
-  }
-
   @Override
   protected UsageInfo @NotNull [] findUsages() {
     ArrayList<EncapsulateFieldUsageInfo> array = new ArrayList<>();
     for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
       for (final PsiReference reference : ReferencesSearch.search(fieldDescriptor.getField())) {
-        checkReference(reference, fieldDescriptor, array);
-      }
-    }
-    UsageInfo[] usageInfos = array.toArray(UsageInfo.EMPTY_ARRAY);
-    return UsageViewUtil.removeDuplicatedUsages(usageInfos);
-  }
+        final PsiElement element = reference.getElement();
 
-  protected void checkReference(@NotNull PsiReference reference,
-                                @NotNull FieldDescriptor fieldDescriptor,
-                                @NotNull List<EncapsulateFieldUsageInfo> results) {
-    final PsiElement element = reference.getElement();
-    final EncapsulateFieldHelper helper = EncapsulateFieldHelper.getHelper(element.getLanguage());
-    if (helper != null) {
-      EncapsulateFieldUsageInfo usageInfo = helper.createUsage(myDescriptor, fieldDescriptor, reference);
-      if (usageInfo != null) {
-        results.add(usageInfo);
+        final EncapsulateFieldHelper helper = EncapsulateFieldHelper.getHelper(element.getLanguage());
+        if (helper != null) {
+          EncapsulateFieldUsageInfo usageInfo = helper.createUsage(myDescriptor, fieldDescriptor, reference);
+          if (usageInfo != null) {
+            array.add(usageInfo);
+          }
+        }
       }
     }
+    EncapsulateFieldUsageInfo[] usageInfos = array.toArray(new EncapsulateFieldUsageInfo[0]);
+    return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
   @Override
