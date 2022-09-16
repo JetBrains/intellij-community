@@ -90,6 +90,21 @@ cp -r "syntaxes" "$ROOT/lib/bundles/jsp"
 
 cd ..
 
+git clone https://github.com/hashicorp/vscode-terraform
+cd vscode-terraform
+
+echo "Adding terraform"
+mkdir -p "$ROOT/lib/bundles/terraform"
+cp -r "LICENSE" "$ROOT/lib/bundles/terraform"
+cp -r "package.json" "$ROOT/lib/bundles/terraform"
+cp -r "language-configuration.json" "$ROOT/lib/bundles/terraform"
+cp -r "README.md" "$ROOT/lib/bundles/terraform"
+cp -r "snippets" "$ROOT/lib/bundles/terraform"
+
+mkdir -p "$ROOT/lib/bundles/terraform/syntaxes"
+wget -q https://raw.githubusercontent.com/hashicorp/syntax/main/syntaxes/terraform.tmGrammar.json -O "$ROOT/lib/bundles/terraform/syntaxes/terraform.tmGrammar.json"
+
+
 echo "Adding erlang"
 mkdir -p "$ROOT/lib/bundles/erlang/grammar"
 wget -q https://raw.githubusercontent.com/erlang-ls/vscode/main/language-configuration.json -O "$ROOT/lib/bundles/erlang/language-configuration.json"
