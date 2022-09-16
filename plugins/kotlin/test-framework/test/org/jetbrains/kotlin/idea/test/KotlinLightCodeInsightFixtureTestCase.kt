@@ -228,15 +228,19 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                     KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_STDLIB_JDK8
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME") ||
-                        InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_STDLIB") ->
+                        InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_STDLIB") -> {
+                    val instance = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// WITH_STDLIB ")
+                        ?.let { version -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance(version) }
+                        ?: KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
                     if (minJavaVersion != null) {
-                        object : KotlinWithJdkAndRuntimeLightProjectDescriptor(INSTANCE.libraryFiles, INSTANCE.librarySourceFiles) {
+                        object : KotlinWithJdkAndRuntimeLightProjectDescriptor(instance.libraryFiles, instance.librarySourceFiles) {
                             val sdkValue by lazy { sdk(minJavaVersion) }
                             override fun getSdk(): Sdk = sdkValue
                         }
                     } else {
-                        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+                        instance
                     }
+                }
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "JS") ->
                     KotlinStdJSProjectDescriptor

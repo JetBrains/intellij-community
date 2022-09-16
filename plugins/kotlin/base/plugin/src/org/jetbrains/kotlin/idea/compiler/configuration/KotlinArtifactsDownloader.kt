@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.util.io.exists
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -25,6 +27,9 @@ import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactD
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.awt.EventQueue
 import java.io.File
+import java.net.URL
+import java.nio.file.Files
+import java.nio.file.Paths
 
 object KotlinArtifactsDownloader {
     fun getUnpackedKotlinDistPath(version: String): File =
@@ -172,6 +177,37 @@ object KotlinArtifactsDownloader {
         return JarRepositoryManager.loadDependenciesSync(project, prop, false, false, null, repos, indicator)
             .map { File(it.file.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project)).presentableUrl).canonicalFile }
             .distinct()
+    }
+
+    @JvmOverloads
+    fun downloadArtifactForIdeFromSources(artifactId: String, version: String, suffix: String = ".jar"): File {
+        check(isRunningFromSources) {
+            "${::downloadArtifactForIdeFromSources.name} must be called only for IDE running from sources or tests. " +
+                    "Use ${::downloadMavenArtifacts.name} when run in production"
+        }
+
+        // In cooperative development artifacts are already downloaded and stored in $PROJECT_DIR$/../build/repo
+        KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, artifactId, version, suffix)?.let {
+            return it.toFile()
+        }
+
+        val fileName = "$artifactId-$version$suffix"
+        val artifact = Paths.get(PathManager.getCommunityHomePath())
+            .resolve("out")
+            .resolve("kotlin-from-sources-deps")
+            .resolve(fileName)
+            .also { Files.createDirectories(it.parent) }
+
+        if (!artifact.exists()) {
+            val stream = URL(
+                "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/" +
+                        "org/jetbrains/kotlin/$artifactId/$version/$fileName"
+            ).openStream()
+            Files.copy(stream, artifact)
+            check(artifact.exists()) { "$artifact should be downloaded" }
+        }
+
+        return artifact.toFile()
     }
 
     private fun getAllIneOneOldFormatLazyDistUnpacker(version: IdeKotlinVersion) =
