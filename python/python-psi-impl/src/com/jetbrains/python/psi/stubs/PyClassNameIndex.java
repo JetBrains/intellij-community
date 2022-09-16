@@ -55,7 +55,7 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
   /**
    * @deprecated use {@link com.jetbrains.python.psi.PyPsiFacade#createClassByQName(String, PsiElement)} or skeleton may be found
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   @Nullable
   public static PyClass findClass(@Nullable String qName, Project project) {
     if (qName == null) {

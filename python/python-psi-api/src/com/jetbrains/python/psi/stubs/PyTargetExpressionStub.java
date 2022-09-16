@@ -45,7 +45,7 @@ public interface PyTargetExpressionStub extends NamedStub<PyTargetExpression>, P
    * @deprecated It is our internal API, try to avoid using it.
    * It is planned to be removed sooner or later, so please don't rely on this method.
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   @Nullable
   <T> T getCustomStub(Class<T> stubClass);
 
