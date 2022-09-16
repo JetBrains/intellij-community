@@ -31,7 +31,7 @@ import java.io.IOException;
  * @author peter
  * @deprecated Use {@link CreateDirectoryPathFix} or {@link CreateFilePathFix} instead.
 */
-@Deprecated(forRemoval = true)
+@Deprecated
 public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final int REFRESH_INTERVAL = 1000;
 

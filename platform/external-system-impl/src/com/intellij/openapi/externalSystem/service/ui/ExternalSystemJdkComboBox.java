@@ -173,7 +173,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
   }
 
 
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public void setHighlightInternalJdk(boolean highlightInternalJdk) {
     myHighlightInternalJdk = highlightInternalJdk;
   }

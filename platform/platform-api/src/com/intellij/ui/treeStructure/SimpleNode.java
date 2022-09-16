@@ -115,7 +115,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public final void setNodeText(String text, String tooltip, boolean hasError) {
     clearColoredText();
     SimpleTextAttributes attributes = hasError ? getErrorAttributes() : getPlainAttributes();
@@ -126,7 +126,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public final void setPlainText(String aText) {
     clearColoredText();
     addPlainText(aText);
@@ -145,7 +145,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public final void clearColoredText() {
     getTemplatePresentation().clearText();
   }
@@ -154,7 +154,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public final void addColoredFragment(String aText, SimpleTextAttributes aAttributes) {
     addColoredFragment(aText, null, aAttributes);
   }
@@ -163,7 +163,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public final void addColoredFragment(String aText, String toolTip, SimpleTextAttributes aAttributes) {
     getTemplatePresentation().addText(new ColoredFragment(aText, toolTip, aAttributes));
   }

@@ -3031,7 +3031,7 @@ public final class UIUtil {
   /**
    * @deprecated use {@link #getListSelectionBackground(boolean)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static @NotNull Color getListUnfocusedSelectionBackground() {
     return getListSelectionBackground(false);
   }

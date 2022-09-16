@@ -34,7 +34,7 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
   /**
    * @deprecated use other CTORs
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public DocumentBasedFormattingModel(final Block rootBlock,
                                       @NotNull final Document document,
                                       final Project project,

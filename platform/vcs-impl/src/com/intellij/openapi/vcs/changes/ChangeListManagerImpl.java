@@ -797,7 +797,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   /**
    * @deprecated use {@link #getUnversionedFilesPaths}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   @NotNull
   public List<VirtualFile> getUnversionedFiles() {
     return mapNotNull(getUnversionedFilesPaths(), FilePath::getVirtualFile);

@@ -133,7 +133,7 @@ public class InjectedLanguageUtilBase {
   /**
    * @deprecated use {@link InjectedLanguageManager#enumerate(PsiElement, PsiLanguageInjectionHost.InjectedPsiVisitor)} instead
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static boolean enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     PsiFile containingFile = host.getContainingFile();
     PsiUtilCore.ensureValid(containingFile);
@@ -143,7 +143,7 @@ public class InjectedLanguageUtilBase {
   /**
    * @deprecated use {@link InjectedLanguageManager#enumerateEx(PsiElement, PsiFile, boolean, PsiLanguageInjectionHost.InjectedPsiVisitor)} instead
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static boolean enumerate(@NotNull PsiElement host,
                                   @NotNull PsiFile containingFile,
                                   boolean probeUp,
@@ -423,7 +423,7 @@ public class InjectedLanguageUtilBase {
    * @deprecated use {@link InjectedLanguageManager#getCachedInjectedDocumentsInRange(PsiFile, TextRange)} instead
    */
   @NotNull
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static ConcurrentList<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile) {
     // modification of cachedInjectedDocuments must be under InjectedLanguageManagerImpl.ourInjectionPsiLock only
     List<DocumentWindow> injected = hostPsiFile.getUserData(INJECTED_DOCS_KEY);

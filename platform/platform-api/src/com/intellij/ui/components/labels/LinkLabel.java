@@ -100,7 +100,7 @@ public class LinkLabel<T> extends JLabel {
    * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public LinkLabel(@NlsContexts.LinkLabel String text,
                    @Nullable Icon icon,
                    @Nullable LinkListener<T> aListener,
