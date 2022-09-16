@@ -606,6 +606,10 @@
                      key="conditional.can.be.pushed.inside.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.controlflow.ConditionalCanBePushedInsideExpressionInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SwitchExpressionCanBePushedDown" bundle="messages.InspectionGadgetsBundle"
+                     key="inspection.common.subexpression.in.switch.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.controlflow.SwitchExpressionCanBePushedDownInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ConfusingElseBranch" shortName="ConfusingElse" bundle="messages.InspectionGadgetsBundle"
                      key="redundant.else.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
