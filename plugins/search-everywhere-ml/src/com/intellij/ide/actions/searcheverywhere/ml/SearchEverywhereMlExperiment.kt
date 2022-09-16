@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
+import java.util.*
 
 internal class SearchEverywhereMlExperiment {
   companion object {
@@ -73,4 +74,18 @@ internal class SearchEverywhereMlExperiment {
 
     fun getExperimentByGroup(group: Int) = tabExperiments.getOrDefault(group, ExperimentType.NO_EXPERIMENT)
   }
+}
+
+internal class FeaturesLoggingRandomisation {
+  private val thresholdsByTab = hashMapOf(
+    SearchEverywhereTabWithMl.ACTION.tabId to 1.0,
+    SearchEverywhereTabWithMl.FILES.tabId to 0.5,
+    ClassSearchEverywhereContributor::class.java.simpleName to 0.5,
+    SymbolSearchEverywhereContributor::class.java.simpleName to 1.0,
+    SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID to 0.5
+  )
+
+  private val seed: Double = Random().nextDouble()
+
+  fun shouldLogFeatures(tabId: String): Boolean = seed < (thresholdsByTab[tabId] ?: 1.0)
 }

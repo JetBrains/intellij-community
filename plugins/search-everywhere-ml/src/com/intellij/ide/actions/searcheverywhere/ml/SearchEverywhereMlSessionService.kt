@@ -39,7 +39,9 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
 
   override fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo) {
     if (isEnabled()) {
-      activeSession.updateAndGet { SearchEverywhereMLSearchSession(project, mixedListInfo, sessionIdCounter.incrementAndGet()) }
+      activeSession.updateAndGet {
+        SearchEverywhereMLSearchSession(project, mixedListInfo, sessionIdCounter.incrementAndGet(), FeaturesLoggingRandomisation())
+      }
     }
   }
 
