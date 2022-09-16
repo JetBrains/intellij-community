@@ -24,23 +24,14 @@ KotlinUFile:commentsOnDataClass.kt(
         KotlinUMethod:component2(
         )
         KotlinUMethod:copy(
-            UComment(/**
-             * Multi-line comment on data class
-             */)
             KotlinUParameter:p1(
             )
             KotlinUParameter:p2(
             )
         )
         KotlinUMethod:hashCode(
-            UComment(/**
-             * Multi-line comment on data class
-             */)
         )
         KotlinUMethod:equals(
-            UComment(/**
-             * Multi-line comment on data class
-             */)
             KotlinUParameter:other(
             )
         )
