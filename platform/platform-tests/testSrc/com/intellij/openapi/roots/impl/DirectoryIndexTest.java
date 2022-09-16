@@ -424,55 +424,6 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     checkInfo(myPack1Dir, myModule2, false, false, null, null, null);
   }
 
-  public void testExcludedDirShouldBeExcludedRightAfterItsCreation() {
-    VirtualFile excluded = createChildDirectory(myModule1Dir, "excluded");
-    assertInProject(excluded);
-    PsiTestUtil.addExcludedRoot(myModule, excluded);
-    assertExcluded(excluded, myModule);
-
-    VfsTestUtil.deleteFile(excluded);
-    final List<VirtualFile> created = new ArrayList<>();
-    VirtualFileListener l = new VirtualFileListener() {
-      @Override
-      public void fileCreated(@NotNull VirtualFileEvent e) {
-        VirtualFile file = e.getFile();
-        assertExcluded(file, myModule);
-        created.add(file);
-      }
-    };
-    VirtualFileManager.getInstance().addVirtualFileListener(l, getTestRootDisposable());
-
-    excluded = createChildDirectory(myModule1Dir, excluded.getName());
-    assertExcluded(excluded, myModule);
-    assertEquals(created.toString(), 1, created.size());
-  }
-
-  public void testExcludesShouldBeRecognizedRightOnRefresh() {
-    final VirtualFile dir = createChildDirectory(myModule1Dir, "dir");
-    final VirtualFile excluded = createChildDirectory(dir, "excluded");
-    PsiTestUtil.addExcludedRoot(myModule, excluded);
-    VfsTestUtil.deleteFile(dir);
-
-
-    boolean created = new File(myModule1Dir.getPath(), "dir/excluded/foo").mkdirs();
-    assertTrue(created);
-
-    VirtualFileListener l = new VirtualFileListener() {
-      @Override
-      public void fileCreated(@NotNull VirtualFileEvent e) {
-        assertEquals("dir", e.getFileName());
-
-        VirtualFile file = e.getFile();
-        assertInProject(file);
-        assertExcluded(file.findFileByRelativePath("excluded"), myModule);
-        assertExcluded(file.findFileByRelativePath("excluded/foo"), myModule);
-      }
-    };
-
-    VirtualFileManager.getInstance().addVirtualFileListener(l, getTestRootDisposable());
-    VirtualFileManager.getInstance().syncRefresh();
-  }
-
   public void testProcessingNestedContentRootsOfExcludedDirsOnCreation() {
     String rootPath = myModule1Dir.getPath();
     final File f = new File(rootPath, "excludedDir/dir/anotherContentRoot");
