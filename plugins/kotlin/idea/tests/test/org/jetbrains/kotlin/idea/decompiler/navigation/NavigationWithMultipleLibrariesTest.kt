@@ -138,7 +138,7 @@ abstract class AbstractNavigationWithMultipleLibrariesTest : JavaModuleTestCase(
 private fun checkLibraryName(referenceTarget: PsiElement, expectedName: String) {
     val navigationFile = referenceTarget.navigationElement.containingFile ?: return
     val libraryName = when (val libraryInfo = navigationFile.moduleInfoOrNull) {
-        is LibraryInfo -> libraryInfo.library.name
+        is LibraryInfo -> libraryInfo.libraryWrapper.name
         is LibrarySourceInfo -> libraryInfo.library.name
         else -> error("Couldn't get library name")
     }

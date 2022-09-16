@@ -44,7 +44,7 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
             is KtLibraryModule -> {
                 val libraryInfo = module.moduleInfo as LibraryInfo
                 libraryInfo.checkValidity()
-                return libraryCache.computeIfAbsent(libraryInfo.library) { ModuleStateTrackerImpl() }
+                return libraryCache.computeIfAbsent(libraryInfo.libraryWrapper.library) { ModuleStateTrackerImpl() }
             }
 
             is KtSdkModule -> {

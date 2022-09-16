@@ -101,7 +101,7 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
 
             private fun gradleApiPresentInModule(moduleInfo: IdeaModuleInfo) =
                 moduleInfo is JvmLibraryInfo &&
-                        moduleInfo.library.safeAs<LibraryEx>()?.isDisposed != true &&
+                        !moduleInfo.libraryWrapper.isDisposed() &&
                         moduleInfo.getLibraryRoots().any {
                             // TODO: it's ugly ugly hack as Script (Gradle) SDK has to be provided in case of providing script dependencies.
                             //  So far the indication of usages of  script dependencies by module is `gradleApi`

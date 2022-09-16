@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.kotlin.backend.common.serialization.metadata.KlibMetadataVersion
 import org.jetbrains.kotlin.backend.common.serialization.metadata.metadataVersion
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
 import org.jetbrains.kotlin.idea.base.util.asKotlinLogger
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.library.*
@@ -22,7 +22,7 @@ sealed class KlibCompatibilityInfo(val isCompatible: Boolean) {
     class IncompatibleMetadata(val isOlder: Boolean) : KlibCompatibilityInfo(false)
 }
 
-abstract class AbstractKlibLibraryInfo(project: Project, library: Library, val libraryRoot: String) : LibraryInfo(project, library) {
+abstract class AbstractKlibLibraryInfo(project: Project, libraryWrapper: LibraryWrapper, val libraryRoot: String) : LibraryInfo(project, libraryWrapper) {
     val resolvedKotlinLibrary: KotlinLibrary = resolveSingleFileKlib(
         libraryFile = File(libraryRoot),
         logger = LOG,

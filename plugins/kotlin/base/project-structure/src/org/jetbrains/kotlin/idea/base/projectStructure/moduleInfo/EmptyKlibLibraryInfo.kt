@@ -3,10 +3,14 @@ package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
+import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.js.JsPlatforms
 
-class JsMetadataLibraryInfo(project: Project, libraryWrapper: LibraryWrapper) : LibraryInfo(project, libraryWrapper) {
+class EmptyKlibLibraryInfo(
+    project: Project,
+    libraryWrapper: LibraryWrapper
+) : AbstractKlibLibraryInfo(project, libraryWrapper, ".") {
+
     override val platform: TargetPlatform
-        get() = JsPlatforms.defaultJsPlatform
+        get() = CommonPlatforms.defaultCommonPlatform
 }

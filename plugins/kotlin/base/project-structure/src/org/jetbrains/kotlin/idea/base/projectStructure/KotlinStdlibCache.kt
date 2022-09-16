@@ -86,7 +86,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
     }
 
     private fun libraryScopeContainsIndexedFilesForNames(libraryInfo: LibraryInfo, names: Collection<FqName>): Boolean {
-        val libraryScope = LibraryScope(project, libraryInfo.library.rootProvider.getFiles(OrderRootType.CLASSES).toSet())
+        val libraryScope = LibraryScope(project, libraryInfo.libraryWrapper.getFiles(OrderRootType.CLASSES).toSet())
         return names.any { name ->
             DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
                 FileBasedIndex.getInstance().getContainingFilesIterator(KotlinStdlibIndex.KEY, name, libraryScope).hasNext()
@@ -99,7 +99,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
 
     private fun isFatJar(libraryInfo: LibraryInfo) = libraryInfo.getLibraryRoots().size > 1
 
-    private fun isKotlinJavaRuntime(libraryInfo: LibraryInfo) = libraryInfo.library.name == KOTLIN_JAVA_RUNTIME_NAME
+    private fun isKotlinJavaRuntime(libraryInfo: LibraryInfo) = libraryInfo.libraryWrapper.name == KOTLIN_JAVA_RUNTIME_NAME
 
     override fun isStdlib(libraryInfo: LibraryInfo): Boolean = stdlibCache[libraryInfo]
 

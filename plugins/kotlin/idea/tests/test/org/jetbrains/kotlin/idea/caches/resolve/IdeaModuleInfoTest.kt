@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
@@ -217,7 +218,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     }
 
     fun testKlibEquals() {
-        val lib1 = projectLibraryWithFakeRoot("lib1")
+        val lib1 = LibraryWrapper.wrapLibrary(projectLibraryWithFakeRoot("lib1"))
         val klib1 = NativeKlibLibraryInfo(project, lib1, "one")
         val klib2 = NativeKlibLibraryInfo(project, lib1, "two")
         Assert.assertNotEquals(klib1, klib2)
@@ -762,7 +763,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         get() = testSourceInfo!!
 
     private val LibraryEx.classes: LibraryInfo
-        get() = object : LibraryInfo(project!!, this) {
+        get() = object : LibraryInfo(project!!, LibraryWrapper.wrapLibrary(this)) {
             override val platform: TargetPlatform
                 get() = kind.platform
         }

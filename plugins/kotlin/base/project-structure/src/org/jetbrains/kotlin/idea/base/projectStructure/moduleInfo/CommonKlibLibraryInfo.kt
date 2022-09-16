@@ -2,15 +2,15 @@
 package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.Library
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
 
 class CommonKlibLibraryInfo(
     project: Project,
-    library: Library,
+    libraryWrapper: LibraryWrapper,
     libraryRoot: String
-) : AbstractKlibLibraryInfo(project, library, libraryRoot) {
+) : AbstractKlibLibraryInfo(project, libraryWrapper, libraryRoot) {
     override val platform: TargetPlatform
         get() = CommonPlatforms.defaultCommonPlatform
 }

@@ -99,7 +99,7 @@ internal fun ReportContext.ModuleDebugReport(descriptor: ModuleDescriptor): Modu
 
     val ijModule: Any? = when (moduleInfo) {
         is ModuleSourceInfo -> moduleInfo.module
-        is LibraryInfo -> moduleInfo.library
+        is LibraryInfo -> moduleInfo.libraryWrapper.library
         is LibrarySourceInfo -> moduleInfo.library
         is SdkInfo -> moduleInfo.sdk
         else -> null

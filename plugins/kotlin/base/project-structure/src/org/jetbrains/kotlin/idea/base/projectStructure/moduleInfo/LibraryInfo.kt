@@ -23,21 +23,19 @@ import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 
 abstract class LibraryInfo(
     override val project: Project,
-    val library: Library
+    val libraryWrapper: LibraryWrapper
 ) : IdeaModuleInfo, LibraryModuleInfo, BinaryModuleInfo, TrackableModuleInfo {
-
-    protected val libraryWrapper = LibraryWrapper.wrapLibrary(library)
 
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.LIBRARY
 
-    override val name: Name = Name.special("<library ${library.name}>")
+    override val name: Name = Name.special("<library ${libraryWrapper.name}>")
 
     override val displayedName: String
-        get() = KotlinBaseProjectStructureBundle.message("library.0", library.presentableName)
+        get() = KotlinBaseProjectStructureBundle.message("library.0", libraryWrapper.library.presentableName)
 
     override val contentScope: GlobalSearchScope
-        get() = LibraryWithoutSourceScope(project, library)
+        get() = LibraryWithoutSourceScope(project, libraryWrapper.library)
 
     override fun dependencies(): List<IdeaModuleInfo> {
         val dependencies = LibraryDependenciesCache.getInstance(project).getLibraryDependencies(this)
@@ -58,7 +56,7 @@ abstract class LibraryInfo(
     override val analyzerServices: PlatformDependentAnalyzerServices
         get() = platform.findAnalyzerServices(project)
 
-    private val _sourcesModuleInfo: SourceForBinaryModuleInfo by lazy { LibrarySourceInfo(project, library, this) }
+    private val _sourcesModuleInfo: SourceForBinaryModuleInfo by lazy { LibrarySourceInfo(project, libraryWrapper.library, this) }
 
     override val sourcesModuleInfo: SourceForBinaryModuleInfo
         get() = _sourcesModuleInfo
@@ -74,7 +72,7 @@ abstract class LibraryInfo(
         }
 
     internal val isDisposed
-        get() = if (library is LibraryEx) library.isDisposed else false
+        get() = libraryWrapper.isDisposed()
 
     override fun checkValidity() {
         if (isDisposed) {

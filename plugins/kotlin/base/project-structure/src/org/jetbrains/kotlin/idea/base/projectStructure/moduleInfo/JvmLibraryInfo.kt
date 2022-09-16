@@ -2,11 +2,11 @@
 package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.Library
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
-class JvmLibraryInfo(project: Project, library: Library) : LibraryInfo(project, library) {
+class JvmLibraryInfo(project: Project, libraryWrapper: LibraryWrapper) : LibraryInfo(project, libraryWrapper) {
     override val platform: TargetPlatform
         get() = JvmPlatforms.defaultJvmPlatform
 }

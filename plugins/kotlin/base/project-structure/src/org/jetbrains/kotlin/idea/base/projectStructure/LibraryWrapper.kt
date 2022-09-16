@@ -13,12 +13,12 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 // Workaround for duplicated libraries, see KT-42607
 @ApiStatus.Internal
 class LibraryWrapper private constructor(val library: LibraryEx) {
-    private val allRootUrlsByType: Map<OrderRootType, Collection<VirtualFile>> by lazy {
+    private val allRootUrlsByType: Map<OrderRootType, Collection<String>> by lazy {
         buildMap {
             val rootProvider = library.rootProvider
             for (orderRootType in OrderRootType.getAllTypes()) {
                 checkCanceled()
-                val urls = rootProvider.getFiles(orderRootType)
+                val urls = rootProvider.getUrls(orderRootType)
                 if (urls.isNotEmpty()) {
                     put(orderRootType, urls.toList())
                 }
@@ -31,16 +31,23 @@ class LibraryWrapper private constructor(val library: LibraryEx) {
     }
 
     private val hashCode by lazy {
-        31 + 37 * allRootUrlsByType.hashCode() + excludedRootUrls.contentHashCode()
+        31 + 37 * (37 * library.name.hashCode() + 37 * allRootUrlsByType.hashCode() + excludedRootUrls.contentHashCode())
     }
 
-    fun getFiles(orderRootType: OrderRootType): Collection<VirtualFile> = allRootUrlsByType[orderRootType] ?: emptyList()
+    val name: String?
+        get() = library.name
+
+    fun isDisposed(): Boolean = library.isDisposed
+
+    fun getFiles(orderRootType: OrderRootType): Collection<VirtualFile> = library.rootProvider.getFiles(orderRootType).toList()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is LibraryWrapper) return false
 
-        return allRootUrlsByType == other.allRootUrlsByType && excludedRootUrls.contentEquals(other.excludedRootUrls)
+        return library.name == other.library.name &&
+                allRootUrlsByType == other.allRootUrlsByType &&
+                excludedRootUrls.contentEquals(other.excludedRootUrls)
     }
 
     override fun hashCode(): Int = hashCode

@@ -278,6 +278,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         init {
             val map: MultiMap<LibraryWrapper, Module> = MultiMap.createSet()
+            val libraryInfoCache = LibraryInfoCache.getInstance(project)
             for (module in runReadAction { ModuleManager.getInstance(project).modules }) {
                 checkCanceled()
                 runReadAction {
@@ -285,7 +286,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                         if (entry is LibraryOrderEntry) {
                             val library = entry.library
                             if (library != null) {
-                                map.putValue(LibraryWrapper.wrapLibrary(library), module)
+                                val libraryWrapper = libraryInfoCache[library].first().libraryWrapper
+                                map.putValue(libraryWrapper, module)
                             }
                         }
                     }
@@ -296,7 +298,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         fun getModulesLibraryIsUsedIn(libraryInfo: LibraryInfo) = sequence<Module> {
             val ideaModelInfosCache = getIdeaModelInfosCache(project)
-            for (module in modulesLibraryIsUsedIn[LibraryWrapper.wrapLibrary(libraryInfo.library)]) {
+            for (module in modulesLibraryIsUsedIn[libraryInfo.libraryWrapper]) {
                 val mappedModuleInfos = ideaModelInfosCache.getModuleInfosForModule(module)
                 if (mappedModuleInfos.any { it.platform.canDependOn(libraryInfo, module.isHMPPEnabled) }) {
                     yield(module)
