@@ -43,6 +43,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -505,8 +506,13 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         executionManager.getRunningDescriptors(s -> ExecutionManagerImplKt.isOfSameType(s, selectedConfiguration));
       runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> executionManager.getExecutors(descriptor).contains(myExecutor));
 
-      if (!configuration.isAllowRunningInParallel() && !runningDescriptors.isEmpty() && DefaultRunExecutor.EXECUTOR_ID.equals(myExecutor.getId())) {
-        return AllIcons.Actions.Restart;
+      if (!configuration.isAllowRunningInParallel() && !runningDescriptors.isEmpty()) {
+        if (ExperimentalUI.isNewUI() && myExecutor.getIcon() != myExecutor.getRerunIcon()) {
+          return myExecutor.getRerunIcon();
+        }
+        if (DefaultRunExecutor.EXECUTOR_ID.equals(myExecutor.getId())) {
+          return AllIcons.Actions.Restart;
+        }
       }
       if (runningDescriptors.isEmpty()) {
         return myExecutor.getIcon();
