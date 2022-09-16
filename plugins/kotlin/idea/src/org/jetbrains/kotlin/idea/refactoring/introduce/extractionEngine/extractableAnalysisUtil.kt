@@ -34,6 +34,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.core.OLD_EXPERIMENTAL_FQ_NAME
+import org.jetbrains.kotlin.idea.core.OPT_IN_FQ_NAMES
 import org.jetbrains.kotlin.idea.core.compareDescriptors
 import org.jetbrains.kotlin.idea.refactoring.createTempCopy
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AnalysisResult.ErrorMessage
@@ -640,7 +642,7 @@ private fun ExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
         val annotationDescriptor = bindingContext[BindingContext.ANNOTATION, annotationEntry] ?: continue
         val fqName = annotationDescriptor.fqName ?: continue
 
-        if (fqName in OptInNames.USE_EXPERIMENTAL_FQ_NAMES) {
+        if (fqName in OptInNames.OPT_IN_FQ_NAMES) {
             for (argument in annotationEntry.valueArguments) {
                 val argumentExpression = argument.getArgumentExpression()?.safeAs<KtClassLiteralExpression>() ?: continue
                 val markerFqName = bindingContext[
