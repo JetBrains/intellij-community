@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
 
@@ -8,8 +8,7 @@ import com.intellij.openapi.util.text.Strings
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
@@ -27,15 +26,19 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicReference
 
-class BuildContextImpl private constructor(private val compilationContext: CompilationContextImpl,
-                                           override val productProperties: ProductProperties,
-                                           override val windowsDistributionCustomizer: WindowsDistributionCustomizer?,
-                                           override val linuxDistributionCustomizer: LinuxDistributionCustomizer?,
-                                           override val macDistributionCustomizer: MacDistributionCustomizer?,
-                                           override val proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-                                           private val distFiles: ConcurrentLinkedQueue<Map.Entry<Path, String>>) : BuildContext {
+class BuildContextImpl private constructor(
+  private val compilationContext: CompilationContextImpl,
+  override val productProperties: ProductProperties,
+  override val windowsDistributionCustomizer: WindowsDistributionCustomizer?,
+  override val linuxDistributionCustomizer: LinuxDistributionCustomizer?,
+  internal val macDistributionCustomizer: MacDistributionCustomizer?,
+  override val proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY
+) : BuildContext {
+  private val distFiles = ConcurrentLinkedQueue<Map.Entry<Path, String>>()
 
+  private val extraExecutablePatterns = AtomicReference<PersistentMap<OsFamily, PersistentList<String>>>(persistentHashMapOf())
 
   override val fullBuildNumber: String
     get() = "${applicationInfo.productCode}-$buildNumber"
@@ -117,8 +120,7 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
                               windowsDistributionCustomizer = windowsDistributionCustomizer,
                               linuxDistributionCustomizer = linuxDistributionCustomizer,
                               macDistributionCustomizer = macDistributionCustomizer,
-                              proprietaryBuildTools = proprietaryBuildTools,
-                              distFiles = ConcurrentLinkedQueue())
+                              proprietaryBuildTools = proprietaryBuildTools)
     }
   }
 
@@ -150,6 +152,7 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
 
   override val options: BuildOptions
     get() = compilationContext.options
+
   @Suppress("SSBasedInspection")
   override val messages: BuildMessages
     get() = compilationContext.messages
@@ -260,7 +263,6 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
       linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizersAsString),
       macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizersAsString),
       proprietaryBuildTools = proprietaryBuildTools,
-      distFiles = ConcurrentLinkedQueue()
     )
     @Suppress("DEPRECATION") val productCode = productProperties.productCode
     copy.paths.artifactDir = paths.artifactDir.resolve(productCode!!)
@@ -298,6 +300,14 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
     jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(this, os))
     return jvmArgs
   }
+
+  override fun addExtraExecutablePattern(os: OsFamily, pattern: String) {
+    extraExecutablePatterns.updateAndGet { prev ->
+      prev.put(os, (prev.get(os) ?: persistentListOf()).add(pattern))
+    }
+  }
+
+  override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get().get(os) ?: emptyList()
 }
 
 private fun createBuildOutputRootEvaluator(projectHome: Path,

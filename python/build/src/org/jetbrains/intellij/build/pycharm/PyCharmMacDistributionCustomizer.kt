@@ -5,7 +5,7 @@ import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 
-open class PyCharmMacDistributionCustomizer : MacDistributionCustomizer() {
+open class PyCharmMacDistributionCustomizer(extraExecutables: List<String> = emptyList()) : MacDistributionCustomizer(extraExecutables = extraExecutables) {
   override fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
     super.copyAdditionalFiles(context, targetDirectory)
     PyCharmBuildUtils.copySkeletons(context, targetDirectory, "skeletons-mac*.zip")

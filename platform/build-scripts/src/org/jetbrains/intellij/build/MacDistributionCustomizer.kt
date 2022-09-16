@@ -5,10 +5,11 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 
-abstract class MacDistributionCustomizer {
+abstract class MacDistributionCustomizer(
+  val extraExecutables: List<String> = emptyList(),
+) {
   /**
    * Path to icns file containing product icon bundle for macOS distribution
    * For full description of icns files see <a href="https://en.wikipedia.org/wiki/Apple_Icon_Image_format">Apple Icon Image Format</a>
@@ -78,24 +79,6 @@ abstract class MacDistributionCustomizer {
    * If {@code true} *.ipr files will be associated with the product in Info.plist
    */
   var associateIpr = false
-
-
-  /**
-   * Relative paths to files in macOS distribution which should take 'executable' permissions
-   */
-  private var extraExecutablesRef = AtomicReference<PersistentList<String>>(persistentListOf())
-
-  // use setter only if you configure build context first time
-  var extraExecutables: PersistentList<String>
-    get() = extraExecutablesRef.get()
-    set(value) {
-      extraExecutablesRef.set(value)
-    }
-
-  // thread-safe
-  fun addExtraExecutable(path: String) {
-    extraExecutablesRef.updateAndGet { it.add(path) }
-  }
 
   /**
    * Filter for files that is going to be put to `<distribution>/bin` directory.

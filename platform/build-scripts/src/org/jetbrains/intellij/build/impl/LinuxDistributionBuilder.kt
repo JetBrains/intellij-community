@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.NioFiles
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
@@ -129,13 +130,12 @@ class LinuxDistributionBuilder(override val context: BuildContext,
   }
 
   override fun generateExecutableFilesPatterns(includeRuntime: Boolean): List<String> {
-    val patterns = ArrayList<String>()
-    patterns.addAll(listOf("bin/*.sh", "bin/*.py", "bin/fsnotifier*", "bin/remote-dev-server.sh"))
-    patterns.addAll(customizer.extraExecutables)
+    var patterns = persistentListOf("bin/*.sh", "plugins/**/*.sh", "bin/*.py", "bin/fsnotifier*")
+      .addAll(customizer.extraExecutables)
     if (includeRuntime) {
-      patterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX))
+      patterns = patterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX))
     }
-    return patterns
+    return patterns.addAll(context.getExtraExecutablePattern(OsFamily.LINUX))
   }
 
   override fun getArtifactNames(context: BuildContext): List<String> {
@@ -324,18 +324,6 @@ private fun makeFileExecutable(file: Path) {
   @Suppress("SpellCheckingInspection")
   Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rwxr-xr-x"))
 }
-
-fun copyFileSymlinkAware(source: Path, target: Path) {
-  target.parent?.let { Files.createDirectories(it) }
-  if (Files.isSymbolicLink(source)) {
-    // append 'NOFOLLOW_LINKS' copy option to be able to copy symbolic links
-    Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING, LinkOption.NOFOLLOW_LINKS)
-  }
-  else {
-    Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING, LinkOption.NOFOLLOW_LINKS)
-  }
-}
-
 
 internal const val REMOTE_DEV_SCRIPT_FILE_NAME = "remote-dev-server.sh"
 

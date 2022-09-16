@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.diagnostic.telemetry.use
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
+import kotlinx.collections.immutable.persistentListOf
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
@@ -24,7 +25,6 @@ class BundledRuntimeImpl(
   private val error: (String) -> Unit,
   private val info: (String) -> Unit) : BundledRuntime {
   companion object {
-    @JvmStatic
     fun getProductPrefix(context: BuildContext): String {
       return context.options.bundledRuntimePrefix ?: context.productProperties.runtimeDistribution.artifactPrefix
     }
@@ -124,14 +124,14 @@ class BundledRuntimeImpl(
   override fun executableFilesPatterns(os: OsFamily): List<String> {
     val pathPrefix = if (os == OsFamily.MACOS) "jbr/Contents/Home/" else "jbr/"
     @Suppress("SpellCheckingInspection")
-    val executableFilesPatterns = mutableListOf(
+    var executableFilesPatterns = persistentListOf(
       pathPrefix + "bin/*",
       pathPrefix + "lib/jexec",
       pathPrefix + "lib/jspawnhelper",
       pathPrefix + "lib/chrome-sandbox"
     )
     if (os == OsFamily.LINUX) {
-      executableFilesPatterns += "jbr/lib/jcef_helper"
+      executableFilesPatterns = executableFilesPatterns.add("jbr/lib/jcef_helper")
     }
     return executableFilesPatterns
   }

@@ -7,14 +7,21 @@ import kotlinx.collections.immutable.PersistentList
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
-interface BuildContext: CompilationContext {
+interface BuildContext : CompilationContext {
   val productProperties: ProductProperties
   val windowsDistributionCustomizer: WindowsDistributionCustomizer?
   val linuxDistributionCustomizer: LinuxDistributionCustomizer?
-  val macDistributionCustomizer: MacDistributionCustomizer?
   val proprietaryBuildTools: ProprietaryBuildTools
 
   val applicationInfo: ApplicationInfoProperties
+
+  /**
+   * Relative paths to files in distribution which should take 'executable' permissions.
+   * No need to add *.sh.
+   */
+  fun addExtraExecutablePattern(os: OsFamily, pattern: String)
+
+  fun getExtraExecutablePattern(os: OsFamily): List<String>
 
   /**
    * Build number without product code (e.g. '162.500.10')

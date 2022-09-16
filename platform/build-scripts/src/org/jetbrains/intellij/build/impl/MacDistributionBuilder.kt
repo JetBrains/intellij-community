@@ -343,6 +343,7 @@ class MacDistributionBuilder(override val context: BuildContext,
   override fun generateExecutableFilesPatterns(includeRuntime: Boolean): List<String> {
     var executableFilePatterns = persistentListOf(
       "bin/*.sh",
+      "plugins/**/*.sh",
       "bin/*.py",
       "bin/fsnotifier",
       "bin/printenv",
@@ -353,7 +354,9 @@ class MacDistributionBuilder(override val context: BuildContext,
     if (includeRuntime) {
       executableFilePatterns = executableFilePatterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS))
     }
-    return executableFilePatterns.addAll(customizer.extraExecutables)
+    return executableFilePatterns
+      .addAll(customizer.extraExecutables)
+      .addAll(context.getExtraExecutablePattern(OsFamily.MACOS))
   }
 
   private suspend fun buildForArch(builtinModule: BuiltinModulesFileData?,

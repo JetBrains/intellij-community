@@ -56,7 +56,9 @@ import java.util.function.BiConsumer
 import java.util.function.Predicate
 import java.util.stream.Collectors
 
-class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
+class BuildTasksImpl(context: BuildContext) : BuildTasks {
+  private val context = context as BuildContextImpl
+
   override suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean) {
     zipSourcesOfModules(modules = modules, targetFile = targetFile, includeLibraries = includeLibraries, context = context)
   }
@@ -614,14 +616,16 @@ private suspend fun compileModulesForDistribution(pluginsToPublish: Set<PluginLa
 }
 
 private suspend fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
-  val pluginsToPublish = getPluginsByModules(context.productProperties.productLayout.pluginModulesToPublish, context)
-  return compileModulesForDistribution(pluginsToPublish, context)
+  return compileModulesForDistribution(
+    pluginsToPublish = getPluginsByModules(modules = context.productProperties.productLayout.pluginModulesToPublish, context = context),
+    context = context
+  )
 }
 
 suspend fun buildDistributions(context: BuildContext) {
   try {
     spanBuilder("build distributions").useWithScope2 {
-      checkProductProperties(context)
+      checkProductProperties(context as BuildContextImpl)
       copyDependenciesFile(context)
       logFreeDiskSpace("before compilation", context)
       val pluginsToPublish = getPluginsByModules(context.productProperties.productLayout.pluginModulesToPublish, context)
@@ -731,7 +735,7 @@ private fun CoroutineScope.createMavenArtifactJob(context: BuildContext, distrib
   }
 }
 
-private fun checkProductProperties(context: BuildContext) {
+private fun checkProductProperties(context: BuildContextImpl) {
   checkProductLayout(context)
 
   val properties = context.productProperties
@@ -1065,7 +1069,9 @@ fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null, context
     OsFamily.LINUX -> LinuxDistributionBuilder(context = context,
                                                customizer = context.linuxDistributionCustomizer ?: return null,
                                                ideaProperties = ideaProperties)
-    OsFamily.MACOS -> MacDistributionBuilder(context, context.macDistributionCustomizer ?: return null, ideaProperties)
+    OsFamily.MACOS -> MacDistributionBuilder(context = context,
+                                             customizer = (context as BuildContextImpl).macDistributionCustomizer ?: return null,
+                                             ideaProperties = ideaProperties)
   }
 }
 
