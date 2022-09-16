@@ -259,7 +259,7 @@ private class JUnitMalformedSignatureVisitor(
     if (AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, AnnotationUtil.CHECK_HIERARCHY)) return
     if (checkSuspendFunction(method)) return
     if (PsiType.VOID != method.returnType || method.visibility != UastVisibility.PUBLIC || javaMethod.isStatic || !method.isNoArg()) {
-      val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.method.no.arg.void.descriptor", "public", "non-static")
+      val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.no.arg.descriptor", "public", "non-static", DOUBLE)
       return holder.registerUProblem(method, message, MethodSignatureQuickfix(method.name, false, newVisibility = JvmModifier.PUBLIC))
     }
   }
@@ -272,7 +272,7 @@ private class JUnitMalformedSignatureVisitor(
     val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
     val javaMethod = alternatives.firstOrNull { it.isStatic } ?: alternatives.firstOrNull() ?: return
     if (PsiType.VOID != method.returnType || method.visibility == UastVisibility.PRIVATE || javaMethod.isStatic || !method.isNoArg()) {
-      val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.method.no.arg.void.descriptor", "non-private", "non-static")
+      val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.no.arg.descriptor", "non-private", "non-static", DOUBLE)
       val quickFix = MethodSignatureQuickfix(
         method.name, newVisibility = JvmModifier.PUBLIC, makeStatic = false, shouldBeVoidType = true, inCorrectParams = emptyMap()
       )
@@ -288,7 +288,7 @@ private class JUnitMalformedSignatureVisitor(
     val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
     val javaMethod = alternatives.firstOrNull { it.isStatic } ?: alternatives.firstOrNull() ?: return
     if (method.visibility == UastVisibility.PRIVATE || !javaMethod.isStatic || !method.isNoArg()) {
-      val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.method.no.arg.descriptor", "non-private", "static")
+      val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.no.arg.descriptor", "non-private", "static", SINGLE)
       val quickFix = MethodSignatureQuickfix(
         method.name, newVisibility = JvmModifier.PUBLIC, makeStatic = true, shouldBeVoidType = false, inCorrectParams = emptyMap()
       )
@@ -762,11 +762,11 @@ private class JUnitMalformedSignatureVisitor(
       element: UField, visibility: UastVisibility?, annotation: String, problems: List<@NlsSafe String>
     ) {
       val message = if (problems.size == 1) {
-        JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.field.single.descriptor",
+        JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.single.descriptor", FIELD,
                                   annotation.substringAfterLast('.'), problems.first()
         )
       } else {
-        JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.field.double.descriptor",
+        JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.double.descriptor", FIELD,
                                   annotation.substringAfterLast('.'), problems.first(), problems.last()
         )
       }
@@ -778,16 +778,16 @@ private class JUnitMalformedSignatureVisitor(
     ) {
       if (problems.isEmpty()) {
         val message = JvmAnalysisBundle.message(
-          "jvm.inspections.junit.malformed.annotated.field.typed.descriptor", annotation.substringAfterLast('.'), type)
+          "jvm.inspections.junit.malformed.annotated.typed.descriptor", FIELD, annotation.substringAfterLast('.'), type)
         registerUProblem(element, message)
       }
       else if (problems.size == 1) {
-        val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.field.single.typed.descriptor",
+        val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.single.typed.descriptor", FIELD,
                                   annotation.substringAfterLast('.'), problems.first(), type
         )
         reportFieldProblem(message, element, visibility)
       } else {
-        val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.field.double.typed.descriptor",
+        val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.double.typed.descriptor", FIELD,
                                   annotation.substringAfterLast('.'), problems.first(), problems.last(), type
         )
         reportFieldProblem(message, element, visibility)
@@ -913,14 +913,14 @@ private class JUnitMalformedSignatureVisitor(
     ) {
       val message = if (problems.isEmpty()) {
         JvmAnalysisBundle.message(
-          "jvm.inspections.junit.malformed.annotated.method.typed.descriptor", annotation.substringAfterLast('.'), type
+          "jvm.inspections.junit.malformed.annotated.typed.descriptor", METHOD, annotation.substringAfterLast('.'), type
         )
       } else if (problems.size == 1) {
-        JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.method.single.typed.descriptor",
+        JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.single.typed.descriptor", METHOD,
                                   annotation.substringAfterLast('.'), problems.first(), type
         )
       } else {
-        JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.method.double.typed.descriptor",
+        JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.double.typed.descriptor", METHOD,
                                   annotation.substringAfterLast('.'), problems.first(), problems.last(), type
         )
       }
@@ -931,11 +931,11 @@ private class JUnitMalformedSignatureVisitor(
       element: UMethod, visibility: UastVisibility?, annotation: String, problems: List<@NlsSafe String>
     ) {
       val message = if (problems.size == 1) {
-        JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.method.single.descriptor",
+        JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.single.descriptor", METHOD,
                                   annotation.substringAfterLast('.'), problems.first()
         )
       } else {
-        JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.method.double.descriptor",
+        JvmAnalysisBundle.message("jvm.inspections.junit.malformed.annotated.double.descriptor", METHOD,
                                   annotation.substringAfterLast('.'), problems.first(), problems.last()
         )
       }
@@ -1027,6 +1027,12 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   companion object {
+    // message choices
+    private const val FIELD = 0
+    private const val METHOD = 1
+    private const val SINGLE = 0
+    private const val DOUBLE = 1
+
     private const val TEST_INSTANCE_PER_CLASS = "@org.junit.jupiter.api.TestInstance(TestInstance.Lifecycle.PER_CLASS)"
     private const val METHOD_SOURCE_RETURN_TYPE = "java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments>"
 
