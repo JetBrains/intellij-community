@@ -15,11 +15,11 @@ internal fun createCommunityBuildContext(
 ): BuildContext {
   return BuildContextImpl.createContextBlocking(communityHome = communityHome,
                                                 projectHome = projectHome,
-                                                productProperties = IdeaCommunityProperties(communityHome),
+                                                productProperties = IdeaCommunityProperties(communityHome.communityRoot),
                                                 options = options)
 }
 
-open class IdeaCommunityProperties(private val communityHome: BuildDependenciesCommunityRoot) : BaseIdeaProperties() {
+open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIdeaProperties() {
   companion object {
     val MAVEN_ARTIFACTS_ADDITIONAL_MODULES = persistentListOf(
       "intellij.tools.jps.build.standalone",
@@ -40,7 +40,7 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
   init {
     platformPrefix = "Idea"
     applicationInfoModule = "intellij.idea.community.resources"
-    additionalIDEPropertiesFilePaths = persistentListOf(communityHome.communityRoot.resolve("build/conf/ideaCE.properties"))
+    additionalIDEPropertiesFilePaths = persistentListOf(communityHomeDir.resolve("build/conf/ideaCE.properties"))
     toolsJarRequired = true
     scrambleMainJar = false
     useSplash = true
@@ -48,7 +48,10 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
 
     productLayout.productImplementationModules = listOf("intellij.platform.main")
     productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources")
-    productLayout.bundledPluginModules.addAll(BUNDLED_PLUGIN_MODULES)
+    productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS
+      .add("intellij.javaFX.community")
+      .toMutableList()
+
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
     productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.addAll(listOf(
@@ -94,9 +97,9 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
   override fun createWindowsCustomizer(projectHome: String): WindowsDistributionCustomizer {
     return object : WindowsDistributionCustomizer() {
       init {
-        icoPath = "${communityHome.communityRoot}/platform/icons/src/idea_CE.ico"
-        icoPathForEAP = "${communityHome.communityRoot}/build/conf/ideaCE/win/images/idea_CE_EAP.ico"
-        installerImagesPath = "${communityHome.communityRoot}/build/conf/ideaCE/win/images"
+        icoPath = "${communityHomeDir}/platform/icons/src/idea_CE.ico"
+        icoPathForEAP = "${communityHomeDir}/build/conf/ideaCE/win/images/idea_CE_EAP.ico"
+        installerImagesPath = "${communityHomeDir}/build/conf/ideaCE/win/images"
         fileAssociations = listOf("java", "groovy", "kt", "kts")
       }
 
@@ -113,8 +116,8 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
   override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer {
     return object : LinuxDistributionCustomizer() {
       init {
-        iconPngPath = "${communityHome.communityRoot}/build/conf/ideaCE/linux/images/icon_CE_128.png"
-        iconPngPathForEAP = "${communityHome.communityRoot}/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
+        iconPngPath = "${communityHomeDir}/build/conf/ideaCE/linux/images/icon_CE_128.png"
+        iconPngPathForEAP = "${communityHomeDir}/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
         snapName = "intellij-idea-community"
         snapDescription =
           "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
@@ -135,13 +138,13 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
   override fun createMacCustomizer(projectHome: String): MacDistributionCustomizer {
     return object : MacDistributionCustomizer() {
       init {
-        icnsPath = "${communityHome.communityRoot}/build/conf/ideaCE/mac/images/idea.icns"
+        icnsPath = "${communityHomeDir}/build/conf/ideaCE/mac/images/idea.icns"
         urlSchemes = listOf("idea")
         associateIpr = true
         fileAssociations = FileAssociation.from("java", "groovy", "kt", "kts")
         bundleIdentifier = "com.jetbrains.intellij.ce"
-        dmgImagePath = "${communityHome.communityRoot}/build/conf/ideaCE/mac/images/dmg_background.tiff"
-        icnsPathForEAP = "${communityHome.communityRoot}/build/conf/ideaCE/mac/images/communityEAP.icns"
+        dmgImagePath = "${communityHomeDir}/build/conf/ideaCE/mac/images/dmg_background.tiff"
+        icnsPathForEAP = "${communityHomeDir}/build/conf/ideaCE/mac/images/communityEAP.icns"
       }
 
       override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {

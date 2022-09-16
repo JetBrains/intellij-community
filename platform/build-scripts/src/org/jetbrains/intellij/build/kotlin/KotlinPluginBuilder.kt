@@ -20,7 +20,7 @@ object KotlinPluginBuilder {
   /**
    * Module which contains META-INF/plugin.xml
    */
-  const val MAIN_KOTLIN_PLUGIN_MODULE = "kotlin.plugin"
+  const val MAIN_KOTLIN_PLUGIN_MODULE: String = "kotlin.plugin"
 
   /**
    * Version of Kotlin compiler which is used in the cooperative development setup in kt-master && kt-*-master branches

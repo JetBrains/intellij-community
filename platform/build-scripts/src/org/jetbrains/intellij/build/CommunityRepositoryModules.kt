@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader
 import org.jetbrains.intellij.build.impl.LibraryPackMode
@@ -19,8 +20,8 @@ object CommunityRepositoryModules {
   /**
    * Specifies non-trivial layout for all plugins which sources are located in 'community' and 'contrib' repositories
    */
-  @JvmStatic
-  val COMMUNITY_REPOSITORY_PLUGINS = persistentListOf(
+  @Suppress("SpellCheckingInspection")
+  val COMMUNITY_REPOSITORY_PLUGINS: PersistentList<PluginLayout> = persistentListOf(
     plugin("intellij.ant") { spec ->
       spec.mainJarName = "antIntegration.jar"
       spec.withModule("intellij.ant.jps", "ant-jps.jar")
@@ -271,8 +272,8 @@ object CommunityRepositoryModules {
     },
   )
 
-  @JvmStatic
-  val CONTRIB_REPOSITORY_PLUGINS = persistentListOf(
+  @Suppress("SpellCheckingInspection")
+  val CONTRIB_REPOSITORY_PLUGINS: PersistentList<PluginLayout> = persistentListOf(
     plugin("intellij.errorProne") { spec ->
       spec.withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
     },
@@ -304,6 +305,7 @@ object CommunityRepositoryModules {
       // design-tools.jar
       spec.withModule("intellij.android.compose-designer", "design-tools.jar")
       spec.withModule("intellij.android.design-plugin", "design-tools.jar")
+      @Suppress("SpellCheckingInspection")
       spec.withModule("intellij.android.designer.customview", "design-tools.jar")
       spec.withModule("intellij.android.designer", "design-tools.jar")
       spec.withModule("intellij.android.layoutlib", "design-tools.jar")

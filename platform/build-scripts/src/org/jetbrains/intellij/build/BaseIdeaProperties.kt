@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.plus
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentListOf
@@ -50,8 +51,12 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
   "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar" to "1.8",
 )
 
+/**
+ * Default bundled plugins for all editions of IntelliJ IDEA.
+ * See also [JB_BUNDLED_PLUGINS] and [DEFAULT_BUNDLED_PLUGINS].
+ */
 @Suppress("SpellCheckingInspection")
-val BUNDLED_PLUGIN_MODULES: PersistentList<String> = persistentListOf(
+val IDEA_BUNDLED_PLUGINS: PersistentList<String> = JB_BUNDLED_PLUGINS + persistentListOf(
   "intellij.java.plugin",
   "intellij.java.ide.customization",
   "intellij.copyright",
@@ -86,7 +91,6 @@ val BUNDLED_PLUGIN_MODULES: PersistentList<String> = persistentListOf(
   "intellij.xslt.debugger",
   "intellij.android.plugin",
   "intellij.android.design-plugin",
-  "intellij.javaFX.community",
   "intellij.java.i18n",
   "intellij.ant",
   "intellij.java.guiForms.designer",
@@ -132,6 +136,7 @@ abstract class BaseIdeaProperties : ProductProperties() {
   init {
     @Suppress("LeakingThis")
     configureJetBrainsProduct(this)
+
     productLayout.mainJarName = "idea.jar"
 
     productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.java.ide.resources")

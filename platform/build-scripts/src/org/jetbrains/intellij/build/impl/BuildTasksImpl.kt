@@ -668,16 +668,15 @@ suspend fun buildDistributions(context: BuildContext) {
             else {
               context.executeStep("build toolbox lite-gen links", BuildOptions.TOOLBOX_LITE_GEN_STEP) {
                 val toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")
-                if (toolboxLiteGenVersion == null) {
-                  context.messages.error("Toolbox Lite-Gen version is not specified!")
+                checkNotNull(toolboxLiteGenVersion) {
+                  "Toolbox Lite-Gen version is not specified!"
                 }
-                else {
-                  ToolboxLiteGen.runToolboxLiteGen(context.paths.communityHomeDirRoot, context.messages,
-                                                   toolboxLiteGenVersion, "/artifacts-dir=" + context.paths.artifacts,
-                                                   "/product-code=" + context.applicationInfo.productCode,
-                                                   "/isEAP=" + context.applicationInfo.isEAP.toString(),
-                                                   "/output-dir=" + context.paths.buildOutputRoot + "/toolbox-lite-gen")
-                }
+
+                ToolboxLiteGen.runToolboxLiteGen(context.paths.communityHomeDirRoot, context.messages,
+                                                 toolboxLiteGenVersion, "/artifacts-dir=" + context.paths.artifacts,
+                                                 "/product-code=" + context.applicationInfo.productCode,
+                                                 "/isEAP=" + context.applicationInfo.isEAP.toString(),
+                                                 "/output-dir=" + context.paths.buildOutputRoot + "/toolbox-lite-gen")
               }
             }
           }
@@ -739,31 +738,29 @@ private fun checkProductProperties(context: BuildContextImpl) {
   checkProductLayout(context)
 
   val properties = context.productProperties
-  val messages = context.messages
-  checkPaths2(properties.brandingResourcePaths, "productProperties.brandingResourcePaths", messages)
-  checkPaths2(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths", messages)
-  checkPaths2(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses", messages)
+  checkPaths2(properties.brandingResourcePaths, "productProperties.brandingResourcePaths")
+  checkPaths2(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
+  checkPaths2(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
   checkModules(properties.additionalModulesToCompile, "productProperties.additionalModulesToCompile", context)
   checkModules(properties.modulesToCompileTests, "productProperties.modulesToCompileTests", context)
 
   context.windowsDistributionCustomizer?.let { winCustomizer ->
-    checkPaths(listOfNotNull(winCustomizer.icoPath), "productProperties.windowsCustomizer.icoPath", messages)
-    checkPaths(listOfNotNull(winCustomizer.icoPathForEAP), "productProperties.windowsCustomizer.icoPathForEAP", messages)
-    checkPaths(listOfNotNull(winCustomizer.installerImagesPath), "productProperties.windowsCustomizer.installerImagesPath", messages)
+    checkPaths(listOfNotNull(winCustomizer.icoPath), "productProperties.windowsCustomizer.icoPath")
+    checkPaths(listOfNotNull(winCustomizer.icoPathForEAP), "productProperties.windowsCustomizer.icoPathForEAP")
+    checkPaths(listOfNotNull(winCustomizer.installerImagesPath), "productProperties.windowsCustomizer.installerImagesPath")
   }
 
   context.linuxDistributionCustomizer?.let { linuxDistributionCustomizer ->
-    checkPaths(listOfNotNull(linuxDistributionCustomizer.iconPngPath), "productProperties.linuxCustomizer.iconPngPath", messages)
-    checkPaths(listOfNotNull(linuxDistributionCustomizer.iconPngPathForEAP), "productProperties.linuxCustomizer.iconPngPathForEAP",
-               messages)
+    checkPaths(listOfNotNull(linuxDistributionCustomizer.iconPngPath), "productProperties.linuxCustomizer.iconPngPath")
+    checkPaths(listOfNotNull(linuxDistributionCustomizer.iconPngPathForEAP), "productProperties.linuxCustomizer.iconPngPathForEAP")
   }
 
   context.macDistributionCustomizer?.let { macCustomizer ->
-    checkMandatoryField(macCustomizer.bundleIdentifier, "productProperties.macCustomizer.bundleIdentifier", messages)
-    checkMandatoryPath(macCustomizer.icnsPath, "productProperties.macCustomizer.icnsPath", messages)
-    checkPaths(listOfNotNull(macCustomizer.icnsPathForEAP), "productProperties.macCustomizer.icnsPathForEAP", messages)
-    checkMandatoryPath(macCustomizer.dmgImagePath, "productProperties.macCustomizer.dmgImagePath", messages)
-    checkPaths(listOfNotNull(macCustomizer.dmgImagePathForEAP), "productProperties.macCustomizer.dmgImagePathForEAP", messages)
+    checkMandatoryField(macCustomizer.bundleIdentifier, "productProperties.macCustomizer.bundleIdentifier")
+    checkMandatoryPath(macCustomizer.icnsPath, "productProperties.macCustomizer.icnsPath")
+    checkPaths(listOfNotNull(macCustomizer.icnsPathForEAP), "productProperties.macCustomizer.icnsPathForEAP")
+    checkMandatoryPath(macCustomizer.dmgImagePath, "productProperties.macCustomizer.dmgImagePath")
+    checkPaths(listOfNotNull(macCustomizer.dmgImagePathForEAP), "productProperties.macCustomizer.dmgImagePathForEAP")
   }
 
   checkModules(properties.mavenArtifacts.additionalModules, "productProperties.mavenArtifacts.additionalModules", context)
@@ -922,44 +919,41 @@ private fun checkPluginModules(
   val unspecifiedLayoutPluginModules = pluginModules.filter { mainModuleName ->
     pluginLayoutList.none { it.mainModule == mainModuleName }
   }
-  if (!unspecifiedLayoutPluginModules.isEmpty()) {
-    context.messages.error("No plugin layout specified in productProperties.productLayout.pluginLayouts for " +
-                           "following plugin main modules (referenced from $fieldName): ${unspecifiedLayoutPluginModules.joinToString(separator = "\n") {
-                             "simplePlugin(\"$it\"),"
-                           }}")
+  check(unspecifiedLayoutPluginModules.isEmpty()) {
+    "No plugin layout specified in productProperties.productLayout.pluginLayouts for following plugin main modules " +
+    "(referenced from $fieldName):\n${unspecifiedLayoutPluginModules.joinToString(separator = "\n") { "simplePlugin(\"$it\")," }}"
   }
 
   val unknownBundledPluginModules = pluginModules.filter { context.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
-  if (!unknownBundledPluginModules.isEmpty()) {
-    context.messages.error("The following modules from $fieldName don\'t contain META-INF/plugin.xml file and" +
-                           " aren\'t specified as optional plugin modules in productProperties.productLayout.pluginLayouts: " +
-                           "${unknownBundledPluginModules.joinToString()}}. ")
+  check(unknownBundledPluginModules.isEmpty()) {
+    "The following modules from $fieldName don\'t contain META-INF/plugin.xml file and aren\'t specified as optional plugin modules" +
+    "in productProperties.productLayout.pluginLayouts: ${unknownBundledPluginModules.joinToString()}."
   }
 }
 
-private fun checkPaths(paths: Collection<String>, propertyName: String, messages: BuildMessages) {
+private fun checkPaths(paths: Collection<String>, propertyName: String) {
   val nonExistingFiles = paths.filter { Files.notExists(Path.of(it)) }
-  if (!nonExistingFiles.isEmpty()) {
-    messages.error("$propertyName contains non-existing files: ${nonExistingFiles.joinToString()}")
+  check(nonExistingFiles.isEmpty()) {
+    "$propertyName contains non-existing files: ${nonExistingFiles.joinToString()}"
   }
 }
 
-private fun checkPaths2(paths: Collection<Path>, propertyName: String, messages: BuildMessages) {
+private fun checkPaths2(paths: Collection<Path>, propertyName: String) {
   val nonExistingFiles = paths.filter { Files.notExists(it) }
-  if (!nonExistingFiles.isEmpty()) {
-    messages.error("$propertyName contains non-existing files: ${nonExistingFiles.joinToString()}")
+  check(nonExistingFiles.isEmpty()) {
+    "$propertyName contains non-existing files: ${nonExistingFiles.joinToString()}"
   }
 }
 
-private fun checkMandatoryField(value: String?, fieldName: String, messages: BuildMessages) {
-  if (value == null) {
-    messages.error("Mandatory property \'$fieldName\' is not specified")
+private fun checkMandatoryField(value: String?, fieldName: String) {
+  checkNotNull(value) {
+    "Mandatory property \'$fieldName\' is not specified"
   }
 }
 
-private fun checkMandatoryPath(path: String, fieldName: String, messages: BuildMessages) {
-  checkMandatoryField(path, fieldName, messages)
-  checkPaths(listOf(path), fieldName, messages)
+private fun checkMandatoryPath(path: String, fieldName: String) {
+  checkMandatoryField(path, fieldName)
+  checkPaths(listOf(path), fieldName)
 }
 
 private fun logFreeDiskSpace(phase: String, context: CompilationContext) {

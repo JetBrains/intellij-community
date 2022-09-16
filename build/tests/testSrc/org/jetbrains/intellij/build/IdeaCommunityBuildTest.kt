@@ -20,7 +20,7 @@ class IdeaCommunityBuildTest {
     runTestBuild(
       homePath = homePath,
       communityHomePath = communityHomePath,
-      productProperties = IdeaCommunityProperties(communityHomePath),
+      productProperties = IdeaCommunityProperties(communityHomePath.communityRoot),
     ) {
       it.projectClassesOutputDirectory = System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
                                          ?: "$homePath/out/classes"
@@ -34,7 +34,7 @@ class IdeaCommunityBuildTest {
     runBlocking(Dispatchers.Default) {
       val context = createBuildContext(
         homePath = homePath,
-        productProperties = IdeaCommunityProperties(communityHome),
+        productProperties = IdeaCommunityProperties(communityHome.communityRoot),
         skipDependencySetup = true,
         communityHomePath = communityHome,
       )

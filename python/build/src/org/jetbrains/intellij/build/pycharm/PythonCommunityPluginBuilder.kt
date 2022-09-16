@@ -25,7 +25,7 @@ internal class PythonCommunityPluginBuilder(private val home: Path) {
     val communityRoot = BuildDependenciesCommunityRoot(homeDir)
     val buildContext = BuildContextImpl.createContextBlocking(communityRoot,
                                                               homeDir,
-                                                              IdeaCommunityProperties(communityRoot),
+                                                              IdeaCommunityProperties(communityRoot.communityRoot),
                                                               ProprietaryBuildTools.DUMMY,
                                                               options)
     BuildTasks.create(buildContext).blockingBuildNonBundledPlugins(listOf(

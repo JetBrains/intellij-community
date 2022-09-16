@@ -147,6 +147,10 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
       layout.withResourceFromModule(moduleName, resourcePath, relativeOutputPath)
     }
+
+    fun withPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext>) {
+      layout.patchers = layout.patchers.add(patcher::accept)
+    }
   }
 
   // as a builder for PluginLayout, that ideally should be immutable
@@ -247,10 +251,6 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
                                                                          resourcePath = resourcePath,
                                                                          relativeOutputPath = relativeOutputFile,
                                                                          packToZip = true))
-    }
-
-    fun withPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext>) {
-      layout.patchers = layout.patchers.add(patcher::accept)
     }
 
     /**

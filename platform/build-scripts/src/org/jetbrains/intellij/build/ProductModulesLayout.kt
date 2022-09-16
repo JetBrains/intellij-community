@@ -11,15 +11,16 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import java.util.function.BiConsumer
 
-class ProductModulesLayout {
-  companion object {
-    @JvmField
-    val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
-      "intellij.platform.images",
-      "intellij.dev",
-    )
-  }
+/**
+ * Default bundled plugins for all products.
+ * See also [JB_BUNDLED_PLUGINS].
+ */
+val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
+  "intellij.platform.images",
+  "intellij.dev",
+)
 
+class ProductModulesLayout {
   /**
    * Name of the main product JAR file. Outputs of {@link #productImplementationModules} will be packed into it.
    */
@@ -163,7 +164,7 @@ class ProductModulesLayout {
    * Map name of JAR to names of the modules; these modules will be packed into these JARs and copied to the product's 'lib' directory.
    */
   fun withAdditionalPlatformJar(jarName: String, vararg moduleNames: String) {
-    additionalPlatformJars.putValues(jarName, moduleNames.toList())
+    additionalPlatformJars.putValues(jarName, moduleNames.asList())
   }
 
   fun withoutAdditionalPlatformJar(jarName: String, moduleName: String) {
