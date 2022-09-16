@@ -26,6 +26,8 @@
   <xi:include href="/META-INF/Inspect.xml">
     <xi:fallback/>
   </xi:include>
+  <xi:include href="/META-INF/WebSymbols.xml"/>
+  <xi:include href="/META-INF/WebSymbolsExtensionPoints.xml"/>
   <xi:include href="/META-INF/xml.xml">
     <xi:fallback/>
   </xi:include>

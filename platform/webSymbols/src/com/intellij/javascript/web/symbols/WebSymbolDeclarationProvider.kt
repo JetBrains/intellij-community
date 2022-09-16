@@ -1,0 +1,23 @@
+package com.intellij.javascript.web.symbols
+
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.psi.PsiElement
+
+interface WebSymbolDeclarationProvider {
+
+  /**
+   * If `offsetInElement < 0` provide all declarations in the element,
+   * otherwise try to provide only those at the hinted offset. Declarations outside the offset
+   * will be filtered out anyway.
+   */
+  fun getDeclarations(element: PsiElement, offsetInElement: Int): Collection<WebSymbolDeclaration>
+
+  companion object {
+    val EP_NAME = ExtensionPointName.create<WebSymbolDeclarationProvider>("com.intellij.javascript.web.declarationProvider")
+
+    fun getAllDeclarations(element: PsiElement, offsetInElement: Int): Collection<WebSymbolDeclaration> =
+      EP_NAME.extensions.asSequence().flatMap { it.getDeclarations(element, offsetInElement) }.toList()
+
+  }
+
+}

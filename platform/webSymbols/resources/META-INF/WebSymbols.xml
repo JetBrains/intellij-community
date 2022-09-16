@@ -1,0 +1,30 @@
+<idea-plugin>
+  <projectListeners>
+    <listener class="com.intellij.javascript.web.context.WebFrameworkContextProjectRootsListener"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
+  </projectListeners>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.javascript.web.symbols.WebSymbolsRegistryManager"
+                    serviceImplementation="com.intellij.javascript.web.symbols.impl.WebSymbolsRegistryManagerImpl"/>
+
+    <highlightingPassFactory implementation="com.intellij.javascript.web.inspections.WebSymbolsPassFactory$Registrar"/>
+
+    <javascript.web.filter
+      name="match-prefix"
+      implementation="com.intellij.javascript.web.symbols.filters.WebSymbolsMatchPrefixFilter"/>
+    <javascript.web.documentationCustomizer
+      id="web-types"
+      implementation="com.intellij.javascript.web.webTypes.WebTypesDocumentationCustomizer"/>
+
+    <psi.declarationProvider implementation="com.intellij.javascript.web.symbols.impl.WebSymbolDeclarationProviderDelegate"/>
+
+    <referencesSearch implementation="com.intellij.javascript.web.findUsages.PsiSourcedWebSymbolReferenceSearcher"/>
+    <refactoring.helper implementation="com.intellij.javascript.web.refactoring.PsiSourcedWebSymbolRefactoringHelper"/>
+    <renameHandler implementation="com.intellij.javascript.web.refactoring.PsiSourcedWebSymbolRenameHandler"/>
+
+    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+              implementationClass="com.intellij.javascript.web.findUsages.WebSymbolsUsageSearcher"/>
+    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
+              implementationClass="com.intellij.javascript.web.refactoring.WebSymbolsRenameUsageSearcher"/>
+  </extensions>
+</idea-plugin>
