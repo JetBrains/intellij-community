@@ -280,7 +280,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       new FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/mac"))
         .includeAll()
         .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/bin/clang/mac"))
-      extraExecutables = ExtensionsKt.persistentListOf("plugins/c-clangd/bin/clang/mac/clangd", "plugins/c-clangd/bin/clang/mac/clang-tidy")
     }
   }
 
