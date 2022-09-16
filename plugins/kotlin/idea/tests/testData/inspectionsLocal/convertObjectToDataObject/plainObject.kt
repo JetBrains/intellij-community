@@ -1,5 +1,5 @@
 // PROBLEM: none
-// LANGUAGE_VERSION: 1.8
+// COMPILER_ARGUMENTS: -XXLanguage:+DataObjects
 object<caret> Foo : Bar()
 
 open class Bar

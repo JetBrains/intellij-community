@@ -3988,14 +3988,14 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertSealedSubClassToObject/convertSubClassWithoutParentheses.kt");
         }
 
-        @TestMetadata("dataClass17Lv.kt")
-        public void testDataClass17Lv() throws Exception {
-            runTest("testData/inspectionsLocal/convertSealedSubClassToObject/dataClass17Lv.kt");
+        @TestMetadata("dataClass_dataObjectIsDisabled.kt")
+        public void testDataClass_dataObjectIsDisabled() throws Exception {
+            runTest("testData/inspectionsLocal/convertSealedSubClassToObject/dataClass_dataObjectIsDisabled.kt");
         }
 
-        @TestMetadata("dataClass18Lv.kt")
-        public void testDataClass18Lv() throws Exception {
-            runTest("testData/inspectionsLocal/convertSealedSubClassToObject/dataClass18Lv.kt");
+        @TestMetadata("dataClass_dataObjectIsEnabled.kt")
+        public void testDataClass_dataObjectIsEnabled() throws Exception {
+            runTest("testData/inspectionsLocal/convertSealedSubClassToObject/dataClass_dataObjectIsEnabled.kt");
         }
 
         @TestMetadata("dataObject.kt")

@@ -1,4 +1,4 @@
-// LANGUAGE_VERSION: 1.8
+// COMPILER_ARGUMENTS: -XXLanguage:+DataObjects
 object<caret> Foo {
     override fun toString(): String = Foo::class.simpleName ?: throw Exception()
 }

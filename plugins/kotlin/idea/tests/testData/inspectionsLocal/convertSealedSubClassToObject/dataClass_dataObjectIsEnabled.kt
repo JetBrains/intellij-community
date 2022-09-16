@@ -1,4 +1,4 @@
-// LANGUAGE_VERSION: 1.8
+// COMPILER_ARGUMENTS: -XXLanguage:+DataObjects
 // DISABLE-ERRORS
 sealed class Bar
 
