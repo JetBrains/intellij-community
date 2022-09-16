@@ -121,7 +121,7 @@ public abstract class DomManager extends CompositeModificationTracker implements
    * @return {@link ConverterManager} instance
    * @deprecated This will be moved at the application level
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public abstract ConverterManager getConverterManager();
 
   public abstract ModelMerger createModelMerger();
