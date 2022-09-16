@@ -94,31 +94,48 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
                 this += compileDependenciesBuilder.buildComponent(compilationReflection.gradleCompilation, importingContext)
                 this += runtimeDependenciesBuilder.buildComponent(compilationReflection.gradleCompilation, importingContext)
                     .onlyNewDependencies(this)
+                this += compilationDependenciesFromDeclaredSourceSets(importingContext, compilationReflection)
+            }
+        }
 
-                /*
-                * We have to add some source set dependencies into compilation dependencies to workaround K/N specifics.
-                * We don't want to simply add all of them, because of KTIJ-20056 and potential other issues
-                * caused by versions of the same dependency coming from compilation and its declared source sets independently.
-                *
-                * First part of the additionally added dependencies are the implicitly assumed (by the compiler)
-                * K/N distribution dependencies that are not put into a native compilation classpath.
-                * IDE can't rely on implicit assumption for building deps, so they are held in a dedicated source set configuration.
-                *
-                * Second part are Gradle project-to-project dependencies, which are not supported properly via affiliated
-                * artifact mapping for native targets. Since native targets are not usable from non-MPP projects right now,
-                * this has no other visible consequences, and so we can manually provide project dependencies from the source sets
-                * without having a correct artifact mapping.
-                */
-                compilationReflection.sourceSets
-                    ?.mapNotNull { importingContext.sourceSetByName(it.name) }
-                    ?.forEach { compilationSourceSet ->
-                        this += compilationSourceSet.intransitiveDependencies.mapNotNull {
-                            importingContext.dependencyMapper.getDependency(it)
-                        }
-                        this += compilationSourceSet.regularDependencies.mapNotNull { dependencyId ->
-                            importingContext.dependencyMapper.getDependency(dependencyId).takeIf { it is ExternalProjectDependency }
-                        }
+        /*
+        * We have to add some source set dependencies into compilation dependencies to workaround K/N specifics.
+        * We don't want to simply add all of them, because of KTIJ-20056 and potential other issues
+        * caused by versions of the same dependency coming from compilation and its declared source sets independently.
+        *
+        * The first part of the additionally added dependencies are implicitly assumed (by the compiler)
+        * K/N distribution dependencies that are not put into a native compilation classpath.
+        * IDE can't rely on implicit assumption for building deps, so they are held in a dedicated source set configuration.
+        *
+        * The second part are project-to-project dependencies, which are not supported properly via affiliated
+        * artifact mapping for native targets. Since native targets are not usable from non-MPP projects right now,
+        * this has no other visible consequences, and so we can manually provide project dependencies from the source sets
+        * without having a correct artifact mapping.
+        *
+        * Prior to KGP 1.5.20 intransitive metadata didn't exist, so we still add all source set dependencies for older KGP versions.
+        */
+        private fun compilationDependenciesFromDeclaredSourceSets(
+            importingContext: MultiplatformModelImportingContext,
+            compilationReflection: KotlinCompilationReflection,
+        ): List<KotlinDependency> = ArrayList<KotlinDependency>().apply {
+            val compilationSourceSets = compilationReflection.sourceSets ?: return@apply
+            val isIntransitiveMetadataSupported = compilationSourceSets.all {
+                it[INTRANSITIVE_METADATA_CONFIGURATION_NAME_ACCESSOR] != null
+            }
+
+            compilationSourceSets.mapNotNull { importingContext.sourceSetByName(it.name) }.forEach { compilationSourceSet ->
+                if (isIntransitiveMetadataSupported) {
+                    this += compilationSourceSet.intransitiveDependencies.mapNotNull {
+                        importingContext.dependencyMapper.getDependency(it)
                     }
+                    this += compilationSourceSet.regularDependencies.mapNotNull { dependencyId ->
+                        importingContext.dependencyMapper.getDependency(dependencyId) as? ExternalProjectDependency
+                    }
+                } else {
+                    this += compilationSourceSet.dependencies.mapNotNull {
+                        importingContext.dependencyMapper.getDependency(it)
+                    }
+                }
             }
         }
 

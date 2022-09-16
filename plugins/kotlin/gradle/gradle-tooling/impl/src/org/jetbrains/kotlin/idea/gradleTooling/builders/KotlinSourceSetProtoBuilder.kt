@@ -112,7 +112,7 @@ class KotlinSourceSetProtoBuilder(
         }
 
         private val intransitiveMetadataDependenciesBuilder = object : KotlinMultiplatformDependenciesBuilder() {
-            override val configurationNameAccessor: String = "getIntransitiveMetadataConfigurationName"
+            override val configurationNameAccessor: String = INTRANSITIVE_METADATA_CONFIGURATION_NAME_ACCESSOR
             override val scope: String = "COMPILE"
         }
 
@@ -161,3 +161,5 @@ class KotlinSourceSetProtoBuilder(
             intransitiveMetadataDependenciesBuilder.buildComponent(gradleSourceSet, importingContext).toList()
     }
 }
+
+internal const val INTRANSITIVE_METADATA_CONFIGURATION_NAME_ACCESSOR = "getIntransitiveMetadataConfigurationName"
