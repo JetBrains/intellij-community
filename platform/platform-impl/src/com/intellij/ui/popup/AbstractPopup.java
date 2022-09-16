@@ -23,6 +23,8 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -52,10 +54,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
@@ -508,6 +508,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   private static int calcHorizontalAlignment(@NotNull Component comp) {
     if (!(comp instanceof JComponent jcomp)) return JBUIScale.scale(2);
     if (comp instanceof ActionButton) return JBUIScale.scale(2);
+    if (comp instanceof ComboBoxWithWidePopup<?>) return JBUIScale.scale(2);
 
     int componentLeftInset = jcomp.getInsets().left;
     int popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left;
