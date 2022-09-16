@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.java18StreamApi.PseudoLambdaReplaceTemplate;
@@ -17,7 +17,6 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -34,8 +33,7 @@ import java.util.*;
  */
 public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRule {
   private static final Logger LOG = Logger.getInstance(GuavaFluentIterableConversionRule.class);
-  private static final Map<@NonNls String, TypeConversionDescriptorFactory> DESCRIPTORS_MAP =
-    new HashMap<>();
+  private static final Map<@NonNls String, TypeConversionDescriptorFactory> DESCRIPTORS_MAP = new HashMap<>();
 
   public static final Set<@NonNls String> CHAIN_HEAD_METHODS = ContainerUtil.newHashSet("from", "of", "fromNullable");
   public static final @NonNls String FLUENT_ITERABLE = "com.google.common.collect.FluentIterable";
@@ -225,9 +223,9 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
           return super.replace(expression, evaluator);
         }
 
-        private  String suggestName(String baseName, JavaCodeStyleManager codeStyleManager, PsiElement place) {
-          final SuggestedNameInfo suggestedNameInfo = codeStyleManager
-            .suggestVariableName(VariableKind.LOCAL_VARIABLE, baseName, null, null, false);
+        private static String suggestName(String baseName, JavaCodeStyleManager codeStyleManager, PsiElement place) {
+          final SuggestedNameInfo suggestedNameInfo =
+            codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, baseName, null, null, false);
           return codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, place, false).names[0];
         }
       };
@@ -376,7 +374,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     }
 
     @Override
-    public PsiExpression replace(@NotNull PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
+    public PsiExpression replace(@NotNull PsiExpression expression, @NotNull TypeEvaluator evaluator) {
       Stack<PsiMethodCallExpression> methodChainStack = new Stack<>();
       PsiMethodCallExpression current = (PsiMethodCallExpression) expression;
       while (current != null) {
