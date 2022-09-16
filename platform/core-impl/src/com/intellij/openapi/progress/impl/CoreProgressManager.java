@@ -249,7 +249,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
                                                                         @Nullable Project project) throws E {
     AtomicReference<T> result = new AtomicReference<>();
     AtomicReference<Throwable> exception = new AtomicReference<>();
-
     runProcessWithProgressSynchronously(new Task.Modal(project, progressTitle, canBeCanceled) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -680,7 +679,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           boolean isStandard = thisIndicator instanceof StandardProgressIndicator;
           if (!isStandard) {
             AtomicInteger newCount = nonStandardIndicators.compute(thisIndicator, (__, count) -> {
-              if (count.decrementAndGet() == 0) {
+              if (count == null || count.decrementAndGet() == 0) {
                 return null;
               }
               return count;
