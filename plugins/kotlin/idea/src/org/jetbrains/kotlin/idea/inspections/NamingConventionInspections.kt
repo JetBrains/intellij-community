@@ -273,24 +273,15 @@ abstract class PropertyNameInspectionBase protected constructor(
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
         override fun visitProperty(property: KtProperty) {
-            if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-                return
-            }
-
+            if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return
             if (property.getKind() == kind) {
                 verifyName(property, holder)
             }
         }
 
         override fun visitParameter(parameter: KtParameter) {
-            if (parameter.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-                return
-            }
-
-            if (parameter.ownerFunction is KtFunctionLiteral && parameter.isSingleUnderscore) {
-                return
-            }
-
+            if (parameter.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return
+            if (parameter.isSingleUnderscore) return
             if (parameter.getKind() == kind) {
                 verifyName(parameter, holder)
             }
@@ -304,7 +295,7 @@ abstract class PropertyNameInspectionBase protected constructor(
         }
     }
 
-    private val PsiNamedElement.isSingleUnderscore
+    private val PsiNamedElement.isSingleUnderscore: Boolean
         get() = name == "_"
 
     private fun KtProperty.getKind(): PropertyKind {
