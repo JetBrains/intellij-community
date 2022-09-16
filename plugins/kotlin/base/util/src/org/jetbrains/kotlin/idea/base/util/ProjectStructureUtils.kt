@@ -95,6 +95,8 @@ fun Module.findLibrary(predicate: (Library) -> Boolean): Library? {
     return OrderEnumerator.orderEntries(this).findLibrary(predicate)
 }
 
+fun Project.containsKotlinFile(): Boolean = FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, projectScope())
+
 val Module.sdk: Sdk?
     get() = ModuleRootManager.getInstance(this).sdk
 

@@ -10,13 +10,13 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker.excludedFromUpdate
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
+import org.jetbrains.kotlin.idea.base.util.containsKotlinFile
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePluginVersion
 import org.jetbrains.kotlin.idea.configuration.notifications.notifyKotlinStyleUpdateIfNeeded
 import org.jetbrains.kotlin.idea.configuration.notifications.showEapSurveyNotification
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter.Companion.setupReportingFromRelease
-import org.jetbrains.kotlin.idea.search.containsKotlinFile
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.util.concurrent.Callable
 
