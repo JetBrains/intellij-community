@@ -8,7 +8,7 @@ import com.intellij.psi.impl.light.LightRecordCanonicalConstructor.LightRecordCo
 import com.intellij.psi.impl.light.LightRecordField
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.UElementAlternative
@@ -132,7 +132,7 @@ private fun createAlternatives(element: PsiElement,
     is PsiRecordComponent -> Triple(element, null, null)
     is LightRecordConstructorParameter -> {
       val lightRecordField = element.parentOfType<PsiMethod>()?.containingClass?.findFieldByName(element.name, false)
-                               ?.castSafelyTo<LightRecordField>() ?: return null
+                               ?.asSafely<LightRecordField>() ?: return null
       Triple(lightRecordField.recordComponent, lightRecordField, element)
     }
     is LightRecordField -> Triple(element.recordComponent, element, null)

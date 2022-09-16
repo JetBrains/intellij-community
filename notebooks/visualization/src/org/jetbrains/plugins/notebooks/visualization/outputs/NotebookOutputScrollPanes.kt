@@ -5,7 +5,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.ui.MouseEventHandler
 import java.awt.Component
 import java.awt.Insets
@@ -230,7 +230,7 @@ open class NotebookOutputNonStickyScrollPane(
       // them. This makes the events invisible to the underlying parent components.
       // The code below ensures that events will reach parents that may be interested in them.
       val source = e.source as Component  // source of MouseEvent should always be Component, see constructor of MouseEvent
-      e.takeUnless { it.isConsumed }?.source?.castSafelyTo<Component>()?.parent?.let {
+      e.takeUnless { it.isConsumed }?.source?.asSafely<Component>()?.parent?.let {
         val adjustedPoint = SwingUtilities.convertPoint(source, e.point, it)
         it.dispatchEvent(MouseEvent(
           it,

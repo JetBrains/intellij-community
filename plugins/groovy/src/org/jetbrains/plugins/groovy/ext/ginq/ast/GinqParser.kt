@@ -9,7 +9,7 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager.getCachedValue
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.parents
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.ext.ginq.*
@@ -27,11 +27,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget
 
 fun getTopParsedGinqTree(root: GinqRootPsiElement): GinqExpression? {
-  return getTopParsedGinqInfo(root).second?.castSafelyTo<GinqExpression>()
+  return getTopParsedGinqInfo(root).second?.asSafely<GinqExpression>()
 }
 
 fun getTopShutdownGinq(root: GinqRootPsiElement): GinqShutdown? {
-  return getTopParsedGinqInfo(root).second?.castSafelyTo<GinqShutdown>()
+  return getTopParsedGinqInfo(root).second?.asSafely<GinqShutdown>()
 }
 
 fun PsiElement.getClosestGinqTree(root: GinqRootPsiElement): GinqExpression? {
@@ -173,7 +173,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
       // was parsed as a standalone ginq somewhere above
       return
     }
-    val callName = methodCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
+    val callName = methodCall.invokedExpression.asSafely<GrReferenceExpression>()?.referenceName
     if (callName == null) {
       return
     }
@@ -186,7 +186,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
       KW_LIMIT -> parseAsLimit(methodCall, callKw)
       KW_SELECT -> parseAsSelect(methodCall, callKw)
       GINQ_EXISTS -> { /* it's fine to have exists as a top-level call */ }
-      else -> recordError(methodCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement ?: methodCall.invokedExpression,
+      else -> recordError(methodCall.invokedExpression.asSafely<GrReferenceExpression>()?.referenceNameElement ?: methodCall.invokedExpression,
                           GroovyBundle.message("ginq.error.message.unrecognized.query"))
     }
   }
@@ -200,7 +200,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
       recordError(methodCall.argumentList, GroovyBundle.message("ginq.error.message.expected.in.operator"))
       return
     }
-    val alias = argument.leftOperand.castSafelyTo<GrReferenceExpression>()
+    val alias = argument.leftOperand.asSafely<GrReferenceExpression>()
     if (alias == null) {
       recordError(argument.leftOperand, GroovyBundle.message("ginq.error.message.expected.alias"))
     }
@@ -254,7 +254,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
 
   private fun parseAsGroupBy(methodCall: GrMethodCall, callKw: PsiElement) {
     val arguments = methodCall.collectExpressionArguments<GrExpression>()?.map {
-      if (it is GrSafeCastExpression) AliasedExpression(it.operand, it.castTypeElement?.castSafelyTo<GrClassTypeElement>())
+      if (it is GrSafeCastExpression) AliasedExpression(it.operand, it.castTypeElement?.asSafely<GrClassTypeElement>())
       else AliasedExpression(it, null)
     }
     if (arguments == null) {
@@ -294,7 +294,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
                     ?: return
     val parsedArguments = arguments.map { arg ->
       val deep = arg.skipParenthesesDownOrNull()
-      val (aliased, alias) = if (deep is GrSafeCastExpression) deep.operand to deep.castTypeElement?.castSafelyTo<GrClassTypeElement>() else arg to null
+      val (aliased, alias) = if (deep is GrSafeCastExpression) deep.operand to deep.castTypeElement?.asSafely<GrClassTypeElement>() else arg to null
       val windows = GinqWindowCollector().also { aliased.accept(it) }.windows
       AggregatableAliasedExpression(aliased, windows, alias)
     }
@@ -302,7 +302,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
       it.aggregatedExpression.markAsGinqUntransformed()
       it.alias?.referenceElement?.let(::markAsReferenceResolveTarget)
     }
-    container.add(GinqSelectFragment(callKw, distinct?.invokedExpression?.castSafelyTo<GrReferenceExpression>(), parsedArguments))
+    container.add(GinqSelectFragment(callKw, distinct?.invokedExpression?.asSafely<GrReferenceExpression>(), parsedArguments))
   }
 
   override fun visitExpression(expression: GrExpression) {
@@ -322,28 +322,28 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
 }
 
 private inline fun <reified T : GrExpression> GrMethodCall.getSingleArgument(): T? =
-  this.getArguments()?.singleOrNull()?.castSafelyTo<ExpressionArgument>()?.expression?.castSafelyTo<T>()
+  this.getArguments()?.singleOrNull()?.asSafely<ExpressionArgument>()?.expression?.asSafely<T>()
 
 private inline fun <reified T : GrExpression> GrMethodCall.collectExpressionArguments(): List<T>? =
   this.getArguments()?.filterIsInstance<ExpressionArgument>()?.map { it.expression }?.filterIsInstance<T>()?.takeIf { it.size == getArguments()?.size }
 
-internal fun GrMethodCall.refCallIdentifier(): PsiElement = invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement
+internal fun GrMethodCall.refCallIdentifier(): PsiElement = invokedExpression.asSafely<GrReferenceExpression>()?.referenceNameElement
                                                            ?: invokedExpression
-internal val GrMethodCall.callRefName: String? get() = invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
+internal val GrMethodCall.callRefName: String? get() = invokedExpression.asSafely<GrReferenceExpression>()?.referenceName
 
 private fun isApproximatelyGinq(e: PsiElement): Boolean {
   val available = listOf("select", "from")
   val qualifiers = generateSequence({ e }) {
     if (it is GrMethodCall) it.invokedExpression else if (it is GrReferenceExpression) it.qualifierExpression else null
   }
-  return qualifiers.any { (it is GrMethodCall && it.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName in available) || (it is GrReferenceExpression && it.referenceName in available)}
+  return qualifiers.any { (it is GrMethodCall && it.invokedExpression.asSafely<GrReferenceExpression>()?.referenceName in available) || (it is GrReferenceExpression && it.referenceName in available)}
 }
 
 private val INJECTED_GINQ_KEY: Key<CachedValue<Pair<List<ParsingError>, GenericGinqExpression?>>> = Key.create("root ginq expression")
 
 internal fun PsiElement.isGinqRoot() : Boolean = getUserData(INJECTED_GINQ_KEY) != null
 
-internal fun PsiElement.getStoredGinq() : GinqExpression? = this.getUserData(INJECTED_GINQ_KEY)?.upToDateOrNull?.get()?.second?.castSafelyTo<GinqExpression>()
+internal fun PsiElement.getStoredGinq() : GinqExpression? = this.getUserData(INJECTED_GINQ_KEY)?.upToDateOrNull?.get()?.second?.asSafely<GinqExpression>()
 
 private val GINQ_UNTRANSFORMED_ELEMENT: Key<Unit> = Key.create("Untransformed psi element within Groovy macro")
 

@@ -36,7 +36,7 @@ import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.NamedColorUtil
@@ -665,8 +665,8 @@ internal class RecentProjectFilteringTree(
     }
 
     private fun activateItem(tree: Tree) {
-      val node = tree.lastSelectedPathComponent.castSafelyTo<DefaultMutableTreeNode>() ?: return
-      val item = node.userObject.castSafelyTo<RecentProjectTreeItem>() ?: return
+      val node = tree.lastSelectedPathComponent.asSafely<DefaultMutableTreeNode>() ?: return
+      val item = node.userObject.asSafely<RecentProjectTreeItem>() ?: return
       activateItem(tree, item)
     }
 
@@ -688,7 +688,7 @@ internal class RecentProjectFilteringTree(
     }
 
     private fun removeItem(tree: Tree) {
-      val node = tree.lastSelectedPathComponent.castSafelyTo<DefaultMutableTreeNode>() ?: return
+      val node = tree.lastSelectedPathComponent.asSafely<DefaultMutableTreeNode>() ?: return
       val item = node.userObject as RecentProjectTreeItem
       item.removeItem()
     }

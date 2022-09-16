@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayManager
 import org.jetbrains.plugins.notebooks.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.outputs.hoveredCollapsingComponentRect
@@ -110,20 +110,20 @@ private class OutputCollapsingGutterMouseListener : EditorMouseListener, EditorM
     val surroundingX = if ((editor as EditorImpl).isMirrored) 80 else 0
     val surroundingComponent =
       editor.contentComponent.getComponentAt(surroundingX, point.y)
-        .castSafelyTo<JComponent>()
+        .asSafely<JComponent>()
         ?.takeIf { it.componentCount > 0 }
         ?.getComponent(0)
-        ?.castSafelyTo<SurroundingComponent>()
+        ?.asSafely<SurroundingComponent>()
       ?: return null
 
     val innerComponent =
-      (surroundingComponent.layout as BorderLayout).getLayoutComponent(BorderLayout.CENTER).castSafelyTo<InnerComponent>()
+      (surroundingComponent.layout as BorderLayout).getLayoutComponent(BorderLayout.CENTER).asSafely<InnerComponent>()
       ?: return null
 
     val y = point.y - SwingUtilities.convertPoint(innerComponent, 0, 0, editor.contentComponent).y
 
     val collapsingComponent =
-      innerComponent.getComponentAt(0, y).castSafelyTo<CollapsingComponent>()
+      innerComponent.getComponentAt(0, y).asSafely<CollapsingComponent>()
       ?: return null
 
     if (!collapsingComponent.isWorthCollapsing) return null

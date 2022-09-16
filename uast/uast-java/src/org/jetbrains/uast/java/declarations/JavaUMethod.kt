@@ -5,7 +5,7 @@ package org.jetbrains.uast.java
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.convertOrReport
@@ -27,7 +27,7 @@ open class JavaUMethod(
       javaPsi.takeIf { it !is LightElement }
 
   override val uastBody: UExpression? by lz {
-    val body = sourcePsi.castSafelyTo<PsiMethod>()?.body ?: return@lz null
+    val body = sourcePsi.asSafely<PsiMethod>()?.body ?: return@lz null
     UastFacade.findPlugin(body)?.convertElement(body, this) as? UExpression
   }
 
@@ -43,7 +43,7 @@ open class JavaUMethod(
     get() {
       val psiElement = (sourcePsi as? PsiNameIdentifierOwner)?.nameIdentifier // return elements of library sources, do not switch to binary
                        ?: (sourcePsi?.originalElement as? PsiNameIdentifierOwner)?.nameIdentifier
-                       ?: sourcePsi.castSafelyTo<PsiMethod>()?.nameIdentifier ?: return null
+                       ?: sourcePsi.asSafely<PsiMethod>()?.nameIdentifier ?: return null
       return UIdentifier(psiElement, this)
     }
 

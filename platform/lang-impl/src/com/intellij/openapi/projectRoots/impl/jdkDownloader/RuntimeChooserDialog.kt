@@ -24,7 +24,7 @@ import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.toJBEmptyBorder
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.io.isDirectory
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -112,13 +112,13 @@ class RuntimeChooserDialog(
     }
 
     if (isOK) run {
-      val jdkItem = jdkCombobox.selectedItem.castSafelyTo<RuntimeChooserDownloadableItem>()?.item ?: return@run
+      val jdkItem = jdkCombobox.selectedItem.asSafely<RuntimeChooserDownloadableItem>()?.item ?: return@run
       val path = model.getInstallPathFromText(jdkItem, jdkInstallDirSelector.text)
       return RuntimeChooserDialogResult.DownloadAndUse(jdkItem, path)
     }
 
     if (isOK) run {
-      val jdkItem = jdkCombobox.selectedItem.castSafelyTo<RuntimeChooserCustomItem>() ?: return@run
+      val jdkItem = jdkCombobox.selectedItem.asSafely<RuntimeChooserCustomItem>() ?: return@run
       val home = Paths.get(jdkItem.homeDir)
       if (home.isDirectory()) {
         return RuntimeChooserDialogResult.UseCustomJdk(listOfNotNull(jdkItem.displayName, jdkItem.version).joinToString(" "), home)

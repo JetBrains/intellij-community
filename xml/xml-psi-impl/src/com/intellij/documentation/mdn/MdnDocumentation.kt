@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.xml.psi.XmlPsiBundle
 import com.intellij.xml.util.HtmlUtil
 import java.util.*
@@ -442,7 +442,7 @@ private class CompatibilityMapDeserializer : JsonDeserializer<CompatibilityMap>(
 
   override fun deserialize(p: JsonParser, ctxt: DeserializationContext): CompatibilityMap =
     p.readValueAsTree<TreeNode>()
-      .castSafelyTo<ObjectNode>()
+      .asSafely<ObjectNode>()
       ?.let {
         if (it.firstOrNull() is ObjectNode) {
           it.fields().asSequence()
@@ -488,7 +488,7 @@ fun getHtmlApiNamespace(namespace: String?, element: PsiElement?, symbolName: St
     namespace == HtmlUtil.MATH_ML_NAMESPACE -> MdnApiNamespace.MathML
     else -> PsiTreeUtil.findFirstParent(element, false) { parent ->
       parent is XmlTag && parent.localName.lowercase(Locale.US).let { it == "svg" || it == "math" }
-    }?.castSafelyTo<XmlTag>()?.let {
+    }?.asSafely<XmlTag>()?.let {
       when (it.name.lowercase(Locale.US)) {
         "svg" -> MdnApiNamespace.Svg
         "math" -> MdnApiNamespace.MathML

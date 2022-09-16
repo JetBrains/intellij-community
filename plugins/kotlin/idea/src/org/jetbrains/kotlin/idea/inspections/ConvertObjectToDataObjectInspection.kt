@@ -6,7 +6,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -85,7 +85,7 @@ private fun isCompatibleReadResolve(ktObject: KtObjectDeclaration, ktObjectFqn: 
     val readResolve = ktObject.findReadResolve() ?: return true
     if (!readResolve.isPrivate()) return false
     val fqn = readResolve.singleExpressionBody()
-        ?.castSafelyTo<KtNameReferenceExpression>()
+        ?.asSafely<KtNameReferenceExpression>()
         ?.resolveType()
         ?.fqName
         ?: return false
@@ -103,13 +103,13 @@ private fun isCompatibleToString(
     val callChain = body.tryUnwrapElvisOrDoubleBang(context).getCallChain()
     if (callChain.size !in 2..3) return false
     val fqn = callChain.firstOrNull()
-        ?.castSafelyTo<KtClassLiteralExpression>()
+        ?.asSafely<KtClassLiteralExpression>()
         ?.receiverExpression
-        ?.castSafelyTo<KtNameReferenceExpression>()
+        ?.asSafely<KtNameReferenceExpression>()
         ?.resolveType(context.value)
         ?.fqName
         ?: return false
-    val methods = callChain.drop(1).map { it.castSafelyTo<KtNameReferenceExpression>()?.text ?: return false }
+    val methods = callChain.drop(1).map { it.asSafely<KtNameReferenceExpression>()?.text ?: return false }
     return fqn == ktObjectFqn.value && (methods == listOf("java", "simpleName") || methods == listOf("simpleName"))
 }
 
@@ -121,7 +121,7 @@ private fun KtExpression.tryUnwrapElvisOrDoubleBang(context: Lazy<BindingContext
 
 private fun isCompatibleEquals(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<FqName?>): Boolean {
     val equals = ktObject.findEquals() ?: return true
-    val isExpr = equals.singleExpressionBody().castSafelyTo<KtIsExpression>() ?: return false
+    val isExpr = equals.singleExpressionBody().asSafely<KtIsExpression>() ?: return false
     val typeReference = isExpr.typeReference ?: return false
     return typeReference.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)
         .get(BindingContext.TYPE, typeReference)?.fqName == ktObjectFqn.value
@@ -136,7 +136,7 @@ private class ConvertToDataObjectQuickFix(private val isSerializable: Boolean) :
     override fun getFamilyName(): String = KotlinBundle.message("convert.to.data.object")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val ktObject = descriptor.psiElement.parent.castSafelyTo<KtObjectDeclaration>() ?: return
+        val ktObject = descriptor.psiElement.parent.asSafely<KtObjectDeclaration>() ?: return
         ktObject.findToString()?.delete()
         ktObject.findEquals()?.delete()
         ktObject.findHashCode()?.delete()
@@ -151,10 +151,10 @@ private fun KtClassOrObject.findEquals(): KtNamedFunction? = findMemberFunction(
 private fun KtClassOrObject.findHashCode(): KtNamedFunction? = findMemberFunction(FunctionDescriptor::isAnyHashCode)
 private fun KtClassOrObject.findReadResolve(): KtNamedFunction? =
     body?.functions?.singleOrNull { function ->
-        function.name == "readResolve" && function.descriptor?.castSafelyTo<FunctionDescriptor>()?.returnType?.isAnyOrNullableAny() == true
+        function.name == "readResolve" && function.descriptor?.asSafely<FunctionDescriptor>()?.returnType?.isAnyOrNullableAny() == true
     }
 
 private fun KtClassOrObject.findMemberFunction(predicate: (FunctionDescriptor) -> Boolean): KtNamedFunction? =
     body?.functions?.singleOrNull { function ->
-        function.descriptor?.castSafelyTo<FunctionDescriptor>()?.let(predicate) == true
+        function.descriptor?.asSafely<FunctionDescriptor>()?.let(predicate) == true
     }

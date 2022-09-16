@@ -4,7 +4,7 @@ package com.intellij.collaboration.ui
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.util.EventDispatcher
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import java.awt.event.ActionEvent
 import javax.swing.Action
 import javax.swing.ComboBoxModel
@@ -61,7 +61,7 @@ class ComboBoxWithActionsModel<T : Any>
       if (action.isEnabled) action.actionPerformed(ActionEvent(this, ActionEvent.ACTION_PERFORMED, null))
       return
     }
-    itemsModel.selectedItem = item.castSafelyTo<Item.Wrapper<T>>()?.wrappee
+    itemsModel.selectedItem = item.asSafely<Item.Wrapper<T>>()?.wrappee
   }
 
   override fun getSize() = itemsModel.size + actions.size

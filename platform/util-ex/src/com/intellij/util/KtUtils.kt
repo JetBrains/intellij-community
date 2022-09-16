@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KProperty
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-inline fun <reified T : Any> Any?.castSafelyTo(): @kotlin.internal.NoInfer T? = this as? T
+inline fun <reified T : Any> Any?.asSafely(): @kotlin.internal.NoInfer T? = this as? T
 
 inline fun <T> runIf(condition: Boolean, block: () -> T): T? = if (condition) block() else null
 

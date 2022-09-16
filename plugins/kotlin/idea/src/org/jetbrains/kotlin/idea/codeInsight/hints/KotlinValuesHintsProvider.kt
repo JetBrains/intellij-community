@@ -6,7 +6,7 @@ import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.ui.layout.*
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
 import org.jetbrains.kotlin.idea.intentions.callExpression

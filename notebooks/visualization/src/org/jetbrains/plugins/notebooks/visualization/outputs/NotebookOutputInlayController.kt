@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.messages.Topic
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
@@ -39,10 +39,10 @@ interface OutputListener {
 val OUTPUT_LISTENER: Topic<OutputListener> = Topic.create("OutputAdded", OutputListener::class.java)
 
 val EditorCustomElementRenderer.notebookInlayOutputComponent: JComponent?
-  get() = castSafelyTo<JComponent>()?.components?.firstOrNull()?.castSafelyTo<SurroundingComponent>()
+  get() = asSafely<JComponent>()?.components?.firstOrNull()?.asSafely<SurroundingComponent>()
 
 val EditorCustomElementRenderer.notebookCellOutputComponents: List<JComponent>?
-  get() = notebookInlayOutputComponent?.components?.firstOrNull()?.castSafelyTo<JComponent>()?.components?.map { it as JComponent }
+  get() = notebookInlayOutputComponent?.components?.firstOrNull()?.asSafely<JComponent>()?.components?.map { it as JComponent }
 
 /**
  * Shows outputs for intervals using [NotebookOutputDataKeyExtractor] and [NotebookOutputComponentFactory].
@@ -165,7 +165,7 @@ class NotebookOutputInlayController private constructor(
           NotebookOutputComponentFactory.Match.COMPATIBLE -> {
             @Suppress("UNCHECKED_CAST") (oldFactory as NotebookOutputComponentFactory<JComponent, NotebookOutputDataKey>)
             oldFactory.updateComponent(editor, oldComponent, newDataKey)
-            oldComponent.parent.castSafelyTo<CollapsingComponent>()?.updateStubIfCollapsed()
+            oldComponent.parent.asSafely<CollapsingComponent>()?.updateStubIfCollapsed()
             true
           }
           NotebookOutputComponentFactory.Match.SAME -> true
