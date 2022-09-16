@@ -15,12 +15,17 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.RefactoringQuickFix;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandlerBase;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,6 +61,17 @@ public class EncapsulateVariableFix extends RefactoringInspectionGadgetsFix impl
     else {
       return super.getElementToRefactor(element);
     }
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    PsiField field = ObjectUtils.tryCast(getElementToRefactor(previewDescriptor.getPsiElement()), PsiField.class);
+    if (field == null || field.getContainingClass() == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    var handler = (EncapsulateFieldsHandlerBase)getHandler();
+    handler.invokeForPreview(field);
+    return IntentionPreviewInfo.DIFF;
   }
 
   @NotNull

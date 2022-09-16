@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -233,7 +233,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   protected UsageInfo @NotNull [] findUsages() {
     ArrayList<EncapsulateFieldUsageInfo> array = new ArrayList<>();
     for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
-      for (final PsiReference reference : ReferencesSearch.search(fieldDescriptor.getField())) {
+      for (final PsiReference reference : getFieldReferences(fieldDescriptor.getField())) {
         final PsiElement element = reference.getElement();
 
         final EncapsulateFieldHelper helper = EncapsulateFieldHelper.getHelper(element.getLanguage());
@@ -247,6 +247,10 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     }
     EncapsulateFieldUsageInfo[] usageInfos = array.toArray(new EncapsulateFieldUsageInfo[0]);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
+  }
+
+  protected Iterable<? extends PsiReference> getFieldReferences(@NotNull PsiField field) {
+    return ReferencesSearch.search(field);
   }
 
   @Override
