@@ -108,7 +108,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
     val androidProperties: Map<String, String>
         get() = mapOf(
-            "android_gradle_plugin_version" to "7.2.2",
+            "android_gradle_plugin_version" to "7.3.0",
             "compile_sdk_version" to "31",
             "build_tools_version" to "28.0.3",
         )
