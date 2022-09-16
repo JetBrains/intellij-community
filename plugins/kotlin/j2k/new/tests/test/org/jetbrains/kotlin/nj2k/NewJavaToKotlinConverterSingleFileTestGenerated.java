@@ -5079,6 +5079,64 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/newJ2k/textBlocks")
+    public static class TextBlocks extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("backslash.java")
+        public void testBackslash() throws Exception {
+            runTest("testData/newJ2k/textBlocks/backslash.java");
+        }
+
+        @TestMetadata("callChain.java")
+        public void testCallChain() throws Exception {
+            runTest("testData/newJ2k/textBlocks/callChain.java");
+        }
+
+        @TestMetadata("dollar.java")
+        public void testDollar() throws Exception {
+            runTest("testData/newJ2k/textBlocks/dollar.java");
+        }
+
+        @TestMetadata("escape.java")
+        public void testEscape() throws Exception {
+            runTest("testData/newJ2k/textBlocks/escape.java");
+        }
+
+        @TestMetadata("helloWorld.java")
+        public void testHelloWorld() throws Exception {
+            runTest("testData/newJ2k/textBlocks/helloWorld.java");
+        }
+
+        @TestMetadata("multiline.java")
+        public void testMultiline() throws Exception {
+            runTest("testData/newJ2k/textBlocks/multiline.java");
+        }
+
+        @TestMetadata("octalEscape.java")
+        public void testOctalEscape() throws Exception {
+            runTest("testData/newJ2k/textBlocks/octalEscape.java");
+        }
+
+        @TestMetadata("simple.java")
+        public void testSimple() throws Exception {
+            runTest("testData/newJ2k/textBlocks/simple.java");
+        }
+
+        @TestMetadata("trailingWhitespace.java")
+        public void testTrailingWhitespace() throws Exception {
+            runTest("testData/newJ2k/textBlocks/trailingWhitespace.java");
+        }
+
+        @TestMetadata("tripleQuote.java")
+        public void testTripleQuote() throws Exception {
+            runTest("testData/newJ2k/textBlocks/tripleQuote.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/newJ2k/thisExpression")
     public static class ThisExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {
