@@ -425,7 +425,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       if (session != null) {
         UsageCluster cluster = session.findCluster(ContainerUtil.getFirstItem(infos));
         if (cluster != null && cluster.getUsages().size() > 1) {
-          myToolbar = new UsagePreviewToolbarWithSimilarUsagesLink(this, usageView, infos, cluster);
+          myToolbar = new UsagePreviewToolbarWithSimilarUsagesLink(this, usageView, infos, cluster, session);
           add(myToolbar, BorderLayout.NORTH);
         }
       }
