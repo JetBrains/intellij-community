@@ -177,7 +177,7 @@ internal object FilesScanExecutor {
     }
     val skippedCount = AtomicInteger()
     val processedCount = AtomicInteger()
-    val visitedFiles = ConcurrentBitSet.create()
+    val visitedFiles = ConcurrentBitSet.create(deque.size)
     val fileFilter = VirtualFileFilter { file: VirtualFile ->
       val fileId = FileBasedIndex.getFileId(file)
       if (visitedFiles.set(fileId)) return@VirtualFileFilter false
