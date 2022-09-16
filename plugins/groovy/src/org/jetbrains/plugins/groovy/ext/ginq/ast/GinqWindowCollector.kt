@@ -43,13 +43,13 @@ class GinqWindowCollector : GroovyRecursiveElementVisitor() {
         when (invokedInner.referenceName) {
           "range", "rows" -> {
             rowsOrRangeKw = invokedInner.referenceNameElement
-            rowsOrRangeArguments = call.argumentList.allArguments.toList().mapNotNull(GroovyPsiElement?::castSafelyTo)
+            rowsOrRangeArguments = call.argumentList.allArguments.toList().filterIsInstance<GrExpression>()
             rowsOrRangeArguments.forEach { it.markAsGinqUntransformed() }
             localQualifier = invokedInner.qualifier
           }
           "partitionby" -> {
             partitionKw = invokedInner.referenceNameElement
-            partitionArguments = call.argumentList.allArguments.toList().mapNotNull(GroovyPsiElement?::castSafelyTo)
+            partitionArguments = call.argumentList.allArguments.toList().filterIsInstance<GrExpression>()
             partitionArguments.forEach { it.markAsGinqUntransformed() }
             localQualifier = invokedInner.qualifier
           }
