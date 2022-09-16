@@ -247,8 +247,12 @@ private fun isKotlinSuspendMain(uMainMethod: UMethod): Boolean {
   if (sourcePsi.language.id != "kotlin") return false
   if (!SyntaxTraverser.psiTraverser(sourcePsi.children.first()).any { it is LeafPsiElement && it.textMatches("suspend") }) return false
   val method = uMainMethod.javaPsi
-  val parameters: Array<PsiParameter> = method.getParameterList().getParameters()
-  if (parameters.isNotEmpty() && parameters.singleOrNull()?.type?.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) != true) return false
+  val parameters: Array<PsiParameter> = method.parameterList.parameters
+  if (parameters.size > 2) return false
+  if (parameters.size == 2) {
+    val argsType = parameters[0].type as? PsiArrayType ?: return false
+    if (!argsType.componentType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return false
+  }
   return method.hasModifierProperty(PsiModifier.STATIC) && method.returnType?.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) == true
 }
 
