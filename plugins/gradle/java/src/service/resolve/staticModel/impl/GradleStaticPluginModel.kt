@@ -5,6 +5,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.gradle.codeInspection.GradlePluginDslStructureInspection
 import org.jetbrains.plugins.gradle.service.resolve.getLinkedGradleProjectPath
 import org.jetbrains.plugins.gradle.service.resolve.staticModel.api.GradleStaticPluginDescriptor
@@ -117,11 +118,11 @@ private fun doSortPlugins(root: GradleStaticPluginDescriptor,
 }
 
 private fun getPluginsBlock(file: GroovyFileBase): Array<GrStatement> {
-  return file.statements.firstOrNull { it is GrMethodCall && it.invokedExpression.text == "plugins" }?.let { it as? GrMethodCall }?.let {
+  return file.statements.firstOrNull { it is GrMethodCall && it.invokedExpression.text == "plugins" }?.castSafelyTo<GrMethodCall>()?.let {
     GradlePluginDslStructureInspection.getStatements(it)
   } ?: emptyArray()
 }
 
 private fun extractPluginName(statement: GrStatement): String? {
-  return (statement as? GrMethodCall)?.takeIf { it.invokedExpression.text == "id" }?.expressionArguments?.firstOrNull()?.let { it as? GrLiteral }?.value?.let { it as? String }
+  return statement.castSafelyTo<GrMethodCall>()?.takeIf { it.invokedExpression.text == "id" }?.expressionArguments?.firstOrNull()?.castSafelyTo<GrLiteral>()?.value?.castSafelyTo<String>()
 }

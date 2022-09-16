@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.util.runInEdtAndWait
 import com.intellij.openapi.externalSystem.util.text
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.util.castSafelyTo
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
@@ -65,8 +66,8 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
           }
         }.setup {
           val rangeMarkers = ArrayList<RangeMarker>()
-          (document as? DocumentEx)?.processRangeMarkers { rangeMarkers.add(it) }
-          rangeMarkers.forEach { marker -> (document as? DocumentEx)?.removeRangeMarker(marker as RangeMarkerEx) }
+          document.castSafelyTo<DocumentEx>()?.processRangeMarkers { rangeMarkers.add(it) }
+          rangeMarkers.forEach { marker -> document.castSafelyTo<DocumentEx>()?.removeRangeMarker(marker as RangeMarkerEx) }
         }.usesAllCPUCores().assertTiming()
       }
     }

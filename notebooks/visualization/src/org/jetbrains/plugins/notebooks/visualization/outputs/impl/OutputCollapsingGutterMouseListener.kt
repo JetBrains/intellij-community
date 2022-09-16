@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
+import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayManager
 import org.jetbrains.plugins.notebooks.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.outputs.hoveredCollapsingComponentRect
@@ -23,7 +24,7 @@ import javax.swing.SwingUtilities
 
 private class OutputCollapsingGutterMouseListener : EditorMouseListener, EditorMouseMotionListener {
   private val EditorMouseEvent.notebookEditor: EditorEx?
-    get() = editor.takeIf { NotebookCellInlayManager.get(it) != null } as? EditorEx?
+    get() = editor.takeIf { NotebookCellInlayManager.get(it) != null }.castSafelyTo()
 
   override fun mousePressed(e: EditorMouseEvent) {
     val editor = e.notebookEditor ?: return
@@ -108,21 +109,21 @@ private class OutputCollapsingGutterMouseListener : EditorMouseListener, EditorM
   private fun getCollapsingComponent(editor: EditorEx, point: Point): CollapsingComponent? {
     val surroundingX = if ((editor as EditorImpl).isMirrored) 80 else 0
     val surroundingComponent: SurroundingComponent =
-      (editor.contentComponent.getComponentAt(surroundingX, point.y)
-        as? JComponent)
+      editor.contentComponent.getComponentAt(surroundingX, point.y)
+        .castSafelyTo<JComponent>()
         ?.takeIf { it.componentCount > 0 }
         ?.getComponent(0)
-        ?.let { it as? SurroundingComponent? }
+        ?.castSafelyTo()
       ?: return null
 
     val innerComponent: InnerComponent =
-      (surroundingComponent.layout as BorderLayout).getLayoutComponent(BorderLayout.CENTER) as? InnerComponent?
+      (surroundingComponent.layout as BorderLayout).getLayoutComponent(BorderLayout.CENTER).castSafelyTo()
       ?: return null
 
     val y = point.y - SwingUtilities.convertPoint(innerComponent, 0, 0, editor.contentComponent).y
 
     val collapsingComponent: CollapsingComponent =
-      innerComponent.getComponentAt(0, y) as? CollapsingComponent?
+      innerComponent.getComponentAt(0, y).castSafelyTo()
       ?: return null
 
     if (!collapsingComponent.isWorthCollapsing) return null

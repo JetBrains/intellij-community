@@ -21,6 +21,7 @@ import com.intellij.psi.search.UseScopeEnlarger
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
+import com.intellij.util.castSafelyTo
 import org.gradle.initialization.BuildLayoutParameters
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -59,7 +60,7 @@ class GradleUseScopeEnlarger : UseScopeEnlarger() {
     }
 
     private fun isInGradleDistribution(project: Project, file: VirtualFile) : Boolean {
-      val actualPath = (file.fileSystem as? JarFileSystem)?.getLocalByEntry(file) ?: file
+      val actualPath = file.fileSystem.castSafelyTo<JarFileSystem>()?.getLocalByEntry(file) ?: file
       val paths : MutableList<String?> = mutableListOf(BuildLayoutParameters().gradleUserHomeDir.path)
       val settings = GradleSettings.getInstance(project).linkedProjectsSettings
       for (linkedProjectSettings in settings) {

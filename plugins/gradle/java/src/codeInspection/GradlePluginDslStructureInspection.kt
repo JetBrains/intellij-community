@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.codeInspection
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
+import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionTool
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
@@ -55,8 +56,8 @@ class GradlePluginDslStructureInspection : GroovyLocalInspectionTool() {
   }
 
   private fun decomposeCall(call: GrMethodCall) : Triple<PsiElement?, GrExpression?, String?>? {
-    val caller = call.invokedExpression as? GrReferenceExpression ?: return null
-    val qualifierCallName = ((caller.qualifierExpression as? GrMethodCall)?.invokedExpression as? GrReferenceExpression)?.referenceName
+    val caller = call.invokedExpression.castSafelyTo<GrReferenceExpression>() ?: return null
+    val qualifierCallName = caller.qualifierExpression.castSafelyTo<GrMethodCall>()?.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
     return Triple(caller.referenceNameElement, caller.qualifierExpression, qualifierCallName)
   }
 
@@ -110,8 +111,7 @@ class GradlePluginDslStructureInspection : GroovyLocalInspectionTool() {
 
   companion object {
     fun getStatements(call: GrMethodCall) : Array<GrStatement> {
-      val closure = call.closureArguments.singleOrNull() ?: call.expressionArguments.firstOrNull()?.let { it as? GrFunctionalExpression }
-                    ?: return emptyArray()
+      val closure = call.closureArguments.singleOrNull() ?: call.expressionArguments.firstOrNull()?.castSafelyTo<GrFunctionalExpression>() ?: return emptyArray()
       return getStatements(closure)
     }
 

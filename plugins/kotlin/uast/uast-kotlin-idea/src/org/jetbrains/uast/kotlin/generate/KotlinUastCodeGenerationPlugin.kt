@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.castSafelyTo
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -90,11 +91,11 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     }
 
     override fun importMemberOnDemand(reference: UQualifiedReferenceExpression): UExpression? {
-      val ktQualifiedExpression = reference.sourcePsi?.let { it as? KtDotQualifiedExpression } ?: return null
-      val selector = ktQualifiedExpression.selectorExpression ?: return null
-      val ptr = SmartPointerManager.createPointer(selector)
-      ImportAllMembersIntention().applyTo(ktQualifiedExpression, null)
-      return ptr.element?.toUElementOfType()
+        val ktQualifiedExpression = reference.sourcePsi?.castSafelyTo<KtDotQualifiedExpression>() ?: return null
+        val selector = ktQualifiedExpression.selectorExpression ?: return null
+        val ptr = SmartPointerManager.createPointer(selector)
+        ImportAllMembersIntention().applyTo(ktQualifiedExpression, null)
+        return ptr.element?.toUElementOfType()
     }
 }
 

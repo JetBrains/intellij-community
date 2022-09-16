@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.DumbAware
+import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.notebooks.visualization.*
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputInlayController
 import org.jetbrains.plugins.notebooks.visualization.outputs.collapsingComponents
@@ -103,7 +104,7 @@ internal class NotebookOutputCollapseSingleInCellAction private constructor() : 
 
   private fun getExpectedComponent(e: AnActionEvent): CollapsingComponent? =
     e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
-      ?.let { it as? CollapsingComponent }
+      ?.castSafelyTo<CollapsingComponent>()
       ?.let { expectedComponent ->
         getCollapsingComponents(e)?.singleOrNull { it === expectedComponent }
       }

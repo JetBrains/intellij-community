@@ -29,6 +29,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.JBVerticalGaps
 import com.intellij.util.IconUtil
+import com.intellij.util.castSafelyTo
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -604,8 +605,7 @@ internal class GitRebaseDialog(private val project: Project,
     if (top) {
       bottomBranchFieldPlaceholder.component = null
       topBranchFieldPlaceholder.component = branchField
-    }
-    else {
+    } else {
       topBranchFieldPlaceholder.component = null
       bottomBranchFieldPlaceholder.component = branchField
     }
@@ -615,8 +615,7 @@ internal class GitRebaseDialog(private val project: Project,
     if (top) {
       bottomUpstreamFieldPlaceholder.component = null
       topUpstreamFieldPlaceholder.component = upstreamField
-    }
-    else {
+    } else {
       topUpstreamFieldPlaceholder.component = null
       bottomUpstreamFieldPlaceholder.component = upstreamField
     }
@@ -666,4 +665,4 @@ internal class GitRebaseDialog(private val project: Project,
   }
 }
 
-private val JComboBox<String>.mutableModel get() = this.model as? MutableCollectionComboBoxModel<String>
+private val JComboBox<String>.mutableModel get() = this.model.castSafelyTo<MutableCollectionComboBoxModel<String>>()

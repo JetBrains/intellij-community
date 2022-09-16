@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.psi.PsiType
+import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
@@ -24,19 +25,17 @@ internal class InitialTypeProvider(private val start: GrControlFlowOwner, privat
                              Attachment("block.text", start.text),
                              Attachment("block.flow", start.controlFlow.contentDeepToString()),
                              Attachment("block.vars", reverseMapping.contentToString()))
-        }
-        else {
-          val field = (reverseMapping[descriptorId] as? ResolvedVariableDescriptor)?.variable?.let { it as? GrField } ?: return null
+        } else {
+          val field = reverseMapping[descriptorId].castSafelyTo<ResolvedVariableDescriptor>()?.variable?.castSafelyTo<GrField>() ?: return null
           val fieldType = field.typeGroovy
           if (fieldType != null) {
             cache[descriptorId] = fieldType
           }
         }
-      }
-      finally {
+      } finally {
         cache.putIfAbsent(descriptorId, TYPE_INFERENCE_FAILED)
       }
     }
-    return cache[descriptorId]?.let { it as? PsiType }
+    return cache[descriptorId]?.castSafelyTo<PsiType>()
   }
 }

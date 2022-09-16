@@ -6,6 +6,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastVisitorAdapter
+import com.intellij.util.castSafelyTo
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
@@ -261,7 +262,7 @@ open class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor)
 
   private fun maybeProcessReferenceInsideImportStatement(node: UReferenceExpression): Boolean {
     if (isInsideImportStatement(node)) {
-      val parentingQualifier = (node as? USimpleNameReferenceExpression)?.uastParent as? UQualifiedReferenceExpression
+      val parentingQualifier = node.castSafelyTo<USimpleNameReferenceExpression>()?.uastParent.castSafelyTo<UQualifiedReferenceExpression>()
       if (node != parentingQualifier?.selector) {
         val resolved = node.resolve() as? PsiModifierListOwner
         if (resolved != null) {

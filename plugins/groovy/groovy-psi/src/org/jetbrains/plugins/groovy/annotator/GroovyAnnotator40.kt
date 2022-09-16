@@ -9,6 +9,7 @@ import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.parentOfType
+import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.annotator.intentions.AddToPermitsList
 import org.jetbrains.plugins.groovy.annotator.intentions.GrChangeModifiersFix
@@ -289,7 +290,7 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
 
   override fun visitMethodCall(call: GrMethodCall) {
     super.visitMethodCall(call)
-    if ((call.invokedExpression as? GrReferenceExpression)?.isQualified == false) {
+    if (call.invokedExpression.castSafelyTo<GrReferenceExpression>()?.isQualified == false) {
       val resolved = call.resolveMethod()?.takeIf { it.hasModifierProperty(PsiModifier.STATIC) } ?: return
       if (resolved.containingClass?.isInterface == true) {
         val fix = GroovyQuickFixFactory.getInstance().createQualifyExpressionFix()

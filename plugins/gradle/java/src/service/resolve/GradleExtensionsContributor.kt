@@ -11,6 +11,7 @@ import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.service.resolve.staticModel.impl.getStaticPluginModel
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
@@ -123,7 +124,7 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
 
     private fun String.getGradlePropertiesFile(project: Project): PropertiesFile? {
       val file = VfsUtil.findFile(Path.of(this), false)?.findChild(PROPERTIES_FILE_NAME)
-      return file?.let { PsiUtilCore.getPsiFile(project, it) } as? PropertiesFile
+      return file?.let { PsiUtilCore.getPsiFile(project, it) }.castSafelyTo<PropertiesFile>()
     }
 
     private fun createGroovyProperty(aClass: PsiClass,

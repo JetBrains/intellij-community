@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMember
+import com.intellij.util.castSafelyTo
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.gradle.service.resolve.DECLARATION_ALTERNATIVES
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -17,8 +18,8 @@ class GradleLookupWeigher : LookupElementWeigher("gradleWeigher", true, false) {
   override fun weigh(element: LookupElement, context: WeighingContext): Comparable<*> {
     val completionElement = element.`object`
     val holder =
-      completionElement as? UserDataHolder
-      ?: (completionElement as? GroovyResolveResult)?.element
+      completionElement.castSafelyTo<UserDataHolder>()
+      ?: completionElement.castSafelyTo<GroovyResolveResult>()?.element
       ?: return 0
 
     val comparable: Int = element.getUserData(COMPLETION_PRIORITY) ?: holder.getUserData(COMPLETION_PRIORITY) ?: getFallbackCompletionPriority(holder)
@@ -30,7 +31,7 @@ class GradleLookupWeigher : LookupElementWeigher("gradleWeigher", true, false) {
     if (holder !is PsiMember) {
       return 0
     }
-    val containingFile = holder.containingFile ?: (holder as? PsiMember)?.containingClass?.containingFile
+    val containingFile = holder.containingFile ?: holder.castSafelyTo<PsiMember>()?.containingClass?.containingFile
     if (containingFile is PsiJavaFile && containingFile.packageName.startsWith("org.gradle")) {
       return DEFAULT_COMPLETION_PRIORITY
     }

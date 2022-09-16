@@ -4,12 +4,13 @@ package org.jetbrains.plugins.groovy.stats
 import com.intellij.internal.statistic.libraryUsage.LibraryUsageImportProcessor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 
 internal class GroovyLibraryUsageImportProcessor : LibraryUsageImportProcessor<GrImportStatement> {
   override fun imports(file: PsiFile): List<GrImportStatement> {
-    return (file as? GroovyFile)
+    return file.castSafelyTo<GroovyFile>()
       ?.importStatements
       ?.toList()
       .orEmpty()

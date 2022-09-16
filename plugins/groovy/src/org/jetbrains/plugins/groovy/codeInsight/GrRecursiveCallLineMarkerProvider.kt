@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.util.FunctionUtil
+import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -26,13 +27,12 @@ class GrRecursiveCallLineMarkerProvider : LineMarkerProvider {
     for (element in elements) {
       ProgressManager.checkCanceled()
       if (element !is GrMethodCall) continue
-      val calledMethod = element.resolveMethod()?.let { it as? GrMethod } ?: continue
+      val calledMethod = element.resolveMethod()?.castSafelyTo<GrMethod>() ?: continue
       val parentMethod = element.parentOfType<GrMethod>() ?: continue
       if (calledMethod == parentMethod) {
         val invoked = element.invokedExpression
-        val leaf = (invoked as? GrReferenceExpression)?.referenceNameElement ?: continue
-        val lineNumber = PsiDocumentManager.getInstance(element.project)?.getDocument(element.containingFile)?.getLineNumber(
-          invoked.endOffset) ?: continue
+        val leaf = invoked.castSafelyTo<GrReferenceExpression>()?.referenceNameElement ?: continue
+        val lineNumber = PsiDocumentManager.getInstance(element.project)?.getDocument(element.containingFile)?.getLineNumber(invoked.endOffset) ?: continue
         if (lines.add(lineNumber)) {
           result.add(LineMarkerInfo(leaf, leaf.textRange, AllIcons.Gutter.RecursiveMethod,
                                     FunctionUtil.constant(JavaBundle.message("line.marker.recursive.call")), null,

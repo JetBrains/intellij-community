@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.*
 import com.intellij.uast.UastHintedVisitorAdapter
+import com.intellij.util.castSafelyTo
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
 import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.uast.*
@@ -86,11 +87,10 @@ private class MigrateToAssertThatQuickFix(private val matcherClassFqn: String, p
     val factory = call.getUastElementFactory(project) ?: return
     val methodName = call.methodName ?: return
     val arguments = call.valueArguments.toMutableList()
-    val method = call.resolveToUElement()?.let { it as? UMethod } ?: return
+    val method = call.resolveToUElement()?.castSafelyTo<UMethod>() ?: return
     val message = if (TypeUtils.typeEquals(JAVA_LANG_STRING, method.uastParameters.first().type)) {
       arguments.removeFirst()
-    }
-    else null
+    } else null
     val (left, right) = when (methodName) {
       "assertTrue", "assertFalse" -> {
         val conditionArgument = arguments.lastOrNull() ?: return
@@ -101,14 +101,13 @@ private class MigrateToAssertThatQuickFix(private val matcherClassFqn: String, p
             conditionArgument.leftOperand to matchExpression
           }
           is UQualifiedReferenceExpression -> {
-            val conditionCall = conditionArgument.selector as? UCallExpression ?: return
+            val conditionCall = conditionArgument.selector.castSafelyTo<UCallExpression>() ?: return
             val conditionMethodName = conditionCall.methodName ?: return
             val matchExpression = if (methodName.contains("False")) {
               factory.createMatchExpression(
                 "not", factory.buildMatchExpression(conditionMethodName, conditionArgument.receiver, conditionCall.valueArguments.first())
               )
-            }
-                                  else {
+            } else {
               factory.buildMatchExpression(conditionMethodName, conditionArgument.receiver, conditionCall.valueArguments.first())
             } ?: return
             conditionArgument.receiver to matchExpression
@@ -148,11 +147,11 @@ private class MigrateToAssertThatQuickFix(private val matcherClassFqn: String, p
     }
     if (importMemberOnDemand) {
       val assertThatCall = factory.createAssertThat(listOfNotNull(message, left, right)) ?: return
-      val replaced = call.getQualifiedParentOrThis().replace(assertThatCall)?.let { it as? UQualifiedReferenceExpression } ?: return
+      val replaced = call.getQualifiedParentOrThis().replace(assertThatCall)?.castSafelyTo<UQualifiedReferenceExpression>() ?: return
       var toImport = replaced
       while (true) {
-        val imported = toImport.importMemberOnDemand()?.let { it as? UCallExpression } ?: return
-        toImport = imported.valueArguments.lastOrNull()?.let { it as? UQualifiedReferenceExpression } ?: return
+        val imported = toImport.importMemberOnDemand()?.castSafelyTo<UCallExpression>() ?: return
+        toImport = imported.valueArguments.lastOrNull()?.castSafelyTo<UQualifiedReferenceExpression>() ?: return
       }
     }
   }

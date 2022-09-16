@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ui.ListTable
 import com.intellij.codeInspection.ui.ListWrappingTableModel
 import com.intellij.psi.*
 import com.intellij.uast.UastHintedVisitorAdapter
+import com.intellij.util.castSafelyTo
 import com.intellij.util.ui.CheckBox
 import com.intellij.util.ui.FormBuilder
 import com.siyeh.InspectionGadgetsBundle
@@ -108,11 +109,11 @@ private class TestMethodWithoutAssertionVisitor(
 
   private fun lastStatementIsCallToMethodWithAssertion(method: UMethod): Boolean {
     val lastExpression = when (method.uastBody) {
-                           is UBlockExpression -> (method.uastBody as? UBlockExpression)?.expressions?.lastOrNull()
+                           is UBlockExpression -> method.uastBody.castSafelyTo<UBlockExpression>()?.expressions?.lastOrNull()
                            else -> method.uastBody
                          } ?: return false
-    val callExpression = lastExpression as? UCallExpression ?: return false
-    val targetMethod = callExpression.resolveToUElement()?.let { it as? UMethod } ?: return false
+    val callExpression = lastExpression.castSafelyTo<UCallExpression>() ?: return false
+    val targetMethod = callExpression.resolveToUElement()?.castSafelyTo<UMethod>() ?: return false
     return containsAssertion(targetMethod)
   }
 

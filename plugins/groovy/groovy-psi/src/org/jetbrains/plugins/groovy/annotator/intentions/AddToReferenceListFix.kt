@@ -9,6 +9,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiReferenceList.Role
 import com.intellij.psi.PsiReferenceList.Role.*
 import com.intellij.psi.util.parentOfType
+import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
@@ -25,9 +26,9 @@ sealed class AddToReferenceListFix(private val role: Role, private val addedName
   }
 
   private fun generateNewList(descriptor: ProblemDescriptor) : Pair<PsiClass, GrReferenceList>? {
-    val element = descriptor.psiElement as? GrCodeReferenceElement ?: return null
+    val element = descriptor.psiElement?.castSafelyTo<GrCodeReferenceElement>() ?: return null
     val referencedClass = element.parentOfType<PsiClass>() ?: return null
-    val dependentClass = element.resolve()?.let { it as? PsiClass } ?: return null
+    val dependentClass = element.resolve()?.castSafelyTo<PsiClass>() ?: return null
     val targetReferenceList = getReplacedList(dependentClass)
     val referencesRepresentation = if (targetReferenceList == null || targetReferenceList.referenceElements.isEmpty()) {
       role.getRepresentation() + " " + referencedClass.qualifiedName
@@ -37,7 +38,7 @@ sealed class AddToReferenceListFix(private val role: Role, private val addedName
     }
     val factory = GroovyPsiElementFactory.getInstance(referencedClass.project)
     val typeDefinition = factory.createTypeDefinition("class __Dummy $referencesRepresentation {}")
-    return dependentClass to (getReplacedList(typeDefinition) as? GrReferenceList ?: return null)
+    return dependentClass to (getReplacedList(typeDefinition).castSafelyTo<GrReferenceList>() ?: return null)
   }
 
   private fun getReplacedList(dependentClass: PsiClass) = when (role) {

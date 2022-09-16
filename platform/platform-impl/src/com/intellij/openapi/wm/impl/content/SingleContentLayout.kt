@@ -32,6 +32,7 @@ import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.TabLabel
+import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.UIUtil
@@ -103,7 +104,7 @@ internal class SingleContentLayout(
       resetSingleContentView()
     }
 
-    val toolwindow = ui.getWindow() as? ToolWindowEx
+    val toolwindow = ui.getWindow().castSafelyTo<ToolWindowEx>()
     if (toolwindow != null) {
       val group = toolwindow.decoration?.actionGroup
       if (isSingleContentView) {

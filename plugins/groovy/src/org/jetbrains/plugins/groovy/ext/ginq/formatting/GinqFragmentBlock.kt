@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
+import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.ext.ginq.ast.*
 import org.jetbrains.plugins.groovy.formatter.FormattingContext
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock
@@ -25,7 +26,7 @@ class GinqFragmentBlock(val fragment: GinqQueryFragment,
               context) {
 
   private val actualChildren = fragment.keyword.parentOfType<GrMethodCall>()!!.run {
-    val keyword = (this.invokedExpression as? GrReferenceExpression)?.referenceNameElement!!
+    val keyword = this.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement!!
     listOf(keyword.node) + this.node.getChildren(null).takeLastWhile { !PsiTreeUtil.isAncestor(it.psi, keyword, false) }
   }
 

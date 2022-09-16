@@ -10,6 +10,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.util.castSafelyTo
 import junit.framework.TestCase
 import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.*
@@ -349,7 +350,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
   fun `test custom evaluator`() {
     val myAnnoValueProvider = DeclarationValueEvaluator { declaration ->
       val myAnnotation = declaration.uAnnotations.firstOrNull { anno -> anno.qualifiedName == "MyAnno" }
-      myAnnotation?.findAttributeValue("value")?.let { it as? ULiteralExpression }?.takeIf { it.isString }?.let { literal ->
+      myAnnotation?.findAttributeValue("value")?.castSafelyTo<ULiteralExpression>()?.takeIf { it.isString }?.let { literal ->
         PartiallyKnownString(StringEntry.Known(literal.value as String, literal.sourcePsi!!, TextRange(0, literal.sourcePsi!!.textLength)))
       }
     }

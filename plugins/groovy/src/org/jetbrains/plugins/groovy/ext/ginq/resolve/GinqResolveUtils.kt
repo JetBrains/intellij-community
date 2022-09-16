@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.ext.ginq.resolve
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentsOfType
+import com.intellij.util.castSafelyTo
 import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.ext.ginq.GINQ_EXISTS
 import org.jetbrains.plugins.groovy.ext.ginq.GinqSupport
@@ -58,7 +59,7 @@ object GinqResolveUtils : GinqSupport {
     if (name !in aggregateFunctions.keys) {
       return null
     }
-    val call = place.parent as? GrMethodCallExpression ?: return null
+    val call = place.parent?.castSafelyTo<GrMethodCallExpression>() ?: return null
     val args = call.argumentList.allArguments
     val prototype = getQueryable(place)?.findMethodsByName(name, false)?.find { it.parameters.size == args.size } ?: return null
     val proxy = GrLightMethodBuilder(place.manager, name)
@@ -108,7 +109,7 @@ object GinqResolveUtils : GinqSupport {
 
   private fun getOver(place: PsiElement) : Pair<GrExpression, GrMethodCallExpression>? {
     for (callExpression in place.parentsOfType<GrMethodCallExpression>()) {
-      val invoked = callExpression.invokedExpression as? GrReferenceExpression ?: continue
+      val invoked = callExpression.invokedExpression.castSafelyTo<GrReferenceExpression>() ?: continue
       val qualifier = invoked.qualifierExpression
       if (invoked.referenceName == OVER && qualifier != null) {
         return qualifier to callExpression
