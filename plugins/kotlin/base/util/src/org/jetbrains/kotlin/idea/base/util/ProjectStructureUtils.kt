@@ -30,6 +30,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.config.ALL_KOTLIN_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.nio.file.Paths
@@ -96,6 +97,12 @@ fun Module.findLibrary(predicate: (Library) -> Boolean): Library? {
 }
 
 fun Project.containsKotlinFile(): Boolean = FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, projectScope())
+
+fun Project.containsNonScriptKotlinFile(): Boolean = !FileTypeIndex.processFiles(
+    KotlinFileType.INSTANCE,
+    { it.toPsiFile(this)?.safeAs<KtFile>()?.isScript() != false },
+    projectScope(),
+)
 
 val Module.sdk: Sdk?
     get() = ModuleRootManager.getInstance(this).sdk

@@ -11,6 +11,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.base.util.containsKotlinFile
+import org.jetbrains.kotlin.idea.base.util.containsNonScriptKotlinFile
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePluginVersion
 import org.jetbrains.kotlin.idea.configuration.notifications.notifyKotlinStyleUpdateIfNeeded
@@ -29,22 +30,30 @@ internal class PluginStartupActivity : StartupActivity.Background {
         //todo[Sedunov]: wait for fix in platform to avoid misunderstood from Java newbies (also ConfigureKotlinInTempDirTest)
         //KotlinSdkType.Companion.setUpIfNeeded();
 
+        val pluginDisposable = KotlinPluginDisposable.getInstance(project)
         ReadAction.nonBlocking(Callable { project.containsKotlinFile() })
             .inSmartMode(project)
-            .expireWith(KotlinPluginDisposable.getInstance(project))
+            .expireWith(pluginDisposable)
             .finishOnUiThread(ModalityState.any()) { hasKotlinFiles ->
                 if (!hasKotlinFiles) return@finishOnUiThread
 
-                if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-                    notifyKotlinStyleUpdateIfNeeded(project)
-
-                    if (!isUnitTestMode()) {
-                        showEapSurveyNotification(project)
-                    }
-                }
-
                 val daemonCodeAnalyzer = DaemonCodeAnalyzerImpl.getInstanceEx(project) as DaemonCodeAnalyzerImpl
                 daemonCodeAnalyzer.serializeCodeInsightPasses(true)
+            }
+            .submit(AppExecutorUtil.getAppExecutorService())
+
+        if (ApplicationManager.getApplication().isHeadlessEnvironment) return
+
+        ReadAction.nonBlocking(Callable { project.containsNonScriptKotlinFile() })
+            .inSmartMode(project)
+            .expireWith(pluginDisposable)
+            .finishOnUiThread(ModalityState.any()) { hasKotlinFiles ->
+                if (!hasKotlinFiles) return@finishOnUiThread
+
+                notifyKotlinStyleUpdateIfNeeded(project)
+                if (!isUnitTestMode()) {
+                    showEapSurveyNotification(project)
+                }
             }
             .submit(AppExecutorUtil.getAppExecutorService())
     }

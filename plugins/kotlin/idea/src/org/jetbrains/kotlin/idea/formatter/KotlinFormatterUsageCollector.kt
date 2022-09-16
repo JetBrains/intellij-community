@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
-import org.jetbrains.kotlin.idea.base.util.containsKotlinFile
+import org.jetbrains.kotlin.idea.base.util.containsNonScriptKotlinFile
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.*
@@ -23,7 +23,7 @@ class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
-        if (KotlinPlatformUtils.isAndroidStudio || project.runReadActionInSmartMode { !project.containsKotlinFile() }) {
+        if (KotlinPlatformUtils.isAndroidStudio || project.runReadActionInSmartMode { !project.containsNonScriptKotlinFile() }) {
             return emptySet()
         }
 
