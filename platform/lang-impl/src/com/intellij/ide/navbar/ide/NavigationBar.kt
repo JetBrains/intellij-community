@@ -35,6 +35,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDirectoryContainer
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.HintHint
 import com.intellij.util.flow.throttle
 import com.intellij.util.ui.EDT
@@ -51,6 +52,7 @@ import kotlin.coroutines.resume
 internal val navbarV2Enabled: Boolean =
   Registry.`is`("ide.navBar.v2", false)
   && ApplicationManager.getApplication().isInternal
+  && !ExperimentalUI.isNewUI()
 
 internal val LOG: Logger = Logger.getInstance("#com.intellij.ide.navbar.ide")
 
