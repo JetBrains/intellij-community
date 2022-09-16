@@ -134,7 +134,9 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
     private void highlightDuplicate(@NotNull BranchBase<?> duplicate, @NotNull BranchBase<?> original) {
       LocalQuickFix fix = isMergeCasesFixAvailable(duplicate, original) ? original.newMergeCasesFix() : null;
-      registerProblem(duplicate, duplicate.getCaseBranchMessage(), fix);
+      if (fix != null || !duplicate.isEmptyRuleBody()) {
+        registerProblem(duplicate, duplicate.getCaseBranchMessage(), fix);
+      }
     }
 
     private void highlightDefaultDuplicate(@NotNull BranchBase branch) {
@@ -166,7 +168,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       }
       PsiSwitchLabeledRuleStatement ruleStatement = (PsiSwitchLabeledRuleStatement)element;
       PsiStatement body = ruleStatement.getBody();
-      if (body != null && !(body instanceof PsiBlockStatement blockStatement && blockStatement.getCodeBlock().isEmpty())) {
+      if (body != null) {
         TryWithIdenticalCatchesInspection.collectCommentTexts(ruleStatement, commentTexts);
         Rule rule = new Rule(ruleStatement, body, ArrayUtilRt.toStringArray(commentTexts));
         commentTexts.clear();
@@ -571,6 +573,8 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
     abstract LocalQuickFix newMergeWithDefaultFix();
 
+    abstract boolean isEmptyRuleBody();
+
     @Nullable
     Match match(BranchBase<?> other) {
       return getFinder().isDuplicate(other.myStatements[0], true);
@@ -730,6 +734,11 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     @Override
+    boolean isEmptyRuleBody() {
+      return false;
+    }
+
+    @Override
     LocalQuickFix newDeleteCaseFix() {
       return new DeleteRedundantBranchFix();
     }
@@ -864,6 +873,11 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     @Override
     LocalQuickFix newMergeWithDefaultFix() {
       return null;
+    }
+
+    @Override
+    boolean isEmptyRuleBody() {
+      return myStatements[0] instanceof PsiBlockStatement blockStatement && blockStatement.getCodeBlock().isEmpty();
     }
 
     @Override
