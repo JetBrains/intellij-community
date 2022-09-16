@@ -46,6 +46,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
 
 
@@ -196,11 +197,13 @@ internal class NavigationBar(
 
   private suspend fun childrenPopupPrompt(selectedItemIndex: Int, children: List<UiNavBarItem>): PopupEvent =
     suspendCancellableCoroutine {
-      myComponent.scrollTo(selectedItemIndex)
-      val nextItem = myItems.value.getOrNull(selectedItemIndex + 1)
-      val popupHint = NavigationBarPopup(children, nextItem, it)
-      val absolutePoint = myComponent.getItemPopupLocation(selectedItemIndex)
-      popupHint.show(myComponent, absolutePoint.x, absolutePoint.y, myComponent, HintHint(myComponent, absolutePoint))
+      SwingUtilities.invokeLater {
+        myComponent.scrollTo(selectedItemIndex)
+        val nextItem = myItems.value.getOrNull(selectedItemIndex + 1)
+        val popupHint = NavigationBarPopup(children, nextItem, it)
+        val absolutePoint = myComponent.getItemPopupLocation(selectedItemIndex)
+        popupHint.show(myComponent, absolutePoint.x, absolutePoint.y, myComponent, HintHint(myComponent, absolutePoint))
+      }
     }
 
   // Run body with no external model changes allowed

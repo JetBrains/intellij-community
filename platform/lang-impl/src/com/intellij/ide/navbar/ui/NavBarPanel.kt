@@ -23,6 +23,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.function.Consumer
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
 
 
 internal class NavBarPanel(
@@ -40,13 +41,13 @@ internal class NavBarPanel(
 
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
       myItems.collect {
-        render(it)
+        rebuild(it)
       }
     }
 
   }
 
-  private fun render(items: List<UiNavBarItem>) {
+  private fun rebuild(items: List<UiNavBarItem>) {
     EDT.assertIsEdt()
     removeAll()
     myItemComponents.clear()
@@ -80,6 +81,12 @@ internal class NavBarPanel(
     revalidate()
     repaint()
 
+    SwingUtilities.invokeLater {
+      myItemComponents.lastOrNull()?.let {
+        scrollRectToVisible(it.bounds)
+      }
+    }
+
     onSizeChange?.accept(preferredSize)
 
   }
@@ -94,13 +101,6 @@ internal class NavBarPanel(
 
   fun scrollTo(index: Int) {
     myItemComponents.getOrNull(index)?.let {
-      scrollRectToVisible(it.bounds)
-    }
-  }
-
-  override fun paint(g: Graphics?) {
-    super.paint(g)
-    myItemComponents.lastOrNull()?.let {
       scrollRectToVisible(it.bounds)
     }
   }
