@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.Option
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
@@ -79,7 +80,7 @@ enum class HintType(
 
         override fun isApplicable(e: PsiElement): Boolean {
             return e is KtNamedFunction && !(e.hasBlockBody() || e.hasDeclaredReturnType()) ||
-                    e is KtExpression && e !is KtFunctionLiteral && !e.isNameReferenceInCall() && e.isLambdaReturnValueHintsApplicable(allowOneLiner = true)
+                    Registry.`is`("kotlin.enable.inlay.hint.for.lambda.return.type") && e is KtExpression && e !is KtFunctionLiteral && !e.isNameReferenceInCall() && e.isLambdaReturnValueHintsApplicable(allowOneLiner = true)
         }
     },
 

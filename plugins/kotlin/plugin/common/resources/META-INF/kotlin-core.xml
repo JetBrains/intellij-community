@@ -336,6 +336,12 @@
             defaultValue="false"
             restartRequired="false"/>
 
+    <registryKey
+            key="kotlin.enable.inlay.hint.for.lambda.return.type"
+            description="Unresolved reference importer runs on EDT and could be slow"
+            defaultValue="false"
+            restartRequired="false"/>
+
     <registryKey key="kotlin.cache.packages.strong.map"
                  description="Hold info about packages using strong references instead of soft ones"
                  defaultValue="true"
