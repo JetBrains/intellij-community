@@ -5,7 +5,7 @@ import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.collaboration.auth.AccountDetails
 
 @GraphQLFragment("graphql/fragment/user.graphql")
-class GitLabUserDto(
+class GitLabUserDTO(
   val id: String,
   val username: String,
   override val name: String,
