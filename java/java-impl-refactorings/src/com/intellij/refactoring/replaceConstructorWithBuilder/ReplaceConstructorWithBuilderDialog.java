@@ -323,19 +323,14 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       final ParameterData data = getParamData(rowIndex);
-      switch (columnIndex) {
-        case PARAM:
-          return data.getType().getCanonicalText() + " " + data.getParamName();
-        case FIELD:
-          return data.getFieldName();
-        case SETTER:
-          return data.getSetterName();
-        case DEFAULT_VALUE:
-          return data.getDefaultValue();
-        case SKIP_SETTER:
-          return !data.isInsertSetter();
-      }
-      return null;
+      return switch (columnIndex) {
+        case PARAM -> data.getType().getCanonicalText() + " " + data.getParamName();
+        case FIELD -> data.getFieldName();
+        case SETTER -> data.getSetterName();
+        case DEFAULT_VALUE -> data.getDefaultValue();
+        case SKIP_SETTER -> !data.isInsertSetter();
+        default -> null;
+      };
     }
 
     private ParameterData getParamData(int rowIndex) {
@@ -346,20 +341,13 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       final ParameterData data = getParamData(rowIndex);
       switch (columnIndex) {
-        case FIELD:
-          data.setFieldName((String)aValue);
-          break;
-        case SETTER:
-          data.setSetterName((String)aValue);
-          break;
-        case DEFAULT_VALUE:
-          data.setDefaultValue((String)aValue);
-          break;
-        case SKIP_SETTER:
-          data.setInsertSetter(!((Boolean)aValue).booleanValue());
-          break;
-        default:
+        case FIELD -> data.setFieldName((String)aValue);
+        case SETTER -> data.setSetterName((String)aValue);
+        case DEFAULT_VALUE -> data.setDefaultValue((String)aValue);
+        case SKIP_SETTER -> data.setInsertSetter(!((Boolean)aValue).booleanValue());
+        default -> {
           assert false;
+        }
       }
     }
 
@@ -370,20 +358,17 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
 
     @Override
     public String getColumnName(int column) {
-      switch (column) {
-        case PARAM:
-          return JavaRefactoringBundle.message("replace.constructor.builder.parameter.table.title");
-        case FIELD:
-          return JavaRefactoringBundle.message("replace.constructor.builder.field.name.table.title");
-        case SETTER:
-          return JavaRefactoringBundle.message("replace.constructor.builder.setter.name.table.title");
-        case DEFAULT_VALUE:
-          return JavaRefactoringBundle.message("replace.constructor.builder.default.value.table.title");
-        case SKIP_SETTER:
-          return JavaRefactoringBundle.message("replace.constructor.builder.optional.setter.table.title");
-      }
-      assert false: "unknown column " + column;
-      return null;
+      return switch (column) {
+        case PARAM -> JavaRefactoringBundle.message("replace.constructor.builder.parameter.table.title");
+        case FIELD -> JavaRefactoringBundle.message("replace.constructor.builder.field.name.table.title");
+        case SETTER -> JavaRefactoringBundle.message("replace.constructor.builder.setter.name.table.title");
+        case DEFAULT_VALUE -> JavaRefactoringBundle.message("replace.constructor.builder.default.value.table.title");
+        case SKIP_SETTER -> JavaRefactoringBundle.message("replace.constructor.builder.optional.setter.table.title");
+        default -> {
+          assert false : "unknown column " + column;
+          yield null;
+        }
+      };
     }
   }
 

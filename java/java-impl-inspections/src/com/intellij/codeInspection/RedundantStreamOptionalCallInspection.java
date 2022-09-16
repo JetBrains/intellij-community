@@ -133,19 +133,19 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
         }
         if (!EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(qualifier.getType(), call.getType())) return;
         switch (name) {
-          case "filter":
+          case "filter" -> {
             if (args.length == 1 && isTruePredicate(args[0])) {
               register(call, JavaBundle.message("inspection.redundant.stream.optional.call.explanation.filter"));
             }
-            break;
-          case "map":
+          }
+          case "map" -> {
             boolean allowBoxUnbox =
               USELESS_BOXING_IN_STREAM_MAP || optional || StreamApiUtil.getStreamElementType(call.getType()) instanceof PsiPrimitiveType;
             if (args.length == 1 && isIdentityMapping(args[0], allowBoxUnbox)) {
               register(call, null);
             }
-            break;
-          case "flatMap":
+          }
+          case "flatMap" -> {
             if (args.length == 1) {
               if (optional) {
                 if (FunctionalExpressionUtils
@@ -154,15 +154,16 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
                       .isFunctionalReferenceTo(args[0], CommonClassNames.JAVA_UTIL_OPTIONAL, null, "ofNullable", new PsiType[1])) {
                   register(call, null);
                 }
-              } else {
+              }
+              else {
                 if (FunctionalExpressionUtils
-                      .isFunctionalReferenceTo(args[0], CommonClassNames.JAVA_UTIL_STREAM_STREAM, null, "of", new PsiType[1])) {
+                  .isFunctionalReferenceTo(args[0], CommonClassNames.JAVA_UTIL_STREAM_STREAM, null, "of", new PsiType[1])) {
                   register(call, null);
                 }
               }
             }
-            break;
-          case "sorted":
+          }
+          case "sorted" -> {
             if (args.length <= 1) {
               PsiMethodCallExpression furtherCall = findCallThatSpoilsSorting(call);
               if (furtherCall != null) {
@@ -183,13 +184,14 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
                 String message = "sorted".equals(furtherCallName)
                                  ? JavaBundle.message("inspection.redundant.stream.optional.call.explanation.sorted.twice")
                                  : terminalReplacement != null
-                                 ? JavaBundle.message("inspection.redundant.stream.optional.call.explanation.sorted.parallel", furtherCallName)
-                                 : JavaBundle.message("inspection.redundant.stream.optional.call.explanation.sorted", furtherCallName);
+                                   ? JavaBundle.message("inspection.redundant.stream.optional.call.explanation.sorted.parallel",
+                                                        furtherCallName)
+                                   : JavaBundle.message("inspection.redundant.stream.optional.call.explanation.sorted", furtherCallName);
                 register(call, message, additionalFix);
               }
             }
-            break;
-          case "distinct":
+          }
+          case "distinct" -> {
             if (args.length == 0) {
               PsiMethodCallExpression furtherCall =
                 findSubsequentCall(call, Predicate.isEqual("distinct"), CALLS_KEEPING_ELEMENTS_DISTINCT::contains);
@@ -203,8 +205,8 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
                 register(call, JavaBundle.message("inspection.redundant.stream.optional.call.explanation.distinct.set"));
               }
             }
-            break;
-          case "unordered":
+          }
+          case "unordered" -> {
             if (args.length == 0) {
               PsiMethodCallExpression furtherCall =
                 findSubsequentCall(call, Predicate.isEqual("unordered"), n -> !n.equals("sorted"));
@@ -212,15 +214,15 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
                 register(furtherCall, JavaBundle.message("inspection.redundant.stream.optional.call.explanation.unordered"));
               }
             }
-            break;
-          case "sequential":
-          case "parallel":
+          }
+          case "sequential", "parallel" -> {
             if (args.length == 0) {
               PsiMethodCallExpression furtherCall = findSubsequentCall(call, CALLS_AFFECTING_PARALLELIZATION::contains, n -> true);
               if (furtherCall != null && furtherCall.getArgumentList().isEmpty()) {
                 register(call, JavaBundle.message("inspection.redundant.stream.optional.call.explanation.parallel",
-                                                         furtherCall.getMethodExpression().getReferenceName()));
-              } else {
+                                                  furtherCall.getMethodExpression().getReferenceName()));
+              }
+              else {
                 PsiMethodCallExpression previousCall = MethodCallUtils.getQualifierMethodCall(call);
                 while (true) {
                   if (previousCall == null) break;
@@ -242,7 +244,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
                 }
               }
             }
-            break;
+          }
         }
       }
 

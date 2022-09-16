@@ -719,20 +719,21 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       boolean removeParentNegation;
       boolean removeLambdaNegation;
       switch (from) {
-        case ALL_MATCH_METHOD:
+        case ALL_MATCH_METHOD -> {
           removeLambdaNegation = true;
           removeParentNegation = myTo.equals(ANY_MATCH_METHOD);
-          break;
-        case ANY_MATCH_METHOD:
+        }
+        case ANY_MATCH_METHOD -> {
           removeParentNegation = true;
           removeLambdaNegation = myTo.equals(ALL_MATCH_METHOD);
-          break;
-        case NONE_MATCH_METHOD:
+        }
+        case NONE_MATCH_METHOD -> {
           removeParentNegation = myTo.equals(ANY_MATCH_METHOD);
           removeLambdaNegation = myTo.equals(ALL_MATCH_METHOD);
-          break;
-        default:
+        }
+        default -> {
           return null;
+        }
       }
       if (removeParentNegation && !isParentNegated(methodCall)) return null;
       if (removeLambdaNegation && !isArgumentLambdaNegated(methodCall)) return null;
@@ -1628,15 +1629,12 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     private static String getStreamClassName(@NotNull PsiMethodCallExpression call) {
       String name = MethodCallUtils.getMethodName(call);
       if (name == null) return JAVA_UTIL_STREAM_STREAM;
-      switch (name) {
-        case "mapToInt":
-          return JAVA_UTIL_STREAM_INT_STREAM;
-        case "mapToLong":
-          return JAVA_UTIL_STREAM_LONG_STREAM;
-        case "mapToDouble":
-          return JAVA_UTIL_STREAM_DOUBLE_STREAM;
-      }
-      return JAVA_UTIL_STREAM_STREAM;
+      return switch (name) {
+        case "mapToInt" -> JAVA_UTIL_STREAM_INT_STREAM;
+        case "mapToLong" -> JAVA_UTIL_STREAM_LONG_STREAM;
+        case "mapToDouble" -> JAVA_UTIL_STREAM_DOUBLE_STREAM;
+        default -> JAVA_UTIL_STREAM_STREAM;
+      };
     }
   }
 

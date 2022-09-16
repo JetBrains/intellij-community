@@ -451,32 +451,26 @@ public final class ResolverTree {
       final PsiType right = constr.getRight();
 
       switch ((left instanceof PsiTypeVariable ? 0 : 1) + (right instanceof PsiTypeVariable ? 0 : 2)) {
-        case 0:
-          continue;
+        case 0 -> { }
+        case 1 -> {
+          final Constraint c = myTypeVarConstraints.get(right);
 
-        case 1:
-          {
-            final Constraint c = myTypeVarConstraints.get(right);
+          if (c == null) {
+            final Constraint d = myVarTypeConstraints.get(right);
 
-            if (c == null) {
-              final Constraint d = myVarTypeConstraints.get(right);
-
-              if (d != null) {
-                reduceInterval(constr, d);
-                return;
-              }
-
-              myTypeVarConstraints.put((PsiTypeVariable)right, constr);
-            }
-            else {
-              reduceTypeVar(constr, c);
+            if (d != null) {
+              reduceInterval(constr, d);
               return;
             }
-          }
-          break;
 
-        case 2:
-        {
+            myTypeVarConstraints.put((PsiTypeVariable)right, constr);
+          }
+          else {
+            reduceTypeVar(constr, c);
+            return;
+          }
+        }
+        case 2 -> {
           final Constraint c = myVarTypeConstraints.get(left);
 
           if (c == null) {
@@ -493,12 +487,11 @@ public final class ResolverTree {
             reduceVarType(constr, c);
             return;
           }
-          break;
         }
-
-        case 3:
+        case 3 -> {
           reduceTypeType(constr);
           return;
+        }
       }
     }
 

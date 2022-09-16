@@ -138,14 +138,13 @@ public class JavaColorProvider implements ElementColorProvider {
 
   @Nullable
   private static ColorConstructors getConstructorType(int paramCount, PsiType paramType) {
-    switch (paramCount) {
-      case 1: return ColorConstructors.INT;
-      case 2: return ColorConstructors.INT_BOOL;
-      case 3: return PsiType.INT.equals(paramType) ? ColorConstructors.INT_x3 : ColorConstructors.FLOAT_x3;
-      case 4: return PsiType.INT.equals(paramType) ? ColorConstructors.INT_x4 : ColorConstructors.FLOAT_x4;
-    }
-
-    return null;
+    return switch (paramCount) {
+      case 1 -> ColorConstructors.INT;
+      case 2 -> ColorConstructors.INT_BOOL;
+      case 3 -> PsiType.INT.equals(paramType) ? ColorConstructors.INT_x3 : ColorConstructors.FLOAT_x3;
+      case 4 -> PsiType.INT.equals(paramType) ? ColorConstructors.INT_x4 : ColorConstructors.FLOAT_x4;
+      default -> null;
+    };
   }
 
   public static int getInt(UExpression expr) {

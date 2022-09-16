@@ -685,17 +685,16 @@ public class ControlFlowGraph implements CodeConstants {
       InstructionImpact.stepTypes(data, instr, pool);
 
       switch (instr.opcode) {
-        case CodeConstants.opc_jsr:
-        case CodeConstants.opc_ret:
+        case CodeConstants.opc_jsr, CodeConstants.opc_ret -> {
           seq.removeInstruction(i);
           i--;
-          break;
-        case CodeConstants.opc_astore:
-        case CodeConstants.opc_pop:
+        }
+        case CodeConstants.opc_astore, CodeConstants.opc_pop -> {
           if (var.getType() == CodeConstants.TYPE_ADDRESS) {
             seq.removeInstruction(i);
             i--;
           }
+        }
       }
     }
 

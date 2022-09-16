@@ -78,17 +78,15 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     int depth = 0;
     while (startPos < input.length()) {
       switch (input.charAt(startPos)) {
-        case '(':
-          depth++;
-          break;
-        case ')':
+        case '(' -> depth++;
+        case ')' -> {
           if (depth == 1) {
             return startPos;
           }
           else {
             depth--;
           }
-          break;
+        }
       }
       startPos++;
     }
