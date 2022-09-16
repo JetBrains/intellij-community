@@ -1,0 +1,48 @@
+KotlinUFile:commentsOnDataClass.kt(
+    KotlinUClass:Foo(
+        UComment(/**
+         * Multi-line comment on data class
+         */)
+        KotlinUField:p1(
+        )
+        KotlinUField:p2(
+        )
+        KotlinUMethod:toString(
+        )
+        KotlinUMethod:getP1(
+        )
+        KotlinUMethod:getP2(
+        )
+        KotlinConstructorUMethod:Foo(
+            KotlinUParameter:p1(
+            )
+            KotlinUParameter:p2(
+            )
+        )
+        KotlinUMethod:component1(
+        )
+        KotlinUMethod:component2(
+        )
+        KotlinUMethod:copy(
+            UComment(/**
+             * Multi-line comment on data class
+             */)
+            KotlinUParameter:p1(
+            )
+            KotlinUParameter:p2(
+            )
+        )
+        KotlinUMethod:hashCode(
+            UComment(/**
+             * Multi-line comment on data class
+             */)
+        )
+        KotlinUMethod:equals(
+            UComment(/**
+             * Multi-line comment on data class
+             */)
+            KotlinUParameter:other(
+            )
+        )
+    )
+)
