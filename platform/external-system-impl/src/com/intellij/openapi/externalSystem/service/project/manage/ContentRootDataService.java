@@ -180,7 +180,8 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
       }
 
       for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.EXCLUDED)) {
-        createExcludedRootIfAbsent(contentEntry, path, module.getName(), module.getProject());
+        createExcludedRootIfAbsent(contentEntry, path, module.getName(), module.getProject(),
+                                   ExternalSystemApiUtil.toExternalSource(node.getData().getOwner()));
       }
       contentEntriesMap.remove(contentEntry.getUrl());
     }
@@ -354,7 +355,11 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     }
   }
 
-  private static void createExcludedRootIfAbsent(@NotNull ContentEntry entry, @NotNull SourceRoot root, @NotNull String moduleName, @NotNull Project project) {
+  private static void createExcludedRootIfAbsent(@NotNull ContentEntry entry,
+                                                 @NotNull SourceRoot root,
+                                                 @NotNull String moduleName,
+                                                 @NotNull Project project,
+                                                 @NotNull ProjectModelExternalSource source) {
     String rootPath = root.getPath();
     for (VirtualFile file : entry.getExcludeFolderFiles()) {
       if (ExternalSystemApiUtil.getLocalFileSystemPath(file).equals(rootPath)) {
@@ -362,7 +367,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
       }
     }
     logDebug("Importing excluded root '%s' for content root '%s' of module '%s'", root, entry.getUrl(), moduleName);
-    entry.addExcludeFolder(pathToUrl(rootPath));
+    entry.addExcludeFolder(pathToUrl(rootPath), source);
   }
 
 

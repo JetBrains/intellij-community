@@ -65,8 +65,8 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
     if (!(newEntity.getExcludedPatterns().equals(oldEntity.getExcludedPatterns()))) {
       return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getModule().getPersistentId(), newEntity.getUrl());
     }
-    List<VirtualFileUrl> newExcludedUrls = newEntity.getExcludedUrls();
-    List<VirtualFileUrl> oldExcludedUrls = oldEntity.getExcludedUrls();
+    List<VirtualFileUrl> newExcludedUrls = ContainerUtil.map(newEntity.getExcludedUrls(), o -> o.getUrl());
+    List<VirtualFileUrl> oldExcludedUrls = ContainerUtil.map(oldEntity.getExcludedUrls(), o -> o.getUrl());
     if (!oldExcludedUrls.equals(newExcludedUrls)) {
       List<VirtualFileUrl> roots = new ArrayList<>();
       for (VirtualFileUrl oldUrl : oldExcludedUrls) {

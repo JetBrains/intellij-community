@@ -214,6 +214,7 @@ public interface ContentEntry extends Synthetic {
    */
   @NotNull
   ExcludeFolder addExcludeFolder(@NotNull String url);
+  ExcludeFolder addExcludeFolder(@NotNull String url, ProjectModelExternalSource source);
 
   /**
    * Removes an exclude root from this content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.

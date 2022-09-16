@@ -108,11 +108,11 @@ fun MutableEntityStorage.addContentRootEntity(url: VirtualFileUrl,
                                               excludedPatterns: List<String>,
                                               module: ModuleEntity,
                                               source: EntitySource = module.entitySource): ContentRootEntity {
-  val entity = ContentRootEntity(url, excludedUrls, excludedPatterns, source) {
+  val excludes = excludedUrls.map { this addEntity ExcludeUrlEntity(it, source) }
+  return this addEntity ContentRootEntity(url, excludedPatterns, source) {
+    this.excludedUrls = excludes
     this.module = module
   }
-  this.addEntity(entity)
-  return entity
 }
 
 @Deprecated(replaceWith = ReplaceWith("addContentRootEntity(url, excludedUrls, excludedPatterns, module, source)"),
@@ -128,9 +128,15 @@ fun MutableEntityStorage.addContentRootEntityWithCustomEntitySource(url: Virtual
 
 fun MutableEntityStorage.addLibraryEntity(name: String, tableId: LibraryTableId, roots: List<LibraryRoot>,
                                           excludedRoots: List<VirtualFileUrl>, source: EntitySource): LibraryEntity {
-  val entity = LibraryEntity(name, tableId, roots, excludedRoots, source)
-  this.addEntity(entity)
-  return entity
+  val excludes = excludedRoots.map { this addEntity ExcludeUrlEntity(it, source) }
+  return addLibraryEntityWithExcludes(name, tableId, roots, excludes, source)
+}
+
+fun MutableEntityStorage.addLibraryEntityWithExcludes(name: String, tableId: LibraryTableId, roots: List<LibraryRoot>,
+                                                      excludedRoots: List<ExcludeUrlEntity>, source: EntitySource): LibraryEntity {
+  return this addEntity LibraryEntity(name, tableId, roots, source) {
+    this.excludedRoots = excludedRoots
+  }
 }
 
 /**
@@ -403,7 +409,7 @@ fun ModuleDependencyItem.equalsAsOrderEntry(other: ModuleDependencyItem,
             else {
               val beforeLibrary = thisStore.resolve(library)!!
               val afterLibrary = otherStore.resolve(other.library)!!
-              if (beforeLibrary.excludedRoots != afterLibrary.excludedRoots) false
+              if (beforeLibrary.excludedRoots.map { it.url } != afterLibrary.excludedRoots.map { it.url }) false
               else {
                 val beforeLibraryKind = beforeLibrary.libraryProperties?.libraryType
                 val afterLibraryKind = afterLibrary.libraryProperties?.libraryType

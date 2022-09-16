@@ -18,6 +18,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntityWithExcludes
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryPropertiesEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
@@ -119,7 +120,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       LibraryId(existsName, tableId) in modifiableModel.diff
     }
     val originalEntity = original.librarySnapshot.libraryEntity
-    val libraryEntity = modifiableModel.diff.addLibraryEntity(
+    val libraryEntity = modifiableModel.diff.addLibraryEntityWithExcludes(
       roots = originalEntity.roots,
       tableId = tableId,
       name = libraryEntityName,

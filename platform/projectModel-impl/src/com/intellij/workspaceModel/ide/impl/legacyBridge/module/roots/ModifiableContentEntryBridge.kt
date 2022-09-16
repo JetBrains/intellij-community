@@ -13,6 +13,8 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ExcludeUrlEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaResourceRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -106,14 +108,15 @@ internal class ModifiableContentEntryBridge(
     currentContentEntry.value.sourceRootEntities.forEach { sourceRoot -> diff.removeEntity(sourceRoot) }
   }
 
-  private fun addExcludeFolder(excludeUrl: VirtualFileUrl): ExcludeFolder {
+  private fun addExcludeFolder(excludeUrl: VirtualFileUrl, projectSource: ProjectModelExternalSource?): ExcludeFolder {
     if (!contentEntryUrl.isEqualOrParentOf(excludeUrl)) {
       error("Exclude folder $excludeUrl must be under content entry $contentEntryUrl")
     }
 
-    if (excludeUrl !in currentContentEntry.value.entity.excludedUrls) {
+    if (excludeUrl !in currentContentEntry.value.entity.excludedUrls.map { it.url }) {
       updateContentEntry {
-        excludedUrls.add(excludeUrl)
+        val source = if (projectSource == null) getInternalFileSource(entitySource) ?: entitySource else entitySource
+        excludedUrls = excludedUrls + ExcludeUrlEntity(excludeUrl, source)
       }
     }
 
@@ -122,34 +125,40 @@ internal class ModifiableContentEntryBridge(
     } ?: error("Exclude folder $excludeUrl must be present after adding it to content entry $contentEntryUrl")
   }
 
-  override fun addExcludeFolder(file: VirtualFile): ExcludeFolder = addExcludeFolder(file.toVirtualFileUrl(virtualFileManager))
-  override fun addExcludeFolder(url: String): ExcludeFolder = addExcludeFolder(virtualFileManager.fromUrl(url))
+  override fun addExcludeFolder(file: VirtualFile): ExcludeFolder = addExcludeFolder(file.toVirtualFileUrl(virtualFileManager), null)
+  override fun addExcludeFolder(url: String): ExcludeFolder = addExcludeFolder(virtualFileManager.fromUrl(url), null)
+  override fun addExcludeFolder(url: String, source: ProjectModelExternalSource): ExcludeFolder {
+    return addExcludeFolder(virtualFileManager.fromUrl(url), source)
+  }
 
   override fun removeExcludeFolder(excludeFolder: ExcludeFolder) {
     val virtualFileUrl = (excludeFolder as ExcludeFolderBridge).excludeFolderUrl
 
     updateContentEntry {
-      if (!excludedUrls.contains(virtualFileUrl)) {
+      if (!excludedUrls.map { it.url }.contains(virtualFileUrl)) {
         error("Exclude folder ${excludeFolder.url} is not under content entry $contentEntryUrl")
       }
 
-      excludedUrls.removeIf { url -> url == virtualFileUrl }
+      excludedUrls = excludedUrls.filterNot { url -> url.url == virtualFileUrl }
     }
   }
 
   private fun updateContentEntry(updater: ContentRootEntity.Builder.() -> Unit) {
-    diff.modifyEntity(ContentRootEntity.Builder::class.java, currentContentEntry.value.entity, updater)
+    diff.modifyEntity(currentContentEntry.value.entity, updater)
   }
 
   override fun removeExcludeFolder(url: String): Boolean {
     val virtualFileUrl = virtualFileManager.fromUrl(url)
 
-    val excludedUrls = currentContentEntry.value.entity.excludedUrls
+    val excludedUrls = currentContentEntry.value.entity.excludedUrls.map { it.url }
     if (!excludedUrls.contains(virtualFileUrl)) return false
 
+    val contentRootEntity = currentContentEntry.value.entity
+    val (new, toRemove) = contentRootEntity.excludedUrls.partition {excludedUrl -> excludedUrl.url != virtualFileUrl  }
     updateContentEntry {
-      this.excludedUrls.removeIf { excludedUrl -> excludedUrl == virtualFileUrl }
+      this.excludedUrls = new
     }
+    toRemove.forEach { diff.removeEntity(it) }
 
     return true
   }

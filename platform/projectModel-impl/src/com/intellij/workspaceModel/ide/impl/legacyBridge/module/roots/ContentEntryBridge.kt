@@ -19,7 +19,7 @@ internal class ContentEntryBridge(internal val model: ModuleRootModelBridge,
                                   val entity: ContentRootEntity,
                                   val updater: (((MutableEntityStorage) -> Unit) -> Unit)?) : ContentEntry {
   private val excludeFolders by lazy {
-    entity.excludedUrls.map { ExcludeFolderBridge(this, it) }
+    entity.excludedUrls.map { ExcludeFolderBridge(this, it.url) }
   }
   private val sourceFolders by lazy {
     sourceRootEntities.map { SourceFolderBridge(this, it) }
@@ -94,6 +94,7 @@ internal class ContentEntryBridge(internal val model: ModuleRootModelBridge,
   override fun clearSourceFolders() = throwReadonly()
   override fun addExcludeFolder(file: VirtualFile): ExcludeFolder = throwReadonly()
   override fun addExcludeFolder(url: String): ExcludeFolder = throwReadonly()
+  override fun addExcludeFolder(url: String, source: ProjectModelExternalSource?): ExcludeFolder = throwReadonly()
   override fun removeExcludeFolder(excludeFolder: ExcludeFolder) = throwReadonly()
   override fun removeExcludeFolder(url: String): Boolean = throwReadonly()
   override fun clearExcludeFolders() = throwReadonly()

@@ -76,6 +76,6 @@ object IndexableEntityProviderMethods {
   }
 
   fun getExcludedFiles(entity: ContentRootEntity): List<VirtualFile> {
-    return ContainerUtil.mapNotNull(entity.excludedUrls) { param -> param.virtualFile }
+    return ContainerUtil.mapNotNull(entity.excludedUrls) { param -> param.url.virtualFile }
   }
 }

@@ -423,31 +423,46 @@ internal class MutableEntityStorageImpl(
         removes[value.oldData] = if (existingValue != null) ArrayList(existingValue + value.oldData) else mutableListOf(value.oldData)
       }
     }
-    val idsToRemove = ArrayList<EntityId>()
+    val idsToRemove = ArrayList<Pair<EntityId, EntityId>>()
     adds.forEach { addedEntityData ->
       if (removes.isEmpty()) return@forEach
       val possibleRemovedSameEntity = removes[addedEntityData]
-      val addedEntityId = addedEntityData.createEntityId()
+      val newEntityId = addedEntityData.createEntityId()
       val hasMapping = this.indexes.externalMappings.any { (_, value) ->
-        (value as ExternalEntityMappingImpl<*>).getDataByEntityId(addedEntityId) != null
+        (value as ExternalEntityMappingImpl<*>).getDataByEntityId(newEntityId) != null
       }
       if (hasMapping) return@forEach
       val found = possibleRemovedSameEntity?.firstOrNull { possibleRemovedSame ->
-        same(originalImpl, addedEntityId, possibleRemovedSame.createEntityId())
+        same(originalImpl, newEntityId, possibleRemovedSame.createEntityId())
       }
       if (found != null) {
-        val foundEntityId = found.createEntityId()
+        val initialEntityId = found.createEntityId()
         val hasRemovedMapping = originalImpl.indexes.externalMappings.any { (_, value) ->
-          value.getDataByEntityId(foundEntityId) != null
+          value.getDataByEntityId(initialEntityId) != null
         }
         if (hasRemovedMapping) return@forEach
         possibleRemovedSameEntity.remove(found)
         if (possibleRemovedSameEntity.isEmpty()) removes.remove(addedEntityData)
-        idsToRemove += addedEntityId
-        idsToRemove += foundEntityId
+        idsToRemove += newEntityId to initialEntityId
       }
     }
-    idsToRemove.forEach { changeLog.changeLog.remove(it) }
+    idsToRemove.forEach { (new, initial) ->
+      changeLog.changeLog.remove(new)
+      changeLog.changeLog.remove(initial)
+
+
+      this.refs.getParentRefsOfChild(new.asChild()).forEach { (connection, parent) ->
+        val changedParent = changeLog.changeLog[parent.id]
+        if (changedParent is ChangeEntry.ReplaceEntity) {
+          if (changedParent.newData == changedParent.oldData
+              && changedParent.modifiedParents.isEmpty()
+              && changedParent.removedChildren.singleOrNull()?.takeIf { it.first == connection && it.second.id == initial } != null
+              && changedParent.newChildren.singleOrNull()?.takeIf { it.first == connection && it.second.id == new } != null) {
+            changeLog.changeLog.remove(parent.id)
+          }
+        }
+      }
+    }
   }
 
   private fun same(originalImpl: AbstractEntityStorage,
