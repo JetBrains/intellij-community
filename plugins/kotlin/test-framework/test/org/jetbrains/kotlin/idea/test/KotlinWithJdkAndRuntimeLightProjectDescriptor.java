@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader;
 
 import java.io.File;
 import java.util.List;
@@ -24,6 +25,18 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
             @NotNull List<? extends File> librarySourceFiles
     ) {
         super(libraryFiles, librarySourceFiles);
+    }
+
+    @NotNull
+    public static KotlinWithJdkAndRuntimeLightProjectDescriptor getInstance(@NotNull String version) {
+        KotlinArtifactsDownloader instance = KotlinArtifactsDownloader.INSTANCE;
+        return new KotlinWithJdkAndRuntimeLightProjectDescriptor(
+                List.of(instance.downloadArtifactForIdeFromSources("kotlin-stdlib", version)),
+                List.of(
+                        instance.downloadArtifactForIdeFromSources("kotlin-stdlib", version, "-sources.jar"),
+                        instance.downloadArtifactForIdeFromSources("kotlin-stdlib-common", version, "-sources.jar")
+                )
+        );
     }
 
     @NotNull

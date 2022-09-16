@@ -69,12 +69,14 @@ object KotlinPluginLayout {
         if (isRunningFromSources) {
             val bundledJpsVersion by lazy {
                 KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_dist.xml")
-                    ?: error("Cannot find version of kotlin-dist library")
             }
 
             kotlincProvider = lazy {
                 @Suppress("DEPRECATION")
-                val distJar = downloadArtifactForIdeFromSources(libraryFileName = "kotlinc_kotlin_dist.xml", artifactId = OLD_KOTLIN_DIST_ARTIFACT_ID)
+                val distJar = downloadArtifactForIdeFromSources(
+                    OLD_KOTLIN_DIST_ARTIFACT_ID,
+                    KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_dist.xml")
+                )
                 val unpackedDistDir = KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources")
                 LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar)
             }
