@@ -2,7 +2,11 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.UsefulTestCase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MavenSimpleConsoleTest extends UsefulTestCase {
 
@@ -138,6 +142,21 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
            "[IJ]-spy-output-3\n" +
            "end\n"
     );
+  }
+
+  public void testAnsiColors() {
+    List<Pair<String, Key<String>>> expected = new ArrayList<>() {{
+      add(new Pair<>("[", Key.create("color1")));
+      add(new Pair<>("INFO", Key.create("color2")));
+      add(new Pair<>("]\n", Key.create("color1")));
+    }};
+    List<Pair<String, Key<String>>> actual = new ArrayList<>();
+    MavenSimpleConsoleEventsBuffer buffer =
+      new MavenSimpleConsoleEventsBuffer((l, k) -> actual.add(new Pair<>(l, k)), false);
+    for (var item : expected) {
+      buffer.addText(item.first, item.second);
+    }
+    assertEquals(expected, actual);
   }
 
   private static void doTest(boolean showSpyOutput, String[] text, String expected) {
