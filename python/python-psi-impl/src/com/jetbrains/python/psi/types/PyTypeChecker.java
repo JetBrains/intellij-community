@@ -891,6 +891,20 @@ public final class PyTypeChecker {
         }
         return new PyCollectionTypeImpl(collection.getPyClass(), collection.isDefinition(), substitutes);
       }
+      else if (type instanceof PyTypedDictType typedDictType) {
+        final Map<String, kotlin.Pair<PyExpression, PyType>> tdFields = typedDictType.getKeysToValuesWithTypes();
+        final var substitutedTDFields = ContainerUtil.map2Map(
+          tdFields.entrySet(),
+          field -> Pair.create(
+            field.getKey(),
+            new kotlin.Pair<>(
+              field.getValue().getFirst(),
+              substitute(field.getValue().getSecond(), substitutions, context)
+            )
+          )
+        );
+        return PyTypedDictType.Companion.createFromKeysToValueTypes(typedDictType.myClass, substitutedTDFields, false);
+      }
       else if (type instanceof PyTupleType) {
         final PyTupleType tupleType = (PyTupleType)type;
         final PyClass tupleClass = tupleType.getPyClass();
