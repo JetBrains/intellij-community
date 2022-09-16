@@ -164,6 +164,29 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       return connections
     }
 
+    override fun afterModification() {
+      val collection_manyLinks = getEntityData().manyLinks
+      if (collection_manyLinks is MutableWorkspaceList<*>) {
+        collection_manyLinks.cleanModificationUpdateAction()
+      }
+      val collection_inContainerList = getEntityData().inContainerList
+      if (collection_inContainerList is MutableWorkspaceList<*>) {
+        collection_inContainerList.cleanModificationUpdateAction()
+      }
+      val collection_deepContainer = getEntityData().deepContainer
+      if (collection_deepContainer is MutableWorkspaceList<*>) {
+        collection_deepContainer.cleanModificationUpdateAction()
+      }
+      val collection_listSealedContainer = getEntityData().listSealedContainer
+      if (collection_listSealedContainer is MutableWorkspaceList<*>) {
+        collection_listSealedContainer.cleanModificationUpdateAction()
+      }
+      val collection_justListProperty = getEntityData().justListProperty
+      if (collection_justListProperty is MutableWorkspaceList<*>) {
+        collection_justListProperty.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as EntityWithSoftLinks
@@ -212,7 +235,12 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() {
         val collection_manyLinks = getEntityData().manyLinks
         if (collection_manyLinks !is MutableWorkspaceList) return collection_manyLinks
-        collection_manyLinks.setModificationUpdateAction(manyLinksUpdater)
+        if (modifiable.get()) {
+          collection_manyLinks.setModificationUpdateAction(manyLinksUpdater)
+        }
+        else {
+          collection_manyLinks.cleanModificationUpdateAction()
+        }
         return collection_manyLinks
       }
       set(value) {
@@ -256,7 +284,12 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() {
         val collection_inContainerList = getEntityData().inContainerList
         if (collection_inContainerList !is MutableWorkspaceList) return collection_inContainerList
-        collection_inContainerList.setModificationUpdateAction(inContainerListUpdater)
+        if (modifiable.get()) {
+          collection_inContainerList.setModificationUpdateAction(inContainerListUpdater)
+        }
+        else {
+          collection_inContainerList.cleanModificationUpdateAction()
+        }
         return collection_inContainerList
       }
       set(value) {
@@ -273,7 +306,12 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() {
         val collection_deepContainer = getEntityData().deepContainer
         if (collection_deepContainer !is MutableWorkspaceList) return collection_deepContainer
-        collection_deepContainer.setModificationUpdateAction(deepContainerUpdater)
+        if (modifiable.get()) {
+          collection_deepContainer.setModificationUpdateAction(deepContainerUpdater)
+        }
+        else {
+          collection_deepContainer.cleanModificationUpdateAction()
+        }
         return collection_deepContainer
       }
       set(value) {
@@ -299,7 +337,12 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() {
         val collection_listSealedContainer = getEntityData().listSealedContainer
         if (collection_listSealedContainer !is MutableWorkspaceList) return collection_listSealedContainer
-        collection_listSealedContainer.setModificationUpdateAction(listSealedContainerUpdater)
+        if (modifiable.get()) {
+          collection_listSealedContainer.setModificationUpdateAction(listSealedContainerUpdater)
+        }
+        else {
+          collection_listSealedContainer.cleanModificationUpdateAction()
+        }
         return collection_listSealedContainer
       }
       set(value) {
@@ -332,7 +375,12 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() {
         val collection_justListProperty = getEntityData().justListProperty
         if (collection_justListProperty !is MutableWorkspaceList) return collection_justListProperty
-        collection_justListProperty.setModificationUpdateAction(justListPropertyUpdater)
+        if (modifiable.get()) {
+          collection_justListProperty.setModificationUpdateAction(justListPropertyUpdater)
+        }
+        else {
+          collection_justListProperty.cleanModificationUpdateAction()
+        }
         return collection_justListProperty
       }
       set(value) {

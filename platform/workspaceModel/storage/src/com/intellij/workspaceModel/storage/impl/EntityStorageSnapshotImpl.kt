@@ -243,6 +243,7 @@ internal class MutableEntityStorageImpl(
       // Execute modification code
       (modifiableEntity as ModifiableWorkspaceEntityBase<*>).allowModifications {
         modifiableEntity.change()
+        modifiableEntity.afterModification()
       }
 
       // Check for persistent id uniqueness

@@ -124,6 +124,13 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
       return connections
     }
 
+    override fun afterModification() {
+      val collection_stringListProperty = getEntityData().stringListProperty
+      if (collection_stringListProperty is MutableWorkspaceList<*>) {
+        collection_stringListProperty.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SampleEntity
@@ -173,7 +180,12 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
       get() {
         val collection_stringListProperty = getEntityData().stringListProperty
         if (collection_stringListProperty !is MutableWorkspaceList) return collection_stringListProperty
-        collection_stringListProperty.setModificationUpdateAction(stringListPropertyUpdater)
+        if (modifiable.get()) {
+          collection_stringListProperty.setModificationUpdateAction(stringListPropertyUpdater)
+        }
+        else {
+          collection_stringListProperty.cleanModificationUpdateAction()
+        }
         return collection_stringListProperty
       }
       set(value) {

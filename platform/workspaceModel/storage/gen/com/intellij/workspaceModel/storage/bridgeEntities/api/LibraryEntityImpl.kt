@@ -126,6 +126,17 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       return connections
     }
 
+    override fun afterModification() {
+      val collection_roots = getEntityData().roots
+      if (collection_roots is MutableWorkspaceList<*>) {
+        collection_roots.cleanModificationUpdateAction()
+      }
+      val collection_excludedRoots = getEntityData().excludedRoots
+      if (collection_excludedRoots is MutableWorkspaceList<*>) {
+        collection_excludedRoots.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LibraryEntity
@@ -190,7 +201,12 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       get() {
         val collection_roots = getEntityData().roots
         if (collection_roots !is MutableWorkspaceList) return collection_roots
-        collection_roots.setModificationUpdateAction(rootsUpdater)
+        if (modifiable.get()) {
+          collection_roots.setModificationUpdateAction(rootsUpdater)
+        }
+        else {
+          collection_roots.cleanModificationUpdateAction()
+        }
         return collection_roots
       }
       set(value) {
@@ -208,7 +224,12 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       get() {
         val collection_excludedRoots = getEntityData().excludedRoots
         if (collection_excludedRoots !is MutableWorkspaceList) return collection_excludedRoots
-        collection_excludedRoots.setModificationUpdateAction(excludedRootsUpdater)
+        if (modifiable.get()) {
+          collection_excludedRoots.setModificationUpdateAction(excludedRootsUpdater)
+        }
+        else {
+          collection_excludedRoots.cleanModificationUpdateAction()
+        }
         return collection_excludedRoots
       }
       set(value) {

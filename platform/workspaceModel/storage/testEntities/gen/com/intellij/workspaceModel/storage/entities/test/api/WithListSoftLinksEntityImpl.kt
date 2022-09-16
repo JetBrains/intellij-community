@@ -86,6 +86,13 @@ open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityDa
       return connections
     }
 
+    override fun afterModification() {
+      val collection_links = getEntityData().links
+      if (collection_links is MutableWorkspaceList<*>) {
+        collection_links.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as WithListSoftLinksEntity
@@ -122,7 +129,12 @@ open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityDa
       get() {
         val collection_links = getEntityData().links
         if (collection_links !is MutableWorkspaceList) return collection_links
-        collection_links.setModificationUpdateAction(linksUpdater)
+        if (modifiable.get()) {
+          collection_links.setModificationUpdateAction(linksUpdater)
+        }
+        else {
+          collection_links.cleanModificationUpdateAction()
+        }
         return collection_links
       }
       set(value) {

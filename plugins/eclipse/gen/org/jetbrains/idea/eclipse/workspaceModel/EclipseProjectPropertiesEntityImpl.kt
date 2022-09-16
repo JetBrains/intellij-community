@@ -127,6 +127,21 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
       return connections
     }
 
+    override fun afterModification() {
+      val collection_eclipseUrls = getEntityData().eclipseUrls
+      if (collection_eclipseUrls is MutableWorkspaceList<*>) {
+        collection_eclipseUrls.cleanModificationUpdateAction()
+      }
+      val collection_unknownCons = getEntityData().unknownCons
+      if (collection_unknownCons is MutableWorkspaceList<*>) {
+        collection_unknownCons.cleanModificationUpdateAction()
+      }
+      val collection_knownCons = getEntityData().knownCons
+      if (collection_knownCons is MutableWorkspaceList<*>) {
+        collection_knownCons.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as EclipseProjectPropertiesEntity
@@ -208,7 +223,12 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
       get() {
         val collection_eclipseUrls = getEntityData().eclipseUrls
         if (collection_eclipseUrls !is MutableWorkspaceList) return collection_eclipseUrls
-        collection_eclipseUrls.setModificationUpdateAction(eclipseUrlsUpdater)
+        if (modifiable.get()) {
+          collection_eclipseUrls.setModificationUpdateAction(eclipseUrlsUpdater)
+        }
+        else {
+          collection_eclipseUrls.cleanModificationUpdateAction()
+        }
         return collection_eclipseUrls
       }
       set(value) {
@@ -225,7 +245,12 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
       get() {
         val collection_unknownCons = getEntityData().unknownCons
         if (collection_unknownCons !is MutableWorkspaceList) return collection_unknownCons
-        collection_unknownCons.setModificationUpdateAction(unknownConsUpdater)
+        if (modifiable.get()) {
+          collection_unknownCons.setModificationUpdateAction(unknownConsUpdater)
+        }
+        else {
+          collection_unknownCons.cleanModificationUpdateAction()
+        }
         return collection_unknownCons
       }
       set(value) {
@@ -242,7 +267,12 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
       get() {
         val collection_knownCons = getEntityData().knownCons
         if (collection_knownCons !is MutableWorkspaceList) return collection_knownCons
-        collection_knownCons.setModificationUpdateAction(knownConsUpdater)
+        if (modifiable.get()) {
+          collection_knownCons.setModificationUpdateAction(knownConsUpdater)
+        }
+        else {
+          collection_knownCons.cleanModificationUpdateAction()
+        }
         return collection_knownCons
       }
       set(value) {

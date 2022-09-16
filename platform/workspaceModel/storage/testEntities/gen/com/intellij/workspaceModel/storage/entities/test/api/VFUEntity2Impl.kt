@@ -94,6 +94,13 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       return connections
     }
 
+    override fun afterModification() {
+      val collection_notNullRoots = getEntityData().notNullRoots
+      if (collection_notNullRoots is MutableWorkspaceList<*>) {
+        collection_notNullRoots.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as VFUEntity2
@@ -153,7 +160,12 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       get() {
         val collection_notNullRoots = getEntityData().notNullRoots
         if (collection_notNullRoots !is MutableWorkspaceList) return collection_notNullRoots
-        collection_notNullRoots.setModificationUpdateAction(notNullRootsUpdater)
+        if (modifiable.get()) {
+          collection_notNullRoots.setModificationUpdateAction(notNullRootsUpdater)
+        }
+        else {
+          collection_notNullRoots.cleanModificationUpdateAction()
+        }
         return collection_notNullRoots
       }
       set(value) {

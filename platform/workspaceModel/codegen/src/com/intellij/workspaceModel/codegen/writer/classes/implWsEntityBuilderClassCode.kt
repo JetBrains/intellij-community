@@ -9,11 +9,14 @@ import com.intellij.workspaceModel.codegen.fields.javaType
 import com.intellij.workspaceModel.codegen.utils.fqn
 import com.intellij.workspaceModel.codegen.utils.lines
 import com.intellij.workspaceModel.codegen.writer.allFields
+import com.intellij.workspaceModel.codegen.writer.javaName
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
 
 fun ObjClass<*>.implWsEntityBuilderCode(): String {
   return """
@@ -64,8 +67,28 @@ ${
       section("override fun connectionIdList(): List<${ConnectionId::class.fqn}>") { 
         line("return connections")
       }
-      
       line()
+
+      val collectionFields = allFields.noRefs().filter { it.valueType is ValueType.Collection<*,*> }
+      if (collectionFields.isNotEmpty()) {
+        section("override fun afterModification()") {
+          collectionFields.forEach { field ->
+            line("val collection_${field.javaName} = getEntityData().${field.javaName}")
+            if (field.valueType is ValueType.List<*>) {
+              `if`("collection_${field.javaName} is ${MutableWorkspaceList::class.fqn}<*>") {
+                line("collection_${field.javaName}.cleanModificationUpdateAction()")
+              }
+            }
+            if (field.valueType is ValueType.Set<*>) {
+              `if`("collection_${field.javaName} is ${MutableWorkspaceSet::class.fqn}<*>") {
+              line("collection_${field.javaName}.cleanModificationUpdateAction()")
+              }
+            }
+          }
+        }
+        line()
+      }
+
       lineComment("Relabeling code, move information from dataSource to this builder")
       section("override fun relabel(dataSource: ${WorkspaceEntity::class.fqn}, parents: Set<WorkspaceEntity>?)") {
         line("dataSource as $javaFullName")

@@ -362,6 +362,8 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
     throw NotImplementedError()
   }
 
+  open fun afterModification() { }
+
   fun processLinkedEntities(builder: MutableEntityStorage) {
     val parentKeysToRemove = ArrayList<EntityLink>()
     for ((key, entity) in HashMap(entityLinks)) {

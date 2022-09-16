@@ -139,6 +139,17 @@ open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : Conten
       return connections
     }
 
+    override fun afterModification() {
+      val collection_excludedUrls = getEntityData().excludedUrls
+      if (collection_excludedUrls is MutableWorkspaceList<*>) {
+        collection_excludedUrls.cleanModificationUpdateAction()
+      }
+      val collection_excludedPatterns = getEntityData().excludedPatterns
+      if (collection_excludedPatterns is MutableWorkspaceList<*>) {
+        collection_excludedPatterns.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ContentRootEntity
@@ -222,7 +233,12 @@ open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : Conten
       get() {
         val collection_excludedUrls = getEntityData().excludedUrls
         if (collection_excludedUrls !is MutableWorkspaceList) return collection_excludedUrls
-        collection_excludedUrls.setModificationUpdateAction(excludedUrlsUpdater)
+        if (modifiable.get()) {
+          collection_excludedUrls.setModificationUpdateAction(excludedUrlsUpdater)
+        }
+        else {
+          collection_excludedUrls.cleanModificationUpdateAction()
+        }
         return collection_excludedUrls
       }
       set(value) {
@@ -239,7 +255,12 @@ open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : Conten
       get() {
         val collection_excludedPatterns = getEntityData().excludedPatterns
         if (collection_excludedPatterns !is MutableWorkspaceList) return collection_excludedPatterns
-        collection_excludedPatterns.setModificationUpdateAction(excludedPatternsUpdater)
+        if (modifiable.get()) {
+          collection_excludedPatterns.setModificationUpdateAction(excludedPatternsUpdater)
+        }
+        else {
+          collection_excludedPatterns.cleanModificationUpdateAction()
+        }
         return collection_excludedPatterns
       }
       set(value) {

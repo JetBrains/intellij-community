@@ -86,6 +86,13 @@ open class SetVFUEntityImpl(val dataSource: SetVFUEntityData) : SetVFUEntity, Wo
       return connections
     }
 
+    override fun afterModification() {
+      val collection_fileProperty = getEntityData().fileProperty
+      if (collection_fileProperty is MutableWorkspaceSet<*>) {
+        collection_fileProperty.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SetVFUEntity
@@ -123,7 +130,12 @@ open class SetVFUEntityImpl(val dataSource: SetVFUEntityData) : SetVFUEntity, Wo
       get() {
         val collection_fileProperty = getEntityData().fileProperty
         if (collection_fileProperty !is MutableWorkspaceSet) return collection_fileProperty
-        collection_fileProperty.setModificationUpdateAction(filePropertyUpdater)
+        if (modifiable.get()) {
+          collection_fileProperty.setModificationUpdateAction(filePropertyUpdater)
+        }
+        else {
+          collection_fileProperty.cleanModificationUpdateAction()
+        }
         return collection_fileProperty
       }
       set(value) {

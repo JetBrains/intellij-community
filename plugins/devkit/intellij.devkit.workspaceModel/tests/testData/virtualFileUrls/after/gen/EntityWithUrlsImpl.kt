@@ -92,6 +92,13 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
       return connections
     }
 
+    override fun afterModification() {
+      val collection_listOfUrls = getEntityData().listOfUrls
+      if (collection_listOfUrls is MutableWorkspaceList<*>) {
+        collection_listOfUrls.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as EntityWithUrls
@@ -143,7 +150,12 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
       get() {
         val collection_listOfUrls = getEntityData().listOfUrls
         if (collection_listOfUrls !is MutableWorkspaceList) return collection_listOfUrls
-        collection_listOfUrls.setModificationUpdateAction(listOfUrlsUpdater)
+        if (modifiable.get()) {
+          collection_listOfUrls.setModificationUpdateAction(listOfUrlsUpdater)
+        }
+        else {
+          collection_listOfUrls.cleanModificationUpdateAction()
+        }
         return collection_listOfUrls
       }
       set(value) {

@@ -97,6 +97,13 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
       return connections
     }
 
+    override fun afterModification() {
+      val collection_path = getEntityData().path
+      if (collection_path is MutableWorkspaceList<*>) {
+        collection_path.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleGroupPathEntity
@@ -163,7 +170,12 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
       get() {
         val collection_path = getEntityData().path
         if (collection_path !is MutableWorkspaceList) return collection_path
-        collection_path.setModificationUpdateAction(pathUpdater)
+        if (modifiable.get()) {
+          collection_path.setModificationUpdateAction(pathUpdater)
+        }
+        else {
+          collection_path.cleanModificationUpdateAction()
+        }
         return collection_path
       }
       set(value) {

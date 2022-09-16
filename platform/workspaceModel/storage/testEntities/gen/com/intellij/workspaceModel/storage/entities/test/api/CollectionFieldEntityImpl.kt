@@ -84,6 +84,17 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
       return connections
     }
 
+    override fun afterModification() {
+      val collection_versions = getEntityData().versions
+      if (collection_versions is MutableWorkspaceSet<*>) {
+        collection_versions.cleanModificationUpdateAction()
+      }
+      val collection_names = getEntityData().names
+      if (collection_names is MutableWorkspaceList<*>) {
+        collection_names.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as CollectionFieldEntity
@@ -112,7 +123,12 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
       get() {
         val collection_versions = getEntityData().versions
         if (collection_versions !is MutableWorkspaceSet) return collection_versions
-        collection_versions.setModificationUpdateAction(versionsUpdater)
+        if (modifiable.get()) {
+          collection_versions.setModificationUpdateAction(versionsUpdater)
+        }
+        else {
+          collection_versions.cleanModificationUpdateAction()
+        }
         return collection_versions
       }
       set(value) {
@@ -129,7 +145,12 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
       get() {
         val collection_names = getEntityData().names
         if (collection_names !is MutableWorkspaceList) return collection_names
-        collection_names.setModificationUpdateAction(namesUpdater)
+        if (modifiable.get()) {
+          collection_names.setModificationUpdateAction(namesUpdater)
+        }
+        else {
+          collection_names.cleanModificationUpdateAction()
+        }
         return collection_names
       }
       set(value) {

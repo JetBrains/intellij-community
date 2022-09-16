@@ -156,6 +156,13 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
       return connections
     }
 
+    override fun afterModification() {
+      val collection_dependencies = getEntityData().dependencies
+      if (collection_dependencies is MutableWorkspaceList<*>) {
+        collection_dependencies.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleEntity
@@ -201,7 +208,12 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
       get() {
         val collection_dependencies = getEntityData().dependencies
         if (collection_dependencies !is MutableWorkspaceList) return collection_dependencies
-        collection_dependencies.setModificationUpdateAction(dependenciesUpdater)
+        if (modifiable.get()) {
+          collection_dependencies.setModificationUpdateAction(dependenciesUpdater)
+        }
+        else {
+          collection_dependencies.cleanModificationUpdateAction()
+        }
         return collection_dependencies
       }
       set(value) {

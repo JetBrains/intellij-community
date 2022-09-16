@@ -78,6 +78,13 @@ open class ArtifactsOrderEntityImpl(val dataSource: ArtifactsOrderEntityData) : 
       return connections
     }
 
+    override fun afterModification() {
+      val collection_orderOfArtifacts = getEntityData().orderOfArtifacts
+      if (collection_orderOfArtifacts is MutableWorkspaceList<*>) {
+        collection_orderOfArtifacts.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ArtifactsOrderEntity
@@ -105,7 +112,12 @@ open class ArtifactsOrderEntityImpl(val dataSource: ArtifactsOrderEntityData) : 
       get() {
         val collection_orderOfArtifacts = getEntityData().orderOfArtifacts
         if (collection_orderOfArtifacts !is MutableWorkspaceList) return collection_orderOfArtifacts
-        collection_orderOfArtifacts.setModificationUpdateAction(orderOfArtifactsUpdater)
+        if (modifiable.get()) {
+          collection_orderOfArtifacts.setModificationUpdateAction(orderOfArtifactsUpdater)
+        }
+        else {
+          collection_orderOfArtifacts.cleanModificationUpdateAction()
+        }
         return collection_orderOfArtifacts
       }
       set(value) {

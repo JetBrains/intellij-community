@@ -96,6 +96,13 @@ open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : Facets
       return connections
     }
 
+    override fun afterModification() {
+      val collection_orderOfFacets = getEntityData().orderOfFacets
+      if (collection_orderOfFacets is MutableWorkspaceList<*>) {
+        collection_orderOfFacets.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FacetsOrderEntity
@@ -127,7 +134,12 @@ open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : Facets
       get() {
         val collection_orderOfFacets = getEntityData().orderOfFacets
         if (collection_orderOfFacets !is MutableWorkspaceList) return collection_orderOfFacets
-        collection_orderOfFacets.setModificationUpdateAction(orderOfFacetsUpdater)
+        if (modifiable.get()) {
+          collection_orderOfFacets.setModificationUpdateAction(orderOfFacetsUpdater)
+        }
+        else {
+          collection_orderOfFacets.cleanModificationUpdateAction()
+        }
         return collection_orderOfFacets
       }
       set(value) {

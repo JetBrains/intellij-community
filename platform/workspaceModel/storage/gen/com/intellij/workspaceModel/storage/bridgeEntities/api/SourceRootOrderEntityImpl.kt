@@ -99,6 +99,13 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
       return connections
     }
 
+    override fun afterModification() {
+      val collection_orderOfSourceRoots = getEntityData().orderOfSourceRoots
+      if (collection_orderOfSourceRoots is MutableWorkspaceList<*>) {
+        collection_orderOfSourceRoots.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SourceRootOrderEntity
@@ -166,7 +173,12 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
       get() {
         val collection_orderOfSourceRoots = getEntityData().orderOfSourceRoots
         if (collection_orderOfSourceRoots !is MutableWorkspaceList) return collection_orderOfSourceRoots
-        collection_orderOfSourceRoots.setModificationUpdateAction(orderOfSourceRootsUpdater)
+        if (modifiable.get()) {
+          collection_orderOfSourceRoots.setModificationUpdateAction(orderOfSourceRootsUpdater)
+        }
+        else {
+          collection_orderOfSourceRoots.cleanModificationUpdateAction()
+        }
         return collection_orderOfSourceRoots
       }
       set(value) {

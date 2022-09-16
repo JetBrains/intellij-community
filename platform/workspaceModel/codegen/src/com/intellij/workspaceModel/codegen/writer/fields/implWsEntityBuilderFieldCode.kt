@@ -160,11 +160,15 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                 changedProperty.add("${field.javaName}")
             }
             override var ${field.javaName}: MutableList<${elementType.javaType}>
-                get() { 
+                get() {
                     val collection_${field.javaName} = getEntityData().${field.javaName}
                     if (collection_${field.javaName} !is ${MutableWorkspaceList::class.fqn}) return collection_${field.javaName}
-                    collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
-                    return collection_${field.javaName}
+                    if (modifiable.get()) {
+                      collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
+                    } else {
+                      collection_${field.javaName}.cleanModificationUpdateAction()
+                    }
+                    return collection_${field.javaName}  
                 }
                 set(value) {
                     checkModificationAllowed()
@@ -189,8 +193,12 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                 get() { 
                     val collection_${field.javaName} = getEntityData().${field.javaName}
                     if (collection_${field.javaName} !is ${MutableWorkspaceSet::class.fqn}) return collection_${field.javaName}
-                    collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
-                    return collection_${field.javaName}
+                    if (modifiable.get()) {
+                      collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
+                    } else {
+                      collection_${field.javaName}.cleanModificationUpdateAction()
+                    }
+                    return collection_${field.javaName} 
                 }
                 set(value) {
                     checkModificationAllowed()

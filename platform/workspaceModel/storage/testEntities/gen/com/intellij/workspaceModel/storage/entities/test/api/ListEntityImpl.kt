@@ -76,6 +76,13 @@ open class ListEntityImpl(val dataSource: ListEntityData) : ListEntity, Workspac
       return connections
     }
 
+    override fun afterModification() {
+      val collection_data = getEntityData().data
+      if (collection_data is MutableWorkspaceList<*>) {
+        collection_data.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ListEntity
@@ -103,7 +110,12 @@ open class ListEntityImpl(val dataSource: ListEntityData) : ListEntity, Workspac
       get() {
         val collection_data = getEntityData().data
         if (collection_data !is MutableWorkspaceList) return collection_data
-        collection_data.setModificationUpdateAction(dataUpdater)
+        if (modifiable.get()) {
+          collection_data.setModificationUpdateAction(dataUpdater)
+        }
+        else {
+          collection_data.cleanModificationUpdateAction()
+        }
         return collection_data
       }
       set(value) {
