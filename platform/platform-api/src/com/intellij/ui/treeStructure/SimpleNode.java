@@ -129,15 +129,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   @Deprecated
   public final void setPlainText(String aText) {
     clearColoredText();
-    addPlainText(aText);
-  }
-
-  /**
-   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
-   * or update presentation dynamically by defining {@link #update(PresentationData)}
-   */
-  @Deprecated(forRemoval = true)
-  public final void addPlainText(String aText) {
     getTemplatePresentation().addText(new ColoredFragment(aText, getPlainAttributes()));
   }
 

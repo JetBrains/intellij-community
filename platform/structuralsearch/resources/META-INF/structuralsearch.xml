@@ -5,9 +5,6 @@
     <extensionPoint qualifiedName="com.intellij.structuralsearch.profile"
                     interface="com.intellij.structuralsearch.StructuralSearchProfile"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.structuralsearch.filter"
-                    interface="com.intellij.structuralsearch.plugin.ui.filters.FilterAction"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.structuralsearch.filterProvider"
                     interface="com.intellij.structuralsearch.plugin.ui.filters.FilterProvider"
                     dynamic="true"/>

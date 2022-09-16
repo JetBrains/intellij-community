@@ -413,17 +413,6 @@ class MarketplaceRequests : PluginInfoProvider {
     }
   }
 
-  @Deprecated("Please use `PluginId`", replaceWith = ReplaceWith("getLastCompatiblePluginUpdate(PluginId.get(id), buildNumber, indicator)"))
-  @ApiStatus.ScheduledForRemoval
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
-  @JvmOverloads
-  fun getLastCompatiblePluginUpdate(
-    id: String,
-    buildNumber: BuildNumber? = null,
-    indicator: ProgressIndicator? = null,
-  ): PluginNode? = getLastCompatiblePluginUpdate(PluginId.getId(id), buildNumber, indicator)
-
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   @JvmOverloads

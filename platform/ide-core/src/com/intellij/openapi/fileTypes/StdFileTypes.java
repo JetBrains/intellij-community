@@ -1,9 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.highlighter.WorkspaceFileType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -81,24 +78,6 @@ public final class StdFileTypes extends FileTypes {
   @Deprecated(forRemoval = true)
   public static volatile FileType GUI_DESIGNER_FORM = FileTypeManager.getInstance().getStdFileType("GUI_DESIGNER_FORM");
 
-  /**
-   * @deprecated use {@link WorkspaceFileType#INSTANCE} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static volatile FileType IDEA_WORKSPACE = FileTypeManager.getInstance().getStdFileType("IDEA_WORKSPACE");
-
-  /**
-   * @deprecated use {@link ProjectFileType#INSTANCE} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static volatile FileType IDEA_PROJECT = FileTypeManager.getInstance().getStdFileType("IDEA_PROJECT");
-
-  /**
-   * @deprecated use {@link ModuleFileType#INSTANCE} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static volatile FileType IDEA_MODULE = FileTypeManager.getInstance().getStdFileType("IDEA_MODULE");
-
 
   public static class StdFileTypesUpdater implements FileTypeListener {
     @Override
@@ -118,9 +97,6 @@ public final class StdFileTypes extends FileTypes {
           case "JavaScript": JS = (LanguageFileType)addedFileType; break;
           case "Properties": PROPERTIES = (LanguageFileType)addedFileType; break;
           case "GUI_DESIGNER_FORM": GUI_DESIGNER_FORM = addedFileType; break;
-          case "IDEA_WORKSPACE": IDEA_WORKSPACE = addedFileType; break;
-          case "IDEA_PROJECT": IDEA_PROJECT = addedFileType; break;
-          case "IDEA_MODULE": IDEA_MODULE = addedFileType; break;
         }
       }
 
@@ -139,9 +115,6 @@ public final class StdFileTypes extends FileTypes {
           case "JavaScript": JS = PLAIN_TEXT; break;
           case "Properties": PROPERTIES = PLAIN_TEXT; break;
           case "GUI_DESIGNER_FORM": GUI_DESIGNER_FORM = PLAIN_TEXT; break;
-          case "IDEA_WORKSPACE": IDEA_WORKSPACE = PLAIN_TEXT; break;
-          case "IDEA_PROJECT": IDEA_PROJECT = PLAIN_TEXT; break;
-          case "IDEA_MODULE": IDEA_MODULE = PLAIN_TEXT; break;
           case "PATCH":
             break;
         }

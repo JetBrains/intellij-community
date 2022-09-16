@@ -709,22 +709,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.SHOW_INTENTION_PREVIEW = show;
   }
 
-  /**
-   * @deprecated use {@link com.intellij.codeInsight.hints.HintUtilsKt#isParameterHintsEnabledForLanguage(Language)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public boolean isShowParameterNameHints() {
-    return myOptions.SHOW_PARAMETER_NAME_HINTS;
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.codeInsight.hints.HintUtilsKt#setShowParameterHintsForLanguage(boolean, Language)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void setShowParameterNameHints(boolean value) {
-    myOptions.SHOW_PARAMETER_NAME_HINTS = value;
-  }
-
   public boolean isKeepTrailingSpacesOnCaretLine() {
     return myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE;
   }
