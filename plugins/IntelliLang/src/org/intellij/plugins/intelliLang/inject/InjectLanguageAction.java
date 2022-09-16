@@ -19,6 +19,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
@@ -113,6 +114,14 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
       return !InjectedReferencesContributor.isInjected(file.findReferenceAt(editor.getCaretModel().getOffset()));
     }
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiLanguageInjectionHost host = findInjectionHost(editor, file);
+    if (host == null) return IntentionPreviewInfo.EMPTY;
+    String text = StringUtil.shortenTextWithEllipsis(ElementManipulators.getValueText(host), 40, 10);
+    return new IntentionPreviewInfo.Html(IntelliLangBundle.message("intelliLang.inject.language.action.preview", text));
   }
 
   @Nullable
