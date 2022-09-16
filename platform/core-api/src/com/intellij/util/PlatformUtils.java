@@ -121,6 +121,10 @@ public final class PlatformUtils {
     return is(APPCODE_PREFIX);
   }
 
+  /**
+   * @deprecated use other ways to customize behavior in different IDEs, see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
+   */
+  @Deprecated
   public static boolean isCLion() {
     return is(CLION_PREFIX);
   }
