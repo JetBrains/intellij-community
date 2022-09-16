@@ -39,10 +39,7 @@ import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ProjectType;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
@@ -229,7 +226,10 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     }
     CustomActionsSchema customActionsSchema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
     if (customActionsSchema != null && StringUtil.isNotEmpty(customActionsSchema.getIconPath(stub.getId()))) {
-      customActionsSchema.initActionIcon(anAction, stub.getId(), ActionManager.getInstance());
+      RecursionManager.doPreventingRecursion(stub.getId(), false, () -> {
+        customActionsSchema.initActionIcon(anAction, stub.getId(), ActionManager.getInstance());
+        return null;
+      });
     }
   }
 
