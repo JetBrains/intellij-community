@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.imports
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
 import org.jetbrains.kotlin.idea.test.*
@@ -43,6 +44,9 @@ abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() 
         withCustomCompilerOptions(originalText, project, module) {
             val settings = KotlinCodeInsightSettings.getInstance()
             val oldValue = settings.addUnambiguousImportsOnTheFly
+            val registryValue = Registry.get("kotlin.enable.unresolved.reference.importer")
+            val oldRegistryValue = registryValue.asBoolean()
+            registryValue.setValue(true)
 
             ConfigLibraryUtil.configureLibrariesByDirective(module, originalText)
 
@@ -67,6 +71,7 @@ abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() 
                     ConfigLibraryUtil.unConfigureKotlinRuntimeAndSdk(module, projectDescriptor.sdk!!)
                 }
                 settings.addUnambiguousImportsOnTheFly = oldValue
+                registryValue.setValue(oldRegistryValue)
             }
         }
 

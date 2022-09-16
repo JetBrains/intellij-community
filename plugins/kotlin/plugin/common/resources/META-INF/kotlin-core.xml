@@ -330,6 +330,12 @@
                  defaultValue="false"
                  restartRequired="true"/>
 
+    <registryKey
+            key="kotlin.enable.unresolved.reference.importer"
+            description="Unresolved reference importer runs on EDT and could be slow"
+            defaultValue="false"
+            restartRequired="false"/>
+
     <registryKey key="kotlin.cache.packages.strong.map"
                  description="Hold info about packages using strong references instead of soft ones"
                  defaultValue="true"

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonListeners
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
@@ -26,7 +27,8 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class KotlinReferenceImporter : AbstractKotlinReferenceImporter() {
-    override fun isEnabledFor(file: KtFile): Boolean = KotlinCodeInsightSettings.getInstance().addUnambiguousImportsOnTheFly
+    override fun isEnabledFor(file: KtFile): Boolean = Registry.`is`("kotlin.enable.unresolved.reference.importer") && KotlinCodeInsightSettings.getInstance().addUnambiguousImportsOnTheFly
+
     override val enableAutoImportFilter: Boolean = false
 }
 
