@@ -268,8 +268,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       }
     }
 
+    JComponent replacement = selected.getUserData(Content.REPLACEMENT_COMPONENT);
+    JComponent newComponent = replacement != null ? replacement : selected.getComponent();
+
     contentComponent.removeAll();
-    contentComponent.add(selected.getComponent(), BorderLayout.CENTER);
+    contentComponent.add(newComponent, BorderLayout.CENTER);
 
     contentComponent.revalidate();
     contentComponent.repaint();

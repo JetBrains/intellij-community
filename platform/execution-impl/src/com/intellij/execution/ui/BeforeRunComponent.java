@@ -273,9 +273,13 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
         @Override
         public void mouseClicked(MouseEvent e) {
           if (e.getClickCount() == 2) {
+            BeforeRunTask clone = myTask.clone();
             if (!DumbService.isDumb(myConfiguration.getProject()) || DumbService.isDumbAware(myProvider)) {
-              myProvider.configureTask(DataManager.getInstance().getDataContext(TaskButton.this), myConfiguration, myTask)
-                .onSuccess(aBoolean -> setTask(myTask));
+              myProvider.configureTask(DataManager.getInstance().getDataContext(TaskButton.this), myConfiguration, clone)
+                .onSuccess(aBoolean -> {
+                  setTask(clone);
+                  updateButton();
+                });
             }
           }
         }

@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -306,7 +307,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       PythonScriptExecution pythonScriptExecution = new PythonScriptExecution();
       String scriptPath = myConfig.getScriptName();
       if (!StringUtil.isEmptyOrSpaces(scriptPath)) {
-        pythonScriptExecution.setPythonScriptPath(getTargetPath(targetEnvironmentRequest, scriptPath));
+        pythonScriptExecution.setPythonScriptPath(getTargetPath(targetEnvironmentRequest, Path.of(scriptPath)));
       }
       pythonExecution = pythonScriptExecution;
     }
@@ -354,7 +355,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
   @Override
   protected @NotNull Function<TargetEnvironment, String> getTargetPath(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
-                                                                       @NotNull String scriptPath) {
+                                                                       @NotNull Path scriptPath) {
     return PySdkTargetPaths.getTargetPathForPythonConsoleExecution(targetEnvironmentRequest, myConfig.getProject(), myConfig.getSdk(),
                                                                    createRemotePathMapper(), scriptPath);
   }

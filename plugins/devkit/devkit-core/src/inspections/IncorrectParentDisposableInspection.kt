@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -47,9 +47,9 @@ class IncorrectParentDisposableInspection : DevKitUastInspectionBase(UCallExpres
       val facade = JavaPsiFacade.getInstance(project)
       @NlsSafe val typeName: String? =
         when {
-          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Project::class.java.name, GlobalSearchScope.projectScope(project)), true) -> "Project"
-          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Application::class.java.name, GlobalSearchScope.projectScope(project)), true) -> "Application"
-          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Module::class.java.name, GlobalSearchScope.projectScope(project)), true) -> "Module"
+          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Project::class.java.name, psiMethod.resolveScope), true) -> "Project"
+          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Application::class.java.name, psiMethod.resolveScope), true) -> "Application"
+          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Module::class.java.name, psiMethod.resolveScope), true) -> "Module"
           else -> null
         }
 

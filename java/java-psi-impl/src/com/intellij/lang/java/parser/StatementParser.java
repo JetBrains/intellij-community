@@ -488,7 +488,7 @@ public class StatementParser {
       }
       builder.remapCurrentToken(JavaTokenType.WHEN_KEYWORD);
       builder.advanceLexer();
-      PsiBuilder.Marker guardingExpression = myParser.getExpressionParser().parse(builder);
+      PsiBuilder.Marker guardingExpression = myParser.getExpressionParser().parse(builder, ExpressionParser.FORBID_LAMBDA_MASK);
       if (guardingExpression == null) {
         error(builder, JavaPsiBundle.message("expected.expression"));
       }

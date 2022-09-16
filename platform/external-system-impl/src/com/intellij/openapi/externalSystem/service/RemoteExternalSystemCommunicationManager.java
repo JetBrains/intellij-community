@@ -43,7 +43,6 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.serialization.ObjectSerializer;
 import com.intellij.ui.PlaceHolder;
 import com.intellij.util.Alarm;
-import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
@@ -60,6 +59,8 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.openapi.application.PathManager.getJarPathForClass;
 
 @Service(Service.Level.APP)
 public final class RemoteExternalSystemCommunicationManager implements ExternalSystemCommunicationManager, Disposable {
@@ -112,33 +113,33 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
 
         // IDE jars.
         Collection<String> classPath = new LinkedHashSet<>(ClassPathUtil.getUtilClassPath());
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Project.class)); //intellij.platform.core
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(PlaceHolder.class)); //intellij.platform.editor
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(DependencyScope.class)); //intellij.platform.projectModel
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ProjectExtension.class)); //intellij.platform.projectModel.impl
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Alarm.class)); //intellij.platform.ide
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExtensionPointName.class)); //intellij.platform.extensions
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(StorageUtilKt.class)); //intellij.platform.ide.impl
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExternalSystemTaskNotificationListener.class)); //intellij.platform.externalSystem
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(AtomicFieldUpdater.class)); //intellij.platform.concurrency
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(Project.class)); //intellij.platform.core
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(PlaceHolder.class)); //intellij.platform.editor
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(DependencyScope.class)); //intellij.platform.projectModel
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(ProjectExtension.class)); //intellij.platform.projectModel.impl
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(Alarm.class)); //intellij.platform.ide
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(ExtensionPointName.class)); //intellij.platform.extensions
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(StorageUtilKt.class)); //intellij.platform.ide.impl
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(ExternalSystemTaskNotificationListener.class)); //intellij.platform.externalSystem
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(AtomicFieldUpdater.class)); //intellij.platform.concurrency
 
         // java plugin jar if it's installed
         Class<? extends SdkType> javaSdkClass = ExternalSystemJdkProvider.getInstance().getJavaSdkType().getClass();
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(javaSdkClass));
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(javaSdkClass));
 
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ModuleType.class));
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(EmptyModuleType.class));
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(ModuleType.class));
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(EmptyModuleType.class));
 
         // add Kotlin runtime
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Unit.class));
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(NoSuchPropertyException.class));
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(Unit.class));
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(NoSuchPropertyException.class));
 
         // External system module jars
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(getClass()));
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(getClass()));
         // external-system-rt.jar
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExternalSystemException.class));
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(ExternalSystemException.class));
         // com.intellij.openapi.externalSystem.model.FSTSerializer dependencies
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ObjectSerializer.class));
+        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(ObjectSerializer.class));
 
         params.getClassPath().addAll(new ArrayList<>(classPath));
 
@@ -160,8 +161,8 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
         if (externalSystemId != null) {
           ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
           if (manager != null) {
-            params.getClassPath().add(PathUtil.getJarPathForClass(manager.getProjectResolverClass()));
-            params.getClassPath().add(PathUtil.getJarPathForClass(manager.getClass().getSuperclass()));
+            params.getClassPath().add(getJarPathForClass(manager.getProjectResolverClass()));
+            params.getClassPath().add(getJarPathForClass(manager.getClass().getSuperclass()));
             params.getProgramParametersList().add(manager.getProjectResolverClass().getName());
             params.getProgramParametersList().add(manager.getTaskManagerClass().getName());
             manager.enhanceRemoteProcessing(params);

@@ -18,8 +18,17 @@ import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager.appendBasicMappings
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import java.nio.file.Path
 
-/**
+@Deprecated("Use Path for localPath")
+fun getTargetPathForPythonConsoleExecution(targetEnvironmentRequest: TargetEnvironmentRequest,
+                                          project: Project,
+                                          sdk: Sdk?,
+                                          pathMapper: PyRemotePathMapper?,
+                                          localPath: String): TargetEnvironmentFunction<String>
+= getTargetPathForPythonConsoleExecution(targetEnvironmentRequest, project, sdk, pathMapper, Path.of(localPath))
+
+  /**
  * @param pathMapper corresponds to the path mappings specified in the run configuration
  * @throws IllegalArgumentException if [localPath] cannot be found neither in SDK additional data nor within the registered uploads in the
  *                                  request
@@ -28,7 +37,7 @@ fun getTargetPathForPythonScriptExecution(targetEnvironmentRequest: TargetEnviro
                                           project: Project,
                                           sdk: Sdk?,
                                           pathMapper: PyRemotePathMapper?,
-                                          localPath: String): TargetEnvironmentFunction<String> {
+                                          localPath: Path): TargetEnvironmentFunction<String> {
   val initialPathMapper = pathMapper ?: PyRemotePathMapper()
   val targetPath = initialPathMapper.extendPythonSdkPathMapper(project, sdk).convertToRemoteOrNull(localPath)
   return targetPath?.let { constant(it) } ?: targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath)
@@ -59,7 +68,7 @@ fun getTargetPathForPythonConsoleExecution(targetEnvironmentRequest: TargetEnvir
                                            project: Project,
                                            sdk: Sdk?,
                                            pathMapper: PyRemotePathMapper?,
-                                           localPath: String): TargetEnvironmentFunction<String> {
+                                           localPath: Path): TargetEnvironmentFunction<String> {
   val targetPath = pathMapper?.convertToRemoteOrNull(localPath)
                    ?: getPythonConsolePathMapper(project, sdk)?.convertToRemoteOrNull(localPath)
   return targetPath?.let { constant(it) } ?: targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath)
@@ -68,7 +77,7 @@ fun getTargetPathForPythonConsoleExecution(targetEnvironmentRequest: TargetEnvir
 fun getTargetPathForPythonConsoleExecution(project: Project,
                                            sdk: Sdk?,
                                            pathMapper: PyRemotePathMapper?,
-                                           localPath: String): TargetEnvironmentFunction<String> {
+                                           localPath: Path): TargetEnvironmentFunction<String> {
   val targetPath = pathMapper?.convertToRemoteOrNull(localPath)
                    ?: getPythonConsolePathMapper(project, sdk)?.convertToRemoteOrNull(localPath)
   return targetPath?.let { constant(it) } ?: getTargetEnvironmentValueForLocalPath(localPath)
@@ -80,8 +89,8 @@ fun getTargetPathForPythonConsoleExecution(project: Project,
 private fun getPythonConsolePathMapper(project: Project, sdk: Sdk?): PyRemotePathMapper? =
   getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).pythonConsoleSettings)
 
-private fun PyRemotePathMapper.convertToRemoteOrNull(localPath: String): String? =
-  takeIf { it.canReplaceLocal(localPath) }?.convertToRemote(localPath)
+private fun PyRemotePathMapper.convertToRemoteOrNull(localPath: Path): String? =
+  takeIf { it.canReplaceLocal(localPath.toString()) }?.convertToRemote(localPath.toString())
 
 fun getPathMapper(project: Project, consoleSettings: PyConsoleSettings, data: PyTargetAwareAdditionalData): PyRemotePathMapper {
   val remotePathMapper = appendBasicMappings(project, null, data)

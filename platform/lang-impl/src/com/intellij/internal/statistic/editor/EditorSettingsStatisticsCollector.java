@@ -84,6 +84,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     addBoolIfDiffers(set, es, esDefault, s -> s.isSmoothScrolling(), Settings.ANIMATED_SCROLL);
     addBoolIfDiffers(set, es, esDefault, s -> s.isDndEnabled(), Settings.DRAG_N_DROP);
     addBoolIfDiffers(set, es, esDefault, s -> s.isWheelFontChangeEnabled(), Settings.WHEEL_ZOOM);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isWheelFontChangePersistent(), Settings.WHEEL_PERSISTENT);
     addBoolIfDiffers(set, es, esDefault, s -> s.isMouseClickSelectionHonorsCamelWords(), Settings.MOUSE_CAMEL);
     addBoolIfDiffers(set, es, esDefault, s -> s.isVariableInplaceRenameEnabled(), Settings.INPLACE_RENAME);
     addBoolIfDiffers(set, es, esDefault, s -> s.isPreselectRename(), Settings.PRESELECT_ON_RENAME);
@@ -264,6 +265,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     ANIMATED_SCROLL("animatedScroll"),
     DRAG_N_DROP("dragNDrop"),
     WHEEL_ZOOM("wheelZoom"),
+    WHEEL_PERSISTENT("wheelPersistent"),
     MOUSE_CAMEL("mouseCamel"),
     INPLACE_RENAME("inplaceRename"),
     PRESELECT_ON_RENAME("preselectOnRename"),

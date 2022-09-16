@@ -14,9 +14,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author novokrest
@@ -30,7 +28,7 @@ public abstract class PyCallHierarchyTreeStructureBase extends HierarchyTreeStru
   }
 
   @NotNull
-  protected abstract List<PsiElement> getChildren(@NotNull PyElement element);
+  protected abstract Map<PsiElement, Collection<PsiElement>> getChildren(@NotNull PyElement element);
 
   @Override
   protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
@@ -44,28 +42,22 @@ public abstract class PyCallHierarchyTreeStructureBase extends HierarchyTreeStru
         return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
       }
 
-      final List<PsiElement> children = getChildren((PyElement)element);
+      final Map<PsiElement, Collection<PsiElement>> children = getChildren((PyElement)element);
 
       final HashMap<PsiElement, PyHierarchyNodeDescriptor> callerToDescriptorMap = new HashMap<>();
       PsiElement baseClass = element instanceof PyFunction ? ((PyFunction)element).getContainingClass() : null;
 
-      for (PsiElement caller : children) {
+      children.forEach((caller, usages) -> {
         if (isInScope(baseClass, caller, myScopeType)) {
           PyHierarchyNodeDescriptor callerDescriptor = callerToDescriptorMap.get(caller);
           if (callerDescriptor == null) {
-            callerDescriptor = new PyHierarchyNodeDescriptor(descriptor, caller, false);
+            callerDescriptor = new PyHierarchyNodeDescriptor(descriptor, caller, usages, false);
             callerToDescriptorMap.put(caller, callerDescriptor);
             descriptors.add(callerDescriptor);
           }
         }
-      }
-
+      });
     }
     return ArrayUtil.toObjectArray(descriptors);
-  }
-
-  @Override
-  public boolean isAlwaysShowPlus() {
-    return true;
   }
 }

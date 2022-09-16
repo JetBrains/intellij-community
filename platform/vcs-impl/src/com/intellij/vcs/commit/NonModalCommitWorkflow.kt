@@ -34,23 +34,26 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     return handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
   }
 
-  suspend fun executeDefault(checker: suspend () -> CheckinHandler.ReturnResult) {
-    var result = CheckinHandler.ReturnResult.CANCEL
+  suspend fun executeDefault(checker: suspend () -> CommitChecksResult) {
+    var result: CommitChecksResult = CommitChecksResult.ExecutionError
     try {
       result = checkCommit(checker)
       processExecuteDefaultChecksResult(result)
     }
     finally {
-      if (result != CheckinHandler.ReturnResult.COMMIT) endExecution()
+      if (!result.shouldCommit) endExecution()
     }
   }
 
-  private suspend fun checkCommit(checker: suspend () -> CheckinHandler.ReturnResult): CheckinHandler.ReturnResult {
-    var result = CheckinHandler.ReturnResult.CANCEL
+  private suspend fun checkCommit(checker: suspend () -> CommitChecksResult): CommitChecksResult {
+    var result: CommitChecksResult = CommitChecksResult.ExecutionError
 
     fireBeforeCommitChecksStarted()
     try {
       result = checker()
+    }
+    catch (e: ProcessCanceledException) {
+      result = CommitChecksResult.Cancelled
     }
     finally {
       fireBeforeCommitChecksEnded(true, result)

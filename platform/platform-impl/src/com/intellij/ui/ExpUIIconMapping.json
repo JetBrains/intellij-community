@@ -461,7 +461,9 @@
         "icons/php-remote.svg",
         "icons/run_remote_debug.svg"
       ],
-      "phpWeb.svg": "icons/run_web_app.svg"
+      "phpWeb.svg": "icons/run_web_app.svg",
+      "debug_listen_on.svg": "icons/debug_listen_on.svg",
+      "debug_listen_off.svg": "icons/debug_listen_off.svg"
     },
     "plugins/space": {
       "spaceToolWindow.svg": "icons/spaceToolWindow.svg"

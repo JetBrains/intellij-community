@@ -112,6 +112,7 @@ class FacetModelBridgeTest {
       val facet = assertOneElement(facets) as MockFacet
       assertEquals("MyFacet", facet.name)
       assertEquals("foo", facet.configuration.data)
+      assertTrue(facet.isInitialized)
     }
   }
 
@@ -149,6 +150,7 @@ class FacetModelBridgeTest {
       val configProperties = facet.configuration.myProperties
       assertEquals("Android", configProperties.firstElement[0])
       assertEquals("Spring", configProperties.secondElement[0])
+      assertTrue(facet.isInitialized)
     }
   }
 

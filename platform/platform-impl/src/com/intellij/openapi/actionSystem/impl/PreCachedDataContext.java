@@ -82,9 +82,9 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       if (ourPrevMapEventCount != count || ApplicationManager.getApplication().isUnitTestMode()) {
         ourPrevMaps.clear();
       }
-      List<Component> components = ContainerUtil.reverse(
-        UIUtil.uiParents(component, false).takeWhile(o -> ourPrevMaps.get(o) == null).toList());
-      Component topParent = components.isEmpty() ? component : components.get(0).getParent();
+      List<Component> components = FList.createFromReversed(
+        JBIterable.generate(component, UIUtil::getParent).takeWhile(o -> ourPrevMaps.get(o) == null));
+      Component topParent = components.isEmpty() ? component : UIUtil.getParent(components.get(0));
       FList<ProviderData> initial = topParent == null ? FList.emptyList() : ourPrevMaps.get(topParent);
 
       if (components.isEmpty()) {

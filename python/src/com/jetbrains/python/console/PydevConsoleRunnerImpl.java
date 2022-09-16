@@ -640,7 +640,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       // Use all modules otherwise
       modules = ModuleManager.getInstance(myProject).getModules();
     }
-    PythonScripts.ensureProjectAndModuleDirsAreOnTarget(targetEnvironmentRequest, myProject, modules);
+    PythonScripts.ensureProjectSdkAndModuleDirsAreOnTarget(targetEnvironmentRequest, myProject, modules);
   }
 
   private static class PyRemoteSocketToLocalHostProviderStub implements PyRemoteSocketToLocalHostProvider {

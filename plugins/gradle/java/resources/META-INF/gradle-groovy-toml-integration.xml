@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <gotoDeclarationHandler implementation="org.jetbrains.plugins.gradle.service.navigation.GradleVersionCatalogTomlAwareGotoDeclarationHandler"/>
+  </extensions>
+</idea-plugin>

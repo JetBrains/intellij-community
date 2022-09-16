@@ -38,7 +38,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         GradleNewProjectWizardStep<KotlinNewProjectWizard.Step>(parent),
         BuildSystemKotlinNewProjectWizardData by parent {
 
-        private val addSampleCodeProperty = propertyGraph.property(false)
+        private val addSampleCodeProperty = propertyGraph.property(true)
             .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
 
         private val addSampleCode by addSampleCodeProperty

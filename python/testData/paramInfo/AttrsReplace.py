@@ -1,4 +1,5 @@
 from attr import s, ib, assoc, evolve
+import attrs
 
 
 @s(auto_attribs=True)
@@ -36,3 +37,12 @@ class D:
 
 assoc(D(1), <arg7>)
 evolve(D(1), <arg8>)
+
+
+@attrs.define
+class E:
+    a: int
+
+
+attrs.assoc(E(1), <arg9>)
+attrs.evolve(E(1), <arg10>)

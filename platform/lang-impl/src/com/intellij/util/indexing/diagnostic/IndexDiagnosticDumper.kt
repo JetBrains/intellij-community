@@ -66,9 +66,9 @@ class IndexDiagnosticDumper : Disposable {
     }
 
     @JvmStatic
-    private val indexingDiagnosticsSizeLimitOfFilesInMBPerProject: Int
+    private val indexingDiagnosticsSizeLimitOfFilesInMiBPerProject: Int
       get() {
-        val providedValue = System.getProperty("intellij.indexes.diagnostics.size.limit.of.files.MB.per.project")
+        val providedValue = System.getProperty("intellij.indexes.diagnostics.size.limit.of.files.MiB.per.project")
         if (providedValue != null) {
           try {
             return providedValue.toInt()
@@ -79,6 +79,11 @@ class IndexDiagnosticDumper : Disposable {
 
         return if (hasProvidedDiagnosticsLimitOfFilesValue()) 0 else 10
       }
+
+    @JvmStatic
+    private val indexingDiagnosticsSizeLimitOfFilesInMBPerProject: Int
+      get() =
+        SystemProperties.getIntProperty("intellij.indexes.diagnostics.size.limit.of.files.MB.per.project", 10)
 
     @JvmStatic
     val shouldDumpPathsOfIndexedFiles: Boolean

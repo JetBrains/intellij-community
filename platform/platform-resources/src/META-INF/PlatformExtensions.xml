@@ -114,6 +114,9 @@
                         serviceImplementation="com.intellij.openapi.command.impl.DocumentReferenceManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.diagnostic.LowMemoryNotifier" preload="true"/>
+    <applicationService serviceInterface="com.intellij.diagnostic.EditMemorySettingsService"
+                        serviceImplementation="com.intellij.diagnostic.EditMemorySettingsServiceImpl" preload="true"/>
+
     <applicationService serviceImplementation="com.intellij.diagnostic.IdeHeartbeatEventReporter"/>
     <startupActivity implementation="com.intellij.diagnostic.IdeHeartbeatEventReporter$Loader"/>
 
@@ -1252,6 +1255,8 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <notificationGroup id="Error Report" displayType="BALLOON" isLogByDefault="false" bundle="messages.DiagnosticBundle" key="notification.group.error.report"/>
     <notificationGroup id="Test ToolWindow Notification" displayType="TOOL_WINDOW" toolWindowId="TODO" hideFromSettings="true"/>
     <notificationGroup id="Test Sticky Notification" displayType="STICKY_BALLOON" hideFromSettings="true"/>
+    <notificationGroup id="Test Balloon Notification" displayType="BALLOON" hideFromSettings="true"/>
+    <notificationGroup id="Test Hidden Notification" displayType="NONE" hideFromSettings="true"/>
     <notificationGroup id="Test Notification" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Test Runner" displayType="NONE" bundle="messages.TestRunnerBundle" key="notification.group.test.runner"/>
     <notificationGroup id="System Messages" displayType="BALLOON"/>
@@ -1434,6 +1439,8 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <listener class="com.intellij.ide.FrameStateManagerAppListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
     
     <listener class="com.intellij.diagnostic.FusFreezeReporter" topic="com.intellij.diagnostic.IdePerformanceListener"/>
+
+    <listener class="com.intellij.openapi.keymap.impl.KeymapFlagsStorageListener" topic="com.intellij.openapi.keymap.KeymapManagerListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener"

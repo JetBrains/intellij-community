@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.AppUIExecutor.onUiThread
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
@@ -28,12 +29,11 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.util.progress.DelegatingProgressIndicatorEx
 import com.intellij.util.ui.HtmlPanel
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil.getErrorForeground
-import com.intellij.util.ui.update.Activatable
-import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -66,6 +66,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
   private val scope = CoroutineScope(SupervisorJob() + onUiThread().coroutineDispatchingContext())
     .also { Disposer.register(this) { it.cancel() } }
 
+  private val taskInfo = CommitChecksTaskInfo()
   private val progressFlow = MutableStateFlow<CommitChecksProgressIndicator?>(null)
   private var progress: CommitChecksProgressIndicator? by progressFlow::value
 
@@ -91,21 +92,9 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     commitMessage.addDocumentListener(this)
     commitWorkflowUi.addInclusionListener(this, this)
 
-    setupShowProgressInStatusBar()
     setupProgressVisibilityDelay()
     setupProgressSpinnerTooltip()
   }
-
-  private fun setupShowProgressInStatusBar() =
-    Disposer.register(this, UiNotifyConnector(this, object : Activatable {
-      override fun showNotify() {
-        progress?.let { removeFromStatusBar(it) }
-      }
-
-      override fun hideNotify() {
-        progress?.let { addToStatusBar(it) }
-      }
-    }))
 
   @Suppress("EXPERIMENTAL_API_USAGE")
   private fun setupProgressVisibilityDelay() {
@@ -124,59 +113,65 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
 
   override fun dispose() = Unit
 
-  override fun startProgress(): ProgressIndicatorEx {
+  override fun startProgress(isOnlyRunCommitChecks: Boolean): ProgressIndicatorEx {
     check(progress == null) { "Commit checks indicator already created" }
 
-    val indicator = InlineCommitChecksProgressIndicator()
+    val indicator = InlineCommitChecksProgressIndicator(isOnlyRunCommitChecks)
     Disposer.register(this, indicator)
 
     indicator.component.isVisible = false
     indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
-      override fun start() = progressStarted()
-      override fun stop() = progressStopped()
+      override fun start() = progressStarted(indicator)
+      override fun stop() = progressStopped(indicator)
     })
 
     progress = indicator
-    indicator.start()
-    return indicator
+    return IndeterminateIndicator(indicator)
   }
 
-  private fun progressStarted() {
-    add(progress!!.component)
-    // we assume `isShowing == true` here - so we do not need to add progress to status bar
+  private fun progressStarted(indicator: InlineCommitChecksProgressIndicator) {
+    logger<CommitProgressPanel>().assertTrue(progress == indicator)
+
+    add(indicator.component)
+    addToStatusBar(indicator.statusBarDelegate)
+
     failuresPanel.clearFailures()
     revalidate()
   }
 
-  private fun progressStopped() {
-    progress!!.let {
-      remove(it.component)
-      removeFromStatusBar(it)
-      Disposer.dispose(it)
-    }
+  private fun progressStopped(indicator: InlineCommitChecksProgressIndicator) {
+    logger<CommitProgressPanel>().assertTrue(progress == indicator)
     progress = null
+
+    remove(indicator.component)
+    removeFromStatusBar(indicator.statusBarDelegate)
+    Disposer.dispose(indicator)
 
     failuresPanel.endProgress()
     revalidate()
   }
 
-  private fun addToStatusBar(progress: CommitChecksProgressIndicator) {
+  private fun addToStatusBar(progress: ProgressIndicatorEx) {
     val frame = WindowManagerEx.getInstanceEx().findFrameFor(null) ?: return
     val statusBar = frame.statusBar as? StatusBarEx ?: return
-
-    statusBar.addProgress(progress, CommitChecksTaskInfo())
+    statusBar.addProgress(progress, taskInfo)
   }
 
-  private fun removeFromStatusBar(progress: CommitChecksProgressIndicator) =
+  private fun removeFromStatusBar(progress: ProgressIndicatorEx) {
     // `finish` tracks list of finished `TaskInfo`-s - so we pass new instance to remove from status bar
-    progress.finish(CommitChecksTaskInfo())
+    progress.finish(taskInfo)
+  }
 
-  override fun addCommitCheckFailure(text: String, detailsViewer: (() -> Unit)?) {
+  override fun addCommitCheckFailure(failure: CommitCheckFailure) {
     progress?.component?.isVisible = false
-    failuresPanel.addFailure(CommitCheckFailure(text, detailsViewer))
+    failuresPanel.addFailure(failure)
   }
 
   override fun clearCommitCheckFailures() = failuresPanel.clearFailures()
+
+  override fun getCommitCheckFailures(): List<CommitCheckFailure> {
+    return failuresPanel.getFailures()
+  }
 
   override fun documentChanged(event: DocumentEvent) = clearError()
   override fun inclusionChanged() = clearError()
@@ -206,7 +201,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     }
 }
 
-private class CommitCheckFailure(@Nls val text: String, val detailsViewer: (() -> Unit)?)
+class CommitCheckFailure(@Nls val text: String, val detailsViewer: (() -> Unit)?)
 
 private class FailuresPanel : JBPanel<FailuresPanel>() {
   private var nextFailureId = 0
@@ -245,6 +240,8 @@ private class FailuresPanel : JBPanel<FailuresPanel>() {
     isVisible = failures.isNotEmpty()
     if (isVisible) iconLabel.icon = AllIcons.General.Warning
   }
+
+  fun getFailures() = failures.values.toList()
 
   private fun update() {
     description.failures = failures
@@ -320,4 +317,9 @@ private class RerunCommitChecksAction :
       hoveredIcon = AllIcons.General.InlineRefreshHover
     }
   }
+}
+
+private class IndeterminateIndicator(indicator: ProgressIndicatorEx) : DelegatingProgressIndicatorEx(indicator) {
+  override fun setIndeterminate(indeterminate: Boolean) = Unit
+  override fun setFraction(fraction: Double) = Unit
 }

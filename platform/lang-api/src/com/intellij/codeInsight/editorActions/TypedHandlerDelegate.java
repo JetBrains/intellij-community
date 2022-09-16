@@ -32,6 +32,7 @@ public abstract class TypedHandlerDelegate {
   /**
    * Called before selected text is deleted.
    * This method is supposed to be overridden by handlers having custom behaviour with respect to selection.
+   * This method is called for each caret individually.
    */
   @NotNull
   public Result beforeSelectionRemoved(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
@@ -39,7 +40,16 @@ public abstract class TypedHandlerDelegate {
   }
 
   /**
+   * Called before starting processing the user input. It can be used to determine individual character input because other methods
+   *   may be called multiple times (for each caret individually).
+   * This method is called once regardless how many carets exist in the editor.
+   */
+  public void newTypingStarted(char c, @NotNull Editor editor, @NotNull DataContext context) {
+  }
+
+  /**
    * Called before the specified character typed by the user is inserted in the editor.
+   * This method is called for each caret individually.
    */
   @NotNull
   public Result beforeCharTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
@@ -48,6 +58,7 @@ public abstract class TypedHandlerDelegate {
 
   /**
    * Called after the specified character typed by the user has been inserted in the editor.
+   * This method is called for each caret individually.
    */
   @NotNull
   public Result charTyped(char c, @NotNull Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {

@@ -1,7 +1,10 @@
 /* Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. */
 .code-fence-highlighter-copy-button {
-  float: right;
   display: flex;
+  position: absolute;
+  float: left;
+  margin-left: -1em;
+  margin-top: -1em;
 }
 
 .code-fence-highlighter-copy-button-icon {

@@ -386,5 +386,18 @@ public class RunConfigurationBeforeRunProvider
       result = 31 * result + myTypeNameTarget.hashCode();
       return result;
     }
+
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    @Override
+    public BeforeRunTask clone() {
+      RunConfigurableBeforeRunTask task = new RunConfigurableBeforeRunTask();
+      if (mySettingsWithTarget != null) {
+        task.setSettingsWithTarget(mySettingsWithTarget.first, mySettingsWithTarget.second);
+      }
+      task.myTypeNameTarget.setType(myTypeNameTarget.getType());
+      task.myTypeNameTarget.setName(myTypeNameTarget.getName());
+      task.myTypeNameTarget.setTargetId(myTypeNameTarget.getTargetId());
+      return task;
+    }
   }
 }

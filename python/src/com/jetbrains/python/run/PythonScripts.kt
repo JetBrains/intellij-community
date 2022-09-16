@@ -13,10 +13,7 @@ import com.intellij.execution.target.*
 import com.intellij.execution.target.TargetEnvironment.TargetPath
 import com.intellij.execution.target.TargetEnvironment.UploadRoot
 import com.intellij.execution.target.local.LocalTargetPtyOptions
-import com.intellij.execution.target.value.TargetEnvironmentFunction
-import com.intellij.execution.target.value.TargetValue
-import com.intellij.execution.target.value.getRelativeTargetPath
-import com.intellij.execution.target.value.joinToStringFunction
+import com.intellij.execution.target.value.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
@@ -34,6 +31,8 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.targetAdditionalData
+import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAddedByUser
 import java.nio.file.Path
 
 private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
@@ -47,8 +46,9 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   charset?.let { commandLineBuilder.setCharset(it) }
   inputFile?.let { commandLineBuilder.setInputFile(TargetValue.fixed(it.absolutePath)) }
   val interpreterPath = getInterpreterPath(sdk)
+  val platform = targetEnvironment.targetPlatform.platform
   if (!interpreterPath.isNullOrEmpty()) {
-    commandLineBuilder.setExePath(targetEnvironment.targetPlatform.platform.toSystemDependentName(interpreterPath))
+    commandLineBuilder.setExePath(platform.toSystemDependentName(interpreterPath))
   }
   commandLineBuilder.addParameters(interpreterParameters)
   when (this) {
@@ -59,6 +59,9 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   }
   for (parameter in parameters) {
     commandLineBuilder.addParameter(parameter.apply(targetEnvironment))
+  }
+  sdk?.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.forEach { path ->
+    appendToPythonPath(constant(path), targetEnvironment.targetPlatform)
   }
   for ((name, value) in envs) {
     commandLineBuilder.addEnvironmentVariable(name, value.apply(targetEnvironment))
@@ -189,6 +192,7 @@ fun appendToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String
 fun Collection<TargetEnvironmentFunction<String>>.joinToPathValue(targetPlatform: TargetPlatform): TargetEnvironmentFunction<String> =
   this.joinToStringFunction(separator = targetPlatform.platform.pathSeparator.toString())
 
+// TODO: Make this code python-agnostic, get red of path hardcode
 fun PythonExecution.extendEnvs(additionalEnvs: Map<String, TargetEnvironmentFunction<String>>, targetPlatform: TargetPlatform) {
   for ((key, value) in additionalEnvs) {
     if (key == PYTHONPATH_ENV) {
@@ -215,17 +219,18 @@ fun TargetedCommandLine.execute(env: TargetEnvironment, indicator: ProgressIndic
   return output
 }
 
+
 /**
  * Checks whether the base directory of [project] is registered in [this] request. Adds it if it is not.
- * You can also provide [modules] to add its content roots
+ * You can also provide [modules] to add its content roots and [Sdk] for which user added custom paths
  */
-fun TargetEnvironmentRequest.ensureProjectAndModuleDirsAreOnTarget(project: Project, vararg modules: Module) {
+fun TargetEnvironmentRequest.ensureProjectSdkAndModuleDirsAreOnTarget(project: Project, vararg modules: Module) {
   fun TargetEnvironmentRequest.addPathToVolume(basePath: Path) {
     if (uploadVolumes.none { it.localRootPath.isAncestor(basePath) }) {
       uploadVolumes += UploadRoot(localRootPath = basePath, targetRootPath = TargetPath.Temporary())
     }
   }
-  for(module in modules) {
+  for (module in modules) {
     ModuleRootManager.getInstance(module).contentRoots.forEach {
       try {
         addPathToVolume(it.toNioPath())

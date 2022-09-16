@@ -1,4 +1,5 @@
 <idea-plugin>
+  <depends optional="true" config-file="gradle-groovy-toml-integration.xml">org.toml.lang</depends>
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.resolve.contributor" interface="org.jetbrains.plugins.gradle.service.resolve.GradleMethodContextContributor"
                     dynamic="true"/>
@@ -34,6 +35,7 @@
     <implicitUsageProvider implementation="org.jetbrains.plugins.gradle.config.GradleImplicitUsageProvider"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
     <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
+    <gotoDeclarationHandler implementation="org.jetbrains.plugins.gradle.service.navigation.GradleVersionCatalogGotoDeclarationHandler"/>
 
     <lang.documentationProvider language="Groovy"
                                 implementationClass="org.jetbrains.plugins.gradle.documentation.GradleDocumentationProvider" order="first"/>

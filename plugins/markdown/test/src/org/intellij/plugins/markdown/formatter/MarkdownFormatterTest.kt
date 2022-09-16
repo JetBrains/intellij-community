@@ -87,6 +87,10 @@ open class MarkdownFormatterTest : LightPlatformCodeInsightTestCase() {
     doTest()
   }
 
+  fun testLongTable() {
+    doTest()
+  }
+
   private fun doTest() {
     val before = getTestName(true) + "_before.md"
     val after = getTestName(true) + "_after.md"

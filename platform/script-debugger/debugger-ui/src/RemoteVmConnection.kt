@@ -5,6 +5,8 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.ui.ColoredListCellRenderer
@@ -13,6 +15,7 @@ import com.intellij.util.io.socketConnection.ConnectionStatus
 import com.intellij.xdebugger.XDebuggerBundle
 import io.netty.bootstrap.Bootstrap
 import org.jetbrains.concurrency.*
+import org.jetbrains.debugger.ScriptDebuggerBundle
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
 import org.jetbrains.rpc.LOG
@@ -131,6 +134,7 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
   val result = AsyncPromise<T>()
   ApplicationManager.getApplication().invokeLater {
     val model = targets.toMutableList()
+    val selected: AtomicReference<T?> = AtomicReference()
     val builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(model)
       .setRenderer(
@@ -140,16 +144,23 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
           }
         })
       .setTitle(XDebuggerBundle.message("script.debugger.popup.title.choose.page"))
-      .setCancelOnWindowDeactivation(false)
-      .setCancelOnClickOutside(false)
+      .setCancelOnWindowDeactivation(true)
+      .setCancelOnClickOutside(true)
       .setRequestFocus(true)
-      .setItemChosenCallback { value ->
-        result.setResult(value)
+      .setItemSelectedCallback { value ->
+        selected.set(value)
       }
-      .setCancelCallback {
-        result.setResult(model[0])
-        true
-      }
+      .addListener(object : JBPopupListener {
+        override fun onClosed(event: LightweightWindowEvent) {
+          val value = selected.get()
+          if (event.isOk && value != null) {
+            result.setResult(value)
+          }
+          else {
+            result.setError(XDebuggerBundle.message("script.debugger.popup.canceled"))
+          }
+        }
+      })
     if (selectedIndex != -1) {
       builder.setSelectedValue(model[selectedIndex], false)
     }

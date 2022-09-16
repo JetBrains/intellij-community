@@ -20,9 +20,11 @@ object VmOptionsGenerator {
     "-XX:+HeapDumpOnOutOfMemoryError",
     "-XX:-OmitStackTraceInFastThrow",
     "-XX:+IgnoreUnrecognizedVMOptions",  // allowing the JVM to start even with outdated options stuck in user configs
+    "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend", // temporary workaround for crashes in С2 (JBR-4509)
     "-ea",
     "-Dsun.io.useCanonCaches=false",
     "-Dsun.java2d.metal=true",
+    "-Djbr.catch.SIGABRT=true",
     "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
     "-Djdk.attach.allowAttachSelf=true",
     "-Djdk.module.illegalAccess.silent=true",

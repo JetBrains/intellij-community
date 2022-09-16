@@ -50,6 +50,7 @@ internal class DefaultCodeFenceGeneratingProvider(
     val indentBefore = node.getTextInNode(text).commonPrefixWith(" ".repeat(10)).length
 
     visitor.consumeHtml("<pre class=\"code-fence\" ${HtmlGenerator.getSrcPosAttribute(node)}>")
+    addCopyButton(visitor, collectFenceText(node, text).trim())
 
     var state = 0
 
@@ -81,7 +82,6 @@ internal class DefaultCodeFenceGeneratingProvider(
     }
 
     val rawContentResult = codeFenceRawContent.toString()
-    addCopyButton(visitor, rawContentResult)
     if (state == 1) {
       visitor.consumeHtml(
         pluginGeneratedHtml(language, codeFenceContent.toString(), rawContentResult, node)
@@ -97,19 +97,38 @@ internal class DefaultCodeFenceGeneratingProvider(
     visitor.consumeHtml("</code></pre>")
   }
 
+  private fun collectFenceText(node: ASTNode, allText: String): String {
+    return buildString {
+      collectFenceText(this, node, allText)
+    }
+  }
+
+  private fun collectFenceText(builder: StringBuilder, node: ASTNode, allText: String) {
+    if (node.type == MarkdownTokenTypes.CODE_FENCE_CONTENT || node.type == MarkdownTokenTypes.EOL) {
+      builder.append(codeFenceRawText(allText, node))
+    }
+    for (child in node.children) {
+      collectFenceText(builder, child, allText)
+    }
+  }
+
   private fun addCopyButton(visitor: HtmlGenerator.HtmlGeneratingVisitor, content: String) {
     val encodedContent = Base64.encode(content.toByteArray())
     // language=HTML
     val html = """
     <div class="code-fence-highlighter-copy-button" data-fence-content="$encodedContent">
-        <img class="code-fence-highlighter-copy-button-icon">
+      <img class="code-fence-highlighter-copy-button-icon">
     </div>
     """.trimIndent()
     visitor.consumeHtml(html)
   }
 
-  private fun codeFenceRawText(text: String, node: ASTNode): CharSequence =
-    if (node.type != MarkdownTokenTypes.BLOCK_QUOTE) node.getTextInNode(text) else ""
+  private fun codeFenceRawText(text: String, node: ASTNode): CharSequence {
+    return when (node.type) {
+      MarkdownTokenTypes.BLOCK_QUOTE -> ""
+      else -> node.getTextInNode(text)
+    }
+  }
 
   private fun codeFenceText(text: String, node: ASTNode): CharSequence =
     if (node.type != MarkdownTokenTypes.BLOCK_QUOTE) HtmlGenerator.leafText(text, node, false) else ""

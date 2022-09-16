@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.vcs.commit.SingleChangeListCommitter.Companion.moveToFailedList
@@ -56,24 +55,22 @@ open class SingleChangeListCommitWorkflow(
 
   internal lateinit var commitState: ChangeListCommitState
 
-  override fun processExecuteDefaultChecksResult(result: CheckinHandler.ReturnResult) = when (result) {
-    CheckinHandler.ReturnResult.COMMIT -> DefaultNameChangeListCleaner(project, commitState).use { doCommit(commitState) }
-    CheckinHandler.ReturnResult.CLOSE_WINDOW ->
+  override fun processExecuteDefaultChecksResult(result: CommitChecksResult) = when {
+    result.shouldCommit -> DefaultNameChangeListCleaner(project, commitState).use { doCommit(commitState) }
+    result.shouldCloseWindow ->
       moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
-
-    CheckinHandler.ReturnResult.CANCEL -> Unit
+    else -> Unit
   }
 
   override fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean =
     executeCustom(executor, session, commitState.changes, commitState.commitMessage)
 
-  override fun processExecuteCustomChecksResult(executor: CommitExecutor, session: CommitSession, result: CheckinHandler.ReturnResult) =
-    when (result) {
-      CheckinHandler.ReturnResult.COMMIT -> doCommitCustom(executor, session)
-      CheckinHandler.ReturnResult.CLOSE_WINDOW ->
+  override fun processExecuteCustomChecksResult(executor: CommitExecutor, session: CommitSession, result: CommitChecksResult) =
+    when {
+      result.shouldCommit -> doCommitCustom(executor, session)
+      result.shouldCloseWindow ->
         moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
-
-      CheckinHandler.ReturnResult.CANCEL -> Unit
+      else -> Unit
     }
 
   override fun doRunBeforeCommitChecks(checks: Runnable) =

@@ -25,7 +25,7 @@ import com.jetbrains.python.remote.PyRemoteSourceItem;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
-import com.jetbrains.python.ui.ManualPathEntryDialog;
+import com.jetbrains.python.ui.targetPathEditor.ManualPathEntryDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -118,7 +118,8 @@ class PyRemotePathEditor extends PythonPathEditor {
       return remoteInterpreterManager.chooseRemoteFiles(myProject, (PyRemoteSdkAdditionalDataBase)sdkAdditionalData, false);
     }
     else if (sdkAdditionalData instanceof PyTargetAwareAdditionalData) {
-      var dialog = new ManualPathEntryDialog(myProject, Platform.UNIX);
+      var dialog = new ManualPathEntryDialog(myProject, Platform.UNIX,
+                                             ((PyTargetAwareAdditionalData)sdkAdditionalData).getTargetEnvironmentConfiguration());
       if (dialog.showAndGet()) {
         return new String[]{dialog.getPath()};
       }

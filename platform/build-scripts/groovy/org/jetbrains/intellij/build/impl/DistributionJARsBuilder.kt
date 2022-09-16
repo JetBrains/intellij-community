@@ -219,7 +219,15 @@ class DistributionJARsBuilder {
         val module = plugin.mainModule
         val excludeRule = "-$productCode:$module"
         val includeRule = "+$productCode:$module"
-        if (config.contains(excludeRule)) false else config.contains(module) || config.contains(includeRule)
+        if (
+          config.contains(excludeRule) && config.contains(includeRule) ||
+          config.contains(module) && config.contains(includeRule)
+        ) {
+          buildContext.messages.error("Unsupported rules combination: " + config.filter {
+            it == module || it.endsWith(":$module")
+          })
+        }
+        !config.contains(excludeRule) && (config.contains(module) || config.contains(includeRule))
       }
     }
 

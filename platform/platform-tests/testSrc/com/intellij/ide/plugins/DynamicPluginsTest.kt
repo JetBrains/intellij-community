@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
 import com.intellij.codeInspection.GlobalInspectionTool
 import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
+import com.intellij.ide.actions.ContextHelpAction
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.ui.UISettings
@@ -205,6 +206,16 @@ class DynamicPluginsTest {
     assertThat(ActionManager.getInstance().getAction("foo.bar")).isNotNull()
     Disposer.dispose(disposable)
     assertThat(ActionManager.getInstance().getAction("foo.bar")).isNull()
+  }
+
+  @Test
+  fun unloadActionOverride() {
+    val disposable = loadPluginWithText(PluginBuilder().actions("""
+      <action id="ContextHelp" class="${MyAction::class.java.name}" overrides="true"/>
+    """.trimIndent()))
+    assertThat(ActionManager.getInstance().getAction("ContextHelp")).isInstanceOf(MyAction::class.java)
+    Disposer.dispose(disposable)
+    assertThat(ActionManager.getInstance().getAction("ContextHelp")).isInstanceOf(ContextHelpAction::class.java)
   }
 
   @Test

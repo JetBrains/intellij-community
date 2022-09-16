@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 
 internal class InsertAction: DumbAwareAction() {
   override fun actionPerformed(event: AnActionEvent) {
@@ -25,7 +25,9 @@ internal class InsertAction: DumbAwareAction() {
   }
 
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabledAndVisible = event.getData(PlatformDataKeys.PSI_FILE) is MarkdownFile
+    val editor = event.getData(PlatformDataKeys.EDITOR)
+    val file = event.getData(PlatformDataKeys.PSI_FILE)
+    event.presentation.isEnabledAndVisible = editor != null && file?.language?.isMarkdownLanguage() == true
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

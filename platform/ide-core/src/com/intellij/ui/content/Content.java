@@ -40,6 +40,7 @@ public interface Content extends UserDataHolder, ComponentContainer {
   Key<Boolean> TEMPORARY_REMOVED_KEY = Key.create("temporaryRemoved");
   Key<ContentManagerListener> CLOSE_LISTENER_KEY = Key.create("CloseListener");
   Key<Boolean> SIMPLIFIED_TAB_RENDERING_KEY = Key.create("simplifiedTabRendering");
+  Key<JComponent> REPLACEMENT_COMPONENT = Key.create("replacementComponent");
 
   void setComponent(JComponent component);
 

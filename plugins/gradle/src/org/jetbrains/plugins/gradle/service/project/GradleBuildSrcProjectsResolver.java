@@ -200,7 +200,7 @@ public final class GradleBuildSrcProjectsResolver {
 
   @NotNull
   private static Collection<BuildParticipant> excludeTransitiveParentsOf(@NotNull String path, @NotNull List<BuildParticipant> participants) {
-    Map<String, BuildParticipant> rootPathParticipantMap = new HashMap<>();
+    Map<String, BuildParticipant> rootPathParticipantMap = new LinkedHashMap<>();
 
     for (BuildParticipant participant : participants) {
       rootPathParticipantMap.put(participant.getRootPath(), participant);

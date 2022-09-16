@@ -41,9 +41,10 @@ private val LOG = logger<BuiltInServerManager>()
 class BuiltInServerManagerImpl : BuiltInServerManager() {
   private var serverStartFuture: Future<*>? = null
   private var server: BuiltInServer? = null
+  private var portOverride: Int? = null
 
   override val port: Int
-    get() = server?.port ?: defaultPort
+    get() = portOverride ?: server?.port ?: defaultPort
 
   override val serverDisposable: Disposable?
     get() = server
@@ -154,6 +155,10 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
       url.parameters != null -> url
       else -> Urls.newUrl(url.scheme!!, url.authority!!, url.path, Collections.singletonMap(TOKEN_PARAM_NAME, acquireToken()))
     }
+  }
+
+  override fun overridePort(port: Int?) {
+    portOverride = port
   }
 
   override fun configureRequestToWebServer(connection: URLConnection) {

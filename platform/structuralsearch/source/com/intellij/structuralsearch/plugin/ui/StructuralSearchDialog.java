@@ -374,10 +374,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   private void startSearching() {
     if (myReplace) {
-      new ReplaceCommand(myConfiguration, mySearchContext).startSearching();
+      new ReplaceCommand(getConfiguration(), mySearchContext).startSearching();
     }
     else {
-      new SearchCommand(myConfiguration, mySearchContext).startSearching();
+      new SearchCommand(getConfiguration(), mySearchContext).startSearching();
     }
   }
 
@@ -423,7 +423,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myExistingTemplatesComponent.onConfigurationSelected(configuration -> {
       loadConfiguration(configuration);
     });
-    myExistingTemplatesComponent.setConfigurationProducer(() -> myConfiguration);
+    myExistingTemplatesComponent.setConfigurationProducer(() -> getConfiguration());
     myExistingTemplatesComponent.setSearchEditorProducer(() -> mySearchCriteriaEdit);
     myExistingTemplatesComponent.setExportRunnable(() -> exportToClipboard());
     myExistingTemplatesComponent.setImportRunnable(() -> importFromClipboard());
@@ -776,7 +776,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }
 
     FindSettings.getInstance().setShowResultsInSeparateView(myOpenInNewTab.isSelected());
-    ConfigurationManager.getInstance(getProject()).addHistoryConfiguration(myConfiguration);
+    ConfigurationManager.getInstance(getProject()).addHistoryConfiguration(getConfiguration());
     startSearching();
   }
 

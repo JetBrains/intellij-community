@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.CollectionFactory
 import java.util.*
@@ -230,9 +229,9 @@ internal class ChangesViewCommitWorkflowHandler(
     super.inclusionChanged()
   }
 
-  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) {
+  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) {
     super.beforeCommitChecksEnded(isDefaultCommit, result)
-    if (result == CheckinHandler.ReturnResult.COMMIT) {
+    if (result.shouldCommit) {
       // commit message could be changed during before-commit checks - ensure updated commit message is used for commit
       workflow.commitState = workflow.commitState.copy(getCommitMessage())
 

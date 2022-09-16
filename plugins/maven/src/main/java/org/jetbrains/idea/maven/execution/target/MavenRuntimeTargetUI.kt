@@ -23,7 +23,7 @@ class MavenRuntimeTargetUI<C : TargetEnvironmentConfiguration>(private val confi
           cellBuilder = textFieldWithBrowseTargetButton(this, targetType, targetSupplier,
                                                         project,
                                                         message("maven.target.configurable.home.path.title"),
-                                                        config::homePath.toBinding())
+                                                        config::homePath.toBinding(), TargetBrowserHints())
         }
         else {
           cellBuilder = textField(config::homePath)

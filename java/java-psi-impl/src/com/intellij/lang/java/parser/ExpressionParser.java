@@ -61,6 +61,10 @@ public class ExpressionParser {
   public PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
     return parseAssignment(builder);
   }
+  @Nullable
+  PsiBuilder.Marker parse(@NotNull PsiBuilder builder, final int mode) {
+    return parseAssignment(builder, mode);
+  }
 
   @Nullable
   public PsiBuilder.Marker parseCaseLabel(@NotNull PsiBuilder builder) {

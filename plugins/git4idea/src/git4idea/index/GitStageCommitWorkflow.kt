@@ -8,11 +8,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitSession
-import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.vcs.commit.CommitHandlersNotifier
-import com.intellij.vcs.commit.EdtCommitResultHandler
-import com.intellij.vcs.commit.NonModalCommitWorkflow
-import com.intellij.vcs.commit.isCleanupCommitMessage
+import com.intellij.vcs.commit.*
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitCommitTemplateTracker
@@ -40,8 +36,8 @@ class GitStageCommitWorkflow(project: Project) : NonModalCommitWorkflow(project)
 
   override fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean = error("Not supported currently")
 
-  override fun processExecuteDefaultChecksResult(result: CheckinHandler.ReturnResult) {
-    if (result == CheckinHandler.ReturnResult.COMMIT) doCommit()
+  override fun processExecuteDefaultChecksResult(result: CommitChecksResult) {
+    if (result.shouldCommit) doCommit()
   }
 
   private fun doCommit() {

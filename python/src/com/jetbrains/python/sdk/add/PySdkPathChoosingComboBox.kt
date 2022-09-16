@@ -16,10 +16,7 @@
 package com.jetbrains.python.sdk.add
 
 import com.intellij.execution.Platform
-import com.intellij.execution.target.BrowsableTargetEnvironmentType
-import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.TargetEnvironmentType
-import com.intellij.execution.target.getTargetType
+import com.intellij.execution.target.*
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
@@ -35,7 +32,7 @@ import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.target.createDetectedSdk
-import com.jetbrains.python.ui.ManualPathEntryDialog
+import com.jetbrains.python.ui.targetPathEditor.ManualPathEntryDialog
 import java.awt.event.ActionListener
 import java.util.function.Supplier
 import javax.swing.JComboBox
@@ -94,7 +91,8 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = empt
                                    title,
                                    PY_SDK_COMBOBOX_TEXT_ACCESSOR,
                                    childComponent,
-                                   Supplier { targetEnvironmentConfiguration })
+                                   Supplier { targetEnvironmentConfiguration },
+                                   TargetBrowserHints(false))
         }
         else {
           // The fallback where the path is entered manually

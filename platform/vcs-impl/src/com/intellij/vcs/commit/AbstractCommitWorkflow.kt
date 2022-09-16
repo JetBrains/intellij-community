@@ -60,7 +60,7 @@ interface CommitWorkflowListener : EventListener {
   fun executionEnded()
 
   fun beforeCommitChecksStarted()
-  fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult)
+  fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult)
 }
 
 abstract class AbstractCommitWorkflow(val project: Project) {
@@ -172,12 +172,12 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   fun executeDefault(executor: CommitExecutor?): Boolean {
     val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(true, executor)
     processExecuteDefaultChecksResult(beforeCommitChecksResult)
-    return beforeCommitChecksResult == CheckinHandler.ReturnResult.COMMIT
+    return beforeCommitChecksResult.shouldCommit
   }
 
-  protected open fun processExecuteDefaultChecksResult(result: CheckinHandler.ReturnResult) = Unit
+  protected open fun processExecuteDefaultChecksResult(result: CommitChecksResult) = Unit
 
-  protected fun runBeforeCommitChecksWithEvents(isDefaultCommit: Boolean, executor: CommitExecutor?): CheckinHandler.ReturnResult {
+  protected fun runBeforeCommitChecksWithEvents(isDefaultCommit: Boolean, executor: CommitExecutor?): CommitChecksResult {
     fireBeforeCommitChecksStarted()
     val result = runBeforeCommitChecks(executor)
     fireBeforeCommitChecksEnded(isDefaultCommit, result)
@@ -187,11 +187,11 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   protected fun fireBeforeCommitChecksStarted() = eventDispatcher.multicaster.beforeCommitChecksStarted()
 
-  protected fun fireBeforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) =
+  protected fun fireBeforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) =
     eventDispatcher.multicaster.beforeCommitChecksEnded(isDefaultCommit, result)
 
-  private fun runBeforeCommitChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
-    var result: CheckinHandler.ReturnResult? = null
+  private fun runBeforeCommitChecks(executor: CommitExecutor?): CommitChecksResult {
+    var result: CommitChecksResult? = null
 
     var checks = Runnable {
       ProgressManager.checkCanceled()
@@ -216,7 +216,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     }
     doRunBeforeCommitChecks(task)
 
-    return result ?: CheckinHandler.ReturnResult.CANCEL.also { LOG.debug("No commit handlers result. Cancelling commit.") }
+    return result ?: CommitChecksResult.ExecutionError.also { LOG.debug("No commit handlers result. Cancelling commit.") }
   }
 
   protected open fun doRunBeforeCommitChecks(checks: Runnable) = checks.run()
@@ -237,19 +237,23 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
     }
 
-  fun runBeforeCommitHandlersChecks(executor: CommitExecutor?, handlers: List<CheckinHandler>): CheckinHandler.ReturnResult {
+  fun runBeforeCommitHandlersChecks(executor: CommitExecutor?, handlers: List<CheckinHandler>): CommitChecksResult {
     handlers.forEachLoggingErrors(LOG) { handler ->
       try {
         val result = runBeforeCommitHandler(handler, executor)
-        if (result != CheckinHandler.ReturnResult.COMMIT) return result
+        when (result) {
+          CheckinHandler.ReturnResult.COMMIT -> Unit // continue
+          CheckinHandler.ReturnResult.CANCEL -> return CommitChecksResult.Failed()
+          CheckinHandler.ReturnResult.CLOSE_WINDOW -> return CommitChecksResult.Failed(toCloseWindow = true)
+        }
       }
       catch (e: ProcessCanceledException) {
         LOG.debug("CheckinHandler cancelled $handler")
-        return CheckinHandler.ReturnResult.CANCEL
+        return CommitChecksResult.Cancelled
       }
     }
 
-    return CheckinHandler.ReturnResult.COMMIT
+    return CommitChecksResult.Passed(toCommit = true)
   }
 
   protected open fun runBeforeCommitHandler(handler: CheckinHandler, executor: CommitExecutor?): CheckinHandler.ReturnResult {
@@ -279,7 +283,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     run {
       val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(false, executor)
       processExecuteCustomChecksResult(executor, session, beforeCommitChecksResult)
-      beforeCommitChecksResult == CheckinHandler.ReturnResult.COMMIT
+      beforeCommitChecksResult.shouldCommit
     }
 
   private fun configureCommitSession(executor: CommitExecutor,
@@ -298,7 +302,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   protected open fun processExecuteCustomChecksResult(executor: CommitExecutor,
                                                       session: CommitSession,
-                                                      result: CheckinHandler.ReturnResult) = Unit
+                                                      result: CommitChecksResult) = Unit
 
   companion object {
     @JvmStatic

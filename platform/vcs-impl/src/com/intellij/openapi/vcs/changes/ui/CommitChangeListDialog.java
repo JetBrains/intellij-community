@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.BeforeCheckinDialogHandler;
-import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.ui.JBColor;
@@ -710,12 +709,13 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   @Override
-  public void endBeforeCommitChecks(@NotNull CheckinHandler.ReturnResult result) {
-    if (result == CheckinHandler.ReturnResult.CANCEL) {
-      restartUpdate();
-    }
-    else if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
+  public void endBeforeCommitChecks(@NotNull CommitChecksResult result) {
+    if (result.getShouldCommit()) return;
+    if (result.getShouldCloseWindow()) {
       doCancelAction();
+    }
+    else {
+      restartUpdate();
     }
   }
 

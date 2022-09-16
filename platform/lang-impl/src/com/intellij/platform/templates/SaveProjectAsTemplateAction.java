@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.CommonBundle;
@@ -414,18 +414,26 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     public boolean processFile(@NotNull VirtualFile virtualFile) {
       myIndicator.checkCanceled();
 
-      if (!virtualFile.isDirectory()) {
+      String relativePath = VfsUtilCore.getRelativePath(virtualFile, myRootDir, '/');
+      if (relativePath == null) {
+        throw new RuntimeException("Can't find relative path for " + virtualFile + " in " + myRootDir);
+      }
+      String entryName = myPrefix + '/' + relativePath;
+
+      if (virtualFile.isDirectory()) {
+        try {
+          myStream.addDirectory(entryName);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+      else {
         String fileName = virtualFile.getName();
         myIndicator.setText2(fileName);
 
-        String relativePath = VfsUtilCore.getRelativePath(virtualFile, myRootDir, '/');
-        if (relativePath == null) {
-          throw new RuntimeException("Can't find relative path for " + virtualFile + " in " + myRootDir);
-        }
-
         boolean system = Project.DIRECTORY_STORE_FOLDER.equals(virtualFile.getParent().getName());
         if (!system || ALLOWED_FILES.contains(fileName) || fileName.endsWith(".iml")) {
-          String entryName = myPrefix + '/' + relativePath;
           try {
             if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName())) {
               myStream.addFile(entryName, new File(virtualFile.getPath()));
