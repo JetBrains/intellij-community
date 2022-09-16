@@ -48,6 +48,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Predicate
 import java.util.stream.Collectors
+import kotlin.io.path.exists
 
 /**
  * Assembles output of modules to platform JARs (in [BuildPaths.distAllDir]/lib directory),
@@ -1034,23 +1035,26 @@ private fun layoutArtifacts(layout: BaseLayout,
     val relativePath = entry.value
     span.addEvent("include artifact", Attributes.of(AttributeKey.stringKey("artifactName"), artifactName))
     val artifact = JpsArtifactService.getInstance().getArtifacts(context.project).find { it.name == artifactName }
-                   ?: throw IllegalArgumentException("Cannot find artifact $artifactName in the project")
-    var artifactFile: Path
+                   ?: error("Cannot find artifact '$artifactName' in the project")
+    var artifactPath = targetDirectory.resolve("lib").resolve(relativePath)
+    val sourcePath = artifact.outputFilePath?.let(Path::of) ?: error("Missing output path for '$artifactName' artifact")
+    if (copyFiles) {
+      require(sourcePath.exists()) {
+        "Missing output file for '$artifactName' artifact: outputFilePath=${artifact.outputFilePath}, outputPath=${artifact.outputPath}"
+      }
+    }
     if (artifact.outputFilePath == artifact.outputPath) {
-      val source = Path.of(artifact.outputPath!!)
-      artifactFile = targetDirectory.resolve("lib").resolve(relativePath)
       if (copyFiles) {
-        copyDir(source, targetDirectory.resolve("lib").resolve(relativePath))
+        copyDir(sourcePath, artifactPath)
       }
     }
     else {
-      val source = Path.of(artifact.outputFilePath!!)
-      artifactFile = targetDirectory.resolve("lib").resolve(relativePath).resolve(source.fileName)
+      artifactPath = artifactPath.resolve(sourcePath.fileName)
       if (copyFiles) {
-        copyFile(source, artifactFile)
+        copyFile(sourcePath, artifactPath)
       }
     }
-    addArtifactMapping(artifact, entries, artifactFile)
+    addArtifactMapping(artifact, entries, artifactPath)
   }
   return entries
 }
