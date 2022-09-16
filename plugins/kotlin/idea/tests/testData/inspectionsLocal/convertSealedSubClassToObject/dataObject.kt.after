@@ -1,4 +1,4 @@
-// LANGUAGE_VERSION: 1.8
+// COMPILER_ARGUMENTS: -XXLanguage:+DataObjects
 // FIX: Convert sealed subclass to object
 
 sealed class Sealed
