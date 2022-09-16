@@ -27,6 +27,8 @@ import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactD
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.awt.EventQueue
 import java.io.File
+import java.io.FileNotFoundException
+import java.io.InputStream
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -198,10 +200,11 @@ object KotlinArtifactsDownloader {
             .also { Files.createDirectories(it.parent) }
 
         if (!artifact.exists()) {
-            val stream = URL(
+            val idePluginDeps =
                 "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/" +
-                        "org/jetbrains/kotlin/$artifactId/$version/$fileName"
-            ).openStream()
+                    "org/jetbrains/kotlin/$artifactId/$version/$fileName"
+            val mavenCentral = "https://repo1.maven.org/maven2/org/jetbrains/kotlin/$artifactId/$version/$fileName"
+            val stream = URL(idePluginDeps).openStreamOrNull() ?: URL(mavenCentral).openStream()
             Files.copy(stream, artifact)
             check(artifact.exists()) { "$artifact should be downloaded" }
         }
@@ -247,3 +250,10 @@ object KotlinArtifactsDownloader {
         ) + "\n\n" + suggestion
     }
 }
+
+private fun URL.openStreamOrNull(): InputStream? =
+    try {
+        openStream()
+    } catch (ex: FileNotFoundException) {
+        null
+    }
