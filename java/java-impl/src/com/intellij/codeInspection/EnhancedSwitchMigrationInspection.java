@@ -176,7 +176,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     }
     StreamEx.ofTree((PsiElement)switchBlock, block -> Arrays.stream(block.getChildren()))
       .select(PsiBreakStatement.class)
-      .filter(breakStmt -> ControlFlowUtils.statementCompletesWithStatement(switchBlock, breakStmt))
+      .filter(breakStmt -> ControlFlowUtils.statementCompletesWithStatement(switchBlock, breakStmt) && breakStmt.findExitedStatement() == switchBlock)
       .forEach(statement -> new CommentTracker().delete(statement));
     return switchBlock;
   }
