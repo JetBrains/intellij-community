@@ -16,6 +16,7 @@ import com.intellij.util.ProcessingContext
 import com.jetbrains.python.actions.checkIfAvailableAndShowHint
 import com.jetbrains.python.actions.getCustomDescriptor
 import com.jetbrains.python.actions.getSelectedPythonConsole
+import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.PyExecuteConsoleCustomizer
 import com.jetbrains.python.console.PydevConsoleCommunication
 import com.jetbrains.python.console.PythonConsoleView
@@ -93,7 +94,9 @@ class DummyConsolePandasColumnNameRetrievalService : ConsolePandasColumnNameRetr
 
 class ConsolePandasColumnNameRetrievalServiceImpl(val project: Project) : ConsolePandasColumnNameRetrievalService {
   override fun getPandasColumns(consoleCommunication: PydevConsoleCommunication, name: @NlsSafe String): List<String> {
-
+    if (!PyConsoleOptions.getInstance(project).isAutoCompletionEnabled) {
+      return emptyList()
+    }
     val debugValue = consoleCommunication.evaluate(PANDAS_COLUMN_NAMES_CODE.format(name, name), true, true)
     return when (debugValue.type) {
       "str" -> debugValue.value?.let { parseDebugValue(it) } ?: emptyList()

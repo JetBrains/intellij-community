@@ -23,7 +23,7 @@ import com.jetbrains.python.run.PythonRunParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.util.*;
 
 @State(
   name = "PyConsoleOptionsProvider",
@@ -82,6 +82,14 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     return myState.myCommandQueueEnabled;
   }
 
+  public void setAutoCompletionEnabled(boolean selected) {
+    myState.myAutoCompletionEnabled = selected;
+  }
+
+  public boolean isAutoCompletionEnabled() {
+    return myState.myAutoCompletionEnabled;
+  }
+
   public static PyConsoleOptions getInstance(Project project) {
     return project.getService(PyConsoleOptions.class);
   }
@@ -99,6 +107,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myIpythonEnabled = state.myIpythonEnabled;
     myState.myUseExistingConsole = state.myUseExistingConsole;
     myState.myCommandQueueEnabled = state.myCommandQueueEnabled;
+    myState.myAutoCompletionEnabled = state.myAutoCompletionEnabled;
   }
 
   public static class State {
@@ -109,6 +118,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myIpythonEnabled = true;
     public boolean myUseExistingConsole = false;
     public boolean myCommandQueueEnabled = true;
+    public boolean myAutoCompletionEnabled = false;
   }
 
   @Tag("console-settings")
