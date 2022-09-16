@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.gradle.ProjectInfo
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_4_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_5_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_6_21
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_7_20
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Rule
@@ -93,12 +94,12 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
             if (!IS_UNDER_SAFE_PUSH) {
                 addVersions("6.8.3", V_1_4_32)
-                addVersions("6.9.2", V_1_5_32)
                 addVersions("7.3.3", V_1_6_21)
+                addVersions("7.4.2", V_1_7_20)
             }
 
             addVersions(
-                "7.4.2", KotlinGradlePluginVersions.latest,
+                "7.5.1", KotlinGradlePluginVersions.latest,
                 "${KotlinGradlePluginVersions.latest.major}.${KotlinGradlePluginVersions.latest.minor}"
             )
 
