@@ -183,14 +183,14 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     when (change) {
       is EntityChange.Removed -> {
         // It's possible case then idToModule doesn't contain element e.g. if unloaded module was removed
-        val module = event.storageBefore.findModuleByEntity(change.entity)
+        val module = change.entity.findModule(event.storageBefore)
         if (module != null) {
           fireEventAndDisposeModule(module)
         }
       }
 
       is EntityChange.Added -> {
-        val alreadyCreatedModule = event.storageAfter.findModuleByEntity(change.entity)
+        val alreadyCreatedModule = change.entity.findModule(event.storageAfter)
         val module = if (alreadyCreatedModule != null) {
           unloadedModules.remove(change.entity.name)
 
@@ -220,14 +220,14 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
         if (oldId != newId) {
           unloadedModules.remove(change.newEntity.name)
-          val module = event.storageBefore.findModuleByEntity(change.oldEntity)
+          val module = change.oldEntity.findModule(event.storageBefore)
           if (module != null) {
             module.rename(newId.name, getModuleVirtualFileUrl(change.newEntity), true)
             oldModuleNames[module] = oldId.name
           }
         }
         else if (getImlFileDirectory(change.oldEntity) != getImlFileDirectory(change.newEntity)) {
-          val module = event.storageBefore.findModuleByEntity(change.newEntity)
+          val module = change.newEntity.findModule(event.storageBefore)
           val imlFilePath = getModuleVirtualFileUrl(change.newEntity)
           if (module != null && imlFilePath != null) {
             module.onImlFileMoved(imlFilePath)
@@ -265,7 +265,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
           val library = event.storageAfter.libraryMap.getDataByEntity(change.entity)
           if (library == null && areModulesLoaded()) {
-            val module = entityStore.current.findModuleByEntity(moduleEntity)
+            val module = moduleEntity.findModule(entityStore.current)
                          ?: error("Could not find module bridge for module entity $moduleEntity")
             val moduleRootComponent = ModuleRootComponentBridge.getInstance(module)
             (moduleRootComponent.getModuleLibraryTable() as ModuleLibraryTableBridgeImpl).addLibrary(change.entity, null)

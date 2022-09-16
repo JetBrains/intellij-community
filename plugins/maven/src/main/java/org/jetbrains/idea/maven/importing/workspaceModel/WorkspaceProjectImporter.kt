@@ -15,7 +15,7 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
@@ -235,7 +235,7 @@ internal class WorkspaceProjectImporter(
       val appliedModules = each.modules.mapNotNull<ModuleWithTypeData<ModuleEntity>, ModuleWithTypeData<Module>> {
         val originalEntity = it.module
         val appliedEntity = appliedStorage.resolve(originalEntity.persistentId) ?: return@mapNotNull null
-        val module = appliedStorage.findModuleByEntity(appliedEntity) ?: return@mapNotNull null
+        val module = appliedEntity.findModule(appliedStorage) ?: return@mapNotNull null
         ModuleWithTypeData(module, it.type)
       }
 

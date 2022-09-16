@@ -12,9 +12,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.map2Array
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.getInstance
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
@@ -87,15 +87,14 @@ class ModuleModelProxyImpl(private val diff: MutableEntityStorage,
 
   override val modules: Array<Module>
     get() = diff.entities(ModuleEntity::class.java)
-      .map { diff.findModuleByEntity(it) }
+      .map { moduleEntity -> moduleEntity.findModule(diff) }
       .filterNotNull()
       .toList()
       .map2Array { it }
 
 
   override fun findModuleByName(name: String): Module? {
-    val entity = diff.resolve(ModuleId(name)) ?: return null
-    return diff.findModuleByEntity(entity)
+    return diff.resolve(ModuleId(name))?.findModule(diff)
   }
 
   override fun newModule(path: String, moduleTypeId: String): Module {

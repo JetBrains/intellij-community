@@ -219,8 +219,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     get() = entityStore.cachedValue(sortedModulesValue)
 
   override fun findModuleByName(name: String): Module? {
-    val entity = entityStore.current.resolve(ModuleId(name)) ?: return null
-    return entityStore.current.findModuleByEntity(entity)
+    return entityStore.current.resolve(ModuleId(name))?.findModule(entityStore.current)
   }
 
   override fun disposeModule(module: Module) = ApplicationManager.getApplication().runWriteAction {
@@ -433,8 +432,6 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     @JvmStatic
     fun EntityStorage.findModuleEntity(module: ModuleBridge) = moduleMap.getEntities(module).firstOrNull() as ModuleEntity?
 
-    @JvmStatic
-    fun EntityStorage.findModuleByEntity(entity: ModuleEntity): ModuleBridge? = moduleMap.getDataByEntity(entity)
 
     internal fun getModuleGroupPath(module: Module, entityStorage: VersionedEntityStorage): Array<String>? {
       val moduleEntity = entityStorage.current.findModuleEntity(module as ModuleBridge) ?: return null
