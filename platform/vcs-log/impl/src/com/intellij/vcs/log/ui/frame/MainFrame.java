@@ -34,6 +34,7 @@ import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionIds;
@@ -111,7 +112,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myDetailsPanel = new CommitDetailsListPanel(logData.getProject(), this, () -> {
       return new CommitDetailsPanel(commit -> {
-        logUi.getVcsLog().jumpToCommit(commit.getHash(), commit.getRoot());
+        VcsLogNavigationUtil.jumpToCommit(logUi, commit.getHash(), commit.getRoot(), false, true);
         return Unit.INSTANCE;
       });
     });
