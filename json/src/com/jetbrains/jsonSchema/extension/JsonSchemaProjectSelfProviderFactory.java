@@ -58,16 +58,11 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
       if (!service.isApplicableToFile(file)) return false;
       JsonSchemaVersion schemaVersion = service.getSchemaVersion(file);
       if (schemaVersion == null) return false;
-      switch (schemaVersion) {
-        case SCHEMA_4:
-          return isSchemaV4();
-        case SCHEMA_6:
-          return isSchemaV6();
-        case SCHEMA_7:
-          return isSchemaV7();
-      }
-
-      throw new NotImplementedError("Unknown schema version: " + schemaVersion);
+      return switch (schemaVersion) {
+        case SCHEMA_4 -> isSchemaV4();
+        case SCHEMA_6 -> isSchemaV6();
+        case SCHEMA_7 -> isSchemaV7();
+      };
     }
 
     @Override
@@ -96,29 +91,23 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
     @Nullable
     @Override
     public String getRemoteSource() {
-      switch (myFileName) {
-        case SCHEMA_JSON_FILE_NAME:
-          return "http://json-schema.org/draft-04/schema";
-        case SCHEMA06_JSON_FILE_NAME:
-          return "http://json-schema.org/draft-06/schema";
-        case SCHEMA07_JSON_FILE_NAME:
-          return "http://json-schema.org/draft-07/schema";
-      }
-      return null;
+      return switch (myFileName) {
+        case SCHEMA_JSON_FILE_NAME -> "http://json-schema.org/draft-04/schema";
+        case SCHEMA06_JSON_FILE_NAME -> "http://json-schema.org/draft-06/schema";
+        case SCHEMA07_JSON_FILE_NAME -> "http://json-schema.org/draft-07/schema";
+        default -> null;
+      };
     }
 
     @NotNull
     @Override
     public String getPresentableName() {
-      switch (myFileName) {
-        case SCHEMA_JSON_FILE_NAME:
-          return JsonBundle.message("schema.of.version", 4);
-        case SCHEMA06_JSON_FILE_NAME:
-          return JsonBundle.message("schema.of.version", 6);
-        case SCHEMA07_JSON_FILE_NAME:
-          return JsonBundle.message("schema.of.version", 7);
-      }
-      return getName();
+      return switch (myFileName) {
+        case SCHEMA_JSON_FILE_NAME -> JsonBundle.message("schema.of.version", 4);
+        case SCHEMA06_JSON_FILE_NAME -> JsonBundle.message("schema.of.version", 6);
+        case SCHEMA07_JSON_FILE_NAME -> JsonBundle.message("schema.of.version", 7);
+        default -> getName();
+      };
     }
   }
 }

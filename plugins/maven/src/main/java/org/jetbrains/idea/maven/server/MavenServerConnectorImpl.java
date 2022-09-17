@@ -205,15 +205,11 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
 
   @Override
   public State getState() {
-    switch (myServerPromise.getState()) {
-      case SUCCEEDED: {
-        return myTerminated.get() ? State.STOPPED : State.RUNNING;
-      }
-      case REJECTED:
-        return State.FAILED;
-      default:
-        return State.STARTING;
-    }
+    return switch (myServerPromise.getState()) {
+      case SUCCEEDED -> myTerminated.get() ? State.STOPPED : State.RUNNING;
+      case REJECTED -> State.FAILED;
+      default -> State.STARTING;
+    };
   }
 
   @Override
@@ -301,16 +297,9 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
           if (logEvents == null) return;
           for (ServerLogEvent e : logEvents) {
             switch (e.getType()) {
-              case PRINT:
-              case INFO:
-                MavenLog.LOG.info(e.getMessage());
-                break;
-              case WARN:
-                MavenLog.LOG.warn(e.getMessage());
-                break;
-              case ERROR:
-                MavenLog.LOG.error(e.getMessage());
-                break;
+              case PRINT, INFO -> MavenLog.LOG.info(e.getMessage());
+              case WARN -> MavenLog.LOG.warn(e.getMessage());
+              case ERROR -> MavenLog.LOG.error(e.getMessage());
             }
           }
           myLoggerConnectFailedCount.set(0);
