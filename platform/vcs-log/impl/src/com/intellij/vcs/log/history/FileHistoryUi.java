@@ -140,12 +140,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                                          getCommitPresentation(commitId), myPath.getName());
       showWarningWithLink(text, VcsLogBundle.message("file.history.commit.not.found.view.in.log.link"), () -> {
         VcsLogContentUtil.runInMainLog(myProject, ui -> {
-          if (commitId instanceof Hash) {
-            ui.getVcsLog().jumpToCommit((Hash)commitId, myRoot);
-          }
-          else if (commitId instanceof String) {
-            ui.getVcsLog().jumpToReference((String)commitId);
-          }
+          ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false, true);
         });
       });
     }
