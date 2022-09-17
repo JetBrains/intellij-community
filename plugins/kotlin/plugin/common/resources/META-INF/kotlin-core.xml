@@ -338,7 +338,7 @@
 
     <registryKey
             key="kotlin.enable.inlay.hint.for.lambda.return.type"
-            description="Unresolved reference importer runs on EDT and could be slow"
+            description="Show inlay hint for lambda return type"
             defaultValue="false"
             restartRequired="false"/>
 
