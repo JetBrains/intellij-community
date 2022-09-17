@@ -10312,6 +10312,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/companionWithOuterName.kt");
         }
 
+        @TestMetadata("copy.kt")
+        public void testCopy() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/copy.kt");
+        }
+
         @TestMetadata("enumEntry.kt")
         public void testEnumEntry() throws Exception {
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumEntry.kt");

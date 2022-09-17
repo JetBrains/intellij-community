@@ -155,9 +155,12 @@ private fun KtDotQualifiedExpression.applicableExpression(
     val newDescriptorFqName = newDescriptor.unwrapFakeOverrideIfNecessary().fqNameSafe
     if (originalDescriptorFqName != newDescriptorFqName) return null
 
-    if (newExpression is KtQualifiedExpression && newExpression.receiverExpression.declarationDescriptor(newContext) != receiverReference) {
-        return null
-    }
+    if (newExpression is KtQualifiedExpression && !compareDescriptors(
+            project,
+            newExpression.receiverExpression.declarationDescriptor(newContext)?.containingDeclaration,
+            receiverReference?.containingDeclaration
+        )
+    ) return null
 
     return this.takeIf {
         if (newDescriptor is ImportedFromObjectCallableDescriptor<*>)
