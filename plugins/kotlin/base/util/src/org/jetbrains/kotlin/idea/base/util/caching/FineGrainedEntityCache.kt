@@ -88,8 +88,15 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
 
     protected fun invalidate() {
         useCache { cache ->
-            cache.clear()
+            doInvalidate(cache)
         }
+    }
+
+    /**
+     * perform [cache] invalidation under the lock
+     */
+    protected open fun doInvalidate(cache: MutableMap<Key, Value>) {
+        cache.clear()
     }
 
     protected fun invalidateKeysAndGetOutdatedValues(

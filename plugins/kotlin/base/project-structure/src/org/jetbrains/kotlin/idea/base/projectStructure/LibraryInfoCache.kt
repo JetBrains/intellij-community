@@ -47,9 +47,9 @@ class LibraryInfoCache(project: Project): Disposable {
             WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, ModelChangeListener(this, project))
         }
 
-        override fun dispose() {
-            super.dispose()
-            useCache { deduplicationCache.clear() }
+        override fun doInvalidate(cache: MutableMap<LibraryEx, List<LibraryInfo>>) {
+            cache.clear()
+            deduplicationCache.clear()
         }
 
         override fun get(key: LibraryEx): List<LibraryInfo> {
@@ -61,6 +61,24 @@ class LibraryInfoCache(project: Project): Disposable {
                 cache[key]
             }?.let { return it }
 
+            /**
+             * Project model could provide different instances of libraries
+             * those have the same content (roots + excluded roots) but different names
+             * e.g. module level library has `null` name while project level library has smth like `kotlin-stdlib-1.5.10`.
+             *
+             * When it is needed to check equality (e.g. to eliminate duplicates) of LibraryInfo we have to
+             * check roots of underlying library.
+             *
+             * To have faster equality checks we need to deduplicate libraries: [deduplicationCache] is used to address it.
+             * It uses first root of a library as a key.
+             * Values are only unique (in terms of content) libraries those are used in some LibraryInfo.
+             *
+             * if we have two different instances of the same (in terms of content) library
+             * we ALWAYS have the same instance of libraryInfo (and the same instance of LibraryWrapper in it).
+             *
+             * It even allows to perform equality check based on object identity.
+             */
+
             val urlsByType = buildMap {
                 val rootProvider = key.rootProvider
                 for (orderRootType in OrderRootType.getAllTypes()) {
@@ -70,24 +88,22 @@ class LibraryInfoCache(project: Project): Disposable {
             }
 
             val firstRoot = key.firstRoot()
+            useCache { cache ->
+                checkEntitiesIfRequired(cache)
 
-            val (deduplicatedLibrary: LibraryEx?, libraryInfos: List<LibraryInfo>?) =
-                useCache { cache ->
-                    val deduplicatedLibrary = deduplicationCache[firstRoot]?.firstOrNull {
-                        it === key || urlsByType.all { (k, v) ->
-                            v.contentEquals(it.getUrls(k))
-                        }
-                    } ?: return@useCache null
-                    checkEntitiesIfRequired(cache)
+                cache[key]?.let { return@useCache it }
 
-                    val libraryInfos = cache[deduplicatedLibrary]
-                    if (libraryInfos != null && deduplicatedLibrary !== key) {
-                        cache[key] = libraryInfos
-                    }
-                    deduplicatedLibrary to libraryInfos
-                } ?: Pair(null, null)
+                val deduplicatedLibraries = deduplicationCache[firstRoot] ?: return@useCache null
+                val deduplicatedLibrary = deduplicatedLibraries.find {
+                    urlsByType.all { (k, v) -> v.contentEquals(it.getUrls(k)) }
+                } ?: return@useCache null
 
-            libraryInfos?.let { return it }
+                val libraryInfos = cache[deduplicatedLibrary] ?: error("inconsistent state of ${deduplicatedLibrary.presentableName}")
+                cache[key] = libraryInfos
+                deduplicatedLibraries += key
+
+                libraryInfos
+            }?.let { return it }
 
             ProgressManager.checkCanceled()
 
@@ -98,21 +114,12 @@ class LibraryInfoCache(project: Project): Disposable {
             }
 
             useCache { cache ->
-                val putIfAbsent = cache.putIfAbsent(key, newValue)
-                if (key.name == null) {
-                    Unit
+                val existedValue = cache.putIfAbsent(key, newValue)
+                if (existedValue == null) {
+                    deduplicationCache.computeIfAbsent(firstRoot) { mutableListOf() } += key
                 }
-                val libraryExMutableList = deduplicationCache.computeIfAbsent(firstRoot) { mutableListOf() }
-                if (putIfAbsent == null) {
-                    libraryExMutableList.add(key)
-                }
-                if (deduplicatedLibrary != null) {
-                    val putIfAbsent2 = cache.putIfAbsent(deduplicatedLibrary, newValue)
-                    if (putIfAbsent2 == null) {
-                        libraryExMutableList.add(deduplicatedLibrary)
-                    }
-                }
-                putIfAbsent
+
+                existedValue
             }?.let { return it }
 
             postProcessNewValue(key, newValue)
@@ -198,8 +205,11 @@ class LibraryInfoCache(project: Project): Disposable {
     }
 
     operator fun get(key: Library): List<LibraryInfo> {
-        return libraryInfoCache[key as LibraryEx]
+        require(key is LibraryEx) { "Library '${key.presentableName}' does not implement LibraryEx which is not expected" }
+        return libraryInfoCache[key]
     }
+
+    fun getLibraryWrapper(library: Library): LibraryWrapper = get(library).first().libraryWrapper
 
     override fun dispose() = Unit
 

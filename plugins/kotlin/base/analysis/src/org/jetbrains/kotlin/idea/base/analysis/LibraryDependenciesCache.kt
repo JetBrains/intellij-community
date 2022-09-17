@@ -286,7 +286,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                         if (entry is LibraryOrderEntry) {
                             val library = entry.library
                             if (library != null) {
-                                val libraryWrapper = libraryInfoCache[library].first().libraryWrapper
+                                val libraryWrapper = libraryInfoCache.getLibraryWrapper(library)
                                 map.putValue(libraryWrapper, module)
                             }
                         }
