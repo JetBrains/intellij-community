@@ -257,22 +257,29 @@ object VcsLogNavigationUtil {
     return future
   }
 
-  private fun VcsLogUiEx.jumpToHash(commitHash: String, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
-    val future = SettableFuture.create<JumpResult>()
-    val trimmed = StringUtil.trim(commitHash) { ch -> !StringUtil.containsChar("()'\"`", ch) }
-    if (!VcsLogUtil.HASH_REGEX.matcher(trimmed).matches()) {
+  /**
+   * Asynchronously selects the commit node defined by the given hash.
+   *
+   * @param commitHash target commit hash
+   * @param silently   skip showing notification when the target is not found
+   * @param focus      focus the table
+   * @return future result (success or failure)
+   */
+  @JvmStatic
+  fun VcsLogUiEx.jumpToHash(commitHash: String, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
+    val trimmedHash = StringUtil.trim(commitHash) { ch -> !StringUtil.containsChar("()'\"`", ch) }
+
+    if (!VcsLogUtil.HASH_REGEX.matcher(trimmedHash).matches()) {
       if (!silently) {
         VcsBalloonProblemNotifier.showOverChangesView(logData.project,
                                                       VcsLogBundle.message("vcs.log.commit.or.reference.not.found", commitHash),
                                                       MessageType.WARNING)
       }
-      future.set(JumpResult.COMMIT_NOT_FOUND)
+      return Futures.immediateFuture(false)
     }
-    else {
-      jumpTo(trimmed, { visiblePack, partialHash ->
-        getCommitRow(logData, visiblePack, partialHash)
-      }, future, silently, focus)
-    }
+
+    val future = SettableFuture.create<JumpResult>()
+    jumpTo(trimmedHash, { visiblePack, partialHash -> getCommitRow(logData, visiblePack, partialHash) }, future, silently, focus)
     return mapToJumpSuccess(future)
   }
 
