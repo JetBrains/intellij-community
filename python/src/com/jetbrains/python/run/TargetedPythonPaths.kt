@@ -178,7 +178,7 @@ private fun addLibrariesFromModule(module: Module,
         // skip libraries from Python facet
         continue
       }
-      for (root in entry.getRootFiles(OrderRootType.CLASSES).map { it.toNioPath() }) {
+      for (root in entry.getRootFiles(OrderRootType.CLASSES).mapNotNull { it.toNioPathOrNull() }) {
         val library = entry.library
         if (!PlatformUtils.isPyCharm()) {
           pythonPathList += targetPath(root)
@@ -193,6 +193,14 @@ private fun addLibrariesFromModule(module: Module,
     }
   }
 }
+
+/**
+ * Returns a related [Path] for [this] virtual file where possible or `null` otherwise.
+ *
+ * Unlike [VirtualFile.toNioPath], this extension function does not throw [UnsupportedOperationException], but rather return `null` in the
+ * same cases.
+ */
+private fun VirtualFile.toNioPathOrNull(): Path? = fileSystem.getNioPath(this)
 
 private fun addRootsFromModule(module: Module, pythonPathList: MutableCollection<TargetEnvironmentFunction<String>>) {
   // for Jython
