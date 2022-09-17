@@ -3,7 +3,7 @@ package com.siyeh.igtest.security.design_for_extension;
 class DesignForExtension {
 
 
-  public boolean <warning descr="Method 'equals()' may be overridden and its functionality ignored">eq<caret>uals</warning>(Object o) {
+  public final boolean equals(Object o) {
     return true;
   }
 
