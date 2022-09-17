@@ -683,7 +683,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
   fun `test malformed setup highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class C extends junit.framework.TestCase {
-        private void <warning descr="Method 'setUp' should be a non-private, non-static, have no parameters and be of type void">setUp</warning>(int i) { }
+        private void <warning descr="Method 'setUp' should be non-private, non-static, have no parameters and of type void">setUp</warning>(int i) { }
       }  
     """.trimIndent())
   }
@@ -897,10 +897,10 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
   fun `test malformed test for JUnit 3 highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class JUnit3TestMethodIsPublicVoidNoArg extends junit.framework.TestCase {
-        void <warning descr="Method 'testOne' should be a public, non-static, have no parameters and be of type void">testOne</warning>() { }
-        public int <warning descr="Method 'testTwo' should be a public, non-static, have no parameters and be of type void">testTwo</warning>() { return 2; }
-        public static void <warning descr="Method 'testThree' should be a public, non-static, have no parameters and be of type void">testThree</warning>() { }
-        public void <warning descr="Method 'testFour' should be a public, non-static, have no parameters and be of type void">testFour</warning>(int i) { }
+        void <warning descr="Method 'testOne' should be public, non-static, have no parameters and of type void">testOne</warning>() { }
+        public int <warning descr="Method 'testTwo' should be public, non-static, have no parameters and of type void">testTwo</warning>() { return 2; }
+        public static void <warning descr="Method 'testThree' should be public, non-static, have no parameters and of type void">testThree</warning>() { }
+        public void <warning descr="Method 'testFour' should be public, non-static, have no parameters and of type void">testFour</warning>(int i) { }
         public void testFive() { }
         void testSix(int i) { } //ignore when method doesn't look like test anymore
       }
