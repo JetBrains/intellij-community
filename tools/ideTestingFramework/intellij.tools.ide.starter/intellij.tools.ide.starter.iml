@@ -58,18 +58,9 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library name="qodana-sarif" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.jetbrains.qodana:qodana-sarif:0.1.95" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/qodana/qodana-sarif/0.1.95/qodana-sarif-0.1.95.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="qodana-sarif" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="library" name="gson" level="project" />
   </component>
 </module>
