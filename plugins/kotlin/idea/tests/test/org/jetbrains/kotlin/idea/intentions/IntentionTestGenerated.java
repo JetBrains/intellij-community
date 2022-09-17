@@ -8552,6 +8552,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public void testBasic() throws Exception {
             runTest("testData/intentions/convertToRawStringTemplate/basic.kt");
         }
+
+        @TestMetadata("octalEscape.kt")
+        public void testOctalEscape() throws Exception {
+            runTest("testData/intentions/convertToRawStringTemplate/octalEscape.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

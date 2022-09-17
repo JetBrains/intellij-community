@@ -4932,6 +4932,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         public void testFormattedString() throws Exception {
             runTest("testData/newJ2k/strings/formattedString.java");
         }
+
+        @TestMetadata("octalEscape.java")
+        public void testOctalEscape() throws Exception {
+            runTest("testData/newJ2k/strings/octalEscape.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
