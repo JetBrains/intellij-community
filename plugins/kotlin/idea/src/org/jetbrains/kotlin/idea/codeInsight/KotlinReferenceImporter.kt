@@ -66,14 +66,12 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
             }.ifEmpty { return false }
 
             val importFixBases = buildList {
-                diagnostics.groupBy { it.psiElement }.forEach { (_, sameElement) ->
-                    sameElement.groupBy { it.factory }.forEach { (_, sameTypeDiagnostic) ->
+                diagnostics.groupBy { it.psiElement }.forEach { (_, sameElementDiagnostics) ->
+                    sameElementDiagnostics.groupBy { it.factory }.forEach { (_, sameTypeDiagnostic) ->
                         val quickFixes = Fe10QuickFixProvider.getInstance(project).createUnresolvedReferenceQuickFixes(sameTypeDiagnostic)
-                        for (entry in quickFixes.entrySet()) {
-                            for (action in entry.value) {
-                                if (action is ImportFixBase<*>) {
-                                    add(action)
-                                }
+                        for (action in quickFixes.values()) {
+                            if (action is ImportFixBase<*>) {
+                                add(action)
                             }
                         }
                     }
@@ -81,14 +79,13 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
             }.ifEmpty { return false }
 
             val suggestions = filterSuggestions(file, importFixBases.flatMap { it.collectSuggestions() })
-                .filter { suggestion ->
-                    val descriptors = file.resolveImportReference(suggestion)
+            val suggestion = suggestions.singleOrNull() ?: return false
+            val descriptors = file.resolveImportReference(suggestion)
 
-                    // we do not auto-import nested classes because this will probably add qualification into the text and this will confuse the user
-                    !(descriptors.any { it is ClassDescriptor && it.containingDeclaration is ClassDescriptor })
-                }
-
-            if (suggestions.size != 1) return false
+            // we do not auto-import nested classes because this will probably add qualification into the text and this will confuse the user
+            if (descriptors.any { it is ClassDescriptor && it.containingDeclaration is ClassDescriptor }) {
+                return false
+            }
 
             var result = false
             CommandProcessor.getInstance().runUndoTransparentAction {
