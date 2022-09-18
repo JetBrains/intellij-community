@@ -216,21 +216,13 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     if (StringUtil.isEmpty(value)) {
       UUID id;
       switch (family) {
-        case CHROME:
-          id = PREDEFINED_CHROME_ID;
-          break;
-        case EXPLORER:
-          id = PREDEFINED_EXPLORER_ID;
-          break;
-        case FIREFOX:
-          id = PREDEFINED_FIREFOX_ID;
-          break;
-        case SAFARI:
-          id = PREDEFINED_SAFARI_ID;
-          break;
-
-        default:
+        case CHROME -> id = PREDEFINED_CHROME_ID;
+        case EXPLORER -> id = PREDEFINED_EXPLORER_ID;
+        case FIREFOX -> id = PREDEFINED_FIREFOX_ID;
+        case SAFARI -> id = PREDEFINED_SAFARI_ID;
+        default -> {
           return null;
+        }
       }
 
       for (ConfigurableWebBrowser browser : existingBrowsers) {

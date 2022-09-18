@@ -164,16 +164,12 @@ class DefaultScrollBarUI extends ScrollBarUI {
 
   private int scale(int value) {
     value = JBUIScale.scale(value);
-    //noinspection EnumSwitchStatementWhichMissesCases
-    switch (UIUtil.getComponentStyle(myScrollBar)) {
-      case LARGE:
-        return (int)(value * 1.15);
-      case SMALL:
-        return (int)(value * 0.857);
-      case MINI:
-        return (int)(value * 0.714);
-    }
-    return value;
+    return switch (UIUtil.getComponentStyle(myScrollBar)) {
+      case LARGE -> (int)(value * 1.15);
+      case SMALL -> (int)(value * 0.857);
+      case MINI -> (int)(value * 0.714);
+      case REGULAR -> value;
+    };
   }
 
   @Override

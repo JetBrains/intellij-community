@@ -397,12 +397,15 @@ public final class EditorUtil {
       char c = text.charAt(i);
       int prevX = x;
       switch (c) {
-        case '\t':
+        case '\t' -> {
           x = nextTabStop(x, editor);
           result += columnsNumber(x - prevX, spaceSize);
-          break;
-        case '\n': x = result = 0; break;
-        default: x += charWidth(c, Font.PLAIN, editor); result++;
+        }
+        case '\n' -> x = result = 0;
+        default -> {
+          x += charWidth(c, Font.PLAIN, editor);
+          result++;
+        }
       }
     }
 

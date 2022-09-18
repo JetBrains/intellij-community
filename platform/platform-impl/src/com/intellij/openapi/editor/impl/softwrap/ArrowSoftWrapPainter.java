@@ -53,17 +53,17 @@ public class ArrowSoftWrapPainter implements SoftWrapPainter {
     int end;
     int result;
     switch (drawingType) {
-      case BEFORE_SOFT_WRAP_LINE_FEED:
+      case BEFORE_SOFT_WRAP_LINE_FEED -> {
         start = x;
         end = myEditor.getScrollingModel().getVisibleArea().width;
         result = end - start;
-        break;
-      case AFTER_SOFT_WRAP:
+      }
+      case AFTER_SOFT_WRAP -> {
         start = 0;
         end = x;
         result = 0;
-        break;
-      default: throw new IllegalStateException("Soft wrap arrow painting is not set up for drawing type " + drawingType);
+      }
+      default -> throw new IllegalStateException("Soft wrap arrow painting is not set up for drawing type " + drawingType);
     }
     myArrowPainter.paint(g, y + lineHeight - g.getFontMetrics().getDescent(), start, end);
     return result;
@@ -71,11 +71,10 @@ public class ArrowSoftWrapPainter implements SoftWrapPainter {
 
   @Override
   public int getDrawingHorizontalOffset(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
-    switch (drawingType) {
-      case BEFORE_SOFT_WRAP_LINE_FEED: return myEditor.getScrollingModel().getVisibleArea().width - x;
-      case AFTER_SOFT_WRAP: return 0;
-      default: throw new IllegalStateException("Soft wrap arrow painting is not set up for drawing type " + drawingType);
-    }
+    return switch (drawingType) {
+      case BEFORE_SOFT_WRAP_LINE_FEED -> myEditor.getScrollingModel().getVisibleArea().width - x;
+      case AFTER_SOFT_WRAP -> 0;
+    };
   }
 
   @Override

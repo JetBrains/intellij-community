@@ -1320,18 +1320,17 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       }
 
       switch (type) {
-        case AccessibleText.CHARACTER:
+        case AccessibleText.CHARACTER -> {
           AccessibleTextSequence charSequence = null;
           if (offset + direction < document.getTextLength() &&
               offset + direction >= 0) {
             int startOffset = offset + direction;
             charSequence = new AccessibleTextSequence(startOffset, startOffset + 1,
-                                         document.getCharsSequence().subSequence(startOffset, startOffset + 1).toString());
+                                                      document.getCharsSequence().subSequence(startOffset, startOffset + 1).toString());
           }
           return charSequence;
-
-        case AccessibleExtendedText.ATTRIBUTE_RUN:
-        case AccessibleText.WORD: {
+        }
+        case AccessibleExtendedText.ATTRIBUTE_RUN, AccessibleText.WORD -> {
           int wordStart = getWordAtOffsetStart(offset, direction);
           int wordEnd = getWordAtOffsetEnd(offset, direction);
           if (wordStart == -1 || wordEnd == -1) {
@@ -1340,9 +1339,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
           return new AccessibleTextSequence(wordStart, wordEnd,
                                             document.getCharsSequence().subSequence(wordStart, wordEnd).toString());
         }
-
-        case AccessibleExtendedText.LINE:
-        case AccessibleText.SENTENCE: {
+        case AccessibleExtendedText.LINE, AccessibleText.SENTENCE -> {
           int lineStart = getLineAtOffsetStart(offset, direction);
           int lineEnd = getLineAtOffsetEnd(offset, direction);
           if (lineStart == -1 || lineEnd == -1) {

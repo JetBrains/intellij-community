@@ -188,13 +188,10 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     switch (type) {
-      case NONE:
+      case NONE -> {
         if (LOG.isDebugEnabled()) LOG.debug("not shown (type=NONE): " + notification);
-        return;
-
-      case STICKY_BALLOON:
-      case BALLOON:
-      default:
+      }
+      case STICKY_BALLOON, BALLOON -> {
         Balloon balloon = notifyByBalloon(notification, type, project);
         if (balloon == null && LOG.isDebugEnabled()) LOG.debug("not shown (no balloon): " + notification);
         if (project != null && !project.isDefault() && (!settings.isShouldLog() || type == NotificationDisplayType.STICKY_BALLOON)) {
@@ -212,9 +209,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
             });
           }
         }
-        break;
-
-      case TOOL_WINDOW:
+      }
+      case TOOL_WINDOW -> {
         MessageType messageType = notification.getType() == NotificationType.ERROR ? MessageType.ERROR :
                                   notification.getType() == NotificationType.WARNING ? MessageType.WARNING :
                                   MessageType.INFO;
@@ -282,6 +278,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
           .notifyByBalloon(toolWindowId, messageType, messageBody, notification.getIcon(), listener);
 
         NotificationCollector.getInstance().logToolWindowNotificationShown(project, notification);
+      }
     }
   }
 

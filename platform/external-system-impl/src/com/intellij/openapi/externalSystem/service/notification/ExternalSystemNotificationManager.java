@@ -420,20 +420,10 @@ public final class ExternalSystemNotificationManager implements Disposable {
     final @NotNull NotificationSource notificationSource,
     final @NotNull ProjectSystemId externalSystemId
   ) {
-    final String contentDisplayName;
-    switch (notificationSource) {
-      case PROJECT_SYNC:
-        contentDisplayName =
-          ExternalSystemBundle.message("notification.messages.project.sync.tab.name", externalSystemId.getReadableName());
-        break;
-      case TASK_EXECUTION:
-        contentDisplayName =
-          ExternalSystemBundle.message("notification.messages.task.execution.tab.name", externalSystemId.getReadableName());
-        break;
-      default:
-        throw new AssertionError("unsupported notification source found: " + notificationSource);
-    }
-    return contentDisplayName;
+    return ExternalSystemBundle.message(switch (notificationSource) {
+      case PROJECT_SYNC -> "notification.messages.project.sync.tab.name";
+      case TASK_EXECUTION -> "notification.messages.task.execution.tab.name";
+    }, externalSystemId.getReadableName());
   }
 
   @Override

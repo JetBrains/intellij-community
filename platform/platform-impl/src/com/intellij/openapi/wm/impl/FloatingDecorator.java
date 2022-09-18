@@ -275,20 +275,20 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     @Override
     protected void processMouseEvent(final MouseEvent e){
       super.processMouseEvent(e);
-      switch(e.getID()){
-        case MouseEvent.MOUSE_PRESSED:{
-          myLastPoint=e.getPoint();
-          SwingUtilities.convertPointToScreen(myLastPoint,this);
+      switch (e.getID()) {
+        case MouseEvent.MOUSE_PRESSED -> {
+          myLastPoint = e.getPoint();
+          SwingUtilities.convertPointToScreen(myLastPoint, this);
           setMotionMask(e.getPoint());
-          myDragging=true;
-          break;
-        }case MouseEvent.MOUSE_RELEASED:{
+          myDragging = true;
+        }
+        case MouseEvent.MOUSE_RELEASED -> {
           FloatingDecorator.this.validate();
           FloatingDecorator.this.repaint();
-          myDragging=false;
-          break;
-        }case MouseEvent.MOUSE_ENTERED:{
-          if(!myDragging){
+          myDragging = false;
+        }
+        case MouseEvent.MOUSE_ENTERED -> {
+          if (!myDragging) {
             setMotionMask(e.getPoint());
           }
         }

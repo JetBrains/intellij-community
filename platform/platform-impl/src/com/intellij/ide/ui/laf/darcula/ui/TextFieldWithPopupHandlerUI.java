@@ -346,19 +346,18 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         final SearchAction action = getActionUnder(e.getPoint());
         if (action != null) {
           switch (action) {
-            case CLEAR:
+            case CLEAR -> {
               Object listener = getComponent().getClientProperty(ON_CLEAR);
               if (listener instanceof ActionListener) {
                 ((ActionListener)listener).actionPerformed(new ActionEvent(getComponent(), ActionEvent.ACTION_PERFORMED, "action"));
               }
               getComponent().setText("");
-              break;
-            case NEWLINE: {
+            }
+            case NEWLINE -> {
               AbstractAction newLineAction = getNewLineAction(getComponent());
               if (newLineAction != null) {
                 newLineAction.actionPerformed(new ActionEvent(getComponent(), ActionEvent.ACTION_PERFORMED, "action"));
               }
-              break;
             }
           }
           e.consume();

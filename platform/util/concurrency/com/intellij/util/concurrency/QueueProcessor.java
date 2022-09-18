@@ -216,7 +216,7 @@ public final class QueueProcessor<T> {
     };
     Application application = ApplicationManager.getApplication();
     switch (myThreadToUse) {
-      case AWT:
+      case AWT -> {
         ModalityState state = pair.getSecond();
         if (state == null) {
           application.invokeLater(runnable);
@@ -224,15 +224,15 @@ public final class QueueProcessor<T> {
         else {
           application.invokeLater(runnable, state);
         }
-        break;
-      case POOLED:
+      }
+      case POOLED -> {
         if (application == null) {
           SwingUtilities.invokeLater(runnable);
         }
         else {
           application.executeOnPooledThread(runnable);
         }
-        break;
+      }
     }
   }
 

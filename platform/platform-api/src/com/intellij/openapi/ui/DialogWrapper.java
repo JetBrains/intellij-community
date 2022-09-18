@@ -83,15 +83,11 @@ public abstract class DialogWrapper {
     MODELESS;
 
     public @NotNull Dialog.ModalityType toAwtModality() {
-      switch (this) {
-        case IDE:
-          return Dialog.ModalityType.APPLICATION_MODAL;
-        case PROJECT:
-          return Dialog.ModalityType.DOCUMENT_MODAL;
-        case MODELESS:
-          return Dialog.ModalityType.MODELESS;
-      }
-      throw new IllegalStateException(toString());
+      return switch (this) {
+        case IDE -> Dialog.ModalityType.APPLICATION_MODAL;
+        case PROJECT -> Dialog.ModalityType.DOCUMENT_MODAL;
+        case MODELESS -> Dialog.ModalityType.MODELESS;
+      };
     }
   }
 

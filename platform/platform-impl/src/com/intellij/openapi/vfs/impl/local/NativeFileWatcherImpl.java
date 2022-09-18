@@ -436,26 +436,11 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       }
 
       switch (op) {
-        case STATS:
-        case CHANGE:
-          myNotificationSink.notifyDirtyPath(path);
-          break;
-
-        case CREATE:
-        case DELETE:
-          myNotificationSink.notifyPathCreatedOrDeleted(path);
-          break;
-
-        case DIRTY:
-          myNotificationSink.notifyDirtyDirectory(path);
-          break;
-
-        case RECDIRTY:
-          myNotificationSink.notifyDirtyPathRecursive(path);
-          break;
-
-        default:
-          LOG.error("Unexpected op: " + op);
+        case STATS, CHANGE -> myNotificationSink.notifyDirtyPath(path);
+        case CREATE, DELETE -> myNotificationSink.notifyPathCreatedOrDeleted(path);
+        case DIRTY -> myNotificationSink.notifyDirtyDirectory(path);
+        case RECDIRTY -> myNotificationSink.notifyDirtyPathRecursive(path);
+        default -> LOG.error("Unexpected op: " + op);
       }
     }
   }

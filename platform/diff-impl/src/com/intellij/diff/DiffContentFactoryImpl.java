@@ -509,14 +509,11 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     if (fromBOM != null) return fromBOM;
 
     CharsetToolkit.GuessedEncoding guessedEncoding = toolkit.guessFromContent(content.length);
-    switch (guessedEncoding) {
-      case SEVEN_BIT:
-        return StandardCharsets.US_ASCII;
-      case VALID_UTF8:
-        return StandardCharsets.UTF_8;
-      default:
-        return null;
-    }
+    return switch (guessedEncoding) {
+      case SEVEN_BIT -> StandardCharsets.US_ASCII;
+      case VALID_UTF8 -> StandardCharsets.UTF_8;
+      default -> null;
+    };
   }
 
   @Nullable

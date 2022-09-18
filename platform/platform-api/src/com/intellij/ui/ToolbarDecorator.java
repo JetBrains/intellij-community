@@ -496,17 +496,12 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
 
   @NotNull
   static Object getPlacement(@NotNull ActionToolbarPosition position) {
-    switch (position) {
-      case TOP:
-        return BorderLayout.NORTH;
-      case LEFT:
-        return BorderLayout.WEST;
-      case BOTTOM:
-        return BorderLayout.SOUTH;
-      case RIGHT:
-        return BorderLayout.EAST;
-    }
-    return BorderLayout.SOUTH;
+    return switch (position) {
+      case TOP -> BorderLayout.NORTH;
+      case LEFT -> BorderLayout.WEST;
+      case BOTTOM -> BorderLayout.SOUTH;
+      case RIGHT -> BorderLayout.EAST;
+    };
   }
 
   private CommonActionsPanel.Buttons @NotNull [] getButtons() {

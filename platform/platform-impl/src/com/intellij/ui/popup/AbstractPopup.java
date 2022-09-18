@@ -1674,25 +1674,23 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     @Override
     public void eventDispatched(final AWTEvent event) {
       switch (event.getID()) {
-        case WINDOW_ACTIVATED:
-        case WINDOW_GAINED_FOCUS:
+        case WINDOW_ACTIVATED, WINDOW_GAINED_FOCUS -> {
           if (myCancelOnWindow && myPopup != null && isCancelNeeded((WindowEvent)event, myPopup.getWindow())) {
             cancel();
           }
-          break;
-        case MOUSE_ENTERED:
+        }
+        case MOUSE_ENTERED -> {
           if (withinPopup(event)) {
             myEverEntered = true;
           }
-          break;
-        case MOUSE_MOVED:
-        case MOUSE_PRESSED:
+        }
+        case MOUSE_MOVED, MOUSE_PRESSED -> {
           if (myCancelOnMouseOutCallback != null && myEverEntered && !withinPopup(event)) {
             if (myCancelOnMouseOutCallback.check((MouseEvent)event)) {
               cancel();
             }
           }
-          break;
+        }
       }
     }
 

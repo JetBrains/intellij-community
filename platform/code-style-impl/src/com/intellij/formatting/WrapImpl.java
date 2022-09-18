@@ -168,15 +168,12 @@ public class WrapImpl extends Wrap {
   }
 
   public WrapImpl(WrapType type, boolean wrapFirstElement) {
-    Type myType;
-
-    switch(type) {
-        case NORMAL: myType = Type.WRAP_AS_NEEDED;break;
-        case NONE: myType= Type.DO_NOT_WRAP;break;
-        case ALWAYS: myType = Type.WRAP_ALWAYS; break;
-        case CHOP_DOWN_IF_LONG:
-        default: myType = Type.CHOP_IF_NEEDED;
-    }
+    Type myType = switch (type) {
+      case NORMAL -> Type.WRAP_AS_NEEDED;
+      case NONE -> Type.DO_NOT_WRAP;
+      case ALWAYS -> Type.WRAP_ALWAYS;
+      case CHOP_DOWN_IF_LONG -> Type.CHOP_IF_NEEDED;
+    };
 
     myFlags |= (wrapFirstElement ? WRAP_FIRST_ELEMENT_MASK:0) | (myType.ordinal() << TYPE_SHIFT);
   }

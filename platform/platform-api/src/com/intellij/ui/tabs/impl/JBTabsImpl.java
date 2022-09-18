@@ -444,18 +444,12 @@ public class JBTabsImpl extends JComponent
 
     if (area == null) return false;
 
-    switch (getTabsPosition()) {
-      case top:
-        return y <= area.height;
-      case left:
-        return x <= area.width;
-      case bottom:
-        return y >= getHeight() - area.height;
-      case right:
-        return x >= getWidth() - area.width;
-    }
-
-    return false;
+    return switch (getTabsPosition()) {
+      case top -> y <= area.height;
+      case left -> x <= area.width;
+      case bottom -> y >= getHeight() - area.height;
+      case right -> x >= getWidth() - area.width;
+    };
   }
 
   private void setupScrollBar() {
@@ -498,30 +492,25 @@ public class JBTabsImpl extends JComponent
   private Rectangle getScrollBarBounds() {
     if (!isWithScrollBar()) return new Rectangle(0, 0, 0, 0);
 
-    switch (getTabsPosition()) {
-      case left: {
+    return switch (getTabsPosition()) {
+      case left -> {
         if (ExperimentalUI.isNewUI()) {
           Rectangle tabsRect = myLastLayoutPass.getHeaderRectangle();
           if (tabsRect != null) {
-            return new Rectangle(tabsRect.x + tabsRect.width - SCROLL_BAR_THICKNESS - 1, 0, SCROLL_BAR_THICKNESS, getHeight());
+            yield new Rectangle(tabsRect.x + tabsRect.width - SCROLL_BAR_THICKNESS - 1, 0, SCROLL_BAR_THICKNESS, getHeight());
           }
           else {
-            return new Rectangle(0, 0, 0, 0);
+            yield new Rectangle(0, 0, 0, 0);
           }
         }
         else {
-          return new Rectangle(0, 0, SCROLL_BAR_THICKNESS, getHeight());
+          yield new Rectangle(0, 0, SCROLL_BAR_THICKNESS, getHeight());
         }
       }
-      case right:
-        return new Rectangle(getWidth() - SCROLL_BAR_THICKNESS, 0, SCROLL_BAR_THICKNESS, getHeight());
-      case top:
-        return new Rectangle(0, 1, getWidth(), SCROLL_BAR_THICKNESS);
-      case bottom:
-        return new Rectangle(0, getHeight() - SCROLL_BAR_THICKNESS, getWidth(), SCROLL_BAR_THICKNESS);
-    }
-
-    return new Rectangle(0, 0, 0, 0);
+      case right -> new Rectangle(getWidth() - SCROLL_BAR_THICKNESS, 0, SCROLL_BAR_THICKNESS, getHeight());
+      case top -> new Rectangle(0, 1, getWidth(), SCROLL_BAR_THICKNESS);
+      case bottom -> new Rectangle(0, getHeight() - SCROLL_BAR_THICKNESS, getWidth(), SCROLL_BAR_THICKNESS);
+    };
   }
 
   public boolean isWithScrollBar() {

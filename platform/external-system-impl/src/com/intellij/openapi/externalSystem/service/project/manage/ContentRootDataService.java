@@ -191,23 +191,13 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
 
   @Nullable
   private static JpsModuleSourceRootType<?> getJavaSourceRootType(ExternalSystemSourceType type) {
-    switch (type) {
-      case SOURCE:
-      case SOURCE_GENERATED:
-        return JavaSourceRootType.SOURCE;
-      case TEST:
-      case TEST_GENERATED:
-        return JavaSourceRootType.TEST_SOURCE;
-      case EXCLUDED:
-        return null;
-      case RESOURCE:
-      case RESOURCE_GENERATED:
-        return JavaResourceRootType.RESOURCE;
-      case TEST_RESOURCE:
-      case TEST_RESOURCE_GENERATED:
-        return JavaResourceRootType.TEST_RESOURCE;
-    }
-    return null;
+    return switch (type) {
+      case SOURCE, SOURCE_GENERATED -> JavaSourceRootType.SOURCE;
+      case TEST, TEST_GENERATED -> JavaSourceRootType.TEST_SOURCE;
+      case EXCLUDED -> null;
+      case RESOURCE, RESOURCE_GENERATED -> JavaResourceRootType.RESOURCE;
+      case TEST_RESOURCE, TEST_RESOURCE_GENERATED -> JavaResourceRootType.TEST_RESOURCE;
+    };
   }
 
   @NotNull

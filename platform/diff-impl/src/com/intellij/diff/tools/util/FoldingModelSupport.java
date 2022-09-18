@@ -1166,16 +1166,12 @@ public class FoldingModelSupport {
    * return: number of context lines. ('-1' - end)
    */
   private static int getRangeShift(int range, int number) {
-    switch (number) {
-      case 0:
-        return range;
-      case 1:
-        return range * 2;
-      case 2:
-        return range * 4;
-      default:
-        return -1;
-    }
+    return switch (number) {
+      case 0 -> range;
+      case 1 -> range * 2;
+      case 2 -> range * 4;
+      default -> -1;
+    };
   }
 
   @Nullable

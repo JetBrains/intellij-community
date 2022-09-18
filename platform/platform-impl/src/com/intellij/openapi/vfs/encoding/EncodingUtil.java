@@ -275,14 +275,13 @@ public final class EncodingUtil {
 
   @NotNull
   static @Nls String reasonToString(@NotNull FailReason reason, @NotNull VirtualFile file) {
-    switch (reason) {
-      case IS_DIRECTORY: return IdeBundle.message("no.charset.set.reason.disabled.for.directory");
-      case IS_BINARY: return IdeBundle.message("no.charset.set.reason.disabled.for.binary.file");
-      case BY_FILE: return IdeBundle.message("no.charset.set.reason.charset.hard.coded.in.file");
-      case BY_BOM: return IdeBundle.message("no.charset.set.reason.charset.auto.detected.by.bom");
-      case BY_BYTES: return IdeBundle.message("no.charset.set.reason.charset.auto.detected.from.content");
-      case BY_FILETYPE: return IdeBundle.message("no.charset.set.reason.disabled.for.file.type", file.getFileType().getDescription());
-    }
-    throw new AssertionError(reason);
+    return switch (reason) {
+      case IS_DIRECTORY -> IdeBundle.message("no.charset.set.reason.disabled.for.directory");
+      case IS_BINARY -> IdeBundle.message("no.charset.set.reason.disabled.for.binary.file");
+      case BY_FILE -> IdeBundle.message("no.charset.set.reason.charset.hard.coded.in.file");
+      case BY_BOM -> IdeBundle.message("no.charset.set.reason.charset.auto.detected.by.bom");
+      case BY_BYTES -> IdeBundle.message("no.charset.set.reason.charset.auto.detected.from.content");
+      case BY_FILETYPE -> IdeBundle.message("no.charset.set.reason.disabled.for.file.type", file.getFileType().getDescription());
+    };
   }
 }

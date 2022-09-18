@@ -1290,20 +1290,19 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     int w;
     int x;
     switch (position) {
-      case LEFT:
+      case LEFT -> {
         w = getLeftFreePaintersAreaWidth();
         x = getLeftFreePaintersAreaOffset();
-        break;
-      case RIGHT:
+      }
+      case RIGHT -> {
         w = getRightFreePaintersAreaWidth();
         x = getLineMarkerFreePaintersAreaOffset();
-        break;
-      case CUSTOM:
+      }
+      case CUSTOM -> {
         w = getWidth();
         x = 0;
-        break;
-      default:
-        throw new IllegalArgumentException(position.name());
+      }
+      default -> throw new IllegalArgumentException(position.name());
     }
 
     int height = endY - startY;
@@ -1535,28 +1534,27 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     // need to have the same sub-device-pixel offset as centerX for the square_with_plus rect to have equal dev width/height
     double centerY = PaintUtil.alignToInt(y + width / 2, g) + strokeOff;
     switch (type) {
-      case COLLAPSED:
-      case COLLAPSED_SINGLE_LINE:
+      case COLLAPSED, COLLAPSED_SINGLE_LINE -> {
         if (y <= clip.y + clip.height && y + height >= clip.y) {
           drawSquareWithPlusOrMinus(g, centerX, centerY, width, true, active, visualLine);
         }
-        break;
-      case EXPANDED_SINGLE_LINE:
+      }
+      case EXPANDED_SINGLE_LINE -> {
         if (y <= clip.y + clip.height && y + height >= clip.y) {
           drawSquareWithPlusOrMinus(g, centerX, centerY, width, false, active, visualLine);
         }
-        break;
-      case EXPANDED_TOP:
+      }
+      case EXPANDED_TOP -> {
         if (y <= clip.y + clip.height && y + height >= clip.y) {
           drawDirectedBox(g, centerX, centerY, width, height, baseHeight, active, visualLine);
         }
-        break;
-      case EXPANDED_BOTTOM:
+      }
+      case EXPANDED_BOTTOM -> {
         y += width;
         if (y - height <= clip.y + clip.height && y >= clip.y) {
           drawDirectedBox(g, centerX, centerY, width, -height, -baseHeight, active, visualLine);
         }
-        break;
+      }
     }
   }
 

@@ -225,15 +225,13 @@ public final class IdeEventQueue extends EventQueue {
     // All default and simple renderers do not post specified events,
     // but panel-based renderers have to post events by contract.
     switch (event.getID()) {
-      case ComponentEvent.COMPONENT_MOVED:
-      case ComponentEvent.COMPONENT_RESIZED:
-      case HierarchyEvent.ANCESTOR_MOVED:
-      case HierarchyEvent.ANCESTOR_RESIZED:
+      case ComponentEvent.COMPONENT_MOVED, ComponentEvent.COMPONENT_RESIZED, HierarchyEvent.ANCESTOR_MOVED, HierarchyEvent.ANCESTOR_RESIZED -> {
         Object source = event.getSource();
         if (source instanceof Component &&
             ComponentUtil.getParentOfType(CellRendererPane.class, (Component)source) != null) {
           return true;
         }
+      }
     }
     return false;
   }

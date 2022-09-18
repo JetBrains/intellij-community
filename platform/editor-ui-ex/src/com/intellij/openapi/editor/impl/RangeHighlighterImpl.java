@@ -365,34 +365,29 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   @Override
   public int getAffectedAreaStartOffset() {
     int startOffset = getStartOffset();
-    switch (getTargetArea()) {
-      case EXACT_RANGE:
-        return startOffset;
-      case LINES_IN_RANGE:
+    return switch (getTargetArea()) {
+      case EXACT_RANGE -> startOffset;
+      case LINES_IN_RANGE -> {
         Document document = myModel.getDocument();
         int textLength = document.getTextLength();
-        if (startOffset >= textLength) return textLength;
-        return document.getLineStartOffset(document.getLineNumber(startOffset));
-      default:
-        throw new IllegalStateException(getTargetArea().toString());
-    }
+        if (startOffset >= textLength) yield textLength;
+        yield document.getLineStartOffset(document.getLineNumber(startOffset));
+      }
+    };
   }
 
   @Override
   public int getAffectedAreaEndOffset() {
     int endOffset = getEndOffset();
-    switch (getTargetArea()) {
-      case EXACT_RANGE:
-        return endOffset;
-      case LINES_IN_RANGE:
+    return switch (getTargetArea()) {
+      case EXACT_RANGE -> endOffset;
+      case LINES_IN_RANGE -> {
         Document document = myModel.getDocument();
         int textLength = document.getTextLength();
-        if (endOffset >= textLength) return endOffset;
-        return Math.min(textLength, document.getLineEndOffset(document.getLineNumber(endOffset)) + 1);
-      default:
-        throw new IllegalStateException(getTargetArea().toString());
-    }
-
+        if (endOffset >= textLength) yield endOffset;
+        yield Math.min(textLength, document.getLineEndOffset(document.getLineNumber(endOffset)) + 1);
+      }
+    };
   }
 
   @ChangeStatus

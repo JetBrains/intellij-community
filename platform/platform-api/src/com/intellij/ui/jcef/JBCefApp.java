@@ -206,23 +206,16 @@ public final class JBCefApp {
 
   private static LogSeverity getLogLevel() {
     String level = System.getProperty("ide.browser.jcef.log.level", "disable").toLowerCase(Locale.ENGLISH);
-    switch (level) {
-      case "disable":
-        return LogSeverity.LOGSEVERITY_DISABLE;
-      case "verbose":
-        return LogSeverity.LOGSEVERITY_VERBOSE;
-      case "info":
-        return LogSeverity.LOGSEVERITY_INFO;
-      case "warning":
-        return LogSeverity.LOGSEVERITY_WARNING;
-      case "error":
-        return LogSeverity.LOGSEVERITY_ERROR;
-      case "fatal":
-        return LogSeverity.LOGSEVERITY_FATAL;
-      case "default":
-      default:
-        return LogSeverity.LOGSEVERITY_DEFAULT;
-    }
+    return switch (level) {
+      case "disable" -> LogSeverity.LOGSEVERITY_DISABLE;
+      case "verbose" -> LogSeverity.LOGSEVERITY_VERBOSE;
+      case "info" -> LogSeverity.LOGSEVERITY_INFO;
+      case "warning" -> LogSeverity.LOGSEVERITY_WARNING;
+      case "error" -> LogSeverity.LOGSEVERITY_ERROR;
+      case "fatal" -> LogSeverity.LOGSEVERITY_FATAL;
+      case "default" -> LogSeverity.LOGSEVERITY_DEFAULT;
+      default -> LogSeverity.LOGSEVERITY_DEFAULT;
+    };
   }
 
   @NotNull

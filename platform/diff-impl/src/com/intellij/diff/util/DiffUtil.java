@@ -1299,18 +1299,12 @@ public final class DiffUtil {
 
   @NotNull
   public static TextDiffType getDiffType(@NotNull MergeConflictType conflictType) {
-    Type type = conflictType.getType();
-    switch (type) {
-      case INSERTED:
-        return TextDiffType.INSERTED;
-      case DELETED:
-        return TextDiffType.DELETED;
-      case MODIFIED:
-        return TextDiffType.MODIFIED;
-      case CONFLICT:
-        return TextDiffType.CONFLICT;
-    }
-    throw new IllegalStateException(type.name());
+    return switch (conflictType.getType()) {
+      case INSERTED -> TextDiffType.INSERTED;
+      case DELETED -> TextDiffType.DELETED;
+      case MODIFIED -> TextDiffType.MODIFIED;
+      case CONFLICT -> TextDiffType.CONFLICT;
+    };
   }
 
   //

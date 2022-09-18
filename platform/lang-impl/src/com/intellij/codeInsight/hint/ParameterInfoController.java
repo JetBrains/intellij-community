@@ -279,16 +279,12 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
 
   @HintManager.PositionFlags
   private static short toShort(Position position) {
-    switch (position) {
-      case above:
-        return HintManager.ABOVE;
-      case atLeft:
-        return HintManager.LEFT;
-      case atRight:
-        return HintManager.RIGHT;
-      default:
-        return HintManager.UNDER;
-    }
+    return switch (position) {
+      case above -> HintManager.ABOVE;
+      case atLeft -> HintManager.LEFT;
+      case atRight -> HintManager.RIGHT;
+      default -> HintManager.UNDER;
+    };
   }
 
   @Override

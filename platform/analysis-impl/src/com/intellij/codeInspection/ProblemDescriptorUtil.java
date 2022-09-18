@@ -225,39 +225,29 @@ public final class ProblemDescriptorUtil {
   public static HighlightInfoType getHighlightInfoType(@NotNull ProblemHighlightType highlightType,
                                                        @NotNull HighlightSeverity severity,
                                                        @NotNull SeverityRegistrar severityRegistrar) {
-    switch (highlightType) {
-      case GENERIC_ERROR_OR_WARNING:
-        return severityRegistrar.getHighlightInfoTypeBySeverity(severity);
-      case LIKE_DEPRECATED:
-        return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.DEPRECATED.getAttributesKey());
-      case LIKE_MARKED_FOR_REMOVAL:
-        return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.MARKED_FOR_REMOVAL.getAttributesKey());
-      case LIKE_UNKNOWN_SYMBOL:
+    return switch (highlightType) {
+      case GENERIC_ERROR_OR_WARNING -> severityRegistrar.getHighlightInfoTypeBySeverity(severity);
+      case LIKE_DEPRECATED -> new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.DEPRECATED.getAttributesKey());
+      case LIKE_MARKED_FOR_REMOVAL ->
+        new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.MARKED_FOR_REMOVAL.getAttributesKey());
+      case LIKE_UNKNOWN_SYMBOL -> {
         if (severity == HighlightSeverity.ERROR) {
-          return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.WRONG_REF.getAttributesKey());
+          yield new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.WRONG_REF.getAttributesKey());
         }
         if (severity == HighlightSeverity.WARNING) {
-          return new HighlightInfoType.HighlightInfoTypeImpl(severity, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
+          yield new HighlightInfoType.HighlightInfoTypeImpl(severity, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
         }
-        return severityRegistrar.getHighlightInfoTypeBySeverity(severity);
-      case LIKE_UNUSED_SYMBOL:
-        return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
-      case INFO:
-        return HighlightInfoType.INFO;
-      case WEAK_WARNING:
-        return HighlightInfoType.WEAK_WARNING;
-      case WARNING:
-        return HighlightInfoType.WARNING;
-      case ERROR:
-        return HighlightInfoType.WRONG_REF;
-      case GENERIC_ERROR:
-        return HighlightInfoType.ERROR;
-      case INFORMATION:
-        return HighlightInfoType.INFORMATION;
-      case POSSIBLE_PROBLEM:
-        return HighlightInfoType.POSSIBLE_PROBLEM;
-    }
-    throw new RuntimeException("Cannot map " + highlightType);
+        yield severityRegistrar.getHighlightInfoTypeBySeverity(severity);
+      }
+      case LIKE_UNUSED_SYMBOL -> new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
+      case INFO -> HighlightInfoType.INFO;
+      case WEAK_WARNING -> HighlightInfoType.WEAK_WARNING;
+      case WARNING -> HighlightInfoType.WARNING;
+      case ERROR -> HighlightInfoType.WRONG_REF;
+      case GENERIC_ERROR -> HighlightInfoType.ERROR;
+      case INFORMATION -> HighlightInfoType.INFORMATION;
+      case POSSIBLE_PROBLEM -> HighlightInfoType.POSSIBLE_PROBLEM;
+    };
   }
   public static ProblemDescriptor @NotNull [] convertToProblemDescriptors(@NotNull final List<? extends Annotation> annotations, @NotNull final PsiFile file) {
     if (annotations.isEmpty()) {

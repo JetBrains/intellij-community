@@ -201,26 +201,15 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
   }
 
   private void recordDragStats(int dropSide, boolean sameWindow) {
-    String actionId = null;
-    switch (dropSide) {
-      case -1:
-        actionId = "OpenElementInNewWindow";
-        break;
-      case TOP:
-        actionId = "SplitVertically";
-        break;
-      case LEFT:
-        actionId = "SplitHorizontally";
-        break;
-      case BOTTOM:
-        actionId = "MoveTabDown";
-        break;
-      case RIGHT:
-        actionId = "MoveTabRight";
-        break;
-      case CENTER:
-        return;// This drag-n-drop gesture cannot be mapped to any action (drop to some exact tab index)
-    }
+    String actionId = switch (dropSide) {
+      case -1 -> "OpenElementInNewWindow";
+      case TOP -> "SplitVertically";
+      case LEFT -> "SplitHorizontally";
+      case BOTTOM -> "MoveTabDown";
+      case RIGHT -> "MoveTabRight";
+      case CENTER -> null; // This drag-n-drop gesture cannot be mapped to any action (drop to some exact tab index)
+      default -> null;
+    };
     if (actionId != null) {
       AnActionEvent event = AnActionEvent.createFromInputEvent(
         new MouseEvent(mySplitters, MouseEvent.MOUSE_DRAGGED, System.currentTimeMillis(), 0, 0, 0, 0, false,

@@ -290,17 +290,16 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   @Override
   protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
     switch (tabStyle) {
-      case fill:
+      case fill -> {
         if (tabPane.isEnabled()) {
           g.setColor(isSelected ? ENABLED_SELECTED_COLOR : tabIndex == hoverTab ? HOVER_COLOR : tabPane.getBackground());
         }
         else {
           g.setColor(isSelected ? DISABLED_SELECTED_COLOR : tabPane.getBackground());
         }
-        break;
-
-      case underline:
-      default:
+      }
+      //case underline,
+      default -> {
         Color c = tabPane.getBackground();
         if (tabPane.isEnabled()) {
           if (tabPane.hasFocus() && isSelected) {
@@ -312,7 +311,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
         }
 
         g.setColor(c);
-        break;
+      }
     }
 
     if (tabPane.getTabLayoutPolicy() == JTabbedPane.SCROLL_TAB_LAYOUT) {
@@ -350,23 +349,23 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
       int offset;
       boolean wrap = tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT;
       switch (tabPlacement) {
-        case LEFT:
+        case LEFT -> {
           offset = SELECTION_HEIGHT.get() - (wrap ? getOffset() : 0);
           paintUnderline(g, x + w - offset, y, SELECTION_HEIGHT.get(), h);
-          break;
-        case RIGHT:
+        }
+        case RIGHT -> {
           offset = wrap ? getOffset() : 0;
           paintUnderline(g, x - offset, y, SELECTION_HEIGHT.get(), h);
-          break;
-        case BOTTOM:
+        }
+        case BOTTOM -> {
           offset = wrap ? getOffset() : 0;
           paintUnderline(g, x, y - offset, w, SELECTION_HEIGHT.get());
-          break;
-        case TOP:
-        default:
+        }
+        //case TOP,
+        default -> {
           offset = SELECTION_HEIGHT.get() - (wrap ? getOffset() : 0);
           paintUnderline(g, x, y + h - offset, w, SELECTION_HEIGHT.get());
-          break;
+        }
       }
     }
   }
@@ -378,18 +377,12 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
       delta -= getOffset();
     }
 
-    switch (tabPlacement) {
-      case RIGHT:
-      case LEFT:
-        return 0;
-
-      case BOTTOM:
-        return delta / 2;
-
-      case TOP:
-      default:
-        return -delta / 2;
-    }
+    return switch (tabPlacement) {
+      case RIGHT, LEFT -> 0;
+      case BOTTOM -> delta / 2;
+      //case TOP,
+      default -> -delta / 2;
+    };
   }
 
   @Override
@@ -399,18 +392,12 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
       delta -= getOffset();
     }
 
-    switch (tabPlacement) {
-      case TOP:
-      case BOTTOM:
-        return 0;
-
-      case LEFT:
-        return -delta / 2;
-
-      case RIGHT:
-      default:
-        return delta / 2;
-    }
+    return switch (tabPlacement) {
+      case TOP, BOTTOM -> 0;
+      case LEFT -> -delta / 2;
+      //case RIGHT,
+      default -> delta / 2;
+    };
   }
 
   @Override

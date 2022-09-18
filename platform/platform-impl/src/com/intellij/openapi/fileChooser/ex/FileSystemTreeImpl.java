@@ -289,22 +289,22 @@ public class FileSystemTreeImpl implements FileSystemTree {
   public void select(VirtualFile[] file, @Nullable final Runnable onDone) {
     if (myAsyncTreeModel != null) {
       switch (file.length) {
-        case 0:
+        case 0 -> {
           myTree.clearSelection();
           if (onDone != null) onDone.run();
-          break;
-        case 1:
+        }
+        case 1 -> {
           myTree.clearSelection();
           TreeUtil.promiseSelect(myTree, new FileNodeVisitor(file[0])).onProcessed(path -> {
             if (onDone != null) onDone.run();
           });
-          break;
-        default:
+        }
+        default -> {
           myTree.clearSelection();
           TreeUtil.promiseSelect(myTree, Stream.of(file).map(FileNodeVisitor::new)).onProcessed(paths -> {
             if (onDone != null) onDone.run();
           });
-          break;
+        }
       }
     }
     else {

@@ -221,22 +221,14 @@ public final class IdeKeyEventDispatcher {
     myContext.setProject(CommonDataKeys.PROJECT.getData(dataContext));
 
     try {
-      switch (getState()) {
-        case STATE_INIT:
-          return inInitState();
-        case STATE_PROCESSED:
-          return inProcessedState();
-        case STATE_WAIT_FOR_SECOND_KEYSTROKE:
-          return inWaitForSecondStrokeState();
-        case STATE_SECOND_STROKE_IN_PROGRESS:
-          return inSecondStrokeInProgressState();
-        case STATE_KEY_GESTURE_PROCESSOR:
-          return myKeyGestureProcessor.process();
-        case STATE_WAIT_FOR_POSSIBLE_ALT_GR:
-          return inWaitForPossibleAltGr();
-        default:
-          throw new IllegalStateException("state = " + getState());
-      }
+      return switch (getState()) {
+        case STATE_INIT -> inInitState();
+        case STATE_PROCESSED -> inProcessedState();
+        case STATE_WAIT_FOR_SECOND_KEYSTROKE -> inWaitForSecondStrokeState();
+        case STATE_SECOND_STROKE_IN_PROGRESS -> inSecondStrokeInProgressState();
+        case STATE_KEY_GESTURE_PROCESSOR -> myKeyGestureProcessor.process();
+        case STATE_WAIT_FOR_POSSIBLE_ALT_GR -> inWaitForPossibleAltGr();
+      };
     }
     finally {
       myContext.clear();

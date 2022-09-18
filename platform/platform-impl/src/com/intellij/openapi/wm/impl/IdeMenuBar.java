@@ -580,13 +580,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     protected void paintCycleEnd() {
       myProgress = 1;
       switch (getState()) {
-        case COLLAPSING:
-          setState(State.COLLAPSED);
-          break;
-        case EXPANDING:
-          setState(State.TEMPORARY_EXPANDED);
-          break;
-        default:
+        case COLLAPSING -> setState(State.COLLAPSED);
+        case EXPANDING -> setState(State.TEMPORARY_EXPANDED);
+        default -> {
+        }
       }
       if (!isShowing()) {
         return;

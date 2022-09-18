@@ -279,19 +279,16 @@ public class LineStatusMarkerDrawUtil {
   @Nullable
   public static Color getGutterColor(byte type, @Nullable Editor editor) {
     final EditorColorsScheme scheme = getColorScheme(editor);
-    switch (type) {
-      case Range.INSERTED:
-        return scheme.getColor(EditorColors.ADDED_LINES_COLOR);
-      case Range.DELETED:
-        return scheme.getColor(EditorColors.DELETED_LINES_COLOR);
-      case Range.MODIFIED:
-        return scheme.getColor(EditorColors.MODIFIED_LINES_COLOR);
-      case Range.EQUAL:
-        return scheme.getColor(EditorColors.WHITESPACES_MODIFIED_LINES_COLOR);
-      default:
+    return switch (type) {
+      case Range.INSERTED -> scheme.getColor(EditorColors.ADDED_LINES_COLOR);
+      case Range.DELETED -> scheme.getColor(EditorColors.DELETED_LINES_COLOR);
+      case Range.MODIFIED -> scheme.getColor(EditorColors.MODIFIED_LINES_COLOR);
+      case Range.EQUAL -> scheme.getColor(EditorColors.WHITESPACES_MODIFIED_LINES_COLOR);
+      default -> {
         assert false;
-        return null;
-    }
+        yield null;
+      }
+    };
   }
 
   @Nullable
@@ -302,34 +299,29 @@ public class LineStatusMarkerDrawUtil {
   @Nullable
   public static Color getErrorStripeColor(byte type) {
     final EditorColorsScheme scheme = getColorScheme(null);
-    switch (type) {
-      case Range.INSERTED:
-        return scheme.getAttributes(DiffColors.DIFF_INSERTED).getErrorStripeColor();
-      case Range.DELETED:
-        return scheme.getAttributes(DiffColors.DIFF_DELETED).getErrorStripeColor();
-      case Range.MODIFIED:
-        return scheme.getAttributes(DiffColors.DIFF_MODIFIED).getErrorStripeColor();
-      default:
+    return switch (type) {
+      case Range.INSERTED -> scheme.getAttributes(DiffColors.DIFF_INSERTED).getErrorStripeColor();
+      case Range.DELETED -> scheme.getAttributes(DiffColors.DIFF_DELETED).getErrorStripeColor();
+      case Range.MODIFIED -> scheme.getAttributes(DiffColors.DIFF_MODIFIED).getErrorStripeColor();
+      default -> {
         assert false;
-        return null;
-    }
+        yield null;
+      }
+    };
   }
 
   @Nullable
   public static Color getIgnoredGutterBorderColor(byte type, @Nullable Editor editor) {
     final EditorColorsScheme scheme = getColorScheme(editor);
-    switch (type) {
-      case Range.INSERTED:
-        return scheme.getColor(EditorColors.IGNORED_ADDED_LINES_BORDER_COLOR);
-      case Range.DELETED:
-        return scheme.getColor(EditorColors.IGNORED_DELETED_LINES_BORDER_COLOR);
-      case Range.MODIFIED:
-      case Range.EQUAL:
-        return scheme.getColor(EditorColors.IGNORED_MODIFIED_LINES_BORDER_COLOR);
-      default:
+    return switch (type) {
+      case Range.INSERTED -> scheme.getColor(EditorColors.IGNORED_ADDED_LINES_BORDER_COLOR);
+      case Range.DELETED -> scheme.getColor(EditorColors.IGNORED_DELETED_LINES_BORDER_COLOR);
+      case Range.MODIFIED, Range.EQUAL -> scheme.getColor(EditorColors.IGNORED_MODIFIED_LINES_BORDER_COLOR);
+      default -> {
         assert false;
-        return null;
-    }
+        yield null;
+      }
+    };
   }
 
   @Nullable

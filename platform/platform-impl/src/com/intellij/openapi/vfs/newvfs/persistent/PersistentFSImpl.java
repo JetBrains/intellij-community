@@ -1510,24 +1510,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         VirtualFile file = propertyChangeEvent.getFile();
         Object newValue = propertyChangeEvent.getNewValue();
         switch (propertyChangeEvent.getPropertyName()) {
-          case VirtualFile.PROP_NAME:
-            executeRename(file, (String)newValue);
-            break;
-          case VirtualFile.PROP_WRITABLE:
+          case VirtualFile.PROP_NAME -> executeRename(file, (String)newValue);
+          case VirtualFile.PROP_WRITABLE -> {
             executeSetWritable(file, ((Boolean)newValue).booleanValue());
             if (LOG.isDebugEnabled()) {
               LOG.debug("File " + file + " writable=" + file.isWritable() + " id=" + getFileId(file));
             }
-            break;
-          case VirtualFile.PROP_HIDDEN:
-            executeSetHidden(file, ((Boolean)newValue).booleanValue());
-            break;
-          case VirtualFile.PROP_SYMLINK_TARGET:
-            executeSetTarget(file, (String)newValue);
-            break;
-          case VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY:
-            executeChangeCaseSensitivity(file, (FileAttributes.CaseSensitivity)newValue);
-            break;
+          }
+          case VirtualFile.PROP_HIDDEN -> executeSetHidden(file, ((Boolean)newValue).booleanValue());
+          case VirtualFile.PROP_SYMLINK_TARGET -> executeSetTarget(file, (String)newValue);
+          case VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY -> executeChangeCaseSensitivity(file, (FileAttributes.CaseSensitivity)newValue);
         }
       }
     }

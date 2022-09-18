@@ -171,14 +171,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       @Override
       public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
         // only these fields due to backward compatibility
-        switch (accessor.getName()) {
-          case "passParentEnvs":
-            return !mySettings.isPassParentEnvs();
-          case "env":
-            return !mySettings.getEnv().isEmpty();
-          default:
-            return true;
-        }
+        return switch (accessor.getName()) {
+          case "passParentEnvs" -> !mySettings.isPassParentEnvs();
+          case "env" -> !mySettings.getEnv().isEmpty();
+          default -> true;
+        };
       }
     }));
 

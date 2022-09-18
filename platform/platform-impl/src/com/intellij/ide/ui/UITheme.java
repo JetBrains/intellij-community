@@ -491,12 +491,15 @@ public final class UITheme {
   public static Object parseValue(String key, @NotNull String value, @NotNull ClassLoader classLoader) {
     try {
       switch (value) {
-        case "null":
+        case "null" -> {
           return null;
-        case "true":
+        }
+        case "true" -> {
           return Boolean.TRUE;
-        case "false":
+        }
+        case "false" -> {
           return Boolean.FALSE;
+        }
       }
 
       if (value.endsWith(".png") || value.endsWith(".svg")) {

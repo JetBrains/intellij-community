@@ -270,15 +270,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    switch (myLayout) {
-      case SHOW_EDITOR_AND_PREVIEW:
-      case SHOW_EDITOR:
-        return myEditor.getPreferredFocusedComponent();
-      case SHOW_PREVIEW:
-        return myPreview.getPreferredFocusedComponent();
-      default:
-        throw new IllegalStateException(myLayout.myId);
-    }
+    return switch (myLayout) {
+      case SHOW_EDITOR_AND_PREVIEW, SHOW_EDITOR -> myEditor.getPreferredFocusedComponent();
+      case SHOW_PREVIEW -> myPreview.getPreferredFocusedComponent();
+    };
   }
 
   @NotNull

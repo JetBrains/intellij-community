@@ -561,17 +561,15 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myLoadingIcon.setVisible(false);
     myLoadingIcon.suspend();
     switch (emptyState) {
-      case MULTI_SELECT:
+      case MULTI_SELECT -> {
         text.setText(IdeBundle.message("plugins.configurable.several.plugins"));
         text.appendSecondaryText(IdeBundle.message("plugins.configurable.one.plugin.details"), StatusText.DEFAULT_ATTRIBUTES, null);
-        break;
-      case NONE_SELECTED:
-        text.setText(IdeBundle.message("plugins.configurable.plugin.details"));
-        break;
-      case PROGRESS:
+      }
+      case NONE_SELECTED -> text.setText(IdeBundle.message("plugins.configurable.plugin.details"));
+      case PROGRESS -> {
         myLoadingIcon.setVisible(true);
         myLoadingIcon.resume();
-        break;
+      }
     }
   }
 

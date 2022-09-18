@@ -29,23 +29,22 @@ public final class DfaBinOpValue extends DfaValue {
   private DfaBinOpValue(@NotNull DfaVariableValue left, @NotNull DfaValue right, @NotNull DfIntegralType type, @NotNull LongRangeBinOp op) {
     super(left.getFactory());
     switch (op) {
-      case PLUS:
+      case PLUS -> {
         if (!(right.getDfType() instanceof DfConstantType) && !(right instanceof DfaVariableValue)) {
           throw new IllegalArgumentException("RHO must be constant or variable for plus");
         }
-        break;
-      case MINUS:
+      }
+      case MINUS -> {
         if (!(right instanceof DfaVariableValue)) {
           throw new IllegalArgumentException("RHO must be variable for minus");
         }
-        break;
-      case MOD:
+      }
+      case MOD -> {
         if (!(right.getDfType() instanceof DfConstantType)) {
           throw new IllegalArgumentException("RHO must be constant for mod");
         }
-        break;
-      default:
-        throw new IllegalArgumentException("Unsupported op: " + op);
+      }
+      default -> throw new IllegalArgumentException("Unsupported op: " + op);
     }
     myLeft = left;
     myRight = right;
