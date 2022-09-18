@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.Spa
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.StorageLockContext;
-import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.ImperativeCommand;
@@ -19,9 +18,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.IntStream;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.INLINE_ATTRIBUTE_MAX_SIZE;
+import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.INLINE_ATTRIBUTE_SMALLER_THAN;
 import static org.jetbrains.jetCheck.Generator.constant;
 import static org.junit.Assert.*;
 
@@ -141,11 +139,11 @@ public class AttributesStorageOnTheTopOfBlobStoragePropertyBasedTest {
           final int attributeSize = record.attributeBytesLength();
           //grow small attributes, shrink big attributes:
           final Generator<Integer> sizeGenerator;
-          if (attributeSize <= INLINE_ATTRIBUTE_MAX_SIZE) {
-            sizeGenerator = Generator.integers(attributeSize, 4 * INLINE_ATTRIBUTE_MAX_SIZE);
+          if (attributeSize <= INLINE_ATTRIBUTE_SMALLER_THAN) {
+            sizeGenerator = Generator.integers(attributeSize, 4 * INLINE_ATTRIBUTE_SMALLER_THAN);
           }
           else {
-            sizeGenerator = Generator.integers(0, 2 * INLINE_ATTRIBUTE_MAX_SIZE);
+            sizeGenerator = Generator.integers(0, 2 * INLINE_ATTRIBUTE_SMALLER_THAN);
           }
           final Integer newSize = env.generateValue(sizeGenerator,
                                                     "New attribute size: %s bytes");

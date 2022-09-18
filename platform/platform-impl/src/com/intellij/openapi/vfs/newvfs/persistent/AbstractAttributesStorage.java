@@ -18,14 +18,18 @@ import java.io.IOException;
  */
 public abstract class AbstractAttributesStorage implements Forceable, Closeable {
 
-  public static final int INLINE_ATTRIBUTE_MAX_SIZE = 64;
+  /**
+   * Exclusive upper bound for inline attribute size: attribute is inlined if its size < {@linkplain #INLINE_ATTRIBUTE_SMALLER_THAN}
+   */
+  public static final int INLINE_ATTRIBUTE_SMALLER_THAN = 64;
 
   public static final int NON_EXISTENT_ATTR_RECORD_ID = 0;
 
-  protected AbstractAttributesStorage() {}
+  protected AbstractAttributesStorage() { }
 
 
   public abstract int getVersion() throws IOException;
+
   public abstract void setVersion(final int version) throws IOException;
 
   @Nullable
@@ -44,7 +48,7 @@ public abstract class AbstractAttributesStorage implements Forceable, Closeable 
   @NotNull
   public abstract AttributeOutputStream writeAttribute(final PersistentFSConnection connection,
                                                        final int fileId,
-                                                       final @NotNull FileAttribute attribute) ;
+                                                       final @NotNull FileAttribute attribute);
 
   public abstract void deleteAttributes(final PersistentFSConnection connection,
                                         final int fileId) throws IOException;

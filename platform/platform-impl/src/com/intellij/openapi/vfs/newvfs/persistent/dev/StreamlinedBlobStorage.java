@@ -18,6 +18,9 @@ import java.nio.ByteOrder;
  * Store blobs, like {@link com.intellij.util.io.storage.AbstractStorage}, but tries to be faster:
  * remove intermediate mapping (id -> offset,length), and directly use offset as recordId. Also provides
  * read/write methods direct access to underlying ByteBuffers, to reduce memcopy-ing overhead.
+ * <br/>
+ * <br/>
+ * Not thread safe: requires external synchronization if used from multiple threads
  */
 public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceable {
   private static final Logger LOG = Logger.getInstance(StreamlinedBlobStorage.class);
@@ -26,10 +29,10 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
 
   /* ======== Persistent format: =================================================================== */
 
-  // Persistent format: header, records*
-  //  header: storageVersion[4b], safeCloseMagic[4b], dataFormatVersion[4b]
+  // Persistent format: (header) (records)*
+  //  header: storageVersion[int32], safeCloseMagic[int32] ...monitoring fields... dataFormatVersion[int32]
   //  record:
-  //          recordHeader: capacity[2b], actualLength[2b], redirectToOffset[4b]
+  //          recordHeader: capacity[uint16], actualLength[uint16], redirectToOffset[int32]
   //          recordData:   byte[actualLength]?
   //
   //  1. capacity is the allocated size of the record payload _excluding_ header, so
@@ -44,9 +47,9 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
   //
   //  3. redirectToOffset is a 'forwarding pointer' for records that was moved (e.g. re-allocated).
   //
-  //  4. records are always allocated on a single page, never break on a page boundary: if record
-  //     doesn't fit current page, it is moved to another page (and remaining space filled by placeholder
-  //     record)
+  //  4. records are always allocated on a single page: single record never breaks a page boundary: if
+  //     a record doesn't fit current page, it is moved to another page (remaining space on page is filled
+  //     by placeholder record, if needed).
 
   //TODO RC: implement space reclamation: re-use space of deleted records for the newly allocated ones.
   //         Need to keep a free-list.
@@ -68,9 +71,12 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
 
   public static final int STORAGE_VERSION_CURRENT = 2;
 
+
   private static final int FILE_STATUS_OPENED = 0;
   private static final int FILE_STATUS_SAFELY_CLOSED = 1;
   private static final int FILE_STATUS_CORRUPTED = 2;
+
+  //=== HEADER format:
 
   /**
    * Version of this storage persistent format -- i.e. if !=STORAGE_VERSION_CURRENT, this class probably
@@ -78,14 +84,24 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
    */
   private static final int HEADER_OFFSET_STORAGE_VERSION = 0;
   private static final int HEADER_OFFSET_FILE_STATUS = HEADER_OFFSET_STORAGE_VERSION + Integer.BYTES;
+
+  private static final int HEADER_OFFSET_RECORDS_ALLOCATED = HEADER_OFFSET_FILE_STATUS + Integer.BYTES;
+  private static final int HEADER_OFFSET_RECORDS_RELOCATED = HEADER_OFFSET_RECORDS_ALLOCATED + Integer.BYTES;
+  private static final int HEADER_OFFSET_RECORDS_DELETED = HEADER_OFFSET_RECORDS_RELOCATED + Integer.BYTES;
+  private static final int HEADER_OFFSET_RECORDS_LIVE_TOTAL_PAYLOAD_SIZE = HEADER_OFFSET_RECORDS_DELETED + Integer.BYTES;
+  private static final int HEADER_OFFSET_RECORDS_LIVE_TOTAL_CAPACITY_SIZE = HEADER_OFFSET_RECORDS_LIVE_TOTAL_PAYLOAD_SIZE + Long.BYTES;
   /**
    * Version of data, stored in a blobs, managed by client code.
-   * MAYBE this probably shouldn't be a part of standard header, but implemented on the top of
-   * 'additional headers' (see below)
+   * MAYBE this should not be a part of standard header, but implemented on the top of 'additional headers'
+   * (see below)?
    */
-  private static final int HEADER_OFFSET_EXTERNAL_VERSION = HEADER_OFFSET_FILE_STATUS + Integer.BYTES;
-  private static final int HEADER_SIZE = HEADER_OFFSET_EXTERNAL_VERSION + Integer.BYTES;
-  //TODO allow to reserve additional space in header for something implemented on the top of the storage
+  private static final int HEADER_OFFSET_DATA_FORMAT_VERSION = HEADER_OFFSET_RECORDS_LIVE_TOTAL_CAPACITY_SIZE + Long.BYTES;
+  private static final int HEADER_SIZE = HEADER_OFFSET_DATA_FORMAT_VERSION + Integer.BYTES;
+
+  //MAYBE allow to reserve additional space in header for something implemented on the top of the storage?
+
+
+  //=== RECORD format:
 
   private static final int RECORD_OFFSET_CAPACITY = 0;
   private static final int RECORD_OFFSET_ACTUAL_LENGTH = RECORD_OFFSET_CAPACITY + Short.BYTES;
@@ -141,6 +157,16 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
 
   private final ThreadLocal<ByteBuffer> threadLocalBuffer;
 
+  //==== monitoring fields:
+  // They are frequently accessed, read/write them each time into a file header is too expensive (and verbose),
+  // hence use caching fields instead:
+
+  private int recordsAllocated;
+  private int recordsRelocated;
+  private int recordsDeleted;
+  private long totalLiveRecordsPayloadBytes;
+  private long totalLiveRecordsCapacityBytes;
+
 
   public StreamlinedBlobStorage(final @NotNull PagedFileStorage pagedStorage,
                                 final @NotNull SpaceAllocationStrategy allocationStrategy) throws IOException {
@@ -160,13 +186,13 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
     pagedStorage.lockWrite();
     try {
       final long length = pagedStorage.length();
-      if (length >= HEADER_SIZE) {
-        final int version = readHeaderStorageVersion();
+      if (length >= headerSize()) {
+        final int version = readHeaderInt(HEADER_OFFSET_STORAGE_VERSION);
         if (version != STORAGE_VERSION_CURRENT) {
           throw new IOException(
             "Can't read file[" + pagedStorage + "]: version(" + version + ") != storage version (" + STORAGE_VERSION_CURRENT + ")");
         }
-        final int fileStatus = readHeaderFileStatus();
+        final int fileStatus = readHeaderInt(HEADER_OFFSET_FILE_STATUS);
         if (fileStatus != FILE_STATUS_SAFELY_CLOSED) {
           throw new IOException(
             "Can't read file[" + pagedStorage + "]: status(" + fileStatus + ") != SAFELY_CLOSED (" + FILE_STATUS_SAFELY_CLOSED + ")");
@@ -175,12 +201,18 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
           throw new IOException("Can't read file[" + pagedStorage + "]: too big, " + length + " > Integer.MAX_VALUE * " + OFFSET_BUCKET);
         }
         nextRecordId = offsetToId(length);
+
+        recordsAllocated = readHeaderInt(HEADER_OFFSET_RECORDS_ALLOCATED);
+        recordsRelocated = readHeaderInt(HEADER_OFFSET_RECORDS_RELOCATED);
+        recordsDeleted = readHeaderInt(HEADER_OFFSET_RECORDS_DELETED);
+        totalLiveRecordsPayloadBytes = readHeaderLong(HEADER_OFFSET_RECORDS_LIVE_TOTAL_PAYLOAD_SIZE);
+        totalLiveRecordsCapacityBytes = readHeaderLong(HEADER_OFFSET_RECORDS_LIVE_TOTAL_CAPACITY_SIZE);
       }
       else {
         nextRecordId = offsetToId(recordsStartOffset());
       }
-      putHeaderStorageVersion(STORAGE_VERSION_CURRENT);
-      putHeaderFileStatus(FILE_STATUS_OPENED);
+      putHeaderInt(HEADER_OFFSET_STORAGE_VERSION, STORAGE_VERSION_CURRENT);
+      putHeaderInt(HEADER_OFFSET_FILE_STATUS, FILE_STATUS_OPENED);
     }
     finally {
       pagedStorage.unlockWrite();
@@ -190,7 +222,7 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
   public int getStorageVersion() throws IOException {
     pagedStorage.lockRead();
     try {
-      return readHeaderStorageVersion();
+      return readHeaderInt(HEADER_OFFSET_STORAGE_VERSION);
     }
     finally {
       pagedStorage.unlockRead();
@@ -200,7 +232,7 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
   public int getDataFormatVersion() throws IOException {
     pagedStorage.lockRead();
     try {
-      return readHeaderExternalVersion();
+      return readHeaderInt(HEADER_OFFSET_DATA_FORMAT_VERSION);
     }
     finally {
       pagedStorage.unlockRead();
@@ -210,7 +242,7 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
   public void setDataFormatVersion(final int expectedVersion) throws IOException {
     pagedStorage.lockWrite();
     try {
-      putHeaderExternalVersion(expectedVersion);
+      putHeaderInt(HEADER_OFFSET_DATA_FORMAT_VERSION, expectedVersion);
     }
     finally {
       pagedStorage.unlockWrite();
@@ -408,12 +440,19 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
             //RC: really, in this case writer should just write data in the 'recordContent' buffer, but ok, we could deal with it:
             putRecordPayload(buffer, offsetOnPage, newRecordContent, newRecordLength);
             page.fileSizeMayChanged(offsetOnPage + RECORD_HEADER_SIZE + newRecordLength);
+
+            totalLiveRecordsPayloadBytes += (newRecordLength - recordActualLength);
           }
           else {
             final int newRecordId = allocateRecord(newRecordContent, newRecordContent.capacity());
             putRecordLengthMark(buffer, offsetOnPage, MOVED_RECORD_MARK);
             putRecordRedirectTo(buffer, offsetOnPage, newRecordId);
             page.fileSizeMayChanged(offsetOnPage + RECORD_HEADER_SIZE);
+
+            totalLiveRecordsPayloadBytes -= recordActualLength;
+            totalLiveRecordsCapacityBytes -= recordCapacity;
+            recordsRelocated++;
+
             return newRecordId;
           }
         }
@@ -425,6 +464,8 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
                                                        ": can't be, since recordContent.capacity()==recordCapacity!";
           putRecordLength(buffer, offsetOnPage, newRecordLength);
           page.fileSizeMayChanged(offsetOnPage + RECORD_HEADER_SIZE + newRecordLength);
+
+          totalLiveRecordsPayloadBytes += (newRecordLength - recordActualLength);
         }
         return recordId;
       }
@@ -461,6 +502,7 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
       final DirectBufferWrapper page = pagedStorage.getByteBuffer(recordOffset, true);
       try {
         final ByteBuffer buffer = page.getBuffer();
+        final int recordCapacity = readRecordCapacity(buffer, offsetOnPage);
         final int recordActualLength = readRecordLength(buffer, offsetOnPage);
         final int recordRedirectedToId = readRecordRedirectToId(buffer, offsetOnPage);
 
@@ -473,6 +515,10 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
 
           page.fileSizeMayChanged(offsetOnPage + RECORD_HEADER_SIZE);
           page.markDirty();
+
+          recordsDeleted++;
+          totalLiveRecordsPayloadBytes -= recordActualLength;
+          totalLiveRecordsCapacityBytes -= recordCapacity;
         }
       }
       finally {
@@ -494,7 +540,7 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
    *
    * @return how many records were processed
    */
-  public int forEach(final @NotNull Processor processor) throws IOException {
+  public <E extends Exception> int forEach(final @NotNull Processor<E> processor) throws IOException, E {
     pagedStorage.lockRead();
     try {
       final long storageLength = pagedStorage.length();
@@ -550,17 +596,31 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
   }
 
   public int maxPayloadSupported() {
-    return MAX_LENGTH - HEADER_SIZE;
-  }
-
-  public int recordsCount() {
-    //TODO
-    throw new UnsupportedOperationException("Method not implemented yet");
+    return MAX_LENGTH - RECORD_HEADER_SIZE;
   }
 
   public int liveRecordsCount() {
-    //TODO
-    throw new UnsupportedOperationException("Method not implemented yet");
+    return recordsAllocated - recordsDeleted - recordsRelocated;
+  }
+
+  public int recordsAllocated() {
+    return recordsAllocated;
+  }
+
+  public int recordsRelocated() {
+    return recordsRelocated;
+  }
+
+  public int recordsDeleted() {
+    return recordsDeleted;
+  }
+
+  public long totalLiveRecordsPayloadBytes() {
+    return totalLiveRecordsPayloadBytes;
+  }
+
+  public long totalLiveRecordsCapacityBytes() {
+    return totalLiveRecordsCapacityBytes;
   }
 
   public long sizeInBytes() {
@@ -576,7 +636,17 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
   public void force() throws IOException {
     pagedStorage.lockWrite();
     try {
-      pagedStorage.force();
+      if (!closed) {
+        putHeaderInt(HEADER_OFFSET_FILE_STATUS, FILE_STATUS_SAFELY_CLOSED);
+
+        putHeaderInt(HEADER_OFFSET_RECORDS_ALLOCATED, recordsAllocated);
+        putHeaderInt(HEADER_OFFSET_RECORDS_RELOCATED, recordsRelocated);
+        putHeaderInt(HEADER_OFFSET_RECORDS_DELETED, recordsDeleted);
+        putHeaderLong(HEADER_OFFSET_RECORDS_LIVE_TOTAL_PAYLOAD_SIZE, totalLiveRecordsPayloadBytes);
+        putHeaderLong(HEADER_OFFSET_RECORDS_LIVE_TOTAL_CAPACITY_SIZE, totalLiveRecordsCapacityBytes);
+
+        pagedStorage.force();
+      }
     }
     finally {
       pagedStorage.unlockWrite();
@@ -587,17 +657,17 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
   public void close() throws IOException {
     pagedStorage.lockWrite();
     try {
-      if (!closed) {
-        //.close() methods are better to be idempotent, i.e. not throw exceptions on repeating calls, but just
-        // silently ignore attempts to close already closed. And pagedStorage (seems to) conforms with that. But
-        // here we try to write file status, and without .close flag we'll try to do that even on already closed
-        // pagedStorage, which leads to exception.
-        putHeaderFileStatus(FILE_STATUS_SAFELY_CLOSED);
-        //MAYBE RC: generally, it should not be this class's responsibility to close pagedStorage, since not this
-        // class creates it -- who creates it, is responsible for closing it.
-        pagedStorage.close();
-        closed = true;
-      }
+      force();
+
+      //MAYBE RC: generally, it should not be this class's responsibility to close pagedStorage, since not this
+      // class creates it -- whoever creates it, is responsible for closing it.
+      pagedStorage.close();
+
+      //.close() methods are better to be idempotent, i.e. not throw exceptions on repeating calls, but just
+      // silently ignore attempts to close already closed. And pagedStorage (seems to) conforms with that. But
+      // here we try to write file status and other header fields, and without .close flag we'll try to do that
+      // even on already closed pagedStorage, which leads to exception.
+      closed = true;
     }
     finally {
       pagedStorage.unlockWrite();
@@ -618,11 +688,11 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
     ByteBuffer write(@NotNull final ByteBuffer data) throws IOException;
   }
 
-  public interface Processor {
+  public interface Processor<E extends Exception> {
     boolean processRecord(final int recordId,
                           final int recordCapacity,
                           final int recordLength,
-                          final ByteBuffer payload) throws IOException;
+                          final ByteBuffer payload) throws IOException, E;
   }
 
   public interface SpaceAllocationStrategy {
@@ -633,9 +703,9 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
     int defaultCapacity();
 
     /**
-     * @return given buffer, returned by writer in a {@link StreamlinedBlobStorage#writeToRecord(int, Writer)}, how big
-     * record to allocate? buffer actual size (limit-position) and buffer capacity is considered.
-     * returned value must be >= actualLength
+     * @return if a writer in a {@link StreamlinedBlobStorage#writeToRecord(int, Writer)} returns buffer
+     * of (length, capacity) -- how big record to allocate for the data? Buffer actual size (limit-position)
+     * and buffer.capacity is considered. returned value must be >= actualLength
      */
     int capacity(final int actualLength,
                  final int currentCapacity);
@@ -790,6 +860,10 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
         page.unlock();
       }
 
+      recordsAllocated++;
+      totalLiveRecordsCapacityBytes += recordCapacityRoundedUp;
+      totalLiveRecordsPayloadBytes += newRecordLength;
+
       nextRecordId = offsetToId(nextRecordOffset(recordOffset, recordCapacityRoundedUp));
       return newRecordId;
     }
@@ -838,36 +912,46 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
     return nextOffset;
   }
 
-  private void putHeaderFileStatus(final int status) throws IOException {
-    pagedStorage.putInt(HEADER_OFFSET_FILE_STATUS, status);
+
+  private int readHeaderInt(final int offset) throws IOException {
+    assert (0 <= offset && offset <= HEADER_SIZE - Integer.BYTES)
+      : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Integer.BYTES) + "]";
+    return pagedStorage.getInt(offset);
   }
 
-  private void putHeaderStorageVersion(final int version) throws IOException {
-    pagedStorage.putInt(HEADER_OFFSET_STORAGE_VERSION, version);
+  private void putHeaderInt(final int offset,
+                            final int value) throws IOException {
+    assert (0 <= offset && offset <= HEADER_SIZE - Integer.BYTES)
+      : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Integer.BYTES) + "]";
+    pagedStorage.putInt(offset, value);
   }
 
-  private void putHeaderExternalVersion(final int version) throws IOException {
-    pagedStorage.putInt(HEADER_OFFSET_EXTERNAL_VERSION, version);
+  private long readHeaderLong(final int offset) throws IOException {
+    assert (0 <= offset && offset <= HEADER_SIZE - Long.BYTES)
+      : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Long.BYTES) + "]";
+    return pagedStorage.getLong(offset);
   }
 
-  private int readHeaderFileStatus() throws IOException {
-    return this.pagedStorage.getInt(HEADER_OFFSET_FILE_STATUS);
-  }
-
-  private int readHeaderStorageVersion() throws IOException {
-    return pagedStorage.getInt(HEADER_OFFSET_STORAGE_VERSION);
-  }
-
-  private int readHeaderExternalVersion() throws IOException {
-    return pagedStorage.getInt(HEADER_OFFSET_EXTERNAL_VERSION);
+  private void putHeaderLong(final int offset,
+                             final long value) throws IOException {
+    assert (0 <= offset && offset <= HEADER_SIZE - Long.BYTES)
+      : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Long.BYTES) + "]";
+    pagedStorage.putLong(offset, value);
   }
 
   private long headerSize() {
     return HEADER_SIZE;
   }
 
+
   private long recordsStartOffset() {
-    return (headerSize() / OFFSET_BUCKET + 1) * OFFSET_BUCKET;
+    final long headerSize = headerSize();
+    if (headerSize % OFFSET_BUCKET > 0) {
+      return (headerSize / OFFSET_BUCKET + 1) * OFFSET_BUCKET;
+    }
+    else {
+      return (headerSize / OFFSET_BUCKET) * OFFSET_BUCKET;
+    }
   }
 
   @NotNull

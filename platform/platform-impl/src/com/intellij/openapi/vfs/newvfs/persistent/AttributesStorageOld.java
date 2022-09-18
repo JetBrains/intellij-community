@@ -35,10 +35,10 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
    */
   private final boolean bulkAttrReadSupport;
   /**
-   * If true, store small attribute content (<={@link #INLINE_ATTRIBUTE_MAX_SIZE}) right in the main attribute record.
+   * If true, store small attribute content (<={@link #INLINE_ATTRIBUTE_SMALLER_THAN}) right in the main attribute record.
    * If false, main record contains only a list ('directory') of attributes references, each refers to dedicated
    * record, with actual attribute content -- and the same strategy is used for attributes with content
-   * bigger than {@link #INLINE_ATTRIBUTE_MAX_SIZE} anyway.
+   * bigger than {@link #INLINE_ATTRIBUTE_SMALLER_THAN} anyway.
    */
   private final boolean inlineAttributes;
 
@@ -92,19 +92,19 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
           final int attrAddressOrSize = DataInputOutputUtil.readINT(attrRefs);
 
           if (attIdOnPage != encodedAttrId) {
-            if (inlineAttributes && attrAddressOrSize < INLINE_ATTRIBUTE_MAX_SIZE) {
+            if (inlineAttributes && attrAddressOrSize < INLINE_ATTRIBUTE_SMALLER_THAN) {
               final int inlineAttrSize = attrAddressOrSize;
               attrRefs.skipBytes(inlineAttrSize);
             }
           }
           else {
-            if (inlineAttributes && attrAddressOrSize < INLINE_ATTRIBUTE_MAX_SIZE) {
+            if (inlineAttributes && attrAddressOrSize < INLINE_ATTRIBUTE_SMALLER_THAN) {
               final int inlineAttrSize = attrAddressOrSize;
               final byte[] attrContent = ArrayUtil.newByteArray(inlineAttrSize);
               attrRefs.readFully(attrContent);
               return new AttributeInputStream(new UnsyncByteArrayInputStream(attrContent), connection.getEnumeratedAttributes());
             }
-            page = inlineAttributes ? attrAddressOrSize - INLINE_ATTRIBUTE_MAX_SIZE : attrAddressOrSize;
+            page = inlineAttributes ? attrAddressOrSize - INLINE_ATTRIBUTE_SMALLER_THAN : attrAddressOrSize;
             break;
           }
         }
@@ -165,11 +165,11 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
             int attAddressOrSize = DataInputOutputUtil.readINT(attStream);
 
             if (inlineAttributes) {
-              if (attAddressOrSize < INLINE_ATTRIBUTE_MAX_SIZE) {
+              if (attAddressOrSize < INLINE_ATTRIBUTE_SMALLER_THAN) {
                 attStream.skipBytes(attAddressOrSize);
                 continue;
               }
-              attAddressOrSize -= INLINE_ATTRIBUTE_MAX_SIZE;
+              attAddressOrSize -= INLINE_ATTRIBUTE_SMALLER_THAN;
             }
             attributesBlobStorage.deleteRecord(attAddressOrSize);
           }
@@ -246,7 +246,7 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
       try {
         final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
 
-        if (inlineAttributes && _out.size() < INLINE_ATTRIBUTE_MAX_SIZE) {
+        if (inlineAttributes && _out.size() < INLINE_ATTRIBUTE_SMALLER_THAN) {
           //if attribute value could be stored in the directory record inline -> try to (over)write it
           // there:
           rewriteDirectoryRecordWithInlineAttrContent(_out);
@@ -303,7 +303,7 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
     private void rewriteDirectoryRecordWithInlineAttrContent(final @NotNull BufferExposingByteArrayOutputStream newAttributeInlinableValue)
       throws IOException {
 
-      assert newAttributeInlinableValue.size() < INLINE_ATTRIBUTE_MAX_SIZE : "Only small values could be stored in directory record";
+      assert newAttributeInlinableValue.size() < INLINE_ATTRIBUTE_SMALLER_THAN : "Only small values could be stored in directory record";
       assert inlineAttributes : "Attributes could be stored in directory record only if 'inline small attributes' is enabled";
 
       int recordId = fileAttributeRecordId(connection, myFileId);
@@ -355,7 +355,7 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
                 DataInputOutputUtil.writeINT(dataStream, attIdOnPage);
                 DataInputOutputUtil.writeINT(dataStream, attrAddressOrSize);
 
-                if (attrAddressOrSize < INLINE_ATTRIBUTE_MAX_SIZE) {
+                if (attrAddressOrSize < INLINE_ATTRIBUTE_SMALLER_THAN) {
                   byte[] b = ArrayUtil.newByteArray(attrAddressOrSize);
                   attrRefs.readFully(b);
                   dataStream.write(b);
@@ -364,7 +364,7 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
               else {
                 //if( attIdOnPage == encodedAttrId ) and attribute was written inline -> overwrite it inline
                 // _only if its size is unchanged_, so entries after the current one -- remain in place.
-                if (attrAddressOrSize < INLINE_ATTRIBUTE_MAX_SIZE) {
+                if (attrAddressOrSize < INLINE_ATTRIBUTE_SMALLER_THAN) {
                   if (newAttributeInlinableValue.size() == attrAddressOrSize) {
                     // update inplace when new attr has the same size
                     int remaining = attrRefs.available();
@@ -451,13 +451,13 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
 
           if (attIdOnPage == encodedAttrId) {
             if (inlineAttributes) {
-              if (attrAddressOrSize < INLINE_ATTRIBUTE_MAX_SIZE) {
+              if (attrAddressOrSize < INLINE_ATTRIBUTE_SMALLER_THAN) {
                 //return record id, but negated, so clients understand that it is not dedicated attr record, but
                 // directory record, with attribute inlined:
                 return -recordId;
               }
               else {
-                return attrAddressOrSize - INLINE_ATTRIBUTE_MAX_SIZE;
+                return attrAddressOrSize - INLINE_ATTRIBUTE_SMALLER_THAN;
               }
             }
             else {
@@ -465,7 +465,7 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
             }
           }
           else {
-            if (inlineAttributes && attrAddressOrSize < INLINE_ATTRIBUTE_MAX_SIZE) {
+            if (inlineAttributes && attrAddressOrSize < INLINE_ATTRIBUTE_SMALLER_THAN) {
               attrRefs.skipBytes(attrAddressOrSize);
             }
           }
@@ -484,7 +484,7 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
 
         DataInputOutputUtil.writeINT(appender, encodedAttrId);
         int attrAddress = attributesBlobStorage.createNewRecord();
-        DataInputOutputUtil.writeINT(appender, inlineAttributes ? attrAddress + INLINE_ATTRIBUTE_MAX_SIZE : attrAddress);
+        DataInputOutputUtil.writeINT(appender, inlineAttributes ? attrAddress + INLINE_ATTRIBUTE_SMALLER_THAN : attrAddress);
         PersistentFSConnection.REASONABLY_SMALL.myAttrPageRequested = true;
         return attrAddress;
       }
@@ -544,12 +544,12 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
         int attDataRecordIdOrSize = DataInputOutputUtil.readINT(dataInputStream);
 
         if (inlineAttributes) {
-          if (attDataRecordIdOrSize < INLINE_ATTRIBUTE_MAX_SIZE) {
+          if (attDataRecordIdOrSize < INLINE_ATTRIBUTE_SMALLER_THAN) {
             dataInputStream.skipBytes(attDataRecordIdOrSize);
             continue;
           }
           else {
-            attDataRecordIdOrSize -= INLINE_ATTRIBUTE_MAX_SIZE;
+            attDataRecordIdOrSize -= INLINE_ATTRIBUTE_SMALLER_THAN;
           }
         }
         assert !usedAttributeRecordIds.contains(attDataRecordIdOrSize);

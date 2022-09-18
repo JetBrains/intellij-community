@@ -93,8 +93,30 @@ public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobS
   @Test
   public void newStorageHasVersionOfCurrentStorageFormat() throws Exception {
     assertEquals(
+      "New storage version == STORAGE_VERSION_CURRENT",
       storage.getStorageVersion(),
       StreamlinedBlobStorage.STORAGE_VERSION_CURRENT
+    );
+  }
+
+  @Test
+  public void dataFormatVersionCouldBeWrittenAndReadBackAsIs_AfterStorageReopened() throws Exception {
+    final int dataFormatVersion = 42;
+
+    storage.setDataFormatVersion(dataFormatVersion);
+    assertEquals(
+      "Data format version must be same as was just written",
+      storage.getDataFormatVersion(),
+      dataFormatVersion
+    );
+
+    closeStorage(storage);
+    storage = openStorage(storagePath);
+
+    assertEquals(
+      "Data format version must be same as was written before close/reopen",
+      storage.getDataFormatVersion(),
+      dataFormatVersion
     );
   }
 
@@ -266,6 +288,24 @@ public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobS
   @Override
   protected void closeStorage(final StreamlinedBlobStorage storage) throws Exception {
     storage.close();
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    if (storage != null) {
+      System.out.printf("Storage after test: %d records allocated, %d deleted, %d relocated, live records %.1f%% of total \n",
+                        storage.recordsAllocated(),
+                        storage.recordsDeleted(),
+                        storage.recordsRelocated(),
+                        storage.liveRecordsCount() * 100.0 / storage.recordsAllocated()
+      );
+      System.out.printf("                    %d bytes live payload, %d live capacity, live payload %.1f%% of total storage size \n",
+                        storage.totalLiveRecordsPayloadBytes(),
+                        storage.totalLiveRecordsCapacityBytes(),
+                        storage.totalLiveRecordsPayloadBytes() * 100.0 / storage.sizeInBytes() //including _storage_ header
+      );
+    }
+    super.tearDown();
   }
 
   @Override

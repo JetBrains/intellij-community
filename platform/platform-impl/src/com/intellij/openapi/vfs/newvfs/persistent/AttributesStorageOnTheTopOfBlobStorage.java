@@ -25,7 +25,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesStorage {
   //Persistent format (see AttributesRecord/AttributeEntry):
-  //  attributes directory record: header, entry*
+  //  Storage := (AttributeDirectoryRecord | AttributeDedicatedRecord)*
+  //
+  //  AttributeDirectoryRecord: header, entry*
   //      header:  fileId[4b]   (ref back to file owned attributes)
   //      entry:  attributeId[4b], inlineSizeOrRefId[4b], inlineData[inlineSizeOrRefId]?
   //
@@ -34,7 +36,7 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
   //      dedicatedRecordId = (inlineSizeOrRefId-INLINE_ATTRIBUTE_MAX_SIZE), inlineData is absent
   //      for them.
   //
-  //  attribute dedicated record: header, data[...]
+  //  AttributeDedicatedRecord: header, data[...]
   //      header: -fileId[4b], attributeId[4b]
   //               (fileId refs back to file owned attribute, '-' distinguishes dedicated record
   //               from directory record)
@@ -147,6 +149,64 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
     return modCount.get();
   }
 
+  /**
+   * BEWARE: recordId reported to callback is not always the same recordId as was inserted: during insert/update recordId of
+   * 'directory' record is returned, but attributes could be actually stored in additional 'dedicated' records (if they are
+   * not fit for storing inline in 'directory' record). This dedicated record id will be reported to callback for such
+   * 'big' attributes (see details in the method body)
+   */
+  public <E extends Exception> void forEachAttribute(final Processor<E> processor) throws IOException, E {
+    // RC: For dedicated records ID of dedicated record reported, instead of id of apt. parent 'directory' record -- simply
+    // because this is there attribute value is found during file scan-through -- while at insert phase it would be _directory
+    // record_ id.
+    // But such a behaviour, surely, a surprise from a client PoV.
+    // And surely, this could be fixed in the implementation, but with the cost: basically, we'll need to not report dedicated
+    // records to the callback immediately, but keep track of them, and report them only after their 'parent' directory records
+    // are met, hence 'true' recordId could be determined.
+    // This is surely doable, but for now it seems an overkill to do that -- for the practical use cases of .forEachAttribute I
+    // have in my mind now fileId and attributeId are important, but 'true' recordId is really not important. And the purpose of
+    // this method is to provide fast _streaming-like_ access to storage.
+    // Hence, I decided to delay more correct implementation until the need for it satisfies its cost.
+    lock.readLock().lock();
+    try {
+      storage.forEach((recordId, recordCapacity, recordLength, payload) -> {
+        if (!storage.isRecordActual(recordLength)) {
+          return true;
+        }
+
+        final AttributesRecord attributesRecord = new AttributesRecord(payload);
+        if (attributesRecord.hasDirectory()) {
+          final int fileId = attributesRecord.fileId();
+          for (final AttributeEntry attributeEntry = attributesRecord.currentEntry();
+               attributeEntry.isValid();
+               attributeEntry.moveToNextEntry()) {
+            final int attributeId = attributeEntry.attributeId();
+            if (attributeEntry.isValueInlined()) {
+              final byte[] valueBytes = attributeEntry.inlinedValueAsByteArray();
+              processor.processAttribute(recordId, fileId, attributeId, valueBytes);
+            }
+          }
+        }
+        else if (attributesRecord.hasDedicatedAttribute()) {
+          final int fileId = attributesRecord.fileId();
+          final int attributeId = attributesRecord.dedicatedRecordAttributeId();
+          final byte[] valueBytes = attributesRecord.dedicatedValueAsByteArray();
+          processor.processAttribute(recordId, fileId, attributeId, valueBytes);
+        }
+        return true;
+      });
+    }
+    finally {
+      lock.readLock().unlock();
+    }
+  }
+
+  public interface Processor<E extends Exception> {
+    void processAttribute(final int recordId, final int fileId,
+                          final int attributeId,
+                          final byte[] attributeValue) throws E;
+  }
+
   @Override
   public boolean isDirty() {
     return storage.isDirty();
@@ -183,7 +243,7 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
     private final int length;
 
     private final int backRefFileId;
-    private final int encodedAttributeId;
+    private final int dedicatedAttributeId;
 
 
     private final AttributeEntry entry = new AttributeEntry();
@@ -195,20 +255,25 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
       if (length > RECORD_HEADER_SIZE) {
         final int fileId = buffer.getInt(RECORD_FILE_ID_OFFSET);
         if (fileId < 0) {
+          assert length >= DEDICATED_RECORD_HEADER_SIZE : "record length(=" + length + ") must be > " + DEDICATED_RECORD_HEADER_SIZE;
           //this is dedicated attribute record, not directory record
           backRefFileId = -fileId;
-          encodedAttributeId = buffer.getInt(DEDICATED_RECORD_ATTRIBUTE_ID_OFFSET);
+          dedicatedAttributeId = buffer.getInt(DEDICATED_RECORD_ATTRIBUTE_ID_OFFSET);
         }
         else {
           backRefFileId = fileId;
-          encodedAttributeId = -1;
+          dedicatedAttributeId = -1;
         }
         entry.reset(RECORD_HEADER_SIZE, buffer);
       }
       else {
         backRefFileId = -1;
-        encodedAttributeId = -1;
+        dedicatedAttributeId = -1;
       }
+    }
+
+    protected int fileId() {
+      return backRefFileId;
     }
 
     public boolean findAttributeInDirectoryRecord(final int lookupAttributeId) {
@@ -227,17 +292,27 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
       return entry;
     }
 
-    public boolean moveToNextEntry() {
-      return entry.moveToNextEntry();
-    }
-
     public boolean hasDirectory() {
-      return length >= RECORD_HEADER_SIZE;
+      return length >= RECORD_HEADER_SIZE
+             && dedicatedAttributeId < 0;
     }
 
     public boolean hasDedicatedAttribute() {
       return length >= DEDICATED_RECORD_HEADER_SIZE
-             && encodedAttributeId > 0;
+             && dedicatedAttributeId > 0;
+    }
+
+    /**
+     * Valid for dedicated attribute record, -1 otherwise
+     */
+    protected int dedicatedRecordAttributeId() {
+      return dedicatedAttributeId;
+    }
+
+    public byte[] dedicatedValueAsByteArray() {
+      final byte[] recordValue = new byte[length - DEDICATED_RECORD_HEADER_SIZE];
+      buffer.get(DEDICATED_RECORD_HEADER_SIZE, recordValue);
+      return recordValue;
     }
 
     public static ByteBuffer putDirectoryRecordHeader(final ByteBuffer buffer,
@@ -293,11 +368,11 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
     }
 
     public boolean isValueInlined() {
-      return inlinedValueSizeOrDedicatedRecordId < INLINE_ATTRIBUTE_MAX_SIZE;
+      return inlinedValueSizeOrDedicatedRecordId < INLINE_ATTRIBUTE_SMALLER_THAN;
     }
 
     public int dedicatedValueRecordId() {
-      return inlinedValueSizeOrDedicatedRecordId - INLINE_ATTRIBUTE_MAX_SIZE;
+      return inlinedValueSizeOrDedicatedRecordId - INLINE_ATTRIBUTE_SMALLER_THAN;
     }
 
     public int inlinedValueStartOffset() {
@@ -328,8 +403,9 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
       return true;
     }
 
-    public byte[] inlinedValue() {
-      final byte[] entryValue = new byte[inlinedValueLength()];
+    public byte[] inlinedValueAsByteArray() {
+      final int valueLength = inlinedValueLength();
+      final byte[] entryValue = new byte[valueLength];
       buffer.get(inlinedValueStartOffset(), entryValue);
       return entryValue;
     }
@@ -347,7 +423,7 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
     public static ByteBuffer putInlineEntryHeader(final ByteBuffer buffer,
                                                   final int encodedAttributeId,
                                                   final int newValueSize) {
-      assert newValueSize <= INLINE_ATTRIBUTE_MAX_SIZE : newValueSize + " > " + INLINE_ATTRIBUTE_MAX_SIZE;
+      assert newValueSize <= INLINE_ATTRIBUTE_SMALLER_THAN : newValueSize + " > " + INLINE_ATTRIBUTE_SMALLER_THAN;
       return buffer.putInt(encodedAttributeId)
         .putInt(newValueSize);
     }
@@ -370,7 +446,7 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
                                          final int attributeId,
                                          final int dedicatedRecordId) {
       return buffer.putInt(attributeId)
-        .putInt(INLINE_ATTRIBUTE_MAX_SIZE + dedicatedRecordId);
+        .putInt(INLINE_ATTRIBUTE_SMALLER_THAN + dedicatedRecordId);
     }
 
     public static int entrySizeForValueSize(final int size) {
@@ -415,6 +491,7 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
         modCount.incrementAndGet();
       }
       catch (Throwable t) {
+        FSRecords.LOG.warn("Error storing " + attribute + " of file(" + fileId + ")");
         FSRecords.handleError(t);
         throw new RuntimeException(t);
       }
@@ -432,7 +509,7 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
                                 final byte[] newValueBytes,
                                 final int newValueSize) throws IOException {
     final int updatedAttributesRecordId;
-    if (newValueSize < INLINE_ATTRIBUTE_MAX_SIZE) {
+    if (newValueSize < INLINE_ATTRIBUTE_SMALLER_THAN) {
       //if attribute value could be stored in the directory record inline
       //  -> try to (over)write it there:
       updatedAttributesRecordId = writeAttributeInlineIntoDirectoryRecord(
@@ -473,7 +550,7 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
                                                       final int attributeId,
                                                       final byte[] newValueBuffer,
                                                       final int newValueSize) throws IOException {
-    assert newValueSize < INLINE_ATTRIBUTE_MAX_SIZE : "Only small values could be stored in directory record";
+    assert newValueSize < INLINE_ATTRIBUTE_SMALLER_THAN : "Only small values could be stored in directory record";
 
     if (attributesRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
       //no directory record yet -> create new one:
@@ -639,7 +716,7 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
 
       final AttributeEntry attributeEntry = attributesRecord.currentEntry();
       if (attributeEntry.isValueInlined()) {
-        return attributeEntry.inlinedValue();
+        return attributeEntry.inlinedValueAsByteArray();
       }
 
       final int dedicatedRecordId = attributeEntry.dedicatedValueRecordId();
@@ -672,7 +749,7 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
                                            ") is not a directory record (" +
                                            attributesRecord.backRefFileId +
                                            ", " +
-                                           attributesRecord.encodedAttributeId +
+                                           attributesRecord.dedicatedAttributeId +
                                            ")");
       }
       if (!attributesRecord.findAttributeInDirectoryRecord(attributeId)) {
