@@ -70,7 +70,7 @@ public class EncapsulateVariableFix extends RefactoringInspectionGadgetsFix impl
       return IntentionPreviewInfo.EMPTY;
     }
     var handler = (EncapsulateFieldsHandlerBase)getHandler();
-    handler.invokeForPreview(field);
+    handler.invokeForPreview(project, field);
     return IntentionPreviewInfo.DIFF;
   }
 

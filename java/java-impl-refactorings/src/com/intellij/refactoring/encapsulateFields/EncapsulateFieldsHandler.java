@@ -128,13 +128,13 @@ public class EncapsulateFieldsHandler implements EncapsulateFieldsHandlerBase {
   }
 
   @Override
-  public void invokeForPreview(@NotNull PsiField field) {
+  public void invokeForPreview(@NotNull Project project, @NotNull PsiField field) {
     final FieldDescriptor fieldDescriptor = new FieldDescriptorImpl(field, GenerateMembersUtil.suggestGetterName(field),
                                                               GenerateMembersUtil.suggestSetterName(field),
                                                               GenerateMembersUtil.generateGetterPrototype(field),
                                                               GenerateMembersUtil.generateSetterPrototype(field));
     final EncapsulateFieldsDescriptor descriptor = new EncapsulateOnPreviewDescriptor(fieldDescriptor);
-    final EncapsulateFieldsProcessor processor = new EncapsulateFieldsProcessor(field.getProject(), descriptor) {
+    final EncapsulateFieldsProcessor processor = new EncapsulateFieldsProcessor(project, descriptor) {
       @Override
       protected Iterable<PsiReferenceExpression> getFieldReferences(@NotNull PsiField field) {
         return VariableAccessUtils.getVariableReferences(field, field.getContainingFile());
