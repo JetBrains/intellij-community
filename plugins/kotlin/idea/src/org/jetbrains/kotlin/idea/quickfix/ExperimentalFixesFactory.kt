@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.descriptors.resolveClassByFqName
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.toDescriptor
@@ -153,7 +154,7 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
 
     private val ModuleDescriptor.OPT_IN_FQ_NAME: FqName
         get() = OptInNames.OPT_IN_FQ_NAME.takeIf { fqNameIsExisting(it) }
-            ?: OptInNames.OLD_USE_EXPERIMENTAL_FQ_NAME
+            ?: FqNames.OptInFqNames.OLD_USE_EXPERIMENTAL_FQ_NAME
 
     // Find the existing file-level annotation of the specified class if it exists
     private fun findFileAnnotation(file: KtFile, annotationFqName: FqName): KtAnnotationEntry? {

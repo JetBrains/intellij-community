@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.caches.project.toDescriptor
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
@@ -84,7 +85,7 @@ open class MakeModuleExperimentalFix(
                 module,
                 OptInNames.REQUIRES_OPT_IN_FQ_NAME.takeIf {
                     module.toDescriptor()?.fqNameIsExisting(it) == true
-                } ?: OptInNames.OLD_EXPERIMENTAL_FQ_NAME
+                } ?: FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME
             )
         }
     }

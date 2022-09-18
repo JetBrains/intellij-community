@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -627,7 +628,7 @@ private fun ExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
         if (fqName == null) return false
         val annotations = annotationClass?.annotations ?: return false
         return annotations.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) ||
-                annotations.hasAnnotation(OptInNames.OLD_EXPERIMENTAL_FQ_NAME)
+                annotations.hasAnnotation(FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME)
     }
 
     val bindingContext = bindingContext ?: return ExperimentalMarkers.empty
@@ -639,7 +640,7 @@ private fun ExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
         val annotationDescriptor = bindingContext[BindingContext.ANNOTATION, annotationEntry] ?: continue
         val fqName = annotationDescriptor.fqName ?: continue
 
-        if (fqName in OptInNames.USE_EXPERIMENTAL_FQ_NAMES) {
+        if (fqName in FqNames.OptInFqNames.OPT_IN_FQ_NAMES) {
             for (argument in annotationEntry.valueArguments) {
                 val argumentExpression = argument.getArgumentExpression()?.safeAs<KtClassLiteralExpression>() ?: continue
                 val markerFqName = bindingContext[

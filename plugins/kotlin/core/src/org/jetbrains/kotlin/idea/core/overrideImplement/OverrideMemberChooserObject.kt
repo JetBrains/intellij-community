@@ -9,10 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.config.AnalysisFlag
-import org.jetbrains.kotlin.config.AnalysisFlags
-import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.TemplateKind
@@ -207,7 +205,7 @@ private val OVERRIDE_RENDERER = withOptions {
     annotationFilter = {
         val annotations = it.type.constructor.declarationDescriptor?.annotations
         annotations != null && (annotations.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) ||
-                annotations.hasAnnotation(OptInNames.OLD_EXPERIMENTAL_FQ_NAME))
+                annotations.hasAnnotation(FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME))
     }
     presentableUnresolvedTypes = true
     informativeErrorType = false
