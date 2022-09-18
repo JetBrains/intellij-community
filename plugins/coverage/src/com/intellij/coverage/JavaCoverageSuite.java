@@ -57,7 +57,7 @@ public final class JavaCoverageSuite extends BaseCoverageSuite {
                            final boolean tracingEnabled,
                            final boolean trackTestFolders,
                            final CoverageRunner coverageRunner,
-                           @NotNull final JavaCoverageEngine coverageSupportProvider,
+                           @NotNull final CoverageEngine coverageEngine,
                            final Project project) {
     super(name, coverageDataFileProvider, lastCoverageTimeStamp, coverageByTestEnabled,
           tracingEnabled, trackTestFolders,
@@ -65,7 +65,7 @@ public final class JavaCoverageSuite extends BaseCoverageSuite {
 
     myFilters = filters;
     myExcludePatterns = excludePatterns;
-    myCoverageEngine = coverageSupportProvider;
+    myCoverageEngine = coverageEngine;
   }
 
   public String @NotNull [] getFilteredPackageNames() {
