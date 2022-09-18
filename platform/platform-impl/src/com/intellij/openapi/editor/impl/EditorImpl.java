@@ -1000,6 +1000,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myFractionalMetricsHintValue = UISettings.getEditorFractionalMetricsHint();
   }
+  
+  public void doNotIgnoreNextConsecutiveMouseEvent() {
+    myIgnoreMouseEventsConsecutiveToInitial = false;
+  }
 
   @Contract("_->fail")
   public void throwDisposalError(@NonNls @NotNull String msg) {

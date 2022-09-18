@@ -44,6 +44,7 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -1430,6 +1431,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
       }
       else {
         editor.setHighlighter(DiffUtil.createEmptyEditorHighlighter());
+      }
+      
+      if (editor instanceof EditorImpl editorImpl) {
+        editorImpl.doNotIgnoreNextConsecutiveMouseEvent();
       }
 
       UnifiedEditorRangeHighlighter.erase(project, editor.getDocument());
