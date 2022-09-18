@@ -11,12 +11,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -89,8 +92,23 @@ public class SwitchExpressionCanBePushedDownInspection extends AbstractBaseJavaL
       if (!(statement instanceof PsiSwitchLabeledRuleStatement rule)) return null;
       PsiStatement ruleBody = rule.getBody();
       if (ruleBody instanceof PsiThrowStatement) continue;
-      if (!(ruleBody instanceof PsiExpressionStatement expr)) return null;
-      result.add(expr.getExpression());
+      if (ruleBody instanceof PsiBlockStatement blockStatement) {
+        if (!(block instanceof PsiSwitchExpression)) return null;
+        if (ControlFlowUtils.codeBlockMayCompleteNormally(blockStatement.getCodeBlock())) return null;
+        Collection<PsiYieldStatement> yields = PsiTreeUtil.findChildrenOfType(blockStatement, PsiYieldStatement.class);
+        List<PsiYieldStatement> myYields = ContainerUtil.filter(yields, st -> st.findEnclosingExpression() == block);
+        for (PsiYieldStatement yield : myYields) {
+          PsiExpression expression = yield.getExpression();
+          if (expression == null) return null;
+          result.add(expression);
+        }
+        continue;
+      }
+      if (ruleBody instanceof PsiExpressionStatement expr) {
+        result.add(expr.getExpression());
+        continue;
+      }
+      return null;
     }
     if (result.size() < 2) return null;
     return result;
