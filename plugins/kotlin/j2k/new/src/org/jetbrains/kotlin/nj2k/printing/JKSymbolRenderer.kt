@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.JKClassAccessExpression
 import org.jetbrains.kotlin.nj2k.tree.JKQualifiedExpression
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class JKSymbolRenderer(private val importStorage: JKImportStorage, project: Project) {
@@ -32,9 +33,6 @@ internal class JKSymbolRenderer(private val importStorage: JKImportStorage, proj
         return this is JKClassSymbol || isStaticMember || isEnumConstant
     }
 
-    private fun JKSymbol.isFromJavaLangPackage() =
-        fqName.startsWith(JAVA_LANG_FQ_PREFIX)
-
     fun renderSymbol(symbol: JKSymbol, owner: JKTreeElement?): String {
         val name = symbol.name.escaped()
         if (!symbol.isFqNameExpected(owner)) return name
@@ -46,6 +44,7 @@ internal class JKSymbolRenderer(private val importStorage: JKImportStorage, proj
                 importStorage.addImport(fqName)
                 name
             }
+
             symbol.isStaticMember && symbol.containingClass?.isUnnamedCompanion == true -> {
                 val containingClass = symbol.containingClass ?: return fqName
                 val classContainingCompanion = containingClass.containingClass ?: return fqName
@@ -65,11 +64,20 @@ internal class JKSymbolRenderer(private val importStorage: JKImportStorage, proj
         }
     }
 
-    private fun JKTreeElement.isSelectorOfQualifiedExpression() =
-        parent?.safeAs<JKQualifiedExpression>()?.selector == this
-
     companion object {
         private const val JAVA_LANG_FQ_PREFIX = "java.lang"
+
+        private val JKMultiverseFunctionSymbol.isTopLevelBuiltInKotlinFunction: Boolean
+            get() = fqName.isKotlinPackagePrefix && target.parent is KtFile
+
+        private val String.isKotlinPackagePrefix: Boolean
+            get() = this == "kotlin" || this.startsWith("kotlin.")
+
+        private fun JKSymbol.isFromJavaLangPackage(): Boolean =
+            fqName.startsWith(JAVA_LANG_FQ_PREFIX)
+
+        private fun JKTreeElement.isSelectorOfQualifiedExpression(): Boolean =
+            parent?.safeAs<JKQualifiedExpression>()?.selector == this
     }
 }
 

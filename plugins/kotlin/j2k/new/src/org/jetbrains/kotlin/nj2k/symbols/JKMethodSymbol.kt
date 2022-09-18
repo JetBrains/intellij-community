@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.nj2k.tree.JKClass
 import org.jetbrains.kotlin.nj2k.tree.JKMethod
 import org.jetbrains.kotlin.nj2k.types.*
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -79,9 +78,6 @@ class JKMultiverseFunctionSymbol(
 
     override val returnType: JKType?
         get() = target.typeReference?.toJK(typeFactory)
-
-    val isTopLevelBuiltInKotlinFunction: Boolean
-        get() = fqName.isKotlinPackagePrefix && target.parent is KtFile
 }
 
 class JKUnresolvedMethod(
@@ -108,6 +104,3 @@ class KtClassImplicitConstructorSymbol(
     override val returnType: JKType?
         get() = target.returnType?.let(typeFactory::fromPsiType)
 }
-
-private val String.isKotlinPackagePrefix: Boolean
-    get() = this == "kotlin" || this.startsWith("kotlin.")
