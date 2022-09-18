@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
+import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendantsToWaitingSet
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.findOrCreateDirectoryForPackage
@@ -260,7 +261,7 @@ private val forbiddenAnnotationFqNames = setOf(
     OptionalAnnotationUtil.OPTIONAL_EXPECTATION_FQ_NAME,
     FqName("kotlin.ExperimentalMultiplatform"),
     OptInNames.OPT_IN_FQ_NAME,
-    OptInNames.OLD_USE_EXPERIMENTAL_FQ_NAME
+    FqNames.OptInFqNames.OLD_USE_EXPERIMENTAL_FQ_NAME
 )
 
 internal fun generateCallable(
