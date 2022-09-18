@@ -35,22 +35,29 @@ public class JavaTemplateSubstitutor implements TemplateSubstitutor {
   public @Nullable TemplateImpl substituteTemplate(@NotNull TemplateSubstitutionContext substitutionContext,
                                                    @NotNull TemplateImpl template) {
     PsiFile file = substitutionContext.getPsiFile();
-    if (file.getLanguage().isKindOf(JavaLanguage.INSTANCE) && 
-        EXPR_LAMBDA_BODY.accepts(file.findElementAt(substitutionContext.getOffset()))) {
-      String text = template.getString();
-      try {
-        PsiStatement statement = JavaPsiFacade.getElementFactory(substitutionContext.getProject()).createStatementFromText(text, null);
-        String resultText;
-        if (statement instanceof PsiExpressionStatement) {
-          resultText = ((PsiExpressionStatement)statement).getExpression().getText();
-        } else {
-          resultText = "{" + text + "}";
+    if (file.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+      PsiElement element = file.findElementAt(substitutionContext.getOffset());
+      if (EXPR_LAMBDA_BODY.accepts(element)) {
+        boolean inSwitch = element != null && element.getPrevSibling() instanceof PsiSwitchLabeledRuleStatement;
+        String text = template.getString();
+        try {
+          PsiStatement statement = JavaPsiFacade.getElementFactory(substitutionContext.getProject()).createStatementFromText(text, null);
+          String resultText;
+          if (inSwitch && (statement instanceof PsiExpressionStatement || statement instanceof PsiThrowStatement)) {
+            resultText = text;
+          }
+          else if (statement instanceof PsiExpressionStatement) {
+            resultText = ((PsiExpressionStatement)statement).getExpression().getText();
+          }
+          else {
+            resultText = "{" + text + "}";
+          }
+          TemplateImpl copy = template.copy();
+          copy.setString(resultText);
+          return copy;
         }
-        TemplateImpl copy = template.copy();
-        copy.setString(resultText);
-        return copy;
-      }
-      catch (IncorrectOperationException ignored) {
+        catch (IncorrectOperationException ignored) {
+        }
       }
     }
     return null;

@@ -211,6 +211,13 @@ class Outer {
     checkResult()
   }
 
+  void testThrInSwitch() {
+    configure()
+    startTemplate("thr", "Java")
+    stripTrailingSpaces()
+    checkResult()
+  }
+
   private void stripTrailingSpaces() {
     DocumentImpl document = (DocumentImpl)getEditor().getDocument()
     document.setStripTrailingSpacesEnabled(true)
