@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
+public class IntroduceConstantHandler extends BaseExpressionToFieldHandler implements IntroduceConstantHandlerBase {
   protected InplaceIntroduceConstantPopup myInplaceIntroduceConstantPopup;
 
   public IntroduceConstantHandler() {
@@ -43,7 +43,8 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     return HelpID.INTRODUCE_CONSTANT;
   }
 
-  public void invoke(Project project, PsiExpression[] expressions) {
+  @Override
+  public void invoke(@NotNull Project project, PsiExpression @NotNull [] expressions) {
     for (PsiExpression expression : expressions) {
       final PsiFile file = expression.getContainingFile();
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
