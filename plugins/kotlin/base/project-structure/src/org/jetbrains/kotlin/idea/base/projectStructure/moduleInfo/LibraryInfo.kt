@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 /**
  * @see [org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache]
  */
-sealed class LibraryInfo(
+abstract class LibraryInfo internal constructor(
     override val project: Project,
     val library: LibraryEx,
 ) : IdeaModuleInfo, LibraryModuleInfo, BinaryModuleInfo, TrackableModuleInfo {

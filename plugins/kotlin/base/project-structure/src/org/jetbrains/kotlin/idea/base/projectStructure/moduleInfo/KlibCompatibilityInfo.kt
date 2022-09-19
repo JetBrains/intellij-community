@@ -22,7 +22,8 @@ sealed class KlibCompatibilityInfo(val isCompatible: Boolean) {
     class IncompatibleMetadata(val isOlder: Boolean) : KlibCompatibilityInfo(false)
 }
 
-sealed class AbstractKlibLibraryInfo(project: Project, library: LibraryEx, val libraryRoot: String) : LibraryInfo(project, library) {
+abstract class AbstractKlibLibraryInfo internal constructor(project: Project, library: LibraryEx, val libraryRoot: String) :
+    LibraryInfo(project, library) {
     val resolvedKotlinLibrary: KotlinLibrary = resolveSingleFileKlib(
         libraryFile = File(libraryRoot),
         logger = LOG,
@@ -56,10 +57,12 @@ val KotlinLibrary.compatibilityInfo: KlibCompatibilityInfo
                 // Too old KLIB format, even doesn't have metadata version
                 KlibCompatibilityInfo.IncompatibleMetadata(true)
             }
+
             !metadataVersion.isCompatible() -> {
                 val isOlder = metadataVersion.isAtLeast(KlibMetadataVersion.INSTANCE)
                 KlibCompatibilityInfo.IncompatibleMetadata(!isOlder)
             }
+
             else -> KlibCompatibilityInfo.Compatible
         }
     }
