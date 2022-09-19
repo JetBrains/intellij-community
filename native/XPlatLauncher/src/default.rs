@@ -298,9 +298,7 @@ impl DefaultLaunchConfiguration {
         let content = read_file_to_end(jre_path_file.as_path())?;
         let user_jre_path = Path::new(content.as_str());
 
-        let java_executable = user_jre_path
-            .join("bin")
-            .join("java");
+        let java_executable = get_bin_java_path(user_jre_path);
 
         match is_executable::is_executable(&java_executable) {
             true => { Ok(java_executable) }
@@ -316,12 +314,12 @@ impl DefaultLaunchConfiguration {
     fn get_java_executable_from_java_root_env_var(&self, env_var_name: &str) -> Result<PathBuf> {
         let env_var_value = env::var(env_var_name)?;
 
-        if !env_var_value.is_empty() {
+        if env_var_value.is_empty() {
             bail!("Env var {env_var_value} is not set, skipping JDK detection from it");
         }
 
         let product_jdk_dir = Path::new(env_var_value.as_str());
-        let java_executable = product_jdk_dir.join("bin").join("java");
+        let java_executable = get_bin_java_path(product_jdk_dir);
 
         if !java_executable.exists() {
             bail!("Java executable from JDK {java_executable:?} does not exist");
