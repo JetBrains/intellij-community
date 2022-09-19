@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -51,6 +52,7 @@ import org.jetbrains.kotlin.test.util.projectLibrary
 import org.jetbrains.kotlin.types.typeUtil.closure
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.junit.Assert
+import org.junit.Assert.assertNotEquals
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
@@ -58,6 +60,51 @@ import java.io.File
 @RunWith(JUnit38ClassRunner::class)
 class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     private var vfsDisposable: Ref<Disposable>? = null
+
+    fun testCacheDeduplication() {
+        val stdlib = stdlibJvm()
+        val stdlibCopy = projectLibrary("kotlin-stdlib-copy", TestKotlinArtifacts.kotlinStdlib.jarRoot)
+        val myLib = projectLibraryWithFakeRoot("myLib")
+        val cache = LibraryInfoCache.getInstance(project)
+
+        assertNotEquals(stdlib, stdlibCopy)
+        assertNotEquals(stdlib, myLib)
+        assertNotEquals(stdlibCopy, myLib)
+
+        val stdlibInfo = cache[stdlib].first().also(LibraryInfo::checkValidity)
+        val stdlibCopyInfo = cache[stdlibCopy].first().also(LibraryInfo::checkValidity)
+        val myLibInfo = cache[myLib].first().also(LibraryInfo::checkValidity)
+
+        assertEquals(stdlibInfo, stdlibCopyInfo)
+        assertNotEquals(stdlibInfo, myLibInfo)
+        assertNotEquals(stdlibCopyInfo, myLibInfo)
+
+        val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+        runWriteAction { libraryTable.removeLibrary(stdlib) }
+
+        assertTrue(stdlib.isDisposed)
+        assertTrue(stdlibInfo.isDisposed)
+
+        assertFalse(stdlibCopy.isDisposed)
+        assertTrue(stdlibCopyInfo.isDisposed)
+
+        assertFalse(myLib.isDisposed)
+        assertFalse(myLibInfo.isDisposed)
+
+        val newStdlibCopyInfo = cache[stdlibCopy].first().also(LibraryInfo::checkValidity)
+        assertNotEquals(stdlibCopyInfo, newStdlibCopyInfo)
+
+        val newStdlib = stdlibJvm()
+        val newStdlibInfo = cache[newStdlib].first().also(LibraryInfo::checkValidity)
+        assertEquals(newStdlibInfo, newStdlibCopyInfo)
+
+        runWriteAction { libraryTable.removeLibrary(newStdlib) }
+        assertTrue(newStdlib.isDisposed)
+        assertFalse(newStdlibInfo.isDisposed)
+
+        val updatedStdlibCopyInfo = cache[stdlibCopy].first().also(LibraryInfo::checkValidity)
+        assertNotEquals(newStdlibCopyInfo, updatedStdlibCopyInfo) // can be optimized
+    }
 
     fun testSimpleModuleDependency() {
         val (a, b) = modules()

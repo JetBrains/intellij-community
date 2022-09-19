@@ -45,11 +45,11 @@ class LibraryInfoCache(project: Project) : Disposable {
 
         override fun subscribe() {
             val busConnection = project.messageBus.connect(this)
-            WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, ModelChangeListener(this, project))
+            WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, ModelChangeListener(project))
         }
 
         override fun doInvalidate(cache: MutableMap<LibraryEx, List<LibraryInfo>>) {
-            cache.clear()
+            super.doInvalidate(cache)
             deduplicationCache.clear()
         }
 
@@ -80,24 +80,17 @@ class LibraryInfoCache(project: Project) : Disposable {
              * It even allows to perform equality check based on object identity.
              */
 
-            val urlsByType = buildMap {
-                val rootProvider = key.rootProvider
-                for (orderRootType in OrderRootType.getAllTypes()) {
-                    ProgressManager.checkCanceled()
-                    put(orderRootType, rootProvider.getUrls(orderRootType))
-                }
-            }
-
+            val urlsByType = key.urlsByType()
             val firstRoot = key.firstRoot()
+            ProgressManager.checkCanceled()
+
             useCache { cache ->
                 checkEntitiesIfRequired(cache)
 
                 cache[key]?.let { return@useCache it }
 
                 val deduplicatedLibraries = deduplicationCache[firstRoot] ?: return@useCache null
-                val deduplicatedLibrary = deduplicatedLibraries.find {
-                    urlsByType.all { (k, v) -> v.contentEquals(it.getUrls(k)) }
-                } ?: return@useCache null
+                val deduplicatedLibrary = deduplicatedLibraries.find { urlsByType.rootEquals(it) } ?: return@useCache null
 
                 val libraryInfos = cache[deduplicatedLibrary] ?: error("inconsistent state of ${deduplicatedLibrary.presentableName}")
                 cache[key] = libraryInfos
@@ -146,14 +139,28 @@ class LibraryInfoCache(project: Project) : Disposable {
             project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosAdded(value)
         }
 
-        fun invalidateKeysAndGetOutdatedValues(
+        override fun doInvalidateKeysAndGetOutdatedValues(
             keys: Collection<LibraryEx>,
+            cache: MutableMap<LibraryEx, List<LibraryInfo>>,
         ): Collection<List<LibraryInfo>> {
-            val outdatedValues = super.invalidateKeysAndGetOutdatedValues(keys, CHECK_ALL)
-            useCache { _ ->
-                for (key in keys) {
-                    val firstRoot = key.firstRoot()
-                    deduplicationCache[firstRoot]?.remove(key)
+            val outdatedValues = super.doInvalidateKeysAndGetOutdatedValues(keys, cache)
+            for ((root, invalidatedLibraries) in keys.groupBy { it.firstRoot() }) {
+                val deduplicatedLibraries = deduplicationCache[root] ?: continue
+                deduplicatedLibraries.removeAll(invalidatedLibraries)
+                if (deduplicatedLibraries.isEmpty()) continue
+
+                for (invalidatedLibrary in invalidatedLibraries) {
+                    val invalidatedLibraryUrlsByType = invalidatedLibrary.urlsByType()
+                    val iterator = deduplicatedLibraries.iterator()
+                    while (iterator.hasNext()) {
+                        val deduplicatedLibrary = iterator.next()
+                        if (invalidatedLibraryUrlsByType.rootEquals(deduplicatedLibrary)) {
+                            iterator.remove()
+                            cache.remove(deduplicatedLibrary)
+                        }
+                    }
+
+                    if (deduplicatedLibraries.isEmpty()) break
                 }
             }
 
@@ -189,21 +196,18 @@ class LibraryInfoCache(project: Project) : Disposable {
             } else {
                 JvmPlatforms.defaultJvmPlatform
             }
-    }
 
-    internal class ModelChangeListener(private val libraryInfoCache: LibraryInfoInnerCache, project: Project) :
-        LibraryEntityChangeListener(project, afterChangeApplied = false) {
+        internal inner class ModelChangeListener(project: Project) : LibraryEntityChangeListener(project, afterChangeApplied = false) {
+            override fun entitiesChanged(outdated: List<Library>) {
+                val droppedLibraryInfos = invalidateKeysAndGetOutdatedValues(outdated.map { it as LibraryEx }).flattenTo(hashSetOf())
 
-        override fun entitiesChanged(outdated: List<Library>) {
-            val droppedLibraryInfos = libraryInfoCache.invalidateKeysAndGetOutdatedValues(
-                outdated.map { it as LibraryEx }
-            ).flattenTo(hashSetOf())
-
-            if (droppedLibraryInfos.isNotEmpty()) {
-                project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosRemoved(droppedLibraryInfos)
+                if (droppedLibraryInfos.isNotEmpty()) {
+                    project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosRemoved(droppedLibraryInfos)
+                }
             }
         }
     }
+
 
     operator fun get(key: Library): List<LibraryInfo> {
         require(key is LibraryEx) { "Library '${key.presentableName}' does not implement LibraryEx which is not expected" }
@@ -238,4 +242,14 @@ fun Library.checkValidity() {
     if (this is LibraryEx && isDisposed) {
         throw AlreadyDisposedException("Library '${name}' is already disposed")
     }
+}
+
+private fun LibraryEx.urlsByType(): Map<OrderRootType, Array<String>> = buildMap {
+    for (orderRootType in OrderRootType.getAllTypes()) {
+        put(orderRootType, getUrls(orderRootType))
+    }
+}
+
+private fun Map<OrderRootType, Array<String>>.rootEquals(another: LibraryEx): Boolean = all { (k, v) ->
+    v.contentEquals(another.getUrls(k))
 }

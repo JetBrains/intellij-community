@@ -16,7 +16,6 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
-import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
@@ -99,16 +98,19 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
     protected fun invalidateKeysAndGetOutdatedValues(
         keys: Collection<Key>,
         validityCondition: ((Key, Value) -> Boolean)? = CHECK_ALL
-    ): Collection<Value> {
-        val removedValues = mutableListOf<Value>()
-        useCache { cache ->
-            for (key in keys) {
-                removedValues.addIfNotNull(cache.remove(key))
-            }
+    ): Collection<Value> = useCache { cache ->
+        doInvalidateKeysAndGetOutdatedValues(keys, cache).also {
             invalidationStamp.incInvalidation()
             checkEntities(cache, validityCondition)
         }
-        return removedValues
+    }
+
+    protected open fun doInvalidateKeysAndGetOutdatedValues(keys: Collection<Key>, cache: MutableMap<Key, Value>): Collection<Value> {
+        return buildList {
+            for (key in keys) {
+                cache.remove(key)?.let(::add)
+            }
+        }
     }
 
     protected fun invalidateKeys(
