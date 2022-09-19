@@ -18,6 +18,8 @@ import io.opentelemetry.sdk.trace.export.SpanExporter
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import java.time.Instant
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 
 /**
@@ -68,7 +70,8 @@ object TraceManager {
         .setResource(Resource.create(Attributes.of(
           ResourceAttributes.SERVICE_NAME, serviceName,
           ResourceAttributes.SERVICE_VERSION, serviceVersion,
-          ResourceAttributes.SERVICE_NAMESPACE, serviceNamespace
+          ResourceAttributes.SERVICE_NAMESPACE, serviceNamespace,
+          ResourceAttributes.SERVICE_INSTANCE_ID, DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
         )))
         .build()
       sdk = OpenTelemetrySdk.builder()
