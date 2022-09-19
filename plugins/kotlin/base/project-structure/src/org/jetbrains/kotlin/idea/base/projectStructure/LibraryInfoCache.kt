@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
 
-class LibraryInfoCache(project: Project): Disposable {
+class LibraryInfoCache(project: Project) : Disposable {
 
     private val libraryInfoCache = LibraryInfoInnerCache(project)
 
@@ -38,7 +38,8 @@ class LibraryInfoCache(project: Project): Disposable {
         Disposer.register(this, libraryInfoCache)
     }
 
-    internal class LibraryInfoInnerCache(project: Project) : SynchronizedFineGrainedEntityCache<LibraryEx, List<LibraryInfo>>(project, cleanOnLowMemory = true) {
+    internal class LibraryInfoInnerCache(project: Project) :
+        SynchronizedFineGrainedEntityCache<LibraryEx, List<LibraryInfo>>(project, cleanOnLowMemory = true) {
 
         private val deduplicationCache = hashMapOf<String, MutableList<LibraryEx>>()
 
@@ -133,16 +134,12 @@ class LibraryInfoCache(project: Project): Disposable {
             key.checkValidity()
         }
 
-        override fun calculate(key: LibraryEx): List<LibraryInfo> {
-            val libraryInfos = when (val platformKind = getPlatform(key).idePlatformKind) {
-                is JvmIdePlatformKind -> listOf(JvmLibraryInfo(project, key))
-                is CommonIdePlatformKind -> createLibraryInfos(key, platformKind, ::CommonKlibLibraryInfo, ::CommonMetadataLibraryInfo)
-                is JsIdePlatformKind -> createLibraryInfos(key, platformKind, ::JsKlibLibraryInfo, ::JsMetadataLibraryInfo)
-                is NativeIdePlatformKind -> createLibraryInfos(key, platformKind, ::NativeKlibLibraryInfo, ::NativeMetadataLibraryInfo)
-                else -> error("Unexpected platform kind: $platformKind")
-            }
-
-            return libraryInfos
+        override fun calculate(key: LibraryEx): List<LibraryInfo> = when (val platformKind = getPlatform(key).idePlatformKind) {
+            is JvmIdePlatformKind -> listOf(JvmLibraryInfo(project, key))
+            is CommonIdePlatformKind -> createLibraryInfos(key, platformKind, ::CommonKlibLibraryInfo, ::CommonMetadataLibraryInfo)
+            is JsIdePlatformKind -> createLibraryInfos(key, platformKind, ::JsKlibLibraryInfo, ::JsMetadataLibraryInfo)
+            is NativeIdePlatformKind -> createLibraryInfos(key, platformKind, ::NativeKlibLibraryInfo, ::NativeMetadataLibraryInfo)
+            else -> error("Unexpected platform kind: $platformKind")
         }
 
         override fun postProcessNewValue(key: LibraryEx, value: List<LibraryInfo>) {
@@ -153,12 +150,13 @@ class LibraryInfoCache(project: Project): Disposable {
             keys: Collection<LibraryEx>,
         ): Collection<List<LibraryInfo>> {
             val outdatedValues = super.invalidateKeysAndGetOutdatedValues(keys, CHECK_ALL)
-            useCache {_ ->
+            useCache { _ ->
                 for (key in keys) {
                     val firstRoot = key.firstRoot()
                     deduplicationCache[firstRoot]?.remove(key)
                 }
             }
+
             return outdatedValues
         }
 
@@ -193,10 +191,13 @@ class LibraryInfoCache(project: Project): Disposable {
             }
     }
 
-    internal class ModelChangeListener(private val libraryInfoCache: LibraryInfoInnerCache, project: Project) : LibraryEntityChangeListener(project, afterChangeApplied = false) {
+    internal class ModelChangeListener(private val libraryInfoCache: LibraryInfoInnerCache, project: Project) :
+        LibraryEntityChangeListener(project, afterChangeApplied = false) {
 
         override fun entitiesChanged(outdated: List<Library>) {
-            val droppedLibraryInfos = libraryInfoCache.invalidateKeysAndGetOutdatedValues(outdated.map { it as LibraryEx }).flattenTo(hashSetOf())
+            val droppedLibraryInfos = libraryInfoCache.invalidateKeysAndGetOutdatedValues(
+                outdated.map { it as LibraryEx }
+            ).flattenTo(hashSetOf())
 
             if (droppedLibraryInfos.isNotEmpty()) {
                 project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosRemoved(droppedLibraryInfos)
@@ -223,7 +224,7 @@ interface LibraryInfoListener {
     fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>)
 
     @ApiStatus.Internal
-    fun libraryInfosAdded(libraryInfos: Collection<LibraryInfo>) {}
+    fun libraryInfosAdded(libraryInfos: Collection<LibraryInfo>) = Unit
 
     companion object {
         @ApiStatus.Internal
