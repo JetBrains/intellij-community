@@ -2,7 +2,6 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -10,18 +9,18 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.SwitchUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class SwitchExpressionCanBePushedDownInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
@@ -75,10 +74,26 @@ public class SwitchExpressionCanBePushedDownInspection extends AbstractBaseJavaL
       diffs[i] = cur;
     }
     if (ArrayUtil.contains(null, diffs)) return PsiExpression.EMPTY_ARRAY;
-    if (block instanceof PsiSwitchStatement && SwitchBlockHighlightingModel.createAddDefaultFixIfNecessary(block) != null) {
+    if (block instanceof PsiSwitchStatement && missesEnumConstants(block)) {
       return PsiExpression.EMPTY_ARRAY;
     }
     return diffs;
+  }
+
+  private static boolean missesEnumConstants(PsiSwitchBlock block) {
+    PsiExpression selector = block.getExpression();
+    if (selector == null) return false;
+    PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(selector.getType());
+    if (selectorClass == null || !selectorClass.isEnum()) return false;
+    Set<PsiEnumConstant> missingConstants = StreamEx.of(selectorClass.getFields()).select(PsiEnumConstant.class).toMutableSet();
+    for (PsiSwitchLabelStatementBase child : PsiTreeUtil.getChildrenOfTypeAsList(block.getBody(), PsiSwitchLabelStatementBase.class)) {
+      if (SwitchUtils.findDefaultElement(child) != null) return false;
+      for (PsiEnumConstant constant : SwitchUtils.findEnumConstants(child)) {
+        missingConstants.remove(constant);
+        if (missingConstants.isEmpty()) return false;
+      }
+    }
+    return true;
   }
 
   @Nullable
