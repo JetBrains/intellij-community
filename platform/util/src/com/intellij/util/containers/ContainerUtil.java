@@ -2210,22 +2210,23 @@ public final class ContainerUtil {
    * @return read-only list consisting of the elements from all collections returned by the mapping function,
    * or a read-only view of the list returned by the mapping function, if it only returned a single list that was not empty
    */
-  public static @NotNull <T, V> List<V> flatMap(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends @NotNull List<V>> mapping) {
+  public static @NotNull <T, V> List<V> flatMap(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends @NotNull List<? extends V>> mapping) {
     // GC optimization for critical clients
     List<V> result = null;
     boolean isOriginal = true;
 
     for (T each : iterable) {
-      List<V> toAdd = mapping.fun(each);
+      List<? extends V> toAdd = mapping.fun(each);
       if (toAdd.isEmpty()) continue;
 
       if (result == null) {
-        result = toAdd;
+        //noinspection unchecked
+        result = (List<V>)toAdd;
         continue;
       }
 
       if (isOriginal) {
-        List<V> original = result;
+        List<? extends V> original = result;
         result = new ArrayList<>(Math.max(10, result.size() + toAdd.size()));
         result.addAll(original);
         isOriginal = false;
