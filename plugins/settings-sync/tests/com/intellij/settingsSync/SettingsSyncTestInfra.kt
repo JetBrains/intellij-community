@@ -41,7 +41,7 @@ fun SettingsSnapshot.assertSettingsSnapshot(build: SettingsSnapshotBuilder.() ->
 internal fun PersistentStateComponent<*>.toFileState() : FileState {
   val file = PathManager.OPTIONS_DIRECTORY + "/" + getDefaultStoragePathSpec(this::class.java)
   val content = this.serialize()
-  return FileState.Modified(file, content, content.size)
+  return FileState.Modified(file, content)
 }
 
 internal val <T> PersistentStateComponent<T>.name: String
@@ -80,7 +80,7 @@ class SettingsSnapshotBuilder {
 
   fun fileState(file: String, content: String) {
     val byteArray = content.toByteArray()
-    fileState(FileState.Modified(file, byteArray, byteArray.size))
+    fileState(FileState.Modified(file, byteArray))
   }
 
   fun plugin(id: String,
