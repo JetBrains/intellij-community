@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.ExplicitTypeCanBeDiamondInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.List;
 
-public class CustomSeverityTest extends LightQuickFixTestCase {
+public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
 
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
@@ -64,5 +64,20 @@ public class CustomSeverityTest extends LightQuickFixTestCase {
     final HighlightInfo info = highlighting.get(0);
     assertEquals(severity, info.getSeverity());
     assertEquals(HighlighterLayer.WARNING, info.getHighlighter().getLayer());
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      final SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(getProject());
+      final HighlightSeverity severity = registrar.getSeverity("X");
+      registrar.unregisterSeverity(severity);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 }
