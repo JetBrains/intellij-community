@@ -535,9 +535,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       final List<NamedLibraryElement> selectedElements = getSelectedValues(selectedUserObjects, NamedLibraryElement.class);
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[0]);
     }
-    if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-      return getSelectedValues(selectedUserObjects);
-    }
     return null;
   }
 
