@@ -3,10 +3,7 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.serviceContainer.AlreadyDisposedException
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
  * Workaround for duplicated libraries, see KT-42607
@@ -16,11 +13,5 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 class LibraryWrapper internal constructor(val library: LibraryEx) {
     override fun toString(): String {
         return "libraryName=${library.name}${if (!library.isDisposed) ", libraryRoots=${library.getFiles(OrderRootType.CLASSES)}" else " -disposed-"})"
-    }
-}
-
-fun Library.checkValidity() {
-    safeAs<LibraryEx>()?.takeIf { it.isDisposed }?.let {
-        throw AlreadyDisposedException("Library '${name}' is already disposed")
     }
 }

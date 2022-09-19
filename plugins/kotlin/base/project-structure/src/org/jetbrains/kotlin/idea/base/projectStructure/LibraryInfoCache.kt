@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
@@ -232,5 +233,11 @@ interface LibraryInfoListener {
         @JvmStatic
         @Topic.ProjectLevel
         val TOPIC = Topic.create("library info listener", LibraryInfoListener::class.java)
+    }
+}
+
+fun Library.checkValidity() {
+    if (this is LibraryEx && isDisposed) {
+        throw AlreadyDisposedException("Library '${name}' is already disposed")
     }
 }
