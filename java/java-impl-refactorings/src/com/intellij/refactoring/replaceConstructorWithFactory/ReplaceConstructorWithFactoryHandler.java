@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -17,12 +17,14 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
  */
-public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHandler, ContextAwareActionHandler {
+public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHandler, ContextAwareActionHandler,
+                                                             ReplaceConstructorWithFactoryHandlerBase {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -88,7 +90,24 @@ public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHa
     else if (elements[0] instanceof PsiClass) {
       invoke((PsiClass)elements[0], editor, project);
     }
+  }
 
+  @Override
+  public void invokeForPreview(@NotNull Project project, @NotNull PsiMethod method) {
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) {
+      return;
+    }
+    String factoryName = suggestFactoryNames(aClass)[0];
+    final var processor = new ReplaceConstructorWithFactoryProcessor(project, method, aClass, aClass, factoryName);
+    processor.performRefactoring(UsageInfo.EMPTY_ARRAY);
+  }
+
+  @Override
+  public void invokeForPreview(@NotNull Project project, @NotNull PsiClass aClass) {
+    String factoryName = suggestFactoryNames(aClass)[0];
+    final var processor = new ReplaceConstructorWithFactoryProcessor(project, null, aClass, aClass, factoryName);
+    processor.performRefactoring(UsageInfo.EMPTY_ARRAY);
   }
 
   private static void invoke(PsiClass aClass, Editor editor, Project project) {
@@ -154,5 +173,14 @@ public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHa
 
   public static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("replace.constructor.with.factory.method.title");
+  }
+
+  public static String @NotNull [] suggestFactoryNames(@NotNull PsiClass aClass) {
+    return new String[]{
+      "create" + aClass.getName(),
+      "new" + aClass.getName(),
+      "getInstance",
+      "newInstance"
+    };
   }
 }
