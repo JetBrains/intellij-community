@@ -874,6 +874,7 @@ public class ListUtils {
 
   void testReturnInCase() throws Throwable { doTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testUnboxedConstantsInCase() throws Throwable { doTest() }
 
   void testAnnotationWithoutValueMethod() throws Throwable {

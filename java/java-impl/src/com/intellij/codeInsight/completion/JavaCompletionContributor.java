@@ -58,6 +58,7 @@ import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.PsiLabelReference;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -265,17 +266,18 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
         PsiVariable variable;
-        if (element instanceof PsiField) {
-          variable = (PsiField)element;
-          if (variable.hasModifierProperty(PsiModifier.FINAL) && variable.hasModifierProperty(PsiModifier.STATIC)) {
-            return true;
+        if (element instanceof PsiField field) {
+          if (!field.hasModifierProperty(PsiModifier.FINAL) || !field.hasModifierProperty(PsiModifier.STATIC) ||
+              !JavaResolveUtil.isAccessible(field, field.getContainingClass(), field.getModifierList(), context, null, null)) {
+            return false;
           }
+          variable = field;
         }
-        else if (element instanceof PsiLocalVariable) {
-          variable = (PsiLocalVariable)element;
-          if (variable.hasModifierProperty(PsiModifier.FINAL)) {
-            return true;
+        else if (element instanceof PsiLocalVariable local) {
+          if (!local.hasModifierProperty(PsiModifier.FINAL)) {
+            return false;
           }
+          variable = local;
         }
         else {
           return false;
@@ -284,12 +286,22 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       }
     };
 
-    if (isPrimitive(selectorType)) return constantVariablesFilter;
-
-    if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(position)) {
-      return TypeUtils.isJavaLangString(selectorType)
-             ? constantVariablesFilter
-             : TrueFilter.INSTANCE;
+    if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(position) ||
+        isPrimitive(selectorType) || TypeUtils.isJavaLangString(selectorType)) {
+      ClassFilter classFilter = new ClassFilter(PsiClass.class) {
+        @Override
+        public boolean isAcceptable(Object element, PsiElement context) {
+          // Accept only classes with inner classes or with suitable fields
+          if (!(element instanceof PsiClass psiClass)) return false;
+          for (PsiClass aClass : psiClass.getInnerClasses()) {
+            if (JavaResolveUtil.isAccessible(aClass, psiClass, aClass.getModifierList(), context, null, null)) {
+              return true;
+            }
+          }
+          return ContainerUtil.exists(psiClass.getAllFields(), field -> constantVariablesFilter.isAcceptable(field, context));
+        }
+      };
+      return new OrFilter(classFilter, constantVariablesFilter);
     }
 
     if (TypeUtils.isJavaLangObject(selectorType)) {
@@ -301,7 +313,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     ClassFilter inheritorsFilter = new ClassFilter(PsiClass.class) {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
-        return element instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)element, typeClass, true);
+        return element instanceof PsiClass psiClass && InheritanceUtil.isInheritorOrSelf(psiClass, typeClass, true);
       }
     };
 

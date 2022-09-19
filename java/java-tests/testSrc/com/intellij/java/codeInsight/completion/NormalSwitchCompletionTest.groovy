@@ -58,6 +58,11 @@ class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   void testCompleteSwitchObjectSelectorPostfix() { doTestPostfixCompletion() }
   void testCompleteSwitchSealedSelectorPostfix() { doTestPostfixCompletion() }
 
+  @NeedsIndex.ForStandardLibrary
+  void testCompleteReferencesInExpressionSwitch() {
+    doTest()
+  }
+
   private void doTestPostfixCompletion() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)
     configure()
