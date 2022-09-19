@@ -102,6 +102,11 @@ pub fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     Ok(result)
 }
 
+pub fn get_jbrsdk_from_project_root() -> &'static Path {
+    let shared = unsafe { SHARED.as_ref() }.expect("Shared test environment should have already been initialized");
+    &shared.jbrsdk_root
+}
+
 pub struct TestEnvironmentShared {
     project_root: PathBuf,
     jbrsdk_root: PathBuf,
@@ -390,6 +395,29 @@ pub fn resolve_launcher_dir(test_dir: &Path, layout_kind: &LauncherLocation) -> 
         LauncherLocation::MainBin => root.join("bin"),
         LauncherLocation::PluginsBin => root.join("plugins/remote-dev-server/bin")
     }
+}
+
+#[cfg(target_os = "linux")]
+pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
+    java_home
+        .join("bin")
+        .join("java")
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
+    java_home
+        .join("bin")
+        .join("java.exe")
+}
+
+#[cfg(target_os = "macos")]
+pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
+    java_home
+        .join("Contents")
+        .join("Home")
+        .join("bin")
+        .join("java")
 }
 
 // TODO: test for additionalJvmArguments in product-info.json being set

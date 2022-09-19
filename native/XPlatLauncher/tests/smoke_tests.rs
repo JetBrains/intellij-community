@@ -3,7 +3,9 @@ pub mod utils;
 
 #[cfg(test)]
 mod tests {
+    use std::path::Path;
     use std::process::ExitStatus;
+    use is_executable::IsExecutable;
     use rstest::*;
     use crate::utils::*;
 
@@ -72,6 +74,52 @@ mod tests {
         assert_eq!(&dump.cmdArguments[3], &test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME).to_string_lossy());
         assert_eq!(&dump.cmdArguments[4], args[0]);
     }
+
+    // # shellcheck disable=SC2154
+    // if [ -n "$IDEA_JDK" ] && [ -x "$IDEA_JDK/bin/java" ]; then
+    //   JRE="$IDEA_JDK"
+    // fi
+    #[rstest]
+    #[case::main_bin(&LauncherLocation::MainBin)]
+    #[case::plugins_bin(&LauncherLocation::PluginsBin)]
+    fn jre_is_idea_jdk_test(#[case] launcher_location: &LauncherLocation) {
+        // todo: different way to resolve java
+        let idea_jdk_root = get_jbrsdk_from_project_root();
+
+        std::env::set_var("IU_JDK", idea_jdk_root);
+
+        let dump = run_launcher_and_get_dump(launcher_location);
+
+        assert!(std::env::var("IU_JDK").is_ok(), "IU_JDK is not set");
+        assert!(
+            !&dump.environmentVariables["IU_JDK"].is_empty(),
+            "IU_JDK is not found in dumped env vars"
+        );
+        assert!(
+            get_bin_java_path(&Path::new(&dump.environmentVariables["IU_JDK"]))
+                .exists(),
+            "Java executable from JDK does not exists"
+        );
+        assert!(
+            get_bin_java_path(&Path::new(&dump.environmentVariables["IU_JDK"]))
+                .is_executable(),
+            "Java executable from JDK is not executable"
+        );
+        assert!(
+            &dump.systemProperties["java.home"].starts_with(
+            idea_jdk_root.to_str().unwrap()),
+            "Resolved java is not equal to set"
+        );
+        assert!(
+            &dump.systemProperties["java.home"].starts_with(
+            &dump.environmentVariables["IU_JDK"]),
+            "Resolved java is not equal to env var"
+        );
+
+        std::env::remove_var("IU_JDK");
+        assert!(std::env::var("IU_JDK").is_err());
+    }
+
 
     #[cfg(target_os = "windows")]
     fn exit_status_to_string(status: &ExitStatus) -> String {
