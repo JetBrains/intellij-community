@@ -83,7 +83,8 @@ mod tests {
     #[case::main_bin(&LauncherLocation::MainBin)]
     #[case::plugins_bin(&LauncherLocation::PluginsBin)]
     fn jre_is_idea_jdk_test(#[case] launcher_location: &LauncherLocation) {
-        // todo: different way to resolve java
+        // todo: different way to resolve java. mb add second java downloader in gradle project
+        // todo: mb should force turn off other ways of java resolving in launcher
         let idea_jdk_root = get_jbrsdk_from_project_root();
 
         std::env::set_var("IU_JDK", idea_jdk_root);
@@ -118,6 +119,45 @@ mod tests {
 
         std::env::remove_var("IU_JDK");
         assert!(std::env::var("IU_JDK").is_err());
+    }
+
+    // if [ -z "$JRE" ] && [ "$OS_TYPE" = "Linux" ] && [ -f "$IDE_HOME/jbr/release" ]; then
+    //   JBR_ARCH="OS_ARCH=\"$OS_ARCH\""
+    //   if grep -q -e "$JBR_ARCH" "$IDE_HOME/jbr/release" ; then
+    //     JRE="$IDE_HOME/jbr"
+    //   fi
+    // fi
+    #[rstest]
+    #[case::main_bin(&LauncherLocation::MainBin)]
+    #[case::plugins_bin(&LauncherLocation::PluginsBin)]
+    fn jre_is_jbr_test(#[case] launcher_location: &LauncherLocation) {
+        // force turn off IU_JDK resolver
+        std::env::remove_var("IU_JDK");
+        assert!(std::env::var("IU_JDK").is_err());
+        // todo: Reset the config jre as well
+
+        let dump = run_launcher_and_get_dump(launcher_location);
+
+        let jbr_java_home = get_jbrsdk_from_project_root();
+        let java_executable = get_bin_java_path(&jbr_java_home);
+
+        assert!(jbr_java_home.is_dir(), "Resolved JBR dir is not a directory");
+        assert!(jbr_java_home.exists(), "JBR dir is not exists");
+        assert!(java_executable.exists(), "Resolved java executable is not exists");
+        assert!(java_executable.is_executable(), "Resolved java executable is not executable");
+        assert_eq!(
+            &dump.systemProperties["java.vendor"],
+            "JetBrains s.r.o.",
+            "Resolved java is not JBR");
+        assert!(
+            &dump.systemProperties["java.home"].starts_with(
+            &jbr_java_home.to_str().unwrap()),
+            "Resolved java is not JBR"
+        );
+        assert!(
+            &dump.systemProperties["java.home"].contains("jbr"),
+            "Resolved java is not JBR"
+        );
     }
 
 
