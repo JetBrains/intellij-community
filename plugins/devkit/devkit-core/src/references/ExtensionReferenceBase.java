@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.openapi.project.Project;
@@ -27,13 +27,13 @@ import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils;
 
 import java.util.List;
 
-abstract class ExtensionPointReferenceBase extends PsiReferenceBase<PsiElement> implements PluginConfigReference {
+abstract class ExtensionReferenceBase extends PsiReferenceBase<PsiElement> implements PluginConfigReference {
 
-  protected ExtensionPointReferenceBase(@NotNull PsiElement element) {
+  protected ExtensionReferenceBase(@NotNull PsiElement element) {
     super(element);
   }
 
-  protected ExtensionPointReferenceBase(@NotNull PsiElement element, TextRange rangeInElement) {
+  protected ExtensionReferenceBase(@NotNull PsiElement element, TextRange rangeInElement) {
     super(element, rangeInElement);
   }
 
