@@ -19,6 +19,8 @@ import com.intellij.codeInsight.template.TemplateSubstitutor;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,16 +31,15 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
  * @author peter
  */
 public class JavaTemplateSubstitutor implements TemplateSubstitutor {
-  private static final ElementPattern<PsiElement> EXPR_LAMBDA_BODY = psiElement().afterLeaf(psiElement(JavaTokenType.ARROW));
-
   @Override
   public @Nullable TemplateImpl substituteTemplate(@NotNull TemplateSubstitutionContext substitutionContext,
                                                    @NotNull TemplateImpl template) {
     PsiFile file = substitutionContext.getPsiFile();
     if (file.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
       PsiElement element = file.findElementAt(substitutionContext.getOffset());
-      if (EXPR_LAMBDA_BODY.accepts(element)) {
-        boolean inSwitch = element != null && element.getPrevSibling() instanceof PsiSwitchLabeledRuleStatement;
+      PsiElement prevLeaf = element == null ? null : PsiTreeUtil.prevCodeLeaf(element);
+      if (PsiUtil.isJavaToken(prevLeaf, JavaTokenType.ARROW)) {
+        boolean inSwitch = prevLeaf.getParent() instanceof PsiSwitchLabeledRuleStatement;
         String text = template.getString();
         try {
           PsiStatement statement = JavaPsiFacade.getElementFactory(substitutionContext.getProject()).createStatementFromText(text, null);
