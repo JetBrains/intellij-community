@@ -1,6 +1,7 @@
 package org.intellij.plugins.markdown.lang.lexer;
 
 import com.intellij.lexer.LexerBase;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.tree.IElementType;
 import org.intellij.markdown.ast.ASTNode;
 import org.intellij.markdown.ast.ASTNodeKt;
@@ -106,6 +107,7 @@ public class MarkdownToplevelLexer extends LexerBase {
 
     @Override
     public void visitNode(@NotNull ASTNode node) {
+      ProgressManager.checkCanceled();
       if (node.getStartOffset() == node.getEndOffset()) {
         return;
       }

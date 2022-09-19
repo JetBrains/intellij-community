@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.lang.parser
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.WhitespacesAndCommentsBinder
 import com.intellij.lang.WhitespacesBinders
+import com.intellij.openapi.progress.ProgressManager
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.LeafASTNode
@@ -17,6 +18,7 @@ internal class PsiBuilderFillingVisitor(private val builder: PsiBuilder) : Recur
   private val HEADERS = MarkdownTokenTypeSets.HEADERS.types.map { MarkdownElementType.markdownType(it) }.toSet()
 
   override fun visitNode(node: ASTNode) {
+    ProgressManager.checkCanceled()
     if (node is LeafASTNode) {
       /* a hack for the link reference definitions:
        * they are being parsed independent of link references and
