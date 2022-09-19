@@ -3,6 +3,7 @@ pub mod utils;
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
     use std::path::Path;
     use std::process::ExitStatus;
     use is_executable::IsExecutable;
@@ -119,6 +120,38 @@ mod tests {
 
         std::env::remove_var("IU_JDK");
         assert!(std::env::var("IU_JDK").is_err());
+    }
+
+    // if [ -z "$JRE" ] && [ -s "${CONFIG_HOME}/JetBrains/IntelliJIdea2022.3/idea.jdk" ]; then
+    //   USER_JRE=$(cat "${CONFIG_HOME}/JetBrains/IntelliJIdea2022.3/idea.jdk")
+    //   if [ -x "$USER_JRE/bin/java" ]; then
+    //     JRE="$USER_JRE"
+    //   fi
+    // fi
+    #[rstest]
+    #[case::main_bin(&LauncherLocation::MainBin)]
+    #[case::plugins_bin(&LauncherLocation::PluginsBin)]
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    fn jre_is_user_jre_test(#[case] launcher_location: &LauncherLocation) {
+        // forced shutdown of IU_JDK
+        std::env::remove_var("IU_JDK");
+        assert!(std::env::var("IU_JDK").is_err());
+
+        let idea_jdk = create_dummy_config();
+        let idea_jdk_content = fs::read_to_string(&idea_jdk).unwrap();
+        let resolved_jdk_path = Path::new(&idea_jdk_content);
+
+        let dump = run_launcher_and_get_dump(launcher_location);
+
+        assert!(idea_jdk.exists(), "Config file is not exists");
+        assert!(resolved_jdk_path.exists(), "JDK from idea.jdk is not exists");
+        assert!(
+            &dump.systemProperties["java.home"].starts_with(
+            &idea_jdk_content.to_string()),
+            "Resolved java is not from .config"
+        );
+
+        fs::remove_file(idea_jdk).expect("Failed to remove idea.jdk");
     }
 
     // if [ -z "$JRE" ] && [ "$OS_TYPE" = "Linux" ] && [ -f "$IDE_HOME/jbr/release" ]; then

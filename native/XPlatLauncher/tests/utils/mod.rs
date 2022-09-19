@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::{env, fs, io, thread, time};
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Output};
 use std::sync::Once;
@@ -102,15 +102,20 @@ pub fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     Ok(result)
 }
 
+pub struct TestEnvironmentShared {
+    project_root: PathBuf,
+    jbrsdk_root: PathBuf,
+    intellij_app_jar_source: PathBuf
+}
+
 pub fn get_jbrsdk_from_project_root() -> &'static Path {
     let shared = unsafe { SHARED.as_ref() }.expect("Shared test environment should have already been initialized");
     &shared.jbrsdk_root
 }
 
-pub struct TestEnvironmentShared {
-    project_root: PathBuf,
-    jbrsdk_root: PathBuf,
-    intellij_app_jar_source: PathBuf
+fn get_project_root() -> &'static Path {
+    let shared = unsafe { SHARED.as_ref() }.expect("Shared test environment should have already been initialized");
+    &shared.project_root
 }
 
 pub fn gradle_command_wrapper(gradle_command: &str) {
@@ -418,6 +423,36 @@ pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
         .join("Home")
         .join("bin")
         .join("java")
+}
+
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+fn get_config_home() -> PathBuf {
+    let home = env::var("HOME").unwrap();
+
+    Path::new(&home).join(".config")
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_config_home() -> PathBuf {
+    PathBuf::from("C:\\tmp")
+}
+
+pub fn create_dummy_config() -> PathBuf {
+    let config_home_path = get_config_home();
+    let idea_config_path = config_home_path
+        .join("JetBrains")
+        .join("IntellijIdea2022.3"); //todo
+    let idea_jdk = idea_config_path.join("idea.jdk");
+
+    if !idea_jdk.exists() {
+        fs::create_dir_all(idea_config_path).unwrap();
+        let idea_jdk_content = get_jbrsdk_from_project_root();
+        let idea_jdk_content = idea_jdk_content.to_str().unwrap().as_bytes();
+        let mut idea_jdk_file = File::create(&idea_jdk).expect("Fail to create idea.jdk");
+        idea_jdk_file.write_all(idea_jdk_content).expect("Fail to write in idea.jdk");
+    }
+
+    idea_jdk
 }
 
 // TODO: test for additionalJvmArguments in product-info.json being set
