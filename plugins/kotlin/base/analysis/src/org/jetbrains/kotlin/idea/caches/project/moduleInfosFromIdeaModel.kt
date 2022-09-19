@@ -31,7 +31,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
 import org.jetbrains.kotlin.idea.base.projectStructure.checkValidity
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
@@ -111,11 +110,14 @@ private fun collectModuleInfosFromIdeaModel(
     val ideaModules = ModuleManager.getInstance(project).modules.toList()
 
     //TODO: (module refactoring) include libraries that are not among dependencies of any module
-    val ideaLibraries = ideaModules.flatMap { module ->
-        ModuleRootManager.getInstance(module).orderEntries.filterIsInstance<LibraryOrderEntry>().map { entry ->
-            entry.library?.let { LibraryWrapper.wrapLibrary(it) }
+    val ideaLibraries = buildSet {
+        for (ideaModule in ideaModules) {
+            for (entry in ModuleRootManager.getInstance(ideaModule).orderEntries) {
+                if (entry !is LibraryOrderEntry) continue
+                entry.library?.let(this::add)
+            }
         }
-    }.filterNotNull().toSet()
+    }
 
     val sdksFromModulesDependencies = ideaModules.flatMap { module ->
         ModuleRootManager.getInstance(module).orderEntries.filterIsInstance<JdkOrderEntry>().map {
@@ -131,10 +133,10 @@ private fun collectModuleInfosFromIdeaModel(
             }
         },
         libraryInfosByLibraries = MultiMap.create<Library, LibraryInfo>().also { libraryInfosByLibraries ->
-            for (libraryWrapper in ideaLibraries) {
+            for (library in ideaLibraries) {
                 checkCanceled()
-                val libraryInfos = LibraryInfoCache.getInstance(project)[libraryWrapper.library]
-                libraryInfosByLibraries.putValues(libraryWrapper.library, libraryInfos)
+                val libraryInfos = LibraryInfoCache.getInstance(project)[library]
+                libraryInfosByLibraries.putValues(library, libraryInfos)
             }
         },
         sdkInfosBySdks = LinkedHashMap<Sdk, SdkInfo>().also { sdkInfosBySdks ->
