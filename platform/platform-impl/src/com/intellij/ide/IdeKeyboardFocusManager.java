@@ -13,6 +13,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.VetoableChangeListener;
+import java.lang.reflect.Method;
+import java.util.List;
+
 /**
  * We extend the obsolete {@link DefaultFocusManager} class here instead of {@link KeyboardFocusManager} to prevent unwanted overwriting of
  * the default focus traversal policy by careless clients. In case they use the obsolete {@link FocusManager#getCurrentManager} method
@@ -56,13 +60,6 @@ final class IdeKeyboardFocusManager extends DefaultFocusManager /* see javadoc a
         EditorsSplitters.activateEditorComponentOnEscape(e.getComponent())) {
       e.consume();
     }
-    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (focusOwner == null || focusOwner instanceof Window) {
-      // Swing doesn't process key bindings when there's no focus component,
-      // or when focus component is a window (as window classes don't inherit from JComponent),
-      // but WHEN_IN_FOCUSED_WINDOW bindings (e.g. main menu accelerators) make sense even in this case.
-      SwingUtilities.processKeyBindings(e);
-    }
     return super.postProcessKeyEvent(e);
   }
 
@@ -72,6 +69,31 @@ final class IdeKeyboardFocusManager extends DefaultFocusManager /* see javadoc a
     IdeKeyboardFocusManager ideKfm = new IdeKeyboardFocusManager();
     for (PropertyChangeListener l : kfm.getPropertyChangeListeners()) {
       ideKfm.addPropertyChangeListener(l);
+    }
+    for (VetoableChangeListener l : kfm.getVetoableChangeListeners()) {
+      ideKfm.addVetoableChangeListener(l);
+    }
+    try {
+      Method getDispatchersMethod = KeyboardFocusManager.class.getDeclaredMethod("getKeyEventDispatchers");
+      getDispatchersMethod.setAccessible(true);
+      @SuppressWarnings("unchecked") List<KeyEventDispatcher> dispatchers = (List<KeyEventDispatcher>)getDispatchersMethod.invoke(kfm);
+      if (dispatchers != null) {
+        for (KeyEventDispatcher d : dispatchers) {
+          ideKfm.addKeyEventDispatcher(d);
+        }
+      }
+      Method getPostProcessorsMethod = KeyboardFocusManager.class.getDeclaredMethod("getKeyEventPostProcessors");
+      getPostProcessorsMethod.setAccessible(true);
+      @SuppressWarnings("unchecked") List<KeyEventPostProcessor> postProcessors =
+        (List<KeyEventPostProcessor>)getPostProcessorsMethod.invoke(kfm);
+      if (postProcessors != null) {
+        for (KeyEventPostProcessor p : postProcessors) {
+          ideKfm.addKeyEventPostProcessor(p);
+        }
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
     AppContext.getAppContext().put(KeyboardFocusManager.class, ideKfm);
     return (IdeKeyboardFocusManager)getCurrentKeyboardFocusManager();
