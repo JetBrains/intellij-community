@@ -243,9 +243,6 @@ public final class LogFileTypeIndex extends FileTypeIndexImplBase {
       }
       return true;
     });
-    invertedIndex.forEach((id, __) -> {
-      invertedIndexChangeCallback.accept(id);
-    });
     return new MemorySnapshot(invertedIndex, forwardIndex, invertedIndexChangeCallback);
   }
 
