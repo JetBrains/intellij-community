@@ -55,7 +55,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
           val facetBridge = if (existingFacetBridge == null) {
             val workspaceModel = WorkspaceModel.getInstance(project)
             val moduleEntity = workspaceFacetContributor.getRelatedModuleEntity(change.newEntity)
-            val module = ModuleManager.getInstance(project).findModuleByName(moduleEntity.name) ?: error("Module bridge should be available")
+            val module = ModuleManager.getInstance(project).findModuleByName(moduleEntity.name) ?: return@forEach
             val newFacetBridge = workspaceFacetContributor.createFacetFromEntity(change.newEntity, module)
             workspaceModel.updateProjectModelSilent {
               it.mutableFacetMapping().addMapping(change.newEntity, newFacetBridge)
