@@ -57,6 +57,19 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
+  fun `test normalizing relative paths`() {
+    val contentRoots = collect(projectRoots = listOf("/home", "/home/../home"),
+                               mainSourceFolders = listOf("/home/dir/../source", "/home/../source"))
+
+    assertContentRoots(contentRoots,
+                       listOf(ContentRootTestData(expectedPath = "/home",
+                                                  expectedMainSourceFolders = listOf("/home/source")),
+                              ContentRootTestData(expectedPath = "/source",
+                                                  expectedMainSourceFolders = listOf("/source")))
+    )
+  }
+
+  @Test
   fun `test source folders override resource folders`() {
     val root = "/home"
     val sourceMain = "/home/main/source"
@@ -123,7 +136,7 @@ class ContentRootCollectorTest : MavenTestCase() {
 
   @Test
   fun `test do not register nested generated folder under a source folder`() {
-    val root = "/project/"
+    val root = "/project"
 
     val source = "/project/source"
     val nestedGeneratedFolder = "/project/source/generated"
@@ -141,7 +154,7 @@ class ContentRootCollectorTest : MavenTestCase() {
 
   @Test
   fun `test do not register generated folder when there is a nested source or generated folder`() {
-    val root = "/project/"
+    val root = "/project"
 
     val generatedWithNestedSourceFolder = "/project/generated-with-sources"
     val source = "/project/generated-with-sources/source"
@@ -149,7 +162,7 @@ class ContentRootCollectorTest : MavenTestCase() {
     val generatedWithNestedGeneratedFolder = "/project/generated-with-generated"
     val generatedNestedFoldersHolder = "/project/generated-with-generated/generated"
 
-    val generatedNoNestedFolders = "/project/target/generated-no-subsources/"
+    val generatedNoNestedFolders = "/project/target/generated-no-subsources"
 
     val contentRoots = collect(projectRoots = listOf(root),
                                mainSourceFolders = listOf(source),
@@ -169,7 +182,7 @@ class ContentRootCollectorTest : MavenTestCase() {
 
   @Test
   fun `test do not register generated folder with a nested source, but create a root`() {
-    val root = "/root1/"
+    val root = "/root1"
 
     val generatedWithNestedSourceFolder = "/generated-with-sources"
     val source = "/generated-with-sources/source"
