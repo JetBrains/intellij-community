@@ -11,6 +11,7 @@ import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.CodeInsightColors
@@ -21,6 +22,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
@@ -118,26 +120,20 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       return false
     }
 
-    @JvmStatic
-    fun activateEditorComponentOnEscape(target: Component?): Boolean {
-      @Suppress("NAME_SHADOWING") var target = target
-      while (target != null && target !is Window) {
-        if (target is EditorsSplitters) {
-          // editor is already focused
-          return false
+    private val ACTIVATE_EDITOR_ON_ESCAPE_HANDLER = KeyEventPostProcessor { e ->
+      if (!e.isConsumed && KeymapUtil.isEventForAction(e, IdeActions.ACTION_FOCUS_EDITOR)) {
+        var target = e.component
+        while (target != null && (target !is Window || target is FloatingDecorator) && target !is EditorsSplitters) {
+          target = target.parent
         }
-        target = target.parent
+        if (target is IdeFrame) {
+          target.project?.let {
+            focusDefaultComponentInSplittersIfPresent(it)
+            e.consume()
+          }
+        }
       }
-      if (target is FloatingDecorator) {
-        target = target.getParent()
-      }
-
-      if (target !is IdeFrame) {
-        return false
-      }
-
-      focusDefaultComponentInSplittersIfPresent((target as IdeFrame).project ?: return false)
-      return true
+      false
     }
   }
 
@@ -206,6 +202,13 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
         repaint()
       }
     })
+    enableEditorActivationOnEscape();
+  }
+
+  private fun enableEditorActivationOnEscape() {
+    val kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+    kfm.removeKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER) // we need only one handler, not one per EditorsSplitters instance
+    kfm.addKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER)
   }
 
   override fun dispose() {

@@ -1,15 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.keymap.KeymapUtil;
 
 import javax.swing.FocusManager;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.VetoableChangeListener;
 import java.lang.reflect.Method;
@@ -49,16 +45,6 @@ final class IdeKeyboardFocusManager extends DefaultFocusManager /* see javadoc a
       }
       super.setDefaultFocusTraversalPolicy(defaultPolicy);
     }
-  }
-
-  @Override
-  public boolean postProcessKeyEvent(KeyEvent e) {
-    if (!e.isConsumed() &&
-        KeymapUtil.isEventForAction(e, IdeActions.ACTION_FOCUS_EDITOR) &&
-        EditorsSplitters.activateEditorComponentOnEscape(e.getComponent())) {
-      e.consume();
-    }
-    return super.postProcessKeyEvent(e);
   }
 
   static void replaceDefault() {
