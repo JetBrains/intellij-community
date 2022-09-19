@@ -17,10 +17,6 @@ class LibraryWrapper internal constructor(val library: LibraryEx) {
     override fun toString(): String {
         return "libraryName=${library.name}${if (!library.isDisposed) ", libraryRoots=${library.getFiles(OrderRootType.CLASSES)}" else " -disposed-"})"
     }
-
-    fun checkValidity() {
-        library.checkValidity()
-    }
 }
 
 fun Library.checkValidity() {
