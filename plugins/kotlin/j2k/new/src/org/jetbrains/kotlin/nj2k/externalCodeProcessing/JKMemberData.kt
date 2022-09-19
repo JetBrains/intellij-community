@@ -63,11 +63,24 @@ data class JKFieldDataFromJava(
         get() = javaElement.name != name
 }
 
-data class JKMethodData(
+interface JKMethodData : JKMemberDataCameFromJava<PsiMethod> {
+    var usedAsAccessorOfProperty: JKFieldData?
+}
+
+data class JKPhysicalMethodData(
     override val javaElement: PsiMethod,
     override var isStatic: Boolean = false,
     override var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>? = null,
-    var usedAsAccessorOfProperty: JKFieldData? = null
-) : JKMemberDataCameFromJava<PsiMethod> {
+    override var usedAsAccessorOfProperty: JKFieldData? = null
+) : JKMethodData {
+    override var name: String = javaElement.name
+}
+
+data class JKLightMethodData(
+    override val javaElement: PsiMethod,
+    override var isStatic: Boolean = false,
+    override var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>? = null,
+    override var usedAsAccessorOfProperty: JKFieldData? = null
+) : JKMethodData {
     override var name: String = javaElement.name
 }

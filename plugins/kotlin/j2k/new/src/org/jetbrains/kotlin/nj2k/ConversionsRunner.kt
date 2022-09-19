@@ -33,6 +33,7 @@ object ConversionsRunner {
         ImplicitInitializerConversion(context),
         ParameterModificationInMethodCallsConversion(context),
         BlockToRunConversion(context),
+        RecordClassConversion(context),
         PrimaryConstructorDetectConversion(context),
         InsertDefaultPrimaryConstructorConversion(context),
         ClassMemberConversion(context),

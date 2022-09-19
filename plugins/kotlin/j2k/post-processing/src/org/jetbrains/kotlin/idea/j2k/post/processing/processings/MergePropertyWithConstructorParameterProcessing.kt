@@ -9,11 +9,14 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.childrenOfType
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FIELD
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics.findAnnotation
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
 import org.jetbrains.kotlin.idea.j2k.post.processing.*
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.lexer.KtTokens.DATA_KEYWORD
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.escaped
 import org.jetbrains.kotlin.psi.*
@@ -37,6 +40,7 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
             initializations.forEach(::convertInitialization)
             klass.removeEmptyInitBlocks()
             klass.removeRedundantEnumSemicolon()
+            klass.removeIllegalDataModifierIfNeeded()
         }
     }
 
@@ -167,6 +171,16 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
 
     private fun KtElement.removeSemicolon() {
         getChildrenOfType<LeafPsiElement>().find { it.text == ";" }?.delete()
+    }
+
+    private fun KtClass.removeIllegalDataModifierIfNeeded() {
+        if (!isData()) return
+        if (primaryConstructorParameters.isEmpty() ||
+            primaryConstructorParameters.any { it.isVarArg || !it.hasValOrVar() }
+        ) {
+            removeModifier(DATA_KEYWORD)
+            findAnnotation(declaration = this, FqName("kotlin.jvm.JvmRecord"))?.delete()
+        }
     }
 }
 

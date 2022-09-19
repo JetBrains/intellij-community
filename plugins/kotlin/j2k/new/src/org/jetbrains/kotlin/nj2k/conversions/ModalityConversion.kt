@@ -24,7 +24,7 @@ class ModalityConversion(context: NewJ2kConverterContext) : RecursiveApplicableC
 
     private fun JKClass.process() {
         modality = when {
-            classKind == ENUM -> FINAL
+            classKind == ENUM || classKind == RECORD -> FINAL
             classKind == INTERFACE -> OPEN
             modality == OPEN && context.converter.settings.openByDefault -> OPEN
             modality == OPEN && !hasInheritors(psi as PsiClass) -> FINAL
