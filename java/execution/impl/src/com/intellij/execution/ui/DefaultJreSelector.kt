@@ -8,6 +8,8 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.util.JavaParametersUtil
 import com.intellij.java.JavaBundle
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.module.Module
@@ -20,7 +22,10 @@ import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.EditorTextFieldWithBrowseButton
+import com.intellij.util.concurrency.NonUrgentExecutor
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.Callable
+import java.util.function.Consumer
 
 abstract class DefaultJreSelector {
   companion object {
@@ -104,7 +109,22 @@ abstract class DefaultJreSelector {
   }
 
   class SdkFromSourceRootDependencies<T: ComboBox<*>>(moduleComboBox: T, getSelectedModule: (T) -> Module?, private val classSelector: EditorTextField)
-  : SdkFromModuleDependencies<T>(moduleComboBox, getSelectedModule, { isClassInProductionSources(moduleComboBox, getSelectedModule, classSelector) }) {
+  : SdkFromModuleDependencies<T>(moduleComboBox, getSelectedModule,
+                                 { classSelector.getClientProperty(PRODUCTION_CACHED) as Boolean? == true }) {
+    init {
+      classSelector.addDocumentListener(object : DocumentListener {
+        override fun documentChanged(event: DocumentEvent) {
+          ReadAction.nonBlocking(Callable {
+            isClassInProductionSources(moduleComboBox, getSelectedModule, classSelector)
+          }).expireWhen { !classSelector.isVisible }
+            .finishOnUiThread(ModalityState.defaultModalityState(), Consumer {
+              classSelector.putClientProperty(PRODUCTION_CACHED, it)
+              classSelector.invalidate()
+              classSelector.repaint()
+            }).submit(NonUrgentExecutor.getInstance())
+        }
+      })
+    }
     override fun addChangeListener(listener: Runnable) {
       super.addChangeListener(listener)
       classSelector.addDocumentListener(object : DocumentListener {
@@ -120,3 +140,5 @@ private fun <T: ComboBox<*>> isClassInProductionSources(moduleSelector: T, getSe
   val module = getSelectedModule(moduleSelector) ?: return false
   return JavaParametersUtil.isClassInProductionSources(classSelector.text, module) ?: false
 }
+
+private const val PRODUCTION_CACHED = "production.cached"
