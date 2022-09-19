@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -59,6 +60,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
             new MissingIfBranchesFixer(),
             new MissingTryBodyFixer(),
             new MissingSwitchBodyFixer(),
+            new MissingLambdaBodyFixer(),
             new MissingCatchBodyFixer(),
             new MissingSynchronizedBodyFixer(),
             new MissingLoopBodyFixer(),
