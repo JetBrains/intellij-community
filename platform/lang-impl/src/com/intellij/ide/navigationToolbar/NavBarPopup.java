@@ -103,8 +103,10 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   private void show(final NavBarItem item, boolean checkRepaint) {
     UIEventLogger.NavBarShowPopup.log(myPanel.getProject());
 
+    UISettings settings = UISettings.getInstance();
     int relativeY = ExperimentalUI.isNewUI()
-                    && UISettings.getInstance().getShowNavigationBarInBottom()
+                    && settings.getShowNavigationBarInBottom()
+                    && settings.getShowStatusBar()
                     ? -getComponent().getPreferredSize().height
                     : item.getHeight();
 
