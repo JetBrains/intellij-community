@@ -134,12 +134,11 @@ class LibraryInfoCache(project: Project): Disposable {
         }
 
         override fun calculate(key: LibraryEx): List<LibraryInfo> {
-            val libraryWrapper = LibraryWrapper(key)
             val libraryInfos = when (val platformKind = getPlatform(key).idePlatformKind) {
-                is JvmIdePlatformKind -> listOf(JvmLibraryInfo(project, libraryWrapper))
-                is CommonIdePlatformKind -> createLibraryInfos(libraryWrapper, platformKind, ::CommonKlibLibraryInfo, ::CommonMetadataLibraryInfo)
-                is JsIdePlatformKind -> createLibraryInfos(libraryWrapper, platformKind, ::JsKlibLibraryInfo, ::JsMetadataLibraryInfo)
-                is NativeIdePlatformKind -> createLibraryInfos(libraryWrapper, platformKind, ::NativeKlibLibraryInfo, ::NativeMetadataLibraryInfo)
+                is JvmIdePlatformKind -> listOf(JvmLibraryInfo(project, key))
+                is CommonIdePlatformKind -> createLibraryInfos(key, platformKind, ::CommonKlibLibraryInfo, ::CommonMetadataLibraryInfo)
+                is JsIdePlatformKind -> createLibraryInfos(key, platformKind, ::JsKlibLibraryInfo, ::JsMetadataLibraryInfo)
+                is NativeIdePlatformKind -> createLibraryInfos(key, platformKind, ::NativeKlibLibraryInfo, ::NativeMetadataLibraryInfo)
                 else -> error("Unexpected platform kind: $platformKind")
             }
 
@@ -164,24 +163,24 @@ class LibraryInfoCache(project: Project): Disposable {
         }
 
         private fun createLibraryInfos(
-            libraryWrapper: LibraryWrapper,
+            library: LibraryEx,
             platformKind: IdePlatformKind,
-            klibLibraryInfoFactory: (Project, LibraryWrapper, String) -> LibraryInfo,
-            metadataLibraryInfoFactory: ((Project, LibraryWrapper) -> LibraryInfo)
+            klibLibraryInfoFactory: (Project, LibraryEx, String) -> LibraryInfo,
+            metadataLibraryInfoFactory: ((Project, LibraryEx) -> LibraryInfo)
         ): List<LibraryInfo> {
             val defaultPlatform = platformKind.defaultPlatform
-            val klibFiles = libraryWrapper.library.getFiles(OrderRootType.CLASSES).filter {
+            val klibFiles = library.getFiles(OrderRootType.CLASSES).filter {
                 it.isKlibLibraryRootForPlatform(defaultPlatform)
             }
 
             if (klibFiles.isEmpty()) {
-                return listOf(metadataLibraryInfoFactory(project, libraryWrapper))
+                return listOf(metadataLibraryInfoFactory(project, library))
             }
 
             return ArrayList<LibraryInfo>(klibFiles.size).apply {
                 for (file in klibFiles) {
                     val path = PathUtil.getLocalPath(file) ?: continue
-                    add(klibLibraryInfoFactory(project, libraryWrapper, path))
+                    add(klibLibraryInfoFactory(project, library, path))
                 }
             }
         }
@@ -209,8 +208,6 @@ class LibraryInfoCache(project: Project): Disposable {
         require(key is LibraryEx) { "Library '${key.presentableName}' does not implement LibraryEx which is not expected" }
         return libraryInfoCache[key]
     }
-
-    fun getLibraryWrapper(library: Library): LibraryWrapper = get(library).first().libraryWrapper
 
     override fun dispose() = Unit
 

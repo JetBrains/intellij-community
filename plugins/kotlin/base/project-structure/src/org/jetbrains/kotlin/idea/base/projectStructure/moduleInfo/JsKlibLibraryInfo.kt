@@ -2,11 +2,11 @@
 package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 
-class JsKlibLibraryInfo internal constructor(project: Project, libraryWrapper: LibraryWrapper, libraryRoot: String) :
-    AbstractKlibLibraryInfo(project, libraryWrapper, libraryRoot) {
+class JsKlibLibraryInfo internal constructor(project: Project, library: LibraryEx, libraryRoot: String) :
+    AbstractKlibLibraryInfo(project, library, libraryRoot) {
     override val platform: TargetPlatform get() = JsPlatforms.defaultJsPlatform
 }

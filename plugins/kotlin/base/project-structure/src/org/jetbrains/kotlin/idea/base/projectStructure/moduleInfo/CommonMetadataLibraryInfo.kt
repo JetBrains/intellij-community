@@ -2,11 +2,10 @@
 package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
 
-class CommonMetadataLibraryInfo internal constructor(project: Project, libraryWrapper: LibraryWrapper) :
-    LibraryInfo(project, libraryWrapper) {
+class CommonMetadataLibraryInfo internal constructor(project: Project, library: LibraryEx) : LibraryInfo(project, library) {
     override val platform: TargetPlatform get() = CommonPlatforms.defaultCommonPlatform
 }

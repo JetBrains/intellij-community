@@ -26,17 +26,14 @@ import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
  */
 sealed class LibraryInfo(
     override val project: Project,
-    val libraryWrapper: LibraryWrapper,
+    val library: LibraryEx,
 ) : IdeaModuleInfo, LibraryModuleInfo, BinaryModuleInfo, TrackableModuleInfo {
-    val library: LibraryEx get() = libraryWrapper.library
-
-    override val moduleOrigin: ModuleOrigin
-        get() = ModuleOrigin.LIBRARY
+    override val moduleOrigin: ModuleOrigin get() = ModuleOrigin.LIBRARY
 
     override val name: Name = Name.special("<library ${library.name}>")
 
     override val displayedName: String
-        get() = KotlinBaseProjectStructureBundle.message("library.0", libraryWrapper.library.presentableName)
+        get() = KotlinBaseProjectStructureBundle.message("library.0", library.presentableName)
 
     override val contentScope: GlobalSearchScope
         get() = LibraryWithoutSourceScope(project, library)
@@ -60,7 +57,7 @@ sealed class LibraryInfo(
     override val analyzerServices: PlatformDependentAnalyzerServices
         get() = platform.findAnalyzerServices(project)
 
-    private val _sourcesModuleInfo: SourceForBinaryModuleInfo by lazy { LibrarySourceInfo(project, libraryWrapper.library, this) }
+    private val _sourcesModuleInfo: SourceForBinaryModuleInfo by lazy { LibrarySourceInfo(project, library, this) }
 
     override val sourcesModuleInfo: SourceForBinaryModuleInfo
         get() = _sourcesModuleInfo
@@ -82,7 +79,7 @@ sealed class LibraryInfo(
         }
     }
 
-    override fun toString() = "${this::class.simpleName}($libraryWrapper)"
+    override fun toString() = "${this::class.simpleName}($library)"
 }
 
 private class ResolutionAnchorAwareLibraryModificationTracker(libraryInfo: LibraryInfo) : ModificationTracker {
