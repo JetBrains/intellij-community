@@ -135,6 +135,12 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       }
       false
     }
+
+    private fun enableEditorActivationOnEscape() {
+      val kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+      kfm.removeKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER) // we need only one handler, not one per EditorsSplitters instance
+      kfm.addKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER)
+    }
   }
 
   var lastFocusGainedTime: Long = 0L
@@ -203,12 +209,6 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       }
     })
     enableEditorActivationOnEscape();
-  }
-
-  private fun enableEditorActivationOnEscape() {
-    val kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()
-    kfm.removeKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER) // we need only one handler, not one per EditorsSplitters instance
-    kfm.addKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER)
   }
 
   override fun dispose() {
