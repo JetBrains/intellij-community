@@ -92,7 +92,12 @@ class LibraryInfoCache(project: Project) : Disposable {
                 val deduplicatedLibraries = deduplicationCache[firstRoot] ?: return@useCache null
                 val deduplicatedLibrary = deduplicatedLibraries.find { urlsByType.rootEquals(it) } ?: return@useCache null
 
-                val libraryInfos = cache[deduplicatedLibrary] ?: error("inconsistent state of ${deduplicatedLibrary.presentableName}")
+                val libraryInfos = cache[deduplicatedLibrary] ?: kotlin.run {
+                    deduplicatedLibraries.remove(deduplicatedLibrary)
+                    logger.error("inconsistent state. deduplicated: ${deduplicatedLibrary.presentableName}, key: ${key.presentableName}")
+                    return@useCache null
+                }
+
                 cache[key] = libraryInfos
                 deduplicatedLibraries += key
 
