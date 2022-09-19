@@ -716,15 +716,8 @@ object CodeWithMeClientDownloader {
     return processLifetimeDef.lifetime
   }
 
-  private fun detectMacOsJbrDirectory(root: Path): Path {
-    val jbrDirectory = root.listDirectoryEntries().find { it.nameWithoutExtension.startsWith("jbr") }
-
-    LOG.debug { "JBR directory: $jbrDirectory" }
-    return jbrDirectory ?: error("Unable to find target content directory starts with 'jbr' inside MacOS package: '$root'")
-  }
-
   fun createSymlinkToJdkFromGuest(guestRoot: Path, jdkRoot: Path): Path {
-    val linkTarget = if (SystemInfo.isMac) detectMacOsJbrDirectory(jdkRoot) else detectTrueJdkRoot(jdkRoot)
+    val linkTarget = detectTrueJdkRoot(jdkRoot)
     val guestHome = findCwmGuestHome(guestRoot)
     val link = guestHome / "jbr"
     createSymlink(link, linkTarget)
