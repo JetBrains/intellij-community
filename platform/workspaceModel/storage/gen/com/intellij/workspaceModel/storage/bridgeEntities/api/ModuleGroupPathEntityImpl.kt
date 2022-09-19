@@ -170,7 +170,7 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
       get() {
         val collection_path = getEntityData().path
         if (collection_path !is MutableWorkspaceList) return collection_path
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_path.setModificationUpdateAction(pathUpdater)
         }
         else {

@@ -163,7 +163,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                 get() {
                     val collection_${field.javaName} = getEntityData().${field.javaName}
                     if (collection_${field.javaName} !is ${MutableWorkspaceList::class.fqn}) return collection_${field.javaName}
-                    if (modifiable.get()) {
+                    if (diff == null || modifiable.get()) {
                       collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
                     } else {
                       collection_${field.javaName}.cleanModificationUpdateAction()
@@ -193,7 +193,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                 get() { 
                     val collection_${field.javaName} = getEntityData().${field.javaName}
                     if (collection_${field.javaName} !is ${MutableWorkspaceSet::class.fqn}) return collection_${field.javaName}
-                    if (modifiable.get()) {
+                    if (diff == null || modifiable.get()) {
                       collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
                     } else {
                       collection_${field.javaName}.cleanModificationUpdateAction()

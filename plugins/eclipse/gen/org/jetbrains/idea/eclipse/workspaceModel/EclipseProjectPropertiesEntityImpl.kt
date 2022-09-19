@@ -223,7 +223,7 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
       get() {
         val collection_eclipseUrls = getEntityData().eclipseUrls
         if (collection_eclipseUrls !is MutableWorkspaceList) return collection_eclipseUrls
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_eclipseUrls.setModificationUpdateAction(eclipseUrlsUpdater)
         }
         else {
@@ -245,7 +245,7 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
       get() {
         val collection_unknownCons = getEntityData().unknownCons
         if (collection_unknownCons !is MutableWorkspaceList) return collection_unknownCons
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_unknownCons.setModificationUpdateAction(unknownConsUpdater)
         }
         else {
@@ -267,7 +267,7 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
       get() {
         val collection_knownCons = getEntityData().knownCons
         if (collection_knownCons !is MutableWorkspaceList) return collection_knownCons
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_knownCons.setModificationUpdateAction(knownConsUpdater)
         }
         else {

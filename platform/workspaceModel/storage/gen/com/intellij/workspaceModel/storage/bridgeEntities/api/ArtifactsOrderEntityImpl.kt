@@ -112,7 +112,7 @@ open class ArtifactsOrderEntityImpl(val dataSource: ArtifactsOrderEntityData) : 
       get() {
         val collection_orderOfArtifacts = getEntityData().orderOfArtifacts
         if (collection_orderOfArtifacts !is MutableWorkspaceList) return collection_orderOfArtifacts
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_orderOfArtifacts.setModificationUpdateAction(orderOfArtifactsUpdater)
         }
         else {

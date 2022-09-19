@@ -134,7 +134,7 @@ open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : Facets
       get() {
         val collection_orderOfFacets = getEntityData().orderOfFacets
         if (collection_orderOfFacets !is MutableWorkspaceList) return collection_orderOfFacets
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_orderOfFacets.setModificationUpdateAction(orderOfFacetsUpdater)
         }
         else {

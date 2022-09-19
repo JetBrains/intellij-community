@@ -110,7 +110,7 @@ open class ListEntityImpl(val dataSource: ListEntityData) : ListEntity, Workspac
       get() {
         val collection_data = getEntityData().data
         if (collection_data !is MutableWorkspaceList) return collection_data
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_data.setModificationUpdateAction(dataUpdater)
         }
         else {

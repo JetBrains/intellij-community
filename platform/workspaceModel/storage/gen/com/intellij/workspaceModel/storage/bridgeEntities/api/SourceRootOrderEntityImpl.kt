@@ -173,7 +173,7 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
       get() {
         val collection_orderOfSourceRoots = getEntityData().orderOfSourceRoots
         if (collection_orderOfSourceRoots !is MutableWorkspaceList) return collection_orderOfSourceRoots
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_orderOfSourceRoots.setModificationUpdateAction(orderOfSourceRootsUpdater)
         }
         else {

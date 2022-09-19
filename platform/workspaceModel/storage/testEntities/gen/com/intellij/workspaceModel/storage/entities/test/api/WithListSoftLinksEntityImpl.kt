@@ -129,7 +129,7 @@ open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityDa
       get() {
         val collection_links = getEntityData().links
         if (collection_links !is MutableWorkspaceList) return collection_links
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_links.setModificationUpdateAction(linksUpdater)
         }
         else {

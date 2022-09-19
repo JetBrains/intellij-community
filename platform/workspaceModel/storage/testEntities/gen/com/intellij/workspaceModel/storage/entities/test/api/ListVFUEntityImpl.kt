@@ -130,7 +130,7 @@ open class ListVFUEntityImpl(val dataSource: ListVFUEntityData) : ListVFUEntity,
       get() {
         val collection_fileProperty = getEntityData().fileProperty
         if (collection_fileProperty !is MutableWorkspaceList) return collection_fileProperty
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_fileProperty.setModificationUpdateAction(filePropertyUpdater)
         }
         else {

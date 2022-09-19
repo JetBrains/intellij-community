@@ -201,7 +201,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       get() {
         val collection_roots = getEntityData().roots
         if (collection_roots !is MutableWorkspaceList) return collection_roots
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_roots.setModificationUpdateAction(rootsUpdater)
         }
         else {
@@ -224,7 +224,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       get() {
         val collection_excludedRoots = getEntityData().excludedRoots
         if (collection_excludedRoots !is MutableWorkspaceList) return collection_excludedRoots
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_excludedRoots.setModificationUpdateAction(excludedRootsUpdater)
         }
         else {

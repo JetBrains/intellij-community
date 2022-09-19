@@ -235,7 +235,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() {
         val collection_manyLinks = getEntityData().manyLinks
         if (collection_manyLinks !is MutableWorkspaceList) return collection_manyLinks
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_manyLinks.setModificationUpdateAction(manyLinksUpdater)
         }
         else {
@@ -284,7 +284,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() {
         val collection_inContainerList = getEntityData().inContainerList
         if (collection_inContainerList !is MutableWorkspaceList) return collection_inContainerList
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_inContainerList.setModificationUpdateAction(inContainerListUpdater)
         }
         else {
@@ -306,7 +306,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() {
         val collection_deepContainer = getEntityData().deepContainer
         if (collection_deepContainer !is MutableWorkspaceList) return collection_deepContainer
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_deepContainer.setModificationUpdateAction(deepContainerUpdater)
         }
         else {
@@ -337,7 +337,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() {
         val collection_listSealedContainer = getEntityData().listSealedContainer
         if (collection_listSealedContainer !is MutableWorkspaceList) return collection_listSealedContainer
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_listSealedContainer.setModificationUpdateAction(listSealedContainerUpdater)
         }
         else {
@@ -375,7 +375,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       get() {
         val collection_justListProperty = getEntityData().justListProperty
         if (collection_justListProperty !is MutableWorkspaceList) return collection_justListProperty
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_justListProperty.setModificationUpdateAction(justListPropertyUpdater)
         }
         else {

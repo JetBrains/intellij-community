@@ -233,7 +233,7 @@ open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : Conten
       get() {
         val collection_excludedUrls = getEntityData().excludedUrls
         if (collection_excludedUrls !is MutableWorkspaceList) return collection_excludedUrls
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_excludedUrls.setModificationUpdateAction(excludedUrlsUpdater)
         }
         else {
@@ -255,7 +255,7 @@ open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : Conten
       get() {
         val collection_excludedPatterns = getEntityData().excludedPatterns
         if (collection_excludedPatterns !is MutableWorkspaceList) return collection_excludedPatterns
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_excludedPatterns.setModificationUpdateAction(excludedPatternsUpdater)
         }
         else {

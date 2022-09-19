@@ -177,7 +177,7 @@ open class SampleWithPersistentIdEntityImpl(val dataSource: SampleWithPersistent
       get() {
         val collection_stringListProperty = getEntityData().stringListProperty
         if (collection_stringListProperty !is MutableWorkspaceList) return collection_stringListProperty
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_stringListProperty.setModificationUpdateAction(stringListPropertyUpdater)
         }
         else {

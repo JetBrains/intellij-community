@@ -150,7 +150,7 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
       get() {
         val collection_listOfUrls = getEntityData().listOfUrls
         if (collection_listOfUrls !is MutableWorkspaceList) return collection_listOfUrls
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_listOfUrls.setModificationUpdateAction(listOfUrlsUpdater)
         }
         else {

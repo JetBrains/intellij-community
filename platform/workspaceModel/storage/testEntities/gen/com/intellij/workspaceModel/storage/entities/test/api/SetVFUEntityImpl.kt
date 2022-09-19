@@ -130,7 +130,7 @@ open class SetVFUEntityImpl(val dataSource: SetVFUEntityData) : SetVFUEntity, Wo
       get() {
         val collection_fileProperty = getEntityData().fileProperty
         if (collection_fileProperty !is MutableWorkspaceSet) return collection_fileProperty
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_fileProperty.setModificationUpdateAction(filePropertyUpdater)
         }
         else {

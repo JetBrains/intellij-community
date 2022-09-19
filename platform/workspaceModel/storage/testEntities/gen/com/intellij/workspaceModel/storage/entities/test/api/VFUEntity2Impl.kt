@@ -160,7 +160,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       get() {
         val collection_notNullRoots = getEntityData().notNullRoots
         if (collection_notNullRoots !is MutableWorkspaceList) return collection_notNullRoots
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_notNullRoots.setModificationUpdateAction(notNullRootsUpdater)
         }
         else {

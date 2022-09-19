@@ -120,7 +120,7 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
       get() {
         val collection_versions = getEntityData().versions
         if (collection_versions !is MutableWorkspaceSet) return collection_versions
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_versions.setModificationUpdateAction(versionsUpdater)
         }
         else {
@@ -142,7 +142,7 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
       get() {
         val collection_names = getEntityData().names
         if (collection_names !is MutableWorkspaceList) return collection_names
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_names.setModificationUpdateAction(namesUpdater)
         }
         else {

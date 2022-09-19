@@ -208,7 +208,7 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
       get() {
         val collection_dependencies = getEntityData().dependencies
         if (collection_dependencies !is MutableWorkspaceList) return collection_dependencies
-        if (modifiable.get()) {
+        if (diff == null || modifiable.get()) {
           collection_dependencies.setModificationUpdateAction(dependenciesUpdater)
         }
         else {
