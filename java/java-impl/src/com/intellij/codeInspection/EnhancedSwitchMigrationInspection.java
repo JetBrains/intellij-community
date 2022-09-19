@@ -241,6 +241,11 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     @NotNull
     @Override
     public String getFamilyName() {
+      return JavaBundle.message("inspection.replace.with.switch.expression.fix.family.name");
+    }
+
+    @Override
+    public @NotNull String getName() {
       return myReplacementType.getFixName();
     }
 
