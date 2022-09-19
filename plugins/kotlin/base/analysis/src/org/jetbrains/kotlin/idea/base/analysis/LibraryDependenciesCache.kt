@@ -14,6 +14,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.CachedValueProvider
@@ -274,31 +275,27 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     }
 
     private inner class LibraryUsageIndex {
-        private val modulesLibraryIsUsedIn: MultiMap<LibraryWrapper, Module>
+        private val modulesLibraryIsUsedIn: MultiMap<Library, Module>
 
         init {
-            val map: MultiMap<LibraryWrapper, Module> = MultiMap.createSet()
-            val libraryInfoCache = LibraryInfoCache.getInstance(project)
+            val map: MultiMap<Library, Module> = MultiMap.createSet()
             for (module in runReadAction { ModuleManager.getInstance(project).modules }) {
                 checkCanceled()
                 runReadAction {
                     for (entry in ModuleRootManager.getInstance(module).orderEntries) {
-                        if (entry is LibraryOrderEntry) {
-                            val library = entry.library
-                            if (library != null) {
-                                val libraryWrapper = libraryInfoCache.getLibraryWrapper(library)
-                                map.putValue(libraryWrapper, module)
-                            }
-                        }
+                        if (entry !is LibraryOrderEntry) continue
+                        val library = entry.library ?: continue
+                        map.putValue(library, module)
                     }
                 }
             }
+
             modulesLibraryIsUsedIn = map
         }
 
         fun getModulesLibraryIsUsedIn(libraryInfo: LibraryInfo) = sequence<Module> {
             val ideaModelInfosCache = getIdeaModelInfosCache(project)
-            for (module in modulesLibraryIsUsedIn[libraryInfo.libraryWrapper]) {
+            for (module in modulesLibraryIsUsedIn[libraryInfo.library]) {
                 val mappedModuleInfos = ideaModelInfosCache.getModuleInfosForModule(module)
                 if (mappedModuleInfos.any { it.platform.canDependOn(libraryInfo, module.isHMPPEnabled) }) {
                     yield(module)
@@ -306,5 +303,4 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }
         }
     }
-
 }

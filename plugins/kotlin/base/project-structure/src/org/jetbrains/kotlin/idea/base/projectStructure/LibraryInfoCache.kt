@@ -74,7 +74,7 @@ class LibraryInfoCache(project: Project): Disposable {
              * Values are only unique (in terms of content) libraries those are used in some LibraryInfo.
              *
              * if we have two different instances of the same (in terms of content) library
-             * we ALWAYS have the same instance of libraryInfo (and the same instance of LibraryWrapper in it).
+             * we ALWAYS have the same instance of libraryInfo.
              *
              * It even allows to perform equality check based on object identity.
              */
