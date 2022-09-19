@@ -37,7 +37,7 @@ import javax.swing.JLabel
 
 @Suppress("MagicNumber") // Swing dimension constants
 internal class HeaderPanel(
-    onUpdateAllLinkClicked: (Deferred<List<PackageSearchOperation<*>>>) -> Unit
+    onUpdateAllLinkClicked: (List<PackageSearchOperation<*>>) -> Unit
 ) : BorderLayoutPanel() {
 
     private val titleLabel = JLabel().apply {
@@ -63,7 +63,7 @@ internal class HeaderPanel(
         insets.top = 3.scaled()
     }
 
-    private var updateAllOperations: Deferred<List<PackageSearchOperation<*>>>? = null
+    private var updateAllOperations:List<PackageSearchOperation<*>>? = null
 
     init {
         PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.smallHeaderHeight.get())

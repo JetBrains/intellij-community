@@ -81,7 +81,6 @@ internal class PackageManagementPanel(
     private val packagesListPanel = PackagesListPanel(
         project = project,
         operationExecutor = operationExecutor,
-        operationFactory = operationFactory,
         viewModelFlow = combine(
             modulesTree.targetModulesStateFlow,
             project.packageSearchProjectService.installedPackagesStateFlow,
