@@ -91,6 +91,12 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return accessibleContext;
   }
 
+  public void setUsedInPopup(boolean value) {
+    if (myBackgroundRenderer instanceof PsiElementBackgroundListCellRenderer psiElementRenderer) {
+      psiElementRenderer.setUsedInPopup(value);
+    }
+  }
+
   public static class ItemMatchers {
     @Nullable public final Matcher nameMatcher;
     @Nullable public final Matcher locationMatcher;

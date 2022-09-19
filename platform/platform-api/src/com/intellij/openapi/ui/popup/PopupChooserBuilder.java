@@ -2,14 +2,17 @@
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.ui.ListComponentUpdater;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ActiveComponent;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -21,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -390,6 +394,10 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       addEastComponentToContentPane(contentPane, myEastComponent);
     }
 
+    if (ExperimentalUI.isNewUI()) {
+      applyInsets(contentComponent);
+    }
+
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(contentPane, myPreferableFocusComponent);
     for (JBPopupListener each : myListeners) {
       builder.addListener(each);
@@ -612,5 +620,15 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   @Override
   public ListComponentUpdater getBackgroundUpdater() {
     return myChooserComponent.getBackgroundUpdater();
+  }
+
+  /**
+   * Applies borders according to contentComponent. Can be extended later for different types of component
+   */
+  private void applyInsets(JComponent contentComponent) {
+    if (contentComponent instanceof ListWithFilter<?> listWithFilter) {
+      Insets insets = PopupUtil.getListInsets(myTitle != null, StringUtil.isNotEmpty(myAd));
+      listWithFilter.getList().setBorder(new EmptyBorder(insets));
+    }
   }
 }

@@ -5,11 +5,14 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.navigation.LocationPresentation
 import com.intellij.navigation.TargetPresentation
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.psi.PsiElement
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.speedSearch.SpeedSearchUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Deferred
@@ -31,6 +34,14 @@ internal class PsiElementBackgroundListCellRenderer(
 
   private val myComponent = PsiElementListCellRendererComponent()
 
+  var usedInPopup = false
+    set(value) {
+      if (ExperimentalUI.isNewUI()) {
+        PopupUtil.configSelectablePanel(myComponent)
+      }
+      field = value
+    }
+
   override fun getListCellRendererComponent(list: JList<out PsiElement>,
                                             value: PsiElement,
                                             index: Int,
@@ -45,14 +56,16 @@ internal class PsiElementBackgroundListCellRenderer(
     @Suppress("EXPERIMENTAL_API_USAGE")
     val presentation = future.getCompleted()
 
+    val defaultBg = if (usedInPopup && ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Popup.BACKGROUND else UIUtil.getListBackground()
+    myComponent.background = presentation.backgroundColor ?: defaultBg
     val bg = if (isSelected) {
       UIUtil.getListSelectionBackground(cellHasFocus)
     }
     else {
-      presentation.backgroundColor ?: UIUtil.getListBackground()
+      myComponent.background
     }
 
-    myComponent.background = bg
+    myComponent.selectionColor = bg
 
     val locationText = presentation.locationText
     if (locationText != null) {
@@ -72,7 +85,9 @@ internal class PsiElementBackgroundListCellRenderer(
           isOpaque = false
           icon = presentation.locationIcon
           text = locationText
-          border = BorderFactory.createEmptyBorder(0, 0, 0, UIUtil.getListCellHPadding())
+          if (!usedInPopup || !ExperimentalUI.isNewUI()) {
+            border = BorderFactory.createEmptyBorder(0, 0, 0, UIUtil.getListCellHPadding())
+          }
           horizontalTextPosition = LEFT
           horizontalAlignment = RIGHT
           return component
@@ -93,6 +108,10 @@ internal class PsiElementBackgroundListCellRenderer(
                                          hasFocus: Boolean) {
         isOpaque = false
         icon = presentation.icon
+        if (usedInPopup && ExperimentalUI.isNewUI()) {
+          ipad.left = 0
+          ipad.right = 0
+        }
 
         val nameAttributes = presentation.presentableTextAttributes?.let(SimpleTextAttributes::fromTextAttributes)
                              ?: SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getListForeground(selected, hasFocus))
