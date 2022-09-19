@@ -352,7 +352,6 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     myChangeProvider.setChanges(changes);
 
     VcsDirtyScopeManager.getInstance(getProject()).markEverythingDirty();
-    myChangeListManager.scheduleUpdate();
     myChangeListManager.waitUntilRefreshed();
 
     myChangeListManager.moveChangesTo(list, change);

@@ -39,7 +39,9 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
   public abstract Collection<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes);
 
   @NotNull
-  public abstract LocalChangeList addChangeList(@NotNull @NonNls String name, @Nullable @NonNls String comment, @Nullable ChangeListData data);
+  public abstract LocalChangeList addChangeList(@NotNull @NonNls String name,
+                                                @Nullable @NonNls String comment,
+                                                @Nullable ChangeListData data);
 
   public abstract boolean editChangeListData(@NotNull @NonNls String name, @Nullable ChangeListData newData);
 
@@ -57,14 +59,16 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
    */
   @RequiresEdt
   public abstract void blockModalNotifications();
+
   @RequiresEdt
   public abstract void unblockModalNotifications();
 
   /**
-   * Temporarily disable CLM update
+   * Temporarily disable CLM update.
    * For example, to preserve FilePath->ChangeList mapping during "stash-do_smth-unstash" routine.
    */
   public abstract void freeze(@NotNull @Nls String reason);
+
   public abstract void unfreeze();
 
   /**

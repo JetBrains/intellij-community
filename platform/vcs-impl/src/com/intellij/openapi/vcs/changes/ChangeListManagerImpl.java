@@ -418,6 +418,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @Override
   public void scheduleUpdate() {
+    scheduleUpdateImpl();
+  }
+
+  public void scheduleUpdateImpl() {
     myUpdater.schedule();
   }
 
