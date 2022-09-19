@@ -82,17 +82,7 @@ sealed class LibraryInfo(
         }
     }
 
-    override fun toString() =
-        "${this::class.simpleName}($libraryWrapper)"
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is LibraryInfo) return false
-
-        return libraryWrapper == other.libraryWrapper
-    }
-
-    override fun hashCode() = libraryWrapper.hashCode()
+    override fun toString() = "${this::class.simpleName}($libraryWrapper)"
 }
 
 private class ResolutionAnchorAwareLibraryModificationTracker(libraryInfo: LibraryInfo) : ModificationTracker {

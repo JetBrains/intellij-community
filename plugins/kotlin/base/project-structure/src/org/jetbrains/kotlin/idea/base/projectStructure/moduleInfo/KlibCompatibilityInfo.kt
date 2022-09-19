@@ -39,14 +39,6 @@ sealed class AbstractKlibLibraryInfo(project: Project, libraryWrapper: LibraryWr
 
     val isInterop: Boolean by lazy { resolvedKotlinLibrary.safeRead(false) { isInterop } }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is AbstractKlibLibraryInfo) return false
-        return libraryRoot == other.libraryRoot && libraryWrapper == other.libraryWrapper
-    }
-
-    override fun hashCode(): Int = 31 * super.hashCode() + libraryRoot.hashCode()
-
     companion object {
         private val LOG = Logger.getInstance(AbstractKlibLibraryInfo::class.java).asKotlinLogger()
     }
