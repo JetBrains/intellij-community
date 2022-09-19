@@ -1101,7 +1101,8 @@ public class SwitchBlockHighlightingModel {
   public static @NotNull Set<PsiElement> findSuspiciousLabelElements(@NotNull PsiSwitchBlock switchBlock) {
     SwitchBlockHighlightingModel switchModel = createInstance(PsiUtil.getLanguageLevel(switchBlock), switchBlock, switchBlock.getContainingFile());
     if (switchModel == null) return Collections.emptySet();
-    List<PsiCaseLabelElement> labelElements = StreamEx.of(SwitchUtils.getSwitchBranches(switchBlock)).select(PsiCaseLabelElement.class).toList();
+    List<PsiCaseLabelElement> labelElements =
+      ContainerUtil.filterIsInstance(SwitchUtils.getSwitchBranches(switchBlock), PsiCaseLabelElement.class);
     if (labelElements.isEmpty()) return Collections.emptySet();
     MultiMap<Object, PsiElement> duplicateCandidates = new MultiMap<>();
     labelElements.forEach(branch -> switchModel.fillElementsToCheckDuplicates(duplicateCandidates, branch));

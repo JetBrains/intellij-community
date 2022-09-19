@@ -8,8 +8,8 @@ import com.intellij.codeInspection.HTMLJavaHTMLComposer;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -114,7 +114,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   @Override
   public void appendDerivedFunctionalExpressions(@NotNull StringBuilder buf, @NotNull RefMethod refMethod) {
     List<RefFunctionalExpression> functionalExpressions =
-      StreamEx.of(refMethod.getDerivedReferences()).select(RefFunctionalExpression.class).toList();
+      ContainerUtil.filterIsInstance(refMethod.getDerivedReferences(), RefFunctionalExpression.class);
     if (!functionalExpressions.isEmpty()) {
       HTMLComposer.appendHeading(buf, "Derived lambdas and method references");
 
