@@ -123,9 +123,9 @@ public class MavenImportingSettingsForm {
   }
 
   public void getData(@NotNull MavenImportingSettings data) {
-    if (!"true".equals(System.getProperty("maven.import.to.workspace.model"))) { // enabled system property should not affect user settings
+    //if (!"true".equals(System.getProperty("maven.import.to.workspace.model"))) { // enabled system property should not affect user settings
       data.setWorkspaceImportEnabled(myWorkspaceImportCheckBox.isSelected());
-    }
+    //}
 
     data.setLookForNested(mySearchRecursivelyCheckBox.isSelected());
     LookForNestedToggleAction.setSelected(mySearchRecursivelyCheckBox.isSelected());
@@ -155,6 +155,7 @@ public class MavenImportingSettingsForm {
   public void setData(MavenImportingSettings data, @Nullable Project project) {
     mySearchRecursivelyCheckBox.setSelected(LookForNestedToggleAction.isSelected());
 
+    /*
     if ("true".equals(System.getProperty("maven.import.to.workspace.model"))) {
       myWorkspaceImportCheckBox.setSelected(true);
       myWorkspaceImportCheckBox.setEnabled(false);
@@ -162,8 +163,9 @@ public class MavenImportingSettingsForm {
       myWorkspaceImportCheckBox.setText(myWorkspaceImportCheckBox.getText() + " - enabled since '-Dmaven.import.to.workspace.model=true'");
     }
     else {
+    */
       myWorkspaceImportCheckBox.setSelected(data.isWorkspaceImportEnabled());
-    }
+    //}
 
     mySeparateModulesDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));
     mySeparateModulesDirChooser.setText(data.getDedicatedModuleDir());
