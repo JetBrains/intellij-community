@@ -5,8 +5,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.keymap.KeymapUtil;
-import org.jetbrains.annotations.NotNull;
-import sun.awt.AppContext;
 
 import javax.swing.FocusManager;
 import javax.swing.*;
@@ -63,8 +61,7 @@ final class IdeKeyboardFocusManager extends DefaultFocusManager /* see javadoc a
     return super.postProcessKeyEvent(e);
   }
 
-  @NotNull
-  static IdeKeyboardFocusManager replaceDefault() {
+  static void replaceDefault() {
     KeyboardFocusManager kfm = getCurrentKeyboardFocusManager();
     IdeKeyboardFocusManager ideKfm = new IdeKeyboardFocusManager();
     for (PropertyChangeListener l : kfm.getPropertyChangeListeners()) {
@@ -95,7 +92,6 @@ final class IdeKeyboardFocusManager extends DefaultFocusManager /* see javadoc a
     catch (Exception e) {
       LOG.error(e);
     }
-    AppContext.getAppContext().put(KeyboardFocusManager.class, ideKfm);
-    return (IdeKeyboardFocusManager)getCurrentKeyboardFocusManager();
+    KeyboardFocusManager.setCurrentKeyboardFocusManager(ideKfm);
   }
 }

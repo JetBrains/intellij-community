@@ -193,14 +193,7 @@ public final class IdeEventQueue extends EventQueue {
 
     EDT.updateEdt();
 
-    KeyboardFocusManager keyboardFocusManager = IdeKeyboardFocusManager.replaceDefault();
-    keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", e -> {
-      Application app = ApplicationManager.getApplication();
-      // we can get focus event before application is initialized
-      if (app != null) {
-        app.assertIsDispatchThread();
-      }
-    });
+    IdeKeyboardFocusManager.replaceDefault();
 
     addDispatcher(new WindowsAltSuppressor(), null);
     if (SystemInfoRt.isWindows && Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
