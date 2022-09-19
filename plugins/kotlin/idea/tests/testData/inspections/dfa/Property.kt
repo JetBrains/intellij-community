@@ -11,12 +11,22 @@ abstract class X {
         if (c > 5 && c < 3) {}
     }
 }
-open class Test {
+interface Foo {
+    var b: String?
+}
+
+open class Test : Foo {
   open var a: String? = ""
+  override var b: String? = ""
   fun printA0(){
     if (a==null){
       println()
     } else if (a!=null){
+      println()
+    }
+    if (b==null){
+      println()
+    } else if (b!=null){
       println()
     }
   }
@@ -24,6 +34,9 @@ open class Test {
 
 open class Test2 : Test() {
   override var a: String?
+    get() = if (Math.random() > 0.5) "" else null
+    set(<warning descr="[UNUSED_PARAMETER] Parameter 'value' is never used">value</warning>) {}
+  override var b: String?
     get() = if (Math.random() > 0.5) "" else null
     set(<warning descr="[UNUSED_PARAMETER] Parameter 'value' is never used">value</warning>) {}
 }
