@@ -85,7 +85,7 @@ class ResolutionAnchorCacheServiceImpl(
         return getModuleInfosFromIdeaModel(project).associateBy { moduleInfo ->
             checkCanceled()
             when (moduleInfo) {
-                is LibraryInfo -> moduleInfo.libraryWrapper.name ?: "" // TODO: when does library have no name?
+                is LibraryInfo -> moduleInfo.library.name ?: "" // TODO: when does library have no name?
                 is ModuleSourceInfo -> moduleInfo.module.name
                 else -> moduleInfo.name.asString()
             }

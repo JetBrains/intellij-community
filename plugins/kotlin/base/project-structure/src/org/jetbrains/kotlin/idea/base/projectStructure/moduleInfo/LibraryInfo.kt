@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,17 +28,18 @@ sealed class LibraryInfo(
     override val project: Project,
     val libraryWrapper: LibraryWrapper,
 ) : IdeaModuleInfo, LibraryModuleInfo, BinaryModuleInfo, TrackableModuleInfo {
+    val library: LibraryEx get() = libraryWrapper.library
 
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.LIBRARY
 
-    override val name: Name = Name.special("<library ${libraryWrapper.name}>")
+    override val name: Name = Name.special("<library ${library.name}>")
 
     override val displayedName: String
         get() = KotlinBaseProjectStructureBundle.message("library.0", libraryWrapper.library.presentableName)
 
     override val contentScope: GlobalSearchScope
-        get() = LibraryWithoutSourceScope(project, libraryWrapper.library)
+        get() = LibraryWithoutSourceScope(project, library)
 
     override fun dependencies(): List<IdeaModuleInfo> {
         val dependencies = LibraryDependenciesCache.getInstance(project).getLibraryDependencies(this)

@@ -99,7 +99,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
 
     private fun isFatJar(libraryInfo: LibraryInfo) = libraryInfo.getLibraryRoots().size > 1
 
-    private fun isKotlinJavaRuntime(libraryInfo: LibraryInfo) = libraryInfo.libraryWrapper.name == KOTLIN_JAVA_RUNTIME_NAME
+    private fun isKotlinJavaRuntime(libraryInfo: LibraryInfo) = libraryInfo.library.name == KOTLIN_JAVA_RUNTIME_NAME
 
     override fun isStdlib(libraryInfo: LibraryInfo): Boolean = stdlibCache[libraryInfo]
 

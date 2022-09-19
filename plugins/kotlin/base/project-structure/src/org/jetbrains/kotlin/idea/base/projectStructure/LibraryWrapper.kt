@@ -15,8 +15,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  */
 @ApiStatus.Internal
 class LibraryWrapper internal constructor(val library: LibraryEx) {
-    val name: String? get() = library.name
-
     fun isDisposed(): Boolean = library.isDisposed
 
     fun getFiles(orderRootType: OrderRootType): Collection<VirtualFile> = library.getFiles(orderRootType).toList()

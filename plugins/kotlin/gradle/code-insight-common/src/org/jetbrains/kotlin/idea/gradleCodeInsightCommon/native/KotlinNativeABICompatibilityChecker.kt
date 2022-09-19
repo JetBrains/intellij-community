@@ -176,7 +176,7 @@ internal class KotlinNativeABICompatibilityCheckerService(private val project: P
 
     // returns a pair of library name and library group
     private fun parseIDELibraryName(libraryInfo: NativeKlibLibraryInfo): Pair<String, LibraryGroup> {
-        val ideLibraryName = libraryInfo.libraryWrapper.name?.takeIf(String::isNotEmpty)
+        val ideLibraryName = libraryInfo.library.name?.takeIf(String::isNotEmpty)
         if (ideLibraryName != null) {
             parseIDELibraryName(ideLibraryName)?.let { (kotlinVersion, libraryName) ->
                 return libraryName to LibraryGroup.FromDistribution(kotlinVersion)

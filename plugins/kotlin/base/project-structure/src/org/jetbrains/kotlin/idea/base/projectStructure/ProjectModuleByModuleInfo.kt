@@ -118,7 +118,7 @@ internal class KtLibraryModuleByModuleInfo(
     provider: ProjectStructureProviderIdeImpl
 ) : KtModuleByModuleInfoBase(moduleInfo, provider), KtLibraryModule {
     override val libraryName: String
-        get() = moduleInfo.libraryWrapper.name ?: "Unnamed library"
+        get() = moduleInfo.library.name ?: "Unnamed library"
 
     override val librarySources: KtLibrarySourceModule
         get() = moduleInfo.sourcesModuleInfo.let { provider.getKtModuleByModuleInfo(it) as KtLibrarySourceModule }
