@@ -6,11 +6,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 
-class EmptyKlibLibraryInfo(
-    project: Project,
-    libraryWrapper: LibraryWrapper
-) : AbstractKlibLibraryInfo(project, libraryWrapper, ".") {
-
-    override val platform: TargetPlatform
-        get() = NativePlatforms.unspecifiedNativePlatform
+class NativeMetadataLibraryInfo(project: Project, libraryWrapper: LibraryWrapper) : LibraryInfo(project, libraryWrapper) {
+    override val platform: TargetPlatform get() = NativePlatforms.unspecifiedNativePlatform
 }

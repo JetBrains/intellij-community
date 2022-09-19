@@ -13,12 +13,12 @@ import com.intellij.util.PathUtil
 import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
 import org.jetbrains.kotlin.idea.base.platforms.isKlibLibraryRootForPlatform
 import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.caching.LibraryEntityChangeListener
+import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
-import kotlin.collections.ArrayList
 
 class LibraryInfoCache(project: Project): Disposable {
 
@@ -139,7 +138,7 @@ class LibraryInfoCache(project: Project): Disposable {
                 is JvmIdePlatformKind -> listOf(JvmLibraryInfo(project, libraryWrapper))
                 is CommonIdePlatformKind -> createLibraryInfos(libraryWrapper, platformKind, ::CommonKlibLibraryInfo, ::CommonMetadataLibraryInfo)
                 is JsIdePlatformKind -> createLibraryInfos(libraryWrapper, platformKind, ::JsKlibLibraryInfo, ::JsMetadataLibraryInfo)
-                is NativeIdePlatformKind -> createLibraryInfos(libraryWrapper, platformKind, ::NativeKlibLibraryInfo, null)
+                is NativeIdePlatformKind -> createLibraryInfos(libraryWrapper, platformKind, ::NativeKlibLibraryInfo, ::NativeMetadataLibraryInfo)
                 else -> error("Unexpected platform kind: $platformKind")
             }
             return libraryInfos
@@ -166,22 +165,19 @@ class LibraryInfoCache(project: Project): Disposable {
             libraryWrapper: LibraryWrapper,
             platformKind: IdePlatformKind,
             klibLibraryInfoFactory: (Project, LibraryWrapper, String) -> LibraryInfo,
-            metadataLibraryInfoFactory: ((Project, LibraryWrapper) -> LibraryInfo)?
+            metadataLibraryInfoFactory: ((Project, LibraryWrapper) -> LibraryInfo)
         ): List<LibraryInfo> {
             val defaultPlatform = platformKind.defaultPlatform
             val klibFiles = libraryWrapper.getFiles(OrderRootType.CLASSES).filter { it.isKlibLibraryRootForPlatform(defaultPlatform) }
+            if (klibFiles.isEmpty()) {
+                return listOf(metadataLibraryInfoFactory(project, libraryWrapper))
+            }
 
-            return if (klibFiles.isNotEmpty()) {
-                ArrayList<LibraryInfo>(klibFiles.size).apply {
-                    for (file in klibFiles) {
-                        val path = PathUtil.getLocalPath(file) ?: continue
-                        add(klibLibraryInfoFactory(project, libraryWrapper, path))
-                    }
+            return ArrayList<LibraryInfo>(klibFiles.size).apply {
+                for (file in klibFiles) {
+                    val path = PathUtil.getLocalPath(file) ?: continue
+                    add(klibLibraryInfoFactory(project, libraryWrapper, path))
                 }
-            } else if (metadataLibraryInfoFactory != null) {
-                listOf(metadataLibraryInfoFactory(project, libraryWrapper))
-            } else {
-                listOf(EmptyKlibLibraryInfo(project, libraryWrapper))
             }
         }
 
