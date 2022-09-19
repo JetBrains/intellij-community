@@ -167,6 +167,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
       List<PsiLocalVariable> variables = createVariables(label, switchExpression, ruleBody);
       if (variables.isEmpty()) {
         new CommentTracker().replaceAndRestoreComments(switchExpression, ((PsiExpressionStatement)ruleBody).getExpression());
+        surroundResult.collapse();
         return;
       }
       new CommentTracker().replaceAndRestoreComments(switchExpression, ((PsiExpressionStatement)ruleBody).getExpression());
