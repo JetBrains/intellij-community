@@ -133,7 +133,7 @@ class LibraryInfoCache(project: Project): Disposable {
         }
 
         override fun calculate(key: LibraryEx): List<LibraryInfo> {
-            val libraryWrapper = LibraryWrapper.wrapLibrary(key)
+            val libraryWrapper = LibraryWrapper(key)
             val libraryInfos = when (val platformKind = getPlatform(key).idePlatformKind) {
                 is JvmIdePlatformKind -> listOf(JvmLibraryInfo(project, libraryWrapper))
                 is CommonIdePlatformKind -> createLibraryInfos(libraryWrapper, platformKind, ::CommonKlibLibraryInfo, ::CommonMetadataLibraryInfo)
@@ -141,6 +141,7 @@ class LibraryInfoCache(project: Project): Disposable {
                 is NativeIdePlatformKind -> createLibraryInfos(libraryWrapper, platformKind, ::NativeKlibLibraryInfo, ::NativeMetadataLibraryInfo)
                 else -> error("Unexpected platform kind: $platformKind")
             }
+
             return libraryInfos
         }
 

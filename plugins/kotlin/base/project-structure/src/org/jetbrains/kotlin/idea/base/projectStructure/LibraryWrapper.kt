@@ -10,9 +10,12 @@ import com.intellij.serviceContainer.AlreadyDisposedException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-// Workaround for duplicated libraries, see KT-42607
+/**
+ * Workaround for duplicated libraries, see KT-42607
+ * @see [org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache]
+ */
 @ApiStatus.Internal
-class LibraryWrapper private constructor(val library: LibraryEx) {
+class LibraryWrapper internal constructor(val library: LibraryEx) {
     private val allRootUrlsByType: Map<OrderRootType, Collection<String>> by lazy {
         buildMap {
             val rootProvider = library.rootProvider
@@ -58,13 +61,6 @@ class LibraryWrapper private constructor(val library: LibraryEx) {
 
     fun checkValidity() {
         library.checkValidity()
-    }
-
-    companion object {
-        fun wrapLibrary(library: Library): LibraryWrapper {
-            require(library is LibraryEx) { "Library '${library.presentableName}' does not implement LibraryEx which is not expected" }
-            return LibraryWrapper(library)
-        }
     }
 }
 
