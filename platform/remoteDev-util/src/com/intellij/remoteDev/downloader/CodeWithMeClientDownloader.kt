@@ -157,14 +157,16 @@ object CodeWithMeClientDownloader {
     val platformSuffix = if (jreBuildToDownload != null) when {
       SystemInfo.isLinux && CpuArch.isIntel64() -> "-no-jbr.tar.gz"
       SystemInfo.isLinux && CpuArch.isArm64() -> "-no-jbr-aarch64.tar.gz"
-      SystemInfo.isWindows -> ".win.zip"
+      SystemInfo.isWindows && CpuArch.isIntel64() -> ".win.zip"
+      SystemInfo.isWindows && CpuArch.isArm64() -> "-aarch64.win.zip"
       SystemInfo.isMac && CpuArch.isIntel64() -> "-no-jdk.sit"
       SystemInfo.isMac && CpuArch.isArm64() -> "-no-jdk-aarch64.sit"
       else -> null
     } else when {
       SystemInfo.isLinux && CpuArch.isIntel64() -> ".tar.gz"
       SystemInfo.isLinux && CpuArch.isArm64() -> "-aarch64.tar.gz"
-      SystemInfo.isWindows -> ".jbr.win.zip"
+      SystemInfo.isWindows && CpuArch.isIntel64() -> ".jbr.win.zip"
+      SystemInfo.isWindows && CpuArch.isArm64() -> "-aarch64.jbr.win.zip"
       SystemInfo.isMac && CpuArch.isIntel64() -> ".sit"
       SystemInfo.isMac && CpuArch.isArm64() -> "-aarch64.sit"
       else -> null
@@ -175,8 +177,10 @@ object CodeWithMeClientDownloader {
 
     val jreDownloadUrl = if (jreBuildToDownload != null) {
       val platformString = when {
-        SystemInfo.isLinux -> "linux-x64"
-        SystemInfo.isWindows -> "windows-x64"
+        SystemInfo.isLinux && CpuArch.isIntel64() -> "linux-x64"
+        SystemInfo.isLinux && CpuArch.isArm64() -> "linux-aarch64"
+        SystemInfo.isWindows && CpuArch.isIntel64() -> "windows-x64"
+        SystemInfo.isWindows && CpuArch.isArm64() -> "windows-aarch64"
         SystemInfo.isMac && CpuArch.isIntel64() -> "osx-x64"
         SystemInfo.isMac && CpuArch.isArm64() -> "osx-aarch64"
         else -> error("Current platform is not supported")

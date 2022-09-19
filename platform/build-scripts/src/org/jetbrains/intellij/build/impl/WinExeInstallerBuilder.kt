@@ -76,7 +76,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
   val outFileName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
   context.messages.progress("Building Windows installer $outFileName")
 
-  val box = context.paths.tempDir.resolve("winInstaller")
+  val box = context.paths.tempDir.resolve("winInstaller${suffix}")
   //noinspection SpellCheckingInspection
   val nsiConfDir = box.resolve("nsiconf")
   withContext(Dispatchers.IO) {
@@ -107,7 +107,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
 
     // Log final nsi directory to make debugging easier
     val logDir = Path.of(context.paths.buildOutputRoot, "log")
-    val nsiLogDir = logDir.resolve("nsi")
+    val nsiLogDir = logDir.resolve("nsi$suffix")
     deleteDir(nsiLogDir)
     copyDir(nsiConfDir, nsiLogDir)
 

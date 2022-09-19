@@ -105,7 +105,7 @@ internal class WindowsDistributionBuilder(
 
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
-
+    val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
     val jreDir = context.bundledRuntime.extract(BundledRuntimeImpl.getProductPrefix(context), OsFamily.WINDOWS, arch)
 
     @Suppress("SpellCheckingInspection")
@@ -121,7 +121,7 @@ internal class WindowsDistributionBuilder(
     val zipWithJbrPath = coroutineScope {
       val zipWithJbrPathTask = if (customizer.buildZipArchiveWithBundledJre) {
         createBuildWinZipTask(jreDirectoryPaths = listOf(jreDir),
-                              zipNameSuffix = customizer.zipArchiveWithBundledJreSuffix,
+                              zipNameSuffix = suffix + customizer.zipArchiveWithBundledJreSuffix,
                               winDistPath = osAndArchSpecificDistPath,
                               customizer = customizer,
                               context = context)
@@ -132,7 +132,7 @@ internal class WindowsDistributionBuilder(
 
       if (customizer.buildZipArchiveWithoutBundledJre) {
         createBuildWinZipTask(jreDirectoryPaths = emptyList(),
-                              zipNameSuffix = customizer.zipArchiveWithoutBundledJreSuffix,
+                              zipNameSuffix = suffix + customizer.zipArchiveWithoutBundledJreSuffix,
                               winDistPath = osAndArchSpecificDistPath,
                               customizer = customizer,
                               context = context)
@@ -148,7 +148,7 @@ internal class WindowsDistributionBuilder(
 
         exePath = buildNsisInstaller(winDistPath = osAndArchSpecificDistPath,
                                      additionalDirectoryToInclude = productJsonDir,
-                                     suffix = "",
+                                     suffix = suffix,
                                      customizer = customizer,
                                      jreDir = jreDir,
                                      context = context)
@@ -176,8 +176,8 @@ internal class WindowsDistributionBuilder(
 
     Span.current().addEvent("compare ${zipPath.fileName} vs. ${exePath.fileName}")
 
-    val tempZip = withContext(Dispatchers.IO) { Files.createTempDirectory(context.paths.tempDir, "zip-") }
-    val tempExe = withContext(Dispatchers.IO) { Files.createTempDirectory(context.paths.tempDir, "exe-") }
+    val tempZip = withContext(Dispatchers.IO) { Files.createTempDirectory(context.paths.tempDir, "zip-${arch.dirName}") }
+    val tempExe = withContext(Dispatchers.IO) { Files.createTempDirectory(context.paths.tempDir, "exe-${arch.dirName}") }
     try {
       withContext(Dispatchers.IO) {
         runProcess(args = listOf("7z", "x", "-bd", exePath.toString()), workingDir = tempExe, logger = context.messages)
@@ -290,7 +290,7 @@ internal class WindowsDistributionBuilder(
   private suspend fun buildWinLauncher(winDistPath: Path, arch: JvmArchitecture) {
     spanBuilder("build Windows executable").useWithScope2 {
       val executableBaseName = "${context.productProperties.baseFileName}64"
-      val launcherPropertiesPath = context.paths.tempDir.resolve("launcher.properties")
+      val launcherPropertiesPath = context.paths.tempDir.resolve("launcher-${arch.dirName}.properties")
       val upperCaseProductName = context.applicationInfo.upperCaseProductName
 
       @Suppress("SpellCheckingInspection")
@@ -299,7 +299,7 @@ internal class WindowsDistributionBuilder(
       val classPath = context.bootClassPathJarNames.joinToString(separator = ";")
       val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ";")
       val envVarBaseName = context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)
-      val icoFilesDirectory = context.paths.tempDir.resolve("win-launcher-ico")
+      val icoFilesDirectory = context.paths.tempDir.resolve("win-launcher-ico-${arch.dirName}")
       val appInfoForLauncher = generateApplicationInfoForLauncher(context.applicationInfo.appInfoXml, icoFilesDirectory)
       @Suppress("SpellCheckingInspection")
       Files.writeString(launcherPropertiesPath, """

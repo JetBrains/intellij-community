@@ -71,6 +71,7 @@ object ThinClientSessionInfoFetcher {
       SystemInfo.isLinux && CpuArch.isArm64() -> "linux-aarch64"
       SystemInfo.isLinux && CpuArch.isIntel64() -> "linux-x64"
       SystemInfo.isWindows && CpuArch.isIntel64() -> "windows-x64"
+      SystemInfo.isWindows && CpuArch.isArm64() -> "windows-aarch64"
       else -> error("Unsupported OS type: ${SystemInfo.OS_NAME}, CpuArch: ${CpuArch.CURRENT}")
     }
   }
