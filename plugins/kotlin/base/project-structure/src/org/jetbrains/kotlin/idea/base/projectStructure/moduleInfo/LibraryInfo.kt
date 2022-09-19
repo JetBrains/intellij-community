@@ -74,8 +74,7 @@ sealed class LibraryInfo(
             ResolutionAnchorAwareLibraryModificationTracker(this)
         }
 
-    internal val isDisposed
-        get() = libraryWrapper.isDisposed()
+    val isDisposed get() = library.isDisposed
 
     override fun checkValidity() {
         if (isDisposed) {

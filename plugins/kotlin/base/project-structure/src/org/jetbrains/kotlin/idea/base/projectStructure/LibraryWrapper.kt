@@ -14,8 +14,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  */
 @ApiStatus.Internal
 class LibraryWrapper internal constructor(val library: LibraryEx) {
-    fun isDisposed(): Boolean = library.isDisposed
-
     override fun toString(): String {
         return "libraryName=${library.name}${if (!library.isDisposed) ", libraryRoots=${library.getFiles(OrderRootType.CLASSES)}" else " -disposed-"})"
     }
