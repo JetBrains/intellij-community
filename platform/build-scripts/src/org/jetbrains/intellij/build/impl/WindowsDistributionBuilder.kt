@@ -18,7 +18,10 @@ import org.jetbrains.intellij.build.io.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.FileTime
+import java.util.concurrent.TimeUnit
 import java.util.function.BiPredicate
+import kotlin.io.path.setLastModifiedTime
 
 internal class WindowsDistributionBuilder(
   override val context: BuildContext,
@@ -101,10 +104,10 @@ internal class WindowsDistributionBuilder(
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
     val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
-    val jreDir = context.bundledRuntime.extract(BundledRuntimeImpl.getProductPrefix(context), OsFamily.WINDOWS, arch)
+    val runtimeDir = context.bundledRuntime.extract(BundledRuntimeImpl.getProductPrefix(context), OsFamily.WINDOWS, arch)
 
     @Suppress("SpellCheckingInspection")
-    val vcRtDll = jreDir.resolve("jbr/bin/msvcp140.dll")
+    val vcRtDll = runtimeDir.resolve("jbr/bin/msvcp140.dll")
     check(Files.exists(vcRtDll)) {
       "VS C++ Runtime DLL (${vcRtDll.fileName}) not found in ${vcRtDll.parent}.\n" +
       "If JBR uses a newer version, please correct the path in this code and update Windows Launcher build configuration.\n" +
@@ -114,8 +117,14 @@ internal class WindowsDistributionBuilder(
     copyFileToDir(vcRtDll, osAndArchSpecificDistPath.resolve("bin"))
     var exePath: Path? = null
     val zipWithJbrPath = coroutineScope {
+      Files.walk(osAndArchSpecificDistPath).use { tree ->
+        val fileTime = FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS)
+        tree.forEach {
+          it.setLastModifiedTime(fileTime)
+        }
+      }
       val zipWithJbrPathTask = if (customizer.buildZipArchiveWithBundledJre) {
-        createBuildWinZipTask(jreDirectoryPaths = listOf(jreDir),
+        createBuildWinZipTask(runtimeDir = runtimeDir,
                               zipNameSuffix = suffix + customizer.zipArchiveWithBundledJreSuffix,
                               winDistPath = osAndArchSpecificDistPath,
                               arch = arch,
@@ -127,7 +136,7 @@ internal class WindowsDistributionBuilder(
       }
 
       if (customizer.buildZipArchiveWithoutBundledJre) {
-        createBuildWinZipTask(jreDirectoryPaths = emptyList(),
+        createBuildWinZipTask(runtimeDir = null,
                               zipNameSuffix = suffix + customizer.zipArchiveWithoutBundledJreSuffix,
                               winDistPath = osAndArchSpecificDistPath,
                               arch = arch,
@@ -138,9 +147,9 @@ internal class WindowsDistributionBuilder(
       context.executeStep(spanBuilder("build Windows installer")
                             .setAttribute("arch", arch.dirName), BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
         val productJsonDir = Files.createTempDirectory(context.paths.tempDir, "win-product-info")
-        validateProductJson(jsonText = generateProductJson(targetDir = productJsonDir, arch = arch, isJreIncluded = true, context = context),
+        validateProductJson(jsonText = generateProductJson(targetDir = productJsonDir, arch = arch, isRuntimeIncluded = true, context = context),
                             relativePathToProductJson = "",
-                            installationDirectories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, jreDir),
+                            installationDirectories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDir),
                             installationArchives = emptyList(),
                             context = context)
 
@@ -148,7 +157,7 @@ internal class WindowsDistributionBuilder(
                                      additionalDirectoryToInclude = productJsonDir,
                                      suffix = suffix,
                                      customizer = customizer,
-                                     jreDir = jreDir,
+                                     runtimeDir = runtimeDir,
                                      context = context)
       }
 
@@ -373,7 +382,7 @@ private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path,
   }
 }
 
-private fun CoroutineScope.createBuildWinZipTask(jreDirectoryPaths: List<Path>,
+private fun CoroutineScope.createBuildWinZipTask(runtimeDir: Path?,
                                                  zipNameSuffix: String,
                                                  winDistPath: Path,
                                                  arch: JvmArchitecture,
@@ -388,10 +397,10 @@ private fun CoroutineScope.createBuildWinZipTask(jreDirectoryPaths: List<Path>,
       .setAttribute("arch", arch.dirName)
       .useWithScope2 {
         val productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip$zipNameSuffix")
-        generateProductJson(targetDir = productJsonDir, arch = arch, isJreIncluded = !jreDirectoryPaths.isEmpty(), context = context)
+        generateProductJson(targetDir = productJsonDir, arch = arch, isRuntimeIncluded = runtimeDir != null, context = context)
 
         val zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
-        val dirs = listOf(context.paths.distAllDir, winDistPath, productJsonDir) + jreDirectoryPaths
+        val dirs = listOfNotNull(context.paths.distAllDir, winDistPath, productJsonDir, runtimeDir)
 
         val dirMap = dirs.associateWithTo(LinkedHashMap(dirs.size)) { zipPrefix }
         if (context.options.compressZipFiles) {
@@ -407,10 +416,10 @@ private fun CoroutineScope.createBuildWinZipTask(jreDirectoryPaths: List<Path>,
   }
 }
 
-private fun generateProductJson(targetDir: Path, isJreIncluded: Boolean, arch: JvmArchitecture, context: BuildContext): String {
+private fun generateProductJson(targetDir: Path, isRuntimeIncluded: Boolean, arch: JvmArchitecture, context: BuildContext): String {
   val launcherPath = "bin/${context.productProperties.baseFileName}64.exe"
   val vmOptionsPath = "bin/${context.productProperties.baseFileName}64.exe.vmoptions"
-  val javaExecutablePath = if (isJreIncluded) "jbr/bin/java.exe" else null
+  val javaExecutablePath = if (isRuntimeIncluded) "jbr/bin/java.exe" else null
 
   val file = targetDir.resolve(PRODUCT_INFO_FILE_NAME)
   Files.createDirectories(targetDir)
@@ -429,6 +438,7 @@ private fun generateProductJson(targetDir: Path, isJreIncluded: Boolean, arch: J
       additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch))),
     context)
   Files.writeString(file, json)
+  file.setLastModifiedTime(FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
   return json
 }
 

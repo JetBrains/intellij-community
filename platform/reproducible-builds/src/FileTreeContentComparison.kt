@@ -31,11 +31,15 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
     class ProcessCallResult(val exitCode: Int, val stdOut: String)
 
     val isUnsquashfsAvailable by lazy {
-      process("unsquashfs", "-help").exitCode == 0
+      process("unsquashfs", "-help", ignoreExitCode = true).exitCode == 0
     }
 
     val isDiffoscopeAvailable by lazy {
-      process("diffoscope", "--version").exitCode == 0
+      process("diffoscope", "--version", ignoreExitCode = true).exitCode == 0
+    }
+
+    val is7zAvailable by lazy {
+      process("7z", "--help", ignoreExitCode = true).exitCode == 0
     }
 
     @JvmStatic
@@ -162,7 +166,10 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
     when (extension) {
       "jar", "zip", "tar.gz", "gz", "tar", "ijx", "sit" -> error("$this is expected to be already unpacked")
       "class" -> target.writeText(process("javap", "-verbose", "$this").stdOut)
-      "dmg" -> target.writeText(process("7z", "l", "$this", ignoreExitCode = true).stdOut)
+      "dmg", "exe" -> if (is7zAvailable) {
+        target.writeText(process("7z", "l", "$this").stdOut)
+      }
+      else copyTo(target, overwrite = true)
       else -> copyTo(target, overwrite = true)
     }
   }

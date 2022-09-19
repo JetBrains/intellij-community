@@ -53,11 +53,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.DosFileAttributeView
+import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFilePermission
 import java.util.*
+import java.util.concurrent.TimeUnit
 import java.util.function.Predicate
 import java.util.stream.Collectors
 import java.util.zip.ZipOutputStream
+import kotlin.io.path.setLastModifiedTime
 
 class BuildTasksImpl(context: BuildContext) : BuildTasks {
   private val context = context as BuildContextImpl
@@ -373,6 +376,14 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
   val propertiesFile = patchIdeaPropertiesFile(context)
 
   return supervisorScope {
+    withContext(Dispatchers.IO) {
+      Files.walk(context.paths.distAllDir).use { tree ->
+        val fileTime = FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS)
+        tree.forEach {
+          it.setLastModifiedTime(fileTime)
+        }
+      }
+    }
     SUPPORTED_DISTRIBUTIONS.mapNotNull { (os, arch) ->
       if (!context.shouldBuildDistributionForOS(os, arch)) {
         return@mapNotNull null
