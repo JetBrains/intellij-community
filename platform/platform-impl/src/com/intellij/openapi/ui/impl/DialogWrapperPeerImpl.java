@@ -1,9 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
-import com.intellij.diagnostic.LoadingStateUtilKt;
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.concurrency.ThreadContext;
+import com.intellij.diagnostic.LoadingStateUtilKt;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.ui.AntialiasingType;
@@ -31,6 +30,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -43,6 +43,9 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDia
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.ID;
+import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.SlowOperations;
@@ -652,6 +655,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         JBR.getCustomWindowDecoration().setCustomDecorationEnabled(this, true);
       }
       super.addNotify();
+      if (SystemInfo.isMacOSVentura && Registry.is("ide.mac.stage.manager.support")) {
+        Foundation.executeOnMainThread(true, false, () -> {
+          ID window = MacUtil.getWindowFromJavaWindow(this);
+          Foundation.invoke(window, "setCollectionBehavior:", 1 << 4);
+        });
+      }
     }
 
     @Override
