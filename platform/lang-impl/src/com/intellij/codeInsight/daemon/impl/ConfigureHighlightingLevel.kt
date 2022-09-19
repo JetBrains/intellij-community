@@ -114,7 +114,7 @@ object NotebookInjectedCodeUtility {
   }
 
   fun ensureStateAfterHighlightingAnalysis(psiFile: PsiFile?, holder: HighlightInfoHolder?) {
-    if (!isSuitableKtNotebookFragment(psiFile)) return
+    if (!isSuitableKtNotebookFragment(psiFile) || psiFile?.name?.endsWith("1.${notebookInjectedFileExtension}") == true) return
 
     psiFile?.putUserData(ANALYZER_PASS_INJECTED_INFO_HOLDER_KEY, holder)
   }
