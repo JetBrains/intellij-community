@@ -177,8 +177,8 @@ class MarkdownHeader: MarkdownHeaderImpl {
   }
 
   companion object {
-    internal val garbageRegex = Regex("[^\\w\\- ]")
-    internal val additionalSymbolsRegex = Regex("[^-_a-z0-9\\s]")
+    internal val garbageRegex = Regex("[^\\p{IsAlphabetic}\\d\\- ]")
+    internal val additionalSymbolsRegex = Regex("[^\\-_ \\p{IsAlphabetic}\\d]")
 
     private fun buildUniqueAnchorText(header: MarkdownHeader): String? {
       val anchorText = obtainRawAnchorText(header) ?: return null
