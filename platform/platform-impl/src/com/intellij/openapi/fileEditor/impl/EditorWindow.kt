@@ -51,7 +51,6 @@ import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
-import java.util.*
 import java.util.function.BiFunction
 import java.util.function.Function
 import javax.swing.*
@@ -478,7 +477,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
   fun getSiblings(): List<EditorWindow> {
     checkConsistency()
     val splitter = (panel.parent as? Splitter) ?: return emptyList()
-    return owner.getWindows().filter { SwingUtilities.isDescendingFrom(it.panel, splitter) }
+    return owner.getWindows().filter { win -> win != this@EditorWindow && SwingUtilities.isDescendingFrom(win.panel, splitter) }
   }
 
   fun updateFileBackgroundColor(file: VirtualFile) {
