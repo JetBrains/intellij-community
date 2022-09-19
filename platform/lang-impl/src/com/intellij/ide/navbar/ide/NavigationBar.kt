@@ -50,10 +50,8 @@ import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
 
 
-internal val navbarV2Enabled: Boolean =
-  Registry.`is`("ide.navBar.v2", false)
-  && ApplicationManager.getApplication().isInternal
-  && !ExperimentalUI.isNewUI()
+internal val navbarV2Enabled: Boolean = Registry.`is`("ide.navBar.v2", false)
+
 
 internal val LOG: Logger = Logger.getInstance("#com.intellij.ide.navbar.ide")
 
