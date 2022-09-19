@@ -38,7 +38,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
                                    "EditorTab", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow"},
       {"alt DOWN",                 "MethodDown", "ShowContent", "ShowSearchHistory", "JupyterNotebookMoveCellDownCommandModeAction"},
-      {"alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue"},
+      {"alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "JupyterNotebookRunInsertCellBelowCommandModeAction"},
       {"alt F6",                   "CommanderSyncViews", "EditPropertyValue"},
       {"alt INSERT",               "FileChooser.NewFolder", "Generate", "NewElement"},
       {"alt J",                    "SelectNextOccurrence", "JupyterNotebookMoveCellDownCommandModeAction"},
