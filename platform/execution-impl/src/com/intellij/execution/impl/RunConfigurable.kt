@@ -766,6 +766,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       .finishOnUiThread(ModalityState.current()) {
         runDialog.setOKActionEnabled(it)
       }
+      .expireWith(runDialog.getDisposable())
       .submit(AppExecutorUtil.getAppExecutorService())
     runDialog.setTitle(buffer.toString())
   }
