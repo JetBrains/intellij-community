@@ -93,5 +93,6 @@
     <orderEntry type="module" module-name="kotlin.refactorings.rename.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.highlighting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.refactorings.k2" scope="RUNTIME" />
   </component>
 </module>

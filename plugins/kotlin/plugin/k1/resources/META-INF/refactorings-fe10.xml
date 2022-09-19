@@ -93,9 +93,6 @@
 
     <refactoring.overrideMethodProcessor implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinOverrideMethodsProcessor"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.refactorings.KotlinSafeDeleteHelper"
-                    serviceImplementation="org.jetbrains.kotlin.idea.refactoring.KotlinK1SafeDeleteHelper"/>
-
     <refactoring.pullUpHelperFactory
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpHelperFactory"/>
