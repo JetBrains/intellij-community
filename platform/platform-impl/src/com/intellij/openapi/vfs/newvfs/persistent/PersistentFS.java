@@ -27,22 +27,20 @@ import java.util.function.Function;
 import static com.intellij.util.BitUtil.isSet;
 
 public abstract class PersistentFS extends ManagingFS {
-  static class Flags {
+  static final class Flags {
     static final int CHILDREN_CACHED = 0x01;
     static final int IS_DIRECTORY = 0x02;
     static final int IS_READ_ONLY = 0x04;
     static final int MUST_RELOAD_CONTENT = 0x08;
     static final int IS_SYMLINK = 0x10;
-    static final int IS_SPECIAL = 0x20; // this file has "special" flag. Defined for files only.
+    static final int IS_SPECIAL = 0x20;
     static final int IS_HIDDEN = 0x40;
     static final int MUST_RELOAD_LENGTH = 0x80;
-    // true if this directory can contain case-sensitive files. Defined for directories only.
-    static final int CHILDREN_CASE_SENSITIVE = 0x100;
-    // true if it's known whether this directory can contain case-sensitive files or not. Defined for directories only.
-    static final int CHILDREN_CASE_SENSITIVITY_CACHED = 0x200;
-    static final int ALL_VALID_FLAGS =
-      CHILDREN_CACHED | IS_DIRECTORY | IS_READ_ONLY | MUST_RELOAD_CONTENT | MUST_RELOAD_LENGTH | IS_SYMLINK | IS_SPECIAL | IS_HIDDEN |
-      CHILDREN_CASE_SENSITIVE | CHILDREN_CASE_SENSITIVITY_CACHED;
+    static final int CHILDREN_CASE_SENSITIVE = 0x100;  // 'true' if this directory can contain files differing only in the case
+    static final int CHILDREN_CASE_SENSITIVITY_CACHED = 0x200;  // 'true' if this directory's case sensitivity is known
+    static final int FREE_RECORD_FLAG = 0x400;
+
+    static final int MASK = 0x7FF;
   }
 
   @MagicConstant(flagsFromClass = Flags.class)
@@ -124,6 +122,6 @@ public abstract class PersistentFS extends ManagingFS {
     return fs;
   }
 
-  // true if FS persisted at least one child or it has never been queried for children
+  // 'true' if the FS persisted at least one child, or it has never been queried for children
   public abstract boolean mayHaveChildren(int id);
 }

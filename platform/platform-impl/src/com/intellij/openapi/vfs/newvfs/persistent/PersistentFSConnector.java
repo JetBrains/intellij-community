@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class PersistentFSConnector {
@@ -207,7 +206,7 @@ final class PersistentFSConnector {
     long start = System.nanoTime();
     InvertedNameIndex.clear();
     records.processAllRecords((fileId, nameId, flags, parentId, corrupted) -> {
-      if (BitUtil.isSet(flags, PersistentFSRecordAccessor.FREE_RECORD_FLAG)) {
+      if (BitUtil.isSet(flags, PersistentFS.Flags.FREE_RECORD_FLAG)) {
         freeFileIds.add(fileId);
       }
       else if (nameId != 0) {
