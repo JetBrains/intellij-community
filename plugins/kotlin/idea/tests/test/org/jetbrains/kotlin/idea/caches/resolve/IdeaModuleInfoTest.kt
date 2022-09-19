@@ -103,7 +103,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         assertFalse(newStdlibInfo.isDisposed)
 
         val updatedStdlibCopyInfo = cache[stdlibCopy].first().also(LibraryInfo::checkValidity)
-        assertNotEquals(newStdlibCopyInfo, updatedStdlibCopyInfo) // can be optimized
+        assertEquals(newStdlibCopyInfo, updatedStdlibCopyInfo)
     }
 
     fun testSimpleModuleDependency() {

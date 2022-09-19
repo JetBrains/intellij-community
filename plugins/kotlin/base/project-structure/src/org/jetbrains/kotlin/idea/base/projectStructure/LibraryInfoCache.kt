@@ -148,24 +148,26 @@ class LibraryInfoCache(project: Project) : Disposable {
             keys: Collection<LibraryEx>,
             cache: MutableMap<LibraryEx, List<LibraryInfo>>,
         ): Collection<List<LibraryInfo>> {
-            val outdatedValues = super.doInvalidateKeysAndGetOutdatedValues(keys, cache)
+            val outdatedValues = mutableListOf<List<LibraryInfo>>()
             for ((root, invalidatedLibraries) in keys.groupBy { it.firstRoot() }) {
                 val deduplicatedLibraries = deduplicationCache[root] ?: continue
-                deduplicatedLibraries.removeAll(invalidatedLibraries)
                 if (deduplicatedLibraries.isEmpty()) continue
+                deduplicatedLibraries.removeAll(invalidatedLibraries)
 
                 for (invalidatedLibrary in invalidatedLibraries) {
+                    val anchorInfo = cache.remove(invalidatedLibrary)?.takeIf { it.first().library == invalidatedLibrary } ?: continue
+                    outdatedValues += anchorInfo
+
+                    if (deduplicatedLibraries.isEmpty()) continue
                     val invalidatedLibraryUrlsByType = invalidatedLibrary.urlsByType()
-                    val iterator = deduplicatedLibraries.iterator()
-                    while (iterator.hasNext()) {
-                        val deduplicatedLibrary = iterator.next()
+                    val deduplicatedLibrariesIterator = deduplicatedLibraries.iterator()
+                    while (deduplicatedLibrariesIterator.hasNext()) {
+                        val deduplicatedLibrary = deduplicatedLibrariesIterator.next()
                         if (invalidatedLibraryUrlsByType.rootEquals(deduplicatedLibrary)) {
-                            iterator.remove()
+                            deduplicatedLibrariesIterator.remove()
                             cache.remove(deduplicatedLibrary)
                         }
                     }
-
-                    if (deduplicatedLibraries.isEmpty()) break
                 }
             }
 
