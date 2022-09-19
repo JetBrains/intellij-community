@@ -48,6 +48,13 @@ class NormalSwitchCompletionTest extends NormalCompletionTestCase {
 
   void testCompleteSealedLabelSwitch() { doTest() }
 
+  void testCompleteReturnInSwitchRule() { doTest() }
+  void testCompleteReturnInSwitchRule2() { doTest() }
+  void testCompleteThrowInSwitchRule() { doTest() }
+
+  @NeedsIndex.Full(reason = "Other options do not appear if there's no index. As a result, '\n' goes right into the editor")
+  void testCompleteIfInSwitchRule() { doTest('\n') }
+
   void testCompleteSwitchObjectSelectorPostfix() { doTestPostfixCompletion() }
   void testCompleteSwitchSealedSelectorPostfix() { doTestPostfixCompletion() }
 
