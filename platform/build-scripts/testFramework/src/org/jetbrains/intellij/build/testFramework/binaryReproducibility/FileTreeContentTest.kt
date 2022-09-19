@@ -13,11 +13,27 @@ import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
-import kotlin.streams.toList
 
 class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty("user.dir")).resolve(".diff"),
                           private val tempDir: Path = Files.createTempDirectory(this::class.java.simpleName)) {
-  companion object {
+  private companion object {
+    fun process(vararg command: String, workDir: Path? = null, ignoreExitCode: Boolean = false): ProcessCallResult {
+      val process = ProcessBuilder(*command).directory(workDir?.toFile()).start()
+      val output = process.inputStream.bufferedReader().use { it.readText() }
+      if (!process.waitFor(10, TimeUnit.MINUTES)) {
+        process.destroyForcibly().waitFor()
+        error("${command.joinToString(separator = " ")} timed out")
+      }
+      require(ignoreExitCode || process.exitValue() == 0) { output }
+      return ProcessCallResult(process.exitValue(), output)
+    }
+
+    class ProcessCallResult(val exitCode: Int, val stdOut: String)
+
+    val isUnsquashfsAvailable by lazy {
+      process("unsquashfs", "-help").exitCode == 0
+    }
+
     @JvmStatic
     fun main(args: Array<String>) {
       require(args.count() == 2)
@@ -43,7 +59,6 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
 
   private fun listingDiff(firstIteration: Set<Path>, nextIteration: Set<Path>) =
     ((firstIteration - nextIteration) + (nextIteration - firstIteration))
-      .filterNot { it.name == ".DS_Store" }
 
   private fun assertTheSameFile(relativeFilePath: Path, dir1: Path, dir2: Path): AssertionError? {
     val path1 = dir1.resolve(relativeFilePath)
@@ -71,8 +86,7 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
         path2.unpackingDir().also { Decompressor.Zip(path2).withZipExtensions().extract(it) }
       ).error ?: AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
       "dmg" -> {
-        saveDiff(relativeFilePath, path1, path2)
-        println("dmg cannot be built reproducibly, content comparison is required")
+        println(".dmg cannot be built reproducibly, content comparison is required")
         if (SystemInfo.isMac) {
           path1.mountDmg { dmg1Content ->
             path2.mountDmg { dmg2Content ->
@@ -81,7 +95,20 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
           }
         }
         else {
-          println("macOS is required to compare content of dmg, skipping")
+          println("macOS is required to compare content of .dmg, skipping")
+          null
+        }
+      }
+      "snap" -> {
+        println(".snap cannot be built reproducibly, content comparison is required")
+        if (isUnsquashfsAvailable) {
+          assertTheSameDirectoryContent(
+            path1.unSquash(path1.unpackingDir()),
+            path2.unSquash(path2.unpackingDir())
+          ).error
+        }
+        else {
+          println("unsquashfs should be installed to compare content of .snap, skipping")
           null
         }
       }
@@ -130,8 +157,8 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
   private fun Path.writeContent(target: Path) {
     when (extension) {
       "jar", "zip", "tar.gz", "gz", "tar", "ijx", "sit" -> error("$this is expected to be already unpacked")
-      "class" -> target.writeText(process("javap", "-verbose", "$this"))
-      "dmg" -> target.writeText(process("7z", "l", "$this", ignoreExitCode = true))
+      "class" -> target.writeText(process("javap", "-verbose", "$this").stdOut)
+      "dmg" -> target.writeText(process("7z", "l", "$this", ignoreExitCode = true).stdOut)
       else -> copyTo(target, overwrite = true)
     }
   }
@@ -146,7 +173,7 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
     return unpackingDir
   }
 
-  private fun diff(path1: Path, path2: Path) = process("git", "diff", "--no-index", "--", "$path1", "$path2", ignoreExitCode = true)
+  private fun diff(path1: Path, path2: Path) = process("git", "diff", "--no-index", "--", "$path1", "$path2", ignoreExitCode = true).stdOut
 
   private fun <T> Path.mountDmg(action: (mountPoint: Path) -> T): T {
     require(SystemInfo.isMac)
@@ -162,22 +189,23 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
     }
   }
 
-  private fun process(vararg command: String, ignoreExitCode: Boolean = false): String {
-    val process = ProcessBuilder(*command).start()
-    val output = process.inputStream.bufferedReader().use { it.readText() }
-    if (!process.waitFor(10, TimeUnit.MINUTES)) {
-      process.destroyForcibly().waitFor()
-      error("${command.joinToString(separator = " ")} timed out")
+  private fun Path.unSquash(target: Path): Path {
+    process("unsquashfs", "$this", workDir = target)
+    return target
+  }
+
+  private fun Path.listDirectory(): List<Path> {
+    require(isDirectory()) {
+      "$this is expected to be directory"
     }
-    require(ignoreExitCode || process.exitValue() == 0) { output }
-    return output
+    return Files.walk(this).use { paths ->
+      paths.filter { it.name != ".DS_Store" }.toList()
+    }
   }
 
   fun assertTheSameDirectoryContent(dir1: Path, dir2: Path): ComparisonResult {
-    require(dir1.isDirectory())
-    require(dir2.isDirectory())
-    val listing1 = Files.walk(dir1).use { it.toList() }
-    val listing2 = Files.walk(dir2).use { it.toList() }
+    val listing1 = dir1.listDirectory()
+    val listing2 = dir2.listDirectory()
     val relativeListing1 = listing1.map(dir1::relativize)
     val listingDiff = listingDiff(relativeListing1.toSet(), listing2.map(dir2::relativize).toSet())
     val contentComparisonErrors = relativeListing1.mapNotNull { assertTheSameFile(it, dir1, dir2) }
