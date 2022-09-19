@@ -22,7 +22,7 @@ sealed class KlibCompatibilityInfo(val isCompatible: Boolean) {
     class IncompatibleMetadata(val isOlder: Boolean) : KlibCompatibilityInfo(false)
 }
 
-abstract class AbstractKlibLibraryInfo(project: Project, libraryWrapper: LibraryWrapper, val libraryRoot: String) : LibraryInfo(project, libraryWrapper) {
+sealed class AbstractKlibLibraryInfo(project: Project, libraryWrapper: LibraryWrapper, val libraryRoot: String) : LibraryInfo(project, libraryWrapper) {
     val resolvedKotlinLibrary: KotlinLibrary = resolveSingleFileKlib(
         libraryFile = File(libraryRoot),
         logger = LOG,

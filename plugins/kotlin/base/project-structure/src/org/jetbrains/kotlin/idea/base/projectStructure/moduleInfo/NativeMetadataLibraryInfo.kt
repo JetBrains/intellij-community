@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 
-class NativeMetadataLibraryInfo(project: Project, libraryWrapper: LibraryWrapper) : LibraryInfo(project, libraryWrapper) {
+class NativeMetadataLibraryInfo internal constructor(project: Project, libraryWrapper: LibraryWrapper) :
+    LibraryInfo(project, libraryWrapper) {
     override val platform: TargetPlatform get() = NativePlatforms.unspecifiedNativePlatform
 }

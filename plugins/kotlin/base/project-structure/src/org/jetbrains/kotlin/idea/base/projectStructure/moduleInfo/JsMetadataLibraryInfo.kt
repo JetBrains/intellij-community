@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 
-class JsMetadataLibraryInfo(project: Project, libraryWrapper: LibraryWrapper) : LibraryInfo(project, libraryWrapper) {
-    override val platform: TargetPlatform
-        get() = JsPlatforms.defaultJsPlatform
+class JsMetadataLibraryInfo internal constructor(project: Project, libraryWrapper: LibraryWrapper) : LibraryInfo(project, libraryWrapper) {
+    override val platform: TargetPlatform get() = JsPlatforms.defaultJsPlatform
 }

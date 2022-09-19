@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
 
-class CommonMetadataLibraryInfo(project: Project, libraryWrapper: LibraryWrapper) : LibraryInfo(project, libraryWrapper) {
-    override val platform: TargetPlatform
-        get() = CommonPlatforms.defaultCommonPlatform
+class CommonMetadataLibraryInfo internal constructor(project: Project, libraryWrapper: LibraryWrapper) :
+    LibraryInfo(project, libraryWrapper) {
+    override val platform: TargetPlatform get() = CommonPlatforms.defaultCommonPlatform
 }

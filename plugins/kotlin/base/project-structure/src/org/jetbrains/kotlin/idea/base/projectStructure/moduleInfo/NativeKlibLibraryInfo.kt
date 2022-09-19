@@ -19,11 +19,8 @@ import org.jetbrains.kotlin.platform.konan.NativePlatforms.nativePlatformByTarge
 import org.jetbrains.kotlin.resolve.ImplicitIntegerCoercion
 import java.io.IOException
 
-class NativeKlibLibraryInfo(
-    project: Project,
-    libraryWrapper: LibraryWrapper,
-    libraryRoot: String
-) : AbstractKlibLibraryInfo(project, libraryWrapper, libraryRoot) {
+class NativeKlibLibraryInfo internal constructor(project: Project, libraryWrapper: LibraryWrapper, libraryRoot: String) :
+    AbstractKlibLibraryInfo(project, libraryWrapper, libraryRoot) {
     // If you're changing this, please take a look at ideaModelDependencies as well
     val isStdlib: Boolean get() = libraryRoot.endsWith(KONAN_STDLIB_NAME)
 

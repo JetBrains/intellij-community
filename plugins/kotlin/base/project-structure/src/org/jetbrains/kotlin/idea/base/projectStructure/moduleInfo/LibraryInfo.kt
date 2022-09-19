@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
@@ -21,9 +20,12 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 
-abstract class LibraryInfo(
+/**
+ * @see [org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache]
+ */
+sealed class LibraryInfo(
     override val project: Project,
-    val libraryWrapper: LibraryWrapper
+    val libraryWrapper: LibraryWrapper,
 ) : IdeaModuleInfo, LibraryModuleInfo, BinaryModuleInfo, TrackableModuleInfo {
 
     override val moduleOrigin: ModuleOrigin

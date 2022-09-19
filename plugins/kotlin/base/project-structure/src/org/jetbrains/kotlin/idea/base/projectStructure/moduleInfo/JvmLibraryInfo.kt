@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
-class JvmLibraryInfo(project: Project, libraryWrapper: LibraryWrapper) : LibraryInfo(project, libraryWrapper) {
-    override val platform: TargetPlatform
-        get() = JvmPlatforms.defaultJvmPlatform
+class JvmLibraryInfo internal constructor(project: Project, libraryWrapper: LibraryWrapper) : LibraryInfo(project, libraryWrapper) {
+    override val platform: TargetPlatform get() = JvmPlatforms.defaultJvmPlatform
 }

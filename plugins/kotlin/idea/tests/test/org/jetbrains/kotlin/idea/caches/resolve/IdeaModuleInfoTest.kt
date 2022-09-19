@@ -25,14 +25,10 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.getDependentModules
 import org.jetbrains.kotlin.idea.caches.project.getIdeaModelInfosCache
@@ -215,13 +211,6 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
 
         c.production.assertDependenciesEqual(c.production)
         c.test.assertDependenciesEqual(c.test, c.production, b.test, b.production, a.test, a.production)
-    }
-
-    fun testKlibEquals() {
-        val lib1 = LibraryWrapper.wrapLibrary(projectLibraryWithFakeRoot("lib1"))
-        val klib1 = NativeKlibLibraryInfo(project, lib1, "one")
-        val klib2 = NativeKlibLibraryInfo(project, lib1, "two")
-        Assert.assertNotEquals(klib1, klib2)
     }
 
     fun testDependents() {
@@ -763,10 +752,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         get() = testSourceInfo!!
 
     private val LibraryEx.classes: LibraryInfo
-        get() = object : LibraryInfo(project!!, LibraryWrapper.wrapLibrary(this)) {
-            override val platform: TargetPlatform
-                get() = kind.platform
-        }
+        get() = LibraryInfoCache.getInstance(project)[this].first()
 
     private fun module(name: String, hasProductionRoot: Boolean = true, hasTestRoot: Boolean = true): Module {
         return createModuleFromTestData(createTempDirectory().absolutePath, name, StdModuleTypes.JAVA, false).apply {

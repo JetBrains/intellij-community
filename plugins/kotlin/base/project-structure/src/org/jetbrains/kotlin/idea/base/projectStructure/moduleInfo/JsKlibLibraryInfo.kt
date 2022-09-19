@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 
-class JsKlibLibraryInfo(project: Project, libraryWrapper: LibraryWrapper, libraryRoot: String) : AbstractKlibLibraryInfo(project, libraryWrapper, libraryRoot) {
-    override val platform: TargetPlatform
-        get() = JsPlatforms.defaultJsPlatform
+class JsKlibLibraryInfo internal constructor(project: Project, libraryWrapper: LibraryWrapper, libraryRoot: String) :
+    AbstractKlibLibraryInfo(project, libraryWrapper, libraryRoot) {
+    override val platform: TargetPlatform get() = JsPlatforms.defaultJsPlatform
 }
