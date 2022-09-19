@@ -22,12 +22,6 @@ interface BuildTasks {
     zipSourcesOfModules(modules, targetFile, false)
   }
 
-  fun zipSourcesOfModulesBlocking(modules: List<String>, targetFile: Path, includeLibraries: Boolean) {
-    runBlocking {
-      zipSourcesOfModules(modules, targetFile, includeLibraries = includeLibraries)
-    }
-  }
-
   fun zipSourcesOfModulesBlocking(modules: List<String>, targetFile: Path) {
     runBlocking {
       zipSourcesOfModules(modules, targetFile, includeLibraries = false)

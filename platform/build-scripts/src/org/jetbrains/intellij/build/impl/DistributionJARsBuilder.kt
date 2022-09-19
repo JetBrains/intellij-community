@@ -48,7 +48,6 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Predicate
 import java.util.stream.Collectors
-import kotlin.io.path.exists
 
 /**
  * Assembles output of modules to platform JARs (in [BuildPaths.distAllDir]/lib directory),
@@ -980,7 +979,7 @@ suspend fun layoutDistribution(layout: BaseLayout,
   }
 }
 
-private fun layoutAdditionalResources(layout: BaseLayout, context: BuildContext, targetDirectory: Path) {
+private suspend fun layoutAdditionalResources(layout: BaseLayout, context: BuildContext, targetDirectory: Path) {
   for (resourceData in layout.resourcePaths) {
     val source = basePath(context, resourceData.moduleName).resolve(resourceData.resourcePath).normalize()
     var target = targetDirectory.resolve(resourceData.relativeOutputPath).normalize()
@@ -1010,15 +1009,16 @@ private fun layoutAdditionalResources(layout: BaseLayout, context: BuildContext,
 
   val resourceGenerators = layout.resourceGenerators
   if (!resourceGenerators.isEmpty()) {
-    spanBuilder("generate and pack resources").useWithScope {
+    spanBuilder("generate and pack resources").useWithScope2 {
       for (item in resourceGenerators) {
-        val resourceFile = item.apply(targetDirectory, context) ?: continue
-        if (Files.isRegularFile(resourceFile)) {
-          copyFileToDir(resourceFile, targetDirectory)
-        }
-        else {
-          copyDir(resourceFile, targetDirectory)
-        }
+        item(targetDirectory, context)
+        //val resourceFile = item(targetDirectory, context) ?: continue
+        //if (Files.isRegularFile(resourceFile)) {
+        //  copyFileToDir(resourceFile, targetDirectory)
+        //}
+        //else {
+        //  copyDir(resourceFile, targetDirectory)
+        //}
       }
     }
   }
@@ -1039,7 +1039,7 @@ private fun layoutArtifacts(layout: BaseLayout,
     var artifactPath = targetDirectory.resolve("lib").resolve(relativePath)
     val sourcePath = artifact.outputFilePath?.let(Path::of) ?: error("Missing output path for '$artifactName' artifact")
     if (copyFiles) {
-      require(sourcePath.exists()) {
+      require(Files.exists(sourcePath)) {
         "Missing output file for '$artifactName' artifact: outputFilePath=${artifact.outputFilePath}, outputPath=${artifact.outputPath}"
       }
     }
