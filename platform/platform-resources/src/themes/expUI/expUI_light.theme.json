@@ -295,6 +295,7 @@
     "MenuItem.background": "Grey13",
 
     "MainMenu": {
+      "background": "Grey2",
       "foreground": "Grey11",
       "selectionForeground": "Grey11",
       "selectionBackground": "Grey1"
