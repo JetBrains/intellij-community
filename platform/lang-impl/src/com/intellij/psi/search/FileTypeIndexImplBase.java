@@ -225,7 +225,7 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
     }
     var fileType = getFileTypeById(id);
     if (fileType != null) {
-      myIndexChangedPublisher.changedForFileType(fileType);
+      myIndexChangedPublisher.onChangedForFileType(fileType);
     }
   }
 }

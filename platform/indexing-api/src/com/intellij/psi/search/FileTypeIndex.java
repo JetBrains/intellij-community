@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.EventListener;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -60,9 +59,11 @@ public final class FileTypeIndex {
     return true;
   }
 
+  @ApiStatus.Experimental
   public static final Topic<IndexChangeListener> INDEX_CHANGE_TOPIC =
     new Topic<>(IndexChangeListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
-  public interface IndexChangeListener extends EventListener {
-    void changedForFileType(@NotNull FileType fileType);
+  @ApiStatus.Experimental
+  public interface IndexChangeListener {
+    void onChangedForFileType(@NotNull FileType fileType);
   }
 }
