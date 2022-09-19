@@ -127,7 +127,7 @@ public final class FileTypeChooser extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myList;
+    return myList.isEnabled() ? myList : myDetectFileType;
   }
 
   private void updateButtonsState() {
