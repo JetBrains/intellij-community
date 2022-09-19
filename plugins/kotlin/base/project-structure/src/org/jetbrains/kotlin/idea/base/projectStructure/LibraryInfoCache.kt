@@ -169,7 +169,10 @@ class LibraryInfoCache(project: Project): Disposable {
             metadataLibraryInfoFactory: ((Project, LibraryWrapper) -> LibraryInfo)
         ): List<LibraryInfo> {
             val defaultPlatform = platformKind.defaultPlatform
-            val klibFiles = libraryWrapper.getFiles(OrderRootType.CLASSES).filter { it.isKlibLibraryRootForPlatform(defaultPlatform) }
+            val klibFiles = libraryWrapper.library.getFiles(OrderRootType.CLASSES).filter {
+                it.isKlibLibraryRootForPlatform(defaultPlatform)
+            }
+
             if (klibFiles.isEmpty()) {
                 return listOf(metadataLibraryInfoFactory(project, libraryWrapper))
             }

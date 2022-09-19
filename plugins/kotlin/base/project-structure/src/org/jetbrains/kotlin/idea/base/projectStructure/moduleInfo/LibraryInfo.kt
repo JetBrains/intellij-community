@@ -65,8 +65,7 @@ sealed class LibraryInfo(
     override val sourcesModuleInfo: SourceForBinaryModuleInfo
         get() = _sourcesModuleInfo
 
-    override fun getLibraryRoots(): Collection<String> =
-        libraryWrapper.getFiles(OrderRootType.CLASSES).mapNotNull(PathUtil::getLocalPath)
+    override fun getLibraryRoots(): Collection<String> = library.getFiles(OrderRootType.CLASSES).mapNotNull(PathUtil::getLocalPath)
 
     override fun createModificationTracker(): ModificationTracker =
         if (!project.useLibraryToSourceAnalysis) {

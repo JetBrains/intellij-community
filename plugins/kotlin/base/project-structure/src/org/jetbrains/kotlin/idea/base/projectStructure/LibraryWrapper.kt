@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.AlreadyDisposedException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -17,10 +16,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 class LibraryWrapper internal constructor(val library: LibraryEx) {
     fun isDisposed(): Boolean = library.isDisposed
 
-    fun getFiles(orderRootType: OrderRootType): Collection<VirtualFile> = library.getFiles(orderRootType).toList()
-
     override fun toString(): String {
-        return "libraryName=${library.name}${if (!library.isDisposed) ", libraryRoots=${getFiles(OrderRootType.CLASSES)}" else " -disposed-"})"
+        return "libraryName=${library.name}${if (!library.isDisposed) ", libraryRoots=${library.getFiles(OrderRootType.CLASSES)}" else " -disposed-"})"
     }
 
     fun checkValidity() {

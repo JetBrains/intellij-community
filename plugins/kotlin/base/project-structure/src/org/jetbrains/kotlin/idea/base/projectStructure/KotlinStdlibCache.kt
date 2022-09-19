@@ -86,7 +86,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
     }
 
     private fun libraryScopeContainsIndexedFilesForNames(libraryInfo: LibraryInfo, names: Collection<FqName>): Boolean {
-        val libraryScope = LibraryScope(project, libraryInfo.libraryWrapper.getFiles(OrderRootType.CLASSES).toSet())
+        val libraryScope = LibraryScope(project, libraryInfo.library.getFiles(OrderRootType.CLASSES).toSet())
         return names.any { name ->
             DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
                 FileBasedIndex.getInstance().getContainingFilesIterator(KotlinStdlibIndex.KEY, name, libraryScope).hasNext()
