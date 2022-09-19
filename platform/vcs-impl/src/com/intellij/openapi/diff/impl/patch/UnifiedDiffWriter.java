@@ -107,18 +107,11 @@ public final class UnifiedDiffWriter {
         writeHunkStart(writer, hunk.getStartLineBefore(), hunk.getEndLineBefore(), hunk.getStartLineAfter(), hunk.getEndLineAfter(),
                        headerLineSeparator);
         for (PatchLine line : hunk.getLines()) {
-          char prefixChar = ' ';
-          switch (line.getType()) {
-            case ADD:
-              prefixChar = '+';
-              break;
-            case REMOVE:
-              prefixChar = '-';
-              break;
-            case CONTEXT:
-              prefixChar = ' ';
-              break;
-          }
+          char prefixChar = switch (line.getType()) {
+            case ADD -> '+';
+            case REMOVE -> '-';
+            case CONTEXT -> ' ';
+          };
           String text = line.getText();
           text = StringUtil.trimEnd(text, "\n");
           writeLine(writer, text, prefixChar);

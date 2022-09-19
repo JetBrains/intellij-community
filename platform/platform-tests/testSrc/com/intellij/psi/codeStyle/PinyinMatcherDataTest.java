@@ -139,16 +139,15 @@ public class PinyinMatcherDataTest {
       if (codePoint > 0xA000) return null;
       String[] readings;
       switch (parts[1]) {
-        case "kMandarin":
-          readings = new String[]{parts[2]};
-          break;
-        case "kHanyuPinyin":
+        case "kMandarin" -> readings = new String[]{parts[2]};
+        case "kHanyuPinyin" -> {
           int colonPos = parts[2].indexOf(':');
           if (colonPos == -1) return null;
           readings = parts[2].substring(colonPos + 1).split(",");
-          break;
-        default:
+        }
+        default -> {
           return null;
+        }
       }
       long encoded = 0;
       for (String reading : readings) {

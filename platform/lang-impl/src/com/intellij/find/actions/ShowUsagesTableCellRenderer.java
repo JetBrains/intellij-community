@@ -152,7 +152,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     TextChunk[] text = presentation.getText();
 
     switch (column) {
-      case CURRENT_ASTERISK_COL:
+      case CURRENT_ASTERISK_COL -> {
         if (!ExperimentalUI.isNewUI()) {
           if (isOriginUsage) {
             panel.add(new JLabel(isSelected ? AllIcons.General.ModifiedSelected : AllIcons.General.Modified));
@@ -163,11 +163,9 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
             panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.OTHER_ASTERISK_COL"));
           }
         }
-        break;
-      case FILE_GROUP_COL:
-        appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
-        break;
-      case LINE_NUMBER_COL: {
+      }
+      case FILE_GROUP_COL -> appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
+      case LINE_NUMBER_COL -> {
         SimpleColoredComponent textChunks = new SimpleColoredComponent();
         textChunks.setOpaque(false);
         if (text.length != 0) {
@@ -177,11 +175,10 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
         SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
 
         panel.add(textChunks);
-        panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.LINE_NUMBER_COL", textChunks.getAccessibleContext().getAccessibleName()));
-        break;
+        panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.LINE_NUMBER_COL",
+                                                                         textChunks.getAccessibleContext().getAccessibleName()));
       }
-
-      case USAGE_TEXT_COL: {
+      case USAGE_TEXT_COL -> {
         SimpleColoredComponent textChunks = new SimpleColoredComponent();
         textChunks.setOpaque(false);
 
@@ -195,7 +192,8 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
         SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
 
         panel.add(textChunks);
-        panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.USAGE_TEXT_COL", textChunks.getAccessibleContext().getAccessibleName()));
+        panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.USAGE_TEXT_COL",
+                                                                         textChunks.getAccessibleContext().getAccessibleName()));
 
         if (isOriginUsage) {
           SimpleColoredComponent origin;
@@ -218,13 +216,11 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
             origin.appendTextPadding(JBUIScale.scale(45));
           }
           panel.add(origin, BorderLayout.EAST);
-          panel.getAccessibleContext().setAccessibleName(panel.getAccessibleContext().getAccessibleName() + ", " + origin.getAccessibleContext().getAccessibleName());
+          panel.getAccessibleContext()
+            .setAccessibleName(panel.getAccessibleContext().getAccessibleName() + ", " + origin.getAccessibleContext().getAccessibleName());
         }
-        break;
       }
-
-      default:
-        throw new IllegalStateException("unknown column: " + column);
+      default -> throw new IllegalStateException("unknown column: " + column);
     }
 
     return panel;
@@ -359,30 +355,25 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
       Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
       switch (column) {
-        case CURRENT_ASTERISK_COL: {
+        case CURRENT_ASTERISK_COL -> {
           panel.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
           panel.setSelectionArcCorners(SelectablePanel.SelectionArcCorners.LEFT);
           //noinspection UseDPIAwareInsets
           panel.setSelectionInsets(new Insets(0, leftRightInset, 0, 0));
           //noinspection UseDPIAwareBorders
           panel.setBorder(new EmptyBorder(innerInsets.top, leftRightInset + innerInsets.left, innerInsets.bottom, 0));
-          break;
         }
-
-        case USAGE_TEXT_COL: {
+        case USAGE_TEXT_COL -> {
           panel.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
           panel.setSelectionArcCorners(SelectablePanel.SelectionArcCorners.RIGHT);
           //noinspection UseDPIAwareInsets
           panel.setSelectionInsets(new Insets(0, 0, 0, leftRightInset));
           //noinspection UseDPIAwareBorders
           panel.setBorder(new EmptyBorder(innerInsets.top, 0, innerInsets.bottom, innerInsets.right + leftRightInset));
-          break;
         }
-
-        default: {
+        default ->
           //noinspection UseDPIAwareBorders
           panel.setBorder(new EmptyBorder(innerInsets.top, 0, innerInsets.bottom, 0));
-        }
       }
       panel.setBackground(rowBackground);
       panel.setSelectionColor(rowSelectionBackground);

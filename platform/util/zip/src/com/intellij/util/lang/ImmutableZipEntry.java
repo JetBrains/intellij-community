@@ -81,13 +81,13 @@ public final class ImmutableZipEntry {
     }
 
     switch (method) {
-      case STORED: {
+      case STORED -> {
         ByteBuffer inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer);
         byte[] result = new byte[uncompressedSize];
         inputBuffer.get(result);
         return result;
       }
-      case DEFLATED: {
+      case DEFLATED -> {
         ByteBuffer inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer);
         Inflater inflater = new Inflater(true);
         inflater.setInput(inputBuffer);
@@ -114,9 +114,7 @@ public final class ImmutableZipEntry {
           inflater.end();
         }
       }
-
-      default:
-        throw new ZipException("Found unsupported compression method " + method);
+      default -> throw new ZipException("Found unsupported compression method " + method);
     }
   }
 
@@ -139,10 +137,10 @@ public final class ImmutableZipEntry {
     }
 
     switch (method) {
-      case STORED: {
+      case STORED -> {
         return computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer);
       }
-      case DEFLATED: {
+      case DEFLATED -> {
         ByteBuffer inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer);
         Inflater inflater = new Inflater(true);
         inflater.setInput(inputBuffer);
@@ -164,9 +162,7 @@ public final class ImmutableZipEntry {
           inflater.end();
         }
       }
-
-      default:
-        throw new ZipException("Found unsupported compression method " + method);
+      default -> throw new ZipException("Found unsupported compression method " + method);
     }
   }
 

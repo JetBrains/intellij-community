@@ -12,6 +12,7 @@ import com.intellij.ui.CommonActionsPanel;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,41 +97,27 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
   @Nullable
   @Override
   public String getCustomName(@NotNull CommonActionsPanel.Buttons type) {
-    switch (type) {
-      case EDIT:
-        return BookmarkBundle.message("action.bookmark.edit.description");
-      case REMOVE:
-        return BookmarkBundle.message("action.bookmark.delete");
-      default:
-        return null;
-    }
+    return switch (type) {
+      case EDIT -> BookmarkBundle.message("action.bookmark.edit.description");
+      case REMOVE -> BookmarkBundle.message("action.bookmark.delete");
+      default -> null;
+    };
   }
 
   @Override
   public boolean willHandle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects) {
-    switch (type) {
-      case EDIT:
-        if (selectedObjects.size() != 1) {
-          return false;
-        }
-        Object toEdit = selectedObjects.iterator().next();
-        return toEdit instanceof AbstractTreeNode && ((AbstractTreeNode<?>)toEdit).getValue() instanceof Bookmark;
-      case REMOVE:
-        for (Object toRemove : selectedObjects) {
-          if (!(toRemove instanceof AbstractTreeNode && ((AbstractTreeNode<?>)toRemove).getValue() instanceof Bookmark)) {
-            return false;
-          }
-        }
-        return true;
-      default:
-        return false;
-    }
+    return switch (type) {
+      case EDIT -> ContainerUtil.getOnlyItem(selectedObjects) instanceof AbstractTreeNode<?> node && node.getValue() instanceof Bookmark;
+      case REMOVE ->
+        ContainerUtil.and(selectedObjects, toRemove -> toRemove instanceof AbstractTreeNode<?> node && node.getValue() instanceof Bookmark);
+      default -> false;
+    };
   }
 
   @Override
   public void handle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects, JComponent component) {
     switch (type) {
-      case EDIT:
+      case EDIT -> {
         if (selectedObjects.size() != 1) {
           break;
         }
@@ -142,15 +129,15 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
           }
           BookmarkManager.getInstance(project).editDescription(bookmark, component);
         }
-        break;
-      case REMOVE:
+      }
+      case REMOVE -> {
         for (Object toRemove : selectedObjects) {
           @SuppressWarnings("unchecked")
           Bookmark bookmark = ((AbstractTreeNode<Bookmark>)toRemove).getValue();
           BookmarkManager.getInstance(project).removeBookmark(bookmark);
         }
-        break;
-      default:
+      }
+      default -> {}
     }
   }
 

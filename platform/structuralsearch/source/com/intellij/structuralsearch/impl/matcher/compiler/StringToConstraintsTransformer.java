@@ -254,12 +254,8 @@ public final class StringToConstraintsTransformer {
     if (ch == '+' || ch == '*') {
       // this is type axis navigation relation
       switch (ch) {
-        case '+':
-          constraint.setStrictlyWithinHierarchy(true);
-          break;
-        case '*':
-          constraint.setWithinHierarchy(true);
-          break;
+        case '+' -> constraint.setStrictlyWithinHierarchy(true);
+        case '*' -> constraint.setWithinHierarchy(true);
       }
 
       ++index;

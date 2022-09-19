@@ -92,16 +92,12 @@ public final class ShortcutDataProvider {
   }
 
   private static String getMouseButtonText(int buttonNum) {
-    switch (buttonNum) {
-      case MouseEvent.BUTTON1:
-        return "MouseLeft";
-      case MouseEvent.BUTTON2:
-        return "MouseMiddle";
-      case MouseEvent.BUTTON3:
-        return "MouseRight";
-      default:
-        return "NoMouseButton";
-    }
+    return switch (buttonNum) {
+      case MouseEvent.BUTTON1 -> "MouseLeft";
+      case MouseEvent.BUTTON2 -> "MouseMiddle";
+      case MouseEvent.BUTTON3 -> "MouseRight";
+      default -> "NoMouseButton";
+    };
   }
 
   private static String getShortcutText(KeyboardShortcut shortcut) {

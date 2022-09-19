@@ -281,24 +281,22 @@ public class ScopePanel extends JPanel {
   private void setScopeFromUI() {
     if (myUpdating) return;
     switch (myScopeType) {
-      case PROJECT:
-        myScope = GlobalSearchScope.projectScope(myProject);
-        break;
-      case MODULE:
+      case PROJECT -> myScope = GlobalSearchScope.projectScope(myProject);
+      case MODULE -> {
         final Module module = myModulesComboBox.getSelectedModule();
         if (module == null) return;
         myScope = GlobalSearchScope.moduleScope(module);
-        break;
-      case DIRECTORY:
+      }
+      case DIRECTORY -> {
         final VirtualFile directory = myDirectoryComboBox.getDirectory();
         if (directory == null) return;
         myScope = GlobalSearchScopesCore.directoryScope(myProject, directory, myDirectoryComboBox.isRecursive());
-        break;
-      case NAMED:
+      }
+      case NAMED -> {
         final SearchScope namedScope = myScopesComboBox.getSelectedScope();
         if (namedScope == null) return;
         myScope = namedScope;
-        break;
+      }
     }
     if (myConsumer != null) myConsumer.consume(myScope);
   }

@@ -709,14 +709,11 @@ public final class UIUtil {
 
   public static float getFontSize(@NotNull FontSize size) {
     int defSize = StartupUiUtil.getLabelFont().getSize();
-    switch (size) {
-      case SMALL:
-        return Math.max(defSize - JBUIScale.scale(2f), JBUIScale.scale(11f));
-      case MINI:
-        return Math.max(defSize - JBUIScale.scale(4f), JBUIScale.scale(9f));
-      default:
-        return defSize;
-    }
+    return switch (size) {
+      case SMALL -> Math.max(defSize - JBUIScale.scale(2f), JBUIScale.scale(11f));
+      case MINI -> Math.max(defSize - JBUIScale.scale(4f), JBUIScale.scale(9f));
+      default -> defSize;
+    };
   }
 
   public static @NotNull Color getLabelFontColor(@NotNull FontColor fontColor) {

@@ -119,21 +119,12 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
   @TestOnly
   public TodoTreeBuilder getBuilderAndAllowUpdatesOnIt(Scope scope) {
-    TodoTreeBuilder builder = null;
-    switch (scope) {
-      case AllTodos:
-        builder = myAllTodos.myTodoTreeBuilder;
-        break;
-      case ChangeList:
-        builder = myChangeListTodosPanel.myTodoTreeBuilder;
-        break;
-      case CurrentFile:
-        builder = myCurrentFileTodosPanel.myTodoTreeBuilder;
-        break;
-      case ScopeBased:
-        builder = myScopeBasedTodosPanel.myTodoTreeBuilder;
-        break;
-    }
+    TodoTreeBuilder builder = switch (scope) {
+      case AllTodos -> myAllTodos.myTodoTreeBuilder;
+      case ChangeList -> myChangeListTodosPanel.myTodoTreeBuilder;
+      case CurrentFile -> myCurrentFileTodosPanel.myTodoTreeBuilder;
+      case ScopeBased -> myScopeBasedTodosPanel.myTodoTreeBuilder;
+    };
 
     builder.setUpdatable(true);
     return builder;
