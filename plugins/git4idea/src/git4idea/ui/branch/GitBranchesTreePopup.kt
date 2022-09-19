@@ -13,10 +13,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.ui.popup.PopupStep
-import com.intellij.openapi.ui.popup.TreePopup
+import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.WindowStateService
@@ -40,6 +37,7 @@ import git4idea.GitBranch
 import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryChangeListener
 import git4idea.ui.branch.GitBranchesTreeUtil.overrideBuiltInAction
 import git4idea.ui.branch.GitBranchesTreeUtil.selectFirstLeaf
 import git4idea.ui.branch.GitBranchesTreeUtil.selectLastLeaf
@@ -88,6 +86,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     installGeneralShortcutActions()
     installShortcutActions(step.treeModel)
     installHeaderToolbar()
+    installRepoListener()
     installResizeListener()
     installBranchSettingsListener()
     DataManager.registerDataProvider(component, DataProvider { dataId -> if (POPUP_KEY.`is`(dataId)) this else null })
@@ -109,18 +108,30 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     with(uiScope(this)) {
       launch {
         searchPatternStateFlow.drop(1).debounce(100).collectLatest { pattern ->
-          treeStep.setSearchPattern(pattern)
-          selectPreferred()
+          applySearchPattern(pattern)
         }
       }
     }
     return tree
   }
 
+  private fun applySearchPattern(pattern: String? = speedSearch.enteredPrefix.nullize(true)) {
+    treeStep.setSearchPattern(pattern)
+    selectPreferred()
+  }
+
   internal fun restoreDefaultSize() {
     userResized = false
     WindowStateService.getInstance(project).putSizeFor(project, dimensionServiceKey, null)
     pack(true, true)
+  }
+
+  private fun installRepoListener() {
+    project.messageBus.connect(this).subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
+      runInEdt {
+        applySearchPattern()
+      }
+    })
   }
 
   private fun installResizeListener() {

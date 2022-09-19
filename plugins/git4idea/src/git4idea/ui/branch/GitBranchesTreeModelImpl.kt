@@ -38,12 +38,7 @@ class GitBranchesTreeModelImpl(
   private val branchesTreeCache = mutableMapOf<Any, List<Any>>()
 
   private var branchTypeFilter: GitBranchType? = null
-  private var branchNameMatcher: MinusculeMatcher? by observable(null) { _, _, matcher ->
-    branchesTreeCache.keys.clear()
-    localBranchesTree = LazyBranchesSubtreeHolder(repository.branches.localBranches, branchComparator, matcher)
-    remoteBranchesTree = LazyBranchesSubtreeHolder(repository.branches.remoteBranches, branchComparator, matcher)
-    treeStructureChanged(TreePath(arrayOf(root)), null, null)
-  }
+  private var branchNameMatcher: MinusculeMatcher? by observable(null) { _, _, matcher -> rebuild(matcher) }
 
   override var isPrefixGrouping: Boolean by equalVetoingObservable(branchManager.isGroupingEnabled(GROUPING_BY_DIRECTORY)) {
     branchNameMatcher = null // rebuild tree
@@ -52,6 +47,13 @@ class GitBranchesTreeModelImpl(
   init {
     // set trees
     branchNameMatcher = null
+  }
+
+  private fun rebuild(matcher: MinusculeMatcher?) {
+    branchesTreeCache.keys.clear()
+    localBranchesTree = LazyBranchesSubtreeHolder(repository.branches.localBranches, branchComparator, matcher)
+    remoteBranchesTree = LazyBranchesSubtreeHolder(repository.branches.remoteBranches, branchComparator, matcher)
+    treeStructureChanged(TreePath(arrayOf(root)), null, null)
   }
 
   override fun getRoot() = repository
