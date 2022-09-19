@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.impl.dataRules;
 
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -97,8 +98,11 @@ public class VirtualFileArrayRule implements GetDataRule {
 
     if (result == null) {
       Object[] objects = (Object[])dataProvider.getData(PlatformCoreDataKeys.SELECTED_ITEMS.getName());
-      if (objects != null && objects.length != 0 && ContainerUtil.all(objects, o -> o instanceof VirtualFile)) {
-        return Arrays.copyOf(objects, objects.length, VirtualFile[].class);
+      if (objects != null && objects.length != 0) {
+        Object[] unwrapped = ContainerUtil.map2Array(objects, o -> AbstractProjectViewPane.extractValueFromNode(o));
+        if (ContainerUtil.all(unwrapped, o -> o instanceof VirtualFile)) {
+          return Arrays.copyOf(unwrapped, unwrapped.length, VirtualFile[].class);
+        }
       }
       return null;
     }
