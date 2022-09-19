@@ -170,15 +170,16 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       return false;
     }
 
+    var interpreterPanel = myInterpreterPanel;
     final Map<Boolean, List<String>> errorsAndWarnings = StreamEx
-      .of(myInterpreterPanel == null ? Collections.emptyList() : myInterpreterPanel.validateAll())
+      .of(interpreterPanel == null ? Collections.emptyList() : interpreterPanel.validateAll())
       .groupingBy(it -> it.warning, Collectors.mapping(it -> it.message, Collectors.toList()));
     List<String> validationErrors = errorsAndWarnings.getOrDefault(false, Collections.emptyList());
     final List<String> validationWarnings = errorsAndWarnings.getOrDefault(true, Collections.emptyList());
 
     if (validationErrors.isEmpty()) {
       // Once can't create anything on immutable SDK
-      var sdk = myInterpreterPanel.getSdk();
+      var sdk = (interpreterPanel != null) ?  interpreterPanel.getSdk() : null;
       if (sdk != null && isImmutableSdk(sdk)) {
         validationErrors = List.of(
           PyBundle.message("python.unknown.project.synchronizer.this.interpreter.type.does.not.support.remote.project.creation"));
