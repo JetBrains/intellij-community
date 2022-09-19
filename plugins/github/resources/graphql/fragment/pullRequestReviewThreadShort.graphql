@@ -1,6 +1,0 @@
-fragment pullRequestReviewThreadShort on PullRequestReviewThread {
-  ...nodeInfo
-
-  isResolved
-  isOutdated
-}

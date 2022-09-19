@@ -13,7 +13,7 @@ import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThreadShort
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -49,7 +49,15 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
                                                                           pr.assignees.map { user ->
                                                                             createUserPresentation(avatarIconsProvider, user)
                                                                           }),
-                                      commentsCounter = getUnresolvedCommentsCount(pr.reviewThreads))
+                                      userGroup2 = NamedCollection.create(GithubBundle.message("pull.request.reviewers"),
+                                                                          pr.reviewRequests.mapNotNull { it.requestedReviewer }
+                                                                            .map { reviewer ->
+                                                                              createUserPresentation(avatarIconsProvider, reviewer)
+                                                                            }),
+                                      commentsCounter = ReviewListItemPresentation.CommentsCounter(
+                                        pr.unresolvedReviewThreadsCount,
+                                        GithubBundle.message("pull.request.unresolved.comments", pr.unresolvedReviewThreadsCount)
+                                      ))
 
   private fun getLabelPresentation(label: GHLabel) =
     TagPresentation.Simple(label.name, ColorHexUtil.fromHex(label.color))
@@ -68,12 +76,6 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
     return null
   }
 
-  private fun getUnresolvedCommentsCount(reviewThreads: List<GHPullRequestReviewThreadShort>): ReviewListItemPresentation.CommentsCounter {
-    val unresolvedCommentsCount = reviewThreads.filter { comment -> !comment.isResolved && !comment.isOutdated }.size
-    return ReviewListItemPresentation.CommentsCounter(unresolvedCommentsCount,
-                                                      GithubBundle.message("pull.request.unresolved.comments", unresolvedCommentsCount))
-  }
-
   private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHActor?): UserPresentation? {
     if (user == null) return null
     return UserPresentation.Simple(user.login, null, avatarIconsProvider.getIcon(user.avatarUrl, GHUIUtil.AVATAR_SIZE))
@@ -81,4 +83,8 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
 
   private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHUser): UserPresentation =
     UserPresentation.Simple(user.login, user.name, avatarIconsProvider.getIcon(user.avatarUrl, GHUIUtil.AVATAR_SIZE))
+
+  private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHPullRequestRequestedReviewer): UserPresentation {
+    return UserPresentation.Simple(user.shortName, user.name, avatarIconsProvider.getIcon(user.avatarUrl, GHUIUtil.AVATAR_SIZE))
+  }
 }
