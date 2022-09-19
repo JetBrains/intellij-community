@@ -696,6 +696,10 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Object = load("json/object.svg", 1575206082, 2);
   }
 
+  public static final class Linux {
+    /** 16x16 */ public static final @NotNull Icon Linux = load("linux/linux.svg", -1159824251, 2);
+  }
+
   /** 80x80 */ public static final @NotNull Icon Logo_welcomeScreen = load("Logo_welcomeScreen.png", 0, 1);
   /** 80x80 */ public static final @NotNull Icon Logo_welcomeScreen_CE = load("Logo_welcomeScreen_CE.png", 0, 1);
 
