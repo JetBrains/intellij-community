@@ -74,25 +74,28 @@ public class SwitchExpressionCanBePushedDownInspection extends AbstractBaseJavaL
       diffs[i] = cur;
     }
     if (ArrayUtil.contains(null, diffs)) return PsiExpression.EMPTY_ARRAY;
-    if (block instanceof PsiSwitchStatement && missesEnumConstants(block)) {
+    if (block instanceof PsiSwitchStatement statement && isNonExhaustiveSwitchStatement(statement)) {
       return PsiExpression.EMPTY_ARRAY;
     }
     return diffs;
   }
 
-  private static boolean missesEnumConstants(PsiSwitchBlock block) {
-    PsiExpression selector = block.getExpression();
+  private static boolean isNonExhaustiveSwitchStatement(PsiSwitchStatement statement) {
+    PsiExpression selector = statement.getExpression();
     if (selector == null) return false;
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(selector.getType());
-    if (selectorClass == null || !selectorClass.isEnum()) return false;
+    if (selectorClass == null || !selectorClass.isEnum()) {
+      return SwitchUtils.findDefaultElement(statement) == null;
+    }
     Set<PsiEnumConstant> missingConstants = StreamEx.of(selectorClass.getFields()).select(PsiEnumConstant.class).toMutableSet();
-    for (PsiSwitchLabelStatementBase child : PsiTreeUtil.getChildrenOfTypeAsList(block.getBody(), PsiSwitchLabelStatementBase.class)) {
+    for (PsiSwitchLabelStatementBase child : PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatementBase.class)) {
       if (SwitchUtils.findDefaultElement(child) != null) return false;
       for (PsiEnumConstant constant : SwitchUtils.findEnumConstants(child)) {
         missingConstants.remove(constant);
         if (missingConstants.isEmpty()) return false;
       }
     }
+    // Don't need to care about pattern switches (e.g., over sealed types), as non-exhaustive pattern switch statements are non-compilable
     return true;
   }
 
