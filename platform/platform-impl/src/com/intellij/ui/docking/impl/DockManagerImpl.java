@@ -290,9 +290,12 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       for (DockContainer each : getAllContainers()) {
         RelativeRectangle rec = each.getAcceptArea();
         if (rec.contains(point)) {
-          DockContainer.ContentResponse response = each.getContentResponse(myContent, point.toRelativePoint(each.getContainerComponent()));
-          if (response.canAccept()) {
-            return response;
+          JComponent component = each.getContainerComponent();
+          if (component.getGraphicsConfiguration() != null) {
+            DockContainer.ContentResponse response = each.getContentResponse(myContent, point.toRelativePoint(component));
+            if (response.canAccept()) {
+              return response;
+            }
           }
         }
       }
