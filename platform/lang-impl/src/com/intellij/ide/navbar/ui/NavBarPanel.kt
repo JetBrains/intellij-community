@@ -5,8 +5,10 @@ import com.intellij.ide.navbar.ide.ItemClickEvent
 import com.intellij.ide.navbar.ide.ItemSelectType.NAVIGATE
 import com.intellij.ide.navbar.ide.ItemSelectType.OPEN_POPUP
 import com.intellij.ide.navbar.ide.UiNavBarItem
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
@@ -91,10 +93,17 @@ internal class NavBarPanel(
 
   }
 
-  fun getItemPopupLocation(i: Int): Point {
+  fun getItemPopupLocation(i: Int, popupHint: NavigationBarPopup): Point {
     val itemComponent = myItemComponents.getOrNull(i) ?: return Point(0, 0)
     val relativeX = 0
-    val relativeY = itemComponent.height
+
+    val relativeY = if (ExperimentalUI.isNewUI() && UISettings.getInstance().showNavigationBarInBottom) {
+      -popupHint.component.preferredSize.height
+    }
+    else {
+      itemComponent.height
+    }
+
     val relativePoint = RelativePoint(itemComponent, Point(relativeX, relativeY))
     return relativePoint.getPoint(this)
   }

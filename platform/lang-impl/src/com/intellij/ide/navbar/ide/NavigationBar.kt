@@ -199,7 +199,7 @@ internal class NavigationBar(
         myComponent.scrollTo(selectedItemIndex)
         val nextItem = myItems.value.getOrNull(selectedItemIndex + 1)
         val popupHint = NavigationBarPopup(children, nextItem, it)
-        val absolutePoint = myComponent.getItemPopupLocation(selectedItemIndex)
+        val absolutePoint = myComponent.getItemPopupLocation(selectedItemIndex, popupHint)
         popupHint.show(myComponent, absolutePoint.x, absolutePoint.y, myComponent, HintHint(myComponent, absolutePoint))
       }
     }
