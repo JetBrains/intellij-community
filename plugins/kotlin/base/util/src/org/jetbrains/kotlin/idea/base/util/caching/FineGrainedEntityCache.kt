@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
-abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val project: Project, cleanOnLowMemory: Boolean): Disposable {
+abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val project: Project, cleanOnLowMemory: Boolean) : Disposable {
     private val invalidationStamp = InvalidationStamp()
     protected abstract val cache: MutableMap<Key, Value>
     protected val logger = Logger.getInstance(javaClass)
@@ -38,7 +38,7 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
         }
     }
 
-    protected abstract fun <T> useCache(block: (MutableMap<Key, Value>) -> T?): T?
+    protected abstract fun <T> useCache(block: (MutableMap<Key, Value>) -> T): T
 
     override fun dispose() {
         invalidate()
@@ -46,10 +46,7 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
 
     abstract operator fun get(key: Key): Value
 
-    fun values(): Collection<Value> =
-        useCache {
-            it.values
-        } ?: emptyList()
+    fun values(): Collection<Value> = useCache { it.values }
 
     protected fun checkEntitiesIfRequired(cache: MutableMap<Key, Value>) {
         if (isValidityChecksEnabled && invalidationStamp.isCheckRequired()) {
@@ -73,14 +70,14 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
 
     protected fun putAll(map: Map<Key, Value>) {
         if (isValidityChecksEnabled) {
-            for((key, value) in map) {
+            for ((key, value) in map) {
                 checkKeyValidity(key)
                 checkValueValidity(value)
             }
         }
 
         useCache { cache ->
-            for((key, value) in map) {
+            for ((key, value) in map) {
                 cache.putIfAbsent(key, value)
             }
         }
@@ -219,13 +216,14 @@ abstract class FineGrainedEntityCache<Key: Any, Value: Any>(protected val projec
     }
 }
 
-abstract class SynchronizedFineGrainedEntityCache<Key: Any, Value: Any>(project: Project, cleanOnLowMemory: Boolean): FineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory) {
+abstract class SynchronizedFineGrainedEntityCache<Key : Any, Value : Any>(project: Project, cleanOnLowMemory: Boolean) :
+    FineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory) {
     override val cache: MutableMap<Key, Value> by StorageProvider(project, javaClass) { HashMap() }
         @Deprecated("Do not use directly", level = DeprecationLevel.ERROR) get
 
     private val lock = Any()
 
-    final override fun <T> useCache(block: (MutableMap<Key, Value>) -> T?): T? =
+    final override fun <T> useCache(block: (MutableMap<Key, Value>) -> T): T =
         synchronized(lock) {
             @Suppress("DEPRECATION_ERROR")
             cache.run(block)
@@ -280,11 +278,12 @@ fun EntityStorage.findModuleWithHack(entity: ModuleEntity, project: Project) = e
 // TODO: workaround to bypass bug with new modules not present in storageAfter
 entity.findModule(WorkspaceModel.getInstance(project).entityStorage.current)
 
-abstract class LockFreeFineGrainedEntityCache<Key: Any, Value: Any>(project: Project, cleanOnLowMemory: Boolean): FineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory) {
+abstract class LockFreeFineGrainedEntityCache<Key : Any, Value : Any>(project: Project, cleanOnLowMemory: Boolean) :
+    FineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory) {
     override val cache: MutableMap<Key, Value> by StorageProvider(project, javaClass) { ConcurrentHashMap() }
         @Deprecated("Do not use directly", level = DeprecationLevel.ERROR) get
 
-    final override fun <T> useCache(block: (MutableMap<Key, Value>) -> T?): T? =
+    final override fun <T> useCache(block: (MutableMap<Key, Value>) -> T): T =
         @Suppress("DEPRECATION_ERROR")
         cache.run(block)
 
@@ -301,15 +300,15 @@ abstract class LockFreeFineGrainedEntityCache<Key: Any, Value: Any>(project: Pro
 
         return useCache { cache ->
             calculate(cache, key)
-        }!!
+        }
     }
 
-    abstract fun calculate(cache:MutableMap<Key, Value>, key: Key): Value
+    abstract fun calculate(cache: MutableMap<Key, Value>, key: Key): Value
 
 }
 
 
-class StorageProvider<Storage: Any>(
+class StorageProvider<Storage : Any>(
     private val project: Project,
     private val key: Class<*>,
     private val factory: () -> Storage
@@ -326,17 +325,17 @@ class StorageProvider<Storage: Any>(
     }
 }
 
-fun <T: Any> SynchronizedFineGrainedEntityCache<Unit, T>.get() = get(Unit)
+fun <T : Any> SynchronizedFineGrainedEntityCache<Unit, T>.get() = get(Unit)
 
 
-fun <T: WorkspaceEntity> EntityChange<T>.oldEntity() =
+fun <T : WorkspaceEntity> EntityChange<T>.oldEntity() =
     when (this) {
         is EntityChange.Added -> null
         is EntityChange.Removed -> entity
         is EntityChange.Replaced -> oldEntity
     }
 
-fun <T: WorkspaceEntity> EntityChange<T>.newEntity() =
+fun <T : WorkspaceEntity> EntityChange<T>.newEntity() =
     when (this) {
         is EntityChange.Added -> newEntity
         is EntityChange.Removed -> null
