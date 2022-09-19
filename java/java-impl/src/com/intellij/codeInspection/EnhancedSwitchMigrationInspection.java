@@ -192,7 +192,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
 
   private static boolean isConvertibleBranch(OldSwitchStatementBranch branch, boolean allowMultipleStatements, boolean hasNext) {
     int length = branch.getStatements().length;
-    if (length == 0) return branch.isFallthrough() && hasNext;
+    if (length == 0) return (branch.isFallthrough() && hasNext) || (!branch.isFallthrough() && branch.isDefault());
     if (branch.isFallthrough()) return false;
     if (allowMultipleStatements) return true;
     return length == 1;
