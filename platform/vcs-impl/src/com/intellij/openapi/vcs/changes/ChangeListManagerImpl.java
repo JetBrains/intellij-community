@@ -393,7 +393,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @Override
   public void waitForUpdate() {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    assert !ApplicationManager.getApplication().isReadAccessAllowed();
     CountDownLatch waiter = new CountDownLatch(1);
     invokeAfterUpdate(false, waiter::countDown);
     awaitWithCheckCanceled(waiter);
