@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.processings
+package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isNullExpres
 import org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveUselessCastFix
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.diagnosticBasedProcessing
+import org.jetbrains.kotlin.idea.j2k.post.processing.diagnosticBasedProcessing
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType

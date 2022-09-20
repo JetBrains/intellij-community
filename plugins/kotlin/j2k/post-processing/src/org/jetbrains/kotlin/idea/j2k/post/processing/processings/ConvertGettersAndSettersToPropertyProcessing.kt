@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.processings
+package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
@@ -57,8 +57,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.mapToIndex
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
-import org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.*
-import org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.JKInMemoryFilesSearcher
+import org.jetbrains.kotlin.idea.j2k.post.processing.*
 
 internal class ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPostProcessing() {
     override val options: PostProcessingOptions =
@@ -179,10 +178,10 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
     }
 
     private fun addGetter(
-      getter: Getter,
-      property: KtProperty,
-      factory: KtPsiFactory,
-      isFakeProperty: Boolean
+        getter: Getter,
+        property: KtProperty,
+        factory: KtPsiFactory,
+        isFakeProperty: Boolean
     ): KtPropertyAccessor {
         val body =
             if (isFakeProperty) getter.body
@@ -231,10 +230,10 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
     }
 
     private fun createSetter(
-      setter: Setter,
-      property: KtProperty,
-      factory: KtPsiFactory,
-      isFakeProperty: Boolean
+        setter: Setter,
+        property: KtProperty,
+        factory: KtPsiFactory,
+        isFakeProperty: Boolean
     ): KtPropertyAccessor {
         if (setter is RealSetter) {
             setter.function.valueParameters.single().rename(setter.parameterName)
@@ -277,9 +276,9 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
     }
 
     private fun savePossibleLeadingAndTrailingComments(
-      accessor: RealAccessor,
-      ktAccessor: KtPropertyAccessor,
-      factory: KtPsiFactory
+        accessor: RealAccessor,
+        ktAccessor: KtPropertyAccessor,
+        factory: KtPsiFactory
     ) {
         if (accessor.function.firstChild is PsiComment) {
             ktAccessor.addBefore(factory.createWhiteSpace(), ktAccessor.firstChild)
@@ -719,16 +718,16 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
 
 
 private data class PropertyWithAccessors(
-  val property: Property,
-  val getter: Getter,
-  val setter: Setter?
+    val property: Property,
+    val getter: Getter,
+    val setter: Setter?
 )
 
 private data class PropertyData(
-  val realProperty: RealProperty?,
-  val realGetter: RealGetter?,
-  val realSetter: RealSetter?,
-  val type: KotlinType
+    val realProperty: RealProperty?,
+    val realGetter: RealGetter?,
+    val realSetter: RealSetter?,
+    val type: KotlinType
 )
 
 private interface PropertyInfo {

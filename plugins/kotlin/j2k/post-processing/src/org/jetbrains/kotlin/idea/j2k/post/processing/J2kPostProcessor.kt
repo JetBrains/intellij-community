@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing
+package org.jetbrains.kotlin.idea.j2k.post.processing
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -26,8 +26,7 @@ import org.jetbrains.kotlin.j2k.PostProcessor
 import org.jetbrains.kotlin.j2k.files
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.idea.j2k.post.processing.KotlinNJ2KServicesBundle
-import org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.processings.*
+import org.jetbrains.kotlin.idea.j2k.post.processing.processings.*
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -95,59 +94,59 @@ class NewJ2kPostProcessor : PostProcessor {
 
 private val errorsFixingDiagnosticBasedPostProcessingGroup =
     DiagnosticBasedPostProcessingGroup(
-      diagnosticBasedProcessing(Errors.REDUNDANT_OPEN_IN_INTERFACE) { element: KtModifierListOwner, _ ->
+        diagnosticBasedProcessing(Errors.REDUNDANT_OPEN_IN_INTERFACE) { element: KtModifierListOwner, _ ->
             element.removeModifier(KtTokens.OPEN_KEYWORD)
         },
-      diagnosticBasedProcessing(Errors.PLATFORM_CLASS_MAPPED_TO_KOTLIN) { element: KtDotQualifiedExpression, _ ->
+        diagnosticBasedProcessing(Errors.PLATFORM_CLASS_MAPPED_TO_KOTLIN) { element: KtDotQualifiedExpression, _ ->
             val parent = element.parent as? KtImportDirective ?: return@diagnosticBasedProcessing
             parent.delete()
         },
 
-      diagnosticBasedProcessing(
+        diagnosticBasedProcessing(
             UnsafeCallExclExclFixFactory,
             Errors.UNSAFE_CALL,
             Errors.UNSAFE_INFIX_CALL,
             Errors.UNSAFE_OPERATOR_CALL
         ),
-      diagnosticBasedProcessing(
+        diagnosticBasedProcessing(
             MissingIteratorExclExclFixFactory,
             Errors.ITERATOR_ON_NULLABLE
         ),
-      diagnosticBasedProcessing(
+        diagnosticBasedProcessing(
             SmartCastImpossibleExclExclFixFactory,
             Errors.SMARTCAST_IMPOSSIBLE
         ),
 
-      diagnosticBasedProcessing(
+        diagnosticBasedProcessing(
             ReplacePrimitiveCastWithNumberConversionFix,
             Errors.CAST_NEVER_SUCCEEDS
         ),
-      diagnosticBasedProcessing(
+        diagnosticBasedProcessing(
             ChangeCallableReturnTypeFix.ReturnTypeMismatchOnOverrideFactory,
             Errors.RETURN_TYPE_MISMATCH_ON_OVERRIDE
         ),
 
-      diagnosticBasedProcessing(
+        diagnosticBasedProcessing(
             RemoveModifierFixBase.createRemoveProjectionFactory(true),
             Errors.REDUNDANT_PROJECTION
         ),
-      diagnosticBasedProcessing(
-          AddModifierFixFE10.createFactory(KtTokens.OVERRIDE_KEYWORD),
-          Errors.VIRTUAL_MEMBER_HIDDEN
+        diagnosticBasedProcessing(
+            AddModifierFixFE10.createFactory(KtTokens.OVERRIDE_KEYWORD),
+            Errors.VIRTUAL_MEMBER_HIDDEN
         ),
-      diagnosticBasedProcessing(
+        diagnosticBasedProcessing(
             RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.OPEN_KEYWORD),
             Errors.NON_FINAL_MEMBER_IN_FINAL_CLASS, Errors.NON_FINAL_MEMBER_IN_OBJECT
         ),
-      diagnosticBasedProcessing(
+        diagnosticBasedProcessing(
             MakeVisibleFactory,
             Errors.INVISIBLE_MEMBER
         ),
-      diagnosticBasedProcessing(
+        diagnosticBasedProcessing(
             RemoveModifierFixBase.removeNonRedundantModifier,
             Errors.WRONG_MODIFIER_TARGET
         ),
-      diagnosticBasedProcessing(
+        diagnosticBasedProcessing(
             ChangeVisibilityOnExposureFactory,
             Errors.EXPOSED_FUNCTION_RETURN_TYPE,
             Errors.EXPOSED_PARAMETER_TYPE,
@@ -158,8 +157,8 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
             Errors.EXPOSED_SUPER_CLASS,
             Errors.EXPOSED_SUPER_INTERFACE
         ),
-      fixValToVarDiagnosticBasedProcessing,
-      fixTypeMismatchDiagnosticBasedProcessing
+        fixValToVarDiagnosticBasedProcessing,
+        fixTypeMismatchDiagnosticBasedProcessing
     )
 
 
@@ -167,9 +166,9 @@ private val addOrRemoveModifiersProcessingGroup =
     InspectionLikeProcessingGroup(
         runSingleTime = true,
         processings = listOf(
-          RemoveRedundantVisibilityModifierProcessing(),
-          RemoveRedundantModalityModifierProcessing(),
-          inspectionBasedProcessing(AddOperatorModifierInspection(), writeActionNeeded = false),
+            RemoveRedundantVisibilityModifierProcessing(),
+            RemoveRedundantModalityModifierProcessing(),
+            inspectionBasedProcessing(AddOperatorModifierInspection(), writeActionNeeded = false),
         )
     )
 
@@ -177,69 +176,69 @@ private val removeRedundantElementsProcessingGroup =
     InspectionLikeProcessingGroup(
         runSingleTime = true,
         processings = listOf(
-          RemoveExplicitTypeArgumentsProcessing(),
-          RemoveJavaStreamsCollectCallTypeArgumentsProcessing(),
-          ExplicitThisInspectionBasedProcessing(),
-          RemoveOpenModifierOnTopLevelDeclarationsProcessing(),
-          inspectionBasedProcessing(KotlinInspectionFacade.instance.removeEmptyClassBody)
+            RemoveExplicitTypeArgumentsProcessing(),
+            RemoveJavaStreamsCollectCallTypeArgumentsProcessing(),
+            ExplicitThisInspectionBasedProcessing(),
+            RemoveOpenModifierOnTopLevelDeclarationsProcessing(),
+            inspectionBasedProcessing(KotlinInspectionFacade.instance.removeEmptyClassBody)
         )
     )
 
 private val inspectionLikePostProcessingGroup =
     InspectionLikeProcessingGroup(
-      RemoveRedundantConstructorKeywordProcessing(),
-      RemoveExplicitOpenInInterfaceProcessing(),
-      RemoveRedundantOverrideVisibilityProcessing(),
-      MoveLambdaOutsideParenthesesProcessing(),
-      intentionBasedProcessing(ConvertToStringTemplateIntention(), writeActionNeeded = false) {
+        RemoveRedundantConstructorKeywordProcessing(),
+        RemoveExplicitOpenInInterfaceProcessing(),
+        RemoveRedundantOverrideVisibilityProcessing(),
+        MoveLambdaOutsideParenthesesProcessing(),
+        intentionBasedProcessing(ConvertToStringTemplateIntention(), writeActionNeeded = false) {
             ConvertToStringTemplateIntention.shouldSuggestToConvert(it)
         },
-      intentionBasedProcessing(UsePropertyAccessSyntaxIntention(), writeActionNeeded = false),
-      UninitializedVariableReferenceFromInitializerToThisReferenceProcessing(),
-      UnresolvedVariableReferenceFromInitializerToThisReferenceProcessing(),
-      RemoveRedundantSamAdaptersProcessing(),
-      RemoveRedundantCastToNullableProcessing(),
-      inspectionBasedProcessing(ReplacePutWithAssignmentInspection()),
-      ReplaceGetterBodyWithSingleReturnStatementWithExpressionBody(),
-      inspectionBasedProcessing(UnnecessaryVariableInspection(), writeActionNeeded = false),
-      RedundantExplicitTypeInspectionBasedProcessing(),
-      JavaObjectEqualsToEqOperatorProcessing(),
-      RemoveExplicitPropertyTypeProcessing(),
-      RemoveRedundantNullabilityProcessing(),
-      CanBeValInspectionBasedProcessing(),
-      inspectionBasedProcessing(FoldInitializerAndIfToElvisInspection(), writeActionNeeded = false),
-      inspectionBasedProcessing(JavaMapForEachInspection()),
-      intentionBasedProcessing(FoldIfToReturnIntention()) { it.then.isTrivialStatementBody() && it.`else`.isTrivialStatementBody() },
-      intentionBasedProcessing(FoldIfToReturnAsymmetricallyIntention()) {
+        intentionBasedProcessing(UsePropertyAccessSyntaxIntention(), writeActionNeeded = false),
+        UninitializedVariableReferenceFromInitializerToThisReferenceProcessing(),
+        UnresolvedVariableReferenceFromInitializerToThisReferenceProcessing(),
+        RemoveRedundantSamAdaptersProcessing(),
+        RemoveRedundantCastToNullableProcessing(),
+        inspectionBasedProcessing(ReplacePutWithAssignmentInspection()),
+        ReplaceGetterBodyWithSingleReturnStatementWithExpressionBody(),
+        inspectionBasedProcessing(UnnecessaryVariableInspection(), writeActionNeeded = false),
+        RedundantExplicitTypeInspectionBasedProcessing(),
+        JavaObjectEqualsToEqOperatorProcessing(),
+        RemoveExplicitPropertyTypeProcessing(),
+        RemoveRedundantNullabilityProcessing(),
+        CanBeValInspectionBasedProcessing(),
+        inspectionBasedProcessing(FoldInitializerAndIfToElvisInspection(), writeActionNeeded = false),
+        inspectionBasedProcessing(JavaMapForEachInspection()),
+        intentionBasedProcessing(FoldIfToReturnIntention()) { it.then.isTrivialStatementBody() && it.`else`.isTrivialStatementBody() },
+        intentionBasedProcessing(FoldIfToReturnAsymmetricallyIntention()) {
             it.then.isTrivialStatementBody() && (KtPsiUtil.skipTrailingWhitespacesAndComments(
                 it
             ) as KtReturnExpression).returnedExpression.isTrivialStatementBody()
         },
-      inspectionBasedProcessing(IfThenToSafeAccessInspection(inlineWithPrompt = false), writeActionNeeded = false),
-      inspectionBasedProcessing(IfThenToElvisInspection(highlightStatement = true, inlineWithPrompt = false), writeActionNeeded = false),
-      inspectionBasedProcessing(KotlinInspectionFacade.instance.simplifyNegatedBinaryExpression),
-      inspectionBasedProcessing(ReplaceGetOrSetInspection()),
-      intentionBasedProcessing(ObjectLiteralToLambdaIntention(), writeActionNeeded = true),
-      intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()),
-      intentionBasedProcessing(DestructureIntention(), writeActionNeeded = false),
-      inspectionBasedProcessing(SimplifyAssertNotNullInspection()),
-      intentionBasedProcessing(RemoveRedundantCallsOfConversionMethodsIntention()),
-      LiftReturnInspectionBasedProcessing(),
-      LiftAssignmentInspectionBasedProcessing(),
-      intentionBasedProcessing(RemoveEmptyPrimaryConstructorIntention()),
-      MayBeConstantInspectionBasedProcessing(),
-      RemoveForExpressionLoopParameterTypeProcessing(),
-      intentionBasedProcessing(ReplaceMapGetOrDefaultIntention()),
-      inspectionBasedProcessing(ReplaceGuardClauseWithFunctionCallInspection()),
-      inspectionBasedProcessing(KotlinInspectionFacade.instance.sortModifiers),
-      intentionBasedProcessing(ConvertToRawStringTemplateIntention()) { element ->
+        inspectionBasedProcessing(IfThenToSafeAccessInspection(inlineWithPrompt = false), writeActionNeeded = false),
+        inspectionBasedProcessing(IfThenToElvisInspection(highlightStatement = true, inlineWithPrompt = false), writeActionNeeded = false),
+        inspectionBasedProcessing(KotlinInspectionFacade.instance.simplifyNegatedBinaryExpression),
+        inspectionBasedProcessing(ReplaceGetOrSetInspection()),
+        intentionBasedProcessing(ObjectLiteralToLambdaIntention(), writeActionNeeded = true),
+        intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()),
+        intentionBasedProcessing(DestructureIntention(), writeActionNeeded = false),
+        inspectionBasedProcessing(SimplifyAssertNotNullInspection()),
+        intentionBasedProcessing(RemoveRedundantCallsOfConversionMethodsIntention()),
+        LiftReturnInspectionBasedProcessing(),
+        LiftAssignmentInspectionBasedProcessing(),
+        intentionBasedProcessing(RemoveEmptyPrimaryConstructorIntention()),
+        MayBeConstantInspectionBasedProcessing(),
+        RemoveForExpressionLoopParameterTypeProcessing(),
+        intentionBasedProcessing(ReplaceMapGetOrDefaultIntention()),
+        inspectionBasedProcessing(ReplaceGuardClauseWithFunctionCallInspection()),
+        inspectionBasedProcessing(KotlinInspectionFacade.instance.sortModifiers),
+        intentionBasedProcessing(ConvertToRawStringTemplateIntention()) { element ->
             element.parents.none {
                 (it as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true
             } && ConvertToStringTemplateIntention.buildReplacement(element).entries.any {
                 (it as? KtEscapeStringTemplateEntry)?.unescapedValue == "\n"
             }
         },
-      intentionBasedProcessing(IndentRawStringIntention())
+        intentionBasedProcessing(IndentRawStringIntention())
     )
 
 
@@ -252,7 +251,7 @@ private val cleaningUpDiagnosticBasedPostProcessingGroup =
 
 
 private val processings: List<NamedPostProcessingGroup> = listOf(
-  NamedPostProcessingGroup(
+    NamedPostProcessingGroup(
         KotlinNJ2KServicesBundle.message("processing.step.inferring.types"),
         listOf(
             InspectionLikeProcessingGroup(
@@ -267,7 +266,7 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
             ClearUnknownLabelsProcessing()
         )
     ),
-  NamedPostProcessingGroup(
+    NamedPostProcessingGroup(
         KotlinNJ2KServicesBundle.message("processing.step.cleaning.up.code"),
         listOf(
             InspectionLikeProcessingGroup(VarToValProcessing()),
@@ -285,12 +284,12 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
             cleaningUpDiagnosticBasedPostProcessingGroup
         )
     ),
-  NamedPostProcessingGroup(
+    NamedPostProcessingGroup(
         KotlinNJ2KServicesBundle.message("processing.step.optimizing.imports.and.formatting.code"),
         listOf(
-          ShortenReferenceProcessing(),
-          OptimizeImportsProcessing(),
-          FormatCodeProcessing()
+            ShortenReferenceProcessing(),
+            OptimizeImportsProcessing(),
+            FormatCodeProcessing()
         )
     )
 )

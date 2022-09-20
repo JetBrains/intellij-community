@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.processings
+package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.FunctionConstraintsCollector
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.mutability.*
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability.*
-import org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.ElementsBasedPostProcessing
+import org.jetbrains.kotlin.idea.j2k.post.processing.ElementsBasedPostProcessing
 import org.jetbrains.kotlin.psi.KtElement
 
 internal abstract class InferenceProcessing : ElementsBasedPostProcessing() {
