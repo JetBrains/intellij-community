@@ -391,23 +391,6 @@ public class Element extends Content implements Parent, Serializable {
   }
 
   /**
-   * Removes an additional namespace declarations from this element. This
-   * should <i>not</i> be used to remove the declaration for this element
-   * itself; that should be handled in the construction of the element.
-   * Instead, this is for removing namespace declarations on the element not
-   * relating directly to itself. If the declaration is not present, this
-   * method does nothing.
-   *
-   * @param additionalNamespace namespace to remove. A null Namespace does nothing.
-   */
-  public void removeNamespaceDeclaration(final Namespace additionalNamespace) {
-    if (additionalNamespaces == null) {
-      return;
-    }
-    additionalNamespaces.remove(additionalNamespace);
-  }
-
-  /**
    * Returns a list of the additional namespace declarations on this element.
    * This includes only additional namespace, not the namespace of the element
    * itself, which can be obtained through {@link #getNamespace()}. If there
@@ -1580,7 +1563,6 @@ public class Element extends Content implements Parent, Serializable {
    *
    * @see NamespaceAware
    */
-  @Override
   public List<Namespace> getNamespacesInScope() {
     // The assumption here is that all namespaces are valid,
     // that there are no namespace collisions on this element
@@ -1631,7 +1613,8 @@ public class Element extends Content implements Parent, Serializable {
     return Collections.unmodifiableList(al);
   }
 
-  @Override
+  // used externally
+  @SuppressWarnings("unused")
   public List<Namespace> getNamespacesIntroduced() {
     if (getParentElement() == null) {
       // we introduce everything... except Namespace.XML_NAMESPACE
@@ -1666,9 +1649,12 @@ public class Element extends Content implements Parent, Serializable {
   @Override
   public void canContainContent(Content child, int index, boolean replace) throws IllegalAddException {
     if (child instanceof DocType) {
-      throw new IllegalAddException(
-        "A DocType is not allowed except at the document level");
+      throw new IllegalAddException("A DocType is not allowed except at the document level");
     }
+  }
+
+  public boolean isEmpty() {
+    return !hasAttributes() && getContent().isEmpty();
   }
 
   /**

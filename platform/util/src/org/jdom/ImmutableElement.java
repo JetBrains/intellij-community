@@ -333,11 +333,6 @@ final class ImmutableElement extends Element {
   }
 
   @Override
-  public void removeNamespaceDeclaration(Namespace additionalNamespace) {
-    throw immutableError(this);
-  }
-
-  @Override
   public Element setText(String text) {
     throw immutableError(this);
   }

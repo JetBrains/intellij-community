@@ -731,19 +731,6 @@ public final class Document extends CloneBase implements Parent, Serializable {
     }
   }
 
-  @Override
-  public List<Namespace> getNamespacesInScope() {
-    //noinspection SSBasedInspection
-    return Collections.unmodifiableList(Arrays.asList(Namespace.NO_NAMESPACE, Namespace.XML_NAMESPACE));
-  }
-
-  @Override
-  public List<Namespace> getNamespacesIntroduced() {
-    //noinspection SSBasedInspection
-    return Collections.unmodifiableList(Arrays.asList(Namespace.NO_NAMESPACE, Namespace.XML_NAMESPACE));
-  }
-
-
   /**
    * JDOM2 Serialization. In this case, DocType is simple.
    */

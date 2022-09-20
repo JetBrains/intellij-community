@@ -685,7 +685,7 @@ public final class JDOMUtil {
   }
 
   public static boolean isEmpty(@Nullable Element element) {
-    return element == null || (!element.hasAttributes() && element.getContent().isEmpty());
+    return element == null || element.isEmpty();
   }
 
   public static boolean isEmpty(@Nullable Element element, int attributeCount) {
