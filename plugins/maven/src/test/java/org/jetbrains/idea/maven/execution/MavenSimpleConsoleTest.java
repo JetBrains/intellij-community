@@ -145,11 +145,11 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
   }
 
   public void testAnsiColors() {
-    List<Pair<String, Key<String>>> expected = new ArrayList<>() {{
-      add(new Pair<>("[", Key.create("color1")));
-      add(new Pair<>("INFO", Key.create("color2")));
-      add(new Pair<>("]\n", Key.create("color1")));
-    }};
+    List<Pair<String, Key<String>>> expected = List.of(
+      new Pair<>("[", Key.create("color1")),
+      new Pair<>("INFO", Key.create("color2")),
+      new Pair<>("]\n", Key.create("color1"))
+    );
     List<Pair<String, Key<String>>> actual = new ArrayList<>();
     MavenSimpleConsoleEventsBuffer buffer =
       new MavenSimpleConsoleEventsBuffer((l, k) -> actual.add(new Pair<>(l, k)), false);
