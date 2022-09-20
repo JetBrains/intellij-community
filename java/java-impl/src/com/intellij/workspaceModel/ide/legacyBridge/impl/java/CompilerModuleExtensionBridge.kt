@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.ModuleExtension
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -30,7 +30,7 @@ class CompilerModuleExtensionBridge(
   private val virtualFileManager = VirtualFileUrlManager.getInstance(module.project)
 
   private val javaSettings: JavaModuleSettingsEntity?
-    get() = entityStorage.current.findModuleEntity(module)?.javaSettings
+    get() = module.findModuleEntity(entityStorage.current)?.javaSettings
 
   private fun getSanitizedModuleName(): String =
     module.moduleFile?.nameWithoutExtension ?: module.name
@@ -73,7 +73,7 @@ class CompilerModuleExtensionBridge(
       error("Read-only $javaClass")
     }
 
-    val moduleEntity = entityStorage.current.findModuleEntity(module)
+    val moduleEntity = module.findModuleEntity(entityStorage.current)
                        ?: error("Could not find entity for $module, ${module.hashCode()}, diff: ${entityStorage.base}")
     val moduleSource = moduleEntity.entitySource
 

@@ -19,7 +19,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
@@ -130,7 +129,7 @@ internal class ModuleBridgeImpl(
   }
 
   override fun getOptionValue(key: String): String? {
-    val moduleEntity = entityStorage.current.findModuleEntity(this)
+    val moduleEntity = this.findModuleEntity(entityStorage.current)
     if (key == Module.ELEMENT_TYPE) {
       return moduleEntity?.type
     }
@@ -164,7 +163,7 @@ internal class ModuleBridgeImpl(
 
     val diff = diff
     if (diff != null) {
-      val entity = entityStorage.current.findModuleEntity(this)
+      val entity = this.findModuleEntity(entityStorage.current)
       if (entity != null) {
         updateOptionInEntity(diff, entity)
       }
@@ -174,7 +173,7 @@ internal class ModuleBridgeImpl(
       if (getOptionValue(key) != value) {
         WriteAction.runAndWait<RuntimeException> {
           WorkspaceModel.getInstance(project).updateProjectModel { builder ->
-            val entity = builder.findModuleEntity(this)
+            val entity = this.findModuleEntity(builder)
             if (entity != null) {
               updateOptionInEntity(builder, entity)
             }

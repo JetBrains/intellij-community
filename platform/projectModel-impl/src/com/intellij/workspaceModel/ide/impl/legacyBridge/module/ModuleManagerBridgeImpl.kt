@@ -440,11 +440,12 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       get() = getMutableExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
     @JvmStatic
+    @Deprecated("Use ModuleBridgeUtils#findModuleEntity instead")
     fun EntityStorage.findModuleEntity(module: ModuleBridge) = moduleMap.getEntities(module).firstOrNull() as ModuleEntity?
 
 
     internal fun getModuleGroupPath(module: Module, entityStorage: VersionedEntityStorage): Array<String>? {
-      val moduleEntity = entityStorage.current.findModuleEntity(module as ModuleBridge) ?: return null
+      val moduleEntity = (module as ModuleBridge).findModuleEntity(entityStorage.current) ?: return null
       return moduleEntity.groupPath?.path?.toTypedArray()
     }
 
@@ -476,7 +477,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       newSource: EntitySource,
       moduleDiff: MutableEntityStorage?,
     ) {
-      val oldEntitySource = moduleEntityStore.findModuleEntity(module)?.entitySource ?: return
+      val oldEntitySource = module.findModuleEntity(moduleEntityStore)?.entitySource ?: return
       fun changeSources(diffBuilder: MutableEntityStorage, storage: EntityStorage) {
         val entitiesMap = storage.entitiesBySource { it == oldEntitySource }
         entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatten() }.forEach {

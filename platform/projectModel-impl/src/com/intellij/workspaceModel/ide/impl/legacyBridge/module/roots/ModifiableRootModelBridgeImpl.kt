@@ -17,13 +17,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtilRt
-import com.intellij.util.ExceptionUtil
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
@@ -72,7 +71,7 @@ class ModifiableRootModelBridgeImpl(
     //   The case: we rename the module. Since the changes not yet committed, the module will remain with the old persistentId. After that
     //   we try to get modifiableRootModel. In general case it would work fine because the builder will be based on main store, but
     //   in case of gradle/maven import we take the builder that was used for renaming. So, the old name cannot be found in the new store.
-    return current.resolve(myModuleBridge.moduleEntityId) ?: current.findModuleEntity(myModuleBridge)
+    return current.resolve(myModuleBridge.moduleEntityId) ?: myModuleBridge.findModuleEntity(current)
   }
 
   override fun getModificationCount(): Long = diff.modificationCount
@@ -113,7 +112,7 @@ class ModifiableRootModelBridgeImpl(
    * library referenced from [LibraryOrderEntry] is renamed).
    */
   private val orderEntriesArrayValue: CachedValue<Array<OrderEntry>> = CachedValue { storage ->
-    val dependencies = storage.findModuleEntity(module)?.dependencies ?: return@CachedValue emptyArray()
+    val dependencies = module.findModuleEntity(storage)?.dependencies ?: return@CachedValue emptyArray()
     if (mutableOrderEntries.size == dependencies.size) {
       //keep old instances of OrderEntries if possible (i.e. if only some properties of order entries were changes via WorkspaceModel)
       for (i in mutableOrderEntries.indices) {
@@ -137,7 +136,7 @@ class ModifiableRootModelBridgeImpl(
     }
 
   private val contentEntriesImplValue: CachedValue<List<ModifiableContentEntryBridge>> = CachedValue { storage ->
-    val moduleEntity = storage.findModuleEntity(module) ?: return@CachedValue emptyList<ModifiableContentEntryBridge>()
+    val moduleEntity = module.findModuleEntity(storage) ?: return@CachedValue emptyList<ModifiableContentEntryBridge>()
     val contentEntries = moduleEntity.contentRoots.sortedBy { it.url.url }.toList()
 
     contentEntries.map {

@@ -24,7 +24,7 @@ import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
@@ -96,7 +96,7 @@ class ModuleBridgesTest {
       val contentRootUrl = temporaryDirectoryRule.newPath("contentRoot").toVirtualFileUrl(virtualFileManager)
 
       WorkspaceModel.getInstance(project).updateProjectModel {
-        val moduleEntity = it.findModuleEntity(module)!!
+        val moduleEntity = module.findModuleEntity(it)!!
         it.addContentRootEntity(contentRootUrl, emptyList(), emptyList(), moduleEntity)
       }
 

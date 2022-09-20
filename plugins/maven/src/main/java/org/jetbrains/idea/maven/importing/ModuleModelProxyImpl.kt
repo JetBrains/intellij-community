@@ -12,9 +12,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.map2Array
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
@@ -71,7 +71,7 @@ class ModuleModelProxyImpl(private val diff: MutableEntityStorage,
       return
     }
     if (module !is ModuleBridge) return
-    val moduleEntity: ModuleEntity = diff.findModuleEntity(module) ?: return //MavenProjectImporterImpl.LOG.error("Could not find module entity to remove by $module");
+    val moduleEntity: ModuleEntity = module.findModuleEntity(diff) ?: return //MavenProjectImporterImpl.LOG.error("Could not find module entity to remove by $module");
 
     moduleEntity.dependencies
       .asSequence()
@@ -126,7 +126,7 @@ class ModuleModelProxyImpl(private val diff: MutableEntityStorage,
   override fun setModuleGroupPath(module: Module, groupPath: Array<String>?) {
     if (module !is ModuleBridge) return
 
-    val moduleEntity = diff.findModuleEntity(module) ?: error("Could not resolve module entity for $module")
+    val moduleEntity = module.findModuleEntity(diff) ?: error("Could not resolve module entity for $module")
     val moduleGroupEntity = moduleEntity.groupPath
     val groupPathList = groupPath?.toMutableList()
 

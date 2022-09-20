@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.impl.RootModelBase
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
@@ -125,7 +125,7 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
         it.createExtension(module, storage, diff)
       }
 
-      val moduleEntity = storage.current.findModuleEntity(module)
+      val moduleEntity = module.findModuleEntity(storage.current)
       val rootManagerElement = moduleEntity?.customImlData?.rootManagerTagCustomData?.let { JDOMUtil.load(it) }
 
       for (extension in ModuleRootManagerEx.MODULE_EXTENSION_NAME.getExtensions(module)) {
