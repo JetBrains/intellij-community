@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.rd.util
 
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.jetbrains.rd.framework.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isEternal
@@ -16,6 +18,13 @@ private val uiDispatcherWithInlining get() = RdCoroutineHost.instance.uiDispatch
 private val uiDispatcherAnyModality get() = RdCoroutineHost.instance.uiDispatcherAnyModality
 
 fun Lifetime.launchOnUi(
+  start: CoroutineStart = CoroutineStart.DEFAULT,
+  action: suspend CoroutineScope.() -> Unit
+): Job {
+  return launch(uiDispatcher + ModalityState.defaultModalityState().asContextElement(), start, action)
+}
+
+fun Lifetime.launchOnUiNonModal(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(uiDispatcher, start, action)
@@ -58,6 +67,11 @@ fun Lifetime.launchNonUrgentBackground(
 ): Job = launch(nonUrgentDispatcher, start, action)
 
 fun <T> Lifetime.startOnUiAsync(
+  start: CoroutineStart = CoroutineStart.DEFAULT,
+  action: suspend CoroutineScope.() -> T
+): Deferred<T> = startAsync(uiDispatcher + ModalityState.defaultModalityState().asContextElement(), start, action)
+
+fun <T> Lifetime.startOnUiNonModalAsync(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> T
 ): Deferred<T> = startAsync(uiDispatcher, start, action)
