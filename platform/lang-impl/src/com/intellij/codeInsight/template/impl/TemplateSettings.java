@@ -2,9 +2,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.DynamicBundle;
-import com.intellij.codeInsight.template.Macro;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.*;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -42,6 +40,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
+
+import static com.intellij.codeInsight.template.impl.TemplateContext.contextsEqual;
 
 @State(
   name = "TemplateSettings",
@@ -227,9 +227,10 @@ public final class TemplateSettings implements PersistentStateComponent<Template
         if (template.isModified()) {
           return SchemeState.POSSIBLY_CHANGED;
         }
+        LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
 
         for (TemplateImpl t : template.getElements()) {
-          if (differsFromDefault(t)) {
+          if (differsFromDefault(allContexts, t)) {
             return SchemeState.POSSIBLY_CHANGED;
           }
         }
@@ -245,9 +246,10 @@ public final class TemplateSettings implements PersistentStateComponent<Template
         if (!elements.isEmpty()) {
           boolean isGroupAttributeAdded = false;
           Lazy<Map<String, TemplateContextType>> idToType = TemplateContext.getIdToType();
+          LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
           for (TemplateImpl t : elements) {
             TemplateImpl defaultTemplate = getDefaultTemplate(t);
-            if (defaultTemplate == null || !t.equals(defaultTemplate) || !t.contextsEqual(defaultTemplate)) {
+            if (defaultTemplate == null || !t.equals(defaultTemplate) || !contextsEqual(allContexts, t, defaultTemplate)) {
               if (!isGroupAttributeAdded) {
                 isGroupAttributeAdded = true;
                 // add attribute only if not empty to avoid empty file (due to group attribute element will be not considered as empty)
@@ -305,9 +307,13 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     return ApplicationManager.getApplication().getService(TemplateSettings.class);
   }
 
-  boolean differsFromDefault(@NotNull TemplateImpl t) {
+  private boolean differsFromDefault(@NotNull LiveTemplateContextsSnapshot allContexts, @NotNull TemplateImpl t) {
     TemplateImpl def = getDefaultTemplate(t);
-    return def == null || !t.equals(def) || !t.contextsEqual(def);
+    return def == null || !t.equals(def) || !contextsEqual(allContexts, t, def);
+  }
+
+  boolean differsFromDefault(@NotNull TemplateImpl t) {
+    return differsFromDefault(LiveTemplateContextService.getInstance().getSnapshot(), t);
   }
 
   @Nullable
@@ -597,8 +603,10 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     return defTemplate.substring(defTemplate.lastIndexOf('/') + 1);
   }
 
-  @Nullable
-  private static TemplateGroup parseTemplateGroup(@NotNull Element element, @NonNls String defGroupName, @NotNull ClassLoader classLoader) {
+
+  private static @Nullable TemplateGroup parseTemplateGroup(@NotNull Element element,
+                                                            @NonNls String defGroupName,
+                                                            @NotNull ClassLoader classLoader) {
     if (!TEMPLATE_SET.equals(element.getName())) {
       LOG.error("Ignore invalid template scheme: " + JDOMUtil.writeElement(element));
       return null;
@@ -609,11 +617,11 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       groupName = defGroupName;
     }
 
+    LiveTemplateContextService ltContextService = LiveTemplateContextService.getInstance();
     TemplateGroup result = new TemplateGroup(groupName, element.getAttributeValue("REPLACE"));
-
     for (Element child : element.getChildren(TEMPLATE)) {
       try {
-        result.addElement(readTemplateFromElement(groupName, child, classLoader));
+        result.addElement(readTemplateFromElement(groupName, child, classLoader, ltContextService));
       }
       catch (Exception e) {
         LOG.warn("failed to load template " + element.getAttributeValue(NAME), e);
@@ -675,7 +683,20 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     return result.isEmpty() ? null : result;
   }
 
-  public static TemplateImpl readTemplateFromElement(final String groupName, @NotNull Element element, @NotNull ClassLoader classLoader) {
+  /**
+   * @deprecated Use {@link com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils} if needed for postfix templates.
+   */
+  @Deprecated
+  public static TemplateImpl readTemplateFromElement(String groupName,
+                                                     @NotNull Element element,
+                                                     @NotNull ClassLoader classLoader) {
+    return readTemplateFromElement(groupName, element, classLoader, LiveTemplateContextService.getInstance());
+  }
+
+  public static TemplateImpl readTemplateFromElement(String groupName,
+                                                     @NotNull Element element,
+                                                     @NotNull ClassLoader classLoader,
+                                                     @NotNull LiveTemplateContextService ltContextService) {
     String name = element.getAttributeValue(NAME);
     String value = element.getAttributeValue(VALUE);
     String description;
@@ -712,14 +733,15 @@ public final class TemplateSettings implements PersistentStateComponent<Template
 
     Element context = element.getChild(CONTEXT);
     if (context != null) {
-      template.getTemplateContext().readTemplateContext(context);
+      template.getTemplateContext().readTemplateContext(context, ltContextService);
     }
 
     return template;
   }
 
-  @NotNull
-  public static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateImpl defaultTemplate, @NotNull Lazy<Map<String, TemplateContextType>> idToType) {
+  public static @NotNull Element serializeTemplate(@NotNull TemplateImpl template,
+                                                   @Nullable TemplateImpl defaultTemplate,
+                                                   @NotNull Lazy<Map<String, TemplateContextType>> idToType) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
     if (id != null) {

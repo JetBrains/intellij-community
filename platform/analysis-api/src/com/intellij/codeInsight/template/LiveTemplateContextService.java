@@ -4,6 +4,7 @@ package com.intellij.codeInsight.template;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service(Service.Level.APP)
+@ApiStatus.Internal
 public final class LiveTemplateContextService implements Disposable {
   private final ReadWriteLock myRwLock = new ReentrantReadWriteLock();
 
@@ -43,7 +45,9 @@ public final class LiveTemplateContextService implements Disposable {
     }
   }
 
-  public @Nullable LiveTemplateContext getLiveTemplateContext(@NotNull String id) {
+  public @Nullable LiveTemplateContext getLiveTemplateContext(@Nullable String id) {
+    if (id == null) return null;
+
     myRwLock.readLock().lock();
     try {
       return myLiveTemplateIds.get(id);
@@ -130,6 +134,16 @@ public final class LiveTemplateContextService implements Disposable {
     }
     finally {
       myRwLock.writeLock().unlock();
+    }
+  }
+
+  public @NotNull LiveTemplateContextsSnapshot getSnapshot() {
+    myRwLock.readLock().lock();
+    try {
+      return new LiveTemplateContextsSnapshot(myLiveTemplateIds); // myLiveTemplateIds is immutable
+    }
+    finally {
+      myRwLock.readLock().unlock();
     }
   }
 

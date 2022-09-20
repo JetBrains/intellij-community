@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.LiveTemplateContextService;
+import com.intellij.codeInsight.template.LiveTemplateContextsSnapshot;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -41,6 +43,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
+
+import static com.intellij.codeInsight.template.impl.TemplateContext.getDifference;
+import static com.intellij.codeInsight.template.impl.TemplateContext.getDifferenceType;
 
 public class TemplateListPanel extends JPanel implements Disposable {
   private static final String NO_SELECTION = "NoSelection";
@@ -171,9 +176,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
         original.setModified(true);
       }
       else {
+        LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
+
         // TemplateImpl.equals doesn't compare context and  I (develar) don't want to risk and change this behavior, so, we compare it explicitly
         for (int i = 0; i < originalElements.size(); i++) {
-          if (originalElements.get(i).getTemplateContext().getDifference(copiedElements.get(i).getTemplateContext()) != null) {
+          if (getDifference(allContexts, originalElements.get(i).getTemplateContext(), copiedElements.get(i).getTemplateContext()) != null) {
             original.setModified(true);
             break;
           }
@@ -247,16 +254,18 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private String checkAreEqual(@NotNull List<? extends TemplateImpl> originalGroup, @NotNull List<? extends TemplateImpl> newGroup) {
     if (originalGroup.size() != newGroup.size()) return "different sizes";
 
+    LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
+
     for (int i = 0; i < newGroup.size(); i++) {
       TemplateImpl t1 = newGroup.get(i);
       TemplateImpl t2 = originalGroup.get(i);
-      if (templatesDiffer(t1, t2)) {
+      if (templatesDiffer(allContexts, t1, t2)) {
         if (isTest) {
           return "Templates differ: new=" + t1 + "; original=" + t2 +
                  "; equals=" + t1.equals(t2) +
                  "; vars=" + t1.getVariables().equals(t2.getVariables()) +
                  "; options=" + areOptionsEqual(t1, t2) +
-                 "; diff=" + getTemplateContext(t1).getDifferenceType(t2.getTemplateContext()) +
+                 "; diff=" + getDifferenceType(allContexts, getTemplateContext(t1), t2.getTemplateContext()) +
                  "\ncontext1=" + getTemplateContext(t1) +
                  "\ncontext2=" + getTemplateContext(t2);
         }
@@ -462,7 +471,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
         if (value instanceof TemplateImpl) {
           TemplateImpl template = (TemplateImpl)value;
           TemplateImpl defaultTemplate = TemplateSettings.getInstance().getDefaultTemplate(template);
-          Color fgColor = defaultTemplate != null && templatesDiffer(template, defaultTemplate) ? JBColor.BLUE : null;
+          LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
+          Color fgColor = defaultTemplate != null && templatesDiffer(allContexts, template, defaultTemplate) ? JBColor.BLUE : null;
           getTextRenderer().append(template.getKey(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fgColor));
           String description = template.getDescription();
           if (StringUtil.isNotEmpty(description)) {
@@ -558,13 +568,13 @@ public class TemplateListPanel extends JPanel implements Disposable {
     ((CardLayout) myDetailsPanel.getLayout()).show(myDetailsPanel, NO_SELECTION);
   }
 
-  private boolean templatesDiffer(@NotNull TemplateImpl template, @NotNull TemplateImpl defaultTemplate) {
+  private boolean templatesDiffer(@NotNull LiveTemplateContextsSnapshot allContexts, @NotNull TemplateImpl template, @NotNull TemplateImpl defaultTemplate) {
     template.parseSegments();
     defaultTemplate.parseSegments();
     return !template.equals(defaultTemplate) ||
            !template.getVariables().equals(defaultTemplate.getVariables()) ||
            !areOptionsEqual(template, defaultTemplate) ||
-           getTemplateContext(template).getDifference(defaultTemplate.getTemplateContext()) != null;
+           getDifference(allContexts, getTemplateContext(template), defaultTemplate.getTemplateContext()) != null;
   }
 
   private ToolbarDecorator initToolbar() {
@@ -755,15 +765,17 @@ public class TemplateListPanel extends JPanel implements Disposable {
       @Override
       public void update(@NotNull AnActionEvent e) {
         boolean enabled = false;
+
+        LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
+
         Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
         for (TemplateImpl template : templates.keySet()) {
           TemplateImpl defaultTemplate = TemplateSettings.getInstance().getDefaultTemplate(template);
-          if (defaultTemplate != null && templatesDiffer(template, defaultTemplate)) {
+          if (defaultTemplate != null && templatesDiffer(allContexts, template, defaultTemplate)) {
             enabled = true;
           }
         }
         e.getPresentation().setEnabledAndVisible(enabled);
-        super.update(e);
       }
 
       @Override
