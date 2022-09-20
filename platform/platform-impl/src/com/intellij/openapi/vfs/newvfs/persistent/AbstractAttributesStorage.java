@@ -13,13 +13,13 @@ import java.io.Closeable;
 import java.io.IOException;
 
 /**
- * Adapter different attributes storage implementations: adapt them to the same interface
+ * Adapter for different attributes storage implementations: adapts them to the same interface
  * used by {@link PersistentFSAttributeAccessor}
  */
 public abstract class AbstractAttributesStorage implements Forceable, Closeable {
 
   /**
-   * Exclusive upper bound for inline attribute size: attribute is inlined if its size < {@linkplain #INLINE_ATTRIBUTE_SMALLER_THAN}
+   * Exclusive upper bound for inline attribute size: attribute is inlined if its size < this value
    */
   public static final int INLINE_ATTRIBUTE_SMALLER_THAN = 64;
 

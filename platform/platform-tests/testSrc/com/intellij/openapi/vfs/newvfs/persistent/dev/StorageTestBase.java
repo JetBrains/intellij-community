@@ -219,8 +219,8 @@ public abstract class StorageTestBase<S> {
     final StorageRecord[] recordsToWrite = StorageTestBase.generateRecords(ENOUGH_RECORDS);
 
     //write initial records
-    for (StorageRecord record : recordsToWrite) {
-      record.writeIntoStorage(this, storage);
+    for (int i = 0; i < recordsToWrite.length; i++) {
+      recordsToWrite[i] = recordsToWrite[i].writeIntoStorage(this, storage);
     }
 
     closeStorage(storage);
@@ -232,6 +232,9 @@ public abstract class StorageTestBase<S> {
         .withRandomPayloadOfSize(recordsToWrite[i].payload.length() * 3)
         .writeIntoStorage(this, storage);
     }
+
+    closeStorage(storage);
+    storage = openStorage(storagePath);
 
     for (int i = 0; i < recordsToWrite.length; i++) {
       final StorageRecord recordWritten = recordsToWrite[i];
@@ -245,7 +248,8 @@ public abstract class StorageTestBase<S> {
     }
   }
 
-  //TODO test space reclamation: add/delete records multiple time, check storage.size is not growing
+  //TODO RC: test space reclamation (not implemented yet): add/delete records multiple time, check storage.size is not
+  //         growing infinitely
 
   @NotNull
   protected static StorageRecord[] generateRecords(final int count) {

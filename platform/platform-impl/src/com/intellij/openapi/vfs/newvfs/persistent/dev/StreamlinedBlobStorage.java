@@ -20,6 +20,11 @@ import java.nio.ByteOrder;
  * read/write methods direct access to underlying ByteBuffers, to reduce memcopy-ing overhead.
  * <br/>
  * <br/>
+ * Storage is designed for performance, hence API is quite low-level, and needs care to be used correctly.
+ * I've tried to hide implementation details AMAP, but some of them are visible through API anyway, because hiding them (seems to)
+ * will cost performance.
+ * <br/>
+ * <br/>
  * Not thread safe: requires external synchronization if used from multiple threads
  */
 public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceable {
@@ -355,6 +360,16 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
     }
   }
 
+  public int writeToRecord(final int recordId,
+                           final @NotNull Writer writer) throws IOException {
+    return writeToRecord(recordId, writer, /*expectedRecordSizeHint: */ -1);
+  }
+
+  public int writeToRecord(final int recordId,
+                           final @NotNull Writer writer,
+                           final int expectedRecordSizeHint) throws IOException {
+    return writeToRecord(recordId, writer, expectedRecordSizeHint, /* leaveRedirectOnRecordRelocation: */ false);
+  }
 
   /**
    * Writer is called with writeable ByteBuffer represented current record content (payload).
@@ -371,12 +386,19 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
    * payload requires more space, writer should allocate its own buffer with enough capacity, write
    * new payload into it, and return that buffer (in a 'after puts' state), instead of buffer passed
    * in. Storage will re-allocate space for the record with capacity >= returned buffer capacity.
+   *
+   * @param expectedRecordSizeHint          hint to a storage about how big data writer intend to write. May be used for allocating buffer
+   *                                        of that size. <=0 means 'no hints, use default buffer allocation strategy'
+   * @param leaveRedirectOnRecordRelocation if current record is relocated during writing, old record could be either removed right now,
+   *                                        or remain as 'redirect-to' record, so new content could still be accesses by old recordId.
    */
   public int writeToRecord(final int recordId,
-                           final @NotNull Writer writer) throws IOException {
+                           final @NotNull Writer writer,
+                           final int expectedRecordSizeHint,
+                           final boolean leaveRedirectOnRecordRelocation) throws IOException {
+    //insert new record?
     if (!isValidRecordId(recordId)) {
-      //insert new record:
-      final ByteBuffer temp = acquireTemporaryBuffer();
+      final ByteBuffer temp = acquireTemporaryBuffer(expectedRecordSizeHint);
       try {
         final ByteBuffer bufferWithData = writer.write(temp);
         bufferWithData.flip();
@@ -384,7 +406,7 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
         checkLength(recordLength);
 
         final int capacity = bufferWithData.capacity();
-        //Don't check capacity here -- let allocation strategy first decide how to deal with capacity > MAX
+        //Don't check capacity right here -- let allocation strategy first decide how to deal with capacity > MAX
         final int recordCapacity = allocationStrategy.capacity(
           recordLength,
           capacity
@@ -403,6 +425,7 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
       }
     }
 
+    //already existent record
     pagedStorage.lockWrite();
     try {
       final long recordOffset = idToOffset(recordId);
@@ -419,9 +442,11 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
             throw new IOException("Can't write to record[" + recordId + "]: it was deleted");
           }
           //hope redirect chains are not too long...
-          return writeToRecord(recordRedirectedToId, writer);
+          return writeToRecord(recordRedirectedToId, writer, expectedRecordSizeHint, leaveRedirectOnRecordRelocation);
         }
 
+        //TODO RC: consider 'expectedRecordSizeHint' here? I.e. if expectedRecordSizeHint>record.capacity -> allocate heap buffer
+        //         of the size asked, copy actual record content into it?
         final int recordDataStartIndex = offsetOnPage + RECORD_HEADER_SIZE;
         final ByteBuffer recordContent = buffer.slice(recordDataStartIndex, recordCapacity)
           .limit(recordActualLength)
@@ -437,21 +462,30 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
           newRecordContent.flip();
           final int newRecordLength = newRecordContent.remaining();
           if (newRecordLength <= recordCapacity) {
-            //RC: really, in this case writer should just write data in the 'recordContent' buffer, but ok, we could deal with it:
+            //RC: really, in this case writer should just write data right in the 'recordContent' buffer,
+            //    not allocate the new buffer -- but ok, we could deal with it:
             putRecordPayload(buffer, offsetOnPage, newRecordContent, newRecordLength);
             page.fileSizeMayChanged(offsetOnPage + RECORD_HEADER_SIZE + newRecordLength);
 
             totalLiveRecordsPayloadBytes += (newRecordLength - recordActualLength);
           }
-          else {
+          else {//current record is too small for new content -> relocate to a new place
             final int newRecordId = allocateRecord(newRecordContent, newRecordContent.capacity());
-            putRecordLengthMark(buffer, offsetOnPage, MOVED_RECORD_MARK);
+
+            //mark current record as either 'moved' or 'deleted'
+            final int recordMark = leaveRedirectOnRecordRelocation ? MOVED_RECORD_MARK : DELETED_RECORD_MARK;
+            putRecordLengthMark(buffer, offsetOnPage, recordMark);
             putRecordRedirectTo(buffer, offsetOnPage, newRecordId);
             page.fileSizeMayChanged(offsetOnPage + RECORD_HEADER_SIZE);
 
             totalLiveRecordsPayloadBytes -= recordActualLength;
             totalLiveRecordsCapacityBytes -= recordCapacity;
-            recordsRelocated++;
+            if (leaveRedirectOnRecordRelocation) {
+              recordsRelocated++;
+            }
+            else {
+              recordsDeleted++;
+            }
 
             return newRecordId;
           }
@@ -955,15 +989,17 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
   }
 
   @NotNull
-  private ByteBuffer acquireTemporaryBuffer() {
+  private ByteBuffer acquireTemporaryBuffer(final int expectedRecordSizeHint) {
     final ByteBuffer temp = threadLocalBuffer.get();
-    threadLocalBuffer.set(null);
-    if (temp != null) {
+    if (temp != null && temp.capacity() >= expectedRecordSizeHint) {
+      threadLocalBuffer.set(null);
       return temp.position(0)
         .limit(0);
     }
     else {
-      final ByteBuffer buffer = ByteBuffer.allocate(allocationStrategy.defaultCapacity());
+      final int defaultCapacity = allocationStrategy.defaultCapacity();
+      final int capacity = Math.max(defaultCapacity, expectedRecordSizeHint);
+      final ByteBuffer buffer = ByteBuffer.allocate(capacity);
       if (pagedStorage.isNativeBytesOrder()) {
         buffer.order(ByteOrder.nativeOrder());
       }
@@ -972,7 +1008,11 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
   }
 
   private void releaseTemporaryBuffer(final @NotNull ByteBuffer temp) {
-    threadLocalBuffer.set(temp);
+    final int defaultCapacity = allocationStrategy.defaultCapacity();
+    //avoid keeping too big buffers from GC:
+    if (temp.capacity() <= 2 * defaultCapacity) {
+      threadLocalBuffer.set(temp);
+    }
   }
 
 
