@@ -7,16 +7,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-
-// It will be better to inherit from Icon, but it leads for some magical reason to binary API break
-public interface ReplaceableIcon {
-
+public interface ReplaceableIcon extends Icon {
   default @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
     Logger.getInstance(ReplaceableIcon.class).error("Please, implement replaceBy method in " + this.getClass());
-    if (this instanceof Icon) {
-      return (Icon)this;
-    } else {
-      throw new IllegalStateException("Cannot replace self by some icon");
-    }
+    return this;
   }
 }

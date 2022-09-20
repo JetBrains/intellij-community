@@ -103,6 +103,7 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
   @Override
   public DeferredIconImpl<T> replaceBy(@NotNull IconReplacer replacer) {
     DeferredIconImpl<T> result = new DeferredIconImpl<>(this, replacer.replaceIcon(myDelegateIcon));
+    result.myEvaluator = (p) -> replacer.replaceIcon(result.myEvaluator.apply(p));
     result.myScaledDelegateIcon = replacer.replaceIcon(myScaledDelegateIcon);
     return result;
   }
