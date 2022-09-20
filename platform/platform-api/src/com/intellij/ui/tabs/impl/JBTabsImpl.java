@@ -948,7 +948,8 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public boolean canShowMorePopup() {
-    return getMoreRect() != null;
+    Rectangle rect = getMoreRect();
+    return rect != null && !rect.isEmpty();
   }
 
   @Override

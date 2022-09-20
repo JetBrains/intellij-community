@@ -31,8 +31,7 @@ public class TabListAction extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    boolean available = isTabListAvailable(e) || e.getPlace() == ActionPlaces.TABS_MORE_TOOLBAR;
-    e.getPresentation().setEnabledAndVisible(available);
+    e.getPresentation().setEnabledAndVisible(isTabListAvailable(e));
   }
 
   @Override
