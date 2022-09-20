@@ -1,0 +1,96 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.javascript.web.webTypes.registry
+
+import com.intellij.javascript.web.DebugOutputPrinter
+import com.intellij.javascript.web.symbols.PsiSourcedWebSymbol
+import com.intellij.javascript.web.symbols.WebSymbol
+import com.intellij.javascript.web.symbols.WebSymbolCodeCompletionItem
+import java.util.*
+
+open class WebSymbolsDebugOutputPrinter: DebugOutputPrinter() {
+
+  private val parents = Stack<WebSymbol>()
+
+  override fun printValueImpl(builder: StringBuilder, level: Int, value: Any?): StringBuilder =
+    when (value) {
+      is WebSymbolCodeCompletionItem -> builder.printCodeCompletionItem(level, value)
+      is WebSymbol -> builder.printSymbol(level, value)
+      is WebSymbol.AttributeValue -> builder.printAttributeValue(level, value)
+      is WebSymbol.NameSegment -> builder.printSegment(level, value)
+      else -> super.printValueImpl(builder, level, value)
+    }
+
+  private fun StringBuilder.printCodeCompletionItem(topLevel: Int, item: WebSymbolCodeCompletionItem): StringBuilder =
+    printObject(topLevel) { level ->
+      printProperty(level, "name", item.name)
+      printProperty(level, "priority", item.priority ?: WebSymbol.Priority.NORMAL)
+      printProperty(level, "proximity", item.proximity?.takeIf { it > 0 })
+      printProperty(level, "displayName", item.displayName.takeIf { it != item.name })
+      printProperty(level, "offset", item.offset.takeIf { it != 0 })
+      printProperty(level, "completeAfterInsert", item.completeAfterInsert.takeIf { it })
+      printProperty(level, "completeAfterChars", item.completeAfterChars.takeIf { it.isNotEmpty() })
+      printProperty(level, "aliases", item.aliases.takeIf { it.isNotEmpty() })
+      printProperty(level, "source", item.symbol)
+    }
+
+
+  private fun StringBuilder.printSymbol(topLevel: Int, source: WebSymbol): StringBuilder {
+    if (parents.contains(source)) {
+      if (parents.peek() == source) append("<self>") else append("<recursive>")
+      return this
+    }
+    printObject(topLevel) { level ->
+      printProperty(level, "matchedName", source.namespace.name.lowercase(Locale.US) + "/" + source.kind + "/" + source.matchedName)
+      printProperty(level, "name", source.name.takeIf { it != source.matchedName })
+      printProperty(level, "origin", "${source.origin.packageName}@${source.origin.version} (${source.origin.framework ?: "<none>"})")
+      printProperty(level, "source", (source as? PsiSourcedWebSymbol)?.source)
+      printProperty(level, "type", source.type)
+      printProperty(level, "attrValue", source.attributeValue)
+      printProperty(level, "complete", source.completeMatch)
+      printProperty(level, "description", source.description?.ellipsis(45))
+      printProperty(level, "docUrl", source.docUrl)
+      printProperty(level, "descriptionSections", source.descriptionSections.takeIf { it.isNotEmpty() })
+      printProperty(level, "abstract", source.abstract.takeIf { it })
+      printProperty(level, "virtual", source.virtual.takeIf { it })
+      printProperty(level, "deprecated", source.deprecated.takeIf { it })
+      printProperty(level, "experimental", source.experimental.takeIf { it })
+      printProperty(level, "priority", source.priority ?: WebSymbol.Priority.NORMAL)
+      printProperty(level, "proximity", source.proximity?.takeIf { it > 0 })
+      printProperty(level, "has-pattern", if (source.pattern != null) true else null)
+      printProperty(level, "properties", source.properties.takeIf { it.isNotEmpty() })
+      parents.push(source)
+      printProperty(level, "segments", source.nameSegments)
+      parents.pop()
+    }
+    return this
+  }
+
+
+  private fun StringBuilder.printSegment(topLevel: Int,
+                                         segment: WebSymbol.NameSegment): StringBuilder =
+    printObject(topLevel) { level ->
+      printProperty(level, "name-part", parents.peek().matchedName.substring(segment.start, segment.end))
+      printProperty(level, "display-name", segment.displayName)
+      printProperty(level, "deprecated", segment.deprecated.takeIf { it })
+      printProperty(level, "priority", segment.priority?.takeIf { it != WebSymbol.Priority.NORMAL })
+      printProperty(level, "matchScore", segment.matchScore.takeIf { it != segment.end - segment.start })
+      printProperty(level, "problem", segment.problem)
+      val symbols = segment.symbols.filter { !it.extension }
+      if (symbols.size > 1) {
+        printProperty(level, "symbols", symbols)
+      }
+      else if (symbols.size == 1) {
+        printProperty(level, "symbol", symbols[0])
+      }
+    }
+
+  private fun StringBuilder.printAttributeValue(topLevel: Int, value: WebSymbol.AttributeValue): StringBuilder =
+    printObject(topLevel) { level ->
+      printProperty(level, "kind", value.kind)
+        .printProperty(level, "type", value.type)
+        .printProperty(level, "langType", value.langType)
+        .printProperty(level, "required", value.required)
+        .printProperty(level, "default", value.default)
+    }
+
+}

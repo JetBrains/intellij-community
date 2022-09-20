@@ -11,7 +11,7 @@
   virtual: true,
   priority: NORMAL,
   properties: {
-   ng-binding-pattern: true
+   ng-binding-pattern: true,
   },
   segments: [
    {
@@ -30,7 +30,7 @@
      priority: NORMAL,
      has-pattern: true,
      properties: {
-      ng-binding-pattern: true
+      ng-binding-pattern: true,
      },
      segments: [
       {
@@ -85,7 +85,7 @@
      priority: LOW,
      has-pattern: true,
      properties: {
-      hide-from-completion: true
+      hide-from-completion: true,
      },
      segments: [
       {

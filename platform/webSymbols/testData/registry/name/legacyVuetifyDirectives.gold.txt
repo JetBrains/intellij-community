@@ -19,7 +19,7 @@
   complete: true,
   priority: NORMAL,
   properties: {
-   source-file: "./src/directives/click-outside.ts"
+   source-file: "./src/directives/click-outside.ts",
   },
   segments: [
    {
@@ -231,7 +231,7 @@
   complete: true,
   priority: NORMAL,
   properties: {
-   source-file: "./src/directives/resize.ts"
+   source-file: "./src/directives/resize.ts",
   },
   segments: [
    {
@@ -246,7 +246,7 @@
   complete: true,
   priority: NORMAL,
   properties: {
-   source-file: "./src/directives/ripple.ts"
+   source-file: "./src/directives/ripple.ts",
   },
   segments: [
    {
@@ -261,7 +261,7 @@
   complete: true,
   priority: NORMAL,
   properties: {
-   source-file: "./src/directives/scroll.ts"
+   source-file: "./src/directives/scroll.ts",
   },
   segments: [
    {
@@ -330,7 +330,7 @@
   complete: true,
   priority: NORMAL,
   properties: {
-   source-file: "./src/directives/touch.ts"
+   source-file: "./src/directives/touch.ts",
   },
   segments: [
    {

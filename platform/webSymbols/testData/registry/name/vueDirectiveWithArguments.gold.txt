@@ -13,7 +13,7 @@
   priority: LOWEST,
   proximity: 5,
   properties: {
-   doc-hide-pattern: true
+   doc-hide-pattern: true,
   },
   segments: [
    {
@@ -80,8 +80,8 @@
      priority: LOWEST,
      has-pattern: true,
      properties: {
-      doc-hide-pattern: true
-      hide-from-completion: true
+      doc-hide-pattern: true,
+      hide-from-completion: true,
      },
      segments: [
       {

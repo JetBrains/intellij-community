@@ -12,7 +12,7 @@
   virtual: true,
   priority: NORMAL,
   properties: {
-   doc-hide-pattern: true
+   doc-hide-pattern: true,
   },
   segments: [
    {
@@ -78,7 +78,7 @@
      priority: NORMAL,
      has-pattern: true,
      properties: {
-      doc-hide-pattern: true
+      doc-hide-pattern: true,
      },
      segments: [
       {

@@ -10,7 +10,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    ng-binding-pattern: true
+    ng-binding-pattern: true,
    },
    segments: [
     {
@@ -23,7 +23,7 @@
       priority: NORMAL,
       has-pattern: true,
       properties: {
-       ng-binding-pattern: true
+       ng-binding-pattern: true,
       },
       segments: [
        {
@@ -50,7 +50,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    ng-binding-pattern: true
+    ng-binding-pattern: true,
    },
    segments: [
     {
@@ -63,7 +63,7 @@
       priority: NORMAL,
       has-pattern: true,
       properties: {
-       ng-binding-pattern: true
+       ng-binding-pattern: true,
       },
       segments: [
        {

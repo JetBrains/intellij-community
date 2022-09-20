@@ -26,12 +26,12 @@
    description: "<p>An element",
    priority: NORMAL,
    properties: {
-    custom-prop: 12.0
+    custom-prop: 12.0,
     custom-prop-2: [
      "foo",
      true,
      15.0,
-    ]
+    ],
    },
    segments: [
     {

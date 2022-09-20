@@ -13,7 +13,7 @@
   priority: LOWEST,
   proximity: 10,
   properties: {
-   doc-hide-pattern: true
+   doc-hide-pattern: true,
   },
   segments: [
    {
@@ -52,7 +52,7 @@
      complete: true,
      priority: LOWEST,
      properties: {
-      doc-hide-pattern: true
+      doc-hide-pattern: true,
      },
      segments: [
       {
@@ -67,8 +67,8 @@
         priority: LOWEST,
         has-pattern: true,
         properties: {
-         doc-hide-pattern: true
-         hide-from-completion: true
+         doc-hide-pattern: true,
+         hide-from-completion: true,
         },
         segments: [
          {

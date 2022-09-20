@@ -149,7 +149,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VApp/VApp.js"
+    source-file: "./src/components/VApp/VApp.js",
    },
    segments: [
     {
@@ -168,7 +168,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VAutocomplete/VAutocomplete.js"
+    source-file: "./src/components/VAutocomplete/VAutocomplete.js",
    },
    segments: [
     {
@@ -187,7 +187,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VAvatar/VAvatar.ts"
+    source-file: "./src/components/VAvatar/VAvatar.ts",
    },
    segments: [
     {
@@ -206,7 +206,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VBadge/VBadge.ts"
+    source-file: "./src/components/VBadge/VBadge.ts",
    },
    segments: [
     {
@@ -225,7 +225,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VBottomNav/VBottomNav.ts"
+    source-file: "./src/components/VBottomNav/VBottomNav.ts",
    },
    segments: [
     {
@@ -244,7 +244,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VBottomSheet/VBottomSheet.js"
+    source-file: "./src/components/VBottomSheet/VBottomSheet.js",
    },
    segments: [
     {
@@ -263,7 +263,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -282,7 +282,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VBreadcrumbs/VBreadcrumbs.ts"
+    source-file: "./src/components/VBreadcrumbs/VBreadcrumbs.ts",
    },
    segments: [
     {
@@ -301,7 +301,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -320,7 +320,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VBreadcrumbs/VBreadcrumbsItem.ts"
+    source-file: "./src/components/VBreadcrumbs/VBreadcrumbsItem.ts",
    },
    segments: [
     {
@@ -339,7 +339,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VBtn/VBtn.ts"
+    source-file: "./src/components/VBtn/VBtn.ts",
    },
    segments: [
     {
@@ -358,7 +358,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VBtnToggle/VBtnToggle.ts"
+    source-file: "./src/components/VBtnToggle/VBtnToggle.ts",
    },
    segments: [
     {
@@ -377,7 +377,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VCard/VCard.ts"
+    source-file: "./src/components/VCard/VCard.ts",
    },
    segments: [
     {
@@ -396,7 +396,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -415,7 +415,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VCard/VCardMedia.ts"
+    source-file: "./src/components/VCard/VCardMedia.ts",
    },
    segments: [
     {
@@ -434,7 +434,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -453,7 +453,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VCard/VCardTitle.ts"
+    source-file: "./src/components/VCard/VCardTitle.ts",
    },
    segments: [
     {
@@ -472,7 +472,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VCarousel/VCarousel.ts"
+    source-file: "./src/components/VCarousel/VCarousel.ts",
    },
    segments: [
     {
@@ -491,7 +491,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VCarousel/VCarouselItem.ts"
+    source-file: "./src/components/VCarousel/VCarouselItem.ts",
    },
    segments: [
     {
@@ -510,7 +510,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -529,7 +529,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -548,7 +548,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VCheckbox/VCheckbox.js"
+    source-file: "./src/components/VCheckbox/VCheckbox.js",
    },
    segments: [
     {
@@ -567,7 +567,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VChip/VChip.ts"
+    source-file: "./src/components/VChip/VChip.ts",
    },
    segments: [
     {
@@ -586,7 +586,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VCombobox/VCombobox.js"
+    source-file: "./src/components/VCombobox/VCombobox.js",
    },
    segments: [
     {
@@ -605,7 +605,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VGrid/grid.js"
+    source-file: "./src/components/VGrid/grid.js",
    },
    segments: [
     {
@@ -624,7 +624,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VGrid/VContent.js"
+    source-file: "./src/components/VGrid/VContent.js",
    },
    segments: [
     {
@@ -643,7 +643,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VCounter/VCounter.js"
+    source-file: "./src/components/VCounter/VCounter.js",
    },
    segments: [
     {
@@ -662,7 +662,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VDataIterator/VDataIterator.js"
+    source-file: "./src/components/VDataIterator/VDataIterator.js",
    },
    segments: [
     {
@@ -681,7 +681,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VDataTable/VDataTable.js"
+    source-file: "./src/components/VDataTable/VDataTable.js",
    },
    segments: [
     {
@@ -700,7 +700,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VDatePicker/VDatePicker.js"
+    source-file: "./src/components/VDatePicker/VDatePicker.js",
    },
    segments: [
     {
@@ -719,7 +719,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VDatePicker/VDatePickerDateTable.js"
+    source-file: "./src/components/VDatePicker/VDatePickerDateTable.js",
    },
    segments: [
     {
@@ -738,7 +738,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VDatePicker/VDatePickerHeader.js"
+    source-file: "./src/components/VDatePicker/VDatePickerHeader.js",
    },
    segments: [
     {
@@ -757,7 +757,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VDatePicker/VDatePickerMonthTable.js"
+    source-file: "./src/components/VDatePicker/VDatePickerMonthTable.js",
    },
    segments: [
     {
@@ -776,7 +776,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VDatePicker/VDatePickerTitle.js"
+    source-file: "./src/components/VDatePicker/VDatePickerTitle.js",
    },
    segments: [
     {
@@ -795,7 +795,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VDatePicker/VDatePickerYears.js"
+    source-file: "./src/components/VDatePicker/VDatePickerYears.js",
    },
    segments: [
     {
@@ -814,7 +814,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VDialog/VDialog.js"
+    source-file: "./src/components/VDialog/VDialog.js",
    },
    segments: [
     {
@@ -833,7 +833,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -852,7 +852,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -871,7 +871,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VDivider/VDivider.ts"
+    source-file: "./src/components/VDivider/VDivider.ts",
    },
    segments: [
     {
@@ -890,7 +890,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VDataTable/VEditDialog.js"
+    source-file: "./src/components/VDataTable/VEditDialog.js",
    },
    segments: [
     {
@@ -909,7 +909,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -928,7 +928,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VExpansionPanel/VExpansionPanel.ts"
+    source-file: "./src/components/VExpansionPanel/VExpansionPanel.ts",
    },
    segments: [
     {
@@ -947,7 +947,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VExpansionPanel/VExpansionPanelContent.ts"
+    source-file: "./src/components/VExpansionPanel/VExpansionPanelContent.ts",
    },
    segments: [
     {
@@ -966,7 +966,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -985,7 +985,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1004,7 +1004,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VGrid/grid.js"
+    source-file: "./src/components/VGrid/grid.js",
    },
    segments: [
     {
@@ -1023,7 +1023,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VFooter/VFooter.js"
+    source-file: "./src/components/VFooter/VFooter.js",
    },
    segments: [
     {
@@ -1042,7 +1042,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VForm/VForm.js"
+    source-file: "./src/components/VForm/VForm.js",
    },
    segments: [
     {
@@ -1061,7 +1061,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VHover/VHover.ts"
+    source-file: "./src/components/VHover/VHover.ts",
    },
    segments: [
     {
@@ -1080,7 +1080,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VIcon/VIcon.ts"
+    source-file: "./src/components/VIcon/VIcon.ts",
    },
    segments: [
     {
@@ -1099,7 +1099,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VImg/VImg.ts"
+    source-file: "./src/components/VImg/VImg.ts",
    },
    segments: [
     {
@@ -1118,7 +1118,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VInput/VInput.js"
+    source-file: "./src/components/VInput/VInput.js",
    },
    segments: [
     {
@@ -1137,7 +1137,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VItemGroup/VItem.ts"
+    source-file: "./src/components/VItemGroup/VItem.ts",
    },
    segments: [
     {
@@ -1156,7 +1156,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VItemGroup/VItemGroup.ts"
+    source-file: "./src/components/VItemGroup/VItemGroup.ts",
    },
    segments: [
     {
@@ -1175,7 +1175,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VJumbotron/VJumbotron.js"
+    source-file: "./src/components/VJumbotron/VJumbotron.js",
    },
    segments: [
     {
@@ -1194,7 +1194,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VLabel/VLabel.js"
+    source-file: "./src/components/VLabel/VLabel.js",
    },
    segments: [
     {
@@ -1213,7 +1213,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VGrid/grid.js"
+    source-file: "./src/components/VGrid/grid.js",
    },
    segments: [
     {
@@ -1232,7 +1232,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VList/VList.js"
+    source-file: "./src/components/VList/VList.js",
    },
    segments: [
     {
@@ -1251,7 +1251,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VList/VListGroup.js"
+    source-file: "./src/components/VList/VListGroup.js",
    },
    segments: [
     {
@@ -1270,7 +1270,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VList/VListTile.js"
+    source-file: "./src/components/VList/VListTile.js",
    },
    segments: [
     {
@@ -1289,7 +1289,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VList/VListTileAction.js"
+    source-file: "./src/components/VList/VListTileAction.js",
    },
    segments: [
     {
@@ -1308,7 +1308,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1327,7 +1327,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VList/VListTileAvatar.js"
+    source-file: "./src/components/VList/VListTileAvatar.js",
    },
    segments: [
     {
@@ -1346,7 +1346,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1365,7 +1365,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1384,7 +1384,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1403,7 +1403,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VMenu/VMenu.js"
+    source-file: "./src/components/VMenu/VMenu.js",
    },
    segments: [
     {
@@ -1422,7 +1422,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1441,7 +1441,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VMessages/VMessages.js"
+    source-file: "./src/components/VMessages/VMessages.js",
    },
    segments: [
     {
@@ -1460,7 +1460,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VNavigationDrawer/VNavigationDrawer.js"
+    source-file: "./src/components/VNavigationDrawer/VNavigationDrawer.js",
    },
    segments: [
     {
@@ -1479,7 +1479,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VOverflowBtn/VOverflowBtn.js"
+    source-file: "./src/components/VOverflowBtn/VOverflowBtn.js",
    },
    segments: [
     {
@@ -1498,7 +1498,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VPagination/VPagination.ts"
+    source-file: "./src/components/VPagination/VPagination.ts",
    },
    segments: [
     {
@@ -1517,7 +1517,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VParallax/VParallax.ts"
+    source-file: "./src/components/VParallax/VParallax.ts",
    },
    segments: [
     {
@@ -1536,7 +1536,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VPicker/VPicker.js"
+    source-file: "./src/components/VPicker/VPicker.js",
    },
    segments: [
     {
@@ -1555,7 +1555,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VProgressCircular/VProgressCircular.ts"
+    source-file: "./src/components/VProgressCircular/VProgressCircular.ts",
    },
    segments: [
     {
@@ -1574,7 +1574,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VProgressLinear/VProgressLinear.ts"
+    source-file: "./src/components/VProgressLinear/VProgressLinear.ts",
    },
    segments: [
     {
@@ -1593,7 +1593,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VRadioGroup/VRadio.js"
+    source-file: "./src/components/VRadioGroup/VRadio.js",
    },
    segments: [
     {
@@ -1612,7 +1612,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VRadioGroup/VRadioGroup.js"
+    source-file: "./src/components/VRadioGroup/VRadioGroup.js",
    },
    segments: [
     {
@@ -1631,7 +1631,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VRangeSlider/VRangeSlider.js"
+    source-file: "./src/components/VRangeSlider/VRangeSlider.js",
    },
    segments: [
     {
@@ -1650,7 +1650,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VRating/VRating.ts"
+    source-file: "./src/components/VRating/VRating.ts",
    },
    segments: [
     {
@@ -1669,7 +1669,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VResponsive/VResponsive.ts"
+    source-file: "./src/components/VResponsive/VResponsive.ts",
    },
    segments: [
     {
@@ -1688,7 +1688,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1707,7 +1707,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1726,7 +1726,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1745,7 +1745,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1764,7 +1764,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1783,7 +1783,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1818,7 +1818,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1837,7 +1837,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1856,7 +1856,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1875,7 +1875,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1894,7 +1894,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VSlider/VSlider.js"
+    source-file: "./src/components/VSlider/VSlider.js",
    },
    segments: [
     {
@@ -1913,7 +1913,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VSnackbar/VSnackbar.ts"
+    source-file: "./src/components/VSnackbar/VSnackbar.ts",
    },
    segments: [
     {
@@ -1932,7 +1932,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -1951,7 +1951,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VSpeedDial/VSpeedDial.js"
+    source-file: "./src/components/VSpeedDial/VSpeedDial.js",
    },
    segments: [
     {
@@ -1970,7 +1970,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VStepper/VStepper.js"
+    source-file: "./src/components/VStepper/VStepper.js",
    },
    segments: [
     {
@@ -1989,7 +1989,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VStepper/VStepperContent.js"
+    source-file: "./src/components/VStepper/VStepperContent.js",
    },
    segments: [
     {
@@ -2008,7 +2008,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -2027,7 +2027,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -2046,7 +2046,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VStepper/VStepperStep.js"
+    source-file: "./src/components/VStepper/VStepperStep.js",
    },
    segments: [
     {
@@ -2065,7 +2065,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VSubheader/VSubheader.js"
+    source-file: "./src/components/VSubheader/VSubheader.js",
    },
    segments: [
     {
@@ -2084,7 +2084,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VSwitch/VSwitch.js"
+    source-file: "./src/components/VSwitch/VSwitch.js",
    },
    segments: [
     {
@@ -2103,7 +2103,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VSystemBar/VSystemBar.js"
+    source-file: "./src/components/VSystemBar/VSystemBar.js",
    },
    segments: [
     {
@@ -2122,7 +2122,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VTabs/VTab.js"
+    source-file: "./src/components/VTabs/VTab.js",
    },
    segments: [
     {
@@ -2141,7 +2141,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VTabs/VTabItem.js"
+    source-file: "./src/components/VTabs/VTabItem.js",
    },
    segments: [
     {
@@ -2160,7 +2160,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -2179,7 +2179,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -2198,7 +2198,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -2217,7 +2217,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VTabs/VTabs.js"
+    source-file: "./src/components/VTabs/VTabs.js",
    },
    segments: [
     {
@@ -2236,7 +2236,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VTabs/VTabsItems.js"
+    source-file: "./src/components/VTabs/VTabsItems.js",
    },
    segments: [
     {
@@ -2255,7 +2255,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VTabs/VTabsSlider.js"
+    source-file: "./src/components/VTabs/VTabsSlider.js",
    },
    segments: [
     {
@@ -2290,7 +2290,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VTextarea/VTextarea.js"
+    source-file: "./src/components/VTextarea/VTextarea.js",
    },
    segments: [
     {
@@ -2309,7 +2309,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VTimePicker/VTimePicker.js"
+    source-file: "./src/components/VTimePicker/VTimePicker.js",
    },
    segments: [
     {
@@ -2328,7 +2328,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VTimePicker/VTimePickerClock.js"
+    source-file: "./src/components/VTimePicker/VTimePickerClock.js",
    },
    segments: [
     {
@@ -2347,7 +2347,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VTimePicker/VTimePickerTitle.js"
+    source-file: "./src/components/VTimePicker/VTimePickerTitle.js",
    },
    segments: [
     {
@@ -2366,7 +2366,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VTimeline/VTimeline.ts"
+    source-file: "./src/components/VTimeline/VTimeline.ts",
    },
    segments: [
     {
@@ -2385,7 +2385,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VTimeline/VTimelineItem.ts"
+    source-file: "./src/components/VTimeline/VTimelineItem.ts",
    },
    segments: [
     {
@@ -2404,7 +2404,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VToolbar/VToolbar.js"
+    source-file: "./src/components/VToolbar/VToolbar.js",
    },
    segments: [
     {
@@ -2423,7 +2423,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -2442,7 +2442,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VToolbar/VToolbarSideIcon.js"
+    source-file: "./src/components/VToolbar/VToolbarSideIcon.js",
    },
    segments: [
     {
@@ -2461,7 +2461,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/util/helpers.ts"
+    source-file: "./src/util/helpers.ts",
    },
    segments: [
     {
@@ -2480,7 +2480,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VTooltip/VTooltip.js"
+    source-file: "./src/components/VTooltip/VTooltip.js",
    },
    segments: [
     {
@@ -2499,7 +2499,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VTreeview/VTreeview.ts"
+    source-file: "./src/components/VTreeview/VTreeview.ts",
    },
    segments: [
     {
@@ -2518,7 +2518,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VTreeview/VTreeviewNode.ts"
+    source-file: "./src/components/VTreeview/VTreeviewNode.ts",
    },
    segments: [
     {
@@ -2537,7 +2537,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VWindow/VWindow.ts"
+    source-file: "./src/components/VWindow/VWindow.ts",
    },
    segments: [
     {
@@ -2556,7 +2556,7 @@
    complete: true,
    priority: NORMAL,
    properties: {
-    source-file: "./src/components/VWindow/VWindowItem.ts"
+    source-file: "./src/components/VWindow/VWindowItem.ts",
    },
    segments: [
     {
