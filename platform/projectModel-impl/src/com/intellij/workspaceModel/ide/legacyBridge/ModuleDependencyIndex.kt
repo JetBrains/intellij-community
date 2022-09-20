@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.EventListener
 
 /**
@@ -27,6 +28,9 @@ interface ModuleDependencyIndex {
   fun addListener(listener: ModuleDependencyListener)
 
   fun setupTrackedLibrariesAndJdks()
+  
+  @TestOnly
+  fun reset()
 
   /**
    * Return `true` if at least one module has dependency on 'Project SDK'

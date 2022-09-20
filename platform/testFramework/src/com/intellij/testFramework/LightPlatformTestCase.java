@@ -72,6 +72,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EDT;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -294,8 +295,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     app.invokeAndWait(() -> {
       if (reusedProject.get()) {
         // clear all caches, reindex
-        WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(),
-                                                                                          RootsChangeRescanningInfo.TOTAL_RESCAN));
+        WriteAction.run(() -> {
+          ModuleDependencyIndex.getInstance(project).reset();
+          ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(),
+                                                                      RootsChangeRescanningInfo.TOTAL_RESCAN);
+        });
       }
 
       MessageBusConnection connection = project.getMessageBus().connect(parentDisposable);

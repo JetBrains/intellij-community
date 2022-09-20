@@ -130,16 +130,8 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
   override fun dispose() {
     if (project.isDefault) return
 
-    val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
-    libraryTablesListener.getLibraryLevels().forEach { libraryLevel ->
-      val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project)
-      libraryTable?.libraryIterator?.forEach {
-        it.rootProvider.removeRootSetChangedListener(rootSetChangeListener)  
-      }
-      libraryTable?.removeListener(libraryTablesListener)
-    }
-    libraryTablesListener.clear()
-    jdkChangeListener.unsubscribeListeners()
+    libraryTablesListener.unsubscribe()
+    jdkChangeListener.unsubscribe()
   }
 
   private inner class ReferencedRootSetChangeListener : RootProvider.RootSetChangedListener {
@@ -233,7 +225,17 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     private fun getLibraryIdentifier(libraryTable: LibraryTable,
                                      libraryName: String) = "${libraryTable.tableLevel}$LIBRARY_NAME_DELIMITER$libraryName"
 
-    fun clear() = librariesPerModuleMap.clear()
+    fun unsubscribe() {
+      val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
+      libraryTablesListener.getLibraryLevels().forEach { libraryLevel ->
+        val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project)
+        libraryTable?.libraryIterator?.forEach {
+          it.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
+        }
+        libraryTable?.removeListener(libraryTablesListener)
+      }
+      librariesPerModuleMap.clear()
+    }
   }
 
   private inner class JdkChangeListener : ProjectJdkTable.Listener {
@@ -316,12 +318,18 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
              || jdk.name == projectRootManager.projectSdkName && jdk.sdkType.name == projectRootManager.projectSdkTypeName && hasProjectSdkDependency()
     }
 
-    fun unsubscribeListeners() {
+    fun unsubscribe() {
       watchedSdks.forEach {
         it.removeRootSetChangedListener(rootSetChangeListener)
       }
       watchedSdks.clear()
     }
+  }
+
+  override fun reset() {
+    libraryTablesListener.unsubscribe()
+    jdkChangeListener.unsubscribe()
+    setupTrackedLibrariesAndJdks()
   }
 
 }
