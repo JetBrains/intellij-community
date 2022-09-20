@@ -92,8 +92,6 @@ public abstract class PersistentFS extends ManagingFS {
     return isSet(attributes, Flags.CHILDREN_CASE_SENSITIVE) ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
   }
 
-  public abstract @Nullable NewVirtualFile findFileByIdIfCached(int id);
-
   public abstract int storeUnlinkedContent(byte @NotNull [] bytes);
 
   public abstract byte @NotNull [] contentsToByteArray(int contentId) throws IOException;

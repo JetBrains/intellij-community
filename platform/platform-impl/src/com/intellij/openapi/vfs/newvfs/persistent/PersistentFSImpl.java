@@ -1434,11 +1434,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public NewVirtualFile findFileByIdIfCached(int id) {
-    return myVfsData.hasLoadedFile(id) ? findFileById(id) : null;
-  }
-
-  @Override
   public VirtualFile @NotNull [] getRoots() {
     Collection<VirtualFileSystemEntry> roots = myRoots.values();
     return VfsUtilCore.toVirtualFileArray(roots); // ConcurrentHashMap.keySet().toArray(new T[0]) guaranteed to return array with no nulls
