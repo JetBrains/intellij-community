@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
@@ -216,10 +217,11 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     if (result is CommitChecksResult.Failed ||
         result is CommitChecksResult.ExecutionError) {
       val executor = sessionInfo.executor
+      val failures = ui.commitProgressUi.getCommitCheckFailures()
       val commitActionText = getCommitActionTextForNotification(executor, false)
       val commitAnywayActionText = getCommitActionTextForNotification(executor, true)
       val title = message("commit.checks.failed.notification.title", commitActionText)
-      val description = getCommitCheckFailureDescription()
+      val description = getCommitCheckFailureDescription(failures)
       checkinErrorNotifications.notify(title, description, project) {
         it.setDisplayId(VcsNotificationIdsHolder.COMMIT_CHECKS_FAILED)
         it.addAction(
@@ -228,37 +230,39 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
               executorCalled(executor)
             }
           })
-        it.addAction(createShowDetailsNotificationAction())
+        appendShowDetailsNotificationActions(it, failures)
       }
     }
 
     if (result is CommitChecksResult.OnlyChecks && !result.checksPassed) {
+      val failures = ui.commitProgressUi.getCommitCheckFailures()
       val commitActionText = getCommitActionTextForNotification(null, false)
       val title = message("commit.checks.failed.notification.title", commitActionText)
-      val description = getCommitCheckFailureDescription()
+      val description = getCommitCheckFailureDescription(failures)
       checkinErrorNotifications.notify(title, description, project) {
         it.setDisplayId(VcsNotificationIdsHolder.COMMIT_CHECKS_ONLY_FAILED)
-        it.addAction(createShowDetailsNotificationAction())
+        appendShowDetailsNotificationActions(it, failures)
       }
     }
   }
 
-  private fun getCommitCheckFailureDescription(): @NlsContexts.NotificationContent String {
-    return ui.commitProgressUi.getCommitCheckFailures().mapNotNull { it.text }.joinToString()
+  private fun getCommitCheckFailureDescription(failures: List<CommitCheckFailure>): @NlsContexts.NotificationContent String {
+    return failures.filterIsInstance<CommitCheckFailure.WithDescription>().joinToString("<br>") { it.text }
   }
 
-  private fun createShowDetailsNotificationAction(): NotificationAction {
-    return NotificationAction.create(message("commit.checks.failed.notification.show.details.action")) { _, _ ->
-      val detailsViewer = ui.commitProgressUi.getCommitCheckFailures().mapNotNull { it.detailsViewer }.singleOrNull()
-      if (detailsViewer != null) {
-        detailsViewer()
-      }
-      else {
+  private fun appendShowDetailsNotificationActions(notification: Notification, failures: List<CommitCheckFailure>) {
+    for (failure in failures.filterIsInstance<CommitCheckFailure.WithDetails>()) {
+      notification.addAction(NotificationAction.create(failure.viewDetailsActionText) { _, _ -> failure.viewDetails() })
+    }
+
+    val hasGenericFailure = failures.any { it !is CommitCheckFailure.WithDetails }
+    if (hasGenericFailure) {
+      notification.addAction(NotificationAction.create(message("commit.checks.failed.notification.show.details.action")) { _, _ ->
         val toolWindow = ChangesViewContentManager.getToolWindowFor(project, LOCAL_CHANGES)
         toolWindow?.activate {
           ChangesViewContentManager.getInstance(project).selectContent(LOCAL_CHANGES)
         }
-      }
+      })
     }
   }
 
@@ -369,9 +373,11 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   private fun reportCommitCheckFailure(commitInfo: CommitInfo, problem: CommitProblem) {
     val checkFailure = when (problem) {
-      is UnknownCommitProblem -> CommitCheckFailure(null, null)
-      is CommitProblemWithDetails -> CommitCheckFailure(problem.text) { problem.showDetails(project, commitInfo) }
-      else -> CommitCheckFailure(problem.text, null)
+      is UnknownCommitProblem -> CommitCheckFailure.Unknown
+      is CommitProblemWithDetails -> CommitCheckFailure.WithDetails(problem.text, problem.showDetailsAction) {
+        problem.showDetails(project, commitInfo)
+      }
+      else -> CommitCheckFailure.WithDescription(problem.text)
     }
     ui.commitProgressUi.addCommitCheckFailure(checkFailure)
   }

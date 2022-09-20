@@ -59,6 +59,9 @@ class TodoCommitProblem(val worker: TodoCheckinHandlerWorker) : CommitProblemWit
   override fun showModalSolution(project: Project, commitInfo: CommitInfo): CheckinHandler.ReturnResult {
     return showDialog(project, worker, commitInfo.commitActionText)
   }
+
+  override val showDetailsAction: String
+    get() = message("todo.in.new.review.button")
 }
 
 class TodoCheckinHandler(private val project: Project) : CheckinHandler(), CommitCheck, DumbAware {

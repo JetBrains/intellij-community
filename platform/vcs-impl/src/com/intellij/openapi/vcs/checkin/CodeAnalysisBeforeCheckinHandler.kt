@@ -33,6 +33,7 @@ import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
 import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.CodeSmellDetector
 import com.intellij.openapi.vcs.VcsBundle.message
@@ -89,6 +90,9 @@ class CodeAnalysisCommitProblem(private val codeSmells: List<CodeSmellInfo>) : C
   override fun showModalSolution(project: Project, commitInfo: CommitInfo): CheckinHandler.ReturnResult {
     return processFoundCodeSmells(project, codeSmells, commitInfo.commitActionText)
   }
+
+  override val showDetailsAction: String
+    get() = message("code.smells.review.button")
 }
 
 /**
@@ -275,7 +279,7 @@ class ProfileChooser(private val project: Project,
 private fun askReviewCommitCancel(project: Project, codeSmells: List<CodeSmellInfo>, @NlsContexts.Button commitActionText: String): Int =
   yesNoCancel(message("code.smells.error.messages.tab.name"), getDescription(codeSmells))
     .icon(getWarningIcon())
-    .yesText(message("code.smells.review.button"))
+    .yesText(StringUtil.toTitleCase(message("code.smells.review.button")))
     .noText(commitActionText)
     .cancelText(getCancelButtonText())
     .show(project)

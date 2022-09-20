@@ -5,6 +5,8 @@ import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.Change
@@ -98,7 +100,7 @@ interface CommitProblem {
     if (this is CommitProblemWithDetails) {
       val commit = MessageDialogBuilder.yesNoCancel(VcsBundle.message("checkin.commit.checks.failed"),
                                                     VcsBundle.message("checkin.commit.checks.failed.with.error.message", text))
-        .yesText(VcsBundle.message("checkin.commit.checks.failed.review.button"))
+        .yesText(StringUtil.toTitleCase(showDetailsAction))
         .noText(commitInfo.commitActionText)
         .cancelText(VcsBundle.message("checkin.commit.checks.failed.cancel.button"))
         .show(project)
@@ -140,6 +142,8 @@ interface CommitProblem {
 
 @ApiStatus.Experimental
 interface CommitProblemWithDetails : CommitProblem {
+  val showDetailsAction: @NlsContexts.NotificationContent String
+
   /**
    * Allows showing details for the problem (ex: by opening a toolwindow tab with a list of failed inspections).
    * Modal dialog will be closed after this call if it is shown.

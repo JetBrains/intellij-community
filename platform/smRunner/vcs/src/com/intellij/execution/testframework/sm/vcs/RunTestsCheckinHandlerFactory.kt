@@ -112,6 +112,9 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
   override fun showDetails(project: Project, commitInfo: CommitInfo) {
     showFailedTests(project, this)
   }
+
+  override val showDetailsAction: String
+    get() = ExecutionBundle.message("commit.checks.run.configuration.failed.show.details.action")
 }
 
 data class FailureDescription(val historyFileName: String, val failed: Int, val ignored: Int, val configuration: RunnerAndConfigurationSettings?, val configName: String?)
