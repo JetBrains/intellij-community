@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.remoteDev.connection.CodeWithMeSessionInfoProvider
@@ -529,8 +530,13 @@ object CodeWithMeClientDownloader {
   private fun findLauncherUnderCwmGuestRoot(guestRoot: Path): Pair<Path, List<String>> {
     when {
       SystemInfo.isWindows -> {
-        val launcherNames = listOf("jetbrains_client64.exe", "cwm_guest64.exe", "intellij_client64.exe", "intellij_client.bat")
-        return findLauncher(guestRoot, launcherNames)
+        val batchLaunchers = listOf("intellij_client.bat", "jetbrains_client.bat")
+        val exeLaunchers = listOf("jetbrains_client64.exe", "cwm_guest64.exe", "intellij_client64.exe")
+        val eligibleLaunchers = if (Registry.`is`("com.jetbrains.gateway.client.use.batch.launcher", false))
+          batchLaunchers
+        else
+          exeLaunchers + batchLaunchers
+        return findLauncher(guestRoot, eligibleLaunchers)
       }
 
       SystemInfo.isUnix -> {
