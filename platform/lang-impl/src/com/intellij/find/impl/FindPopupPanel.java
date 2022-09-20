@@ -812,6 +812,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       myPreviewSplitter.setBlindZone(() -> new Insets(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right));
       bottomPanel.setBorder(JBUI.Borders.empty(5, 18));
       bottomPanel.setBackground(JBUI.CurrentTheme.Advertiser.background());
+      scrollPane.setBorder(JBUI.Borders.emptyBottom(4));
     } else {
       header.panel.setBorder(JBUI.Borders.empty(2, 5));
       mySearchTextArea.setBorder(JBUI.Borders.compound(
@@ -822,9 +823,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
         JBUI.Borders.empty(1, 0, 2, 0)));
       scopesPanel.setBorder(JBUI.Borders.empty(3, 5));
       bottomPanel.setBorder(JBUI.Borders.empty(5));
+      scrollPane.setBorder(JBUI.Borders.empty());
     }
     PopupUtil.applyPreviewTitleInsets(myUsagePreviewTitle);
-    scrollPane.setBorder(JBUI.Borders.empty());
     add(header.panel, "growx, pushx, wrap");
 
     add(mySearchTextArea, "pushx, growx, wrap");
