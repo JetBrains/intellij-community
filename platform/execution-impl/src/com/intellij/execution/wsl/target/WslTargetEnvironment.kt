@@ -103,7 +103,7 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
     }
 
   @Throws(ExecutionException::class)
-  override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator?): Process {
+  override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
     val ptyOptions = commandLine.ptyOptions?.toLocalPtyOptions()
     val generalCommandLine = if (ptyOptions != null) {
       PtyCommandLine(commandLine.collectCommandsSynchronously()).withOptions(ptyOptions)

@@ -125,7 +125,7 @@ public class LocalTargetEnvironment extends TargetEnvironment {
 
   @NotNull
   @Override
-  public Process createProcess(@NotNull TargetedCommandLine commandLine, @Nullable ProgressIndicator indicator) throws ExecutionException {
+  public Process createProcess(@NotNull TargetedCommandLine commandLine, @NotNull ProgressIndicator indicator)  throws ExecutionException {
     return createGeneralCommandLine(commandLine).createProcess();
   }
 
