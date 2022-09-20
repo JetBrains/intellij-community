@@ -23,7 +23,7 @@
             <configuration>
               <filesets>
                 <fileset>
-                  <directory>${basedir}/../../gen/com/intellij/javascript/web/webTypes/json/</directory>
+                  <directory>${basedir}/../../gen/com/intellij/webSymbols/webTypes/json/</directory>
                   <includes>
                     <include>**/*</include>
                   </includes>
@@ -47,11 +47,11 @@
           <includeHashcodeAndEquals>false</includeHashcodeAndEquals>
           <includeToString>false</includeToString>
           <targetVersion>1.8</targetVersion>
-          <targetPackage>com.intellij.javascript.web.webTypes.json</targetPackage>
+          <targetPackage>com.intellij.webSymbols.webTypes.json</targetPackage>
           <sourceDirectory>${basedir}/../resources/web-types.json</sourceDirectory>
           <sourceType>JSONSCHEMA</sourceType>
           <outputDirectory>${basedir}/../../gen/</outputDirectory>
-          <customRuleFactory>com.intellij.javascript.web.webTypes.gen.WebTypesRuleFactory</customRuleFactory>
+          <customRuleFactory>com.intellij.webSymbols.webTypes.gen.WebTypesRuleFactory</customRuleFactory>
         </configuration>
         <dependencies>
           <dependency>

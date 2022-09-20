@@ -1,61 +1,61 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.javascript.web.framework"
-                    beanClass="com.intellij.javascript.web.framework.impl.WebSymbolsFrameworkRegistrationExtensionPoint"
+                    beanClass="com.intellij.webSymbols.framework.impl.WebFrameworkRegistrationExtensionPoint"
                     dynamic="true">
-      <with attribute="implementation" implements="com.intellij.javascript.web.framework.WebSymbolsFramework"/>
+      <with attribute="implementation" implements="com.intellij.webSymbols.framework.WebFramework"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.javascript.web.context"
-                    beanClass="com.intellij.javascript.web.framework.impl.WebSymbolsFrameworkExtensionPoint"
+                    beanClass="com.intellij.webSymbols.framework.impl.WebFrameworkExtensionPoint"
                     dynamic="true">
-      <with attribute="implementation" implements="com.intellij.javascript.web.context.WebFrameworkContext"/>
+      <with attribute="implementation" implements="com.intellij.webSymbols.framework.WebFrameworkContext"/>
     </extensionPoint>
     <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.javascript.webTypes"
-                    beanClass="com.intellij.javascript.web.webTypes.WebTypesDefinitionsEP"
+                    beanClass="com.intellij.webSymbols.webTypes.WebTypesDefinitionsEP"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javascript.webTypes.symbolTypeResolverFactory"
-                    beanClass="com.intellij.javascript.web.webTypes.WebTypesSymbolTypeResolverFactoryEP"
+                    beanClass="com.intellij.webSymbols.webTypes.WebTypesSymbolTypeResolverFactoryEP"
                     dynamic="true">
-      <with attribute="implementation" implements="com.intellij.javascript.web.webTypes.WebTypesSymbolTypeResolver$Factory"/>
+      <with attribute="implementation" implements="com.intellij.webSymbols.webTypes.WebTypesSymbolTypeResolver$Factory"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.javascript.web.additionalContextProvider"
-                    interface="com.intellij.javascript.web.symbols.WebSymbolsAdditionalContextProvider"
+                    interface="com.intellij.webSymbols.WebSymbolsAdditionalContextProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javascript.web.filter"
-                    beanClass="com.intellij.javascript.web.symbols.impl.WebSymbolsFilterEP"
+                    beanClass="com.intellij.webSymbols.impl.WebSymbolsFilterEP"
                     dynamic="true">
-      <with attribute="implementation" implements="com.intellij.javascript.web.symbols.WebSymbolsFilter"/>
+      <with attribute="implementation" implements="com.intellij.webSymbols.WebSymbolsFilter"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.javascript.web.documentationCustomizer"
-                    interface="com.intellij.javascript.web.symbols.WebSymbolDocumentationCustomizer"
+                    interface="com.intellij.webSymbols.WebSymbolDocumentationCustomizer"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javascript.web.codeCompletionItemCustomizer"
-                    interface="com.intellij.javascript.web.symbols.WebSymbolCodeCompletionItemCustomizer"
+                    interface="com.intellij.webSymbols.WebSymbolCodeCompletionItemCustomizer"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javascript.web.defaultIconProvider"
-                    interface="com.intellij.javascript.web.symbols.WebSymbolDefaultIconProvider"
+                    interface="com.intellij.webSymbols.WebSymbolDefaultIconProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javascript.web.scopeProvider"
-                    interface="com.intellij.javascript.web.symbols.WebSymbolsScopeProvider"
+                    interface="com.intellij.webSymbols.WebSymbolsScopeProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javascript.web.declarationProvider"
-                    interface="com.intellij.javascript.web.symbols.WebSymbolDeclarationProvider"
+                    interface="com.intellij.webSymbols.WebSymbolDeclarationProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javascript.web.psiSourcedSymbolProvider"
-                    interface="com.intellij.javascript.web.symbols.PsiSourcedWebSymbolProvider"
+                    interface="com.intellij.webSymbols.PsiSourcedWebSymbolProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javascript.web.psiSourcedSymbol"
-                    beanClass="com.intellij.javascript.web.findUsages.impl.WebSymbolPsiSourcedSymbolHostClassEP"
+                    beanClass="com.intellij.webSymbols.findUsages.impl.WebSymbolPsiSourcedSymbolHostClassEP"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javascript.web.inspectionToolMapping"
-                    beanClass="com.intellij.javascript.web.inspections.impl.WebSymbolsInspectionToolMappingEP"
+                    beanClass="com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javascript.web.highlightInLanguage"
-                    beanClass="com.intellij.javascript.web.inspections.impl.WebSymbolsHighlightInLanguageEP"
+                    beanClass="com.intellij.webSymbols.inspections.impl.WebSymbolsHighlightInLanguageEP"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javascript.web.dependencyProximityProvider"
-                    interface="com.intellij.javascript.web.context.WebSymbolDependencyProximityProvider"
+                    interface="com.intellij.webSymbols.framework.DependencyProximityProvider"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
