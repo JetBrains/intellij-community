@@ -123,7 +123,7 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
             val overriddenDeclarationsAndRenders: Map<PsiElement, String>
         )
 
-        fun KtAnalysisSession.getClassDescription(overriddenElement: PsiElement, containingSymbol: KtSymbolWithKind?): String =
+        fun getClassDescription(overriddenElement: PsiElement, containingSymbol: KtSymbolWithKind?): String =
             when (overriddenElement) {
                 is KtNamedFunction, is KtProperty, is KtParameter -> (containingSymbol as? KtNamedSymbol)?.name?.asString() ?: "Unknown"  //TODO render symbols
                 is PsiMethod -> {
@@ -146,7 +146,7 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
                     }
 
                     val filteredDeclarations =
-                        if (ignore != null) renderToPsi.filter { ignore.contains(it.first) } else renderToPsi
+                        if (ignore != null) renderToPsi.filter { !ignore.contains(it.first) } else renderToPsi
 
                     val renderedClass = containingClass.name?.asString() ?: SpecialNames.ANONYMOUS_STRING //TODO render class
 
@@ -170,7 +170,7 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
         )
 
         return when (exitCode) {
-            Messages.YES -> listOf(declaration) + analyzeResult.overriddenDeclarationsAndRenders.keys
+            Messages.YES -> analyzeResult.overriddenDeclarationsAndRenders.keys.toList()
             Messages.NO -> listOf(declaration)
             else -> emptyList()
         }
