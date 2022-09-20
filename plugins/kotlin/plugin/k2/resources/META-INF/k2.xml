@@ -179,7 +179,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinBuildProcessParametersProvider"/>
 
-    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector"
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector"
                         serviceImplementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.SymbolBasedKotlinMainFunctionDetector"/>
 
     <configurationType implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationType"/>

@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.base.codeInsight
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.name.StandardClassIds

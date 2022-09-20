@@ -9,9 +9,9 @@ import com.intellij.util.Function
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinBaseCodeInsightBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.PsiOnlyKotlinMainFunctionDetector
+import org.jetbrains.kotlin.idea.base.codeInsight.hasMain
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
-import org.jetbrains.kotlin.idea.base.lineMarkers.run.hasMain
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework

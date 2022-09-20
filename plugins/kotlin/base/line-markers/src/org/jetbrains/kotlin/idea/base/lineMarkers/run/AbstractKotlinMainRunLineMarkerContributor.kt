@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 @ApiStatus.Internal

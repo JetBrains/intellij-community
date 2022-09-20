@@ -46,10 +46,10 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle.message
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.PsiOnlyKotlinMainFunctionDetector
-import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector
-import org.jetbrains.kotlin.idea.base.lineMarkers.run.findMainOwner
-import org.jetbrains.kotlin.idea.base.lineMarkers.run.hasMain
+import org.jetbrains.kotlin.idea.base.codeInsight.findMainOwner
+import org.jetbrains.kotlin.idea.base.codeInsight.hasMain
 import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
