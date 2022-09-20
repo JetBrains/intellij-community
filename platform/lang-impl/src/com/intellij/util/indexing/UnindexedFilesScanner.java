@@ -299,13 +299,19 @@ public class UnindexedFilesScanner extends DumbModeTask {
       scheduleInitialVfsRefresh();
     }
 
-    UnindexedFilesIndexer indexer = new UnindexedFilesIndexer(myProject, providerToFiles);
-    if (shouldScanInSmartMode()) {
-      // Switch to dumb mode and index
-      indexer.queue(myProject);
+    int totalFiles = providerToFiles.values().stream().mapToInt(List::size).sum();
+    if (totalFiles > 0) {
+      UnindexedFilesIndexer indexer = new UnindexedFilesIndexer(myProject, providerToFiles);
+      if (shouldScanInSmartMode()) {
+        // Switch to dumb mode and index
+        indexer.queue(myProject);
+      }
+      else {
+        // Already in dumb mode. Just invoke indexer
+        indexer.indexFiles(projectIndexingHistory, indicator);
+      }
     } else {
-      // Already in dumb mode. Just invoke indexer
-      indexer.indexFiles(projectIndexingHistory, indicator);
+      LOG.info("Finished for " + myProject.getName() + ". No files to index with loading content.");
     }
   }
 
