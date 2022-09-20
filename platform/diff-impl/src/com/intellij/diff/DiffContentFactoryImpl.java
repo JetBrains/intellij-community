@@ -490,13 +490,36 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       if (fileTypeCharset != null) return fileTypeCharset;
     }
 
+    if (highlightFile != null) {
+      Charset fileCharset = highlightFile.getCharset();
+      return takeCharsetOrGuessUTF(fileCharset, content);
+    }
+    else {
+      EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : EncodingManager.getInstance();
+      Charset globalCharset = e.getDefaultCharset();
+      return takeCharsetOrGuessUTF(globalCharset, content);
+    }
+  }
+
+  @NotNull
+  private static Charset takeCharsetOrGuessUTF(@NotNull Charset charset, byte @NotNull [] content) {
+    if (StandardCharsets.UTF_8.equals(charset)) {
+      // GuessedEncoding can't detect UTF8-incompatible charsets, verification can be skipped
+      return charset;
+    }
+
+    if (CharsetToolkit.tryDecodeString(content, charset) != null) {
+      // charset is OK
+      return charset;
+    }
+
     Charset charsetFromContent = guessCharsetFromContent(content);
-    if (charsetFromContent != null) return charsetFromContent;
+    if (charsetFromContent != null) {
+      return charsetFromContent;
+    }
 
-    if (highlightFile != null) return highlightFile.getCharset();
-
-    EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : EncodingManager.getInstance();
-    return e.getDefaultCharset();
+    // charset is NOT OK, but we don't know better
+    return charset;
   }
 
   @Nullable
