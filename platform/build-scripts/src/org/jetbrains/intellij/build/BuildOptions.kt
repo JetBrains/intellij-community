@@ -105,6 +105,8 @@ class BuildOptions {
     const val SETUP_BUNDLED_MAVEN = "setup_bundled_maven"
     const val VERIFY_CLASS_FILE_VERSIONS = "verify_class_file_versions"
 
+    const val ARCHIVE_PLUGINS = "archivePlugins"
+
     /**
      * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
      * Comprises many small publication steps.
@@ -314,6 +316,9 @@ class BuildOptions {
 
   @Internal
   var compressNonBundledPluginArchive = true
+
+  @Internal
+  var skipCustomResourceGenerators = false
 
   var resolveDependenciesMaxAttempts = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "2").toInt()
   var resolveDependenciesDelayMs = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000").toLong()

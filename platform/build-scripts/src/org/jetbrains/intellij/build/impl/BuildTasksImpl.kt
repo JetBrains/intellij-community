@@ -16,7 +16,6 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
@@ -55,6 +54,7 @@ import java.util.*
 import java.util.function.BiConsumer
 import java.util.function.Predicate
 import java.util.stream.Collectors
+import kotlin.collections.HashSet
 
 class BuildTasksImpl(context: BuildContext) : BuildTasks {
   private val context = context as BuildContextImpl
@@ -93,9 +93,9 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
 
   override suspend fun buildNonBundledPlugins(mainPluginModules: List<String>) {
     checkProductProperties(context)
-    checkPluginModules(mainPluginModules, "mainPluginModules", context.productProperties.productLayout.pluginLayouts, context)
+    checkPluginModules(mainPluginModules, "mainPluginModules", context)
     copyDependenciesFile(context)
-    val pluginsToPublish = getPluginsByModules(mainPluginModules, context)
+    val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context)
     val distributionJARsBuilder = DistributionJARsBuilder(compilePlatformAndPluginModules(pluginsToPublish, context))
     distributionJARsBuilder.buildSearchableOptions(context)
     distributionJARsBuilder.buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
@@ -620,7 +620,7 @@ private suspend fun compileModulesForDistribution(pluginsToPublish: Set<PluginLa
 
 private suspend fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
   return compileModulesForDistribution(
-    pluginsToPublish = getPluginsByModules(modules = context.productProperties.productLayout.pluginModulesToPublish, context = context),
+    pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.pluginModulesToPublish, context = context),
     context = context
   )
 }
@@ -631,7 +631,7 @@ suspend fun buildDistributions(context: BuildContext) {
       checkProductProperties(context as BuildContextImpl)
       copyDependenciesFile(context)
       logFreeDiskSpace("before compilation", context)
-      val pluginsToPublish = getPluginsByModules(context.productProperties.productLayout.pluginModulesToPublish, context)
+      val pluginsToPublish = getPluginLayoutsByJpsModuleNames(context.productProperties.productLayout.pluginModulesToPublish, context)
       val distributionState = compileModulesForDistribution(context)
       logFreeDiskSpace("after compilation", context)
 
@@ -789,18 +789,15 @@ private fun checkProductLayout(context: BuildContext) {
   val pluginLayouts = layout.pluginLayouts
   checkScrambleClasspathPlugins(pluginLayouts)
   checkPluginDuplicates(pluginLayouts)
-  checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", pluginLayouts, context)
-  checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", pluginLayouts, context)
-  checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", pluginLayouts,
-                     context)
+  checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", context)
+  checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", context)
+  checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", context)
   if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
     messages.warning("layout.buildAllCompatiblePlugins option isn't enabled. Value of " +
                      "layout.compatiblePluginsToIgnore property will be ignored (${layout.compatiblePluginsToIgnore})")
   }
   if (layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
-    checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore",
-                       pluginLayouts,
-                       context)
+    checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", context)
   }
   if (!context.shouldBuildDistributions() && layout.buildAllCompatiblePlugins) {
     messages.warning("Distribution is not going to build. Hence all compatible plugins won't be built despite " +
@@ -895,8 +892,7 @@ private fun checkArtifacts(names: Collection<String>, fieldName: String, context
 }
 
 private fun checkScrambleClasspathPlugins(pluginLayoutList: List<PluginLayout>) {
-  val pluginDirectories = pluginLayoutList.map { it.directoryName }.toImmutableSet()
-
+  val pluginDirectories = pluginLayoutList.mapTo(HashSet()) { it.directoryName }
   for (pluginLayout in pluginLayoutList) {
     for ((pluginDirectoryName, _) in pluginLayout.scrambleClasspathPlugins) {
       check(pluginDirectories.contains(pluginDirectoryName)) {
@@ -907,25 +903,12 @@ private fun checkScrambleClasspathPlugins(pluginLayoutList: List<PluginLayout>) 
   }
 }
 
-private fun checkPluginModules(
-  pluginModules: Collection<String>?,
-  fieldName: String,
-  pluginLayoutList: List<PluginLayout>,
-  context: BuildContext,
-) {
+private fun checkPluginModules(pluginModules: Collection<String>?, fieldName: String, context: BuildContext) {
   if (pluginModules == null) {
     return
   }
 
   checkModules(pluginModules, fieldName, context)
-
-  val unspecifiedLayoutPluginModules = pluginModules.filter { mainModuleName ->
-    pluginLayoutList.none { it.mainModule == mainModuleName }
-  }
-  check(unspecifiedLayoutPluginModules.isEmpty()) {
-    "No plugin layout specified in productProperties.productLayout.pluginLayouts for following plugin main modules " +
-    "(referenced from $fieldName):\n${unspecifiedLayoutPluginModules.joinToString(separator = "\n") { "simplePlugin(\"$it\")," }}"
-  }
 
   val unknownBundledPluginModules = pluginModules.filter { context.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
   check(unknownBundledPluginModules.isEmpty()) {

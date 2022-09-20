@@ -93,7 +93,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
 
   val moduleNameToPluginBuildDescriptor = HashMap<String, PluginBuildDescriptor>()
   val pluginBuildDescriptors = mutableListOf<PluginBuildDescriptor>()
-  for (plugin in context.productProperties.productLayout.pluginLayouts) {
+  for (plugin in getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context)) {
     if (!isPluginApplicable(bundledMainModuleNames = bundledMainModuleNames, plugin = plugin, context = context)) {
       continue
     }
