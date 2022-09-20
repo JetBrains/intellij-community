@@ -4,13 +4,11 @@ package com.intellij.openapi.vfs;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.idea.HardwareAgentRequired;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
@@ -36,7 +34,8 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
+import static java.util.Objects.requireNonNull;
 import static org.junit.Assert.*;
 
 @RunFirst
@@ -137,7 +137,7 @@ public class VfsUtilPerformanceTest {
       }
       VirtualFile leafDir = dir;
       ThrowableRunnable<RuntimeException> checkPerformance = new ThrowableRunnable<>() {
-        private VirtualFile findRoot(VirtualFile file) {
+        private static VirtualFile findRoot(VirtualFile file) {
           while (true) {
             VirtualFile parent = file.getParent();
             if (parent == null) {
@@ -199,69 +199,57 @@ public class VfsUtilPerformanceTest {
 
   @Test
   public void testAsyncRefresh() throws Throwable {
-    AtomicReference<Throwable> ex = new AtomicReference<>();
-    boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-      Collections.nCopies(JobSchedulerImpl.getJobPoolParallelism(), null), null,
-      __ -> {
-        try {
-          doAsyncRefreshTest();
-        }
-        catch (Throwable t) {
-          ex.set(t);
-        }
-        return true;
-      });
+    var ex = new AtomicReference<Throwable>();
+    var tasks = Collections.nCopies(JobSchedulerImpl.getJobPoolParallelism(), null);
+    var success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, null, __ -> {
+      try {
+        doAsyncRefreshTest();
+      }
+      catch (Throwable t) {
+        ex.set(t);
+      }
+      return true;
+    });
 
     if (ex.get() != null) throw ex.get();
     assertTrue(success);
   }
 
   private void doAsyncRefreshTest() throws Exception {
-    byte[] xxx = "xxx".getBytes(StandardCharsets.UTF_8);
-
-    File temp = myTempDir.newDirectory();
-    LocalFileSystem fs = LocalFileSystem.getInstance();
-    VirtualFile vTemp = fs.findFileByIoFile(temp);
-    assertNotNull(vTemp);
-
-    int N = 1_000;
-    VirtualFile[] vFiles = new VirtualFile[N];
-    long[] ioTimestamp = new long[N];
+    var N = 1_000;
+    var vFiles = new VirtualFile[N];
+    var modStamps = new long[N];
+    var temp = myTempDir.newDirectoryPath();
+    var fs = LocalFileSystem.getInstance();
 
     for (int i = 0; i < N; i++) {
-      File ioFile = new File(temp, i + ".txt");
-      FileUtil.writeToFile(ioFile, xxx);
-      VirtualFile vFile = fs.refreshAndFindFileByIoFile(ioFile);
-      assertNotNull(vFile);
-      vFiles[i] = vFile;
-      ioTimestamp[i] = ioFile.lastModified();
+      var file = Files.writeString(temp.resolve(i + ".txt"), "xxx");
+      vFiles[i] = requireNonNull(fs.refreshAndFindFileByNioFile(file));
+      modStamps[i] = Files.getLastModifiedTime(file).toMillis();
     }
 
-    vTemp.refresh(false, true);
+    vFiles[0].getParent().refresh(false, true);
 
     for (int i = 0; i < N; i++) {
-      File ioFile = new File(temp, i + ".txt");
-      assertEquals(ioTimestamp[i], ioFile.lastModified());
-      VirtualFile vFile = fs.findFileByIoFile(ioFile);
-      assertNotNull(vFile);
-      IoTestUtil.assertTimestampsEqual(ioTimestamp[i], vFile.getTimeStamp());
+      var file = temp.resolve(i + ".txt");
+      assertEquals(modStamps[i], Files.getLastModifiedTime(file).toMillis());
+      var vFile = requireNonNull(fs.refreshAndFindFileByNioFile(file));
+      assertEquals(modStamps[i], vFile.getTimeStamp());
     }
 
     for (int i = 0; i < N; i++) {
-      File ioFile = new File(temp, i + ".txt");
-      FileUtil.writeToFile(ioFile, xxx);
-      assertTrue(ioFile.setLastModified(ioTimestamp[i] - 2_000));
-      long ioModified = ioFile.lastModified();
-      assertTrue("File:" + ioFile.getPath() + "; time:" + ioModified, ioTimestamp[i] != ioModified);
-      ioTimestamp[i] = ioModified;
-      IoTestUtil.assertTimestampsNotEqual(vFiles[i].getTimeStamp(), ioModified);
+      var file = temp.resolve(i + ".txt");
+      Files.setLastModifiedTime(file, FileTime.fromMillis(modStamps[i] - 2_000));
+      var newModStamp = Files.getLastModifiedTime(file).toMillis();
+      assertNotEquals(modStamps[i], newModStamp);
+      modStamps[i] = newModStamp;
+      assertNotEquals(vFiles[i].getTimeStamp(), newModStamp);
     }
 
-    Disposable refreshEngaged = Disposer.newDisposable();
-    CountDownLatch latch;
+    var latch = new CountDownLatch(N);
+    var refreshEngaged = Disposer.newDisposable();
     try {
       FrequentEventDetector.disableUntil(refreshEngaged);
-      latch = new CountDownLatch(N);
       for (VirtualFile vFile : vFiles) {
         vFile.refresh(true, true, latch::countDown);
       }
@@ -269,14 +257,10 @@ public class VfsUtilPerformanceTest {
     finally {
       Disposer.dispose(refreshEngaged);
     }
-    while (latch.getCount() != 0) {
-      latch.await(100, TimeUnit.MILLISECONDS);
-      UIUtil.pump();
-    }
+    assertTrue(latch.await(2, TimeUnit.MINUTES));
 
     for (int i = 0; i < N; i++) {
-      VirtualFile vFile = vFiles[i];
-      IoTestUtil.assertTimestampsEqual(ioTimestamp[i], vFile.getTimeStamp());
+      assertEquals(modStamps[i], vFiles[i].getTimeStamp());
     }
   }
 
