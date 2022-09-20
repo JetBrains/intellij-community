@@ -631,8 +631,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       Object selectedValue = myListModel.getElementAt(forIndex);
       if (withTimer) {
         myShowSubmenuTimer = new Timer(250, e -> {
-          if (!isDisposed() && myLastSelectedIndex == forIndex)
+          if (!isDisposed() && myLastSelectedIndex == forIndex) {
+            disposeChildren();
             showNextStepPopup(listStep.onChosen(selectedValue, false), selectedValue);
+          }
         });
         myShowSubmenuTimer.setRepeats(false);
         myShowSubmenuTimer.start();
