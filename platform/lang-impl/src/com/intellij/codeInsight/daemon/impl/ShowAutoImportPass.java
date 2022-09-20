@@ -36,8 +36,10 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 public class ShowAutoImportPass extends TextEditorHighlightingPass {
   private final Editor myEditor;
@@ -46,6 +48,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   private final TextRange myVisibleRange;
   private final boolean hasDirtyTextRange;
+  private final List<BooleanSupplier> autoImportActions = Collections.synchronizedList(new ArrayList<>());
 
   ShowAutoImportPass(@NotNull PsiFile file, @NotNull Editor editor) {
     super(file.getProject(), editor.getDocument(), false);
@@ -58,6 +61,29 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
+    Document document = myEditor.getDocument();
+    List<HighlightInfo> infos = new ArrayList<>();
+    List<BooleanSupplier> result = new ArrayList<>();
+    int exceptCaretOffset = myEditor.getCaretModel().getOffset();
+    DaemonCodeAnalyzerEx.processHighlights(document, myProject, null, 0, document.getTextLength(), info -> {
+      if (info.isUnresolvedReference() && info.getSeverity() == HighlightSeverity.ERROR && !info.containsOffset(exceptCaretOffset, true)) {
+        infos.add(info);
+      }
+      return true;
+    });
+
+    for (HighlightInfo info : infos) {
+      for (ReferenceImporter importer : ReferenceImporter.EP_NAME.getExtensionList()) {
+        if (!importer.isAddUnambiguousImportsOnTheFlyEnabled(myFile)) {
+          continue;
+        }
+        BooleanSupplier action = importer.computeAutoImportAtOffset(myEditor, myFile, info.getActualStartOffset(), false);
+        if (action != null) {
+          result.add(action);
+        }
+      }
+    }
+    autoImportActions.addAll(result);
   }
 
   @Override
@@ -73,7 +99,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
     SlowOperations.allowSlowOperations(() -> {
       int caretOffset = myEditor.getCaretModel().getOffset();
-      importUnambiguousImports(caretOffset);
+      importUnambiguousImports();
       if (isImportHintEnabled()) {
         List<HighlightInfo> visibleHighlights = getVisibleHighlights(myVisibleRange, myProject, myEditor, hasDirtyTextRange);
         // sort by distance to the caret
@@ -87,22 +113,11 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     });
   }
 
-  private void importUnambiguousImports(int exceptCaretOffset) {
+  private void importUnambiguousImports() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!mayAutoImportNow(myFile)) return;
-    Document document = myEditor.getDocument();
-    List<HighlightInfo> infos = new ArrayList<>();
-    DaemonCodeAnalyzerEx.processHighlights(document, myProject, null, 0, document.getTextLength(), info -> {
-      if (info.isUnresolvedReference() && info.getSeverity() == HighlightSeverity.ERROR && !info.containsOffset(exceptCaretOffset, true)) {
-        infos.add(info);
-      }
-      return true;
-    });
-
-    for (HighlightInfo info : infos) {
-      for (ReferenceImporter importer : ReferenceImporter.EP_NAME.getExtensionList()) {
-        if (importer.isAddUnambiguousImportsOnTheFlyEnabled(myFile)
-            && importer.autoImportReferenceAtOffset(myEditor, myFile, info.getActualStartOffset())) break;
-      }
+    for (BooleanSupplier autoImportAction : autoImportActions) {
+      autoImportAction.getAsBoolean();
     }
   }
 

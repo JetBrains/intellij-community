@@ -453,21 +453,20 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
   public void testUnambiguousImportMustBeInsertedEvenWhenShowImportPopupIsOff() throws Exception {
     @Language("JAVA")
-    @NonNls String text = "package p;\n" +
-                          "class S { ArrayList l; }  ";
-    configureByText(text);
-    type(" ");
-    backspace();
-
+    @NonNls String text = """
+                          package p;
+                          class S { ArrayList l; }
+                          """;
     boolean importHintEnabled = DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled();
     try {
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
       CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
 
-      List<HighlightInfo> errs = highlightErrors();
+      configureByText(text);
+      type(" ");
+      backspace();
+      highlightErrors();
       UIUtil.dispatchAllInvocationEvents();
-
-      assertEmpty(errs);
 
       assertOneImportAdded("java.util.ArrayList");
     }
@@ -531,8 +530,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
     type(" ");
-    List<HighlightInfo> errs = highlightErrors();
-    assertEmpty(errs);
+    highlightErrors();
 
     assertOneImportAdded("java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock");
   }

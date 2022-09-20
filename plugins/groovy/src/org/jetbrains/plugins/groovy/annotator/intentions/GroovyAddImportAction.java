@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -174,5 +175,32 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
     if (file instanceof GroovyFile) {
       ((GroovyFile)file).importClass(targetClass);
     }
+  }
+
+  @Override
+  protected boolean isClassMaybeImportedAlready(@NotNull PsiFile containingFile, @NotNull PsiClass classToImport) {
+    GrImportStatement[] importList = ((GroovyFile)containingFile).getImportStatements();
+    if (importList == null) return false;
+    String classQualifiedName = classToImport.getQualifiedName();
+    String packageName = classQualifiedName == null ? "" : StringUtil.getPackageName(classQualifiedName);
+    boolean result = false;
+    for (GrImportStatement statement : importList) {
+      GrCodeReferenceElement importRef = statement.getImportReference();
+      if (importRef == null) continue;
+      String canonicalText = importRef.getCanonicalText(); // rely on the optimization: no resolve while getting import statement canonical text
+      if (statement.isOnDemand()) {
+        if (canonicalText.equals(packageName)) {
+          result = true;
+          break;
+        }
+      }
+      else {
+        if (canonicalText.equals(classQualifiedName)) {
+          result = true;
+          break;
+        }
+      }
+    }
+    return result;
   }
 }

@@ -51,6 +51,12 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   private final long myPsiModificationCount;
   private final boolean myHasUnresolvedImportWhichCanImport;
   private final PsiFile myContainingFile;
+  /**
+   * If true, this.isAvailable() will return false when PSI has changed after this action instantiation.
+   * By default, make this action unavailable on PSI modification because e.g., the file text might change to obsolete this fix altogether.
+   * However, sometimes we do need to perform import on changed PSI, e.g., in case of auto-importing unambiguous references in bulk.
+   */
+  private boolean abortOnPSIModification = true;
 
   protected ImportClassFixBase(@NotNull T referenceElement, @NotNull R reference) {
     if (ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed()) {
@@ -84,7 +90,23 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   private boolean isPsiModificationStampChanged(@NotNull Project project) {
     long currentPsiModificationCount = PsiModificationTracker.getInstance(project).getModificationCount();
-    return currentPsiModificationCount != myPsiModificationCount;
+    if (currentPsiModificationCount == myPsiModificationCount) {
+      return false;
+    }
+    if (abortOnPSIModification) return true;
+    // ok, something did change. but can we still import? (in case of auto-import there maybe multiple fixes wanting to be executed)
+    List<? extends PsiClass> classesToImport = getClassesToImport(true);
+    return classesToImport.size() != 1 || isClassMaybeImportedAlready(myContainingFile, classesToImport.get(0));
+  }
+
+  /**
+   * @return true if the class candidate name to be imported already present in the import list (maybe some auto-import-fix for another reference did it?)
+   * This method is intended to be cheap and resolve-free, because it might be called in EDT.
+   * This method is used as an optimization against trying to import the same class several times,
+   * so false negatives are OK (returning false even when the class already imported) whereas false positives are bad (don't return true when the class wasn't imported).
+   */
+  protected boolean isClassMaybeImportedAlready(@NotNull PsiFile containingFile, @NotNull PsiClass classToImport) {
+    return false;
   }
 
   @Nullable
@@ -487,5 +509,9 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
         ImportClassFixBase.this.bindReference(ref, targetClass);
       }
     };
+  }
+
+  public void surviveOnPSIModifications() {
+    abortOnPSIModification = false;
   }
 }
