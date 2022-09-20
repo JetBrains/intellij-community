@@ -219,7 +219,7 @@ class DistributionJARsBuilder {
     }
     val nonPluginsEntries = ArrayList<DistributionFileEntry>()
     val pluginsEntries = ArrayList<DistributionFileEntry>()
-    for (e in generateProjectStructureMapping(context, pluginLayoutRoot)) {
+    for (e in generateProjectStructureMapping(context = context, state = state, pluginLayoutRoot = pluginLayoutRoot)) {
       if (e.path.startsWith(pluginLayoutRoot)) {
         val relPath = pluginLayoutRoot.relativize(e.path)
         // For plugins our classloader load jars only from lib folder
@@ -240,33 +240,6 @@ class DistributionJARsBuilder {
       }
     }
     return classPath
-  }
-
-  internal suspend fun generateProjectStructureMapping(context: BuildContext, pluginLayoutRoot: Path): List<DistributionFileEntry> {
-    val moduleOutputPatcher = ModuleOutputPatcher()
-    return coroutineScope {
-      val libDirLayout = async {
-        processLibDirectoryLayout(moduleOutputPatcher = moduleOutputPatcher,
-                                  platform = state.platform,
-                                  context = context,
-                                  copyFiles = false)
-      }
-      val allPlugins = getPluginsByModules(context.productProperties.productLayout.bundledPluginModules, context)
-      val entries = ArrayList<DistributionFileEntry>()
-      for (plugin in allPlugins) {
-        if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, context = context)) {
-          entries.addAll(layoutDistribution(layout = plugin,
-                                            targetDirectory = pluginLayoutRoot,
-                                            copyFiles = false,
-                                            simplify = false,
-                                            moduleOutputPatcher = moduleOutputPatcher,
-                                            jarToModule = plugin.jarToModules,
-                                            context = context).first)
-        }
-      }
-      entries.addAll(libDirLayout.await())
-      entries
-    }
   }
 
   suspend fun buildBundledPlugins(plugins: Collection<PluginLayout>,
@@ -453,6 +426,32 @@ class DistributionJARsBuilder {
       null
     }
     return PluginRepositorySpec(destFile, moduleOutputPatcher.getPatchedPluginXml(helpPlugin.mainModule))
+  }
+}
+
+internal suspend fun generateProjectStructureMapping(context: BuildContext,
+                                                     state: DistributionBuilderState,
+                                                     pluginLayoutRoot: Path): List<DistributionFileEntry> {
+  val moduleOutputPatcher = ModuleOutputPatcher()
+  return coroutineScope {
+    val libDirLayout = async {
+      processLibDirectoryLayout(moduleOutputPatcher = moduleOutputPatcher, platform = state.platform, context = context, copyFiles = false)
+    }
+    val allPlugins = getPluginsByModules(context.productProperties.productLayout.bundledPluginModules, context)
+    val entries = ArrayList<DistributionFileEntry>()
+    for (plugin in allPlugins) {
+      if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, context = context)) {
+        entries.addAll(layoutDistribution(layout = plugin,
+                                          targetDirectory = pluginLayoutRoot,
+                                          copyFiles = false,
+                                          simplify = false,
+                                          moduleOutputPatcher = moduleOutputPatcher,
+                                          jarToModule = plugin.jarToModules,
+                                          context = context).first)
+      }
+    }
+    entries.addAll(libDirLayout.await())
+    entries
   }
 }
 

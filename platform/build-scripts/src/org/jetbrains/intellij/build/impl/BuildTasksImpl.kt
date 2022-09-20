@@ -110,7 +110,9 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
       Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
     }
     writeProjectStructureReport(
-      entries = DistributionJARsBuilder(context).generateProjectStructureMapping(context, pluginLayoutRoot),
+      entries = generateProjectStructureMapping(context = context,
+                                                state = DistributionBuilderState(pluginsToPublish = emptySet(), context = context),
+                                                pluginLayoutRoot = pluginLayoutRoot),
       file = targetFile,
       buildPaths = context.paths
     )

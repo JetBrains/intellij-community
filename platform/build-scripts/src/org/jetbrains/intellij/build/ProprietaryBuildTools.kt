@@ -41,7 +41,6 @@ class ProprietaryBuildTools(
   val licenseServerHost: String?
 ) {
   companion object {
-    @JvmStatic
     val DUMMY = ProprietaryBuildTools(signTool = null,
                                       scrambleTool = null,
                                       macHostProperties = null,
