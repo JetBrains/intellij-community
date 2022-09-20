@@ -172,8 +172,8 @@ class BuildContextImpl private constructor(
     get() = compilationContext.stableJavaExecutable
   override val stableJdkHome: Path
     get() = compilationContext.stableJdkHome
-  override val projectOutputDirectory: Path
-    get() = compilationContext.projectOutputDirectory
+  override val classesOutputDirectory: Path
+    get() = compilationContext.classesOutputDirectory
 
   override fun findRequiredModule(name: String): JpsModule {
     return compilationContext.findRequiredModule(name)

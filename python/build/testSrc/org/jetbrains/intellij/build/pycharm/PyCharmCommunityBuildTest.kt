@@ -17,8 +17,8 @@ class PyCharmCommunityBuildTest {
       communityHomePath = communityHomePath,
       productProperties = PyCharmCommunityProperties(communityHomePath.communityRoot),
     ) {
-      it.projectClassesOutputDirectory = System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
-                                         ?: "$homePath/out/classes"
+      it.classesOutputDirectory = System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
+                                  ?: "$homePath/out/classes"
     }
   }
 }

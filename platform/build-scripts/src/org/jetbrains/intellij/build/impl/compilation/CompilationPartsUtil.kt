@@ -108,7 +108,7 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntri
   val items = ArrayList<PackAndUploadItem>(2048)
   spanBuilder("compute module list to pack").use { span ->
     // production, test
-    for (subRoot in Files.newDirectoryStream(context.projectOutputDirectory).use(DirectoryStream<Path>::toList)) {
+    for (subRoot in Files.newDirectoryStream(context.classesOutputDirectory).use(DirectoryStream<Path>::toList)) {
       if (!Files.isDirectory(subRoot)) {
         continue
       }

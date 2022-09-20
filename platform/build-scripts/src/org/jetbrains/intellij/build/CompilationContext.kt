@@ -37,7 +37,7 @@ interface CompilationContext {
   /**
    * @return directory with compiled project classes, 'url' attribute value of 'output' tag from .idea/misc.xml by default
    */
-  val projectOutputDirectory: Path
+  val classesOutputDirectory: Path
 
   fun findRequiredModule(name: String): JpsModule
 

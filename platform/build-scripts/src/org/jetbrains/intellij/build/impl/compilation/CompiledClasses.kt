@@ -77,9 +77,9 @@ internal object CompiledClasses {
     val messages = context.messages
     when {
       context.options.useCompiledClassesFromProjectOutput -> {
-        messages.info("Compilation skipped, the compiled classes from '${context.projectOutputDirectory}' will be used")
+        messages.info("Compilation skipped, the compiled classes from '${context.classesOutputDirectory}' will be used")
         Span.current().addEvent("compiled classes reused", Attributes.of(
-          AttributeKey.stringKey("dir"), context.projectOutputDirectory.toString(),
+          AttributeKey.stringKey("dir"), context.classesOutputDirectory.toString(),
         ))
       }
       PortableCompilationCache.IS_ENABLED -> {
@@ -88,7 +88,7 @@ internal object CompiledClasses {
       }
       context.options.pathToCompiledClassesArchive != null -> {
         messages.info("Compilation skipped, the compiled classes from '${options.pathToCompiledClassesArchive}' will be used")
-        unpackCompiledClasses(context.projectOutputDirectory, context)
+        unpackCompiledClasses(context.classesOutputDirectory, context)
       }
       context.options.pathToCompiledClassesArchivesMetadata != null -> {
         messages.info("Compilation skipped, the compiled classes from '${options.pathToCompiledClassesArchivesMetadata}' will be used")
@@ -96,7 +96,7 @@ internal object CompiledClasses {
         fetchAndUnpackCompiledClasses(
           reportStatisticValue = context.messages::reportStatisticValue,
           withScope = { name, operation -> context.messages.block(name, operation) },
-          classOutput = context.projectOutputDirectory,
+          classOutput = context.classesOutputDirectory,
           metadataFile = Path.of(context.options.pathToCompiledClassesArchivesMetadata!!),
           saveHash = !forInstallers,
         )

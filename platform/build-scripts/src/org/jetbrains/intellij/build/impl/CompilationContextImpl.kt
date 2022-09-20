@@ -27,7 +27,6 @@ import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.*
-import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -98,7 +97,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
         categoriesWithDebugLevelNullable = System.getProperty("intellij.build.debug.logging.categories", "")
       )
     }
-    overrideProjectOutputDirectory()
+    overrideClassesOutputDirectory()
     JpsArtifactService.getInstance().getArtifacts(project).forEach {
       it.outputPath = "${paths.jpsArtifacts.resolve(PathUtilRt.getFileName(it.outputPath))}"
     }
@@ -108,19 +107,19 @@ class CompilationContextImpl private constructor(model: JpsModel,
     cleanOutput(keepCompilationState = CompiledClasses.keepCompilationState(options))
   }
 
-  private fun overrideProjectOutputDirectory() {
-    val override = options.projectClassesOutputDirectory
+  private fun overrideClassesOutputDirectory() {
+    val override = options.classesOutputDirectory
     when {
-      !override.isNullOrEmpty() -> projectOutputDirectory = Path.of(override)
-      options.useCompiledClassesFromProjectOutput -> require(Files.exists(projectOutputDirectory)) {
-        "${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled but the project output directory $projectOutputDirectory doesn't exist"
+      !override.isNullOrEmpty() -> classesOutputDirectory = Path.of(override)
+      options.useCompiledClassesFromProjectOutput -> require(Files.exists(classesOutputDirectory)) {
+        "${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled but the classes output directory $classesOutputDirectory doesn't exist"
       }
-      else -> projectOutputDirectory = paths.buildOutputDir.resolve("classes")
+      else -> classesOutputDirectory = paths.buildOutputDir.resolve("classes")
     }
-    Span.current().addEvent("project output directory is $projectOutputDirectory")
+    Span.current().addEvent("classes output directory is $classesOutputDirectory")
   }
 
-  override var projectOutputDirectory: Path
+  override var classesOutputDirectory: Path
     get() {
       val url = JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl
       return JpsPathUtil.urlToFile(url).toPath()
@@ -384,7 +383,7 @@ private fun CompilationContext.cleanOutput(keepCompilationState: Boolean) {
       Files.newDirectoryStream(outDir).use { dirStream ->
         for (file in dirStream) {
           val attributes = Attributes.of(AttributeKey.stringKey("dir"), outDir.relativize(file).toString())
-          if (outputDirectoriesToKeep.contains(file.fileName.toString())) {
+          if (outputDirectoriesToKeep.contains(file.name)) {
             span.addEvent("skip cleaning", attributes)
           }
           else {

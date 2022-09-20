@@ -145,7 +145,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
   }
 
   private fun clean() {
-    for (it in listOf(jpsCaches.dir, context.projectOutputDirectory)) {
+    for (it in listOf(jpsCaches.dir, context.classesOutputDirectory)) {
       context.messages.info("Cleaning $it")
       NioFiles.deleteRecursively(it)
     }
