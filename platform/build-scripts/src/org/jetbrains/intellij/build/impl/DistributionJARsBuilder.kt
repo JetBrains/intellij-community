@@ -912,7 +912,7 @@ private suspend fun buildKeymapPlugins(targetDir: Path, context: BuildContext): 
         arrayOf("Default for KDE"),
         arrayOf("Default for XWin"),
         arrayOf("Emacs"),
-        arrayOf("Sublime Text", "Sublime Text (Mac OS X)")
+        arrayOf("Sublime Text", "Sublime Text (Mac OS X)"),
       ).map {
         async { buildKeymapPlugin(it, context.buildNumber, targetDir, keymapDir) }
       }
