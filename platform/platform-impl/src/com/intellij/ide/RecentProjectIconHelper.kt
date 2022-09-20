@@ -20,10 +20,7 @@ import com.intellij.util.io.isDirectory
 import com.intellij.util.ui.*
 import org.imgscalr.Scalr
 import org.jetbrains.annotations.SystemIndependent
-import java.awt.Color
-import java.awt.Component
-import java.awt.Graphics
-import java.awt.Graphics2D
+import java.awt.*
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.*
@@ -62,7 +59,7 @@ internal class RecentProjectIconHelper {
     }
 
     @JvmStatic
-    fun createIcon(file: Path): Icon = ProjectFileIcon(file, userScaledProjectIconSize())
+    fun createIcon(file: Path): Icon = ProjectFileIcon(loadIconFile(file), userScaledProjectIconSize())
 
     @JvmStatic
     private val projectIconsCache = HashMap<String, ProjectIcon>()
@@ -163,7 +160,7 @@ private data class ProjectIcon(
 )
 
 private class ProjectFileIcon(
-  private val file: Path,
+  private val iconData: IconData,
   private val userScaledSize: Int,
 ) : JBCachingScalableIcon<ProjectFileIcon>() {
 
@@ -183,7 +180,7 @@ private class ProjectFileIcon(
     ) {
       cachedIcon
     } else {
-      createIcon(sysScale, pixScale).also {
+      iconData.getScaledIcon(sysScale, pixScale).also {
         this.cachedIcon = it
         this.cachedIconSysScale = sysScale
         this.cachedIconPixScale = pixScale
@@ -192,44 +189,66 @@ private class ProjectFileIcon(
     delegate.paintIcon(c, g, x, y)
   }
 
-  private fun createIcon(sysScale: Float, pixScale: Float): Icon {
-    try {
-      if ("svg" == file.extension.lowercase(Locale.ENGLISH)) {
-        return IconDeferrer.getInstance().defer(EmptyIcon.create(userScaledSize),
-                                         Pair(file.toAbsolutePath(), StartupUiUtil.isUnderDarcula())) {
-          val icon = IconLoader.findIcon(file.toUri().toURL(), false) ?: return@defer null
-          if (icon is ScaleContextAware) {
-            icon.updateScaleContext(ScaleContext.create(ScaleType.SYS_SCALE.of(sysScale.toDouble())))
-          }
-
-          val iconSize = max(icon.iconWidth, icon.iconHeight)
-          // workaround for Windows fractional scaling glitches:
-          val targetSize = if (sysScale > 1.0) userScaledSize - 1 else userScaledSize
-          if (iconSize == targetSize) return@defer icon
-          return@defer IconUtil.scale(icon, null, targetSize.toFloat() / iconSize)
-        }
-      }
-      else {
-        val image = ImageLoader.loadFromUrl(file.toUri().toURL()) ?: return EmptyIcon.create(userScaledSize)
-        val targetSize = if (UIUtil.isRetina()) 32 else (userScaledSize * pixScale).toInt()
-        return IconUtil.toRetinaAwareIcon(
-          Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, targetSize),
-          sysScale
-        )
-      }
-    }
-    catch (e: Exception) {
-      LOG.debug(e)
-      return EmptyIcon.create(userScaledSize)
-    }
-  }
-
   override fun getIconWidth(): Int = userScaledSize
 
   override fun getIconHeight(): Int = userScaledSize
 
-  override fun copy(): ProjectFileIcon = ProjectFileIcon(file, userScaledSize)
+  override fun copy(): ProjectFileIcon = ProjectFileIcon(iconData, userScaledSize)
 
+}
+
+private fun loadIconFile(file: Path): IconData = try {
+  if ("svg" == file.extension.lowercase()) {
+    SvgIconData(IconLoader.findIcon(file.toUri().toURL(), false), userScaledProjectIconSize())
+  } else {
+    PngIconData(ImageLoader.loadFromUrl(file.toUri().toURL()), userScaledProjectIconSize())
+  }
+} catch (e: Exception) {
+  LOG.debug(e)
+  EmptyIconData(userScaledProjectIconSize())
+}
+
+private sealed class IconData(protected val userScaledSize: Int) {
+
+  abstract fun getScaledIcon(sysScale: Float, pixScale: Float): Icon
+
+  protected fun emptyIcon(): Icon = EmptyIcon.create(userScaledSize)
+
+}
+
+private class SvgIconData(private val originalIcon: Icon?, userScaledSize: Int) : IconData(userScaledSize) {
+  override fun getScaledIcon(sysScale: Float, pixScale: Float): Icon {
+    if (originalIcon == null) {
+      return emptyIcon()
+    }
+    if (originalIcon is ScaleContextAware) {
+      originalIcon.updateScaleContext(ScaleContext.create(ScaleType.SYS_SCALE.of(sysScale.toDouble())))
+    }
+    val iconSize = max(originalIcon.iconWidth, originalIcon.iconHeight)
+    // workaround for Windows fractional scaling glitches:
+    val targetSize = if (sysScale > 1.0) userScaledSize - 1 else userScaledSize
+    return if (iconSize == targetSize)
+      originalIcon
+    else
+      IconUtil.scale(originalIcon, null, targetSize.toFloat() / iconSize)
+  }
+}
+
+private class PngIconData(private val originalImage: Image?, userScaledSize: Int) : IconData(userScaledSize) {
+  override fun getScaledIcon(sysScale: Float, pixScale: Float): Icon {
+    if (originalImage == null) {
+      return emptyIcon()
+    }
+    val targetSize = if (UIUtil.isRetina()) 32 else (userScaledSize * pixScale).toInt()
+    return IconUtil.toRetinaAwareIcon(
+      Scalr.resize(ImageUtil.toBufferedImage(originalImage), Scalr.Method.ULTRA_QUALITY, targetSize),
+      sysScale
+    )
+  }
+}
+
+private class EmptyIconData(userScaledSize: Int) : IconData(userScaledSize) {
+  override fun getScaledIcon(sysScale: Float, pixScale: Float): Icon = EmptyIcon.create(userScaledSize)
 }
 
 private object ProjectIconPalette : ColorPalette() {
