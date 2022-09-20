@@ -60,8 +60,8 @@ interface NotebookEditorAppearanceColors {
    * Takes lines of the cell and returns a color for the stripe that will be drawn behind the folding markers.
    * Currently only code cells are supported.
    */
-  fun getCellStripeColor(editor: EditorImpl, interval: NotebookCellLines.Interval): Color? = null
-  fun getCellStripeHoverColor(editor: EditorImpl, interval: NotebookCellLines.Interval): Color? = null
+  fun getCellStripeColor(editor: EditorImpl, lines: IntRange): Color? = null
+  fun getCellStripeHoverColor(editor: EditorImpl, lines: IntRange): Color? = null
 
   fun shouldShowCellLineNumbers(): Boolean
 }
