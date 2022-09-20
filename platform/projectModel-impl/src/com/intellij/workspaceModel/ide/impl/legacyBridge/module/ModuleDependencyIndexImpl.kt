@@ -20,6 +20,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.storage.VersionedStorageChange
@@ -306,7 +307,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
     private fun findSdk(sdkDependency: ModuleDependencyItem): Sdk? = when (sdkDependency) {
       is ModuleDependencyItem.InheritedSdkDependency -> projectRootManager.projectSdk
-      is ModuleDependencyItem.SdkDependency -> ProjectJdkTable.getInstance().findJdk(sdkDependency.sdkName, sdkDependency.sdkType)
+      is ModuleDependencyItem.SdkDependency -> ModifiableRootModelBridge.findSdk(sdkDependency.sdkName, sdkDependency.sdkType)
       else -> null
     }
 
