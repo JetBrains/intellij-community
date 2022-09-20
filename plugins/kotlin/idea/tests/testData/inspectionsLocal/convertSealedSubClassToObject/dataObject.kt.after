@@ -1,5 +1,5 @@
 // LANGUAGE_VERSION: 1.8
-// FIX: Convert sealed sub-class to object
+// FIX: Convert sealed subclass to object
 
 sealed class Sealed
 

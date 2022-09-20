@@ -16,11 +16,8 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgressIfEdt
 import org.jetbrains.kotlin.idea.intentions.ConvertSecondaryConstructorToPrimaryIntention
-import org.jetbrains.kotlin.idea.util.application.isDispatchThread
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
@@ -31,7 +28,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 class ConvertSealedSubClassToObjectFix : LocalQuickFix {
 
-    override fun getFamilyName() = KotlinBundle.message("convert.sealed.sub.class.to.object.fix.family.name")
+    override fun getFamilyName() = KotlinBundle.message("convert.sealed.subclass.to.object.fix.family.name")
 
     override fun startInWriteAction(): Boolean = false
 
@@ -94,7 +91,7 @@ class ConvertSealedSubClassToObjectFix : LocalQuickFix {
      * Map references to this class by language
      */
     private fun mapReferencesByLanguage(pointer: SmartPsiElementPointer<KtClass>): Map<Language, List<PsiElement>> =
-        pointer.project.runSynchronouslyWithProgressIfEdt(KotlinBundle.message("progress.looking.up.sealed.sub.class.usage"), true) {
+        pointer.project.runSynchronouslyWithProgressIfEdt(KotlinBundle.message("progress.looking.up.sealed.subclass.usage"), true) {
             pointer.element?.let { ktClass ->
                 ReferencesSearch.search(ktClass).groupBy({ it.element.language }, { it.element.parent })
             } ?: emptyMap()

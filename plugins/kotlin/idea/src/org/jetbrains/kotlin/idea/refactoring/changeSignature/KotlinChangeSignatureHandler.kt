@@ -118,7 +118,7 @@ class KotlinChangeSignatureHandler : ChangeSignatureHandler {
                 return CommonRefactoringUtil.showErrorHint(
                     project,
                     editor,
-                    KotlinBundle.message("error.hint.the.read.only.declaration.cannot.be.changed"),
+                    KotlinBundle.message("error.hint.library.declarations.cannot.be.changed"),
                     RefactoringBundle.message("changeSignature.refactoring.name"),
                     "refactoring.changeSignature",
                 )
