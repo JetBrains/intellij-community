@@ -60,17 +60,20 @@ final class RefreshWorker {
 
   private final boolean myIsRecursive;
   private final boolean myParallel;
-  private final Deque<NewVirtualFile> myRefreshQueue = new ConcurrentLinkedDeque<>();
-  private final Semaphore mySemaphore = new Semaphore();
+  private final Set<NewVirtualFile> myRoots;
+  private final Deque<NewVirtualFile> myRefreshQueue;
+  private final Semaphore mySemaphore;
   private volatile boolean myCancelled;
 
   private final AtomicInteger myFullScans = new AtomicInteger(), myPartialScans = new AtomicInteger(), myProcessed = new AtomicInteger();
   private final AtomicLong myVfsTime = new AtomicLong(), myIoTime = new AtomicLong();
 
-  RefreshWorker(@NotNull NewVirtualFile refreshRoot, boolean isRecursive) {
+  RefreshWorker(@NotNull Collection<@NotNull NewVirtualFile> refreshRoots, boolean isRecursive) {
     myIsRecursive = isRecursive;
     myParallel = isRecursive && ourParallelism > 1 && !ApplicationManager.getApplication().isWriteThread();
-    myRefreshQueue.addLast(refreshRoot);
+    myRoots = new HashSet<>(refreshRoots);
+    myRefreshQueue = new ConcurrentLinkedDeque<>(refreshRoots);
+    mySemaphore = new Semaphore(refreshRoots.size());
   }
 
   void cancel() {
@@ -81,60 +84,14 @@ final class RefreshWorker {
     var t = System.nanoTime();
 
     try {
-      NewVirtualFile root = myRefreshQueue.removeFirst();
-      NewVirtualFileSystem fs = root.getFileSystem();
-      PersistentFS persistence = PersistentFS.getInstance();
+      var persistence = PersistentFS.getInstance();
       var events = new ArrayList<VFileEvent>();
 
-      FileAttributes attributes = fs.getAttributes(root);
-      if (attributes == null) {
-        scheduleDeletion(events, root);
-        root.markClean();
-        return events;
-      }
-
-      checkAndScheduleChildRefresh(events, fs, persistence, root.getParent(), root, attributes);
-
-      if (root.isDirty() && root.isDirectory() && myRefreshQueue.isEmpty()) {
-        queueDirectory(root);
-      }
-
       if (!myParallel) {
-        try {
-          processQueue(events, PersistentFS.replaceWithNativeFS(fs), persistence);
-        }
-        catch (RefreshCancelledException e) {
-          LOG.trace("refresh cancelled");
-        }
+        singleThreadScan(persistence, events);
       }
       else {
-        List<CompletableFuture<List<VFileEvent>>> futures = new ArrayList<>(ourParallelism);
-        for (int i = 0; i < ourParallelism; i++) {
-          futures.add(CompletableFuture.supplyAsync(() -> {
-            var threadEvents = new ArrayList<VFileEvent>();
-            try {
-              processQueue(threadEvents, PersistentFS.replaceWithNativeFS(fs), persistence);
-            }
-            catch (RefreshCancelledException ignored) { }
-            catch (Throwable e) {
-              LOG.error(e);
-              myCancelled = true;
-            }
-            return threadEvents;
-          }, ourExecutor));
-        }
-        for (CompletableFuture<List<VFileEvent>> f : futures) {
-          try {
-            events.addAll(f.get());
-          }
-          catch (InterruptedException ignored) { }
-          catch (ExecutionException e) {
-            LOG.error(e);
-          }
-        }
-        if (myCancelled) {
-          LOG.trace("refresh cancelled");
-        }
+        parallelScan(persistence, events);
       }
 
       return events;
@@ -144,6 +101,48 @@ final class RefreshWorker {
       var retries = myFullScans.get() + myPartialScans.get() - myProcessed.get();
       VfsUsageCollector.logRefreshScan(myFullScans.get(), myPartialScans.get(), retries, t,
                                        NANOSECONDS.toMillis(myVfsTime.get()), NANOSECONDS.toMillis(myIoTime.get()));
+    }
+  }
+
+  private void singleThreadScan(PersistentFS persistence, List<VFileEvent> events) {
+    try {
+      processQueue(events, persistence);
+    }
+    catch (RefreshCancelledException e) {
+      LOG.trace("refresh cancelled");
+    }
+  }
+
+  private void parallelScan(PersistentFS persistence, List<VFileEvent> events) {
+    List<CompletableFuture<List<VFileEvent>>> futures = new ArrayList<>(ourParallelism);
+
+    for (int i = 0; i < ourParallelism; i++) {
+      futures.add(CompletableFuture.supplyAsync(() -> {
+        var threadEvents = new ArrayList<VFileEvent>();
+        try {
+          processQueue(threadEvents, persistence);
+        }
+        catch (RefreshCancelledException ignored) { }
+        catch (Throwable e) {
+          LOG.error(e);
+          myCancelled = true;
+        }
+        return threadEvents;
+      }, ourExecutor));
+    }
+
+    for (CompletableFuture<List<VFileEvent>> f : futures) {
+      try {
+        events.addAll(f.get());
+      }
+      catch (InterruptedException ignored) { }
+      catch (ExecutionException e) {
+        LOG.error(e);
+      }
+    }
+
+    if (myCancelled) {
+      LOG.trace("refresh cancelled");
     }
   }
 
@@ -157,16 +156,34 @@ final class RefreshWorker {
     }
   }
 
-  private void processQueue(List<VFileEvent> events, NewVirtualFileSystem fs, PersistentFS persistence) throws RefreshCancelledException {
+  private void processQueue(List<VFileEvent> events, PersistentFS persistence) throws RefreshCancelledException {
     nextDir:
     while (!mySemaphore.isUp()) {
-      var dir = (VirtualDirectoryImpl)myRefreshQueue.pollFirst();
-      if (dir == null) {
-        TimeoutUtil.sleep(10);
+      var file = myRefreshQueue.pollFirst();
+      if (file == null) {
+        TimeoutUtil.sleep(1);
         continue;
       }
 
+      var fs = PersistentFS.replaceWithNativeFS(file.getFileSystem());
+
       try {
+        if (myRoots.contains(file)) {
+          var attributes = fs.getAttributes(file);
+          if (attributes == null) {
+            scheduleDeletion(events, file);
+            file.markClean();
+            continue;
+          }
+
+          checkAndScheduleChildRefresh(events, fs, persistence, file.getParent(), file, attributes);
+
+          if (!file.isDirty() || !file.isDirectory()) {
+            continue;
+          }
+        }
+
+        var dir = (VirtualDirectoryImpl)file;
         boolean fullSync = dir.allChildrenLoaded(), succeeded;
 
         do {
