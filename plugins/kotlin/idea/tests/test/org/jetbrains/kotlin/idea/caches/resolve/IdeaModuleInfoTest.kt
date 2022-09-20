@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.module.Module
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.konan.target.KonanTarget
@@ -56,10 +58,26 @@ import org.junit.Assert.assertNotEquals
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 @RunWith(JUnit38ClassRunner::class)
 class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     private var vfsDisposable: Ref<Disposable>? = null
+
+    fun testCacheRace() {
+        val cache = LibraryInfoCache.getInstance(project)
+        val resultSet: MutableSet<List<LibraryInfo>> = ConcurrentCollectionFactory.createConcurrentIdentitySet<List<LibraryInfo>>()
+        val libraries = List(50) { index -> projectLibrary("kotlin-stdlib-$index", TestKotlinArtifacts.kotlinStdlib.jarRoot) }
+        val features = libraries.map {
+            executeOnPooledThread {
+                val value: List<LibraryInfo> = cache[it]
+                resultSet.add(value)
+            }
+        }
+
+        features.forEach { it.get(60, TimeUnit.SECONDS) }
+        assertEquals(/* expected = */ 1, /* actual = */ resultSet.size)
+    }
 
     fun testCacheDeduplication() {
         val stdlib = stdlibJvm()

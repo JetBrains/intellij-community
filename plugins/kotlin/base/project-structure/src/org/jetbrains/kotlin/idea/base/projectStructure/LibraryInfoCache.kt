@@ -84,25 +84,7 @@ class LibraryInfoCache(project: Project) : Disposable {
             val firstRoot = key.firstRoot()
             ProgressManager.checkCanceled()
 
-            useCache { cache ->
-                checkEntitiesIfRequired(cache)
-
-                cache[key]?.let { return@useCache it }
-
-                val deduplicatedLibraries = deduplicationCache[firstRoot] ?: return@useCache null
-                val deduplicatedLibrary = deduplicatedLibraries.find { urlsByType.rootEquals(it) } ?: return@useCache null
-
-                val libraryInfos = cache[deduplicatedLibrary] ?: kotlin.run {
-                    deduplicatedLibraries.remove(deduplicatedLibrary)
-                    logger.error("inconsistent state. deduplicated: ${deduplicatedLibrary.presentableName}, key: ${key.presentableName}")
-                    return@useCache null
-                }
-
-                cache[key] = libraryInfos
-                deduplicatedLibraries += key
-
-                libraryInfos
-            }?.let { return it }
+            getCachedOrPutNewValue(key, firstRoot, urlsByType, newValue = null)?.let { return it }
 
             ProgressManager.checkCanceled()
 
@@ -112,18 +94,56 @@ class LibraryInfoCache(project: Project) : Disposable {
                 checkValueValidity(newValue)
             }
 
-            useCache { cache ->
-                val existedValue = cache.putIfAbsent(key, newValue)
-                if (existedValue == null) {
-                    deduplicationCache.computeIfAbsent(firstRoot) { mutableListOf() } += key
-                }
-
-                existedValue
-            }?.let { return it }
+            getCachedOrPutNewValue(key, firstRoot, urlsByType, newValue)?.let { return it }
 
             postProcessNewValue(key, newValue)
 
             return newValue
+        }
+
+        /**
+         * @return cached value or null
+         */
+        private fun getCachedOrPutNewValue(
+            key: LibraryEx,
+            root: String,
+            keyUrlsByType: Map<OrderRootType, Array<String>>,
+            newValue: List<LibraryInfo>?,
+        ): List<LibraryInfo>? = useCache { cache ->
+            cache[key]?.let { return@useCache it }
+
+            val deduplicatedValue = cachedDeduplicatedValue(cache, key, root, keyUrlsByType)
+            val resultValue = deduplicatedValue ?: newValue ?: return@useCache null
+            addEntryToCache(cache, key, root, resultValue)
+
+            deduplicatedValue
+        }
+
+        private fun addEntryToCache(
+            cache: MutableMap<LibraryEx, List<LibraryInfo>>,
+            key: LibraryEx,
+            root: String,
+            value: List<LibraryInfo>,
+        ) {
+            cache[key] = value
+            deduplicationCache.computeIfAbsent(root) { mutableListOf() } += key
+        }
+
+        private fun cachedDeduplicatedValue(
+            cache: MutableMap<LibraryEx, List<LibraryInfo>>,
+            key: LibraryEx,
+            root: String,
+            keyUrlsByType: Map<OrderRootType, Array<String>>,
+        ): List<LibraryInfo>? {
+            val deduplicatedLibraries = deduplicationCache[root] ?: return null
+            val deduplicatedLibrary = deduplicatedLibraries.find { keyUrlsByType.rootEquals(it) } ?: return null
+            val cachedValue = cache[deduplicatedLibrary]
+            if (cachedValue == null) {
+                deduplicatedLibraries -= deduplicatedLibrary
+                logger.error("inconsistent state. deduplicated: ${deduplicatedLibrary.presentableName}, key: ${key.presentableName}")
+            }
+
+            return cachedValue
         }
 
         private fun LibraryEx.firstRoot() = getUrls(OrderRootType.CLASSES).firstOrNull() ?: ""
@@ -238,10 +258,10 @@ interface LibraryInfoListener {
     fun libraryInfosAdded(libraryInfos: Collection<LibraryInfo>) = Unit
 
     companion object {
-        @ApiStatus.Internal
         @JvmStatic
         @Topic.ProjectLevel
-        val TOPIC = Topic.create("library info listener", LibraryInfoListener::class.java)
+        @ApiStatus.Internal
+        val TOPIC = Topic(LibraryInfoListener::class.java, Topic.BroadcastDirection.NONE, true)
     }
 }
 
