@@ -87,16 +87,11 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
       myOriginalRange = postFormatProcessorHelper.getResultTextRange();
       myDocumentManager = PsiDocumentManager.getInstance(project);
       myDocument = file.getViewProvider().getDocument();
-      switch (style) {
-        case Single:
-          myNewQuote = "'";
-          break;
-        case Double:
-          myNewQuote = "\"";
-          break;
-        default:
-          myNewQuote = String.valueOf(0);
-      }
+      myNewQuote = switch (style) {
+        case Single -> "'";
+        case Double -> "\"";
+        default -> String.valueOf(0);
+      };
     }
 
     public Document getDocument() {

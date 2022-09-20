@@ -100,11 +100,11 @@ public class HgWorkingCopyRevisionsCommand {
   @NotNull
   public Couple<HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable FilePath file, @Nullable HgRevisionNumber revision) {
     final List<HgRevisionNumber> revisions = getRevisions(repo, "parents", file, revision, true);
-    switch (revisions.size()) {
-      case 1: return Couple.of(revisions.get(0), null);
-      case 2: return Couple.of(revisions.get(0), revisions.get(1));
-      default: return Couple.of(null, null);
-    }
+    return switch (revisions.size()) {
+      case 1 -> Couple.of(revisions.get(0), null);
+      case 2 -> Couple.of(revisions.get(0), revisions.get(1));
+      default -> Couple.of(null, null);
+    };
   }
 
   @Nullable

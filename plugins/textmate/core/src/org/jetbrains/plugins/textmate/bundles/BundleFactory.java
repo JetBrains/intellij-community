@@ -26,16 +26,12 @@ public class BundleFactory {
   @Nullable
   public Bundle fromDirectory(@NotNull File directory) throws IOException {
     final BundleType type = BundleType.fromDirectory(directory);
-    switch (type) {
-      case TEXTMATE:
-        return fromTextMateBundle(directory);
-      case SUBLIME:
-        return new Bundle(directory.getName(), directory.getPath(), type);
-      case VSCODE:
-        return new VSCBundle(directory.getName(), directory.getPath());
-      default:
-        return null;
-    }
+    return switch (type) {
+      case TEXTMATE -> fromTextMateBundle(directory);
+      case SUBLIME -> new Bundle(directory.getName(), directory.getPath(), type);
+      case VSCODE -> new VSCBundle(directory.getName(), directory.getPath());
+      default -> null;
+    };
   }
 
   private Bundle fromTextMateBundle(File directory) throws IOException {

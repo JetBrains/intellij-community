@@ -99,19 +99,10 @@ public class YamlMetaClass extends YamlMetaType {
                                          @NotNull Field.Relation relation,
                                          @NotNull ForcedCompletionPath.Iteration iteration) {
     switch (relation) {
-      case SCALAR_VALUE:
-        throw new IllegalArgumentException("Default relation " + relation + " requested for complex type: " + this);
-
-      case OBJECT_CONTENTS:
-        doBuildInsertionSuffixMarkup(markup, false, iteration);
-        break;
-
-      case SEQUENCE_ITEM:
-        doBuildInsertionSuffixMarkup(markup, true, iteration);
-        break;
-
-      default:
-        throw new IllegalArgumentException("Unknown relation: " + relation);
+      case SCALAR_VALUE -> throw new IllegalArgumentException("Default relation " + relation + " requested for complex type: " + this);
+      case OBJECT_CONTENTS -> doBuildInsertionSuffixMarkup(markup, false, iteration);
+      case SEQUENCE_ITEM -> doBuildInsertionSuffixMarkup(markup, true, iteration);
+      default -> throw new IllegalArgumentException("Unknown relation: " + relation);
     }
   }
 

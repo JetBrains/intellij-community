@@ -101,18 +101,13 @@ public final class DocStringUtil {
 
   @NotNull
   public static StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull Substring content) {
-    switch (format) {
-      case REST:
-        return new SphinxDocString(content);
-      case EPYTEXT:
-        return new EpydocString(content);
-      case GOOGLE:
-        return new GoogleCodeStyleDocString(content);
-      case NUMPY:
-        return new NumpyDocString(content);
-      default:
-        return new PlainDocString(content);
-    }
+    return switch (format) {
+      case REST -> new SphinxDocString(content);
+      case EPYTEXT -> new EpydocString(content);
+      case GOOGLE -> new GoogleCodeStyleDocString(content);
+      case NUMPY -> new NumpyDocString(content);
+      case PLAIN -> new PlainDocString(content);
+    };
   }
 
   @NotNull

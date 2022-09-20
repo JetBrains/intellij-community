@@ -408,15 +408,15 @@ public final class CheckRegExpForm {
 
   void reportResult(RegExpMatchResult result, @NotNull PsiFile regExpFile) {
     switch (result) {
-      case NO_MATCH:
+      case NO_MATCH -> {
         setIconAndTooltip(mySampleIcon, AllIcons.General.BalloonError, RegExpBundle.message("tooltip.no.match"));
         setIconAndTooltip(myRegExpIcon, null, null);
-        break;
-      case MATCHES:
+      }
+      case MATCHES -> {
         setIconAndTooltip(mySampleIcon, AllIcons.General.InspectionsOK, RegExpBundle.message("tooltip.matches"));
         setIconAndTooltip(myRegExpIcon, null, null);
-        break;
-      case FOUND:
+      }
+      case FOUND -> {
         final List<RegExpMatch> matches = getMatches(regExpFile);
         final Editor editor = mySampleText.getEditor();
         if (editor != null) {
@@ -433,19 +433,19 @@ public final class CheckRegExpForm {
           setIconAndTooltip(mySampleIcon, AllIcons.General.InspectionsOK, RegExpBundle.message("tooltip.found"));
         }
         setIconAndTooltip(myRegExpIcon, null, null);
-        break;
-      case INCOMPLETE:
+      }
+      case INCOMPLETE -> {
         setIconAndTooltip(mySampleIcon, AllIcons.General.BalloonWarning, RegExpBundle.message("tooltip.more.input.expected"));
         setIconAndTooltip(myRegExpIcon, null, null);
-        break;
-      case BAD_REGEXP:
+      }
+      case BAD_REGEXP -> {
         setIconAndTooltip(mySampleIcon, null, null);
         setIconAndTooltip(myRegExpIcon, AllIcons.General.BalloonError, RegExpBundle.message("tooltip.bad.pattern"));
-        break;
-      case TIMEOUT:
+      }
+      case TIMEOUT -> {
         setIconAndTooltip(mySampleIcon, null, null);
         setIconAndTooltip(myRegExpIcon, AllIcons.General.BalloonWarning, RegExpBundle.message("tooltip.pattern.is.too.complex"));
-        break;
+      }
     }
   }
 

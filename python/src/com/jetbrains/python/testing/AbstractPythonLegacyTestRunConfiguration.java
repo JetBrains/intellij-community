@@ -253,23 +253,20 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
 
   @Override
   public String suggestedName() {
-    switch (myTestType) {
-      case TEST_CLASS:
-        return PyBundle.message("runcfg.unittest.suggest.name.in.class", getPluralTitle(), myClassName);
-      case TEST_METHOD:
-        return getTitle() + " " + myClassName + "." + myMethodName;
-      case TEST_SCRIPT:
+    return switch (myTestType) {
+      case TEST_CLASS -> PyBundle.message("runcfg.unittest.suggest.name.in.class", getPluralTitle(), myClassName);
+      case TEST_METHOD -> getTitle() + " " + myClassName + "." + myMethodName;
+      case TEST_SCRIPT -> {
         String name = new File(getScriptName()).getName();
         name = StringUtil.trimEnd(name, ".py");
-        return PyBundle.message("runcfg.unittest.suggest.name.in.script", getPluralTitle(), name);
-      case TEST_FOLDER:
+        yield PyBundle.message("runcfg.unittest.suggest.name.in.script", getPluralTitle(), name);
+      }
+      case TEST_FOLDER -> {
         String folderName = new File(myFolderName).getName();
-        return PyBundle.message("runcfg.unittest.suggest.name.in.folder", getPluralTitle(), folderName);
-      case TEST_FUNCTION:
-        return getTitle() + " " + myMethodName;
-      default:
-        throw new IllegalStateException("Unknown test type: " + myTestType);
-    }
+        yield PyBundle.message("runcfg.unittest.suggest.name.in.folder", getPluralTitle(), folderName);
+      }
+      case TEST_FUNCTION -> getTitle() + " " + myMethodName;
+    };
   }
 
   @Nullable

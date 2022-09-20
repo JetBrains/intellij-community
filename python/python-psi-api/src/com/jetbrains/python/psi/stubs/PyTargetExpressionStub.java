@@ -25,12 +25,12 @@ public interface PyTargetExpressionStub extends NamedStub<PyTargetExpression>, P
     }
 
     public static InitializerType fromIndex(int index) {
-      switch (index) {
-        case 1: return ReferenceExpression;
-        case 2: return CallExpression;
-        case 3: return Custom;
-        default: return Other;
-      }
+      return switch (index) {
+        case 1 -> ReferenceExpression;
+        case 2 -> CallExpression;
+        case 3 -> Custom;
+        default -> Other;
+      };
     }
   }
 

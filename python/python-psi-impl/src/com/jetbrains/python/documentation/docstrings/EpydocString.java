@@ -188,18 +188,10 @@ public class EpydocString extends TagBasedDocString {
         return;
       }
       switch (markupChar) {
-        case 'I':
-          appendTagPair(markupContent, "i");
-          break;
-        case 'B':
-          appendTagPair(markupContent, "b");
-          break;
-        case 'C':
-          appendTagPair(markupContent, "code");
-          break;
-        default:
-          myResult.append(StringUtil.escapeXmlEntities(markupContent));
-          break;
+        case 'I' -> appendTagPair(markupContent, "i");
+        case 'B' -> appendTagPair(markupContent, "b");
+        case 'C' -> appendTagPair(markupContent, "code");
+        default -> myResult.append(StringUtil.escapeXmlEntities(markupContent));
       }
     }
 
