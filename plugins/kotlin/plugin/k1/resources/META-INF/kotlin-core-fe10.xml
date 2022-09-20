@@ -129,8 +129,6 @@
                                     implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinRecursiveCallLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="kotlin"
                                     implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinSuspendCallLineMarkerProvider"/>
-    <runLineMarkerContributor language="kotlin"
-                              implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinFE10MainRunLineMarkerContributor"/>
   </extensions>
 
   <!-- Inlay hints -->

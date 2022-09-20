@@ -189,6 +189,13 @@
     <iconMapper mappingFile="KotlinIconMappings.json"/>
   </extensions>
 
+  <!-- Line markers -->
+  <extensions defaultExtensionNs="com.intellij">
+    <runLineMarkerContributor
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinRunLineMarkerContributor"/>
+  </extensions>
+
   <projectListeners>
     <listener class="org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService$PackageCacheBulkFileListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
