@@ -42,6 +42,8 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.AssumptionViolatedException;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -278,31 +280,24 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testModCountIncreases() throws IOException {
+  public void testGlobalFSModCountIncreasesOnMostFileAttributesModifications() throws IOException {
     VirtualFile vFile = tempDirectory.newVirtualFile("file.txt");
     HeavyPlatformTestCase.setBinaryContent(vFile, "x".getBytes(StandardCharsets.UTF_8)); // make various listeners update their VFS views
     ManagingFS managingFS = ManagingFS.getInstance();
-    int inSessionModCount = managingFS.getModificationCount();
-    int globalModCount = managingFS.getFilesystemModificationCount();
-    int parentModCount = managingFS.getModificationCount(vFile.getParent());
+    int globalFsModCount = managingFS.getFilesystemModificationCount();
 
     WriteAction.runAndWait(() -> vFile.setWritable(false));
 
-    assertEquals(globalModCount + 1, managingFS.getModificationCount(vFile));
-    assertEquals(globalModCount + 1, managingFS.getFilesystemModificationCount());
-    assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
-    assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
+    assertEquals(globalFsModCount + 1, managingFS.getFilesystemModificationCount());
 
     FSRecords.force();
     assertFalse(FSRecords.isDirty());
-    ++globalModCount;
+    ++globalFsModCount;
 
-    int finalGlobalModCount = globalModCount;
+    int finalGlobalModCount = globalFsModCount;
 
     HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Processing, "This test wants no indices flush", ()-> {
       WriteAction.runAndWait(() -> {
-        long timestamp = vFile.getTimeStamp();
-        int finalInSessionModCount = managingFS.getModificationCount();
         try {
           vFile.setWritable(true);  // 1 change
           vFile.setBinaryContent("foo".getBytes(Charset.defaultCharset())); // content change + length change + maybe timestamp change
@@ -311,24 +306,25 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
           throw new RuntimeException(e);
         }
 
+        //TODO RC: I don't think it is worth to check exact number of 'changes' -- those look like
+        //         an implementation detail. Better to just check _there are_ changes (i.e. modCount
+        //         increases) after any sensible change.
+
         // we check in write action to avoid observing background thread to index stuff
-        int changesCount = timestamp == vFile.getTimeStamp() ? 3 : 4;
-        assertEquals(finalGlobalModCount + changesCount, managingFS.getModificationCount(vFile));
-        assertEquals(finalGlobalModCount + changesCount, managingFS.getFilesystemModificationCount());
-        assertEquals(finalInSessionModCount + changesCount, managingFS.getModificationCount());
-        assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
+        final int changesCount = 3; //flags, content, length, +...
+        assertTrue(
+          "fsModCount(="+managingFS.getFilesystemModificationCount()+") should +3 at least since before (="+finalGlobalModCount+")",
+          managingFS.getFilesystemModificationCount() >= finalGlobalModCount + changesCount);
       });
     });
   }
 
+  @Ignore("Now all that changes DO lead to modCount increments")
   @Test
-  public void testModCountNotIncreases() throws IOException {
-    VirtualFile vFile = tempDirectory.newVirtualFile("file.txt");
+  public void testGlobalFsModCountIncreasesOnAddingFileAttributeOrLengthOrTimestampChanges() throws IOException {
+    final VirtualFile vFile = tempDirectory.newVirtualFile("file.txt");
     ManagingFS managingFS = ManagingFS.getInstance();
-    int globalModCount = managingFS.getFilesystemModificationCount();
-    int parentModCount = managingFS.getModificationCount(vFile.getParent());
-    int fileModCount = managingFS.getModificationCount(vFile);
-    int inSessionModCount = managingFS.getModificationCount();
+    final int globalFsModCountBefore = managingFS.getFilesystemModificationCount();
 
     FSRecords.force();
     assertFalse(FSRecords.isDirty());
@@ -340,10 +336,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       }
     });
 
-    assertEquals(fileModCount, managingFS.getModificationCount(vFile));
-    assertEquals(globalModCount, managingFS.getFilesystemModificationCount());
-    assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
-    assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
+    assertEquals(globalFsModCountBefore, managingFS.getFilesystemModificationCount());
 
     assertTrue(FSRecords.isDirty());
     FSRecords.force();
@@ -353,10 +346,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     FSRecords.setTimestamp(fileId, FSRecords.getTimestamp(fileId));
     FSRecords.setLength(fileId, FSRecords.getLength(fileId));
 
-    assertEquals(fileModCount, managingFS.getModificationCount(vFile));
-    assertEquals(globalModCount, managingFS.getFilesystemModificationCount());
-    assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
-    assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
+    assertEquals(globalFsModCountBefore, managingFS.getFilesystemModificationCount());
     assertFalse(FSRecords.isDirty());
   }
 

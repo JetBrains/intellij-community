@@ -301,6 +301,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
+  @Deprecated
   public int getModificationCount() {
     return FSRecords.getLocalModCount();
   }
@@ -470,6 +471,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         return info;
       }
     }
+    //FIXME RC: above check is 'strict' only if nameId is unique identifier for a name. We're going to change that, hence
+    //          the code below should be run not only for caseSensitive systems, but for all them, as 'slow path'
     // for case-sensitive systems, the above check is exhaustive in consistent state of VFS
     if (!parent.isCaseSensitive()) {
       for (ChildInfo info : children) {

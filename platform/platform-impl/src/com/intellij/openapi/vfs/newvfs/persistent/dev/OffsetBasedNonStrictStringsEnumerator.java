@@ -288,14 +288,14 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
 
     public static final int SIZE = CACHE_SIZE;
     public static final int MAX_PROBES = OffsetBasedNonStrictStringsEnumerator.MAX_PROBES;
-    private final String[] keys = new String[SIZE];
 
+    private final String[] keys = new String[SIZE];
     private final int[] values = new int[SIZE];
 
     public int lookup(final @NotNull String key,
                       final IntThrowableComputable<IOException> orCompute) throws IOException {
       final int hash = key.hashCode();
-      final int startIndex = Math.abs(hash);
+      final int startIndex = Math.abs(hash) % SIZE;
       for (int probe = 0; probe < MAX_PROBES; probe++) {
         final int index = (startIndex + probe) % SIZE;
         final String candidateKey = keys[index];
@@ -343,7 +343,7 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
     public String lookup(final @NotNull int key,
                          final ThrowableComputable<String, IOException> orCompute) throws IOException {
       final int hash = Integer.hashCode(key);
-      final int startIndex = Math.abs(hash);
+      final int startIndex = Math.abs(hash) % SIZE;
       for (int probe = 0; probe < MAX_PROBE; probe++) {
         final int index = (startIndex + probe) % SIZE;
         final int candidateKey = keys[index];

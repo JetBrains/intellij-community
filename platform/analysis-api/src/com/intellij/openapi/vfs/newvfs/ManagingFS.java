@@ -32,7 +32,10 @@ public abstract class ManagingFS implements FileSystemInterface {
   /**
    * @return a number that's incremented every time something changes for the file: name, size, flags, content.
    * This number is persisted between IDE sessions and so it'll always increase. This method invocation means disk access, so it's not terribly cheap.
+   * @deprecated to be dropped as there is no real use for it
    */
+  //FIXME RC: drop this method from API -- the only use is in test code
+  @Deprecated
   public abstract int getModificationCount(@NotNull VirtualFile fileOrDirectory);
 
   /**
@@ -40,7 +43,10 @@ public abstract class ManagingFS implements FileSystemInterface {
    * This only counts modifications done in current IDE session.
    * @see #getStructureModificationCount()
    * @see #getFilesystemModificationCount()
+   * @deprecated to be dropped as there is no real use for it 
    */
+  //FIXME RC: drop this method from API -- the only use is in test code
+  @Deprecated
   public abstract int getModificationCount();
 
   /**
