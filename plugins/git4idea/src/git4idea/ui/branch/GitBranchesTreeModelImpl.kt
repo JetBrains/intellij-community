@@ -65,6 +65,8 @@ class GitBranchesTreeModelImpl(
   override fun getIndexOfChild(parent: Any?, child: Any?): Int = getChildren(parent).indexOf(child)
 
   override fun isLeaf(node: Any?): Boolean = (node is GitBranch) || (node is PopupFactoryImpl.ActionItem)
+                                             || (node === GitBranchType.LOCAL && localBranchesTree.empty)
+                                             || (node === GitBranchType.REMOTE && remoteBranchesTree.empty)
 
   private fun getChildren(parent: Any?): List<Any> {
     if (parent == null) return emptyList()
@@ -174,6 +176,8 @@ class GitBranchesTreeModelImpl(
     private val matcher: MinusculeMatcher? = null
   ) {
 
+    var empty = false
+
     private val matchingResult: MatchResult by lazy {
       match(branches)
     }
@@ -223,6 +227,9 @@ class GitBranchesTreeModelImpl(
           topMatch = branch to matchingDegree
         }
       }
+
+      empty = result.isEmpty()
+
       return MatchResult(result, topMatch)
     }
   }
