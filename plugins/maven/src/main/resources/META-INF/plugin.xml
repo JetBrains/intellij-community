@@ -93,7 +93,6 @@
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenArchetypeManager"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManager" preload="true"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenProjectIndicesManager" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenTasksManager" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenShortcutsManager" preload="true"/>
