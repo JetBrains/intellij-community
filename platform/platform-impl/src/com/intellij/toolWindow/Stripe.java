@@ -11,7 +11,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.LinePainter2D;
-import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -53,6 +52,17 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
       computedPreferredSize = getButtons().isEmpty() ? JBUI.emptySize() : recomputeBounds(false, null, false).size;
     }
     return computedPreferredSize;
+  }
+
+  @Override
+  public void doLayout() {
+    Dimension size = getSize();
+    // Provide some indication of size if the stripe is hidden
+    if (size.width == 0 && size.height == 0) {
+      final Rectangle virtualBounds = (Rectangle) getClientProperty(VIRTUAL_BOUNDS);
+      size = virtualBounds.getSize();
+    }
+    doLayout(size);
   }
 
   @Override

@@ -386,17 +386,21 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
   private fun addDropTargetHighlighter(pane: ToolWindowPane) {
     with(pane.rootPane.glassPane as JComponent) {
-      add(dropTargetHighlightComponent)
-      revalidate()
-      repaint()
+      if (!isAncestorOf(dropTargetHighlightComponent)) {
+        add(dropTargetHighlightComponent)
+        revalidate()
+        repaint()
+      }
     }
   }
 
   private fun removeDropTargetHighlighter(pane: ToolWindowPane) {
     with(pane.rootPane.glassPane as JComponent) {
-      remove(dropTargetHighlightComponent)
-      revalidate()
-      repaint()
+      if (isAncestorOf(dropTargetHighlightComponent)) {
+        remove(dropTargetHighlightComponent)
+        revalidate()
+        repaint()
+      }
     }
   }
 
