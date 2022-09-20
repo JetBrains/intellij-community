@@ -174,7 +174,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
               env.copyUserDataTo(context);
               return Pair.create(context, projectTask);
 
-            }).expireWhen(myProject::isDisposed).executeSynchronously();
+            }).expireWith(myProject).executeSynchronously();
 
             projectTaskManager.run(pair.first, pair.second).onSuccess(taskResult -> {
               if ((!taskResult.hasErrors() || ignoreErrors) && !taskResult.isAborted()) {
