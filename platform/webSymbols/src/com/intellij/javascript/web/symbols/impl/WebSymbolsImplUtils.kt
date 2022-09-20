@@ -88,8 +88,7 @@ fun Sequence<WebSymbol.AttributeValue?>.merge(): WebSymbol.AttributeValue? {
   var type: WebSymbol.AttributeValueType? = null
   var required: Boolean? = null
   var default: String? = null
-  // TODO rename to `symbolType`
-  var jsType: Any? = null
+  var langType: Any? = null
 
   for (value in this) {
     if (value == null) continue
@@ -105,8 +104,8 @@ fun Sequence<WebSymbol.AttributeValue?>.merge(): WebSymbol.AttributeValue? {
     if (default == null) {
       default = value.default
     }
-    if (jsType == null) {
-      jsType = value.jsType
+    if (langType == null) {
+      langType = value.langType
     }
     if (kind != null && type != null && required != null) {
       break
@@ -115,8 +114,8 @@ fun Sequence<WebSymbol.AttributeValue?>.merge(): WebSymbol.AttributeValue? {
   return if (kind != null
              || type != null
              || required != null
-             || jsType != null
+             || langType != null
              || default != null)
-    WebSymbolHtmlAttributeValueData(kind, type, required, default, jsType)
+    WebSymbolHtmlAttributeValueData(kind, type, required, default, langType)
   else null
 }

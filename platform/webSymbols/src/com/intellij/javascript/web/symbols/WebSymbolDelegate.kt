@@ -64,8 +64,8 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
     get() = delegate.priority
   override val proximity: Int?
     get() = delegate.proximity
-  override val jsType: Any?
-    get() = delegate.jsType
+  override val type: Any?
+    get() = delegate.type
   override val attributeValue: WebSymbol.AttributeValue?
     get() = delegate.attributeValue
   override val pattern: WebSymbolsPattern?

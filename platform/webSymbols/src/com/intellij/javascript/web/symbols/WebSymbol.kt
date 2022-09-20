@@ -118,9 +118,8 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
   val proximity: Int?
     get() = null
 
-  // TODO: rename to `type`
   @JvmDefault
-  val jsType: Any?
+  val type: Any?
     get() = null
 
   @JvmDefault
@@ -212,9 +211,8 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
     val default: String?
       get() = null
 
-    // TODO: rename
     @JvmDefault
-    val jsType: Any?
+    val langType: Any?
       get() = null
   }
 
@@ -229,7 +227,7 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
     NUMBER,
     STRING,
     ENUM,
-    JAVASCRIPT,
+    COMPLEX,
     OF_MATCH
   }
 

@@ -2,7 +2,7 @@
  {
   matchedName: "html/attributes/appearActiveClass",
   origin: "vue@3.0.0 (vue)",
-  jsType: "string",
+  type: "string",
   attrValue: {
    kind: PLAIN,
    type: OF_MATCH,
@@ -38,7 +38,7 @@
     symbol: {
      matchedName: "html/props/appearActiveClass",
      origin: "vue@3.0.0 (vue)",
-     jsType: "string",
+     type: "string",
      complete: true,
      priority: NORMAL,
      segments: [

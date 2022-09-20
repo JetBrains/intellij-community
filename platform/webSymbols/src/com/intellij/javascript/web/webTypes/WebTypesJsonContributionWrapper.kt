@@ -179,10 +179,10 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
       .plus(superContributions.asSequence().map { it.attributeValue })
       .merge()
 
-    override val jsType: Any?
+    override val type: Any?
       get() = (base.contribution.type)
                 ?.let { base.jsonOrigin.getType(it) }
-              ?: superContributions.asSequence().mapNotNull { it.jsType }.firstOrNull()
+              ?: superContributions.asSequence().mapNotNull { it.type }.firstOrNull()
 
     override val deprecated: Boolean
       get() = base.contribution.deprecated == true
@@ -263,8 +263,8 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
       override val default: String?
         get() = value.default
 
-      override val jsType: Any?
-        get() = value.type?.toJSType()
+      override val langType: Any?
+        get() = value.type?.toLangType()
           ?.let { base.jsonOrigin.getType(it) }
 
     }

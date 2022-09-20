@@ -291,10 +291,10 @@ internal fun HtmlValueType.wrap(): WebSymbol.AttributeValueType? =
     "boolean" -> WebSymbol.AttributeValueType.BOOLEAN
     "number" -> WebSymbol.AttributeValueType.NUMBER
     null -> null
-    else -> WebSymbol.AttributeValueType.JAVASCRIPT
+    else -> WebSymbol.AttributeValueType.COMPLEX
   }
 
-internal fun HtmlValueType.toJSType(): List<Type>? =
+internal fun HtmlValueType.toLangType(): List<Type>? =
   when (val typeValue = this.value) {
     null, "enum", "of-match" -> null
     is List<*> -> typeValue.filterIsInstance<Type>()

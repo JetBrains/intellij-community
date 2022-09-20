@@ -5,7 +5,7 @@
   attrValue: {
    kind: EXPRESSION,
    type: STRING,
-   jsType: "string",
+   langType: "string",
    required: false,
   },
   complete: true,
@@ -20,8 +20,8 @@
      origin: "vue@3.0.0 (vue)",
      attrValue: {
       kind: EXPRESSION,
-      type: JAVASCRIPT,
-      jsType: "any",
+      type: COMPLEX,
+      langType: "any",
       required: false,
      },
      complete: true,
@@ -47,7 +47,7 @@
      attrValue: {
       kind: EXPRESSION,
       type: STRING,
-      jsType: "string",
+      langType: "string",
      },
      complete: true,
      description: "<p>The cool directive</p>",

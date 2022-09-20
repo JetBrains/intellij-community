@@ -4,8 +4,8 @@
   origin: "framework-web-types@0.1.0 (@polymer/polymer)",
   attrValue: {
    kind: EXPRESSION,
-   type: JAVASCRIPT,
-   jsType: "any",
+   type: COMPLEX,
+   langType: "any",
   },
   complete: true,
   priority: NORMAL,
@@ -18,8 +18,8 @@
      origin: "framework-web-types@0.1.0 (@polymer/polymer)",
      attrValue: {
       kind: EXPRESSION,
-      type: JAVASCRIPT,
-      jsType: "any",
+      type: COMPLEX,
+      langType: "any",
      },
      complete: true,
      description: "<p>Properties expression",

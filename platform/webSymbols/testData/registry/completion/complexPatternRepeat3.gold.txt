@@ -420,8 +420,8 @@
    matchedName: "html/vue-directives/on",
    origin: "vue@3.0.0 (vue)",
    attrValue: {
-    type: JAVASCRIPT,
-    jsType: "void",
+    type: COMPLEX,
+    langType: "void",
    },
    complete: true,
    description: "<p>Attaches an event listener to the element.…",

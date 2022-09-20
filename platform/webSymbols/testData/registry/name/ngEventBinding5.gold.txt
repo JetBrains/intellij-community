@@ -4,8 +4,8 @@
   origin: "css@1.0 (<none>)",
   attrValue: {
    kind: EXPRESSION,
-   type: JAVASCRIPT,
-   jsType: "void",
+   type: COMPLEX,
+   langType: "void",
   },
   complete: true,
   virtual: true,
@@ -22,8 +22,8 @@
      origin: "css@1.0 (<none>)",
      attrValue: {
       kind: EXPRESSION,
-      type: JAVASCRIPT,
-      jsType: "void",
+      type: COMPLEX,
+      langType: "void",
      },
      complete: true,
      virtual: true,

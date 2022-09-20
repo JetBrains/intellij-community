@@ -4,8 +4,8 @@
   origin: "vue@3.0.0 (vue)",
   attrValue: {
    kind: EXPRESSION,
-   type: JAVASCRIPT,
-   jsType: "void",
+   type: COMPLEX,
+   langType: "void",
    required: false,
   },
   complete: true,
@@ -24,8 +24,8 @@
      origin: "vue@3.0.0 (vue)",
      attrValue: {
       kind: EXPRESSION,
-      type: JAVASCRIPT,
-      jsType: "any",
+      type: COMPLEX,
+      langType: "any",
       required: false,
      },
      complete: true,
@@ -49,8 +49,8 @@
      matchedName: "html/vue-directives/on",
      origin: "vue@3.0.0 (vue)",
      attrValue: {
-      type: JAVASCRIPT,
-      jsType: "void",
+      type: COMPLEX,
+      langType: "void",
       required: true,
      },
      complete: true,

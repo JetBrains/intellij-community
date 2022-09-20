@@ -5,7 +5,7 @@
   attrValue: {
    kind: EXPRESSION,
    type: STRING,
-   jsType: "string",
+   langType: "string",
   },
   complete: true,
   virtual: true,
@@ -19,8 +19,8 @@
      origin: "framework-web-types@0.1.0 (<none>)",
      attrValue: {
       kind: EXPRESSION,
-      type: JAVASCRIPT,
-      jsType: "any",
+      type: COMPLEX,
+      langType: "any",
      },
      complete: true,
      description: "<p>Properties expression",
@@ -59,7 +59,7 @@
      origin: "web-components@1.0.0 (<none>)",
      attrValue: {
       type: STRING,
-      jsType: "string",
+      langType: "string",
      },
      complete: true,
      priority: NORMAL,

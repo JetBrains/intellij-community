@@ -7,7 +7,7 @@
    origin: "web-components@1.0.0 (<none>)",
    attrValue: {
     type: STRING,
-    jsType: "string",
+    langType: "string",
    },
    complete: true,
    priority: NORMAL,
@@ -22,7 +22,7 @@
       origin: "web-components@1.0.0 (<none>)",
       attrValue: {
        type: STRING,
-       jsType: "string",
+       langType: "string",
       },
       complete: true,
       priority: NORMAL,
@@ -46,7 +46,7 @@
    origin: "web-components@1.0.0 (<none>)",
    attrValue: {
     type: STRING,
-    jsType: "string",
+    langType: "string",
    },
    complete: true,
    priority: NORMAL,

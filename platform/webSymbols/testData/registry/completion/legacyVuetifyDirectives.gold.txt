@@ -106,8 +106,8 @@
    matchedName: "html/vue-directives/for",
    origin: "vue@3.0.0 (vue)",
    attrValue: {
-    type: JAVASCRIPT,
-    jsType: "void",
+    type: COMPLEX,
+    langType: "void",
     required: true,
    },
    complete: true,
@@ -130,7 +130,7 @@
    origin: "vue@3.0.0 (vue)",
    attrValue: {
     type: STRING,
-    jsType: "string",
+    langType: "string",
     required: true,
    },
    complete: true,
@@ -174,7 +174,7 @@
    origin: "vue@3.0.0 (vue)",
    attrValue: {
     type: STRING,
-    jsType: "string",
+    langType: "string",
     required: true,
    },
    complete: true,
@@ -196,8 +196,8 @@
    matchedName: "html/vue-directives/model",
    origin: "vue@3.0.0 (vue)",
    attrValue: {
-    type: JAVASCRIPT,
-    jsType: "any",
+    type: COMPLEX,
+    langType: "any",
     required: true,
    },
    complete: true,
@@ -219,8 +219,8 @@
    matchedName: "html/vue-directives/on",
    origin: "vue@3.0.0 (vue)",
    attrValue: {
-    type: JAVASCRIPT,
-    jsType: "void",
+    type: COMPLEX,
+    langType: "void",
     required: true,
    },
    complete: true,
@@ -362,8 +362,8 @@
    matchedName: "html/vue-directives/slot",
    origin: "vue@3.0.0 (vue)",
    attrValue: {
-    type: JAVASCRIPT,
-    jsType: "void",
+    type: COMPLEX,
+    langType: "void",
    },
    complete: true,
    description: "<p>Denote named slots or slots that expect to…",
@@ -385,7 +385,7 @@
    origin: "vue@3.0.0 (vue)",
    attrValue: {
     type: STRING,
-    jsType: "string",
+    langType: "string",
     required: true,
    },
    complete: true,

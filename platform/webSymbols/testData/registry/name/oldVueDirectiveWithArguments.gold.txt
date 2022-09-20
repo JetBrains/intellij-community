@@ -4,8 +4,8 @@
   origin: "vue@3.0.0 (vue)",
   attrValue: {
    kind: EXPRESSION,
-   type: JAVASCRIPT,
-   jsType: [
+   type: COMPLEX,
+   langType: [
     "Function",
     "object",
     "any",
@@ -28,8 +28,8 @@
      origin: "vue@3.0.0 (vue)",
      attrValue: {
       kind: EXPRESSION,
-      type: JAVASCRIPT,
-      jsType: "any",
+      type: COMPLEX,
+      langType: "any",
       required: false,
      },
      complete: true,
@@ -54,8 +54,8 @@
      origin: "vue@2.5.0a (vue)",
      attrValue: {
       kind: EXPRESSION,
-      type: JAVASCRIPT,
-      jsType: [
+      type: COMPLEX,
+      langType: [
        "Function",
        "object",
        "any",

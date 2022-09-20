@@ -4,5 +4,4 @@ data class WebSymbolHtmlAttributeValueData(override val kind: WebSymbol.Attribut
                                            override val type: WebSymbol.AttributeValueType? = null,
                                            override val required: Boolean? = null,
                                            override val default: String? = null,
-                                           // TODO rename to symbolType
-                                           override val jsType: Any? = null) : WebSymbol.AttributeValue
+                                           override val langType: Any? = null) : WebSymbol.AttributeValue

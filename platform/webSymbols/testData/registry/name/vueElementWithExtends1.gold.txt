@@ -2,7 +2,7 @@
  {
   matchedName: "html/props/appear",
   origin: "vue@3.0.0 (vue)",
-  jsType: "boolean",
+  type: "boolean",
   complete: true,
   description: "<p>Whether to apply transition on initial ren…",
   priority: NORMAL,
@@ -16,7 +16,7 @@
  {
   matchedName: "html/props/appearActiveClass",
   origin: "vue@3.0.0 (vue)",
-  jsType: "string",
+  type: "string",
   complete: true,
   priority: NORMAL,
   segments: [
@@ -29,7 +29,7 @@
  {
   matchedName: "html/props/appearClass",
   origin: "vue@3.0.0 (vue)",
-  jsType: "string",
+  type: "string",
   complete: true,
   priority: NORMAL,
   segments: [
@@ -42,7 +42,7 @@
  {
   matchedName: "html/props/appearToClass",
   origin: "vue@3.0.0 (vue)",
-  jsType: "string",
+  type: "string",
   complete: true,
   priority: NORMAL,
   segments: [
@@ -55,7 +55,7 @@
  {
   matchedName: "html/props/css",
   origin: "vue@3.0.0 (vue)",
-  jsType: "boolean",
+  type: "boolean",
   complete: true,
   description: "<p>Whether to apply CSS transition classes. D…",
   priority: NORMAL,
@@ -69,7 +69,7 @@
  {
   matchedName: "html/props/duration",
   origin: "vue@3.0.0 (vue)",
-  jsType: [
+  type: [
    "number",
    "{ enter: number, leave: number }",
   ],
@@ -86,7 +86,7 @@
  {
   matchedName: "html/props/enterActiveClass",
   origin: "vue@3.0.0 (vue)",
-  jsType: "string",
+  type: "string",
   complete: true,
   priority: NORMAL,
   segments: [
@@ -99,7 +99,7 @@
  {
   matchedName: "html/props/enterFromClass",
   origin: "vue@3.0.0 (vue)",
-  jsType: "string",
+  type: "string",
   complete: true,
   priority: NORMAL,
   segments: [
@@ -112,7 +112,7 @@
  {
   matchedName: "html/props/enterToClass",
   origin: "vue@3.0.0 (vue)",
-  jsType: "string",
+  type: "string",
   complete: true,
   priority: NORMAL,
   segments: [
@@ -125,7 +125,7 @@
  {
   matchedName: "html/props/leaveActiveClass",
   origin: "vue@3.0.0 (vue)",
-  jsType: "string",
+  type: "string",
   complete: true,
   priority: NORMAL,
   segments: [
@@ -138,7 +138,7 @@
  {
   matchedName: "html/props/leaveFromClass",
   origin: "vue@3.0.0 (vue)",
-  jsType: "string",
+  type: "string",
   complete: true,
   priority: NORMAL,
   segments: [
@@ -151,7 +151,7 @@
  {
   matchedName: "html/props/leaveToClass",
   origin: "vue@3.0.0 (vue)",
-  jsType: "string",
+  type: "string",
   complete: true,
   priority: NORMAL,
   segments: [
@@ -177,7 +177,7 @@
  {
   matchedName: "html/props/name",
   origin: "vue@3.0.0 (vue)",
-  jsType: "string",
+  type: "string",
   complete: true,
   description: "<p>Used to automatically generate transition …",
   priority: NORMAL,
@@ -191,7 +191,7 @@
  {
   matchedName: "html/props/tag",
   origin: "vue@3.0.0 (vue)",
-  jsType: "string",
+  type: "string",
   complete: true,
   priority: NORMAL,
   segments: [
@@ -204,7 +204,7 @@
  {
   matchedName: "html/props/type",
   origin: "vue@3.0.0 (vue)",
-  jsType: [
+  type: [
    ""transition"",
    ""animation"",
   ],

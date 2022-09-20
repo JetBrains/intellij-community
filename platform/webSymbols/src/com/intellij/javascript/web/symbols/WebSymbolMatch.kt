@@ -69,9 +69,9 @@ open class WebSymbolMatch private constructor(override val matchedName: String,
       .flatMap { it.symbols }
       .flatMap { it.contextContainers }
 
-  override val jsType: Any?
+  override val type: Any?
     get() = reversedSegments().flatMap { it.symbols }
-      .mapNotNull { it.jsType }.firstOrNull()
+      .mapNotNull { it.type }.firstOrNull()
 
   override val attributeValue: WebSymbol.AttributeValue?
     get() = reversedSegments().flatMap { it.symbols }.mapNotNull { it.attributeValue }.merge()

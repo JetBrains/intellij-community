@@ -9,8 +9,8 @@
    matchedName: "html/vue-directives/slot",
    origin: "vue@3.0.0 (vue)",
    attrValue: {
-    type: JAVASCRIPT,
-    jsType: "void",
+    type: COMPLEX,
+    langType: "void",
    },
    complete: true,
    description: "<p>Denote named slots or slots that expect to…",
@@ -589,8 +589,8 @@
    matchedName: "html/vue-directives/on",
    origin: "vue@3.0.0 (vue)",
    attrValue: {
-    type: JAVASCRIPT,
-    jsType: "void",
+    type: COMPLEX,
+    langType: "void",
     required: true,
    },
    complete: true,

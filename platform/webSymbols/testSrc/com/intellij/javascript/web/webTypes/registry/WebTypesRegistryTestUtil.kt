@@ -90,7 +90,7 @@ private fun StringBuilder.printSymbol(level: Int, source: WebSymbol): StringBuil
   printProperty(level, "name", source.name.takeIf { it != source.matchedName })
   printProperty(level, "origin", "${source.origin.packageName}@${source.origin.version} (${source.origin.framework ?: "<none>"})")
   printProperty(level, "source", (source as? PsiSourcedWebSymbol)?.source)
-  printProperty(level, "jsType", source.jsType)
+  printProperty(level, "type", source.type)
   printProperty(level, "attrValue", source.attributeValue)
   printProperty(level, "complete", source.completeMatch)
   printProperty(level, "description", source.description?.ellipsis(45))
@@ -215,6 +215,6 @@ private fun StringBuilder.printPsiElement(element: PsiElement): StringBuilder {
 private fun StringBuilder.printAttributeValue(level: Int, value: WebSymbol.AttributeValue): StringBuilder =
   printProperty(level, "kind", value.kind)
     .printProperty(level, "type", value.type)
-    .printProperty(level, "jsType", value.jsType)
+    .printProperty(level, "langType", value.langType)
     .printProperty(level, "required", value.required)
     .printProperty(level, "default", value.default)
