@@ -24,6 +24,7 @@ internal class GitLabAccountsDetailsProvider(scope: CoroutineScope,
 
   override suspend fun loadAvatar(account: GitLabAccount, url: String): Image? {
     val api = apiClientSupplier(account) ?: return null
-    return api.loadImage(url)
+    val actualUrl = account.server.uri + url
+    return api.loadImage(actualUrl)
   }
 }
