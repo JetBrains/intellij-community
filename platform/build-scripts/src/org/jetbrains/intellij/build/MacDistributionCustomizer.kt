@@ -8,7 +8,7 @@ import java.nio.file.Path
 import java.util.function.Predicate
 
 abstract class MacDistributionCustomizer(
-  val extraExecutables: List<String> = emptyList(),
+  internal val extraExecutables: List<String> = emptyList(),
 ) {
   /**
    * Path to icns file containing product icon bundle for macOS distribution
