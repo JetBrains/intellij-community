@@ -19,13 +19,13 @@ public class JavaUsageSimilarityFeaturesProvider implements UsageSimilarityFeatu
   @RequiresReadLock
   @RequiresBackgroundThread
   public @NotNull Bag getFeatures(@NotNull PsiElement usage) {
-    PsiElement statement = getContainingStatement(usage);
-    if (statement != null) {
-      final Bag usageProperties = new JavaSimilarityFeaturesExtractor(statement).getFeatures();
+    PsiElement context = getContainingStatement(usage);
+    if (context != null) {
+      final Bag usageFeatures = new JavaSimilarityFeaturesExtractor(context).getFeatures();
       if (Registry.is("similarity.find.usages.parent.statement.condition.feature")) {
-        usageProperties.addAll(getParentStatementFeatures(statement));
+        usageFeatures.addAll(getParentStatementFeatures(context));
       }
-      return usageProperties;
+      return usageFeatures;
     }
     return Bag.EMPTY_BAG;
   }
@@ -50,7 +50,8 @@ public class JavaUsageSimilarityFeaturesProvider implements UsageSimilarityFeatu
                                        PsiForStatement.class,
                                        PsiForeachStatement.class,
                                        PsiConditionalLoopStatement.class,
-                                       PsiBlockStatement.class);
+                                       PsiBlockStatement.class,
+                                       PsiMethod.class);
   }
 
   private static @NotNull Bag getParentStatementFeatures(@NotNull PsiElement context) {
