@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor
 import com.intellij.refactoring.safeDelete.NonCodeUsageSearchInfo
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegateBase
@@ -16,7 +17,6 @@ import com.intellij.util.Processor
 import com.intellij.util.containers.map2Array
 import org.jetbrains.kotlin.idea.refactoring.KotlinFirRefactoringsSettings
 import org.jetbrains.kotlin.idea.refactoring.canDeleteElement
-import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -48,8 +48,6 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 val parameterList = owner.typeParameters
                 val parameterIndex = parameterList.indexOf(element)
                 for (reference in ReferencesSearch.search(owner)) {
-                    if (reference !is KtReference) continue
-
                     val referencedElement = reference.element
 
                     val argList = referencedElement.getNonStrictParentOfType<KtUserType>()?.typeArgumentList
@@ -60,6 +58,9 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                         if (parameterIndex < projections.size) {
                             result.add(SafeDeleteTypeArgumentUsageInfo(projections[parameterIndex], element))
                         }
+                    } else {
+                        JavaSafeDeleteProcessor.createJavaTypeParameterUsageInfo(element, parameterList.size, parameterIndex, reference)
+                            ?.let { result.add(it) }
                     }
                 }
             }

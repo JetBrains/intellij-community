@@ -677,20 +677,30 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         final int index = parameterList.getTypeParameterIndex(typeParameter);
 
         ReferencesSearch.search(owner).forEach(reference -> {
-          if (reference instanceof PsiJavaCodeReferenceElement) {
-            final PsiReferenceParameterList parameterList1 = ((PsiJavaCodeReferenceElement)reference).getParameterList();
-            if (parameterList1 != null) {
-              PsiTypeElement[] typeArgs = parameterList1.getTypeParameterElements();
-              if (typeArgs.length > index) {
-                if (typeArgs.length == 1 && paramsCount > 1 && typeArgs[0].getType() instanceof PsiDiamondType) return true;
-                usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(typeArgs[index], typeParameter, true));
-              }
-            }
-          }
+          ContainerUtil.addIfNotNull(usages, createJavaTypeParameterUsageInfo(typeParameter, paramsCount, index, reference));
           return true;
         });
       }
     }
+  }
+
+  public static UsageInfo createJavaTypeParameterUsageInfo(@NotNull PsiElement typeParameter,
+                                                           int paramsCount,
+                                                           int index,
+                                                           @NotNull PsiReference reference) {
+    if (reference instanceof PsiJavaCodeReferenceElement) {
+      final PsiReferenceParameterList parameterList1 = ((PsiJavaCodeReferenceElement)reference).getParameterList();
+      if (parameterList1 != null) {
+        PsiTypeElement[] typeArgs = parameterList1.getTypeParameterElements();
+        if (typeArgs.length > index) {
+          if (typeArgs.length == 1 && paramsCount > 1 && typeArgs[0].getType() instanceof PsiDiamondType) {
+            return null;
+          }
+          return new SafeDeleteReferenceJavaDeleteUsageInfo(typeArgs[index], typeParameter, true);
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
