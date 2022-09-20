@@ -1,15 +1,17 @@
 package com.intellij.openapi.rd.util
 
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.jetbrains.rd.framework.util.launch
 import com.jetbrains.rd.framework.util.startAsync
 import com.jetbrains.rd.framework.util.startChildAsync
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
+import com.jetbrains.rd.util.lifetime.isNotAlive
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.jetbrains.annotations.Nls
@@ -138,10 +140,16 @@ private class CoroutineProgressContext(
     fun create(lifetime: Lifetime, isIndeterminate: Boolean = true, createTask: (run: (ProgressIndicator) -> Unit) -> Task): CoroutineProgressContext {
       val channel = Channel<Runnable>(Channel.UNLIMITED)
       val dispatcher = object : CoroutineDispatcher() {
+
+        @Volatile
+        var thread: Thread? = null
+
         override fun dispatch(context: CoroutineContext, block: Runnable) {
           val result = channel.trySendBlocking(block)
           result.getOrThrow()
         }
+
+        override fun isDispatchNeeded(context: CoroutineContext) = thread != Thread.currentThread()
       }
 
       val taskLifetimeDef = lifetime.createNested()
@@ -158,6 +166,8 @@ private class CoroutineProgressContext(
 
         try {
           runBlocking {
+            dispatcher.thread = Thread.currentThread()
+
             while (true)
               channel.receive().run()
           }
@@ -199,16 +209,35 @@ private class CoroutineProgressContext(
 
 class ProgressCoroutineScope(override val coroutineContext: CoroutineContext, val progressLifetime: Lifetime, val indicator: ProgressIndicator) : CoroutineScope {
 
+  private val sink = object : ProgressSink {
+    override fun update(text: @NlsContexts.ProgressText String?, details: @NlsContexts.ProgressDetails String?, fraction: Double?) {
+      if (progressLifetime.isNotAlive) return
+
+      progressLifetime.launch(coroutineContext) {
+        if (text != null) indicator.text = text
+        if (details != null) indicator.text2 = details
+        if (fraction != null) indicator.fraction = fraction
+      }
+    }
+  }
+
   internal suspend fun <T> execute(action: suspend ProgressCoroutineScope.() -> T): T {
     return try {
-      action()
+      withContext(ModalityState.defaultModalityState().asContextElement() + sink.asContextElement()) {
+        action()
+      }
     }
     catch (e: ProcessCanceledException) {
       throw CancellationException(e.message, e)
     }
   }
 
+  @Deprecated("Use withText", ReplaceWith("withText(text, action)"))
   inline fun withTextAboveProgressBar(@Nls(capitalization = Nls.Capitalization.Sentence) text: String, action: ProgressCoroutineScope.() -> Unit) {
+    withText(text, action)
+  }
+
+  inline fun withText(@Nls(capitalization = Nls.Capitalization.Sentence) text: String, action: ProgressCoroutineScope.() -> Unit) {
     val oldText = indicator.text
     try {
       indicator.text = text
@@ -219,7 +248,12 @@ class ProgressCoroutineScope(override val coroutineContext: CoroutineContext, va
     }
   }
 
+  @Deprecated("Use withDetails", ReplaceWith("withDetails(text, action)"))
   inline fun withTextUnderProgressBar(@Nls(capitalization = Nls.Capitalization.Sentence) text: String, action: ProgressCoroutineScope.() -> Unit) {
+    withDetails(text, action)
+  }
+
+  inline fun withDetails(@Nls(capitalization = Nls.Capitalization.Sentence) text: String, action: ProgressCoroutineScope.() -> Unit) {
     val oldText = indicator.text2
     try {
       indicator.text2 = text
