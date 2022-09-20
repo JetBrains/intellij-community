@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.toolWindow.*;
 import com.intellij.ui.ComponentUtil;
@@ -582,12 +583,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       myContainer.addListener(new DockContainer.Listener() {
         @Override
         public void contentRemoved(Object key) {
-          getReady().doWhenDone(() -> {
-            if (myContainer.isEmpty() && (myToolWindowPane == null || !myToolWindowPane.buttonManager.hasButtons())) {
-              close();
-              myContainers.remove(myContainer);
-            }
-          });
+          getReady().doWhenDone(() -> closeIfEmpty());
         }
       }, this);
     }
@@ -615,6 +611,27 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
       myDockContentUiContainer.remove(containerComponent);
       myDockContentUiContainer.add(myToolWindowPane, BorderLayout.CENTER);
+
+      // Close the container if it's empty, and we've just removed the last tool window
+      myProject.getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
+        @Override
+        public void stateChanged(@NotNull ToolWindowManager toolWindowManager,
+                                 @NotNull ToolWindowManagerListener.ToolWindowManagerEventType eventType) {
+          if (eventType == ToolWindowManagerEventType.ActivateToolWindow
+              || eventType == ToolWindowManagerEventType.MovedOrResized
+              || eventType == ToolWindowManagerEventType.SetContentUiType) {
+            return;
+          }
+          getReady().doWhenDone(() -> closeIfEmpty());
+        }
+      });
+    }
+
+    private void closeIfEmpty() {
+      if (myContainer.isEmpty() && (myToolWindowPane == null || !myToolWindowPane.buttonManager.hasButtons())) {
+        close();
+        myContainers.remove(myContainer);
+      }
     }
 
     private void setupNorthPanel() {
