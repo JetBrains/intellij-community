@@ -28,7 +28,10 @@ class LocalModelsManager : ConfigurableModelsManager {
   private fun initSchema(): LocalModelsSchema {
     return if (modelsFile.exists()) {
       modelsFile.readText().takeIf { it.isNotBlank() }?.let(::decodeFromXml)
-      ?: LocalModelsSchema(1, mutableListOf())
+      ?: LocalModelsSchema(1, mutableListOf()).also {
+        modelsFile.createNewFile()
+        modelsFile.writeText(encodeToXml(it))
+      }
     }
     else {
       LocalModelsSchema(1, mutableListOf()).also {
