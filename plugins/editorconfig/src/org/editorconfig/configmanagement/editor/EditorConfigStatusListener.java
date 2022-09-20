@@ -37,7 +37,7 @@ public final class EditorConfigStatusListener implements CodeStyleSettingsListen
 
   public EditorConfigStatusListener(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     myProject = project;
-    myEnabledStatus = Utils.isEnabled(project);
+    myEnabledStatus = Utils.INSTANCE.isEnabled(project);
     myVirtualFile = virtualFile;
     myEncodings = extractEncodings();
     CodeStyleSettingsManager.getInstance(project).addListener(this);
@@ -51,7 +51,7 @@ public final class EditorConfigStatusListener implements CodeStyleSettingsListen
       return;
     }
 
-    boolean newEnabledStatus = Utils.isEnabled(myProject);
+    boolean newEnabledStatus = Utils.INSTANCE.isEnabled(myProject);
     if (myEnabledStatus != newEnabledStatus) {
       myEnabledStatus = newEnabledStatus;
       onEditorConfigEnabled(newEnabledStatus);
@@ -85,11 +85,11 @@ public final class EditorConfigStatusListener implements CodeStyleSettingsListen
   }
 
   private static void onEncodingChanged() {
-    EditorConfigEncodingCache.getInstance().reset();
+    EditorConfigEncodingCache.Companion.getInstance().reset();
   }
 
   private static boolean containsValidEncodings(@NotNull Set<String> encodings) {
-    return ContainerUtil.and(encodings, encoding -> ConfigEncodingManager.toCharset(encoding) != null);
+    return ContainerUtil.and(encodings, encoding -> ConfigEncodingManager.Companion.toCharset(encoding) != null);
   }
 
   @NotNull

@@ -54,7 +54,7 @@ public class EditorConfigEncodingInspectionTest extends InspectionFixtureTestCas
     IntentionAction quickFix = myFixture.findSingleIntention(EditorConfigBundle.message("inspection.file.encoding.ignore"));
     assertNotNull(quickFix);
     myFixture.launchAction(quickFix);
-    assertTrue(EditorConfigEncodingCache.getInstance().isIgnored(getFile().getVirtualFile()));
+    assertTrue(EditorConfigEncodingCache.Companion.getInstance().isIgnored(getFile().getVirtualFile()));
     myFixture.checkHighlighting();
   }
 
