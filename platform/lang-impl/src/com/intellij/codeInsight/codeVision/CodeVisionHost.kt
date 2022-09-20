@@ -184,7 +184,7 @@ open class CodeVisionHost(val project: Project) {
     val project = editor.project ?: return emptyList()
     if (psiFile != null && psiFile.virtualFile != null) {
       val directoryInfo = DirectoryIndex.getInstance(project).getInfoForFile(psiFile.virtualFile)
-      if (!directoryInfo.isInModuleSource(psiFile.virtualFile)) return emptyList()
+      if (directoryInfo.isInLibrarySource(psiFile.virtualFile)) return emptyList()
     }
     val bypassBasedCollectors = ArrayList<Pair<BypassBasedPlaceholderCollector, CodeVisionProvider<*>>>()
     val placeholders = ArrayList<Pair<TextRange, CodeVisionEntry>>()

@@ -67,7 +67,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
 
       val virtualFile = file.virtualFile ?: return@runReadAction READY_EMPTY
       val directoryInfo = DirectoryIndex.getInstance(project).getInfoForFile(virtualFile)
-      if (!directoryInfo.isInModuleSource(virtualFile)) return@runReadAction READY_EMPTY
+      if (directoryInfo.isInLibrarySource(virtualFile)) return@runReadAction READY_EMPTY
 
       val aspect = when (val aspectResult = getAspect(file, editor)) {
         AnnotationResult.NoAnnotation -> return@runReadAction CodeVisionState.Ready(emptyList())

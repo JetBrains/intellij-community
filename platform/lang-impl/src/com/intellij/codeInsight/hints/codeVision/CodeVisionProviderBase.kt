@@ -44,7 +44,7 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
 
     val virtualFile = file.virtualFile ?: return emptyList()
     val directoryInfo = DirectoryIndex.getInstance(file.project).getInfoForFile(virtualFile)
-    if (!directoryInfo.isInModuleSource(file.virtualFile)) return emptyList()
+    if (directoryInfo.isInLibrarySource(file.virtualFile)) return emptyList()
 
     val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
     val traverser = SyntaxTraverser.psiTraverser(file)

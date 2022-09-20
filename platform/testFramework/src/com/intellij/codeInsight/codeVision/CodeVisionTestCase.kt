@@ -1,15 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.codeInsight.codeVision
+package com.intellij.codeInsight.codeVision
 
-import com.intellij.codeInsight.codeVision.CodeVisionHost
-import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionRenderer
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import java.util.regex.Pattern
@@ -19,6 +15,9 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
     Registry.get("editor.codeVision.new").setValue(true, testRootDisposable)
     super.setUp()
   }
+
+  protected open val onlyCodeVisionHintsAllowed: Boolean
+    get() = true
 
   protected fun testProviders(expectedText: String, fileName: String, vararg enabledProviderIds: String) {
     // set enabled providers
@@ -58,6 +57,10 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
     return buildString {
       var currentOffset = 0
       for (inlay in inlays) {
+        if (inlay.inlay.renderer !is CodeVisionRenderer) {
+          if (onlyCodeVisionHintsAllowed) error("renderer not supported")
+          else continue
+        }
         val nextOffset = inlay.effectiveOffset(document)
         append(sourceText.subSequence(currentOffset, nextOffset))
         append(inlay)
@@ -80,8 +83,6 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
     }
 
     override fun toString(): String {
-      val renderer = inlay.renderer
-      if (renderer !is CodeVisionRenderer) error("renderer not supported")
       return buildString {
         append("<# ")
         if (type == InlayType.Block) {
