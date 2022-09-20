@@ -16,6 +16,7 @@ import java.util.EventListener
 @ApiStatus.Internal
 interface ModuleDependencyIndex {
   companion object {
+    @JvmStatic
     fun getInstance(project: Project): ModuleDependencyIndex = project.service()
   }
 
@@ -70,17 +71,23 @@ interface ModuleDependencyListener : EventListener {
   /**
    * Called when [library] is created and some module has a dependency on this library (it was unresolved before) 
    */
-  fun referencedLibraryAdded(library: Library)
+  @JvmDefault
+  fun referencedLibraryAdded(library: Library) {
+  }
 
   /**
    * Called when configuration of [library] is changed if some module has a dependency on this library
    */
-  fun referencedLibraryChanged(library: Library)
+  @JvmDefault
+  fun referencedLibraryChanged(library: Library) {
+  }
 
   /**
    * Called when [library] is removed and some module has a dependency on this library (it will become unresolved)
    */
-  fun referencedLibraryRemoved(library: Library)
+  @JvmDefault
+  fun referencedLibraryRemoved(library: Library) {
+  }
 
   /**
    * Called when [sdk] is added to dependency of some module, and there were no dependencies on this SDK before
@@ -99,15 +106,21 @@ interface ModuleDependencyListener : EventListener {
   /**
    * Called when [sdk] is created and some module has a dependency on this SDK (it was unresolved before)
    */
-  fun referencedSdkAdded(sdk: Sdk)
+  @JvmDefault
+  fun referencedSdkAdded(sdk: Sdk) {
+  }
 
   /**
    * Called when configuration of [sdk] is changed if some module has a dependency on this SDK
    */
-  fun referencedSdkChanged(sdk: Sdk)
+  @JvmDefault
+  fun referencedSdkChanged(sdk: Sdk) {
+  }
 
   /**
    * Called when [sdk] is removed and some module has a dependency on this SDK (it will become unresolved)
    */
-  fun referencedSdkRemoved(sdk: Sdk)
+  @JvmDefault
+  fun referencedSdkRemoved(sdk: Sdk) {
+  }
 }
