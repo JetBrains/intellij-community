@@ -312,7 +312,6 @@ object CommunityLibraryLicenses {
                                                    "ai.grazie.nlp.common",
                                                    "ai.grazie.nlp.langs",
                                                    "ai.grazie.nlp.similarity",
-                                                   "ai.grazie.nlp-tokenizer",
                                                    "ai.grazie.nlp.detect",
                                                    "ai.grazie.nlp.stemmer",
                                                    "ai.grazie.nlp.tokenizer",

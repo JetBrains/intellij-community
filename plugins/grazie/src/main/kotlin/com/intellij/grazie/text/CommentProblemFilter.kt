@@ -1,14 +1,13 @@
 package com.intellij.grazie.text
 
 import ai.grazie.nlp.tokenizer.sentence.RuleSentenceTokenizer
-import ai.grazie.utils.mpp.FromResourcesDataLoader
+import ai.grazie.nlp.tokenizer.sentence.SRXRules
 import com.intellij.grazie.text.TextContent.TextDomain.COMMENTS
 import com.intellij.grazie.text.TextContent.TextDomain.DOCUMENTATION
 import com.intellij.grazie.utils.Text
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiTodoSearchHelper
-import kotlinx.coroutines.runBlocking
 
 internal class CommentProblemFilter : ProblemFilter() {
 
@@ -55,8 +54,6 @@ internal class CommentProblemFilter : ProblemFilter() {
     PsiTodoSearchHelper.getInstance(file.project).findTodoItems(file).any { text.intersectsRange(it.textRange) }
 
   companion object {
-    private val tokenizer by lazy {
-      runBlocking { RuleSentenceTokenizer.load(FromResourcesDataLoader) }
-    }
+    private val tokenizer by lazy { RuleSentenceTokenizer(SRXRules.english) }
   }
 }

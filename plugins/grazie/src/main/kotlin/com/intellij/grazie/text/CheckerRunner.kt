@@ -3,7 +3,7 @@
 package com.intellij.grazie.text
 
 import ai.grazie.nlp.tokenizer.sentence.RuleSentenceTokenizer
-import ai.grazie.utils.mpp.FromResourcesDataLoader
+import ai.grazie.nlp.tokenizer.sentence.SRXRules
 import ai.grazie.utils.toLinkedSet
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -213,9 +213,7 @@ class CheckerRunner(val text: TextContent) {
     TextRange(problem.highlightRanges[0].startOffset, problem.highlightRanges.last().endOffset)
 
   companion object {
-    private val tokenizer by lazy {
-      runBlocking { RuleSentenceTokenizer.load(FromResourcesDataLoader) }
-    }
+    private val tokenizer by lazy { RuleSentenceTokenizer(SRXRules.english) }
   }
 }
 
