@@ -3859,6 +3859,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       requestFocus();
       runMousePressedCommand(e);
+      myInitialMouseEvent = e.isConsumed() ? e : null;
     }
 
     @Override
@@ -4018,8 +4019,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private boolean processMousePressed(@NotNull final MouseEvent e) {
-      myInitialMouseEvent = e;
-
       if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE &&
           System.currentTimeMillis() - myMouseSelectionChangeTimestamp > Registry.intValue(
             "editor.mouseSelectionStateResetTimeout")) {
