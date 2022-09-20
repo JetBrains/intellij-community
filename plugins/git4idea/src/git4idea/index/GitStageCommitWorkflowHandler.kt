@@ -3,6 +3,9 @@ package git4idea.index
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.vcs.commit.*
 import git4idea.index.ui.GitStageCommitPanel
 
@@ -56,6 +59,12 @@ class GitStageCommitWorkflowHandler(
     return superCheckResult &&
            !ui.commitProgressUi.isEmptyRoots &&
            !ui.commitProgressUi.isUnmerged
+  }
+
+  override fun isExecutorEnabled(executor: CommitExecutor): Boolean {
+    val session = executor.createCommitSession(CommitContext())
+    return session == CommitSession.VCS_COMMIT &&
+           super.isExecutorEnabled(executor)
   }
 
   private inner class GitStageCommitStateCleaner : CommitStateCleaner() {

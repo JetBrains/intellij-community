@@ -35,7 +35,7 @@ class GitStageCommitWorkflow(project: Project) : NonModalCommitWorkflow(project)
   }
 
   override fun performCommit(sessionInfo: CommitSessionInfo) {
-    assert(sessionInfo.isVcsCommit)
+    assert(sessionInfo.isVcsCommit) { "Custom commit sessions are not supported with staging area: ${sessionInfo.executor.toString()}" }
     LOG.debug("Do actual commit")
 
     commitContext.isCleanupCommitMessage = project.service<GitCommitTemplateTracker>().exists()
