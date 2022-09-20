@@ -1,8 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -21,7 +24,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBPanel
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
@@ -33,7 +35,6 @@ import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.UIUtil.uiTraverser
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Point
-import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
@@ -64,33 +65,7 @@ abstract class NonModalCommitPanel(
   }
 
   val commitMessage = CommitMessage(project, false, false, true, message("commit.message.placeholder")).apply {
-    editorField.addSettingsProvider {
-      it.setBorder(emptyLeft(6))
-
-      val scrollPane = it.scrollPane as? JBScrollPane ?: return@addSettingsProvider
-
-      val historyActionToolbar = createToolbarWithHistoryAction(editorField)
-
-      scrollPane.statusComponent.apply {
-        isOpaque = true
-        background = getButtonPanelBackground()
-        add(historyActionToolbar.component)
-        revalidate()
-        repaint()
-      }
-    }
-  }
-
-  private fun createToolbarWithHistoryAction(target: JComponent): ActionToolbar {
-    val actions = ActionManager.getInstance().getAction("Vcs.MessageActionGroup") as ActionGroup
-
-    val editorToolbar = ActionManager.getInstance().createActionToolbar(COMMIT_EDITOR_PLACE, actions, true).apply {
-      setReservePlaceAutoPopupIcon(false)
-      component.border = BorderFactory.createEmptyBorder()
-      component.background = getButtonPanelBackground()
-      targetComponent = target
-    }
-    return editorToolbar
+    editorField.addSettingsProvider { it.setBorder(emptyLeft(6)) }
   }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
