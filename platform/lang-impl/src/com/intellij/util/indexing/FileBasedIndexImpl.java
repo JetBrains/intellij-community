@@ -900,7 +900,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private static void scheduleIndexRescanningForAllProjects(@NotNull String reason) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      new UnindexedFilesUpdater(project, reason).queue(project);
+      new UnindexedFilesUpdater(project, reason).queue();
     }
   }
 
