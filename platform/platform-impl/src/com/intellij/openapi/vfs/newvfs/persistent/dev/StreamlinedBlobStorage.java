@@ -437,7 +437,7 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
         final int recordActualLength = readRecordLength(buffer, offsetOnPage);
         final int recordRedirectedToId = readRecordRedirectToId(buffer, offsetOnPage);
 
-        if (!isRecordActual(recordActualLength)) {//record deleted or moved: check was it moved to a new location?
+        if (!isRecordActual(recordActualLength)) { //record deleted or moved: check was it moved to a new location?
           if (!isValidRecordId(recordRedirectedToId)) {
             throw new IOException("Can't write to record[" + recordId + "]: it was deleted");
           }

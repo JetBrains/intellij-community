@@ -93,7 +93,7 @@ public class ResizeableMappedFileReadFromUnAllocatedAreaTest {
   }
 
   private static ResizeableMappedFile createResizeableMappedFile(final File storageFile) throws IOException {
-    final int pageSize = PagedFileStorage.BUFFER_SIZE;
+    final int pageSize = PagedFileStorage.DEFAULT_PAGE_SIZE;
     final StorageLockContext storageLockContext = new StorageLockContext(true, true, true);
     return new ResizeableMappedFile(
       storageFile.toPath(),
@@ -105,7 +105,6 @@ public class ResizeableMappedFileReadFromUnAllocatedAreaTest {
     );
   }
 
-  @NotNull
   private static long[] generateLongArray(final int size) {
     final long[] swarmOfLongs = new long[size];
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
