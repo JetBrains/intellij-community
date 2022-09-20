@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import org.junit.Ignore
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -168,7 +169,7 @@ class SdkInProjectFileIndexTest {
   }
 
   @Test
-  internal fun `project SDK in project without modules`() {
+  fun `project SDK in project without modules`() {
     val sdk = projectModel.addSdk {
       it.addRoot(sdkRoot, OrderRootType.CLASSES)
     }
