@@ -8,6 +8,7 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -100,6 +101,8 @@ private fun <PSI : PsiElement, INPUT : KotlinApplicatorInput> KotlinApplicator<P
     @IntentionName actionName: String,
 ): LocalQuickFix = object : LocalQuickFix {
     override fun startInWriteAction() = false
+
+    override fun getElementToMakeWritable(currentFile: PsiFile) = currentFile
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         @Suppress("UNCHECKED_CAST")
