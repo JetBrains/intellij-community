@@ -10,9 +10,11 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginSet
 import com.intellij.idea.*
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.impl.RwLockHolder
@@ -24,6 +26,8 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
@@ -54,6 +58,7 @@ import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import sun.awt.AWTAutoShutdown
@@ -127,30 +132,24 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   }
 
   try {
-    runBlocking(Dispatchers.Default) {
-      // 40 seconds - tests maybe executed on cloud agents where I/O is very slow
-      val pluginSet = withTimeout(Duration.ofSeconds(40).toMillis()) {
-        loadedModuleFuture.await()
+    // 40 seconds - tests maybe executed on cloud agents where I/O is very slow
+    val pluginSet = loadedModuleFuture.asCompletableFuture().get(40, TimeUnit.SECONDS)
+    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app, precomputedExtensionModel = null, listenerCallbacks = null)
+
+    initConfigurationStore(app)
+
+    addKeysFromPlugins()
+    Registry.markAsLoaded()
+
+    if (EDT.isCurrentThreadEdt()) {
+      runBlockingModal(ModalTaskOwner.guess(), "") {
+        preloadServicesAndCallAppInitializedListeners(app, pluginSet)
       }
-
-      app.registerComponents(pluginSet.getEnabledModules(), app, null, null)
-      initConfigurationStore(app)
-      addKeysFromPlugins()
-      Registry.markAsLoaded()
-
-      coroutineScope {
-        withTimeout(Duration.ofSeconds(40).toMillis()) {
-          preloadCriticalServices(app)
-          app.preloadServices(
-            modules = pluginSet.getEnabledModules(),
-            activityPrefix = "",
-            syncScope = this,
-          )
-        }
-        app.loadComponents()
+    }
+    else {
+      runBlocking(Dispatchers.Default) {
+        preloadServicesAndCallAppInitializedListeners(app, pluginSet)
       }
-
-      callAppInitialized(getAppInitializedListeners(app), app.coroutineScope)
     }
 
     StartUpMeasurer.setCurrentState(LoadingState.APP_STARTED)
@@ -158,6 +157,30 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   }
   catch (e: InterruptedException) {
     throw e.cause ?: e
+  }
+}
+
+private suspend fun preloadServicesAndCallAppInitializedListeners(app: ApplicationImpl, pluginSet: PluginSet) {
+  coroutineScope {
+    withTimeout(Duration.ofSeconds(40).toMillis()) {
+      preloadCriticalServices(app)
+      app.preloadServices(
+        modules = pluginSet.getEnabledModules(),
+        activityPrefix = "",
+        syncScope = this,
+      )
+    }
+
+    app.createInitOldComponentsTask()?.let { loadComponentInEdtTask ->
+      withContext(Dispatchers.EDT) {
+        loadComponentInEdtTask()
+      }
+    }
+    app.loadComponents()
+  }
+
+  coroutineScope {
+    callAppInitialized(getAppInitializedListeners(app), app.coroutineScope)
   }
 }
 
