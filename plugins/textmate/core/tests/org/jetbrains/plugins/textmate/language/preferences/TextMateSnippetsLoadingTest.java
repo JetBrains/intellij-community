@@ -56,7 +56,7 @@ public class TextMateSnippetsLoadingTest {
   private static SnippetsRegistry loadSnippets(@NotNull String bundleName) throws IOException {
     final Bundle bundle = getBundle(bundleName);
     assertNotNull(bundle);
-    final SnippetsRegistry snippetsRegistry = new SnippetsRegistry();
+    final SnippetsRegistryImpl snippetsRegistry = new SnippetsRegistryImpl();
     Interner<CharSequence> interner = new HashSetInterner<>();
     for (File file : bundle.getSnippetFiles()) {
       final TextMateSnippet snippet = PreferencesReadUtil.loadSnippet(file, new CompositePlistReader().read(file), interner);
