@@ -54,8 +54,6 @@
                     dynamic="true"/>
     <extensionPoint name="versionAwareMavenSupport" interface="org.jetbrains.idea.maven.MavenVersionAwareSupportExtension" dynamic="true"/>
 
-    <extensionPoint name="importListener" interface="org.jetbrains.idea.maven.MavenImportListener" dynamic="true"/>
-
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
