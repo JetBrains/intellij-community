@@ -298,6 +298,22 @@ class ZipTest {
     }
   }
 
+  @Test
+  fun `write all dir entries`(@TempDir tempDir: Path) {
+    val dir = tempDir.resolve("dir")
+    Files.createDirectories(dir)
+
+    val random = Random(42)
+    val data = random.nextBytes(2 * 1024 * 1024)
+
+    dir.resolve("dir/subDir/foo.class").write(data)
+    val archiveFile = tempDir.resolve("archive.zip")
+    zip(archiveFile, mapOf(dir to ""), addDirEntriesMode = AddDirEntriesMode.ALL)
+    HashMapZipFile.load(archiveFile).use { zipFile ->
+      assertThat(zipFile.getRawEntry("dir/subDir")).isNotNull
+    }
+  }
+
   // check both IKV- and non-IKV variants of immutable zip file
   private fun checkZip(file: Path, checker: (ZipFile) -> Unit) {
     HashMapZipFile.load(file).use { zipFile ->

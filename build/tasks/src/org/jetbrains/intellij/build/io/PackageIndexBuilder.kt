@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.intellij.build.tasks
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.io
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
-import org.jetbrains.intellij.build.io.ZipFileWriter
 import org.jetbrains.xxh3.Xx3UnencodedString
 
 class PackageIndexBuilder {
@@ -11,7 +10,7 @@ class PackageIndexBuilder {
   @JvmField
   internal val resourcePackageHashSet = LongOpenHashSet()
 
-  private val dirsToRegister = LinkedHashSet<String>()
+  private val dirsToRegister = HashSet<String>()
   private var wasWritten = false
 
   fun addFile(name: String, addClassDir: Boolean = false) {
@@ -29,7 +28,7 @@ class PackageIndexBuilder {
     }
   }
 
-  fun writePackageIndex(zipCreator: ZipFileWriter) {
+  fun writePackageIndex(zipCreator: ZipFileWriter, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE) {
     assert(!wasWritten)
     wasWritten = true
 
@@ -40,12 +39,23 @@ class PackageIndexBuilder {
 
     val classPackages = classPackageHashSet.toLongArray()
     val resourcePackages = resourcePackageHashSet.toLongArray()
+
     // same content for same data
     classPackages.sort()
     resourcePackages.sort()
-    // no need to sort dirsToRegister - index entries are sorted in any case
-    zipCreator.resultStream.addDirsToIndex(dirsToRegister)
-    zipCreator.resultStream.setPackageIndex(classPackages, resourcePackages)
+    val sortedDirsToRegister = dirsToRegister.sorted()
+
+    val stream = zipCreator.resultStream
+    if (addDirEntriesMode == AddDirEntriesMode.NONE) {
+      stream.addDirsToIndex(sortedDirsToRegister)
+    }
+    else {
+      for (dir in sortedDirsToRegister) {
+        stream.addDirEntry(dir)
+      }
+    }
+
+    stream.setPackageIndex(classPackages = classPackages, resourcePackages = resourcePackages)
   }
 
   // add to index only directories where some non-class files are located (as it can be requested in runtime, e.g. stubs, fileTemplates)
