@@ -12,5 +12,6 @@ class RedundantEscapeInRegexReplacement {
     m.replaceFirst("<warning descr="Redundant escape of '@'">\\</warning>@");
     m.appendReplacement(new StringBuilder(), "<warning descr="Redundant escape of '#'">\\</warning>#");
     m.appendReplacement(new StringBuffer(), "<warning descr="Redundant escape of '%'">\\</warning>%");
+    "x".replaceAll("x", "<warning descr="Redundant escape of '.'">\\</warning>.<warning descr="Redundant escape of '.'">\\</warning>.");
   }
 }
