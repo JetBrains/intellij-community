@@ -18,6 +18,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.ui.icons.CopyableIcon;
 import com.intellij.ui.icons.ImageDescriptor;
+import com.intellij.ui.paint.PaintUtilKt;
 import com.intellij.ui.scale.*;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.*;
@@ -968,9 +969,9 @@ public final class IconUtil {
       public void paintIcon(Component c, Graphics g, int x, int y) {
         if (isJreHiDPI()) {
           Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
+          PaintUtilKt.alignToInt(newG);
           newG.scale(1.0 / sysScale, 1.0 / sysScale);
           newG.drawImage(image, 0, 0, null);
-          newG.scale(1.0, 1.0);
           newG.dispose();
         }
         else {

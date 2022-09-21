@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.JBColor
+import com.intellij.ui.paint.withTxAndClipAligned
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextAware
@@ -186,7 +187,9 @@ private class ProjectFileIcon(
         this.cachedIconPixScale = pixScale
       }
     }
-    delegate.paintIcon(c, g, x, y)
+    withTxAndClipAligned(g, x, y, delegate.iconWidth, delegate.iconHeight) { ag ->
+      delegate.paintIcon(c, ag, 0, 0)
+    }
   }
 
   override fun getIconWidth(): Int = userScaledSize
@@ -225,12 +228,10 @@ private class SvgIconData(private val originalIcon: Icon?, userScaledSize: Int) 
       originalIcon.updateScaleContext(ScaleContext.create(ScaleType.SYS_SCALE.of(sysScale.toDouble())))
     }
     val iconSize = max(originalIcon.iconWidth, originalIcon.iconHeight)
-    // workaround for Windows fractional scaling glitches:
-    val targetSize = if (sysScale > 1.0) userScaledSize - 1 else userScaledSize
-    return if (iconSize == targetSize)
+    return if (iconSize == userScaledSize)
       originalIcon
     else
-      IconUtil.scale(originalIcon, null, targetSize.toFloat() / iconSize)
+      IconUtil.scale(originalIcon, null, userScaledSize.toFloat() / iconSize)
   }
 }
 

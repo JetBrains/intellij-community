@@ -262,25 +262,37 @@ public final class PaintUtil {
    */
   @Nullable
   public static Shape alignClipToInt(@NotNull Graphics2D g, boolean alignH, boolean alignV, RoundingMode xyRM, RoundingMode whRM) {
-    Shape clip = g.getClip();
-    if (clip instanceof Rectangle2D && isFractionalScale(g.getTransform())) {
-      Rectangle2D rect = (Rectangle2D)clip;
-      double x = rect.getX();
-      double y = rect.getY();
-      double w = rect.getWidth();
-      double h = rect.getHeight();
-      if (alignH) {
-        x = alignToInt(rect.getX(), g, xyRM);
-        w = alignToInt(rect.getX() + rect.getWidth(), g, whRM) - x;
+    AffineTransform transform = g.getTransform();
+    double scaleX = transform.getScaleX();
+    double scaleY = transform.getScaleY();
+    // temporarily unscale to prevent getClip() from messing with coordinates
+    g.scale(1.0 / scaleX, 1.0 / scaleY);
+    try {
+      Shape clip = g.getClip();
+      if (clip instanceof Rectangle2D && isFractionalScale(transform)) {
+        Rectangle2D rect = (Rectangle2D)clip;
+        double x = rect.getX();
+        double y = rect.getY();
+        double w = rect.getWidth();
+        double h = rect.getHeight();
+        if (alignH) {
+          x = alignToInt(rect.getX(), g, xyRM);
+          w = alignToInt(rect.getX() + rect.getWidth(), g, whRM) - x;
+        }
+        if (alignV) {
+          y = alignToInt(rect.getY(), g, xyRM);
+          h = alignToInt(rect.getY() + rect.getHeight(), g, whRM) - y;
+        }
+        // A rare case when replacing the clipping rectangle actually makes sense:
+        //noinspection GraphicsSetClipInspection
+        g.setClip(new Rectangle2D.Double(x, y, w, h));
+        return clip;
       }
-      if (alignV) {
-        y = alignToInt(rect.getY(), g, xyRM);
-        h = alignToInt(rect.getY() + rect.getHeight(), g, whRM) - y;
-      }
-      g.setClip(new Rectangle2D.Double(x, y, w, h));
-      return clip;
+      return null;
+    } finally {
+      // re-scale back
+      g.scale(scaleX, scaleY);
     }
-    return null;
   }
 
   /**

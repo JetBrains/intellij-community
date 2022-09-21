@@ -2,6 +2,7 @@
 package com.intellij.util.ui
 
 import com.intellij.ui.JBColor
+import com.intellij.ui.paint.withTxAndClipAligned
 import com.intellij.util.ui.AvatarUtils.generateColoredAvatar
 import com.intellij.util.ui.ImageUtil.applyQualityRenderingHints
 import java.awt.*
@@ -27,15 +28,16 @@ class AvatarIcon(private val targetSize: Int,
       myCachedImage = null
     }
 
-    if (myCachedImage == null) {
-      myCachedImage = generateColoredAvatar(g.deviceConfiguration, iconSize, arcRatio, gradientSeed, avatarName, palette)
+    var cachedImage = myCachedImage
+    if (cachedImage == null) {
+      cachedImage = generateColoredAvatar(g.deviceConfiguration, iconSize, arcRatio, gradientSeed, avatarName, palette)
+      myCachedImage = cachedImage
       myCachedImageScale = scale
     }
 
-    val gg = g.create() as Graphics2D
-    UIUtil.drawImage(gg, myCachedImage!!, x, y, null)
-
-    gg.dispose()
+    withTxAndClipAligned(g, x, y, cachedImage.width, cachedImage.height) { gg ->
+      UIUtil.drawImage(gg, cachedImage, 0, 0, null)
+    }
   }
 
   private fun getIconSize() = scaleVal(targetSize.toDouble()).toInt()
@@ -58,7 +60,7 @@ object AvatarUtils {
     generateColoredAvatar(null, size, arcRatio, gradientSeed, name, palette)
 
   internal fun generateColoredAvatar(gc: GraphicsConfiguration?,
-                                     fullSize: Int,
+                                     size: Int,
                                      arcRatio: Double,
                                      gradientSeed: String,
                                      name: String,
@@ -66,15 +68,8 @@ object AvatarUtils {
     val (color1, color2) = palette.gradient(gradientSeed)
 
     val shortName = Avatars.initials(name)
-    val image = ImageUtil.createImage(gc, fullSize, fullSize, BufferedImage.TYPE_INT_ARGB)
+    val image = ImageUtil.createImage(gc, size, size, BufferedImage.TYPE_INT_ARGB)
     val g2 = image.createGraphics()
-    val size = if (g2.transform.scaleX > 1.0) {
-      // add a transparent 1px border to fix Windows fractional scaling issues
-      g2.translate(1, 1)
-      fullSize - 2
-    } else {
-      fullSize
-    }
     applyQualityRenderingHints(g2)
     g2.paint = GradientPaint(0.0f, 0.0f, color2,
                              size.toFloat(), size.toFloat(), color1)
