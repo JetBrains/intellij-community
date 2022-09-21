@@ -10,7 +10,6 @@ object NameCaseUtils {
   fun toPascalCase(str: String, preserveConsecutiveUppercase: Boolean): String =
     toCamelCase(str, preserveConsecutiveUppercase, true)
 
-
   @JvmStatic
   fun toCamelCase(str: String): String =
     toCamelCase(str, false, false)

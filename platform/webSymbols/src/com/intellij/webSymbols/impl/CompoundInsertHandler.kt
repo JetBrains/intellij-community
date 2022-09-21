@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolCodeCompletionItemInsertHandler
 
-class CompoundInsertHandler private constructor(val handlers: List<WebSymbolCodeCompletionItemInsertHandler>) : WebSymbolCodeCompletionItemInsertHandler {
+internal class CompoundInsertHandler private constructor(val handlers: List<WebSymbolCodeCompletionItemInsertHandler>) : WebSymbolCodeCompletionItemInsertHandler {
 
   override val priority: WebSymbol.Priority
     get() = WebSymbol.Priority.NORMAL
@@ -25,7 +25,8 @@ class CompoundInsertHandler private constructor(val handlers: List<WebSymbolCode
 
   companion object {
 
-    fun merge(a: WebSymbolCodeCompletionItemInsertHandler?, b: WebSymbolCodeCompletionItemInsertHandler?): WebSymbolCodeCompletionItemInsertHandler? {
+    fun merge(a: WebSymbolCodeCompletionItemInsertHandler?,
+              b: WebSymbolCodeCompletionItemInsertHandler?): WebSymbolCodeCompletionItemInsertHandler? {
       if (a == null) return b
       if (b == null) return a
 

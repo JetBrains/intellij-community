@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.webSymbols
+package com.intellij.webSymbols.framework
 
 import com.intellij.model.Pointer
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.webSymbols.FrameworkId
+import com.intellij.webSymbols.WebSymbolNameConversionRules
 
-@ApiStatus.Experimental
 interface WebFrameworksConfiguration : WebSymbolNameConversionRules {
 
   val enableWhen: Map<FrameworkId, List<EnablementRules>>
@@ -15,7 +15,7 @@ interface WebFrameworksConfiguration : WebSymbolNameConversionRules {
   data class DisablementRules(val fileExtensions: List<String>,
                               val fileNamePatterns: List<Regex>)
 
-  data class EnablementRules(val nodePackages: List<String>,
+  data class EnablementRules(val pkgManagerDependencies: List<String>,
                              val fileExtensions: List<String>,
                              val ideLibraries: List<String>,
                              val fileNamePatterns: List<Regex>,

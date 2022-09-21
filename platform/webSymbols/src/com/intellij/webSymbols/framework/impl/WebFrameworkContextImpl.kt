@@ -1,14 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.webSymbols.framework
+package com.intellij.webSymbols.framework.impl
 
-import com.intellij.webSymbols.framework.DependencyProximityProvider.Companion.mergeProximity
-import com.intellij.webSymbols.framework.DependencyProximityProvider.DependenciesKind
-import com.intellij.webSymbols.framework.WebFrameworkContext.Companion.WEB_FRAMEWORK_CONTEXT_EP
-import com.intellij.webSymbols.WebFrameworksConfiguration
-import com.intellij.webSymbols.WebSymbolsRegistryManager
-import com.intellij.webSymbols.impl.WebSymbolsRegistryManagerImpl
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.model.ModelBranchUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
@@ -27,8 +20,17 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.testFramework.LightVirtualFileBase
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.webSymbols.WebSymbolsRegistryManager
+import com.intellij.webSymbols.framework.DependencyProximityProvider
+import com.intellij.webSymbols.framework.DependencyProximityProvider.Companion.mergeProximity
+import com.intellij.webSymbols.framework.DependencyProximityProvider.DependenciesKind
+import com.intellij.webSymbols.framework.WebFramework
+import com.intellij.webSymbols.framework.WebFrameworkContext
+import com.intellij.webSymbols.framework.WebFrameworkContext.Companion.WEB_FRAMEWORK_CONTEXT_EP
+import com.intellij.webSymbols.framework.WebFrameworksConfiguration
+import com.intellij.webSymbols.impl.WebSymbolsRegistryManagerImpl
+import com.intellij.webSymbols.utils.findOriginalFile
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.Pair
@@ -74,16 +76,6 @@ internal fun findWebSymbolsFrameworkInContext(context: VirtualFile, project: Pro
                ?: return null
   return withContextChangeCheck(psiDir, file)
 }
-
-fun findOriginalFile(file: VirtualFile?) =
-  ModelBranchUtil.findOriginalFile(file)
-    ?.let {
-      var f: VirtualFile? = it
-      while (f is LightVirtualFileBase) {
-        f = f.originalFile
-      }
-      f
-    }
 
 private fun findWebFrameworkInContextCached(directory: PsiDirectory, file: VirtualFile?): WebFramework? {
   val project = directory.project
@@ -139,7 +131,7 @@ private fun calcProximityPerFrameworkFromRules(directory: PsiDirectory,
     .flatMap { (key, value) -> value.asSequence().flatMap { it.ideLibraries }.map { Pair(it, key) } }
     .groupByTo(mutableMapOf(), { it.first }, { it.second })
 
-  DependencyProximityProvider.calculateProximityFromProviders(directory, ideLibToFramework.keys, DependenciesKind.IdeLibrary)
+  DependencyProximityProvider.calculateProximity(directory, ideLibToFramework.keys, DependenciesKind.IdeLibrary)
     .let {
       it.dependency2proximity.forEach { (lib, proximity) ->
         ideLibToFramework[lib]?.forEach { framework ->
@@ -151,10 +143,10 @@ private fun calcProximityPerFrameworkFromRules(directory: PsiDirectory,
 
   // Check packages by `package.json` entries
   val depToFramework = enableWhen
-    .flatMap { (key, value) -> value.asSequence().flatMap { it.nodePackages }.map { Pair(it, key) } }
+    .flatMap { (key, value) -> value.asSequence().flatMap { it.pkgManagerDependencies }.map { Pair(it, key) } }
     .groupBy({ it.first }, { it.second })
 
-  DependencyProximityProvider.calculateProximityFromProviders(directory, depToFramework.keys, DependenciesKind.PackageManagerDependency)
+  DependencyProximityProvider.calculateProximity(directory, depToFramework.keys, DependenciesKind.PackageManagerDependency)
     .let {
       it.dependency2proximity.forEach { (lib, proximity) ->
         depToFramework[lib]?.forEach { framework ->

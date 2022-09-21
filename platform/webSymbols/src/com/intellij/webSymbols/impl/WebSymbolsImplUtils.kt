@@ -1,14 +1,14 @@
 package com.intellij.webSymbols.impl
 
-import com.intellij.webSymbols.WebSymbol.NameSegment
-import com.intellij.webSymbols.patterns.applyIcons
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.JBUI
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbol.NameSegment
+import com.intellij.webSymbols.patterns.impl.applyIcons
 import javax.swing.Icon
 
-fun Icon.scaleToHeight(height: Int): Icon {
+internal fun Icon.scaleToHeight(height: Int): Icon {
   val scale = JBUI.scale(height).toFloat() / this.iconHeight.toFloat()
   return IconUtil.scale(this, null, scale)
 }
@@ -82,40 +82,3 @@ internal fun WebSymbol.toCodeCompletionItems(name: String?,
   ?: params.registry.namesProvider
     .getNames(namespace, kind, matchedName, com.intellij.webSymbols.WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
     .map { WebSymbolCodeCompletionItem.create(it, 0, symbol = this) }
-
-fun Sequence<WebSymbol.AttributeValue?>.merge(): WebSymbol.AttributeValue? {
-  var kind: WebSymbol.AttributeValueKind? = null
-  var type: WebSymbol.AttributeValueType? = null
-  var required: Boolean? = null
-  var default: String? = null
-  var langType: Any? = null
-
-  for (value in this) {
-    if (value == null) continue
-    if (kind == null) {
-      kind = value.kind
-    }
-    if (type == null) {
-      type = value.type
-    }
-    if (required == null) {
-      required = value.required
-    }
-    if (default == null) {
-      default = value.default
-    }
-    if (langType == null) {
-      langType = value.langType
-    }
-    if (kind != null && type != null && required != null) {
-      break
-    }
-  }
-  return if (kind != null
-             || type != null
-             || required != null
-             || langType != null
-             || default != null)
-    WebSymbolHtmlAttributeValueData(kind, type, required, default, langType)
-  else null
-}

@@ -1,10 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.webTypes
 
-import com.intellij.webSymbols.WebSymbolsContainer.Namespace
-import com.intellij.webSymbols.impl.SearchMap
-import com.intellij.webSymbols.webTypes.WebTypesJsonContributionWrapper.Companion.wrap
-import com.intellij.webSymbols.utils.HtmlMarkdownUtils
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.IconLoader
@@ -15,15 +11,18 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbolsContainer.Namespace
+import com.intellij.webSymbols.framework.WebFrameworksConfiguration
+import com.intellij.webSymbols.impl.SearchMap
+import com.intellij.webSymbols.utils.HtmlMarkdownUtils
+import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionWrapper
+import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionWrapper.Companion.wrap
+import com.intellij.webSymbols.webTypes.impl.wrap
 import com.intellij.webSymbols.webTypes.json.*
-import com.intellij.webSymbols.webTypes.json.mapNameConverters
-import com.intellij.webSymbols.webTypes.json.mergeConverters
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 import javax.swing.Icon
 
-@ApiStatus.Experimental
 abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebFrameworksConfiguration {
 
   private val namesProviderCache: MutableMap<WebSymbolNamesProvider, NameProvidersCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
@@ -309,7 +308,7 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebFrameworks
   ) : WebTypesJsonOrigin {
 
     override val framework: FrameworkId? = webTypes.framework
-    override val packageName: String? = webTypes.name
+    override val library: String? = webTypes.name
 
     private val descriptionRenderer: (String) -> String? =
       when (webTypes.descriptionMarkupWithLegacy) {
@@ -346,7 +345,7 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebFrameworks
         iconLoader(path)
 
     override fun toString(): String {
-      return "$packageName@$version ($framework)"
+      return "$library@$version ($framework)"
     }
   }
 

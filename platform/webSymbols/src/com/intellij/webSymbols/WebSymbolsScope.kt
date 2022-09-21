@@ -3,11 +3,8 @@ package com.intellij.webSymbols
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
-import org.jetbrains.annotations.ApiStatus
 
-
-@ApiStatus.Experimental
-interface WebSymbolsScope: ModificationTracker {
+interface WebSymbolsScope : ModificationTracker {
 
   fun createPointer(): Pointer<out WebSymbolsScope>
 

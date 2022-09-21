@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.impl
 
-import com.intellij.webSymbols.WebSymbolsContainer.Namespace
-import com.intellij.webSymbols.WebSymbolsScope.Companion.applyScope
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
@@ -10,6 +8,9 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbolsContainer.Namespace
+import com.intellij.webSymbols.WebSymbolsScope.Companion.applyScope
+import com.intellij.webSymbols.utils.hideFromCompletion
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min

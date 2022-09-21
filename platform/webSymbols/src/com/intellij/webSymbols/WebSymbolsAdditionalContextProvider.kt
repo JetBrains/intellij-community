@@ -6,18 +6,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import com.intellij.webSymbols.framework.WebFrameworksConfiguration
 
 @Suppress("DEPRECATION")
 interface WebSymbolsAdditionalContextProvider {
 
-  @Deprecated(message = "Use and override variant with 'allowResolve'", replaceWith = ReplaceWith("getAdditionalContext(project, element, framework, allowResolve)"))
-  @JvmDefault
-  fun getAdditionalContext(project: Project, element: PsiElement?, framework: String?): List<WebSymbolsContainer> =
-    emptyList()
-
   @JvmDefault
   fun getAdditionalContext(project: Project, element: PsiElement?, framework: String?, allowResolve: Boolean): List<WebSymbolsContainer> =
-    getAdditionalContext(project, element, framework)
+    emptyList()
 
   @JvmDefault
   fun getFrameworkConfigurations(dir: PsiDirectory): Pair<List<WebFrameworksConfiguration>, ModificationTracker> =
@@ -29,7 +25,7 @@ interface WebSymbolsAdditionalContextProvider {
 
   companion object {
 
-    internal val EP_NAME = ExtensionPointName<WebSymbolsAdditionalContextProvider>("com.intellij.javascript.web.additionalContextProvider")
+    internal val EP_NAME = ExtensionPointName<WebSymbolsAdditionalContextProvider>("com.intellij.webSymbols.additionalContextProvider")
 
   }
 

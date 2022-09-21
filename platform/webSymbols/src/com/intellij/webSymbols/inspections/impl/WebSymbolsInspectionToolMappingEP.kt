@@ -3,16 +3,14 @@ package com.intellij.webSymbols.inspections.impl
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.webSymbols.WebSymbolReferenceProblem
+import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.WebSymbolsContainer
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-@ApiStatus.Experimental
 internal class WebSymbolsInspectionToolMappingEP : PluginAware {
 
   companion object {
@@ -80,7 +78,7 @@ private data class ExtensionKey(
   var problemKind: WebSymbolReferenceProblem.ProblemKind,
 )
 
-private val EP_NAME = ExtensionPointName<WebSymbolsInspectionToolMappingEP>("com.intellij.javascript.web.inspectionToolMapping")
+private val EP_NAME = ExtensionPointName<WebSymbolsInspectionToolMappingEP>("com.intellij.webSymbols.inspectionToolMapping")
 
 private val map: ClearableLazyValue<Map<ExtensionKey, WebSymbolsInspectionToolMappingEP>> = ExtensionPointUtil.dropLazyValueOnChange(
   ClearableLazyValue.create {

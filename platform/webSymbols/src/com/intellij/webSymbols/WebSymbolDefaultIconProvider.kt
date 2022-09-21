@@ -13,9 +13,9 @@ interface WebSymbolDefaultIconProvider {
 
   companion object {
 
-    private val EP_NAME = ExtensionPointName<WebSymbolDefaultIconProvider>("com.intellij.javascript.web.defaultIconProvider")
+    private val EP_NAME = ExtensionPointName<WebSymbolDefaultIconProvider>("com.intellij.webSymbols.defaultIconProvider")
 
-    fun getDefaultIcon(namespace: WebSymbolsContainer.Namespace, kind: SymbolKind): Icon? =
+    fun get(namespace: WebSymbolsContainer.Namespace, kind: SymbolKind): Icon? =
       EP_NAME.extensionList.firstNotNullOfOrNull { it.getDefaultIcon(namespace, kind) }
       ?: when (namespace) {
         WebSymbolsContainer.Namespace.HTML -> when (kind) {

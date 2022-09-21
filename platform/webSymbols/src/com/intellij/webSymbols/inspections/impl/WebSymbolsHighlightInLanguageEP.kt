@@ -2,12 +2,12 @@
 package com.intellij.webSymbols.inspections.impl
 
 import com.intellij.lang.Language
-import com.intellij.openapi.extensions.*
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.ExtensionPointUtil
+import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.xmlb.annotations.Attribute
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 internal class WebSymbolsHighlightInLanguageEP {
 
   @Attribute("language")
@@ -17,7 +17,7 @@ internal class WebSymbolsHighlightInLanguageEP {
 
   companion object {
 
-    private val EP_NAME = ExtensionPointName<WebSymbolsHighlightInLanguageEP>("com.intellij.javascript.web.highlightInLanguage")
+    private val EP_NAME = ExtensionPointName<WebSymbolsHighlightInLanguageEP>("com.intellij.webSymbols.highlightInLanguage")
 
     fun shouldHighlight(language: Language): Boolean =
       language.isKindOf(language.id)

@@ -1,16 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols
 
-import com.intellij.webSymbols.impl.toCodeCompletionItems
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.containers.Stack
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.webSymbols.impl.toCodeCompletionItems
 import java.util.*
 import javax.swing.Icon
 
+/*
+ * DEPRECATION -> @JvmDefault
+ **/
 @Suppress("DEPRECATION")
-@ApiStatus.Experimental
 interface WebSymbolsContainer : ModificationTracker {
 
   fun createPointer(): Pointer<out WebSymbolsContainer>
@@ -42,7 +43,7 @@ interface WebSymbolsContainer : ModificationTracker {
       get() = null
 
     @JvmDefault
-    val packageName: String?
+    val library: String?
       get() = null
 
     @JvmDefault
@@ -55,7 +56,7 @@ interface WebSymbolsContainer : ModificationTracker {
   }
 
   data class OriginData(override val framework: FrameworkId? = null,
-                        override val packageName: String? = null,
+                        override val library: String? = null,
                         override val version: String? = null,
                         override val defaultIcon: Icon? = null) : Origin
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.framework.WebFrameworksConfiguration
 
 class WebSymbolsMockRegistryManager : WebSymbolsRegistryManager {
 

@@ -43,4 +43,4 @@ fun printMatches(matches: List<WebSymbol>, printer: DebugOutputPrinter = WebSymb
                     .comparing<WebSymbol, WebSymbol.Priority?> { it.priority ?: WebSymbol.Priority.NORMAL }
                     .thenComparing(Function { it.matchedName })
                     .thenComparing(Function { it.name })
-                    .thenComparing(Function { it.origin.packageName ?: "" })))
+                    .thenComparing(Function { it.origin.library ?: "" })))

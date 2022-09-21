@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols
 
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.symbol.DocumentationSymbol
 import com.intellij.model.Pointer
@@ -14,12 +13,12 @@ import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.webSymbols.impl.WebSymbolDocumentationTargetImpl
+import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import java.util.*
 import javax.swing.Icon
 
-@ApiStatus.Experimental
-/**
+/*
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  * DEPRECATION -> @JvmDefault
  **/
@@ -141,7 +140,7 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
 
   @JvmDefault
   override fun getDocumentationTarget(): DocumentationTarget =
-    WebSymbolDocumentationTarget(this)
+    WebSymbolDocumentationTargetImpl(this)
 
   @JvmDefault
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
@@ -189,8 +188,6 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
 
   /**
    * null values might be replaced ("shadowed") by sibling WebSymbols while merging. Otherwise, default values are applied as the last step.
-   *
-   * @see com.intellij.javascript.web.symbols.impl.merge
    */
   interface AttributeValue {
     /** Default: PLAIN */

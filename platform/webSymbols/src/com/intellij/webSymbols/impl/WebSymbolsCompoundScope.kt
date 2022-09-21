@@ -4,7 +4,7 @@ package com.intellij.webSymbols.impl
 import com.intellij.model.Pointer
 import com.intellij.webSymbols.*
 
-class WebSymbolsCompoundScope(private val scopes: List<WebSymbolsScope>) : WebSymbolsScope {
+internal class WebSymbolsCompoundScope(private val scopes: List<WebSymbolsScope>) : WebSymbolsScope {
 
   override fun apply(matches: List<WebSymbol>, strict: Boolean,
                      namespace: WebSymbolsContainer.Namespace?,

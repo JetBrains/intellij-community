@@ -1,6 +1,6 @@
 <idea-plugin>
   <projectListeners>
-    <listener class="com.intellij.webSymbols.framework.WebFrameworkContextProjectRootsListener"
+    <listener class="com.intellij.webSymbols.framework.impl.WebFrameworkContextProjectRootsListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
   </projectListeners>
   <extensions defaultExtensionNs="com.intellij">

@@ -25,20 +25,20 @@ abstract class WebSymbolsMockRegistryTestBase : UsefulTestCase() {
     val application = MockApplication.setUp(testRootDisposable)
     application.registerService(WebSymbolsRegistryManager::class.java, WebSymbolsMockRegistryManager())
     application.extensionArea.registerExtensionPoint(
-      "com.intellij.javascript.web.filter",
-      "com.intellij.javascript.web.symbols.impl.WebSymbolsFilterEP",
+      "com.intellij.webSymbols.filter",
+      "com.intellij.webSymbols.impl.WebSymbolsFilterEP",
       ExtensionPoint.Kind.BEAN_CLASS, true)
     application.extensionArea.registerExtensionPoint(
-      "com.intellij.javascript.web.defaultIconProvider",
+      "com.intellij.webSymbols.defaultIconProvider",
       "com.intellij.webSymbols.WebSymbolDefaultIconProvider",
       ExtensionPoint.Kind.INTERFACE, true)
     val mockPluginDescriptor = DefaultPluginDescriptor(PluginId.getId("mock"),
                                                        WebSymbolsMatchPrefixFilter::class.java.classLoader)
-    application.extensionArea.getExtensionPoint<WebSymbolsFilterEP>("com.intellij.javascript.web.filter")
+    application.extensionArea.getExtensionPoint<WebSymbolsFilterEP>("com.intellij.webSymbols.filter")
       .registerExtension(
         WebSymbolsFilterEP().also {
           it.name = "match-prefix"
-          it.implementation = "com.intellij.javascript.web.symbols.filters.WebSymbolsMatchPrefixFilter"
+          it.implementation = "com.intellij.webSymbols.filters.WebSymbolsMatchPrefixFilter"
           it.pluginDescriptor = mockPluginDescriptor
         },
         mockPluginDescriptor, testRootDisposable)

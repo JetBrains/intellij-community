@@ -1,7 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.webTypes.json
 
-import com.intellij.webSymbols.utils.NameCaseUtils
+import com.intellij.model.Pointer
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_CLASSES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_FUNCTIONS
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_PROPERTIES
@@ -15,13 +18,11 @@ import com.intellij.webSymbols.WebSymbol.Companion.PROP_ARGUMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_DOC_HIDE_PATTERN
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_HIDE_FROM_COMPLETION
 import com.intellij.webSymbols.WebSymbolsContainer.Namespace
+import com.intellij.webSymbols.framework.WebFrameworksConfiguration
 import com.intellij.webSymbols.impl.WebSymbolsRegistryImpl.Companion.parsePath
+import com.intellij.webSymbols.utils.NameCaseUtils
 import com.intellij.webSymbols.webTypes.WebTypesSymbolTypeResolver
 import com.intellij.webSymbols.webTypes.json.NameConversionRulesSingle.NameConverter
-import com.intellij.model.Pointer
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.webSymbols.*
 import java.util.*
 import java.util.function.Function
 
@@ -33,12 +34,12 @@ private fun namespaceOf(host: GenericContributionsHost): Namespace =
     else -> throw IllegalArgumentException(host.toString())
   }
 
-fun Contributions.getAllContributions(framework: FrameworkId?): Sequence<Triple<Namespace, SymbolKind, List<BaseContribution>>> =
+internal fun Contributions.getAllContributions(framework: FrameworkId?): Sequence<Triple<Namespace, SymbolKind, List<BaseContribution>>> =
   sequenceOf(css, js, html)
     .filter { it != null }
     .flatMap { host -> host.collectDirectContributions(framework).mapWith(namespaceOf(host)) }
 
-fun GenericContributionsHost.getAllContributions(framework: FrameworkId?): Sequence<Triple<Namespace, SymbolKind, List<BaseContribution>>> =
+internal fun GenericContributionsHost.getAllContributions(framework: FrameworkId?): Sequence<Triple<Namespace, SymbolKind, List<BaseContribution>>> =
   if (this is BaseContribution)
     sequenceOf(this, css, js, html)
       .filter { it != null }
@@ -212,19 +213,19 @@ internal fun DisablementRules.wrap(): WebFrameworksConfiguration.DisablementRule
     fileNamePatterns.mapNotNull { it.toRegex() },
   )
 
-fun BaseContribution.Priority.wrap() =
+internal fun BaseContribution.Priority.wrap() =
   WebSymbol.Priority.values()[ordinal]
 
-val BaseContribution.attributeValue: HtmlAttributeValue?
+internal val BaseContribution.attributeValue: HtmlAttributeValue?
   get() =
     (this as? GenericContribution)?.attributeValue
     ?: (this as? HtmlAttribute)?.value
 
-val BaseContribution.type: List<Type>?
+internal val BaseContribution.type: List<Type>?
   get() =
     (this as? TypedContribution)?.type?.takeIf { it.isNotEmpty() }
 
-fun DeprecatedHtmlAttributeVueArgument.toHtmlContribution(): BaseContribution {
+internal fun DeprecatedHtmlAttributeVueArgument.toHtmlContribution(): BaseContribution {
   val result = GenericHtmlContribution()
   result.name = "Vue directive argument"
   result.description = this.description
@@ -235,7 +236,7 @@ fun DeprecatedHtmlAttributeVueArgument.toHtmlContribution(): BaseContribution {
   return result
 }
 
-fun DeprecatedHtmlAttributeVueModifier.toHtmlContribution(): BaseContribution {
+internal fun DeprecatedHtmlAttributeVueModifier.toHtmlContribution(): BaseContribution {
   val result = GenericHtmlContribution()
   result.name = this.name
   result.description = this.description
@@ -246,7 +247,7 @@ fun DeprecatedHtmlAttributeVueModifier.toHtmlContribution(): BaseContribution {
   return result
 }
 
-fun Pattern.toRegex(): Regex? =
+internal fun Pattern.toRegex(): Regex? =
   when (val pattern = value) {
     is String -> Regex(pattern, RegexOption.IGNORE_CASE)
     is PatternObject -> if (pattern.caseSensitive == true)
@@ -256,7 +257,7 @@ fun Pattern.toRegex(): Regex? =
     else -> null
   }
 
-val WebTypes.jsTypesSyntaxWithLegacy: WebTypes.JsTypesSyntax?
+internal val WebTypes.jsTypesSyntaxWithLegacy: WebTypes.JsTypesSyntax?
   get() =
     jsTypesSyntax
     ?: contributions?.html?.typesSyntax
@@ -270,7 +271,7 @@ val WebTypes.jsTypesSyntaxWithLegacy: WebTypes.JsTypesSyntax?
         }
       }
 
-val WebTypes.descriptionMarkupWithLegacy: WebTypes.DescriptionMarkup?
+internal val WebTypes.descriptionMarkupWithLegacy: WebTypes.DescriptionMarkup?
   get() =
     descriptionMarkup?.takeIf { it != WebTypes.DescriptionMarkup.NONE }
     ?: contributions?.html?.descriptionMarkup
@@ -435,5 +436,6 @@ internal fun <K, T> mapNameConverters(map: Map<String, T>,
       Pair(Triple(framework, namespace, symbolKind), converter)
     }
 
-fun WebTypes.getSymbolTypeResolver(project: Project? = null, context: List<VirtualFile> = emptyList()): WebTypesSymbolTypeResolver =
-  com.intellij.webSymbols.webTypes.WebTypesSymbolTypeResolver.get(this, project, context)
+internal fun WebTypes.getSymbolTypeResolver(project: Project? = null,
+                                            context: List<VirtualFile> = emptyList()): WebTypesSymbolTypeResolver =
+  WebTypesSymbolTypeResolver.get(this, project, context)

@@ -64,6 +64,6 @@ interface WebFrameworkContext {
   fun isForbidden(contextFile: VirtualFile, project: Project): Boolean = false
 
   companion object {
-    val WEB_FRAMEWORK_CONTEXT_EP = WebFrameworkExtension<WebFrameworkContext>("com.intellij.javascript.web.context")
+    internal val WEB_FRAMEWORK_CONTEXT_EP = WebFrameworkExtension<WebFrameworkContext>("com.intellij.webSymbols.context")
   }
 }

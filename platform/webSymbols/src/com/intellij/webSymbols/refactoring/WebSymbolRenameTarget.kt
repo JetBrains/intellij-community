@@ -1,11 +1,11 @@
 package com.intellij.webSymbols.refactoring
 
-import com.intellij.webSymbols.WebSymbol
 import com.intellij.model.Pointer
 import com.intellij.navigation.TargetPresentation
 import com.intellij.refactoring.rename.api.RenameTarget
+import com.intellij.webSymbols.WebSymbol
 
-open class WebSymbolRenameTarget(val symbol: WebSymbol): RenameTarget {
+open class WebSymbolRenameTarget(val symbol: WebSymbol) : RenameTarget {
 
   override fun createPointer(): Pointer<out RenameTarget> {
     val symbolPtr = symbol.createPointer()

@@ -2,7 +2,7 @@ package com.intellij.webSymbols.filters
 
 import com.intellij.webSymbols.*
 
-class WebSymbolsMatchPrefixFilter: WebSymbolsFilter {
+class WebSymbolsMatchPrefixFilter : WebSymbolsFilter {
 
   override fun filterCodeCompletions(codeCompletions: List<WebSymbolCodeCompletionItem>,
                                      registry: WebSymbolsRegistry,

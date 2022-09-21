@@ -1,14 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.webSymbols.patterns
+package com.intellij.webSymbols.patterns.impl
 
+import com.intellij.util.containers.Stack
+import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.WebSymbolsContainer
-import com.intellij.util.containers.Stack
-import com.intellij.util.text.CharSequenceSubSequence
+import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
 import java.util.regex.Pattern
 
-class RegExpPattern(private val regex: String, private val caseSensitive: Boolean = false) : WebSymbolsPattern() {
+internal class RegExpPattern(private val regex: String, private val caseSensitive: Boolean = false) : WebSymbolsPattern() {
   private val pattern: Pattern by lazy(LazyThreadSafetyMode.NONE) {
     if (caseSensitive)
       Pattern.compile(regex)
@@ -22,7 +24,7 @@ class RegExpPattern(private val regex: String, private val caseSensitive: Boolea
 
   override fun match(owner: WebSymbol?,
                      contextStack: Stack<WebSymbolsContainer>,
-                     itemsProvider: ItemsProvider?,
+                     itemsProvider: WebSymbolsPatternItemsProvider?,
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> {
@@ -36,7 +38,7 @@ class RegExpPattern(private val regex: String, private val caseSensitive: Boolea
 
   override fun getCompletionResults(owner: WebSymbol?,
                                     contextStack: Stack<WebSymbolsContainer>,
-                                    itemsProvider: ItemsProvider?,
+                                    itemsProvider: WebSymbolsPatternItemsProvider?,
                                     params: CompletionParameters,
                                     start: Int,
                                     end: Int): CompletionResults =

@@ -1,12 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.impl
 
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.utils.match
 import java.util.*
 
 internal abstract class SearchMap<T> internal constructor(

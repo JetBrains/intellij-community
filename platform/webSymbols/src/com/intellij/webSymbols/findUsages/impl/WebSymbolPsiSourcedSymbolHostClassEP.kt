@@ -11,7 +11,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 internal class WebSymbolPsiSourcedSymbolHostClassEP : BaseKeyedLazyInstance<Class<PsiElement>>() {
 
   companion object {
-    val EP_NAME = ExtensionPointName<WebSymbolPsiSourcedSymbolHostClassEP>("com.intellij.javascript.web.psiSourcedSymbol")
+    val EP_NAME = ExtensionPointName<WebSymbolPsiSourcedSymbolHostClassEP>("com.intellij.webSymbols.psiSourcedSymbol")
   }
 
   @Attribute("host")

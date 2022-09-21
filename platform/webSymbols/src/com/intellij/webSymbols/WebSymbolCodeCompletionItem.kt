@@ -1,25 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols
 
-import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.completion.PrioritizedLookupElement.withExplicitProximity
-import com.intellij.codeInsight.completion.PrioritizedLookupElement.withPriority
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.webSymbols.impl.CompoundInsertHandler
-import com.intellij.webSymbols.impl.WebSymbolCodeCompletionItemImpl
-import com.intellij.webSymbols.impl.scaleToHeight
 import com.intellij.model.Pointer
 import com.intellij.psi.PsiElement
+import com.intellij.webSymbols.impl.WebSymbolCodeCompletionItemImpl
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import javax.swing.Icon
 
 /**
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
- * DEPRECATION -> @JvmDefault
  **/
-@Suppress("INAPPLICABLE_JVM_NAME", "DEPRECATION")
+@Suppress("INAPPLICABLE_JVM_NAME")
 @NonExtendable
 interface WebSymbolCodeCompletionItem {
   val name: String
@@ -41,220 +36,51 @@ interface WebSymbolCodeCompletionItem {
   val symbol: WebSymbol?
   val insertHandler: WebSymbolCodeCompletionItemInsertHandler?
 
-  @JvmDefault
-  fun withPrefix(prefix: String): WebSymbolCodeCompletionItem =
-    if (prefix.isEmpty())
-      this
-    else
-      WebSymbolCodeCompletionItemImpl(
-        prefix + name,
-        offset - prefix.length,
-        completeAfterInsert,
-        completeAfterChars,
-        if (displayName != null) prefix + displayName else null,
-        symbol, priority, proximity, deprecated,
-        aliases.asSequence().map { prefix + it }.toSet(),
-        icon, typeText, tailText, insertHandler,
-        stopSequencePatternEvaluation
-      )
+  fun withPrefix(prefix: String): WebSymbolCodeCompletionItem
 
-  @JvmDefault
   fun addToResult(parameters: CompletionParameters,
                   result: CompletionResultSet,
-                  baselinePriorityValue: Double = WebSymbol.Priority.NORMAL.value) {
-    val completionPrefixMatcher = result.prefixMatcher
-    val completionPrefix = completionPrefixMatcher.prefix
-    if (completionPrefix.length < offset ||
-        completionPrefix.substring(offset) == name)
-      return
-    val priorityOffset = baselinePriorityValue - WebSymbol.Priority.NORMAL.value
-    LookupElementBuilder.create(symbol?.createPointer() ?: name, name)
-      .withLookupStrings(aliases)
-      .withIcon(icon?.scaleToHeight(16))
-      .withTypeText(typeText, true)
-      .withTailText(tailText, true)
-      .withBoldness(!deprecated && priority == WebSymbol.Priority.HIGHEST)
-      .withStrikeoutness(deprecated)
-      .let {
-        if (displayName != null)
-          it.withPresentableText(displayName!!)
-        else it
-      }
-      .let {
-        if (completeAfterInsert) {
-          it.withInsertHandler { insertionContext, _ ->
-            insertionContext.setLaterRunnable {
-              CodeCompletionHandlerBase(CompletionType.BASIC)
-                .invokeCompletion(parameters.originalFile.project, parameters.editor)
-            }
-          }
-        }
-        else if (completeAfterChars.isNotEmpty()) {
-          it.withInsertHandler { insertionContext, completionItem ->
-            if (completeAfterChars.contains(insertionContext.completionChar)) {
-              insertionContext.setLaterRunnable {
-                CodeCompletionHandlerBase(CompletionType.BASIC)
-                  .invokeCompletion(parameters.originalFile.project, parameters.editor)
-              }
-            }
-            else {
-              insertHandler?.prepare(insertionContext, completionItem)?.run()
-            }
-          }
-        }
-        else {
-          it.withInsertHandler { insertionContext, completionItem ->
-            insertHandler?.prepare(insertionContext, completionItem)?.run()
-          }
-        }
-      }.let {
-        if (completeAfterChars.isNotEmpty())
-          it.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE)
-        else it
-      }.let {
-        val priorityValue = if (deprecated) WebSymbol.Priority.LOWEST.value
-        else (priority ?: WebSymbol.Priority.NORMAL).value + priorityOffset
-        withPriority(it, priorityValue)
-      }.let {
-        withExplicitProximity(it, proximity ?: 0)
-      }.let {
-        (if (offset > 0) result.withPrefixMatcher(completionPrefixMatcher.cloneWithPrefix(completionPrefix.substring(offset)))
-        else result).addElement(it)
-      }
-  }
+                  baselinePriorityValue: Double = WebSymbol.Priority.NORMAL.value)
 
-  @JvmDefault
-  fun withName(name: String): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, completeAfterChars, displayName, symbol,
-                                    priority, proximity, deprecated,
-                                    aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withName(name: String): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withOffset(offset: Int): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, completeAfterChars, displayName, symbol,
-                                    priority, proximity, deprecated,
-                                    aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withOffset(offset: Int): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withCompleteAfterInsert(completeAfterInsert: Boolean): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, completeAfterChars, displayName, symbol,
-                                    priority, proximity, deprecated,
-                                    aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withCompleteAfterInsert(completeAfterInsert: Boolean): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withDisplayName(displayName: String?): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, completeAfterChars, displayName, symbol,
-                                    priority, proximity, deprecated,
-                                    aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withDisplayName(displayName: String?): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withSymbol(symbol: WebSymbol?): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, completeAfterChars, displayName, symbol,
-                                    priority, proximity, deprecated,
-                                    aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withSymbol(symbol: WebSymbol?): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withPriority(priority: WebSymbol.Priority?): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, completeAfterChars, displayName, symbol,
-                                    priority, proximity, deprecated,
-                                    aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withPriority(priority: WebSymbol.Priority?): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withProximity(proximity: Int): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, completeAfterChars, displayName, symbol,
-                                    priority, proximity, deprecated,
-                                    aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withProximity(proximity: Int): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withDeprecated(deprecated: Boolean): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, completeAfterChars, displayName, symbol,
-                                    priority, proximity, deprecated,
-                                    aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withDeprecated(deprecated: Boolean): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withAliasesReplaced(aliases: Set<String>): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, completeAfterChars, displayName, symbol,
-                                    priority, proximity, deprecated,
-                                    aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withAliasesReplaced(aliases: Set<String>): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withAliasesAdded(aliases: Set<String>): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, completeAfterChars, displayName, symbol,
-                                    priority, proximity, deprecated,
-                                    this.aliases + aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withAliasesAdded(aliases: Set<String>): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withAliasAdded(alias: String): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, completeAfterChars, displayName, symbol,
-                                    priority, proximity, deprecated,
-                                    aliases + alias, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withAliasAdded(alias: String): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withIcon(icon: Icon?): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, completeAfterChars, displayName, symbol,
-                                    priority, proximity, deprecated,
-                                    aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withIcon(icon: Icon?): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withTypeText(typeText: String?): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, completeAfterChars, displayName, symbol,
-                                    priority, proximity, deprecated,
-                                    aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withTypeText(typeText: String?): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withTailText(tailText: String?): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, completeAfterChars, displayName, symbol,
-                                    priority, proximity, deprecated,
-                                    aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withTailText(tailText: String?): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withCompleteAfterChar(char: Char): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, if (!completeAfterInsert) completeAfterChars + char else emptySet(),
-                                    displayName, symbol, priority, proximity, deprecated,
-                                    aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withCompleteAfterChar(char: Char): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withCompleteAfterCharsAdded(chars: List<Char>): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, if (!completeAfterInsert) completeAfterChars + chars else emptySet(),
-                                    displayName, symbol, priority, proximity, deprecated,
-                                    aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withCompleteAfterCharsAdded(chars: List<Char>): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withInsertHandlerReplaced(insertHandler: WebSymbolCodeCompletionItemInsertHandler?): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, completeAfterChars, displayName, symbol,
-                                    priority, proximity, deprecated,
-                                    aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+  fun withInsertHandlerReplaced(insertHandler: WebSymbolCodeCompletionItemInsertHandler?): WebSymbolCodeCompletionItem
 
-  @JvmDefault
   fun withInsertHandlerAdded(insertHandler: InsertHandler<LookupElement>,
-                             priority: WebSymbol.Priority = WebSymbol.Priority.NORMAL): WebSymbolCodeCompletionItem =
-    withInsertHandlerAdded(WebSymbolCodeCompletionItemInsertHandler.adapt(insertHandler, priority))
+                             priority: WebSymbol.Priority = WebSymbol.Priority.NORMAL): WebSymbolCodeCompletionItem
 
-  @JvmDefault
-  fun withInsertHandlerAdded(insertHandler: WebSymbolCodeCompletionItemInsertHandler): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, completeAfterChars, displayName,
-                                    symbol, priority, proximity, deprecated,
-                                    aliases, icon, typeText, tailText, CompoundInsertHandler.merge(this.insertHandler, insertHandler),
-                                    stopSequencePatternEvaluation)
+  fun withInsertHandlerAdded(insertHandler: WebSymbolCodeCompletionItemInsertHandler): WebSymbolCodeCompletionItem
 
-  @JvmDefault
   fun with(name: String = this.name,
            offset: Int = this.offset,
            completeAfterInsert: Boolean = this.completeAfterInsert,
@@ -266,14 +92,10 @@ interface WebSymbolCodeCompletionItem {
            deprecated: Boolean = this.deprecated,
            icon: Icon? = this.icon,
            typeText: String? = this.typeText,
-           tailText: String? = this.tailText): WebSymbolCodeCompletionItem =
-    WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, if (!completeAfterInsert) completeAfterChars else emptySet(),
-                                    displayName, symbol, priority, proximity,
-                                    deprecated, aliases, icon, typeText, tailText, insertHandler,
-                                    stopSequencePatternEvaluation)
+           tailText: String? = this.tailText): WebSymbolCodeCompletionItem
 
   companion object {
-
+    @JvmStatic
     fun create(name: String,
                offset: Int = 0,
                completeAfterInsert: Boolean = false,
@@ -287,7 +109,7 @@ interface WebSymbolCodeCompletionItem {
                icon: Icon? = symbol?.let {
                  it.icon
                  ?: it.origin.defaultIcon
-                 ?: WebSymbolDefaultIconProvider.getDefaultIcon(it.namespace, it.kind)
+                 ?: WebSymbolDefaultIconProvider.get(it.namespace, it.kind)
                },
                typeText: String? = null,
                tailText: String? = null,
@@ -296,15 +118,13 @@ interface WebSymbolCodeCompletionItem {
                                       displayName, symbol, priority, proximity,
                                       deprecated, aliases, icon, typeText, tailText, insertHandler)
 
+    @JvmStatic
     fun getPsiElement(lookupElement: LookupElement): PsiElement? =
       lookupElement.psiElement
       ?: (lookupElement.`object` as? Pointer<*>)
         ?.dereference()
         ?.let { it as? PsiSourcedWebSymbol }
         ?.source
-
-    private val WebSymbolCodeCompletionItem.stopSequencePatternEvaluation
-      get() = (this as WebSymbolCodeCompletionItemImpl).stopSequencePatternEvaluation
 
   }
 

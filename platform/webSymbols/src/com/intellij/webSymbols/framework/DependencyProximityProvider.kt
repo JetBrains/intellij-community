@@ -18,12 +18,16 @@ interface DependencyProximityProvider {
   }
 
   companion object {
+    @JvmStatic
+    fun mergeProximity(a: Double?, b: Double): Double =
+      a?.coerceAtMost(b) ?: b
 
     private val EP_NAME = ExtensionPointName<DependencyProximityProvider>(
-      "com.intellij.javascript.web.dependencyProximityProvider")
+      "com.intellij.webSymbols.dependencyProximityProvider")
 
-    @JvmStatic
-    fun calculateProximityFromProviders(psiDir: PsiDirectory, dependencies: Set<String>, dependenciesKind: DependenciesKind): Result {
+    internal fun calculateProximity(psiDir: PsiDirectory,
+                                    dependencies: Set<String>,
+                                    dependenciesKind: DependenciesKind): Result {
       val dependency2proximity = mutableMapOf<String, Double>()
       val trackers = mutableSetOf<ModificationTracker>()
       EP_NAME.extensionList
@@ -37,9 +41,6 @@ interface DependencyProximityProvider {
       return Result(dependency2proximity, trackers)
     }
 
-    @JvmStatic
-    fun mergeProximity(a: Double?, b: Double): Double =
-      a?.coerceAtMost(b) ?: b
   }
 
 }

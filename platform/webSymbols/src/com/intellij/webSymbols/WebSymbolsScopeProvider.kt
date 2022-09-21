@@ -1,18 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols
 
-import com.intellij.webSymbols.impl.WebSymbolsCompoundScope
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
+import com.intellij.webSymbols.impl.WebSymbolsCompoundScope
 
 interface WebSymbolsScopeProvider {
 
   fun get(context: PsiElement, framework: FrameworkId?): WebSymbolsScope?
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<WebSymbolsScopeProvider>("com.intellij.javascript.web.scopeProvider")
+    private val EP_NAME = ExtensionPointName.create<WebSymbolsScopeProvider>("com.intellij.webSymbols.scopeProvider")
 
     @JvmStatic
     fun getScope(context: PsiElement?,

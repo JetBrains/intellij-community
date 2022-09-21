@@ -42,7 +42,7 @@ open class WebSymbolsDebugOutputPrinter: DebugOutputPrinter() {
     printObject(topLevel) { level ->
       printProperty(level, "matchedName", source.namespace.name.lowercase(Locale.US) + "/" + source.kind + "/" + source.matchedName)
       printProperty(level, "name", source.name.takeIf { it != source.matchedName })
-      printProperty(level, "origin", "${source.origin.packageName}@${source.origin.version} (${source.origin.framework ?: "<none>"})")
+      printProperty(level, "origin", "${source.origin.library}@${source.origin.version} (${source.origin.framework ?: "<none>"})")
       printProperty(level, "source", (source as? PsiSourcedWebSymbol)?.source)
       printProperty(level, "type", source.type)
       printProperty(level, "attrValue", source.attributeValue)

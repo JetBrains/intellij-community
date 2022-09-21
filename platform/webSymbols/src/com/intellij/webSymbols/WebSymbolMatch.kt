@@ -1,14 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols
 
-import com.intellij.webSymbols.WebSymbol.NameSegment
-import com.intellij.webSymbols.WebSymbol.Priority
-import com.intellij.webSymbols.impl.merge
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.model.Pointer
 import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.webSymbols.WebSymbol.NameSegment
+import com.intellij.webSymbols.WebSymbol.Priority
+import com.intellij.webSymbols.utils.merge
 import javax.swing.Icon
 
 open class WebSymbolMatch private constructor(override val matchedName: String,

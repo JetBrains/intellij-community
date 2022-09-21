@@ -12,10 +12,10 @@
     </extensionPoint>
     <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes"
-                    beanClass="com.intellij.webSymbols.webTypes.WebTypesDefinitionsEP"
+                    beanClass="com.intellij.webSymbols.webTypes.impl.WebTypesDefinitionsEP"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes.symbolTypeResolverFactory"
-                    beanClass="com.intellij.webSymbols.webTypes.WebTypesSymbolTypeResolverFactoryEP"
+                    beanClass="com.intellij.webSymbols.webTypes.impl.WebTypesSymbolTypeResolverFactoryEP"
                     dynamic="true">
       <with attribute="implementation" implements="com.intellij.webSymbols.webTypes.WebTypesSymbolTypeResolver$Factory"/>
     </extensionPoint>

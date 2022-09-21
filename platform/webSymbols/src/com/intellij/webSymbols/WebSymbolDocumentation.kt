@@ -1,18 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols
 
-import com.intellij.webSymbols.impl.WebSymbolDocumentationImpl
 import com.intellij.openapi.util.text.Strings
+import com.intellij.webSymbols.impl.WebSymbolDocumentationImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-@ApiStatus.Experimental
 /**
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
- * DEPRECATION -> @JvmDefault
  **/
-@Suppress("INAPPLICABLE_JVM_NAME", "DEPRECATION")
+@Suppress("INAPPLICABLE_JVM_NAME")
+@ApiStatus.NonExtendable
 interface WebSymbolDocumentation {
 
   /**
@@ -78,72 +77,32 @@ interface WebSymbolDocumentation {
    */
   val footnote: @Nls String?
 
-  @JvmDefault
-  fun isNotEmpty(): Boolean =
-    name != definition || description != null || docUrl != null || deprecated || experimental
-    || required || defaultValue != null || library != null || descriptionSections.isNotEmpty() || footnote != null
+  fun isNotEmpty(): Boolean
 
-  @JvmDefault
-  fun withName(name: String): WebSymbolDocumentation =
-    WebSymbolDocumentationImpl(name, definition, description, docUrl, deprecated, experimental,
-                               required, defaultValue, library, icon, descriptionSections, footnote)
+  fun withName(name: String): WebSymbolDocumentation
 
-  @JvmDefault
-  fun withDefinition(definition: String): WebSymbolDocumentation =
-    WebSymbolDocumentationImpl(name, definition, description, docUrl, deprecated, experimental,
-                               required, defaultValue, library, icon, descriptionSections, footnote)
+  fun withDefinition(definition: String): WebSymbolDocumentation
 
-  @JvmDefault
-  fun withDescription(description: @Nls String?): WebSymbolDocumentation =
-    WebSymbolDocumentationImpl(name, definition, description, docUrl, deprecated, experimental,
-                               required, defaultValue, library, icon, descriptionSections, footnote)
+  fun withDescription(description: @Nls String?): WebSymbolDocumentation
 
-  @JvmDefault
-  fun withDocUrl(docUrl: String?): WebSymbolDocumentation =
-    WebSymbolDocumentationImpl(name, definition, description, docUrl, deprecated, experimental,
-                               required, defaultValue, library, icon, descriptionSections, footnote)
+  fun withDocUrl(docUrl: String?): WebSymbolDocumentation
 
-  @JvmDefault
-  fun withDeprecated(deprecated: Boolean): WebSymbolDocumentation =
-    WebSymbolDocumentationImpl(name, definition, description, docUrl, deprecated, experimental,
-                               required, defaultValue, library, icon, descriptionSections, footnote)
+  fun withDeprecated(deprecated: Boolean): WebSymbolDocumentation
 
-  @JvmDefault
-  fun withExperimental(experimental: Boolean): WebSymbolDocumentation =
-    WebSymbolDocumentationImpl(name, definition, description, docUrl, deprecated, experimental,
-                               required, defaultValue, library, icon, descriptionSections, footnote)
+  fun withExperimental(experimental: Boolean): WebSymbolDocumentation
 
-  @JvmDefault
-  fun withRequired(required: Boolean): WebSymbolDocumentation =
-    WebSymbolDocumentationImpl(name, definition, description, docUrl, deprecated, experimental,
-                               required, defaultValue, library, icon, descriptionSections, footnote)
+  fun withRequired(required: Boolean): WebSymbolDocumentation
 
-  @JvmDefault
-  fun withDefault(defaultValue: String?): WebSymbolDocumentation =
-    WebSymbolDocumentationImpl(name, definition, description, docUrl, deprecated, experimental,
-                               required, defaultValue, library, icon, descriptionSections, footnote)
+  fun withDefault(defaultValue: String?): WebSymbolDocumentation
 
-  @JvmDefault
-  fun withLibrary(library: String?): WebSymbolDocumentation =
-    WebSymbolDocumentationImpl(name, definition, description, docUrl, deprecated, experimental,
-                               required, defaultValue, library, icon, descriptionSections, footnote)
+  fun withLibrary(library: String?): WebSymbolDocumentation
 
-  @JvmDefault
-  fun withIcon(icon: Icon?): WebSymbolDocumentation =
-    WebSymbolDocumentationImpl(name, definition, description, docUrl, deprecated, experimental,
-                               required, defaultValue, library, icon, descriptionSections, footnote)
+  fun withIcon(icon: Icon?): WebSymbolDocumentation
 
-  @JvmDefault
-  fun withDescriptionSection(@Nls name: String, @Nls contents: String): WebSymbolDocumentation =
-    WebSymbolDocumentationImpl(name, definition, description, docUrl, deprecated, experimental,
-                               required, defaultValue, library, icon, descriptionSections + Pair(name, contents), footnote)
+  fun withDescriptionSection(@Nls name: String, @Nls contents: String): WebSymbolDocumentation
 
-  @JvmDefault
-  fun withFootnote(@Nls footnote: String?): WebSymbolDocumentation =
-    WebSymbolDocumentationImpl(name, definition, description, docUrl, deprecated, experimental,
-                               required, defaultValue, library, icon, descriptionSections, footnote)
+  fun withFootnote(@Nls footnote: String?): WebSymbolDocumentation
 
-  @JvmDefault
   fun with(name: String = this.name,
            definition: String = this.definition,
            description: @Nls String? = this.description,
@@ -155,9 +114,7 @@ interface WebSymbolDocumentation {
            library: String? = this.library,
            icon: Icon? = this.icon,
            additionalSections: Map<@Nls String, @Nls String> = emptyMap(),
-           footnote: @Nls String? = this.footnote): WebSymbolDocumentation =
-    WebSymbolDocumentationImpl(name, definition, description, docUrl, deprecated, experimental,
-                               required, defaultValue, library, icon, descriptionSections + additionalSections, footnote)
+           footnote: @Nls String? = this.footnote): WebSymbolDocumentation
 
   companion object {
 
@@ -166,9 +123,9 @@ interface WebSymbolDocumentation {
                                  symbol.experimental,
                                  symbol.required ?: false,
                                  symbol.defaultValue ?: symbol.attributeValue?.default,
-                                 symbol.origin.takeIf { it.packageName != null }
+                                 symbol.origin.takeIf { it.library != null }
                                    ?.let { context ->
-                                     context.packageName +
+                                     context.library +
                                      if (context.version?.takeIf { it != "0.0.0" } != null) "@${context.version}" else ""
                                    },
                                  symbol.icon, symbol.descriptionSections, null)

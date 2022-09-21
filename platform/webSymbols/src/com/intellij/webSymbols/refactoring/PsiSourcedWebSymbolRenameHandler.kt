@@ -1,6 +1,5 @@
 package com.intellij.webSymbols.refactoring
 
-import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
@@ -11,6 +10,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.SyntheticElement
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.RenameHandler
+import com.intellij.webSymbols.PsiSourcedWebSymbol
 
 class PsiSourcedWebSymbolRenameHandler : RenameHandler {
 

@@ -6,11 +6,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
-@ApiStatus.Experimental
-interface WebSymbolsRegistryManager: Disposable {
+interface WebSymbolsRegistryManager : Disposable {
 
   fun get(contextElement: PsiElement?, allowResolve: Boolean = true): WebSymbolsRegistry
 

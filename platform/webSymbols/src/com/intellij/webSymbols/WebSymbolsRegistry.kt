@@ -4,10 +4,8 @@ package com.intellij.webSymbols
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-/**
+/*
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  * DEPRECATION -> @JvmDefault
  **/

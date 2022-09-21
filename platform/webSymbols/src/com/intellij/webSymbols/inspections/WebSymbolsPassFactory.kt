@@ -1,10 +1,10 @@
 package com.intellij.webSymbols.inspections
 
 import com.intellij.codeHighlighting.*
-import com.intellij.webSymbols.inspections.impl.WebSymbolsHighlightInLanguageEP
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.intellij.webSymbols.inspections.impl.WebSymbolsHighlightInLanguageEP
 
 class WebSymbolsPassFactory(registrar: TextEditorHighlightingPassRegistrar) : DirtyScopeTrackingHighlightingPassFactory {
 

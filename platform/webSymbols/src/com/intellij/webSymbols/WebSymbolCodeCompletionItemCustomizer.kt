@@ -2,9 +2,7 @@
 package com.intellij.webSymbols
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 interface WebSymbolCodeCompletionItemCustomizer {
 
   fun customize(item: WebSymbolCodeCompletionItem,
@@ -13,12 +11,12 @@ interface WebSymbolCodeCompletionItemCustomizer {
                 kind: SymbolKind): WebSymbolCodeCompletionItem?
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<WebSymbolCodeCompletionItemCustomizer>(
-      "com.intellij.javascript.web.codeCompletionItemCustomizer")
+    private val EP_NAME = ExtensionPointName.create<WebSymbolCodeCompletionItemCustomizer>(
+      "com.intellij.webSymbols.codeCompletionItemCustomizer")
 
-    fun Sequence<WebSymbolCodeCompletionItem>.customizeItems(framework: FrameworkId?,
-                                                             namespace: WebSymbolsContainer.Namespace,
-                                                             kind: SymbolKind): Sequence<WebSymbolCodeCompletionItem> {
+    internal fun Sequence<WebSymbolCodeCompletionItem>.customizeItems(framework: FrameworkId?,
+                                                                      namespace: WebSymbolsContainer.Namespace,
+                                                                      kind: SymbolKind): Sequence<WebSymbolCodeCompletionItem> {
       val customizers = EP_NAME.extensionList
       return if (customizers.isNotEmpty())
         this.mapNotNull { item ->

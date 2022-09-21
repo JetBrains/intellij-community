@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.impl
 
-import com.intellij.webSymbols.framework.findOriginalFile
-import com.intellij.webSymbols.framework.findWebSymbolsFrameworkInContext
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -15,6 +13,9 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.framework.WebFrameworksConfiguration
+import com.intellij.webSymbols.framework.impl.findWebSymbolsFrameworkInContext
+import com.intellij.webSymbols.utils.findOriginalFile
 
 class WebSymbolsRegistryManagerImpl(private val project: Project) : WebSymbolsRegistryManager, Disposable {
 

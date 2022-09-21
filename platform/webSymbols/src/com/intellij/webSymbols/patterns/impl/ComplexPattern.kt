@@ -1,14 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.webSymbols.patterns
+package com.intellij.webSymbols.patterns.impl
 
-import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbol.Companion.isCritical
-import com.intellij.webSymbols.WebSymbolsContainer
-import com.intellij.webSymbols.impl.selectBest
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
+import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbol.Companion.isCritical
+import com.intellij.webSymbols.WebSymbolsContainer
+import com.intellij.webSymbols.impl.selectBest
+import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
 import kotlin.math.max
 import kotlin.math.min
 
@@ -16,36 +18,10 @@ import kotlin.math.min
  * Complex pattern matches any of the provided patterns
  * and allows for high level of customization.
  */
-class ComplexPattern(private val configProvider: ComplexPatternConfigProvider,
-                     private val defaultDisplayName: String?) : WebSymbolsPattern() {
-
-  interface ComplexPatternConfigProvider {
-
-    fun getPatterns(defaultDisplayName: String?): List<WebSymbolsPattern>
-
-    fun getOptions(params: MatchParameters, contextStack: Stack<WebSymbolsContainer>): ComplexPatternOptions
-
-    fun isStaticAndRequired(): Boolean
-
-  }
-
-  constructor(optionsProvider: (params: MatchParameters, contextStack: Stack<WebSymbolsContainer>) -> ComplexPatternOptions,
-              isStaticAndRequired: Boolean,
-              defaultDisplayName: String?,
-              vararg patterns: WebSymbolsPattern) : this(object : ComplexPatternConfigProvider {
-    override fun getPatterns(defaultDisplayName: String?): List<WebSymbolsPattern> =
-      patterns.toList()
-
-    override fun getOptions(params: MatchParameters, contextStack: Stack<WebSymbolsContainer>): ComplexPatternOptions =
-      optionsProvider(params, contextStack)
-
-    override fun isStaticAndRequired(): Boolean =
-      isStaticAndRequired
-
-  }, defaultDisplayName)
+internal class ComplexPattern(private val configProvider: ComplexPatternConfigProvider) : WebSymbolsPattern() {
 
   private val patterns: List<WebSymbolsPattern>
-    get() = configProvider.getPatterns(defaultDisplayName)
+    get() = configProvider.getPatterns()
 
   override fun getStaticPrefixes(): Sequence<String> =
     patterns
@@ -53,11 +29,11 @@ class ComplexPattern(private val configProvider: ComplexPatternConfigProvider,
       .flatMap { it.getStaticPrefixes() }
 
   override fun isStaticAndRequired(): Boolean =
-    configProvider.isStaticAndRequired()
+    configProvider.isStaticAndRequired
 
   override fun match(owner: WebSymbol?,
                      contextStack: Stack<WebSymbolsContainer>,
-                     itemsProvider: ItemsProvider?,
+                     itemsProvider: WebSymbolsPatternItemsProvider?,
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> =
@@ -110,7 +86,7 @@ class ComplexPattern(private val configProvider: ComplexPatternConfigProvider,
 
   override fun getCompletionResults(owner: WebSymbol?,
                                     contextStack: Stack<WebSymbolsContainer>,
-                                    itemsProvider: ItemsProvider?,
+                                    itemsProvider: WebSymbolsPatternItemsProvider?,
                                     params: CompletionParameters,
                                     start: Int,
                                     end: Int): CompletionResults =
@@ -184,7 +160,7 @@ class ComplexPattern(private val configProvider: ComplexPatternConfigProvider,
   private fun <T> process(contextStack: Stack<WebSymbolsContainer>,
                           params: MatchParameters,
                           action: (patterns: List<WebSymbolsPattern>,
-                                   itemsProvider: ItemsProvider?,
+                                   itemsProvider: WebSymbolsPatternItemsProvider?,
                                    patternDeprecated: Boolean?,
                                    patternRequired: Boolean,
                                    patternPriority: WebSymbol.Priority?,
@@ -215,7 +191,7 @@ class ComplexPattern(private val configProvider: ComplexPatternConfigProvider,
                                   repeats: Boolean,
                                   unique: Boolean,
                                   contextStack: Stack<WebSymbolsContainer>,
-                                  newItemsProvider: ItemsProvider?): List<MatchResult> {
+                                  newItemsProvider: WebSymbolsPatternItemsProvider?): List<MatchResult> {
     // shortcut
     if (start == end) {
       // This won't work for nested patterns, but at least allow for one level of empty
@@ -245,7 +221,7 @@ class ComplexPattern(private val configProvider: ComplexPatternConfigProvider,
                                     staticPrefixes: Set<String>,
                                     contextStack: Stack<WebSymbolsContainer>,
                                     patterns: List<WebSymbolsPattern>,
-                                    newItemsProvider: ItemsProvider?,
+                                    newItemsProvider: WebSymbolsPatternItemsProvider?,
                                     unique: Boolean): SmartList<Pair<Int, List<MatchResult>>> {
     val complete = SmartList<Pair<Int, List<MatchResult>>>()
     val toProcess = Stack<Pair<List<MatchResult>, List<CharSequence>>?>(null)
@@ -378,16 +354,5 @@ class ComplexPattern(private val configProvider: ComplexPatternConfigProvider,
 
   override fun toString(): String =
     patterns.joinToString("\nor ")
-
-  data class ComplexPatternOptions(
-    val delegate: WebSymbol?,
-    val isDeprecated: Boolean?,
-    val isRequired: Boolean,
-    val priority: WebSymbol.Priority?,
-    val proximity: Int?,
-    val repeats: Boolean,
-    val unique: Boolean,
-    val itemsProvider: ItemsProvider?,
-  )
 
 }

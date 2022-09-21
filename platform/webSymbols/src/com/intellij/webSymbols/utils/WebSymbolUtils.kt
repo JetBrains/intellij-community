@@ -1,10 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:JvmName("WebSymbolsUtils")
+@file:JvmName("WebSymbolUtils")
 
-package com.intellij.webSymbols
+package com.intellij.webSymbols.utils
 
-import com.intellij.webSymbols.WebSymbolReferenceProblem.ProblemKind
-import com.intellij.webSymbols.impl.sortSymbolsByPriority
 import com.intellij.navigation.EmptyNavigatable
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.NavigationItem
@@ -15,6 +13,9 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.Stack
+import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbolReferenceProblem.ProblemKind
+import com.intellij.webSymbols.impl.sortSymbolsByPriority
 import java.util.*
 import javax.swing.Icon
 import kotlin.contracts.ExperimentalContracts
@@ -24,7 +25,7 @@ import kotlin.contracts.contract
 val Project.psiModificationCount get() = PsiModificationTracker.getInstance(this).modificationCount
 
 @OptIn(ExperimentalContracts::class)
-inline fun <T : Any, P : Any> T.letWithNotNull(param: P?, block: T.(P) -> T): T {
+inline fun <T : Any, P : Any> T.applyIfNotNull(param: P?, block: T.(P) -> T): T {
   contract {
     callsInPlace(block, InvocationKind.EXACTLY_ONCE)
   }
@@ -143,6 +144,43 @@ val WebSymbol.hideFromCompletion
 fun List<WebSymbol.NameSegment>.withOffset(offset: Int): List<WebSymbol.NameSegment> =
   if (offset != 0) map { it.withOffset(offset) }
   else this
+
+fun Sequence<WebSymbol.AttributeValue?>.merge(): WebSymbol.AttributeValue? {
+  var kind: WebSymbol.AttributeValueKind? = null
+  var type: WebSymbol.AttributeValueType? = null
+  var required: Boolean? = null
+  var default: String? = null
+  var langType: Any? = null
+
+  for (value in this) {
+    if (value == null) continue
+    if (kind == null) {
+      kind = value.kind
+    }
+    if (type == null) {
+      type = value.type
+    }
+    if (required == null) {
+      required = value.required
+    }
+    if (default == null) {
+      default = value.default
+    }
+    if (langType == null) {
+      langType = value.langType
+    }
+    if (kind != null && type != null && required != null) {
+      break
+    }
+  }
+  return if (kind != null
+             || type != null
+             || required != null
+             || langType != null
+             || default != null)
+    WebSymbolHtmlAttributeValueData(kind, type, required, default, langType)
+  else null
+}
 
 fun NavigationTarget.createPsiRangeNavigationItem(element: PsiElement, offsetWithinElement: Int): Navigatable {
   val vf = element.containingFile.virtualFile

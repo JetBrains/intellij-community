@@ -1,9 +1,5 @@
 package com.intellij.webSymbols.findUsages
 
-import com.intellij.webSymbols.findUsages.impl.WebSymbolPsiSourcedSymbolHostClassEP
-import com.intellij.webSymbols.PsiSourcedWebSymbolProvider
-import com.intellij.webSymbols.WebSymbolNamesProvider
-import com.intellij.webSymbols.WebSymbolsRegistryManager
 import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.openapi.extensions.ExtensionPointUtil
 import com.intellij.openapi.util.ClearableLazyValue
@@ -13,6 +9,10 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
+import com.intellij.webSymbols.PsiSourcedWebSymbolProvider
+import com.intellij.webSymbols.WebSymbolNamesProvider
+import com.intellij.webSymbols.WebSymbolsRegistryManager
+import com.intellij.webSymbols.findUsages.impl.WebSymbolPsiSourcedSymbolHostClassEP
 
 class PsiSourcedWebSymbolReferenceSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(true) {
 

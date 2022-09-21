@@ -10,5 +10,4 @@ public interface GenericContributionsHost {
 
   @JsonAnyGetter
   public Map<String, ? extends ArrayList<? extends GenericContributionOrProperty>> getAdditionalProperties();
-
 }

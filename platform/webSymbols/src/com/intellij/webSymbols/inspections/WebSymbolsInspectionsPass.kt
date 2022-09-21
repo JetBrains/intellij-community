@@ -18,12 +18,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.webSymbols.WebSymbolsBundle
-import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
-import com.intellij.webSymbols.WebSymbolReference
-import com.intellij.webSymbols.WebSymbolReferenceProblem
-import com.intellij.webSymbols.WebSymbolReferenceProblem.ProblemKind
-import com.intellij.webSymbols.letWithNotNull
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.model.psi.PsiSymbolReferenceService
 import com.intellij.openapi.application.ApplicationManager
@@ -36,9 +30,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.webSymbols.WebSymbolReference
+import com.intellij.webSymbols.WebSymbolReferenceProblem
+import com.intellij.webSymbols.WebSymbolReferenceProblem.ProblemKind
+import com.intellij.webSymbols.WebSymbolsBundle
+import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
+import com.intellij.webSymbols.utils.applyIfNotNull
 import org.jetbrains.annotations.PropertyKey
 
-class WebSymbolsInspectionsPass(private val file: PsiFile, document: Document) : TextEditorHighlightingPass(file.project, document) {
+internal class WebSymbolsInspectionsPass(private val file: PsiFile, document: Document) : TextEditorHighlightingPass(file.project,
+                                                                                                                     document) {
 
   private val referencesWithProblems = ContainerUtil.createConcurrentList<WebSymbolReference>()
   private val myInspectionToolInfos = mutableMapOf<String, InspectionToolInfo>()
@@ -109,8 +110,8 @@ class WebSymbolsInspectionsPass(private val file: PsiFile, document: Document) :
 
     HighlightInfo
       .newHighlightInfo(ProblemDescriptorUtil.getHighlightInfoType(type, severity, SeverityRegistrar.getSeverityRegistrar(myProject)))
-      .letWithNotNull(inspectionToolId) { inspectionToolId(it) }
-      .letWithNotNull(textAttributesKey) { textAttributes(it) }
+      .applyIfNotNull(inspectionToolId) { inspectionToolId(it) }
+      .applyIfNotNull(textAttributesKey) { textAttributes(it) }
       .range(range)
       .severity(severity)
       .descriptionAndTooltip(message)

@@ -3,13 +3,13 @@ package com.intellij.webSymbols.codeInsight
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.webSymbols.WebSymbolCodeCompletionItemCustomizer.Companion.customizeItems
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.ProcessingContext
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbolCodeCompletionItemCustomizer.Companion.customizeItems
 
 abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProvider<CompletionParameters>() {
   final override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
@@ -39,6 +39,7 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
 
   companion object {
 
+    @JvmStatic
     fun processCompletionQueryResults(registry: WebSymbolsRegistry,
                                       result: CompletionResultSet,
                                       namespace: WebSymbolsContainer.Namespace,

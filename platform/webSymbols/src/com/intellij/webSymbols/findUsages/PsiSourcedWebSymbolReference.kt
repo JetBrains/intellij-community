@@ -1,7 +1,5 @@
 package com.intellij.webSymbols.findUsages
 
-import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolsRegistryManager
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
@@ -12,6 +10,8 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.refactoring.util.NonCodeUsageInfo
+import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolsRegistryManager
 
 class PsiSourcedWebSymbolReference(private val symbol: WebSymbol,
                                    private val sourceElement: PsiElement,

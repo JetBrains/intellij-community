@@ -4,8 +4,8 @@ package com.intellij.webSymbols.webTypes
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.type.TypeFactory
-import com.intellij.webSymbols.webTypes.json.WebTypes
 import com.intellij.util.text.SemVer
+import com.intellij.webSymbols.webTypes.json.WebTypes
 import java.io.InputStream
 import java.util.*
 

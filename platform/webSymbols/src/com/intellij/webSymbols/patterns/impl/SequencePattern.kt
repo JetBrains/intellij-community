@@ -1,13 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.webSymbols.patterns
+package com.intellij.webSymbols.patterns.impl
 
-import com.intellij.webSymbols.impl.CompoundInsertHandler
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.WebSymbolMatch
+import com.intellij.webSymbols.WebSymbolsContainer
+import com.intellij.webSymbols.impl.CompoundInsertHandler
+import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
+import com.intellij.webSymbols.utils.asSingleSymbol
+import com.intellij.webSymbols.utils.withOffset
 
-class SequencePattern(private val patternsProvider: () -> List<WebSymbolsPattern>) : WebSymbolsPattern() {
+internal class SequencePattern(private val patternsProvider: () -> List<WebSymbolsPattern>) : WebSymbolsPattern() {
 
   constructor(vararg patterns: WebSymbolsPattern) : this({ patterns.toList() })
 
@@ -23,7 +30,7 @@ class SequencePattern(private val patternsProvider: () -> List<WebSymbolsPattern
 
   override fun match(owner: WebSymbol?,
                      contextStack: Stack<WebSymbolsContainer>,
-                     itemsProvider: ItemsProvider?,
+                     itemsProvider: WebSymbolsPatternItemsProvider?,
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> =
@@ -47,7 +54,7 @@ class SequencePattern(private val patternsProvider: () -> List<WebSymbolsPattern
 
   override fun getCompletionResults(owner: WebSymbol?,
                                     contextStack: Stack<WebSymbolsContainer>,
-                                    itemsProvider: ItemsProvider?,
+                                    itemsProvider: WebSymbolsPatternItemsProvider?,
                                     params: CompletionParameters,
                                     start: Int,
                                     end: Int): CompletionResults {
@@ -114,7 +121,7 @@ class SequencePattern(private val patternsProvider: () -> List<WebSymbolsPattern
                                         matchStart: Int,
                                         matchEnd: Int,
                                         prevResult: MatchResult?,
-                                        itemsProvider: ItemsProvider?,
+                                        itemsProvider: WebSymbolsPatternItemsProvider?,
                                         params: CompletionParameters): List<SequenceCompletionResult>? =
     matchResult
       ?.takeIf {
@@ -259,7 +266,7 @@ class SequencePattern(private val patternsProvider: () -> List<WebSymbolsPattern
 
   private fun getCompletionResultsOnPattern(pattern: WebSymbolsPattern,
                                             contextStack: Stack<WebSymbolsContainer>,
-                                            itemsProvider: ItemsProvider?,
+                                            itemsProvider: WebSymbolsPatternItemsProvider?,
                                             matchResult: MatchResult?,
                                             params: CompletionParameters,
                                             matchStart: Int,

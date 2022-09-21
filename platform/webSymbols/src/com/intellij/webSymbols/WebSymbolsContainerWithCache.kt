@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols
 
-import com.intellij.webSymbols.impl.SearchMap
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
@@ -12,6 +11,8 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
+import com.intellij.webSymbols.impl.SearchMap
+import com.intellij.webSymbols.utils.psiModificationCount
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -126,7 +127,7 @@ abstract class WebSymbolsContainerWithCache<T : UserDataHolder, K>(protected val
 
     fun add(symbol: WebSymbol) {
       assert(symbol.origin.framework == framework) {
-        "WebSymbolsContainer only accepts symbols with framework: $framework, but symbol with "
+        "WebSymbolsContainer only accepts symbols with framework: $framework, but symbol with framework ${symbol.origin.framework} was added."
       }
       add(symbol.namespace, symbol.kind, symbol.name, symbol.pattern, symbol)
     }

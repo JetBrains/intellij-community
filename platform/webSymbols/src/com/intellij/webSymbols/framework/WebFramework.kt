@@ -1,13 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.framework
 
-import com.intellij.webSymbols.SymbolKind
-import com.intellij.webSymbols.WebSymbolNamesProvider
-import com.intellij.webSymbols.WebSymbolsContainer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.webSymbols.SymbolKind
+import com.intellij.webSymbols.WebSymbolNamesProvider
+import com.intellij.webSymbols.WebSymbolsContainer
+import com.intellij.webSymbols.framework.impl.findWebSymbolsFrameworkInContext
 import javax.swing.Icon
 
 abstract class WebFramework {
@@ -30,7 +31,7 @@ abstract class WebFramework {
 
   companion object {
 
-    private val WEB_FRAMEWORK_EP = object : KeyedExtensionCollector<WebFramework, String>("com.intellij.javascript.web.framework") {
+    private val WEB_FRAMEWORK_EP = object : KeyedExtensionCollector<WebFramework, String>("com.intellij.webSymbols.framework") {
       val all get() = extensions.asSequence().map { it.instance }
     }
 

@@ -13,7 +13,8 @@ interface WebSymbolCodeCompletionItemInsertHandler {
 
   companion object {
 
-    fun adapt(insertHandler: InsertHandler<LookupElement>, priority: WebSymbol.Priority): WebSymbolCodeCompletionItemInsertHandler =
+    internal fun adapt(insertHandler: InsertHandler<LookupElement>,
+                       priority: WebSymbol.Priority): WebSymbolCodeCompletionItemInsertHandler =
       object : WebSymbolCodeCompletionItemInsertHandler {
 
         override val priority: WebSymbol.Priority

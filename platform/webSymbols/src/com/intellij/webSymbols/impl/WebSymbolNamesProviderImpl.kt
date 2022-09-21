@@ -1,11 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.impl
 
-import com.intellij.webSymbols.framework.WebFramework
+import com.intellij.model.Pointer
+import com.intellij.webSymbols.FrameworkId
+import com.intellij.webSymbols.SymbolKind
+import com.intellij.webSymbols.WebSymbolNameConversionRules
+import com.intellij.webSymbols.WebSymbolNamesProvider
 import com.intellij.webSymbols.WebSymbolNamesProvider.Target.*
 import com.intellij.webSymbols.WebSymbolsContainer.Namespace
-import com.intellij.model.Pointer
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.framework.WebFramework
+import com.intellij.webSymbols.framework.WebFrameworksConfiguration
 import java.util.*
 import java.util.function.Function
 

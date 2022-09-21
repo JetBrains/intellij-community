@@ -4,7 +4,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.IconLoader
 import com.intellij.util.io.DigestUtil
 import java.io.File
-import java.security.MessageDigest
 import javax.swing.Icon
 
 object WebTypesSvgStringIconLoader {

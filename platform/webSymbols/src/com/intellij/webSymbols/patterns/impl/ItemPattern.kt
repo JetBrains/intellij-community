@@ -1,20 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.webSymbols.patterns
+package com.intellij.webSymbols.patterns.impl
 
+import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolMatch
 import com.intellij.webSymbols.WebSymbolsContainer
-import com.intellij.util.containers.Stack
+import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
 import kotlin.math.max
 
-class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
+internal class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
   override fun getStaticPrefixes(): Sequence<String> = sequenceOf("")
 
   override fun isStaticAndRequired(): Boolean = false
 
   override fun match(owner: WebSymbol?,
                      contextStack: Stack<WebSymbolsContainer>,
-                     itemsProvider: ItemsProvider?,
+                     itemsProvider: WebSymbolsPatternItemsProvider?,
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> {
@@ -55,7 +57,7 @@ class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
 
   override fun getCompletionResults(owner: WebSymbol?,
                                     contextStack: Stack<WebSymbolsContainer>,
-                                    itemsProvider: ItemsProvider?,
+                                    itemsProvider: WebSymbolsPatternItemsProvider?,
                                     params: CompletionParameters,
                                     start: Int,
                                     end: Int): CompletionResults =

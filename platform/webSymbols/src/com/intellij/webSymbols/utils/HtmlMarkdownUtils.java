@@ -163,7 +163,7 @@ public final class HtmlMarkdownUtils {
     List<String> parts = new ArrayList<>(StringUtil.split(processedLine, "|"));
     if (parts.isEmpty()) return parts;
     if (StringUtil.isEmptyOrSpaces(parts.get(0))) parts.remove(0);
-    if (!parts.isEmpty() && StringUtil.isEmptyOrSpaces(parts.get(parts.size() - 1)))  parts.remove(parts.size() - 1);
+    if (!parts.isEmpty() && StringUtil.isEmptyOrSpaces(parts.get(parts.size() - 1))) parts.remove(parts.size() - 1);
     return parts;
   }
 
@@ -177,7 +177,9 @@ public final class HtmlMarkdownUtils {
     StringBuilder resultBuilder = new StringBuilder("<tr style=\"" + getBorder() + "\">" + openingTagStart);
     resultBuilder.append("align=\"").append(getAlign(0, tableFormats)).append("\">");
     for (int i = 0; i < parts.size(); i++) {
-      if (i > 0) resultBuilder.append(closingTag).append(openingTagStart).append("align=\"").append(getAlign(i, tableFormats)).append("\">");
+      if (i > 0) {
+        resultBuilder.append(closingTag).append(openingTagStart).append("align=\"").append(getAlign(i, tableFormats)).append("\">");
+      }
       resultBuilder.append(convert(parts.get(i).trim()));
     }
     resultBuilder.append(closingTag).append("</tr>");
@@ -185,7 +187,7 @@ public final class HtmlMarkdownUtils {
   }
 
   private static @NotNull String getAlign(int index, @Nullable List<String> formats) {
-    return formats == null  || index >= formats.size() ? "left" : formats.get(index);
+    return formats == null || index >= formats.size() ? "left" : formats.get(index);
   }
 
   private static @NotNull String parseFormat(@NotNull String format) {

@@ -1,13 +1,13 @@
 package com.intellij.webSymbols.refactoring
 
-import com.intellij.webSymbols.findUsages.PsiSourcedWebSymbolReference
-import com.intellij.webSymbols.findUsages.PsiSourcedWebSymbolReference.RenameHandler
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.RefactoringHelper
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.usageView.UsageInfo
+import com.intellij.webSymbols.findUsages.PsiSourcedWebSymbolReference
+import com.intellij.webSymbols.findUsages.PsiSourcedWebSymbolReference.RenameHandler
 
 class PsiSourcedWebSymbolRefactoringHelper : RefactoringHelper<List<RenameHandler>> {
 

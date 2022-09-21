@@ -14,8 +14,9 @@ interface WebSymbolDeclarationProvider {
   fun getDeclarations(element: PsiElement, offsetInElement: Int): Collection<WebSymbolDeclaration>
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<WebSymbolDeclarationProvider>("com.intellij.javascript.web.declarationProvider")
+    private val EP_NAME = ExtensionPointName.create<WebSymbolDeclarationProvider>("com.intellij.webSymbols.declarationProvider")
 
+    @JvmStatic
     fun getAllDeclarations(element: PsiElement, offsetInElement: Int): Collection<WebSymbolDeclaration> =
       EP_NAME.extensions.asSequence().flatMap { it.getDeclarations(element, offsetInElement) }.toList()
 

@@ -1,13 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.webSymbols.webTypes
+package com.intellij.webSymbols.webTypes.impl
 
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
-import com.intellij.webSymbols.WebSymbol.NameSegment
-import com.intellij.webSymbols.WebSymbol.Priority
-import com.intellij.webSymbols.WebSymbolsContainer.Namespace
-import com.intellij.webSymbols.impl.merge
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
-import com.intellij.webSymbols.webTypes.WebTypesSymbolsContainerBase.WebTypesJsonOrigin
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.UserDataHolderBase
@@ -17,13 +10,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
+import com.intellij.webSymbols.WebSymbol.NameSegment
+import com.intellij.webSymbols.WebSymbol.Priority
+import com.intellij.webSymbols.WebSymbolsContainer.Namespace
+import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.utils.merge
+import com.intellij.webSymbols.webTypes.WebTypesSymbol
+import com.intellij.webSymbols.webTypes.WebTypesSymbolsContainerBase
+import com.intellij.webSymbols.webTypes.WebTypesSymbolsContainerBase.WebTypesJsonOrigin
 import com.intellij.webSymbols.webTypes.json.*
-import com.intellij.webSymbols.webTypes.json.KIND_HTML_VUE_COMPONENTS
-import com.intellij.webSymbols.webTypes.json.KIND_HTML_VUE_COMPONENT_PROPS
-import com.intellij.webSymbols.webTypes.json.KIND_HTML_VUE_DIRECTIVES
-import com.intellij.webSymbols.webTypes.json.KIND_HTML_VUE_LEGACY_COMPONENTS
-import com.intellij.webSymbols.webTypes.json.VUE_DIRECTIVE_PREFIX
-import com.intellij.webSymbols.webTypes.json.VUE_FRAMEWORK
 import javax.swing.Icon
 
 internal abstract class WebTypesJsonContributionWrapper private constructor(protected val contribution: BaseContribution,
@@ -36,9 +32,9 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
 
   companion object {
     fun BaseContribution.wrap(origin: WebTypesJsonOrigin,
-                                                                                       rootContainer: WebTypesSymbolsContainerBase,
-                                                                                       root: Namespace,
-                                                                                       kind: SymbolKind): WebTypesJsonContributionWrapper =
+                              rootContainer: WebTypesSymbolsContainerBase,
+                              root: Namespace,
+                              kind: SymbolKind): WebTypesJsonContributionWrapper =
       if (pattern != null) {
         Pattern(this, origin, UserDataHolderBase(), rootContainer, root, kind)
       }
@@ -183,8 +179,8 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
 
     override val attributeValue: WebSymbol.AttributeValue?
       get() = (base.contribution.attributeValue?.let { sequenceOf(HtmlAttributeValueImpl(it)) } ?: emptySequence())
-      .plus(superContributions.asSequence().map { it.attributeValue })
-      .merge()
+        .plus(superContributions.asSequence().map { it.attributeValue })
+        .merge()
 
     override val type: Any?
       get() = (base.contribution.type)

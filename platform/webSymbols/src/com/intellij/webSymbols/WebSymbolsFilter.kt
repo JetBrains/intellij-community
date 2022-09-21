@@ -2,9 +2,7 @@
 package com.intellij.webSymbols
 
 import com.intellij.webSymbols.impl.WebSymbolsFilterEP
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 interface WebSymbolsFilter {
 
   fun filterCodeCompletions(codeCompletions: List<WebSymbolCodeCompletionItem>,

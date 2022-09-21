@@ -3,7 +3,7 @@ package com.intellij.webSymbols
 
 import com.intellij.model.psi.PsiSymbolDeclaration
 
-interface WebSymbolDeclaration: PsiSymbolDeclaration {
+interface WebSymbolDeclaration : PsiSymbolDeclaration {
 
   override fun getSymbol(): WebSymbol
 

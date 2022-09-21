@@ -2,10 +2,6 @@ package com.intellij.webSymbols.codeInsight
 
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.webSymbols.inspections.WebSymbolsInspectionsPass.Companion.getDefaultProblemMessage
-import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
-import com.intellij.webSymbols.WebSymbol.NameSegment
-import com.intellij.webSymbols.WebSymbolReferenceProblem.ProblemKind
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.model.psi.PsiSymbolReference
@@ -19,7 +15,16 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.MultiMap
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbol.NameSegment
+import com.intellij.webSymbols.WebSymbolReference
+import com.intellij.webSymbols.WebSymbolReferenceProblem
+import com.intellij.webSymbols.WebSymbolReferenceProblem.ProblemKind
+import com.intellij.webSymbols.inspections.WebSymbolsInspectionsPass.Companion.getDefaultProblemMessage
+import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
+import com.intellij.webSymbols.utils.asSingleSymbol
+import com.intellij.webSymbols.utils.getProblemKind
+import com.intellij.webSymbols.utils.hasOnlyExtensions
 import java.util.*
 
 private const val IJ_IGNORE_REFS = "ij-no-psi-refs"
@@ -201,6 +206,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
 
   companion object {
 
+    @JvmStatic
     fun PsiElement.startOffsetIn(parent: PsiElement): Int {
       var result = 0
       var tmp: PsiElement? = this

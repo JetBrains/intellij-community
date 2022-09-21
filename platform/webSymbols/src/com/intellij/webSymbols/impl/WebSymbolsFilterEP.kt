@@ -6,10 +6,10 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.webSymbols.*
 
-internal class WebSymbolsFilterEP : CustomLoadingExtensionPointBean<WebSymbolsFilter>() {
+class WebSymbolsFilterEP internal constructor() : CustomLoadingExtensionPointBean<WebSymbolsFilter>() {
 
   companion object {
-    private val EP_NAME = ExtensionPointName<WebSymbolsFilterEP>("com.intellij.javascript.web.filter")
+    private val EP_NAME = ExtensionPointName<WebSymbolsFilterEP>("com.intellij.webSymbols.filter")
 
     fun get(name: String): WebSymbolsFilter =
       EP_NAME.getByKey(name, WebSymbol::class.java) { it.name }?.instance

@@ -2,11 +2,11 @@
 package com.intellij.webSymbols.webTypes
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.intellij.webSymbols.webTypes.json.WebTypes
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.util.io.HttpRequests
+import com.intellij.webSymbols.webTypes.json.WebTypes
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream

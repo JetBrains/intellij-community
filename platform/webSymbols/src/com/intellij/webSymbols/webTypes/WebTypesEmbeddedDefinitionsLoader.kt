@@ -2,9 +2,6 @@
 package com.intellij.webSymbols.webTypes
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.webSymbols.WebSymbolsContainer
-import com.intellij.webSymbols.webTypes.json.WebTypes
-import com.intellij.webSymbols.webTypes.json.getSymbolTypeResolver
 import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -15,6 +12,10 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.text.SemVer
+import com.intellij.webSymbols.WebSymbolsContainer
+import com.intellij.webSymbols.webTypes.impl.WebTypesDefinitionsEP
+import com.intellij.webSymbols.webTypes.json.WebTypes
+import com.intellij.webSymbols.webTypes.json.getSymbolTypeResolver
 
 @Service
 class WebTypesEmbeddedDefinitionsLoader(val project: Project) : Disposable {
@@ -82,7 +83,7 @@ class WebTypesEmbeddedDefinitionsLoader(val project: Project) : Disposable {
             registry.get(it.key, it.value)?.let { (pluginDescriptor, webTypes) ->
               addWebTypes(webTypes, WebTypesJsonOriginImpl(
                 webTypes,
-                typeResolver = webTypes.getSymbolTypeResolver(null, emptyList()),
+                typeResolver = WebTypesSymbolTypeResolver.get(webTypes),
                 iconLoader = WebTypesEmbeddedIconLoader(pluginDescriptor)::loadIcon,
                 version = null
               ))
