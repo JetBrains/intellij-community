@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ImaginaryCaret extends UserDataHolderBase implements Caret {
   private final ImaginaryCaretModel myCaretModel;
-  private int myStart, myEnd;
+  private int myStart, myPos, myEnd;
 
   public ImaginaryCaret(ImaginaryCaretModel caretModel) {
     myCaretModel = caretModel;
@@ -44,17 +44,17 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public int getOffset() {
-    return myStart;
+    return myPos;
   }
 
   @Override
   public void moveToOffset(int offset) {
-    myStart = myEnd = offset;
+    myStart = myPos = myEnd = offset;
   }
 
   @Override
   public void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
-    myStart = myEnd = offset;
+    myStart = myPos = myEnd = offset;
   }
 
   private RuntimeException notImplemented() {
@@ -71,7 +71,7 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
     if (lineShift == 0) {
       myEnd += columnShift;
       if (!withSelection) {
-        myStart = myEnd;
+        myStart = myPos = myEnd;
       }
       return;
     }
@@ -153,6 +153,12 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
       myStart = startOffset;
       myEnd = endOffset;
     }
+    if (myPos < myStart) {
+      myPos = myStart;
+    }
+    else if (myPos > myEnd) {
+      myPos = myEnd;
+    }
   }
 
   @Override
@@ -181,7 +187,7 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void removeSelection() {
-    myStart = myEnd;
+    myStart = myPos = myEnd;
   }
 
   @Override
