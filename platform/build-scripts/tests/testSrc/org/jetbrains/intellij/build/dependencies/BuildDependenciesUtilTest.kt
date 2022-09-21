@@ -1,20 +1,16 @@
 package org.jetbrains.intellij.build.dependencies
 
-import groovy.transform.CompileStatic
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
 
-import static org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.trim
-
-@CompileStatic
 class BuildDependenciesUtilTest {
   @Rule
-  public ExpectedException thrown = ExpectedException.none()
+  @JvmField val thrown = ExpectedException.none()
 
   @Test
-  void testEntryFile() {
+  fun testEntryFile() {
     Assert.assertEquals(
       "xxx",
       BuildDependenciesUtil.normalizeEntryName("///////xxx\\")
@@ -26,24 +22,24 @@ class BuildDependenciesUtilTest {
   }
 
   @Test
-  void testTrim() {
-    char trimChar = '/'
-    Assert.assertEquals("", trim("/", trimChar))
-    Assert.assertEquals("", trim("//", trimChar))
-    Assert.assertEquals("", trim("", trimChar))
-    Assert.assertEquals("a", trim("/a/", trimChar))
-    Assert.assertEquals("xx/yy", trim("/xx/yy/", trimChar))
-    Assert.assertEquals("xxx", trim("////xxx//", trimChar))
+  fun testTrim() {
+    val trimChar = '/'
+    Assert.assertEquals("", BuildDependenciesUtil.trim("/", trimChar))
+    Assert.assertEquals("", BuildDependenciesUtil.trim("//", trimChar))
+    Assert.assertEquals("", BuildDependenciesUtil.trim("", trimChar))
+    Assert.assertEquals("a", BuildDependenciesUtil.trim("/a/", trimChar))
+    Assert.assertEquals("xx/yy", BuildDependenciesUtil.trim("/xx/yy/", trimChar))
+    Assert.assertEquals("xxx", BuildDependenciesUtil.trim("////xxx//", trimChar))
   }
 
   @Test
-  void testEntryFileInvalid() {
+  fun testEntryFileInvalid() {
     thrown.expectMessage("Invalid entry name: ../xxx")
     BuildDependenciesUtil.normalizeEntryName("/../xxx")
   }
 
   @Test
-  void testEntryFileInvalid2() {
+  fun testEntryFileInvalid2() {
     thrown.expectMessage("Normalized entry name should not contain '//': a//xxx")
     BuildDependenciesUtil.normalizeEntryName("a/\\xxx")
   }
