@@ -231,7 +231,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
     }
 
     NotebookInjectedCodeUtility notebookUtility = NotebookInjectedCodeUtility.INSTANCE;
-    HighlightInfoHolder holder = notebookUtility.tryGetPreviousPassHolderFromInjected(injectedPsi);
+    HighlightInfoHolder holder = notebookUtility.tryGetPreviousPassHolderFromInjected(injectedPsi, injectedLanguageManager);
     boolean isUsingExistingPassData = holder != null;
     if (!isUsingExistingPassData) {
       holder = createInfoHolder(injectedPsi);
@@ -280,7 +280,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
     }
 
     if (notebookUtility.isSuitableKtNotebookFragment(injectedPsi)) {
-      notebookUtility.ensureStateAfterHighlightingAnalysis(injectedPsi, holder);
+      notebookUtility.ensureStateAfterHighlightingAnalysis(injectedPsi, holder, injectedLanguageManager);
     }
 
     return true;

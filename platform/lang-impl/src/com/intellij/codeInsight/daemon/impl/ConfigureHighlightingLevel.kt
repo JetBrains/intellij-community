@@ -99,23 +99,27 @@ internal class ConfigureHighlightingLevelAction : DumbAwareAction() {
 }
 
 object NotebookInjectedCodeUtility {
+  val ANALYZER_PASS_INJECTION_IGNORED_HOST_KEY: Key<Boolean> = Key.create("injection.host.ignored.mark")
   val ANALYZER_PASS_INJECTED_INFO_HOLDER_KEY: Key<HighlightInfoHolder> = Key.create("injected.element.pass.info.holder")
   private const val notebookInjectedFileExtension: String = "jupyter-kts"
 
   fun isSuitableKtNotebookFragment(psiFile: PsiFile?): Boolean =
     psiFile?.name?.endsWith(notebookInjectedFileExtension) == true
 
-  fun tryGetPreviousPassHolderFromInjected(psiFile: PsiFile?): HighlightInfoHolder? {
+  fun tryGetPreviousPassHolderFromInjected(psiFile: PsiFile?, injectedLanguageManager: InjectedLanguageManager): HighlightInfoHolder? {
     psiFile ?: return null
     if (isSuitableKtNotebookFragment(psiFile)) {
-      return psiFile.getUserData(ANALYZER_PASS_INJECTED_INFO_HOLDER_KEY)
+      return if (injectedLanguageManager.getInjectionHost(psiFile)?.getCopyableUserData(ANALYZER_PASS_INJECTION_IGNORED_HOST_KEY) != null) null
+      else psiFile.getUserData(ANALYZER_PASS_INJECTED_INFO_HOLDER_KEY)
     }
     return null
   }
 
-  fun ensureStateAfterHighlightingAnalysis(psiFile: PsiFile?, holder: HighlightInfoHolder?) {
-    if (!isSuitableKtNotebookFragment(psiFile) || psiFile?.name?.endsWith("1.${notebookInjectedFileExtension}") == true) return
+  fun ensureStateAfterHighlightingAnalysis(psiFile: PsiFile?, holder: HighlightInfoHolder?, injectedLanguageManager: InjectedLanguageManager) {
+    if (!isSuitableKtNotebookFragment(psiFile)
+        || psiFile == null
+        || injectedLanguageManager.getInjectionHost(psiFile)?.getCopyableUserData(ANALYZER_PASS_INJECTION_IGNORED_HOST_KEY) != null) return
 
-    psiFile?.putUserData(ANALYZER_PASS_INJECTED_INFO_HOLDER_KEY, holder)
+    psiFile.putUserData(ANALYZER_PASS_INJECTED_INFO_HOLDER_KEY, holder)
   }
 }
