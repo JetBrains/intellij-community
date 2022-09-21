@@ -225,6 +225,7 @@ internal class MutableEntityStorageImpl(
   override fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     try {
       lockWrite()
+      if (e is ModifiableWorkspaceEntityBase<*> && e.diff !== this) error("Trying to modify entity from a different builder")
       val entityId = (e as WorkspaceEntityBase).id
 
       val originalEntityData = this.getOriginalEntityData(entityId) as WorkspaceEntityData<T>
@@ -307,6 +308,7 @@ internal class MutableEntityStorageImpl(
   override fun removeEntity(e: WorkspaceEntity): Boolean {
     try {
       lockWrite()
+      if (e is ModifiableWorkspaceEntityBase<*> && e.diff !== this) error("Trying to remove entity from a different builder")
 
       LOG.debug { "Removing ${e.javaClass}..." }
       e as WorkspaceEntityBase

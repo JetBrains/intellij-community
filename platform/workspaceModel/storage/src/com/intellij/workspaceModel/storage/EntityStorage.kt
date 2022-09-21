@@ -283,3 +283,14 @@ sealed class EntityChange<T : WorkspaceEntity> {
 open class NotGeneratedRuntimeException(message: String) : RuntimeException(message)
 class NotGeneratedMethodRuntimeException(val methodName: String)
   : NotGeneratedRuntimeException("Method `$methodName` uses default implementation. Please regenerate entities")
+
+
+// Internal tools, not sure if we can open them
+
+
+/**
+ * Return same entity, but in different entity storage. Fail if no entity
+ */
+internal fun <T: WorkspaceEntity> T.from(storage: EntityStorage): T {
+  return this.createReference<T>().resolve(storage)!!
+}

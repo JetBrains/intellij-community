@@ -140,7 +140,8 @@ class ReplaceBySourceTest {
   fun `entity modification`() {
     val entity = builder add NamedEntity("hello2", MySource)
     replacement = createBuilderFrom(builder)
-    val modified = replacement.modifyEntity(entity) {
+    val replacementEntity = entity.createReference<NamedEntity>().resolve(replacement)!!
+    val modified = replacement.modifyEntity(replacementEntity) {
       myName = "Hello Alex"
     }
 
@@ -171,7 +172,7 @@ class ReplaceBySourceTest {
   fun `removing entity in builder`() {
     val entity = builder add NamedEntity("myEntity", MySource)
     replacement = createBuilderFrom(builder)
-    replacement.removeEntity(entity)
+    replacement.removeEntity(entity.from(replacement))
     rbsAllSources()
 
     builder.assertConsistency()
@@ -187,7 +188,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(parent) {
+    replacement.modifyEntity(parent.from(replacement)) {
       myName = "newProperty"
     }
 
@@ -207,7 +208,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(child) {
+    replacement.modifyEntity(child.from(replacement)) {
       childProperty = "newProperty"
     }
 
@@ -226,7 +227,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.removeEntity(parent)
+    replacement.removeEntity(parent.from(replacement))
 
     rbsAllSources()
 
@@ -247,7 +248,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(child) {
+    replacement.modifyEntity(child.from(replacement)) {
       this.parentEntity = parent2
     }
 
@@ -277,7 +278,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(child) {
+    replacement.modifyEntity(child.from(replacement)) {
       this.parentEntity = parent
     }
 
@@ -296,7 +297,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(child) {
+    replacement.modifyEntity(child.from(replacement)) {
       this.parentEntity = parent2
     }
 
@@ -316,7 +317,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.removeEntity(child)
+    replacement.removeEntity(child.from(replacement))
 
     rbsAllSources()
 
@@ -366,7 +367,7 @@ class ReplaceBySourceTest {
       this.parentEntity = parentEntity
     }
     replacement = createBuilderFrom(builder)
-    replacement.removeEntity(parentEntity)
+    replacement.removeEntity(parentEntity.from(replacement))
 
     builder.replaceBySource({ it is AnotherSource }, replacement)
 
@@ -403,7 +404,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.removeEntity(child)
+    replacement.removeEntity(child.from(replacement))
 
     builder.replaceBySource({ it is MySource }, replacement)
   }
@@ -416,7 +417,7 @@ class ReplaceBySourceTest {
     builder.assertConsistency()
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(named) {
+    replacement.modifyEntity(named.from(replacement)) {
       this.myName = "NewName"
     }
 
@@ -437,7 +438,7 @@ class ReplaceBySourceTest {
     builder.assertConsistency()
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(linked) {
+    replacement.modifyEntity(linked.from(replacement)) {
       this.links = mutableListOf()
     }
 
@@ -468,7 +469,7 @@ class ReplaceBySourceTest {
   fun `trying to create two similar persistent ids`() {
     val namedEntity = builder.addNamedEntity("MyName", source = AnotherSource)
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(namedEntity) {
+    replacement.modifyEntity(namedEntity.from(replacement)) {
       this.myName = "AnotherName"
     }
 
@@ -489,7 +490,7 @@ class ReplaceBySourceTest {
     replacement = createBuilderFrom(builder)
 
     val anotherParent = replacement add NamedEntity("Another", MySource)
-    replacement.modifyEntity(childEntity) {
+    replacement.modifyEntity(childEntity.from(replacement)) {
       this.parentEntity = anotherParent
     }
 

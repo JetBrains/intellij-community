@@ -54,7 +54,7 @@ class EntityWithCollectionTest {
 
     runWriteActionAndWait {
       model.updateProjectModel {
-        it.modifyEntity(collectionEntity) {
+        it.modifyEntity(collectionEntity.createReference<CollectionFieldEntity>().resolve(it)!!) {
           names.add(baz)
         }
       }
@@ -68,7 +68,7 @@ class EntityWithCollectionTest {
 
     runWriteActionAndWait {
       model.updateProjectModel {
-        it.modifyEntity(collectionEntity) {
+        it.modifyEntity(collectionEntity.createReference<CollectionFieldEntity>().resolve(it)!!) {
           names = mutableListOf(baz)
         }
       }
