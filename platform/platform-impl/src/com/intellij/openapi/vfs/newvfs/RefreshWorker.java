@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -555,10 +554,9 @@ final class RefreshWorker {
         if ((++checkCanceledCount & 0xf) == 0) {
           checkCanceled.run();
         }
-        String name = file.getFileName().toString();
-        FileAttributes attributes = FileSystemUtil.getAttributes(file.toString());
+        FileAttributes attributes = FileAttributes.fromNio(file, attrs);
         String symLinkTarget = attrs.isSymbolicLink() ? FileUtil.toSystemIndependentName(file.toRealPath().toString()) : null;
-        ChildInfo info = new ChildInfoImpl(name, attributes, null, symLinkTarget);
+        ChildInfo info = new ChildInfoImpl(file.getFileName().toString(), attributes, null, symLinkTarget);
         stack.peek().add(info);
         return FileVisitResult.CONTINUE;
       }
