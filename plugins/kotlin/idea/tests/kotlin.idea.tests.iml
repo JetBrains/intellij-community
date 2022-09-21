@@ -115,7 +115,6 @@
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.resources" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.line-markers" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k1" scope="TEST" />

@@ -30,7 +30,6 @@
     <orderEntry type="module" module-name="kotlin.base.facet" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.klib" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.highlighting" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.line-markers" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.external-build-system" scope="RUNTIME" />
@@ -144,5 +143,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" scope="RUNTIME" />
   </component>
 </module>
