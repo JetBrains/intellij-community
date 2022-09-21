@@ -160,12 +160,12 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
 
     val menuPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
-      add(myMenuBar, gb.next().insetLeft(JBUI.scale(20)).fillCellVertically().weighty(1.0))
+      add(myMenuBar, gb.next().insetLeft(JBUI.scale(16)).fillCellVertically().weighty(1.0))
       add(Box.createHorizontalGlue(), gb.next().weightx(1.0).fillCell())
     }
     val toolbarPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
-      add(mainMenuButton.button, gb.next().insetLeft(JBUI.scale(20)))
+      add(mainMenuButton.button, gb.next().insetLeft(JBUI.scale(16)))
       add(myToolbarPlaceholder, gb.next().weightx(1.0).fillCell())
     }
 
