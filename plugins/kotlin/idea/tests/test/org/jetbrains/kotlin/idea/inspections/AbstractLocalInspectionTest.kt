@@ -22,7 +22,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
 import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.executeCommand
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import java.io.File
@@ -226,8 +227,12 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             localFixAction != null
         )
 
-        project.executeWriteCommand(localFixAction!!.text, null) {
-            localFixAction.invoke(project, editor, file)
+        project.executeCommand(localFixAction!!.text, null) {
+            if (localFixAction.startInWriteAction()) {
+                runWriteAction { localFixAction.invoke(project, editor, file) }
+            } else {
+                localFixAction.invoke(project, editor, file)
+            }
         }
         return true
     }
