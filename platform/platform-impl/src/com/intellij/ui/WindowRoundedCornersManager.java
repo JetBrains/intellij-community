@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.ui.popup.PopupCornerType;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
@@ -18,13 +19,13 @@ import java.awt.*;
  */
 public final class WindowRoundedCornersManager {
   public static boolean isAvailable() {
-    if (!ExperimentalUI.isNewUI() || !Registry.is("ide.popup.rounded.corners")) {
-      return false;
-    }
     if (!JBR.isRoundedCornersManagerSupported()) {
       return false;
     }
-    if (SystemInfo.isWindows) {
+    if (!ExperimentalUI.isNewUI() || !Registry.is("ide.popup.rounded.corners", true)) {
+      return false;
+    }
+    if (SystemInfoRt.isWindows) {
       Long buildNumber = SystemInfo.getWinBuildNumber();
       return buildNumber != null && buildNumber.longValue() >= 22000; // Windows 11 only
     }
