@@ -194,7 +194,11 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
     launch(CoroutineName("coroutine debug probes init")) {
-      enableCoroutineDump()
+      try {
+        enableCoroutineDump()
+      }
+      catch (ignore: Exception) {
+      }
     }
   }
 
