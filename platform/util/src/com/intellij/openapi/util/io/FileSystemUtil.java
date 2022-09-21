@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
@@ -371,44 +370,8 @@ public final class FileSystemUtil {
     public FileAttributes getAttributes(@NotNull String pathStr) {
       try {
         Path path = Paths.get(pathStr);
-
-        Class<? extends BasicFileAttributes> schema = SystemInfo.isWindows ? DosFileAttributes.class : PosixFileAttributes.class;
-        BasicFileAttributes attributes = Files.readAttributes(path, schema, myNoFollowLinkOptions);
-        boolean isSymbolicLink = attributes != null &&
-                                 (attributes.isSymbolicLink() ||
-                                  SystemInfo.isWindows && attributes.isOther() && attributes.isDirectory() && path.getParent() != null);
-        if (isSymbolicLink) {
-          try {
-            attributes = Files.readAttributes(path, schema);
-          }
-          catch (FileSystemException e) {
-            LOG.debug(pathStr, e);
-            return FileAttributes.BROKEN_SYMLINK;
-          }
-        }
-        if (attributes == null) {
-          return null;
-        }
-
-        boolean isDirectory = attributes.isDirectory();
-        boolean isOther = attributes.isOther();
-        long size = attributes.size();
-        long lastModified = attributes.lastModifiedTime().toMillis();
-        boolean isHidden;
-        boolean isWritable;
-        if (SystemInfo.isWindows) {
-          isHidden = path.getParent() != null && ((DosFileAttributes)attributes).isHidden();
-          isWritable = isDirectory || !((DosFileAttributes)attributes).isReadOnly();
-        }
-        else {
-          isHidden = false;
-          try {
-            isWritable = Files.isWritable(path);
-          } catch (SecurityException e){
-            isWritable = false;
-          }
-        }
-        return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable);
+        BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class, myNoFollowLinkOptions);
+        return FileAttributes.fromNio(path, attributes);
       }
       catch (IOException | InvalidPathException e) {
         LOG.debug(pathStr, e);

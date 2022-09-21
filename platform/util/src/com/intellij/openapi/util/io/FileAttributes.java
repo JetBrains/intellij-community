@@ -1,12 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
+import com.intellij.openapi.util.SystemInfo;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.DosFileAttributes;
 
 import static com.intellij.util.BitUtil.isSet;
 
@@ -201,5 +207,33 @@ public final class FileAttributes {
     sb.append(" case sensitive: ").append(areChildrenCaseSensitive());
     sb.append(']');
     return sb.toString();
+  }
+
+  public static @NotNull FileAttributes fromNio(@NotNull Path path, @NotNull BasicFileAttributes attrs) {
+    boolean isSymbolicLink = attrs.isSymbolicLink() || SystemInfo.isWindows && attrs.isOther() && attrs.isDirectory() && path.getParent() != null;
+
+    if (isSymbolicLink) {
+      try {
+        attrs = Files.readAttributes(path, BasicFileAttributes.class);
+      }
+      catch (IOException e) {
+        return BROKEN_SYMLINK;
+      }
+    }
+
+    boolean isHidden = false;
+    boolean isWritable = false;
+    if (SystemInfo.isWindows) {
+      isHidden = path.getParent() != null && ((DosFileAttributes)attrs).isHidden();
+      isWritable = attrs.isDirectory() || !((DosFileAttributes)attrs).isReadOnly();
+    }
+    else {
+      try { isWritable = Files.isWritable(path); }
+      catch (SecurityException ignored) { }
+    }
+
+    long lastModified = attrs.lastModifiedTime().toMillis();
+
+    return new FileAttributes(attrs.isDirectory(), attrs.isOther(), isSymbolicLink, isHidden, attrs.size(), lastModified, isWritable);
   }
 }
