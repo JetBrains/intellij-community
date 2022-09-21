@@ -47,7 +47,7 @@ internal class SettingsSyncPluginManager : Disposable {
         }
       }
 
-      logChangedState(oldPlugins, newPlugins)
+      logChangedState("Updated component state by the state of IDE.", oldPlugins, newPlugins)
       state = SettingsSyncPluginsState(newPlugins)
       return state
     }
@@ -58,25 +58,34 @@ internal class SettingsSyncPluginManager : Disposable {
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
   }
 
-  private fun logChangedState(oldPlugins: Map<PluginId, PluginData>, newPlugins: Map<PluginId, PluginData>) {
+  private fun logChangedState(message: String, oldPlugins: Map<PluginId, PluginData>, newPlugins: Map<PluginId, PluginData>) {
     val pluginsWithEnabledStateChanged = newPlugins.filter { (newKey, newData) ->
       val oldData = oldPlugins[newKey]
       oldData != null && oldData.enabled != newData.enabled
     }
+    val pluginsWithNoChanges = newPlugins.filter {
+      (newKey, newData) -> oldPlugins[newKey] == newData
+    }
     val pluginsWithOtherChanges = newPlugins.filter { (newKey, newData) ->
       val oldData = oldPlugins[newKey]
-      oldData != null && oldData.enabled == newData.enabled
+      oldData != null && oldData != newData && oldData.enabled == newData.enabled
     }
     val enabledStateChanges = pluginsWithEnabledStateChanged.map { (id, _) ->
       "$id: ${enabledOrDisabled(oldPlugins[id]?.enabled)} -> ${enabledOrDisabled(newPlugins[id]?.enabled)}"
     }
-    LOG.info("""Updated component state by the state of IDE. 
-                Added: ${newPlugins.keys - oldPlugins.keys}
-                Removed: ${oldPlugins.keys - newPlugins.keys}
-                Changed enabled state: $enabledStateChanges
-                ${if (pluginsWithOtherChanges.isNotEmpty()) "Other changes: $pluginsWithOtherChanges" else ""}""".trimIndent())
+
+    val addedPlugins = newPlugins.keys - oldPlugins.keys
+    val removedPlugins = oldPlugins.keys - newPlugins.keys
+    LOG.info("$message\n" +
+             getLineIfNotEmpty("Added", addedPlugins) +
+             getLineIfNotEmpty("Removed", removedPlugins) +
+             getLineIfNotEmpty("Changed enabled state", enabledStateChanges) +
+             getLineIfNotEmpty("No changes", pluginsWithNoChanges) +
+             getLineIfNotEmpty("Other changes", pluginsWithOtherChanges))
   }
 
+  private fun getLineIfNotEmpty(prefix: String, plugins: Collection<*>) = if (plugins.isNotEmpty()) "$prefix: $plugins\n" else ""
+  private fun getLineIfNotEmpty(prefix: String, plugins: Map<*, *>) = if (plugins.isNotEmpty()) "$prefix: $plugins\n" else ""
   private fun enabledOrDisabled(value: Boolean?) = if (value == null) "null" else if (value) "enabled" else "disabled"
 
   private fun getPluginData(plugin: IdeaPluginDescriptor, explicitEnabled: Boolean? = null): PluginData {
@@ -105,7 +114,7 @@ internal class SettingsSyncPluginManager : Disposable {
       val oldPlugins = state.plugins
       val newPlugins = newState.plugins
 
-      logChangedState(oldPlugins, newPlugins)
+      logChangedState("Pushed new changes to the IDE", oldPlugins, newPlugins)
       state = SettingsSyncPluginsState(newPlugins)
 
       val removedPluginData = oldPlugins.keys - newPlugins.keys
