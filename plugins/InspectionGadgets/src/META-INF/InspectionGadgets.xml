@@ -2651,6 +2651,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantCollectionOperation" bundle="messages.InspectionGadgetsBundle"
                      key="inspection.redundant.collection.operation.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantCollectionOperationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantLengthCheck" bundle="messages.InspectionGadgetsBundle"
+                     key="inspection.redundant.length.check.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantLengthCheckInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantEscapeInRegexReplacement" bundle="messages.InspectionGadgetsBundle"
                      key="redundant.escape.in.regex.replacement.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.style.RedundantEscapeInRegexReplacementInspection"/>
