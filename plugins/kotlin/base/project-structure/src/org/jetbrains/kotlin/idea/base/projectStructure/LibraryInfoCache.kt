@@ -295,6 +295,8 @@ class LibraryInfoCache(project: Project) : Disposable {
         return libraryInfoCache[key]
     }
 
+    fun deduplicatedLibrary(key: Library): Library = get(key).first().library
+
     override fun dispose() = Unit
 
     companion object {

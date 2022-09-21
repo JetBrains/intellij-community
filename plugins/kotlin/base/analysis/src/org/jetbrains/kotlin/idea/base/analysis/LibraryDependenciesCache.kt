@@ -279,13 +279,16 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         init {
             val map: MultiMap<Library, Module> = MultiMap.createSet()
+            val libraryCache = LibraryInfoCache.getInstance(project)
+
             for (module in runReadAction { ModuleManager.getInstance(project).modules }) {
                 checkCanceled()
                 runReadAction {
                     for (entry in ModuleRootManager.getInstance(module).orderEntries) {
                         if (entry !is LibraryOrderEntry) continue
                         val library = entry.library ?: continue
-                        map.putValue(library, module)
+                        val keyLibrary = libraryCache.deduplicatedLibrary(library)
+                        map.putValue(keyLibrary, module)
                     }
                 }
             }

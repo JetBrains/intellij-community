@@ -79,6 +79,29 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         assertEquals(/* expected = */ 1, /* actual = */ resultSet.size)
     }
 
+    fun testDependenciesFromDuplicatedLibraries() {
+        val (a, b, c) = modules()
+
+        val daemonLibrary1 = projectLibrary("daemon-1", TestKotlinArtifacts.kotlinDaemon.jarRoot)
+        a.addDependency(daemonLibrary1)
+
+        val stdlib = stdlibJvm()
+        val daemonLibrary2 = projectLibrary("daemon-2", TestKotlinArtifacts.kotlinDaemon.jarRoot)
+        b.addDependency(daemonLibrary2)
+        b.addDependency(stdlib)
+
+        val fakeLib = projectLibraryWithFakeRoot("fake")
+        c.addDependency(fakeLib)
+
+        val libInfoCache = LibraryInfoCache.getInstance(project)
+        val daemonLibraryInfo = libInfoCache[daemonLibrary1].first()
+        val stdlibInfo = libInfoCache[stdlib].first()
+
+        val dependenciesCache = LibraryDependenciesCache.getInstance(project)
+        val dependencies = dependenciesCache.getLibraryDependencies(daemonLibraryInfo)
+        assertEquals(listOf(daemonLibraryInfo, stdlibInfo), dependencies.libraries)
+    }
+
     fun testCacheDeduplication() {
         val stdlib = stdlibJvm()
         val stdlibCopy = projectLibrary("kotlin-stdlib-copy", TestKotlinArtifacts.kotlinStdlib.jarRoot)
