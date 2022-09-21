@@ -3,30 +3,23 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
-import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.formatting.service.FormattingService;
 import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.lang.ImportOptimizer;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.HintText;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.FutureTask;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.codeInsight.actions.OptimizeImportsProcessor.NotificationInfo.NOTHING_CHANGED_NOTIFICATION;
 import static com.intellij.codeInsight.actions.OptimizeImportsProcessor.NotificationInfo.SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION;
@@ -89,8 +83,8 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       return emptyTask();
     }
 
-    List<HintAction> hints = ApplicationManager.getApplication().isDispatchThread() ?
-                             Collections.emptyList() : runGHPAndComputeImportHints(file);
+    List<BooleanSupplier> hints = ApplicationManager.getApplication().isDispatchThread()
+                                  ? Collections.emptyList() : collectAutoImports(file);
 
     return new FutureTask<>(() -> {
       ApplicationManager.getApplication().assertIsDispatchThread();
@@ -101,7 +95,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
           myOptimizerNotifications.add(getNotificationInfo(runnable));
         }
         putNotificationInfoIntoCollector();
-        ShowAutoImportPass.fixAllImportsSilently(file, hints);
+        fixAllImportsSilently(file, hints);
       }
       finally {
         CoreCodeStyleUtil.setSequentialProcessingAllowed(true);
@@ -110,54 +104,46 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   }
 
   /**
-   * Run syntax highlighting and extract hint actions from resulting quick fixes. e.g. import suggestions.
-   * Must be run outside EDT.
+   * walk PSI and for each unresolved reference ask {@link ReferenceImporter} how to import it
    */
   @NotNull
-  private static List<HintAction> runGHPAndComputeImportHints(@NotNull PsiFile file) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      // really can't run highlighting from within EDT
-      // also, guard against recursive call optimize imports->add imports->optimize imports (in AddImportAction.doAddImport())
-      throw new IllegalStateException("Must not be run from within EDT");
-    }
-    Project project = file.getProject();
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document == null || InjectedLanguageManager.getInstance(project).isInjectedFragment(file) || !hasUnresolvedReferences(file)) {
-      return Collections.emptyList();
-    }
-
-    HighlightInfo fakeInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(0,0).createUnconditionally();
-    QuickFixActionRegistrarImpl registrar = new QuickFixActionRegistrarImpl(fakeInfo);
-    file.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(@NotNull PsiElement element) {
-        ProgressManager.checkCanceled();
-        if (element instanceof PsiReference && ((PsiReference)element).resolve() == null) {
-          UnresolvedReferenceQuickFixProvider.registerReferenceFixes((PsiReference)element, registrar);
-        }
-        super.visitElement(element);
-      }
-    });
-    return ContainerUtil.filter(ShowAutoImportPass.extractHints(fakeInfo), action -> action.isAvailable(project, null, file));
-  }
-
-  private static boolean hasUnresolvedReferences(@NotNull PsiFile file) {
-    if (file instanceof PsiCompiledElement) return false;
-    Ref<Boolean> result = new Ref<>(false);
+  private static List<BooleanSupplier> collectAutoImports(@NotNull PsiFile file) {
+    if (file instanceof PsiCompiledElement) return List.of();
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (document == null) return List.of();
+    Editor editor = new ImaginaryEditor(file.getProject(), document);
+    List<ReferenceImporter> referenceImporters = ReferenceImporter.EP_NAME.getExtensionList();
+    List<BooleanSupplier> result = new ArrayList<>();
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
         for (PsiReference reference : element.getReferences()) {
           if (reference.resolve() == null) {
-            result.set(true);
-            stopWalking();
-            break;
+            for (ReferenceImporter importer : referenceImporters) {
+              if (importer.isAddUnambiguousImportsOnTheFlyEnabled(file)) {
+                BooleanSupplier action = importer.computeAutoImportAtOffset(editor, file, element.getTextRange().getStartOffset(), true);
+                if (action != null) {
+                  result.add(action);
+                }
+              }
+            }
           }
         }
         super.visitElement(element);
       }
     });
-    return result.get();
+
+    return result;
+  }
+
+  private static void fixAllImportsSilently(@NotNull PsiFile file, @NotNull List<? extends BooleanSupplier> actions) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (actions.isEmpty()) return;
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (document == null) return;
+    for (BooleanSupplier action : actions) {
+      action.getAsBoolean();
+    }
   }
 
   static @NotNull List<Runnable> collectOptimizers(@NotNull PsiFile file) {

@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -27,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SlowOperations;
@@ -166,16 +164,6 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
       }
     }
     return false;
-  }
-
-  public static void fixAllImportsSilently(@NotNull PsiFile file, @NotNull List<? extends HintAction> actions) {
-    if (actions.isEmpty()) return;
-    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-    if (document == null) return;
-    Editor editor = new ImaginaryEditor(file.getProject(), document);
-    for (HintAction action : actions) {
-      action.fixSilently(editor);
-    }
   }
 
   private boolean isImportHintEnabled() {
