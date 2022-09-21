@@ -23,6 +23,10 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doOverrideFileTest()
     }
 
+    open fun testNoCallToAbstractSuper2() {
+        doOverrideFileTest()
+    }
+
    open fun testAndroidxNotNull() {
         doOverrideDirectoryTest("foo")
     }

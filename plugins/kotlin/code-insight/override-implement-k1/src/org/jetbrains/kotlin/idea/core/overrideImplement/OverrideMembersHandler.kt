@@ -8,8 +8,10 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
-import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
-import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+
+private val METHODS_OF_ANY = listOf("equals", "hashCode", "toString").map { FqName("kotlin.Any.$it") }.toSet()
 
 class OverrideMembersHandler(private val preferConstructorParameters: Boolean = false) : GenerateMembersHandler(false) {
     override fun collectMembersToGenerate(descriptor: ClassDescriptor, project: Project): Collection<OverrideMemberChooserObject> {
@@ -37,10 +39,19 @@ class OverrideMembersHandler(private val preferConstructorParameters: Boolean = 
                     }
                 }
 
-                val realSupers = byOriginalRealSupers.values.map(Data::realSuper)
-                val closestRealSupers = realSupers.leaveClosestTo(descriptor)
+                var realSupers = byOriginalRealSupers.values.map(Data::realSuper)
+                if (realSupers.size > 1) {
+                    realSupers = realSupers.filter { it.fqNameSafe !in METHODS_OF_ANY }
+                }
 
-                for (realSuper in closestRealSupers) {
+                val nonAbstractRealSupers = realSupers.filter { it.modality != Modality.ABSTRACT }
+                val realSupersToUse = if (nonAbstractRealSupers.isNotEmpty()) {
+                    nonAbstractRealSupers
+                } else {
+                    listOf(realSupers.firstOrNull() ?: continue)
+                }
+
+                for (realSuper in realSupersToUse) {
                     val immediateSupers = byOriginalRealSupers[realSuper.original]!!.immediateSupers
                     assert(immediateSupers.isNotEmpty())
 
@@ -56,7 +67,7 @@ class OverrideMembersHandler(private val preferConstructorParameters: Boolean = 
                             BodyType.NoBody
                         immediateSuperToUse.modality == Modality.ABSTRACT ->
                             BodyType.FromTemplate
-                        closestRealSupers.size == 1 ->
+                        realSupersToUse.size == 1 ->
                             BodyType.Super
                         else ->
                             BodyType.QualifiedSuper
@@ -90,29 +101,3 @@ class OverrideMembersHandler(private val preferConstructorParameters: Boolean = 
 
     override fun getNoMembersFoundHint() = KotlinIdeaCoreBundle.message("override.members.handler.no.members.hint")
 }
-
-private fun List<CallableMemberDescriptor>.leaveClosestTo(descriptor: ClassDescriptor): List<CallableMemberDescriptor> {
-    if (size <= 1) return this
-
-    val candidateClassToMethod = associateBy { it.containingDeclaration }
-    val candidateClasses = candidateClassToMethod.keys
-
-    var closestCandidates: List<CallableMemberDescriptor> = emptyList()
-    var ancestors = setOf(descriptor)
-    while (closestCandidates.isEmpty()) {
-        ancestors = ancestors.theirAncestors().takeIf { it.isNotEmpty() } ?: break
-
-        closestCandidates = candidateClasses
-            .filter { it in ancestors }
-            .mapNotNull { candidateClassToMethod[it] }
-    }
-
-    return closestCandidates.filter { it.modality != Modality.ABSTRACT }.takeIf { it.isNotEmpty() }
-        ?: closestCandidates
-}
-
-fun Set<ClassDescriptor>.theirAncestors(): Set<ClassDescriptor> = asSequence()
-    .flatMap {
-        val superClass = it.getSuperClassNotAny() ?: return@flatMap it.getSuperInterfaces()
-        it.getSuperInterfaces() + superClass
-    }.toSet()
