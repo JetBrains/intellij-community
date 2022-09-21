@@ -2,10 +2,13 @@
 package com.intellij.remoteServer;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
+import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationTypesManager;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
 import com.intellij.remoteServer.configuration.deployment.SingletonDeploymentSourceType;
 import com.intellij.remoteServer.runtime.Deployment;
@@ -23,15 +26,33 @@ import java.util.Comparator;
 import java.util.List;
 
 public abstract class ServerType<C extends ServerConfiguration> {
+
   public static final ExtensionPointName<ServerType<?>> EP_NAME = ExtensionPointName.create("com.intellij.remoteServer.type");
 
-  private final String myId;
+  static {
+    EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
 
-  protected ServerType(String id) {
+      @Override
+      public void extensionAdded(@NotNull ServerType<?> serverType,
+                                 @NotNull PluginDescriptor pluginDescriptor) {
+        DeploymentConfigurationTypesManager.getInstance().registerConfigurationType(serverType);
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull ServerType<?> serverType,
+                                   @NotNull PluginDescriptor pluginDescriptor) {
+        DeploymentConfigurationTypesManager.getInstance().unregisterConfigurationType(serverType);
+      }
+    }, true, DeploymentConfigurationTypesManager.getInstance());
+  }
+
+  private final @NotNull @NonNls String myId;
+
+  protected ServerType(@NotNull @NonNls String id) {
     myId = id;
   }
 
-  public final String getId() {
+  public final @NotNull @NonNls String getId() {
     return myId;
   }
 

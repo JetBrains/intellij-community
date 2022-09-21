@@ -13,8 +13,8 @@ import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
-import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
+import com.intellij.remoteServer.impl.configuration.deployment.DeploymentConfigurationTypesManagerImpl;
 import com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +35,9 @@ public final class CloudRunConfigurationUtil {
     final RunManager runManager = RunManager.getInstance(module.getProject());
     String name = generateRunConfigurationName(account, module);
 
-    ConfigurationFactory configurationFactory = DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(account.getType()).getFactoryForType(deploymentSource.getType());
+    ConfigurationFactory configurationFactory = DeploymentConfigurationTypesManagerImpl.getImplementationInstance()
+      .getConfigurationType(account.getType())
+      .getFactoryForType(deploymentSource.getType());
     final RunnerAndConfigurationSettings runSettings = runManager.createConfiguration(name, configurationFactory);
     @SuppressWarnings("unchecked")
     DeployToServerRunConfiguration<SC, DC> result = (DeployToServerRunConfiguration<SC, DC>)runSettings.getConfiguration();
