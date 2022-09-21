@@ -1,7 +1,6 @@
 package com.intellij.grazie.text
 
-import ai.grazie.nlp.tokenizer.sentence.RuleSentenceTokenizer
-import ai.grazie.nlp.tokenizer.sentence.SRXRules
+import ai.grazie.nlp.tokenizer.sentence.StandardSentenceTokenizer
 import com.intellij.grazie.text.TextContent.TextDomain.COMMENTS
 import com.intellij.grazie.text.TextContent.TextDomain.DOCUMENTATION
 import com.intellij.grazie.utils.Text
@@ -10,6 +9,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiTodoSearchHelper
 
 internal class CommentProblemFilter : ProblemFilter() {
+  private val tokenizer
+    get() = StandardSentenceTokenizer.Default
 
   override fun shouldIgnore(problem: TextProblem): Boolean {
     val text = problem.text
@@ -52,8 +53,4 @@ internal class CommentProblemFilter : ProblemFilter() {
   // the _todo_ word spoils the grammar of what follows
   private fun isTodoComment(file: PsiFile, text: TextContent) =
     PsiTodoSearchHelper.getInstance(file.project).findTodoItems(file).any { text.intersectsRange(it.textRange) }
-
-  companion object {
-    private val tokenizer by lazy { RuleSentenceTokenizer(SRXRules.english) }
-  }
 }
