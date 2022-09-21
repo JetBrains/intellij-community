@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.android-extensions-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:android-extensions-compiler-plugin-for-ide:1.8.0-dev-3032" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:android-extensions-compiler-plugin-for-ide:1.8.20-dev-57" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/1.8.0-dev-3032/android-extensions-compiler-plugin-for-ide-1.8.0-dev-3032.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/1.8.20-dev-57/android-extensions-compiler-plugin-for-ide-1.8.20-dev-57.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/1.8.0-dev-3032/android-extensions-compiler-plugin-for-ide-1.8.0-dev-3032-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/1.8.20-dev-57/android-extensions-compiler-plugin-for-ide-1.8.20-dev-57-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
