@@ -157,12 +157,7 @@ fun KtDeclarationWithBody.singleExpressionBody(): KtExpression? =
     }
 
 fun KtExpression.getCallChain(): List<KtExpression> =
-    generateSequence<Pair<KtExpression?, KtExpression?>>(this to null) { (receiver, _) ->
-        receiver.asSafely<KtDotQualifiedExpression>()?.let { it.receiverExpression to it.selectorExpression } ?: (null to receiver)
-    }
-        .drop(1)
-        .map { (_, selector) -> selector }
-        .takeWhileNotNull()
+    generateSequence(this) { (it as? KtDotQualifiedExpression)?.receiverExpression }
+        .map { (it as? KtDotQualifiedExpression)?.selectorExpression ?: it }
         .toList()
         .reversed()
-

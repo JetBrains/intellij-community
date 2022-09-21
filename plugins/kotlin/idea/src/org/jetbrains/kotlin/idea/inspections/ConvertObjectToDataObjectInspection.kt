@@ -51,10 +51,10 @@ class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
             val fqName = lazy { ktObject.descriptor?.fqNameSafe ?: FqName.ROOT }
             val isSerializable = isSerializable(ktObject)
             val toString = ktObject.findToString()
-            val candidate1 = toString == null && isSerializable
-            val candidate2 = lazy { toString == null && ktObject.isSubclassOfStatelessSealed() }
-            val candidate3 = lazy { toString != null && isCompatibleToString(ktObject, fqName, toString) }
-            if ((candidate1 || candidate2.value || candidate3.value) &&
+            val isSerializableCase = toString == null && isSerializable
+            val isSealedSubClassCase by lazy { toString == null && ktObject.isSubclassOfStatelessSealed() }
+            val isToStringCase by lazy { toString != null && isCompatibleToString(ktObject, fqName, toString) }
+            if ((isSerializableCase || isSealedSubClassCase || isToStringCase) &&
                 isCompatibleHashCode(ktObject) &&
                 isCompatibleEquals(ktObject, fqName) &&
                 isCompatibleReadResolve(ktObject, fqName, isSerializable)
@@ -63,8 +63,8 @@ class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
                     ktObject.getObjectKeyword() ?: return,
                     KotlinBundle.message(
                         when {
-                            candidate1 -> "serializable.object.must.be.marked.with.data"
-                            candidate2.value -> "inspection.message.sealed.object.can.be.converted.to.data.object"
+                            isSerializableCase -> "serializable.object.must.be.marked.with.data"
+                            isSealedSubClassCase -> "inspection.message.sealed.object.can.be.converted.to.data.object"
                             else -> "inspection.message.object.with.manual.tostring.can.be.converted.to.data.object"
                         }
                     ),
@@ -122,8 +122,7 @@ private fun isCompatibleEquals(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<
     val equals = ktObject.findEquals() ?: return true
     val isExpr = equals.singleExpressionBody().asSafely<KtIsExpression>() ?: return false
     val typeReference = isExpr.typeReference ?: return false
-    return typeReference.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)
-        .get(BindingContext.TYPE, typeReference)?.fqName == ktObjectFqn.value
+    return typeReference.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)[BindingContext.TYPE, typeReference]?.fqName == ktObjectFqn.value
 }
 
 private fun isCompatibleHashCode(ktObject: KtObjectDeclaration): Boolean {
@@ -145,15 +144,12 @@ private class ConvertToDataObjectQuickFix(private val isSerializable: Boolean) :
     }
 }
 
-private fun KtClassOrObject.findToString(): KtNamedFunction? = findMemberFunction(FunctionDescriptor::isAnyToString)
-private fun KtClassOrObject.findEquals(): KtNamedFunction? = findMemberFunction(FunctionDescriptor::isAnyEquals)
-private fun KtClassOrObject.findHashCode(): KtNamedFunction? = findMemberFunction(FunctionDescriptor::isAnyHashCode)
-private fun KtClassOrObject.findReadResolve(): KtNamedFunction? =
-    body?.functions?.singleOrNull { function ->
-        function.name == "readResolve" && function.descriptor?.asSafely<FunctionDescriptor>()?.returnType?.isAnyOrNullableAny() == true
-    }
+private fun KtClassOrObject.findToString(): KtNamedFunction? = findMemberFunction("toString", FunctionDescriptor::isAnyToString)
+private fun KtClassOrObject.findEquals(): KtNamedFunction? = findMemberFunction("equals", FunctionDescriptor::isAnyEquals)
+private fun KtClassOrObject.findHashCode(): KtNamedFunction? = findMemberFunction("hashCode", FunctionDescriptor::isAnyHashCode)
+private fun KtClassOrObject.findReadResolve(): KtNamedFunction? = findMemberFunction("readResolve") { it.returnType?.isAnyOrNullableAny() }
 
-private fun KtClassOrObject.findMemberFunction(predicate: (FunctionDescriptor) -> Boolean): KtNamedFunction? =
+private fun KtClassOrObject.findMemberFunction(name: String, predicate: (FunctionDescriptor) -> Boolean?): KtNamedFunction? =
     body?.functions?.singleOrNull { function ->
-        function.descriptor?.asSafely<FunctionDescriptor>()?.let(predicate) == true
+        function.name == name && function.descriptor?.asSafely<FunctionDescriptor>()?.let(predicate) == true
     }
