@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.logging.Formatter;
-import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 public class IdeaLogRecordFormatter extends Formatter {
@@ -41,14 +40,13 @@ public class IdeaLogRecordFormatter extends Formatter {
     if (loggerName != null) {
       loggerName = smartAbbreviate(loggerName);
     }
-    String level = record.getLevel() == Level.WARNING ? "WARN" : record.getLevel().toString();
     long startedMillis = getStartedMillis();
     String relativeToStartedMillis = (startedMillis == 0) ? "-------" : String.valueOf(record.getMillis() - startedMillis);
     String result = String.format(
       myWithDateTime ? FORMAT_WITH_DATE_TIME : FORMAT_WITHOUT_DATE_TIME,
       record.getMillis(),
       relativeToStartedMillis,
-      level,
+      LogLevel.getPrettyLevelName(record.getLevel()),
       loggerName,
       formatMessage(record),
       LINE_SEPARATOR

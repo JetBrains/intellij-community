@@ -1,13 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.mock
 
-import com.intellij.openapi.diagnostic.Logger
-import org.apache.log4j.Level
+import com.intellij.openapi.diagnostic.DefaultLogger
 import org.jetbrains.annotations.TestOnly
 import org.junit.Assert.assertEquals
 
 @TestOnly
-class EditorConfigMockLogger : Logger() {
+class EditorConfigMockLogger : DefaultLogger("") {
   private var lastMessage: String? = null
 
   private var debugCalls = 0
@@ -47,7 +46,4 @@ class EditorConfigMockLogger : Logger() {
     errorCalls += 1
     lastMessage = message
   }
-
-  @Deprecated("Deprecated in Java")
-  override fun setLevel(level: Level) {}
 }
