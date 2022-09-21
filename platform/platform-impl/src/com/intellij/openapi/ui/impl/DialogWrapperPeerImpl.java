@@ -5,7 +5,6 @@ import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.LoadingStateUtilKt;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataValidators;
-import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -25,7 +24,6 @@ import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WindowStateService;
@@ -188,8 +186,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return new HeadlessDialog(wrapper);
     }
     else {
-      ActionCallback focused = new ActionCallback("DialogFocusedCallback");
-      MyDialog dialog = new MyDialog(OwnerOptional.fromComponent(owner).get(), wrapper, project, focused);
+      MyDialog dialog = new MyDialog(OwnerOptional.fromComponent(owner).get(), wrapper, project);
       dialog.setModalityType(ideModalityType.toAwtModality());
       return dialog;
     }
@@ -543,17 +540,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     private Dimension myInitialSize;
     private String myDimensionServiceKey;
     private boolean myOpened = false;
-    private boolean myActivated = false;
 
     private MyDialog.MyWindowListener myWindowListener;
 
     private final WeakReference<Project> myProject;
-    private final ActionCallback myFocusedCallback;
 
     MyDialog(Window owner,
                     DialogWrapper dialogWrapper,
-                    Project project,
-                    @NotNull ActionCallback focused) {
+                    Project project) {
       super(owner);
       myDialogWrapper = new WeakReference<>(dialogWrapper);
       myProject = project != null ? new WeakReference<>(project) : null;
@@ -565,11 +559,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         }
       });
 
-      myFocusedCallback = focused;
-
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
+      addWindowFocusListener(myWindowListener);
       UIUtil.setAutoRequestFocus(this, (owner != null && owner.isActive()) || !isDisableAutoRequestFocus());
     }
 
@@ -793,6 +786,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       if (myWindowListener != null) {
         myWindowListener.saveSize();
         removeWindowListener(myWindowListener);
+        removeWindowFocusListener(myWindowListener);
         myWindowListener = null;
       }
       DialogWrapper wrapper = getDialogWrapper();
@@ -869,71 +863,33 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
 
       @Override
-      public void windowOpened(final WindowEvent e) {
-        SwingUtilities.invokeLater(() -> {
-          myOpened = true;
-          final DialogWrapper activeWrapper = getActiveWrapper();
-          UIUtil.uiTraverser(e.getWindow()).filter(JComponent.class).consumeEach(c -> {
-            GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAAHintForSwingComponent());
-            c.invalidate();
-          });
+      public void windowGainedFocus(final WindowEvent e) {
+        removeWindowFocusListener(this); // run this code only the first time our dialog is focused
 
-          JComponent rootPane = ((JDialog)e.getComponent()).getRootPane();
-          if (rootPane != null) {
-            rootPane.revalidate();
-          }
-          e.getComponent().repaint();
+        myOpened = true;
 
-          if (activeWrapper == null) {
-            myFocusedCallback.setRejected();
-          }
-
-          final DialogWrapper wrapper = getActiveWrapper();
-          if (wrapper == null && !myFocusedCallback.isProcessed()) {
-            myFocusedCallback.setRejected();
-            return;
-          }
-
-          if (myActivated) {
-            return;
-          }
-          myActivated = true;
-          JComponent toFocus = wrapper == null ? null : wrapper.getPreferredFocusedComponent();
-          if (getRootPane() != null && toFocus == null) {
-            toFocus = getRootPane().getDefaultButton();
-          }
-
-          if (getRootPane() != null) {
-            IJSwingUtilities.moveMousePointerOn(getRootPane().getDefaultButton());
-          }
-          setupSelectionOnPreferredComponent(toFocus);
-
-          if (toFocus != null && toFocus.isEnabled()) {
-            if (isShowing() && (ApplicationManager.getApplication() == null || !LoadingStateUtilKt.getAreComponentsInitialized() || ApplicationManager.getApplication().isActive())) {
-              toFocus.requestFocus();
-            } else {
-              toFocus.requestFocusInWindow();
-            }
-            notifyFocused(wrapper);
-          } else {
-            if (isShowing()) {
-              notifyFocused(wrapper);
-            }
-          }
-        });
-      }
-
-      private void notifyFocused(DialogWrapper wrapper) {
-        myFocusedCallback.setDone();
-      }
-
-      private DialogWrapper getActiveWrapper() {
-        DialogWrapper activeWrapper = getDialogWrapper();
-        if (activeWrapper == null || !activeWrapper.isShowing()) {
-          return null;
+        DialogWrapper wrapper = getDialogWrapper();
+        JComponent toFocus = wrapper == null ? null : wrapper.getPreferredFocusedComponent();
+        JRootPane pane = getRootPane();
+        if (pane != null && toFocus == null) {
+          toFocus = pane.getDefaultButton();
         }
 
-        return activeWrapper;
+        if (pane != null) {
+          IJSwingUtilities.moveMousePointerOn(pane.getDefaultButton());
+        }
+
+        setupSelectionOnPreferredComponent(toFocus);
+
+        if (toFocus != null && toFocus.isEnabled()) {
+          if (isShowing() && (ApplicationManager.getApplication() == null ||
+                              !LoadingStateUtilKt.getAreComponentsInitialized() ||
+                              ApplicationManager.getApplication().isActive())) {
+            toFocus.requestFocus();
+          } else {
+            toFocus.requestFocusInWindow();
+          }
+        }
       }
     }
 
