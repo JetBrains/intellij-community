@@ -537,15 +537,8 @@ final class RefreshWorker {
         if (!dir.equals(root)) {
           visitFile(dir, attrs);
         }
-        if (SystemInfo.isWindows) {
-          // Even though Files.walkFileTree does not follow symbolic links, it follows Windows Junctions for some reason.
-          // We shouldn't follow any links (including Windows Junctions) to avoid possible performance issues
-          // caused by symlink configuration leading to exponential amount of visited files.
-          // `BasicFileAttribute` doesn't support Windows Junctions, need to use `FileSystemUtil.getAttributes` for that.
-          FileAttributes attributes = FileSystemUtil.getAttributes(dir.toString());
-          if (attributes != null && attributes.isSymLink()) {
-            return FileVisitResult.SKIP_SUBTREE;
-          }
+        if (SystemInfo.isWindows && attrs.isOther()) {
+          return FileVisitResult.SKIP_SUBTREE;  // bypassing NTFS reparse points
         }
         // on average, this "excluded" array is very small for any particular root, so linear search it is.
         if (excluded.contains(dir)) {
