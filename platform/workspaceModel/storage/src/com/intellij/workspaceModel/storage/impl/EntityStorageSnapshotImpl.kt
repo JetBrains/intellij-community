@@ -163,6 +163,7 @@ internal class MutableEntityStorageImpl(
       entity as ModifiableWorkspaceEntityBase<T>
 
       entity.applyToBuilder(this)
+      entity.changedProperty.clear()
     }
     finally {
       unlockWrite()
