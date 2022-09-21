@@ -2244,7 +2244,7 @@ public class JBTabsImpl extends JComponent
     if (myVisibleInfos.isEmpty()) {
       if (myEmptyText != null) {
         UISettings.setupAntialiasing(g);
-        UIUtil.drawCenteredString((Graphics2D)g, getBounds(), myEmptyText);
+        UIUtil.drawCenteredString((Graphics2D)g, new Rectangle(0, 0, getWidth(), getHeight()), myEmptyText);
       }
       return;
     }
