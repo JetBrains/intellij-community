@@ -370,7 +370,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   }
 
   private static final class FixerUsageCollector extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("java.smart.enter.fixer", 2);
+    private static final EventLogGroup GROUP = new EventLogGroup("java.smart.enter.fixer", 3);
     private static final EventId1<String> USED = GROUP.registerEvent("fixer_used", new StringEventField.ValidatedByAllowedValues(
       "fixer_used",
       ContainerUtil.map(ourFixers, f -> f.getClass().getSimpleName())));
