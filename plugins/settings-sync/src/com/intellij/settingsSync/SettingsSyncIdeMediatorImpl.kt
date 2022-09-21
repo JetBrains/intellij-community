@@ -17,6 +17,7 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.IconLoader
@@ -266,7 +267,12 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     updateStateStorage(changedComponentNames, deleted, true)
 
     for (schemeManager in schemeManagersToReload) {
-      schemeManager.reload()
+      if (schemeManager.fileSpec == "colors") {
+        EditorColorsManager.getInstance().reloadKeepingActiveScheme()
+      }
+      else {
+        schemeManager.reload()
+      }
     }
 
     val notReloadableComponents = componentStore.getNotReloadableComponents(changedComponentNames)
