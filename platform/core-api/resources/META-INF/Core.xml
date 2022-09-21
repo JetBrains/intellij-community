@@ -40,6 +40,7 @@
     <extensionPoint name="filetype.decompiler" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.BinaryFileDecompiler"/>
     </extensionPoint>
+    <extensionPoint name="iconLayerProvider" interface="com.intellij.ide.IconLayerProvider"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.util.messages.MessageBusFactory"

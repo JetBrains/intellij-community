@@ -36,6 +36,7 @@
     </extensionPoint>
     <extensionPoint name="documentWriteAccessGuard" interface="com.intellij.openapi.editor.impl.DocumentWriteAccessGuard" dynamic="true"/>
     <extensionPoint name="diagnostic.freezeProfiler" interface="com.intellij.diagnostic.FreezeProfiler" dynamic="true"/>
+    <extensionPoint name="elementsToHighlightFilter" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.diagnostic.PluginProblemReporter"
