@@ -9,10 +9,10 @@
 
     <highlightingPassFactory implementation="com.intellij.webSymbols.inspections.WebSymbolsPassFactory$Registrar"/>
 
-    <javascript.web.filter
+    <webSymbols.filter
       name="match-prefix"
       implementation="com.intellij.webSymbols.filters.WebSymbolsMatchPrefixFilter"/>
-    <javascript.web.documentationCustomizer
+    <webSymbols.documentationCustomizer
       id="web-types"
       implementation="com.intellij.webSymbols.webTypes.WebTypesDocumentationCustomizer"/>
 

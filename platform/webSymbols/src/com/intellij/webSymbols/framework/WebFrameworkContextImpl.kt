@@ -249,6 +249,9 @@ private fun webContextProximityFromProviders(framework: String,
     }
     dependencies.addAll(result.dependencyItems)
   }
+  if (dependencies.isEmpty()) {
+    dependencies.add(ModificationTracker.NEVER_CHANGED)
+  }
   return CachedValueProvider.Result(proximity, *dependencies.toTypedArray())
 }
 
