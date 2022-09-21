@@ -7,6 +7,7 @@ import com.intellij.ide.FileIconProvider;
 import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.fileTypes.DirectoryFileType;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -153,7 +154,7 @@ public final class IconUtil {
     flags = filterFileIconFlags(file, flags);
 
     Icon providersIcon = getProvidersIcon(file, flags, project);
-    Icon icon = providersIcon != null ? providersIcon : computeBaseFileIcon(file);
+    Icon icon = providersIcon != null ? providersIcon : computeFileTypeIcon(file, false);
 
     boolean dumb = project != null && DumbService.getInstance(project).isDumb();
     for (FileIconPatcher patcher : FileIconPatcher.EP_NAME.getExtensionList()) {
@@ -204,11 +205,16 @@ public final class IconUtil {
    * @see FileType#getIcon()
    */
   public static @NotNull Icon computeBaseFileIcon(@NotNull VirtualFile vFile) {
+    return computeFileTypeIcon(vFile, true);
+  }
+
+  private static @NotNull Icon computeFileTypeIcon(@NotNull VirtualFile vFile, boolean onlyFastChecks) {
     Icon icon = TypePresentationService.getService().getIcon(vFile);
     if (icon != null) {
       return icon;
     }
-    FileType fileType = vFile.getFileType();
+    FileType fileType = onlyFastChecks ? FileTypeRegistry.getInstance().getFileTypeByFileName(vFile.getName())
+                                       : vFile.getFileType();
     if (vFile.isDirectory() && !(fileType instanceof DirectoryFileType)) {
       return IconManager.getInstance().tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
     }
