@@ -1020,12 +1020,13 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   private static void findParameterUsages(final PsiParameter parameter, final List<UsageInfo> usages) {
     final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
     final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
+    if (parameterIndex < 0) return;
     //search for refs to current method only, do not search for refs to overriding methods, they'll be searched separately
     ReferencesSearch.search(method).forEach(reference -> {
       PsiElement element = reference.getElement();
       final JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage());
       if (safeDeleteDelegate != null) {
-        safeDeleteDelegate.createUsageInfoForParameter(reference, usages, parameter, method);
+        safeDeleteDelegate.createUsageInfoForParameter(reference, usages, parameter, parameterIndex, parameter.isVarArgs());
       }
       if (!parameter.isVarArgs() && !JavaPsiConstructorUtil.isSuperConstructorCall(element.getParent())) {
         final PsiParameter paramInCaller = SafeDeleteJavaCallerChooser.isTheOnlyOneParameterUsage(element.getParent(), parameterIndex, method);
