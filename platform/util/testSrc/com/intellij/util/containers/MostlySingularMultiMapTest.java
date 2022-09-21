@@ -15,19 +15,16 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.util.Assertion;
 import junit.framework.TestCase;
 
 import java.util.Arrays;
 import java.util.Collections;
 
+import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Tests for {@link MostlySingularMultiMap}.
  */
 public class MostlySingularMultiMapTest extends TestCase {
-
-  private final Assertion CHECK = new Assertion();
-
   public void testAddRemove() {
     MostlySingularMultiMap<String, String> map = new MostlySingularMultiMap<>();
     assertEquals(Collections.emptyList(), map.get("key"));
@@ -69,7 +66,7 @@ public class MostlySingularMultiMapTest extends TestCase {
     }
     assertEquals(2 + 20, ContainerUtil.newArrayList(map.get("multiKey")).size());
     assertEquals(2 + 20, map.valuesForKey("multiKey"));
-    CHECK.contains(ContainerUtil.newArrayList(map.get("multiKey")), "multi10");
+    assertThat(ContainerUtil.newArrayList(map.get("multiKey"))).contains("multi10");
     assertEquals(Collections.singletonList("single"), map.get("key"));
     assertEquals(1, map.valuesForKey("key"));
     assertEquals(Collections.singletonList("single"), map.get("otherKey"));
