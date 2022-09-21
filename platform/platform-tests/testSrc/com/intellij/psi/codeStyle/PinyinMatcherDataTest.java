@@ -109,15 +109,7 @@ public class PinyinMatcherDataTest {
     }
   }
 
-  private static final class Mapping {
-    private final int codePoint;
-    private final long chars;
-
-    Mapping(int codePoint, long chars) {
-      this.codePoint = codePoint;
-      this.chars = chars;
-    }
-
+  private record Mapping(int codePoint, long chars) {
     String charString() {
       return BitSet.valueOf(new long[]{chars}).stream().mapToObj(bit -> Character.toString((char)(bit + 'a')))
         .collect(Collectors.joining());
