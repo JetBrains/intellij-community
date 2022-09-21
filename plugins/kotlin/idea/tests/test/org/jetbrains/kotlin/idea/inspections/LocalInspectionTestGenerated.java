@@ -3936,6 +3936,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testSerializableTransitive() throws Exception {
             runTest("testData/inspectionsLocal/convertObjectToDataObject/serializableTransitive.kt");
         }
+
+        @TestMetadata("tripleQuotesToString.kt")
+        public void testTripleQuotesToString() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/tripleQuotesToString.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

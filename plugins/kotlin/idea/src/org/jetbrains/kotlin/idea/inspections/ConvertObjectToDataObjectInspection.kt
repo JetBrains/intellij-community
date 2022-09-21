@@ -97,7 +97,7 @@ private fun isCompatibleToString(
     toStringFunction: KtNamedFunction
 ): Boolean {
     val body = toStringFunction.singleExpressionBody() ?: return false
-    if (body.text == "\"${ktObject.name}\"") return true
+    if ((body as? KtStringTemplateExpression)?.entries?.singleOrNull()?.text == ktObject.name) return true
     val context = lazy { body.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL) }
     val callChain = body.tryUnwrapElvisOrDoubleBang(context).getCallChain()
     if (callChain.size !in 2..3) return false
