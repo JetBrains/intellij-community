@@ -18,7 +18,7 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
     get() = delegate.psiContext
   override val origin: WebSymbolsContainer.Origin
     get() = delegate.origin
-  override val namespace: WebSymbolsContainer.Namespace
+  override val namespace: SymbolNamespace
     get() = delegate.namespace
   override val kind: SymbolKind
     get() = delegate.kind
@@ -79,21 +79,21 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     (delegate as? NavigatableSymbol)?.getNavigationTargets(project) ?: emptyList()
 
-  override fun getSymbols(namespace: WebSymbolsContainer.Namespace?,
+  override fun getSymbols(namespace: SymbolNamespace?,
                           kind: SymbolKind,
                           name: String?,
                           params: WebSymbolsNameMatchQueryParams,
                           context: Stack<WebSymbolsContainer>): List<WebSymbolsContainer> =
     delegate.getSymbols(namespace, kind, name, params, context)
 
-  override fun getCodeCompletions(namespace: WebSymbolsContainer.Namespace?,
+  override fun getCodeCompletions(namespace: SymbolNamespace?,
                                   kind: SymbolKind,
                                   name: String?,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   context: Stack<WebSymbolsContainer>): List<WebSymbolCodeCompletionItem> =
     delegate.getCodeCompletions(namespace, kind, name, params, context)
 
-  override fun isExclusiveFor(namespace: WebSymbolsContainer.Namespace?, kind: SymbolKind): Boolean =
+  override fun isExclusiveFor(namespace: SymbolNamespace?, kind: SymbolKind): Boolean =
     delegate.isExclusiveFor(namespace, kind)
 
   protected fun renameTargetFromDelegate(): RenameTarget =

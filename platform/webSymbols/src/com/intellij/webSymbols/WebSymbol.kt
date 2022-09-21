@@ -26,7 +26,7 @@ import javax.swing.Icon
 interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, DocumentationSymbol, NavigatableSymbol {
 
   val origin: WebSymbolsContainer.Origin
-  val namespace: WebSymbolsContainer.Namespace
+  val namespace: SymbolNamespace
   val kind: SymbolKind
 
   @JvmDefault
@@ -162,7 +162,7 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
           else -> it
         }
       }
-      "${namespace.name} $kindName '$matchedName'"
+      "${namespace} $kindName '$matchedName'"
     }
     return SymbolPresentation.create(icon, name, description, description)
   }
@@ -230,7 +230,7 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
   }
 
   data class SymbolType(
-    val namespace: WebSymbolsContainer.Namespace,
+    val namespace: SymbolNamespace,
     val kind: SymbolKind,
   )
 

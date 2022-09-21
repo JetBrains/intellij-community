@@ -10,26 +10,26 @@ interface WebSymbolsScope : ModificationTracker {
 
   fun apply(matches: List<WebSymbol>,
             strict: Boolean,
-            namespace: WebSymbolsContainer.Namespace?,
+            namespace: SymbolNamespace?,
             kind: SymbolKind,
             name: String?): List<WebSymbol>
 
   fun apply(item: WebSymbolCodeCompletionItem,
-            namespace: WebSymbolsContainer.Namespace?,
+            namespace: SymbolNamespace?,
             kind: SymbolKind): WebSymbolCodeCompletionItem?
 
   companion object {
     @JvmStatic
     fun List<WebSymbol>.applyScope(scope: WebSymbolsScope,
                                    strict: Boolean,
-                                   namespace: WebSymbolsContainer.Namespace?,
+                                   namespace: SymbolNamespace?,
                                    kind: SymbolKind,
                                    name: String?): List<WebSymbol> =
       scope.apply(this, strict, namespace, kind, name)
 
     @JvmStatic
     fun WebSymbolCodeCompletionItem.applyScope(scope: WebSymbolsScope,
-                                               namespace: WebSymbolsContainer.Namespace?,
+                                               namespace: SymbolNamespace?,
                                                kind: SymbolKind): WebSymbolCodeCompletionItem? =
       scope.apply(this, namespace, kind)
   }

@@ -17,8 +17,11 @@ import com.intellij.webSymbols.WebSymbol.Companion.KIND_JS_PROPERTIES
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_ARGUMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_DOC_HIDE_PATTERN
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_HIDE_FROM_COMPLETION
-import com.intellij.webSymbols.WebSymbolsContainer.Namespace
+import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_CSS
+import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_HTML
+import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_JS
 import com.intellij.webSymbols.framework.WebFrameworksConfiguration
+import com.intellij.webSymbols.impl.WebSymbolsRegistryImpl.Companion.asSymbolNamespace
 import com.intellij.webSymbols.impl.WebSymbolsRegistryImpl.Companion.parsePath
 import com.intellij.webSymbols.utils.NameCaseUtils
 import com.intellij.webSymbols.webTypes.WebTypesSymbolTypeResolver
@@ -26,20 +29,20 @@ import com.intellij.webSymbols.webTypes.json.NameConversionRulesSingle.NameConve
 import java.util.*
 import java.util.function.Function
 
-private fun namespaceOf(host: GenericContributionsHost): Namespace =
+private fun namespaceOf(host: GenericContributionsHost): SymbolNamespace =
   when (host) {
-    is HtmlContributionsHost -> Namespace.HTML
-    is CssContributionsHost -> Namespace.CSS
-    is JsContributionsHost -> Namespace.JS
+    is HtmlContributionsHost -> NAMESPACE_HTML
+    is CssContributionsHost -> NAMESPACE_CSS
+    is JsContributionsHost -> NAMESPACE_JS
     else -> throw IllegalArgumentException(host.toString())
   }
 
-internal fun Contributions.getAllContributions(framework: FrameworkId?): Sequence<Triple<Namespace, SymbolKind, List<BaseContribution>>> =
+internal fun Contributions.getAllContributions(framework: FrameworkId?): Sequence<Triple<SymbolNamespace, SymbolKind, List<BaseContribution>>> =
   sequenceOf(css, js, html)
     .filter { it != null }
     .flatMap { host -> host.collectDirectContributions(framework).mapWith(namespaceOf(host)) }
 
-internal fun GenericContributionsHost.getAllContributions(framework: FrameworkId?): Sequence<Triple<Namespace, SymbolKind, List<BaseContribution>>> =
+internal fun GenericContributionsHost.getAllContributions(framework: FrameworkId?): Sequence<Triple<SymbolNamespace, SymbolKind, List<BaseContribution>>> =
   if (this is BaseContribution)
     sequenceOf(this, css, js, html)
       .filter { it != null }
@@ -47,10 +50,10 @@ internal fun GenericContributionsHost.getAllContributions(framework: FrameworkId
   else
     this.collectDirectContributions(framework).mapWith(namespaceOf(this))
 
-private fun Sequence<Pair<SymbolKind, List<BaseContribution>>>.mapWith(namespace: Namespace): Sequence<Triple<Namespace, SymbolKind, List<BaseContribution>>> =
+private fun Sequence<Pair<SymbolKind, List<BaseContribution>>>.mapWith(namespace: SymbolNamespace): Sequence<Triple<SymbolNamespace, SymbolKind, List<BaseContribution>>> =
   map {
-    if (namespace == Namespace.HTML && it.first == KIND_JS_EVENTS)
-      Triple(Namespace.JS, KIND_JS_EVENTS, it.second)
+    if (namespace == NAMESPACE_HTML && it.first == KIND_JS_EVENTS)
+      Triple(NAMESPACE_JS, KIND_JS_EVENTS, it.second)
     else Triple(namespace, it.first, it.second)
   }
 
@@ -351,7 +354,7 @@ private fun ReferenceWithProps.createNameConversionRules(framework: FrameworkId?
     return emptyList()
 
   @Suppress("UNCHECKED_CAST")
-  fun createConvertersMap(value: Any?): Map<Triple<FrameworkId?, Namespace, SymbolKind>, List<NameConverter>> =
+  fun createConvertersMap(value: Any?): Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, List<NameConverter>> =
     when (value) {
       is NameConverter -> mapOf(Pair(Triple(framework, lastPath.namespace, lastPath.kind), listOf(value)))
       is List<*> -> mapOf(Pair(Triple(framework, lastPath.namespace, lastPath.kind), value as List<NameConverter>))
@@ -370,19 +373,19 @@ private fun ReferenceWithProps.createNameConversionRules(framework: FrameworkId?
   return listOf(ReferenceNameConversionRules(canonicalNames, matchNames, nameVariants))
 }
 
-private class ReferenceNameConversionRules(private val canonicalNames: Map<Triple<FrameworkId?, Namespace, SymbolKind>, List<NameConverter>>,
-                                           private val matchNames: Map<Triple<FrameworkId?, Namespace, SymbolKind>, List<NameConverter>>,
-                                           private val nameVariants: Map<Triple<FrameworkId?, Namespace, SymbolKind>, List<NameConverter>>) : WebSymbolNameConversionRules {
-  override val canonicalNamesProviders: Map<Triple<FrameworkId?, Namespace, SymbolKind>, Function<String, List<String>>> =
+private class ReferenceNameConversionRules(private val canonicalNames: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, List<NameConverter>>,
+                                           private val matchNames: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, List<NameConverter>>,
+                                           private val nameVariants: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, List<NameConverter>>) : WebSymbolNameConversionRules {
+  override val canonicalNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>> =
     buildMap(canonicalNames)
 
-  override val matchNamesProviders: Map<Triple<FrameworkId?, Namespace, SymbolKind>, Function<String, List<String>>> =
+  override val matchNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>> =
     buildMap(matchNames)
 
-  override val nameVariantsProviders: Map<Triple<FrameworkId?, Namespace, SymbolKind>, Function<String, List<String>>> =
+  override val nameVariantsProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>> =
     buildMap(nameVariants)
 
-  private fun buildMap(converters: Map<Triple<FrameworkId?, Namespace, SymbolKind>, List<NameConverter>>): Map<Triple<FrameworkId?, Namespace, SymbolKind>, Function<String, List<String>>> =
+  private fun buildMap(converters: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, List<NameConverter>>): Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>> =
     converters.takeIf { it.isNotEmpty() }
       ?.mapValues { mergeConverters(it.value) }
     ?: emptyMap()
@@ -423,19 +426,15 @@ internal fun mergeConverters(converters: List<NameConverter>): Function<String, 
 
 internal fun <K, T> mapNameConverters(map: Map<String, T>,
                                       mapper: (T) -> K,
-                                      framework: String?): Sequence<Pair<Triple<FrameworkId?, Namespace, String>, K>> =
+                                      framework: String?): Sequence<Pair<Triple<FrameworkId?, SymbolNamespace, String>, K>> =
   map.entries
     .asSequence()
     .mapNotNull { (key, value) ->
       val path = key.splitToSequence('/')
                    .filter { it.isNotEmpty() }
                    .toList().takeIf { it.size == 2 } ?: return@mapNotNull null
-      val namespace = Namespace.of(path[0]) ?: return@mapNotNull null
+      val namespace = path[0].asSymbolNamespace() ?: return@mapNotNull null
       val symbolKind = path[1]
       val converter = mapper(value) ?: return@mapNotNull null
       Pair(Triple(framework, namespace, symbolKind), converter)
     }
-
-internal fun WebTypes.getSymbolTypeResolver(project: Project? = null,
-                                            context: List<VirtualFile> = emptyList()): WebTypesSymbolTypeResolver =
-  WebTypesSymbolTypeResolver.get(this, project, context)

@@ -17,7 +17,7 @@ interface WebSymbolsContainer : ModificationTracker {
   fun createPointer(): Pointer<out WebSymbolsContainer>
 
   @JvmDefault
-  fun getSymbols(namespace: Namespace?,
+  fun getSymbols(namespace: SymbolNamespace?,
                  kind: SymbolKind,
                  name: String?,
                  params: WebSymbolsNameMatchQueryParams,
@@ -25,7 +25,7 @@ interface WebSymbolsContainer : ModificationTracker {
     emptyList()
 
   @JvmDefault
-  fun getCodeCompletions(namespace: Namespace?,
+  fun getCodeCompletions(namespace: SymbolNamespace?,
                          kind: SymbolKind,
                          name: String?,
                          params: WebSymbolsCodeCompletionQueryParams,
@@ -34,7 +34,7 @@ interface WebSymbolsContainer : ModificationTracker {
       .flatMap { (it as? WebSymbol)?.toCodeCompletionItems(name, params, context) ?: emptyList() }
 
   @JvmDefault
-  fun isExclusiveFor(namespace: Namespace?, kind: SymbolKind): Boolean =
+  fun isExclusiveFor(namespace: SymbolNamespace?, kind: SymbolKind): Boolean =
     false
 
   interface Origin {
@@ -60,28 +60,16 @@ interface WebSymbolsContainer : ModificationTracker {
                         override val version: String? = null,
                         override val defaultIcon: Icon? = null) : Origin
 
-  enum class Namespace {
-    HTML,
-    CSS,
-    JS;
-
-    companion object {
-      @JvmStatic
-      fun of(value: String): Namespace? =
-        when (value.lowercase(Locale.US)) {
-          NAMESPACE_HTML -> HTML
-          NAMESPACE_CSS -> CSS
-          NAMESPACE_JS -> JS
-          else -> null
-        }
-    }
-  }
-
+  @Suppress("MayBeConstant")
   companion object {
-    const val NAMESPACE_HTML = "html"
-    const val NAMESPACE_CSS = "css"
-    const val NAMESPACE_JS = "js"
+    @JvmField
+    val NAMESPACE_HTML = "html"
+    @JvmField
+    val NAMESPACE_CSS = "css"
+    @JvmField
+    val NAMESPACE_JS = "js"
 
+    @JvmField
     val EMPTY_ORIGIN: Origin = OriginData()
   }
 

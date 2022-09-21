@@ -393,7 +393,7 @@ class WebSymbolsRegistryNameQueryTest : WebSymbolsMockRegistryTestBase() {
   fun testNestedPattern1() {
     webSymbolsRegistryManager.addSymbolsContainer(
       object : WebSymbolsContainer {
-        override fun getSymbols(namespace: WebSymbolsContainer.Namespace?,
+        override fun getSymbols(namespace: SymbolNamespace?,
                                 kind: SymbolKind,
                                 name: String?,
                                 params: WebSymbolsNameMatchQueryParams,
@@ -404,8 +404,8 @@ class WebSymbolsRegistryNameQueryTest : WebSymbolsMockRegistryTestBase() {
                 get() = object : WebSymbolsContainer.Origin {
                   override val framework: FrameworkId get() = "vue"
                 }
-              override val namespace: WebSymbolsContainer.Namespace
-                get() = WebSymbolsContainer.Namespace.HTML
+              override val namespace: SymbolNamespace
+                get() = WebSymbolsContainer.NAMESPACE_HTML
               override val kind: SymbolKind
                 get() = WebSymbol.KIND_HTML_ATTRIBUTES
               override val matchedName: String

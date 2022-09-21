@@ -8,12 +8,12 @@ interface WebSymbolNamesProvider : ModificationTracker {
 
   fun createPointer(): Pointer<WebSymbolNamesProvider>
 
-  fun getNames(namespace: WebSymbolsContainer.Namespace,
+  fun getNames(namespace: SymbolNamespace,
                kind: SymbolKind,
                name: String,
                target: Target): List<String>
 
-  fun adjustRename(namespace: WebSymbolsContainer.Namespace,
+  fun adjustRename(namespace: SymbolNamespace,
                    kind: SymbolKind,
                    oldName: String,
                    newName: String,

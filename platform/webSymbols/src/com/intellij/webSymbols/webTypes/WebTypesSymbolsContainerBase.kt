@@ -11,7 +11,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.WebSymbolsContainer.Namespace
 import com.intellij.webSymbols.framework.WebFrameworksConfiguration
 import com.intellij.webSymbols.impl.SearchMap
 import com.intellij.webSymbols.utils.HtmlMarkdownUtils
@@ -56,17 +55,17 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebFrameworks
     get() = enableWhenCache.value
   override val disableWhen: Map<String, List<WebFrameworksConfiguration.DisablementRules>>
     get() = disableWhenCache.value
-  override val canonicalNamesProviders: Map<Triple<FrameworkId?, Namespace, SymbolKind>, Function<String, List<String>>>
+  override val canonicalNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>>
     get() = canonicalNamesProvidersCache.value
-  override val matchNamesProviders: Map<Triple<FrameworkId?, Namespace, SymbolKind>, Function<String, List<String>>>
+  override val matchNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>>
     get() = matchNamesProvidersCache.value
-  override val nameVariantsProviders: Map<Triple<FrameworkId?, Namespace, SymbolKind>, Function<String, List<String>>>
+  override val nameVariantsProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>>
     get() = nameVariantsProvidersCache.value
 
   override fun getModificationCount(): Long =
     modCount
 
-  final override fun getSymbols(namespace: Namespace?,
+  final override fun getSymbols(namespace: SymbolNamespace?,
                                 kind: String,
                                 name: String?,
                                 params: WebSymbolsNameMatchQueryParams,
@@ -79,7 +78,7 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebFrameworks
     else emptyList()
 
 
-  final override fun getCodeCompletions(namespace: Namespace?,
+  final override fun getCodeCompletions(namespace: SymbolNamespace?,
                                         kind: String,
                                         name: String?,
                                         params: WebSymbolsCodeCompletionQueryParams,
@@ -92,9 +91,9 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebFrameworks
     else emptyList()
 
   internal fun getSymbols(host: GenericContributionsHost,
-                          defaultNamespace: Namespace,
+                          defaultNamespace: SymbolNamespace,
                           origin: WebTypesJsonOrigin,
-                          namespace: Namespace?,
+                          namespace: SymbolNamespace?,
                           kind: String,
                           name: String?,
                           params: WebSymbolsNameMatchQueryParams,
@@ -104,9 +103,9 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebFrameworks
       .toList()
 
   internal fun getCodeCompletions(host: GenericContributionsHost,
-                                  defaultNamespace: Namespace,
+                                  defaultNamespace: SymbolNamespace,
                                   origin: WebTypesJsonOrigin,
-                                  namespace: Namespace?,
+                                  namespace: SymbolNamespace?,
                                   kind: String,
                                   name: String?,
                                   params: WebSymbolsCodeCompletionQueryParams,
@@ -227,7 +226,7 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebFrameworks
     }
 
   private fun <T, K> createNameProvidersCache(accessor: (config: FrameworkConfig) -> Map<String, T>?, mapper: (T) -> K):
-    ClearableLazyValue<Map<Triple<FrameworkId?, Namespace, SymbolKind>, K>> =
+    ClearableLazyValue<Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, K>> =
     ClearableLazyValue.create {
       configs.asSequence()
         .flatMap { config ->

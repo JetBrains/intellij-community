@@ -6,6 +6,7 @@ import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.SymbolKind
+import com.intellij.webSymbols.SymbolNamespace
 import com.intellij.webSymbols.WebSymbolNamesProvider
 import com.intellij.webSymbols.WebSymbolsContainer
 import com.intellij.webSymbols.framework.impl.findWebSymbolsFrameworkInContext
@@ -20,7 +21,7 @@ abstract class WebFramework {
 
   open val icon: Icon? get() = null
 
-  open fun getNames(namespace: WebSymbolsContainer.Namespace,
+  open fun getNames(namespace: SymbolNamespace,
                     kind: SymbolKind,
                     name: String,
                     target: WebSymbolNamesProvider.Target): List<String> = emptyList()

@@ -6,6 +6,7 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.webSymbols.SymbolNamespace
 import com.intellij.webSymbols.WebSymbolReferenceProblem
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.WebSymbolsContainer
@@ -15,7 +16,7 @@ internal class WebSymbolsInspectionToolMappingEP : PluginAware {
 
   companion object {
 
-    fun get(symbolNamespace: WebSymbolsContainer.Namespace,
+    fun get(symbolNamespace: SymbolNamespace,
             symbolKind: String,
             problemKind: WebSymbolReferenceProblem.ProblemKind): WebSymbolsInspectionToolMappingEP? =
       map.value[ExtensionKey(symbolNamespace, symbolKind, problemKind)]
@@ -25,7 +26,7 @@ internal class WebSymbolsInspectionToolMappingEP : PluginAware {
   @Attribute("symbolNamespace")
   @RequiredElement
   @JvmField
-  var symbolNamespace: WebSymbolsContainer.Namespace? = null
+  var symbolNamespace: SymbolNamespace? = null
 
   @Attribute("symbolKind")
   @RequiredElement
@@ -73,7 +74,7 @@ internal class WebSymbolsInspectionToolMappingEP : PluginAware {
 }
 
 private data class ExtensionKey(
-  var symbolNamespace: WebSymbolsContainer.Namespace,
+  var symbolNamespace: SymbolNamespace,
   var symbolKind: String,
   var problemKind: WebSymbolReferenceProblem.ProblemKind,
 )

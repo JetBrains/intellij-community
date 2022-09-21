@@ -15,7 +15,6 @@ import com.intellij.util.text.SemVer
 import com.intellij.webSymbols.WebSymbolsContainer
 import com.intellij.webSymbols.webTypes.impl.WebTypesDefinitionsEP
 import com.intellij.webSymbols.webTypes.json.WebTypes
-import com.intellij.webSymbols.webTypes.json.getSymbolTypeResolver
 
 @Service
 class WebTypesEmbeddedDefinitionsLoader(val project: Project) : Disposable {

@@ -13,7 +13,7 @@ import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.NameSegment
 import com.intellij.webSymbols.WebSymbol.Priority
-import com.intellij.webSymbols.WebSymbolsContainer.Namespace
+import com.intellij.webSymbols.impl.WebSymbolsRegistryImpl.Companion.asSymbolNamespace
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.utils.merge
 import com.intellij.webSymbols.webTypes.WebTypesSymbol
@@ -26,14 +26,14 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
                                                                             private val jsonOrigin: WebTypesJsonOrigin,
                                                                             protected val cacheHolder: UserDataHolderEx,
                                                                             protected val rootContainer: WebTypesSymbolsContainerBase,
-                                                                            val namespace: Namespace,
+                                                                            val namespace: SymbolNamespace,
                                                                             val kind: String) {
 
 
   companion object {
     fun BaseContribution.wrap(origin: WebTypesJsonOrigin,
                               rootContainer: WebTypesSymbolsContainerBase,
-                              root: Namespace,
+                              root: SymbolNamespace,
                               kind: SymbolKind): WebTypesJsonContributionWrapper =
       if (pattern != null) {
         Pattern(this, origin, UserDataHolderBase(), rootContainer, root, kind)
@@ -63,9 +63,9 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
     get() = jsonPattern?.wrap(contribution.name)
   open val contributionForRegistryQuery: GenericContributionsHost get() = contribution
 
-  private var exclusiveContributions: Set<Pair<Namespace, String>>? = null
+  private var exclusiveContributions: Set<Pair<SymbolNamespace, String>>? = null
 
-  fun isExclusiveFor(namespace: Namespace, kind: SymbolKind): Boolean =
+  fun isExclusiveFor(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
     (exclusiveContributions
      ?: when {
        contribution.exclusiveContributions.isEmpty() -> emptySet()
@@ -75,7 +75,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
            if (!path.startsWith('/')) return@mapNotNull null
            val slash = path.indexOf('/', 1)
            if (path.lastIndexOf('/') != slash) return@mapNotNull null
-           val n = Namespace.of(path.substring(1, slash))
+           val n = path.substring(1, slash).asSymbolNamespace()
                    ?: return@mapNotNull null
            val k = path.substring(slash + 1, path.length)
            Pair(n, k)
@@ -104,7 +104,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
                 ?.also { contributions -> _superContributions = contributions }
               ?: emptyList()
 
-    override fun getSymbols(namespace: Namespace?,
+    override fun getSymbols(namespace: SymbolNamespace?,
                             kind: String,
                             name: String?,
                             params: WebSymbolsNameMatchQueryParams,
@@ -114,7 +114,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
                     namespace, kind, name, params, context)
         .toList()
 
-    override fun getCodeCompletions(namespace: Namespace?,
+    override fun getCodeCompletions(namespace: SymbolNamespace?,
                                     kind: String,
                                     name: String?,
                                     params: WebSymbolsCodeCompletionQueryParams,
@@ -130,7 +130,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
     override val origin: WebSymbolsContainer.Origin
       get() = base.jsonOrigin
 
-    override val namespace: Namespace
+    override val namespace: SymbolNamespace
       get() = base.namespace
 
     override val nameSegments: List<NameSegment>
@@ -244,7 +244,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
     override val properties: Map<String, Any>
       get() = base.contribution.genericProperties
 
-    override fun isExclusiveFor(namespace: Namespace?, kind: SymbolKind): Boolean =
+    override fun isExclusiveFor(namespace: SymbolNamespace?, kind: SymbolKind): Boolean =
       namespace != null
       && namespace == this.namespace
       && (base.isExclusiveFor(namespace, kind)
@@ -279,7 +279,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
                        context: WebTypesJsonOrigin,
                        cacheHolder: UserDataHolderEx,
                        rootContainer: WebTypesSymbolsContainerBase,
-                       namespace: Namespace,
+                       namespace: SymbolNamespace,
                        kind: String) : WebTypesJsonContributionWrapper(contribution, context, cacheHolder, rootContainer, namespace, kind) {
 
     override val name: String
@@ -305,7 +305,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
                         context: WebTypesJsonOrigin,
                         cacheHolder: UserDataHolderEx,
                         rootContainer: WebTypesSymbolsContainerBase,
-                        namespace: Namespace,
+                        namespace: SymbolNamespace,
                         kind: String)
     : WebTypesJsonContributionWrapper(contribution, context, cacheHolder, rootContainer, namespace, kind) {
 
@@ -333,7 +333,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
                                    context: WebTypesJsonOrigin,
                                    cacheHolder: UserDataHolderEx,
                                    rootContainer: WebTypesSymbolsContainerBase,
-                                   root: Namespace)
+                                   root: SymbolNamespace)
     : WebTypesJsonContributionWrapper(contribution, context, cacheHolder, rootContainer, root, KIND_HTML_VUE_DIRECTIVES) {
 
     override val name: String =
@@ -362,7 +362,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
                                    context: WebTypesJsonOrigin,
                                    cacheHolder: UserDataHolderEx,
                                    rootContainer: WebTypesSymbolsContainerBase,
-                                   root: Namespace)
+                                   root: SymbolNamespace)
     : WebTypesJsonContributionWrapper(contribution, context, cacheHolder, rootContainer, root, KIND_HTML_VUE_COMPONENTS) {
 
     private var _contributionForRegistryQuery: GenericContributionsHost? = null

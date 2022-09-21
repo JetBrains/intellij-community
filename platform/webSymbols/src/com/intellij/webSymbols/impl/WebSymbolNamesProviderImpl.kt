@@ -2,12 +2,9 @@
 package com.intellij.webSymbols.impl
 
 import com.intellij.model.Pointer
-import com.intellij.webSymbols.FrameworkId
-import com.intellij.webSymbols.SymbolKind
-import com.intellij.webSymbols.WebSymbolNameConversionRules
-import com.intellij.webSymbols.WebSymbolNamesProvider
+import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbolNamesProvider.Target.*
-import com.intellij.webSymbols.WebSymbolsContainer.Namespace
+import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_JS
 import com.intellij.webSymbols.framework.WebFramework
 import com.intellij.webSymbols.framework.WebFrameworksConfiguration
 import java.util.*
@@ -18,23 +15,23 @@ internal class WebSymbolNamesProviderImpl(
   private val configuration: List<WebSymbolNameConversionRules>,
 ) : WebSymbolNamesProvider {
 
-  private val canonicalNamesProviders: Map<Triple<FrameworkId?, Namespace, SymbolKind>,
+  private val canonicalNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>,
     Function<String, List<String>>>
 
-  private val matchNamesProviders: Map<Triple<FrameworkId?, Namespace, SymbolKind>,
+  private val matchNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>,
     Function<String, List<String>>>
 
-  private val nameVariantsProviders: Map<Triple<FrameworkId?, Namespace, SymbolKind>,
+  private val nameVariantsProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>,
     Function<String, List<String>>>
 
   private val webFramework get() = framework?.let { WebFramework.get(it) }
 
   init {
-    val canonicalNamesProviders = mutableMapOf<Triple<FrameworkId?, Namespace, SymbolKind>,
+    val canonicalNamesProviders = mutableMapOf<Triple<FrameworkId?, SymbolNamespace, SymbolKind>,
       Function<String, List<String>>>()
-    val matchNamesProviders = mutableMapOf<Triple<FrameworkId?, Namespace, SymbolKind>,
+    val matchNamesProviders = mutableMapOf<Triple<FrameworkId?, SymbolNamespace, SymbolKind>,
       Function<String, List<String>>>()
-    val nameVariantsProviders = mutableMapOf<Triple<FrameworkId?, Namespace, SymbolKind>,
+    val nameVariantsProviders = mutableMapOf<Triple<FrameworkId?, SymbolNamespace, SymbolKind>,
       Function<String, List<String>>>()
     configuration.forEach { config ->
       config.canonicalNamesProviders.forEach { canonicalNamesProviders.putIfAbsent(it.key, it.value) }
@@ -73,7 +70,7 @@ internal class WebSymbolNamesProviderImpl(
   override fun withRules(rules: List<WebSymbolNameConversionRules>): WebSymbolNamesProvider =
     WebSymbolNamesProviderImpl(framework, rules + configuration)
 
-  override fun getNames(namespace: Namespace,
+  override fun getNames(namespace: SymbolNamespace,
                         kind: SymbolKind,
                         name: String,
                         target: WebSymbolNamesProvider.Target): List<String> =
@@ -93,12 +90,12 @@ internal class WebSymbolNamesProviderImpl(
       }
     }
     ?: listOf(
-      if (namespace == Namespace.JS)
+      if (namespace == NAMESPACE_JS)
         name
       else
         name.lowercase(Locale.US))
 
-  override fun adjustRename(namespace: Namespace,
+  override fun adjustRename(namespace: SymbolNamespace,
                             kind: SymbolKind,
                             oldName: String,
                             newName: String,

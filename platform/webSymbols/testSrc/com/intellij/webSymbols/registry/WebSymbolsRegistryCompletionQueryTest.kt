@@ -225,7 +225,7 @@ class WebSymbolsRegistryCompletionQueryTest : WebSymbolsMockRegistryTestBase() {
       object : WebSymbolsContainer {
         override fun createPointer(): Pointer<out WebSymbolsContainer> = Pointer.hardPointer(this)
 
-        override fun getCodeCompletions(namespace: WebSymbolsContainer.Namespace?,
+        override fun getCodeCompletions(namespace: SymbolNamespace?,
                                         kind: SymbolKind,
                                         name: String?,
                                         params: WebSymbolsCodeCompletionQueryParams,

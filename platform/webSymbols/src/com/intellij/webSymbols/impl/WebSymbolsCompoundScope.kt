@@ -7,7 +7,7 @@ import com.intellij.webSymbols.*
 internal class WebSymbolsCompoundScope(private val scopes: List<WebSymbolsScope>) : WebSymbolsScope {
 
   override fun apply(matches: List<WebSymbol>, strict: Boolean,
-                     namespace: WebSymbolsContainer.Namespace?,
+                     namespace: SymbolNamespace?,
                      kind: SymbolKind,
                      name: String?): List<WebSymbol> =
     scopes.foldRight(matches) { scope, list ->
@@ -15,7 +15,7 @@ internal class WebSymbolsCompoundScope(private val scopes: List<WebSymbolsScope>
     }
 
   override fun apply(item: WebSymbolCodeCompletionItem,
-                     namespace: WebSymbolsContainer.Namespace?,
+                     namespace: SymbolNamespace?,
                      kind: SymbolKind): WebSymbolCodeCompletionItem? =
     scopes.foldRight(item as WebSymbolCodeCompletionItem?) { scope, i ->
       i?.let { scope.apply(it, namespace, kind) }

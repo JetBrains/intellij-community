@@ -206,7 +206,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
             symbol = WebSymbolMatch.create(
               name,
               lastMatched.segments.filter { it.start < it.end }.withOffset(-lastMatched.start),
-              WebSymbolsContainer.Namespace.HTML, SPECIAL_MATCHED_CONTRIB,
+              WebSymbolsContainer.NAMESPACE_HTML, SPECIAL_MATCHED_CONTRIB,
               WebSymbolsContainer.OriginData()
             ))
         }

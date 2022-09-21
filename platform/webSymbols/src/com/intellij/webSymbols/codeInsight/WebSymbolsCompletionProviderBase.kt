@@ -42,7 +42,7 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
     @JvmStatic
     fun processCompletionQueryResults(registry: WebSymbolsRegistry,
                                       result: CompletionResultSet,
-                                      namespace: WebSymbolsContainer.Namespace,
+                                      namespace: SymbolNamespace,
                                       kind: SymbolKind,
                                       name: String,
                                       position: Int,
@@ -53,7 +53,7 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
       val prefixLength = name.length
       val prefixes = mutableSetOf<String>()
       registry
-        .runCodeCompletionQuery(listOf(namespace.name, kind, name), position, context = queryContext)
+        .runCodeCompletionQuery(listOf(namespace, kind, name), position, context = queryContext)
         .asSequence()
         .distinctBy { Triple(it.offset, it.name, it.completeAfterInsert) }
         .customizeItems(registry.framework, namespace, kind)

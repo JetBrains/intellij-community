@@ -71,10 +71,10 @@ abstract class WebSymbolsContainerWithCache<T : UserDataHolder, K>(protected val
       CachedValueProvider.Result.create(map, dependencies.toList())
     }
 
-  protected open fun provides(namespace: WebSymbolsContainer.Namespace, kind: String): Boolean = true
+  protected open fun provides(namespace: SymbolNamespace, kind: SymbolKind): Boolean = true
 
-  override fun getSymbols(namespace: WebSymbolsContainer.Namespace?,
-                          kind: String,
+  override fun getSymbols(namespace: SymbolNamespace?,
+                          kind: SymbolKind,
                           name: String?,
                           params: WebSymbolsNameMatchQueryParams,
                           context: Stack<WebSymbolsContainer>): List<WebSymbolsContainer> =
@@ -86,8 +86,8 @@ abstract class WebSymbolsContainerWithCache<T : UserDataHolder, K>(protected val
     }
     else emptyList()
 
-  override fun getCodeCompletions(namespace: WebSymbolsContainer.Namespace?,
-                                  kind: String,
+  override fun getCodeCompletions(namespace: SymbolNamespace?,
+                                  kind: SymbolKind,
                                   name: String?,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   context: Stack<WebSymbolsContainer>): List<WebSymbolCodeCompletionItem> =

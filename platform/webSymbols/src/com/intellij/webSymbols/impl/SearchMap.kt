@@ -18,7 +18,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   internal abstract fun Sequence<T>.mapAndFilter(params: WebSymbolsRegistryQueryParams): Sequence<WebSymbol>
 
-  internal fun add(namespace: WebSymbolsContainer.Namespace,
+  internal fun add(namespace: SymbolNamespace,
                    kind: SymbolKind,
                    name: String,
                    pattern: WebSymbolsPattern?,
@@ -43,7 +43,7 @@ internal abstract class SearchMap<T> internal constructor(
         }
   }
 
-  internal fun getSymbols(namespace: WebSymbolsContainer.Namespace,
+  internal fun getSymbols(namespace: SymbolNamespace,
                           kind: SymbolKind,
                           name: String?,
                           params: WebSymbolsNameMatchQueryParams,
@@ -63,7 +63,7 @@ internal abstract class SearchMap<T> internal constructor(
         .plus(collectPatternContributions(namespace, kind, name, params, context))
     }
 
-  internal fun getCodeCompletions(namespace: WebSymbolsContainer.Namespace,
+  internal fun getCodeCompletions(namespace: SymbolNamespace,
                                   kind: String,
                                   name: String?,
                                   params: WebSymbolsCodeCompletionQueryParams,
@@ -73,7 +73,7 @@ internal abstract class SearchMap<T> internal constructor(
       .plus(collectPatternCompletionResults(namespace, kind, name, params, context))
       .distinct()
 
-  private fun collectStaticCompletionResults(namespace: WebSymbolsContainer.Namespace,
+  private fun collectStaticCompletionResults(namespace: SymbolNamespace,
                                              kind: String,
                                              name: String?,
                                              params: WebSymbolsCodeCompletionQueryParams,
@@ -86,7 +86,7 @@ internal abstract class SearchMap<T> internal constructor(
       .flatMap { it.toCodeCompletionItems(name, params, context) }
       .toList()
 
-  private fun collectPatternCompletionResults(namespace: WebSymbolsContainer.Namespace,
+  private fun collectPatternCompletionResults(namespace: SymbolNamespace,
                                               kind: String,
                                               name: String?,
                                               params: WebSymbolsCodeCompletionQueryParams,
@@ -100,7 +100,7 @@ internal abstract class SearchMap<T> internal constructor(
       .flatMap { it.toCodeCompletionItems(name, params, context) }
       .toList()
 
-  private fun collectPatternContributions(namespace: WebSymbolsContainer.Namespace,
+  private fun collectPatternContributions(namespace: SymbolNamespace,
                                           kind: String,
                                           name: String?,
                                           params: WebSymbolsNameMatchQueryParams,
@@ -114,7 +114,7 @@ internal abstract class SearchMap<T> internal constructor(
       }
       .toList()
 
-  private fun collectPatternsToProcess(namespace: WebSymbolsContainer.Namespace, kind: String, name: String): Collection<T> {
+  private fun collectPatternsToProcess(namespace: SymbolNamespace, kind: String, name: String): Collection<T> {
     val toProcess = mutableSetOf<T>()
     for (p in 0..name.length) {
       val check = SearchMapEntry(namespace, kind, CharSequenceSubSequence(name, 0, p))
@@ -136,7 +136,7 @@ internal abstract class SearchMap<T> internal constructor(
   private fun Sequence<Collection<T>>.flatMapWithQueryParameters(params: WebSymbolsRegistryQueryParams): Sequence<WebSymbol> =
     this.flatMap { it.asSequence().innerMapAndFilter(params) }
 
-  private data class SearchMapEntry(val namespace: WebSymbolsContainer.Namespace,
+  private data class SearchMapEntry(val namespace: SymbolNamespace,
                                     val kind: SymbolKind,
                                     val name: CharSequence = "",
                                     val kindExclusive: Boolean = false) : Comparable<SearchMapEntry> {

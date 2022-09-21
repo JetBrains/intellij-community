@@ -7,7 +7,7 @@ interface WebSymbolCodeCompletionItemCustomizer {
 
   fun customize(item: WebSymbolCodeCompletionItem,
                 framework: FrameworkId?,
-                namespace: WebSymbolsContainer.Namespace,
+                namespace: SymbolNamespace,
                 kind: SymbolKind): WebSymbolCodeCompletionItem?
 
   companion object {
@@ -15,7 +15,7 @@ interface WebSymbolCodeCompletionItemCustomizer {
       "com.intellij.webSymbols.codeCompletionItemCustomizer")
 
     internal fun Sequence<WebSymbolCodeCompletionItem>.customizeItems(framework: FrameworkId?,
-                                                                      namespace: WebSymbolsContainer.Namespace,
+                                                                      namespace: SymbolNamespace,
                                                                       kind: SymbolKind): Sequence<WebSymbolCodeCompletionItem> {
       val customizers = EP_NAME.extensionList
       return if (customizers.isNotEmpty())

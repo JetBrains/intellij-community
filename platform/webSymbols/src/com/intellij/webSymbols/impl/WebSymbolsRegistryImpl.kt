@@ -8,7 +8,9 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.WebSymbolsContainer.Namespace
+import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_CSS
+import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_HTML
+import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_JS
 import com.intellij.webSymbols.WebSymbolsScope.Companion.applyScope
 import com.intellij.webSymbols.utils.hideFromCompletion
 import java.util.*
@@ -187,9 +189,9 @@ internal class WebSymbolsRegistryImpl(private val rootContext: List<WebSymbolsCo
     }
   }
 
-  internal data class PathSection(val namespace: Namespace?, val kind: String, val name: String?)
+  internal data class PathSection(val namespace: SymbolNamespace?, val kind: String, val name: String?)
 
-  private fun Collection<WebSymbolsContainer>.takeLastUntilExclusiveContainerFor(namespace: Namespace?,
+  private fun Collection<WebSymbolsContainer>.takeLastUntilExclusiveContainerFor(namespace: SymbolNamespace?,
                                                                                  kind: String): List<WebSymbolsContainer> =
     toList()
       .let { list ->
@@ -221,18 +223,21 @@ internal class WebSymbolsRegistryImpl(private val rootContext: List<WebSymbolsCo
 
   companion object {
 
-    internal fun parsePath(path: String?, context: Namespace? = null): List<PathSection> =
+    internal fun String.asSymbolNamespace(): SymbolNamespace? =
+      takeIf { it == NAMESPACE_JS || it == NAMESPACE_HTML || it == NAMESPACE_CSS }
+
+    internal fun parsePath(path: String?, context: SymbolNamespace? = null): List<PathSection> =
       if (path != null)
         parsePath(StringUtil.split(path, "/", true, true), context)
       else
         emptyList()
 
-    internal fun parsePath(path: List<String>, context: Namespace? = null): List<PathSection> {
+    internal fun parsePath(path: List<String>, context: SymbolNamespace? = null): List<PathSection> {
       var i = 0
-      var prevRoot: Namespace? = context
+      var prevRoot: SymbolNamespace? = context
       val result = mutableListOf<PathSection>()
       while (i < path.size) {
-        var root = Namespace.of(path[i])
+        var root = path[i].asSymbolNamespace()
         if (root != null) {
           i++
           prevRoot = root

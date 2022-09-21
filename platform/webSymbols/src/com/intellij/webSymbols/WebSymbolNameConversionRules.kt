@@ -7,9 +7,9 @@ import java.util.function.Function
 
 interface WebSymbolNameConversionRules : ModificationTracker {
 
-  val canonicalNamesProviders: Map<Triple<FrameworkId?, WebSymbolsContainer.Namespace, SymbolKind>, Function<String, List<String>>>
-  val matchNamesProviders: Map<Triple<FrameworkId?, WebSymbolsContainer.Namespace, SymbolKind>, Function<String, List<String>>>
-  val nameVariantsProviders: Map<Triple<FrameworkId?, WebSymbolsContainer.Namespace, SymbolKind>, Function<String, List<String>>>
+  val canonicalNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>>
+  val matchNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>>
+  val nameVariantsProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>>
 
   fun createPointer(): Pointer<out WebSymbolNameConversionRules>
 
