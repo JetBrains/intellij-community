@@ -3822,6 +3822,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertObjectToDataObject/constHashCode.kt");
         }
 
+        @TestMetadata("customSerializable.kt")
+        public void testCustomSerializable() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/customSerializable.kt");
+        }
+
         @TestMetadata("doubleBangReflectToString.kt")
         public void testDoubleBangReflectToString() throws Exception {
             runTest("testData/inspectionsLocal/convertObjectToDataObject/doubleBangReflectToString.kt");
