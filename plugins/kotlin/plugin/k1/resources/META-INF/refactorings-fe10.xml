@@ -93,6 +93,11 @@
 
     <refactoring.overrideMethodProcessor implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinOverrideMethodsProcessor"/>
 
+    <refactoring.safeDeleteProcessor
+            id="kotlinProcessor"
+            implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinSafeDeleteProcessor"
+            order="before javaProcessor"/>
+
     <refactoring.pullUpHelperFactory
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpHelperFactory"/>

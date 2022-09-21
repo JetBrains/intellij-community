@@ -97,29 +97,6 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteClass/javaClassWithKotlin")
-    public static class JavaClassWithKotlin extends AbstractK2SafeDeleteTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doJavaClassTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("ImportJavaClassToKotlin.java")
-        public void testImportJavaClassToKotlin() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/javaClassWithKotlin/ImportJavaClassToKotlin.java");
-        }
-
-        @TestMetadata("javaInterfaceInSuperTypeList.java")
-        public void testJavaInterfaceInSuperTypeList() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/javaClassWithKotlin/javaInterfaceInSuperTypeList.java");
-        }
-
-        @TestMetadata("javaInterfaceInSuperTypeListLast.java")
-        public void testJavaInterfaceInSuperTypeListLast() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/javaClassWithKotlin/javaInterfaceInSuperTypeListLast.java");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteObject/kotlinObject")
     public static class KotlinObject extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -174,24 +151,6 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("unsafeImport.kt")
         public void testUnsafeImport() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteObject/kotlinObject/unsafeImport.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin")
-    public static class JavaFunctionWithKotlin extends AbstractK2SafeDeleteTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doJavaMethodTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("mixedHierarchy1.kt")
-        public void testMixedHierarchy1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin/mixedHierarchy1.kt");
-        }
-
-        @TestMetadata("mixedHierarchy2.kt")
-        public void testMixedHierarchy2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin/mixedHierarchy2.kt");
         }
     }
 

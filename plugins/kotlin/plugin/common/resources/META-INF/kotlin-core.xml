@@ -433,10 +433,6 @@
     <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinConventionMethodReferencesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.DefaultAnnotationMethodKotlinImplicitReferenceSearcher"/>
 
-    <refactoring.safeDeleteProcessor
-            id="kotlinProcessor"
-            implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinSafeDeleteProcessor"
-            order="before javaProcessor"/>
     <refactoring.safeDelete.JavaSafeDeleteDelegate
             id="kotlinJavaSafeDeleteDelegate"
             language="kotlin"

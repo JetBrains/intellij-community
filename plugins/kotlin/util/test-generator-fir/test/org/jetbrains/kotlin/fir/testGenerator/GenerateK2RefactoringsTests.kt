@@ -10,11 +10,11 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("refactoring/safeDelete/deleteClass/kotlinClass", testMethodName = "doClassTest")
             //todo secondary constructor 
             //model("refactoring/safeDelete/deleteClass/kotlinClassWithJava", testMethodName = "doClassTestWithJava")
-            model("refactoring/safeDelete/deleteClass/javaClassWithKotlin", pattern = Patterns.JAVA, testMethodName = "doJavaClassTest")
+            //model("refactoring/safeDelete/deleteClass/javaClassWithKotlin", pattern = Patterns.JAVA, testMethodName = "doJavaClassTest")
             model("refactoring/safeDelete/deleteObject/kotlinObject", testMethodName = "doObjectTest")
             //model("refactoring/safeDelete/deleteFunction/kotlinFunction", testMethodName = "doFunctionTest")
             //model("refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava", testMethodName = "doFunctionTestWithJava")
-            model("refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin", testMethodName = "doJavaMethodTest")
+            //model("refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin", testMethodName = "doJavaMethodTest")
             //model("refactoring/safeDelete/deleteProperty/kotlinProperty", testMethodName = "doPropertyTest")
             //model("refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava", testMethodName = "doPropertyTestWithJava")
             model("refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin", testMethodName = "doJavaPropertyTest")
