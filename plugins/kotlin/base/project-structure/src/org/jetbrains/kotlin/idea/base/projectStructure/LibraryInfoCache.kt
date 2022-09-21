@@ -143,17 +143,19 @@ class LibraryInfoCache(project: Project) : Disposable {
                 val exception = KotlinExceptionWithAttachments(
                     """
                         inconsistent state:
-                        is the same: ${deduplicatedLibrary === key}
-                        key: ${key.presentableName}
-                        deduplicated: ${deduplicatedLibrary.presentableName}
+                        is the same key: ${deduplicatedLibrary === key}
+                        root consistent: ${key.firstRoot() == root}
+                        urls consistent: ${key.urlsByType() == keyUrlsByType}
+                        key name: ${key.presentableName}
+                        deduplicated key name: ${deduplicatedLibrary.presentableName}
                     """.trimIndent()
                 )
                     .withAttachment("key.txt", key.toString())
                     .withAttachment("deduplicated.txt", deduplicatedLibrary.toString())
-                    .withAttachment("librariesBefore.txt", deduplicatedLibraries.toString())
+                    .withAttachment("librariesBefore.txt", deduplicatedLibraries.joinToString(separator = "\n"))
 
                 deduplicatedLibraries -= deduplicatedLibrary
-                exception.withAttachment("librariesAfter.txt", deduplicatedLibraries.toString())
+                exception.withAttachment("librariesAfter.txt", deduplicatedLibraries.joinToString(separator = "\n"))
                 logger.error(exception)
 
                 return cachedDeduplicatedValue(cache, key, root, keyUrlsByType)
