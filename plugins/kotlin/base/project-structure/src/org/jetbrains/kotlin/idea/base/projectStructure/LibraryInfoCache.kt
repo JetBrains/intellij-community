@@ -140,10 +140,11 @@ class LibraryInfoCache(project: Project) : Disposable {
             val deduplicatedLibrary = deduplicatedLibraries.find { keyUrlsByType.rootEquals(it) } ?: return null
             val cachedValue = cache[deduplicatedLibrary]
             if (cachedValue == null) {
-                val exception = KotlinExceptionWithAttachments("inconsistent state. deduplicated: ${deduplicatedLibrary.presentableName}, key: ${key.presentableName}")
-                    .withAttachment("key.txt", key.toString())
-                    .withAttachment("deduplicated.txt", deduplicatedLibrary.toString())
-                    .withAttachment("librariesBefore.txt", deduplicatedLibraries.toString())
+                val exception =
+                    KotlinExceptionWithAttachments("inconsistent state. deduplicated: ${deduplicatedLibrary.presentableName}, key: ${key.presentableName}")
+                        .withAttachment("key.txt", key.toString())
+                        .withAttachment("deduplicated.txt", deduplicatedLibrary.toString())
+                        .withAttachment("librariesBefore.txt", deduplicatedLibraries.toString())
 
                 deduplicatedLibraries -= deduplicatedLibrary
                 exception.withAttachment("librariesAfter.txt", deduplicatedLibraries.toString())
@@ -159,6 +160,50 @@ class LibraryInfoCache(project: Project) : Disposable {
 
         override fun checkKeyValidity(key: LibraryEx) {
             key.checkValidity()
+        }
+
+        override fun checkKeyConsistency(cache: MutableMap<LibraryEx, List<LibraryInfo>>, key: LibraryEx) {
+            super.checkKeyConsistency(cache, key)
+
+            val isCached = key in cache
+            val isDeduplicated = deduplicationCache[key.firstRoot()]?.contains(key) == true
+            if (isCached != isDeduplicated) {
+                error("inconsistent state ${key.presentableName}: is cached: $isCached, is deduplicated: $isDeduplicated")
+            }
+        }
+
+        override fun disposeIllegalEntry(cache: MutableMap<LibraryEx, List<LibraryInfo>>, key: LibraryEx) {
+            super.disposeIllegalEntry(cache, key)
+            dropDisposedKey(key)
+        }
+
+        override fun disposeEntry(
+            cache: MutableMap<LibraryEx, List<LibraryInfo>>,
+            entry: MutableMap.MutableEntry<LibraryEx, List<LibraryInfo>>,
+        ) {
+            dropDisposedKey(entry.key)
+
+            val libInfoKey = entry.value.first().library
+            if (libInfoKey == entry.key) return
+
+            val iterator = cache.iterator()
+            while (iterator.hasNext()) {
+                val cacheEntry = iterator.next()
+                if (cacheEntry.value.first().library == libInfoKey) {
+                    iterator.remove()
+                    dropDisposedKey(cacheEntry.key)
+                }
+            }
+        }
+
+        private fun dropDisposedKey(key: LibraryEx) {
+            for (values in deduplicationCache.values) {
+                if (values.remove(key)) break
+            }
+        }
+
+        override fun checkValueValidity(value: List<LibraryInfo>) {
+            value.forEach(LibraryInfo::checkValidity)
         }
 
         override fun calculate(key: LibraryEx): List<LibraryInfo> = when (val platformKind = getPlatform(key).idePlatformKind) {

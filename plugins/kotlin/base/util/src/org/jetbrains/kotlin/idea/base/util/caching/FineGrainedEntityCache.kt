@@ -59,12 +59,16 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
                 checkKeyValidity(key)
             } catch (e: Throwable) {
                 useCache { cache ->
-                    cache.remove(key)
+                    disposeIllegalEntry(cache, key)
                 }
 
                 logger.error(e)
             }
         }
+    }
+
+    protected open fun disposeIllegalEntry(cache: MutableMap<Key, Value>, key: Key) {
+        cache.remove(key)
     }
 
     protected fun putAll(map: Map<Key, Value>) {
@@ -155,10 +159,11 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
                 val entry = iterator.next()
                 if (validityCondition(entry.key, entry.value)) {
                     try {
-                        checkKeyValidity(entry.key)
+                        checkKeyConsistency(cache, entry.key)
                         checkValueValidity(entry.value)
                     } catch (e: Throwable) {
                         iterator.remove()
+                        disposeEntry(cache, entry)
                         throw e
                     }
                 } else {
@@ -171,9 +176,12 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
         }
     }
 
+    protected open fun disposeEntry(cache: MutableMap<Key, Value>, entry: MutableMap.MutableEntry<Key, Value>) = Unit
+
     protected abstract fun subscribe()
 
     protected abstract fun checkKeyValidity(key: Key)
+    protected open fun checkKeyConsistency(cache: MutableMap<Key, Value>, key: Key) = checkKeyValidity(key)
 
     protected open fun checkValueValidity(value: Value) {}
 
