@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import org.intellij.lang.annotations.MagicConstant;
@@ -13,7 +13,7 @@ import static com.intellij.util.BitUtil.isSet;
 /**
  * @see FileSystemUtil#getAttributes(String)
  */
-public class FileAttributes {
+public final class FileAttributes {
   public enum Type {FILE, DIRECTORY, SPECIAL}
 
   public enum CaseSensitivity {
@@ -34,7 +34,6 @@ public class FileAttributes {
   public @interface Flags { }
 
   public static final FileAttributes BROKEN_SYMLINK = new FileAttributes(SYM_LINK, 0, 0);
-  protected static final FileAttributes UNKNOWN = new FileAttributes((byte)-1, 0, 0);
 
   private static final int TYPE_SHIFT = 3;
   private static final int CASE_SENSITIVITY_SHIFT = 5;
@@ -45,7 +44,7 @@ public class FileAttributes {
    * <p>Bits 5-7: {@link CaseSensitivity CaseSensitivity} (00={@link CaseSensitivity#UNKNOWN UNKNOWN},
    *   01={@link CaseSensitivity#SENSITIVE SENSITIVE}, 10={@link CaseSensitivity#INSENSITIVE INSENSITIVE})</p>
    */
-  protected final @Flags byte flags;
+  private final @Flags byte flags;
 
   /**
    * In bytes, 0 for special files.<br/>
@@ -82,7 +81,7 @@ public class FileAttributes {
     this(flags(isDirectory, isSpecial, isSymlink, isHidden, isWritable, caseSensitivity), length, lastModified);
   }
 
-  protected FileAttributes(@Flags byte flags, long length, long lastModified) {
+  private FileAttributes(@Flags byte flags, long length, long lastModified) {
     if (flags != -1 && (flags & 0b10000000) != 0) {
       throw new IllegalArgumentException("Invalid flags: " + Integer.toBinaryString(flags));
     }
@@ -92,12 +91,6 @@ public class FileAttributes {
     this.flags = flags;
     this.length = length;
     this.lastModified = lastModified;
-  }
-
-  protected FileAttributes(@NotNull FileAttributes fileAttributes) {
-    this.flags = fileAttributes.flags;
-    this.length = fileAttributes.length;
-    this.lastModified = fileAttributes.lastModified;
   }
 
   private static @Flags byte flags(boolean isDirectory, boolean isSpecial, boolean isSymlink, boolean isHidden, boolean isWritable, CaseSensitivity sensitivity) {
