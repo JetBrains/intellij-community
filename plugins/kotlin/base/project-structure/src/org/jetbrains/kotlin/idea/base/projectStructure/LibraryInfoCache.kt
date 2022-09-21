@@ -180,6 +180,34 @@ class LibraryInfoCache(project: Project) : Disposable {
             }
         }
 
+        private fun checkCacheConsistency(cache: MutableMap<LibraryEx, List<LibraryInfo>>, key: LibraryEx) {
+            val isCached = key in cache
+            val isDeduplicated = deduplicationCache[key.firstRoot()]?.contains(key) == true
+            if (isCached != isDeduplicated) {
+                error("inconsistent state ${key.presentableName}: is cached: $isCached, is deduplicated: $isDeduplicated")
+            }
+        }
+
+        override fun additionalEntitiesCheck(cache: MutableMap<LibraryEx, List<LibraryInfo>>): Boolean {
+            var success = true
+            for (values in deduplicationCache.values) {
+                val iterator = values.iterator()
+                while (iterator.hasNext()) {
+                    val library = iterator.next()
+                    try {
+                        checkCacheConsistency(cache, library)
+                    } catch (e: Throwable) {
+                        iterator.remove()
+                        cache.remove(library)
+                        logger.error(e)
+                        success = false
+                    }
+                }
+            }
+
+            return success
+        }
+
         override fun disposeIllegalEntry(cache: MutableMap<LibraryEx, List<LibraryInfo>>, key: LibraryEx) {
             super.disposeIllegalEntry(cache, key)
             dropDisposedKey(key)
