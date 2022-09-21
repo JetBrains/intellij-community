@@ -13,6 +13,7 @@ import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.gdpr.showDataSharingAgreement
+import com.intellij.ide.gdpr.showEndUserAndDataSharingAgreements
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
@@ -617,7 +618,7 @@ private fun CoroutineScope.showEuaIfNeeded(euaDocumentDeferred: Deferred<Any?>?,
     runActivity("eua showing") {
       if (document != null) {
         prepareAndExecuteInEdt {
-          UIManager.setLookAndFeel(IntelliJLaf())
+          showEndUserAndDataSharingAgreements(document)
         }
         true
       }

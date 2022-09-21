@@ -48,7 +48,10 @@ import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.OwnerOptional;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.JBR;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -648,7 +651,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         JBR.getCustomWindowDecoration().setCustomDecorationEnabled(this, true);
       }
       super.addNotify();
-      if (SystemInfo.isMacOSVentura && Registry.is("ide.mac.stage.manager.support")) {
+      if (SystemInfo.isMacOSVentura && Registry.is("ide.mac.stage.manager.support", false)) {
         Foundation.executeOnMainThread(true, false, () -> {
           ID window = MacUtil.getWindowFromJavaWindow(this);
           Foundation.invoke(window, "setCollectionBehavior:", 1 << 4);
