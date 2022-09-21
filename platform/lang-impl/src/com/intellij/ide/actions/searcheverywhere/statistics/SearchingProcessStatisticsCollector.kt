@@ -5,10 +5,12 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
+private const val GROUP_ID = "search.everywhere.process"
+
 class SearchingProcessStatisticsCollector : CounterUsagesCollector() {
 
   companion object {
-    private val group = EventLogGroup("search.everywhere.process", 1)
+    private val group = EventLogGroup(GROUP_ID, 1)
 
     private val searchStartedEvent = group.registerEvent("contributor.search.started", SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD)
     private val elementFoundEvent = group.registerEvent("first.element.found", SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD)
@@ -33,4 +35,5 @@ class SearchingProcessStatisticsCollector : CounterUsagesCollector() {
     }
   }
 
+  override fun getGroup(): EventLogGroup = SearchingProcessStatisticsCollector.group
 }
