@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,6 +33,8 @@ import com.intellij.util.indexing.roots.origin.IndexableSetContributorSelfDepend
 import com.intellij.util.indexing.roots.origin.ModuleRootSelfDependentOriginImpl;
 import com.intellij.util.indexing.roots.origin.SdkSelfDependentOriginImpl;
 import com.intellij.util.indexing.roots.origin.SyntheticLibrarySelfDependentOriginImpl;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener;
 import com.intellij.workspaceModel.storage.*;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import org.jetbrains.annotations.ApiStatus;
@@ -69,6 +72,7 @@ public class IndexableFilesIndex {
   public IndexableFilesIndex(@NotNull Project project) {
     this.project = project;
     snapshotHandler = new SnapshotHandler(project);
+    ModuleDependencyIndex.Companion.getInstance(project).addListener(snapshotHandler.createModuleDependencyListener());
   }
 
   @RequiresBackgroundThread
@@ -116,27 +120,9 @@ public class IndexableFilesIndex {
       Set<VirtualFile> excludedModuleFilesFromPolicies = new HashSet<>(snapshot.excludedFilesFromPolicies);
       excludedModuleFilesFromPolicies.addAll(
         ContainerUtil.mapNotNull(snapshot.excludedModuleFilesFromPolicies, pointer -> pointer.getFile()));
-      for (Map.Entry<WorkspaceEntity, Collection<IndexableSetSelfDependentOrigin>> entry : status.entitiesToOrigins.entrySet()) {
-        for (IndexableSetSelfDependentOrigin origin : entry.getValue()) {
-          if (origin instanceof SdkSelfDependentOriginImpl) {
-            List<VirtualFile> excludedRootsForSdk = new ArrayList<>();
-            for (Function<Sdk, List<VirtualFile>> exclusionFunction : snapshot.sdkExclusionFunctions) {
-              List<VirtualFile> roots = exclusionFunction.fun(((SdkOrigin)origin).getSdk());
-              if (roots != null && !roots.isEmpty()) {
-                excludedRootsForSdk.addAll(roots);
-              }
-            }
-            if (!excludedRootsForSdk.isEmpty()) {
-              origins.add(((SdkSelfDependentOriginImpl)origin).copyWithAdditionalExcludedFiles(excludedRootsForSdk));
-              continue;
-            }
-          }
-          else if (origin instanceof ModuleRootSelfDependentOriginImpl && !excludedModuleFilesFromPolicies.isEmpty()) {
-            origins.add(((ModuleRootSelfDependentOriginImpl)origin).copyWithAdditionalExcludedFiles(excludedModuleFilesFromPolicies));
-            continue;
-          }
-          origins.add(origin);
-        }
+      for (IndexableSetSelfDependentOrigin origin : status.getOrigins()) {
+        origin = patchOriginIfNeeded(origin, snapshot, excludedModuleFilesFromPolicies);
+        origins.add(origin);
       }
       origins.addAll(snapshot.indexableSetOrigins);
       origins.addAll(snapshot.syntheticLibrariesOrigins);
@@ -148,6 +134,28 @@ public class IndexableFilesIndex {
         }
       }
       roots = builder.build();
+    }
+
+    @NotNull
+    private static IndexableSetSelfDependentOrigin patchOriginIfNeeded(@NotNull IndexableSetSelfDependentOrigin origin,
+                                                                       @NotNull NonWorkspaceModelSnapshot snapshot,
+                                                                       @NotNull Set<VirtualFile> excludedModuleFilesFromPolicies) {
+      if (origin instanceof SdkSelfDependentOriginImpl) {
+        List<VirtualFile> excludedRootsForSdk = new ArrayList<>();
+        for (Function<Sdk, List<VirtualFile>> exclusionFunction : snapshot.sdkExclusionFunctions) {
+          List<VirtualFile> roots = exclusionFunction.fun(((SdkOrigin)origin).getSdk());
+          if (roots != null && !roots.isEmpty()) {
+            excludedRootsForSdk.addAll(roots);
+          }
+        }
+        if (!excludedRootsForSdk.isEmpty()) {
+          return ((SdkSelfDependentOriginImpl)origin).copyWithAdditionalExcludedFiles(excludedRootsForSdk);
+        }
+      }
+      else if (origin instanceof ModuleRootSelfDependentOriginImpl && !excludedModuleFilesFromPolicies.isEmpty()) {
+        return ((ModuleRootSelfDependentOriginImpl)origin).copyWithAdditionalExcludedFiles(excludedModuleFilesFromPolicies);
+      }
+      return origin;
     }
   }
 
@@ -383,6 +391,53 @@ public class IndexableFilesIndex {
         }
       }
     }
+
+    @NotNull
+    public ModuleDependencyListener createModuleDependencyListener() {
+      return new MyModuleDependencyListener();
+    }
+
+    private class MyModuleDependencyListener implements ModuleDependencyListener {
+      @Override
+      public void referencedLibraryAdded(@NotNull Library library) {
+        updateWorkspaceSnapshot(snapshot -> snapshot.referencedLibraryAdded(library));
+      }
+
+      @Override
+      public void referencedLibraryChanged(@NotNull Library library) {
+        updateWorkspaceSnapshot(snapshot -> snapshot.referencedLibraryChanged(library));
+      }
+
+      @Override
+      public void referencedLibraryRemoved(@NotNull Library library) {
+        updateWorkspaceSnapshot(snapshot -> snapshot.referencedLibraryRemoved(library));
+      }
+
+      @Override
+      public void addedDependencyOn(@NotNull Sdk sdk) {
+        updateWorkspaceSnapshot(snapshot -> snapshot.addedDependencyOn(sdk));
+      }
+
+      @Override
+      public void removedDependencyOn(@NotNull Sdk sdk) {
+        updateWorkspaceSnapshot(snapshot -> snapshot.removedDependencyOn(sdk));
+      }
+
+      @Override
+      public void referencedSdkAdded(@NotNull Sdk sdk) {
+        updateWorkspaceSnapshot(snapshot -> snapshot.referencedSdkAdded(sdk));
+      }
+
+      @Override
+      public void referencedSdkChanged(@NotNull Sdk sdk) {
+        updateWorkspaceSnapshot(snapshot -> snapshot.referencedSdkChanged(sdk));
+      }
+
+      @Override
+      public void referencedSdkRemoved(@NotNull Sdk sdk) {
+        updateWorkspaceSnapshot(snapshot -> snapshot.referencedSdkRemoved(sdk));
+      }
+    }
   }
 
   private static class Snapshots {
@@ -408,7 +463,7 @@ public class IndexableFilesIndex {
     }
 
     private static Snapshots create(@NotNull Project project) {
-      return new Snapshots(new WorkspaceModelSnapshot(project), 0, null, 0, null);
+      return new Snapshots(WorkspaceModelSnapshot.create(project), 0, null, 0, null);
     }
 
     public Snapshots createReset() {
