@@ -40,7 +40,9 @@ public interface HintAction extends IntentionAction {
    * This method is invoked on UI thread after the highlighting is finished, without a write action.
    * Before the invocation, {@link #isAvailable(Project, Editor, PsiFile)} is checked to be {@code true}.
    * @return whether the action was performed and anything has changed in document/PSI/project model
+   * @deprecated Use {@link com.intellij.codeInsight.daemon.ReferenceImporter} instead, which does a better job to avoid freezes
    */
+  @Deprecated
   default boolean fixSilently(@NotNull Editor editor) {
     return false;
   }
