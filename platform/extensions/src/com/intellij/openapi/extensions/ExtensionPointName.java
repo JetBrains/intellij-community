@@ -116,6 +116,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
     return getPointImpl(null).findExtension(instanceOf, false, ThreeState.UNSURE);
   }
 
+  @ApiStatus.Internal
   public <V> @NotNull List<@NotNull T> findExtensions(@NotNull Class<V> instanceOf) {
     return getPointImpl(null).findExtensions(instanceOf);
   }
