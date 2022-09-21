@@ -303,7 +303,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         //noinspection HardCodedStringLiteral
         Dimension preferredSize = new JLabel("W").getPreferredSize();
         JBInsets.addTo(preferredSize, JBUI.CurrentTheme.ActionsList.mnemonicInsets());
-        myMnemonicLabel.setText("  ");
+        myMnemonicLabel.setText("");
       }
       Color foreground =
         ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.mnemonicForeground() : JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND;
