@@ -146,7 +146,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
       val shape = when (component) {
         component.parent?.components?.lastOrNull() -> {
           val shape1 = RoundRectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(), width.toFloat(), height.toFloat(), arc, arc)
-          val shape2 = Rectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(), arc, height.toFloat())
+          val shape2 = Rectangle2D.Float(rect.x.toFloat() - 1, rect.y.toFloat(), arc, height.toFloat())
           Area(shape1).also { it.add(Area(shape2)) }
         }
         component.parent?.components?.get(0) -> {
@@ -155,7 +155,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
           Area(shape1).also { it.add(Area(shape2)) }
         }
         else -> {
-          Rectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(), width.toFloat(), height.toFloat())
+          Rectangle2D.Float(rect.x.toFloat() - 1, rect.y.toFloat(), width.toFloat() + 2, height.toFloat())
         }
       }
 
