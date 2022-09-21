@@ -1985,6 +1985,11 @@ public class JBTabsImpl extends JComponent
         each.setTabActionsAutoHide(myTabLabelActionsAutoHide);
       }
 
+      Rectangle moreBoundsBeforeLayout = myMoreToolbar.getComponent().getBounds();
+      Rectangle entryPointBoundsBeforeLayout = myEntryPointToolbar != null
+                                               ? myEntryPointToolbar.getComponent().getBounds()
+                                               : new Rectangle(0, 0, 0, 0);
+
       myHeaderFitSize = computeHeaderFitSize();
 
       List<TabInfo> visible = new ArrayList<>(getVisibleInfos());
@@ -2081,9 +2086,19 @@ public class JBTabsImpl extends JComponent
         myScrollBar.setBounds(getScrollBarBounds());
       }
       updateScrollBarModel();
+      updateToolbarIfVisibilityChanged(myMoreToolbar, moreBoundsBeforeLayout);
+      updateToolbarIfVisibilityChanged(myEntryPointToolbar, entryPointBoundsBeforeLayout);
     }
     finally {
       myForcedRelayout = false;
+    }
+  }
+
+  private static void updateToolbarIfVisibilityChanged(@Nullable ActionToolbar toolbar, @NotNull Rectangle previousBounds) {
+    if (toolbar == null) return;
+    Rectangle curBounds = toolbar.getComponent().getBounds();
+    if (curBounds.isEmpty() != previousBounds.isEmpty()) {
+      toolbar.updateActionsImmediately();
     }
   }
 
