@@ -12,6 +12,7 @@ import com.intellij.ide.UiActivity
 import com.intellij.ide.UiActivityMonitor
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.MaximizeActiveDialogAction
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.openapi.Disposable
@@ -546,7 +547,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       shouldBeAvailable = factory.shouldBeAvailable(project),
       contentFactory = factory,
       stripeTitle = getStripeTitleSupplier(bean.id, project, plugin)
-    ), toolWindowPane.buttonManager)
+    ).apply {
+      pluginDescriptor = plugin
+    }, toolWindowPane.buttonManager)
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id), this)
 
     toolWindowPane.buttonManager.getStripeFor(anchor, sideTool).revalidate()
@@ -1018,7 +1021,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
     var info = layoutState.getInfo(task.id)
     val isButtonNeeded = task.shouldBeAvailable
-                         && (info?.isShowStripeButton ?: !(isNewUi && task.pluginDescriptor?.isBundled == true))
+                         && (info?.isShowStripeButton ?: !(isNewUi && isToolwindowOfBundledPlugin(task)))
                          && stripeManager.allowToShowOnStripe(task.id, info == null, isNewUi)
     // do not create layout for New UI - button is not created for toolwindow by default
     if (info == null) {
@@ -1106,6 +1109,16 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
 
     return entry
+  }
+
+  private fun isToolwindowOfBundledPlugin(task: RegisterToolWindowTask): Boolean {
+    val taskPlugin = task.pluginDescriptor
+    if (taskPlugin != null) return taskPlugin.isBundled
+
+    val contentFactoryClass = task.contentFactory?.javaClass?.canonicalName ?: return false
+    // check content factory, Service View and Endpoints View go here
+    val pluginDescriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(contentFactoryClass)
+    return pluginDescriptor == null || pluginDescriptor.isBundled
   }
 
   @Deprecated("Use ToolWindowFactory and toolWindow extension point")
