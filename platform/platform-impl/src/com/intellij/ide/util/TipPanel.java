@@ -25,12 +25,12 @@ import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,8 +43,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.util.SystemInfo.isWin10OrNewer;
-import static com.intellij.ui.Gray.xD0;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
@@ -66,9 +64,6 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
 
   public TipPanel(@NotNull final Project project, @NotNull final List<TipAndTrickBean> tips, @NotNull Disposable parentDisposable) {
     setLayout(new BorderLayout());
-    if (isWin10OrNewer && !StartupUiUtil.isUnderDarcula()) {
-      setBorder(JBUI.Borders.customLine(xD0, 1, 0, 0, 0));
-    }
     myProject = project;
     myTextPane = new StyledTextPane();
     myTextPane.setBackground(UIUtil.getTextFieldBackground());
@@ -256,6 +251,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     myTextPane.setParagraphs(tipContent);
     adjustTextPaneBorder(tipContent);
     setPromotionForCurrentTip();
+    setTopBorder();
 
     TipsOfTheDayUsagesCollector.triggerTipShown(tip, myAlgorithm, myAlgorithmVersion);
     TipsUsageManager.getInstance().fireTipShown(myCurrentTip);
@@ -291,6 +287,15 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     }
     revalidate();
     repaint();
+  }
+
+  private void setTopBorder() {
+    if (myCurrentPromotion == null && (SystemInfo.isWin10OrNewer || SystemInfo.isMac)) {
+      setBorder(JBUI.Borders.customLine(TipUiSettings.getImageBorderColor(), 1, 0, 0, 0));
+    }
+    else {
+      setBorder(null);
+    }
   }
 
   private void setTipsNotFoundText() {
