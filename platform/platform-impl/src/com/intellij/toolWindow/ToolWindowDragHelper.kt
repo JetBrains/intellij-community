@@ -22,7 +22,6 @@ import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.NotNull
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -61,7 +60,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       val image = ImageUtil.createImage(component.graphicsConfiguration, component.width, component.height, BufferedImage.TYPE_INT_RGB)
       val graphics = image.graphics
       graphics.color = UIUtil.getBgFillColor(component)
-      RectanglePainter.FILL.paint(graphics as @NotNull Graphics2D, 0, 0, component.width, component.height, null)
+      RectanglePainter.FILL.paint(graphics as Graphics2D, 0, 0, component.width, component.height, null)
       component.paint(graphics)
       graphics.dispose()
       val width: Double = image.getWidth(null).toDouble()
@@ -588,6 +587,8 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     private var dragOut: Boolean? = null
 
     init {
+      type = Type.POPUP
+      focusableWindowState = false
       isUndecorated = true
       try {
         opacity = THUMB_OPACITY

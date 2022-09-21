@@ -260,7 +260,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
         else if (event is WindowEvent && event.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
           process { manager ->
             val frame = event.getSource() as? JFrame
-            if (frame === manager.frameState?.frameOrNull) {
+            // Reset the hold state if a tool window owning frame is losing focus, and the window gaining focus isn't a tool window frame
+            if (manager.toolWindowPanes.values.any { it.frame === frame }
+                && manager.toolWindowPanes.values.all { it.frame !== event.oppositeWindow }) {
               manager.resetHoldState()
             }
           }
@@ -1748,7 +1750,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       entry.toolWindow.requestFocusInToolWindow()
     }
 
-    val frame = frameState!!
+    val frame = getToolWindowPane(entry.toolWindow).frame
     val rootPane = frame.rootPane ?: return
     rootPane.revalidate()
     rootPane.repaint()
@@ -1817,9 +1819,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   }
 
   private fun addFloatingDecorator(entry: ToolWindowEntry, info: WindowInfo) {
-    val frame = frameState!!.frameOrNull
+    val frame = getToolWindowPane(entry.toolWindow).frame
     val decorator = entry.toolWindow.getOrCreateDecoratorComponent()
-    val floatingDecorator = FloatingDecorator(frame!!, decorator)
+    val floatingDecorator = FloatingDecorator(frame, decorator)
     floatingDecorator.apply(info)
 
     entry.floatingDecorator = floatingDecorator
@@ -1829,7 +1831,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       floatingDecorator.bounds = Rectangle(bounds)
     }
     else {
-      // place new frame at the center of main frame if there are no floating bounds
+      // place new frame at the center of current frame if there are no floating bounds
       var size = decorator.size
       if (size.width == 0 || size.height == 0) {
         size = decorator.preferredSize
@@ -1862,13 +1864,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       window.bounds = Rectangle(bounds)
     }
     else {
-      // place new frame at the center of main frame if there are no floating bounds
+      // place new frame at the center of current frame if there are no floating bounds
+      val currentFrame = getToolWindowPane(entry.toolWindow).frame
       var size = decorator.size
       if (size.width == 0 || size.height == 0) {
         size = decorator.preferredSize
       }
       window.size = size
-      window.setLocationRelativeTo(frameState!!.frameOrNull)
+      window.setLocationRelativeTo(currentFrame)
     }
     entry.windowedDecorator = windowedDecorator
     Disposer.register(windowedDecorator) {
