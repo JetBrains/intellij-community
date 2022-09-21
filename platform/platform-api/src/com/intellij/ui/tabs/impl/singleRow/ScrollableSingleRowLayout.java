@@ -173,7 +173,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   }
 
   private int getMoreRectAxisSize() {
-    if (ExperimentalUI.isNewUI() || isWithScrollBar()) return 0;
+    if (isWithScrollBar()) return 0;
     return getStrategy().getMoreRectAxisSize();
   }
 
