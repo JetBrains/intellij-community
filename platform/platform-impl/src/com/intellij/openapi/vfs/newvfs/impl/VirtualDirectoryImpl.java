@@ -357,6 +357,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Override
+  @SuppressWarnings("SpellCheckingInspection")
   public @NotNull Iterable<VirtualFile> iterInDbChildren() {
     if (!ourPersistence.wereChildrenAccessed(this)) {
       return Collections.emptyList();
@@ -372,6 +373,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Override
+  @SuppressWarnings("SpellCheckingInspection")
   public @NotNull Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
     if (!ourPersistence.wereChildrenAccessed(this)) {
       return Collections.emptyList();
@@ -433,9 +435,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
             }
             if (!isCaseSensitive) {
               // Sometimes file system rules for case-insensitive comparison differ from Java rules.
-              // E.g., on NTFS files named \u1E9B (small long S with dot) and \u1E60 (capital S with dot)
-              // can coexist while the uppercase for \u1E9B is \u1E60 - probably because the lower case of
-              // \u1E60 is \u1E61 (small S with dot), not \u1E9B.
+              // E.g., on NTFS files named 'ẛ' (small long S with dot) and 'Ṡ' (capital S with dot) can coexist
+              // despite the uppercase for 'ẛ' being 'Ṡ' - probably because the lower case of 'Ṡ' is 'ṡ' (small S with dot), not 'ẛ'.
               // When encountering such a case, we fall back to case-sensitive comparison to establish some order between these names.
               cmp = compareNames(name1, name2, true);
             }
@@ -588,7 +589,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
       return;
     }
-    // optimization: when there are many children, it's cheaper to merge sorted added and existing lists just like in merge sort
+    // optimization: when there are many children, it's cheaper to merge sorted lists just like in merge sort
     boolean isCaseSensitive = isCaseSensitive();
     Comparator<ChildInfo> byName = (p1, p2) -> compareNames(p1.getName(), p2.getName(), isCaseSensitive);
     added.sort(byName);

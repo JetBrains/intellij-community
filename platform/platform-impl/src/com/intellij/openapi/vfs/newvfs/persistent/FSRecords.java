@@ -119,8 +119,7 @@ public final class FSRecords {
     return nameId;
   }
 
-  @NotNull
-  public static String diagnosticsForAlreadyCreatedFile(int fileId, int nameId, @NotNull Object existingData) {
+  public static @NotNull String diagnosticsForAlreadyCreatedFile(int fileId, int nameId, @NotNull Object existingData) {
     invalidateCaches();
     int parentId = getParent(fileId);
     String msg = "File already created: fileId=" + fileId +
@@ -165,8 +164,7 @@ public final class FSRecords {
     }
   }
 
-  @NotNull
-  public static String getCachesDir() {
+  public static @NotNull String getCachesDir() {
     String dir = System.getProperty("caches_dir");
     return dir == null ? PathManager.getSystemPath() + "/caches/" : dir;
   }
@@ -248,8 +246,7 @@ public final class FSRecords {
     return ourConnection.isDirty();
   }
 
-  @PersistentFS.Attributes
-  static int getFlags(int id) {
+  static @PersistentFS.Attributes int getFlags(int id) {
     try {
       return ourConnection.getRecords().getFlags(id);
     }
@@ -331,8 +328,7 @@ public final class FSRecords {
   }
 
   // returns child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
-  @NotNull
-  static ListResult list(int parentId) {
+  static @NotNull ListResult list(int parentId) {
     try {
       return ourTreeAccessor.doLoadChildren(parentId);
     }
@@ -342,8 +338,7 @@ public final class FSRecords {
     }
   }
 
-  @NotNull
-  public static List<CharSequence> listNames(int parentId) {
+  public static @NotNull List<CharSequence> listNames(int parentId) {
     return ContainerUtil.map(list(parentId).children, c -> c.getName());
   }
 
@@ -361,8 +356,7 @@ public final class FSRecords {
   // Obtain fresh children and try to apply `childrenConvertor` to the children of `parentId`.
   // If everything is still valid (i.e. no one changed the list in the meantime), commit.
   // Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
-  @NotNull
-  static ListResult update(@NotNull VirtualFile parent, int parentId, @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
+  static @NotNull ListResult update(@NotNull VirtualFile parent, int parentId, @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
     SlowOperations.assertSlowOperationsAreAllowed();
 
     assert parentId > 0: parentId;
@@ -537,10 +531,9 @@ public final class FSRecords {
     }
   }
 
-  @Nullable
-  static VirtualFileSystemEntry findFileById(int id, @NotNull VirtualDirectoryCache idToDirCache) {
+  static @Nullable VirtualFileSystemEntry findFileById(int id, @NotNull VirtualDirectoryCache idToDirCache) {
     class ParentFinder implements ThrowableComputable<Void, Exception> {
-      @Nullable private IntList path;
+      private @Nullable IntList path;
       private VirtualFileSystemEntry foundParent;
 
       @Override
@@ -569,8 +562,7 @@ public final class FSRecords {
         return null;
       }
 
-      @Nullable
-      private VirtualFileSystemEntry findDescendantByIdPath() {
+      private @Nullable VirtualFileSystemEntry findDescendantByIdPath() {
         VirtualFileSystemEntry parent = foundParent;
         if (path != null) {
           for (int i = path.size() - 1; i >= 0; i--) {
@@ -581,8 +573,7 @@ public final class FSRecords {
         return findChild(parent, id);
       }
 
-      @Nullable
-      private VirtualFileSystemEntry findChild(VirtualFileSystemEntry parent, int childId) {
+      private @Nullable VirtualFileSystemEntry findChild(VirtualFileSystemEntry parent, int childId) {
         if (!(parent instanceof VirtualDirectoryImpl)) {
           return null;
         }
@@ -612,14 +603,12 @@ public final class FSRecords {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static IntList getRemainFreeRecords() {
+  public static @NotNull IntList getRemainFreeRecords() {
     return ourConnection.getFreeRecords();
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static IntList getNewFreeRecords() {
+  public static @NotNull IntList getNewFreeRecords() {
     return ourRecordAccessor.getNewFreeRecords();
   }
 
@@ -670,8 +659,7 @@ public final class FSRecords {
     return getNameSequence(id).toString();
   }
 
-  @NotNull
-  static CharSequence getNameSequence(int id) {
+  static @NotNull CharSequence getNameSequence(int id) {
     try {
       int nameId = ourConnection.getRecords().getNameId(id);
       return nameId == 0 ? "" : FileNameCache.getVFileName(nameId);
@@ -781,8 +769,7 @@ public final class FSRecords {
     }
   }
 
-  @Nullable
-  static DataInputStream readContent(int fileId) {
+  static @Nullable DataInputStream readContent(int fileId) {
     try {
       return ourContentAccessor.readContent(fileId);
     }
@@ -795,8 +782,7 @@ public final class FSRecords {
     return null;
   }
 
-  @NotNull
-  static DataInputStream readContentById(int contentId) {
+  static @NotNull DataInputStream readContentById(int contentId) {
     try {
       return ourContentAccessor.readContentDirectly(contentId);
     }
@@ -806,8 +792,7 @@ public final class FSRecords {
     return null;
   }
 
-  @Nullable
-  public static AttributeInputStream readAttributeWithLock(int fileId, @NotNull FileAttribute att) {
+  public static @Nullable AttributeInputStream readAttributeWithLock(int fileId, @NotNull FileAttribute att) {
     try {
       try (AttributeInputStream stream = readAttribute(fileId, att)) {
         if (stream != null && att.isVersioned()) {
@@ -831,8 +816,7 @@ public final class FSRecords {
   }
 
   // must be called under r or w lock
-  @Nullable
-  private static AttributeInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
+  private static @Nullable AttributeInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
     return ourAttributeAccessor.readAttribute(fileId, attribute);
   }
 
@@ -877,8 +861,7 @@ public final class FSRecords {
     }
   }
 
-  @NotNull
-  static DataOutputStream writeContent(int fileId, boolean readOnly) {
+  static @NotNull DataOutputStream writeContent(int fileId, boolean readOnly) {
     return new DataOutputStream(ourContentAccessor.new ContentOutputStream(fileId, readOnly)) {
       @Override
       public void close() {
@@ -915,8 +898,7 @@ public final class FSRecords {
     }
   }
 
-  @NotNull
-  public static AttributeOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
+  public static @NotNull AttributeOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
     return ourAttributeAccessor.writeAttribute(fileId, att);
   }
 
