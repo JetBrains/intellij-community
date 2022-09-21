@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
 
 class LibraryInfoCache(project: Project) : Disposable {
@@ -126,7 +127,7 @@ class LibraryInfoCache(project: Project) : Disposable {
             value: List<LibraryInfo>,
         ) {
             cache[key] = value
-            deduplicationCache.computeIfAbsent(root) { mutableListOf() } += key
+            deduplicationCache.getOrPut(root) { mutableListOf() } += key
         }
 
         private fun cachedDeduplicatedValue(
@@ -139,8 +140,16 @@ class LibraryInfoCache(project: Project) : Disposable {
             val deduplicatedLibrary = deduplicatedLibraries.find { keyUrlsByType.rootEquals(it) } ?: return null
             val cachedValue = cache[deduplicatedLibrary]
             if (cachedValue == null) {
+                val exception = KotlinExceptionWithAttachments("inconsistent state. deduplicated: ${deduplicatedLibrary.presentableName}, key: ${key.presentableName}")
+                    .withAttachment("key.txt", key.toString())
+                    .withAttachment("deduplicated.txt", deduplicatedLibrary.toString())
+                    .withAttachment("librariesBefore.txt", deduplicatedLibraries.toString())
+
                 deduplicatedLibraries -= deduplicatedLibrary
-                logger.error("inconsistent state. deduplicated: ${deduplicatedLibrary.presentableName}, key: ${key.presentableName}")
+                exception.withAttachment("librariesAfter.txt", deduplicatedLibraries.toString())
+                logger.error(exception)
+
+                return cachedDeduplicatedValue(cache, key, root, keyUrlsByType)
             }
 
             return cachedValue
