@@ -3,7 +3,7 @@
 // TEST_FRAMEWORK: JUnit5
 class A {
     @org.junit.jupiter.api.Test
-    internal fun name() {
+    fun name() {
         <selection>TODO("Not yet implemented")<caret></selection>
     }
 }

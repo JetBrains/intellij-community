@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.j2k.ConverterSettings
+import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.defaultSettings
 import org.jetbrains.kotlin.j2k.FilesResult
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.OldJavaToKotlinConverter
@@ -106,7 +107,8 @@ class JavaToKotlinAction : AnAction() {
             module: Module,
             enableExternalCodeProcessing: Boolean = true,
             askExternalCodeProcessing: Boolean = true,
-            forceUsingOldJ2k: Boolean = false
+            forceUsingOldJ2k: Boolean = false,
+            settings: ConverterSettings = defaultSettings
         ): List<KtFile> {
             val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return emptyList() }
             var converterResult: FilesResult? = null
@@ -114,12 +116,12 @@ class JavaToKotlinAction : AnAction() {
                 val converter =
                     if (forceUsingOldJ2k) OldJavaToKotlinConverter(
                         project,
-                        ConverterSettings.defaultSettings,
+                        settings,
                         IdeaJavaToKotlinServices
                     ) else J2kConverterExtension.extension(useNewJ2k = ExperimentalFeatures.NewJ2k.isEnabled).createJavaToKotlinConverter(
                         project,
                         module,
-                        ConverterSettings.defaultSettings,
+                        settings,
                         IdeaJavaToKotlinServices
                     )
                 converterResult = converter.filesToKotlin(

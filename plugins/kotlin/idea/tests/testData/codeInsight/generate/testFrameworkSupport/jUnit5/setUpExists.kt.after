@@ -3,7 +3,7 @@
 // TEST_FRAMEWORK: JUnit5
 class A {
     @org.junit.jupiter.api.BeforeEach
-    internal fun setUp() {
+    fun setUp() {
         <selection>TODO("Not yet implemented")<caret></selection>
     }
 

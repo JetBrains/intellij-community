@@ -3,7 +3,7 @@
 // TEST_FRAMEWORK: JUnit5
 class A {
     @org.junit.jupiter.api.AfterEach
-    internal fun tearDown() {
+    fun tearDown() {
         <selection>TODO("Not yet implemented")<caret></selection>
     }
 }

@@ -9,7 +9,7 @@ open class A {
 
 class B : A() {
     @org.junit.jupiter.api.BeforeEach
-    internal override fun setUp() {
+    override fun setUp() {
         <selection>super.setUp()<caret></selection>
     }
 }
