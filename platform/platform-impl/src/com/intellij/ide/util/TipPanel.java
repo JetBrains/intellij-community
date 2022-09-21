@@ -319,7 +319,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   private static int getDefaultWidth() {
-    return TipUiSettings.imageWidth + TipUiSettings.getTipPanelLeftIndent() + TipUiSettings.getTipPanelRightIndent();
+    return TipUiSettings.getImageMaxWidth() + TipUiSettings.getTipPanelLeftIndent() + TipUiSettings.getTipPanelRightIndent();
   }
 
   @Override

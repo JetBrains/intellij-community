@@ -22,6 +22,7 @@ import com.intellij.ui.TextAccessor;
 import com.intellij.ui.icons.LoadIconParameters;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
@@ -239,6 +240,10 @@ public final class TipUIUtil {
 
       if (image != null) {
         Icon icon = new JBImageIcon(image);
+        int maxWidth = TipUiSettings.getImageMaxWidth();
+        if (icon.getIconWidth() > maxWidth) {
+          icon = IconUtil.scale(icon, null, maxWidth * 1f / icon.getIconWidth());
+        }
         icons.put(path, icon);
       }
       else {

@@ -8,9 +8,9 @@ import javax.swing.BorderFactory
 import javax.swing.border.Border
 
 internal object TipUiSettings {
-  const val imageWidth = 498
-  const val imageHeight = 248
-
+  @JvmStatic
+  val imageMaxWidth: Int
+    get() = JBUI.scale(498)
   @JvmStatic
   val tipPanelMinHeight: Int
     get() = JBUI.scale(190)
