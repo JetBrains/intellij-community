@@ -248,8 +248,7 @@ public final class ExpressionUtils {
     if (expression == null) {
       return false;
     }
-    final PsiType expressionType = expression.getType();
-    final Object value = ConstantExpressionUtil.computeCastTo(expression, expressionType);
+    final Object value = computeConstantExpression(expression);
     if (value == null) {
       return false;
     }
