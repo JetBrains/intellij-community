@@ -178,6 +178,62 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin")
+    public static class JavaFunctionWithKotlin extends AbstractK2SafeDeleteTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doJavaMethodTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("mixedHierarchy1.kt")
+        public void testMixedHierarchy1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin/mixedHierarchy1.kt");
+        }
+
+        @TestMetadata("mixedHierarchy2.kt")
+        public void testMixedHierarchy2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin/mixedHierarchy2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin")
+    public static class JavaPropertyWithKotlin extends AbstractK2SafeDeleteTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doJavaPropertyTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("middleJava1.kt")
+        public void testMiddleJava1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava1.kt");
+        }
+
+        @TestMetadata("middleJava2.kt")
+        public void testMiddleJava2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava2.kt");
+        }
+
+        @TestMetadata("middleJava3.kt")
+        public void testMiddleJava3() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava3.kt");
+        }
+
+        @TestMetadata("middleJava4.kt")
+        public void testMiddleJava4() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava4.kt");
+        }
+
+        @TestMetadata("middleJava5.kt")
+        public void testMiddleJava5() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava5.kt");
+        }
+
+        @TestMetadata("middleJava6.kt")
+        public void testMiddleJava6() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava6.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteTypeAlias/kotlinTypeAlias")
     public static class KotlinTypeAlias extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -373,6 +429,19 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("subst7.kt")
         public void testSubst7() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subst7.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin")
+    public static class JavaParameterWithKotlin extends AbstractK2SafeDeleteTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doJavaParameterTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("hierarchyWithoutConflict.java")
+        public void testHierarchyWithoutConflict() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin/hierarchyWithoutConflict.java");
         }
     }
 }
