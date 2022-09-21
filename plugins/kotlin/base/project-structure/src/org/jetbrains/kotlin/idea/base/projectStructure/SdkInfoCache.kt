@@ -15,7 +15,10 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.kotlin.analyzer.ModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.util.caching.LockFreeFineGrainedEntityCache
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -144,7 +147,6 @@ internal class SdkInfoCacheImpl(project: Project) :
                 val cached = cache[last]
                 if (cached != null) {
                     cached.sdk?.let { return@run graph to cached }
-                    continue
                 }
 
                 if (!visitedModuleInfos.add(last)) continue
@@ -181,16 +183,19 @@ internal class SdkInfoCacheImpl(project: Project) :
                     }
                 }
             }
+
             return@run null to noSdkDependency
         }
+
         // when sdk is found: mark all graph elements could be resolved to the same sdk
         path?.let {
             it.forEach { info -> cache[info] = sdkInfo }
 
             visitedModuleInfos.removeAll(it)
         }
+
         // mark all visited modules (apart from found path) as dead ends
-        visitedModuleInfos.forEach { info -> cache[info] = noSdkDependency }
+        visitedModuleInfos.forEach { info -> cache.putIfAbsent(info, noSdkDependency) }
 
         return cache[key] ?: noSdkDependency
     }
