@@ -3,19 +3,27 @@ package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor
 import com.intellij.refactoring.safeDelete.NonCodeUsageSearchInfo
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegateBase
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
+import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
 import com.intellij.util.containers.map2Array
+import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.refactoring.KotlinFirRefactoringsSettings
+import org.jetbrains.kotlin.idea.refactoring.KotlinK2RefactoringsBundle
 import org.jetbrains.kotlin.idea.refactoring.canDeleteElement
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -73,7 +81,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         element: PsiElement,
         module: Module?,
         allElementsToDelete: MutableCollection<PsiElement>
-    ): MutableCollection<out PsiElement>? {
+    ): MutableCollection<out PsiElement> {
         return arrayListOf(element)
     }
 
@@ -86,6 +94,27 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
     }
 
     override fun findConflicts(element: PsiElement, allElementsToDelete: Array<out PsiElement>): MutableCollection<String>? {
+        if (element is KtNamedFunction || element is KtProperty) {
+            val ktClass = element.getNonStrictParentOfType<KtClass>()
+            if (ktClass == null || ktClass.body != element.parent) return null
+
+            val modifierList = ktClass.modifierList
+            if (modifierList != null && modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return null
+
+            return analyzeInModalWindow(element as KtDeclaration, RefactoringBundle.message("detecting.possible.conflicts")) {
+                (element.getSymbol() as? KtCallableSymbol)?.getAllOverriddenSymbols()
+                    ?.asSequence()
+                    ?.filter { (it as? KtSymbolWithModality)?.modality == Modality.ABSTRACT }
+                    ?.mapNotNull { it.psi }
+                    ?.mapTo(ArrayList()) {
+                        KotlinK2RefactoringsBundle.message(
+                            "safe.delete.implements.conflict.message", 
+                            ElementDescriptionUtil.getElementDescription(element, RefactoringDescriptionLocation.WITH_PARENT), 
+                            ElementDescriptionUtil.getElementDescription(it, RefactoringDescriptionLocation.WITH_PARENT)
+                        )
+                    }
+            }
+        }
         return null
     }
 
