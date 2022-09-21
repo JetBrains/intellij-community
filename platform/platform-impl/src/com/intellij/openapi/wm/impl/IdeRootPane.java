@@ -249,7 +249,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     ToolbarHolder delegate = getToolbarHolderDelegate();
     if (delegate == null && ExperimentalUI.isNewUI()) {
       MainToolbar toolbar = new MainToolbar();
-      toolbar.setBorder(JBUI.Borders.empty(0, 10));
+      toolbar.setBorder(JBUI.Borders.empty());
 
       removeToolbar();
       myToolbar = toolbar;
@@ -351,7 +351,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       IdeFrame frame = ComponentUtil.getParentOfType(IdeFrameImpl.class, this);
       MainToolbar toolbar = new MainToolbar();
       toolbar.init(frame == null ? null : frame.getProject());
-      toolbar.setBorder(JBUI.Borders.empty(0, 10));
+      toolbar.setBorder(JBUI.Borders.empty());
       return toolbar;
     }
 
