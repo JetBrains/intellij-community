@@ -2189,24 +2189,6 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only list consisting of the elements from all collections in order
-   */
-  @Contract(pure = true)
-  public static @NotNull <E> List<E> flattenIterables(@NotNull Iterable<? extends Iterable<? extends E>> collections) {
-    int totalSize = 0;
-    for (Iterable<? extends E> list : collections) {
-      totalSize += list instanceof Collection ? ((Collection<?>)list).size() : 10;
-    }
-    List<E> result = new ArrayList<>(totalSize);
-    for (Iterable<? extends E> list : collections) {
-      for (E e : list) {
-        result.add(e);
-      }
-    }
-    return result.isEmpty() ? emptyList() : result;
-  }
-
-  /**
    * @return read-only list consisting of the elements from all collections returned by the mapping function,
    * or a read-only view of the list returned by the mapping function, if it only returned a single list that was not empty
    */
