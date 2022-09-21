@@ -216,11 +216,29 @@ internal class WorkspaceProjectImporter(
     // remove modules which should be replaced with Maven modules, in order to clean them from pre-existing sources, dependencies etc.
     // It's needed since otherwise 'replaceBySource' will merge pre-existing Module content with imported module content, resulting in
     // unexpected module configuration.
-    val importedModuleNames = mavenProjectsWithModules
-      .flatMapTo(mutableSetOf()) { it.modules.asSequence().map { it.module.name } }
+    val importedModuleNames by lazy {
+      mavenProjectsWithModules.flatMapTo(mutableSetOf()) { it.modules.asSequence().map { it.module.name } }
+    }
+
+    // also remove non-Maven modules that has clashing content roots, otherwise we might end up with a situation:
+    //  * A user opens a project with existing non-maven module 'A', with a single content root(==project root), and a pom.xml in the root.
+    //  * The user asks the IDE to import pom.xml artifactId 'B'.
+    //  * the IDE creates module 'B' along with a non-maven module 'A', both pointing at the same content root.
+    //  -> IDE is confused - which module to use to resolve project files?.
+    //  -> User thinks that either resolve or import is broken.
+    val importedContentRootUrls by lazy {
+      mavenProjectsWithModules
+        .flatMapTo(mutableSetOf()) { it.modules.asSequence().flatMap { it.module.contentRoots.asSequence() }.map { it.url } }
+    }
+
     currentStorage
       .entities(ModuleEntity::class.java)
-      .filter { !isMavenEntity(it.entitySource) && it.name in importedModuleNames }
+      .filter {
+        if (isMavenEntity(it.entitySource)) return@filter false
+        if (it.name in importedModuleNames) return@filter true
+        if (it.contentRoots.map { it.url }.any { it in importedContentRootUrls }) return@filter true
+        false
+      }
       .forEach { currentStorage.removeEntity(it) }
 
     currentStorage.replaceBySource({ isMavenEntity(it) }, newStorage)

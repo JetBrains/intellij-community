@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -110,6 +111,28 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
       assertSources("m2", "src/main/java");
       assertSources("m3", "user-sources");
     }
+  }
+
+  @Test
+  public void testImportWithAlreadyExistingModuleWithDifferentNameButSameContentRoot() throws IOException {
+    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+
+    Module userModuleWithConflictingRoot = createModule("userModuleWithConflictingRoot");
+    PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null);
+    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, myProjectRoot);
+    assertContentRoots(userModuleWithConflictingRoot.getName(), getProjectPath());
+
+    Module userModuleWithUniqueRoot = createModule("userModuleWithUniqueRoot");
+    assertContentRoots(userModuleWithUniqueRoot.getName(), getProjectPath() + "/userModuleWithUniqueRoot");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+
+    importProject();
+    assertModules("project", userModuleWithUniqueRoot.getName());
+    assertContentRoots("project", getProjectPath());
+    assertContentRoots(userModuleWithUniqueRoot.getName(), getProjectPath() + "/userModuleWithUniqueRoot");
   }
 
   @Test
