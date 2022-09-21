@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtil
@@ -111,7 +112,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         if (mppModel == null) {
             return super.populateModuleContentRoots(gradleModule, ideModule)
         } else {
-            if (!nativeDebugAdvertised && mppModel.kotlinNativeHome.isNotEmpty()) {
+            if (!nativeDebugAdvertised && mppModel.kotlinNativeHome.isNotEmpty() && !SystemInfo.isWindows) {
                 nativeDebugAdvertised = true
                 suggestNativeDebug(resolverCtx.projectPath)
             }
