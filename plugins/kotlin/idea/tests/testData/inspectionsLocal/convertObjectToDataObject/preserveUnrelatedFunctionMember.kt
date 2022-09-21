@@ -5,6 +5,4 @@ object<caret> Foo {
     }
 
     fun foo() = 42
-
-    val x = "y"
 }

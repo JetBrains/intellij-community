@@ -141,7 +141,7 @@ private class ConvertToDataObjectQuickFix(private val isSerializable: Boolean) :
         ktObject.findEquals()?.delete()
         ktObject.findHashCode()?.delete()
         if (isSerializable) ktObject.findReadResolve()?.delete()
-        if (ktObject.body?.functions?.isEmpty() == true) ktObject.body?.delete()
+        if (ktObject.body?.declarations?.isEmpty() == true) ktObject.body?.delete()
         ktObject.addModifier(KtTokens.DATA_KEYWORD)
     }
 }

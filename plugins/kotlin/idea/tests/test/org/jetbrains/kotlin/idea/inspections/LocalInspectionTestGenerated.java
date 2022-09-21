@@ -3872,9 +3872,24 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertObjectToDataObject/plainObject.kt");
         }
 
-        @TestMetadata("preserveNotRelatedMembers.kt")
-        public void testPreserveNotRelatedMembers() throws Exception {
-            runTest("testData/inspectionsLocal/convertObjectToDataObject/preserveNotRelatedMembers.kt");
+        @TestMetadata("preserveUnrelatedConstructorMember.kt")
+        public void testPreserveUnrelatedConstructorMember() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/preserveUnrelatedConstructorMember.kt");
+        }
+
+        @TestMetadata("preserveUnrelatedFunctionMember.kt")
+        public void testPreserveUnrelatedFunctionMember() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/preserveUnrelatedFunctionMember.kt");
+        }
+
+        @TestMetadata("preserveUnrelatedObjectMember.kt")
+        public void testPreserveUnrelatedObjectMember() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/preserveUnrelatedObjectMember.kt");
+        }
+
+        @TestMetadata("preserveUnrelatedPropertyMember.kt")
+        public void testPreserveUnrelatedPropertyMember() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/preserveUnrelatedPropertyMember.kt");
         }
 
         @TestMetadata("preserveUnrelatedReadResolve.kt")
