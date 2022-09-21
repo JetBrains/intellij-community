@@ -94,12 +94,63 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     getToolWindowAtPoint(RelativePoint(dragComponent, dragComponentPoint)) != null
 
   override fun processMousePressed(event: MouseEvent) {
-    val relativePoint = RelativePoint(event)
-    val toolWindow = getToolWindowAtPoint(relativePoint) ?: return
+    val toolWindow = getToolWindowAtPoint(RelativePoint(event)) ?: return
+    toolWindowRef = WeakReference(toolWindow)
+  }
+
+  override fun getDragStartDeadzone(pressedScreenPoint: Point, draggedScreenPoint: Point): Int {
+    // The points are screen points from the event, which is in the same coordinate system as the dragSourcePane
+    val point = pressedScreenPoint.location.also { SwingUtilities.convertPointFromScreen(it, dragSourcePane) }
+    val component = getComponentFromDragSourcePane(RelativePoint(dragSourcePane, point))
+    if (component is StripeButton || component is SquareStripeButton) {
+      return super.getDragStartDeadzone(pressedScreenPoint, draggedScreenPoint)
+    }
+    return JBUI.scale(Registry.intValue("ide.new.tool.window.start.drag.deadzone", 7, 0, 100))
+  }
+
+  override fun isDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) =
+    isDragOut(DevicePoint(event))
+
+  private fun isDragOut(devicePoint: DevicePoint): Boolean {
+    if (!isNewUi && isPointInVisibleDockedToolWindow(devicePoint)) {
+      return false
+    }
+
+    // If we've got a stripe, we're within its bounds
+    // Note that this is a shortcut for getTargetStripeByDropLocation(devicePoint, preferredStripe) et al
+    // Make sure lastStripe is up-to-date before calling isDragOut!
+    return lastStripe == null
+  }
+
+  override fun processDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point, dragOutJustStarted: Boolean) {
+    if (getToolWindow() == null) return
+    if (isDragJustStarted) {
+      startDrag(event, startScreenPoint)
+    }
+    if (dragOutJustStarted) {
+      setDragOut(true)
+    }
+    relocate(event)
+    event.consume()
+  }
+
+  override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
+    if (!checkModifiers(event)) return
+    if (isDragJustStarted) {
+      startDrag(event, startScreenPoint)
+    }
+    else {
+      relocate(event)
+    }
+  }
+
+  private fun startDrag(event: MouseEvent, startScreenPoint: Point) {
+    val startPoint = Point(startScreenPoint).also { SwingUtilities.convertPointFromScreen(it, event.component) }
+    val relativePoint = RelativePoint(event.component, startPoint)
+    val toolWindow = getToolWindow() ?: return
     val clickedComponent = getComponentFromDragSourcePane(relativePoint)
     val decorator = if (toolWindow.isVisible) toolWindow.decorator else null
 
-    toolWindowRef = WeakReference(toolWindow)
     initialAnchor = toolWindow.anchor
     initialIsSplit = toolWindow.isSplitMode
 
@@ -129,49 +180,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     if (dragImage != null) {
       dragImageDialog = DragImageDialog(dragSourcePane, this, dragImage, dragOutImage)
     }
-  }
 
-  override fun getDragStartDeadzone(pressedScreenPoint: Point, draggedScreenPoint: Point): Int {
-    // The points are screen points from the event, which is in the same coordinate system as the dragSourcePane
-    val point = pressedScreenPoint.location.also { SwingUtilities.convertPointFromScreen(it, dragSourcePane) }
-    val component = getComponentFromDragSourcePane(RelativePoint(dragSourcePane, point))
-    if (component is StripeButton || component is SquareStripeButton) {
-      return super.getDragStartDeadzone(pressedScreenPoint, draggedScreenPoint)
-    }
-    return JBUI.scale(Registry.intValue("ide.new.tool.window.start.drag.deadzone", 7, 0, 100))
-  }
-
-  override fun isDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) =
-    isDragOut(DevicePoint(event))
-
-  private fun isDragOut(devicePoint: DevicePoint): Boolean {
-    if (!isNewUi && isPointInVisibleDockedToolWindow(devicePoint)) {
-      return false
-    }
-
-    // If we've got a stripe, we're within its bounds
-    // Note that this is a shortcut for getTargetStripeByDropLocation(devicePoint, preferredStripe) et al
-    // Make sure lastStripe is up-to-date before calling isDragOut!
-    return lastStripe == null
-  }
-
-  override fun processDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point, justStarted: Boolean) {
-    if (getToolWindow() == null) return
-    relocate(event)
-    event.consume()
-  }
-
-  override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
-    if (!checkModifiers(event)) return
-    if (isDragJustStarted) {
-      startDrag(event)
-    }
-    else {
-      relocate(event)
-    }
-  }
-
-  private fun startDrag(event: MouseEvent) {
     relocate(event)
     initialStripeButton?.getComponent()?.isVisible = false
     dragImageDialog?.isVisible = true
@@ -309,7 +318,6 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
   override fun processDragFinish(event: MouseEvent, willDragOutStart: Boolean) {
     val toolWindow = getToolWindow() ?: return
     if (willDragOutStart) {
-      setDragOut(true)
       return
     }
 
