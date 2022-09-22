@@ -173,8 +173,7 @@ class LibraryInfoCache(project: Project) : Disposable {
             }
         }
 
-        override fun additionalEntitiesCheck(cache: MutableMap<LibraryEx, List<LibraryInfo>>): Boolean {
-            var success = true
+        override fun additionalEntitiesCheck(cache: MutableMap<LibraryEx, List<LibraryInfo>>) {
             for (values in deduplicationCache.values) {
                 val iterator = values.iterator()
                 while (iterator.hasNext()) {
@@ -185,12 +184,9 @@ class LibraryInfoCache(project: Project) : Disposable {
                         iterator.remove()
                         cache.remove(library)
                         logger.error(e)
-                        success = false
                     }
                 }
             }
-
-            return success
         }
 
         override fun disposeIllegalEntry(cache: MutableMap<LibraryEx, List<LibraryInfo>>, key: LibraryEx) {

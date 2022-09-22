@@ -167,13 +167,14 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
                 }
             }
 
-            if (additionalEntitiesCheck(cache) && allEntriesChecked) {
+            additionalEntitiesCheck(cache)
+            if (allEntriesChecked) {
                 invalidationStamp.reset()
             }
         }
     }
 
-    protected open fun additionalEntitiesCheck(cache: MutableMap<Key, Value>): Boolean = true
+    protected open fun additionalEntitiesCheck(cache: MutableMap<Key, Value>) = Unit
 
     protected open fun disposeEntry(cache: MutableMap<Key, Value>, entry: MutableMap.MutableEntry<Key, Value>) = Unit
 
