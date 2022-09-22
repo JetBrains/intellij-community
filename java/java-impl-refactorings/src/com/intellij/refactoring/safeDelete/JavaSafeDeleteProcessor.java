@@ -668,7 +668,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     return true;
   }
 
-  private static void findTypeParameterExternalUsages(final PsiTypeParameter typeParameter, final Collection<? super UsageInfo> usages) {
+  private static void findTypeParameterExternalUsages(final PsiTypeParameter typeParameter, final List<? super UsageInfo> usages) {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();
     if (owner != null) {
       final PsiTypeParameterList parameterList = owner.getTypeParameterList();
@@ -677,30 +677,14 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         final int index = parameterList.getTypeParameterIndex(typeParameter);
 
         ReferencesSearch.search(owner).forEach(reference -> {
-          ContainerUtil.addIfNotNull(usages, createJavaTypeParameterUsageInfo(typeParameter, paramsCount, index, reference));
+          JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(reference.getElement().getLanguage());
+          if (safeDeleteDelegate != null) {
+            safeDeleteDelegate.createJavaTypeParameterUsageInfo(reference, usages, typeParameter, paramsCount, index);
+          }
           return true;
         });
       }
     }
-  }
-
-  public static UsageInfo createJavaTypeParameterUsageInfo(@NotNull PsiElement typeParameter,
-                                                           int paramsCount,
-                                                           int index,
-                                                           @NotNull PsiReference reference) {
-    if (reference instanceof PsiJavaCodeReferenceElement) {
-      final PsiReferenceParameterList parameterList1 = ((PsiJavaCodeReferenceElement)reference).getParameterList();
-      if (parameterList1 != null) {
-        PsiTypeElement[] typeArgs = parameterList1.getTypeParameterElements();
-        if (typeArgs.length > index) {
-          if (typeArgs.length == 1 && paramsCount > 1 && typeArgs[0].getType() instanceof PsiDiamondType) {
-            return null;
-          }
-          return new SafeDeleteReferenceJavaDeleteUsageInfo(typeArgs[index], typeParameter, true);
-        }
-      }
-    }
-    return null;
   }
 
   @Nullable

@@ -2,6 +2,7 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.lang.LanguageExtension;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.usageView.UsageInfo;
@@ -18,8 +19,8 @@ public interface JavaSafeDeleteDelegate {
     new LanguageExtension<>("com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate");
 
   /**
-   * Method is used to create usage information according to the input <code>reference</code> to the method
-   * and <code>parameter</code> that belongs to the <code>method</code>.
+   * Method is used to create usage information according to the input <code>reference</code> to the <code>parameter</code>.
+   * <p/>
    * The result will be filled into the list of the usages.
    * <p> The method should be called under read action.
    *     A caller should be also aware that an implementation may use an index access,
@@ -31,4 +32,16 @@ public interface JavaSafeDeleteDelegate {
                                    @NotNull PsiNamedElement parameter,
                                    int paramIdx, 
                                    boolean isVararg);
+  /**
+   * Method is used to create usage information for type parameter.
+   * <p/>
+   * <p> The method should be called under read action.
+   *     A caller should be also aware that an implementation may use an index access,
+   *     so using the method in EDT may lead to get the exception from {@link SlowOperations#assertSlowOperationsAreAllowed()}
+  */
+  void createJavaTypeParameterUsageInfo(@NotNull PsiReference reference, 
+                                        @NotNull List<? super UsageInfo> usages,
+                                        @NotNull PsiElement typeParameter,
+                                        int paramsCount,
+                                        int index);
 }

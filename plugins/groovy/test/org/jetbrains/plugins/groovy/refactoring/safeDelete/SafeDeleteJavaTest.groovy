@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Max Medvedev
  */
-class SafeDeleteJavaParameterTest extends LightGroovyTestCase {
+class SafeDeleteJavaTest extends LightGroovyTestCase {
 
   final String basePath = TestUtils.testDataPath + "refactoring/safeDeleteJavaParameter/"
 
@@ -41,6 +41,36 @@ class X{}
 @see A#foo(long)
 */
 class X{}
+''')
+  }
+  
+  void testGroovyTypeArgs() {
+    doTest('''\
+class A<<caret>T> {
+}
+''', '''\
+class X {
+  A<String> a = new A<String>()
+}
+''', '''\
+class X {
+  A a = new A()
+}
+''')
+  }
+  
+  void testGroovyTypeArgs2() {
+    doTest('''\
+class A<<caret>T, K> {
+}
+''', '''\
+class X {
+  A<String, String> a = new A<String, String>()
+}
+''', '''\
+class X {
+  A<String> a = new A<String>()
+}
 ''')
   }
 

@@ -5,18 +5,25 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParameter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,6 +79,44 @@ public class JavaSafeDeleteDelegateForGroovy implements JavaSafeDeleteDelegate {
           }
         }
       });
+    }
+  }
+
+  @Override
+  public void createJavaTypeParameterUsageInfo(@NotNull PsiReference reference, 
+                                               @NotNull List<? super UsageInfo> usages, 
+                                               @NotNull PsiElement typeParameter,
+                                               int paramsCount,
+                                               int index) {
+    if (reference instanceof GrCodeReferenceElementImpl) {
+      final @Nullable GrTypeArgumentList parameterList = ((GrCodeReferenceElementImpl)reference).getTypeArgumentList();
+      if (parameterList != null) {
+        GrTypeElement[] typeArgs = parameterList.getTypeArgumentElements();
+        if (typeArgs.length > index) {
+          usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(typeArgs.length == 1 ? parameterList : typeArgs[index], typeParameter, true) {
+            @Override
+            public void deleteElement() throws IncorrectOperationException {
+              PsiElement element = getElement();
+              if (element != null) {
+                PsiElement parent = element.getParent();
+                if (parent != null && parent.isValid()) {
+                  @Nullable PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
+                  if (next != null && PsiUtilCore.getElementType(next) == GroovyElementTypes.T_COMMA) {
+                    next.delete();
+                  }
+                  else {
+                    @Nullable PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element);
+                    if (prev != null && PsiUtilCore.getElementType(prev) == GroovyElementTypes.T_COMMA) {
+                      prev.delete();
+                    }
+                  }
+                }
+              }
+              super.deleteElement();
+            }
+          });
+        }
+      }
     }
   }
 }

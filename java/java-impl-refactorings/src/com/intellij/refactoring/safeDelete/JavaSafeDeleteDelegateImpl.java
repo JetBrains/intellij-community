@@ -97,4 +97,22 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
       });
     }
   }
+
+  @Override
+  public void createJavaTypeParameterUsageInfo(@NotNull PsiReference reference, @NotNull List<? super UsageInfo> usages, @NotNull PsiElement typeParameter,
+                                               int paramsCount,
+                                               int index)  {
+    if (reference instanceof PsiJavaCodeReferenceElement) {
+      final PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)reference).getParameterList();
+      if (parameterList != null) {
+        PsiTypeElement[] typeArgs = parameterList.getTypeParameterElements();
+        if (typeArgs.length > index) {
+          if (typeArgs.length == 1 && paramsCount > 1 && typeArgs[0].getType() instanceof PsiDiamondType) {
+            return;
+          }
+          usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(typeArgs[index], typeParameter, true));
+        }
+      }
+    }
+  }
 }

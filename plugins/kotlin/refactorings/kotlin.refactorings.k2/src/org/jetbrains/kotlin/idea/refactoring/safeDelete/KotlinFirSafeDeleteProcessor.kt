@@ -6,10 +6,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.elementType
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.safeDelete.*
+import com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate
+import com.intellij.refactoring.safeDelete.NonCodeUsageSearchInfo
+import com.intellij.refactoring.safeDelete.SafeDeleteProcessor
+import com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegateBase
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.usageView.UsageInfo
@@ -19,9 +20,7 @@ import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.idea.refactoring.KotlinFirRefactoringsSettings
-import org.jetbrains.kotlin.idea.refactoring.KotlinK2RefactoringsBundle
-import org.jetbrains.kotlin.idea.refactoring.canDeleteElement
+import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -58,20 +57,13 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 val parameterList = owner.typeParameters
                 val parameterIndex = parameterList.indexOf(element)
                 for (reference in ReferencesSearch.search(owner)) {
-                    val referencedElement = reference.element
-
-                    val argList = referencedElement.getNonStrictParentOfType<KtUserType>()?.typeArgumentList
-                        ?: referencedElement.getNonStrictParentOfType<KtCallExpression>()?.typeArgumentList
-
-                    if (argList != null) {
-                        val projections = argList.arguments
-                        if (parameterIndex < projections.size) {
-                            result.add(SafeDeleteTypeArgumentUsageInfo(projections[parameterIndex], element))
-                        }
-                    } else {
-                        JavaSafeDeleteProcessor.createJavaTypeParameterUsageInfo(element, parameterList.size, parameterIndex, reference)
-                            ?.let { result.add(it) }
-                    }
+                    JavaSafeDeleteDelegate.EP.forLanguage(reference.element.language).createJavaTypeParameterUsageInfo(
+                        reference,
+                        result,
+                        element,
+                        parameterList.size,
+                        parameterIndex
+                    )
                 }
             }
         }
@@ -193,45 +185,6 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
             is KtClass -> settings.RENAME_SEARCH_FOR_TEXT_FOR_CLASS = enabled
             is KtFunction -> settings.RENAME_SEARCH_FOR_TEXT_FOR_FUNCTION = enabled
             is KtProperty -> settings.RENAME_SEARCH_FOR_TEXT_FOR_VARIABLE = enabled
-        }
-    }
-}
-
-class SafeDeleteTypeArgumentUsageInfo(
-    projection: KtTypeProjection,
-    referenceElement: PsiElement
-) : SafeDeleteReferenceSimpleDeleteUsageInfo(projection, referenceElement, true) {
-    override fun deleteElement() {
-        val e = element
-        if (e != null) {
-            deleteSeparatingComma(e)
-            deleteBracesAroundEmptyList(e)
-
-            e.delete()
-        }
-    }
-}
-
-private fun deleteBracesAroundEmptyList(element: PsiElement?) {
-    val nextSibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(element)
-    val prevSibling = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element)
-    if (nextSibling != null && nextSibling.elementType == KtTokens.GT &&
-        prevSibling != null && prevSibling.elementType == KtTokens.LT) {
-         //keep comments
-        nextSibling.delete()
-        prevSibling.delete()
-    }
-}
-
-
-private fun deleteSeparatingComma(e: PsiElement?) {
-    val nextSibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(e)
-    if (nextSibling != null && nextSibling.elementType == KtTokens.COMMA) {
-        nextSibling.delete()
-    } else {
-        val prevSibling = PsiTreeUtil.skipWhitespacesAndCommentsBackward(e)
-        if (prevSibling != null && prevSibling.elementType == KtTokens.COMMA) {
-            prevSibling.delete()
         }
     }
 }
