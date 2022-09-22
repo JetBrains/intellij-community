@@ -114,6 +114,10 @@ public final class HardcodedContracts {
               ContractProvider.of(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(),
                 returnFalse())))
+    .register(anyOf(instanceCall(JAVA_UTIL_SET, "add").parameterCount(1)),
+              ContractProvider.of(singleConditionContract(
+                ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(),
+                returnTrue())))
     .register(instanceCall(JAVA_UTIL_LIST, "get", "remove").parameterTypes("int"),
               ContractProvider.of(specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE)))
     .register(anyOf(
