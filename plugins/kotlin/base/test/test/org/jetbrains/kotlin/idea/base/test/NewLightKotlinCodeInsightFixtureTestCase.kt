@@ -7,6 +7,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.io.exists
+import com.intellij.util.io.readText
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
@@ -21,6 +22,7 @@ import java.lang.reflect.Modifier
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.name
 import kotlin.io.path.writeText
 
 abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFixtureTestCase() {
@@ -65,6 +67,9 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         Paths.get(testClassPath, testMethodPath)
     }
 
+    protected val mainPathAbsolute: Path
+        get() = Paths.get(testDataPath).resolve(mainPath)
+
     override fun setUp() {
         val isK2Plugin = pluginKind == KotlinPluginKind.FIR_PLUGIN
         System.setProperty("idea.kotlin.plugin.use.k2", isK2Plugin.toString())
@@ -84,6 +89,11 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
 
     fun JavaCodeInsightTestFixture.configureByMainPath(): PsiFile {
         return configureByFile(mainPath.toString())
+    }
+
+    fun JavaCodeInsightTestFixture.configureByMainPathStrippingTags(vararg tagNames: String): PsiFile {
+        val text = mainPath.readText()
+        return configureByText(mainPath.name, KotlinTestHelpers.stripTags(text, *tagNames))
     }
 
     fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedSuffix: String) {

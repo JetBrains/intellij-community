@@ -55,6 +55,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k1" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k1" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-k2" exported="" />
     <orderEntry type="module" module-name="kotlin.refactorings.rename.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" exported="" />
