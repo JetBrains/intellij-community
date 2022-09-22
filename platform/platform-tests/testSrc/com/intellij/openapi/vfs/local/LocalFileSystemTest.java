@@ -108,8 +108,9 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void findChild() {
+  public void findChildWithSpecialName() {
     VirtualFile dir = requireNonNull(myFS.refreshAndFindFileByIoFile(tempDir.newDirectory("xxx")));
+    assertFalse(((VirtualDirectoryImpl)dir).allChildrenLoaded());    
     assertNull(dir.findChild("."));
     assertNull(dir.findChild(".."));
   }
