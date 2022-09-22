@@ -453,6 +453,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
 
+    Component componentToRestoreFocus = null;
+    KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    if (UIUtil.isSimpleWindow(kfm.getFocusedWindow())) {
+      // 'Simple' windows cannot be dialog owners, so focus won't return to them automatically on dialog closing
+      componentToRestoreFocus = kfm.getPermanentFocusOwner();
+    }
+
     try (
       AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RESET);
       AccessToken ignore2 = ThreadContext.resetThreadContext()
@@ -471,6 +478,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
 
       myDialog.getFocusManager().doWhenFocusSettlesDown(() -> result.complete(null));
+    }
+
+    if (componentToRestoreFocus != null) {
+      componentToRestoreFocus.requestFocus();
     }
 
     return result;
