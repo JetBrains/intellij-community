@@ -346,8 +346,8 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     @Override
     public void paint(final Graphics g) {
       super.paint(g);
-      final JBColor lightGray = new JBColor(Color.lightGray, Gray._95);
-      final JBColor gray = new JBColor(Color.gray, Gray._95);
+      final JBColor lightGray = new JBColor(JBColor.LIGHT_GRAY, Gray._95);
+      final JBColor gray = new JBColor(JBColor.GRAY, Gray._95);
       if (ANCHOR_TOP == myAnchor) {
         g.setColor(lightGray);
         LinePainter2D.paint((Graphics2D)g, 0, 0, getWidth() - 1, 0);
