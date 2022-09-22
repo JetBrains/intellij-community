@@ -114,6 +114,9 @@ internal class MutableEntityStorageImpl(
   @set:TestOnly
   internal var upgradeEngine: ((ReplaceBySourceOperation) -> Unit)? = null
 
+  @set:TestOnly
+  internal var upgradeAddDiffEngine: ((AddDiffOperation) -> Unit)? = null
+
   // --------------- Replace By Source stuff -----------
 
   override fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E> {
@@ -482,7 +485,9 @@ internal class MutableEntityStorageImpl(
       lockWrite()
       diff as MutableEntityStorageImpl
       applyDiffProtection(diff, "addDiff")
-      AddDiffOperation(this, diff).addDiff()
+      val addDiffOperation = AddDiffOperation(this, diff)
+      upgradeAddDiffEngine?.invoke(addDiffOperation)
+      addDiffOperation.addDiff()
     }
     finally {
       unlockWrite()
