@@ -2,6 +2,7 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -246,6 +247,15 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
     final PsiLocalVariable localVariable = elementToWorkOn.getLocalVariable();
     final PsiExpression initializer = localVariable.getInitializer();
     return initializer != null && isStaticFinalInitializer(initializer) == null;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull PsiElement element) {
+    if (element instanceof PsiExpression expression) {
+      invoke(project, null, expression);
+      return IntentionPreviewInfo.DIFF;
+    }
+    return IntentionPreviewInfo.EMPTY;
   }
 
   @Override
