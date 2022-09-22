@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.encapsulateFields;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -16,6 +18,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -37,8 +40,7 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
       }
       if (element instanceof PsiField field) {
         if (field.getContainingClass() == null) {
-          String message =
-            RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("the.field.should.be.declared.in.a.class"));
+          String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("the.field.should.be.declared.in.a.class"));
           CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.ENCAPSULATE_FIELDS);
           return;
         }
@@ -119,10 +121,30 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
 
   protected EncapsulateFieldsDialog createDialog(Project project, PsiClass aClass, HashSet<PsiField> preselectedFields) {
     return new EncapsulateFieldsDialog(
-              project,
-              aClass,
-              preselectedFields,
-              new JavaEncapsulateFieldHelper());
+      project,
+      aClass,
+      preselectedFields,
+      new JavaEncapsulateFieldHelper());
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull PsiElement element) {
+    if (!(element instanceof PsiField field)) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    final FieldDescriptor fieldDescriptor = new FieldDescriptorImpl(field, GenerateMembersUtil.suggestGetterName(field),
+                                                                    GenerateMembersUtil.suggestSetterName(field),
+                                                                    GenerateMembersUtil.generateGetterPrototype(field),
+                                                                    GenerateMembersUtil.generateSetterPrototype(field));
+    final EncapsulateFieldsDescriptor descriptor = new EncapsulateOnPreviewDescriptor(fieldDescriptor);
+    final EncapsulateFieldsProcessor processor = new EncapsulateFieldsProcessor(project, descriptor) {
+      @Override
+      protected Iterable<PsiReferenceExpression> getFieldReferences(@NotNull PsiField field) {
+        return VariableAccessUtils.getVariableReferences(field, field.getContainingFile());
+      }
+    };
+    processor.performRefactoring(processor.findUsages());
+    return IntentionPreviewInfo.DIFF;
   }
 
   public static @NlsContexts.DialogTitle String getRefactoringName() {
