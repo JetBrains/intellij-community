@@ -32,7 +32,7 @@ public abstract class FileAttributesReadingTest {
   public static class MainTest extends FileAttributesReadingTest {
     @BeforeClass
     public static void setUpClass() {
-      assumeTrue(SystemInfo.OS_NAME + '/' + CpuArch.CURRENT + " is not supported", CpuArch.isIntel64());
+      assumeTrue(SystemInfo.OS_NAME + '/' + CpuArch.CURRENT + " is not supported", SystemInfo.isMac && CpuArch.isIntel64());
       assertEquals(SystemInfo.isWindows ? "IdeaWin32" : "JnaUnix", getMediatorName());
     }
   }
