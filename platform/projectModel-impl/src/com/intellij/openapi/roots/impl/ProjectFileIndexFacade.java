@@ -71,11 +71,11 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     if (!childDir.isDirectory()) {
       childDir = childDir.getParent();
     }
-    DirectoryIndex dirIndex = DirectoryIndex.getInstance(myProject);
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
     while (true) {
       if (childDir == null) return false;
       if (childDir.equals(baseDir)) return true;
-      if (!dirIndex.getInfoForFile(childDir).isInProject(childDir)) return false;
+      if (!fileIndex.isInProject(childDir)) return false;
       childDir = childDir.getParent();
     }
   }
