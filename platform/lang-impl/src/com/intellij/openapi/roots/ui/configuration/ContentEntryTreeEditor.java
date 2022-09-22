@@ -286,7 +286,7 @@ public class ContentEntryTreeEditor {
         return myFileSystemTree;
       }
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return myFileSystemTree.getSelectedFiles();
+        return myFileSystemTree == null ? null : myFileSystemTree.getSelectedFiles();
       }
       return null;
     }

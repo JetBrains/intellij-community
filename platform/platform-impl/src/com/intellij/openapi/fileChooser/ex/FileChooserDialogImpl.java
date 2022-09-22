@@ -499,7 +499,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         return myFileSystemTree;
       }
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return myFileSystemTree.getSelectedFiles();
+        return myFileSystemTree == null ? null : myFileSystemTree.getSelectedFiles();
       }
       if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
         return myPasteProvider;
