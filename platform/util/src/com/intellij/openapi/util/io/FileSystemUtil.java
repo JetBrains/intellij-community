@@ -28,9 +28,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.PosixFileAttributes;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public final class FileSystemUtil {
@@ -49,7 +50,6 @@ public final class FileSystemUtil {
   interface Mediator {
     @Nullable FileAttributes getAttributes(@NotNull String path) throws IOException;
     @Nullable String resolveSymLink(@NotNull String path) throws IOException;
-    boolean clonePermissions(@NotNull String source, @NotNull String target, boolean execOnly) throws IOException;
   }
 
   private static final Mediator ourMediator = computeMediator();
@@ -149,32 +149,6 @@ public final class FileSystemUtil {
     return resolveSymLink(file.getAbsolutePath());
   }
 
-  /**
-   * Gives the second file permissions of the first one if possible; returns {@code true} on success; no-op on Windows.
-   */
-  public static boolean clonePermissions(@NotNull String source, @NotNull String target) {
-    try {
-      return ourMediator.clonePermissions(source, target, false);
-    }
-    catch (Exception e) {
-      LOG.warn(e);
-      return false;
-    }
-  }
-
-  /**
-   * Gives the second file permissions of the first one if possible; returns {@code true} on success; no-op on Windows.
-   */
-  static boolean clonePermissionsToExecute(@NotNull String source, @NotNull String target) {
-    try {
-      return ourMediator.clonePermissions(source, target, true);
-    }
-    catch (Exception e) {
-      LOG.warn(e);
-      return false;
-    }
-  }
-
   private static class IdeaWin32MediatorImpl implements Mediator {
     private final IdeaWin32 myInstance = IdeaWin32.getInstance();
 
@@ -209,11 +183,6 @@ public final class FileSystemUtil {
 
       return path;
     }
-
-    @Override
-    public boolean clonePermissions(@NotNull String source, @NotNull String target, boolean execOnly) {
-      return false;
-    }
   }
 
   // thanks to SVNKit for the idea of platform-specific offsets
@@ -225,14 +194,11 @@ public final class FileSystemUtil {
       static final int S_IFLNK = 0120000;  // symbolic link
       static final int S_IFREG = 0100000;  // regular file
       static final int S_IFDIR = 0040000;  // directory
-      static final int PERM_MASK = 0777;
-      static final int EXECUTE_MASK = 0111;
       static final int WRITE_MASK = 0222;
       static final int W_OK = 2;           // write permission flag for access(2)
 
       static native int getuid();
       static native int getgid();
-      static native int chmod(String path, int mode);
       static native int access(String path, int mode);
       static native int lstat(String path, Pointer stat);
       static native int stat(String path, Pointer stat);
@@ -316,24 +282,6 @@ public final class FileSystemUtil {
       }
     }
 
-    @Override
-    public boolean clonePermissions(@NotNull String source, @NotNull String target, boolean execOnly) {
-      Memory buffer = new Memory(256);
-      if (!loadFileStatus(source, buffer)) return false;
-
-      int permissions;
-      int sourcePermissions = getModeFlags(buffer) & LibC.PERM_MASK;
-      if (execOnly) {
-        if (!loadFileStatus(target, buffer)) return false;
-        int targetPermissions = getModeFlags(buffer) & LibC.PERM_MASK;
-        permissions = targetPermissions & ~LibC.EXECUTE_MASK | sourcePermissions & LibC.EXECUTE_MASK;
-      }
-      else {
-        permissions = sourcePermissions;
-      }
-      return LibC.chmod(target, permissions) == 0;
-    }
-
     private static boolean loadFileStatus(@NotNull String path, @NotNull Memory buffer) {
       return LibC.stat(path, buffer) == 0;
     }
@@ -349,8 +297,6 @@ public final class FileSystemUtil {
 
   private static class Nio2MediatorImpl implements Mediator {
     private final LinkOption[] myNoFollowLinkOptions = {LinkOption.NOFOLLOW_LINKS};
-    private final PosixFilePermission[] myExecPermissions =
-      {PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_EXECUTE, PosixFilePermission.OTHERS_EXECUTE};
 
     @Override
     public FileAttributes getAttributes(@NotNull String pathStr) {
@@ -374,33 +320,6 @@ public final class FileSystemUtil {
         LOG.debug(path, e);
         return null;
       }
-    }
-
-    @Override
-    public boolean clonePermissions(@NotNull String source, @NotNull String target, boolean execOnly) throws IOException {
-      if (!SystemInfo.isUnix) return false;
-
-      Path sourcePath = Paths.get(source);
-      Path targetPath = Paths.get(target);
-      Set<PosixFilePermission> sourcePermissions = Files.readAttributes(sourcePath, PosixFileAttributes.class).permissions();
-      Set<PosixFilePermission> targetPermissions = Files.readAttributes(targetPath, PosixFileAttributes.class).permissions();
-      Set<PosixFilePermission> newPermissions;
-      if (execOnly) {
-        newPermissions = EnumSet.copyOf(targetPermissions);
-        for (PosixFilePermission permission : myExecPermissions) {
-          if (sourcePermissions.contains(permission)) {
-            newPermissions.add(permission);
-          }
-          else {
-            newPermissions.remove(permission);
-          }
-        }
-      }
-      else {
-        newPermissions = sourcePermissions;
-      }
-      Files.setAttribute(targetPath, "posix:permissions", newPermissions);
-      return true;
     }
   }
 

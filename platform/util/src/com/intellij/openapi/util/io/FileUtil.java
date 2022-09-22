@@ -23,11 +23,15 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+
+import static java.nio.file.attribute.PosixFilePermission.*;
 
 /**
  * Utilities for working with {@link File}.
@@ -404,43 +408,56 @@ public class FileUtil extends FileUtilRt {
     performCopy(fromFile, toFile, false);
   }
 
-  private static void performCopy(@NotNull File fromFile, @NotNull File toFile, boolean syncTimestamp) throws IOException {
-    if (filesEqual(fromFile, toFile)) return;
+  private static void performCopy(@NotNull File _fromFile, @NotNull File _toFile, boolean syncTimestamp) throws IOException {
+    if (filesEqual(_fromFile, _toFile)) return;
 
-    try (FileOutputStream fos = openOutputStream(toFile); FileInputStream fis = new FileInputStream(fromFile)) {
-      copy(fis, fos);
+    Path fromFile = _fromFile.toPath(), toFile = _toFile.toPath();
+    try (InputStream in = Files.newInputStream(fromFile); OutputStream out = openOutputStream(toFile)) {
+      copy(in, out);
     }
     catch (IOException e) {
       throw new IOException(String.format("Couldn't copy [%s] to [%s]", fromFile, toFile), e);
     }
 
     if (syncTimestamp) {
-      long timeStamp = fromFile.lastModified();
-      if (timeStamp < 0) {
-        LOG.warn("Invalid timestamp " + timeStamp + " of '" + fromFile + "'");
+      try {
+        FileTime timeStamp = Files.getLastModifiedTime(fromFile);
+        Files.setLastModifiedTime(toFile, timeStamp);
       }
-      else if (!toFile.setLastModified(timeStamp)) {
-        LOG.warn("Unable to set timestamp " + timeStamp + " to '" + toFile + "'");
+      catch (IOException e) {
+        LOG.warn("Unable to set timestamp of '" + toFile + "'");
       }
     }
 
-    if (SystemInfoRt.isUnix && fromFile.canExecute()) {
-      FileSystemUtil.clonePermissionsToExecute(fromFile.getPath(), toFile.getPath());
+    if (SystemInfoRt.isUnix) {
+      Set<PosixFilePermission> exec = EnumSet.of(OWNER_EXECUTE, GROUP_EXECUTE, OTHERS_EXECUTE);
+      try {
+        Set<PosixFilePermission> fromSet = Files.getPosixFilePermissions(fromFile);
+        if (ContainerUtil.exists(exec, fromSet::contains)) {
+          Set<PosixFilePermission> toSet = Files.getPosixFilePermissions(toFile);
+          for (PosixFilePermission permission : exec) {
+            if (fromSet.contains(permission)) toSet.add(permission); else toSet.remove(permission);
+          }
+          Files.setPosixFilePermissions(toFile, toSet);
+        }
+      }
+      catch (IOException e) {
+        LOG.warn("Unable to set permissions of '" + toFile + "'");
+      }
     }
   }
 
-  @NotNull
-  private static FileOutputStream openOutputStream(@NotNull File file) throws IOException {
+  private static OutputStream openOutputStream(Path file) throws IOException {
     try {
-      return new FileOutputStream(file);
+      return Files.newOutputStream(file);
     }
-    catch (FileNotFoundException e) {
-      File parentFile = file.getParentFile();
-      if (parentFile == null) {
-        throw new IOException("Parent file is null for " + file.getPath(), e);
+    catch (NoSuchFileException e) {
+      Path parentDir = file.getParent();
+      if (parentDir == null) {
+        throw new IOException("Parent file is null for " + file, e);
       }
-      createParentDirs(file);
-      return new FileOutputStream(file);
+      Files.createDirectories(parentDir);
+      return Files.newOutputStream(file);
     }
   }
 
