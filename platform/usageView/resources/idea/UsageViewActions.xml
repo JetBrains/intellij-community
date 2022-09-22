@@ -23,7 +23,7 @@
                  key="similarity.find.usages.parent.statement.condition.feature"/>
     <registryKey defaultValue="false" description="Show similar usages panel in usage preview"
                  key="similarity.find.usages.show.similar.usages.in.usage.preview"/>
-    <registryKey defaultValue="false" description="Enable auto-update for similar usages component" key="similarity.find.usages.view.auto.update"/>
+    <registryKey defaultValue="true" description="Enable auto-update for similar usages component" key="similarity.find.usages.view.auto.update"/>
     <registryKey defaultValue="true" description="Use information from sibling nodes" key="similarity.find.usages.use.sibling.features"/>
     <registryKey defaultValue="false" description="Adds 'import clustering data' action for similar usages preview" key="similarity.import.clustering.results.action.enabled"/>
   </extensions>
