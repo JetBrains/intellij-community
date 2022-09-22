@@ -294,6 +294,12 @@ open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : Conten
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                item_value.entityLinks[EntityLink(false, SOURCEROOTS_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
               _diff.addEntity(item_value)
             }
           }

@@ -137,6 +137,9 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
               `if`("_diff != null") {
                 `for`("item_value in value") {
                   `if`("item_value is ${ModifiableWorkspaceEntityBase::class.fqn}<*> && (item_value as? ${ModifiableWorkspaceEntityBase::class.fqn}<*>)?.diff == null") {
+                    lineComment("Backref setup before adding to store")
+                    backrefSetup(field, "item_value")
+                    line()
                     line("_diff.addEntity(item_value)")
                   }
                 }
