@@ -160,7 +160,7 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
                     } catch (e: Throwable) {
                         iterator.remove()
                         disposeEntry(cache, entry)
-                        throw e
+                        logger.error(e)
                     }
                 } else {
                     allEntriesChecked = false
