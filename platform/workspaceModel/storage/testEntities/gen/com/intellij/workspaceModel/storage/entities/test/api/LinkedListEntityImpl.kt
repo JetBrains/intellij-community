@@ -42,7 +42,7 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
     return connections
   }
 
-  class Builder(val result: LinkedListEntityData?) : ModifiableWorkspaceEntityBase<LinkedListEntity>(), LinkedListEntity.Builder {
+  class Builder(var result: LinkedListEntityData?) : ModifiableWorkspaceEntityBase<LinkedListEntity>(), LinkedListEntity.Builder {
     constructor() : this(LinkedListEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -60,6 +60,9 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

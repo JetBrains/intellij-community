@@ -46,7 +46,7 @@ open class ChildWithNullsOppositeMultipleImpl(val dataSource: ChildWithNullsOppo
     return connections
   }
 
-  class Builder(val result: ChildWithNullsOppositeMultipleData?) : ModifiableWorkspaceEntityBase<ChildWithNullsOppositeMultiple>(), ChildWithNullsOppositeMultiple.Builder {
+  class Builder(var result: ChildWithNullsOppositeMultipleData?) : ModifiableWorkspaceEntityBase<ChildWithNullsOppositeMultiple>(), ChildWithNullsOppositeMultiple.Builder {
     constructor() : this(ChildWithNullsOppositeMultipleData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -64,6 +64,9 @@ open class ChildWithNullsOppositeMultipleImpl(val dataSource: ChildWithNullsOppo
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

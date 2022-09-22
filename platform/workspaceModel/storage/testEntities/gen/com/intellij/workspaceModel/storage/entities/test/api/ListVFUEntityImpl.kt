@@ -44,7 +44,7 @@ open class ListVFUEntityImpl(val dataSource: ListVFUEntityData) : ListVFUEntity,
     return connections
   }
 
-  class Builder(val result: ListVFUEntityData?) : ModifiableWorkspaceEntityBase<ListVFUEntity>(), ListVFUEntity.Builder {
+  class Builder(var result: ListVFUEntityData?) : ModifiableWorkspaceEntityBase<ListVFUEntity>(), ListVFUEntity.Builder {
     constructor() : this(ListVFUEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -62,6 +62,9 @@ open class ListVFUEntityImpl(val dataSource: ListVFUEntityData) : ListVFUEntity,
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "fileProperty", this.fileProperty.toHashSet())
       // Process linked entities that are connected without a builder

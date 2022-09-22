@@ -63,7 +63,7 @@ open class CompositeChildAbstractEntityImpl(val dataSource: CompositeChildAbstra
     return connections
   }
 
-  class Builder(val result: CompositeChildAbstractEntityData?) : ModifiableWorkspaceEntityBase<CompositeChildAbstractEntity>(), CompositeChildAbstractEntity.Builder {
+  class Builder(var result: CompositeChildAbstractEntityData?) : ModifiableWorkspaceEntityBase<CompositeChildAbstractEntity>(), CompositeChildAbstractEntity.Builder {
     constructor() : this(CompositeChildAbstractEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -81,6 +81,9 @@ open class CompositeChildAbstractEntityImpl(val dataSource: CompositeChildAbstra
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

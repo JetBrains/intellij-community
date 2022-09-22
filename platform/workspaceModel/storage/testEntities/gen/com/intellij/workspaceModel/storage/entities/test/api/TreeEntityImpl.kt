@@ -53,7 +53,7 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
     return connections
   }
 
-  class Builder(val result: TreeEntityData?) : ModifiableWorkspaceEntityBase<TreeEntity>(), TreeEntity.Builder {
+  class Builder(var result: TreeEntityData?) : ModifiableWorkspaceEntityBase<TreeEntity>(), TreeEntity.Builder {
     constructor() : this(TreeEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -71,6 +71,9 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

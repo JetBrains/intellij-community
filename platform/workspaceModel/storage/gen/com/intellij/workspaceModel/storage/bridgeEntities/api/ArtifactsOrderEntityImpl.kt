@@ -40,7 +40,7 @@ open class ArtifactsOrderEntityImpl(val dataSource: ArtifactsOrderEntityData) : 
     return connections
   }
 
-  class Builder(val result: ArtifactsOrderEntityData?) : ModifiableWorkspaceEntityBase<ArtifactsOrderEntity>(), ArtifactsOrderEntity.Builder {
+  class Builder(var result: ArtifactsOrderEntityData?) : ModifiableWorkspaceEntityBase<ArtifactsOrderEntity>(), ArtifactsOrderEntity.Builder {
     constructor() : this(ArtifactsOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -58,6 +58,9 @@ open class ArtifactsOrderEntityImpl(val dataSource: ArtifactsOrderEntityData) : 
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

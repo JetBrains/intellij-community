@@ -45,7 +45,7 @@ open class ParentMultipleEntityImpl(val dataSource: ParentMultipleEntityData) : 
     return connections
   }
 
-  class Builder(val result: ParentMultipleEntityData?) : ModifiableWorkspaceEntityBase<ParentMultipleEntity>(), ParentMultipleEntity.Builder {
+  class Builder(var result: ParentMultipleEntityData?) : ModifiableWorkspaceEntityBase<ParentMultipleEntity>(), ParentMultipleEntity.Builder {
     constructor() : this(ParentMultipleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -63,6 +63,9 @@ open class ParentMultipleEntityImpl(val dataSource: ParentMultipleEntityData) : 
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

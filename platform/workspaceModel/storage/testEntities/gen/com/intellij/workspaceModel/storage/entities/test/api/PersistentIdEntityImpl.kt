@@ -42,7 +42,7 @@ open class PersistentIdEntityImpl(val dataSource: PersistentIdEntityData) : Pers
     return connections
   }
 
-  class Builder(val result: PersistentIdEntityData?) : ModifiableWorkspaceEntityBase<PersistentIdEntity>(), PersistentIdEntity.Builder {
+  class Builder(var result: PersistentIdEntityData?) : ModifiableWorkspaceEntityBase<PersistentIdEntity>(), PersistentIdEntity.Builder {
     constructor() : this(PersistentIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -60,6 +60,9 @@ open class PersistentIdEntityImpl(val dataSource: PersistentIdEntityData) : Pers
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

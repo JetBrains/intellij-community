@@ -49,7 +49,7 @@ open class KeyParentImpl(val dataSource: KeyParentData) : KeyParent, WorkspaceEn
     return connections
   }
 
-  class Builder(val result: KeyParentData?) : ModifiableWorkspaceEntityBase<KeyParent>(), KeyParent.Builder {
+  class Builder(var result: KeyParentData?) : ModifiableWorkspaceEntityBase<KeyParent>(), KeyParent.Builder {
     constructor() : this(KeyParentData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,6 +67,9 @@ open class KeyParentImpl(val dataSource: KeyParentData) : KeyParent, WorkspaceEn
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

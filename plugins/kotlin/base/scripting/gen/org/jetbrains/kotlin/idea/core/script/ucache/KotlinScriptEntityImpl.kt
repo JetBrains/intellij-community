@@ -49,7 +49,7 @@ open class KotlinScriptEntityImpl(val dataSource: KotlinScriptEntityData) : Kotl
     return connections
   }
 
-  class Builder(val result: KotlinScriptEntityData?) : ModifiableWorkspaceEntityBase<KotlinScriptEntity>(), KotlinScriptEntity.Builder {
+  class Builder(var result: KotlinScriptEntityData?) : ModifiableWorkspaceEntityBase<KotlinScriptEntity>(), KotlinScriptEntity.Builder {
     constructor() : this(KotlinScriptEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,6 +67,9 @@ open class KotlinScriptEntityImpl(val dataSource: KotlinScriptEntityData) : Kotl
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

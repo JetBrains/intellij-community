@@ -52,7 +52,7 @@ open class ModuleTestOutputPackagingElementEntityImpl(val dataSource: ModuleTest
     return connections
   }
 
-  class Builder(val result: ModuleTestOutputPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ModuleTestOutputPackagingElementEntity>(), ModuleTestOutputPackagingElementEntity.Builder {
+  class Builder(var result: ModuleTestOutputPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ModuleTestOutputPackagingElementEntity>(), ModuleTestOutputPackagingElementEntity.Builder {
     constructor() : this(ModuleTestOutputPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -70,6 +70,9 @@ open class ModuleTestOutputPackagingElementEntityImpl(val dataSource: ModuleTest
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

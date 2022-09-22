@@ -41,7 +41,7 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
     return connections
   }
 
-  class Builder(val result: DefaultValueEntityData?) : ModifiableWorkspaceEntityBase<DefaultValueEntity>(), DefaultValueEntity.Builder {
+  class Builder(var result: DefaultValueEntityData?) : ModifiableWorkspaceEntityBase<DefaultValueEntity>(), DefaultValueEntity.Builder {
     constructor() : this(DefaultValueEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -59,6 +59,9 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

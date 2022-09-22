@@ -56,7 +56,7 @@ open class XChildEntityImpl(val dataSource: XChildEntityData) : XChildEntity, Wo
     return connections
   }
 
-  class Builder(val result: XChildEntityData?) : ModifiableWorkspaceEntityBase<XChildEntity>(), XChildEntity.Builder {
+  class Builder(var result: XChildEntityData?) : ModifiableWorkspaceEntityBase<XChildEntity>(), XChildEntity.Builder {
     constructor() : this(XChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -74,6 +74,9 @@ open class XChildEntityImpl(val dataSource: XChildEntityData) : XChildEntity, Wo
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

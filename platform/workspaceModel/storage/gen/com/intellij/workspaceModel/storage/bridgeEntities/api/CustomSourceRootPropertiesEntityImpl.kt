@@ -49,7 +49,7 @@ open class CustomSourceRootPropertiesEntityImpl(val dataSource: CustomSourceRoot
     return connections
   }
 
-  class Builder(val result: CustomSourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<CustomSourceRootPropertiesEntity>(), CustomSourceRootPropertiesEntity.Builder {
+  class Builder(var result: CustomSourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<CustomSourceRootPropertiesEntity>(), CustomSourceRootPropertiesEntity.Builder {
     constructor() : this(CustomSourceRootPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,6 +67,9 @@ open class CustomSourceRootPropertiesEntityImpl(val dataSource: CustomSourceRoot
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

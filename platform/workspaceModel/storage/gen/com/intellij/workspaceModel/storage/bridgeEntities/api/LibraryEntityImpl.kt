@@ -77,7 +77,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
     return connections
   }
 
-  class Builder(val result: LibraryEntityData?) : ModifiableWorkspaceEntityBase<LibraryEntity>(), LibraryEntity.Builder {
+  class Builder(var result: LibraryEntityData?) : ModifiableWorkspaceEntityBase<LibraryEntity>(), LibraryEntity.Builder {
     constructor() : this(LibraryEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -95,6 +95,9 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "excludedRoots", this.excludedRoots.toHashSet())
       indexLibraryRoots(roots)

@@ -63,7 +63,7 @@ open class TreeMultiparentLeafEntityImpl(val dataSource: TreeMultiparentLeafEnti
     return connections
   }
 
-  class Builder(val result: TreeMultiparentLeafEntityData?) : ModifiableWorkspaceEntityBase<TreeMultiparentLeafEntity>(), TreeMultiparentLeafEntity.Builder {
+  class Builder(var result: TreeMultiparentLeafEntityData?) : ModifiableWorkspaceEntityBase<TreeMultiparentLeafEntity>(), TreeMultiparentLeafEntity.Builder {
     constructor() : this(TreeMultiparentLeafEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -81,6 +81,9 @@ open class TreeMultiparentLeafEntityImpl(val dataSource: TreeMultiparentLeafEnti
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

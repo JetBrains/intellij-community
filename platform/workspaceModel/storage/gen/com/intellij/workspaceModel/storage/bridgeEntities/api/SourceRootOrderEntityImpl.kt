@@ -50,7 +50,7 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
     return connections
   }
 
-  class Builder(val result: SourceRootOrderEntityData?) : ModifiableWorkspaceEntityBase<SourceRootOrderEntity>(), SourceRootOrderEntity.Builder {
+  class Builder(var result: SourceRootOrderEntityData?) : ModifiableWorkspaceEntityBase<SourceRootOrderEntity>(), SourceRootOrderEntity.Builder {
     constructor() : this(SourceRootOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -68,6 +68,9 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "orderOfSourceRoots", this.orderOfSourceRoots.toHashSet())
       // Process linked entities that are connected without a builder

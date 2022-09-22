@@ -49,7 +49,7 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
     return connections
   }
 
-  class Builder(val result: SdkEntityData?) : ModifiableWorkspaceEntityBase<SdkEntity>(), SdkEntity.Builder {
+  class Builder(var result: SdkEntityData?) : ModifiableWorkspaceEntityBase<SdkEntity>(), SdkEntity.Builder {
     constructor() : this(SdkEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,6 +67,9 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "homeUrl", this.homeUrl)
       // Process linked entities that are connected without a builder

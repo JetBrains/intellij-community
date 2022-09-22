@@ -20,7 +20,7 @@ import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
 
 fun ObjClass<*>.implWsEntityBuilderCode(): String {
   return """
-    class Builder(val result: $javaDataName?): ${ModifiableWorkspaceEntityBase::class.fqn}<$javaFullName>(), $javaBuilderName {
+    class Builder(var result: $javaDataName?): ${ModifiableWorkspaceEntityBase::class.fqn}<$javaFullName>(), $javaBuilderName {
         constructor(): this($javaDataName())
         
 ${
@@ -39,6 +39,9 @@ ${
         line("this.snapshot = builder")
         line("addToBuilder()")
         line("this.id = getEntityData().createEntityId()")
+        lineComment("After adding entity data to the builder, we need to unbind it and move the control over entity data to builder")
+        lineComment("Builder may switch to snapshot at any moment and lock entity data to modification")
+        line("this.result = null")
         line()
         list(vfuFields) {
           val suffix = if (valueType is ValueType.Collection<*, *>) ".toHashSet()" else ""

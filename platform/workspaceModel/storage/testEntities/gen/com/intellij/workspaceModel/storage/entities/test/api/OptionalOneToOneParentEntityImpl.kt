@@ -44,7 +44,7 @@ open class OptionalOneToOneParentEntityImpl(val dataSource: OptionalOneToOnePare
     return connections
   }
 
-  class Builder(val result: OptionalOneToOneParentEntityData?) : ModifiableWorkspaceEntityBase<OptionalOneToOneParentEntity>(), OptionalOneToOneParentEntity.Builder {
+  class Builder(var result: OptionalOneToOneParentEntityData?) : ModifiableWorkspaceEntityBase<OptionalOneToOneParentEntity>(), OptionalOneToOneParentEntity.Builder {
     constructor() : this(OptionalOneToOneParentEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -62,6 +62,9 @@ open class OptionalOneToOneParentEntityImpl(val dataSource: OptionalOneToOnePare
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

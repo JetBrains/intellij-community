@@ -56,7 +56,7 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
     return connections
   }
 
-  class Builder(val result: JavaModuleSettingsEntityData?) : ModifiableWorkspaceEntityBase<JavaModuleSettingsEntity>(), JavaModuleSettingsEntity.Builder {
+  class Builder(var result: JavaModuleSettingsEntityData?) : ModifiableWorkspaceEntityBase<JavaModuleSettingsEntity>(), JavaModuleSettingsEntity.Builder {
     constructor() : this(JavaModuleSettingsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -74,6 +74,9 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "compilerOutput", this.compilerOutput)
       index(this, "compilerOutputForTests", this.compilerOutputForTests)

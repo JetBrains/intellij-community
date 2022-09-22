@@ -65,7 +65,7 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
     return connections
   }
 
-  class Builder(val result: SampleEntityData?) : ModifiableWorkspaceEntityBase<SampleEntity>(), SampleEntity.Builder {
+  class Builder(var result: SampleEntityData?) : ModifiableWorkspaceEntityBase<SampleEntity>(), SampleEntity.Builder {
     constructor() : this(SampleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -83,6 +83,9 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "fileProperty", this.fileProperty)
       // Process linked entities that are connected without a builder

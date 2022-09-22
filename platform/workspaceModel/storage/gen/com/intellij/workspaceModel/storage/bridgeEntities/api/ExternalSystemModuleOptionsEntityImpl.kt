@@ -67,7 +67,7 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
     return connections
   }
 
-  class Builder(val result: ExternalSystemModuleOptionsEntityData?) : ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity>(), ExternalSystemModuleOptionsEntity.Builder {
+  class Builder(var result: ExternalSystemModuleOptionsEntityData?) : ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity>(), ExternalSystemModuleOptionsEntity.Builder {
     constructor() : this(ExternalSystemModuleOptionsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -85,6 +85,9 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

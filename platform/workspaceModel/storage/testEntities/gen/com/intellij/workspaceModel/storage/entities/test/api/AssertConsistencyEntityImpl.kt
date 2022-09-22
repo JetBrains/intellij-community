@@ -35,7 +35,7 @@ open class AssertConsistencyEntityImpl(val dataSource: AssertConsistencyEntityDa
     return connections
   }
 
-  class Builder(val result: AssertConsistencyEntityData?) : ModifiableWorkspaceEntityBase<AssertConsistencyEntity>(), AssertConsistencyEntity.Builder {
+  class Builder(var result: AssertConsistencyEntityData?) : ModifiableWorkspaceEntityBase<AssertConsistencyEntity>(), AssertConsistencyEntity.Builder {
     constructor() : this(AssertConsistencyEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -53,6 +53,9 @@ open class AssertConsistencyEntityImpl(val dataSource: AssertConsistencyEntityDa
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

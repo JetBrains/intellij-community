@@ -45,7 +45,7 @@ open class SoftLinkReferencedChildImpl(val dataSource: SoftLinkReferencedChildDa
     return connections
   }
 
-  class Builder(val result: SoftLinkReferencedChildData?) : ModifiableWorkspaceEntityBase<SoftLinkReferencedChild>(), SoftLinkReferencedChild.Builder {
+  class Builder(var result: SoftLinkReferencedChildData?) : ModifiableWorkspaceEntityBase<SoftLinkReferencedChild>(), SoftLinkReferencedChild.Builder {
     constructor() : this(SoftLinkReferencedChildData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -63,6 +63,9 @@ open class SoftLinkReferencedChildImpl(val dataSource: SoftLinkReferencedChildDa
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

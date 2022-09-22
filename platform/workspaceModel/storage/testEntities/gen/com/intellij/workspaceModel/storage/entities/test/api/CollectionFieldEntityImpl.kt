@@ -43,7 +43,7 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
     return connections
   }
 
-  class Builder(val result: CollectionFieldEntityData?) : ModifiableWorkspaceEntityBase<CollectionFieldEntity>(), CollectionFieldEntity.Builder {
+  class Builder(var result: CollectionFieldEntityData?) : ModifiableWorkspaceEntityBase<CollectionFieldEntity>(), CollectionFieldEntity.Builder {
     constructor() : this(CollectionFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -61,6 +61,9 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

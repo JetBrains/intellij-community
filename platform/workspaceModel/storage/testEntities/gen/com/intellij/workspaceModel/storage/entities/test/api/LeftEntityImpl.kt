@@ -61,7 +61,7 @@ open class LeftEntityImpl(val dataSource: LeftEntityData) : LeftEntity, Workspac
     return connections
   }
 
-  class Builder(val result: LeftEntityData?) : ModifiableWorkspaceEntityBase<LeftEntity>(), LeftEntity.Builder {
+  class Builder(var result: LeftEntityData?) : ModifiableWorkspaceEntityBase<LeftEntity>(), LeftEntity.Builder {
     constructor() : this(LeftEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -79,6 +79,9 @@ open class LeftEntityImpl(val dataSource: LeftEntityData) : LeftEntity, Workspac
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

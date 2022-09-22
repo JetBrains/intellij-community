@@ -46,7 +46,7 @@ open class OoChildForParentWithPidEntityImpl(val dataSource: OoChildForParentWit
     return connections
   }
 
-  class Builder(val result: OoChildForParentWithPidEntityData?) : ModifiableWorkspaceEntityBase<OoChildForParentWithPidEntity>(), OoChildForParentWithPidEntity.Builder {
+  class Builder(var result: OoChildForParentWithPidEntityData?) : ModifiableWorkspaceEntityBase<OoChildForParentWithPidEntity>(), OoChildForParentWithPidEntity.Builder {
     constructor() : this(OoChildForParentWithPidEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -64,6 +64,9 @@ open class OoChildForParentWithPidEntityImpl(val dataSource: OoChildForParentWit
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

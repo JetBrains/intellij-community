@@ -41,7 +41,7 @@ open class ComposedLinkEntityImpl(val dataSource: ComposedLinkEntityData) : Comp
     return connections
   }
 
-  class Builder(val result: ComposedLinkEntityData?) : ModifiableWorkspaceEntityBase<ComposedLinkEntity>(), ComposedLinkEntity.Builder {
+  class Builder(var result: ComposedLinkEntityData?) : ModifiableWorkspaceEntityBase<ComposedLinkEntity>(), ComposedLinkEntity.Builder {
     constructor() : this(ComposedLinkEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -59,6 +59,9 @@ open class ComposedLinkEntityImpl(val dataSource: ComposedLinkEntityData) : Comp
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

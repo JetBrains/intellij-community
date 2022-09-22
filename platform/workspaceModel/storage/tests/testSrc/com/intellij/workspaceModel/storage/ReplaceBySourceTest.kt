@@ -252,12 +252,17 @@ class ReplaceBySourceTest {
       this.parentEntity = parent2
     }
 
+    // Here the original child entity is removed and a new child entity is added.
+    //   I don't really like this approach, but at the moment we can't understand that child entity wan't actually changed
     rbsAllSources()
 
     builder.assertConsistency()
     val parents = builder.entities(NamedEntity::class.java).toList()
     assertTrue(parents.single { it.myName == "myProperty" }.children.none())
-    assertEquals(child.childProperty, parents.single { it.myName == "anotherProperty" }.children.single().childProperty)
+    assertTrue(parents.single { it.myName == "anotherProperty" }.children.singleOrNull() != null)
+
+    // child is removed, so we can't access it
+    //assertEquals(child.childProperty, parents.single { it.myName == "anotherProperty" }.children.single().childProperty)
     thisStateCheck {
       parent assert ReplaceState.Relabel(parent.base.id)
       parent2 assert ReplaceState.Relabel(parent2.base.id)

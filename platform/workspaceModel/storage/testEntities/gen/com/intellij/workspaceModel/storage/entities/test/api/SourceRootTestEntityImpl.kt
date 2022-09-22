@@ -47,7 +47,7 @@ open class SourceRootTestEntityImpl(val dataSource: SourceRootTestEntityData) : 
     return connections
   }
 
-  class Builder(val result: SourceRootTestEntityData?) : ModifiableWorkspaceEntityBase<SourceRootTestEntity>(), SourceRootTestEntity.Builder {
+  class Builder(var result: SourceRootTestEntityData?) : ModifiableWorkspaceEntityBase<SourceRootTestEntity>(), SourceRootTestEntity.Builder {
     constructor() : this(SourceRootTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -65,6 +65,9 @@ open class SourceRootTestEntityImpl(val dataSource: SourceRootTestEntityData) : 
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)

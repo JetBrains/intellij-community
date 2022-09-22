@@ -47,7 +47,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
     return connections
   }
 
-  class Builder(val result: VFUEntity2Data?) : ModifiableWorkspaceEntityBase<VFUEntity2>(), VFUEntity2.Builder {
+  class Builder(var result: VFUEntity2Data?) : ModifiableWorkspaceEntityBase<VFUEntity2>(), VFUEntity2.Builder {
     constructor() : this(VFUEntity2Data())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -65,6 +65,9 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "filePath", this.filePath)
       index(this, "directoryPath", this.directoryPath)
