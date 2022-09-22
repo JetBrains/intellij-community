@@ -89,6 +89,13 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  public void testDeclarationInForStatement() {
+    myFixture.configureByFile("DeclarationInForStatement.java");
+    PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
+    final Bag features = new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret);
+    assertEquals(1, features.get("FOR"));
+  }
+
   public void testBag() {
     final Bag bag = new Bag("a", "b");
     assertEquals("a : 1\n" +

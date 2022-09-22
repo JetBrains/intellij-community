@@ -37,21 +37,25 @@ public class JavaUsageSimilarityFeaturesProvider implements UsageSimilarityFeatu
   }
 
   public @Nullable PsiElement getContainingStatement(@NotNull PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class,
-                                       PsiExpressionStatement.class,
-                                       PsiIfStatement.class,
-                                       PsiWhileStatement.class,
-                                       PsiTryStatement.class,
-                                       PsiThrowStatement.class,
-                                       PsiSwitchStatement.class,
-                                       PsiReturnStatement.class,
-                                       PsiLoopStatement.class,
-                                       PsiImportStatement.class,
-                                       PsiForStatement.class,
-                                       PsiForeachStatement.class,
-                                       PsiConditionalLoopStatement.class,
-                                       PsiBlockStatement.class,
-                                       PsiMethod.class);
+    PsiElement containingStatement = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class,
+                                                                 PsiExpressionStatement.class,
+                                                                 PsiIfStatement.class,
+                                                                 PsiWhileStatement.class,
+                                                                 PsiTryStatement.class,
+                                                                 PsiThrowStatement.class,
+                                                                 PsiSwitchStatement.class,
+                                                                 PsiReturnStatement.class,
+                                                                 PsiLoopStatement.class,
+                                                                 PsiImportStatement.class,
+                                                                 PsiForStatement.class,
+                                                                 PsiForeachStatement.class,
+                                                                 PsiConditionalLoopStatement.class,
+                                                                 PsiBlockStatement.class,
+                                                                 PsiMethod.class);
+    if (containingStatement instanceof PsiDeclarationStatement && containingStatement.getParent() instanceof PsiForStatement) {
+      return containingStatement.getParent();
+    }
+    return containingStatement;
   }
 
   private static @NotNull Bag getParentStatementFeatures(@NotNull PsiElement context) {
