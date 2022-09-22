@@ -3,52 +3,51 @@ package com.maddyhome.idea.copyright.actions
 
 import com.intellij.copyright.CopyrightBundle
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
-import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
-import com.intellij.openapi.vcs.checkin.CheckinModificationHandler
+import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.util.PairConsumer
 
 class UpdateCopyrightCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
-    return UpdateCopyrightCheckinHandler(panel)
+    return UpdateCopyrightCheckinHandler(panel.project)
+  }
+}
+
+private class UpdateCopyrightCheckinHandler(val project: Project) : CheckinHandler(), CommitCheck {
+
+  override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
+    return BooleanCommitOption(project, CopyrightBundle.message("before.checkin.update.copyright"), false,
+                               settings::UPDATE_COPYRIGHT)
   }
 
-  private class UpdateCopyrightCheckinHandler(private val panel: CheckinProjectPanel) : CheckinHandler(), CheckinModificationHandler {
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION
 
-    override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
-      return BooleanCommitOption(panel, CopyrightBundle.message("before.checkin.update.copyright"), false,
-                                 { settings.UPDATE_COPYRIGHT }, { value -> settings.UPDATE_COPYRIGHT = value })
-    }
+  override fun isEnabled(): Boolean = settings.UPDATE_COPYRIGHT
 
-    override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult? {
-      if (settings.UPDATE_COPYRIGHT) {
-        UpdateCopyrightProcessor(panel.project, null, getPsiFiles()).run()
-        FileDocumentManager.getInstance().saveAllDocuments()
+  override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
+    UpdateCopyrightProcessor(project, null, getPsiFiles(commitInfo.committedVirtualFiles)).run()
+    FileDocumentManager.getInstance().saveAllDocuments()
+    return null
+  }
+
+  private val settings: UpdateCopyrightCheckinHandlerState get() = UpdateCopyrightCheckinHandlerState.getInstance(project)
+
+  private fun getPsiFiles(files: List<VirtualFile>): Array<PsiFile> {
+    val psiFiles = mutableListOf<PsiFile>()
+    val manager = PsiManager.getInstance(project)
+    for (file in files) {
+      val psiFile = manager.findFile(file)
+      if (psiFile != null) {
+        psiFiles.add(psiFile)
       }
-      return super.beforeCheckin()
     }
-
-    private val settings: UpdateCopyrightCheckinHandlerState get() = UpdateCopyrightCheckinHandlerState.getInstance(panel.project)
-
-    private fun getPsiFiles(): Array<PsiFile> {
-      val files = panel.virtualFiles
-      val psiFiles: MutableList<PsiFile> = ArrayList()
-      val manager = PsiManager.getInstance(panel.project)
-      for (file in files) {
-        val psiFile = manager.findFile(file)
-        if (psiFile != null) {
-          psiFiles.add(psiFile)
-        }
-      }
-      return PsiUtilCore.toPsiFileArray(psiFiles)
-    }
+    return PsiUtilCore.toPsiFileArray(psiFiles)
   }
 }
