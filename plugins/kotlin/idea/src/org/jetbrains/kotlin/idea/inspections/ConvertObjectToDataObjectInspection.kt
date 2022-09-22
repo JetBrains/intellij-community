@@ -161,8 +161,9 @@ private class ConvertToDataObjectQuickFix(private val isSerializable: Boolean) :
 private fun KtObjectDeclaration.findToString() = findMemberFunction(TO_STRING, KOTLIN_TO_STRING_FQN, FunctionDescriptor::isAnyToString)
 private fun KtObjectDeclaration.findEquals() = findMemberFunction(EQUALS, KOTLIN_ANY_EQUALS_FQN, FunctionDescriptor::isAnyEquals)
 private fun KtObjectDeclaration.findHashCode() = findMemberFunction(HASH_CODE, KOTLIN_ANY_HASH_CODE_FQN, FunctionDescriptor::isAnyHashCode)
-private fun KtObjectDeclaration.findReadResolve(): VirtualFunction =
-    findMemberFunction("readResolve", trivialSuperFqn = null) { it.returnType?.isAnyOrNullableAny() == true }
+private fun KtObjectDeclaration.findReadResolve(): VirtualFunction = findMemberFunction("readResolve", trivialSuperFqn = null) {
+    it.valueParameters.isEmpty() && it.returnType?.isAnyOrNullableAny() == true
+}
 
 private fun KtObjectDeclaration.findMemberFunction(
     name: String,

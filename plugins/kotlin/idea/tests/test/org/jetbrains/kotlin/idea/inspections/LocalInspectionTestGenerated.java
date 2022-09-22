@@ -3927,6 +3927,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertObjectToDataObject/preserveUnrelatedReadResolve2.kt");
         }
 
+        @TestMetadata("preserveUnrelatedReadResolve3.kt")
+        public void testPreserveUnrelatedReadResolve3() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/preserveUnrelatedReadResolve3.kt");
+        }
+
         @TestMetadata("publicReadResolve.kt")
         public void testPublicReadResolve() throws Exception {
             runTest("testData/inspectionsLocal/convertObjectToDataObject/publicReadResolve.kt");
