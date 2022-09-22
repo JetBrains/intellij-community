@@ -48,7 +48,7 @@ class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
     private class ObjectVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
         override fun visitObjectDeclaration(ktObject: KtObjectDeclaration) {
             if (ktObject.isData() || ktObject.isCompanion() || ktObject.isObjectLiteral()) return
-            val fqName = lazy { ktObject.descriptor?.fqNameSafe }
+            val fqName = lazy { ktObject.descriptor?.fqNameSafe ?: FqName.ROOT }
             val isSerializable = isSerializable(ktObject)
             val toString = ktObject.findToString()
             val candidate1 = toString == null && isSerializable
@@ -80,7 +80,7 @@ private fun isSerializable(ktObject: KtObjectDeclaration): Boolean =
         ?.getAllSuperClassifiers()
         ?.any { it.fqNameUnsafe.asString() == "java.io.Serializable" } == true
 
-private fun isCompatibleReadResolve(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<FqName?>, isSerializable: Boolean): Boolean {
+private fun isCompatibleReadResolve(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<FqName>, isSerializable: Boolean): Boolean {
     if (!isSerializable) return true
     val readResolve = ktObject.findReadResolve() ?: return true
     if (!readResolve.isPrivate()) return false
@@ -88,13 +88,12 @@ private fun isCompatibleReadResolve(ktObject: KtObjectDeclaration, ktObjectFqn: 
         ?.asSafely<KtNameReferenceExpression>()
         ?.resolveType()
         ?.fqName
-        ?: return false
     return ktObjectFqn.value == fqn
 }
 
 private fun isCompatibleToString(
     ktObject: KtObjectDeclaration,
-    ktObjectFqn: Lazy<FqName?>,
+    ktObjectFqn: Lazy<FqName>,
     toStringFunction: KtNamedFunction
 ): Boolean {
     val body = toStringFunction.singleExpressionBody() ?: return false
@@ -119,7 +118,7 @@ private fun KtExpression.tryUnwrapElvisOrDoubleBang(context: Lazy<BindingContext
     else -> null
 } ?: this
 
-private fun isCompatibleEquals(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<FqName?>): Boolean {
+private fun isCompatibleEquals(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<FqName>): Boolean {
     val equals = ktObject.findEquals() ?: return true
     val isExpr = equals.singleExpressionBody().asSafely<KtIsExpression>() ?: return false
     val typeReference = isExpr.typeReference ?: return false
