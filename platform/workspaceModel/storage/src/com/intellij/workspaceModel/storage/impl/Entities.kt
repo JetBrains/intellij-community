@@ -433,7 +433,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
   }
 
   open fun getEntityData(): WorkspaceEntityData<T> {
-    val actualEntityData = (diff as MutableEntityStorageImpl).entityDataById(id)
+    val actualEntityData = (diff as MutableEntityStorageImpl).entitiesByType.getEntityDataForModificationOrNull(id)
       ?: error("Cannot find the data. Must probably this entity was already remove from builder.")
     @Suppress("UNCHECKED_CAST")
     return actualEntityData as WorkspaceEntityData<T>
