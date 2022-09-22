@@ -15,6 +15,14 @@ interface Foo {
     var b: String?
 }
 
+fun testIface(foo : Foo) {
+    if (foo.b==null){
+        println()
+    } else if (foo.b!=null){
+        println()
+    }
+}
+
 open class Test : Foo {
   open var a: String? = ""
   override var b: String? = ""

@@ -463,7 +463,8 @@ val KtProperty.isOverridable: Boolean
 
 private val KtDeclaration.isEffectivelyFinal: Boolean
     get() = hasModifier(KtTokens.FINAL_KEYWORD) ||
-            !(hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD) || hasModifier(KtTokens.OVERRIDE_KEYWORD)) ||
+            !(hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD) || hasModifier(KtTokens.OVERRIDE_KEYWORD) ||
+                    (containingClassOrObject as? KtClass)?.isInterface() == true) ||
             containingClassOrObject?.isEffectivelyFinal == true
 
 private val KtClassOrObject.isEffectivelyFinal: Boolean
@@ -473,7 +474,7 @@ private val KtClassOrObject.isEffectivelyFinal: Boolean
 private val KtClass.isEffectivelyFinal: Boolean
     get() = hasModifier(KtTokens.FINAL_KEYWORD) ||
             isData() ||
-            !(isSealed() || hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD))
+            !(isSealed() || hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD) || isInterface())
 
 fun KtDeclaration.isOverridable(): Boolean {
     val parent = parent
