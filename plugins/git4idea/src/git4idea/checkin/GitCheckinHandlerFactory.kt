@@ -2,7 +2,7 @@
 package git4idea.checkin
 
 import com.intellij.CommonBundle
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -38,50 +38,40 @@ import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
-/**
- * Prohibits committing with an empty messages, warns if committing into detached HEAD, checks if user name and correct CRLF attributes
- * are set.
- */
-open class GitCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey()) {
+abstract class GitCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey())
+
+class GitUserNameCheckinHandlerFactory : GitCheckinHandlerFactory() {
   override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
-    return GitCheckinHandler(panel)
+    return GitUserNameCheckinHandler(panel)
   }
 }
 
-private class GitCheckinHandler(private val myPanel: CheckinProjectPanel) : CheckinHandler() {
-  private val myProject: Project
-
-  init {
-    myProject = myPanel.project
+class GitCRLFCheckinHandlerFactory : GitCheckinHandlerFactory() {
+  override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+    return GitCRLFCheckinHandler(panel)
   }
+}
 
-  override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
-    if (commitOrCommitAndPush(executor)) {
-      var result = checkUserName()
-      if (result != ReturnResult.COMMIT) {
-        return result
-      }
-      result = warnAboutCrlfIfNeeded()
-      return if (result != ReturnResult.COMMIT) {
-        result
-      }
-      else warnAboutDetachedHeadIfNeeded()
-    }
-    return ReturnResult.COMMIT
+class GitDetachedRootCheckinHandlerFactory : GitCheckinHandlerFactory() {
+  override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+    return GitDetachedRootCheckinHandler(panel)
   }
+}
 
-  private fun warnAboutCrlfIfNeeded(): ReturnResult {
-    val settings = GitVcsSettings.getInstance(myProject)
+
+private class GitCRLFCheckinHandler(panel: CheckinProjectPanel) : GitCheckinHandler(panel) {
+  override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>?): ReturnResult {
+    val settings = GitVcsSettings.getInstance(project)
     if (!settings.warnAboutCrlf()) {
       return ReturnResult.COMMIT
     }
 
     val git = Git.getInstance()
 
-    val files = myPanel.virtualFiles // deleted files aren't included, but for them we don't care about CRLFs.
+    val files = panel.virtualFiles // deleted files aren't included, but for them we don't care about CRLFs.
     val crlfHelper = AtomicReference<GitCrlfProblemsDetector?>()
-    runModalTask(GitBundle.message("progress.checking.line.separator.issues"), myProject, true) {
-      crlfHelper.set(GitCrlfProblemsDetector.detect(myProject, git, files))
+    runModalTask(GitBundle.message("progress.checking.line.separator.issues"), project, true) {
+      crlfHelper.set(GitCrlfProblemsDetector.detect(project, git, files))
     }
 
     if (crlfHelper.get() == null) { // detection cancelled
@@ -90,7 +80,7 @@ private class GitCheckinHandler(private val myPanel: CheckinProjectPanel) : Chec
 
     if (crlfHelper.get()!!.shouldWarn()) {
       val codeAndDontWarn = UIUtil.invokeAndWaitIfNeeded<Pair<Int, Boolean>> {
-        val dialog = GitCrlfDialog(myProject)
+        val dialog = GitCrlfDialog(project)
         dialog.show()
         Pair.create(dialog.exitCode, dialog.dontWarnAgain())
       }
@@ -102,7 +92,7 @@ private class GitCheckinHandler(private val myPanel: CheckinProjectPanel) : Chec
       }
       else {
         if (decision == GitCrlfDialog.SET) {
-          val anyRoot = myPanel.roots.iterator().next() // config will be set globally => any root will do.
+          val anyRoot = panel.roots.iterator().next() // config will be set globally => any root will do.
           setCoreAutoCrlfAttribute(anyRoot)
         }
         else {
@@ -117,19 +107,20 @@ private class GitCheckinHandler(private val myPanel: CheckinProjectPanel) : Chec
   }
 
   private fun setCoreAutoCrlfAttribute(aRoot: VirtualFile) {
-    runModalTask(GitBundle.message("progress.setting.config.value"), myProject, true) {
+    runModalTask(GitBundle.message("progress.setting.config.value"), project, true) {
       try {
-        GitConfigUtil.setValue(myProject, aRoot, GitConfigUtil.CORE_AUTOCRLF, GitCrlfUtil.RECOMMENDED_VALUE, "--global")
+        GitConfigUtil.setValue(project, aRoot, GitConfigUtil.CORE_AUTOCRLF, GitCrlfUtil.RECOMMENDED_VALUE, "--global")
       }
       catch (e: VcsException) {
         // it is not critical: the user just will get the dialog again next time
-        LOG.warn("Couldn't globally set core.autocrlf in $aRoot", e)
+        logger<GitCRLFCheckinHandler>().warn("Couldn't globally set core.autocrlf in $aRoot", e)
       }
     }
   }
+}
 
-  private fun checkUserName(): ReturnResult {
-    val project = myPanel.project
+private class GitUserNameCheckinHandler(panel: CheckinProjectPanel) : GitCheckinHandler(panel) {
+  override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>?): ReturnResult {
     val vcs = GitVcs.getInstance(project)
 
     val affectedRoots = getSelectedRoots()
@@ -175,7 +166,7 @@ private class GitCheckinHandler(private val myPanel: CheckinProjectPanel) : Chec
           }
         }
         catch (e: VcsException) {
-          LOG.error("Couldn't get user.name and user.email for root $root", e)
+          logger<GitUserNameCheckinHandler>().error("Couldn't get user.name and user.email for root $root", e)
           // doing nothing - let commit with possibly empty user.name/email
         }
       }
@@ -201,7 +192,7 @@ private class GitCheckinHandler(private val myPanel: CheckinProjectPanel) : Chec
         }
       }
       catch (e: VcsException) {
-        LOG.error("Couldn't set user.name and user.email", e)
+        logger<GitUserNameCheckinHandler>().error("Couldn't set user.name and user.email", e)
         error.set(GitBundle.message("error.cant.set.user.name.email"))
       }
     }
@@ -209,7 +200,7 @@ private class GitCheckinHandler(private val myPanel: CheckinProjectPanel) : Chec
       return true
     }
     else {
-      Messages.showErrorDialog(myPanel.component, error.get())
+      Messages.showErrorDialog(panel.component, error.get())
       return false
     }
   }
@@ -221,11 +212,13 @@ private class GitCheckinHandler(private val myPanel: CheckinProjectPanel) : Chec
     val email = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_EMAIL)
     return Couple.of(name, email)
   }
+}
 
-  private fun warnAboutDetachedHeadIfNeeded(): ReturnResult {
+private class GitDetachedRootCheckinHandler(panel: CheckinProjectPanel) : GitCheckinHandler(panel) {
+  override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
     // Warning: commit on a detached HEAD
     val detachedRoot = getDetachedRoot()
-    if (detachedRoot == null || !GitVcsSettings.getInstance(myProject).warnAboutDetachedHead()) {
+    if (detachedRoot == null || !GitVcsSettings.getInstance(project).warnAboutDetachedHead()) {
       return ReturnResult.COMMIT
     }
 
@@ -251,14 +244,14 @@ private class GitCheckinHandler(private val myPanel: CheckinProjectPanel) : Chec
 
     val dontAskAgain: DialogWrapper.DoNotAskOption = object : DialogWrapper.DoNotAskOption.Adapter() {
       override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
-        GitVcsSettings.getInstance(myProject).setWarnAboutDetachedHead(!isSelected)
+        GitVcsSettings.getInstance(project).setWarnAboutDetachedHead(!isSelected)
       }
 
       override fun getDoNotShowMessage(): String {
         return GitBundle.message("checkbox.dont.warn.again")
       }
     }
-    val choice = Messages.showOkCancelDialog(myProject, message.wrapWithHtmlBody().toString(), title,
+    val choice = Messages.showOkCancelDialog(project, message.wrapWithHtmlBody().toString(), title,
                                              GitBundle.message("commit.action.name"), CommonBundle.getCancelButtonText(),
                                              Messages.getWarningIcon(), dontAskAgain)
     if (choice == Messages.OK) {
@@ -269,10 +262,6 @@ private class GitCheckinHandler(private val myPanel: CheckinProjectPanel) : Chec
     }
   }
 
-  private fun commitOrCommitAndPush(executor: CommitExecutor?): Boolean {
-    return executor == null || executor is GitCommitAndPushExecutor
-  }
-
   /**
    * Scans the Git roots, selected for commit, for the root which is on a detached HEAD.
    * Returns null, if all repositories are on the branch.
@@ -280,7 +269,7 @@ private class GitCheckinHandler(private val myPanel: CheckinProjectPanel) : Chec
    * This is because the situation is very rare, while it requires a lot of additional effort of making a well-formed message.
    */
   private fun getDetachedRoot(): DetachedRoot? {
-    val repositoryManager = GitUtil.getRepositoryManager(myPanel.project)
+    val repositoryManager = GitUtil.getRepositoryManager(project)
     for (root in getSelectedRoots()) {
       val repository = repositoryManager.getRepositoryForRootQuick(root) ?: continue
       if (!repository.isOnBranch && !GitRebaseUtils.isInteractiveRebaseInProgress(repository)) {
@@ -290,11 +279,23 @@ private class GitCheckinHandler(private val myPanel: CheckinProjectPanel) : Chec
     return null
   }
 
-  private fun getSelectedRoots(): Collection<VirtualFile> {
-    val vcsManager = ProjectLevelVcsManager.getInstance(myProject)
-    val git = GitVcs.getInstance(myProject)
+  private class DetachedRoot(val myRoot: VirtualFile, // rebase in progress, or just detached due to a checkout of a commit.
+                             val myRebase: Boolean)
+}
+
+private abstract class GitCheckinHandler(val panel: CheckinProjectPanel) : CheckinHandler() {
+  protected val project get() = panel.project
+
+  override fun acceptExecutor(executor: CommitExecutor?): Boolean {
+    return (executor == null || executor is GitCommitAndPushExecutor) &&
+           super.acceptExecutor(executor)
+  }
+
+  protected fun getSelectedRoots(): Collection<VirtualFile> {
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    val git = GitVcs.getInstance(project)
     val result = mutableSetOf<VirtualFile>()
-    for (path in ChangesUtil.getPaths(myPanel.selectedChanges)) {
+    for (path in ChangesUtil.getPaths(panel.selectedChanges)) {
       val vcsRoot = vcsManager.getVcsRootObjectFor(path)
       if (vcsRoot != null) {
         val root = vcsRoot.path
@@ -304,12 +305,5 @@ private class GitCheckinHandler(private val myPanel: CheckinProjectPanel) : Chec
       }
     }
     return result
-  }
-
-  private class DetachedRoot(val myRoot: VirtualFile, // rebase in progress, or just detached due to a checkout of a commit.
-                             val myRebase: Boolean)
-
-  companion object {
-    private val LOG = Logger.getInstance(GitCheckinHandlerFactory::class.java)
   }
 }
