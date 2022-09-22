@@ -234,7 +234,9 @@ internal class MutableEntityStorageImpl(
       // Get entity data that will be modified
       val copiedData = entitiesByType.getEntityDataForModification(entityId) as WorkspaceEntityData<T>
 
-      val modifiableEntity = copiedData.wrapAsModifiable(this) as M
+      val modifiableEntity = (if (e is ModifiableWorkspaceEntity<*>) e else copiedData.wrapAsModifiable(this)) as M
+      modifiableEntity as ModifiableWorkspaceEntityBase<*>
+      modifiableEntity.changedProperty.clear()
 
       val beforePersistentId = if (e is WorkspaceEntityWithPersistentId) e.persistentId else null
 
@@ -243,7 +245,7 @@ internal class MutableEntityStorageImpl(
       val beforeChildren = this.refs.getChildrenRefsOfParentBy(entityId.asParent()).flatMap { (key, value) -> value.map { key to it } }
 
       // Execute modification code
-      (modifiableEntity as ModifiableWorkspaceEntityBase<*>).allowModifications {
+      modifiableEntity.allowModifications {
         modifiableEntity.change()
         modifiableEntity.afterModification()
       }
