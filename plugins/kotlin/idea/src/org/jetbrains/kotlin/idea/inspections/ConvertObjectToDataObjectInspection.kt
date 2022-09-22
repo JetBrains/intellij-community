@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.asSafely
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.getCallChain
@@ -19,9 +21,9 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Companion.isSubclassOfStatelessSealed
-import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyEquals
-import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyHashCode
-import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyToString
+import org.jetbrains.kotlin.idea.inspections.VirtualFunction.*
+import org.jetbrains.kotlin.idea.inspections.VirtualFunction.Function
+import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.*
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -33,6 +35,8 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getAllSuperClassifiers
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
+import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 import org.jetbrains.kotlin.types.typeUtil.isAnyOrNullableAny
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 
@@ -51,9 +55,9 @@ class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
             val fqName = lazy { ktObject.descriptor?.fqNameSafe ?: FqName.ROOT }
             val isSerializable = isSerializable(ktObject)
             val toString = ktObject.findToString()
-            val isSerializableCase = toString == null && isSerializable
-            val isSealedSubClassCase by lazy { toString == null && ktObject.isSubclassOfStatelessSealed() }
-            val isToStringCase by lazy { toString != null && isCompatibleToString(ktObject, fqName, toString) }
+            val isSerializableCase = toString == TrivialSuper && isSerializable
+            val isSealedSubClassCase by lazy { toString == TrivialSuper && ktObject.isSubclassOfStatelessSealed() }
+            val isToStringCase by lazy { toString is Function && isCompatibleToString(ktObject, fqName, toString.function) }
             if ((isSerializableCase || isSealedSubClassCase || isToStringCase) &&
                 isCompatibleHashCode(ktObject) &&
                 isCompatibleEquals(ktObject, fqName) &&
@@ -80,16 +84,15 @@ private fun isSerializable(ktObject: KtObjectDeclaration): Boolean =
         ?.getAllSuperClassifiers()
         ?.any { it.fqNameUnsafe.asString() == "java.io.Serializable" } == true
 
-private fun isCompatibleReadResolve(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<FqName>, isSerializable: Boolean): Boolean {
-    if (!isSerializable) return true
-    val readResolve = ktObject.findReadResolve() ?: return true
-    if (!readResolve.isPrivate()) return false
-    val fqn = readResolve.singleExpressionBody()
-        ?.asSafely<KtNameReferenceExpression>()
-        ?.resolveType()
-        ?.fqName
-    return ktObjectFqn.value == fqn
-}
+private fun isCompatibleReadResolve(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<FqName>, isSerializable: Boolean): Boolean =
+    !isSerializable || when (val readResolve = ktObject.findReadResolve()) {
+        is Function -> ktObjectFqn.value == readResolve.function.takeIf(KtNamedFunction::isPrivate)?.singleExpressionBody()
+            ?.asSafely<KtNameReferenceExpression>()
+            ?.resolveType()
+            ?.fqName
+        NonTrivialSuper -> false
+        TrivialSuper -> true
+    }
 
 private fun isCompatibleToString(
     ktObject: KtObjectDeclaration,
@@ -118,38 +121,76 @@ private fun KtExpression.tryUnwrapElvisOrDoubleBang(context: Lazy<BindingContext
     else -> null
 } ?: this
 
-private fun isCompatibleEquals(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<FqName>): Boolean {
-    val equals = ktObject.findEquals() ?: return true
-    val isExpr = equals.singleExpressionBody().asSafely<KtIsExpression>() ?: return false
-    val typeReference = isExpr.typeReference ?: return false
-    return typeReference.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)[BindingContext.TYPE, typeReference]?.fqName == ktObjectFqn.value
-}
+private fun isCompatibleEquals(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<FqName>): Boolean =
+    when (val equals = ktObject.findEquals()) {
+        is Function -> ktObjectFqn.value == equals.function.singleExpressionBody()
+            ?.asSafely<KtIsExpression>()?.typeReference?.let { typeReference ->
+                typeReference.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)[BindingContext.TYPE, typeReference]?.fqName
+            }
+        NonTrivialSuper -> false
+        TrivialSuper -> true
+    }
 
-private fun isCompatibleHashCode(ktObject: KtObjectDeclaration): Boolean {
-    val hashCode = ktObject.findHashCode() ?: return true
-    return hashCode.singleExpressionBody() is KtConstantExpression
-}
+private fun isCompatibleHashCode(ktObject: KtObjectDeclaration): Boolean =
+    when (val hashCode = ktObject.findHashCode()) {
+        is Function -> hashCode.function.singleExpressionBody() is KtConstantExpression
+        NonTrivialSuper -> false
+        TrivialSuper -> true
+    }
 
 private class ConvertToDataObjectQuickFix(private val isSerializable: Boolean) : LocalQuickFix {
     override fun getFamilyName(): String = KotlinBundle.message("convert.to.data.object")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val ktObject = descriptor.psiElement.parent.asSafely<KtObjectDeclaration>() ?: return
-        ktObject.findToString()?.delete()
-        ktObject.findEquals()?.delete()
-        ktObject.findHashCode()?.delete()
-        if (isSerializable) ktObject.findReadResolve()?.delete()
+        ktObject.findToString().function?.delete()
+        ktObject.findEquals().function?.delete()
+        ktObject.findHashCode().function?.delete()
+        if (isSerializable) ktObject.findReadResolve().function?.delete()
         if (ktObject.body?.declarations?.isEmpty() == true) ktObject.body?.delete()
         ktObject.addModifier(KtTokens.DATA_KEYWORD)
     }
+
+    private val VirtualFunction.function: KtNamedFunction?
+        get() = when (this) {
+            is Function -> function
+            is NonTrivialSuper -> null
+            is TrivialSuper -> null
+        }
 }
 
-private fun KtClassOrObject.findToString(): KtNamedFunction? = findMemberFunction("toString", FunctionDescriptor::isAnyToString)
-private fun KtClassOrObject.findEquals(): KtNamedFunction? = findMemberFunction("equals", FunctionDescriptor::isAnyEquals)
-private fun KtClassOrObject.findHashCode(): KtNamedFunction? = findMemberFunction("hashCode", FunctionDescriptor::isAnyHashCode)
-private fun KtClassOrObject.findReadResolve(): KtNamedFunction? = findMemberFunction("readResolve") { it.returnType?.isAnyOrNullableAny() }
+private fun KtObjectDeclaration.findToString() = findMemberFunction(TO_STRING, KOTLIN_TO_STRING_FQN, FunctionDescriptor::isAnyToString)
+private fun KtObjectDeclaration.findEquals() = findMemberFunction(EQUALS, KOTLIN_ANY_EQUALS_FQN, FunctionDescriptor::isAnyEquals)
+private fun KtObjectDeclaration.findHashCode() = findMemberFunction(HASH_CODE, KOTLIN_ANY_HASH_CODE_FQN, FunctionDescriptor::isAnyHashCode)
+private fun KtObjectDeclaration.findReadResolve(): VirtualFunction =
+    findMemberFunction("readResolve", trivialSuperFqn = null) { it.returnType?.isAnyOrNullableAny() == true }
 
-private fun KtClassOrObject.findMemberFunction(name: String, predicate: (FunctionDescriptor) -> Boolean?): KtNamedFunction? =
-    body?.functions?.singleOrNull { function ->
-        function.name == name && function.descriptor?.asSafely<FunctionDescriptor>()?.let(predicate) == true
-    }
+private fun KtObjectDeclaration.findMemberFunction(
+    name: String,
+    trivialSuperFqn: String?,
+    predicate: (FunctionDescriptor) -> Boolean
+): VirtualFunction =
+    if (trivialSuperFqn != (descriptor as? ClassDescriptor)?.unsubstitutedMemberScope
+            ?.getDescriptorsFiltered(DescriptorKindFilter.FUNCTIONS) { it.asString() == name }
+            ?.asSequence()
+            ?.filterIsInstance<FunctionDescriptor>()
+            ?.singleOrNull(predicate)
+            ?.findClosestNotFakeSuper()
+            ?.fqNameUnsafe?.asString()) NonTrivialSuper
+    else body?.functions
+        ?.singleOrNull { function ->
+            function.name == name && function.descriptor?.asSafely<FunctionDescriptor>()?.let(predicate) == true
+        }
+        ?.let { Function(it) }
+        ?: TrivialSuper
+
+private fun FunctionDescriptor.findClosestNotFakeSuper(): FunctionDescriptor? =
+    generateSequence(this) { it.overriddenDescriptors.singleOrNull() }
+        .drop(1)
+        .firstOrNull { it.kind != CallableMemberDescriptor.Kind.FAKE_OVERRIDE }
+
+private sealed interface VirtualFunction {
+    class Function(val function: KtNamedFunction) : VirtualFunction
+    object NonTrivialSuper : VirtualFunction
+    object TrivialSuper : VirtualFunction
+}

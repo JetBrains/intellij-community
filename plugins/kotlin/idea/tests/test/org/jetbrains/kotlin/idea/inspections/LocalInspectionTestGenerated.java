@@ -3812,6 +3812,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleEquals.kt");
         }
 
+        @TestMetadata("compatibleInheritedEqualsIsConsideredAsIncompatible.kt")
+        public void testCompatibleInheritedEqualsIsConsideredAsIncompatible() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleInheritedEqualsIsConsideredAsIncompatible.kt");
+        }
+
+        @TestMetadata("compatibleInheritedReadResolveIsConsideredAsIncompatible.kt")
+        public void testCompatibleInheritedReadResolveIsConsideredAsIncompatible() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleInheritedReadResolveIsConsideredAsIncompatible.kt");
+        }
+
         @TestMetadata("compatibleReadResolve.kt")
         public void testCompatibleReadResolve() throws Exception {
             runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleReadResolve.kt");
@@ -3842,6 +3852,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertObjectToDataObject/expressionBodyToString.kt");
         }
 
+        @TestMetadata("inheritanceThatDoesntAffectDataObject.kt")
+        public void testInheritanceThatDoesntAffectDataObject() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/inheritanceThatDoesntAffectDataObject.kt");
+        }
+
         @TestMetadata("javaReflectToString.kt")
         public void testJavaReflectToString() throws Exception {
             runTest("testData/inspectionsLocal/convertObjectToDataObject/javaReflectToString.kt");
@@ -3855,6 +3870,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("notCompatibleEquals.kt")
         public void testNotCompatibleEquals() throws Exception {
             runTest("testData/inspectionsLocal/convertObjectToDataObject/notCompatibleEquals.kt");
+        }
+
+        @TestMetadata("notCompatibleInheritedEquals.kt")
+        public void testNotCompatibleInheritedEquals() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/notCompatibleInheritedEquals.kt");
         }
 
         @TestMetadata("notCompatibleToString.kt")
