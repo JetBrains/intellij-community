@@ -27,7 +27,8 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
-import git4idea.config.*;
+import git4idea.config.GitConfigUtil;
+import git4idea.config.GitVcsSettings;
 import git4idea.crlf.GitCrlfDialog;
 import git4idea.crlf.GitCrlfProblemsDetector;
 import git4idea.crlf.GitCrlfUtil;
@@ -73,11 +74,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     @Override
     public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
       if (commitOrCommitAndPush(executor)) {
-        ReturnResult result = checkGitVersionAndEnv();
-        if (result != ReturnResult.COMMIT) {
-          return result;
-        }
-        result = checkUserName();
+        ReturnResult result = checkUserName();
         if (result != ReturnResult.COMMIT) {
           return result;
         }
@@ -155,17 +152,6 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
           }
         }
       });
-    }
-
-    private ReturnResult checkGitVersionAndEnv() {
-      GitVersion version = GitExecutableManager.getInstance().getVersionUnderModalProgressOrCancel(myProject);
-      if (System.getenv("HOME") == null && GitVersionSpecialty.DOESNT_DEFINE_HOME_ENV_VAR.existsIn(version)) {
-        Messages.showErrorDialog(myProject,
-                                 GitBundle.message("error.message.git.version.does.not.define.home.env", version.getPresentation()),
-                                 GitBundle.message("error.title.git.version.does.not.define.home.env"));
-        return ReturnResult.CANCEL;
-      }
-      return ReturnResult.COMMIT;
     }
 
     private ReturnResult checkUserName() {
