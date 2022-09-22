@@ -138,7 +138,6 @@
                     beanClass="com.intellij.platform.ProjectTemplateEP" dynamic="true"/>
 
     <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener" dynamic="false"/>
-    <extensionPoint name="applicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="false"/>
     <extensionPoint name="ideEventQueueDispatcher" interface="com.intellij.ide.IdeEventQueue$EventDispatcher" dynamic="true"/>
 
     <extensionPoint name="editorTabTitleProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider" dynamic="true"/>
@@ -353,7 +352,6 @@
 
     <extensionPoint name="notification.parentGroup" beanClass="com.intellij.notification.impl.NotificationParentGroupBean"/>
     <extensionPoint name="notification.group" beanClass="com.intellij.notification.impl.NotificationGroupBean"/>
-    <extensionPoint name="notificationGroup" beanClass="com.intellij.notification.impl.NotificationGroupEP" dynamic="true"/>
 
     <extensionPoint name="notificationRemindLaterHandler" interface="com.intellij.notification.NotificationRemindLaterHandler" dynamic="true"/>
 
@@ -396,7 +394,6 @@
     </extensionPoint>
 
     <extensionPoint name="systemProperty" beanClass="com.intellij.openapi.util.SystemPropertyBean"/>
-    <extensionPoint name="registryKey" beanClass="com.intellij.openapi.util.registry.RegistryKeyBean" dynamic="true"/>
 
     <extensionPoint name="fileBreadcrumbsCollector" interface="com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector" area="IDEA_PROJECT" dynamic="true"/>
 

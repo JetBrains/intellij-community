@@ -672,8 +672,6 @@
 
     <applicationService serviceInterface="com.intellij.notification.NotificationsManager"
                         serviceImplementation="com.intellij.notification.impl.NotificationsManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.notification.NotificationGroupManager"
-                        serviceImplementation="com.intellij.notification.impl.NotificationGroupManagerImpl"/>
     <applicationService serviceInterface="com.intellij.notification.NotificationsConfiguration"
                         serviceImplementation="com.intellij.notification.impl.NotificationsConfigurationImpl"/>
 

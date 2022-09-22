@@ -217,9 +217,6 @@
     <applicationService serviceInterface="com.intellij.patterns.compiler.PatternCompilerFactory"
                         serviceImplementation="com.intellij.patterns.compiler.PatternCompilerFactoryImpl"/>
 
-    <applicationService serviceInterface="com.intellij.util.download.DownloadableFileService"
-                        serviceImplementation="com.intellij.util.download.impl.DownloadableFileServiceImpl"/>
-
     <applicationService serviceInterface="com.intellij.psi.stubs.StubTreeLoader"
                         serviceImplementation="com.intellij.psi.stubs.StubTreeLoaderImpl"/>
 
