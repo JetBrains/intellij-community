@@ -7,7 +7,7 @@ import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.roots.impl.DirectoryIndex
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -43,8 +43,7 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
     if (ApplicationManager.getApplication().isUnitTestMode && !CodeVisionHost.isCodeLensTest(editor)) return emptyList()
 
     val virtualFile = file.virtualFile ?: return emptyList()
-    val directoryInfo = DirectoryIndex.getInstance(file.project).getInfoForFile(virtualFile)
-    if (directoryInfo.isInLibrarySource(file.virtualFile)) return emptyList()
+    if (ProjectFileIndex.getInstance(file.project).isInLibrarySource(virtualFile)) return emptyList()
 
     val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
     val traverser = SyntaxTraverser.psiTraverser(file)
