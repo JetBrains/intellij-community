@@ -38,9 +38,7 @@ public final class OwnerOptional {
       if (!owner.isFocused() || !SystemInfo.isJetBrainsJvm) {
         owner = owner.getOwner();
 
-        while (owner != null
-               && !(owner instanceof Dialog)
-               && !(owner instanceof Frame)) {
+        while (UIUtil.isSimpleWindow(owner)) {
           owner = owner.getOwner();
         }
       }
@@ -60,7 +58,7 @@ public final class OwnerOptional {
     }
 
     // Window cannot be parent of JDialog ()
-    if (owner != null && !(owner instanceof Frame || owner instanceof Dialog)) {
+    if (UIUtil.isSimpleWindow(owner)) {
       owner = null;
     }
 

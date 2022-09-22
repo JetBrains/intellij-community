@@ -2949,6 +2949,10 @@ public final class UIUtil {
     return c instanceof Window ? (Window)c : SwingUtilities.getWindowAncestor(c);
   }
 
+  public static boolean isSimpleWindow(Window window) {
+    return window != null && !(window instanceof Frame || window instanceof Dialog);
+  }
+
   public static boolean isHelpButton(Component button) {
     return button instanceof JButton && "help".equals(((JComponent)button).getClientProperty("JButton.buttonType"));
   }

@@ -271,9 +271,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   protected boolean isPopup() {
     Window window = SwingUtilities.getWindowAncestor(myComponent);
-    return window != null
-           && !(window instanceof Dialog || window instanceof Frame)
-           && !isHintsAllowed(window);
+    return UIUtil.isSimpleWindow(window) && !isHintsAllowed(window);
   }
 
   private static boolean isHintsAllowed(Window window) {
