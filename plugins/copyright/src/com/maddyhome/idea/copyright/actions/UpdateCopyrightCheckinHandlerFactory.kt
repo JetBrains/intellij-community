@@ -2,7 +2,9 @@
 package com.maddyhome.idea.copyright.actions
 
 import com.intellij.copyright.CopyrightBundle
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.CommitContext
@@ -13,6 +15,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtilCore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class UpdateCopyrightCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
@@ -32,7 +36,12 @@ private class UpdateCopyrightCheckinHandler(val project: Project) : CheckinHandl
   override fun isEnabled(): Boolean = settings.UPDATE_COPYRIGHT
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
-    UpdateCopyrightProcessor(project, null, getPsiFiles(commitInfo.committedVirtualFiles)).run()
+    withContext(Dispatchers.Default) {
+      runUnderIndicator {
+        val psiFiles = runReadAction { getPsiFiles(commitInfo.committedVirtualFiles) }
+        UpdateCopyrightProcessor(project, null, psiFiles, false).run()
+      }
+    }
     FileDocumentManager.getInstance().saveAllDocuments()
     return null
   }
