@@ -30,7 +30,7 @@ import java.io.ObjectOutputStream;
  * @author Eric D. Friedman
  */
 @Deprecated
-public class TObjectLongHashMap<K> extends TObjectHash<K> {
+public final class TObjectLongHashMap<K> extends TObjectHash<K> {
 
   /**
    * the values of the map

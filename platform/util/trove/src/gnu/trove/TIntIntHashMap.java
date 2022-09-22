@@ -113,13 +113,6 @@ public class TIntIntHashMap extends TIntHash {
   }
 
   /**
-   * @return a TIntIntIterator with access to this map's keys and values
-   */
-  public TIntIntIterator iterator() {
-    return new TIntIntIterator(this);
-  }
-
-  /**
    * initializes the hashtable to a prime capacity which is at least
    * <tt>initialCapacity + 1</tt>.
    *
@@ -271,7 +264,7 @@ public class TIntIntHashMap extends TIntHash {
 
     @Override
     public boolean execute(int key, int value) {
-      h += _hashingStrategy.computeHashCode(key) ^ HashFunctions.hash(value);
+      h += _hashingStrategy.computeHashCode(key) ^ value;
       return true;
     }
   }

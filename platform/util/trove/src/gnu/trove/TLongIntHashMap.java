@@ -265,7 +265,7 @@ public class TLongIntHashMap extends TLongHash {
 
     @Override
     public boolean execute(long key, int value) {
-      h += _hashingStrategy.computeHashCode(key) ^ HashFunctions.hash(value);
+      h += _hashingStrategy.computeHashCode(key) ^ value;
       return true;
     }
   }

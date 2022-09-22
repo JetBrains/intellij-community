@@ -798,6 +798,12 @@ object CommunityLibraryLicenses {
     // for traceprocessor-proto module library in intellij.android.profilersAndroid
     androidDependency(name = "TraceProcessor Daemon Protos", libraryName = "traceprocessor-proto"),
     androidDependency(name = "Transport Pipeline", libraryName = "transport-proto"),
+
+    LibraryLicense(name = "Trove4j (JetBrains's fork)", attachedTo = "intellij.platform.util.trove", license = "LGPL",
+                   version = "1.0.20220920",
+                    url = "https://github.com/JetBrains/intellij-deps-trove4j",
+                    licenseUrl = "https://github.com/JetBrains/intellij-deps-trove4j/blob/master/LICENSE.txt"),
+
     LibraryLicense(name = "TwelveMonkeys ImageIO", libraryName = "imageio-tiff",
                    url = "https://github.com/haraldk/TwelveMonkeys")
       .newBsd("https://github.com/haraldk/TwelveMonkeys#license"),
