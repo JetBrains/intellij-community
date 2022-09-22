@@ -156,7 +156,15 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   public void apply(@NotNull WindowInfo info) {
     LOG.assertTrue(info.getType() == ToolWindowType.FLOATING);
     myInfo = info;
-    // set alpha mode
+    applyBounds(info);
+    applyAlphaMode(info);
+  }
+
+  private void applyBounds(WindowInfo info) {
+    setBounds(info.getFloatingBounds());
+  }
+
+  private void applyAlphaMode(@NotNull WindowInfo info) {
     UISettings uiSettings = UISettings.getInstance();
     if (!uiSettings.getState().getEnableAlphaMode() || !isShowing() || !isDisplayable()) {
       return;
