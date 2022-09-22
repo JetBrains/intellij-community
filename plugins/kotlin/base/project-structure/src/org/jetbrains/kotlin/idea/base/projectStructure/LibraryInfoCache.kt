@@ -172,12 +172,7 @@ class LibraryInfoCache(project: Project) : Disposable {
 
         override fun checkKeyConsistency(cache: MutableMap<LibraryEx, List<LibraryInfo>>, key: LibraryEx) {
             super.checkKeyConsistency(cache, key)
-
-            val isCached = key in cache
-            val isDeduplicated = deduplicationCache[key.firstRoot()]?.contains(key) == true
-            if (isCached != isDeduplicated) {
-                error("inconsistent state ${key.presentableName}: is cached: $isCached, is deduplicated: $isDeduplicated")
-            }
+            checkCacheConsistency(cache, key)
         }
 
         private fun checkCacheConsistency(cache: MutableMap<LibraryEx, List<LibraryInfo>>, key: LibraryEx) {
