@@ -5,7 +5,6 @@ import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
-import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSettings;
 import com.intellij.find.FindSettings;
@@ -70,6 +69,7 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
+import com.intellij.ui.BadgeIconSupplier;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
@@ -498,10 +498,10 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     };
 
     // Filter action
-    final Icon filterModifiedIcon = ExecutionUtil.getLiveIndicator(AllIcons.General.Filter);
+    final BadgeIconSupplier filterIcon = new BadgeIconSupplier(AllIcons.General.Filter);
     final AnAction filterAction = new DumbAwareToggleAction(SSRBundle.message("filter.button"),
                                                             SSRBundle.message("filter.button.description"),
-                                                            filterModifiedIcon) {
+                                                            filterIcon.getLiveIndicatorIcon(true)) {
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
         return ActionUpdateThread.EDT;
@@ -511,7 +511,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
         final Presentation presentation = e.getPresentation();
-        presentation.setIcon(myFilterPanel.hasVisibleFilter() ? filterModifiedIcon : AllIcons.General.Filter);
+        presentation.setIcon(filterIcon.getLiveIndicatorIcon(myFilterPanel.hasVisibleFilter()));
       }
 
       @Override
