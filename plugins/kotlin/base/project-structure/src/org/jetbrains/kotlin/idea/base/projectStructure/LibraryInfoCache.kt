@@ -233,6 +233,8 @@ class LibraryInfoCache(project: Project) : Disposable {
             is JsIdePlatformKind -> createLibraryInfos(key, platformKind, ::JsKlibLibraryInfo, ::JsMetadataLibraryInfo)
             is NativeIdePlatformKind -> createLibraryInfos(key, platformKind, ::NativeKlibLibraryInfo, ::NativeMetadataLibraryInfo)
             else -> error("Unexpected platform kind: $platformKind")
+        }.also {
+            require(it.isNotEmpty()) { "Must be not empty for consistency with LibraryInfoCache#deduplicatedLibrary" }
         }
 
         override fun postProcessNewValue(key: LibraryEx, value: List<LibraryInfo>) {
