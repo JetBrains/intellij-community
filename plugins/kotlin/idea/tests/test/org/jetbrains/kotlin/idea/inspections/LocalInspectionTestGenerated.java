@@ -3962,6 +3962,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertObjectToDataObject/serializableTransitive.kt");
         }
 
+        @TestMetadata("thisJavaClassSimpleNameReflectToString.kt")
+        public void testThisJavaClassSimpleNameReflectToString() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/thisJavaClassSimpleNameReflectToString.kt");
+        }
+
+        @TestMetadata("thisReflectToString.kt")
+        public void testThisReflectToString() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/thisReflectToString.kt");
+        }
+
         @TestMetadata("tripleQuotesToString.kt")
         public void testTripleQuotesToString() throws Exception {
             runTest("testData/inspectionsLocal/convertObjectToDataObject/tripleQuotesToString.kt");
