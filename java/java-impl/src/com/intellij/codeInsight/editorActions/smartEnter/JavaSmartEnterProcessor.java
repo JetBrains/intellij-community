@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -96,7 +95,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   private static final int MAX_ATTEMPTS = 20;
   private static final Key<Long> SMART_ENTER_TIMESTAMP = Key.create("smartEnterOriginalTimestamp");
 
-  public static class TooManyAttemptsException extends Exception {}
+  private static class TooManyAttemptsException extends Exception {}
 
   private final JavadocFixer myJavadocFixer = new JavadocFixer();
 

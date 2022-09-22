@@ -25,7 +25,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 public class ReferenceNameExpression extends Expression {
-  class HammingComparator implements Comparator<LookupElement> {
+  private class HammingComparator implements Comparator<LookupElement> {
     @Override
     public int compare(LookupElement lookupItem1, LookupElement lookupItem2) {
       String s1 = lookupItem1.getLookupString();

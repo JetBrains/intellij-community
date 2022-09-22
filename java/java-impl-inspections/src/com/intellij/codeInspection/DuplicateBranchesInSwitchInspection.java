@@ -357,7 +357,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
   }
 
-  static class BranchFixContext {
+  private static class BranchFixContext {
     private Branch myBranchToDelete;
     private Branch myBranchToMergeWith;
     private List<PsiElement> myBranchPrefixToMove;
