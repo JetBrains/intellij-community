@@ -231,8 +231,8 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
 
 abstract class SynchronizedFineGrainedEntityCache<Key : Any, Value : Any>(project: Project, cleanOnLowMemory: Boolean) :
     FineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory) {
+    @Deprecated("Do not use directly", level = DeprecationLevel.ERROR)
     override val cache: MutableMap<Key, Value> by StorageProvider(project, javaClass) { HashMap() }
-        @Deprecated("Do not use directly", level = DeprecationLevel.ERROR) get
 
     private val lock = Any()
 
@@ -293,8 +293,8 @@ entity.findModule(WorkspaceModel.getInstance(project).entityStorage.current)
 
 abstract class LockFreeFineGrainedEntityCache<Key : Any, Value : Any>(project: Project, cleanOnLowMemory: Boolean) :
     FineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory) {
+    @Deprecated("Do not use directly", level = DeprecationLevel.ERROR)
     override val cache: MutableMap<Key, Value> by StorageProvider(project, javaClass) { ConcurrentHashMap() }
-        @Deprecated("Do not use directly", level = DeprecationLevel.ERROR) get
 
     final override fun <T> useCache(block: (MutableMap<Key, Value>) -> T): T =
         @Suppress("DEPRECATION_ERROR")
