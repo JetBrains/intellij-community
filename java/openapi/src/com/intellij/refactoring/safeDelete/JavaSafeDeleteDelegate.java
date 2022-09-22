@@ -24,6 +24,7 @@ public interface JavaSafeDeleteDelegate {
    * <p> The method should be called under read action.
    *     A caller should be also aware that an implementation may use an index access,
    *     so using the method in EDT may lead to get the exception from {@link SlowOperations#assertSlowOperationsAreAllowed()}
+   * @param paramIdx index with receiver parameter
    */
   void createUsageInfoForParameter(@NotNull PsiReference reference,
                                    @NotNull List<UsageInfo> usages,

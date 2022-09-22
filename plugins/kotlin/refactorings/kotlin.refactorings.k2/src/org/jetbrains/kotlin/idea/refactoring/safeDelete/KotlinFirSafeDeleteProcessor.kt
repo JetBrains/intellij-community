@@ -79,11 +79,20 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         if (element is KtParameter) {
             val function = element.getNonStrictParentOfType<KtFunction>()
             if (function != null) {
+                val parameterIndexAsJavaCall = element.parameterIndex() + if (function.receiverTypeReference != null) 1 else 0
                 ReferencesSearch.search(function).forEach(Processor {
                     JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
-                        ?.createUsageInfoForParameter(it, result, element, element.parameterIndex(), element.isVarArg)
+                        ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
                     return@Processor true
                 })
+
+                if (function is KtPrimaryConstructor) {
+                    ReferencesSearch.search(function.getContainingClassOrObject()).forEach(Processor {
+                        JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
+                            ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
+                        return@Processor true
+                    })
+                }
             }
         }
         
