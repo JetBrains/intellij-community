@@ -77,7 +77,6 @@ internal object CompiledClasses {
     val messages = context.messages
     when {
       context.options.useCompiledClassesFromProjectOutput -> {
-        messages.info("Compilation skipped, the compiled classes from '${context.classesOutputDirectory}' will be used")
         Span.current().addEvent("compiled classes reused", Attributes.of(
           AttributeKey.stringKey("dir"), context.classesOutputDirectory.toString(),
         ))

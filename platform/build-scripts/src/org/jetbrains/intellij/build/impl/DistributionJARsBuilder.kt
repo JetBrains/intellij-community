@@ -595,14 +595,6 @@ fun collectProjectLibrariesWhichShouldBeProvidedByPlatform(plugin: BaseLayout,
   }
 }
 
-internal fun getThirdPartyLibrariesHtmlFilePath(context: BuildContext): Path {
-  return context.paths.distAllDir.resolve("license/third-party-libraries.html")
-}
-
-internal fun getThirdPartyLibrariesJsonFilePath(context: BuildContext): Path {
-  return context.paths.tempDir.resolve("third-party-libraries.json")
-}
-
 private fun basePath(buildContext: BuildContext, moduleName: String): Path {
   return Path.of(JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first()))
 }
@@ -828,8 +820,17 @@ private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: List<Dis
     val generator = LibraryLicensesListGenerator.create(project = context.project,
                                                         licensesList = context.productProperties.allLibraryLicenses,
                                                         usedModulesNames = entries.includedModules.toHashSet())
-    generator.generateHtml(getThirdPartyLibrariesHtmlFilePath(context))
-    generator.generateJson(getThirdPartyLibrariesJsonFilePath(context))
+    val distAllDir = context.paths.distAllDir
+    Files.createDirectories(distAllDir)
+
+    val htmlFilePath = distAllDir.resolve("license/third-party-libraries.html")
+    val jsonFilePath = distAllDir.resolve("license/third-party-libraries.json")
+
+    generator.generateHtml(htmlFilePath)
+    generator.generateJson(jsonFilePath)
+
+    context.notifyArtifactBuilt(htmlFilePath)
+    context.notifyArtifactBuilt(jsonFilePath)
   }
 }
 

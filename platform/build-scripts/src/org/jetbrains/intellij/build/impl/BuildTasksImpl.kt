@@ -54,7 +54,6 @@ import java.util.*
 import java.util.function.BiConsumer
 import java.util.function.Predicate
 import java.util.stream.Collectors
-import kotlin.collections.HashSet
 
 class BuildTasksImpl(context: BuildContext) : BuildTasks {
   private val context = context as BuildContextImpl
@@ -552,25 +551,6 @@ private inline fun filterSourceFilesOnly(name: String, context: BuildContext, co
   return sourceFiles
 }
 
-private suspend fun buildAdditionalArtifacts(entries: List<DistributionFileEntry>, context: BuildContext) {
-  val productProperties = context.productProperties
-  if (productProperties.generateLibraryLicensesTable && !context.isStepSkipped(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP)) {
-    val artifactNamePrefix = productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
-    val artifactDir = context.paths.artifactDir
-    withContext(Dispatchers.IO) {
-      Files.createDirectories(artifactDir)
-      Files.copy(getThirdPartyLibrariesHtmlFilePath(context), artifactDir.resolve("$artifactNamePrefix-third-party-libraries.html"))
-      Files.copy(getThirdPartyLibrariesJsonFilePath(context), artifactDir.resolve("$artifactNamePrefix-third-party-libraries.json"))
-    }
-    context.notifyArtifactBuilt(artifactDir.resolve("$artifactNamePrefix-third-party-libraries.html"))
-    context.notifyArtifactBuilt(artifactDir.resolve("$artifactNamePrefix-third-party-libraries.json"))
-  }
-
-  if (productProperties.buildSourcesArchive) {
-    buildSourcesArchive(entries, context)
-  }
-}
-
 private fun compilePlatformAndPluginModules(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
   val distState = DistributionBuilderState(pluginsToPublish, context)
   val compilationTasks = CompilationTasks.create(context)
@@ -638,11 +618,13 @@ suspend fun buildDistributions(context: BuildContext) {
       coroutineScope {
         createMavenArtifactJob(context, distributionState)
 
-        spanBuilder("build platform and plugin JARs").useWithScope2 {
+        spanBuilder("build platform and plugin JARs").useWithScope2<Unit> {
           val distributionJARsBuilder = DistributionJARsBuilder(distributionState)
           if (context.shouldBuildDistributions()) {
             val entries = distributionJARsBuilder.buildJARs(context)
-            buildAdditionalArtifacts(entries, context)
+            if (context.productProperties.buildSourcesArchive) {
+              buildSourcesArchive(entries, context)
+            }
           }
           else {
             Span.current().addEvent("skip building product distributions because " +
