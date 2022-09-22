@@ -233,7 +233,8 @@ internal class MutableRefsTable(
     }.let { }
   }
 
-  internal fun updateChildrenOfParent(connectionId: ConnectionId, parentId: ParentEntityId, childrenIds: List<ChildEntityId>) {
+  internal fun updateChildrenOfParent(connectionId: ConnectionId, parentId: ParentEntityId, childrenIds: Collection<ChildEntityId>) {
+    if (childrenIds !is Set<ChildEntityId> && childrenIds.size != childrenIds.toSet().size) error("Children have duplicates: $childrenIds")
     when (connectionId.connectionType) {
       ConnectionType.ONE_TO_MANY -> {
         val copiedMap = getOneToManyMutableMap(connectionId)

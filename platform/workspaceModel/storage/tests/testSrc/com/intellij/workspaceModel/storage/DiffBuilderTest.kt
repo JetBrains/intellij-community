@@ -479,4 +479,39 @@ class DiffBuilderTest {
     val newParent = assertOneElement(res.entities(XParentEntity::class.java).toList())
     assertTrue(newParent.optionalChildren.toList().isEmpty())
   }
+
+  @Test
+  fun `add parent with children`() {
+    val target = createEmptyBuilder()
+    target addEntity ParentMultipleEntity("Parent", MySource)
+    val source = createBuilderFrom(target)
+    source.modifyEntity(source.entities(ParentMultipleEntity::class.java).single()) {
+      this.children = listOf(
+        ChildMultipleEntity("child1", MySource),
+        ChildMultipleEntity("child2", MySource),
+      )
+    }
+
+    val result = target.applyDiff(source)
+
+    assertEquals(2, result.entities(ParentMultipleEntity::class.java).single().children.size)
+  }
+
+  @Test
+  fun `add parent with children 2`() {
+    val target = createEmptyBuilder()
+    target addEntity ParentMultipleEntity("Parent", MySource)
+    val source = createBuilderFrom(target)
+    val parentToModify = source.toSnapshot().entities(ParentMultipleEntity::class.java).single()
+    source.modifyEntity(parentToModify) {
+      this.children = listOf(
+        ChildMultipleEntity("child1", MySource),
+        ChildMultipleEntity("child2", MySource),
+      )
+    }
+
+    val result = target.applyDiff(source)
+
+    assertEquals(2, result.entities(ParentMultipleEntity::class.java).single().children.size)
+  }
 }

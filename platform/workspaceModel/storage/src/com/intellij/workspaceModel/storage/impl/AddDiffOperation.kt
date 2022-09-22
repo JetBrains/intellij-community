@@ -244,7 +244,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
       }
       else {
         // Take current children....
-        val mutableChildren = children.toMutableList()
+        val mutableChildren = children.toMutableSet()
 
         val addedChildrenSet = addedChildrenMap[connectionId] ?: emptySet()
         val updatedAddedChildren = addedChildrenSet.mapNotNull { childrenMapper(it) }
@@ -257,7 +257,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
         }
 
         // .... Update if something changed
-        if (children != mutableChildren) {
+        if (children.toSet() != mutableChildren) {
           target.refs.updateChildrenOfParent(connectionId, newEntityId, mutableChildren)
         }
       }
