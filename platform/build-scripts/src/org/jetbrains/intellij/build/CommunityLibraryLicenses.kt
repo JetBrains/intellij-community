@@ -883,6 +883,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("find-action-model"),
     jetbrainsLibrary("find-action-model-experimental"),
     jetbrainsLibrary("find-file-model"),
+    jetbrainsLibrary("find-file-model-experimental"),
     jetbrainsLibrary("git-learning-project"),
     jetbrainsLibrary("intellij.remoterobot.remote.fixtures"),
     jetbrainsLibrary("intellij.remoterobot.robot.server.core"),
