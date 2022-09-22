@@ -181,6 +181,16 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/funExt2.kt");
         }
 
+        @TestMetadata("implement1.kt")
+        public void testImplement1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/implement1.kt");
+        }
+
+        @TestMetadata("implement2.kt")
+        public void testImplement2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/implement2.kt");
+        }
+
         @TestMetadata("localFun1.kt")
         public void testLocalFun1() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/localFun1.kt");
@@ -204,6 +214,36 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("noUsages.kt")
         public void testNoUsages() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/noUsages.kt");
+        }
+
+        @TestMetadata("override1.kt")
+        public void testOverride1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/override1.kt");
+        }
+
+        @TestMetadata("override2.kt")
+        public void testOverride2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/override2.kt");
+        }
+
+        @TestMetadata("overrideAndImplement1.kt")
+        public void testOverrideAndImplement1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/overrideAndImplement1.kt");
+        }
+
+        @TestMetadata("overrideAndImplement2.kt")
+        public void testOverrideAndImplement2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/overrideAndImplement2.kt");
+        }
+
+        @TestMetadata("overrideAndImplement3.kt")
+        public void testOverrideAndImplement3() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/overrideAndImplement3.kt");
+        }
+
+        @TestMetadata("overrideWithUsages.kt")
+        public void testOverrideWithUsages() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/overrideWithUsages.kt");
         }
 
         @TestMetadata("withDefinitelyNotNullType.kt")

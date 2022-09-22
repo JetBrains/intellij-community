@@ -11,10 +11,8 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDe
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtReferenceExpression
-import org.jetbrains.kotlin.psi.KtUserType
-import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 
@@ -84,5 +82,9 @@ class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
                 usages.add(SafeDeleteTypeArgumentUsageInfo(projections[index], referencedElement))
             }
         }
+    }
+
+    override fun removeOverriding(overriddenMethod: PsiElement) {
+        (overriddenMethod as? KtModifierListOwner)?.modifierList?.getModifier(KtTokens.OVERRIDE_KEYWORD)?.delete()
     }
 }

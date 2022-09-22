@@ -44,4 +44,10 @@ public interface JavaSafeDeleteDelegate {
                                         @NotNull PsiElement typeParameter,
                                         int paramsCount,
                                         int index);
+
+  /**
+   * Method is used to clear <code>@Override</code> annotation in java or corresponding <code>override</code> modifier in kotlin
+   * @param overriddenMethod method which overrides another method
+   */
+  void removeOverriding(@NotNull PsiElement overriddenMethod);
 }

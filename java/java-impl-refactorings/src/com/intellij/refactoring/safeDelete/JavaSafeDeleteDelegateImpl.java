@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo;
@@ -113,6 +114,14 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
           usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(typeArgs[index], typeParameter, true));
         }
       }
+    }
+  }
+
+  @Override
+  public void removeOverriding(@NotNull PsiElement overriddenMethod) {
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiModifierListOwner)overriddenMethod, true, Override.class.getName());
+    if (annotation != null) {
+      annotation.delete();
     }
   }
 }

@@ -16,13 +16,19 @@ import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
 import com.intellij.util.containers.map2Array
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.refactoring.*
+import org.jetbrains.kotlin.idea.search.search
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 
@@ -51,6 +57,11 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
             })
         }
 
+        val additionalElementsToDelete = arrayListOf<PsiElement>()
+        if (element is KtNamedFunction) {
+            findFunctionUsages(element, allElementsToDelete, isInside, additionalElementsToDelete, result)
+        }
+        
         if (element is KtTypeParameter) {
             val owner = element.getNonStrictParentOfType<KtTypeParameterListOwner>()
             if (owner != null) {
@@ -80,6 +91,57 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         }
         
         return NonCodeUsageSearchInfo(isInside, element)
+    }
+
+    private fun findFunctionUsages(
+        element: KtNamedFunction,
+        allElementsToDelete: Array<out PsiElement>,
+        isInside: (t: PsiElement) -> Boolean,
+        additionalElementsToDelete: ArrayList<PsiElement>,
+        result: MutableList<UsageInfo>
+    ) {
+        val overridden = arrayListOf<PsiElement>()
+        val containingClass = element.containingClass()
+        if (containingClass != null) {
+            analyze(containingClass) {
+                val elementClassSymbol = containingClass.getSymbol() as KtClassOrObjectSymbol
+
+                fun isMultipleInheritance(function: KtSymbol): Boolean {
+                    val superMethods = (function as? KtCallableSymbol)?.getDirectlyOverriddenSymbols() ?: return false
+                    return superMethods.any {
+                        val superClassSymbol = it.getContainingSymbol() as? KtClassOrObjectSymbol ?: return@any false
+                        return@any superClassSymbol != elementClassSymbol && !superClassSymbol.isSubClassOf(elementClassSymbol)
+                    }
+                }
+
+                search(element).forEach { m ->
+                    val original = m.unwrapped
+                    if (original is KtDeclaration && !allElementsToDelete.contains(original)) {
+                        analyze(original) {
+                            if (isMultipleInheritance(original.getSymbol())) {
+                                return@forEach
+                            }
+                        }
+                        overridden.add(original)
+                    }
+                }
+            }
+        }
+
+        for (overriddenFunction in overridden) {
+            if (ReferencesSearch.search(overriddenFunction).forEach(Processor {
+                    val place = it.element
+                    if (!isInside(place)) {
+                        return@Processor false
+                    }
+                    return@Processor true
+                })) {
+                additionalElementsToDelete.add(overriddenFunction)
+                result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(overriddenFunction, element, true))
+            } else {
+                result.add(SafeDeleteOverrideUsageInfo(overriddenFunction, element))
+            }
+        }
     }
 
     private fun findCallArgumentsToDelete(
