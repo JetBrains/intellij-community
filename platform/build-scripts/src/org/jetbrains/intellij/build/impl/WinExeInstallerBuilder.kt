@@ -204,7 +204,7 @@ private fun prepareConfigurationFiles(nsiConfDir: Path,
 
 !define VER_BUILD ${context.buildNumber}
 !define INSTALL_DIR_AND_SHORTCUT_NAME "$installDirAndShortcutName"
-!define PRODUCT_WITH_VER "\$\{MUI_PRODUCT} $versionString"
+!define PRODUCT_WITH_VER "${"$"}{MUI_PRODUCT} $versionString"
 !define PRODUCT_PATHS_SELECTOR "${context.systemSelector}"
 """)
 }
