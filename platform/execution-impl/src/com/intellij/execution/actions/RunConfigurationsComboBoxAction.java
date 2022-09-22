@@ -20,6 +20,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -124,7 +125,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
       presentation.setText(name, false);
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        setConfigurationIcon(presentation, settings, project);
+        boolean withLiveIndicator = !(ExperimentalUI.isNewUI() && actionPlace.equals(ActionPlaces.MAIN_TOOLBAR));
+        setConfigurationIcon(presentation, settings, project, withLiveIndicator);
       }
     }
     else {
@@ -145,10 +147,17 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   protected static void setConfigurationIcon(final Presentation presentation,
+                                             final RunnerAndConfigurationSettings settings,
+                                             final Project project) {
+    setConfigurationIcon(presentation, settings, project, true);
+  }
+
+  private static void setConfigurationIcon(final Presentation presentation,
                                            final RunnerAndConfigurationSettings settings,
-                                           final Project project) {
+                                           final Project project,
+                                           final boolean withLiveIndicator) {
     try {
-      presentation.setIcon(RunManagerEx.getInstanceEx(project).getConfigurationIcon(settings, true));
+      presentation.setIcon(RunManagerEx.getInstanceEx(project).getConfigurationIcon(settings, withLiveIndicator));
     }
     catch (IndexNotReadyException ignored) {
     }
