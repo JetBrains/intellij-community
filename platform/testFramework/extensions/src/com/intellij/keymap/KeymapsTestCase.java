@@ -31,7 +31,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"F5",                       "Graph.RouteEdges", "CopyElement", "PoBrowserRefresh"},
       {"F7",                       "NextDiff", "StepInto"},
       {"F12",                      "JumpToLastWindow","PoToggleSelection"},
-      {"INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomElementsTreeView.AddElement", "DomCollectionControl.Add",
+      {"INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomCollectionControl.Add",
                                    "XDebugger.NewWatch"},
       {"SPACE",                    "Console.TableResult.ColumnVisibility", "QuickPreview", "SplitChooser.SplitCenter", "CollapsiblePanel-toggle"},
       {"SUBTRACT",                 "CollapseTreeNode", "Graph.ZoomOut"},
