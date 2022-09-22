@@ -93,6 +93,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
               line("}")
             }
             section("set(value)") {
+              lineComment("Set list of ref types for abstract entities")
               line("checkModificationAllowed()")
               line("val _diff = diff")
               `if`("_diff != null") {
@@ -100,6 +101,8 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                   `if`("item_value is ${ModifiableWorkspaceEntityBase::class.fqn}<*> && (item_value as? ${
                     ModifiableWorkspaceEntityBase::class.fqn
                   }<*>)?.diff == null") {
+                    lineComment("Backref setup before adding to store an abstract entity")
+                    backrefSetup(field, "item_value")
                     line("_diff.addEntity(item_value)")
                   }
                 }
