@@ -2,6 +2,7 @@
 @file:JvmName("Agreements")
 package com.intellij.ide.gdpr
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.idea.AppExitCodes
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -34,12 +35,11 @@ private fun applyUserAgreement(ui: AgreementUi, agreement: EndUserAgreement.Docu
       else
         ApplicationNamesInfo.getInstance().fullProductName + " " + bundle.getString("userAgreement.dialog.userAgreement.title"))
     .setDeclineButton(bundle.getString("userAgreement.dialog.exit")) {
-      val application = ApplicationManager.getApplication()
-      if (application == null) {
-        exitProcess(AppExitCodes.PRIVACY_POLICY_REJECTION)
+      if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
+        ApplicationManager.getApplication().exit(true, true, false)
       }
       else {
-        application.exit(true, true, false)
+        exitProcess(AppExitCodes.PRIVACY_POLICY_REJECTION)
       }
     }
     .addCheckBox(bundle.getString("userAgreement.dialog.checkBox")) { checkBox ->
