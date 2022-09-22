@@ -1618,6 +1618,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                                                               @Nullable FileAttributes attributes,
                                                                               @Nullable String symlinkTarget) {
     if (attributes == null) {
+      if (".".equals(name) || "..".equals(name)) {
+        //these names have special meaning, so FS will report that such children exist, but they must not be added to VFS
+        return null;
+      }
       FakeVirtualFile virtualFile = new FakeVirtualFile(parent, name);
       attributes = fs.getAttributes(virtualFile);
       symlinkTarget = attributes != null && attributes.isSymLink() ? fs.resolveSymLink(virtualFile) : null;
