@@ -883,12 +883,14 @@ public class SingleInspectionProfilePanel extends JPanel {
           .withLabel(InspectionsBundle.message("inspection.severity"))
           .moveLabelOnTop()
           .createPanel();
+        severityLevelChooserPanel.setMinimumSize(severityLevelChooserPanel.getPreferredSize());
         severityPanel.add(severityLevelChooserPanel, constraint.next());
 
         final var highlightChooserPanel = UI.PanelFactory.panel(highlightsChooserComponent)
           .withLabel(InspectionsBundle.message("inspection.highlighting"))
           .moveLabelOnTop()
           .createPanel();
+        highlightChooserPanel.setMinimumSize(highlightChooserPanel.getPreferredSize());
         severityPanel.add(highlightChooserPanel, constraint.next());
 
         if (toolState != null) {
