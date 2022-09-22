@@ -256,7 +256,9 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     val diff = moduleBridge.diff
 
     return if (diff != null) {
-      diff.mutableFacetMapping().updater()
+      synchronized(diff) {
+        diff.mutableFacetMapping().updater()
+      }
     }
     else {
       synchronized(obj) {
