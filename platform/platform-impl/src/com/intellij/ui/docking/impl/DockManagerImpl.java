@@ -63,6 +63,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
   private final Map<String, DockContainerFactory> myFactories = new HashMap<>();
   private final Set<DockContainer> myContainers = new HashSet<>();
+  private final Map<String, DockWindow> myWindows = new HashMap<>();
   private final Map<DockContainer, DockWindow> containerToWindow = new HashMap<>();
 
   private MyDragSession myCurrentDragSession;
@@ -221,7 +222,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
     private final @NotNull DockableContent myContent;
 
-    private DockContainer myStartDragContainer;
+    private final DockContainer myStartDragContainer;
     private DockContainer myCurrentOverContainer;
     private final JLabel myImageContainer;
 
@@ -503,7 +504,26 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     DockWindow window =
       new DockWindow(dimensionKey, windowId, myProject, container, container instanceof DockContainer.Dialog, canReopenWindow);
     containerToWindow.put(container, window);
+    myWindows.put(windowId, window);
     return window;
+  }
+
+  private @NotNull DockWindow getOrCreateWindowFor(@NotNull String id,
+                                                   @NotNull DockContainer container) {
+    final DockWindow existingWindow = myWindows.get(id);
+    if (existingWindow != null) {
+      final DockContainer oldContainer = existingWindow.replaceContainer(container);
+      containerToWindow.remove(oldContainer);
+      containerToWindow.put(container, existingWindow);
+
+      if (oldContainer instanceof Disposable) {
+        Disposer.dispose((Disposable)oldContainer);
+      }
+
+      return existingWindow;
+    }
+
+    return createWindowFor(null, id, container, true);
   }
 
   public static boolean isNorthPanelVisible(@NotNull UISettings uiSettings) {
@@ -526,7 +546,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     private final String myId;
     private boolean myNorthPanelAvailable;
     private final boolean mySupportReopen;
-    private final DockContainer myContainer;
+    private DockContainer myContainer;
 
     private final VerticalBox myNorthPanel = new VerticalBox();
     private final Map<String, IdeRootPaneNorthExtension> myNorthExtensions = new LinkedHashMap<>();
@@ -593,6 +613,10 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
         return;
       }
 
+      if (myToolWindowPane != null) {
+        return;
+      }
+
       final String paneId = Objects.requireNonNull(getDimensionKey());
 
       final ToolWindowButtonManager buttonManager;
@@ -627,6 +651,23 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       });
     }
 
+    private DockContainer replaceContainer(DockContainer container) {
+      final JComponent newContainerComponent = container.getContainerComponent();
+      if (myToolWindowPane != null) {
+        myToolWindowPane.setDocumentComponent(newContainerComponent);
+      }
+      else {
+        myDockContentUiContainer.remove(myContainer.getContainerComponent());
+        myDockContentUiContainer.add(newContainerComponent);
+      }
+      final DockContainer oldContainer = myContainer;
+      myContainer = container;
+      if (getFrame().isVisible() && myContainer instanceof Activatable) {
+        ((Activatable)myContainer).showNotify();
+      }
+      return oldContainer;
+    }
+
     private void closeIfEmpty() {
       if (myContainer.isEmpty() && (myToolWindowPane == null || !myToolWindowPane.buttonManager.hasButtons())) {
         close();
@@ -635,6 +676,9 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     }
 
     private void setupNorthPanel() {
+      if (myNorthPanelAvailable) {
+        return;
+      }
       myCenterPanel.add(myNorthPanel, BorderLayout.NORTH);
       myNorthPanelAvailable = true;
       myProject.getMessageBus().connect(this)
@@ -700,7 +744,8 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     @Override
     public void dispose() {
       super.dispose();
-      containerToWindow.remove(myContainer);
+      final DockWindow removed = containerToWindow.remove(myContainer);
+      myWindows.remove(removed.myId);
       if (myContainer instanceof Disposable) {
         Disposer.dispose((Disposable)myContainer);
       }
@@ -808,17 +853,23 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       }
 
       DockContainer container = ((DockContainerFactory.Persistent)factory).loadContainerFrom(eachContent);
-      String withNorthPanelStr = windowElement.getAttributeValue("withNorthPanel", Boolean.toString(true));
-      boolean withNorthPanel = Boolean.parseBoolean(withNorthPanelStr);
-      String withToolWindowPaneStr = windowElement.getAttributeValue("withToolWindowPane", Boolean.toString(true));
-      boolean withToolWindowPane = Boolean.parseBoolean(withToolWindowPaneStr);
-      DockWindow window = createWindowFor(null, windowElement.getAttributeValue("id"), container, true);
+
+      // If the window already exists, reuse it, otherwise create it. This handles changes in tasks & contexts. When we clear the current
+      // context, all open editors are closed, but a floating editor container with a docked tool window will remain open. Switching to a
+      // new context will reuse the window and open editors in that editor container. If the new context doesn't use this window, or it's
+      // a default clean context, the window will remain open, containing only the docked tool windows.
+      DockWindow window = getOrCreateWindowFor(windowElement.getAttributeValue("id"), container);
+
+      // If the window already exists, we can't remove the north panel or tool window pane, but we can add them
+      boolean withNorthPanel = Boolean.parseBoolean(windowElement.getAttributeValue("withNorthPanel", Boolean.toString(true)));
       if (withNorthPanel) {
         window.setupNorthPanel();
       }
+      boolean withToolWindowPane = Boolean.parseBoolean(windowElement.getAttributeValue("withToolWindowPane", Boolean.toString(true)));
       if (withToolWindowPane) {
         window.setupToolWindowPane();
       }
+
       UIUtil.invokeLaterIfNeeded(window::show);
     }
   }
