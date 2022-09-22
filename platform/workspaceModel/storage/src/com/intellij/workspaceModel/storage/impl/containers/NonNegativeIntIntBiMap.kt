@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.containers
 
-import it.unimi.dsi.fastutil.ints.Int2IntMap
-import it.unimi.dsi.fastutil.ints.Int2IntMaps
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
-import it.unimi.dsi.fastutil.ints.IntSet
+import it.unimi.dsi.fastutil.ints.*
 import java.util.function.Consumer
 
 class ImmutableNonNegativeIntIntBiMap(
@@ -31,11 +28,24 @@ class MutableNonNegativeIntIntBiMap private constructor(
   fun putAll(keys: IntArray, value: Int) {
     startWrite()
 
+    var hasDuplicates = false
+    val duplicatesFinder = IntOpenHashSet()
     keys.forEach {
+      if (it in duplicatesFinder) {
+        hasDuplicates = true
+        duplicatesFinder.add(it)
+      }
+      else {
+        duplicatesFinder.add(it)
+      }
       val oldValue = key2Value.put(it, value)
       if (oldValue != DEFAULT_RETURN_VALUE) value2Keys.remove(oldValue, it)
     }
-    value2Keys.putAll(value, keys)
+    if (hasDuplicates) {
+      value2Keys.putAll(value, duplicatesFinder.toIntArray())
+    } else {
+      value2Keys.putAll(value, keys)
+    }
   }
 
   fun removeKey(key: Int) {
