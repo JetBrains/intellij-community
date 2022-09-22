@@ -2,7 +2,6 @@
 package com.intellij.util.indexing.roots;
 
 import com.google.common.collect.ImmutableSetMultimap;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.ModuleManager;
@@ -15,16 +14,14 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.EntityIndexingServiceEx;
+import com.intellij.util.indexing.IndexableFilesIndex;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.roots.kind.IndexableSetSelfDependentOrigin;
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
@@ -40,16 +37,13 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public class IndexableFilesIndex {
-  private static final Logger LOG = Logger.getInstance(IndexableFilesIndex.class);
-  @VisibleForTesting
-  public static final Key<Boolean> ENABLE_IN_TESTS = new Key<>("enable.IndexableFilesIndex");
+public class IndexableFilesIndexImpl implements IndexableFilesIndex {
+  private static final Logger LOG = Logger.getInstance(IndexableFilesIndexImpl.class);
   @NotNull
   private static final FileTypeRegistry ourFileTypes = FileTypeRegistry.getInstance();
   @NotNull
@@ -57,31 +51,26 @@ public class IndexableFilesIndex {
   @NotNull
   private final SnapshotHandler snapshotHandler;
 
-  public static boolean shouldBeUsed() {
-    return (Registry.is("indexing.use.indexable.files.index") ||
-            (ApplicationManager.getApplication().isUnitTestMode() && TestModeFlags.is(ENABLE_IN_TESTS))) &&
-           DefaultProjectIndexableFilesContributor.Companion.indexProjectBasedOnIndexableEntityProviders();
-  }
-
   @NotNull
-  public static IndexableFilesIndex getInstance(@NotNull Project project) {
-    LOG.assertTrue(shouldBeUsed());
-    return project.getService(IndexableFilesIndex.class);
+  public static IndexableFilesIndexImpl getInstanceImpl(@NotNull Project project) {
+    return (IndexableFilesIndexImpl)IndexableFilesIndex.getInstance(project);
   }
 
-  public IndexableFilesIndex(@NotNull Project project) {
+
+  public IndexableFilesIndexImpl(@NotNull Project project) {
     this.project = project;
     snapshotHandler = new SnapshotHandler(project);
     ModuleDependencyIndex.Companion.getInstance(project).addListener(snapshotHandler.createModuleDependencyListener());
   }
 
+  @Override
   @RequiresBackgroundThread
   public boolean shouldBeIndexed(@NotNull VirtualFile file) {
     return getOrigin(file) != null;
   }
 
   @Nullable
-  public IndexableSetSelfDependentOrigin getOrigin(@NotNull VirtualFile file) {
+  private IndexableSetSelfDependentOrigin getOrigin(@NotNull VirtualFile file) {
     VirtualFile currentFile = file;
     ImmutableSetMultimap<VirtualFile, IndexableSetSelfDependentOrigin> roots = snapshotHandler.getResultingSnapshot(project).roots;
     boolean isExcludedFromContent = false;
