@@ -129,3 +129,7 @@ class DisplayDataObject:
             'image_base64': image_bytes_base64
         }
         return ('pycharm-plot-image', body)
+
+
+FigureCanvas = FigureCanvasAgg
+FigureManager = FigureManagerInterAgg
