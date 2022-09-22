@@ -3932,6 +3932,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertObjectToDataObject/publicReadResolve.kt");
         }
 
+        @TestMetadata("sealedNotStatelessSubObject.kt")
+        public void testSealedNotStatelessSubObject() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/sealedNotStatelessSubObject.kt");
+        }
+
         @TestMetadata("sealedSubObject.kt")
         public void testSealedSubObject() throws Exception {
             runTest("testData/inspectionsLocal/convertObjectToDataObject/sealedSubObject.kt");

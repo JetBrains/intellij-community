@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -85,12 +86,17 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
                     && hasNoStateOrEquals()
         }
 
-        fun KtClassOrObject.isSubclassOfStatelessSealed(): Boolean {
-            fun KtSuperTypeListEntry.asKtClass(): KtClass? = typeAsUserType?.referenceExpression?.mainReference?.resolve() as? KtClass
-            return superTypeListEntries.asSequence().mapNotNull { it.asKtClass() }.any {
+        private fun KtClassOrObject.isSubclassOfStatelessSealed(): Boolean =
+            superTypeListEntries.asSequence().mapNotNull { it.asKtClass() }.any {
                 it.isSealed() && it.hasNoStateOrEquals() && it.baseClassHasNoStateOrEquals()
             }
-        }
+
+        fun KtSuperTypeListEntry.asKtClass(): KtClass? =
+            when (val resolved = typeAsUserType?.referenceExpression?.mainReference?.resolve()) {
+                is KtConstructor<*> -> resolved.containingClass()
+                is KtClass -> resolved
+                else -> null
+            }
 
         private fun KtClass.withEmptyConstructors(): Boolean =
             primaryConstructorParameters.isEmpty() && secondaryConstructors.all { it.valueParameters.isEmpty() }

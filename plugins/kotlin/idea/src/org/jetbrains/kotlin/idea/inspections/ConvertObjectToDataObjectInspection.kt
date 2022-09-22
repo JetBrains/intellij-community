@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.resolveType
-import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Companion.isSubclassOfStatelessSealed
+import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Companion.asKtClass
 import org.jetbrains.kotlin.idea.inspections.VirtualFunction.*
 import org.jetbrains.kotlin.idea.inspections.VirtualFunction.Function
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.*
@@ -56,7 +56,7 @@ class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
             val isSerializable = isSerializable(ktObject)
             val toString = ktObject.findToString()
             val isSerializableCase = toString == TrivialSuper && isSerializable
-            val isSealedSubClassCase by lazy { toString == TrivialSuper && ktObject.isSubclassOfStatelessSealed() }
+            val isSealedSubClassCase by lazy { toString == TrivialSuper && ktObject.isSubclassOfSealed() }
             val isToStringCase by lazy { toString is Function && isCompatibleToString(ktObject, fqName, toString.function) }
             if ((isSerializableCase || isSealedSubClassCase || isToStringCase) &&
                 isCompatibleHashCode(ktObject) &&
@@ -78,6 +78,9 @@ class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
         }
     }
 }
+
+private fun KtObjectDeclaration.isSubclassOfSealed(): Boolean =
+    superTypeListEntries.asSequence().mapNotNull { it.asKtClass() }.any { it.isSealed() }
 
 private fun isSerializable(ktObject: KtObjectDeclaration): Boolean =
     ktObject.resolveToDescriptorIfAny()
