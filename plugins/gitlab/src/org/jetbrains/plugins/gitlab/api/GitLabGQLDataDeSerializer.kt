@@ -8,13 +8,14 @@ import com.fasterxml.jackson.databind.introspect.VisibilityChecker
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.collaboration.api.dto.GraphQLErrorDTO
 import com.intellij.collaboration.api.dto.GraphQLResponseDTO
-import com.intellij.collaboration.api.graphql.GraphQLDataSerializer
+import com.intellij.collaboration.api.graphql.GraphQLDataDeserializer
 import com.intellij.collaboration.api.graphql.GraphQLErrorException
-import java.io.InputStream
+import com.intellij.collaboration.api.json.JsonDataSerializer
+import java.io.Reader
 import java.text.SimpleDateFormat
 import java.util.*
 
-object GitLabGQLDataSerializer : GraphQLDataSerializer {
+object GitLabGQLDataDeSerializer : JsonDataSerializer, GraphQLDataDeserializer {
 
   private val mapper: ObjectMapper = jacksonObjectMapper()
     .genericConfig()
@@ -33,19 +34,11 @@ object GitLabGQLDataSerializer : GraphQLDataSerializer {
                                            JsonAutoDetect.Visibility.NONE,
                                            JsonAutoDetect.Visibility.ANY))
 
-
-  override fun toJson(content: Any): String = mapper.writeValueAsString(content)
-
   override fun toJsonBytes(content: Any): ByteArray = mapper.writeValueAsBytes(content)
 
-  override fun <T> readAndTraverseGQLResponse(body: String, pathFromData: Array<out String>, clazz: Class<T>): T? =
+  override fun <T> readAndTraverseGQLResponse(bodyReader: Reader, pathFromData: Array<out String>, clazz: Class<T>): T? =
     readAndTraverseGQLResponse(pathFromData, clazz) {
-      mapper.readValue(body, it)
-    }
-
-  override fun <T> readAndTraverseGQLResponse(body: InputStream, pathFromData: Array<out String>, clazz: Class<T>): T? =
-    readAndTraverseGQLResponse(pathFromData, clazz) {
-      mapper.readValue(body, it)
+      mapper.readValue(bodyReader, it)
     }
 
   private fun <T> readAndTraverseGQLResponse(pathFromData: Array<out String>,
