@@ -21,7 +21,7 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("refactoring/safeDelete/deleteTypeAlias/kotlinTypeAlias", testMethodName = "doTypeAliasTest")
             model("refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter", testMethodName = "doTypeParameterTest")
             model("refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava", testMethodName = "doTypeParameterTestWithJava")
-            //model("refactoring/safeDelete/deleteValueParameter/kotlinValueParameter", testMethodName = "doValueParameterTest")
+            model("refactoring/safeDelete/deleteValueParameter/kotlinValueParameter", pattern = Patterns.forRegex("^(((?!hierarchy).)+)\\.kt"), testMethodName = "doValueParameterTest")
             //model("refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava", testMethodName = "doValueParameterTestWithJava")
             model("refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin", pattern = Patterns.JAVA, testMethodName = "doJavaParameterTest")
         }

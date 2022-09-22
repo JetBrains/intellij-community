@@ -9,10 +9,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor
-import com.intellij.refactoring.safeDelete.NonCodeUsageSearchInfo
-import com.intellij.refactoring.safeDelete.SafeDeleteProcessor
-import com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegateBase
+import com.intellij.refactoring.safeDelete.*
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.usageView.UsageInfo
@@ -28,6 +25,7 @@ import org.jetbrains.kotlin.idea.refactoring.canDeleteElement
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 
 class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
     override fun handlesElement(element: PsiElement?) = element.canDeleteElement()
@@ -43,6 +41,10 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
             ReferencesSearch.search(element).forEach(Processor {
                 val e = it.element
                 if (!isInside(e)) {
+                    if (e.getNonStrictParentOfType<KtValueArgumentName>() != null) {
+                        //named argument would be deleted with argument
+                        return@Processor true
+                    }
                     val importDirective = e.getNonStrictParentOfType<KtImportDirective>()
                     result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(importDirective ?: e, element, importDirective != null))
                 }
@@ -73,7 +75,18 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 }
             }
         }
-
+        
+        if (element is KtParameter) {
+            val function = element.getNonStrictParentOfType<KtFunction>()
+            if (function != null) {
+                ReferencesSearch.search(function).forEach(Processor {
+                    JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
+                        ?.createUsageInfoForParameter(it, result, element, element.parameterIndex(), element.isVarArg)
+                    return@Processor true
+                })
+            }
+        }
+        
         return NonCodeUsageSearchInfo(isInside, element)
     }
 
@@ -123,11 +136,16 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
     }
 
     override fun prepareForDeletion(element: PsiElement?) {
-        if (element is KtTypeParameter) {
-            deleteSeparatingComma(element)
-            deleteBracesAroundEmptyList(element)
-        }
+        when (element) {
+            is KtTypeParameter -> {
+                deleteSeparatingComma(element)
+                deleteBracesAroundEmptyList(element)
+            }
 
+            is KtParameter -> {
+                deleteSeparatingComma(element)
+            }
+        }
     }
 
 

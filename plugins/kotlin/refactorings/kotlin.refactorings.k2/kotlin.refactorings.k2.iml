@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
     <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="intellij.java" />
   </component>
 </module>
