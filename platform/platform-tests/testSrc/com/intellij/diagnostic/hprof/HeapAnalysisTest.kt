@@ -134,7 +134,7 @@ class HeapAnalysisTest {
   }
 
   @Test
-  fun testDisposerTreeSummarySection() {
+  fun testDisposerTree() {
     val objectTree = ObjectTreeTestWrapper()
 
     open class MyDisposable : Disposable {
@@ -167,8 +167,8 @@ class HeapAnalysisTest {
       addDisposer(this, objectTree)
     }
     object : HProfScenarioRunner(tmpFolder, remapInMemory) {
-      override fun adjustConfig(config: AnalysisConfig): AnalysisConfig = configWithDisposerTreeSummaryOnly()
-    }.run(scenario, "testDisposerTreeSummarySection.txt", null)
+      override fun adjustConfig(config: AnalysisConfig): AnalysisConfig = configWithDisposerTreeOnly()
+    }.run(scenario, "testDisposerTree.txt", null)
   }
 
   @Test
@@ -197,7 +197,7 @@ class HeapAnalysisTest {
     }.run(scenario, "testDominatorTreeFlameGraph.txt", null)
   }
 
-  private fun configWithDisposerTreeSummaryOnly() = AnalysisConfig(
+  private fun configWithDisposerTreeOnly() = AnalysisConfig(
     AnalysisConfig.PerClassOptions(
       classNames = listOf(),
       includeClassList = false,
@@ -206,7 +206,7 @@ class HeapAnalysisTest {
                                     includeBySize = false,
                                     includeSummary = false),
     AnalysisConfig.DisposerOptions(
-      includeDisposerTree = false,
+      includeDisposerTree = true,
       includeDisposerTreeSummary = true,
       includeDisposedObjectsSummary = false,
       includeDisposedObjectsDetails = false,

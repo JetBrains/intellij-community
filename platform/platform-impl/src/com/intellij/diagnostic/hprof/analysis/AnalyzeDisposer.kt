@@ -255,30 +255,8 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
 
       val nav = analysisContext.navigator
 
-      // Build a map: object -> list of its disposable children
-      // Collect top-level objects (i.e. have no parent)
       try {
-        val rootNode = DisposerNode("<root>")
-
-        data class StackObject(val node: DisposerNode, val childrenIds: LongCollection)
-
-        val stack = Stack<StackObject>()
-        stack.push(StackObject(rootNode, disposerParentToChildren[0L]))
-
-        while (!stack.empty()) {
-          val (currentNode, childrenIds) = stack.pop()
-
-          val nodeToChildren = HashMap<DisposerNode, LongArrayList>()
-          childrenIds.forEach(LongConsumer {
-            val childClassName = nav.getClassForObjectId(it).name
-            val childNode = currentNode.getChildForClassName(childClassName)
-            childNode.addInstance()
-            disposerParentToChildren[it]?.let {
-              nodeToChildren.getOrPut(childNode) { LongArrayList() }.addAll(it)
-            }
-          })
-          nodeToChildren.forEach { (node, children) -> stack.push(StackObject(node, children)) }
-        }
+        val rootNode = buildDisposerTree(analysisContext.disposerParentToChildren, nav)
 
         // Update subtree size
         data class SubtreeSizeUpdateStackObject(val node: DisposerNode, val operation: SubTreeUpdaterOperation)
@@ -319,6 +297,36 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
     }
   }
 
+  /**
+   * Build a map: object -> list of its disposable children
+   * Collect top-level objects (i.e. have no parent)
+   */
+  private fun buildDisposerTree(disposerParentToChildren: Long2ObjectOpenHashMap<LongArrayList>,
+                                nav: ObjectNavigator): DisposerNode {
+    val rootNode = DisposerNode("<root>")
+
+    data class StackObject(val node: DisposerNode, val childrenIds: LongCollection)
+
+    val stack = Stack<StackObject>()
+    stack.push(StackObject(rootNode, disposerParentToChildren[0L]))
+
+    while (!stack.empty()) {
+      val (currentNode, childrenIds) = stack.pop()
+
+      val nodeToChildren = HashMap<DisposerNode, LongArrayList>()
+      childrenIds.forEach(LongConsumer {
+        val childClassName = nav.getClassForObjectId(it).name
+        val childNode = currentNode.getChildForClassName(childClassName)
+        childNode.addInstance()
+        disposerParentToChildren[it]?.let {
+          nodeToChildren.getOrPut(childNode) { LongArrayList() }.addAll(it)
+        }
+      })
+      nodeToChildren.forEach { (node, children) -> stack.push(StackObject(node, children)) }
+    }
+    return rootNode
+  }
+
   fun prepareDisposerTreeSection(): String = buildString {
     if (!analysisContext.classStore.containsClass("com.intellij.openapi.util.Disposer")) {
       return@buildString
@@ -332,74 +340,60 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
     val nav = analysisContext.navigator
 
     try {
-      goToArrayOfDisposableObjectNodes(nav)
-
       val groupingToObjectStats = HashMap<Grouping, InstanceStats>()
-      val maxTreeDepth = 200
       val tooDeepObjectClasses = HashSet<ClassDefinition>()
-      nav.getReferencesCopy().forEach {
-        if (it == 0L) return@forEach
 
-        nav.goTo(it)
-        verifyClassIsObjectNode(nav.getClass())
-        val objectNodeParentId = nav.getInstanceFieldObjectId(null, "myParent")
-        val objectNodeObjectId = nav.getInstanceFieldObjectId(null, "myObject")
-        nav.goTo(objectNodeParentId)
+      val parentMap = Long2LongOpenHashMap()
+      analysisContext.disposerParentToChildren.forEach { parentId, childrenId ->
+        childrenId.forEach { childId -> parentMap.put(childId, parentId) }
+      }
 
-        val parentId =
-          if (nav.isNull())
-            0L
+      val maxTreeDepth = 200
+      analysisContext.disposerParentToChildren.forEach { parentId, childrenId ->
+        childrenId.forEach { childId ->
+          val parentClass =
+            if (parentId == 0L)
+              null
+            else {
+              nav.goTo(parentId)
+              nav.getClass()
+            }
+
+          nav.goTo(childId)
+          val objectClass = nav.getClass()
+
+          val rootClass: ClassDefinition
+          val rootId: Long
+
+          if (parentId == 0L) {
+            rootClass = objectClass
+            rootId = childId
+          }
           else {
-            verifyClassIsObjectNode(nav.getClass())
-            nav.getInstanceFieldObjectId(null, "myObject")
+            var rootObjectId: Long = parentId
+            var iterationCount = 0
+            while (parentMap[rootObjectId] != 0L) {
+              rootObjectId = parentMap[rootObjectId]
+              iterationCount++
+              if (iterationCount == maxTreeDepth) break
+            }
+
+            if (iterationCount >= maxTreeDepth) {
+              tooDeepObjectClasses.add(objectClass)
+              rootId = parentId
+              rootClass = parentClass!!
+            }
+            else {
+              nav.goTo(rootObjectId)
+              rootId = rootObjectId
+              rootClass = nav.getClass()
+            }
           }
 
-        val parentClass =
-          if (parentId == 0L)
-            null
-          else {
-            nav.goTo(parentId)
-            nav.getClass()
-          }
-
-        nav.goTo(objectNodeObjectId)
-        val objectClass = nav.getClass()
-
-        val rootClass: ClassDefinition
-        val rootId: Long
-
-        if (parentId == 0L) {
-          rootClass = objectClass
-          rootId = objectNodeObjectId
+          groupingToObjectStats
+            .getOrPut(Grouping(objectClass, parentClass, rootClass)) { InstanceStats() }
+            .registerObject(parentId, rootId)
         }
-        else {
-          var rootObjectNodeId = objectNodeParentId
-          var rootObjectId: Long
-          var iterationCount = 0
-          do {
-            nav.goTo(rootObjectNodeId)
-            verifyClassIsObjectNode(nav.getClass())
-            rootObjectNodeId = nav.getInstanceFieldObjectId(null, "myParent")
-            rootObjectId = nav.getInstanceFieldObjectId(null, "myObject")
-            iterationCount++
-          }
-          while (rootObjectNodeId != 0L && iterationCount < maxTreeDepth)
-
-          if (iterationCount >= maxTreeDepth) {
-            tooDeepObjectClasses.add(objectClass)
-            rootId = parentId
-            rootClass = parentClass!!
-          }
-          else {
-            nav.goTo(rootObjectId)
-            rootId = rootObjectId
-            rootClass = nav.getClass()
-          }
-        }
-
-        groupingToObjectStats
-          .getOrPut(Grouping(objectClass, parentClass, rootClass)) { InstanceStats() }
-          .registerObject(parentId, rootId)
       }
 
       TruncatingPrintBuffer(400, 0, this::appendLine).use { buffer ->
