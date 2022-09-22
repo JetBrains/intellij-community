@@ -39,4 +39,17 @@
     <extensionPoint name="fileIndentOptionsProvider" interface="com.intellij.psi.codeStyle.FileIndentOptionsProvider" dynamic="true"/>
     <extensionPoint name="fileCodeStyleProvider" interface="com.intellij.psi.codeStyle.FileCodeStyleProvider" dynamic="true"/>
   </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.psi.impl.source.codeStyle.IndentHelper"
+                        serviceImplementation="com.intellij.psi.impl.source.codeStyle.IndentHelperImpl"/>
+    <applicationService serviceImplementation="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"/>
+    <applicationService serviceInterface="com.intellij.formatting.Formatter" serviceImplementation="com.intellij.formatting.FormatterImpl"/>
+    <formattingService implementation="com.intellij.formatting.service.CoreFormattingService" order="last"/>
+    <projectService serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager" preload="true"/>
+    <projectService serviceInterface="com.intellij.application.options.codeStyle.cache.CodeStyleCachingService"
+                    serviceImplementation="com.intellij.application.options.codeStyle.cache.CodeStyleCachingServiceImpl"/>
+    <projectService serviceInterface="com.intellij.pom.PomModel"
+                    serviceImplementation="com.intellij.psi.impl.source.PostprocessReformattingAspect$LangPomModel" overrides="true"
+                    preload="await"/>
+  </extensions>
 </idea-plugin>
