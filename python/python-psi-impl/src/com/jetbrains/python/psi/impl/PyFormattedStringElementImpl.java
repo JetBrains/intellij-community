@@ -10,10 +10,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyFStringFragment;
-import com.jetbrains.python.psi.PyFormattedStringElement;
-import com.jetbrains.python.psi.PyStringLiteralUtil;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -46,7 +43,7 @@ public class PyFormattedStringElementImpl extends PyElementImpl implements PyFor
   @NotNull
   @Override
   public String getPrefix() {
-    return PyStringLiteralUtil.getPrefix(getText());
+    return PyStringLiteralCoreUtil.getPrefix(getText());
   }
 
   @Override

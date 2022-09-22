@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParameterList
-import com.jetbrains.python.psi.PyStringLiteralUtil
+import com.jetbrains.python.psi.PyStringLiteralCoreUtil
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import org.jetbrains.completion.full.line.language.ElementFormatter
@@ -46,7 +46,7 @@ class ParameterListFormatter : ElementFormatter {
 
   private fun includeDefaultValue(defaultValue: String): String {
     val sb = StringBuilder()
-    val quotes = PyStringLiteralUtil.getQuotes(defaultValue)
+    val quotes = PyStringLiteralCoreUtil.getQuotes(defaultValue)
 
     sb.append("=")
     if (quotes != null) {

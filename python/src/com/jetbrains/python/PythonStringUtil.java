@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.PathUtil;
+import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,8 +107,8 @@ public final class PythonStringUtil {
 
     Pair<String, String> quotes = null;
     if (PyStringLiteralUtil.isQuoted(s)) {
-      quotes = PyStringLiteralUtil.getQuotes(s);
-      s = PyStringLiteralUtil.stripQuotesAroundValue(s);
+      quotes = PyStringLiteralCoreUtil.getQuotes(s);
+      s = PyStringLiteralCoreUtil.stripQuotesAroundValue(s);
     }
 
     s = removeLastSuffix(s, separator);

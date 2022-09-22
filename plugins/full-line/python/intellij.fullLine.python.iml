@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.python.community.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.commonTests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.fullLine.core.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.core.impl" />
   </component>
 </module>

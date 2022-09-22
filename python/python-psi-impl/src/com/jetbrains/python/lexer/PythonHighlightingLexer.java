@@ -20,6 +20,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +44,7 @@ public class PythonHighlightingLexer extends PythonLexer {
                                                @NotNull String tokenText,
                                                @NotNull LanguageLevel languageLevel,
                                                boolean unicodeImport) {
-    final String prefix = PyStringLiteralUtil.getPrefix(tokenText);
+    final String prefix = PyStringLiteralCoreUtil.getPrefix(tokenText);
 
     if (tokenType == PyTokenTypes.SINGLE_QUOTED_STRING) {
       if (languageLevel.isPy3K()) {
