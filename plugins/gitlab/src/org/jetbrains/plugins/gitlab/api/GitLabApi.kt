@@ -7,11 +7,16 @@ import com.intellij.collaboration.api.httpclient.CommonHeadersConfigurer
 import com.intellij.collaboration.api.httpclient.CompoundRequestConfigurer
 import com.intellij.collaboration.api.httpclient.CredentialsAuthorizationConfigurer
 import com.intellij.collaboration.api.httpclient.RequestTimeoutConfigurer
+import com.intellij.collaboration.api.json.JsonHttpApiHelper
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
 
 class GitLabApi private constructor(httpHelper: HttpApiHelper)
   : HttpApiHelper by httpHelper,
+    JsonHttpApiHelper by JsonHttpApiHelper(logger<GitLabApi>(),
+                                           httpHelper,
+                                           GitLabRestJsonDataDeSerializer,
+                                           GitLabRestJsonDataDeSerializer),
     GraphQLApiHelper by GraphQLApiHelper(logger<GitLabApi>(),
                                          httpHelper,
                                          GitLabGQLQueryLoader,

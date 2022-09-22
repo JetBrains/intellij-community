@@ -10,7 +10,7 @@ import java.net.URI
 object URIUtil {
 
   fun normalizeAndValidateHttpUri(uri: String): String {
-    val normalized = addHttpsSchemaIfMissing(uri)
+    val normalized = addHttpsSchemaIfMissing(uri).removeSuffix("/")
     require(uri.startsWith("http")) { CollaborationToolsBundle.message("login.server.invalid") }
     URI.create(normalized)
     return normalized
@@ -41,3 +41,5 @@ object URIUtil {
     return uri.toString().removePrefix(schemeText)
   }
 }
+
+fun URI.resolveRelative(path: String) : URI = resolve("./$path")
