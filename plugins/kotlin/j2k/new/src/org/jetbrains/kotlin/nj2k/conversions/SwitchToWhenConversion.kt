@@ -88,19 +88,12 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplica
         takeWhile(predicate) + listOfNotNull(find { !predicate(it) })
 
     private fun List<JKStatement>.singleBlockOrWrapToRun(): JKStatement =
-        singleOrNull()
-            ?: JKBlockStatement(
-                JKBlockImpl(map { statement ->
-                    when (statement) {
-                        is JKBlockStatement ->
-                            JKExpressionStatement(
-                                runExpression(statement, symbolProvider)
-                            )
-                        else -> statement
-                    }
-                })
-            )
-
+        singleOrNull() ?: blockStatement(map { statement ->
+            when (statement) {
+                is JKBlockStatement -> JKExpressionStatement(runExpression(statement, symbolProvider))
+                else -> statement
+            }
+        })
 
     private fun JKStatement.singleListOrBlockStatements(): List<JKStatement> =
         when (this) {
