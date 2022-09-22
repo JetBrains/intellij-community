@@ -149,13 +149,16 @@ class HeapAnalysisTest {
     val root = MyDisposableRoot()
     val child1 = MyDisposableChild()
     val child2 = MyDisposableChild()
+    val largeList = (1..1000).map { MyDisposableGrandchild() }
 
     objectTree.register(root, child1)
     objectTree.register(root, MyDisposableChild())
     objectTree.register(root, child2)
 
     objectTree.register(child1, MyDisposableGrandchild())
-    objectTree.register(child2, MyDisposableGrandchild())
+    for (grandchild in largeList) {
+      objectTree.register(child2, grandchild)
+    }
     objectTree.register(root, Disposer.newDisposable())
 
     objectTree.register(Disposer.newDisposable(), MyDisposableChild())

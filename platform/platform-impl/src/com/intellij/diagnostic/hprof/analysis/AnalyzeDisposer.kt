@@ -176,6 +176,10 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
         nav.goToInstanceField("com.intellij.openapi.util.ObjectNode\$ListNodeChildren", "myChildren")
         getSmartListChildren(nav)
       }
+      "com.intellij.openapi.util.ObjectNode\$MapNodeChildren" -> {
+        nav.goToInstanceField("com.intellij.openapi.util.ObjectNode\$MapNodeChildren", "myChildren")
+        getMapNodeChildren(nav)
+      }
       else -> {
         getSmartListChildren(nav)
       }
@@ -192,6 +196,11 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
       // myElem is ObjectNode
       return LongList.of(nav.id)
     }
+  }
+
+  private fun getMapNodeChildren(nav: ObjectNavigator): LongList {
+    nav.goToInstanceField("it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap", "value")
+    return nav.getReferencesCopy()
   }
 
   private fun verifyClassIsObjectNode(clazzObjectTree: ClassDefinition) {
