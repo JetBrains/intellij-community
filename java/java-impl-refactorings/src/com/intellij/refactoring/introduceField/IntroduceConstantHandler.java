@@ -18,8 +18,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
+import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.refactoring.ui.NameSuggestionsGenerator;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -31,7 +33,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class IntroduceConstantHandler extends BaseExpressionToFieldHandler implements IntroduceConstantHandlerBase {
+public class IntroduceConstantHandler extends BaseExpressionToFieldHandler implements JavaIntroduceVariableHandlerBase,
+                                                                                      PreviewableRefactoringActionHandler {
   protected InplaceIntroduceConstantPopup myInplaceIntroduceConstantPopup;
 
   public IntroduceConstantHandler() {
@@ -44,6 +47,10 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
   }
 
   @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiExpression expression) {
+    invoke(project, new PsiExpression[]{expression});
+  }
+
   public void invoke(@NotNull Project project, PsiExpression @NotNull [] expressions) {
     for (PsiExpression expression : expressions) {
       final PsiFile file = expression.getContainingFile();

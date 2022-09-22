@@ -18,7 +18,7 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +42,7 @@ public class MoveAnonymousToInnerClassFix extends RefactoringInspectionGadgetsFi
 
   @NotNull
   @Override
-  public RefactoringActionHandler getHandler() {
+  public PreviewableRefactoringActionHandler getHandler() {
     return JavaRefactoringActionHandlerFactory.getInstance().createAnonymousToInnerHandler();
   }
 

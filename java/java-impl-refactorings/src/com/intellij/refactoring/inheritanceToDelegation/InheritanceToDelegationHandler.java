@@ -15,7 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -28,18 +28,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class InheritanceToDelegationHandler implements RefactoringActionHandler, ContextAwareActionHandler {
+public class InheritanceToDelegationHandler implements PreviewableRefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance(InheritanceToDelegationHandler.class);
 
   private static final MemberInfo.Filter<PsiMember> MEMBER_INFO_FILTER = new MemberInfo.Filter<>() {
     @Override
     public boolean includeMember(PsiMember element) {
-      if (element instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)element;
+      if (element instanceof final PsiMethod method) {
         return !method.hasModifierProperty(PsiModifier.STATIC)
                && !method.hasModifierProperty(PsiModifier.PRIVATE);
       }
-      else if (element instanceof PsiClass && ((PsiClass)element).isInterface()) {
+      else if (element instanceof PsiClass aClass && aClass.isInterface()) {
         return true;
       }
       return false;

@@ -3,6 +3,7 @@ package com.intellij.refactoring.openapi.impl;
 
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerOnPsiElement;
 import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
@@ -64,12 +65,12 @@ public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActi
   }
 
   @Override
-  public RefactoringActionHandler createReplaceConstructorWithFactoryHandler() {
+  public PreviewableRefactoringActionHandler createReplaceConstructorWithFactoryHandler() {
     return new ReplaceConstructorWithFactoryHandler();
   }
 
   @Override
-  public RefactoringActionHandler createEncapsulateFieldsHandler() {
+  public PreviewableRefactoringActionHandler createEncapsulateFieldsHandler() {
     return new EncapsulateFieldsHandler();
   }
 
@@ -99,12 +100,12 @@ public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActi
   }
 
   @Override
-  public RefactoringActionHandler createExtractMethodHandler() {
+  public PreviewableRefactoringActionHandler createExtractMethodHandler() {
     return new ExtractMethodHandler();
   }
 
   @Override
-  public RefactoringActionHandler createInheritanceToDelegationHandler() {
+  public PreviewableRefactoringActionHandler createInheritanceToDelegationHandler() {
     return new InheritanceToDelegationHandler();
   }
 
@@ -119,17 +120,17 @@ public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActi
   }
 
   @Override
-  public RefactoringActionHandler createIntroduceVariableHandler() {
+  public PreviewableRefactoringActionHandler createIntroduceVariableHandler() {
     return new IntroduceVariableHandler();
   }
 
   @Override
-  public RefactoringActionHandler createIntroduceConstantHandler() {
+  public PreviewableRefactoringActionHandler createIntroduceConstantHandler() {
     return new IntroduceConstantHandler();
   }
 
   @Override
-  public RefactoringActionHandler createInvertBooleanHandler() {
+  public PreviewableRefactoringActionHandler createInvertBooleanHandler() {
     return new InvertBooleanHandler();
   }
 }

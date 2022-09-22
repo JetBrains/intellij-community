@@ -2,13 +2,12 @@
 
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameterList;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryHandlerBase;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -60,23 +59,8 @@ public class PublicConstructorInspection extends BaseInspection {
 
     @NotNull
     @Override
-    public RefactoringActionHandler getHandler() {
+    public PreviewableRefactoringActionHandler getHandler() {
       return JavaRefactoringActionHandlerFactory.getInstance().createReplaceConstructorWithFactoryHandler();
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      final var handler = (ReplaceConstructorWithFactoryHandlerBase)getHandler();
-      final PsiElement element = getElementToRefactor(previewDescriptor.getPsiElement());
-      if (element instanceof PsiMethod method) {
-        handler.invokeForPreview(project, method);
-      }
-      else if (element instanceof PsiClass aClass) {
-        handler.invokeForPreview(project, aClass);
-      } else {
-        return IntentionPreviewInfo.EMPTY;
-      }
-      return IntentionPreviewInfo.DIFF;
     }
   }
 

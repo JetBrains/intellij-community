@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -12,7 +13,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.actions.RefactoringActionContextUtil;
@@ -23,8 +24,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author dsl
  */
-public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHandler, ContextAwareActionHandler,
-                                                             ReplaceConstructorWithFactoryHandlerBase {
+public class ReplaceConstructorWithFactoryHandler implements PreviewableRefactoringActionHandler, ContextAwareActionHandler {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -38,23 +38,22 @@ public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHa
         return;
       }
 
-      if (element instanceof PsiReferenceExpression) {
-        final PsiElement psiElement = ((PsiReferenceExpression)element).resolve();
-        if (psiElement instanceof PsiMethod && ((PsiMethod) psiElement).isConstructor()) {
+      if (element instanceof PsiReferenceExpression ref) {
+        final PsiElement psiElement = ref.resolve();
+        if (psiElement instanceof PsiMethod method && method.isConstructor()) {
           invoke(project, new PsiElement[] { psiElement }, dataContext);
           return;
         }
       }
-      else if (element instanceof PsiConstructorCall) {
-        final PsiConstructorCall constructorCall = (PsiConstructorCall)element;
+      else if (element instanceof PsiConstructorCall constructorCall) {
         final PsiMethod method = constructorCall.resolveConstructor();
         if (method != null) {
           invoke(project, new PsiElement[] { method }, dataContext);
           return;
         }
         // handle default constructor
-        if (element instanceof PsiNewExpression) {
-          final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)element).getClassReference();
+        if (element instanceof PsiNewExpression newExpression) {
+          final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
           if (classReference != null) {
             final PsiElement classElement = classReference.resolve();
             if (classElement instanceof PsiClass) {
@@ -65,12 +64,11 @@ public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHa
         }
       }
 
-      if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)
-          && ((PsiClass) element).getConstructors().length == 0) {
+      if (element instanceof PsiClass aClass && !(element instanceof PsiAnonymousClass) && aClass.getConstructors().length == 0) {
         invoke(project, new PsiElement[]{element}, dataContext);
         return;
       }
-      if (element instanceof PsiMethod && ((PsiMethod) element).isConstructor()) {
+      if (element instanceof PsiMethod method && method.isConstructor()) {
         invoke(project, new PsiElement[]{element}, dataContext);
         return;
       }
@@ -83,31 +81,34 @@ public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHa
     if (elements.length != 1) return;
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    if (elements[0] instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)elements[0];
+    if (elements[0] instanceof PsiMethod method) {
       invoke(method, editor, project);
     }
-    else if (elements[0] instanceof PsiClass) {
-      invoke((PsiClass)elements[0], editor, project);
+    else if (elements[0] instanceof PsiClass aClass) {
+      invoke(aClass, editor, project);
     }
   }
 
   @Override
-  public void invokeForPreview(@NotNull Project project, @NotNull PsiMethod method) {
-    PsiClass aClass = method.getContainingClass();
-    if (aClass == null) {
-      return;
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull PsiElement element) {
+    final PsiMethod originalConstructor;
+    final PsiClass targetClass;
+    if (element instanceof PsiMethod method) {
+      PsiClass aClass = method.getContainingClass();
+      if (aClass == null) return IntentionPreviewInfo.EMPTY;
+      originalConstructor = method;
+      targetClass = aClass;
     }
-    String factoryName = suggestFactoryNames(aClass)[0];
-    final var processor = new ReplaceConstructorWithFactoryProcessor(project, method, aClass, aClass, factoryName);
+    else if (element instanceof PsiClass aClass) {
+      originalConstructor = null;
+      targetClass = aClass;
+    } else {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    String factoryName = suggestFactoryNames(targetClass)[0];
+    final var processor = new ReplaceConstructorWithFactoryProcessor(project, originalConstructor, targetClass, targetClass, factoryName);
     processor.performRefactoring(UsageInfo.EMPTY_ARRAY);
-  }
-
-  @Override
-  public void invokeForPreview(@NotNull Project project, @NotNull PsiClass aClass) {
-    String factoryName = suggestFactoryNames(aClass)[0];
-    final var processor = new ReplaceConstructorWithFactoryProcessor(project, null, aClass, aClass, factoryName);
-    processor.performRefactoring(UsageInfo.EMPTY_ARRAY);
+    return IntentionPreviewInfo.DIFF;
   }
 
   private static void invoke(PsiClass aClass, Editor editor, Project project) {
