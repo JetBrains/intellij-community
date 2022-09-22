@@ -534,7 +534,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         importProject()
 
         with(facetSettings) {
-            assertEquals("-version", compilerSettings!!.additionalArguments)
+            assertEquals("", compilerSettings!!.additionalArguments)
             assertEquals(
                 listOf(
                     "plugin:org.jetbrains.kotlin.allopen:annotation=org.springframework.stereotype.Component",
@@ -556,7 +556,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
 
         with(facetSettings) {
             assertEquals(
-                "-version",
+                "",
                 compilerSettings!!.additionalArguments
             )
             assertEquals(

@@ -88,7 +88,7 @@ class KotlinLombokMavenImporterTest : AbstractKotlinMavenImporterTest() {
 
         with(facetSettings) {
             org.junit.Assert.assertEquals(
-                "-version",
+                "",
                 compilerSettings!!.additionalArguments
             )
             assertContain(

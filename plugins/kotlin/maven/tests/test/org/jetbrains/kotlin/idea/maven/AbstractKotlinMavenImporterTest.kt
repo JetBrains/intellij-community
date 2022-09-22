@@ -666,7 +666,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                 Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
                 Assert.assertEquals("foobar.jar", (compilerArguments as K2JVMCompilerArguments).classpath)
                 Assert.assertEquals(
-                    "-version",
+                    "",
                     compilerSettings!!.additionalArguments
                 )
             }
@@ -985,7 +985,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                 Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
                 Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
                 Assert.assertEquals("foobar.jar", (compilerArguments as K2JVMCompilerArguments).classpath)
-                Assert.assertEquals("-version", compilerSettings!!.additionalArguments)
+                Assert.assertEquals("", compilerSettings!!.additionalArguments)
             }
         }
     }
@@ -1755,7 +1755,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             with(facetSettings) {
                 Assert.assertEquals(
-                    "-version",
+                    "",
                     compilerSettings!!.additionalArguments
                 )
                 Assert.assertEquals(
@@ -3221,7 +3221,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             with(facetSettings) {
                 Assert.assertEquals(
-                    "-version",
+                    "",
                     compilerSettings!!.additionalArguments
                 )
                 Assert.assertEquals(
@@ -3497,7 +3497,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             )
 
             Assert.assertEquals(
-                "-version",
+                "",
                 facetSettings.compilerSettings!!.additionalArguments
             )
             assertModules("project")
