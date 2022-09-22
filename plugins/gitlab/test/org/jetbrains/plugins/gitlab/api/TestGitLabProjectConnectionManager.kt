@@ -12,7 +12,7 @@ internal class TestGitLabProjectConnectionManager : GitLabProjectConnectionManag
   override val state = MutableStateFlow<GitLabProjectConnection?>(null)
 
   override suspend fun tryConnect(repo: GitLabProjectMapping, account: GitLabAccount) {
-    state.emit(GitLabProjectConnection(repo, account))
+    state.emit(GitLabProjectConnection(repo, account, ""))
   }
 
   override suspend fun disconnect() {
