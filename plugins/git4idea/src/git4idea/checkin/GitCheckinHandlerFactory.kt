@@ -3,13 +3,13 @@ package git4idea.checkin
 
 import com.intellij.CommonBundle
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runModalTask
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DoNotAskOption
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -19,11 +19,8 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
+import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PairConsumer
-import com.intellij.util.ui.UIUtil
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
@@ -34,105 +31,114 @@ import git4idea.crlf.GitCrlfProblemsDetector
 import git4idea.crlf.GitCrlfUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.util.*
-import java.util.concurrent.atomic.AtomicReference
 
 abstract class GitCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey())
 
 class GitUserNameCheckinHandlerFactory : GitCheckinHandlerFactory() {
   override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
-    return GitUserNameCheckinHandler(panel)
+    return GitUserNameCheckinHandler(panel.project)
   }
 }
 
 class GitCRLFCheckinHandlerFactory : GitCheckinHandlerFactory() {
   override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
-    return GitCRLFCheckinHandler(panel)
+    return GitCRLFCheckinHandler(panel.project)
   }
 }
 
 class GitDetachedRootCheckinHandlerFactory : GitCheckinHandlerFactory() {
   override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
-    return GitDetachedRootCheckinHandler(panel)
+    return GitDetachedRootCheckinHandler(panel.project)
   }
 }
 
 
-private class GitCRLFCheckinHandler(panel: CheckinProjectPanel) : GitCheckinHandler(panel) {
-  override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>?): ReturnResult {
-    val settings = GitVcsSettings.getInstance(project)
-    if (!settings.warnAboutCrlf()) {
-      return ReturnResult.COMMIT
-    }
+private class GitCRLFCheckinHandler(project: Project) : GitCheckinHandler(project) {
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.EARLY
 
-    val git = Git.getInstance()
-
-    val files = panel.virtualFiles // deleted files aren't included, but for them we don't care about CRLFs.
-    val crlfHelper = AtomicReference<GitCrlfProblemsDetector?>()
-    runModalTask(GitBundle.message("progress.checking.line.separator.issues"), project, true) {
-      crlfHelper.set(GitCrlfProblemsDetector.detect(project, git, files))
-    }
-
-    if (crlfHelper.get() == null) { // detection cancelled
-      return ReturnResult.CANCEL
-    }
-
-    if (crlfHelper.get()!!.shouldWarn()) {
-      val codeAndDontWarn = UIUtil.invokeAndWaitIfNeeded<Pair<Int, Boolean>> {
-        val dialog = GitCrlfDialog(project)
-        dialog.show()
-        Pair.create(dialog.exitCode, dialog.dontWarnAgain())
-      }
-      val decision = codeAndDontWarn.first
-      val dontWarnAgain = codeAndDontWarn.second
-
-      if (decision == GitCrlfDialog.CANCEL) {
-        return ReturnResult.CANCEL
-      }
-      else {
-        if (decision == GitCrlfDialog.SET) {
-          val anyRoot = panel.roots.iterator().next() // config will be set globally => any root will do.
-          setCoreAutoCrlfAttribute(anyRoot)
-        }
-        else {
-          if (dontWarnAgain) {
-            settings.setWarnAboutCrlf(false)
-          }
-        }
-        return ReturnResult.COMMIT
-      }
-    }
-    return ReturnResult.COMMIT
+  override fun isEnabled(): Boolean {
+    return GitVcsSettings.getInstance(project).warnAboutCrlf()
   }
 
-  private fun setCoreAutoCrlfAttribute(aRoot: VirtualFile) {
+  override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
+    val git = Git.getInstance()
+
+    val files = commitInfo.committedVirtualFiles // Deleted files aren't included. But for them, we don't care about CRLFs.
+    val shouldWarn = withContext(Dispatchers.Default) {
+      coroutineContext.progressSink?.update(GitBundle.message("progress.checking.line.separator.issues"))
+      runUnderIndicator {
+        GitCrlfProblemsDetector.detect(project, git, files).shouldWarn()
+      }
+    }
+    if (!shouldWarn) return null
+
+    val dialog = GitCrlfDialog(project)
+    dialog.show()
+    val decision = dialog.exitCode
+    val dontWarnAgain = dialog.dontWarnAgain()
+
+    if (decision == GitCrlfDialog.CANCEL) {
+      return GitCRLFCommitProblem()
+    }
+
+    if (decision == GitCrlfDialog.SET) {
+      val anyRoot = commitInfo.committedChanges.asSequence()
+        .mapNotNull { ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(ChangesUtil.getFilePath(it)) }
+        .filter { it.vcs is GitVcs }
+        .map { it.path }
+        .firstOrNull()
+      if (anyRoot != null) {
+        setCoreAutoCrlfAttribute(project, anyRoot)
+      }
+    }
+    else if (dontWarnAgain) {
+      val settings = GitVcsSettings.getInstance(project)
+      settings.setWarnAboutCrlf(false)
+    }
+    return null
+  }
+
+  private fun setCoreAutoCrlfAttribute(project: Project, anyRoot: VirtualFile) {
     runModalTask(GitBundle.message("progress.setting.config.value"), project, true) {
       try {
-        GitConfigUtil.setValue(project, aRoot, GitConfigUtil.CORE_AUTOCRLF, GitCrlfUtil.RECOMMENDED_VALUE, "--global")
+        GitConfigUtil.setValue(project, anyRoot, GitConfigUtil.CORE_AUTOCRLF, GitCrlfUtil.RECOMMENDED_VALUE, "--global")
       }
       catch (e: VcsException) {
         // it is not critical: the user just will get the dialog again next time
-        logger<GitCRLFCheckinHandler>().warn("Couldn't globally set core.autocrlf in $aRoot", e)
+        logger<GitCRLFCheckinHandler>().warn("Couldn't globally set core.autocrlf in $anyRoot", e)
       }
+    }
+  }
+
+  private class GitCRLFCommitProblem : CommitProblem {
+    override val text: String get() = GitBundle.message("text.crlf.fix.notification.description.warning")
+
+    override fun showModalSolution(project: Project, commitInfo: CommitInfo): ReturnResult {
+      return ReturnResult.CANCEL // dialog was already shown
     }
   }
 }
 
-private class GitUserNameCheckinHandler(panel: CheckinProjectPanel) : GitCheckinHandler(panel) {
-  override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>?): ReturnResult {
+private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(project) {
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.EARLY
+
+  override fun isEnabled(): Boolean = true
+
+  override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     val vcs = GitVcs.getInstance(project)
 
-    val affectedRoots = getSelectedRoots()
+    val affectedRoots = getSelectedRoots(commitInfo)
     val defined = getDefinedUserNames(project, affectedRoots, false)
 
     val allRoots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs).toMutableList()
     val notDefined = affectedRoots.toMutableList()
     notDefined.removeAll(defined.keys)
 
-    if (notDefined.isEmpty()) {
-      return ReturnResult.COMMIT
-    }
+    if (notDefined.isEmpty()) return null
 
     // try to find a root with defined user name among other roots - to propose this user name in the dialog
     if (defined.isEmpty() && allRoots.size > affectedRoots.size) {
@@ -141,37 +147,42 @@ private class GitUserNameCheckinHandler(panel: CheckinProjectPanel) : GitCheckin
     }
 
     val dialog = GitUserNameNotDefinedDialog(project, notDefined, affectedRoots, defined)
-    if (dialog.showAndGet()) {
-      GitVcsSettings.getInstance(project).setUserNameGlobally(dialog.isGlobal)
-      return if (setUserNameUnderProgress(project, notDefined, dialog)) ReturnResult.COMMIT else ReturnResult.CANCEL
+    if (!dialog.showAndGet()) return GitUserNameCommitProblem(closeWindow = true)
+
+    GitVcsSettings.getInstance(project).setUserNameGlobally(dialog.isGlobal)
+    if (setUserNameUnderProgress(project, notDefined, dialog)) {
+      return null
     }
-    return ReturnResult.CLOSE_WINDOW
+
+    return GitUserNameCommitProblem(closeWindow = false)
   }
 
-  private fun getDefinedUserNames(project: Project,
-                                  roots: Collection<VirtualFile>,
-                                  stopWhenFoundFirst: Boolean): MutableMap<VirtualFile, Couple<String?>> {
-    val defined = HashMap<VirtualFile, Couple<String?>>()
-    runModalTask(GitBundle.message("progress.checking.user.name.email"), project, true) {
-      for (root in roots) {
-        try {
-          val nameAndEmail = getUserNameAndEmailFromGitConfig(project, root)
-          val name = nameAndEmail.getFirst()
-          val email = nameAndEmail.getSecond()
-          if (name != null && email != null) {
-            defined[root] = nameAndEmail
-            if (stopWhenFoundFirst) {
-              break
+  private suspend fun getDefinedUserNames(project: Project,
+                                          roots: Collection<VirtualFile>,
+                                          stopWhenFoundFirst: Boolean): MutableMap<VirtualFile, Couple<String?>> {
+    return withContext(Dispatchers.Default) {
+      runUnderIndicator {
+        val defined = HashMap<VirtualFile, Couple<String?>>()
+        for (root in roots) {
+          try {
+            val nameAndEmail = getUserNameAndEmailFromGitConfig(project, root)
+            val name = nameAndEmail.getFirst()
+            val email = nameAndEmail.getSecond()
+            if (name != null && email != null) {
+              defined[root] = nameAndEmail
+              if (stopWhenFoundFirst) {
+                break
+              }
             }
           }
+          catch (e: VcsException) {
+            logger<GitUserNameCheckinHandler>().error("Couldn't get user.name and user.email for root $root", e)
+            // doing nothing - let commit with possibly empty user.name/email
+          }
         }
-        catch (e: VcsException) {
-          logger<GitUserNameCheckinHandler>().error("Couldn't get user.name and user.email for root $root", e)
-          // doing nothing - let commit with possibly empty user.name/email
-        }
+        defined
       }
     }
-    return defined
   }
 
   private fun setUserNameUnderProgress(project: Project,
@@ -200,7 +211,7 @@ private class GitUserNameCheckinHandler(panel: CheckinProjectPanel) : GitCheckin
       return true
     }
     else {
-      Messages.showErrorDialog(panel.component, error.get())
+      Messages.showErrorDialog(project, error.get(), CommonBundle.getErrorTitle())
       return false
     }
   }
@@ -212,20 +223,37 @@ private class GitUserNameCheckinHandler(panel: CheckinProjectPanel) : GitCheckin
     val email = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_EMAIL)
     return Couple.of(name, email)
   }
+
+  private class GitUserNameCommitProblem(val closeWindow: Boolean) : CommitProblem {
+    override val text: String get() = GitBundle.message("commit.check.warning.user.name.email.not.set")
+
+    override fun showModalSolution(project: Project, commitInfo: CommitInfo): ReturnResult {
+      // dialog was already shown
+      if (closeWindow) {
+        return ReturnResult.CLOSE_WINDOW
+      }
+      else {
+        return ReturnResult.CANCEL
+      }
+    }
+  }
 }
 
-private class GitDetachedRootCheckinHandler(panel: CheckinProjectPanel) : GitCheckinHandler(panel) {
-  override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
-    // Warning: commit on a detached HEAD
-    val detachedRoot = getDetachedRoot()
-    if (detachedRoot == null || !GitVcsSettings.getInstance(project).warnAboutDetachedHead()) {
-      return ReturnResult.COMMIT
-    }
+private class GitDetachedRootCheckinHandler(project: Project) : GitCheckinHandler(project) {
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.EARLY
 
-    val rootPath: HtmlChunk = HtmlChunk.text(detachedRoot.myRoot.presentableUrl).bold()
+  override fun isEnabled(): Boolean {
+    return GitVcsSettings.getInstance(project).warnAboutDetachedHead()
+  }
+
+  override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
+    val detachedRoot = getDetachedRoot(commitInfo)
+    if (detachedRoot == null) return null
+
+    val rootPath = HtmlChunk.text(detachedRoot.root.presentableUrl).bold()
     val title: @NlsContexts.DialogTitle String
     val message: @NlsContexts.DialogMessage HtmlBuilder = HtmlBuilder()
-    if (detachedRoot.myRebase) {
+    if (detachedRoot.isDuringRebase) {
       title = GitBundle.message("warning.title.commit.with.unfinished.rebase")
       message
         .appendRaw(GitBundle.message("warning.message.commit.with.unfinished.rebase", rootPath.toString()))
@@ -242,7 +270,7 @@ private class GitDetachedRootCheckinHandler(panel: CheckinProjectPanel) : GitChe
                     GitBundle.message("link.label.commit.with.detached.head.read.more"))
     }
 
-    val dontAskAgain: DialogWrapper.DoNotAskOption = object : DialogWrapper.DoNotAskOption.Adapter() {
+    val dontAskAgain: DoNotAskOption = object : DoNotAskOption.Adapter() {
       override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
         GitVcsSettings.getInstance(project).setWarnAboutDetachedHead(!isSelected)
       }
@@ -251,26 +279,34 @@ private class GitDetachedRootCheckinHandler(panel: CheckinProjectPanel) : GitChe
         return GitBundle.message("checkbox.dont.warn.again")
       }
     }
-    val choice = Messages.showOkCancelDialog(project, message.wrapWithHtmlBody().toString(), title,
-                                             GitBundle.message("commit.action.name"), CommonBundle.getCancelButtonText(),
-                                             Messages.getWarningIcon(), dontAskAgain)
-    if (choice == Messages.OK) {
-      return ReturnResult.COMMIT
-    }
-    else {
-      return ReturnResult.CLOSE_WINDOW
+    val commit = MessageDialogBuilder.okCancel(title, message.wrapWithHtmlBody().toString())
+      .yesText(commitInfo.commitActionText)
+      .icon(Messages.getWarningIcon())
+      .doNotAsk(dontAskAgain)
+      .ask(project)
+    if (commit) return null
+
+    return GitDetachedRootCommitProblem()
+  }
+
+  private class GitDetachedRootCommitProblem : CommitProblem {
+    override val text: String
+      get() = GitBundle.message("commit.check.warning.title.commit.with.detached.head")
+
+    override fun showModalSolution(project: Project, commitInfo: CommitInfo): ReturnResult {
+      return ReturnResult.CLOSE_WINDOW // dialog was already shown
     }
   }
 
   /**
    * Scans the Git roots, selected for commit, for the root which is on a detached HEAD.
-   * Returns null, if all repositories are on the branch.
-   * There might be several detached repositories, - in that case only one is returned.
+   * Returns null if all repositories are on the branch.
+   * There might be several detached repositories - in that case, only one is returned.
    * This is because the situation is very rare, while it requires a lot of additional effort of making a well-formed message.
    */
-  private fun getDetachedRoot(): DetachedRoot? {
+  private fun getDetachedRoot(commitInfo: CommitInfo): DetachedRoot? {
     val repositoryManager = GitUtil.getRepositoryManager(project)
-    for (root in getSelectedRoots()) {
+    for (root in getSelectedRoots(commitInfo)) {
       val repository = repositoryManager.getRepositoryForRootQuick(root) ?: continue
       if (!repository.isOnBranch && !GitRebaseUtils.isInteractiveRebaseInProgress(repository)) {
         return DetachedRoot(root, repository.isRebaseInProgress)
@@ -279,23 +315,20 @@ private class GitDetachedRootCheckinHandler(panel: CheckinProjectPanel) : GitChe
     return null
   }
 
-  private class DetachedRoot(val myRoot: VirtualFile, // rebase in progress, or just detached due to a checkout of a commit.
-                             val myRebase: Boolean)
+  private class DetachedRoot(val root: VirtualFile, val isDuringRebase: Boolean)
 }
 
-private abstract class GitCheckinHandler(val panel: CheckinProjectPanel) : CheckinHandler() {
-  protected val project get() = panel.project
-
+private abstract class GitCheckinHandler(val project: Project) : CheckinHandler(), CommitCheck {
   override fun acceptExecutor(executor: CommitExecutor?): Boolean {
     return (executor == null || executor is GitCommitAndPushExecutor) &&
            super.acceptExecutor(executor)
   }
 
-  protected fun getSelectedRoots(): Collection<VirtualFile> {
+  protected fun getSelectedRoots(commitInfo: CommitInfo): Collection<VirtualFile> {
     val vcsManager = ProjectLevelVcsManager.getInstance(project)
     val git = GitVcs.getInstance(project)
     val result = mutableSetOf<VirtualFile>()
-    for (path in ChangesUtil.getPaths(panel.selectedChanges)) {
+    for (path in ChangesUtil.getPaths(commitInfo.committedChanges)) {
       val vcsRoot = vcsManager.getVcsRootObjectFor(path)
       if (vcsRoot != null) {
         val root = vcsRoot.path
