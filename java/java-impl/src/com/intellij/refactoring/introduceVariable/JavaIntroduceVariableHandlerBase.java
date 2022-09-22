@@ -10,6 +10,4 @@ import org.jetbrains.annotations.NotNull;
 
 public interface JavaIntroduceVariableHandlerBase extends RefactoringActionHandler, ContextAwareActionHandler {
   void invoke(@NotNull Project project, Editor editor, PsiExpression expression);
-
-  void invokeForPreview(@NotNull Project project, @NotNull PsiExpression expression);
 }
