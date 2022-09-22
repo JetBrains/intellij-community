@@ -29,6 +29,10 @@ public final class FacetDependentToolWindow extends ToolWindowEP {
   @Attribute("facetIdList")
   public String facetIdList;
 
+  /**
+   * @deprecated not supported in new UI
+   */
+  @Deprecated
   @Attribute("showOnStripeByDefault")
   public boolean showOnStripeByDefault = true;
 

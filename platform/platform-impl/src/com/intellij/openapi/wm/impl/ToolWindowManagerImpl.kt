@@ -2014,6 +2014,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   }
 
   internal fun setShowStripeButton(id: String, value: Boolean) {
+    if (isNewUi) {
+      LOG.info("Ignore setShowStripeButton(id=$id, value=$value) - not applicable for a new UI")
+      return
+    }
+
     val entry = idToEntry.get(id) ?: throw IllegalStateException("window with id=\"$id\" isn't registered")
     var info = layoutState.getInfo(id)
     if (info == null) {
