@@ -50,7 +50,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.Resized
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.MovedOrResized
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.toolWindow.*
 import com.intellij.ui.BalloonImpl
@@ -1937,7 +1937,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
    * Handles event from decorator and modify weight/floating bounds of the
    * tool window depending on decoration type.
    */
-  fun resized(source: InternalDecoratorImpl) {
+  fun movedOrResized(source: InternalDecoratorImpl) {
     if (!source.isShowing) {
       // do not recalculate the tool window size if it is not yet shown (and, therefore, has 0,0,0,0 bounds)
       return
@@ -1987,7 +1987,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
         getRegisteredMutableInfoOrLogError(another.toolWindow.id).weight = paneWeight
       }
     }
-    fireStateChanged(Resized)
+    fireStateChanged(MovedOrResized)
   }
 
   private fun focusToolWindowByDefault() {

@@ -115,6 +115,14 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     result
   }
 
+  private val moveOrResizeAlarm = SingleAlarm(Runnable {
+    val decorator = this@ToolWindowImpl.decorator
+    if (decorator != null) {
+      toolWindowManager.movedOrResized(decorator)
+    }
+    this@ToolWindowImpl.windowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
+  }, 100, disposable)
+
   init {
     if (component != null) {
       val content = ContentImpl(component, "", false)
@@ -171,13 +179,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
     decorator.applyWindowInfo(windowInfo)
     decorator.addComponentListener(object : ComponentAdapter() {
-      private val alarm = SingleAlarm(Runnable {
-        toolWindowManager.resized(decorator)
-        windowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
-      }, 100, disposable)
-
       override fun componentResized(e: ComponentEvent) {
-        alarm.cancelAndRequest()
+        onMovedOrResized()
       }
     })
 
@@ -197,6 +200,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
 
     return contentManager
+  }
+
+  fun onMovedOrResized() {
+    moveOrResizeAlarm.cancelAndRequest()
   }
 
   internal fun setWindowInfoSilently(info: WindowInfo) {

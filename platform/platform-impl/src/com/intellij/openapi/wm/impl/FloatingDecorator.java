@@ -24,10 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 
 @ApiStatus.Internal
 public final class FloatingDecorator extends JDialog implements FloatingDecoratorMarker {
@@ -84,8 +81,14 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
       @Override
       public void windowClosing(WindowEvent event) {
         ToolWindowImpl toolWindow = decorator.toolWindow;
-        toolWindow.getToolWindowManager().resized(decorator);
+        toolWindow.getToolWindowManager().movedOrResized(decorator);
         toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false);
+      }
+    });
+    addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentMoved(ComponentEvent e) {
+        decorator.toolWindow.onMovedOrResized();
       }
     });
 
