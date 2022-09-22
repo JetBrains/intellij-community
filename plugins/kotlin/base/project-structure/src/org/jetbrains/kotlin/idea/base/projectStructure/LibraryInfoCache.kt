@@ -57,12 +57,6 @@ class LibraryInfoCache(project: Project) : Disposable {
         override fun get(key: LibraryEx): List<LibraryInfo> {
             checkKeyAndDisposeIllegalEntry(key)
 
-            useCache { cache ->
-                checkEntitiesIfRequired(cache)
-
-                cache[key]
-            }?.let { return it }
-
             /**
              * Project model could provide different instances of libraries
              * those have the same content (roots + excluded roots) but different names
@@ -81,11 +75,7 @@ class LibraryInfoCache(project: Project) : Disposable {
              * It even allows to perform equality check based on object identity.
              */
 
-            val urlsByType = key.urlsByType()
-            val firstRoot = key.firstRoot()
-            ProgressManager.checkCanceled()
-
-            getCachedOrPutNewValue(key, firstRoot, urlsByType, newValue = null)?.let { return it }
+            getCachedOrPutNewValue(key, newValue = null)?.let { return it }
 
             ProgressManager.checkCanceled()
 
@@ -95,7 +85,7 @@ class LibraryInfoCache(project: Project) : Disposable {
                 checkValueValidity(newValue)
             }
 
-            getCachedOrPutNewValue(key, firstRoot, urlsByType, newValue)?.let { return it }
+            getCachedOrPutNewValue(key, newValue)?.let { return it }
 
             postProcessNewValue(key, newValue)
 
@@ -105,15 +95,13 @@ class LibraryInfoCache(project: Project) : Disposable {
         /**
          * @return cached value or null
          */
-        private fun getCachedOrPutNewValue(
-            key: LibraryEx,
-            root: String,
-            keyUrlsByType: Map<OrderRootType, Array<String>>,
-            newValue: List<LibraryInfo>?,
-        ): List<LibraryInfo>? = useCache { cache ->
+        private fun getCachedOrPutNewValue(key: LibraryEx, newValue: List<LibraryInfo>?): List<LibraryInfo>? = useCache { cache ->
+            checkEntitiesIfRequired(cache)
+
             cache[key]?.let { return@useCache it }
 
-            val deduplicatedValue = cachedDeduplicatedValue(cache, key, root, keyUrlsByType)
+            val root = key.firstRoot()
+            val deduplicatedValue = cachedDeduplicatedValue(cache, key, root)
             val resultValue = deduplicatedValue ?: newValue ?: return@useCache null
             addEntryToCache(cache, key, root, resultValue)
 
@@ -134,9 +122,11 @@ class LibraryInfoCache(project: Project) : Disposable {
             cache: MutableMap<LibraryEx, List<LibraryInfo>>,
             key: LibraryEx,
             root: String,
-            keyUrlsByType: Map<OrderRootType, Array<String>>,
         ): List<LibraryInfo>? {
-            val deduplicatedLibraries = deduplicationCache[root] ?: return null
+            val deduplicatedLibraries = deduplicationCache[root]
+            if (deduplicatedLibraries.isNullOrEmpty()) return null
+
+            val keyUrlsByType = key.urlsByType()
             val deduplicatedLibrary = deduplicatedLibraries.find { keyUrlsByType.rootEquals(it) } ?: return null
             val cachedValue = cache[deduplicatedLibrary]
             if (cachedValue == null) {
@@ -158,7 +148,7 @@ class LibraryInfoCache(project: Project) : Disposable {
                 exception.withAttachment("librariesAfter.txt", deduplicatedLibraries.joinToString(separator = "\n"))
                 logger.error(exception)
 
-                return cachedDeduplicatedValue(cache, key, root, keyUrlsByType)
+                return cachedDeduplicatedValue(cache, key, root)
             }
 
             return cachedValue
