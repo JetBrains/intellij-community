@@ -101,6 +101,26 @@ class JavaToKotlinAction : AnAction() {
             return result
         }
 
+        /**
+         * For binary compatibility with third-party plugins.
+         */
+        fun convertFiles(
+            files: List<PsiJavaFile>,
+            project: Project,
+            module: Module,
+            enableExternalCodeProcessing: Boolean = true,
+            askExternalCodeProcessing: Boolean = true,
+            forceUsingOldJ2k: Boolean = false
+        ): List<KtFile> = convertFiles(
+            files,
+            project,
+            module,
+            enableExternalCodeProcessing,
+            askExternalCodeProcessing,
+            forceUsingOldJ2k,
+            defaultSettings
+        )
+
         fun convertFiles(
             files: List<PsiJavaFile>,
             project: Project,

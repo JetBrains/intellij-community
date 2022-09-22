@@ -195,7 +195,7 @@ class KotlinCreateTestIntention : SelfTargetingRangeIntention<KtNamedDeclaration
                                     listOf(generatedFile),
                                     project,
                                     srcModule,
-                                    false,
+                                    enableExternalCodeProcessing = false,
                                     forceUsingOldJ2k = true,
                                     settings = publicByDefault
                                 ).singleOrNull()
