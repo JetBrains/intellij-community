@@ -689,6 +689,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return element;
   }
 
+  @Deprecated(forRemoval = true)
   public final AbstractTreeBuilder getTreeBuilder() {
     return myTreeBuilder;
   }
@@ -790,19 +791,23 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return new GroupByTypeComparator(myProject, getId());
   }
 
+  @Deprecated(forRemoval = true)
   public void installComparator() {
     installComparator(getTreeBuilder());
   }
 
+  @Deprecated(forRemoval = true)
   void installComparator(AbstractTreeBuilder treeBuilder) {
     installComparator(treeBuilder, createComparator());
   }
 
   @TestOnly
+  @Deprecated(forRemoval = true)
   public void installComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     installComparator(getTreeBuilder(), comparator);
   }
 
+  @Deprecated(forRemoval = true)
   protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     if (builder != null) {
       builder.setNodeDescriptorComparator(comparator);
@@ -971,6 +976,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   protected void beforeDnDLeave() { }
 
+  @Deprecated(forRemoval = true)
   public void setTreeBuilder(final AbstractTreeBuilder treeBuilder) {
     if (treeBuilder != null) {
       Disposer.register(this, treeBuilder);
