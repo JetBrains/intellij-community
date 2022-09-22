@@ -53,7 +53,7 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
     TagPresentation.Simple(label.name, ColorHexUtil.fromHex(label.color))
 
   private fun getStateText(state: GHPullRequestState, isDraft: Boolean): @NlsSafe String? {
-    if (state == GHPullRequestState.OPEN) return null
+    if (state == GHPullRequestState.OPEN && !isDraft) return null
     return GHUIUtil.getPullRequestStateText(state, isDraft)
   }
 
