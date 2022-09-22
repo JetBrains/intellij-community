@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.project.Project;
@@ -43,9 +44,14 @@ public final class IndexOperationFUS {
   static final boolean THROW_ON_INCORRECT_USAGE = SystemProperties.getBooleanProperty("IndexOperationFUS.THROW_ON_INCORRECT_USAGE", false);
 
   /**
+   * 'Feature flag': report detailed index lookup events. Default: true for EAP, false otherwise
+   */
+  private static final boolean REPORT_DETAILED_STATS = SystemProperties.getBooleanProperty("IndexOperationFUS.REPORT_DETAILED_STATS",
+                                                                                           ApplicationManager.getApplication().isEAP());
+  /**
    * 'Feature flag': report aggregated (mean, %-iles) index lookup statistics. Default: true
    */
-  private static final boolean REPORT_AGGREGATES = SystemProperties.getBooleanProperty("IndexOperationFUS.REPORT_AGGREGATES", true);
+  private static final boolean REPORT_AGGREGATED_STATS = SystemProperties.getBooleanProperty("IndexOperationFUS.REPORT_AGGREGATED_STATS", true);
 
 
   /**
@@ -271,11 +277,13 @@ public final class IndexOperationFUS {
           final long lookupFinishedAtMs = System.currentTimeMillis();
           final long lookupDurationMs = lookupFinishedAtMs - lookupStartedAtMs;
 
-          if (lookupDurationMs > REPORT_ONLY_OPERATIONS_LONGER_THAN_MS || lookupFailed) {
-            reportDetailedDataToAnalytics(lookupFinishedAtMs);
+          if(REPORT_DETAILED_STATS) {
+            if (lookupDurationMs > REPORT_ONLY_OPERATIONS_LONGER_THAN_MS || lookupFailed) {
+              reportDetailedDataToAnalytics(lookupFinishedAtMs);
+            }
           }
 
-          if (REPORT_AGGREGATES) {
+          if (REPORT_AGGREGATED_STATS) {
             reportAggregatesDataToAnalytics(lookupFinishedAtMs);
           }
         }
@@ -772,7 +780,7 @@ public final class IndexOperationFUS {
     @NotNull
     @Override
     public Set<MetricEvent> getMetrics() {
-      if (REPORT_AGGREGATES) {
+      if (REPORT_AGGREGATED_STATS) {
         final Set<MetricEvent> allKeysLookupStats = allKeysLookupDurationsMsByIndexId.entrySet().stream().map(e -> {
           final IndexId<?, ?> indexId = e.getKey();
           final Recorder recorderForIndex = e.getValue();
