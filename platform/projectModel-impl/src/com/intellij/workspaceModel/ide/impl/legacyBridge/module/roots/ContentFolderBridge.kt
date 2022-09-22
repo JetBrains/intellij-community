@@ -109,12 +109,7 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
   }
 
   private fun getSourceRootType(entity: SourceRootEntity): JpsModuleSourceRootType<out JpsElement> {
-    JpsModelSerializerExtension.getExtensions().forEach { extensions ->
-      extensions.moduleSourceRootPropertiesSerializers.forEach {
-        if (it.typeId == entity.rootType) return it.type
-      }
-    }
-    return UnknownSourceRootType.getInstance(entity.rootType)
+    return SourceRootTypeRegistry.getInstance().findTypeById(entity.rootType) ?: UnknownSourceRootType.getInstance(entity.rootType)
   }
 
   companion object {
