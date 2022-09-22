@@ -72,23 +72,27 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
             val function = element.getNonStrictParentOfType<KtFunction>()
             if (function != null) {
                 val parameterIndexAsJavaCall = element.parameterIndex() + if (function.receiverTypeReference != null) 1 else 0
-                ReferencesSearch.search(function).forEach(Processor {
-                    JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
-                        ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
-                    return@Processor true
-                })
-
+                findCallArgumentsToDelete(result, element, parameterIndexAsJavaCall, function)
                 if (function is KtPrimaryConstructor) {
-                    ReferencesSearch.search(function.getContainingClassOrObject()).forEach(Processor {
-                        JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
-                            ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
-                        return@Processor true
-                    })
+                    findCallArgumentsToDelete(result, element, parameterIndexAsJavaCall, function.getContainingClassOrObject())
                 }
             }
         }
         
         return NonCodeUsageSearchInfo(isInside, element)
+    }
+
+    private fun findCallArgumentsToDelete(
+        result: MutableList<UsageInfo>,
+        element: KtParameter,
+        parameterIndexAsJavaCall: Int,
+        ktElement: KtElement
+    ) {
+        ReferencesSearch.search(ktElement).forEach(Processor {
+            JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
+                ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
+            return@Processor true
+        })
     }
 
     override fun getElementsToSearch(
