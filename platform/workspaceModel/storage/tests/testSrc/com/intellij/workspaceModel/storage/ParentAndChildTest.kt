@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.storage
 import com.intellij.workspaceModel.storage.entities.test.api.ChildEntity
 import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.entities.test.api.ParentEntity
+import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSnapshotImpl
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.assertConsistency
@@ -126,5 +127,20 @@ class ParentAndChildTest {
     builder.addEntity(entity)
 
     assertTrue((entity as ModifiableWorkspaceEntityBase<*>).changedProperty.isEmpty())
+  }
+
+  @Test
+  fun `changed properties is empty after adding to storage 2`() {
+    val entity = ParentEntity("ParentData", MySource)
+
+    val builder = MutableEntityStorage.create()
+    builder.addEntity(entity)
+
+    builder.modifyEntity(entity) {
+      this.parentData = "NewData"
+    }
+
+    assertEquals("NewData", entity.parentData)
+    assertEquals("NewData", builder.entities(ParentEntity::class.java).single().parentData)
   }
 }
