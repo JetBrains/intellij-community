@@ -25,6 +25,7 @@ import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
 import com.jediterm.terminal.model.TerminalModelListener;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalAction;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
@@ -183,13 +184,13 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   @Override
-  public String getSessionName() {
+  public @Nls @Nullable String getDefaultSessionName() {
     ProcessTtyConnector connector = getProcessTtyConnector();
     if (connector instanceof PtyProcessTtyConnector) {
       // use name from settings for local terminal
       return TerminalOptionsProvider.getInstance().getTabName();
     }
-    return super.getSessionName();
+    return super.getDefaultSessionName();
   }
 
   @Override
