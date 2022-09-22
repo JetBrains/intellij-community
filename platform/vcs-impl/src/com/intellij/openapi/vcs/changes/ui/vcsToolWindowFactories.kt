@@ -43,13 +43,17 @@ private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
   override fun updateState(toolWindow: ToolWindow) {
     super.updateState(toolWindow)
 
+    if (shouldShowWithoutActiveVcs.asBoolean().not()) {
+      toolWindow.isShowStripeButton = showInStripeWithoutActiveVcs(toolWindow.project)
+    }
+
     toolWindow.stripeTitle = ProjectLevelVcsManager.getInstance(toolWindow.project).allActiveVcss.singleOrNull()?.displayName
                              ?: IdeBundle.message("toolwindow.stripe.Version_Control")
   }
 
-  override fun isAvailable(project: Project) = project.isTrusted() && showWithoutActiveVcs(project)
+  override fun isAvailable(project: Project) = project.isTrusted()
 
-  private fun showWithoutActiveVcs(project: Project): Boolean {
+  private fun showInStripeWithoutActiveVcs(project: Project): Boolean {
     return shouldShowWithoutActiveVcs.asBoolean() || ProjectLevelVcsManager.getInstance(project).hasAnyMappings()
   }
 }
