@@ -6,11 +6,13 @@ import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
@@ -18,7 +20,6 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.util.containers.MultiMap
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
@@ -29,13 +30,11 @@ import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
-import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.checkValidity
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
-import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.findModuleByEntityWithHack
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
@@ -59,15 +58,7 @@ fun getModuleInfosFromIdeaModel(project: Project, platform: TargetPlatform? = nu
     }
 }
 
-@Suppress("DEPRECATION")
-fun getIdeaModelInfosCache(project: Project): IdeaModelInfosCache =
-    if (FineGrainedEntityCache.isFineGrainedCacheInvalidationEnabled) {
-        project.service()
-    } else {
-        project.cacheInvalidatingOnRootModifications {
-            collectModuleInfosFromIdeaModel(project)
-        }
-    }
+fun getIdeaModelInfosCache(project: Project): IdeaModelInfosCache = project.service()
 
 interface IdeaModelInfosCache {
     fun forPlatform(platform: TargetPlatform): List<IdeaModuleInfo>
@@ -80,75 +71,7 @@ interface IdeaModelInfosCache {
 
 }
 
-private class IdeaModelInfosCacheImpl(
-    private val moduleSourceInfosByModules: MultiMap<Module, ModuleSourceInfo>,
-    private val libraryInfosByLibraries: MultiMap<Library, LibraryInfo>,
-    private val sdkInfosBySdks: Map<Sdk, SdkInfo>,
-): IdeaModelInfosCache {
-    private val resultByPlatform = ConcurrentHashMap<TargetPlatform, List<IdeaModuleInfo>>()
-
-    private val moduleSourceInfos = moduleSourceInfosByModules.values().toList()
-    private val libraryInfos = libraryInfosByLibraries.values().toList()
-    private val sdkInfos = sdkInfosBySdks.values.toList()
-
-    override fun forPlatform(platform: TargetPlatform): List<IdeaModuleInfo> {
-        return resultByPlatform.getOrPut(platform) {
-            mergePlatformModules(moduleSourceInfos, platform) + libraryInfos + sdkInfos
-        }
-    }
-
-    override fun allModules(): List<IdeaModuleInfo> = moduleSourceInfos + libraryInfos + sdkInfos
-
-    override fun getModuleInfosForModule(module: Module): Collection<ModuleSourceInfo> = moduleSourceInfosByModules[module]
-    override fun getLibraryInfosForLibrary(library: Library): Collection<LibraryInfo> = libraryInfosByLibraries[library]
-    override fun getSdkInfoForSdk(sdk: Sdk): SdkInfo? = sdkInfosBySdks[sdk]
-}
-
-private fun collectModuleInfosFromIdeaModel(
-    project: Project
-): IdeaModelInfosCache {
-    val ideaModules = ModuleManager.getInstance(project).modules.toList()
-
-    //TODO: (module refactoring) include libraries that are not among dependencies of any module
-    val ideaLibraries = buildSet {
-        for (ideaModule in ideaModules) {
-            for (entry in ModuleRootManager.getInstance(ideaModule).orderEntries) {
-                if (entry !is LibraryOrderEntry) continue
-                entry.library?.let(this::add)
-            }
-        }
-    }
-
-    val sdksFromModulesDependencies = ideaModules.flatMap { module ->
-        ModuleRootManager.getInstance(module).orderEntries.filterIsInstance<JdkOrderEntry>().map {
-            it.jdk
-        }
-    }
-
-    return IdeaModelInfosCacheImpl(
-        moduleSourceInfosByModules = MultiMap.create<Module, ModuleSourceInfo>().also { moduleInfosByModules ->
-            for (module in ideaModules) {
-                checkCanceled()
-                moduleInfosByModules.putValues(module, module.sourceModuleInfos)
-            }
-        },
-        libraryInfosByLibraries = MultiMap.create<Library, LibraryInfo>().also { libraryInfosByLibraries ->
-            for (library in ideaLibraries) {
-                checkCanceled()
-                val libraryInfos = LibraryInfoCache.getInstance(project)[library]
-                libraryInfosByLibraries.putValues(library, libraryInfos)
-            }
-        },
-        sdkInfosBySdks = LinkedHashMap<Sdk, SdkInfo>().also { sdkInfosBySdks ->
-            fun setSdk(sdk: Sdk) = sdkInfosBySdks.set(sdk, SdkInfo(project, sdk))
-
-            sdksFromModulesDependencies.forEach { if (it != null) setSdk(it) }
-            runReadAction { ProjectJdkTable.getInstance().allJdks }.forEach { setSdk(it) }
-        }
-    )
-}
-
-class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelInfosCache, Disposable {
+class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelInfosCache, Disposable {
     private val moduleCache: ModuleCache
     private val libraryCache: LibraryCache
     private val sdkCache: SdkCache
@@ -159,7 +82,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
     private val modificationTracker = SimpleModificationTracker()
 
     init {
-        moduleCache  = ModuleCache()
+        moduleCache = ModuleCache()
         libraryCache = LibraryCache()
         sdkCache = SdkCache()
 
@@ -180,7 +103,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
 
     override fun dispose() = Unit
 
-    abstract inner class AbstractCache<Key: Any, Value: Any>(initializer: (AbstractCache<Key, Value>) -> Unit):
+    abstract inner class AbstractCache<Key : Any, Value : Any>(initializer: (AbstractCache<Key, Value>) -> Unit) :
         SynchronizedFineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory = false),
         WorkspaceModelChangeListener {
 

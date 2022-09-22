@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinFacetUtils")
+
 package org.jetbrains.kotlin.idea.base.facet
 
 import com.intellij.facet.FacetManager
@@ -21,7 +22,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -29,9 +29,8 @@ import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider
-import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache.Companion.isFineGrainedCacheInvalidationEnabled
-import org.jetbrains.kotlin.idea.base.util.caching.StorageProvider
 import org.jetbrains.kotlin.idea.base.util.caching.findModuleByEntityWithHack
+import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -81,41 +80,36 @@ private val Module.facetSettings: KotlinFacetSettings?
     get() = KotlinFacet.get(this)?.configuration?.settings
 
 @Service(Service.Level.PROJECT)
-class ModulesByLinkedKeyCache(private val project: Project): Disposable, WorkspaceModelChangeListener {
-
-    private val cache: MutableMap<String, Module> by StorageProvider(project, javaClass) { HashMap() }
-        @Deprecated("Do not use directly", level = DeprecationLevel.ERROR) get
+class ModulesByLinkedKeyCache(private val project: Project) : Disposable, WorkspaceModelChangeListener {
+    @Deprecated("Do not use directly", level = DeprecationLevel.ERROR)
+    private val cache: MutableMap<String, Module> = HashMap()
 
     private val lock = Any()
 
     init {
         LowMemoryWatcher.register(this::invalidate, this)
 
-        if (isFineGrainedCacheInvalidationEnabled) {
-            val busConnection = project.messageBus.connect(this)
-            WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, this)
-        }
+        val busConnection = project.messageBus.connect(this)
+        WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, this)
     }
 
-    operator fun get(key: String): Module? =
-        useCache { cache ->
-            if (cache.isEmpty()) {
-                val stableNameProvider = StableModuleNameProvider.getInstance(project)
+    operator fun get(key: String): Module? = useCache { cache ->
+        if (cache.isEmpty()) {
+            val stableNameProvider = StableModuleNameProvider.getInstance(project)
 
-                val map = runReadAction {
-                    val modules = ModuleManager.getInstance(project).modules
-                    modules.associateBy { stableNameProvider.getStableModuleName(it) }
-                }
-                cache.putAll(map)
+            val map = runReadAction {
+                val modules = ModuleManager.getInstance(project).modules
+                modules.associateBy { stableNameProvider.getStableModuleName(it) }
             }
-            cache[key]
+            cache.putAll(map)
         }
+        cache[key]
+    }
 
-    private fun <T> useCache(block: (MutableMap<String, Module>) -> T?): T? =
-        synchronized(lock) {
-            @Suppress("DEPRECATION_ERROR")
-            cache.run(block)
-        }
+    private fun <T> useCache(block: (MutableMap<String, Module>) -> T?): T? = synchronized(lock) {
+        @Suppress("DEPRECATION_ERROR")
+        cache.run(block)
+    }
 
     override fun beforeChanged(event: VersionedStorageChange) {
         if (useCache { it.isEmpty() } == true) return
@@ -156,7 +150,7 @@ class ModulesByLinkedKeyCache(private val project: Project): Disposable, Workspa
 }
 
 val Module.additionalVisibleModules: List<Module>
-    get() = cacheInvalidatingOnRootModifications cache@ {
+    get() = cacheInvalidatingOnRootModifications cache@{
         val facetSettings = facetSettings ?: return@cache emptyList()
 
         val modulesByLinkedKey = project.service<ModulesByLinkedKeyCache>()
