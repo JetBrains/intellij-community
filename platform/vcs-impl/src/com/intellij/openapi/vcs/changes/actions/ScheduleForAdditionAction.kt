@@ -125,17 +125,12 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
                                  files: List<VirtualFile>,
                                  changesConsumer: Consumer<in List<Change>>?,
                                  additionalTask: PairConsumer<in ProgressIndicator, in MutableList<VcsException>>?): Boolean {
-      val changeListManager = ChangeListManager.getInstance(project)
-
       val exceptions: MutableList<VcsException> = ArrayList()
-      val allProcessedFiles: MutableSet<VirtualFile?> = HashSet()
+      val allProcessedFiles: MutableSet<VirtualFile> = HashSet()
 
       ProgressManager.getInstance().run(object : Task.Modal(project, VcsBundle.message("progress.title.adding.files.to.vcs"), true) {
         override fun run(indicator: ProgressIndicator) {
-          ChangesUtil.processVirtualFilesByVcs(project, files) { vcs: AbstractVcs, files: List<VirtualFile> ->
-            addUnversionedFilesToVcs(project, vcs, files, allProcessedFiles, exceptions)
-          }
-
+          allProcessedFiles.addAll(performUnversionedFilesAddition(project, files, exceptions))
           additionalTask?.consume(indicator, exceptions)
         }
       })
@@ -150,6 +145,28 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
 
       VcsDirtyScopeManager.getInstance(project).filesDirty(allProcessedFiles, null)
 
+      moveAddedChangesTo(project, list, allProcessedFiles, changesConsumer)
+
+      return exceptions.isEmpty()
+    }
+
+    private fun performUnversionedFilesAddition(project: Project,
+                                                files: List<VirtualFile>,
+                                                exceptions: MutableList<VcsException>): Set<VirtualFile> {
+      val allProcessedFiles = mutableSetOf<VirtualFile>()
+
+      ChangesUtil.processVirtualFilesByVcs(project, files) { vcs: AbstractVcs, vcsFiles: List<VirtualFile> ->
+        performUnversionedFilesAdditionForVcs(project, vcs, vcsFiles, allProcessedFiles, exceptions)
+      }
+
+      return allProcessedFiles
+    }
+
+    private fun moveAddedChangesTo(project: Project,
+                                   list: LocalChangeList?,
+                                   allProcessedFiles: Set<VirtualFile>,
+                                   changesConsumer: Consumer<in List<Change>>?) {
+      val changeListManager = ChangeListManager.getInstance(project)
       val moveRequired = list != null && !list.isDefault && !allProcessedFiles.isEmpty() && changeListManager.areChangeListsEnabled()
       val syncUpdateRequired = changesConsumer != null
 
@@ -180,15 +197,13 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
             }
           }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null)
       }
-
-      return exceptions.isEmpty()
     }
 
-    private fun addUnversionedFilesToVcs(project: Project,
-                                         vcs: AbstractVcs,
-                                         items: List<VirtualFile>,
-                                         allProcessedFiles: MutableSet<in VirtualFile>,
-                                         exceptions: MutableList<in VcsException>) {
+    private fun performUnversionedFilesAdditionForVcs(project: Project,
+                                                      vcs: AbstractVcs,
+                                                      items: List<VirtualFile>,
+                                                      allProcessedFiles: MutableSet<in VirtualFile>,
+                                                      exceptions: MutableList<in VcsException>) {
       val environment = vcs.checkinEnvironment ?: return
 
       val descendants = runReadAction { getUnversionedDescendantsRecursively(project, items) }
