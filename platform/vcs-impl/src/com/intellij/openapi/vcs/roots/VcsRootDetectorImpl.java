@@ -86,19 +86,20 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
     }
 
     List<VirtualFile> contentRoots = ContainerUtil.sorted(DefaultVcsRootPolicy.getInstance(myProject).getDefaultVcsRoots(),
-                                                          Comparator.comparing(root -> -root.getPath().length()));
+                                                          Comparator.comparing(root -> root.getPath().length()));
     MAPPING_DETECTION_LOG.debug("VcsRootDetectorImpl.scanForRootsInContentRoots - contentRoots", contentRoots);
 
     Set<VcsRoot> detectedRoots = new HashSet<>();
     Set<VirtualFile> skipDirs = new HashSet<>();
     Map<VirtualFile, Boolean> scannedDirs = new HashMap<>();
 
-    // process inner content roots first
-    for (VirtualFile dir : contentRoots) {
+    // process the inner content roots first
+    for (VirtualFile dir : ContainerUtil.reverse(contentRoots)) {
       detectedRoots.addAll(scanForRootsInsideDir(myProject, dir, skipDirs, scannedDirs));
       skipDirs.add(dir);
     }
 
+    // process the outer content roots first
     detectedRoots.addAll(scanForRootsAboveDirs(contentRoots, scannedDirs, detectedRoots));
 
     detectedRoots.addAll(scanDependentRoots(scannedDirs, detectedRoots));
