@@ -8,6 +8,6 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
 abstract class AbstractJava8BasicCompletionTest : AbstractJvmBasicCompletionTest() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+  override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
   override fun getPlatform(): TargetPlatform = JvmPlatforms.jvm8
 }

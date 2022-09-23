@@ -158,9 +158,9 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
     override fun getProjectDescriptor(): LightProjectDescriptor {
         val testName = getTestName(false)
         return if (testName.contains("WithFullJdk") || testName.contains("withFullJdk"))
-            KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+            KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
         else
-            KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+            KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
     private fun String.removeFirstLine() = substringAfter('\n', "")

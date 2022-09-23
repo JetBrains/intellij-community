@@ -24,7 +24,7 @@ import org.junit.runner.RunWith
 @RunWith(JUnit38ClassRunner::class)
 class StringInterpolationInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun testInterpolationSimpleName() = doTest(
         """

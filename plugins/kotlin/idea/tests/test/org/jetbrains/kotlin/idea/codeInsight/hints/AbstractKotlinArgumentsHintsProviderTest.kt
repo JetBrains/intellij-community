@@ -9,7 +9,7 @@ import java.io.File
 abstract class AbstractKotlinArgumentsHintsProviderTest  : KotlinLightCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
     fun doTest(unused: String) { // named according to the convention imposed by GenerateTests

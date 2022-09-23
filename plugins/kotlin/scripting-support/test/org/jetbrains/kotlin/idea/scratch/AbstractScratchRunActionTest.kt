@@ -311,7 +311,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
             testName.endsWith("WithKotlinTest") -> INSTANCE_WITH_KOTLIN_TEST
             testName.endsWith("NoRuntime") -> INSTANCE_WITHOUT_RUNTIME
             testName.endsWith("ScriptRuntime") -> INSTANCE_WITH_SCRIPT_RUNTIME
-            else -> KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+            else -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
         }
     }
 

@@ -32,8 +32,8 @@ abstract class AbstractOptimizeImportsTest : AbstractImportsTest() {
 
 abstract class AbstractJvmOptimizeImportsTest : AbstractOptimizeImportsTest() {
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        if (fileName().endsWith(".kts")) KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_SCRIPT_RUNTIME
-        else KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+        if (fileName().endsWith(".kts")) KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithScriptRuntime()
+        else KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 }
 
 abstract class AbstractJsOptimizeImportsTest : AbstractOptimizeImportsTest() {

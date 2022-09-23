@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 abstract class AbstractExpressionTypeTest : KotlinLightCodeInsightFixtureTestCase() {
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     protected fun doTest(path: String) {
         myFixture.configureByFile(fileName())

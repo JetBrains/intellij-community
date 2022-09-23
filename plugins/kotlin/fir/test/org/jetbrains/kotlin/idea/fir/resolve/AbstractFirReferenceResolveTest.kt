@@ -14,7 +14,7 @@ abstract class AbstractFirReferenceResolveTest : AbstractReferenceResolveTest() 
     override fun isFirPlugin(): Boolean = true
 
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor =
-        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
     override fun tearDown() {
         runAll(

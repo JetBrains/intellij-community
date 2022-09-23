@@ -13,7 +13,7 @@ abstract class AbstractKotlinLambdasHintsProvider :
     InlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
     fun doTest(testPath: String) { // named according to the convention imposed by GenerateTests

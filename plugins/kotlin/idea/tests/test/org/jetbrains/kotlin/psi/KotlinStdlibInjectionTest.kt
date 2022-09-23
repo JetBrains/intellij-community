@@ -70,6 +70,6 @@ class KotlinStdlibInjectionTest : AbstractInjectionTest() {
         doInjectionPresentTest(text, languageId = languageId, unInjectShouldBePresent = false)
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }
 

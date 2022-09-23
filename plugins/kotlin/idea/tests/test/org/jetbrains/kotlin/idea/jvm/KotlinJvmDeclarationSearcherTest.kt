@@ -20,7 +20,7 @@ import kotlin.reflect.KClass
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinJvmDeclarationSearcherTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun testClassWithFieldsAndMethods() = assertDeclares(
         """

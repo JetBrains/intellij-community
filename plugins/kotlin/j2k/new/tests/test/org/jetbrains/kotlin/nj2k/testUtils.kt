@@ -20,12 +20,12 @@ fun descriptorByFileDirective(testDataFile: File, languageLevel: LanguageLevel =
     val fileText = FileUtil.loadFile(testDataFile, true)
     val descriptor = when {
         InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_FULL_JDK") ->
-            KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+            KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
         InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_STDLIB_JDK8") ->
-            KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_STDLIB_JDK8
+            KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk8()
 
-        else -> KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        else -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
     return object : KotlinWithJdkAndRuntimeLightProjectDescriptor(descriptor.libraryFiles, descriptor.librarySourceFiles) {

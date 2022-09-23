@@ -13,7 +13,7 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     override val isFirUastPlugin: Boolean = false
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun testResolveStringFromUast() {
         checkResolveStringFromUast(myFixture, project)

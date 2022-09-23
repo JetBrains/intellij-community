@@ -44,5 +44,5 @@ abstract class AbstractHighLevelMultiFileJvmBasicCompletionTest : KotlinFixtureC
 
     override fun defaultCompletionType(): CompletionType = CompletionType.BASIC
     override fun getPlatform(): TargetPlatform = JvmPlatforms.unspecifiedJvmPlatform
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }

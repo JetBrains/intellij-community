@@ -25,5 +25,5 @@ abstract class AbstractCodeFragmentAutoImportTest : AbstractKotlinHighlightVisit
         assertNull(fixAfter, "No import fix should be available after")
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }

@@ -61,5 +61,5 @@ abstract class AbstractReferenceResolveInLibrarySourcesTest : KotlinLightCodeIns
         AbstractReferenceResolveTest.checkReferenceResolve(expectedResolveData, offset, reference)
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }

@@ -27,5 +27,5 @@ class HighLevelCompletionMultifileHandlerTest : CompletionMultiFileHandlerTest22
 
     override val captureExceptions: Boolean = false
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }

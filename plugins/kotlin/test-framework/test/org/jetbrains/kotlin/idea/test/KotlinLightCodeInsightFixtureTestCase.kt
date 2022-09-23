@@ -150,14 +150,14 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         return when (testMethod.getAnnotation(ProjectDescriptorKind::class.java)?.value) {
             JDK_AND_MULTIPLATFORM_STDLIB_WITH_SOURCES -> KotlinJdkAndMultiplatformStdlibDescriptor.JDK_AND_MULTIPLATFORM_STDLIB_WITH_SOURCES
 
-            KOTLIN_JVM_WITH_STDLIB_SOURCES -> ProjectDescriptorWithStdlibSources.INSTANCE
+            KOTLIN_JVM_WITH_STDLIB_SOURCES -> ProjectDescriptorWithStdlibSources.getInstance()
 
             KOTLIN_JAVASCRIPT -> KotlinStdJSProjectDescriptor
 
             KOTLIN_JVM_WITH_STDLIB_SOURCES_WITH_ADDITIONAL_JS -> {
                 KotlinMultiModuleProjectDescriptor(
                     KOTLIN_JVM_WITH_STDLIB_SOURCES_WITH_ADDITIONAL_JS,
-                    mainModuleDescriptor = ProjectDescriptorWithStdlibSources.INSTANCE,
+                    mainModuleDescriptor = ProjectDescriptorWithStdlibSources.getInstance(),
                     additionalModuleDescriptor = KotlinStdJSProjectDescriptor
                 )
             }
@@ -166,7 +166,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                 KotlinMultiModuleProjectDescriptor(
                     KOTLIN_JAVASCRIPT_WITH_ADDITIONAL_JVM_WITH_STDLIB,
                     mainModuleDescriptor = KotlinStdJSProjectDescriptor,
-                    additionalModuleDescriptor = ProjectDescriptorWithStdlibSources.INSTANCE
+                    additionalModuleDescriptor = ProjectDescriptorWithStdlibSources.getInstance()
                 )
             }
 
@@ -178,8 +178,8 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         val testName = StringUtil.toLowerCase(getTestName(false))
 
         return when {
-            testName.endsWith("runtime") -> KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
-            testName.endsWith("stdlib") -> ProjectDescriptorWithStdlibSources.INSTANCE
+            testName.endsWith("runtime") -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+            testName.endsWith("stdlib") -> ProjectDescriptorWithStdlibSources.getInstance()
             else -> KotlinLightProjectDescriptor.INSTANCE
         }
     }
@@ -206,34 +206,34 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                     SdkAndMockLibraryProjectDescriptor(IDEA_TEST_DATA_DIR.resolve(withLibraryDirective[0]).path, true)
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_SOURCES") ->
-                    ProjectDescriptorWithStdlibSources.INSTANCE
+                    ProjectDescriptorWithStdlibSources.getInstance()
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITHOUT_SOURCES") ->
-                    ProjectDescriptorWithStdlibSources.INSTANCE_NO_SOURCES
+                    ProjectDescriptorWithStdlibSources.getInstanceNoSources()
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_KOTLIN_TEST") ->
-                    KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_KOTLIN_TEST
+                    KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithKotlinTest()
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_FULL_JDK") ->
-                    KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+                    KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_JDK_10") ->
                     KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance(LanguageLevel.JDK_10)
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_REFLECT") ->
-                    KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_REFLECT
+                    KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithReflect()
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_SCRIPT_RUNTIME") ->
-                    KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_SCRIPT_RUNTIME
+                    KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithScriptRuntime()
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_STDLIB_JDK8") ->
-                    KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_STDLIB_JDK8
+                    KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk8()
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME") ||
                         InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_STDLIB") -> {
                     val instance = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// WITH_STDLIB ")
                         ?.let { version -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance(version) }
-                        ?: KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+                        ?: KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
                     if (minJavaVersion != null) {
                         object : KotlinWithJdkAndRuntimeLightProjectDescriptor(instance.libraryFiles, instance.librarySourceFiles) {
                             val sdkValue by lazy { sdk(minJavaVersion) }

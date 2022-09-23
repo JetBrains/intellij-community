@@ -15,7 +15,7 @@ import kotlin.test.fail as kotlinFail
 
 abstract class AbstractKotlinUStringEvaluatorTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     private val PartiallyKnownString.debugConcatenation: String
         get() = buildString {

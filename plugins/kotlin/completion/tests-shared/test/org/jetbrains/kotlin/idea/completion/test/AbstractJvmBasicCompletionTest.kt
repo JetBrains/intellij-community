@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
 abstract class AbstractJvmBasicCompletionTest : KotlinFixtureCompletionBaseTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = object : KotlinJdkAndLibraryProjectDescriptor(
-        libraryFiles = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE.libraryFiles,
-        librarySourceFiles = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE.librarySourceFiles,
+      libraryFiles = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance().libraryFiles,
+      librarySourceFiles = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance().librarySourceFiles,
     ) {
         override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk16()
     }

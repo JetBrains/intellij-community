@@ -15,7 +15,7 @@ import java.lang.annotation.ElementType
 import java.util.function.BiConsumer
 
 class KotlinDfaAssistTest : DfaAssistTest() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.getInstance()
 
     fun testSimple() {
         doTest("""fun test(x: Int) {
