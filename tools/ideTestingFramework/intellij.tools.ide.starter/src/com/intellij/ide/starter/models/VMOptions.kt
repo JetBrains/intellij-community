@@ -67,6 +67,9 @@ data class VMOptions(
     return addLine(line = "-D$key=$value", filterPrefix = "-D$key=")
   }
 
+  fun removeSystemProperty(key: String): VMOptions =
+    copy(data = data.filterNot { it.trim().startsWith("-D${key}") })
+
   fun addLine(line: String, filterPrefix: String? = null): VMOptions {
     if (data.contains(line)) return this
     val copy = if (filterPrefix == null) data else data.filterNot { it.trim().startsWith(filterPrefix) }
