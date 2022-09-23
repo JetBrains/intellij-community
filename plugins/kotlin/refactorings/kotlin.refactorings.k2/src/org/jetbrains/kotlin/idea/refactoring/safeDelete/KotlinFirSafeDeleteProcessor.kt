@@ -48,8 +48,8 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         val isInside: (t: PsiElement) -> Boolean = { isInside(it, allElementsToDelete) }
 
         val additionalElementsToDelete = arrayListOf<PsiElement>()
-        if (element is KtNamedFunction) {
-            findFunctionUsages(element, allElementsToDelete, isInside, additionalElementsToDelete, result)
+        if (element is KtNamedFunction || element is KtProperty) {
+            findFunctionUsages(element as KtCallableDeclaration, allElementsToDelete, isInside, additionalElementsToDelete, result)
         }
 
         if (element is KtDeclaration) {
@@ -74,7 +74,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 val parameterList = owner.typeParameters
                 val parameterIndex = parameterList.indexOf(element)
                 for (reference in ReferencesSearch.search(owner)) {
-                    JavaSafeDeleteDelegate.EP.forLanguage(reference.element.language).createJavaTypeParameterUsageInfo(
+                    JavaSafeDeleteDelegate.EP.forLanguage(reference.element.language)?.createJavaTypeParameterUsageInfo(
                         reference,
                         result,
                         element,
@@ -100,7 +100,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
     }
 
     private fun findFunctionUsages(
-        element: KtNamedFunction,
+        element: KtCallableDeclaration,
         allElementsToDelete: Array<out PsiElement>,
         isInside: (t: PsiElement) -> Boolean,
         additionalElementsToDelete: ArrayList<PsiElement>,
@@ -173,7 +173,10 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         element: PsiElement,
         module: Module?,
         allElementsToDelete: MutableCollection<PsiElement>
-    ): MutableCollection<out PsiElement> {
+    ): Collection<PsiElement> {
+        if (element is KtParameter) {
+            return getParametersToSearch(element)
+        }
         return arrayListOf(element)
     }
 

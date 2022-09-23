@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 
 class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
@@ -95,5 +97,15 @@ class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
                 (element as? KtModifierListOwner)?.modifierList?.getModifier(KtTokens.OVERRIDE_KEYWORD)?.delete()
             }
         })
+    }
+
+    override fun createExtendsListUsageInfo(refElement: PsiElement, reference: PsiReference): UsageInfo? {
+        val element = reference.element
+        return element.getParentOfTypeAndBranch<KtSuperTypeEntry> { typeReference }?.let {
+            if (refElement is PsiClass && refElement.isInterface) {
+                return SafeDeleteSuperTypeUsageInfo(it, refElement)
+            }
+            return null
+        }
     }
 }

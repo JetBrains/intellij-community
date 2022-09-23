@@ -52,4 +52,7 @@ public interface JavaSafeDeleteDelegate {
    * @param elements2Delete all elements which would be deleted this time
    */
   void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement[] elements2Delete, @NotNull List<UsageInfo> result);
+
+  UsageInfo createExtendsListUsageInfo(PsiElement refElement,
+                                       PsiReference reference);
 }

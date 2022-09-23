@@ -97,6 +97,29 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteClass/javaClassWithKotlin")
+    public static class JavaClassWithKotlin extends AbstractK2SafeDeleteTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doJavaClassTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ImportJavaClassToKotlin.java")
+        public void testImportJavaClassToKotlin() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/javaClassWithKotlin/ImportJavaClassToKotlin.java");
+        }
+
+        @TestMetadata("javaInterfaceInSuperTypeList.java")
+        public void testJavaInterfaceInSuperTypeList() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/javaClassWithKotlin/javaInterfaceInSuperTypeList.java");
+        }
+
+        @TestMetadata("javaInterfaceInSuperTypeListLast.java")
+        public void testJavaInterfaceInSuperTypeListLast() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/javaClassWithKotlin/javaInterfaceInSuperTypeListLast.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteObject/kotlinObject")
     public static class KotlinObject extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -307,6 +330,24 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("usageInOverrideToDelete.kt")
         public void testUsageInOverrideToDelete() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/usageInOverrideToDelete.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin")
+    public static class JavaFunctionWithKotlin extends AbstractK2SafeDeleteTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doJavaMethodTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("mixedHierarchy1.kt")
+        public void testMixedHierarchy1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin/mixedHierarchy1.kt");
+        }
+
+        @TestMetadata("mixedHierarchy2.kt")
+        public void testMixedHierarchy2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin/mixedHierarchy2.kt");
         }
     }
 
@@ -622,6 +663,71 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/extNamedParam2.kt");
         }
 
+        @TestMetadata("hierarchyWithSafeUsages1.kt")
+        public void testHierarchyWithSafeUsages1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithSafeUsages1.kt");
+        }
+
+        @TestMetadata("hierarchyWithSafeUsages2.kt")
+        public void testHierarchyWithSafeUsages2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithSafeUsages2.kt");
+        }
+
+        @TestMetadata("hierarchyWithSafeUsages3.kt")
+        public void testHierarchyWithSafeUsages3() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithSafeUsages3.kt");
+        }
+
+        @TestMetadata("hierarchyWithSafeUsages4.kt")
+        public void testHierarchyWithSafeUsages4() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithSafeUsages4.kt");
+        }
+
+        @TestMetadata("hierarchyWithSafeUsages5.kt")
+        public void testHierarchyWithSafeUsages5() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithSafeUsages5.kt");
+        }
+
+        @TestMetadata("hierarchyWithUnsafeUsages1.kt")
+        public void testHierarchyWithUnsafeUsages1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages1.kt");
+        }
+
+        @TestMetadata("hierarchyWithUnsafeUsages2.kt")
+        public void testHierarchyWithUnsafeUsages2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages2.kt");
+        }
+
+        @TestMetadata("hierarchyWithUnsafeUsages3.kt")
+        public void testHierarchyWithUnsafeUsages3() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages3.kt");
+        }
+
+        @TestMetadata("hierarchyWithUnsafeUsages4.kt")
+        public void testHierarchyWithUnsafeUsages4() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages4.kt");
+        }
+
+        @TestMetadata("hierarchyWithUnsafeUsages5.kt")
+        public void testHierarchyWithUnsafeUsages5() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages5.kt");
+        }
+
+        @TestMetadata("hierarchyWithUnsafeUsages6.kt")
+        public void testHierarchyWithUnsafeUsages6() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages6.kt");
+        }
+
+        @TestMetadata("hierarchyWithUnsafeUsages7.kt")
+        public void testHierarchyWithUnsafeUsages7() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages7.kt");
+        }
+
+        @TestMetadata("hierarchyWithUnsafeUsages8.kt")
+        public void testHierarchyWithUnsafeUsages8() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages8.kt");
+        }
+
         @TestMetadata("internalUsage1.kt")
         public void testInternalUsage1() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/internalUsage1.kt");
@@ -705,6 +811,56 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/dataClassComponent.kt");
         }
 
+        @TestMetadata("hierarchyWithSafeUsages1.kt")
+        public void testHierarchyWithSafeUsages1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithSafeUsages1.kt");
+        }
+
+        @TestMetadata("hierarchyWithSafeUsages2.kt")
+        public void testHierarchyWithSafeUsages2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithSafeUsages2.kt");
+        }
+
+        @TestMetadata("hierarchyWithSafeUsages3.kt")
+        public void testHierarchyWithSafeUsages3() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithSafeUsages3.kt");
+        }
+
+        @TestMetadata("hierarchyWithSafeUsages4.kt")
+        public void testHierarchyWithSafeUsages4() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithSafeUsages4.kt");
+        }
+
+        @TestMetadata("hierarchyWithSafeUsages5.kt")
+        public void testHierarchyWithSafeUsages5() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithSafeUsages5.kt");
+        }
+
+        @TestMetadata("hierarchyWithUnsafeUsages1.kt")
+        public void testHierarchyWithUnsafeUsages1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithUnsafeUsages1.kt");
+        }
+
+        @TestMetadata("hierarchyWithUnsafeUsages2.kt")
+        public void testHierarchyWithUnsafeUsages2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithUnsafeUsages2.kt");
+        }
+
+        @TestMetadata("hierarchyWithUnsafeUsages3.kt")
+        public void testHierarchyWithUnsafeUsages3() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithUnsafeUsages3.kt");
+        }
+
+        @TestMetadata("hierarchyWithUnsafeUsages4.kt")
+        public void testHierarchyWithUnsafeUsages4() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithUnsafeUsages4.kt");
+        }
+
+        @TestMetadata("hierarchyWithUnsafeUsages5.kt")
+        public void testHierarchyWithUnsafeUsages5() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithUnsafeUsages5.kt");
+        }
+
         @TestMetadata("internalUsage1.kt")
         public void testInternalUsage1() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/internalUsage1.kt");
@@ -723,6 +879,36 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("lambdaArgExt.kt")
         public void testLambdaArgExt() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/lambdaArgExt.kt");
+        }
+
+        @TestMetadata("mixedHierarchy1.kt")
+        public void testMixedHierarchy1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchy1.kt");
+        }
+
+        @TestMetadata("mixedHierarchy2.kt")
+        public void testMixedHierarchy2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchy2.kt");
+        }
+
+        @TestMetadata("mixedHierarchy3.kt")
+        public void testMixedHierarchy3() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchy3.kt");
+        }
+
+        @TestMetadata("mixedHierarchyWithUnsafeUsages1.kt")
+        public void testMixedHierarchyWithUnsafeUsages1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchyWithUnsafeUsages1.kt");
+        }
+
+        @TestMetadata("mixedHierarchyWithUnsafeUsages2.kt")
+        public void testMixedHierarchyWithUnsafeUsages2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchyWithUnsafeUsages2.kt");
+        }
+
+        @TestMetadata("mixedHierarchyWithUnsafeUsages3.kt")
+        public void testMixedHierarchyWithUnsafeUsages3() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchyWithUnsafeUsages3.kt");
         }
 
         @TestMetadata("propertyParam1.kt")
