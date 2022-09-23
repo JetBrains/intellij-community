@@ -54,7 +54,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
 
   @Override
   public @Nullable JComponent createOptionsPanel() {
-    InspectionOptionsPanel panel = new InspectionOptionsPanel();
+    InspectionOptionsPanel panel = new InspectionOptionsPanel(this);
     panel.addCheckbox(message("inspection.data.flow.true.asserts.option"),
                       "DONT_REPORT_TRUE_ASSERT_STATEMENTS");
     panel.addCheckbox(message("inspection.data.flow.ignore.assert.statements"),
@@ -201,9 +201,9 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
   private void reportConstantReferenceValue(ProblemsHolder reporter, PsiExpression ref, ConstantResult constant) {
     if (!REPORT_CONSTANT_REFERENCE_VALUES && ref instanceof PsiReferenceExpression) return;
     if (shouldBeSuppressed(ref) || constant == ConstantResult.UNKNOWN) return;
-    List<LocalQuickFix> fixes = new SmartList<>();
     String presentableName = constant.toString();
     if (Integer.valueOf(0).equals(constant.value()) && !shouldReportZero(ref)) return;
+    List<LocalQuickFix> fixes = new SmartList<>();
     if (constant.value() instanceof Boolean) {
       fixes.add(createSimplifyBooleanExpressionFix(ref, (Boolean)constant.value()));
     } else {
@@ -471,7 +471,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     reporter.registerProblem(psiAnchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 
-  private @Nullable LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
+  private static @Nullable LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
     LocalQuickFixOnPsiElement fix = createSimplifyBooleanFix(element, value);
     if (fix == null) return null;
     final String text = fix.getText();
@@ -525,7 +525,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     return new LocalQuickFix[]{toRemove ? new RemoveAssignmentFix() : new SimplifyToAssignmentFix()};
   }
 
-  protected LocalQuickFixOnPsiElement createSimplifyBooleanFix(PsiElement element, boolean value) {
+  private static LocalQuickFixOnPsiElement createSimplifyBooleanFix(PsiElement element, boolean value) {
     if (!(element instanceof PsiExpression)) return null;
     if (PsiTreeUtil.findChildOfType(element, PsiAssignmentExpression.class) != null) return null;
 
