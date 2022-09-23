@@ -111,19 +111,17 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
   @Override
   public boolean supportsInlineOptionFlag(char flag, PsiElement context) {
-    switch (flag) {
-      case 'i': // case-insensitive matching
-      case 'd': // Unix lines mode
-      case 'm': // multiline mode
-      case 's': // dotall mode
-      case 'u': // Unicode-aware case folding
-      case 'x': // whitespace and comments in pattern
-        return true;
-      case 'U': // Enables the Unicode version of Predefined character classes and POSIX character classes
-        return hasAtLeastJdkVersion(context, JavaSdkVersion.JDK_1_7);
-      default:
-        return false;
-    }
+    return switch (flag) {
+      case 'i' -> true; // case-insensitive matching
+      case 'd' -> true; // Unix lines mode
+      case 'm' -> true; // multiline mode
+      case 's' -> true; // dotall mode
+      case 'u' -> true; // Unicode-aware case folding
+      case 'x' -> true; // whitespace and comments in pattern
+      case 'U' -> // Enables the Unicode version of Predefined character classes and POSIX character classes
+        hasAtLeastJdkVersion(context, JavaSdkVersion.JDK_1_7);
+      default -> false;
+    };
   }
 
   @Override
