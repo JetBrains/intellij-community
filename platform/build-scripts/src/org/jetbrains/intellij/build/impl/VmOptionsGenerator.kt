@@ -4,7 +4,6 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.ProductProperties
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -37,12 +36,10 @@ object VmOptionsGenerator {
     "-XX:ReservedCodeCacheSize=" to "512m"
   )
 
-  @JvmStatic
   fun computeVmOptions(isEAP: Boolean, productProperties: ProductProperties): List<String> {
     return computeVmOptions(isEAP, productProperties.customJvmMemoryOptions)
   }
 
-  @JvmStatic
   fun computeVmOptions(isEAP: Boolean, customJvmMemoryOptions: Map<String, String>?): List<String> {
     val result = ArrayList<String>()
 
@@ -66,8 +63,6 @@ object VmOptionsGenerator {
     return result
   }
 
-  @JvmStatic
-  @Throws(IOException::class)
   fun writeVmOptions(file: Path, vmOptions: List<String>, separator: String) {
     Files.writeString(file, vmOptions.joinToString(separator = separator, postfix = separator), StandardCharsets.US_ASCII)
   }

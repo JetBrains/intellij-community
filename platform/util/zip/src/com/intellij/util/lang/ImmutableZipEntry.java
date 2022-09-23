@@ -37,14 +37,6 @@ public final class ImmutableZipEntry {
     this.method = method;
   }
 
-  ImmutableZipEntry(String name, int compressedSize, int uncompressedSize, byte method) {
-    this.name = name;
-    this.offsets = 0;
-    this.compressedSize = compressedSize;
-    this.uncompressedSize = uncompressedSize;
-    this.method = method;
-  }
-
   public boolean isCompressed() {
     return method != STORED;
   }
@@ -124,7 +116,7 @@ public final class ImmutableZipEntry {
   }
 
   /**
-   * Release returned buffer using {@link #releaseBuffer} after use.
+   * Release returned buffer using {@link ZipFile#releaseBuffer} after use.
    */
   @ApiStatus.Internal
   public ByteBuffer getByteBuffer(@NotNull HashMapZipFile file) throws IOException {
