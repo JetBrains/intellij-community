@@ -204,6 +204,6 @@ The plugin supports Kotlin 1.7 and lower.
 
   <!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->
 
-  <xi:include href="k1.xml" includeUnless="idea.kotlin.plugin.use.k2"/>
-  <xi:include href="k2.xml" includeIf="idea.kotlin.plugin.use.k2"/>
+  <xi:include href="/k1.xml" includeUnless="idea.kotlin.plugin.use.k2"/>
+  <xi:include href="/k2.xml" includeIf="idea.kotlin.plugin.use.k2"/>
 </idea-plugin>
