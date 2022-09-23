@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.awt.EventQueue
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.IOException
 import java.io.InputStream
 import java.net.URL
 import java.nio.file.Files
@@ -181,7 +182,7 @@ object KotlinArtifactsDownloader {
     }
 
     @JvmOverloads
-    fun downloadArtifactForIdeFromSources(artifactId: String, version: String, suffix: String = ".jar"): File {
+    fun downloadArtifactForIdeFromSources(artifactId: String, version: String, suffix: String = ".jar"): File? {
         check(isRunningFromSources) {
             "${::downloadArtifactForIdeFromSources.name} must be called only for IDE running from sources or tests. " +
                     "Use ${::downloadMavenArtifacts.name} when run in production"
@@ -204,7 +205,7 @@ object KotlinArtifactsDownloader {
                 "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/" +
                     "org/jetbrains/kotlin/$artifactId/$version/$fileName"
             val mavenCentral = "https://repo1.maven.org/maven2/org/jetbrains/kotlin/$artifactId/$version/$fileName"
-            val stream = URL(idePluginDeps).openStreamOrNull() ?: URL(mavenCentral).openStream()
+            val stream = URL(idePluginDeps).openStreamOrNull() ?: URL(mavenCentral).openStreamOrNull() ?: return null
             Files.copy(stream, artifact)
             check(artifact.exists()) { "$artifact should be downloaded" }
         }
@@ -255,5 +256,7 @@ private fun URL.openStreamOrNull(): InputStream? =
     try {
         openStream()
     } catch (ex: FileNotFoundException) {
+        null
+    } catch (ex: IOException) {
         null
     }
