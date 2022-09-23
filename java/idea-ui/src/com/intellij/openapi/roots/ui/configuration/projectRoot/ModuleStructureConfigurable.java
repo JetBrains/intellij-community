@@ -789,6 +789,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         .ifEq(LangDataKeys.MODULE_CONTEXT_ARRAY).thenGet(this::getModuleContexts)
         .ifEq(LangDataKeys.MODULE_CONTEXT).thenGet(() -> getSelectedModule())
         .ifEq(LangDataKeys.MODIFIABLE_MODULE_MODEL).thenGet(() -> myContext.myModulesConfigurator.getModuleModel())
+        .ifEq(PlatformCoreDataKeys.SELECTED_ITEM).thenGet(() -> getSelectedObject())
         .orNull();
     }
 
