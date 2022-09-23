@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -94,7 +95,7 @@ class ReplaceIsEmptyWithIfEmptyInspection : AbstractKotlinInspection() {
         )
     })
 
-    private class ReplaceFix(private val replacement: Replacement) : LocalQuickFix {
+    private class ReplaceFix(@SafeFieldForPreview private val replacement: Replacement) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("replace.with.0", "${replacement.replacementFunctionName} {...}")
 
         override fun getFamilyName() = name
