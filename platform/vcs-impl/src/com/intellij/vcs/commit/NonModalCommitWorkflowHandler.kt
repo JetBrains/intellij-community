@@ -269,12 +269,53 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       }
 
       ui.commitProgressUi.runWithProgress(isOnlyRunCommitChecks) {
-        val problem = workflow.runBackgroundBeforeCommitChecks(commitInfo)
+        val problem = runBackgroundBeforeCommitChecks(commitInfo)
         handleCommitProblem(problem, isOnlyRunCommitChecks, commitInfo.asStaticInfo())
       }
     }
 
     return true
+  }
+
+  private suspend fun runBackgroundBeforeCommitChecks(commitInfo: DynamicCommitInfo): CommitProblem? {
+    try {
+      val handlers = workflow.commitHandlers
+      val commitChecks = handlers
+        .map { it.asCommitCheck(commitInfo) }
+        .groupBy { it.getExecutionOrder() }
+
+      runCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
+
+      val modificationChecks = commitChecks[CommitCheck.ExecutionOrder.MODIFICATION].orEmpty()
+      val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
+      if (metaHandlers.isNotEmpty() || modificationChecks.isNotEmpty()) {
+        workflow.runModificationCommitChecks {
+          AbstractCommitWorkflow.runMetaHandlers(metaHandlers)
+          runCommitChecks(commitInfo, modificationChecks)
+        }?.let { return it }
+        FileDocumentManager.getInstance().saveAllDocuments()
+      }
+
+      runCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE])?.let { return it }
+
+      return null // checks passed
+    }
+    catch (ce: CancellationException) {
+      // Do not report error on cancellation
+      throw ce
+    }
+    catch (e: Throwable) {
+      LOG.warn(Throwable(e))
+      return CommitProblem.createError(e)
+    }
+  }
+
+  private suspend fun runCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>?): CommitProblem? {
+    for (commitCheck in commitChecks.orEmpty()) {
+      val problem = AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo)
+      if (problem != null) return problem
+    }
+    return null
   }
 
   private fun handleCommitProblem(problem: CommitProblem?,
