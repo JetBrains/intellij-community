@@ -25,6 +25,7 @@ import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.FontUtil
@@ -487,7 +488,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
         ClientProperty.put(this, MAIN_ICON, true)
         border = JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap())
       }
-      private val mainLabel = JLabel().apply {
+      private val mainTextComponent = SimpleColoredComponent().apply {
+        isOpaque = false
         border = JBUI.Borders.emptyBottom(1)
       }
       private val secondaryLabel = JLabel().apply {
@@ -503,7 +505,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
       }
 
       private val textPanel = JBUI.Panels.simplePanel()
-        .addToLeft(FlowLayoutWrapper(mainIconComponent).also { it.add(mainLabel) })
+        .addToLeft(FlowLayoutWrapper(mainIconComponent).also { it.add(mainTextComponent) })
         .addToCenter(secondaryLabel)
         .andTransparent()
 
@@ -523,15 +525,18 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
 
         mainIconComponent.icon = step.getIcon(userObject, selected)
 
-        mainLabel.apply {
-          text = step.getText(userObject)
+        mainTextComponent.apply {
+          background = JBUI.CurrentTheme.Tree.background(selected, true)
           foreground = JBUI.CurrentTheme.Tree.foreground(selected, true)
+
+          clear()
+          append(step.getText(userObject).orEmpty())
         }
 
         secondaryLabel.apply {
           text = step.getSecondaryText(userObject)
           //todo: LAF color
-          foreground = if(selected) JBUI.CurrentTheme.Tree.foreground(true, true) else JBColor.GRAY
+          foreground = if (selected) JBUI.CurrentTheme.Tree.foreground(true, true) else JBColor.GRAY
         }
 
         incomingOutgoingLabel.apply {
@@ -542,6 +547,11 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
           isVisible = step.hasSubstep(userObject)
           icon = if (selected) AllIcons.Icons.Ide.MenuArrowSelected else AllIcons.Icons.Ide.MenuArrow
         }
+
+        if (tree != null && value != null) {
+          SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, mainTextComponent, true, selected)
+        }
+
         return mainPanel
       }
 
