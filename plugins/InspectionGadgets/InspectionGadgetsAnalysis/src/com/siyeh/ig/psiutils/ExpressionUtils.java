@@ -402,6 +402,16 @@ public final class ExpressionUtils {
     if (expression == null) {
       return false;
     }
+    if (typeName.equals(CommonClassNames.JAVA_LANG_STRING)) {
+      if (expression instanceof PsiUnaryExpression || expression instanceof PsiInstanceOfExpression ||
+          expression instanceof PsiFunctionalExpression) {
+        return false;
+      }
+      if (expression instanceof PsiPolyadicExpression poly) {
+        IElementType tokenType = poly.getOperationTokenType();
+        if (!tokenType.equals(JavaTokenType.PLUS)) return false;
+      }
+    }
     final PsiType type = expression.getType();
     return TypeUtils.typeEquals(typeName, type);
   }
