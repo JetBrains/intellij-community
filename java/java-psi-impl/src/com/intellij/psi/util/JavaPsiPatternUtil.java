@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -315,6 +316,24 @@ public final class JavaPsiPatternUtil {
       overWhomType = overWhom;
     }
     return overWhomType != null && TypeConversionUtil.areTypesConvertible(overWhomType, whoType);
+  }
+
+  @Contract(pure = true)
+  @Nullable
+  public static PsiRecordComponent getRecordComponentForPattern(@NotNull PsiPattern pattern) {
+    PsiDeconstructionList deconstructionList = ObjectUtils.tryCast(pattern.getParent(), PsiDeconstructionList.class);
+    if (deconstructionList == null) return null;
+    @NotNull PsiPattern @NotNull [] patterns = deconstructionList.getDeconstructionComponents();
+    int index = ArrayUtil.indexOf(patterns, pattern);
+    PsiDeconstructionPattern deconstructionPattern = ObjectUtils.tryCast(deconstructionList.getParent(), PsiDeconstructionPattern.class);
+    if (deconstructionPattern == null) return null;
+    PsiClassType classType = ObjectUtils.tryCast(deconstructionPattern.getTypeElement().getType(), PsiClassType.class);
+    if (classType == null) return null;
+    PsiClass aClass = classType.resolve();
+    if (aClass == null) return null;
+    PsiRecordComponent[] components = aClass.getRecordComponents();
+    if (components.length <= index) return null;
+    return components[index];
   }
 
   private static void collectPatternVariableCandidates(@NotNull PsiExpression scope, @NotNull PsiExpression expression,
