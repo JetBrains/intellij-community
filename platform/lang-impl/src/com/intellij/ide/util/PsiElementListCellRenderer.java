@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
@@ -54,6 +55,7 @@ import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgro
 @DirtyUI
 // extends ListCellRenderer<Object> because it can render strings too
 public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer<Object> {
+  public static final Key<TargetPresentation> TARGET_PRESENTATION_KEY = Key.create("cell.target.presentation");
   private static final Logger LOG = Logger.getInstance(PsiElementListCellRenderer.class);
   private static final String LEFT = BorderLayout.WEST;
   private static final Pattern CONTAINER_PATTERN = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?");
@@ -67,7 +69,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   protected PsiElementListCellRenderer() {
     super(new BorderLayout());
     myBackgroundRenderer =
-      Registry.is("psi.element.list.cell.renderer.background") && !ApplicationManager.getApplication().isHeadlessEnvironment()
+      Registry.is("psi.element.list.cell.renderer.background")
       ? new PsiElementBackgroundListCellRenderer(this)
       : null;
   }
@@ -215,7 +217,11 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-    if (myBackgroundRenderer != null && value instanceof PsiElement) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() && value instanceof PsiElement) {
+      putClientProperty(TARGET_PRESENTATION_KEY, computePresentation((PsiElement)value));
+      return this;
+    }
+    else if (myBackgroundRenderer != null && value instanceof PsiElement) {
       //noinspection unchecked
       return myBackgroundRenderer.getListCellRendererComponent(list, (PsiElement)value, index, isSelected, cellHasFocus);
     }
