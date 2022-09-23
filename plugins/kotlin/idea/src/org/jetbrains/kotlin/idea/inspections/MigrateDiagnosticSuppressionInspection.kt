@@ -38,14 +38,14 @@ class MigrateDiagnosticSuppressionInspection : AbstractKotlinInspection(), Clean
                     expression,
                     KotlinBundle.message("diagnostic.name.should.be.replaced.by.the.new.one"),
                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                    ReplaceDiagnosticNameFix(newDiagnosticFactory)
+                    ReplaceDiagnosticNameFix(newDiagnosticFactory.name)
                 )
             }
         })
     }
 
-    class ReplaceDiagnosticNameFix(private val diagnosticFactory: DiagnosticFactory<*>) : LocalQuickFix {
-        override fun getName() = KotlinBundle.message("replace.diagnostic.name.fix.text", familyName, diagnosticFactory.name!!)
+    class ReplaceDiagnosticNameFix(private val diagnosticFactoryName: String) : LocalQuickFix {
+        override fun getName() = KotlinBundle.message("replace.diagnostic.name.fix.text", familyName, diagnosticFactoryName)
 
         override fun getFamilyName() = KotlinBundle.message("replace.diagnostic.name.fix.family.name")
 
@@ -54,7 +54,7 @@ class MigrateDiagnosticSuppressionInspection : AbstractKotlinInspection(), Clean
             if (!FileModificationService.getInstance().preparePsiElementForWrite(expression)) return
 
             val psiFactory = KtPsiFactory(expression)
-            expression.replace(psiFactory.createExpression("\"${diagnosticFactory.name}\""))
+            expression.replace(psiFactory.createExpression("\"$diagnosticFactoryName\""))
         }
     }
 
