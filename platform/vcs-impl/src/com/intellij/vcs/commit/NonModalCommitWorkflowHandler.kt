@@ -270,7 +270,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
       ui.commitProgressUi.runWithProgress(isOnlyRunCommitChecks) {
         val problem = runNonModalBeforeCommitChecks(commitInfo)
-        handleCommitProblem(problem, isOnlyRunCommitChecks, commitInfo.asStaticInfo())
+        if (problem != null) reportCommitCheckFailure(commitInfo.asStaticInfo(), problem)
+        handleCommitProblem(problem == null, isOnlyRunCommitChecks)
       }
     }
 
@@ -318,19 +319,16 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     return null
   }
 
-  private fun handleCommitProblem(problem: CommitProblem?,
-                                  isOnlyRunCommitChecks: Boolean,
-                                  commitInfo: CommitInfo): CommitChecksResult {
-    if (problem != null) {
-      val checkFailure = when (problem) {
-        is UnknownCommitProblem -> CommitCheckFailure(null, null)
-        is CommitProblemWithDetails -> CommitCheckFailure(problem.text) { problem.showDetails(project, commitInfo) }
-        else -> CommitCheckFailure(problem.text, null)
-      }
-      ui.commitProgressUi.addCommitCheckFailure(checkFailure)
+  private fun reportCommitCheckFailure(commitInfo: CommitInfo, problem: CommitProblem) {
+    val checkFailure = when (problem) {
+      is UnknownCommitProblem -> CommitCheckFailure(null, null)
+      is CommitProblemWithDetails -> CommitCheckFailure(problem.text) { problem.showDetails(project, commitInfo) }
+      else -> CommitCheckFailure(problem.text, null)
     }
+    ui.commitProgressUi.addCommitCheckFailure(checkFailure)
+  }
 
-    val checksPassed = problem == null
+  private fun handleCommitProblem(checksPassed: Boolean, isOnlyRunCommitChecks: Boolean): CommitChecksResult {
     when {
       isOnlyRunCommitChecks -> {
         if (checksPassed) {
