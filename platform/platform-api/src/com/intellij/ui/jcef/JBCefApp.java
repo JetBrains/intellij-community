@@ -206,6 +206,7 @@ public final class JBCefApp {
     CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes));
     myCefSettings = settings;
     myCefApp = CefApp.getInstance(settings);
+    LOG.info(String.format("jcef version: %s | cmd args: %s", myCefApp.getVersion().getJcefVersion(), Arrays.toString(args)));
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
   }
 
