@@ -18,7 +18,7 @@ import java.util.ServiceLoader;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class JUnit5TeamCityRunnerForTestsOnClasspath {
-  
+
   public static void main(String[] args) {
     try {
       Launcher launcher = LauncherFactory.create();
@@ -58,7 +58,7 @@ public class JUnit5TeamCityRunnerForTestsOnClasspath {
     return new ClassNameFilter() {
       @Override
       public FilterResult apply(String className) {
-        
+
         try {
           if ((Boolean)included.invoke(null, className)) {
             return FilterResult.included(null);

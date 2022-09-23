@@ -55,7 +55,9 @@ public class TestCaseLoader {
 
   private static final AtomicInteger CYCLIC_BUCKET_COUNTER = new AtomicInteger(0);
   private static final ConcurrentHashMap<String, Integer> BUCKETS = new ConcurrentHashMap<>();
-  /** Distribute tests equally among the buckets */
+  /**
+   * Distribute tests equally among the buckets
+   */
   private static final boolean IS_FAIR_BUCKETING = Boolean.getBoolean(FAIR_BUCKETING_FLAG);
 
   /**
