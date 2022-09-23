@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.containers.nullize
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import kotlinx.coroutines.*
@@ -286,7 +287,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         .map { it.asCommitCheck(commitInfo) }
         .groupBy { it.getExecutionOrder() }
 
-      runCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
+      runEarlyCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
 
       @Suppress("DEPRECATION") val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
       runModificationCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION], metaHandlers)?.let { return it }
@@ -304,6 +305,19 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       reportCommitCheckFailure(commitInfo.asStaticInfo(), CommitProblem.createError(e))
       return NonModalCommitChecksFailure.ERROR
     }
+  }
+
+  private suspend fun runEarlyCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>?): NonModalCommitChecksFailure? {
+    val problems = mutableListOf<CommitProblem>()
+    for (commitCheck in commitChecks.orEmpty()) {
+      val problem = AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo)
+      problems.addIfNotNull(problem)
+    }
+    if (problems.isEmpty()) return null
+
+    val staticInfo = commitInfo.asStaticInfo()
+    problems.forEach { reportCommitCheckFailure(staticInfo, it) }
+    return NonModalCommitChecksFailure.ERROR
   }
 
   private suspend fun runModificationCommitChecks(commitInfo: DynamicCommitInfo,
