@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.testFramework.TestApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -452,6 +453,54 @@ public class InvokerTest {
     testInterrupt(parent, new Invoker.Background(parent, 10), promise -> promise.cancel());
   }
 
+  @Test
+  public void testImmediateDispose() throws InterruptedException {
+    Disposable invokerParentDisposable = Disposer.newDisposable();
+
+    CountDownLatch invokerLatch = new CountDownLatch(1);
+    AtomicBoolean invokersCreated = new AtomicBoolean(false);
+    List<SuccessfulDisposeTracker> invokers = new ArrayList<>();
+
+    Thread t1 = new Thread(() -> {
+      try {
+        invokerLatch.await();
+        for (int i = 0; i < 10; i++) {
+          invokers.add(new SuccessfulDisposeTracker(Invoker.forBackgroundPoolWithReadAction(invokerParentDisposable)));
+          invokers.add(new SuccessfulDisposeTracker(Invoker.forBackgroundPoolWithoutReadAction(invokerParentDisposable)));
+          invokers.add(new SuccessfulDisposeTracker(Invoker.forBackgroundThreadWithReadAction(invokerParentDisposable)));
+          invokers.add(new SuccessfulDisposeTracker(Invoker.forBackgroundPoolWithoutReadAction(invokerParentDisposable)));
+        }
+      }
+      catch (InterruptedException ignore) {
+      }
+      finally {
+        invokersCreated.set(true);
+      }
+    }, "Invoker Constructor");
+
+    CountDownLatch disposerCompleted = new CountDownLatch(1);
+    AtomicReference<Exception> disposeException = new AtomicReference<>();
+    Thread t2 = new Thread(() -> {
+      try {
+        while (!invokersCreated.get()) {
+          Disposer.disposeChildren(invokerParentDisposable, Predicates.alwaysTrue());
+        }
+      }
+      finally {
+        disposerCompleted.countDown();
+      }
+    }, "Invoker Disposer");
+    t1.start();
+    t2.start();
+    invokerLatch.countDown();
+    disposerCompleted.await();
+    Disposer.dispose(invokerParentDisposable);
+
+    for (SuccessfulDisposeTracker invoker : invokers) {
+      Assert.assertTrue("Failed to dispose", invoker.successfullyDisposed());
+    }
+  }
+
   private static void testInterrupt(Disposable parent, Invoker invoker, Consumer<CancellablePromise<?>> interrupt) {
     InfiniteTask task = new InfiniteTask(interrupt == null);
     CancellablePromise<?> promise = invoker.invokeLater(task, 10);
@@ -478,6 +527,23 @@ public class InvokerTest {
     }
     finally {
       promise.cancel();
+    }
+  }
+  private static final class SuccessfulDisposeTracker implements Disposable {
+    private final Disposable delegate;
+    private boolean disposed;
+
+    private SuccessfulDisposeTracker(Disposable delegate) { this.delegate = delegate; }
+
+    @Override
+    public void dispose() {
+      //noinspection SSBasedInspection
+      delegate.dispose();
+      disposed = true;
+    }
+
+    private boolean successfullyDisposed() {
+      return disposed;
     }
   }
 
