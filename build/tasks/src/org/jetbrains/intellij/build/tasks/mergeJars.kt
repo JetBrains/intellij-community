@@ -3,6 +3,9 @@
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 package org.jetbrains.intellij.build.tasks
 
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.io.*
 import java.nio.file.Path
 import java.nio.file.PathMatcher
@@ -92,14 +95,14 @@ fun buildJar(targetFile: Path,
   val packageIndexBuilder = if (compress) null else PackageIndexBuilder()
   writeNewFile(targetFile) { outChannel ->
     ZipFileWriter(outChannel, if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use { zipCreator ->
-      val uniqueNames = HashSet<String>()
+      val uniqueNames = HashMap<String, Path>()
 
       for (source in sources) {
         val positionBefore = outChannel.position()
         when (source) {
           is DirSource -> {
             val archiver = ZipArchiver(zipCreator, fileAdded = {
-              if (uniqueNames.add(it)) {
+              if (uniqueNames.putIfAbsent(it, source.dir) == null) {
                 packageIndexBuilder?.addFile(it)
                 true
               }
@@ -113,7 +116,7 @@ fun buildJar(targetFile: Path,
           }
 
           is InMemoryContentSource -> {
-            if (!uniqueNames.add(source.relativePath)) {
+            if (uniqueNames.putIfAbsent(source.relativePath, Path.of(source.relativePath)) != null) {
               throw IllegalStateException("in-memory source must always be first " +
                                           "(targetFile=$targetFile, source=${source.relativePath}, sources=${sources.joinToString()})")
             }
@@ -129,13 +132,16 @@ fun buildJar(targetFile: Path,
             val requiresMavenFiles = targetFile.fileName.toString().startsWith("junixsocket-")
             readZipFile(sourceFile) { name, entry ->
               if (nativeFiles != null && isNative(name)) {
+                if (isDuplicated(uniqueNames, name, sourceFile)) {
+                  return@readZipFile
+                }
+
                 nativeFiles.computeIfAbsent(source) { mutableListOf() }.add(name)
               }
               else {
                 val filter = source.filter
                 val isIncluded = if (filter == null) {
                   checkName(name = name,
-                            uniqueNames = uniqueNames,
                             excludes = source.excludes,
                             includeManifest = sources.size == 1,
                             requiresMavenFiles = requiresMavenFiles)
@@ -145,13 +151,17 @@ fun buildJar(targetFile: Path,
                 }
 
                 if (isIncluded) {
+                  if (isDuplicated(uniqueNames, name, sourceFile)) {
+                    return@readZipFile
+                  }
+
                   packageIndexBuilder?.addFile(name)
                   zipCreator.uncompressedData(name, entry.getByteBuffer())
                 }
               }
             }
           }
-        }.let { } // sealed when
+        }
 
         source.sizeConsumer?.accept((zipCreator.resultStream.getChannelPosition() - positionBefore).toInt())
       }
@@ -161,10 +171,20 @@ fun buildJar(targetFile: Path,
   }
 }
 
+private fun isDuplicated(uniqueNames: HashMap<String, Path>, name: String, sourceFile: Path): Boolean {
+  val old = uniqueNames.putIfAbsent(name, sourceFile) ?: return false
+  Span.current().addEvent("$name is duplicated and ignored", Attributes.of(
+    AttributeKey.stringKey("firstSource"), old.toString(),
+    AttributeKey.stringKey("secondSource"), sourceFile.toString(),
+  ))
+  return true
+}
+
 private fun isNative(name: String): Boolean {
   return name.endsWith(".jnilib") ||
          name.endsWith(".dylib") ||
          name.endsWith(".so") ||
+         name.endsWith(".dll") ||
          name.endsWith(".tbd")
 }
 
@@ -203,7 +223,6 @@ private fun getIgnoredNames(): Set<String> {
 private val ignoredNames = java.util.Set.copyOf(getIgnoredNames())
 
 private fun checkName(name: String,
-                      uniqueNames: MutableSet<String>,
                       excludes: List<Regex>,
                       includeManifest: Boolean,
                       requiresMavenFiles: Boolean): Boolean {
@@ -218,6 +237,5 @@ private fun checkName(name: String,
          !name.startsWith("licenses/") &&
          (requiresMavenFiles || (name != "META-INF/maven" && !name.startsWith("META-INF/maven/"))) &&
          !name.startsWith("META-INF/INDEX.LIST") &&
-         (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA"))) &&
-         uniqueNames.add(name)
+         (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA")))
 }

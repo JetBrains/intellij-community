@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog",
+               "BlockingMethodInNonBlockingContext")
 
 package org.jetbrains.intellij.build.impl
 
@@ -7,6 +8,7 @@ import com.intellij.diagnostic.telemetry.use
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.sanitizeFileName
+import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -14,13 +16,14 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.mutate
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.BaseLayout.Companion.APP_JAR
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
+import org.jetbrains.intellij.build.io.W_CREATE_NEW
 import org.jetbrains.intellij.build.tasks.*
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -30,6 +33,7 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.io.File
+import java.nio.channels.FileChannel
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
@@ -82,17 +86,17 @@ private val extraMergeRules: PersistentMap<String, (String) -> Boolean> = persis
 }
 
 internal fun getLibraryFileName(lib: JpsLibrary): String {
-    val name = lib.name
-    if (!name.startsWith("#")) {
-      return name
-    }
-
-    val roots = lib.getRoots(JpsOrderRootType.COMPILED)
-    check(roots.size == 1) {
-      "Non-single entry module library $name: ${roots.joinToString { it.url }}"
-    }
-    return PathUtilRt.getFileName(roots.first().url.removeSuffix(URLUtil.JAR_SEPARATOR))
+  val name = lib.name
+  if (!name.startsWith("#")) {
+    return name
   }
+
+  val roots = lib.getRoots(JpsOrderRootType.COMPILED)
+  check(roots.size == 1) {
+    "Non-single entry module library $name: ${roots.joinToString { it.url }}"
+  }
+  return PathUtilRt.getFileName(roots.first().url.removeSuffix(URLUtil.JAR_SEPARATOR))
+}
 
 class JarPackager private constructor(private val context: BuildContext) {
   private val jarDescriptors = LinkedHashMap<Path, JarDescriptor>()
@@ -186,6 +190,7 @@ class JarPackager private constructor(private val context: BuildContext) {
 
       val descriptors = ArrayList<BuildJarDescriptor>(packager.jarDescriptors.size)
       val isReorderingEnabled = !context.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)
+      val collectNativeFiles = layout !is PluginLayout
       for (descriptor in packager.jarDescriptors.values) {
         var pathInClassLog = ""
         if (isReorderingEnabled) {
@@ -202,15 +207,18 @@ class JarPackager private constructor(private val context: BuildContext) {
             }
           }
         }
-        descriptors.add(BuildJarDescriptor(file = descriptor.jarFile, sources = descriptor.sources, relativePath = pathInClassLog))
+        val fileName = descriptor.jarFile.fileName.toString()
+        descriptors.add(BuildJarDescriptor(
+          descriptor = descriptor,
+          relativePath = pathInClassLog,
+          collectNativeFiles = collectNativeFiles && (fileName == APP_JAR || fileName.startsWith("3rd-party-")),
+        ))
       }
 
-      val nativeFiles = if (layout is PluginLayout) null else TreeMap<ZipSource, MutableList<String>>()
-      buildJars(descriptors = descriptors, dryRun = dryRun, nativeFiles = nativeFiles)
-
+      val nativeFiles = buildJars(descriptors = descriptors, dryRun = dryRun)
       val list = mutableListOf<DistributionFileEntry>()
 
-      if (!nativeFiles.isNullOrEmpty()) {
+      if (nativeFiles.isNotEmpty()) {
         packNativeFiles(outputDir = outputDir, nativeFiles = nativeFiles, packager = packager, list = list, dryRun = dryRun)
       }
 
@@ -228,33 +236,43 @@ class JarPackager private constructor(private val context: BuildContext) {
     }
 
     private suspend fun packNativeFiles(outputDir: Path,
-                                        nativeFiles: TreeMap<ZipSource, MutableList<String>>,
+                                        nativeFiles: Map<ZipSource, MutableList<String>>,
                                         packager: JarPackager,
                                         list: MutableList<DistributionFileEntry>,
                                         dryRun: Boolean) {
       val targetFile = outputDir.resolve("3rd-party-native.jar")
       val sources = mutableListOf<Source>()
-      for ((source, paths) in nativeFiles) {
-        val sourceFile = source.file
-        sources.add(ZipSource(file = sourceFile, filter = paths::contains) { size ->
-          val originalEntry = packager.libraryEntries.first { it.libraryFile === sourceFile }
-          if (originalEntry is ProjectLibraryEntry) {
-            list.add(ProjectLibraryEntry(path = targetFile,
-                                         data = originalEntry.data,
-                                         libraryFile = sourceFile,
-                                         size = size))
+      coroutineScope {
+        for (source in nativeFiles.keys.sortedBy { it.file.fileName.toString() }) {
+          val paths = nativeFiles.get(source)!!
+          val sourceFile = source.file
+          if (sourceFile.fileName.toString().startsWith("jna-")) {
+            async(Dispatchers.IO) {
+              packJnaNativeLibraries(sourceFile = sourceFile, paths = paths, context = packager.context)
+            }
+            continue
           }
-          else {
-            list.add(ModuleLibraryFileEntry(path = targetFile,
-                                            moduleName = (originalEntry as ModuleLibraryFileEntry).moduleName,
-                                            libraryFile = originalEntry.libraryFile,
-                                            size = size))
-          }
-        })
-      }
 
-      withContext(Dispatchers.IO) {
-        buildJar(targetFile = targetFile, sources = sources, dryRun = dryRun, nativeFiles = null)
+          sources.add(ZipSource(file = sourceFile, filter = paths::contains) { size ->
+            val originalEntry = packager.libraryEntries.first { it.libraryFile === sourceFile }
+            if (originalEntry is ProjectLibraryEntry) {
+              list.add(ProjectLibraryEntry(path = targetFile,
+                                           data = originalEntry.data,
+                                           libraryFile = sourceFile,
+                                           size = size))
+            }
+            else {
+              list.add(ModuleLibraryFileEntry(path = targetFile,
+                                              moduleName = (originalEntry as ModuleLibraryFileEntry).moduleName,
+                                              libraryFile = originalEntry.libraryFile,
+                                              size = size))
+            }
+          })
+        }
+
+        withContext(Dispatchers.IO) {
+          buildJar(targetFile = targetFile, sources = sources, dryRun = dryRun, nativeFiles = null)
+        }
       }
     }
   }
@@ -483,7 +501,53 @@ class JarPackager private constructor(private val context: BuildContext) {
   }
 }
 
-private data class JarDescriptor(val jarFile: Path) {
+private fun packJnaNativeLibraries(sourceFile: Path, paths: List<String>, context: BuildContext) {
+  HashMapZipFile.load(sourceFile).use { zipFile ->
+    val jnaOutDir = Files.createDirectories(context.paths.tempDir.resolve("jna"))
+    Files.createDirectories(jnaOutDir)
+    val unsignedFiles = TreeMap<OsFamily, MutableList<Path>>()
+    for (pathWithPackage in paths) {
+      val path = pathWithPackage.removePrefix("com/sun/jna/")
+      val osAndArch = path.substring(0, path.indexOf('/'))
+      val arch = when {
+        osAndArch.endsWith("-aarch64") -> JvmArchitecture.aarch64
+        osAndArch.endsWith("-x86-64") -> JvmArchitecture.x64
+        else -> continue
+      }
+
+      val os = when {
+        osAndArch.startsWith("darwin-") -> OsFamily.MACOS
+        osAndArch.startsWith("win32-") -> OsFamily.WINDOWS
+        else -> OsFamily.LINUX
+      }
+
+      val byteBuffer = zipFile.getByteBuffer(pathWithPackage)!!
+      try {
+        val file = jnaOutDir.resolve(path)
+        Files.createDirectories(file.parent)
+        FileChannel.open(file, W_CREATE_NEW).use { channel ->
+          while (byteBuffer.hasRemaining()) {
+            channel.write(byteBuffer)
+          }
+        }
+
+        if (os != OsFamily.LINUX) {
+          unsignedFiles.computeIfAbsent(os) { mutableListOf() }.add(file)
+        }
+
+        context.addDistFile(DistFile(file = file, relativeDir = "lib/jna", os = os, arch = arch))
+      }
+      finally {
+        zipFile.releaseBuffer(byteBuffer)
+      }
+
+      unsignedFiles.get(OsFamily.MACOS)?.let { context.signFiles(it, MAC_CODE_SIGN_OPTIONS) }
+      unsignedFiles.get(OsFamily.WINDOWS)?.let { context.signFiles(it, BuildOptions.WIN_SIGN_OPTIONS) }
+    }
+  }
+}
+
+private data class JarDescriptor(@JvmField val jarFile: Path) {
   val sources: MutableList<Source> = mutableListOf()
   var includedModules: MutableList<String>? = null
 }
@@ -595,13 +659,19 @@ private fun addModuleSources(moduleName: String,
 
 private data class CopiedFor(@JvmField val library: JpsLibrary, @JvmField val targetFile: Path?)
 
-private data class BuildJarDescriptor(@JvmField val file: Path, @JvmField val sources: List<Source>, @JvmField val relativePath: String)
+private data class BuildJarDescriptor(@JvmField val descriptor: JarDescriptor,
+                                      @JvmField val relativePath: String,
+                                      @JvmField val collectNativeFiles: Boolean) {
+  val file: Path
+    get() = descriptor.jarFile
+
+  val sources: List<Source>
+    get() = descriptor.sources
+}
 
 private const val DO_NOT_EXPORT_TO_CONSOLE = "_CES_"
 
-private suspend fun buildJars(descriptors: List<BuildJarDescriptor>,
-                              dryRun: Boolean,
-                              nativeFiles: MutableMap<ZipSource, MutableList<String>>? = null) {
+private suspend fun buildJars(descriptors: List<BuildJarDescriptor>, dryRun: Boolean): Map<ZipSource, MutableList<String>> {
   val uniqueFiles = HashMap<Path, List<Source>>()
   for (descriptor in descriptors) {
     val existing = uniqueFiles.putIfAbsent(descriptor.file, descriptor.sources)
@@ -612,9 +682,10 @@ private suspend fun buildJars(descriptors: List<BuildJarDescriptor>,
     }
   }
 
-  withContext(Dispatchers.IO) {
-    for (item in descriptors) {
-      launch {
+  val list = withContext(Dispatchers.IO) {
+    descriptors.map { item ->
+      async {
+        val nativeFiles = if (item.collectNativeFiles) HashMap<ZipSource, MutableList<String>>() else null
         val file = item.file
         spanBuilder("build jar")
           .setAttribute(DO_NOT_EXPORT_TO_CONSOLE, true)
@@ -628,7 +699,12 @@ private suspend fun buildJars(descriptors: List<BuildJarDescriptor>,
         if (!dryRun && item.relativePath.isNotEmpty() && item.relativePath != "lib/app.jar") {
           reorderJar(relativePath = item.relativePath, file = file)
         }
+        nativeFiles
       }
     }
   }
+
+  val result = TreeMap<ZipSource, MutableList<String>>(compareBy { it.file.fileName.toString() })
+  list.asSequence().mapNotNull { it.getCompleted() }.forEach(result::putAll)
+  return result
 }

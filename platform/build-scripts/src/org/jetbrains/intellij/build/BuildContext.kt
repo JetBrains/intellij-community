@@ -57,9 +57,9 @@ interface BuildContext : CompilationContext {
   /**
    * Add file to be copied into application.
    */
-  fun addDistFile(file: Map.Entry<Path, String>)
+  fun addDistFile(file: DistFile)
 
-  fun getDistFiles(): Collection<Map.Entry<Path, String>>
+  fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile>
 
   fun includeBreakGenLibraries(): Boolean
 
@@ -106,3 +106,8 @@ data class BuiltinModulesFileData(
   val modules: List<String>,
   val fileExtensions: List<String>,
 )
+
+data class DistFile(@JvmField val file: Path,
+                    @JvmField val relativeDir: String,
+                    @JvmField val os: OsFamily? = null,
+                    @JvmField val arch: JvmArchitecture? = null)

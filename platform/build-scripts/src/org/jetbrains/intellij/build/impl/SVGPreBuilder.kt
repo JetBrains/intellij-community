@@ -7,6 +7,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import java.nio.file.Files
 import java.nio.file.Path
@@ -57,7 +58,7 @@ object SVGPreBuilder {
         }
 
         found = true
-        context.addDistFile(java.util.Map.entry(file, "bin/icons"))
+        context.addDistFile(DistFile(file = file, relativeDir = "bin/icons"))
       }
 
       if (!found) {

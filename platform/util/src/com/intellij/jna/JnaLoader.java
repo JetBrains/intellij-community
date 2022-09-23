@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jna;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.system.CpuArch;
@@ -13,6 +14,10 @@ public final class JnaLoader {
   public static synchronized void load(@NotNull Logger logger) {
     if (ourJnaLoaded == null) {
       ourJnaLoaded = Boolean.FALSE;
+      if (Boolean.getBoolean("idea.jna.unpacked")) {
+        System.setProperty("jna.boot.library.path", PathManager.getLibPath() + "/jna");
+      }
+
       try {
         long t = System.currentTimeMillis();
         int ptrSize = Native.POINTER_SIZE;

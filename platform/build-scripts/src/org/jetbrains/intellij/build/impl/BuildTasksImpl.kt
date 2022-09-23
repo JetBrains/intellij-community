@@ -6,11 +6,13 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.diagnostic.telemetry.use
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.diagnostic.telemetry.useWithScope2
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Formats
 import com.intellij.util.io.Decompressor
+import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -162,7 +164,12 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
     BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
     DistributionJARsBuilder(compileModulesForDistribution(context)).buildJARs(context = context, isUpdateFromSources = true)
-    val arch = JvmArchitecture.currentJvmArch
+    val arch = if (SystemInfo.isMac && CpuArch.isIntel64() && CpuArch.isEmulated()) {
+      JvmArchitecture.aarch64
+    }
+    else {
+      JvmArchitecture.currentJvmArch
+    }
     layoutShared(context)
     if (includeBinAndRuntime) {
       val propertiesFile = patchIdeaPropertiesFile(context)
@@ -176,8 +183,8 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
       builder.checkExecutablePermissions(targetDirectory, root = "")
     }
     else {
-      copyDistFiles(context, targetDirectory)
-      unpackPty4jNative(context, targetDirectory, null)
+      copyDistFiles(context = context, newDir = targetDirectory, os = currentOs, arch = arch)
+      unpackPty4jNative(context = context, distDir = targetDirectory, pty4jOsSubpackageName = null)
     }
   }
 }
@@ -994,7 +1001,7 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
     executableName = executableName,
     productJson = productJson.encodeToByteArray(),
     executablePatterns = distResults.flatMap { it.builder.generateExecutableFilesPatterns(includeRuntime = false) },
-    distFiles = context.getDistFiles(),
+    distFiles = context.getDistFiles(os = null, arch = null),
     extraFiles = mapOf("dependencies.txt" to dependenciesFile),
     distAllDir = context.paths.distAllDir,
   )
@@ -1058,7 +1065,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
                              executableName: String,
                              productJson: ByteArray,
                              executablePatterns: List<String>,
-                             distFiles: Collection<Map.Entry<Path, String>>,
+                             distFiles: Collection<DistFile>,
                              extraFiles: Map<String, Path>,
                              distAllDir: Path) {
   writeNewFile(targetFile) { outFileChannel ->
@@ -1167,7 +1174,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
         filterFileIfAlreadyInZip(relPath, linuxX64DistDir.resolve(relPath), zipFiles)
       }, entryCustomizer = entryCustomizer)
 
-      val winExcludes = distFiles.mapTo(HashSet(distFiles.size)) { "${it.value}/${it.key.fileName}" }
+      val winExcludes = distFiles.mapTo(HashSet(distFiles.size)) { "${it.relativeDir}/${it.file.fileName}" }
       out.dir(winX64DistDir, "", fileFilter = { _, relPath ->
         commonFilter.invoke(relPath) &&
         !(relPath.startsWith("bin/${executableName}") && relPath.endsWith(".exe")) &&

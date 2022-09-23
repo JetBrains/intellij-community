@@ -36,7 +36,7 @@ class BuildContextImpl private constructor(
   internal val macDistributionCustomizer: MacDistributionCustomizer?,
   override val proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY
 ) : BuildContext {
-  private val distFiles = ConcurrentLinkedQueue<Map.Entry<Path, String>>()
+  private val distFiles = ConcurrentLinkedQueue<DistFile>()
 
   private val extraExecutablePatterns = AtomicReference<PersistentMap<OsFamily, PersistentList<String>>>(persistentHashMapOf())
 
@@ -137,13 +137,19 @@ class BuildContextImpl private constructor(
       builtinModulesData = value
     }
 
-  override fun addDistFile(file: Map.Entry<Path, String>) {
+  override fun addDistFile(file: DistFile) {
     messages.debug("$file requested to be added to app resources")
     distFiles.add(file)
   }
 
-  override fun getDistFiles(): Collection<Map.Entry<Path, String>> {
-    return java.util.List.copyOf(distFiles)
+  override fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile> {
+    return distFiles.filter {
+      when {
+        os != null && (it.os != null && it.os != os) -> false
+        arch != null && (it.arch != null && it.arch != arch) -> false
+        else -> true
+      }
+    }
   }
 
   override fun findApplicationInfoModule(): JpsModule {
@@ -223,7 +229,7 @@ class BuildContextImpl private constructor(
       )
     }
     else {
-      proprietaryBuildTools.signTool.signFiles(files, this, options)
+      proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
     }
   }
 
@@ -281,14 +287,18 @@ class BuildContextImpl private constructor(
     Files.writeString(path, Files.readString(path).replace(" inspect ", " ${productProperties.inspectCommandName} "))
   }
 
+  @Suppress("SpellCheckingInspection")
   override fun getAdditionalJvmArguments(os: OsFamily): List<String> {
-    val jvmArgs: MutableList<String> = ArrayList()
-    val classLoader = productProperties.classLoader
-    if (classLoader != null) {
-      jvmArgs.add("-Djava.system.class.loader=$classLoader")
+    val jvmArgs = ArrayList<String>()
+    productProperties.classLoader?.let {
+      jvmArgs.add("-Djava.system.class.loader=$it")
     }
     jvmArgs.add("-Didea.vendor.name=${applicationInfo.shortCompanyName}")
     jvmArgs.add("-Didea.paths.selector=$systemSelector")
+    // we do not set jna.boot.library.path for security reasons - compute using PathManager.getLibPath in runtime
+    jvmArgs.add("-Didea.jna.unpacked=true")
+    jvmArgs.add("-Djna.nounpack=true")
+
     if (productProperties.platformPrefix != null) {
       jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
     }
@@ -297,6 +307,7 @@ class BuildContextImpl private constructor(
       @Suppress("SpellCheckingInspection")
       jvmArgs.add("-Dsplash=true")
     }
+
     jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(this, os))
     return jvmArgs
   }

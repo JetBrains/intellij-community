@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.diagnostic.telemetry.use
 import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.SystemProperties
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
@@ -30,6 +29,12 @@ import java.time.LocalDate
 import java.util.function.BiConsumer
 import java.util.zip.Deflater
 import kotlin.io.path.nameWithoutExtension
+
+internal val MAC_CODE_SIGN_OPTIONS: Map<String, String> = mapOf(
+  "mac_codesign_options" to "runtime",
+  "mac_codesign_force" to "true",
+  "mac_codesign_deep" to "true",
+)
 
 class MacDistributionBuilder(override val context: BuildContext,
                              private val customizer: MacDistributionCustomizer,
@@ -82,7 +87,7 @@ class MacDistributionBuilder(override val context: BuildContext,
     }
   }
 
-  private suspend fun doCopyExtraFiles(macDistDir: Path, arch: JvmArchitecture?, copyDistFiles: Boolean) {
+  private suspend fun doCopyExtraFiles(macDistDir: Path, arch: JvmArchitecture, copyDistFiles: Boolean) {
     @Suppress("SpellCheckingInspection")
     val platformProperties = mutableListOf(
       "\n#---------------------------------------------------------------------",
@@ -103,13 +108,11 @@ class MacDistributionBuilder(override val context: BuildContext,
 
     generateBuildTxt(context, macDistDir.resolve("Resources"))
     if (copyDistFiles) {
-      copyDistFiles(context, macDistDir)
+      copyDistFiles(context = context, newDir = macDistDir, os = OsFamily.MACOS, arch = arch)
     }
 
-    customizer.copyAdditionalFiles(context, macDistDir.toString())
-    if (arch != null) {
-      customizer.copyAdditionalFiles(context, macDistDir, arch)
-    }
+    customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir.toString())
+    customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir, arch = arch)
 
     generateUnixScripts(context, emptyList(), macDistDir.resolve("bin"), OsFamily.MACOS)
   }
@@ -127,11 +130,7 @@ class MacDistributionBuilder(override val context: BuildContext,
       if (!binariesToSign.isEmpty()) {
         context.executeStep(spanBuilder("sign binaries for macOS distribution")
                               .setAttribute("arch", arch.name), BuildOptions.MAC_SIGN_STEP) {
-          context.signFiles(binariesToSign.map(osAndArchSpecificDistPath::resolve), mapOf(
-            "mac_codesign_options" to "runtime",
-            "mac_codesign_force" to "true",
-            "mac_codesign_deep" to "true",
-          ))
+          context.signFiles(binariesToSign.map(osAndArchSpecificDistPath::resolve), MAC_CODE_SIGN_OPTIONS)
         }
       }
       val macZip = (if (publishZipOnly) context.paths.artifactDir else context.paths.tempDir).resolve("$baseName.mac.${arch.name}.zip")
@@ -139,7 +138,7 @@ class MacDistributionBuilder(override val context: BuildContext,
       val zipRoot = getMacZipRoot(customizer, context)
       val runtimeDist = context.bundledRuntime.extract(BundledRuntimeImpl.getProductPrefix(context), OsFamily.MACOS, arch)
       val directories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDist)
-      val extraFiles = context.getDistFiles()
+      val extraFiles = context.getDistFiles(os = OsFamily.MACOS, arch = arch)
       val compressionLevel = if (publishSit || publishZipOnly) Deflater.DEFAULT_COMPRESSION else Deflater.BEST_SPEED
       if (context.options.buildMacArtifactsWithRuntime) {
         buildMacZip(
@@ -470,7 +469,7 @@ private fun MacDistributionBuilder.buildMacZip(targetFile: Path,
                                                zipRoot: String,
                                                productJson: String,
                                                directories: List<Path>,
-                                               extraFiles: Collection<Map.Entry<Path, String>>,
+                                               extraFiles: Collection<DistFile>,
                                                executableFilePatterns: List<String>,
                                                compressionLevel: Int) {
   spanBuilder("build zip archive for macOS")
@@ -506,8 +505,8 @@ private fun MacDistributionBuilder.buildMacZip(targetFile: Path,
             zipOutStream.dir(dir, "$zipRoot/", fileFilter = fileFilter, entryCustomizer = entryCustomizer)
           }
 
-          for ((file, relativePath) in extraFiles) {
-            zipOutStream.entry("$zipRoot/${FileUtilRt.toSystemIndependentName(relativePath)}${if (relativePath.isEmpty()) "" else "/"}${file.fileName}", file)
+          for (item in extraFiles) {
+            zipOutStream.entry("$zipRoot/${item.relativeDir}${if (item.relativeDir.isEmpty()) "" else "/"}${item.file.fileName}", item.file)
           }
         }
       }

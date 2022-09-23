@@ -49,7 +49,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         }
         unpackPty4jNative(context, targetPath, "linux")
         generateBuildTxt(context, targetPath)
-        copyDistFiles(context, targetPath)
+        copyDistFiles(context = context, newDir = targetPath, os = OsFamily.LINUX, arch = arch)
         val extraJarNames = addDbusJava(context, targetPath.resolve("lib"))
         Files.copy(ideaProperties!!, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
         //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;

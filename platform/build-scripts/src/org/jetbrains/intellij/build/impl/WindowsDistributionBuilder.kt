@@ -57,7 +57,7 @@ internal class WindowsDistributionBuilder(
 
       val pty4jNativeDir = unpackPty4jNative(context, targetPath, "win")
       generateBuildTxt(context, targetPath)
-      copyDistFiles(context, targetPath)
+      copyDistFiles(context = context, newDir = targetPath, os = OsFamily.WINDOWS, arch = arch)
 
       Files.writeString(distBinDir.resolve(ideaProperties!!.fileName),
                         StringUtilRt.convertLineSeparators(Files.readString(ideaProperties), "\r\n"))

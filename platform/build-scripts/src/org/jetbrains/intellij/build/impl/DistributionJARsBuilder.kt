@@ -809,7 +809,7 @@ private fun CoroutineScope.createBuildBrokenPluginListJob(context: BuildContext)
                               .setAttribute("path", targetFile.toString()), BuildOptions.BROKEN_PLUGINS_LIST_STEP, context) {
     buildBrokenPlugins(targetFile, buildString, context.options.isInDevelopmentMode)
     if (Files.exists(targetFile)) {
-      context.addDistFile(java.util.Map.entry(targetFile, "bin"))
+      context.addDistFile(DistFile(file = targetFile, relativeDir = "bin"))
     }
   }
 }

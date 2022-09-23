@@ -5,6 +5,8 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -49,12 +51,12 @@ internal fun generateBuildTxt(context: BuildContext, targetDirectory: Path) {
   Files.writeString(targetDirectory.resolve("build.txt"), context.fullBuildNumber)
 }
 
-internal fun copyDistFiles(context: BuildContext, newDir: Path) {
+internal fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmArchitecture) {
   Files.createDirectories(newDir)
-  for ((file, value) in context.getDistFiles()) {
-    val dir = newDir.resolve(value)
+  for (item in context.getDistFiles(os, arch)) {
+    val dir = newDir.resolve(item.relativeDir)
     Files.createDirectories(dir)
-    Files.copy(file, dir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
+    Files.copy(item.file, dir.resolve(item.file.fileName), StandardCopyOption.REPLACE_EXISTING)
   }
 }
 
