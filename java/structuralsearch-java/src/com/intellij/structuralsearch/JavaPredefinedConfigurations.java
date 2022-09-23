@@ -90,20 +90,23 @@ final class JavaPredefinedConfigurations {
                                 "@Deprecated\n'_ReturnType '_Method('_ParameterType '_Parameter*);",
                                 getClassType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.fields.of.the.class"), "fields of a class",
-                                "class '_Class:[script( \"!__context__.interface && !__context__.enum && !__context__.record\" )] {\n" +
-                                "  '_FieldType 'Field = '_Init?;\n" +
-                                "}",
+                                """
+                                  class '_Class:[script( "!__context__.interface && !__context__.enum && !__context__.record" )] {
+                                    '_FieldType 'Field = '_Init?;
+                                  }""",
                                 getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.all.methods.of.the.class.within.hierarchy"),
                                 "all methods of a class (within hierarchy)",
-                                "class '_Class:[script( \"!__context__.interface && !__context__.enum && !__context__.record\" )] {\n" +
-                                "  '_ReturnType 'Method:* ('_ParameterType '_Parameter*);\n" +
-                                "}",
+                                """
+                                  class '_Class:[script( "!__context__.interface && !__context__.enum && !__context__.record" )] {
+                                    '_ReturnType 'Method:* ('_ParameterType '_Parameter*);
+                                  }""",
                                 getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.all.fields.of.the.class"), "all fields of a class",
-                                "class '_Class:[script( \"!__context__.interface && !__context__.enum && !__context__.record\" )] {\n" +
-                                "  '_FieldType 'Field:* = '_Init?;\n" +
-                                "}",
+                                """
+                                  class '_Class:[script( "!__context__.interface && !__context__.enum && !__context__.record" )] {
+                                    '_FieldType 'Field:* = '_Init?;
+                                  }""",
                                 getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.instance.fields.of.the.class"), "instance fields of a class",
                                 "class '_Class { \n  @Modifier(\"Instance\") '_FieldType 'Field = '_Init?;\n}",
@@ -141,11 +144,12 @@ final class JavaPredefinedConfigurations {
                                 "new 'AnonymousClass() {}",
                                 getClassType(), JavaFileType.INSTANCE),
       createConfiguration(SSRBundle.message("predefined.configuration.local.classes"), "Local classes",
-                          "{\n" +
-                          "  '_before*;\n" +
-                          "  class 'Local {}\n" +
-                          "  '_after*;\n" +
-                          "}",
+                          """
+                            {
+                              '_before*;
+                              class 'Local {}
+                              '_after*;
+                            }""",
                           getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.class.implements.two.interfaces"),
                                 "class implementing two interfaces",
@@ -214,32 +218,36 @@ final class JavaPredefinedConfigurations {
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.comments"), "comments",
                                 "/* 'CommentContent */", getMetadataType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.javadoc.annotated.class"), "javadoc annotated class",
-                                "/**\n" +
-                                " * '_Comment\n" +
-                                " * @'_Tag* '_TagValue*\n" +
-                                " */\n" +
-                                "class '_Class {\n" +
-                                "}", getMetadataType(), JavaFileType.INSTANCE),
+                                """
+                                  /**
+                                   * '_Comment
+                                   * @'_Tag* '_TagValue*
+                                   */
+                                  class '_Class {
+                                  }""", getMetadataType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.javadoc.annotated.methods"),
                                 "javadoc annotated methods \\& constructors",
-                                "/**\n" +
-                                " * '_Comment\n" +
-                                " * @'_Tag* '_TagValue*\n" +
-                                " */\n" +
-                                "'_Type? '_Method('_ParameterType '_Parameter*);",
+                                """
+                                  /**
+                                   * '_Comment
+                                   * @'_Tag* '_TagValue*
+                                   */
+                                  '_Type? '_Method('_ParameterType '_Parameter*);""",
                                 getMetadataType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.javadoc.annotated.fields"), "javadoc annotated fields",
-                                "/**\n" +
-                                " * '_Comment\n" +
-                                " * @'_Tag* '_TagValue*\n" +
-                                " */\n" +
-                                "'_Type+ 'Field = '_Init*;",
+                                """
+                                  /**
+                                   * '_Comment
+                                   * @'_Tag* '_TagValue*
+                                   */
+                                  '_Type+ 'Field = '_Init*;""",
                                 getMetadataType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.javadoc.tags"), "javadoc tags",
-                                "/**\n" +
-                                " * '_Comment\n" +
-                                " * @'Tag '_TagValue*\n" +
-                                " */",
+                                """
+                                  /**
+                                   * '_Comment
+                                   * @'Tag '_TagValue*
+                                   */""",
                                 getMetadataType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.xdoclet.metadata"), "XDoclet metadata",
                                 "/** @'Tag \n  '_Property+\n*/",
@@ -251,8 +259,10 @@ final class JavaPredefinedConfigurations {
                                 "@'_Annotation\n" +
                                 "class 'Class {}", getMetadataType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.annotated.fields"), "annotated fields",
-                                "@'_Annotation+\n" +
-                                "'_FieldType 'Field = '_Init?;\n",
+                                """
+                                  @'_Annotation+
+                                  '_FieldType 'Field = '_Init?;
+                                  """,
                                 getMetadataType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.annotated.methods"), "annotated methods",
                                 "@'_Annotation+\n'_MethodType '_Method('_ParameterType '_Parameter*);",
@@ -270,90 +280,111 @@ final class JavaPredefinedConfigurations {
 
       // J2EE templates
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.struts.1.1.actions"), "Struts 1.1 actions",
-                                "public class '_StrutsActionClass extends '_ParentClass*:Action {\n" +
-                                "  public ActionForward '_AnActionMethod:*execute (ActionMapping '_action,\n" +
-                                "                                 ActionForm '_form,\n" +
-                                "                                 HttpServletRequest '_request,\n" +
-                                "                                 HttpServletResponse '_response);\n" +
-                                "}", getJ2EEType(), JavaFileType.INSTANCE, null),
+                                """
+                                  public class '_StrutsActionClass extends '_ParentClass*:Action {
+                                    public ActionForward '_AnActionMethod:*execute (ActionMapping '_action,
+                                                                   ActionForm '_form,
+                                                                   HttpServletRequest '_request,
+                                                                   HttpServletResponse '_response);
+                                  }""", getJ2EEType(), JavaFileType.INSTANCE, null),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.entity.ejb"), "entity ejb",
-                                "class 'EntityBean implements EntityBean {\n" +
-                                "  EntityContext '_Context?;\n\n" +
-                                "  public void setEntityContext(EntityContext '_Context2);\n\n" +
-                                "  public '_RetType ejbCreate('_CreateType '_CreateDcl*);\n" +
-                                "  public void ejbActivate();\n\n" +
-                                "  public void ejbLoad();\n\n" +
-                                "  public void ejbPassivate();\n\n" +
-                                "  public void ejbRemove();\n\n" +
-                                "  public void ejbStore();\n" +
-                                "}", getJ2EEType(), JavaFileType.INSTANCE, null),
+                                """
+                                  class 'EntityBean implements EntityBean {
+                                    EntityContext '_Context?;
+
+                                    public void setEntityContext(EntityContext '_Context2);
+
+                                    public '_RetType ejbCreate('_CreateType '_CreateDcl*);
+                                    public void ejbActivate();
+
+                                    public void ejbLoad();
+
+                                    public void ejbPassivate();
+
+                                    public void ejbRemove();
+
+                                    public void ejbStore();
+                                  }""", getJ2EEType(), JavaFileType.INSTANCE, null),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.session.ejb"), "session ejb",
-                                "class 'SessionBean implements SessionBean {\n" +
-                                "  SessionContext '_Context?;\n\n" +
-                                "  public void '_setSessionContext(SessionContext '_Context2);\n\n" +
-                                "  public '_RetType ejbCreate('_CreateParameterType '_CreateParameterDcl*);\n" +
-                                "  public void ejbActivate();\n\n" +
-                                "  public void ejbPassivate();\n\n" +
-                                "  public void ejbRemove();\n" +
-                                "}", getJ2EEType(), JavaFileType.INSTANCE, null),
+                                """
+                                  class 'SessionBean implements SessionBean {
+                                    SessionContext '_Context?;
+
+                                    public void '_setSessionContext(SessionContext '_Context2);
+
+                                    public '_RetType ejbCreate('_CreateParameterType '_CreateParameterDcl*);
+                                    public void ejbActivate();
+
+                                    public void ejbPassivate();
+
+                                    public void ejbRemove();
+                                  }""", getJ2EEType(), JavaFileType.INSTANCE, null),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.ejb.interface"), "ejb interface",
-                                "interface 'EjbInterface extends EJBObject {\n" +
-                                "  '_Type '_Method+('_ParameterType '_Param*);\n" +
-                                "}", getJ2EEType(), JavaFileType.INSTANCE, null),
+                                """
+                                  interface 'EjbInterface extends EJBObject {
+                                    '_Type '_Method+('_ParameterType '_Param*);
+                                  }""", getJ2EEType(), JavaFileType.INSTANCE, null),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.servlets"), "servlets",
-                                "public class 'Servlet extends '_ParentClass:*HttpServlet {\n" +
-                                "  public void '_InitServletMethod?:init ();\n" +
-                                "  public void '_DestroyServletMethod?:destroy ();\n" +
-                                "  void '_ServiceMethod?:*service (HttpServletRequest '_request, HttpServletResponse '_response);\n" +
-                                "  void '_SpecificServiceMethod*:do.* (HttpServletRequest '_request2, HttpServletResponse '_response2); \n" +
-                                "}", getJ2EEType(), JavaFileType.INSTANCE, null),
+                                """
+                                  public class 'Servlet extends '_ParentClass:*HttpServlet {
+                                    public void '_InitServletMethod?:init ();
+                                    public void '_DestroyServletMethod?:destroy ();
+                                    void '_ServiceMethod?:*service (HttpServletRequest '_request, HttpServletResponse '_response);
+                                    void '_SpecificServiceMethod*:do.* (HttpServletRequest '_request2, HttpServletResponse '_response2);\s
+                                  }""", getJ2EEType(), JavaFileType.INSTANCE, null),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.filters"), "filters",
-                                "public class 'Filter implements Filter {\n" +
-                                "  public void '_DestroyFilterMethod?:*destroy ();\n" +
-                                "  public void '_InitFilterMethod?:*init ();\n" +
-                                "  public void '_FilteringMethod:*doFilter (ServletRequest '_request,\n" +
-                                "    ServletResponse '_response,FilterChain '_chain);\n" +
-                                "}", getJ2EEType(), JavaFileType.INSTANCE, null),
+                                """
+                                  public class 'Filter implements Filter {
+                                    public void '_DestroyFilterMethod?:*destroy ();
+                                    public void '_InitFilterMethod?:*init ();
+                                    public void '_FilteringMethod:*doFilter (ServletRequest '_request,
+                                      ServletResponse '_response,FilterChain '_chain);
+                                  }""", getJ2EEType(), JavaFileType.INSTANCE, null),
 
       // Misc types
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.serializable.classes.and.their.serialization.implementation"),
                                 "Serializable classes and their serialization implementation",
-                                "class 'Class implements '_Serializable:*Serializable {\n" +
-                                "  static final long '_VersionField?:serialVersionUID = '_VersionFieldInit?;\n" +
-                                "  private static final ObjectStreamField[] '_persistentFields?:serialPersistentFields = '_persistentFieldInitial?; \n" +
-                                "  private void '_SerializationWriteHandler?:writeObject (ObjectOutputStream '_stream) throws IOException;\n" +
-                                "  private void '_SerializationReadHandler?:readObject (ObjectInputStream '_stream2) throws IOException, ClassNotFoundException;\n" +
-                                "  Object '_SpecialSerializationReadHandler?:readResolve () throws ObjectStreamException;\n" +
-                                "  Object '_SpecialSerializationWriteHandler?:writeReplace () throws ObjectStreamException;\n" +
-                                "}", getMiscType(), JavaFileType.INSTANCE),
+                                """
+                                  class 'Class implements '_Serializable:*Serializable {
+                                    static final long '_VersionField?:serialVersionUID = '_VersionFieldInit?;
+                                    private static final ObjectStreamField[] '_persistentFields?:serialPersistentFields = '_persistentFieldInitial?;\s
+                                    private void '_SerializationWriteHandler?:writeObject (ObjectOutputStream '_stream) throws IOException;
+                                    private void '_SerializationReadHandler?:readObject (ObjectInputStream '_stream2) throws IOException, ClassNotFoundException;
+                                    Object '_SpecialSerializationReadHandler?:readResolve () throws ObjectStreamException;
+                                    Object '_SpecialSerializationWriteHandler?:writeReplace () throws ObjectStreamException;
+                                  }""", getMiscType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.cloneable.implementations"), "Cloneable implementations",
-                                "class '_Class implements '_Interface:*Cloneable {\n" +
-                                "  Object 'CloningMethod:*clone ();\n" +
-                                "}", getMiscType(), JavaFileType.INSTANCE),
+                                """
+                                  class '_Class implements '_Interface:*Cloneable {
+                                    Object 'CloningMethod:*clone ();
+                                  }""", getMiscType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.junit.test.cases"), "junit test cases",
-                                "public class 'TestCase extends '_TestCaseClazz:*TestCase {\n" +
-                                "  public void '_testMethod+:test.* ();\n" +
-                                "}", getMiscType(), JavaFileType.INSTANCE, null),
+                                """
+                                  public class 'TestCase extends '_TestCaseClazz:*TestCase {
+                                    public void '_testMethod+:test.* ();
+                                  }""", getMiscType(), JavaFileType.INSTANCE, null),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.singletons"), "singletons",
-                                "class 'Class {\n" +
-                                "  private 'Class('_ParameterType '_Parameter*) {\n" +
-                                "   '_ConstructorStatement*;\n" +
-                                "  }\n" +
-                                "  private static '_Class '_Instance;\n" +
-                                "  static '_Class '_GetInstance() {\n" +
-                                "    '_SomeStatement*;\n" +
-                                "    return '_Instance;\n" +
-                                "  }\n" +
-                                "}", getMiscType(), JavaFileType.INSTANCE),
+                                """
+                                  class 'Class {
+                                    private 'Class('_ParameterType '_Parameter*) {
+                                     '_ConstructorStatement*;
+                                    }
+                                    private static '_Class '_Instance;
+                                    static '_Class '_GetInstance() {
+                                      '_SomeStatement*;
+                                      return '_Instance;
+                                    }
+                                  }""", getMiscType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.similar.methods.structure"), "similar methods structure",
-                                "'_RetType '_Method('_ParameterType '_Parameter*) throws 'ExceptionType {\n" +
-                                "  try {\n" +
-                                "    '_OtherStatements+;\n" +
-                                "  } catch('_SomeException '_Exception) {\n" +
-                                "    '_CatchStatement*;\n" +
-                                "    throw new 'ExceptionType('_ExceptionConstructorArgs*);\n" +
-                                "  }\n" +
-                                "}", getMiscType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
+                                """
+                                  '_RetType '_Method('_ParameterType '_Parameter*) throws 'ExceptionType {
+                                    try {
+                                      '_OtherStatements+;
+                                    } catch('_SomeException '_Exception) {
+                                      '_CatchStatement*;
+                                      throw new 'ExceptionType('_ExceptionConstructorArgs*);
+                                    }
+                                  }""", getMiscType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.bean.info.classes"), "Bean info classes",
                                 "class 'A implements '_:*java\\.beans\\.BeanInfo {\n" +
                                 "}", getMiscType(), JavaFileType.INSTANCE),
@@ -362,16 +393,18 @@ final class JavaPredefinedConfigurations {
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.symbol"), "symbol",
                                 "'Symbol", getInterestingType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.fields.variables.read"), "fields/variables read",
-                                "'Symbol:[ script( \"import com.intellij.psi.*\n" +
-                                "import static com.intellij.psi.util.PsiUtil.*\n" +
-                                "Symbol instanceof PsiReferenceExpression && isAccessedForReading(Symbol)\" ) ]",
+                                """
+                                  'Symbol:[ script( "import com.intellij.psi.*
+                                  import static com.intellij.psi.util.PsiUtil.*
+                                  Symbol instanceof PsiReferenceExpression && isAccessedForReading(Symbol)" ) ]""",
                                 getInterestingType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.fields_variables.with.given.name.pattern.updated"),
                                 "fields/variables with given name pattern updated",
-                                "'Symbol:[regex( name ) && script( \"import com.intellij.psi.*\n" +
-                                "import static com.intellij.psi.util.PsiUtil.*\n" +
-                                "Symbol instanceof PsiExpression && isAccessedForWriting(Symbol) ||\n" +
-                                "  Symbol instanceof PsiVariable && Symbol.getInitializer() != null\" )]", getInterestingType(),
+                                """
+                                  'Symbol:[regex( name ) && script( "import com.intellij.psi.*
+                                  import static com.intellij.psi.util.PsiUtil.*
+                                  Symbol instanceof PsiExpression && isAccessedForWriting(Symbol) ||
+                                    Symbol instanceof PsiVariable && Symbol.getInitializer() != null" )]""", getInterestingType(),
                                 JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.usage.of.derived.type.in.cast"),
                                 "usage of derived type in cast",
@@ -401,9 +434,11 @@ final class JavaPredefinedConfigurations {
                                 getInterestingType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.switch.with.branches"),
                                 "switch statements \\& expressions with few branches",
-                                "[ script( \"import com.intellij.psi.*;\n" +
-                                "import com.intellij.psi.util.*;\n" +
-                                "PsiTreeUtil.getChildrenOfType(__context__.body, PsiSwitchLabelStatementBase.class).length < 5\" ) ]switch ('_expression) {\n}",
+                                """
+                                  [ script( "import com.intellij.psi.*;
+                                  import com.intellij.psi.util.*;
+                                  PsiTreeUtil.getChildrenOfType(__context__.body, PsiSwitchLabelStatementBase.class).length < 5" ) ]switch ('_expression) {
+                                  }""",
                                 getInterestingType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.labeled.break"), "labeled break statements",
                                 "break '_label;", getInterestingType(), JavaFileType.INSTANCE),
@@ -412,13 +447,14 @@ final class JavaPredefinedConfigurations {
                                 "'_ReturnType? '_Method('_BeforeType '_BeforeParameter*, final '_ParameterType '_Parameter, '_AfterType '_AfterParameter*);",
                                 getInterestingType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createConfiguration(SSRBundle.message("predefined.configuration.double.checked.locking"), "double-checked locking",
-                          "if ('_condition) {\n" +
-                          "  synchronized ('_lock) {\n" +
-                          "    if ('_condition) {\n" +
-                          "      '_statement+;\n" +
-                          "    }\n" +
-                          "  }\n" +
-                          "}",
+                          """
+                            if ('_condition) {
+                              synchronized ('_lock) {
+                                if ('_condition) {
+                                  '_statement+;
+                                }
+                              }
+                            }""",
                           getInterestingType(), JavaFileType.INSTANCE),
       //createSearchTemplateInfo("methods called","'_?.'_:[ref('Method)] ('_*)", INTERESTING_TYPE),
       //createSearchTemplateInfo("fields selected","'_?.'_:[ref('Field)] ", INTERESTING_TYPE),
