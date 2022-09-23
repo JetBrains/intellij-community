@@ -11,6 +11,8 @@ import com.intellij.dvcs.ui.DvcsBundle.message
 import com.intellij.dvcs.ui.FilePathDocumentChildPathHandle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -60,6 +62,7 @@ import kotlin.properties.Delegates
 
 internal abstract class GHCloneDialogExtensionComponentBase(
   private val project: Project,
+  private val modalityState: ModalityState,
   private val authenticationManager: GithubAuthenticationManager,
   private val executorManager: GithubApiRequestExecutorManager
 ) : VcsCloneDialogExtensionComponent() {
@@ -360,7 +363,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   private fun createAccountsModel(): ListModel<GithubAccount> {
     val accountsState = authenticationManager.accountManager.accountsState
     val model = CollectionListModel(accountsState.value.keys.filter(::isAccountHandled))
-    disposingMainScope().launch {
+    disposingMainScope().launch(modalityState.asContextElement()) {
       val prev = accountsState.value.filterKeys(::isAccountHandled)
       accountsState.collect {
         val new = it.filterKeys(::isAccountHandled)
