@@ -500,7 +500,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     PsiTodoSearchHelper helper = PsiTodoSearchHelper.getInstance(file.getProject());
     if (helper == null || !shouldHighlightTodos(helper, file)) return;
     TodoItem[] todoItems = helper.findTodoItems(file, startOffset, endOffset);
-    if (todoItems.length == 0) return;
 
     for (TodoItem todoItem : todoItems) {
       ProgressManager.checkCanceled();

@@ -149,11 +149,9 @@ public class JavaTestLocator implements SMTestLocator {
       }
       else {
         PsiMethod[] methods = aClass.findMethodsByName(methodName.trim(), true);
-        if (methods.length > 0) {
-          for (PsiMethod method : methods) {
-            results.add(paramName != null ? new PsiMemberParameterizedLocation(project, method, aClass, paramName)
-                                          : MethodLocation.elementInClass(method, aClass));
-          }
+        for (PsiMethod method : methods) {
+          results.add(paramName != null ? new PsiMemberParameterizedLocation(project, method, aClass, paramName)
+                                        : MethodLocation.elementInClass(method, aClass));
         }
       }
     }

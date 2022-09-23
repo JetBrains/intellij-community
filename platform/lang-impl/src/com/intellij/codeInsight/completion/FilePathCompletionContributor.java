@@ -145,9 +145,6 @@ public class FilePathCompletionContributor extends CompletionContributor {
 
                 final PsiFile[] files = FilenameIndex.getFilesByName(project, name, scope);
 
-                if (files.length <= 0) {
-                  continue;
-                }
                 for (final PsiFile file : files) {
                   ProgressManager.checkCanceled();
                   if (variants.contains(file) && file.getName().startsWith(finalPrefix)) {

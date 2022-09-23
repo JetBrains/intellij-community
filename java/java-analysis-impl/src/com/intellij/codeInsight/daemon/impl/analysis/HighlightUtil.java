@@ -3254,7 +3254,6 @@ public final class HighlightUtil {
       return field != null && field.hasModifierProperty(PsiModifier.STATIC);
     }
     PsiMethod[] methods = clazz.findMethodsByName(memberName.getText(), true);
-    if (methods.length == 0) return false;
     for (PsiMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass containingClass = method.getContainingClass();

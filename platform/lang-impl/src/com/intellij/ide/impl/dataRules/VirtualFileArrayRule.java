@@ -53,7 +53,7 @@ public class VirtualFileArrayRule implements GetDataRule {
       }
 
       Module[] selectedModules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataProvider);
-      if (selectedModules != null && selectedModules.length > 0) {
+      if (selectedModules != null) {
         for (Module selectedModule : selectedModules) {
           result = addFiles(result, ModuleRootManager.getInstance(selectedModule).getContentRoots());
         }

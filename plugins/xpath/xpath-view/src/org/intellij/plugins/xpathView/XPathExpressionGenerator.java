@@ -279,22 +279,20 @@ public final class XPathExpressionGenerator {
                         if (what instanceof XmlTag) {
                             final XmlTag tag = (XmlTag)what;
                             final XmlAttribute[] attributes = tag.getAttributes();
-                            if (attributes.length > 0) {
-                                for (XmlAttribute attribute : attributes) {
-                                    final String name = attribute.getName();
-                                    final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
-                                    if ((attribute.getValue() != null &&
-                                            (descriptor != null && descriptor.hasIdType()) ||
-                                            name.equalsIgnoreCase("id") ||
-                                            name.equalsIgnoreCase("name"))) {
-                                        final StringBuilder buffer = new StringBuilder(uniquePath);
-                                        buffer.append("[@");
-                                        buffer.append(name);
-                                        buffer.append("='");
-                                        buffer.append(attribute.getValue());
-                                        buffer.append("']");
-                                        return buffer.toString();
-                                    }
+                            for (XmlAttribute attribute : attributes) {
+                                final String name = attribute.getName();
+                                final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
+                                if ((attribute.getValue() != null &&
+                                     (descriptor != null && descriptor.hasIdType()) ||
+                                     name.equalsIgnoreCase("id") ||
+                                     name.equalsIgnoreCase("name"))) {
+                                  final StringBuilder buffer = new StringBuilder(uniquePath);
+                                  buffer.append("[@");
+                                  buffer.append(name);
+                                  buffer.append("='");
+                                  buffer.append(attribute.getValue());
+                                  buffer.append("']");
+                                  return buffer.toString();
                                 }
                             }
                         }
