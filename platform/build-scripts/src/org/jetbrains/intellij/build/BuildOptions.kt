@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.SystemProperties
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import java.util.concurrent.ThreadLocalRandom
@@ -328,6 +329,9 @@ class BuildOptions {
    */
   var buildDateInSeconds: Long = 0
   var randomSeedNumber: Long = 0
+
+  @ApiStatus.Experimental
+  var signNativeFiles = true
 
   init {
     var targetOs = System.getProperty(TARGET_OS_PROPERTY, OS_ALL)

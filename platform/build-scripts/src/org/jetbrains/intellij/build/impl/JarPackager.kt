@@ -541,7 +541,7 @@ private fun packJnaNativeLibraries(sourceFile: Path, paths: List<String>, contex
         zipFile.releaseBuffer(byteBuffer)
       }
 
-      if (context.productProperties.signNativeFiles) {
+      if (context.options.signNativeFiles) {
         unsignedFiles.get(OsFamily.MACOS)?.let { context.signFiles(it, MAC_CODE_SIGN_OPTIONS) }
         unsignedFiles.get(OsFamily.WINDOWS)?.let { context.signFiles(it, BuildOptions.WIN_SIGN_OPTIONS) }
       }
