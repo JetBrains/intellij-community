@@ -258,7 +258,11 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
 
       VirtualFile file = getSelectedFile();
 
-      WidgetState state = ReadAction.compute(() -> getWidgetState(file));
+      WidgetState state = ReadAction.compute(() -> {
+        if (isDisposed()) return WidgetState.NO_CHANGE;
+
+        return getWidgetState(file);
+      });
       if (state == WidgetState.NO_CHANGE) {
         return;
       }
