@@ -61,7 +61,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
           showAutoImportHints(editor, psiFile, session.getProgressIndicator());
         }
 
-        repaintErrorStripeAndIcon(editor, project);
+        repaintErrorStripeAndIcon(editor, project, psiFile);
       }
     });
   }
@@ -79,11 +79,11 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     }, progressIndicator);
   }
 
-  static void repaintErrorStripeAndIcon(@NotNull Editor editor, @NotNull Project project) {
+  static void repaintErrorStripeAndIcon(@NotNull Editor editor, @NotNull Project project, @Nullable PsiFile file) {
     MarkupModel markup = editor.getMarkupModel();
     if (markup instanceof EditorMarkupModelImpl) {
       ((EditorMarkupModelImpl)markup).repaintTrafficLightIcon();
-      ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
+      ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor, file);
     }
   }
 
@@ -109,7 +109,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                          ProperTextRange.create(priorityRange),
                                                          groupId);
       if (editor != null) {
-        repaintErrorStripeAndIcon(editor, project);
+        repaintErrorStripeAndIcon(editor, project, psiFile);
       }
     });
   }
@@ -173,7 +173,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
           myeditor = PsiEditorUtil.findEditor(file);
         }
         if (myeditor != null && !myeditor.isDisposed()) {
-          repaintErrorStripeAndIcon(myeditor, myProject);
+          repaintErrorStripeAndIcon(myeditor, myProject, file);
         }
       }, 50, null);
     }

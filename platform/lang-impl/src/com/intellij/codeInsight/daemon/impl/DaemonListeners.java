@@ -183,7 +183,8 @@ public final class DaemonListeners implements Disposable {
 
       ErrorStripeUpdateManager errorStripeUpdateManager = ErrorStripeUpdateManager.getInstance(myProject);
       for (Editor editor : activeEditors) {
-        errorStripeUpdateManager.repaintErrorStripePanel(editor);
+        PsiFile file = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument());
+        errorStripeUpdateManager.repaintErrorStripePanel(editor, file);
       }
     });
 
@@ -207,7 +208,7 @@ public final class DaemonListeners implements Disposable {
           return;
         }
 
-        ErrorStripeUpdateManager.getInstance(myProject).repaintErrorStripePanel(editor);
+        ErrorStripeUpdateManager.getInstance(myProject).repaintErrorStripePanel(editor, file);
       }
 
       @Override
