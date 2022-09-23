@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.analysisApiProviders
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class IdeKotlinDeclarationProviderFactory(private val project: Project) : KotlinDeclarationProviderFactory() {
     override fun createDeclarationProvider(searchScope: GlobalSearchScope): KotlinDeclarationProvider {
@@ -29,6 +31,7 @@ private class IdeKotlinDeclarationProvider(
     private val scope: GlobalSearchScope
 ) : KotlinDeclarationProvider() {
     private val stubIndex: StubIndex = StubIndex.getInstance()
+    private val psiManager = PsiManager.getInstance(project)
 
     private inline fun <IndexKey : Any, reified Psi : PsiElement> firstMatchingOrNull(
         stubKey: StubIndexKey<IndexKey, Psi>,
@@ -96,6 +99,21 @@ private class IdeKotlinDeclarationProvider(
 
     override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> =
         KotlinTopLevelFunctionFqnNameIndex.get(callableId.asTopLevelStringForIndexes(), project, scope)
+
+
+    override fun getTopLevelCallableFiles(callableId: CallableId): Collection<KtFile> {
+        val callableIdString = callableId.asTopLevelStringForIndexes()
+
+        return buildSet {
+            stubIndex.getContainingFilesIterator(KotlinTopLevelPropertyFqnNameIndex.key, callableIdString, project, scope).forEach {file ->
+                psiManager.findFile(file)?.safeAs<KtFile>()?.let { add(it) }
+            }
+            stubIndex.getContainingFilesIterator(KotlinTopLevelFunctionFqnNameIndex.key, callableIdString, project, scope).forEach {file ->
+                psiManager.findFile(file)?.safeAs<KtFile>()?.let { add(it) }
+            }
+        }
+    }
+
 
     companion object {
         private fun CallableId.asTopLevelStringForIndexes(): String {
