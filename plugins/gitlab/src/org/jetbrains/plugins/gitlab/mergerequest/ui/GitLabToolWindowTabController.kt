@@ -5,30 +5,25 @@ import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
-import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.collaboration.util.URIUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.content.Content
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
-import org.jetbrains.plugins.gitlab.api.request.loadImage
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowTabViewModel.NestedViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsPanelFactory
 import org.jetbrains.plugins.gitlab.ui.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.awt.BorderLayout
-import java.awt.Image
 import java.awt.event.ActionEvent
 import javax.swing.*
 
@@ -95,34 +90,8 @@ internal class GitLabToolWindowTabController(private val project: Project,
     }
   }
 
-  @Suppress("HardCodedStringLiteral")
-  private fun createMergeRequestsComponent(scope: CoroutineScope, vm: NestedViewModel.MergeRequests): JComponent {
-    val connection = vm.connection
-    val userLabel = JLabel()
-    val avatarIconProvider = AsyncImageIconsProvider(scope, object : AsyncImageIconsProvider.AsyncImageLoader<GitLabUserDTO> {
-      override suspend fun load(key: GitLabUserDTO): Image? {
-        return key.avatarUrl?.let {
-          connection.apiClient.loadImage(connection.account.server.uri + it)
-        }
-      }
-    })
-
-    scope.launch {
-      userLabel.icon = AnimatedIcon.Default()
-      userLabel.text = "Loading user data..."
-      val user = connection.apiClient.getCurrentUser(connection.repo.repository.serverPath)
-      if (user != null) {
-        userLabel.icon = avatarIconProvider.getIcon(user, 20)
-        userLabel.text = user.name
-      }
-      else {
-        userLabel.icon = null
-        userLabel.text = "No current user"
-      }
-    }
-
-    return userLabel
-  }
+  private fun createMergeRequestsComponent(scope: CoroutineScope, vm: NestedViewModel.MergeRequests): JComponent =
+    GitLabMergeRequestsPanelFactory().create(scope, vm.listVm)
 
   private fun createLoginButtons(scope: CoroutineScope, vm: GitLabRepositoryAndAccountSelectorViewModel)
     : List<JButton> {

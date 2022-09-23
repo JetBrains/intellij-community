@@ -8,6 +8,7 @@ import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestsListLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowTabViewModel.NestedViewModel.MergeRequests
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowTabViewModel.NestedViewModel.Selectors
 
@@ -18,7 +19,7 @@ internal class GitLabToolWindowTabViewModel(scope: CoroutineScope,
 
   val nestedViewModelState: StateFlow<NestedViewModel> = connectionManager.state.mapStateScoped(scope) { scope, connection ->
     if (connection != null) {
-      MergeRequests(connection)
+      MergeRequests(scope, connection)
     }
     else {
       Selectors(GitLabRepositoryAndAccountSelectorViewModel(scope, connectionManager, projectsManager, accountManager))
@@ -28,6 +29,12 @@ internal class GitLabToolWindowTabViewModel(scope: CoroutineScope,
   internal sealed interface NestedViewModel {
     class Selectors(val selectorVm: GitLabRepositoryAndAccountSelectorViewModel) : NestedViewModel
 
-    class MergeRequests(val connection: GitLabProjectConnection) : NestedViewModel
+    class MergeRequests(scope: CoroutineScope, connection: GitLabProjectConnection) : NestedViewModel {
+
+      val listVm: GitLabMergeRequestsListViewModel =
+        GitLabMergeRequestsListViewModelImpl(scope) {
+          GitLabMergeRequestsListLoader(connection.apiClient, connection.repo.repository)
+        }
+    }
   }
 }

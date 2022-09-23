@@ -10,6 +10,7 @@ import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.TestGitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.testutil.MainDispatcherRule
+import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.junit.*
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnit
@@ -43,7 +44,7 @@ internal class GitLabToolWindowTabViewModelTest {
     val vm = GitLabToolWindowTabViewModel(scope, connectionManager, projectManager, accountManager)
 
     assertInstanceOf<GitLabToolWindowTabViewModel.NestedViewModel.Selectors>(vm.nestedViewModelState.value)
-    connectionManager.tryConnect(mock(), mock())
+    connectionManager.tryConnect(GitLabProjectMapping(mock(), mock()), mock())
     assertInstanceOf<GitLabToolWindowTabViewModel.NestedViewModel.MergeRequests>(vm.nestedViewModelState.value)
     connectionManager.disconnect()
     assertInstanceOf<GitLabToolWindowTabViewModel.NestedViewModel.Selectors>(vm.nestedViewModelState.value)
