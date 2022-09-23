@@ -348,6 +348,14 @@ Includes the following features:</p>
                      enabledByDefault="true"
                      implementationClass="org.intellij.plugins.markdown.editor.toc.OutdatedTableOfContentsInspection"/>
 
+    <localInspection language="Markdown"
+                     shortName="MarkdownFileLinkDestinationWithSpaces"
+                     bundle="messages.MarkdownBundle"
+                     key="markdown.file.link.destination.with.spaces.inspection.name"
+                     groupKey="markdown.inspection.group.ruby.name"
+                     enabledByDefault="true"
+                     implementationClass="org.intellij.plugins.markdown.lang.references.paths.MarkdownFileLinkDestinationWithSpacesInspection"/>
+
     <notificationGroup id="Markdown" displayType="BALLOON" bundle="messages.MarkdownBundle" key="notification.group.markdown"/>
 
     <registryKey key="markdown.clear.cache.interval"
