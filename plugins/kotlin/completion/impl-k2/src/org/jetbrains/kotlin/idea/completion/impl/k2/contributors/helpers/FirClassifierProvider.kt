@@ -31,7 +31,10 @@ internal object FirClassifierProvider {
         scopeNameFilter: KtScopeNameFilter,
         visibilityChecker: CompletionVisibilityChecker
     ): Sequence<KtClassifierSymbol> =
-        (symbolProvider.getKotlinClassesByNameFilter(scopeNameFilter, psiFilter = { it !is KtEnumEntry }) +
+        (symbolProvider.getKotlinClassesByNameFilter(
+            scopeNameFilter,
+            psiFilter = { ktClass -> ktClass !is KtEnumEntry }
+        ) +
                 symbolProvider.getJavaClassesByNameFilter(scopeNameFilter))
             .filter { visibilityChecker.isVisible(it as KtSymbolWithVisibility) }
 }
