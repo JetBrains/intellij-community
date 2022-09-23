@@ -2,6 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationActivationListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -21,7 +22,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
   private var scheduledFuture: ScheduledFuture<*>? = null // accessed only from the EDT
 
   override suspend fun execute(asyncScope: CoroutineScope) {
-    if (!isSettingsSyncEnabledByKey()) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment || !isSettingsSyncEnabledByKey()) {
       return
     }
 
