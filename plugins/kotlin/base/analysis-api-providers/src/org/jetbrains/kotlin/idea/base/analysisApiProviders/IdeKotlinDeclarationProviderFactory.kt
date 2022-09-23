@@ -92,19 +92,24 @@ private class IdeKotlinDeclarationProvider(
     }
 
     override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> =
-        KotlinTopLevelPropertyFqnNameIndex.get(callableId.asStringForIndexes(), project, scope)
+        KotlinTopLevelPropertyFqnNameIndex.get(callableId.asTopLevelStringForIndexes(), project, scope)
 
     override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> =
-        KotlinTopLevelFunctionFqnNameIndex.get(callableId.asStringForIndexes(), project, scope)
+        KotlinTopLevelFunctionFqnNameIndex.get(callableId.asTopLevelStringForIndexes(), project, scope)
 
     companion object {
-        private fun CallableId.asStringForIndexes(): String =
-            (if (packageName.isRoot) callableName.asString() else toString()).replace('/', '.')
+        private fun CallableId.asTopLevelStringForIndexes(): String {
+            require(this.classId == null) {
+                "Expecting top-level callable, but was $this"
+            }
 
-        private fun FqName.asStringForIndexes(): String =
-            asString().replace('/', '.')
+            if (packageName.isRoot) return callableName.asString()
+            return "${packageName.asString()}.${callableName.asString()}"
+        }
 
-        private fun ClassId.asStringForIndexes(): String =
-            asSingleFqName().asStringForIndexes()
+        private fun ClassId.asStringForIndexes(): String {
+            if (packageFqName.isRoot) return relativeClassName.asString()
+            return "${packageFqName.asString()}.${relativeClassName.asString()}"
+        }
     }
 }
