@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider
 import org.jetbrains.kotlin.idea.quickfix.ImportFixBase
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -78,16 +79,27 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
             }
         }.ifEmpty { return null }
 
-        val suggestions = filterSuggestions(file, importFixBases.flatMap { it.collectSuggestions() })
-        val suggestion = suggestions.singleOrNull() ?: return null
-        val descriptors = file.resolveImportReference(suggestion)
+        return importFixBases.firstNotNullOfOrNull { action ->
+            val suggestions = filterSuggestions(file, action.collectSuggestions())
+            if (suggestions.size != 1) {
+                null
+            } else {
+                val suggestion = suggestions.first()
+                val descriptors = file.resolveImportReference(suggestion)
 
-        // we do not auto-import nested classes because this will probably add qualification into the text and this will confuse the user
-        if (descriptors.any { it is ClassDescriptor && it.containingDeclaration is ClassDescriptor }) {
-            return null
+                // we do not auto-import nested classes because this will probably add qualification into the text and this will confuse the user
+                if (descriptors.any { it is ClassDescriptor && it.containingDeclaration is ClassDescriptor }) {
+                    null
+                } else {
+                    val element = action.element
+                    if (element is KtElement) {
+                        createSingleImportAction(file.project, editor, element, suggestions)
+                    } else {
+                        null
+                    }
+                }
+            }
         }
-
-        return createSingleImportAction(reference.project, editor, reference, suggestions)
     }
 
     override fun computeAutoImportAtOffset(editor: Editor, file: PsiFile, offset: Int, allowCaretNearReference: Boolean): BooleanSupplier? {
