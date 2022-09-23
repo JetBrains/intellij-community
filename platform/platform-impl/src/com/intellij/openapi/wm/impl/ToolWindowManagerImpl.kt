@@ -637,6 +637,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
                                   source: ToolWindowEventSource? = null) {
     LOG.debug { "activateToolWindow($entry)" }
 
+    if (!isIndependentToolWindowResizeEnabled()) {
+      val visibleToolWindow = visibleToolWindow(info.anchor)
+      if (visibleToolWindow != null) {
+        info.weight = visibleToolWindow.readOnlyWindowInfo.weight
+      }
+    }
+
     if (source != null) {
       ToolWindowCollector.getInstance().recordActivation(project, entry.id, info, source)
     }
@@ -667,6 +674,17 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
     fireStateChanged(ToolWindowManagerEventType.ActivateToolWindow)
   }
+
+  private fun isIndependentToolWindowResizeEnabled(): Boolean =
+    if (isNewUi)
+      Registry.`is`("ide.experimental.ui.toolwindow.independent.sizes")
+    else
+      Registry.`is`("toolwindow.independent.sizes")
+
+  private fun visibleToolWindow(anchor: ToolWindowAnchor): ToolWindowEntry? =
+    idToEntry.values.firstOrNull { it.toolWindow.isVisible && it.readOnlyWindowInfo.anchor == anchor }
+
+  private val ToolWindowEntry.weight get() = readOnlyWindowInfo.weight
 
   fun getRecentToolWindows(): List<String> = java.util.List.copyOf(recentToolWindowsState)
 
@@ -1921,15 +1939,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
   internal fun activated(toolWindow: ToolWindowImpl, source: ToolWindowEventSource?) {
     val info = getRegisteredMutableInfoOrLogError(toolWindow.id)
-    if (isNewUi) {
-      val visibleToolWindow = idToEntry.values
-        .asSequence()
-        .filter { it.toolWindow.isVisible && it.readOnlyWindowInfo.anchor == info.anchor }
-        .firstOrNull()
-      if (visibleToolWindow != null) {
-        info.weight = visibleToolWindow.readOnlyWindowInfo.weight
-      }
-    }
     activateToolWindow(entry = idToEntry.get(toolWindow.id)!!, info = info, source = source)
   }
 
