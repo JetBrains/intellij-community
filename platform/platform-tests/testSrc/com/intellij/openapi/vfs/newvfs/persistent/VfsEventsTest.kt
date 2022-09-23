@@ -1,23 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.*
-import com.intellij.openapi.vfs.impl.ZipHandlerBase
 import com.intellij.openapi.vfs.impl.jar.TimedZipHandler
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.testFramework.EdtRule
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.FileContentUtilCore
 import com.intellij.util.io.zip.JBZipFile
-import org.junit.Assert
+import com.intellij.util.messages.MessageBusConnection
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
@@ -36,71 +35,50 @@ import kotlin.test.assertTrue
 
 @RunsInEdt
 class VfsEventsTest : BareTestFixtureTestCase() {
-  @JvmField
-  @Rule
-  val myEdtRule = EdtRule()
+  @JvmField @Rule val edtRule = EdtRule()
+  @JvmField @Rule val tempDir = TempDirectory()
+  @JvmField @Rule val useCrcRule = UseCrcRule()
 
-  @JvmField
-  @Rule
-  var projectRule = ProjectRule()
+  private fun connectToAppBus(): MessageBusConnection =
+    ApplicationManager.getApplication().messageBus.connect(testRootDisposable)
 
-  @JvmField
-  @Rule
-  var tempDir = TempDirectory()
+  @Test fun testFireEvent() {
+    val dir = createDir()
 
-  @JvmField
-  @Rule
-  var useCrcRule = UseCrcRule()
-
-  private val project: Project
-    get() = projectRule.project
-
-  @Test
-  @Throws(IOException::class)
-  fun testFireEvent() {
-    val dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir.newDirectory("vDir"))
-    Assert.assertNotNull(dir)
-    dir!!.children
     var eventFired = false
-    VirtualFileManager.getInstance().addVirtualFileListener(object : VirtualFileListener {
-      override fun fileCreated(event: VirtualFileEvent) {
-        eventFired= true
+    connectToAppBus().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: List<VFileEvent>) {
+        eventFired = eventFired || events.any { it is VFileCreateEvent }
       }
-    }, testRootDisposable)
+    })
 
     addChild(dir, "x.txt")
-    Assert.assertTrue(eventFired)
+    assertTrue(eventFired)
   }
 
-  @Test
-  @Throws(IOException::class)
-  fun testRefreshNewFile() {
+  @Test fun testRefreshNewFile() {
     val vDir = createDir()
 
-    val allVfsListeners = AllVfsListeners(project)
+    val allVfsListeners = AllVfsListeners(testRootDisposable)
     vDir.toNioPath().resolve("added.txt").writeText("JB")
-    vDir.forceAsyncRefresh()
+    vDir.syncRefresh()
     allVfsListeners.assertEvents(1)
   }
 
-  @Test
-  @Throws(IOException::class)
-  fun testRefreshDeletedFile() {
+  @Test fun testRefreshDeletedFile() {
     val vDir = createDir()
     val file = WriteAction.computeAndWait<VirtualFile, IOException> {
       vDir.createChildData(this, "x.txt")
     }
     val nioFile = file.toNioPath()
 
-    val allVfsListeners = AllVfsListeners(project)
+    val allVfsListeners = AllVfsListeners(testRootDisposable)
     assertTrue { Files.deleteIfExists(nioFile) }
-    vDir.forceAsyncRefresh()
+    vDir.syncRefresh()
     allVfsListeners.assertEvents(1)
   }
 
-  @Test
-  @Throws(IOException::class)
-  fun testRefreshModifiedFile() {
+  @Test fun testRefreshModifiedFile() {
     val vDir = createDir()
     val file = WriteAction.computeAndWait<VirtualFile, IOException> {
       val child = vDir.createChildData(this, "x.txt")
@@ -109,70 +87,30 @@ class VfsEventsTest : BareTestFixtureTestCase() {
     }
     val nioFile = file.toNioPath()
 
-    val allVfsListeners = AllVfsListeners(project)
-    nioFile.writeText("21.1")
-    vDir.forceAsyncRefresh()
+    val allVfsListeners = AllVfsListeners(testRootDisposable)
+    nioFile.writeText("21.12")
+    vDir.syncRefresh()
     allVfsListeners.assertEvents(1)
   }
 
-  @Test
-  @Throws(IOException::class)
-  fun testAddedJar() {
-    doTestAddedJar()
-  }
+  @Test fun testAddedJar() = doTestAddedJar()
+  @Test fun testRemovedJar() = doTestRemovedJar()
+  @Test fun testMovedJar() = doTestMovedJar()
+  @Test fun testModifiedJar() = doTestModifiedJar()
 
-  @Test
-  @Throws(IOException::class)
-  fun testRemovedJar() {
-    doTestRemovedJar()
-  }
+  @Test fun testAddedJarWithCrc() = doTestAddedJar()
+  @Test fun testRemovedJarWithCrc() = doTestRemovedJar()
+  @Test fun testMovedJarWithCrc() = doTestMovedJar()
+  @Test fun testModifiedJarWithCrc() = doTestModifiedJar()
 
-  @Test
-  @Throws(IOException::class)
-  fun testMovedJar() {
-    doTestMovedJar()
-  }
-
-  @Test
-  @Throws(IOException::class)
-  fun testModifiedJar() {
-    doTestModifiedJar()
-  }
-
-  @Test
-  @Throws(IOException::class)
-  fun testAddedJarWithCrc() {
-    doTestAddedJar()
-  }
-
-  @Test
-  @Throws(IOException::class)
-  fun testRemovedJarWithCrc() {
-    doTestRemovedJar()
-  }
-
-  @Test
-  @Throws(IOException::class)
-  fun testMovedJarWithCrc() {
-    doTestMovedJar()
-  }
-
-  @Test
-  @Throws(IOException::class)
-  fun testModifiedJarWithCrc() {
-    doTestModifiedJar()
-  }
-
-  @Test
-  @Throws(IOException::class)
-  fun testNestedEventProcessing() {
+  @Test fun testNestedEventProcessing() {
     val fileForNestedMove = tempDir.newVirtualFile("to-move.txt")
     val nestedMoveTarget = tempDir.newVirtualDirectory("move-target")
     val fireMove = AtomicBoolean(false)
     val movePerformed = AtomicBoolean(false)
 
     // execute nested event while async refresh below
-    project.messageBus.connect(testRootDisposable).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    connectToAppBus().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: MutableList<out VFileEvent>) {
         if (fireMove.get() && !movePerformed.get()) {
           movePerformed.set(true)
@@ -181,29 +119,26 @@ class VfsEventsTest : BareTestFixtureTestCase() {
       }
     })
 
-
     val vDir = createDir()
-    val allVfsListeners = AllVfsListeners(project)
+    val allVfsListeners = AllVfsListeners(testRootDisposable)
     fireMove.set(true)
     assertFalse { movePerformed.get() }
 
     // execute async refresh
     vDir.toNioPath().resolve("added.txt").writeText("JB")
 
-    vDir.forceAsyncRefresh()
+    vDir.syncRefresh()
 
     allVfsListeners.assertEvents(2)
   }
 
-  @Test
-  @Throws(IOException::class)
-  fun testNestedManualEventProcessing() {
+  @Test fun testNestedManualEventProcessing() {
     val fileToReparse = tempDir.newVirtualFile("to-reparse.txt")
     val fireReparse = AtomicBoolean(false)
     val reparsePerformed = AtomicBoolean(false)
 
     // execute nested event manually via vfs changes message bus publisher
-    project.messageBus.connect(testRootDisposable).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    connectToAppBus().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: MutableList<out VFileEvent>) {
         if (fireReparse.get() && !reparsePerformed.get()) {
           reparsePerformed.set(true)
@@ -212,16 +147,15 @@ class VfsEventsTest : BareTestFixtureTestCase() {
       }
     })
 
-
     val vDir = createDir()
-    val allVfsListeners = AllVfsListeners(project)
+    val allVfsListeners = AllVfsListeners(testRootDisposable)
     fireReparse.set(true)
     assertFalse { reparsePerformed.get() }
 
     // execute async refresh
     vDir.toNioPath().resolve("added.txt").writeText("JB")
 
-    vDir.forceAsyncRefresh()
+    vDir.syncRefresh()
 
     allVfsListeners.assertEvents(2)
   }
@@ -229,10 +163,10 @@ class VfsEventsTest : BareTestFixtureTestCase() {
   private fun doTestAddedJar() {
     val vDir = createDir()
 
-    val allVfsListeners = AllVfsListeners(project)
+    val allVfsListeners = AllVfsListeners(testRootDisposable)
     createJar(vDir.toNioPath())
 
-    vDir.forceAsyncRefresh()
+    vDir.syncRefresh()
 
     // in case of jar added we don't expect creation events for all of jar's entries.
     allVfsListeners.assertEvents(1)
@@ -241,12 +175,12 @@ class VfsEventsTest : BareTestFixtureTestCase() {
   private fun doTestRemovedJar() {
     val vDir = createDir()
     val jar = createJar(vDir.toNioPath())
-    vDir.forceAsyncRefresh()
+    vDir.syncRefresh()
 
-    val allVfsListeners = AllVfsListeners(project)
+    val allVfsListeners = AllVfsListeners(testRootDisposable)
     TimedZipHandler.closeOpenZipReferences()
     assertTrue { Files.deleteIfExists(jar) }
-    vDir.forceAsyncRefresh()
+    vDir.syncRefresh()
     allVfsListeners.assertEvents(2)
   }
 
@@ -255,23 +189,23 @@ class VfsEventsTest : BareTestFixtureTestCase() {
     val childDir1 = addChild(vDir, "childDir1", true).toNioPath()
     val childDir2 = addChild(vDir, "childDir2", true).toNioPath()
     val jar = createJar(childDir1)
-    vDir.forceAsyncRefresh()
+    vDir.syncRefresh()
 
-    val allVfsListeners = AllVfsListeners(project)
+    val allVfsListeners = AllVfsListeners(testRootDisposable)
     TimedZipHandler.closeOpenZipReferences()
     jar.moveTo(childDir2.resolve(jar.fileName), true)
-    vDir.forceAsyncRefresh()
+    vDir.syncRefresh()
     allVfsListeners.assertEvents(3)
   }
 
   private fun doTestModifiedJar() {
     val vDir = createDir()
     val jar = createJar(vDir.toNioPath())
-    vDir.forceAsyncRefresh()
+    vDir.syncRefresh()
 
     modifyJar(jar)
-    val allVfsListeners = AllVfsListeners(project)
-    vDir.forceAsyncRefresh()
+    val allVfsListeners = AllVfsListeners(testRootDisposable)
+    vDir.syncRefresh()
     allVfsListeners.assertEvents(if(useCrcRule.useCrcForTimestamp) 3 else 4)
   }
 
@@ -325,28 +259,24 @@ class VfsEventsTest : BareTestFixtureTestCase() {
     }
   }
 
-  private fun VirtualFile.forceAsyncRefresh() {
-    PlatformTestUtil.waitForFuture(ApplicationManager.getApplication().executeOnPooledThread {
-      refresh(false, true)
-    }, 30_000)
-  }
+  private fun VirtualFile.syncRefresh() = refresh(false, true)
 
-  private class AllVfsListeners(project: Project) {
+  private class AllVfsListeners(disposable: Disposable) {
     private val asyncEvents: MutableList<VFileEvent> = Collections.synchronizedList(mutableListOf())
     private val bulkEvents: MutableList<VFileEvent> = mutableListOf()
 
     init {
-      VirtualFileManager.getInstance().addAsyncFileListener({ events ->
-        asyncEvents.addAll(events)
-
-        object : AsyncFileListener.ChangeApplier {
-          override fun afterVfsChange() {
+      VirtualFileManager.getInstance().addAsyncFileListener(
+        { events ->
+          object : AsyncFileListener.ChangeApplier {
+            override fun afterVfsChange() {
+              asyncEvents.addAll(events)
+            }
           }
-        }
-      }, project)
+        }, disposable)
 
-      project.messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-        override fun after(events: MutableList<out VFileEvent>) {
+      ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+        override fun after(events: List<VFileEvent>) {
           bulkEvents.addAll(events)
         }
       })
@@ -376,6 +306,7 @@ class VfsEventsTest : BareTestFixtureTestCase() {
 
   class UseCrcRule : ExternalResource() {
     var useCrcForTimestamp = false
+
     override fun apply(base: Statement, description: Description): Statement {
       useCrcForTimestamp = description.methodName.endsWith("WithCrc")
       return super.apply(base, description)
