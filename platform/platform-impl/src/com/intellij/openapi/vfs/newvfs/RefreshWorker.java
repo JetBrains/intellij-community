@@ -40,9 +40,9 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -60,7 +60,7 @@ final class RefreshWorker {
   private final boolean myIsRecursive;
   private final boolean myParallel;
   private final Set<NewVirtualFile> myRoots;
-  private final Deque<NewVirtualFile> myRefreshQueue;
+  private final Queue<NewVirtualFile> myRefreshQueue;
   private final Semaphore mySemaphore;
   private final PersistentFS myPersistence = PersistentFS.getInstance();
   private volatile boolean myCancelled;
@@ -72,7 +72,7 @@ final class RefreshWorker {
     myIsRecursive = isRecursive;
     myParallel = isRecursive && ourParallelism > 1 && !ApplicationManager.getApplication().isWriteThread();
     myRoots = new HashSet<>(refreshRoots);
-    myRefreshQueue = new ConcurrentLinkedDeque<>(refreshRoots);
+    myRefreshQueue = new LinkedBlockingQueue<>(refreshRoots);
     mySemaphore = new Semaphore(refreshRoots.size());
   }
 
@@ -145,7 +145,7 @@ final class RefreshWorker {
   private void queueDirectory(NewVirtualFile root) {
     if (root instanceof VirtualDirectoryImpl) {
       mySemaphore.down();
-      myRefreshQueue.addLast(root);
+      myRefreshQueue.add(root);
     }
     else {
       LOG.error("not a directory: " + root + " (" + root.getClass() + ')');
@@ -155,7 +155,7 @@ final class RefreshWorker {
   private void processQueue(List<VFileEvent> events) throws RefreshCancelledException {
     nextDir:
     while (!mySemaphore.isUp()) {
-      var file = myRefreshQueue.pollFirst();
+      var file = myRefreshQueue.poll();
       if (file == null) {
         TimeoutUtil.sleep(1);
         continue;
@@ -448,7 +448,7 @@ final class RefreshWorker {
       forceMarkDirty(stopAt);
       synchronized (this) {
         NewVirtualFile file;
-        while ((file = myRefreshQueue.pollFirst()) != null) {
+        while ((file = myRefreshQueue.poll()) != null) {
           forceMarkDirty(file);
           mySemaphore.up();
         }
