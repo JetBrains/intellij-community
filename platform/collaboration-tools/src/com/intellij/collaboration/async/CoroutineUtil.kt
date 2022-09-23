@@ -35,6 +35,7 @@ fun DisposingScope(parentDisposable: Disposable, context: CoroutineContext = Sup
 fun Disposable.disposingScope(context: CoroutineContext = SupervisorJob()): CoroutineScope =
   DisposingScope(this, context)
 
+@OptIn(InternalCoroutinesApi::class)
 @ApiStatus.Experimental
 fun CoroutineScope.nestedDisposable(): Disposable {
   val job = coroutineContext[Job]
@@ -42,7 +43,9 @@ fun CoroutineScope.nestedDisposable(): Disposable {
     "Found no Job in context: $coroutineContext"
   }
   return Disposer.newDisposable().also {
-    job.invokeOnCompletion { _ -> Disposer.dispose(it) }
+    job.invokeOnCompletion(onCancelling = true, handler =  { _ ->
+      Disposer.dispose(it)
+    })
   }
 }
 
