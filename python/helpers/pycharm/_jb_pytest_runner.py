@@ -34,11 +34,9 @@ if __name__ == '__main__':
         args += ["--no-header", "--no-summary", "-q"]
 
     if JB_DISABLE_BUFFERING and "-s" not in args:
-      args += ["-s"]
-
+        args += ["-s"]
 
     jb_doc_args("pytest", args)
-
 
     class Plugin:
         @staticmethod
