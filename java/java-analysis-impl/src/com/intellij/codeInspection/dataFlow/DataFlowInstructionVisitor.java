@@ -117,10 +117,9 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   }
 
   private static boolean isAssignmentToDefaultValueInConstructor(DfaValue target, PsiExpression rExpression) {
-    if (!(target instanceof DfaVariableValue)) return false;
-    DfaVariableValue var = (DfaVariableValue)target;
-    PsiField field = tryCast(var.getPsiVariable(), PsiField.class);
-    if (field == null || var.getQualifier() == null || !(var.getQualifier().getDescriptor() instanceof ThisDescriptor)) {
+    if (!(target instanceof DfaVariableValue var)) return false;
+    if (!(var.getPsiVariable() instanceof PsiField field)) return false;
+    if (var.getQualifier() == null || !(var.getQualifier().getDescriptor() instanceof ThisDescriptor)) {
       return false;
     }
 
@@ -144,11 +143,11 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   // Reporting of floating zero is skipped, because this produces false-positives on the code like
   // if(x == -0.0) x = 0.0;
   private static boolean isFloatingZero(Object value) {
-    if (value instanceof Double) {
-      return ((Double)value).doubleValue() == 0.0;
+    if (value instanceof Double dValue) {
+      return dValue == 0.0;
     }
-    if (value instanceof Float) {
-      return ((Float)value).floatValue() == 0.0f;
+    if (value instanceof Float fValue) {
+      return fValue == 0.0f;
     }
     return false;
   }
@@ -217,28 +216,29 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
                          @NotNull DfaAnchor anchor,
                          @NotNull DfaMemoryState state) {
     JavaDfaListener.super.beforePush(args, value, anchor, state);
-    if (anchor instanceof JavaExpressionAnchor) {
-      PsiExpression expression = ((JavaExpressionAnchor)anchor).getExpression();
+    if (anchor instanceof JavaExpressionAnchor expressionAnchor) {
+      PsiExpression expression = expressionAnchor.getExpression();
       if (expression instanceof PsiLiteralExpression) return;
-      if (expression instanceof PsiMethodCallExpression && USELESS_SAME_ARGUMENTS.matches(expression)) {
-        checkUselessCall(args, value, state, ((PsiMethodCallExpression)expression).getMethodExpression());
+      if (expression instanceof PsiMethodCallExpression call && USELESS_SAME_ARGUMENTS.test(call)) {
+        checkUselessCall(args, value, state, call.getMethodExpression());
       }
     }
-    if (anchor instanceof JavaMethodReferenceReturnAnchor) {
-      PsiMethodReferenceExpression methodRef = ((JavaMethodReferenceReturnAnchor)anchor).getMethodReferenceExpression();
+    if (anchor instanceof JavaMethodReferenceReturnAnchor returnAnchor) {
+      PsiMethodReferenceExpression methodRef = returnAnchor.getMethodReferenceExpression();
       if (USELESS_SAME_ARGUMENTS.methodReferenceMatches(methodRef)) {
         checkUselessCall(args, value, state, methodRef);
       }
     }
-    if (anchor instanceof JavaSwitchLabelTakenAnchor) {
+    if (anchor instanceof JavaSwitchLabelTakenAnchor labelTakenAnchor) {
       DfType type = state.getDfType(value);
-      mySwitchLabelsReachability.merge(((JavaSwitchLabelTakenAnchor)anchor).getLabelElement(), fromDfType(type), ThreeState::merge);
+      mySwitchLabelsReachability.merge(labelTakenAnchor.getLabelElement(), fromDfType(type), ThreeState::merge);
       return;
     }
     if (myPotentiallyRedundantInstanceOf.contains(anchor)) {
       if (isUsefulInstanceof(args, value, state)) {
         myPotentiallyRedundantInstanceOf.remove(anchor);
-      } else {
+      }
+      else {
         myConstantInstanceOf.merge(anchor, fromDfType(state.getDfType(value)), ThreeState::merge);
       }
     }
@@ -289,16 +289,13 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
         throw new IllegalStateException("Non-physical expression is passed");
       }
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-      if (OptionalUtil.OPTIONAL_OF_NULLABLE.test(call)) {
-        processOfNullableResult(value, memState, call.getArgumentList().getExpressions()[0]);
-      }
+    if (expression instanceof PsiMethodCallExpression call && OptionalUtil.OPTIONAL_OF_NULLABLE.test(call)) {
+      processOfNullableResult(value, memState, call.getArgumentList().getExpressions()[0]);
     }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiTypeCastExpression) {
+    if (parent instanceof PsiTypeCastExpression cast) {
       TypeConstraint fact = TypeConstraint.fromDfType(memState.getDfType(value));
-      myRealOperandTypes.merge((PsiTypeCastExpression)parent, fact, TypeConstraint::join);
+      myRealOperandTypes.merge(cast, fact, TypeConstraint::join);
     }
   }
 
@@ -310,11 +307,9 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     if (context instanceof PsiMethod || context instanceof PsiLambdaExpression) {
       myAlwaysReturnsNotNull = myAlwaysReturnsNotNull && !state.getDfType(value).isSuperType(DfTypes.NULL);
     }
-    else if (context instanceof PsiMethodReferenceExpression) {
-      var methodRef = (PsiMethodReferenceExpression)context;
-      if (OptionalUtil.OPTIONAL_OF_NULLABLE.methodReferenceMatches(methodRef)) {
-        processOfNullableResult(value, state, methodRef.getReferenceNameElement());
-      }
+    else if (context instanceof PsiMethodReferenceExpression methodRef &&
+             OptionalUtil.OPTIONAL_OF_NULLABLE.methodReferenceMatches(methodRef)) {
+      processOfNullableResult(value, state, methodRef.getReferenceNameElement());
     }
   }
 
@@ -338,39 +333,36 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
                           @NotNull DfaValue value,
                           @NotNull ThreeState failed,
                           @NotNull DfaMemoryState state) {
-    if (problem instanceof MutabilityProblem && failed == ThreeState.YES) {
-      reportMutabilityViolation(((MutabilityProblem)problem).isReceiver(), ((MutabilityProblem)problem).getAnchor());
+    if (problem instanceof MutabilityProblem mutabilityProblem && failed == ThreeState.YES) {
+      reportMutabilityViolation(mutabilityProblem.isReceiver(), mutabilityProblem.getAnchor());
     }
-    else if (problem instanceof NegativeArraySizeProblem) {
-      myNegativeArraySizes.merge(((NegativeArraySizeProblem)problem).getAnchor(), failed, ThreeState::merge);
+    else if (problem instanceof NegativeArraySizeProblem arraySizeProblem) {
+      myNegativeArraySizes.merge(arraySizeProblem.getAnchor(), failed, ThreeState::merge);
     }
-    else if (problem instanceof ArrayIndexProblem) {
-      myOutOfBoundsArrayAccesses.merge(((ArrayIndexProblem)problem).getAnchor(), failed, ThreeState::merge);
+    else if (problem instanceof ArrayIndexProblem indexProblem) {
+      myOutOfBoundsArrayAccesses.merge(indexProblem.getAnchor(), failed, ThreeState::merge);
     }
-    else if (problem instanceof ClassCastProblem) {
-      myClassCastProblems.computeIfAbsent(((ClassCastProblem)problem).getAnchor(), e -> new StateInfo())
+    else if (problem instanceof ClassCastProblem castProblem) {
+      myClassCastProblems.computeIfAbsent(castProblem.getAnchor(), e -> new StateInfo())
         .update(state, ThreeState.fromBoolean(failed != ThreeState.YES));
     }
-    else if (problem instanceof ArrayStoreProblem && failed == ThreeState.YES) {
-      myArrayStoreProblems.put(((ArrayStoreProblem)problem).getAnchor(),
-                               Pair.create(((ArrayStoreProblem)problem).getFromType(), ((ArrayStoreProblem)problem).getToType()));
+    else if (problem instanceof ArrayStoreProblem storeProblem && failed == ThreeState.YES) {
+      myArrayStoreProblems.put(storeProblem.getAnchor(), Pair.create(storeProblem.getFromType(), storeProblem.getToType()));
     }
-    else if (problem instanceof ContractFailureProblem) {
-      ContractFailureProblem contractFailure = (ContractFailureProblem)problem;
-      PsiCallExpression call = tryCast(contractFailure.getAnchor(), PsiCallExpression.class);
-      if (call != null) {
+    else if (problem instanceof ContractFailureProblem contractFailure) {
+      if (contractFailure.getAnchor() instanceof PsiCallExpression call) {
         Boolean isFailing = myFailingCalls.get(problem);
         if (isFailing != null || !hasTrivialFailContract(call)) {
           myFailingCalls.put(contractFailure, failed == ThreeState.YES && !Boolean.FALSE.equals(isFailing));
         }
       }
     }
-    else if (problem instanceof NullabilityProblemKind.NullabilityProblem) {
+    else if (problem instanceof NullabilityProblemKind.NullabilityProblem<?> nullabilityProblem) {
       DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
       boolean notNullable = nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
       boolean unknown = myStrictMode && nullability == DfaNullability.UNKNOWN;
       ThreeState ok = notNullable ? unknown ? ThreeState.UNSURE : ThreeState.YES : ThreeState.NO;
-      StateInfo info = myStateInfos.computeIfAbsent((NullabilityProblemKind.NullabilityProblem<?>)problem, k -> new StateInfo());
+      StateInfo info = myStateInfos.computeIfAbsent(nullabilityProblem, k -> new StateInfo());
       info.update(state, ok);
     }
   }
@@ -387,10 +379,11 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
 
   private void reportMutabilityViolation(boolean receiver, @NotNull PsiElement anchor) {
     if (receiver) {
-      if (anchor instanceof PsiMethodReferenceExpression) {
-        anchor = ((PsiMethodReferenceExpression)anchor).getReferenceNameElement();
-      } else if (anchor instanceof PsiMethodCallExpression) {
-        anchor = ((PsiMethodCallExpression)anchor).getMethodExpression().getReferenceNameElement();
+      if (anchor instanceof PsiMethodReferenceExpression methodRef) {
+        anchor = methodRef.getReferenceNameElement();
+      }
+      else if (anchor instanceof PsiMethodCallExpression call) {
+        anchor = call.getMethodExpression().getReferenceNameElement();
       }
       if (anchor != null) {
         myReceiverMutabilityViolation.add(anchor);

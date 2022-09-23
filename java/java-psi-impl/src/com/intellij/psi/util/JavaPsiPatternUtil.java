@@ -211,27 +211,33 @@ public final class JavaPsiPatternUtil {
       return isTotalForType(((PsiParenthesizedPattern)pattern).getPattern(), type, checkComponents);
     }
     else if (pattern instanceof PsiDeconstructionPattern) {
-      if (!dominates(getPatternType(pattern), type)) return false;
-      if (checkComponents) {
-        PsiPattern[] patternComponents = ((PsiDeconstructionPattern)pattern).getDeconstructionList().getDeconstructionComponents();
-        PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(type);
-        if (selectorClass == null) return false;
-        PsiRecordComponent[] recordComponents = selectorClass.getRecordComponents();
-        if (patternComponents.length != recordComponents.length) return false;
-        for (int i = 0; i < patternComponents.length; i++) {
-          PsiPattern patternComponent = patternComponents[i];
-          PsiType componentType = recordComponents[i].getType();
-          if (!isTotalForType(patternComponent, componentType, true)) {
-            return false;
-          }
-        }
-      }
-      return true;
+      return dominates(getPatternType(pattern), type) && (!checkComponents || hasTotalComponents((PsiDeconstructionPattern)pattern));
     }
     else if (pattern instanceof PsiTypeTestPattern) {
       return dominates(getPatternType(pattern), type);
     }
     return false;
+  }
+
+  /**
+   * @param pattern deconstruction pattern to check
+   * @return true if all components of a pattern are total
+   */
+  public static boolean hasTotalComponents(@NotNull PsiDeconstructionPattern pattern) {
+    PsiType type = pattern.getTypeElement().getType();
+    PsiPattern[] patternComponents = pattern.getDeconstructionList().getDeconstructionComponents();
+    PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (selectorClass == null) return false;
+    PsiRecordComponent[] recordComponents = selectorClass.getRecordComponents();
+    if (patternComponents.length != recordComponents.length) return false;
+    for (int i = 0; i < patternComponents.length; i++) {
+      PsiPattern patternComponent = patternComponents[i];
+      PsiType componentType = recordComponents[i].getType();
+      if (!isTotalForType(patternComponent, componentType, true)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public static boolean dominates(@Nullable PsiType who, @Nullable PsiType overWhom) {
