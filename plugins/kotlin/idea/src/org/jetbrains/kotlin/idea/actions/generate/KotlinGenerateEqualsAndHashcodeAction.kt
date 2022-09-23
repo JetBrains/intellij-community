@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.idea.util.isInlineOrValue
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -39,6 +38,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun ClassDescriptor.findDeclaredEquals(checkSupers: Boolean): FunctionDescriptor? {
     return findDeclaredFunction("equals", checkSupers) {
@@ -78,12 +78,11 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
     }
 
     override fun prepareMembersInfo(klass: KtClassOrObject, project: Project, editor: Editor?): Info? {
-        return prepareMembersInfo(klass, project, true)
+        val asClass = klass.safeAs<KtClass>() ?: return null
+        return prepareMembersInfo(asClass, project, true)
     }
 
-    fun prepareMembersInfo(klass: KtClassOrObject, project: Project, askForRewrite: Boolean): Info? {
-        if (klass !is KtClass) throw AssertionError("Not a class: ${klass.getElementTextWithContext()}")
-
+    fun prepareMembersInfo(klass: KtClass, project: Project, askForRewrite: Boolean): Info? {
         val context = klass.analyzeWithContent()
         val classDescriptor = context.get(BindingContext.CLASS, klass) ?: return null
 

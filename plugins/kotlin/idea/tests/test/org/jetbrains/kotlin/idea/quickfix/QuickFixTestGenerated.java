@@ -13089,6 +13089,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/specifySuperExplicitly/abstractSuperCall2.kt");
         }
 
+        @TestMetadata("abstractSuperCall3.kt")
+        public void testAbstractSuperCall3() throws Exception {
+            runTest("testData/quickfix/specifySuperExplicitly/abstractSuperCall3.kt");
+        }
+
         @TestMetadata("abstractSuperCallEquals.kt")
         public void testAbstractSuperCallEquals() throws Exception {
             runTest("testData/quickfix/specifySuperExplicitly/abstractSuperCallEquals.kt");

@@ -7,13 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
-import org.jetbrains.kotlin.codegen.inline.isInlineOrInsideInline
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.descriptors.MemberDescriptor
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -23,10 +17,10 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPs
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyEquals
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyHashCode
+import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyToString
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 private const val EQUALS = "equals"
@@ -43,7 +37,12 @@ class AbstractSuperCallFix(element: KtNameReferenceExpression) : KotlinPsiOnlyQu
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
         val expression = element ?: return false
-        return getSuperClassNameToReferTo(expression) != null
+
+        fun isToStringOverride() =
+            expression.resolveToCall()?.resultingDescriptor?.safeAs<FunctionDescriptor>()
+                ?.isAnyToString() == true
+
+        return getSuperClassNameToReferTo(expression) != null && !isToStringOverride() // Just in case KTIJ-22784 is late
     }
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
@@ -51,14 +50,14 @@ class AbstractSuperCallFix(element: KtNameReferenceExpression) : KotlinPsiOnlyQu
         val containingClass = expression.getNonStrictParentOfType<KtClassOrObject>() ?: return
         val functionDescriptor = expression.resolveToCall()?.resultingDescriptor?.safeAs<FunctionDescriptor>() ?: return
 
-        fun replaceWithGenerated(functionName: String) {
+        fun replaceWithGenerated(clazz: KtClass) {
             val action = KotlinGenerateEqualsAndHashcodeAction()
-            val membersInfo = action.prepareMembersInfo(containingClass, project, false) ?: return
+            val membersInfo = action.prepareMembersInfo(clazz, project, false) ?: return
 
-            val generated = when (functionName) {
-                HASH_CODE -> action.generateHashCode(project, membersInfo.adjust(needHashCodeActually = true), containingClass)
-                EQUALS -> action.generateEquals(project, membersInfo.adjust(needEqualsActually = true), containingClass)
-                else -> error("$functionName is not expected")
+            val generated = when {
+                functionDescriptor.isAnyHashCode() -> action.generateHashCode(project, membersInfo.adjust(needHashCodeActually = true), containingClass)
+                functionDescriptor.isAnyEquals() -> action.generateEquals(project, membersInfo.adjust(needEqualsActually = true), containingClass)
+                else -> error("$functionDescriptor is not expected")
             } ?: return
 
             expression.parentOfType<KtNamedFunction>()?.replace(generated)
@@ -68,9 +67,11 @@ class AbstractSuperCallFix(element: KtNameReferenceExpression) : KotlinPsiOnlyQu
                 }
         }
 
+        fun replaceIfNotInObject() = containingClass.safeAs<KtClass>()?.let { replaceWithGenerated(it) }
+
         when {
-            functionDescriptor.isAnyEquals() -> replaceWithGenerated(expression.getReferencedName())
-            functionDescriptor.isAnyHashCode() -> replaceWithGenerated(expression.getReferencedName())
+            functionDescriptor.isAnyEquals() -> replaceIfNotInObject()
+            functionDescriptor.isAnyHashCode() -> replaceIfNotInObject()
             else -> {
                 getSuperClassNameToReferTo(expression)?.let { superClassName ->
                     expression.parentOfType<KtDotQualifiedExpression>()
