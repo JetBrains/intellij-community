@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
@@ -423,7 +424,7 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
     public static ByteBuffer putInlineEntryHeader(final ByteBuffer buffer,
                                                   final int encodedAttributeId,
                                                   final int newValueSize) {
-      assert newValueSize <= INLINE_ATTRIBUTE_SMALLER_THAN : newValueSize + " > " + INLINE_ATTRIBUTE_SMALLER_THAN;
+      assert newValueSize < INLINE_ATTRIBUTE_SMALLER_THAN : newValueSize + " >= " + INLINE_ATTRIBUTE_SMALLER_THAN;
       return buffer.putInt(encodedAttributeId)
         .putInt(newValueSize);
     }
@@ -436,8 +437,12 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
 
     public static ByteBuffer putInlineEntry(final ByteBuffer buffer,
                                             final int attributeId,
-                                            final int newValueSize,
-                                            final byte[] newValueBytes) {
+                                            final byte[] newValueBytes,
+                                            final int newValueSize) {
+      assert buffer.remaining() >= entrySizeForValueSize(newValueSize) :
+        "buffer(pos:" + buffer.position() + ", lim:" + buffer.limit() + ") " +
+        "is too small for inline attribute " + newValueSize + " (+8b header)";
+
       putInlineEntryHeader(buffer, attributeId, newValueSize);
       return putInlineEntryValue(buffer, newValueBytes, newValueSize);
     }
@@ -561,15 +566,14 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
         AttributesRecord.putDirectoryRecordHeader(writeTo, fileId);
         AttributeEntry.putInlineEntry(
           writeTo,
-          attributeId, newValueSize,
-          newValueBuffer
+          attributeId, newValueBuffer, newValueSize
         );
 
         return writeTo;
       });
     }
     else {//modify already existing directory record:
-      final int[] recordToDelete = {NON_EXISTENT_ATTR_RECORD_ID};
+      final IntRef recordToDelete = new IntRef(NON_EXISTENT_ATTR_RECORD_ID);
       final int updatedAttributeRecordId = storage.writeToRecord(attributesRecordId, buffer -> {
 
         final AttributesRecord record = new AttributesRecord(buffer);
@@ -578,7 +582,7 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
           final AttributeEntry entryToOverwrite = record.currentEntry();
           if (!entryToOverwrite.isValueInlined()) {
             //delete dedicated record (later):
-            recordToDelete[0] = entryToOverwrite.dedicatedValueRecordId();
+            recordToDelete.set(entryToOverwrite.dedicatedValueRecordId());
           }
           //is buffer.capacity enough?
           final int sizeDiff = newValueSize - entryToOverwrite.inlinedValueLength();
@@ -606,8 +610,7 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
           writeTo.position(entryToOverwrite.offset());
           AttributeEntry.putInlineEntry(
             writeTo,
-            attributeId, newValueSize,
-            newValueBuffer
+            attributeId, newValueBuffer, newValueSize
           );
 
           return writeTo
@@ -621,16 +624,15 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
 
           writeTo.position(record.length);
           AttributeEntry.putInlineEntry(
-            buffer,
-            attributeId, newValueSize,
-            newValueBuffer
+            writeTo,
+            attributeId, newValueBuffer, newValueSize
           );
           return writeTo;
         }
       });
 
-      if (recordToDelete[0] != NON_EXISTENT_ATTR_RECORD_ID) {
-        storage.deleteRecord(recordToDelete[0]);
+      if (recordToDelete.get() != NON_EXISTENT_ATTR_RECORD_ID) {
+        storage.deleteRecord(recordToDelete.get());
       }
 
       return updatedAttributeRecordId;
@@ -831,33 +833,37 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
   /**
    * @return buffer with the limit rose up to requiredLimit, if currently it is lower. If
    * buffer capacity is not enough for requiredLimit -- new buffer is allocated with capacity=requiredLimit,
-   * and set position to buffer.position, and limit to requiredLimit. Data from buffer is not copied
+   * and set position to buffer.position, and limit to requiredLimit. Data from buffer is not copied,
    * use {@link #ensureLimitAndData(ByteBuffer, int)} for that.
    */
   @NotNull
   private static ByteBuffer ensureLimit(final ByteBuffer buffer,
                                         final int requiredLimit) {
     if (buffer.capacity() >= requiredLimit) {
-      //TODO shouln't do that?
       return buffer.limit(Math.max(buffer.limit(), requiredLimit));
     }
     else {
       return ByteBuffer.allocate(requiredLimit)
-        .position(buffer.position())
-        .limit(requiredLimit)
-        .order(buffer.order());
+        .order(buffer.order())
+        .position(buffer.position());
     }
   }
 
+  /**
+   * @return buffer with limit set to at least requiredLimit. If buffer.limit() already more than
+   * requiredLimit -- do nothing. If buffer.capacity() is not big enough for requiredLimit -- method
+   * returns new buffer with same content & same position as the old one, and limit=capacity=requiredLimit.
+   */
   private static ByteBuffer ensureLimitAndData(final ByteBuffer buffer,
-                                               final int requiredCapacity) {
-    if (buffer.capacity() >= requiredCapacity) {
-      return buffer.limit(Math.max(buffer.limit(), requiredCapacity));
+                                               final int requiredLimit) {
+    if (buffer.capacity() >= requiredLimit) {
+      return buffer.limit(Math.max(buffer.limit(), requiredLimit));
     }
     else {
-      return ByteBuffer.allocate(requiredCapacity)
+      return ByteBuffer.allocate(requiredLimit)
         .order(buffer.order())
-        .put(0, buffer, buffer.position(), buffer.limit());
+        .put(0, buffer, 0, buffer.limit())
+        .position(buffer.position());
     }
   }
 }

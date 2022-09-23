@@ -7,8 +7,6 @@ import com.intellij.util.IntPair;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.StorageLockContext;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +18,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.INLINE_ATTRIBUTE_SMALLER_THAN;
@@ -35,7 +34,9 @@ public class AttributesStorageOnTheTopOfBlobStorageTest {
   private static final int PAGE_SIZE = 1 << 15;
   private static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);
 
-  /** Not so much records because each of them could be up to 64k, which leads to OoM quite quickly */
+  /**
+   * Not so much records because each of them could be up to 64k, which leads to OoM quite quickly
+   */
   private static final int ENOUGH_RECORDS = 1 << 15;
 
   private static final int ARBITRARY_FILE_ID = 157;
@@ -355,6 +356,38 @@ public class AttributesStorageOnTheTopOfBlobStorageTest {
     }
   }
 
+  @Test
+  public void manySmallRecordInserted_ExistsInStorage_AndCouldBeReadBack() throws IOException {
+    final int inlineAttributeSize = INLINE_ATTRIBUTE_SMALLER_THAN - 1;
+    final int fileId = ARBITRARY_FILE_ID;
+    final AttributeRecord[] records = IntStream.range(0, 100)
+      .mapToObj(attributeId -> newAttributeRecord(fileId, attributeId)
+        .withRandomAttributeBytes(inlineAttributeSize))
+      .toArray(AttributeRecord[]::new);
+
+    records[0] = records[0].store(attributesStorage);
+    for (int i = 1; i < records.length; i++) {
+      records[i] = records[i].withAttributesRecordId(records[0].attributesRecordId);
+    }
+    for (int i = 1; i < records.length; i++) {
+      records[i] = records[i].store(attributesStorage);
+    }
+
+    for (int i = 0; i < records.length; i++) {
+      final AttributeRecord insertedRecord = records[i];
+      assertTrue(
+        "Attribute just inserted must exist",
+        insertedRecord.existsInStorage(attributesStorage)
+      );
+      assertArrayEquals(
+        insertedRecord + " value must be read",
+        insertedRecord.readValueFromStorage(attributesStorage),
+        insertedRecord.attributeBytes()
+      );
+    }
+  }
+
+
   /* ======================== infrastructure ============================================================== */
 
   private void openStorage() throws IOException {
@@ -531,7 +564,6 @@ public class AttributesStorageOnTheTopOfBlobStorageTest {
     }
   }
 
-  @NotNull
   private static byte[] generateBytes(final ThreadLocalRandom rnd,
                                       final int size) {
     final byte[] attributeBytes = new byte[size];
