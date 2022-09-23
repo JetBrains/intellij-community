@@ -27,11 +27,13 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.search.search
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
+import java.util.*
 
 class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
     override fun handlesElement(element: PsiElement?) = element.canDeleteElement()
@@ -116,7 +118,8 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                     val superMethods = (function as? KtCallableSymbol)?.getDirectlyOverriddenSymbols() ?: return false
                     return superMethods.any {
                         val superClassSymbol = it.getContainingSymbol() as? KtClassOrObjectSymbol ?: return@any false
-                        return@any superClassSymbol != elementClassSymbol && !superClassSymbol.isSubClassOf(elementClassSymbol)
+                        val superMethod = it.psi ?: return@any false
+                        return@any !isInside(superMethod) && !superClassSymbol.isSubClassOf(elementClassSymbol)
                     }
                 }
 
@@ -174,10 +177,18 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         module: Module?,
         allElementsToDelete: MutableCollection<PsiElement>
     ): Collection<PsiElement> {
-        if (element is KtParameter) {
-            return getParametersToSearch(element)
+        when (element) {
+            is KtParameter -> {
+                return getParametersToSearch(element)
+            }
+
+            is KtNamedFunction, is KtProperty -> {
+                if (isUnitTestMode()) return Collections.singletonList(element)
+                return checkSuperMethods(element as KtDeclaration, allElementsToDelete, RefactoringBundle.message("to.refactor"))
+            }
+
+            else -> return arrayListOf(element)
         }
-        return arrayListOf(element)
     }
 
     override fun getAdditionalElementsToDelete(
