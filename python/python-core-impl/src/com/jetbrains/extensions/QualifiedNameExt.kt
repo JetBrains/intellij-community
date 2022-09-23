@@ -33,7 +33,7 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.resolve.*
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PySdkUtil
 import java.util.*
 
 
@@ -124,7 +124,7 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stop
   var psiDirectory: PsiDirectory? = null
 
   var resolveContext = context.contextAnchor.qualifiedNameResolveContext?.copyWithMembers() ?: return null
-  if (PythonSdkType.getLanguageLevelForSdk(context.sdk).isPy3K || context.allowInaccurateResult) {
+  if (PySdkUtil.getLanguageLevelForSdk(context.sdk).isPy3K || context.allowInaccurateResult) {
     resolveContext = resolveContext.copyWithPlainDirectories()
   }
 

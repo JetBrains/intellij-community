@@ -33,6 +33,5 @@
     <orderEntry type="module" module-name="intellij.platform.lvcs" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="module" module-name="intellij.python.community.core.impl" />
   </component>
 </module>

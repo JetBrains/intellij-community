@@ -100,4 +100,17 @@ public class PyStringLiteralCoreUtil {
 
     return text.substring(quotes.first.length(), text.length() - quotes.second.length());
   }
+
+  /**
+   * Handles unicode and raw strings
+   *
+   * @return false if no quotes found, true otherwise
+   *         sdfs -> false
+   *         ur'x' -> true
+   *         "string" -> true
+   */
+
+  public static boolean isQuoted(@Nullable String text) {
+    return text != null && getQuotes(text) != null;
+  }
 }

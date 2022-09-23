@@ -69,19 +69,6 @@ public final class PyStringLiteralUtil extends PyStringLiteralCoreUtil {
   }
 
   /**
-   * Handles unicode and raw strings
-   *
-   * @return false if no quotes found, true otherwise
-   *         sdfs -> false
-   *         ur'x' -> true
-   *         "string" -> true
-   */
-
-  public static boolean isQuoted(@Nullable String text) {
-    return text != null && getQuotes(text) != null;
-  }
-
-  /**
    * Returns the range of the string literal text between the opening quote and the closing one.
    * If the closing quote is either missing or mismatched, this range spans until the end of the literal.
    */

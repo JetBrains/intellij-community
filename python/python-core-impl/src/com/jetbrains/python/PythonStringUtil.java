@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.PathUtil;
 import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
-import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,7 +105,7 @@ public final class PythonStringUtil {
   public static String replaceLastSuffix(String s, String separator, String newElementName) {
 
     Pair<String, String> quotes = null;
-    if (PyStringLiteralUtil.isQuoted(s)) {
+    if (PyStringLiteralCoreUtil.isQuoted(s)) {
       quotes = PyStringLiteralCoreUtil.getQuotes(s);
       s = PyStringLiteralCoreUtil.stripQuotesAroundValue(s);
     }

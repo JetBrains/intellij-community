@@ -22,7 +22,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PyStringLiteralExpressionManipulator extends AbstractElementManipulator<PyStringLiteralExpressionImpl> {
@@ -57,7 +56,7 @@ public class PyStringLiteralExpressionManipulator extends AbstractElementManipul
                                              String newContent) {
     final String newText = range.replace(prevText, newContent);
 
-    if (PyStringLiteralUtil.isQuoted(newText)) {
+    if (PyStringLiteralCoreUtil.isQuoted(newText)) {
       return newText;
     }
 
