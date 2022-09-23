@@ -134,6 +134,9 @@ abstract class ProductProperties() {
   @ApiStatus.Experimental
   var useProductJar = true
 
+  @ApiStatus.Experimental
+  var signNativeFiles = true
+
   /**
    * If `false`, names of private fields won't be scrambled (to avoid problems with serialization).
    * This field is ignored if [scrambleMainJar] is `false`.
