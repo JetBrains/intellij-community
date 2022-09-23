@@ -18,6 +18,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.legacyBridge.FacetBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
@@ -261,10 +262,8 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
       }
     }
     else {
-      synchronized(obj) {
-        WorkspaceModel.getInstance(moduleBridge.project).updateProjectModelSilent {
-          it.mutableFacetMapping().updater()
-        }
+      (WorkspaceModel.getInstance(moduleBridge.project) as WorkspaceModelImpl).updateProjectModelSilent {
+        it.mutableFacetMapping().updater()
       }
     }
   }
@@ -284,7 +283,5 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     fun MutableEntityStorage.mutableFacetMapping(): MutableExternalEntityMapping<Facet<*>> {
       return this.getMutableExternalMapping(FACET_BRIDGE_MAPPING_ID)
     }
-
-    private val obj = Any()
   }
 }

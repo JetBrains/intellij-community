@@ -17,6 +17,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
@@ -140,7 +141,7 @@ class ProjectLibraryTableBridgeImpl(
     }
 
     if (targetBuilder == null) {
-      WorkspaceModel.getInstance(project).updateProjectModelSilent {
+      (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent {
         for ((entity, library) in libraries) {
           it.mutableLibraryMap.addIfAbsent(entity, library)
         }

@@ -27,6 +27,7 @@ import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.precomputeExtensionModel
 import com.intellij.util.graph.*
 import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -130,7 +131,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     }
 
     if (targetBuilder == null) {
-      WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
+      (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent { builder ->
         fillBuilder(builder)
       }
     } else {
@@ -290,7 +291,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
             val unloadedModuleDescription = UnloadedModuleDescriptionImpl(
               modulePath, description.dependencyModuleNames, contentRoots)
             unloadedModules[module.name] = unloadedModuleDescription
-            WorkspaceModel.getInstance(project).updateProjectModelSilent {
+            (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent {
               it.mutableModuleMap.removeMapping(moduleEntity)
             }
             fireEventAndDisposeModule(module)
@@ -298,7 +299,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
           // Remove Facet bridges to recreate them. String constant is taken from
           // com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.FACET_BRIDGE_MAPPING_ID
-          WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
+          (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent { builder ->
             // TODO:: Fix fo external entities associated with facets
             moduleEntitiesToLoad.flatMap { it.facets }.forEach {
               builder.getMutableExternalMapping<Any>(

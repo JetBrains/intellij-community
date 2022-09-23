@@ -107,6 +107,11 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     return result
   }
 
+  /**
+   * Update project model without the notification to message bus and without resetting accumulated changes.
+   *
+   * This method doesn't require write action.
+   */
   @Synchronized
   final override fun <R> updateProjectModelSilent(updater: (MutableEntityStorage) -> R): R {
     if (!projectModelUpdating.compareAndSet(false, true)) {

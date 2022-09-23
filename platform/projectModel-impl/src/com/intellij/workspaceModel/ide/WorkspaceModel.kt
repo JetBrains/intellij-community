@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Provides access to the storage which holds workspace model entities.
@@ -22,6 +23,8 @@ interface WorkspaceModel {
    *
    * This method doesn't require write action.
    */
+  @Deprecated("Method will be removed from interface. Use WorkspaceModelImpl#updateProjectModelSilent only " +
+              "if you are absolutely sure you need it")
   fun <R> updateProjectModelSilent(updater: (MutableEntityStorage) -> R): R
 
   /**

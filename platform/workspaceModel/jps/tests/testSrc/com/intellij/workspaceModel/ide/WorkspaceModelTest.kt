@@ -131,8 +131,8 @@ class WorkspaceModelTest {
   @Test(expected = RuntimeException::class)
   @Ignore
   fun `recursive update silent`() {
-    WorkspaceModel.getInstance(projectModel.project).updateProjectModelSilent {
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModelSilent {
+    (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent {
+      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent {
         println("So much updates")
       }
     }
@@ -142,8 +142,8 @@ class WorkspaceModelTest {
   @Ignore
   fun `recursive update mixed 1`() {
     ApplicationManager.getApplication().runWriteAction {
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModelSilent {
-        WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent {
+        (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModel {
           println("So much updates")
         }
       }
@@ -154,8 +154,8 @@ class WorkspaceModelTest {
   @Ignore
   fun `recursive update mixed 2`() {
     ApplicationManager.getApplication().runWriteAction {
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        WorkspaceModel.getInstance(projectModel.project).updateProjectModelSilent {
+      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModel {
+        (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent {
           println("So much updates")
         }
       }
