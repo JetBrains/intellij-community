@@ -535,16 +535,16 @@ private fun packJnaNativeLibraries(sourceFile: Path, paths: List<String>, contex
           unsignedFiles.computeIfAbsent(os) { mutableListOf() }.add(file)
         }
 
-        context.addDistFile(DistFile(file = file, relativeDir = "lib/jna", os = os, arch = arch))
+        context.addDistFile(DistFile(file = file, relativeDir = "lib/jna/${arch.dirName}", os = os, arch = arch))
       }
       finally {
         zipFile.releaseBuffer(byteBuffer)
       }
+    }
 
-      if (context.options.signNativeFiles) {
-        unsignedFiles.get(OsFamily.MACOS)?.let { context.signFiles(it, MAC_CODE_SIGN_OPTIONS) }
-        unsignedFiles.get(OsFamily.WINDOWS)?.let { context.signFiles(it, BuildOptions.WIN_SIGN_OPTIONS) }
-      }
+    if (context.options.signNativeFiles) {
+      unsignedFiles.get(OsFamily.MACOS)?.let { context.signFiles(it, MAC_CODE_SIGN_OPTIONS) }
+      unsignedFiles.get(OsFamily.WINDOWS)?.let { context.signFiles(it, BuildOptions.WIN_SIGN_OPTIONS) }
     }
   }
 }

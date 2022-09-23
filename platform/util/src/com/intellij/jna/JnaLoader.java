@@ -15,7 +15,7 @@ public final class JnaLoader {
     if (ourJnaLoaded == null) {
       ourJnaLoaded = Boolean.FALSE;
       if (Boolean.getBoolean("idea.jna.unpacked")) {
-        System.setProperty("jna.boot.library.path", PathManager.getLibPath() + "/jna");
+        System.setProperty("jna.boot.library.path", PathManager.getLibPath() + "/jna/" + (CpuArch.isArm64() ? "aarch64" : "amd64"));
       }
 
       try {

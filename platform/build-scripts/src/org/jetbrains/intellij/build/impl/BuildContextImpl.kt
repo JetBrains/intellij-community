@@ -143,12 +143,12 @@ class BuildContextImpl private constructor(
   }
 
   override fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile> {
+    if (os == null && arch == null) {
+      return java.util.List.copyOf(distFiles)
+    }
+
     return distFiles.filter {
-      when {
-        os != null && (it.os != null && it.os != os) -> false
-        arch != null && (it.arch != null && it.arch != arch) -> false
-        else -> true
-      }
+       (os == null || it.os == null || it.os == os) && (arch == null || it.arch == null || it.arch == arch)
     }
   }
 
