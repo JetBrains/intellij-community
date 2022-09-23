@@ -682,7 +682,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       Registry.`is`("toolwindow.independent.sizes")
 
   private fun visibleToolWindow(anchor: ToolWindowAnchor): ToolWindowEntry? =
-    idToEntry.values.firstOrNull { it.toolWindow.isVisible && it.readOnlyWindowInfo.anchor == anchor }
+    idToEntry.values.firstOrNull { it.isVisibleAndDockedTo(anchor) }
+
+  private fun ToolWindowEntry.isVisibleAndDockedTo(anchor: ToolWindowAnchor) =
+    toolWindow.isVisible && readOnlyWindowInfo.isDocked && readOnlyWindowInfo.anchor == anchor
 
   private val ToolWindowEntry.weight get() = readOnlyWindowInfo.weight
 
