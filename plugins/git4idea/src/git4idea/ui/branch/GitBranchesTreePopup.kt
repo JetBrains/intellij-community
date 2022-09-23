@@ -122,6 +122,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     if (haveBranches) {
       selectPreferred()
     }
+    super.updateSpeedSearchColors(!haveBranches)
     if (!pattern.isNullOrBlank()) {
       tree.emptyText.text = GitBundle.message("git.branches.popup.tree.no.branches", pattern)
     }
@@ -327,6 +328,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
   override fun afterShow() {
     selectPreferred()
   }
+
+  override fun updateSpeedSearchColors(error: Boolean) {} // update colors only after branches tree model update
 
   private fun selectPreferred() {
     val preferredSelection = treeStep.getPreferredSelection()

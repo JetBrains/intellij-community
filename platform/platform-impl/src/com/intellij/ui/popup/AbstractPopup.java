@@ -144,7 +144,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     @Override
     public void update() {
-      updateColors(false);
+      updateSpeedSearchColors(false);
       onSpeedSearchPatternChanged();
       mySpeedSearchPatternField.setText(getFilter());
       if (!mySpeedSearchAlwaysShown) {
@@ -161,19 +161,19 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     @Override
     public void noHits() {
-      updateColors(true);
-    }
-
-    private void updateColors(boolean error) {
-      JBTextField textEditor = mySpeedSearchPatternField.getTextEditor();
-      if (ExperimentalUI.isNewUI()) {
-        textEditor.setForeground(error ? NamedColorUtil.getErrorForeground() : UIUtil.getLabelForeground());
-      }
-      else {
-        textEditor.setBackground(error ? LightColors.RED : UIUtil.getTextFieldBackground());
-      }
+      updateSpeedSearchColors(true);
     }
   };
+
+  protected void updateSpeedSearchColors(boolean error) {
+    JBTextField textEditor = mySpeedSearchPatternField.getTextEditor();
+    if (ExperimentalUI.isNewUI()) {
+      textEditor.setForeground(error ? NamedColorUtil.getErrorForeground() : UIUtil.getLabelForeground());
+    }
+    else {
+      textEditor.setBackground(error ? LightColors.RED : UIUtil.getTextFieldBackground());
+    }
+  }
 
   protected SearchTextField mySpeedSearchPatternField;
   private boolean myNativePopup;
