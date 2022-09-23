@@ -77,10 +77,9 @@ class GithubAuthenticationManager internal constructor() {
     )?.registerAccount()
 
   @RequiresEdt
-  fun requestNewAccountForDefaultServer(project: Project?, useToken: Boolean = false): GithubAccount? {
-    return GHLoginRequest(server = GithubServerPath.DEFAULT_SERVER, isCheckLoginUnique = true).let {
-      if (!useToken) it.loginWithOAuth(project, null) else it.loginWithToken(project, null)
-    }?.registerAccount()
+  fun requestNewAccountForDefaultServer(project: Project?, authType: AuthorizationType): GithubAccount? {
+    val loginRequest = GHLoginRequest(server = GithubServerPath.DEFAULT_SERVER, isCheckLoginUnique = true, authType = authType)
+    return login(project, null, loginRequest)?.registerAccount()
   }
 
   internal fun isAccountUnique(name: String, server: GithubServerPath) =

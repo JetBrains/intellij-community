@@ -45,7 +45,7 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
         isOpaque = false
 
         addActionListener {
-          if (loginToGithub(true)) {
+          if (loginToGithub(false, AuthorizationType.OAUTH)) {
             vm.submitSelection()
           }
         }
@@ -54,7 +54,7 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
       },
 
       ActionLink(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
-        if (loginToGithub(false)) {
+        if (loginToGithub(false, AuthorizationType.TOKEN)) {
           vm.submitSelection()
         }
       }.apply {
@@ -81,11 +81,11 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
     return if (isDotComServer)
       listOf(object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")) {
         override fun actionPerformed(e: ActionEvent?) {
-          loginToGithub(true)
+          loginToGithub(true, AuthorizationType.OAUTH)
         }
       }, object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
         override fun actionPerformed(e: ActionEvent?) {
-          loginToGithub(true, false)
+          loginToGithub(true, AuthorizationType.TOKEN)
         }
       })
     else listOf(
@@ -96,15 +96,15 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
       })
   }
 
-  private fun loginToGithub(forceNew: Boolean, withOAuth: Boolean = true): Boolean {
+  private fun loginToGithub(forceNew: Boolean, authType: AuthorizationType): Boolean {
     val account = vm.accountSelectionState.value
     if (account == null || forceNew) {
-      return authManager.requestNewAccountForDefaultServer(project, !withOAuth)?.also {
+      return authManager.requestNewAccountForDefaultServer(project, authType)?.also {
         vm.accountSelectionState.value = it
       } != null
     }
     else if (vm.missingCredentialsState.value) {
-      return authManager.requestReLogin(project, account, AuthorizationType.TOKEN)
+      return authManager.requestReLogin(project, account, authType)
     }
     return false
   }
