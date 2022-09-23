@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.*;
@@ -61,6 +62,8 @@ public abstract class StubIndexEx extends StubIndex {
 
   private final StubProcessingHelper myStubProcessingHelper = new StubProcessingHelper();
   private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
+
+  private final ConcurrentHashMap<Class<? extends IFileElementType>, Integer> myFileElementTypeModCount = new ConcurrentHashMap<>();
 
   @ApiStatus.Internal
   abstract void initializeStubIndexes();
@@ -544,5 +547,22 @@ public abstract class StubIndexEx extends StubIndex {
   @ApiStatus.Internal
   public void cleanCaches() {
     myCachedStubIds.clear();
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public void incModificationCountForFileElementType(Class<? extends IFileElementType> fileElementTypeClass) {
+    myFileElementTypeModCount.compute(fileElementTypeClass, (__, value) -> {
+      if (value == null) {
+        return 1;
+      }
+      return value + 1;
+    });
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public int getModificationCountForFileElementType(Class<? extends IFileElementType> fileElementTypeClass) {
+    return myFileElementTypeModCount.getOrDefault(fileElementTypeClass, 0);
   }
 }

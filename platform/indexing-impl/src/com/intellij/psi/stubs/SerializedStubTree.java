@@ -60,6 +60,10 @@ public final class SerializedStubTree {
     Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> indexedStubs = indexTree(root);
     final BufferExposingByteArrayOutputStream indexBytes = new BufferExposingByteArrayOutputStream();
     forwardIndexExternalizer.save(new DataOutputStream(indexBytes), indexedStubs);
+    if (root instanceof PsiFileStub<?>) {
+      var type = ((PsiFileStub<?>)root).getType();
+      ((StubIndexEx)StubIndex.getInstance()).incModificationCountForFileElementType(type.getClass());
+    }
     byte[] indexedStubBytes = indexBytes.getInternalBuffer();
     int indexedStubByteLength = indexBytes.size();
     return new SerializedStubTree(

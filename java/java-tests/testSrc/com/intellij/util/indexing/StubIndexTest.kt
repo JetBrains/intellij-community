@@ -1,10 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex
+import com.intellij.psi.impl.source.JavaFileElementType
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StubIndexEx
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 
 @SkipSlowTestLocally
 class StubIndexTest : JavaCodeInsightFixtureTestCase() {
@@ -32,5 +38,14 @@ class StubIndexTest : JavaCodeInsightFixtureTestCase() {
     val indexQueryResultNotOptimized =
       JavaShortClassNameIndex.getInstance().get("Bar", myFixture.project, GlobalSearchScope.allScope(myFixture.project))
     assertEmpty(indexQueryResultNotOptimized)
+  }
+
+  fun `test java file element type mod count increments on java file creation and change`() {
+    assertEquals(0, (StubIndex.getInstance() as StubIndexEx).getModificationCountForFileElementType(JavaFileElementType::class.java))
+    val psi = myFixture.addClass("class Foo { String bar; }")
+    assertEquals(1, (StubIndex.getInstance() as StubIndexEx).getModificationCountForFileElementType(JavaFileElementType::class.java))
+    WriteAction.run<Throwable> { VfsUtil.saveText(psi.containingFile.virtualFile, "class Foo { int val; }"); }
+    CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project)
+    assertEquals(2, (StubIndex.getInstance() as StubIndexEx).getModificationCountForFileElementType(JavaFileElementType::class.java))
   }
 }
