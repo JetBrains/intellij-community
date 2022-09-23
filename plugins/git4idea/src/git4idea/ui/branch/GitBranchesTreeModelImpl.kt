@@ -69,7 +69,7 @@ class GitBranchesTreeModelImpl(
                                              || (node === GitBranchType.REMOTE && remoteBranchesTree.empty)
 
   private fun getChildren(parent: Any?): List<Any> {
-    if (parent == null) return emptyList()
+    if (parent == null || !haveFilteredBranches()) return emptyList()
     return when (parent) {
       is GitRepository -> getTopLevelNodes()
       is GitBranchType -> branchesTreeCache.getOrPut(parent) { getBranchTreeNodes(parent, emptyList()) }
@@ -169,6 +169,8 @@ class GitBranchesTreeModelImpl(
     branchTypeFilter = type
     branchNameMatcher = matcher
   }
+
+  private fun haveFilteredBranches(): Boolean = !localBranchesTree.empty || !remoteBranchesTree.empty
 
   private inner class LazyBranchesSubtreeHolder(
     val branches: Collection<GitBranch>,

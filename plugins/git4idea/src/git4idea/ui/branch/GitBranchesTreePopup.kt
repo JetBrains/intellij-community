@@ -118,7 +118,24 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
 
   private fun applySearchPattern(pattern: String? = speedSearch.enteredPrefix.nullize(true)) {
     treeStep.setSearchPattern(pattern)
-    selectPreferred()
+    val haveBranches = haveBranchesToShow()
+    if (haveBranches) {
+      selectPreferred()
+    }
+    if (!pattern.isNullOrBlank()) {
+      tree.emptyText.text = GitBundle.message("git.branches.popup.tree.no.branches", pattern)
+    }
+  }
+
+  private fun haveBranchesToShow(): Boolean {
+    val model = tree.model
+    val root = model.root
+
+    return (0 until model.getChildCount(root))
+      .asSequence()
+      .map { model.getChild(root, it) }
+      .filterIsInstance<GitBranchType>()
+      .any { !model.isLeaf(it) }
   }
 
   internal fun restoreDefaultSize() {
