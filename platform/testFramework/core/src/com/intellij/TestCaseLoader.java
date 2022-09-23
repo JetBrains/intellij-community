@@ -74,7 +74,7 @@ public class TestCaseLoader {
 
   private static final String PLATFORM_LITE_FIXTURE_NAME = "com.intellij.testFramework.PlatformLiteFixture";
 
-  private final List<Class<?>> myClassList = new ArrayList<>();
+  private final HashSet<Class<?>> myClassSet = new HashSet<>();
   private final List<Throwable> myClassLoadingErrors = new ArrayList<>();
   private Class<?> myFirstTestClass;
   private Class<?> myLastTestClass;
@@ -170,15 +170,17 @@ public class TestCaseLoader {
     return StringUtil.split(System.getProperty("intellij.build.test.groups", System.getProperty("idea.test.group", "")).trim(), ";");
   }
 
-  void addClassIfTestCase(Class<?> testCaseClass, String moduleName) {
+  private boolean isClassTestCase(Class<?> testCaseClass, String moduleName) {
     if (shouldAddTestCase(testCaseClass, moduleName, true) &&
         testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass &&
         TestFrameworkUtil.canRunTest(testCaseClass)) {
 
       if (SelfSeedingTestCase.class.isAssignableFrom(testCaseClass) || matchesCurrentBucket(testCaseClass.getName())) {
-        myClassList.add(testCaseClass);
+        return true;
       }
     }
+
+    return false;
   }
 
   /**
@@ -193,21 +195,39 @@ public class TestCaseLoader {
       return MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
     }
 
+    initFairBuckets();
+
     return matchesCurrentBucketFair(testIdentifier, TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX);
   }
 
-  public static boolean matchesCurrentBucketFair(@NotNull String testIdentifier,
-                                                 int testRunnerCount,
-                                                 int testRunnerIndex) {
-    // TODO: if (BUCKETS.isEmpty()) sort filtered test classes and populate buckets
+  /**
+   * Init fair buckets for all test classes
+   */
+  public static void initFairBuckets() {
+    if (BUCKETS.isEmpty()) {
+      var testCaseLoader = new TestCaseLoader("");
 
+      for (Path classesRoot : TestAll.getClassRoots()) {
+
+        ClassFinder classFinder = new ClassFinder(classesRoot.toFile(), "", INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
+        testCaseLoader.loadTestCases(classesRoot.getFileName().toString(), classFinder.getClasses());
+      }
+
+      var testCaseClasses = testCaseLoader.getClasses();
+
+      System.out.printf("Fair buckets initialization. Loaded classes %s%n", testCaseClasses.size());
+      testCaseClasses.forEach(testCaseClass -> matchesCurrentBucketFair(testCaseClass.getName(), TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX));
+    }
+  }
+
+  public static boolean matchesCurrentBucketFair(@NotNull String testIdentifier, int testRunnerCount, int testRunnerIndex) {
     var value = BUCKETS.get(testIdentifier);
 
     if (value != null) {
       var isMatchedBucket = value == testRunnerIndex;
 
       System.out.printf(
-        "Fair bucket matching: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s" + System.lineSeparator(),
+        "Fair bucket match: test identifier `%s` already in bucket, runner count %s, runner index %s, is matching bucket %s%n",
         testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
 
       return isMatchedBucket;
@@ -220,9 +240,8 @@ public class TestCaseLoader {
 
     var isMatchedBucket = BUCKETS.get(testIdentifier) == testRunnerIndex;
 
-    System.out.printf(
-      "Fair bucket matching: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s" + System.lineSeparator(),
-      testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
+    System.out.printf("Fair bucket match: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s%n",
+                      testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
 
     return isMatchedBucket;
   }
@@ -291,7 +310,7 @@ public class TestCaseLoader {
     for (String className : classNamesIterator) {
       try {
         Class<?> candidateClass = Class.forName(className, false, getClassLoader());
-        addClassIfTestCase(candidateClass, moduleName);
+        if (isClassTestCase(candidateClass, moduleName)) myClassSet.add(candidateClass);
       }
       catch (Throwable e) {
         String message = "Cannot load class " + className + ": " + e.getMessage();
@@ -343,17 +362,20 @@ public class TestCaseLoader {
   }
 
   public int getClassesCount() {
-    return myClassList.size();
+    return myClassSet.size();
   }
 
+  /**
+   * @return Sorted list of loaded classes
+   */
   public List<Class<?>> getClasses() {
-    List<Class<?>> result = new ArrayList<>(myClassList.size());
+    List<Class<?>> result = new ArrayList<>(myClassSet.size());
 
     if (myFirstTestClass != null) {
       result.add(myFirstTestClass);
     }
 
-    result.addAll(loadTestSorter().sorted(myClassList, TestCaseLoader::getRank));
+    result.addAll(loadTestSorter().sorted(myClassSet.stream().toList(), TestCaseLoader::getRank));
 
     if (myLastTestClass != null) {
       result.add(myLastTestClass);
@@ -384,7 +406,7 @@ public class TestCaseLoader {
   }
 
   private void clearClasses() {
-    myClassList.clear();
+    myClassSet.clear();
     myFirstTestClass = null;
     myLastTestClass = null;
   }
@@ -437,7 +459,7 @@ public class TestCaseLoader {
       }
     }
 
-    if (myClassList.isEmpty()) { // nothing to test
+    if (myClassSet.isEmpty()) { // nothing to test
       clearClasses();
     }
 
