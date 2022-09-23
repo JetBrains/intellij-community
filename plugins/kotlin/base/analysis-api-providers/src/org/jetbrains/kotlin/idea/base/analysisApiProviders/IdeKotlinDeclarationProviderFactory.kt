@@ -55,7 +55,7 @@ private class IdeKotlinDeclarationProvider(
     override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> {
         return KotlinFullClassNameIndex
             .get(classId.asStringForIndexes(), project, scope)
-            .filter { candidate -> candidate.containingKtFile.packageFqName == classId.packageFqName }
+            .filter { candidate -> candidate.getClassId() == classId }
     }
 
     override fun getAllTypeAliasesByClassId(classId: ClassId): Collection<KtTypeAlias> {
