@@ -31,6 +31,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoListener
 import org.jetbrains.kotlin.idea.base.projectStructure.checkValidity
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
@@ -228,7 +229,22 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
         initializer = {
             val cache = it.cast<LibraryCache>()
             project.ideaModules().forEach(cache::calculateLibrariesForModule)
-        }) {
+        }), LibraryInfoListener {
+
+        override fun subscribe(connection: MessageBusConnection) {
+            connection.subscribe(LibraryInfoListener.TOPIC, this)
+        }
+
+        override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
+            applyIfPossible {
+                invalidateEntries(condition = { _, values -> values.first() in libraryInfos })
+
+                /**
+                 * we can avoid recalculation and tracker incrementation because [modelChanged] will be called after that
+                 * [libraryInfosRemoved] called before model changes and [modelChanged] after
+                 */
+            }
+        }
 
         override fun calculate(key: Library): List<LibraryInfo> = LibraryInfoCache.getInstance(project)[key]
 
@@ -248,7 +264,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
                 .toList()
 
             if (outdatedLibraries.isNotEmpty()) {
-                invalidateEntries({ k, _ -> k in outdatedLibraries })
+                invalidateKeys(outdatedLibraries)
             }
 
             // force calculations
@@ -271,9 +287,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
             val modules = project.ideaModules()
             project.allSdks(modules).forEach(it::get)
         }
-    ),
-                           ProjectJdkTable.Listener,
-                           ModuleRootListener {
+    ), ProjectJdkTable.Listener, ModuleRootListener {
 
         override fun calculate(key: Sdk): SdkInfo = SdkInfo(project, key)
 

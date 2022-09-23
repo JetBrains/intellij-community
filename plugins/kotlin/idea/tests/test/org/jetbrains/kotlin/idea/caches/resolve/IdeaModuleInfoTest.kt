@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSour
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.getDependentModules
 import org.jetbrains.kotlin.idea.caches.project.getIdeaModelInfosCache
+import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
@@ -59,10 +60,43 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
 import java.util.concurrent.TimeUnit
+import kotlin.test.assertContains
 
 @RunWith(JUnit38ClassRunner::class)
 class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     private var vfsDisposable: Ref<Disposable>? = null
+
+    fun testLibraryCacheRace() {
+        val moduleA = module("a")
+        val stdlib = projectLibrary("kotlin-stdlib", TestKotlinArtifacts.kotlinStdlib.jarRoot)
+        moduleA.addDependency(stdlib)
+
+        val moduleB = module("b")
+        val stdlibCopy = projectLibrary("kotlin-stdlib-copy", TestKotlinArtifacts.kotlinStdlib.jarRoot)
+        moduleB.addDependency(stdlibCopy)
+
+        val modelBefore = getModuleInfosFromIdeaModel(project)
+        modelBefore.forEach(IdeaModuleInfo::checkValidity)
+
+        val cache = LibraryInfoCache.getInstance(project)
+        val stdlibCopyInfoBefore = cache[stdlibCopy].first()
+
+        assertContains(modelBefore, stdlibCopyInfoBefore)
+
+        val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+        runWriteAction {
+            libraryTable.removeLibrary(stdlib)
+        }
+
+        val modelAfter = getModuleInfosFromIdeaModel(project)
+        modelAfter.forEach(IdeaModuleInfo::checkValidity)
+
+        val stdlibCopyInfoAfter = cache[stdlibCopy].first()
+        assertNotEquals(stdlibCopyInfoBefore, stdlibCopyInfoAfter)
+
+        assertDoesntContain(modelAfter, stdlibCopyInfoBefore)
+        assertContains(modelAfter, stdlibCopyInfoAfter)
+    }
 
     fun testCacheRace() {
         val cache = LibraryInfoCache.getInstance(project)
