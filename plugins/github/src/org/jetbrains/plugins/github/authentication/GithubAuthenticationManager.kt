@@ -88,20 +88,20 @@ class GithubAuthenticationManager internal constructor() {
 
   @RequiresEdt
   @JvmOverloads
-  fun requestReLogin(account: GithubAccount, project: Project?, parentComponent: Component? = null): Boolean =
+  fun requestReLogin(project: Project?, account: GithubAccount, authType: AuthorizationType, parentComponent: Component? = null): Boolean =
     login(
       project, parentComponent,
-      GHLoginRequest(server = account.server, login = account.name)
+      GHLoginRequest(server = account.server, login = account.name, authType = authType),
     )?.updateAccount(account) != null
 
   @RequiresEdt
-  internal fun login(project: Project?, parentComponent: Component?, request: GHLoginRequest): GHAccountAuthData? =
-    if (request.server?.isGithubDotCom == true) {
-      request.loginWithOAuthOrToken(project, parentComponent)
+  internal fun login(project: Project?, parentComponent: Component?, request: GHLoginRequest): GHAccountAuthData? {
+    return when (request.authType) {
+      AuthorizationType.OAUTH -> request.loginWithOAuth(project, parentComponent)
+      AuthorizationType.TOKEN -> request.loginWithToken(project, parentComponent)
+      AuthorizationType.UNDEFINED -> request.loginWithOAuthOrToken(project, parentComponent)
     }
-    else {
-      request.loginWithToken(project, parentComponent)
-    }
+  }
 
   @RequiresEdt
   internal fun removeAccount(account: GithubAccount) {

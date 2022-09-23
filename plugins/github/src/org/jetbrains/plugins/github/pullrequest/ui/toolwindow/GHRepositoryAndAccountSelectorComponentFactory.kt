@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.plugins.github.authentication.AuthorizationType
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsProvider
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -103,7 +104,7 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
       } != null
     }
     else if (vm.missingCredentialsState.value) {
-      return authManager.requestReLogin(account, project)
+      return authManager.requestReLogin(project, account, AuthorizationType.TOKEN)
     }
     return false
   }
@@ -117,7 +118,7 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
       } != null
     }
     else if (vm.missingCredentialsState.value) {
-      return authManager.requestReLogin(account, project)
+      return authManager.requestReLogin(project, account, AuthorizationType.TOKEN)
     }
     return false
   }

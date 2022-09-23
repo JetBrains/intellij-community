@@ -8,7 +8,10 @@ import com.intellij.openapi.util.NlsContexts
 import git4idea.DialogManager
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager.Companion.createAccount
-import org.jetbrains.plugins.github.authentication.ui.*
+import org.jetbrains.plugins.github.authentication.ui.BaseLoginDialog
+import org.jetbrains.plugins.github.authentication.ui.GHOAuthLoginDialog
+import org.jetbrains.plugins.github.authentication.ui.GHTokenLoginDialog
+import org.jetbrains.plugins.github.authentication.ui.UniqueLoginPredicate
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import java.awt.Component
 
@@ -24,7 +27,8 @@ internal class GHLoginRequest(
   val isLoginEditable: Boolean = true,
   val isCheckLoginUnique: Boolean = false,
 
-  val token: String? = null
+  val token: String? = null,
+  val authType: AuthorizationType = AuthorizationType.UNDEFINED
 )
 
 internal fun GHLoginRequest.loginWithToken(project: Project?, parentComponent: Component?): GHAccountAuthData? {
