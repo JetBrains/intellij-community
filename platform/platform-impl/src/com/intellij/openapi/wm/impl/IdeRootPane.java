@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.accessibility.AccessibilityUtils;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -375,8 +375,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   protected @NotNull IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
-    boolean addToolWindowsWidget = !ExperimentalUI.isNewUI()
-                                   && !AccessibilityUtils.isScreenReaderDetected();
+    boolean addToolWindowsWidget = !ExperimentalUI.isNewUI() && !GeneralSettings.getInstance().isSupportScreenReaders();
     return new IdeStatusBarImpl(frame, addToolWindowsWidget);
   }
 
