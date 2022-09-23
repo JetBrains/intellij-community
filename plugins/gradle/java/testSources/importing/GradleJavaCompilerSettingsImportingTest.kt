@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.pom.java.LanguageLevel
+import org.jetbrains.plugins.gradle.util.isSupported
+import org.junit.Assume
 import org.junit.Test
 
 class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImportingTestCase() {
@@ -66,12 +68,12 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
 
   @Test
   fun `test language level approximation`() {
-    if (isGradleOlderThan("7.0")) return
-
     val nonPreviewLevel = LanguageLevel.HIGHEST
     val preview = LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal + 1]
-    
-    val feature = nonPreviewLevel.toJavaVersion().feature
+    val javaVersion = nonPreviewLevel.toJavaVersion()
+    val feature = javaVersion.feature
+
+    Assume.assumeTrue(isSupported(currentGradleVersion, javaVersion))
 
     createJavaGradleSubProject(
       projectSourceCompatibility = "$feature",
