@@ -1,200 +1,212 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.compiler.server
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.compiler.server;
 
-import com.intellij.compiler.CompilerMessageImpl
-import com.intellij.compiler.ProblemsView
-import com.intellij.compiler.impl.CompileDriver.Companion.convertToCategory
-import com.intellij.notification.Notification
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.compiler.CompilerManager
-import com.intellij.openapi.compiler.CompilerMessageCategory
-import com.intellij.openapi.compiler.CompilerTopics
-import com.intellij.openapi.compiler.JavaCompilerBundle
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.problems.WolfTheProblemSolver
-import org.jetbrains.jps.api.CmdlineRemoteProto
-import org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage
-import org.jetbrains.jps.api.GlobalOptions
-import java.awt.EventQueue
-import java.util.*
+import com.intellij.compiler.CompilerMessageImpl;
+import com.intellij.compiler.ProblemsView;
+import com.intellij.compiler.impl.CompileDriver;
+import com.intellij.notification.Notification;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.problems.Problem;
+import com.intellij.problems.WolfTheProblemSolver;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.api.CmdlineRemoteProto;
+import org.jetbrains.jps.api.GlobalOptions;
 
-private val LAST_AUTO_MAKE_NOTIFICATION = Key.create<Notification>("LAST_AUTO_MAKE_NOTIFICATION")
+import javax.swing.*;
+import java.util.Collections;
+import java.util.UUID;
 
 /**
- * @author Eugene Zhuravlev
- */
-internal class AutoMakeMessageHandler(private val project: Project) : DefaultMessageHandler(project) {
-  private var buildStatus: BuilderMessage.BuildEvent.Status = BuilderMessage.BuildEvent.Status.SUCCESS
-  private val wolf: WolfTheProblemSolver = WolfTheProblemSolver.getInstance(project)
+* @author Eugene Zhuravlev
+*/
+class AutoMakeMessageHandler extends DefaultMessageHandler {
+  private static final Key<Notification> LAST_AUTO_MAKE_NOTIFICATION = Key.create("LAST_AUTO_MAKE_NOTIFICATION");
+  private CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status myBuildStatus;
+  private final Project myProject;
+  private final WolfTheProblemSolver myWolf;
+  private volatile boolean myUnprocessedFSChangesDetected = false;
+  private final AutomakeCompileContext myContext;
 
-  @Volatile
-  private var isUnprocessedFsChangesDetected = false
-  private val context = AutomakeCompileContext(project)
-
-  private val problemView by lazy(LazyThreadSafetyMode.NONE) { ProblemsView.getInstance(project) }
-
-  init {
-    context.progressIndicator.start()
+  AutoMakeMessageHandler(@NotNull Project project) {
+    super(project);
+    myProject = project;
+    myBuildStatus = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.SUCCESS;
+    myWolf = WolfTheProblemSolver.getInstance(project);
+    myContext = new AutomakeCompileContext(project);
+    myContext.getProgressIndicator().start();
   }
 
-  fun unprocessedFSChangesDetected() = isUnprocessedFsChangesDetected
+  public boolean unprocessedFSChangesDetected() {
+    return myUnprocessedFSChangesDetected;
+  }
 
-  override fun handleBuildEvent(sessionId: UUID, event: BuilderMessage.BuildEvent) {
-    if (project.isDisposed) {
-      return
+  @Override
+  protected void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
+    if (myProject.isDisposed()) {
+      return;
     }
-
-    when (event.eventType) {
-      BuilderMessage.BuildEvent.Type.BUILD_COMPLETED -> {
-        context.progressIndicator.stop()
+    switch (event.getEventType()) {
+      case BUILD_COMPLETED:
+        myContext.getProgressIndicator().stop();
         if (event.hasCompletionStatus()) {
-          val status = event.completionStatus
-          buildStatus = status
-          if (status == BuilderMessage.BuildEvent.Status.CANCELED) {
-            context.progressIndicator.cancel()
+          final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status status = event.getCompletionStatus();
+          myBuildStatus = status;
+          if (status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.CANCELED) {
+            myContext.getProgressIndicator().cancel();
           }
         }
+        final int errors = myContext.getMessageCount(CompilerMessageCategory.ERROR);
+        final int warnings = myContext.getMessageCount(CompilerMessageCategory.WARNING);
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(() -> {
+          if (myProject.isDisposed()) {
+            return;
+          }
+          final CompilationStatusListener publisher = myProject.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
+          publisher.automakeCompilationFinished(errors, warnings, myContext);
+        });
+        return;
 
-        val errors = context.getMessageCount(CompilerMessageCategory.ERROR)
-        val warnings = context.getMessageCount(CompilerMessageCategory.WARNING)
-        EventQueue.invokeLater {
-          if (project.isDisposed) {
-            return@invokeLater
-          }
-          val publisher = project.messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS)
-          publisher.automakeCompilationFinished(errors, warnings, context)
+      case FILES_GENERATED:
+        final CompilationStatusListener publisher = myProject.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
+        for (CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile generatedFile : event.getGeneratedFilesList()) {
+          final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
+          final String relativePath = FileUtil.toSystemIndependentName(generatedFile.getRelativePath());
+          publisher.fileGenerated(root, relativePath);
         }
-      }
-      BuilderMessage.BuildEvent.Type.FILES_GENERATED -> {
-        val publisher = project.messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS)
-        for (generatedFile in event.generatedFilesList) {
-          val root = FileUtil.toSystemIndependentName(generatedFile.outputRoot)
-          val relativePath = FileUtil.toSystemIndependentName(generatedFile.relativePath)
-          publisher.fileGenerated(root, relativePath)
-        }
-      }
-      BuilderMessage.BuildEvent.Type.CUSTOM_BUILDER_MESSAGE -> {
-        if (event.hasCustomBuilderMessage()) {
-          val message = event.customBuilderMessage
-          if (GlobalOptions.JPS_SYSTEM_BUILDER_ID == message.builderId && GlobalOptions.JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID == message.messageType) {
-            isUnprocessedFsChangesDetected = true
-          }
-        }
-      }
-      else -> {}
+        return;
+
+      case CUSTOM_BUILDER_MESSAGE:
+         if (event.hasCustomBuilderMessage()) {
+           final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message = event.getCustomBuilderMessage();
+           if (GlobalOptions.JPS_SYSTEM_BUILDER_ID.equals(message.getBuilderId()) && GlobalOptions.JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID.equals(message.getMessageType())) {
+             myUnprocessedFSChangesDetected = true;
+           }
+         }
+         return;
+
+      default:
     }
   }
 
-  override fun handleCompileMessage(sessionId: UUID, message: BuilderMessage.CompileMessage) {
-    if (project.isDisposed) {
-      return
+  @Override
+  protected void handleCompileMessage(final UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
+    if (myProject.isDisposed()) {
+      return;
     }
-
-    val kind = message.kind
-    if (kind == BuilderMessage.CompileMessage.Kind.PROGRESS) {
+    final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind = message.getKind();
+    if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.PROGRESS) {
+      final ProblemsView view = ProblemsView.getInstance(myProject);
       if (message.hasDone()) {
-        problemView.setProgress(message.text, message.done)
+        view.setProgress(message.getText(), message.getDone());
       }
       else {
-        problemView.setProgress(message.text)
+        view.setProgress(message.getText());
       }
     }
     else {
-      val category = convertToCategory(kind) ?: return
-      // only process supported kinds of messages
-      val sourceFilePath = if (message.hasSourceFilePath()) message.sourceFilePath else null
-      val url = if (sourceFilePath == null) {
-        null
-      }
-      else {
-        VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(sourceFilePath))
-      }
-
-      val line = if (message.hasLine()) message.line else -1
-      val column = if (message.hasColumn()) message.column else -1
-      val compilerMessage = context
-        .createAndAddMessage(category, message.text, url, line.toInt(), column.toInt(), null, message.moduleNamesList)
-      if (category === CompilerMessageCategory.ERROR || kind == BuilderMessage.CompileMessage.Kind.JPS_INFO) {
-        if (category === CompilerMessageCategory.ERROR) {
-          informWolf(message)
-        }
-        if (compilerMessage != null) {
-          problemView.addMessage(compilerMessage, sessionId)
+      final CompilerMessageCategory category = CompileDriver.convertToCategory(kind, null);
+      if (category != null) { // only process supported kinds of messages
+        final String sourceFilePath = message.hasSourceFilePath() ? message.getSourceFilePath() : null;
+        final String url = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(sourceFilePath)) : null;
+        final long line = message.hasLine() ? message.getLine() : -1;
+        final long column = message.hasColumn() ? message.getColumn() : -1;
+        //noinspection HardCodedStringLiteral
+        final CompilerMessage msg = myContext.createAndAddMessage(category, message.getText(), url, (int)line, (int)column, null, message.getModuleNamesList());
+        if (category == CompilerMessageCategory.ERROR || kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.JPS_INFO) {
+          if (category == CompilerMessageCategory.ERROR) {
+            ReadAction.run(() -> informWolf(message));
+          }
+          if (msg != null) {
+            ProblemsView.getInstance(myProject).addMessage(msg, sessionId);
+          }
         }
       }
     }
   }
 
-  override fun handleFailure(sessionId: UUID, failure: CmdlineRemoteProto.Message.Failure) {
-    if (project.isDisposed) {
-      return
+  @Override
+  public void handleFailure(@NotNull UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
+    if (myProject.isDisposed()) {
+      return;
     }
-
-    val description = (if (failure.hasDescription()) failure.description else null)
-                      ?: if (failure.hasStacktrace()) failure.stacktrace else ""
-    val message = JavaCompilerBundle.message("notification.compiler.auto.build.failure", description)
-    CompilerManager.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project)
-    problemView.addMessage(CompilerMessageImpl(project, CompilerMessageCategory.ERROR, message), sessionId)
+    String descr = failure.hasDescription() ? failure.getDescription() : null;
+    if (descr == null) {
+      descr = failure.hasStacktrace()? failure.getStacktrace() : "";
+    }
+    final String msg = JavaCompilerBundle.message("notification.compiler.auto.build.failure", descr);
+    CompilerManager.NOTIFICATION_GROUP.createNotification(msg, MessageType.INFO).notify(myProject);
+    ProblemsView.getInstance(myProject).addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.ERROR, msg), sessionId);
   }
 
-  override fun sessionTerminated(sessionId: UUID) {
-    var statusMessage: String? = null /*"Auto make completed"*/
-    when (buildStatus) {
-      BuilderMessage.BuildEvent.Status.SUCCESS -> {}
-      BuilderMessage.BuildEvent.Status.UP_TO_DATE -> {}
-      BuilderMessage.BuildEvent.Status.ERRORS -> statusMessage = JavaCompilerBundle.message(
-        "notification.compiler.auto.build.completed.with.errors")
-      BuilderMessage.BuildEvent.Status.CANCELED -> {}
+  @Override
+  public void sessionTerminated(@NotNull UUID sessionId) {
+    String statusMessage = null/*"Auto make completed"*/;
+    switch (myBuildStatus) {
+      case SUCCESS:
+        //statusMessage = "Auto make completed successfully";
+        break;
+      case UP_TO_DATE:
+        //statusMessage = "All files are up-to-date";
+        break;
+      case ERRORS:
+        statusMessage = JavaCompilerBundle.message("notification.compiler.auto.build.completed.with.errors");
+        break;
+      case CANCELED:
+        //statusMessage = "Auto make has been canceled";
+        break;
     }
     if (statusMessage != null) {
-      val notification = CompilerManager.NOTIFICATION_GROUP.createNotification(statusMessage, MessageType.INFO)
-      if (!project.isDisposed) {
-        notification.notify(project)
+      final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(statusMessage, MessageType.INFO);
+      if (!myProject.isDisposed()) {
+        notification.notify(myProject);
       }
-      project.putUserData(LAST_AUTO_MAKE_NOTIFICATION, notification)
+      myProject.putUserData(LAST_AUTO_MAKE_NOTIFICATION, notification);
     }
     else {
-      val notification = project.getUserData(LAST_AUTO_MAKE_NOTIFICATION)
+      Notification notification = myProject.getUserData(LAST_AUTO_MAKE_NOTIFICATION);
       if (notification != null) {
-        notification.expire()
-        project.putUserData(LAST_AUTO_MAKE_NOTIFICATION, null)
+        notification.expire();
+        myProject.putUserData(LAST_AUTO_MAKE_NOTIFICATION, null);
       }
     }
-    if (!project.isDisposed) {
-      ProblemsView.getInstanceIfCreated(project)?.let { view ->
-        view.clearProgress()
-        view.clearOldMessages(null, sessionId)
+    if (!myProject.isDisposed()) {
+      ProblemsView view = ProblemsView.getInstanceIfCreated(myProject);
+      if (view != null) {
+        view.clearProgress();
+        view.clearOldMessages(null, sessionId);
       }
     }
   }
 
-  override fun getProgressIndicator() = context.progressIndicator
+  @Override
+  public @NotNull ProgressIndicator getProgressIndicator() {
+    return myContext.getProgressIndicator();
+  }
 
-  private fun informWolf(message: BuilderMessage.CompileMessage) {
-    val srcPath = message.sourceFilePath ?: return
-    if (project.isDisposed) {
-      return
-    }
-
-    ApplicationManager.getApplication().runReadAction {
-      if (project.isDisposed) {
-        return@runReadAction
-      }
-
-      val vFile = LocalFileSystem.getInstance().findFileByPath(srcPath) ?: return@runReadAction
-      val line = message.line.toInt()
-      val column = message.column.toInt()
-      if (line > 0 && column > 0) {
-        val problem = wolf.convertToProblem(vFile, line, column, arrayOf(message.text))
-        wolf.weHaveGotProblems(vFile, listOf(problem))
-      }
-      else {
-        wolf.queue(vFile)
+  private void informWolf(CmdlineRemoteProto.Message.BuilderMessage.@NotNull CompileMessage message) {
+    final String srcPath = message.getSourceFilePath();
+    if (srcPath != null && !myProject.isDisposed()) {
+      final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(srcPath);
+      if (vFile != null) {
+        final int line = (int)message.getLine();
+        final int column = (int)message.getColumn();
+        if (line > 0 && column > 0) {
+          final Problem problem = myWolf.convertToProblem(vFile, line, column, new String[]{message.getText()});
+          myWolf.weHaveGotProblems(vFile, Collections.singletonList(problem));
+        }
+        else {
+          myWolf.queue(vFile);
+        }
       }
     }
   }

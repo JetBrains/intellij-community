@@ -1,926 +1,934 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+package com.intellij.compiler.impl;
 
-package com.intellij.compiler.impl
+import com.intellij.CommonBundle;
+import com.intellij.build.BuildContentManager;
+import com.intellij.compiler.*;
+import com.intellij.compiler.progress.CompilerMessagesService;
+import com.intellij.compiler.progress.CompilerTask;
+import com.intellij.compiler.server.BuildManager;
+import com.intellij.compiler.server.DefaultMessageHandler;
+import com.intellij.configurationStore.StoreUtil;
+import com.intellij.ide.nls.NlsMessages;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.deployment.DeploymentUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.LanguageLevelUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.wm.*;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
+import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.tracing.Tracer;
+import com.intellij.util.Chunk;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.*;
+import org.jetbrains.jps.api.*;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-import com.intellij.CommonBundle
-import com.intellij.build.BuildContentManager
-import com.intellij.compiler.*
-import com.intellij.compiler.progress.CompilerMessagesService
-import com.intellij.compiler.progress.CompilerTask
-import com.intellij.compiler.server.BuildManager
-import com.intellij.compiler.server.DefaultMessageHandler
-import com.intellij.configurationStore.runInAutoSaveDisabledMode
-import com.intellij.configurationStore.saveSettings
-import com.intellij.ide.impl.runBlockingUnderModalProgress
-import com.intellij.ide.nls.NlsMessages
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationListener
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.compiler.*
-import com.intellij.openapi.deployment.DeploymentUtil
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.module.LanguageLevelUtil
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.*
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.CompilerModuleExtension
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory
-import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.wm.StatusBar
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.WindowManager
-import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil
-import com.intellij.packaging.impl.compiler.ArtifactsCompiler
-import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.tracing.Tracer
-import com.intellij.util.SystemProperties
-import com.intellij.util.ThrowableRunnable
-import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.write
-import com.intellij.util.text.DateFormatUtil
-import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.PropertyKey
-import org.jetbrains.annotations.TestOnly
-import org.jetbrains.jps.api.*
-import org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage
-import org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage
-import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope
-import org.jetbrains.jps.model.java.JavaSourceRootType
-import java.awt.EventQueue
-import java.io.IOException
-import java.lang.ref.WeakReference
-import java.nio.file.Paths
-import java.util.*
-import java.util.concurrent.CancellationException
-import java.util.concurrent.TimeUnit
-import javax.swing.SwingUtilities
-import javax.swing.event.HyperlinkEvent
+import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
-private val LOG = logger<CompileDriver>()
-private val COMPILATION_STARTED_AUTOMATICALLY = Key.create<Boolean>("compilation_started_automatically")
-private val COMPILE_SERVER_BUILD_STATUS = Key.create<ExitStatus>("COMPILE_SERVER_BUILD_STATUS")
-private const val ONE_MINUTE_MS = 60L * 1000L
+import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
-class CompileDriver(private val project: Project) {
-  private val moduleOutputPaths = HashMap<Module, String?>()
-  private val moduleTestOutputPaths = HashMap<Module, String?>()
+public final class CompileDriver {
+  private static final Logger LOG = Logger.getInstance(CompileDriver.class);
 
-  companion object {
-    @JvmStatic
-    fun setCompilationStartedAutomatically(scope: CompileScope) {
-      //todo[nik] pass this option as a parameter to compile/make methods instead
-      scope.putUserData(COMPILATION_STARTED_AUTOMATICALLY, true)
-    }
+  private static final Key<Boolean> COMPILATION_STARTED_AUTOMATICALLY = Key.create("compilation_started_automatically");
+  private static final Key<ExitStatus> COMPILE_SERVER_BUILD_STATUS = Key.create("COMPILE_SERVER_BUILD_STATUS");
+  private static final long ONE_MINUTE_MS = 60L * 1000L;
 
-    @TestOnly
-    @JvmStatic
-    fun getExternalBuildExitStatus(context: CompileContext): ExitStatus? {
-      return context.getUserData(COMPILE_SERVER_BUILD_STATUS)
-    }
+  private final Project myProject;
+  private final Map<Module, String> myModuleOutputPaths = new HashMap<>();
+  private final Map<Module, String> myModuleTestOutputPaths = new HashMap<>();
 
-    fun convertToCategory(kind: CompileMessage.Kind?): CompilerMessageCategory? {
-      return when (kind) {
-        CompileMessage.Kind.ERROR, CompileMessage.Kind.INTERNAL_BUILDER_ERROR -> CompilerMessageCategory.ERROR
-        CompileMessage.Kind.WARNING -> CompilerMessageCategory.WARNING
-        CompileMessage.Kind.INFO, CompileMessage.Kind.JPS_INFO, CompileMessage.Kind.OTHER -> CompilerMessageCategory.INFORMATION
-        else -> null
-      }
-    }
+  public CompileDriver(Project project) {
+    myProject = project;
   }
 
-  fun rebuild(callback: CompileStatusNotification) {
-    doRebuild(callback = callback, compileScope = ProjectCompileScope(project))
+  @SuppressWarnings({"deprecation", "unused"})
+  public void setCompilerFilter(@SuppressWarnings("unused") CompilerFilter compilerFilter) {
   }
 
-  fun make(scope: CompileScope, callback: CompileStatusNotification) {
-    make(scope = scope, withModalProgress = false, callback = callback)
+  public void rebuild(CompileStatusNotification callback) {
+    doRebuild(callback, new ProjectCompileScope(myProject));
   }
 
-  fun make(scope: CompileScope, withModalProgress: Boolean, callback: CompileStatusNotification) {
+  public void make(CompileScope scope, CompileStatusNotification callback) {
+    make(scope, false, callback);
+  }
+
+  public void make(CompileScope scope, boolean withModalProgress, CompileStatusNotification callback) {
     if (validateCompilerConfiguration(scope)) {
-      startup(scope = scope, forceCompile = false, withModalProgress = withModalProgress, callback = callback)
+      startup(scope, false, false, withModalProgress, callback, null);
     }
     else {
-      callback.finished(aborted = true, errors = 0, warnings = 0, compileContext = DummyCompileContext.create(project))
+      callback.finished(true, 0, 0, DummyCompileContext.create(myProject));
     }
   }
 
-  @Suppress("DuplicatedCode")
-  fun isUpToDate(scope: CompileScope): Boolean {
-    LOG.debug { "isUpToDate operation started" }
-    val task = CompilerTask(
-      project,
-      JavaCompilerBundle.message("classes.up.to.date.check"),  /* headlessMode = */
-      true,  /* forceAsync = */
-      false,  /* waitForPreviousSession */
-      false,
-      isCompilationStartedAutomatically(scope)
-    )
-    val compileContext = CompileContextImpl(project, task, scope, true, false)
-    var result: ExitStatus? = null
-    val compileWork = Runnable {
-      val indicator = compileContext.progressIndicator
-      if (indicator.isCanceled || project.isDisposed) {
-        return@Runnable
+  public boolean isUpToDate(@NotNull CompileScope scope) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("isUpToDate operation started");
+    }
+
+    final CompilerTask task = new CompilerTask(myProject, JavaCompilerBundle.message("classes.up.to.date.check"), true, false, false,
+                                               isCompilationStartedAutomatically(scope));
+    final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, true, false);
+
+    final Ref<ExitStatus> result = new Ref<>();
+
+    Runnable compileWork = () -> {
+      ProgressIndicator indicator = compileContext.getProgressIndicator();
+      if (indicator.isCanceled() || myProject.isDisposed()) {
+        return;
       }
-      val buildManager = BuildManager.getInstance()
+
+      final BuildManager buildManager = BuildManager.getInstance();
       try {
-        buildManager.postponeBackgroundTasks()
-        buildManager.cancelAutoMakeTasks(project)
-        val future = compileInExternalProcess(compileContext = compileContext, onlyCheckUpToDate = true)
+        buildManager.postponeBackgroundTasks();
+        buildManager.cancelAutoMakeTasks(myProject);
+        TaskFuture<?> future = compileInExternalProcess(compileContext, true);
         if (future != null) {
           while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
-            if (indicator.isCanceled) {
-              future.cancel(false)
+            if (indicator.isCanceled()) {
+              future.cancel(false);
             }
           }
         }
       }
-      catch (e: Throwable) {
-        LOG.error(e)
+      catch (ProcessCanceledException ignored) {
+        compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, ExitStatus.CANCELLED);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
       }
       finally {
-        val exitStatus = COMPILE_SERVER_BUILD_STATUS.get(compileContext)
-        task.setEndCompilationStamp(exitStatus, System.currentTimeMillis())
-        result = exitStatus
-        buildManager.allowBackgroundTasks(false)
-        if (!project.isDisposed) {
-          CompilerCacheManager.getInstance(project).flushCaches()
+        ExitStatus exitStatus = COMPILE_SERVER_BUILD_STATUS.get(compileContext);
+        task.setEndCompilationStamp(exitStatus, System.currentTimeMillis());
+        result.set(exitStatus);
+        buildManager.allowBackgroundTasks(false);
+        if (!myProject.isDisposed()) {
+          CompilerCacheManager.getInstance(myProject).flushCaches();
         }
       }
-    }
+    };
 
-    val indicatorProvider = ProgressIndicatorProvider.getInstance()
-    if (!EventQueue.isDispatchThread() && indicatorProvider.progressIndicator != null) {
+    ProgressIndicatorProvider indicatorProvider = ProgressIndicatorProvider.getInstance();
+    if (!EventQueue.isDispatchThread() && indicatorProvider.getProgressIndicator() != null) {
       // if called from background process on pooled thread, run synchronously
-      task.run(compileWork, null, indicatorProvider.progressIndicator)
+      task.run(compileWork, null, indicatorProvider.getProgressIndicator());
     }
     else {
-      task.start(compileWork, null)
+      task.start(compileWork, null);
     }
-    if (LOG.isDebugEnabled) {
-      LOG.debug("isUpToDate operation finished")
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("isUpToDate operation finished");
     }
-    return result == ExitStatus.UP_TO_DATE
+
+    return ExitStatus.UP_TO_DATE.equals(result.get());
   }
 
-  @Suppress("DuplicatedCode")
-  suspend fun nonBlockingIsUpToDate(scope: CompileScope): Boolean {
-    val task = CompilerTask(
-      project,
-      JavaCompilerBundle.message("classes.up.to.date.check"),
-      /* headlessMode = */ true,
-      /* forceAsync = */ false,
-      /* waitForPreviousSession */ false,
-      isCompilationStartedAutomatically(scope)
-    )
-
-    val compileContext = CompileContextImpl(project, task, scope, true, false)
-    return runUnderIndicator {
-      var result: ExitStatus? = null
-      task.runUsingCurrentIndicator(Runnable {
-        val indicator = compileContext.progressIndicator
-        if (indicator.isCanceled || project.isDisposed) {
-          return@Runnable
-        }
-
-        val buildManager = BuildManager.getInstance()
-        try {
-          buildManager.postponeBackgroundTasks()
-          buildManager.cancelAutoMakeTasks(project)
-          val future = compileInExternalProcess(compileContext = compileContext, onlyCheckUpToDate = true)
-          if (future != null) {
-            while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
-              if (indicator.isCanceled) {
-                future.cancel(false)
-              }
-            }
-          }
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
-        }
-        finally {
-          val exitStatus = COMPILE_SERVER_BUILD_STATUS.get(compileContext)
-          task.setEndCompilationStamp(exitStatus, System.currentTimeMillis())
-          result = exitStatus
-          buildManager.allowBackgroundTasks(false)
-          if (!project.isDisposed) {
-            CompilerCacheManager.getInstance(project).flushCaches()
-          }
-        }
-      }, null)
-      result == ExitStatus.UP_TO_DATE
-    }
-  }
-
-  fun compile(scope: CompileScope, callback: CompileStatusNotification) {
+  public void compile(CompileScope scope, CompileStatusNotification callback) {
     if (validateCompilerConfiguration(scope)) {
-      startup(scope = scope, forceCompile = true, callback = callback)
+      startup(scope, false, true, callback, null);
     }
     else {
-      callback.finished(aborted = true, errors = 0, warnings = 0, compileContext = DummyCompileContext.create(project))
+      callback.finished(true, 0, 0, DummyCompileContext.create(myProject));
     }
   }
 
-  private fun doRebuild(callback: CompileStatusNotification, compileScope: CompileScope) {
+  private void doRebuild(CompileStatusNotification callback, final CompileScope compileScope) {
     if (validateCompilerConfiguration(compileScope)) {
-      startup(scope = compileScope, isRebuild = true, forceCompile = false, callback = callback)
+      startup(compileScope, true, false, callback, null);
     }
     else {
-      callback.finished(aborted = true, errors = 0, warnings = 0, compileContext = DummyCompileContext.create(project))
+      callback.finished(true, 0, 0, DummyCompileContext.create(myProject));
     }
   }
 
-  private fun getBuildScopes(compileContext: CompileContextImpl,
-                             scope: CompileScope,
-                             paths: Collection<String>): List<TargetTypeBuildScope> {
-    val scopes = ArrayList<TargetTypeBuildScope>()
-    val forceBuild = !compileContext.isMake
-    val explicitScopes = CompileScopeUtil.getBaseScopeForExternalBuild(scope)
+  public static void setCompilationStartedAutomatically(CompileScope scope) {
+    //todo[nik] pass this option as a parameter to compile/make methods instead
+    scope.putUserData(COMPILATION_STARTED_AUTOMATICALLY, true);
+  }
+
+  private static boolean isCompilationStartedAutomatically(CompileScope scope) {
+    return Boolean.TRUE.equals(scope.getUserData(COMPILATION_STARTED_AUTOMATICALLY));
+  }
+
+  private List<TargetTypeBuildScope> getBuildScopes(@NotNull CompileContextImpl compileContext, CompileScope scope, Collection<String> paths) {
+    List<TargetTypeBuildScope> scopes = new ArrayList<>();
+    final boolean forceBuild = !compileContext.isMake();
+    List<TargetTypeBuildScope> explicitScopes = CompileScopeUtil.getBaseScopeForExternalBuild(scope);
     if (explicitScopes != null) {
-      scopes.addAll(explicitScopes)
+      scopes.addAll(explicitScopes);
     }
-    else if (!compileContext.isRebuild && (!paths.isEmpty() || !CompileScopeUtil.allProjectModulesAffected(compileContext))) {
-      CompileScopeUtil.addScopesForSourceSets(scope.affectedSourceSets, scope.affectedUnloadedModules, scopes, forceBuild)
+    else if (!compileContext.isRebuild() && (!paths.isEmpty() || !CompileScopeUtil.allProjectModulesAffected(compileContext))) {
+      CompileScopeUtil.addScopesForSourceSets(scope.getAffectedSourceSets(), scope.getAffectedUnloadedModules(), scopes, forceBuild);
     }
     else {
-      val sourceSets = scope.affectedSourceSets
-      var includeTests = sourceSets.isEmpty()
-      for (sourceSet in sourceSets) {
-        if (sourceSet.type.isTest) {
-          includeTests = true
-          break
+      final Collection<ModuleSourceSet> sourceSets = scope.getAffectedSourceSets();
+      boolean includeTests = sourceSets.isEmpty();
+      for (ModuleSourceSet sourceSet : sourceSets) {
+        if (sourceSet.getType().isTest()) {
+          includeTests = true;
+          break;
         }
       }
       if (includeTests) {
-        scopes.addAll(CmdlineProtoUtil.createAllModulesScopes(forceBuild))
+        scopes.addAll(CmdlineProtoUtil.createAllModulesScopes(forceBuild));
       }
       else {
-        scopes.add(CmdlineProtoUtil.createAllModulesProductionScope(forceBuild))
+        scopes.add(CmdlineProtoUtil.createAllModulesProductionScope(forceBuild));
       }
     }
-    return if (paths.isEmpty()) mergeScopesFromProviders(scope = scope, scopes = scopes, forceBuild = forceBuild) else scopes
-  }
-
-  private fun mergeScopesFromProviders(scope: CompileScope,
-                                       scopes: List<TargetTypeBuildScope>,
-                                       forceBuild: Boolean): List<TargetTypeBuildScope> {
-    var result = scopes
-    for (provider in BuildTargetScopeProvider.EP_NAME.extensionList) {
-      val providerScopes = ReadAction.compute<List<TargetTypeBuildScope>, RuntimeException> {
-        if (project.isDisposed) {
-          emptyList()
-        }
-        else {
-          provider.getBuildTargetScopes(scope, project, forceBuild)
-        }
-      }
-      result = CompileScopeUtil.mergeScopes(result, providerScopes)
+    if (paths.isEmpty()) {
+      scopes = mergeScopesFromProviders(scope, scopes, forceBuild);
     }
-    return result
+    return scopes;
   }
 
-  private fun compileInExternalProcess(compileContext: CompileContextImpl, onlyCheckUpToDate: Boolean): TaskFuture<*>? {
-    val scope = compileContext.compileScope
-    val paths = CompileScopeUtil.fetchFiles(compileContext)
-    val scopes = getBuildScopes(compileContext = compileContext, scope = scope, paths = paths)
+  private List<TargetTypeBuildScope> mergeScopesFromProviders(CompileScope scope,
+                                                              List<TargetTypeBuildScope> scopes,
+                                                              boolean forceBuild) {
+    for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
+      List<TargetTypeBuildScope> providerScopes = ReadAction.compute(
+        () -> myProject.isDisposed() ? Collections.emptyList()
+                                     : provider.getBuildTargetScopes(scope, myProject, forceBuild));
+      scopes = CompileScopeUtil.mergeScopes(scopes, providerScopes);
+    }
+    return scopes;
+  }
+
+  @Nullable
+  private TaskFuture<?> compileInExternalProcess(@NotNull final CompileContextImpl compileContext, final boolean onlyCheckUpToDate) {
+    final CompileScope scope = compileContext.getCompileScope();
+    final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
+    List<TargetTypeBuildScope> scopes = getBuildScopes(compileContext, scope, paths);
 
     // need to pass scope's user data to server
-    val builderParams = HashMap<String, String>()
-    if (!onlyCheckUpToDate) {
-      val exported = scope.exportUserData()
-      if (!exported.isEmpty()) {
-        for ((key, value) in exported) {
-          builderParams.put(key.toString(), value.toString())
-        }
-      }
-    }
-
-    if (!scope.affectedUnloadedModules.isEmpty()) {
-      builderParams.put(BuildParametersKeys.LOAD_UNLOADED_MODULES, true.toString())
-    }
-    val outputToArtifact = if (ArtifactCompilerUtil.containsArtifacts(scopes)) {
-      ArtifactCompilerUtil.createOutputToArtifactMap(project)
+    final Map<String, String> builderParams;
+    if (onlyCheckUpToDate) {
+      builderParams = new HashMap<>();
     }
     else {
-      null
+      Map<Key<?>, Object> exported = scope.exportUserData();
+      if (!exported.isEmpty()) {
+        builderParams = new HashMap<>();
+        for (Map.Entry<Key<?>, Object> entry : exported.entrySet()) {
+          final String _key = entry.getKey().toString();
+          final String _value = entry.getValue().toString();
+          builderParams.put(_key, _value);
+        }
+      }
+      else {
+        builderParams = new HashMap<>();
+      }
+    }
+    if (!scope.getAffectedUnloadedModules().isEmpty()) {
+      builderParams.put(BuildParametersKeys.LOAD_UNLOADED_MODULES, Boolean.TRUE.toString());
     }
 
-    return BuildManager.getInstance().scheduleBuild(
-      project,
-      compileContext.isRebuild,
-      compileContext.isMake,
-      onlyCheckUpToDate,
-      scopes,
-      paths,
-      builderParams,
-      object : DefaultMessageHandler(project) {
-        override fun sessionTerminated(sessionId: UUID) {
+    final Map<String, List<Artifact>> outputToArtifact = ArtifactCompilerUtil.containsArtifacts(scopes) ? ArtifactCompilerUtil.createOutputToArtifactMap(myProject) : null;
+    return BuildManager.getInstance().scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), onlyCheckUpToDate, scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
+        @Override
+        public void sessionTerminated(@NotNull UUID sessionId) {
           if (!onlyCheckUpToDate && compileContext.shouldUpdateProblemsView()) {
-            val view = ProblemsView.getInstanceIfCreated(project) ?: return
-            view.clearProgress()
-            view.clearOldMessages(compileContext.compileScope, compileContext.sessionId)
+            ProblemsView view = myProject.getServiceIfCreated(ProblemsView.class);
+            if (view != null) {
+              view.clearProgress();
+              view.clearOldMessages(compileContext.getCompileScope(), compileContext.getSessionId());
+            }
           }
         }
 
-        override fun handleFailure(sessionId: UUID, failure: CmdlineRemoteProto.Message.Failure) {
-          compileContext.addMessage(CompilerMessageCategory.ERROR,
-                                    if (failure.hasDescription()) failure.description else "",
-                                    null,
-                                    -1,
-                                    -1)
-          val trace = if (failure.hasStacktrace()) failure.stacktrace else null
+        @Override
+        public void handleFailure(@NotNull UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
+          //noinspection HardCodedStringLiteral
+          compileContext.addMessage(CompilerMessageCategory.ERROR, failure.hasDescription() ? failure.getDescription() : "", null, -1, -1);
+          final String trace = failure.hasStacktrace() ? failure.getStacktrace() : null;
           if (trace != null) {
-            LOG.info(trace)
+            LOG.info(trace);
           }
-          compileContext.putUserData(COMPILE_SERVER_BUILD_STATUS, ExitStatus.ERRORS)
+          compileContext.putUserData(COMPILE_SERVER_BUILD_STATUS, ExitStatus.ERRORS);
         }
 
-        override fun handleCompileMessage(sessionId: UUID, message: CompileMessage) {
-          val kind = message.kind
-          val messageText = message.text
-          if (kind == CompileMessage.Kind.PROGRESS) {
-            val indicator = compileContext.progressIndicator
-            indicator.text = messageText
+        @Override
+        protected void handleCompileMessage(UUID sessionId,
+                                            CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
+          final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind = message.getKind();
+          //System.out.println(compilerMessage.getText());
+          //noinspection HardCodedStringLiteral
+          final String messageText = message.getText();
+          if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.PROGRESS) {
+            final ProgressIndicator indicator = compileContext.getProgressIndicator();
+            indicator.setText(messageText);
             if (message.hasDone()) {
-              indicator.fraction = message.done.toDouble()
+              indicator.setFraction(message.getDone());
             }
           }
           else {
-            val category = convertToCategory(kind = kind) ?: CompilerMessageCategory.INFORMATION
-            val sourceFilePath = if (message.hasSourceFilePath()) message.sourceFilePath?.let { FileUtil.toSystemIndependentName(it) } else null
-            val line = if (message.hasLine()) message.line else -1
-            val column = if (message.hasColumn()) message.column else -1
-            val srcUrl = if (sourceFilePath != null) VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) else null
-            compileContext.addMessage(category, messageText, srcUrl, line.toInt(), column.toInt(), null, message.moduleNamesList)
-            if (compileContext.shouldUpdateProblemsView() && kind == CompileMessage.Kind.JPS_INFO) {
+            final CompilerMessageCategory category = convertToCategory(kind, CompilerMessageCategory.INFORMATION);
+
+            String sourceFilePath = message.hasSourceFilePath() ? message.getSourceFilePath() : null;
+            if (sourceFilePath != null) {
+              sourceFilePath = FileUtil.toSystemIndependentName(sourceFilePath);
+            }
+            final long line = message.hasLine() ? message.getLine() : -1;
+            final long column = message.hasColumn() ? message.getColumn() : -1;
+            final String srcUrl =
+              sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
+            compileContext
+              .addMessage(category, messageText, srcUrl, (int)line, (int)column, null, message.getModuleNamesList());
+            if (compileContext.shouldUpdateProblemsView() &&
+              kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.JPS_INFO) {
               // treat JPS_INFO messages in a special way: add them as info messages to the problems view
-              val project = compileContext.project
-              ProblemsView.getInstance(project).addMessage(CompilerMessageImpl(project, category, messageText), compileContext.sessionId)
+              final Project project = compileContext.getProject();
+              ProblemsView.getInstance(project).addMessage(
+                new CompilerMessageImpl(project, category, messageText),
+                compileContext.getSessionId()
+              );
             }
           }
         }
 
-        override fun handleBuildEvent(sessionId: UUID, event: BuilderMessage.BuildEvent) {
-          when (event.eventType) {
-            BuilderMessage.BuildEvent.Type.FILES_GENERATED -> {
-              val generated = event.generatedFilesList
-              val publisher = if (project.isDisposed) null else project.messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS)
-              val writtenArtifactOutputPaths = if (outputToArtifact == null) null else CollectionFactory.createFilePathSet()
-              for (generatedFile in generated) {
-                val root = FileUtil.toSystemIndependentName(generatedFile.outputRoot)
-                val relativePath = FileUtil.toSystemIndependentName(generatedFile.relativePath)
-                publisher?.fileGenerated(root, relativePath)
+        @Override
+        protected void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
+          final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type eventType = event.getEventType();
+          switch (eventType) {
+            case FILES_GENERATED:
+              final List<CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile> generated =
+                event.getGeneratedFilesList();
+              CompilationStatusListener publisher =
+                myProject.isDisposed() ? null : myProject.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
+              Set<String> writtenArtifactOutputPaths =
+                outputToArtifact != null ? CollectionFactory.createFilePathSet() : null;
+              for (CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile generatedFile : generated) {
+                final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
+                final String relativePath = FileUtil.toSystemIndependentName(generatedFile.getRelativePath());
+                if (publisher != null) {
+                  publisher.fileGenerated(root, relativePath);
+                }
                 if (outputToArtifact != null) {
-                  val artifacts = outputToArtifact.get(root)
-                  if (!artifacts.isNullOrEmpty()) {
-                    writtenArtifactOutputPaths!!.add(FileUtil.toSystemDependentName(DeploymentUtil.appendToPath(root, relativePath)))
+                  Collection<Artifact> artifacts = outputToArtifact.get(root);
+                  if (artifacts != null && !artifacts.isEmpty()) {
+                    writtenArtifactOutputPaths
+                      .add(FileUtil.toSystemDependentName(DeploymentUtil.appendToPath(root, relativePath)));
                   }
                 }
               }
-              if (!writtenArtifactOutputPaths.isNullOrEmpty()) {
-                ArtifactsCompiler.addWrittenPaths(compileContext, writtenArtifactOutputPaths)
+              if (writtenArtifactOutputPaths != null && !writtenArtifactOutputPaths.isEmpty()) {
+                ArtifactsCompiler.addWrittenPaths(compileContext, writtenArtifactOutputPaths);
               }
-            }
-            BuilderMessage.BuildEvent.Type.BUILD_COMPLETED -> {
-              var status = ExitStatus.SUCCESS
+              break;
+
+            case BUILD_COMPLETED:
+              ExitStatus status = ExitStatus.SUCCESS;
               if (event.hasCompletionStatus()) {
-                when (event.completionStatus) {
-                  BuilderMessage.BuildEvent.Status.CANCELED -> status = ExitStatus.CANCELLED
-                  BuilderMessage.BuildEvent.Status.ERRORS -> status = ExitStatus.ERRORS
-                  BuilderMessage.BuildEvent.Status.SUCCESS -> {}
-                  BuilderMessage.BuildEvent.Status.UP_TO_DATE -> status = ExitStatus.UP_TO_DATE
-                  null -> {}
+                final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status completionStatus =
+                  event.getCompletionStatus();
+                switch (completionStatus) {
+                  case CANCELED:
+                    status = ExitStatus.CANCELLED;
+                    break;
+                  case ERRORS:
+                    status = ExitStatus.ERRORS;
+                    break;
+                  case SUCCESS:
+                    break;
+                  case UP_TO_DATE:
+                    status = ExitStatus.UP_TO_DATE;
+                    break;
                 }
               }
-              compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, status)
-            }
-            BuilderMessage.BuildEvent.Type.CUSTOM_BUILDER_MESSAGE -> {
+              compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, status);
+              break;
+
+            case CUSTOM_BUILDER_MESSAGE:
               if (event.hasCustomBuilderMessage()) {
-                val message = event.customBuilderMessage
-                if (GlobalOptions.JPS_SYSTEM_BUILDER_ID == message.builderId &&
-                    GlobalOptions.JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID == message.messageType) {
-                  val text = message.messageText
-                  if (!text.isNullOrEmpty()) {
-                    compileContext.addMessage(CompilerMessageCategory.INFORMATION, text, null, -1, -1)
+                final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message =
+                  event.getCustomBuilderMessage();
+                if (GlobalOptions.JPS_SYSTEM_BUILDER_ID.equals(message.getBuilderId()) &&
+                  GlobalOptions.JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID.equals(message.getMessageType())) {
+                  //noinspection HardCodedStringLiteral
+                  final String text = message.getMessageText();
+                  if (!StringUtil.isEmpty(text)) {
+                    compileContext.addMessage(CompilerMessageCategory.INFORMATION, text, null, -1, -1);
                   }
                 }
               }
-            }
-            null -> {
-            }
+              break;
           }
         }
 
-        override fun getProgressIndicator(): ProgressIndicator = compileContext.progressIndicator
-      }
-    )
+        @Override
+        public @NotNull ProgressIndicator getProgressIndicator() {
+          return compileContext.getProgressIndicator();
+        }
+      });
   }
 
-  private fun startup(scope: CompileScope,
-                      isRebuild: Boolean = false,
-                      forceCompile: Boolean,
-                      withModalProgress: Boolean = false,
-                      callback: CompileStatusNotification?,
-                      message: CompilerMessage? = null) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
-    val name = JavaCompilerBundle.message(when {
-      isRebuild -> "compiler.content.name.rebuild"
-      forceCompile -> "compiler.content.name.recompile"
-      else -> "compiler.content.name.make"
-    })
-    val span = Tracer.start("$name preparation")
-    val compileTask = CompilerTask(
-      project, name, isUnitTestMode, !withModalProgress, true, isCompilationStartedAutomatically(scope), withModalProgress
-    )
-    StatusBar.Info.set("", project, "Compiler")
-    PsiDocumentManager.getInstance(project).commitAllDocuments()
-    FileDocumentManager.getInstance().saveAllDocuments()
+  private void startup(final CompileScope scope, final boolean isRebuild, final boolean forceCompile,
+                       final CompileStatusNotification callback, final CompilerMessage message) {
+    startup(scope, isRebuild, forceCompile, false, callback, message);
+  }
+
+  private void startup(final CompileScope scope,
+                       final boolean isRebuild,
+                       final boolean forceCompile,
+                       boolean withModalProgress, final CompileStatusNotification callback,
+                       final CompilerMessage message) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    final String name = JavaCompilerBundle.message(
+        isRebuild ? "compiler.content.name.rebuild" : forceCompile ? "compiler.content.name.recompile" : "compiler.content.name.make"
+    );
+    Tracer.Span span = Tracer.start(name + " preparation");
+    final CompilerTask compileTask = new CompilerTask(
+      myProject, name, isUnitTestMode, !withModalProgress, true, isCompilationStartedAutomatically(scope), withModalProgress
+    );
+
+    StatusBar.Info.set("", myProject, "Compiler");
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    FileDocumentManager.getInstance().saveAllDocuments();
 
     // ensure the project model seen by build process is up-to-date
-    runInAutoSaveDisabledMode {
-      runBlockingUnderModalProgress {
-        saveSettings(project)
-        if (!isUnitTestMode) {
-          saveSettings(ApplicationManager.getApplication())
-        }
-      }
+    StoreUtil.saveSettings(myProject);
+    if (!isUnitTestMode) {
+      StoreUtil.saveSettings(ApplicationManager.getApplication());
     }
 
-    val compileContext = CompileContextImpl(project, compileTask, scope, !isRebuild && !forceCompile, isRebuild)
-    span.complete()
-    val compileWork = Runnable {
-      val compileWorkSpan = Tracer.start("compileWork")
-      val indicator = compileContext.progressIndicator
-      if (indicator.isCanceled || project.isDisposed) {
-        callback?.finished(true, 0, 0, compileContext)
-        return@Runnable
+    final CompileContextImpl compileContext = new CompileContextImpl(myProject, compileTask, scope, !isRebuild && !forceCompile, isRebuild);
+    span.complete();
+    final Runnable compileWork = () -> {
+      Tracer.Span compileWorkSpan = Tracer.start("compileWork");
+      final ProgressIndicator indicator = compileContext.getProgressIndicator();
+      if (indicator.isCanceled() || myProject.isDisposed()) {
+        if (callback != null) {
+          callback.finished(true, 0, 0, compileContext);
+        }
+        return;
       }
-
-      val compilerCacheManager = CompilerCacheManager.getInstance(project)
-      val buildManager = BuildManager.getInstance()
+      CompilerCacheManager compilerCacheManager = CompilerCacheManager.getInstance(myProject);
+      final BuildManager buildManager = BuildManager.getInstance();
       try {
-        buildManager.postponeBackgroundTasks()
-        buildManager.cancelAutoMakeTasks(project)
-        LOG.info("COMPILATION STARTED (BUILD PROCESS)")
+        buildManager.postponeBackgroundTasks();
+        buildManager.cancelAutoMakeTasks(myProject);
+        LOG.info("COMPILATION STARTED (BUILD PROCESS)");
         if (message != null) {
-          compileContext.addMessage(message)
+          compileContext.addMessage(message);
         }
         if (isRebuild) {
           CompilerUtil.runInContext(compileContext, JavaCompilerBundle.message("progress.text.clearing.build.system.data"),
-                                    ThrowableRunnable { compilerCacheManager.clearCaches(compileContext) })
+                                    (ThrowableRunnable<Throwable>)() -> compilerCacheManager
+                                      .clearCaches(compileContext));
         }
-        val beforeTasksOk = executeCompileTasks(context = compileContext, beforeTasks = true)
-        val errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR)
+        final boolean beforeTasksOk = executeCompileTasks(compileContext, true);
+
+        final int errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
         if (!beforeTasksOk || errorCount > 0) {
-          COMPILE_SERVER_BUILD_STATUS.set(compileContext, if (errorCount > 0) ExitStatus.ERRORS else ExitStatus.CANCELLED)
-          return@Runnable
+          COMPILE_SERVER_BUILD_STATUS.set(compileContext, errorCount > 0 ? ExitStatus.ERRORS : ExitStatus.CANCELLED);
+          return;
         }
-        val future = compileInExternalProcess(compileContext, false)
+
+        TaskFuture<?> future = compileInExternalProcess(compileContext, false);
         if (future != null) {
-          val compileInExternalProcessSpan = Tracer.start("compile in external process")
+          Tracer.Span compileInExternalProcessSpan = Tracer.start("compile in external process");
           while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
-            if (indicator.isCanceled) {
-              future.cancel(false)
+            if (indicator.isCanceled()) {
+              future.cancel(false);
             }
           }
-          compileInExternalProcessSpan.complete()
-          if (!executeCompileTasks(context = compileContext, beforeTasks = false)) {
-            COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.CANCELLED)
+          compileInExternalProcessSpan.complete();
+          if (!executeCompileTasks(compileContext, false)) {
+            COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.CANCELLED);
           }
           if (compileContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
-            COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.ERRORS)
+            COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.ERRORS);
           }
         }
       }
-      catch (ignored: ProcessCanceledException) {
-        compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, ExitStatus.CANCELLED)
+      catch (ProcessCanceledException ignored) {
+        compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, ExitStatus.CANCELLED);
       }
-      catch (e: Throwable) {
-        LOG.error(e) // todo
+      catch (Throwable e) {
+        LOG.error(e); // todo
       }
       finally {
-        compileWorkSpan.complete()
-        // reset state on explicit build to compensate possibly unbalanced postpone/allow calls
-        // (e.g. via BatchFileChangeListener.start/stop)
-        buildManager.allowBackgroundTasks(true)
+        compileWorkSpan.complete();
+        buildManager.allowBackgroundTasks(
+          true // reset state on explicit build to compensate possibly unbalanced postpone/allow calls (e.g. via BatchFileChangeListener.start/stop)
+        );
+        Tracer.Span flushCompilerCaches = Tracer.start("flush compiler caches");
+        compilerCacheManager.flushCaches();
+        flushCompilerCaches.complete();
 
-        val flushCompilerCaches = Tracer.start("flush compiler caches")
-        compilerCacheManager.flushCaches()
-        flushCompilerCaches.complete()
-        val duration = notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS[compileContext])
+        final long duration = notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
         CompilerUtil.logDuration(
           "\tCOMPILATION FINISHED (BUILD PROCESS); Errors: " +
           compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
           "; warnings: " +
           compileContext.getMessageCount(CompilerMessageCategory.WARNING),
           duration
-        )
+        );
+
         if (ApplicationManagerEx.isInIntegrationTest()) {
-          val logPath = PathManager.getLogPath()
-          val perfMetrics = Paths.get(logPath).resolve("performance-metrics").resolve("buildMetrics.json")
+          String logPath = PathManager.getLogPath();
+          Path perfMetrics = Paths.get(logPath).resolve("performance-metrics").resolve("buildMetrics.json");
           try {
-            perfMetrics.write("""{
-	"build_errors" : ${compileContext.getMessageCount(CompilerMessageCategory.ERROR)},
-	"build_warnings" : ${compileContext.getMessageCount(CompilerMessageCategory.WARNING)},
-	"build_compilation_duration" : $duration
-}""")
+            FileUtil.writeToFile(perfMetrics.toFile(), "{\n\t\"build_errors\" : " +
+                                                       compileContext.getMessageCount(CompilerMessageCategory.ERROR) + "," +
+                                                       "\n\t\"build_warnings\" : " +
+                                                       compileContext.getMessageCount(CompilerMessageCategory.WARNING) + "," +
+                                                       "\n\t\"build_compilation_duration\" : " +
+                                                       duration +
+                                                       "\n}");
           }
-          catch (ex: IOException) {
-            LOG.info("Could not create json file with the build performance metrics.")
+          catch (IOException ex) {
+            LOG.info("Could not create json file with the build performance metrics.");
           }
         }
       }
-    }
-    compileTask.start(compileWork) {
+    };
+
+    compileTask.start(compileWork, () -> {
       if (isRebuild) {
-        val rv = Messages.showOkCancelDialog(
-          project, JavaCompilerBundle.message("you.are.about.to.rebuild.the.whole.project"),
+        final int rv = Messages.showOkCancelDialog(
+          myProject, JavaCompilerBundle.message("you.are.about.to.rebuild.the.whole.project"),
           JavaCompilerBundle.message("confirm.project.rebuild"),
           CommonBundle.message("button.build"), JavaCompilerBundle.message("button.rebuild"), Messages.getQuestionIcon()
-        )
+        );
         if (rv == Messages.OK /*yes, please, do run make*/) {
-          startup(scope = scope, forceCompile = false, callback = callback)
-          return@start
+          startup(scope, false, false, callback, null);
+          return;
         }
       }
-      startup(scope = scope, isRebuild = isRebuild, forceCompile = forceCompile, callback = callback, message = message)
-    }
+      startup(scope, isRebuild, forceCompile, callback, message);
+    });
+  }
+
+  @Nullable
+  @TestOnly
+  public static ExitStatus getExternalBuildExitStatus(CompileContext context) {
+    return context.getUserData(COMPILE_SERVER_BUILD_STATUS);
   }
 
   /**
    * @noinspection SSBasedInspection
    */
-  private fun notifyCompilationCompleted(compileContext: CompileContextImpl,
-                                         callback: CompileStatusNotification?,
-                                         exitStatus: ExitStatus): Long {
-    val endCompilationStamp = System.currentTimeMillis()
-    compileContext.buildSession.setEndCompilationStamp(exitStatus, endCompilationStamp)
-    val duration = endCompilationStamp - compileContext.startCompilationStamp
-    if (!project.isDisposed) {
+  private long notifyCompilationCompleted(final CompileContextImpl compileContext,
+                                          final CompileStatusNotification callback,
+                                          final ExitStatus _status) {
+    long endCompilationStamp = System.currentTimeMillis();
+    compileContext.getBuildSession().setEndCompilationStamp(_status, endCompilationStamp);
+    final long duration = endCompilationStamp - compileContext.getStartCompilationStamp();
+    if (!myProject.isDisposed()) {
       // refresh on output roots is required in order for the order enumerator to see all roots via VFS
-      val affectedModules = compileContext.compileScope.affectedModules
-      if (exitStatus !== ExitStatus.UP_TO_DATE && exitStatus !== ExitStatus.CANCELLED) {
+      final Module[] affectedModules = compileContext.getCompileScope().getAffectedModules();
+
+      if (_status != ExitStatus.UP_TO_DATE && _status != ExitStatus.CANCELLED) {
         // have to refresh in case of errors too, because run configuration may be set to ignore errors
-        val affectedRoots = CompilerPaths.getOutputPaths(affectedModules).toHashSet()
+        Collection<String> affectedRoots = ContainerUtil.newHashSet(CompilerPaths.getOutputPaths(affectedModules));
         if (!affectedRoots.isEmpty()) {
-          val indicator = compileContext.progressIndicator
-          indicator.text = JavaCompilerBundle.message("synchronizing.output.directories")
-          CompilerUtil.refreshOutputRoots(affectedRoots)
-          indicator.text = ""
+          ProgressIndicator indicator = compileContext.getProgressIndicator();
+          indicator.setText(JavaCompilerBundle.message("synchronizing.output.directories"));
+          CompilerUtil.refreshOutputRoots(affectedRoots);
+          indicator.setText("");
         }
       }
     }
-    SwingUtilities.invokeLater {
-      var errorCount = 0
-      var warningCount = 0
+    SwingUtilities.invokeLater(() -> {
+      int errorCount = 0;
+      int warningCount = 0;
       try {
-        errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR)
-        warningCount = compileContext.getMessageCount(CompilerMessageCategory.WARNING)
+        errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
+        warningCount = compileContext.getMessageCount(CompilerMessageCategory.WARNING);
       }
       finally {
-        callback?.finished(exitStatus === ExitStatus.CANCELLED, errorCount, warningCount, compileContext)
-      }
-      if (!project.isDisposed) {
-        val statusMessage = createStatusMessage(status = exitStatus, warningCount = warningCount, errorCount = errorCount, duration = duration)
-        val messageType = if (errorCount > 0) MessageType.ERROR else if (warningCount > 0) MessageType.WARNING else MessageType.INFO
-        if (duration > ONE_MINUTE_MS && CompilerWorkspaceConfiguration.getInstance(project).DISPLAY_NOTIFICATION_POPUP) {
-          val toolWindowId = if (useBuildToolWindow()) BuildContentManager.TOOL_WINDOW_ID else ToolWindowId.MESSAGES_WINDOW
-          ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, messageType, statusMessage)
-        }
-
-        val wrappedMessage = if (exitStatus === ExitStatus.UP_TO_DATE) statusMessage else HtmlChunk.link("#", statusMessage).toString()
-        @Suppress("DEPRECATION")
-        val notification = CompilerManager.NOTIFICATION_GROUP.createNotification(wrappedMessage, messageType.toNotificationType())
-          .setListener(BuildToolWindowActivationListener(compileContext))
-          .setImportant(false)
-        compileContext.buildSession.registerCloseAction { notification.expire() }
-        notification.notify(project)
-        if (exitStatus !== ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
-          val msg = DateFormatUtil.formatDateTime(Date()) + " - " + statusMessage
-          compileContext.addMessage(CompilerMessageCategory.INFORMATION, msg, null, -1, -1)
+        if (callback != null) {
+          callback.finished(_status == ExitStatus.CANCELLED, errorCount, warningCount, compileContext);
         }
       }
+
+      if (!myProject.isDisposed()) {
+        final String statusMessage = createStatusMessage(_status, warningCount, errorCount, duration);
+        final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
+        if (duration > ONE_MINUTE_MS && CompilerWorkspaceConfiguration.getInstance(myProject).DISPLAY_NOTIFICATION_POPUP) {
+          String toolWindowId = useBuildToolWindow() ? BuildContentManager.TOOL_WINDOW_ID : ToolWindowId.MESSAGES_WINDOW;
+          ToolWindowManager.getInstance(myProject).notifyByBalloon(toolWindowId, messageType, statusMessage);
+        }
+
+        String wrappedMessage = _status == ExitStatus.UP_TO_DATE ? statusMessage : HtmlChunk.link("#", statusMessage).toString();
+        Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(wrappedMessage, messageType.toNotificationType())
+          .setListener(new BuildToolWindowActivationListener(compileContext))
+          .setImportant(false);
+        compileContext.getBuildSession().registerCloseAction(notification::expire);
+        notification.notify(myProject);
+
+        if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
+          final String msg = DateFormatUtil.formatDateTime(new Date()) + " - " + statusMessage;
+          compileContext.addMessage(CompilerMessageCategory.INFORMATION, msg, null, -1, -1);
+        }
+      }
+    });
+    return duration;
+  }
+
+  private static @Nls String createStatusMessage(final ExitStatus status, final int warningCount, final int errorCount, long duration) {
+    String message;
+    if (status == ExitStatus.CANCELLED) {
+      message = JavaCompilerBundle.message("status.compilation.aborted");
     }
-    return duration
-  }
-
-  private fun getModuleOutputPath(module: Module, inTestSourceContent: Boolean): String? {
-    val map: MutableMap<Module, String?> = if (inTestSourceContent) moduleTestOutputPaths else moduleOutputPaths
-    return map.computeIfAbsent(module) { CompilerPaths.getModuleOutputPath(module, inTestSourceContent) }
-  }
-
-  fun executeCompileTask(task: CompileTask,
-                         scope: CompileScope,
-                         contentName: @NlsContexts.TabTitle String?,
-                         onTaskFinished: Runnable?) {
-    val progressManagerTask = CompilerTask(project, contentName, false, false, true, isCompilationStartedAutomatically(scope))
-    val compileContext = CompileContextImpl(project, progressManagerTask, scope, false, false)
-    FileDocumentManager.getInstance().saveAllDocuments()
-    progressManagerTask.start({
-                                try {
-                                  task.execute(compileContext)
-                                }
-                                catch (ex: ProcessCanceledException) {
-                                  // suppressed
-                                }
-                                finally {
-                                  onTaskFinished?.run()
-                                }
-                              }, null)
-  }
-
-  private fun executeCompileTasks(context: CompileContext, beforeTasks: Boolean): Boolean {
-    if (project.isDisposed) {
-      return false
+    else if (status == ExitStatus.UP_TO_DATE) {
+      message = JavaCompilerBundle.message("status.all.up.to.date");
     }
+    else {
+      String durationString = NlsMessages.formatDurationApproximate(duration);
+      if (status == ExitStatus.SUCCESS) {
+        message = warningCount > 0
+                  ? JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings", warningCount, durationString)
+                  : JavaCompilerBundle.message("status.compilation.completed.successfully", durationString);
+      }
+      else {
+        message = JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors",
+                                             errorCount, warningCount, durationString);
+      }
+    }
+    return message;
+  }
 
-    val manager = CompilerManager.getInstance(project)
-    val progressIndicator = context.progressIndicator
-    progressIndicator.pushState()
+  // [mike] performance optimization - this method is accessed > 15,000 times in Aurora
+  private String getModuleOutputPath(Module module, boolean inTestSourceContent) {
+    Map<Module, String> map = inTestSourceContent ? myModuleTestOutputPaths : myModuleOutputPaths;
+    return map.computeIfAbsent(module, k -> CompilerPaths.getModuleOutputPath(module, inTestSourceContent));
+  }
+
+  public void executeCompileTask(final CompileTask task,
+                                 final CompileScope scope,
+                                 final @NlsContexts.TabTitle String contentName,
+                                 final Runnable onTaskFinished) {
+    final CompilerTask progressManagerTask =
+      new CompilerTask(myProject, contentName, false, false, true, isCompilationStartedAutomatically(scope));
+    final CompileContextImpl compileContext = new CompileContextImpl(myProject, progressManagerTask, scope, false, false);
+
+    FileDocumentManager.getInstance().saveAllDocuments();
+
+    progressManagerTask.start(() -> {
+      try {
+        task.execute(compileContext);
+      }
+      catch (ProcessCanceledException ex) {
+        // suppressed
+      }
+      finally {
+        if (onTaskFinished != null) {
+          onTaskFinished.run();
+        }
+      }
+    }, null);
+  }
+
+  private boolean executeCompileTasks(@NotNull final CompileContext context, final boolean beforeTasks) {
+    if (myProject.isDisposed()) {
+      return false;
+    }
+    final CompilerManager manager = CompilerManager.getInstance(myProject);
+    final ProgressIndicator progressIndicator = context.getProgressIndicator();
+    progressIndicator.pushState();
     try {
-      val tasks = if (beforeTasks) manager.beforeTasks else manager.afterTaskList
-      if (tasks.size > 0) {
-        progressIndicator.text = JavaCompilerBundle.message(
-          if (beforeTasks) "progress.executing.precompile.tasks" else "progress.executing.postcompile.tasks"
-        )
-        for (task in tasks) {
+      List<CompileTask> tasks = beforeTasks ? manager.getBeforeTasks() : manager.getAfterTaskList();
+      if (tasks.size() > 0) {
+        progressIndicator.setText(
+          JavaCompilerBundle.message(beforeTasks ? "progress.executing.precompile.tasks" : "progress.executing.postcompile.tasks")
+        );
+        for (CompileTask task : tasks) {
           try {
             if (!task.execute(context)) {
-              return false
+              return false;
             }
           }
-          catch (e: ProcessCanceledException) {
-            throw e
+          catch (ProcessCanceledException e) {
+            throw e;
           }
-          catch (t: Throwable) {
-            LOG.error("Error executing task", t)
-            context.addMessage(CompilerMessageCategory.INFORMATION,
-                               JavaCompilerBundle.message("error.task.0.execution.failed", task.toString()),
-                               null,
-                               -1,
-                               -1)
+          catch (Throwable t) {
+            LOG.error("Error executing task", t);
+            context.addMessage(
+              CompilerMessageCategory.INFORMATION, JavaCompilerBundle.message("error.task.0.execution.failed", task.toString()), null, -1, -1
+            );
           }
         }
       }
     }
     finally {
-      progressIndicator.popState()
-      WindowManager.getInstance().getStatusBar(project)?.let {
-        it.info = ""
+      progressIndicator.popState();
+      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+      if (statusBar != null) {
+        statusBar.setInfo("");
       }
     }
-    return true
+    return true;
   }
 
-  private fun validateCompilerConfiguration(scope: CompileScope): Boolean {
+  private boolean validateCompilerConfiguration(@NotNull final CompileScope scope) {
     try {
-      val scopeModules = scope.affectedModules
-      val compilerManager = CompilerManager.getInstance(project)
-      val modulesWithSources = scopeModules.filter { module ->
-        if (!compilerManager.isValidationEnabled(module)) {
-          return@filter false
+      final Module[] scopeModules = scope.getAffectedModules();
+      final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+      List<Module> modulesWithSources = ContainerUtil.filter(scopeModules, module -> {
+        if (!compilerManager.isValidationEnabled(module)) return false;
+        final boolean hasSources = hasSources(module, JavaSourceRootType.SOURCE);
+        final boolean hasTestSources = hasSources(module, JavaSourceRootType.TEST_SOURCE);
+        if (!hasSources && !hasTestSources) {
+          // If module contains no sources, shouldn't have to select JDK or output directory (SCR #19333)
+          // todo still there may be problems with this approach if some generated files are attributed by this module
+          return false;
         }
+        return true;
+      });
 
-        val hasSources = hasSources(module, JavaSourceRootType.SOURCE)
-        val hasTestSources = hasSources(module, JavaSourceRootType.TEST_SOURCE)
-        // If module contains no sources, shouldn't have to select JDK or output directory (SCR #19333)
-        // todo still there may be problems with this approach if some generated files are attributed by this module
-        hasSources || hasTestSources
-      }
-      if (!validateJdks(modulesWithSources, true)) {
-        return false
-      }
-      if (!validateOutputs(modulesWithSources)) {
-        return false
-      }
-      return validateCyclicDependencies(scopeModules)
+      if (!validateJdks(modulesWithSources, true)) return false;
+      if (!validateOutputs(modulesWithSources)) return false;
+      if (!validateCyclicDependencies(scopeModules)) return false;
+      return true;
     }
-    catch (ignore: ProcessCanceledException) {
+    catch (ProcessCanceledException e) {
+      return false;
     }
-    catch (e: Throwable) {
-      LOG.error(e)
+    catch (Throwable e) {
+      LOG.error(e);
+      return false;
     }
-    return false
   }
 
-  private fun validateJdks(scopeModules: List<Module>, runUnknownSdkCheck: Boolean): Boolean {
-    val modulesWithoutJdkAssigned = ArrayList<String?>()
-    var projectSdkNotSpecified = false
-    for (module in scopeModules) {
-      val jdk = ModuleRootManager.getInstance(module).sdk
+  private boolean validateJdks(@NotNull List<Module> scopeModules, boolean runUnknownSdkCheck) {
+    final List<String> modulesWithoutJdkAssigned = new ArrayList<>();
+    boolean projectSdkNotSpecified = false;
+    for (final Module module : scopeModules) {
+      final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
       if (jdk != null) {
-        continue
+        continue;
       }
-
-      projectSdkNotSpecified = projectSdkNotSpecified or ModuleRootManager.getInstance(module).isSdkInherited
-      modulesWithoutJdkAssigned.add(module.name)
+      projectSdkNotSpecified |= ModuleRootManager.getInstance(module).isSdkInherited();
+      modulesWithoutJdkAssigned.add(module.getName());
     }
 
     if (runUnknownSdkCheck) {
-      val result = CompilerDriverUnknownSdkTracker
-        .getInstance(project)
-        .fixSdkSettings(projectSdkNotSpecified, scopeModules, formatModulesList(modulesWithoutJdkAssigned))
-      return if (result === CompilerDriverUnknownSdkTracker.Outcome.STOP_COMPILE) false else validateJdks(scopeModules, false)
+      final CompilerDriverUnknownSdkTracker.Outcome result =
+        CompilerDriverUnknownSdkTracker.getInstance(myProject).fixSdkSettings(projectSdkNotSpecified, scopeModules, formatModulesList(modulesWithoutJdkAssigned));
+
+      if (result == CompilerDriverUnknownSdkTracker.Outcome.STOP_COMPILE) {
+        return false;
+      }
+
       //we do not trust the CompilerDriverUnknownSdkTracker, to extra check has to be done anyway
+      return validateJdks(scopeModules, false);
     }
     else {
-      if (modulesWithoutJdkAssigned.isEmpty()) {
-        return true
+      if (!modulesWithoutJdkAssigned.isEmpty()) {
+        showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle.message("modules.classpath.title"));
+        return false;
       }
-      showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned,
-                            JavaCompilerBundle.message("modules.classpath.title"))
-      return false
+      return true;
     }
   }
 
-  private fun validateOutputs(scopeModules: List<Module>): Boolean {
-    val modulesWithoutOutputPathSpecified = ArrayList<String?>()
-    var projectOutputNotSpecified = false
-    for (module in scopeModules) {
-      val outputPath = getModuleOutputPath(module = module, inTestSourceContent = false)
-      val testsOutputPath = getModuleOutputPath(module = module, inTestSourceContent = true)
+  private boolean validateOutputs(@NotNull List<Module> scopeModules) {
+    final List<String> modulesWithoutOutputPathSpecified = new ArrayList<>();
+    boolean projectOutputNotSpecified = false;
+    for (final Module module : scopeModules) {
+      final String outputPath = getModuleOutputPath(module, false);
+      final String testsOutputPath = getModuleOutputPath(module, true);
       if (outputPath == null && testsOutputPath == null) {
-        val compilerExtension = CompilerModuleExtension.getInstance(module)
-        projectOutputNotSpecified = projectOutputNotSpecified or (compilerExtension != null && compilerExtension.isCompilerOutputPathInherited)
-        modulesWithoutOutputPathSpecified.add(module.name)
+        CompilerModuleExtension compilerExtension = CompilerModuleExtension.getInstance(module);
+        projectOutputNotSpecified |= compilerExtension != null && compilerExtension.isCompilerOutputPathInherited();
+        modulesWithoutOutputPathSpecified.add(module.getName());
       }
       else {
         if (outputPath == null) {
           if (hasSources(module, JavaSourceRootType.SOURCE)) {
-            modulesWithoutOutputPathSpecified.add(module.name)
+            modulesWithoutOutputPathSpecified.add(module.getName());
           }
         }
         if (testsOutputPath == null) {
           if (hasSources(module, JavaSourceRootType.TEST_SOURCE)) {
-            modulesWithoutOutputPathSpecified.add(module.name)
+            modulesWithoutOutputPathSpecified.add(module.getName());
           }
         }
       }
     }
+
     if (modulesWithoutOutputPathSpecified.isEmpty()) {
-      return true
+      return true;
     }
-    showNotSpecifiedError("error.output.not.specified", projectOutputNotSpecified, modulesWithoutOutputPathSpecified,
-                          DefaultModuleConfigurationEditorFactory.getInstance().outputEditorDisplayName)
-    return false
+    showNotSpecifiedError(
+      "error.output.not.specified", projectOutputNotSpecified, modulesWithoutOutputPathSpecified, DefaultModuleConfigurationEditorFactory.getInstance().getOutputEditorDisplayName()
+    );
+    return false;
   }
 
-  private fun validateCyclicDependencies(scopeModules: Array<Module>): Boolean {
-    val chunks = ModuleCompilerUtil.getCyclicDependencies(project, scopeModules.asList())
-    for (chunk in chunks) {
-      val sourceSets = chunk.nodes
-      if (sourceSets.size <= 1) {
-        // no need to check one-module chunks
-        continue
+  private boolean validateCyclicDependencies(Module[] scopeModules) {
+    final List<Chunk<ModuleSourceSet>> chunks = ModuleCompilerUtil.getCyclicDependencies(myProject, Arrays.asList(scopeModules));
+    for (final Chunk<ModuleSourceSet> chunk : chunks) {
+      final Set<ModuleSourceSet> sourceSets = chunk.getNodes();
+      if (sourceSets.size() <= 1) {
+        continue; // no need to check one-module chunks
       }
-
-      var jdk: Sdk? = null
-      var languageLevel: LanguageLevel? = null
-      for (sourceSet in sourceSets) {
-        val module = sourceSet.module
-        val moduleJdk = ModuleRootManager.getInstance(module).sdk
+      Sdk jdk = null;
+      LanguageLevel languageLevel = null;
+      for (final ModuleSourceSet sourceSet : sourceSets) {
+        Module module = sourceSet.getModule();
+        final Sdk moduleJdk = ModuleRootManager.getInstance(module).getSdk();
         if (jdk == null) {
-          jdk = moduleJdk
+          jdk = moduleJdk;
         }
         else {
-          if (jdk != moduleJdk) {
-            showCyclicModulesErrorNotification("error.chunk.modules.must.have.same.jdk", ModuleSourceSet.getModules(sourceSets))
-            return false
+          if (!jdk.equals(moduleJdk)) {
+            showCyclicModulesErrorNotification("error.chunk.modules.must.have.same.jdk", ModuleSourceSet.getModules(sourceSets));
+            return false;
           }
         }
-        val moduleLanguageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module)
+
+        LanguageLevel moduleLanguageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
         if (languageLevel == null) {
-          languageLevel = moduleLanguageLevel
+          languageLevel = moduleLanguageLevel;
         }
         else {
-          if (languageLevel != moduleLanguageLevel) {
-            showCyclicModulesErrorNotification("error.chunk.modules.must.have.same.language.level", ModuleSourceSet.getModules(sourceSets))
-            return false
+          if (!languageLevel.equals(moduleLanguageLevel)) {
+            showCyclicModulesErrorNotification("error.chunk.modules.must.have.same.language.level", ModuleSourceSet.getModules(sourceSets));
+            return false;
           }
         }
       }
     }
-    return true
+    return true;
   }
 
-  private fun showCyclicModulesErrorNotification(messageId: @PropertyKey(resourceBundle = JavaCompilerBundle.BUNDLE) String,
-                                                 modulesInChunk: Set<Module>) {
-    val firstModule = modulesInChunk.first()
-    CompileDriverNotifications.getInstance(project)
+  private void showCyclicModulesErrorNotification(@PropertyKey(resourceBundle = JavaCompilerBundle.BUNDLE) @NotNull String messageId,
+                                                  @NotNull Set<? extends Module> modulesInChunk) {
+    Module firstModule = ContainerUtil.getFirstItem(modulesInChunk);
+    LOG.assertTrue(firstModule != null);
+    CompileDriverNotifications.getInstance(myProject)
       .createCannotStartNotification()
       .withContent(JavaCompilerBundle.message(messageId, getModulesString(modulesInChunk)))
-      .withOpenSettingsAction(firstModule.name, null)
-      .showNotification()
+      .withOpenSettingsAction(firstModule.getName(), null)
+      .showNotification();
   }
 
-  private fun showNotSpecifiedError(resourceId: @PropertyKey(resourceBundle = JavaCompilerBundle.BUNDLE) @NonNls String?,
-                                    notSpecifiedValueInheritedFromProject: Boolean,
-                                    modules: List<String?>,
-                                    editorNameToSelect: String) {
-    val nameToSelect = if (notSpecifiedValueInheritedFromProject) null else modules.first()
-    val message = JavaCompilerBundle.message(resourceId!!, modules.size, formatModulesList(modules))
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      LOG.error(message)
+  private static String getModulesString(Collection<? extends Module> modulesInChunk) {
+    return StringUtil.join(modulesInChunk, module -> "\"" + module.getName() + "\"", "\n");
+  }
+
+  private static boolean hasSources(Module module, final JavaSourceRootType rootType) {
+    return !ModuleRootManager.getInstance(module).getSourceRoots(rootType).isEmpty();
+  }
+
+  private void showNotSpecifiedError(@PropertyKey(resourceBundle = JavaCompilerBundle.BUNDLE) @NonNls String resourceId,
+                                     boolean notSpecifiedValueInheritedFromProject,
+                                     List<String> modules,
+                                     String editorNameToSelect) {
+    String nameToSelect = notSpecifiedValueInheritedFromProject ? null : ContainerUtil.getFirstItem(modules);
+    final String message = JavaCompilerBundle.message(resourceId, modules.size(), formatModulesList(modules));
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.error(message);
     }
-    CompileDriverNotifications.getInstance(project)
+
+    CompileDriverNotifications.getInstance(myProject)
       .createCannotStartNotification()
       .withContent(message)
       .withOpenSettingsAction(nameToSelect, editorNameToSelect)
-      .showNotification()
-  }
-}
-
-private fun useBuildToolWindow(): Boolean {
-  return SystemProperties.getBooleanProperty("ide.jps.use.build.tool.window", true)
-}
-
-private class BuildToolWindowActivationListener(compileContext: CompileContextImpl) : NotificationListener.Adapter() {
-  private val projectRef: WeakReference<Project>
-  private val contentId: Any
-
-  init {
-    projectRef = WeakReference(compileContext.project)
-    contentId = compileContext.buildSession.contentId
+      .showNotification();
   }
 
-  override fun hyperlinkActivated(notification: Notification, e: HyperlinkEvent) {
-    val project = projectRef.get()
-    val useBuildToolwindow = useBuildToolWindow()
-    val toolWindowId = if (useBuildToolwindow) BuildContentManager.TOOL_WINDOW_ID else ToolWindowId.MESSAGES_WINDOW
-    if (project != null && !project.isDisposed &&
-        (useBuildToolwindow || CompilerMessagesService.showCompilerContent(project, contentId))) {
-      ToolWindowManager.getInstance(project).getToolWindow(toolWindowId)?.activate(null, false)
+  @NotNull
+  private static String formatModulesList(@NotNull List<String> modules) {
+    final int maxModulesToShow = 10;
+    List<String> actualNamesToInclude = new ArrayList<>(ContainerUtil.getFirstItems(modules, maxModulesToShow));
+    if (modules.size() > maxModulesToShow) {
+      actualNamesToInclude.add(JavaCompilerBundle.message("error.jdk.module.names.overflow.element.ellipsis"));
     }
-    else {
-      notification.expire()
+
+    return NlsMessages.formatNarrowAndList(actualNamesToInclude);
+  }
+
+  public static CompilerMessageCategory convertToCategory(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind, CompilerMessageCategory defaultCategory) {
+    return switch (kind) {
+      case ERROR, INTERNAL_BUILDER_ERROR -> CompilerMessageCategory.ERROR;
+      case WARNING -> CompilerMessageCategory.WARNING;
+      case INFO, JPS_INFO, OTHER -> CompilerMessageCategory.INFORMATION;
+      default -> defaultCategory;
+    };
+  }
+
+  private static final class BuildToolWindowActivationListener extends NotificationListener.Adapter {
+    private final WeakReference<Project> myProjectRef;
+    private final Object myContentId;
+
+    BuildToolWindowActivationListener(CompileContextImpl compileContext) {
+      myProjectRef = new WeakReference<>(compileContext.getProject());
+      myContentId = compileContext.getBuildSession().getContentId();
     }
-  }
-}
 
-private fun isCompilationStartedAutomatically(scope: CompileScope): Boolean {
-  return java.lang.Boolean.TRUE == scope.getUserData(COMPILATION_STARTED_AUTOMATICALLY)
-}
-
-private fun getModulesString(modulesInChunk: Collection<Module>): String {
-  return modulesInChunk.joinToString(separator = "\n") { "\"" + it.name + "\"" }
-}
-
-private fun hasSources(module: Module, rootType: JavaSourceRootType): Boolean {
-  return !ModuleRootManager.getInstance(module).getSourceRoots(rootType).isEmpty()
-}
-
-private fun formatModulesList(modules: List<String?>): String {
-  val maxModulesToShow = 10
-  val actualNamesToInclude: MutableList<String?> = ArrayList(ContainerUtil.getFirstItems(modules, maxModulesToShow))
-  if (modules.size > maxModulesToShow) {
-    actualNamesToInclude.add(JavaCompilerBundle.message("error.jdk.module.names.overflow.element.ellipsis"))
-  }
-  return NlsMessages.formatNarrowAndList(actualNamesToInclude)
-}
-
-private fun createStatusMessage(status: ExitStatus, warningCount: Int, errorCount: Int, duration: Long): @Nls String {
-  return when {
-    status === ExitStatus.CANCELLED -> JavaCompilerBundle.message("status.compilation.aborted")
-    status === ExitStatus.UP_TO_DATE -> JavaCompilerBundle.message("status.all.up.to.date")
-    else -> {
-      val durationString = NlsMessages.formatDurationApproximate(duration)
-      if (status === ExitStatus.SUCCESS) {
-        if (warningCount > 0) {
-          JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings", warningCount, durationString)
-        }
-        else {
-          JavaCompilerBundle.message("status.compilation.completed.successfully", durationString)
+    @Override
+    protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+      Project project = myProjectRef.get();
+      boolean useBuildToolwindow = useBuildToolWindow();
+      String toolWindowId = useBuildToolwindow ? BuildContentManager.TOOL_WINDOW_ID : ToolWindowId.MESSAGES_WINDOW;
+      if (project != null && !project.isDisposed() &&
+          (useBuildToolwindow || CompilerMessagesService.showCompilerContent(project, myContentId))) {
+        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
+        if (toolWindow != null) {
+          toolWindow.activate(null, false);
         }
       }
       else {
-        JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors",
-                                   errorCount, warningCount, durationString)
+        notification.expire();
       }
     }
+  }
+
+  private static boolean useBuildToolWindow() {
+    return SystemProperties.getBooleanProperty("ide.jps.use.build.tool.window", true);
   }
 }

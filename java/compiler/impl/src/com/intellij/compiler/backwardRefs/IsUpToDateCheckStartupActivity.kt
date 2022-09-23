@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs
 
-import com.intellij.compiler.impl.CompileDriver
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
@@ -38,7 +38,7 @@ internal class IsUpToDateCheckStartupActivity : ProjectPostStartupActivity {
     coroutineContext.ensureActive()
 
     val isUpToDate = withBackgroundProgressIndicator(project, JavaCompilerBundle.message("refresh.compiler.ref.index")) {
-      CompileDriver(project).nonBlockingIsUpToDate(CompilerManager.getInstance(project).createProjectCompileScope(project))
+      nonBlockingIsUpToDate(project)
     }
 
     logger.info("isUpToDate = $isUpToDate")
@@ -47,4 +47,13 @@ internal class IsUpToDateCheckStartupActivity : ProjectPostStartupActivity {
       coroutineContext.ensureActive()
     }
   }
+
+  @Suppress("DuplicatedCode")
+  suspend fun nonBlockingIsUpToDate(project: Project): Boolean {
+    return runUnderIndicator {
+      val manager = CompilerManager.getInstance(project)
+      manager.isUpToDate(manager.createProjectCompileScope(project))
+    }
+  }
+
 }

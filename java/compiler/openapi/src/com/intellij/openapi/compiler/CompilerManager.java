@@ -190,9 +190,10 @@ public abstract class CompilerManager {
   public abstract void makeWithModalProgress(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
 
   /**
-   * Use {@link #isUpToDateAsync(CompileScope)}
+   * Checks if compile scope given is up-to-date
+   * @param scope
+   * @return true if make on the scope specified wouldn't do anything or false if something is to be compiled or deleted
    */
-  @Deprecated
   public abstract boolean isUpToDate(@NotNull CompileScope scope);
 
   /**
