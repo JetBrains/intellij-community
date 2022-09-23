@@ -102,7 +102,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
     val git = Git(repository)
     git.add().addFilepattern(".gitignore").call()
-    git.commit().setMessage("Initial").call()
+    commit("Initial")
   }
 
   override fun applyIdeState(snapshot: SettingsSnapshot, message: String) {
@@ -154,12 +154,19 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     commit(message, snapshot.metaInfo.dateCreated)
   }
 
-  private fun commit(message: String, dateCreated: Instant) {
+  private fun commit(message: String, dateCreated: Instant? = null) {
     try {
       // Don't allow empty commit: sometimes the stream provider can notify about changes but there are no actual changes on disk
-      val commit = git.commit().setMessage(message).setAllowEmpty(false).call()
+      val commit = git.commit()
+        .setMessage(message)
+        .setAllowEmpty(false)
+        .setNoVerify(true)
+        .setSign(false)
+        .call()
 
-      recordCreationDate(commit, dateCreated)
+      if (dateCreated != null) {
+        recordCreationDate(commit, dateCreated)
+      }
     }
     catch (e: EmptyCommitException) {
       LOG.info("No actual changes in the settings")
