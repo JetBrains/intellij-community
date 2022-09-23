@@ -65,8 +65,8 @@ class GitBranchesTreeModelImpl(
   override fun getIndexOfChild(parent: Any?, child: Any?): Int = getChildren(parent).indexOf(child)
 
   override fun isLeaf(node: Any?): Boolean = (node is GitBranch) || (node is PopupFactoryImpl.ActionItem)
-                                             || (node === GitBranchType.LOCAL && localBranchesTree.empty)
-                                             || (node === GitBranchType.REMOTE && remoteBranchesTree.empty)
+                                             || (node === GitBranchType.LOCAL && localBranchesTree.isEmpty())
+                                             || (node === GitBranchType.REMOTE && remoteBranchesTree.isEmpty())
 
   private fun getChildren(parent: Any?): List<Any> {
     if (parent == null || !haveFilteredBranches()) return emptyList()
@@ -170,7 +170,7 @@ class GitBranchesTreeModelImpl(
     branchNameMatcher = matcher
   }
 
-  private fun haveFilteredBranches(): Boolean = !localBranchesTree.empty || !remoteBranchesTree.empty
+  private fun haveFilteredBranches(): Boolean = !localBranchesTree.isEmpty() || !remoteBranchesTree.isEmpty()
 
   private inner class LazyBranchesSubtreeHolder(
     val branches: Collection<GitBranch>,
@@ -178,7 +178,7 @@ class GitBranchesTreeModelImpl(
     private val matcher: MinusculeMatcher? = null
   ) {
 
-    var empty = false
+    fun isEmpty() = matchingResult.first.isEmpty()
 
     private val matchingResult: MatchResult by lazy {
       match(branches)
@@ -229,8 +229,6 @@ class GitBranchesTreeModelImpl(
           topMatch = branch to matchingDegree
         }
       }
-
-      empty = result.isEmpty()
 
       return MatchResult(result, topMatch)
     }
