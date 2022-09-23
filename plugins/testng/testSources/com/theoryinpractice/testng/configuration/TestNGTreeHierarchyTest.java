@@ -225,7 +225,7 @@ public class TestNGTreeHierarchyTest {
     listener.onTestFailure(foo);
     String message = buf.toString();
     String expectedFailureMessage =
-      "##teamcity[testFailed name='ATest.testFoo' message='java.lang.AssertionError: ' expected='expected|nnewline' actual='actual|nnewline'";
+      "##teamcity[testFailed name='ATest.testFoo' message='java.lang.AssertionError:' expected='expected|nnewline' actual='actual|nnewline'";
     Assert.assertTrue(message, message.contains(expectedFailureMessage));
     
   }
@@ -243,7 +243,7 @@ public class TestNGTreeHierarchyTest {
     String expectedFailureMessage =
       "##teamcity[testFailed name='ATest.testFoo' message='org.junit.ComparisonFailure: |[there is an unexpected value|] ' expected='1' actual='0' ";
     Assert.assertTrue(message, message.contains(expectedFailureMessage));
-    
+
   }
 
   @Test
