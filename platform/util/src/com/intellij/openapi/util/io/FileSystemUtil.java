@@ -61,7 +61,7 @@ public final class FileSystemUtil {
         if (SystemInfo.isWindows && IdeaWin32.isAvailable()) {
           return ensureSane(new IdeaWin32MediatorImpl());
         }
-        if (SystemInfo.isMac && CpuArch.isIntel64() && JnaLoader.isLoaded()) {
+        if ((SystemInfo.isLinux || SystemInfo.isMac) && CpuArch.isIntel64() && JnaLoader.isLoaded()) {
           return ensureSane(new JnaUnixMediatorImpl());
         }
       }
@@ -201,12 +201,24 @@ public final class FileSystemUtil {
       static native int getuid();
       static native int getgid();
       static native int access(String path, int mode);
+    }
+
+    @SuppressWarnings("SpellCheckingInspection")
+    private static final class UnixLibC {
       static native int lstat(String path, Pointer stat);
       static native int stat(String path, Pointer stat);
     }
 
+    @SuppressWarnings("SpellCheckingInspection")
+    private static final class LinuxLibC {
+      static native int __lxstat64(int ver, String path, Pointer stat);
+      static native int __xstat64(int ver, String path, Pointer stat);
+    }
+
+    private static final int[] LINUX_64 =  {24, 48, 88, 28, 32};
     private static final int[] BSD_64 =    { 8, 72, 40, 12, 16};
 
+    private static final int STAT_VER = 1;
     private static final int OFF_MODE = 0;
     private static final int OFF_SIZE = 1;
     private static final int OFF_TIME = 2;
@@ -222,12 +234,14 @@ public final class FileSystemUtil {
     JnaUnixMediatorImpl() {
       assert JnaLoader.isSupportsDirectMapping() : "Direct mapping not available on " + Platform.RESOURCE_PREFIX;
 
-      if ("darwin-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = BSD_64;
+      if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
+      else if ("darwin-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = BSD_64;
       else throw new IllegalStateException("Unsupported OS/arch: " + Platform.RESOURCE_PREFIX);
 
       Map<String, String> options = Collections.singletonMap(Library.OPTION_STRING_ENCODING, CharsetToolkit.getPlatformCharset().name());
       NativeLibrary lib = NativeLibrary.getInstance("c", options);
       Native.register(LibC.class, lib);
+      Native.register(SystemInfo.isLinux ? LinuxLibC.class : UnixLibC.class, lib);
 
       myUid = LibC.getuid();
       myGid = LibC.getgid();
@@ -237,7 +251,7 @@ public final class FileSystemUtil {
     public FileAttributes getAttributes(@NotNull String path) {
       Memory buffer = myMemoryPool.alloc();
       try {
-        int res = LibC.lstat(path, buffer);
+        int res = SystemInfo.isLinux ? LinuxLibC.__lxstat64(STAT_VER, path, buffer) : UnixLibC.lstat(path, buffer);
         if (res != 0) return null;
 
         int mode = getModeFlags(buffer) & LibC.S_MASK;
@@ -284,11 +298,11 @@ public final class FileSystemUtil {
     }
 
     private static boolean loadFileStatus(@NotNull String path, @NotNull Memory buffer) {
-      return LibC.stat(path, buffer) == 0;
+      return (SystemInfo.isLinux ? LinuxLibC.__xstat64(STAT_VER, path, buffer) : UnixLibC.stat(path, buffer)) == 0;
     }
 
     private int getModeFlags(@NotNull Memory buffer) {
-      return buffer.getShort(myOffsets[OFF_MODE]);
+      return SystemInfo.isLinux ? buffer.getInt(myOffsets[OFF_MODE]) : buffer.getShort(myOffsets[OFF_MODE]);
     }
 
     private boolean ownFile(@NotNull Memory buffer) {
