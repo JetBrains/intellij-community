@@ -96,7 +96,7 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
       if (selectionToCopy == null) {
         return;
       }
-      if (selectionToCopy.copyPasteOptions().isEntireLineFromEmptySelection()) {
+      if (selectionToCopy.copyPasteOptions().isCopiedFromEmptySelection()) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.copy.line");
       }
     }
