@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTest.AttributeRecord;
+import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTest.Attributes;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
@@ -65,13 +66,14 @@ public class AttributesStorageOnTheTopOfBlobStoragePropertyBasedTest {
       //.printGeneratedValues()
       .checkScenarios(() -> {
         return env -> {
+          final Attributes attributes = new Attributes();
           try (AttributesStorageOnTheTopOfBlobStorage storage = createStorage(temporaryFolder.newFile().toPath())) {
             final List<AttributeRecord> records = new ArrayList<>();
             //updates 10x against insert/delete
             final Generator<ImperativeCommand> commandsGenerator = Generator.frequency(
-              1, constant(new InsertAttribute(storage, records)),
-              10, constant(new UpdateAttribute(storage, records)),
-              1, constant(new DeleteAttribute(storage, records))
+              1, constant(new InsertAttribute(attributes, storage, records)),
+              10, constant(new UpdateAttribute(attributes, storage, records)),
+              1, constant(new DeleteAttribute(attributes, storage, records))
             );
             env.executeCommands(commandsGenerator);
             env.logMessage("Total records: " + records.size());
@@ -84,11 +86,14 @@ public class AttributesStorageOnTheTopOfBlobStoragePropertyBasedTest {
   }
 
   public static class InsertAttribute implements ImperativeCommand {
+    private final Attributes attributes;
     private final AttributesStorageOnTheTopOfBlobStorage storage;
     private final List<AttributeRecord> records;
 
-    public InsertAttribute(@NotNull final AttributesStorageOnTheTopOfBlobStorage storage,
+    public InsertAttribute(@NotNull final Attributes attributes,
+                           @NotNull final AttributesStorageOnTheTopOfBlobStorage storage,
                            @NotNull final List<AttributeRecord> records) {
+      this.attributes = attributes;
       this.storage = storage;
       this.records = records;
     }
@@ -103,9 +108,12 @@ public class AttributesStorageOnTheTopOfBlobStoragePropertyBasedTest {
                                              "Generated fileId: %s");
         final int attributeId = env.generateValue(Generator.integers(0, 1024),
                                                   "Generated attributeId: %s");
-        final AttributeRecord insertedRecord = AttributeRecord.newAttributeRecord(fileId, attributeId)
-          .withRandomAttributeBytes(1029)
-          .store(storage);
+
+        final AttributeRecord insertedRecord = attributes.insertOrUpdateRecord(
+          AttributeRecord.newAttributeRecord(fileId, attributeId)
+            .withRandomAttributeBytes(1029),
+          storage
+        );
         records.add(insertedRecord);
 
         assertTrue(
@@ -119,11 +127,14 @@ public class AttributesStorageOnTheTopOfBlobStoragePropertyBasedTest {
   }
 
   public static class UpdateAttribute implements ImperativeCommand {
+    private final Attributes attributes;
     private final AttributesStorageOnTheTopOfBlobStorage storage;
     private final List<AttributeRecord> records;
 
-    public UpdateAttribute(@NotNull final AttributesStorageOnTheTopOfBlobStorage storage,
+    public UpdateAttribute(@NotNull final Attributes attributes,
+                           @NotNull final AttributesStorageOnTheTopOfBlobStorage storage,
                            @NotNull final List<AttributeRecord> records) {
+      this.attributes = attributes;
       this.storage = storage;
       this.records = records;
     }
@@ -148,8 +159,10 @@ public class AttributesStorageOnTheTopOfBlobStoragePropertyBasedTest {
           final Integer newSize = env.generateValue(sizeGenerator,
                                                     "New attribute size: %s bytes");
 
-          final AttributeRecord updatedRecord = record.withRandomAttributeBytes(newSize)
-            .store(storage);
+          final AttributeRecord updatedRecord = attributes.insertOrUpdateRecord(
+            record.withRandomAttributeBytes(newSize),
+            storage
+          );
 
           records.set(recordIndex, updatedRecord);
 
@@ -169,11 +182,14 @@ public class AttributesStorageOnTheTopOfBlobStoragePropertyBasedTest {
   }
 
   public static class DeleteAttribute implements ImperativeCommand {
+    private final Attributes attributes;
     private final AttributesStorageOnTheTopOfBlobStorage storage;
     private final List<AttributeRecord> records;
 
-    public DeleteAttribute(@NotNull final AttributesStorageOnTheTopOfBlobStorage storage,
+    public DeleteAttribute(@NotNull final Attributes attributes,
+                           @NotNull final AttributesStorageOnTheTopOfBlobStorage storage,
                            @NotNull final List<AttributeRecord> records) {
+      this.attributes = attributes;
       this.storage = storage;
       this.records = records;
     }
@@ -186,7 +202,7 @@ public class AttributesStorageOnTheTopOfBlobStoragePropertyBasedTest {
                                                     "Attribute to delete: #%s");
 
           final AttributeRecord recordToDelete = records.remove(recordIndex);
-          recordToDelete.delete(storage);
+          attributes.deleteRecord(recordToDelete, storage);
 
           assertFalse(
             recordToDelete.existsInStorage(storage)
