@@ -7,6 +7,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteCustomUsageInfo
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -84,7 +85,15 @@ class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
         }
     }
 
-    override fun removeOverriding(overriddenMethod: PsiElement) {
-        (overriddenMethod as? KtModifierListOwner)?.modifierList?.getModifier(KtTokens.OVERRIDE_KEYWORD)?.delete()
+    override fun createCleanupOverriding(
+        overriddenFunction: PsiElement,
+        elements2Delete: Array<PsiElement>,
+        result: MutableList<UsageInfo>
+    ) {
+        result.add(object : SafeDeleteReferenceSimpleDeleteUsageInfo(overriddenFunction, overriddenFunction, true), SafeDeleteCustomUsageInfo {
+            override fun performRefactoring() {
+                (element as? KtModifierListOwner)?.modifierList?.getModifier(KtTokens.OVERRIDE_KEYWORD)?.delete()
+            }
+        })
     }
 }

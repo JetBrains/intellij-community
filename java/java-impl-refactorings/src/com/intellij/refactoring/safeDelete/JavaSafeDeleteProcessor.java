@@ -899,8 +899,8 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     return null;
   }
 
-  private static boolean canBePrivate(PsiMethod method, Collection<? extends PsiReference> references, Collection<? extends PsiElement> deleted,
-                                      final PsiElement[] allElementsToDelete) {
+  static boolean canBePrivate(PsiMethod method, Collection<? extends PsiReference> references, Collection<? extends PsiElement> deleted,
+                              final PsiElement[] allElementsToDelete) {
     final PsiClass containingClass = method.getContainingClass();
     if(containingClass == null) {
       return false;

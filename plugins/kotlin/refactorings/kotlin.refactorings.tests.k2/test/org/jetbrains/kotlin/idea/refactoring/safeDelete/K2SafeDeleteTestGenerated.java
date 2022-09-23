@@ -253,6 +253,64 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava")
+    public static class KotlinFunctionWithJava extends AbstractK2SafeDeleteTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doFunctionTestWithJava, this, testDataFilePath);
+        }
+
+        @TestMetadata("funExt.kt")
+        public void testFunExt() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/funExt.kt");
+        }
+
+        @TestMetadata("implement1.kt")
+        public void testImplement1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/implement1.kt");
+        }
+
+        @TestMetadata("implement2.kt")
+        public void testImplement2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/implement2.kt");
+        }
+
+        @TestMetadata("implement3.kt")
+        public void testImplement3() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/implement3.kt");
+        }
+
+        @TestMetadata("override1.kt")
+        public void testOverride1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/override1.kt");
+        }
+
+        @TestMetadata("override2.kt")
+        public void testOverride2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/override2.kt");
+        }
+
+        @TestMetadata("override3.kt")
+        public void testOverride3() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/override3.kt");
+        }
+
+        @TestMetadata("overrideAndImplement1.kt")
+        public void testOverrideAndImplement1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/overrideAndImplement1.kt");
+        }
+
+        @TestMetadata("overrideAndImplement2.kt")
+        public void testOverrideAndImplement2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/overrideAndImplement2.kt");
+        }
+
+        @TestMetadata("usageInOverrideToDelete.kt")
+        public void testUsageInOverrideToDelete() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/usageInOverrideToDelete.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty")
     public static class KotlinProperty extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {

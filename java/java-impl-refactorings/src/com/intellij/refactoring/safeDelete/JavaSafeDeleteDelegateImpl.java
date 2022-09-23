@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverrideAnnotation;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeletePrivatizeMethod;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
@@ -11,6 +13,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -118,10 +121,12 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
   }
 
   @Override
-  public void removeOverriding(@NotNull PsiElement overriddenMethod) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiModifierListOwner)overriddenMethod, true, Override.class.getName());
-    if (annotation != null) {
-      annotation.delete();
+  public void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement[] elements2Delete, @NotNull List<UsageInfo> result) {
+    if (overriddenFunction instanceof PsiMethod &&
+      JavaSafeDeleteProcessor.canBePrivate((PsiMethod)overriddenFunction, ReferencesSearch.search(overriddenFunction).findAll(), Collections.emptyList(), elements2Delete)) {
+      result.add(new SafeDeletePrivatizeMethod((PsiMethod)overriddenFunction, (PsiMethod)overriddenFunction));
+    } else {
+      result.add(new SafeDeleteOverrideAnnotation(overriddenFunction, overriddenFunction));
     }
   }
 }

@@ -46,8 +46,10 @@ public interface JavaSafeDeleteDelegate {
                                         int index);
 
   /**
-   * Method is used to clear <code>@Override</code> annotation in java or corresponding <code>override</code> modifier in kotlin
-   * @param overriddenMethod method which overrides another method
+   * Method is used to create usage to remove <code>@Override</code> annotation in java or corresponding <code>override</code> modifier in kotlin
+   *
+   * @param overriddenMethod method which overrides method to be deleted
+   * @param elements2Delete all elements which would be deleted this time
    */
-  void removeOverriding(@NotNull PsiElement overriddenMethod);
+  void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement[] elements2Delete, @NotNull List<UsageInfo> result);
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMember
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate
@@ -40,12 +41,22 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         allElementsToDelete: Array<out PsiElement>,
         result: MutableList<UsageInfo>
     ): NonCodeUsageSearchInfo {
-        val isInside: (t: PsiElement) -> Boolean =
-            { allElementsToDelete.any { elementToDelete -> SafeDeleteProcessor.isInside(it, elementToDelete) } }
+
+        fun isInside (t: PsiElement, ancestors : Array<out PsiElement>) : Boolean =
+             ancestors.any { elementToDelete -> SafeDeleteProcessor.isInside(t, elementToDelete) } 
+        
+        val isInside: (t: PsiElement) -> Boolean = { isInside(it, allElementsToDelete) }
+
+        val additionalElementsToDelete = arrayListOf<PsiElement>()
+        if (element is KtNamedFunction) {
+            findFunctionUsages(element, allElementsToDelete, isInside, additionalElementsToDelete, result)
+        }
+
         if (element is KtDeclaration) {
+            val additionalElementsToDeleteArray = additionalElementsToDelete.toTypedArray()
             ReferencesSearch.search(element).forEach(Processor {
                 val e = it.element
-                if (!isInside(e)) {
+                if (!isInside(e) && !isInside(e, additionalElementsToDeleteArray)) {
                     if (e.getNonStrictParentOfType<KtValueArgumentName>() != null) {
                         //named argument would be deleted with argument
                         return@Processor true
@@ -55,11 +66,6 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 }
                 return@Processor true
             })
-        }
-
-        val additionalElementsToDelete = arrayListOf<PsiElement>()
-        if (element is KtNamedFunction) {
-            findFunctionUsages(element, allElementsToDelete, isInside, additionalElementsToDelete, result)
         }
         
         if (element is KtTypeParameter) {
@@ -116,12 +122,17 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
 
                 search(element).forEach { m ->
                     val original = m.unwrapped
-                    if (original is KtDeclaration && !allElementsToDelete.contains(original)) {
-                        analyze(original) {
-                            if (isMultipleInheritance(original.getSymbol())) {
-                                return@forEach
-                            }
+                    if (original != null && !allElementsToDelete.contains(original)) {
+                        val oSymbol = when (original) {
+                            is KtDeclaration -> original.getSymbol()
+                            is PsiMember -> original.getCallableSymbol()
+                            else -> null
                         }
+
+                        if (oSymbol != null && isMultipleInheritance(oSymbol)) {
+                            return@forEach
+                        }
+
                         overridden.add(original)
                     }
                 }
@@ -138,8 +149,9 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 })) {
                 additionalElementsToDelete.add(overriddenFunction)
                 result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(overriddenFunction, element, true))
-            } else {
-                result.add(SafeDeleteOverrideUsageInfo(overriddenFunction, element))
+            }
+            else {
+                JavaSafeDeleteDelegate.EP.forLanguage(overriddenFunction.language)?.createCleanupOverriding(overriddenFunction, allElementsToDelete, result)
             }
         }
     }
