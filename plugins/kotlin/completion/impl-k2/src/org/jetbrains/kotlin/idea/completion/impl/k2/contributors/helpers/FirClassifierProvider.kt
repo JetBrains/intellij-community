@@ -18,23 +18,22 @@ internal object FirClassifierProvider {
         position: KtElement,
         scopeNameFilter: KtScopeNameFilter,
         visibilityChecker: CompletionVisibilityChecker
-    ): Sequence<KtClassifierSymbol> = sequence {
-        yieldAll(
-            originalKtFile.getScopeContextForPosition(position).scopes
-                .getClassifierSymbols(scopeNameFilter)
-                .filter { visibilityChecker.isVisible(it) }
-        )
-    }
+    ): Sequence<KtClassifierSymbol> =
+        originalKtFile.getScopeContextForPosition(position).scopes
+            .getClassifierSymbols(scopeNameFilter)
+            .filter { visibilityChecker.isVisible(it) }
 
     fun KtAnalysisSession.getAvailableClassifiersFromIndex(
         symbolProvider: KtSymbolFromIndexProvider,
         scopeNameFilter: KtScopeNameFilter,
         visibilityChecker: CompletionVisibilityChecker
-    ): Sequence<KtClassifierSymbol> =
-        (symbolProvider.getKotlinClassesByNameFilter(
+    ): Sequence<KtClassifierSymbol> {
+        val kotlinDeclarations = symbolProvider.getKotlinClassesByNameFilter(
             scopeNameFilter,
             psiFilter = { ktClass -> ktClass !is KtEnumEntry }
-        ) +
-                symbolProvider.getJavaClassesByNameFilter(scopeNameFilter))
+        )
+        val javaDeclarations = symbolProvider.getJavaClassesByNameFilter(scopeNameFilter)
+        return (kotlinDeclarations + javaDeclarations)
             .filter { visibilityChecker.isVisible(it as KtSymbolWithVisibility) }
+    }
 }
