@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.structuralsearch;
+package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -10,8 +10,8 @@ import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.structuralsearch.inspection.SSBasedInspection;
-import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider;
+import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
@@ -23,7 +23,7 @@ import com.intellij.util.PairProcessor;
 
 import java.util.Collections;
 
-public class SSRCodeInsightTest extends UsefulTestCase {
+public class SSBasedInspectionTest extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
   private SSBasedInspection myInspection;
 
