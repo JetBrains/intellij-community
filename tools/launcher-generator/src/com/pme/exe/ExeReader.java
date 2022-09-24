@@ -23,6 +23,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.Arrays;
+import java.util.Optional;
 
 /**
  * @author Sergey Zhulin
@@ -156,6 +158,16 @@ public class ExeReader extends Bin.Structure{
 
       virtualAddressMember.setValue(virtualAddress);
       virtualAddress += ((ImageSectionHeader)sectionHeader).getValueMember("VirtualSize").getValue();
+    }
+
+    // Update the relative virtual address of the Base Relocation Table, if any.
+    Optional<ImageSectionHeader> relocationSectionHeader = Arrays.stream((ImageSectionHeader[])mySectionHeaders.getArray())
+      .filter(sectionHeader -> ".reloc".equals(sectionHeader.getTxtMember("Name").getText())).findFirst();
+    if (relocationSectionHeader.isPresent()) {
+      Bin.ArrayOfBins imageDataDirectories = (Bin.ArrayOfBins)myImageOptionalHeader.getMember("ImageDataDirectories");
+      ImageDataDirectory relocationDataDirectory = (ImageDataDirectory)imageDataDirectories.get(5);
+      Value virtualAddressMember = relocationDataDirectory.getValueMember("VirtualAddress");
+      virtualAddressMember.setValue(relocationSectionHeader.get().getValue("VirtualAddress"));
     }
 
     // The binary size has been changed as the result, update it in the size holders:
