@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.pme.util.BitsUtil;
 import com.pme.util.OffsetTrackingInputStream;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.lang.reflect.Array;
@@ -301,11 +302,11 @@ public abstract class Bin {
     }
 
     public long getValue() {
-      return BitsUtil.revertBytesOfShort((short) super.getRawValue());
+      return Short.toUnsignedLong(Short.reverseBytes((short) super.getRawValue()));
     }
 
     public Value setValue(long value) {
-      setRawValue(BitsUtil.revertBytesOfShort((short) value));
+      setRawValue(Short.toUnsignedLong(Short.reverseBytes((short)value)));
       return this;
     }
 
@@ -336,12 +337,12 @@ public abstract class Bin {
     }
 
     public Value setValue(long value) {
-      setRawValue(BitsUtil.revertBytesOfInt((int) value));
+      setRawValue(Integer.toUnsignedLong(Integer.reverseBytes((int)value)));
       return this;
     }
 
     public long getValue() {
-      return BitsUtil.revertBytesOfInt((int) super.getRawValue());
+      return Integer.toUnsignedLong(Integer.reverseBytes((int) super.getRawValue()));
     }
 
     public void read(DataInput stream) throws IOException {
@@ -367,12 +368,12 @@ public abstract class Bin {
 
     @Override
     public long getValue() {
-      return BitsUtil.revertBytesOfLong(getRawValue());
+      return Long.reverseBytes(getRawValue());
     }
 
     @Override
     public Value setValue(long value) {
-      setRawValue(BitsUtil.revertBytesOfLong(value));
+      setRawValue(Long.reverseBytes(value));
       return this;
     }
 
@@ -455,7 +456,7 @@ public abstract class Bin {
     public Txt(String name, String string) {
       super(name);
       myBytes = new byte[string.length() * 2];
-      byte[] bytes = string.getBytes();
+      byte[] bytes = string.getBytes(StandardCharsets.US_ASCII);
       for (int i = 0; i < bytes.length; ++i) {
         myBytes[i * 2] = bytes[i];
         myBytes[i * 2 + 1] = 0;
@@ -483,7 +484,7 @@ public abstract class Bin {
 
     private void setValue(){
       for (int i = 0; i < mySize.getValue(); ++i) {
-        int b = BitsUtil.unsignedByte(myBytes[i]);
+        int b = java.lang.Byte.toUnsignedInt(myBytes[i]);
         if (b != 0) {
           myBuffer.append((char) b);
         }
@@ -534,7 +535,7 @@ public abstract class Bin {
     @Override
     public void write(DataOutput stream) throws IOException {
       for (int i = 0; i < myValue.length(); i++) {
-        stream.writeShort(BitsUtil.revertBytesOfShort((short) myValue.charAt(i)));
+        stream.writeShort(Short.toUnsignedInt(Short.reverseBytes((short)myValue.charAt(i))));
       }
       stream.writeShort(0);
     }
