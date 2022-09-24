@@ -1658,4 +1658,24 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
   public void testRestDocstringIvarNameResolvesToDataClassAttribute() {
     runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyTargetExpression.class, "var1"));
   }
+
+  // PY-50788
+  public void testRestDocstringIvarNameResolvesToInheritedInstanceAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyTargetExpression.class, "attr"));
+  }
+
+  // PY-50788
+  public void testRestDocstringVarNameResolvesToInheritedInstanceAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyTargetExpression.class, "attr"));
+  }
+
+  // PY-50788
+  public void testRestDocstringVarNameResolvesToInheritedClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyTargetExpression.class, "attr"));
+  }
+
+  // PY-50788
+  public void testRestDocstringCvarNameResolvesToInheritedClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyTargetExpression.class, "attr"));
+  }
 }
