@@ -195,9 +195,12 @@ private fun KtExpression.isApplicable(parameterName: String): Boolean = when (th
     else -> false
 }
 
-private fun KtCallExpression.isApplicable(parameterName: String): Boolean = valueArguments.all {
-    val argumentExpression = it.getArgumentExpression() ?: return@all false
-    argumentExpression.isApplicable(parameterName)
+private fun KtCallExpression.isApplicable(parameterName: String): Boolean {
+    if (valueArguments.isEmpty()) return false
+    return valueArguments.all {
+        val argumentExpression = it.getArgumentExpression() ?: return@all false
+        argumentExpression.isApplicable(parameterName)
+    }
 }
 
 private fun KtDotQualifiedExpression.isApplicable(parameterName: String): Boolean {
