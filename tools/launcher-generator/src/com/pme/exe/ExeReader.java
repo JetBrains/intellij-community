@@ -146,12 +146,13 @@ public class ExeReader extends Bin.Structure{
   public void sectionVirtualAddressFixup() {
     long virtualAddress = ((ImageSectionHeader)mySectionHeaders.get(0)).getValueMember("VirtualAddress").getValue();
 
+    long sectionAlignment = myImageOptionalHeader.getValue("SectionAlignment");
     for (Bin sectionHeader : mySectionHeaders.getArray()) {
       Value virtualAddressMember = ((ImageSectionHeader)sectionHeader).getValueMember("VirtualAddress");
 
-      // Section always starts from an address divisible by 0x1000
-      if (virtualAddress % 0x1000 != 0)
-        virtualAddress += 0x1000 - virtualAddress % 0x1000;
+      // Section always starts from an address aligned to IMAGE_OPTIONAL_HEADER::SectionAlignment, which is 0x1000 by default
+      if (virtualAddress % sectionAlignment != 0)
+        virtualAddress += sectionAlignment - virtualAddress % sectionAlignment;
 
       virtualAddressMember.setValue(virtualAddress);
       virtualAddress += ((ImageSectionHeader)sectionHeader).getValueMember("VirtualSize").getValue();
