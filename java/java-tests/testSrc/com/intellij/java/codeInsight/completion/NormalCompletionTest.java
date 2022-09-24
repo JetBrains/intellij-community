@@ -193,7 +193,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   public void testProtectedFromSuper() throws Exception {
     configureByFile("ProtectedFromSuper.java");
     Arrays.sort(myItems);
-    assertTrue("Exception not found", Arrays.binarySearch(myItems, "xxx") > 0);
+    assertTrue("Exception not found", ContainerUtil.indexOf(Arrays.asList(myItems), le -> le.getLookupString().equals("xxx")) > 0);
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -205,10 +205,9 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
 
   @NeedsIndex.ForStandardLibrary
   public void testProtectedFromSuper2() throws Exception {
-
     configureByFile("ProtectedFromSuper.java");
     Arrays.sort(myItems);
-    assertTrue("Exception not found", Arrays.binarySearch(myItems, "xxx") > 0);
+    assertTrue("Exception not found", ContainerUtil.indexOf(Arrays.asList(myItems), le -> le.getLookupString().equals("xxx")) > 0);
   }
 
   @NeedsIndex.ForStandardLibrary
