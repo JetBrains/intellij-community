@@ -2868,6 +2868,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/complexRedundantLet/letUseItWithBinaryExpression2.kt");
         }
 
+        @TestMetadata("letUseItWithBinaryExpression3.kt")
+        public void testLetUseItWithBinaryExpression3() throws Exception {
+            runTest("testData/inspectionsLocal/complexRedundantLet/letUseItWithBinaryExpression3.kt");
+        }
+
+        @TestMetadata("letUseItWithBinaryExpression4.kt")
+        public void testLetUseItWithBinaryExpression4() throws Exception {
+            runTest("testData/inspectionsLocal/complexRedundantLet/letUseItWithBinaryExpression4.kt");
+        }
+
         @TestMetadata("letUseItWithMultipleMethodCall1.kt")
         public void testLetUseItWithMultipleMethodCall1() throws Exception {
             runTest("testData/inspectionsLocal/complexRedundantLet/letUseItWithMultipleMethodCall1.kt");
