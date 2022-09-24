@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ import java.io.*;
  * Time: 12:52:09 PM
  */
 public class IconFile extends Bin.Structure {
-  private Level myImages = new Level();
-  private File myFile;
+  private final Level myImages = new Level();
+  private final File myFile;
 
   public static class IconWrongFormat extends IOException {
     public IconWrongFormat( File file ) {
@@ -45,22 +45,17 @@ public class IconFile extends Bin.Structure {
   }
 
   public void read() throws IOException {
-    RandomAccessFile stream = null;
-    try {
-      stream = new RandomAccessFile(myFile, "r");
+    try (RandomAccessFile stream = new RandomAccessFile(myFile, "r")) {
       read(stream);
-    } finally {
-      if (stream != null) {
-        stream.close();
-      }
     }
   }
 
+  @Override
   public void read(DataInput stream) throws IOException {
     try {
       super.read(stream);
       Word idCount = (Word) ((Bin.Structure) getMember("Header")).getMember("idCount");
-      ArrayOfBins<IconDirectory> iconDirs = new ArrayOfBins<IconDirectory>("Icon directories", IconDirectory.class, idCount);
+      ArrayOfBins<IconDirectory> iconDirs = new ArrayOfBins<>("Icon directories", IconDirectory.class, idCount);
       iconDirs.setCountHolder(idCount);
       addMember(myImages);
       Bin[] array = iconDirs.getArray();

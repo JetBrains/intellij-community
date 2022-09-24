@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.pme.exe.res;
 
@@ -14,7 +14,7 @@ public class StringTableDirectory {
     RawResource resource;
   }
 
-  private final List<Entry> myEntries = new ArrayList<Entry>();
+  private final List<Entry> myEntries = new ArrayList<>();
 
   public StringTableDirectory(DirectoryEntry directoryEntry) throws IOException {
     for (DirectoryEntry subDir : directoryEntry.getSubDirs()) {

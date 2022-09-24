@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,11 +46,12 @@ public class ImageFileHeader extends Bin.Structure {
 
   static class Machine extends Bin.Word{
 
-    public Machine() {
+    Machine() {
       super("Machine");
     }
 
-    public void report( OutputStreamWriter writer ) throws IOException {
+    @Override
+    public void report(OutputStreamWriter writer ) throws IOException {
       super.report( writer );
       long machine = getValue();
       if ( machine == 0x014c ){

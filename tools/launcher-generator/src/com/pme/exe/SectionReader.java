@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.io.IOException;
  * Time: 9:48:35 AM
  */
 public class SectionReader extends Bin.Structure{
-  private Bin.Txt myName;
+  private final Bin.Txt myName;
   public SectionReader( ImageSectionHeader sectionHeader, Bin.Value startOffset, Bin.Value mainSectionsOffset, ImageOptionalHeader imageOptionalHeader ) {
     super("Section");
 
@@ -46,6 +46,7 @@ public class SectionReader extends Bin.Structure{
     return myName.getText();
   }
 
+  @Override
   public void report(OutputStreamWriter writer) throws IOException {
     _report( writer, "Section name: " + myName.getText() );
     super.report(writer);

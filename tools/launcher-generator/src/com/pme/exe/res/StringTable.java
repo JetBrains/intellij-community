@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.io.*;
  * Time: 12:43:28 PM
  */
 public class StringTable {
-    String[] strings = new String[16];
+    final String[] strings = new String[16];
 
     public StringTable(byte[] bytes) throws IOException {
       ByteArrayInputStream bytesStream = new ByteArrayInputStream(bytes);
@@ -51,16 +51,16 @@ public class StringTable {
 
     public byte[] getBytes() throws IOException {
       int size = 0;
-      for ( int i = 0; i < strings.length; ++i){
-        size += 2 + strings[i].length() * 2;
+      for (String string : strings) {
+        size += 2 + string.length() * 2;
       }
       ByteArrayOutputStream bytesStream = new ByteArrayOutputStream(size);
       DataOutputStream stream = new DataOutputStream(bytesStream);
-      for ( int i = 0; i < strings.length; ++i){
-        int count = strings[i].length();
-        new Bin.Word().setValue( count ).write( stream );
-        if ( count != 0 ){
-          new Bin.Txt( "", strings[i] ).write( stream );
+      for (String string : strings) {
+        int count = string.length();
+        new Bin.Word().setValue(count).write(stream);
+        if (count != 0) {
+          new Bin.Txt("", string).write(stream);
         }
       }
       return bytesStream.toByteArray();

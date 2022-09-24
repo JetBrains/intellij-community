@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,8 @@ public class ImageOptionalHeader extends Bin.Structure {
     }
     addMember( new DWord( "LoaderFlags" ) );
     DWord numberOfRvaAndSizes = (DWord)addMember( new DWord( "NumberOfRvaAndSizes") );
-    ArrayOfBins<ImageDataDirectory> imageDataDirectories = new ArrayOfBins<ImageDataDirectory>("ImageDataDirectories", ImageDataDirectory.class, numberOfRvaAndSizes);
+    ArrayOfBins<ImageDataDirectory> imageDataDirectories =
+      new ArrayOfBins<>("ImageDataDirectories", ImageDataDirectory.class, numberOfRvaAndSizes);
     imageDataDirectories.setCountHolder( numberOfRvaAndSizes );
 
     addMember( imageDataDirectories );

@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ package com.pme.exe.res;
 
 import com.pme.exe.Bin;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 
 /**
@@ -31,7 +34,7 @@ public class DirectoryEntry extends LevelEntry {
   private ArrayOfBins<EntryDescription> myIdEntries;
   private final ResourceSectionReader mySection;
   private final ArrayList<DirectoryEntry> mySubDirs = new ArrayList<>();
-  private final ArrayList<DataEntry> myDatas = new ArrayList<>();
+  private final ArrayList<DataEntry> myData = new ArrayList<>();
   private final long myIdOrName;
 
   public DirectoryEntry(ResourceSectionReader section, EntryDescription entry, long idOrName) {
@@ -81,21 +84,17 @@ public class DirectoryEntry extends LevelEntry {
   }
 
   public RawResource getRawResource(int index) {
-    DataEntry dataEntry = myDatas.get(index);
+    DataEntry dataEntry = myData.get(index);
     return dataEntry.getRawResource();
   }
 
-  public long sizeInBytes() {
-    return super.sizeInBytes();
-  }
-
   public void insertDataEntry( int index, DataEntry dataEntry ){
-    myDatas.add( dataEntry );
+    myData.add(dataEntry );
     getLevel().insertLevelEntry( index, dataEntry );
   }
 
   public void addDataEntry( DataEntry dataEntry ){
-    myDatas.add( dataEntry );
+    myData.add(dataEntry );
     getLevel().addLevelEntry( dataEntry );
   }
 
@@ -119,6 +118,7 @@ public class DirectoryEntry extends LevelEntry {
     myIdEntries.addBin( entry );
   }
 
+  @Override
   public void read(DataInput stream) throws IOException {
     super.read(stream);
 
@@ -151,10 +151,12 @@ public class DirectoryEntry extends LevelEntry {
     }
   }
 
+  @Override
   public void report(OutputStreamWriter writer) throws IOException {
     super.report(writer);
   }
 
+  @Override
   public void write(DataOutput stream) throws IOException {
     super.write(stream);
   }

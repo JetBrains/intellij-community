@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@ import java.nio.file.StandardCopyOption;
  * Time: 10:43:01 AM
  */
 public class LauncherGenerator {
-  private File myTemplate;
-  private File myExePath;
+  private final File myTemplate;
+  private final File myExePath;
   private StringTableDirectory myStringTableDirectory;
   private DirectoryEntry myRoot;
   private ExeReader myReader;
@@ -103,13 +103,9 @@ public class LauncherGenerator {
 
   private void verifyVersionInfo() throws IOException {
     String versionInfoPath = myExePath + ".version";
-    RandomAccessFile versionInfoStream = new RandomAccessFile(versionInfoPath, "rw");
-    try {
+    try (RandomAccessFile versionInfoStream = new RandomAccessFile(versionInfoPath, "rw")) {
       myVersionInfo.resetOffsets(0);
       myVersionInfo.write(versionInfoStream);
-    }
-    finally {
-      versionInfoStream.close();
     }
 
     VersionInfo copy = new VersionInfo();
@@ -138,11 +134,8 @@ public class LauncherGenerator {
 
   public void injectIcon(int id, final InputStream iconStream) throws IOException {
     Path f = Files.createTempFile("launcher", "ico");
-    try {
+    try (iconStream) {
       Files.copy(iconStream, f, StandardCopyOption.REPLACE_EXISTING);
-    }
-    finally {
-      iconStream.close();
     }
     new IconResourceInjector().injectIcon(f.toFile(), myRoot, "IRD" + id);
   }

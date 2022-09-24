@@ -21,10 +21,10 @@ import com.pme.util.BitsUtil;
 import com.pme.util.OffsetTrackingInputStream;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.lang.reflect.Array;
 
 /**
  * @author Sergey Zhulin
@@ -35,8 +35,8 @@ public abstract class Bin {
   private String myName;
   private String myDescription;
   private long myOffset = 0;
-  ArrayList<Bin.Value> myOffsetHolders = new ArrayList<Bin.Value>(0);
-  ArrayList<Bin.Value> mySizeHolders = new ArrayList<Bin.Value>(0);
+  final ArrayList<Bin.Value> myOffsetHolders = new ArrayList<>(0);
+  final ArrayList<Bin.Value> mySizeHolders = new ArrayList<>(0);
 
   public Bin(String name) {
     myName = name;
@@ -98,34 +98,15 @@ public abstract class Bin {
 
   public abstract void report(OutputStreamWriter writer) throws IOException;
 
-  public static class Comment extends Bin {
-    public Comment(String comment) {
-      super(comment);
-    }
-
-    public long sizeInBytes() {
-      return 0;
-    }
-
-    public void read(DataInput stream) throws IOException {
-    }
-
-    public void write(DataOutput stream) throws IOException {
-    }
-
-    public void report(OutputStreamWriter writer) throws IOException {
-      _report(writer, getName());
-    }
-  }
-
   public static class Structure extends Bin {
-    private ArrayList<Bin> myMembers = new ArrayList<Bin>(1);
-    private HashMap<String, Bin> myMembersMap = new HashMap<String, Bin>(1);
+    private ArrayList<Bin> myMembers = new ArrayList<>(1);
+    private final HashMap<String, Bin> myMembersMap = new HashMap<>(1);
 
     public Structure(String name) {
       super(name);
     }
 
+    @Override
     public void resetOffsets(long newOffset) {
       super.resetOffsets(newOffset);
       long offset = getOffset();
@@ -136,6 +117,7 @@ public abstract class Bin {
       updateSizeOffsetHolders();
     }
 
+    @Override
     public void copyFrom(Bin binStructure) {
       Bin.Structure structure = (Bin.Structure)binStructure;
       ArrayList<Bin> members = structure.getMembers();
@@ -147,6 +129,7 @@ public abstract class Bin {
       }
     }
 
+    @Override
     public long sizeInBytes() {
       long size = 0;
       for (Bin bin : myMembers) {
@@ -163,12 +146,8 @@ public abstract class Bin {
       addMember(bin);
     }
 
-    public void addComment(String message) {
-      myMembers.add(new Comment(message));
-    }
-
-    public Bin insertMember(int index, Bin bin) {
-      ArrayList<Bin> list = new ArrayList<Bin>( myMembers.size() + 1 );
+    public void insertMember(int index, Bin bin) {
+      ArrayList<Bin> list = new ArrayList<>(myMembers.size() + 1);
       for ( int i = 0; i < index; ++i ){
         list.add( myMembers.get( i ) );
       }
@@ -178,7 +157,6 @@ public abstract class Bin {
       }
       myMembers = list;
       addMemberToMapOnly(bin);
-      return bin;
     }
 
     public Bin addMember(Bin bin) {
@@ -188,7 +166,7 @@ public abstract class Bin {
     }
 
     //such members are not read by framework
-    //it is read by parent in 'read' overrided method
+    //it is read by parent in overrode 'read' method
     public void addMemberToMapOnly(Bin bin) {
       myMembersMap.put(bin.getName(), bin);
     }
@@ -211,18 +189,21 @@ public abstract class Bin {
       return ((Bin.Value) myMembersMap.get(name)).getValue();
     }
 
+    @Override
     public void read(DataInput stream) throws IOException {
       for (Bin bin : myMembers) {
         bin.read(stream);
       }
     }
 
+    @Override
     public void write(DataOutput stream) throws IOException {
       for (Bin bin : myMembers) {
         bin.write(stream);
       }
     }
 
+    @Override
     public void report(OutputStreamWriter writer) throws IOException {
       _report(writer, "--- '" + getName() + "' Structure --- size = " + sizeInBytes());
       _report(writer, "{Offset = " + Long.toHexString(getOffset()) + "}");
@@ -243,6 +224,7 @@ public abstract class Bin {
     public abstract long getValue();
     public abstract Value setValue(long value);
 
+    @Override
     public void copyFrom(Bin value) {
       setValue(((Value)value).getValue());
     }
@@ -251,9 +233,8 @@ public abstract class Bin {
       return myValue;
     }
 
-    public Value setRawValue(long value) {
+    public void setRawValue(long value) {
       myValue = value;
-      return this;
     }
   }
 
@@ -262,26 +243,32 @@ public abstract class Bin {
       super(name);
     }
 
+    @Override
     public long sizeInBytes() {
       return 1;
     }
 
+    @Override
     public long getValue() {
       return getRawValue();
     }
+    @Override
     public Value setValue(long value) {
       setRawValue(value);
       return this;
     }
 
+    @Override
     public void read(DataInput stream) throws IOException {
       setRawValue(stream.readByte());
     }
 
+    @Override
     public void write(DataOutput stream) throws IOException {
       stream.writeByte((byte) getRawValue());
     }
 
+    @Override
     public void report(OutputStreamWriter writer) throws IOException {
       _report(writer, getDescription(), (byte) getValue());
     }
@@ -297,27 +284,33 @@ public abstract class Bin {
       super(name);
     }
 
+    @Override
     public long sizeInBytes() {
       return 2;
     }
 
+    @Override
     public long getValue() {
       return Short.toUnsignedLong(Short.reverseBytes((short) super.getRawValue()));
     }
 
+    @Override
     public Value setValue(long value) {
       setRawValue(Short.toUnsignedLong(Short.reverseBytes((short)value)));
       return this;
     }
 
+    @Override
     public void read(DataInput stream) throws IOException {
       setRawValue(stream.readShort());
     }
 
+    @Override
     public void write(DataOutput stream) throws IOException {
       stream.writeShort((short) getRawValue());
     }
 
+    @Override
     public void report(OutputStreamWriter writer) throws IOException {
       short sh = (short) getValue();
       _report(writer, getDescription(), sh);
@@ -332,27 +325,33 @@ public abstract class Bin {
       super(name);
     }
 
+    @Override
     public long sizeInBytes() {
       return 4;
     }
 
+    @Override
     public Value setValue(long value) {
       setRawValue(Integer.toUnsignedLong(Integer.reverseBytes((int)value)));
       return this;
     }
 
+    @Override
     public long getValue() {
       return Integer.toUnsignedLong(Integer.reverseBytes((int) super.getRawValue()));
     }
 
+    @Override
     public void read(DataInput stream) throws IOException {
       setRawValue(stream.readInt());
     }
 
+    @Override
     public void write(DataOutput stream) throws IOException {
       stream.writeInt((int) getRawValue());
     }
 
+    @Override
     public void report(OutputStreamWriter writer) throws IOException {
       _report(writer, getDescription(), (int) getValue());
     }
@@ -399,7 +398,7 @@ public abstract class Bin {
   }
 
   public static class Padding extends Bin {
-    private int myBytes;
+    private final int myBytes;
 
     public Padding(int bytes) {
       super("Padding");
@@ -437,13 +436,13 @@ public abstract class Bin {
     }
 
     @Override
-    public void report(OutputStreamWriter writer) throws IOException {
+    public void report(OutputStreamWriter writer) {
     }
   }
 
   public static class Txt extends Bin {
-    private StringBuffer myBuffer = new StringBuffer();
-    private Bin.Value mySize;
+    private final StringBuffer myBuffer = new StringBuffer();
+    private final Bin.Value mySize;
     private byte[] myBytes;
 
     public Txt(String name, byte[] bytes) {
@@ -478,6 +477,7 @@ public abstract class Bin {
       return myBuffer.toString();
     }
 
+    @Override
     public long sizeInBytes() {
       return mySize.getValue();
     }
@@ -491,6 +491,7 @@ public abstract class Bin {
       }
     }
 
+    @Override
     public void read(DataInput stream) throws IOException {
       myBuffer.setLength(0);
       myBytes = new byte[(int) mySize.getValue()];
@@ -500,10 +501,12 @@ public abstract class Bin {
       setValue();
     }
 
+    @Override
     public void write(DataOutput stream) throws IOException {
       stream.write(myBytes);
     }
 
+    @Override
     public void report(OutputStreamWriter writer) throws IOException {
       _report(writer, myBuffer.toString());
     }
@@ -558,7 +561,7 @@ public abstract class Bin {
     private byte[] myBytes;
     private Value myStartOffset;
     private Value mySize;
-    private int myBytesInRow = 16;
+    private static final int ourBytesInRow = 16;
 
     public Bytes(String name, Bin.Value size) {
       super(name);
@@ -600,10 +603,12 @@ public abstract class Bin {
       mySize.setValue(size);
     }
 
+    @Override
     public long sizeInBytes() {
       return mySize.getValue();
     }
 
+    @Override
     public void read(DataInput stream) throws IOException {
       if (myStartOffset != null) {
         RandomAccessFile file = (RandomAccessFile) stream;
@@ -613,24 +618,26 @@ public abstract class Bin {
       stream.readFully(myBytes);
     }
 
+    @Override
     public void write(DataOutput stream) throws IOException {
       stream.write(myBytes, 0, (int) sizeInBytes());
     }
 
-    private StringBuffer myBuffer = new StringBuffer();
+    private final StringBuffer myBuffer = new StringBuffer();
 
+    @Override
     public void report(OutputStreamWriter writer) throws IOException {
       _report(writer, getName());
       _report(writer, "Number of bytes: " + mySize.getValue());
-      int rowCount = (myBytes.length / myBytesInRow);
-      if (myBytes.length % myBytesInRow != 0) {
+      int rowCount = (myBytes.length / ourBytesInRow);
+      if (myBytes.length % ourBytesInRow != 0) {
         rowCount++;
       }
       int byteCount = 0;
       for (int i = 0; i < rowCount; i++) {
         myBuffer.setLength(0);
         myBuffer.append("\n");
-        for (int j = 0; j < myBytesInRow && byteCount < myBytes.length; j++) {
+        for (int j = 0; j < ourBytesInRow && byteCount < myBytes.length; j++) {
           byte aByte = myBytes[byteCount++];
           myBuffer.append(" ").append(BitsUtil.byteToHexString(aByte));
         }
@@ -641,8 +648,8 @@ public abstract class Bin {
 
   public static class ArrayOfBins<T extends Bin> extends Bin {
     private Bin[] myValues;
-    private Bin.Value mySize;
-    private Class myClass;
+    private final Bin.Value mySize;
+    private final Class<T> myClass;
     private Bin.Value myCountHolder = null;
 
     public ArrayOfBins(String name, Class<T> cl, Bin.Value size) {
@@ -664,8 +671,10 @@ public abstract class Bin {
       mySize.setValue( mySize.getValue() + 1 );
     }
 
+    @Override
     public void copyFrom(Bin bin) {
-      ArrayOfBins value = (ArrayOfBins)bin;
+      //noinspection unchecked
+      ArrayOfBins<T> value = (ArrayOfBins<T>)bin;
       for (int i = 0; i < myValues.length; i++) {
         myValues[i].copyFrom( value.get(i) );
       }
@@ -680,7 +689,7 @@ public abstract class Bin {
 
       for (int i = 0; i < myValues.length; i++) {
         try {
-          Bin bin = (Bin) myClass.newInstance();
+          Bin bin = myClass.newInstance();
           bin.setName("[" + i + "]");
           myValues[i] = bin;
         } catch (InstantiationException | IllegalAccessException e) {
@@ -689,6 +698,7 @@ public abstract class Bin {
       }
     }
 
+    @Override
     public void resetOffsets(long newOffset) {
       super.resetOffsets(newOffset);
       long offset = getOffset();
@@ -714,6 +724,7 @@ public abstract class Bin {
       return (T) myValues[index];
     }
 
+    @Override
     public long sizeInBytes() {
       int size = 0;
       for (Bin value : myValues) {
@@ -722,6 +733,7 @@ public abstract class Bin {
       return size;
     }
 
+    @Override
     public void read(DataInput stream) throws IOException {
       init();
       for (Bin value : myValues) {
@@ -729,12 +741,14 @@ public abstract class Bin {
       }
     }
 
+    @Override
     public void write(DataOutput stream) throws IOException {
       for (Bin value : myValues) {
         value.write(stream);
       }
     }
 
+    @Override
     public void report(OutputStreamWriter writer) throws IOException {
       writer.write("\n" + "Array size: " + myValues.length);
       for (Bin value : myValues) {

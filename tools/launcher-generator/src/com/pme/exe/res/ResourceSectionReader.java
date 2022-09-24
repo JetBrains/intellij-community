@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,14 @@
 package com.pme.exe.res;
 
 import com.pme.exe.Bin;
-import com.pme.exe.ImageSectionHeader;
-import com.pme.exe.ImageOptionalHeader;
 import com.pme.exe.ImageDataDirectory;
+import com.pme.exe.ImageOptionalHeader;
+import com.pme.exe.ImageSectionHeader;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 /**
  * @author Sergey Zhulin
@@ -30,10 +33,10 @@ import java.io.*;
  * Time: 7:10:09 PM
  */
 public class ResourceSectionReader extends Bin.Structure {
-  private Level myRoot = new Level();
-  private Bin.Value myStartOffset;
-  private Bin.Value myMainSectionsOffset;
-  private Bin.Value mySize;
+  private final Level myRoot = new Level();
+  private final Bin.Value myStartOffset;
+  private final Bin.Value myMainSectionsOffset;
+  private final Bin.Value mySize;
   private Bin.Bytes myBytes;
   private long myFileAlignment;
 
@@ -46,7 +49,8 @@ public class ResourceSectionReader extends Bin.Structure {
     addOffsetHolder(startOffset);
     myFileAlignment = imageOptionalHeader.getValue("FileAlignment");
 
-    ArrayOfBins imageDataDirs = (ArrayOfBins)imageOptionalHeader.getMember( "ImageDataDirectories" );
+    //noinspection unchecked
+    ArrayOfBins<ImageDataDirectory> imageDataDirs = (ArrayOfBins<ImageDataDirectory>)imageOptionalHeader.getMember( "ImageDataDirectories" );
     Bin[] bins = imageDataDirs.getArray();
     ImageDataDirectory imageDataDirectory = (ImageDataDirectory)bins[2];
     Value size = imageDataDirectory.getValueMember("Size");
@@ -70,6 +74,7 @@ public class ResourceSectionReader extends Bin.Structure {
     return myMainSectionsOffset;
   }
 
+  @Override
   public long sizeInBytes() {
     long size = super.sizeInBytes() + myBytes.sizeInBytes();
     if (size % myFileAlignment != 0)
@@ -77,6 +82,7 @@ public class ResourceSectionReader extends Bin.Structure {
     return size;
   }
 
+  @Override
   public void read(DataInput stream) throws IOException {
     super.read(stream);
     DWord size = new DWord("size");
@@ -87,6 +93,7 @@ public class ResourceSectionReader extends Bin.Structure {
     myBytes.read(stream);
   }
 
+  @Override
   public void write(DataOutput stream) throws IOException {
     super.write(stream);
     myBytes.write(stream);
@@ -96,6 +103,7 @@ public class ResourceSectionReader extends Bin.Structure {
       stream.write(new byte[(int)paddingSize]);
   }
 
+  @Override
   public void report(OutputStreamWriter writer) throws IOException {
     super.report(writer);
     myBytes.report(writer);

@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,10 @@ package com.pme.exe.res.icon;
 import com.pme.exe.Bin;
 import com.pme.exe.res.*;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -38,7 +41,7 @@ public class IconResourceInjector {
 
     DirectoryEntry iconsDir = root.findSubDir("IRD3");
     Level iconFileLevel = (Level) iconFile.getMember("Level");
-    ArrayList icons = iconFileLevel.getMembers();
+    ArrayList<Bin> icons = iconFileLevel.getMembers();
     if (icons.size() == iconsDir.getSubDirs().size()) {
       for (int i = 0; i < icons.size(); i++) {
         DirectoryEntry subDirIcon = iconsDir.findSubDir("IRD" + (i+1));
@@ -52,7 +55,7 @@ public class IconResourceInjector {
     }
   }
 
-  private void updateGroupIcon(DirectoryEntry root, String iconId, IconFile iconFile) throws IOException {
+  private static void updateGroupIcon(DirectoryEntry root, String iconId, IconFile iconFile) throws IOException {
     DirectoryEntry subDirGroupIcon = root.findSubDir("IRD14").findSubDir(iconId);
     RawResource groupIcon = subDirGroupIcon.getRawResource(0);
 
@@ -61,7 +64,7 @@ public class IconResourceInjector {
     GroupIconResource groupIconResource = new GroupIconResource(idCount);
     groupIconResource.copyFrom(iconFile);
     Level level = (Level) groupIconResource.getMember("Level");
-    ArrayList directories = level.getMembers();
+    ArrayList<Bin> directories = level.getMembers();
     for (int i = 0; i < directories.size(); ++i) {
       GroupIconResourceDirectory grpDir = (GroupIconResourceDirectory) directories.get(i);
       grpDir.getValueMember("dwId").setValue(i + 1);
@@ -73,7 +76,7 @@ public class IconResourceInjector {
     groupIcon.getBytes().setBytes(bytesStream.toByteArray());
   }
 
-  private void insertIcon(DirectoryEntry iconsDir, IconDirectory iconDirectory, int index) {
+  private static void insertIcon(DirectoryEntry iconsDir, IconDirectory iconDirectory, int index) {
     EntryDescription entryDescription = new EntryDescription();
     Bin.Value name = entryDescription.getValueMember("Name");
     name.setValue(index + 1);

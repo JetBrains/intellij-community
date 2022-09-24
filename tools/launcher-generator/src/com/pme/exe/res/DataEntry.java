@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.io.DataOutput;
  * Time: 3:58:05 PM
  */
 public class DataEntry extends LevelEntry {
-  private ResourceSectionReader mySection;
+  private final ResourceSectionReader mySection;
   private RawResource myRawResource = null;
   public DataEntry( ResourceSectionReader section, Bin.Value offsetHolder ) {
     super("DataEntry");
@@ -54,11 +54,13 @@ public class DataEntry extends LevelEntry {
     getLevel().insertLevelEntry( index, myRawResource );
   }
 
+  @Override
   public void read(DataInput stream) throws IOException {
     super.read(stream);
     initRawData();
   }
 
+  @Override
   public void write(DataOutput stream) throws IOException {
     super.write(stream);
   }
