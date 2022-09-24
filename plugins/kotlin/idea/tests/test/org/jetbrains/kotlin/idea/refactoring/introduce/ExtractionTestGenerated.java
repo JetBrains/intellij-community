@@ -3243,6 +3243,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/lastParameterHasBlockComment.kt");
             }
 
+            @TestMetadata("lastParameterHasBlockCommentAndTrailingComma.kt")
+            public void testLastParameterHasBlockCommentAndTrailingComma() throws Exception {
+                runTest("testData/refactoring/introduceParameter/lastParameterHasBlockCommentAndTrailingComma.kt");
+            }
+
             @TestMetadata("lastParameterHasEolComment.kt")
             public void testLastParameterHasEolComment() throws Exception {
                 runTest("testData/refactoring/introduceParameter/lastParameterHasEolComment.kt");
