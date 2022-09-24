@@ -34,5 +34,5 @@ abstract class AbstractNameSuggestionProviderTest : KotlinLightCodeInsightFixtur
         TestCase.assertEquals(expectedNames, actualNames)
     }
 
-    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstance()
+    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 }

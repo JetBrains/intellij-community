@@ -43,5 +43,5 @@ abstract class AbstractHierarchyWithLibTest : AbstractHierarchyTest() {
         } ?: error("Could not find java class: $targetClass")
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.getInstance()
+    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 }

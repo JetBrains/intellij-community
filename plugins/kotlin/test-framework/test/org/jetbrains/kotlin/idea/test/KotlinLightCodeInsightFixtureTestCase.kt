@@ -150,14 +150,14 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         return when (testMethod.getAnnotation(ProjectDescriptorKind::class.java)?.value) {
             JDK_AND_MULTIPLATFORM_STDLIB_WITH_SOURCES -> KotlinJdkAndMultiplatformStdlibDescriptor.JDK_AND_MULTIPLATFORM_STDLIB_WITH_SOURCES
 
-            KOTLIN_JVM_WITH_STDLIB_SOURCES -> ProjectDescriptorWithStdlibSources.getInstance()
+            KOTLIN_JVM_WITH_STDLIB_SOURCES -> ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
             KOTLIN_JAVASCRIPT -> KotlinStdJSProjectDescriptor
 
             KOTLIN_JVM_WITH_STDLIB_SOURCES_WITH_ADDITIONAL_JS -> {
                 KotlinMultiModuleProjectDescriptor(
                     KOTLIN_JVM_WITH_STDLIB_SOURCES_WITH_ADDITIONAL_JS,
-                    mainModuleDescriptor = ProjectDescriptorWithStdlibSources.getInstance(),
+                    mainModuleDescriptor = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources(),
                     additionalModuleDescriptor = KotlinStdJSProjectDescriptor
                 )
             }
@@ -166,7 +166,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                 KotlinMultiModuleProjectDescriptor(
                     KOTLIN_JAVASCRIPT_WITH_ADDITIONAL_JVM_WITH_STDLIB,
                     mainModuleDescriptor = KotlinStdJSProjectDescriptor,
-                    additionalModuleDescriptor = ProjectDescriptorWithStdlibSources.getInstance()
+                    additionalModuleDescriptor = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
                 )
             }
 
@@ -179,7 +179,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
 
         return when {
             testName.endsWith("runtime") -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
-            testName.endsWith("stdlib") -> ProjectDescriptorWithStdlibSources.getInstance()
+            testName.endsWith("stdlib") -> ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
             else -> KotlinLightProjectDescriptor.INSTANCE
         }
     }
@@ -206,7 +206,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                     SdkAndMockLibraryProjectDescriptor(IDEA_TEST_DATA_DIR.resolve(withLibraryDirective[0]).path, true)
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_SOURCES") ->
-                    ProjectDescriptorWithStdlibSources.getInstance()
+                    ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITHOUT_SOURCES") ->
                     ProjectDescriptorWithStdlibSources.getInstanceNoSources()
