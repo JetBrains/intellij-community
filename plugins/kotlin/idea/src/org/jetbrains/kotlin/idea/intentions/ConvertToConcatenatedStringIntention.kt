@@ -27,10 +27,9 @@ class ConvertToConcatenatedStringIntention : SelfTargetingOffsetIndependentInten
 
         val targetEntries = entries
             .filterNot { it is KtStringTemplateEntryWithExpression && it.expression == null }
-            .mapIndexed { index, entry ->
-                entry to entry.toSeparateString(quote, convertExplicitly = (index == 0), isFinalEntry = (index == entries.lastIndex))
-            }
+            .mapIndexed { index, entry -> entry to entry.toSeparateString(quote, isFirstEntry = (index == 0)) }
 
+        var numberOfOperands = 1
         val text = buildString {
             targetEntries.forEachIndexed { index, (entry, entryText) ->
                 var toBeAppended = entryText
@@ -39,6 +38,7 @@ class ConvertToConcatenatedStringIntention : SelfTargetingOffsetIndependentInten
                     toBeAppended = toBeAppended.removePrefix(quote)
                 } else if (prevEntryText != null) {
                     append("+")
+                    numberOfOperands++
                 }
                 val (nextEntry, nextEntryText) = targetEntries.getOrNull(index + 1) ?: (null to null)
                 if (entryText.endsWith(quote) && nextEntryText?.startsWith(quote) == true && nextEntry?.isStringLiteral() == true) {
@@ -48,33 +48,51 @@ class ConvertToConcatenatedStringIntention : SelfTargetingOffsetIndependentInten
             }
         }
 
-        val replacement = KtPsiFactory(element).createExpression(text)
+        val replacement = KtPsiFactory(element).createExpression(text).safeDeparenthesizeOperands(numberOfOperands)
         element.replace(replacement)
+    }
+
+    private fun KtExpression.safeDeparenthesizeOperands(numberOfOperands: Int): KtExpression {
+        if (numberOfOperands > 1 && this is KtBinaryExpression) {
+            val deparenthesizedLeft = this.left!!.safeDeparenthesizeOperands(numberOfOperands - 1)
+            val deparenthesizedRight = this.right!!.safeDeparenthesizeOperands(1)
+            return KtPsiFactory(this.project).createExpressionByPattern(
+                "$0+$1",
+                deparenthesizedLeft.text,
+                deparenthesizedRight.text
+            )
+        } else {
+            if (this is KtParenthesizedExpression && KtPsiUtil.areParenthesesUseless(this)) {
+                return this.expression ?: this
+            } else {
+                return this
+            }
+        }
     }
 
     private fun KtStringTemplateEntry.isStringLiteral() = expression == null || expression is KtStringTemplateExpression
 
     private fun isTripleQuoted(str: String) = str.startsWith("\"\"\"") && str.endsWith("\"\"\"")
 
-    private fun KtStringTemplateEntry.toSeparateString(quote: String, convertExplicitly: Boolean, isFinalEntry: Boolean): String {
+    private fun KtStringTemplateEntry.toSeparateString(quote: String, isFirstEntry: Boolean): String {
         if (this !is KtStringTemplateEntryWithExpression) return text.quote(quote)
 
         val expression = expression!! // checked before
 
-        val text = if (needsParenthesis(expression, isFinalEntry))
+        val text = if (needsParenthesis(expression))
             "(" + expression.text + ")"
         else
             expression.text
 
-        return if (convertExplicitly && !expression.isStringExpression())
+        return if (isFirstEntry && !expression.isStringExpression())
             "$text.toString()"
         else
             text
     }
 
-    private fun needsParenthesis(expression: KtExpression, isFinalEntry: Boolean): Boolean = when (expression) {
-        is KtBinaryExpression -> true
-        is KtIfExpression -> expression.`else` !is KtBlockExpression && !isFinalEntry
+    private fun needsParenthesis(expression: KtExpression): Boolean = when (expression) {
+        is KtOperationExpression -> true
+        is KtIfExpression -> expression.`else` !is KtBlockExpression
         else -> false
     }
 
