@@ -67,11 +67,8 @@ private open class ObservableMutablePropertyView<S, T>(
   override fun set(value: T) =
     instance.set(comap(value))
 
-  override fun afterChange(listener: (T) -> Unit) =
-    instance.afterChange { listener(map(it)) }
-
-  override fun afterChange(listener: (T) -> Unit, parentDisposable: Disposable) =
-    instance.afterChange({ listener(map(it)) }, parentDisposable)
+  override fun afterChange(parentDisposable: Disposable?, listener: (T) -> Unit) =
+    instance.afterChange(parentDisposable) { listener(map(it)) }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

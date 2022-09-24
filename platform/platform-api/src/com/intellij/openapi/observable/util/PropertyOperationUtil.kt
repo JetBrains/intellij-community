@@ -207,11 +207,9 @@ private abstract class ObservablePropertyTransformation<T, R> : ObservableProper
   override fun get(): R =
     map(property.get())
 
-  override fun afterChange(listener: (R) -> Unit) =
-    property.afterChange { listener(map(it)) }
-
-  override fun afterChange(listener: (R) -> Unit, parentDisposable: Disposable) =
-    property.afterChange({ listener(map(it)) }, parentDisposable)
+  override fun afterChange(parentDisposable: Disposable?, listener: (R) -> Unit) {
+    property.afterChange(parentDisposable) { listener(map(it)) }
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -229,15 +227,9 @@ private abstract class AbstractDelegateObservableProperty<T>(
 
   constructor(vararg properties: ObservableProperty<*>) : this(properties.toList())
 
-  override fun afterChange(listener: (T) -> Unit) {
+  override fun afterChange(parentDisposable: Disposable?, listener: (T) -> Unit) {
     for (property in properties) {
-      property.afterChange { listener(get()) }
-    }
-  }
-
-  override fun afterChange(listener: (T) -> Unit, parentDisposable: Disposable) {
-    for (property in properties) {
-      property.afterChange({ listener(get()) }, parentDisposable)
+      property.afterChange(parentDisposable) { listener(get()) }
     }
   }
 }
