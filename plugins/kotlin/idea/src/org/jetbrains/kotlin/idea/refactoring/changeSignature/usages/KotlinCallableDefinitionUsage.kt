@@ -240,14 +240,15 @@ class KotlinCallableDefinitionUsage<T : PsiElement>(
     private fun adjustTrailingComments(oldParameterList: KtParameterList, newParameterList: KtParameterList, psiFactory: KtPsiFactory) {
         val oldLastParameter = oldParameterList.parameters.lastOrNull() ?: return
         val oldLastParameterName = oldLastParameter.name ?: return
-        val trailingComments = oldLastParameter.nextComma().nextCommentsOnSameLine().ifEmpty { return }
+        val (firstTrailingComment, lastTrailingComment) =
+            oldLastParameter.nextComma().nextCommentsOnSameLine().ifEmpty { return }.let { it.first() to it.last() }
 
         val newParameter = newParameterList.parameters.firstOrNull { it.name == oldLastParameterName } ?: return
         val newParameterComma = newParameter.nextComma() ?: return
-        trailingComments.reversed().forEach { newParameterList.addAfter(it, newParameterComma) }
+        newParameterList.addRangeAfter(firstTrailingComment, lastTrailingComment, newParameterComma)
         newParameterList.addAfter(psiFactory.createWhiteSpace(), newParameterComma)
 
-        trailingComments.forEach { it.delete() }
+        oldParameterList.deleteChildRange(firstTrailingComment, lastTrailingComment)
     }
 
     private fun KtParameter.nextComma(): PsiElement? =
