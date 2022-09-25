@@ -319,11 +319,17 @@ data class IDERunContext(
   }
 
   private fun publishArtifacts(isRunSuccessful: Boolean) {
-    // publish artifacts to directory with a test in any case
+    // publish log dir to directory with a test in any case
     testContext.publishArtifact(
       source = testContext.paths.logsDir,
       artifactPath = contextName,
       artifactName = formatArtifactName("logs", testContext.testName)
+    )
+    // publish FUS dir to directory with a test
+    testContext.publishArtifact(
+      source = testContext.paths.systemDir.resolve("event-log-data/logs/FUS"),
+      artifactPath = contextName,
+      artifactName = formatArtifactName("event-log-data", testContext.testName)
     )
 
     if (!isRunSuccessful)
