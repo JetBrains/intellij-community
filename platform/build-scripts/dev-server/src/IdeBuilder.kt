@@ -10,6 +10,7 @@ import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -367,7 +368,7 @@ private fun createBuildOptions(runDir: Path): BuildOptions {
   val options = BuildOptions()
   options.printFreeSpace = false
   options.useCompiledClassesFromProjectOutput = true
-  options.targetOs = BuildOptions.OS_NONE
+  options.targetOs = persistentListOf()
   options.cleanOutputFolder = false
   options.skipDependencySetup = true
   options.outputRootPath = runDir

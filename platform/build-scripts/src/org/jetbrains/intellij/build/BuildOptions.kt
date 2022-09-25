@@ -1,8 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.SystemProperties
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -181,7 +182,7 @@ class BuildOptions {
   /**
    * Specifies for which operating systems distributions should be built.
    */
-  var targetOs: String
+  var targetOs: PersistentList<OsFamily>
 
   /**
    * Specifies for which arch distributions should be built. null means all
@@ -333,20 +334,21 @@ class BuildOptions {
   @ApiStatus.Experimental
   var signNativeFiles = true
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  var compressZipFiles = true
+
   init {
-    var targetOs = System.getProperty(TARGET_OS_PROPERTY, OS_ALL)
-    if (targetOs == OS_CURRENT) {
-      targetOs = when {
-        SystemInfoRt.isWindows -> OS_WINDOWS
-        SystemInfoRt.isMac -> OS_MAC
-        SystemInfoRt.isLinux -> OS_LINUX
-        else -> throw RuntimeException("Unknown OS")
-      }
+    val targetOsId = System.getProperty(TARGET_OS_PROPERTY, OS_ALL).lowercase()
+    targetOs = when {
+      targetOsId == OS_CURRENT -> persistentListOf(OsFamily.currentOs)
+      targetOsId.isEmpty() || targetOsId == OS_ALL -> OsFamily.ALL
+      targetOsId == OS_NONE -> persistentListOf()
+      targetOsId == OsFamily.MACOS.osId -> persistentListOf(OsFamily.MACOS)
+      targetOsId == OsFamily.WINDOWS.osId -> persistentListOf(OsFamily.WINDOWS)
+      targetOsId == OsFamily.LINUX.osId -> persistentListOf(OsFamily.LINUX)
+      else -> throw IllegalStateException("Unknown target OS $targetOsId")
     }
-    else if (targetOs.isEmpty()) {
-      targetOs = OS_ALL
-    }
-    this.targetOs = targetOs
 
     val sourceDateEpoch = System.getenv("SOURCE_DATE_EPOCH")
     buildDateInSeconds = sourceDateEpoch?.toLong() ?: (System.currentTimeMillis() / 1000)

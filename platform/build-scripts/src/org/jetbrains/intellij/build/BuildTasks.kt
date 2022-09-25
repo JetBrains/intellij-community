@@ -72,13 +72,6 @@ interface BuildTasks {
    */
   fun buildFullUpdaterJar()
 
-  /**
-   * Performs a fast dry run to check that the build scripts a properly configured. It'll run compilation, build platform and plugin JAR files,
-   * build searchable options index and scramble the main JAR, but won't produce the product archives and installation files which occupy a lot
-   * of disk space and take a long time to build.
-   */
-  suspend fun runTestBuild()
-
   suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean)
 
   suspend fun buildDmg(macZipDir: Path)

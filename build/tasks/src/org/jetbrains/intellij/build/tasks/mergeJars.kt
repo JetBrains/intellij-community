@@ -204,6 +204,8 @@ private fun getIgnoredNames(): Set<String> {
   set.add("native-image")
   set.add("native")
   set.add("licenses")
+  set.add("META-INF/LGPL2.1")
+  set.add("META-INF/AL2.0")
   @Suppress("SpellCheckingInspection")
   set.add(".gitkeep")
   set.add(INDEX_FILENAME)

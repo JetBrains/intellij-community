@@ -23,20 +23,12 @@ fun zipWithCompression(targetFile: Path,
   Files.createDirectories(targetFile.parent)
   ZipFileWriter(channel = FileChannel.open(targetFile, if (overwrite) W_OVERWRITE else W_CREATE_NEW),
                 deflater = Deflater(compressionLevel, true)).use { zipFileWriter ->
-    val fileAdded: ((String) -> Boolean)?
-    val dirNameSetToAdd: Set<String>
     if (addDirEntriesMode == AddDirEntriesMode.NONE) {
-      if (fileFilter == null) {
-        fileAdded = null
-      }
-      else {
-        fileAdded = fileFilter
-      }
-      dirNameSetToAdd = emptySet()
+      doArchive(zipFileWriter = zipFileWriter, fileAdded = fileFilter, dirs = dirs)
     }
     else {
-      dirNameSetToAdd = LinkedHashSet()
-      fileAdded = { name ->
+      val dirNameSetToAdd = LinkedHashSet<String>()
+      val fileAdded = { name: String ->
         if (fileFilter != null && !fileFilter(name)) {
           false
         }
@@ -49,11 +41,11 @@ fun zipWithCompression(targetFile: Path,
           true
         }
       }
-    }
 
-    doArchive(zipFileWriter = zipFileWriter, fileAdded = fileAdded, dirs = dirs)
-    for (dir in dirNameSetToAdd) {
-      zipFileWriter.dir(dir)
+      doArchive(zipFileWriter = zipFileWriter, fileAdded = fileAdded, dirs = dirs)
+      for (dir in dirNameSetToAdd) {
+        zipFileWriter.dir(dir)
+      }
     }
   }
 }
@@ -65,19 +57,13 @@ fun zip(targetFile: Path,
         overwrite: Boolean = false,
         fileFilter: ((name: String) -> Boolean)? = null) {
   Files.createDirectories(targetFile.parent)
-  val packageIndexBuilder = PackageIndexBuilder()
   ZipFileWriter(channel = FileChannel.open(targetFile, if (overwrite) W_OVERWRITE else W_CREATE_NEW)).use { zipFileWriter ->
-    val fileAdded: ((String) -> Boolean)?
     if (addDirEntriesMode == AddDirEntriesMode.NONE) {
-      if (fileFilter == null) {
-        fileAdded = null
-      }
-      else {
-        fileAdded = fileFilter
-      }
+      doArchive(zipFileWriter = zipFileWriter, fileAdded = fileFilter, dirs = dirs)
     }
     else {
-      fileAdded = { name ->
+      val packageIndexBuilder = PackageIndexBuilder()
+      val fileAdded = { name: String ->
         if (fileFilter != null && !fileFilter(name)) {
           false
         }
@@ -86,9 +72,9 @@ fun zip(targetFile: Path,
           true
         }
       }
+      doArchive(zipFileWriter = zipFileWriter, fileAdded = fileAdded, dirs = dirs)
+      packageIndexBuilder.writePackageIndex(zipFileWriter, addDirEntriesMode = addDirEntriesMode)
     }
-    doArchive(zipFileWriter = zipFileWriter, fileAdded = fileAdded, dirs = dirs)
-    packageIndexBuilder.writePackageIndex(zipFileWriter, addDirEntriesMode = addDirEntriesMode)
   }
 }
 

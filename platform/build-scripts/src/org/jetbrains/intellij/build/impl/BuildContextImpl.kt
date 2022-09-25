@@ -243,14 +243,10 @@ class BuildContextImpl private constructor(
     return true
   }
 
-  override fun shouldBuildDistributions(): Boolean {
-    return options.targetOs.lowercase() != BuildOptions.OS_NONE
-  }
+  override fun shouldBuildDistributions(): Boolean = !options.targetOs.isEmpty()
 
   override fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean {
-    return shouldBuildDistributions()
-           && listOf(BuildOptions.OS_ALL, os.osId).contains(options.targetOs.lowercase())
-           && (options.targetArch == null || options.targetArch == arch)
+    return shouldBuildDistributions() && options.targetOs.contains(os) && (options.targetArch == null || options.targetArch == arch)
   }
 
   override fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext {

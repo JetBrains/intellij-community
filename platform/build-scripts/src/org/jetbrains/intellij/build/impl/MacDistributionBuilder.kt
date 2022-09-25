@@ -107,6 +107,7 @@ class MacDistributionBuilder(override val context: BuildContext,
     unpackPty4jNative(context, macDistDir, "darwin")
 
     generateBuildTxt(context, macDistDir.resolve("Resources"))
+    // if copyDistFiles false, it means that we will copy dist files directly without stage dir
     if (copyDistFiles) {
       copyDistFiles(context = context, newDir = macDistDir, os = OsFamily.MACOS, arch = arch)
     }
@@ -487,7 +488,7 @@ private fun MacDistributionBuilder.buildMacZip(targetFile: Path,
       }
 
       writeNewFile(targetFile) { targetFileChannel ->
-        NoDuplicateZipArchiveOutputStream(targetFileChannel).use { zipOutStream ->
+        NoDuplicateZipArchiveOutputStream(targetFileChannel, compress = context.options.compressZipFiles).use { zipOutStream ->
           zipOutStream.setLevel(compressionLevel)
 
           zipOutStream.entry("$zipRoot/Resources/product-info.json", productJson.encodeToByteArray())

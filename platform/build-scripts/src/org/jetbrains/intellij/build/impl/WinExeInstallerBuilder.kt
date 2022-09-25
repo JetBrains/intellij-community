@@ -6,6 +6,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
+import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
@@ -68,13 +69,13 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
                                         jreDir: Path,
                                         context: BuildContext): Path? {
   if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
-    context.messages.warning("Windows installer can be built only under Windows or Linux")
+    Span.current().addEvent("Windows installer can be built only under Windows or Linux")
     return null
   }
 
   val communityHome = context.paths.communityHomeDir
   val outFileName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
-  context.messages.progress("Building Windows installer $outFileName")
+  Span.current().setAttribute(outFileName, outFileName)
 
   val box = context.paths.tempDir.resolve("winInstaller${suffix}")
   //noinspection SpellCheckingInspection

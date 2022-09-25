@@ -59,7 +59,7 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
   val targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
   val sitFile = (if (context.publishSitArchive) context.paths.artifactDir else context.paths.tempDir).resolve("$targetName.sit")
 
-  prepareMacZip(macZip, sitFile, productJson, zipRoot)
+  prepareMacZip(macZip, sitFile, productJson, zipRoot, context.options.compressZipFiles)
 
   val sign = !context.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
   if (!sign) {
@@ -224,14 +224,11 @@ private fun buildDmgLocally(tempDir: Path, targetFileName: String, customizer: M
 }
 
 // our zip for JARs, but here we need to support file permissions - that's why apache compress is used
-private fun prepareMacZip(macZip: Path,
-                          sitFile: Path,
-                          productJson: String,
-                          zipRoot: String) {
+private fun prepareMacZip(macZip: Path, sitFile: Path, productJson: String, zipRoot: String, compress: Boolean) {
   Files.newByteChannel(macZip, StandardOpenOption.READ).use { sourceFileChannel ->
     ZipFile(sourceFileChannel).use { zipFile ->
       writeNewFile(sitFile) { targetFileChannel ->
-        NoDuplicateZipArchiveOutputStream(targetFileChannel).use { out ->
+        NoDuplicateZipArchiveOutputStream(targetFileChannel, compress = compress).use { out ->
           // file is used only for transfer to mac builder
           out.setLevel(Deflater.BEST_SPEED)
           out.setUseZip64(Zip64Mode.Never)

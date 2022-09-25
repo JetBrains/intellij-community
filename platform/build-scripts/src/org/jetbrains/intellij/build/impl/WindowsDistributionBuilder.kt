@@ -138,7 +138,7 @@ internal class WindowsDistributionBuilder(
                               context = context)
       }
 
-      context.executeStep(spanBuilder("build Windows Exe Installer"), BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
+      context.executeStep(spanBuilder("build Windows installer").setAttribute("arch", arch.dirName), BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
         val productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.exe")
         validateProductJson(jsonText = generateProductJson(targetDir = productJsonDir, isJreIncluded = true, context = context),
                             relativePathToProductJson = "",
@@ -388,7 +388,13 @@ private fun CoroutineScope.createBuildWinZipTask(jreDirectoryPaths: List<Path>,
       val zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
       val dirs = listOf(context.paths.distAllDir, winDistPath, productJsonDir) + jreDirectoryPaths
 
-      zipWithCompression(targetFile = targetFile, dirs = dirs.associateWithTo(LinkedHashMap(dirs.size)) { zipPrefix })
+      val dirMap = dirs.associateWithTo(LinkedHashMap(dirs.size)) { zipPrefix }
+      if (context.options.compressZipFiles) {
+        zipWithCompression(targetFile = targetFile, dirs = dirMap)
+      }
+      else {
+        zip(targetFile = targetFile, dirs = dirMap, addDirEntriesMode = AddDirEntriesMode.NONE)
+      }
       checkInArchive(archiveFile = targetFile, pathInArchive = zipPrefix, context = context)
       context.notifyArtifactWasBuilt(targetFile)
       targetFile

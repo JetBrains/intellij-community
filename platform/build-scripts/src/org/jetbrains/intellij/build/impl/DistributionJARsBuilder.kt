@@ -1125,7 +1125,7 @@ private suspend fun archivePlugins(items: Collection<NonBundledPlugin>, compress
               }
               else {
                 writeNewFile(target) { outFileChannel ->
-                  NoDuplicateZipArchiveOutputStream(outFileChannel).use { out ->
+                  NoDuplicateZipArchiveOutputStream(outFileChannel, compress = context.options.compressZipFiles).use { out ->
                     out.setUseZip64(Zip64Mode.Never)
                     out.dir(source, "${source.fileName}/", entryCustomizer = { entry, file, _ ->
                       if (Files.isExecutable(file)) {

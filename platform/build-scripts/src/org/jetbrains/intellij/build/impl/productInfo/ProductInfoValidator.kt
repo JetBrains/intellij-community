@@ -3,18 +3,20 @@ package org.jetbrains.intellij.build.impl.productInfo
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.util.lang.ImmutableZipFile
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
 import kotlinx.serialization.decodeFromString
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
+import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 
 /**
  * Checks that product-info.json file located in `archivePath` archive in `pathInArchive` subdirectory is correct
@@ -99,8 +101,11 @@ private fun joinPaths(parent: String, child: String): String {
 private fun archiveContainsEntry(archiveFile: Path, entryPath: String): Boolean {
   val fileName = archiveFile.fileName.toString()
   if (fileName.endsWith(".zip") || fileName.endsWith(".jar")) {
-    ImmutableZipFile.load(archiveFile).use {
-      return it.getResource(entryPath) != null
+    // don't use ImmutableZipFile - archive maybe more than 2GB
+    FileChannel.open(archiveFile, StandardOpenOption.READ).use { channel ->
+      ZipFile(channel).use {
+        return it.getEntry(entryPath) != null
+      }
     }
   }
   else if (fileName.endsWith(".tar.gz")) {
@@ -122,8 +127,11 @@ private fun archiveContainsEntry(archiveFile: Path, entryPath: String): Boolean 
 private fun loadEntry(archiveFile: Path, entryPath: String): ByteArray? {
   val fileName = archiveFile.fileName.toString()
   if (fileName.endsWith(".zip") || fileName.endsWith(".jar")) {
-    ImmutableZipFile.load(archiveFile).use {
-      return it.getResource(entryPath)?.data
+    // don't use ImmutableZipFile - archive maybe more than 2GB
+    FileChannel.open(archiveFile, StandardOpenOption.READ).use { channel ->
+      ZipFile(channel).use {
+        return it.getInputStream(it.getEntry(entryPath)).readAllBytes()
+      }
     }
   }
   else if (fileName.endsWith(".tar.gz")) {
@@ -136,6 +144,9 @@ private fun loadEntry(archiveFile: Path, entryPath: String): ByteArray? {
         }
       }
     }
+    return null
   }
-  return null
+  else {
+    return null
+  }
 }

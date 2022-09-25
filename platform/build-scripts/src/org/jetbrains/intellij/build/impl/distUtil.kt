@@ -52,7 +52,6 @@ internal fun generateBuildTxt(context: BuildContext, targetDirectory: Path) {
 }
 
 internal fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmArchitecture) {
-  Files.createDirectories(newDir)
   for (item in context.getDistFiles(os, arch)) {
     val dir = newDir.resolve(item.relativeDir)
     Files.createDirectories(dir)

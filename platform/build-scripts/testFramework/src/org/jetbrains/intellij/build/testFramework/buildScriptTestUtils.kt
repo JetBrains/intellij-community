@@ -13,6 +13,8 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.buildDistributions
+import org.jetbrains.intellij.build.impl.doRunTestBuild
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
 import org.opentest4j.TestAbortedException
@@ -60,6 +62,7 @@ suspend fun createBuildContext(
 ): BuildContext {
   val options = BuildOptions()
   options.signNativeFiles = false
+  options.compressZipFiles = false
   customizeBuildOptionsForTest(options, productProperties, skipDependencySetup)
   buildOptionsCustomizer(options)
   return BuildContextImpl.createContext(communityHome = communityHomePath,
@@ -127,7 +130,7 @@ private fun testBuild(
   }
 
   runTestBuild(
-    buildContext = context,
+    context = context,
     traceSpanName = traceSpanName,
     onFinish = onFinish,
   )
@@ -135,13 +138,13 @@ private fun testBuild(
 
 // FIXME: test reproducibility
 fun runTestBuild(
-  buildContext: BuildContext,
+  context: BuildContext,
   traceSpanName: String? = null,
   onFinish: suspend (context: BuildContext) -> Unit = {},
 ) {
   initializeTracer
 
-  val productProperties = buildContext.productProperties
+  val productProperties = context.productProperties
 
   // to see in Jaeger as a one trace
   val traceFileName = "${productProperties.baseFileName}-trace.json"
@@ -150,13 +153,18 @@ fun runTestBuild(
   val spanScope = span.makeCurrent()
 
   try {
-    val outDir = buildContext.paths.buildOutputDir
+    val outDir = context.paths.buildOutputDir
     span.setAttribute("outDir", outDir.toString())
-    val messages = buildContext.messages as BuildMessagesImpl
+    val messages = context.messages as BuildMessagesImpl
     try {
       runBlocking(Dispatchers.Default) {
-        BuildTasks.create(buildContext).runTestBuild()
-        onFinish(buildContext)
+        doRunTestBuild(context)
+        if (context.options.targetOs == OsFamily.ALL) {
+          buildDistributions(context)
+        }
+        else {
+          onFinish(context)
+        }
       }
     }
     catch (e: Throwable) {
