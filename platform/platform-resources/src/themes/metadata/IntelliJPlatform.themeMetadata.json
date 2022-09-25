@@ -1601,6 +1601,11 @@
       "since": "2022.2"
     },
     {
+      "key": "VersionControl.MarkerPopup.Toolbar.background",
+      "description": "Color of toolbar background in the Vcs Marker Popup",
+      "since": "2022.3"
+    },
+    {
       "key": "WelcomeScreen.background"
     },
     {
