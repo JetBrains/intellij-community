@@ -102,6 +102,9 @@ public final class MavenIndicesManager implements Disposable {
     ApplicationManager.getApplication().getMessageBus().connect(this)
       .subscribe(MavenServerConnector.DOWNLOAD_LISTENER_TOPIC, myDownloadListener);
 
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(MavenIndex.INDEX_IS_BROKEN, new MavenSearchIndexListener(this));
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       MavenProjectsManager.getInstance(myProject).addProjectsTreeListener(new MavenProjectsTree.Listener() {
         @Override
@@ -204,27 +207,6 @@ public final class MavenIndicesManager implements Disposable {
 
   public MavenIndexUpdateManager.IndexUpdatingState getUpdatingState(@NotNull MavenSearchIndex index) {
     return myIndexUpdateManager.getUpdatingState(index);
-  }
-
-  /**
-   * @deprecated use {@link MavenArchetypeManager#getArchetypes()}
-   */
-  @Deprecated
-  public Set<MavenArchetype> getArchetypes() {
-    Set<MavenArchetype> result = new HashSet<>(myIndexerWrapper.getArchetypes());
-    result.addAll(loadUserArchetypes(getIndicesDir().resolve("UserArchetypes.xml")));
-    if (myMavenIndices.isNotInit()) {
-      myMavenIndices.updateIndicesList(myProject);
-    }
-    MavenIndexHolder indexHolder = myMavenIndices.getIndexHolder();
-    for (MavenIndex index : indexHolder.getIndices()) {
-      result.addAll(index.getArchetypes());
-    }
-
-    for (MavenArchetypesProvider each : MavenArchetypesProvider.EP_NAME.getExtensionList()) {
-      result.addAll(each.getArchetypes());
-    }
-    return result;
   }
 
   @NotNull

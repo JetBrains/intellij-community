@@ -280,7 +280,7 @@ public class MavenIndices implements Disposable {
   private static MavenIndex createMavenIndex(@NotNull MavenIndexUtils.IndexPropertyHolder propertyHolder,
                                              @NotNull RepositoryDiffContext context) {
     try {
-      return new MavenIndex(context.indexer, propertyHolder, context.listener);
+      return new MavenIndex(context.indexer, propertyHolder);
     }
     catch (Exception e) {
       FileUtil.delete(propertyHolder.dir);
