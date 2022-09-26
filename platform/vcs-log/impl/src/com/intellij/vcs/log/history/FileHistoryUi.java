@@ -129,8 +129,12 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       return;
     }
 
+    boolean hasBranchFilter = getFilterUi().getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null;
+    String text = VcsLogBundle.message(hasBranchFilter ? "file.history.commit.not.found.in.branch" : "file.history.commit.not.found",
+                                       getCommitPresentation(commitId), myPath.getName());
+
     List<NamedRunnable> actions = new ArrayList<>();
-    if (getFilterUi().getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null) {
+    if (hasBranchFilter) {
       actions.add(new NamedRunnable(VcsLogBundle.message("file.history.commit.not.found.view.and.show.all.branches.link")) {
         @Override
         public void run() {
@@ -139,8 +143,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
         }
       });
     }
-    String text = VcsLogBundle.message("file.history.commit.not.found",
-                                       getCommitPresentation(commitId), myPath.getName());
     actions.add(new NamedRunnable(VcsLogBundle.message("file.history.commit.not.found.view.in.log.link")) {
       @Override
       public void run() {
