@@ -17,7 +17,6 @@ import junit.framework.TestCase
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import org.junit.Ignore
 import org.junit.Test
 import kotlin.reflect.full.memberProperties
 
@@ -46,7 +45,6 @@ class PropertyTest {
   }
 
   @Test
-  @Ignore("Baga in code generation detected")
   fun testAddDiff() {
     PropertyChecker.checkScenarios {
       ImperativeCommand { env ->
