@@ -40,7 +40,7 @@ class LibraryInfoCache(project: Project) : Disposable {
     }
 
     internal class LibraryInfoInnerCache(project: Project) :
-        SynchronizedFineGrainedEntityCache<LibraryEx, List<LibraryInfo>>(project, cleanOnLowMemory = true) {
+        SynchronizedFineGrainedEntityCache<LibraryEx, List<LibraryInfo>>(project, cleanOnLowMemory = false) {
 
         private val deduplicationCache = hashMapOf<String, MutableList<LibraryEx>>()
 

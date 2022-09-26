@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -65,6 +66,56 @@ import kotlin.test.assertContains
 @RunWith(JUnit38ClassRunner::class)
 class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     private var vfsDisposable: Ref<Disposable>? = null
+
+    fun testLowMemory() {
+        val moduleA = module("a")
+        val stdlib = stdlibJvm()
+        moduleA.addDependency(stdlib)
+
+        val modelBefore = getModuleInfosFromIdeaModel(project)
+        modelBefore.forEach(IdeaModuleInfo::checkValidity)
+
+        val stdlibInfoBefore = stdlib.toLibraryInfo()
+
+        assertContains(modelBefore, stdlibInfoBefore)
+
+        LowMemoryWatcher.onLowMemorySignalReceived(true)
+
+        val modelAfter = getModuleInfosFromIdeaModel(project)
+        modelAfter.forEach(IdeaModuleInfo::checkValidity)
+
+        val stdlibInfoAfter = stdlib.toLibraryInfo()
+
+        assertContains(modelAfter, stdlibInfoAfter)
+    }
+
+    fun testLowMemoryLibraryDependenciesCache() {
+        val moduleA = module("a")
+        val daemon = projectLibrary("kotlin-stdlib", TestKotlinArtifacts.kotlinDaemon.jarRoot)
+        val myLib = projectLibraryWithFakeRoot("myLib")
+        moduleA.addDependency(daemon)
+        moduleA.addDependency(myLib)
+
+        val moduleB = module("b")
+        val daemonCopy = projectLibrary("kotlin-stdlib-copy", TestKotlinArtifacts.kotlinDaemon.jarRoot)
+        moduleB.addDependency(daemonCopy)
+
+        val daemonInfo = daemon.toLibraryInfo()
+        val daemonCopyInfo = daemonCopy.toLibraryInfo()
+        assertEquals(daemon, daemonInfo.library)
+        assertNotEquals(daemonCopy, daemonCopyInfo.library)
+        assertEquals(daemonInfo, daemonCopyInfo)
+
+        val dependenciesCache = LibraryDependenciesCache.getInstance(project)
+        val dependenciesBefore = dependenciesCache.getLibraryDependencies(daemonInfo)
+        assertEquals(dependenciesBefore.libraries, listOf(daemonInfo, myLib.toLibraryInfo()))
+
+        LowMemoryWatcher.onLowMemorySignalReceived(true)
+
+        val daemonCopyInfoAfter = daemonCopy.toLibraryInfo()
+        val dependenciesAfter = dependenciesCache.getLibraryDependencies(daemonCopyInfoAfter)
+        assertEquals(dependenciesAfter.libraries, listOf(daemonCopyInfoAfter, myLib.toLibraryInfo()))
+    }
 
     fun testLibraryCacheRace() {
         val moduleA = module("a")
