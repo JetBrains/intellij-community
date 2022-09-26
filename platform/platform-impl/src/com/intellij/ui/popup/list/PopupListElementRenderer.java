@@ -147,7 +147,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     else {
       myMnemonicLabel.setBorder(new JBEmptyBorder(JBUI.CurrentTheme.ActionsList.mnemonicInsets()));
       myMnemonicLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-
+      //noinspection HardCodedStringLiteral
       Dimension preferredSize = new JLabel("W").getPreferredSize();
       JBInsets.addTo(preferredSize, JBUI.insetsLeft(4));
       myMnemonicLabel.setPreferredSize(preferredSize);
@@ -202,8 +202,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       left.setBorder(JBUI.Borders.empty());
       right.setBorder(JBUI.Borders.empty());
     } else {
-      left.setBorder(new EmptyBorder(insets.top, insets.left, insets.bottom, 0));
-      right.setBorder(new EmptyBorder(insets.top, leftRightInset, insets.bottom, insets.right));
+      left.setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, 0));
+      right.setBorder(JBUI.Borders.empty(insets.top, leftRightInset, insets.bottom, insets.right));
     }
 
     GridBag gbc = new GridBag()
@@ -264,7 +264,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       myNextStepLabel.setVisible(isSelectable);
       myNextStepLabel.setIcon(isSelectable && isSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
       if (!ExperimentalUI.isNewUI() ) {
-        myComponent.setBackground(calcBackground(isSelected && isSelectable, false));
+        myComponent.setBackground(calcBackground(isSelected && isSelectable));
       }
       setForegroundSelected(myTextLabel, isSelected && isSelectable);
     }
@@ -375,7 +375,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (!isSelected || !isSelectable) {
       extraButtons = Collections.emptyList();
     } else {
-      extraButtons = myInlineActionsSupport.getExtraButtons(list, value, isSelected);
+      extraButtons = myInlineActionsSupport.getExtraButtons(list, value, true);
     }
 
     if (!extraButtons.isEmpty()) {
@@ -407,11 +407,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     return res;
   }
 
-  private Color calcBackground(boolean selected, boolean hovered) {
-    if (selected) return getSelectionBackground();
-    if (hovered) return JBUI.CurrentTheme.Table.Hover.background(true);
-
-    return getBackground();
+  private Color calcBackground(boolean selected) {
+    return selected ? getSelectionBackground() : getBackground();
   }
 
   @NotNull
