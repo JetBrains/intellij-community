@@ -5,7 +5,9 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
+import com.intellij.util.AbstractQuery
 import com.intellij.util.EmptyQuery
+import com.intellij.util.Processor
 import com.intellij.util.Query
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -19,6 +21,12 @@ fun search(aClass: KtClass): Query<PsiClass> {
 
 fun search(function: KtCallableDeclaration): Query<PsiMethod> {
     val methods = function.toLightMethods()
-    if (methods.size != 1) return EmptyQuery.getEmptyQuery()
-    return OverridingMethodsSearch.search(methods[0], true)
+    if (methods.isEmpty()) return EmptyQuery.getEmptyQuery()
+
+    val queries = methods.map { OverridingMethodsSearch.search(it, true) }.toList()
+    return object : AbstractQuery<PsiMethod>() {
+        override fun processResults(consumer: Processor<in PsiMethod>): Boolean {
+            return queries.all { it.forEach(consumer) }
+        }
+    }
 }

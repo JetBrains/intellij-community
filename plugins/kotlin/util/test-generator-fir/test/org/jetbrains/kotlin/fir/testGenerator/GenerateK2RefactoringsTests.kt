@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.testGenerator.model.*
 
 internal fun MutableTWorkspace.generateK2RefactoringsTests() {
     testGroup("refactorings/kotlin.refactorings.tests.k2", testDataPath = "../../idea/tests/testData") {
-        val noHierarchy = Patterns.forRegex("^(((?![hH]ierarchy)(?![iI]mplement)(?![oO]verride).)+)\\.kt")
         testClass<AbstractK2SafeDeleteTest> {
             model("refactoring/safeDelete/deleteClass/kotlinClass", testMethodName = "doClassTest")
             //todo secondary constructor 
@@ -20,7 +19,7 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
                 testMethodName = "doFunctionTestWithJava"
             )
             model("refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin", testMethodName = "doJavaMethodTest")
-            model("refactoring/safeDelete/deleteProperty/kotlinProperty", pattern = noHierarchy, testMethodName = "doPropertyTest")
+            model("refactoring/safeDelete/deleteProperty/kotlinProperty", testMethodName = "doPropertyTest")
             //model("refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava", testMethodName = "doPropertyTestWithJava")//todo  super method search from java override
             model("refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin", testMethodName = "doJavaPropertyTest")
             model("refactoring/safeDelete/deleteTypeAlias/kotlinTypeAlias", testMethodName = "doTypeAliasTest")
