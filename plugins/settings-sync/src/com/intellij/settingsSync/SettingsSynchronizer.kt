@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ScheduledFuture
@@ -69,7 +70,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     LOG.info("Initializing settings sync")
     val settingsSyncMain = SettingsSyncMain.getInstance()
     settingsSyncMain.controls.bridge.initialize(initMode)
-    settingsSyncMain.syncSettings()
+    syncSettings()
   }
 
   override fun enabledStateChanged(syncEnabled: Boolean) {
@@ -83,7 +84,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
   private fun scheduleSyncing(logMessage: String) {
     executorService.schedule(Runnable {
       LOG.info(logMessage)
-      SettingsSyncMain.getInstance().syncSettings()
+      syncSettings()
     }, 0, TimeUnit.SECONDS)
   }
 
@@ -92,8 +93,13 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     val delay = autoSyncDelay
     return executorService.scheduleWithFixedDelay(Runnable {
       LOG.info("Syncing settings by timer")
-      SettingsSyncMain.getInstance().syncSettings()
+      syncSettings()
     }, delay, delay, TimeUnit.SECONDS)
+  }
+
+  private fun syncSettings() {
+    val syncControls = SettingsSyncMain.getInstance().controls
+    syncSettings(syncControls.remoteCommunicator, syncControls.updateChecker)
   }
 
   @RequiresEdt
@@ -108,5 +114,27 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     private val LOG = logger<SettingsSynchronizer>()
 
     private val MIGRATION_EP = ExtensionPointName.create<SettingsSyncMigration>("com.intellij.settingsSyncMigration")
+
+    @RequiresBackgroundThread
+    internal fun syncSettings(remoteCommunicator: SettingsSyncRemoteCommunicator, updateChecker: SettingsSyncUpdateChecker) {
+      when (remoteCommunicator.checkServerState()) {
+        is ServerState.UpdateNeeded -> {
+          LOG.info("Updating from server")
+          updateChecker.scheduleUpdateFromServer()
+          // the push will happen automatically after updating and merging (if there is anything to merge)
+        }
+        ServerState.FileNotExists -> {
+          LOG.info("No file on server, disable settings sync")
+          SettingsSyncSettings.getInstance().syncEnabled = false
+        }
+        ServerState.UpToDate -> {
+          LOG.info("Updating settings is not needed, will check if push is needed")
+          SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.PingRequest)
+        }
+        is ServerState.Error -> {
+          // error already logged in checkServerState, we schedule update
+        }
+      }
+    }
   }
 }

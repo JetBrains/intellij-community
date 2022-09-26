@@ -8,7 +8,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -46,28 +45,6 @@ class SettingsSyncMain : Disposable {
   }
 
   internal fun getRemoteCommunicator(): SettingsSyncRemoteCommunicator = controls.remoteCommunicator
-
-  @RequiresBackgroundThread
-  internal fun syncSettings() {
-    when (controls.remoteCommunicator.checkServerState()) {
-      is ServerState.UpdateNeeded -> {
-        LOG.info("Updating from server")
-        controls.updateChecker.scheduleUpdateFromServer()
-        // the push will happen automatically after updating and merging (if there is anything to merge)
-      }
-      ServerState.FileNotExists -> {
-        LOG.info("No file on server, disable settings sync")
-        SettingsSyncSettings.getInstance().syncEnabled = false
-      }
-      ServerState.UpToDate -> {
-        LOG.info("Updating settings is not needed, will check if push is needed")
-        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.PingRequest)
-      }
-      is ServerState.Error -> {
-        // error already logged in checkServerState, we schedule update
-      }
-    }
-  }
 
   fun disableSyncing() {
     controls.ideMediator.removeStreamProvider()
