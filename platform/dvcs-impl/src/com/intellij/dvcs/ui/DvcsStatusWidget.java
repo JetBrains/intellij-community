@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
@@ -69,8 +70,19 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
 
   protected abstract boolean isMultiRoot(@NotNull Project project);
 
+  /**
+   * use {@link #getWidgetPopup(Project, Repository)}
+   */
+  @Deprecated(forRemoval = true)
   @NotNull
-  protected abstract ListPopup getPopup(@NotNull Project project, @NotNull T repository);
+  protected ListPopup getPopup(@NotNull Project project, @NotNull T repository) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Nullable
+  protected JBPopup getWidgetPopup(@NotNull Project project, @NotNull T repository) {
+    return null;
+  }
 
   protected abstract void rememberRecentRoot(@NotNull String path);
 
@@ -125,12 +137,17 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   @Nullable
   @Override
   public ListPopup getPopupStep() {
+    return null;
+  }
+
+  @Override
+  public @Nullable JBPopup getPopup() {
     if (isDisposed()) return null;
     Project project = getProject();
     T repository = guessCurrentRepository(project);
     if (repository == null) return null;
 
-    return getPopup(project, repository);
+    return getWidgetPopup(project, repository);
   }
 
   @Nullable

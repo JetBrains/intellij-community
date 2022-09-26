@@ -459,7 +459,12 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
 
     @JvmStatic
     fun show(project: Project, repository: GitRepository) {
-      GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, repository)).showCenteredInCurrentWindow(project)
+      create(project, repository).showCenteredInCurrentWindow(project)
+    }
+
+    @JvmStatic
+    fun create(project: Project, repository: GitRepository): JBPopup {
+      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, repository))
     }
 
     private fun uiScope(parent: Disposable) =
