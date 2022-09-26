@@ -121,11 +121,12 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
       .addPluginDefinitionInPluginsGroup("id 'org.jetbrains.intellij' version '" + pluginVersion + "'")
       .addOther(HELP_COMMENT +
                 "intellij {\n    version = '" + ideVersion + "'\n}\n")
-      .addOther("patchPluginXml {\n" +
-                "    changeNotes = \"\"\"\n" +
-                "      Add change notes here.<br>\n" +
-                "      <em>most HTML tags may be used</em>\"\"\"\n" +
-                "}");
+      .addOther("""
+                  patchPluginXml {
+                      changeNotes = ""\"
+                        Add change notes here.<br>
+                        <em>most HTML tags may be used</em>""\"
+                  }""");
   }
 
   @Override

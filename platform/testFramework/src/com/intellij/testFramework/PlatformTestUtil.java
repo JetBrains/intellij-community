@@ -1006,9 +1006,11 @@ public final class PlatformTestUtil {
   public static void setLongMeaninglessFileIncludeTemplateTemporarilyFor(@NotNull Project project, @NotNull Disposable parentDisposable) {
     FileTemplateManagerImpl templateManager = (FileTemplateManagerImpl)FileTemplateManager.getInstance(project);
     templateManager.setDefaultFileIncludeTemplateTextTemporarilyForTest(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME,
-    "/**\n" +
-    " * Created by ${USER} on ${DATE}.\n" +
-    " */\n", parentDisposable);
+                                                                        """
+                                                                          /**
+                                                                           * Created by ${USER} on ${DATE}.
+                                                                           */
+                                                                          """, parentDisposable);
   }
 
   /**

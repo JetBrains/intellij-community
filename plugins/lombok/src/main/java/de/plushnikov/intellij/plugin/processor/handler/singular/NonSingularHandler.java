@@ -72,10 +72,11 @@ class NonSingularHandler implements BuilderElementHandler {
   public String renderBuildPrepare(@NotNull BuilderInfo info) {
     if (info.hasBuilderDefaultAnnotation()) {
       return MessageFormat.format(
-        "{0} {1} = this.{1};\n" +
-          "if (!this.{2}) '{'\n" +
-          "  {1} = {4}.{3}();\n" +
-          "'}'",
+        """
+          {0} {1} = this.{1};
+          if (!this.{2}) '{'
+            {1} = {4}.{3}();
+          '}'""",
         info.getFieldType().getCanonicalText(false),
         info.renderFieldName(), info.renderFieldDefaultSetName(), info.renderFieldDefaultProviderName(),
         info.getBuilderClass().getContainingClass().getName());

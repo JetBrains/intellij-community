@@ -40,11 +40,13 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.resolvePro
 public class TasksExecutionSettingsBuilder {
   @SuppressWarnings({"GrUnresolvedAccess", "GroovyAssignabilityCheck"})
   @Language("Groovy")
-  private static final String FORCE_COMPILE_TASKS_INIT_SCRIPT_TEMPLATE = "projectsEvaluated { \n" +
-                                                                         "  rootProject.findProject('%s')?.tasks?.withType(AbstractCompile) {  \n" +
-                                                                         "    outputs.upToDateWhen { false } \n" +
-                                                                         "  } \n" +
-                                                                         "}\n";
+  private static final String FORCE_COMPILE_TASKS_INIT_SCRIPT_TEMPLATE = """
+    projectsEvaluated {\s
+      rootProject.findProject('%s')?.tasks?.withType(AbstractCompile) { \s
+        outputs.upToDateWhen { false }\s
+      }\s
+    }
+    """;
 
   private final MultiMap<String, String> buildTasksMap = MultiMap.createLinkedSet();
   private final MultiMap<String, String> initScripts = MultiMap.createLinkedSet();

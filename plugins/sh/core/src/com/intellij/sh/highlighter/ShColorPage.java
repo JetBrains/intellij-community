@@ -94,28 +94,29 @@ public class ShColorPage implements ColorSettingsPage {
   @Override
   public String getDemoText() {
     return
-        "#!/usr/bin/env sh\n" +
-        "\n" +
-        "#Sample comment\n" +
-        "<generic>let</generic> \"a=16 << 2\";\n" +
-        "<var>b</var>=\"Sample text\";\n" +
-        "\n" +
-        "function <function>foo</function>() {\n" +
-        "  if [ $string1 == $string2 ]; then\n" +
-        "    for url in `<generic>cat</generic> example.txt`; do\n" +
-        "      <generic>curl</generic> $url > result.html\n" +
-        "    done\n" +
-        "  fi\n" +
-        "}\n" +
-        "\n" +
-        "<generic>rm</generic> -f $<subshell>(</subshell><generic>find</generic> / -name core<subshell>)</subshell> &> /dev/null\n" +
-        "<generic>mkdir</generic> -p \"${<composed_var>AGENT_USER_HOME_</composed_var>${<composed_var>PLATFORM</composed_var>}}\"\n" +
-        "\n" +
-        "<var>multiline</var>='first line\n" +
-        "           second line\n" +
-        "           third line'\n" +
-        "<generic>cat</generic> << EOF\n" +
-        " Sample text\n" +
-        "EOF";
+      """
+        #!/usr/bin/env sh
+
+        #Sample comment
+        <generic>let</generic> "a=16 << 2";
+        <var>b</var>="Sample text";
+
+        function <function>foo</function>() {
+          if [ $string1 == $string2 ]; then
+            for url in `<generic>cat</generic> example.txt`; do
+              <generic>curl</generic> $url > result.html
+            done
+          fi
+        }
+
+        <generic>rm</generic> -f $<subshell>(</subshell><generic>find</generic> / -name core<subshell>)</subshell> &> /dev/null
+        <generic>mkdir</generic> -p "${<composed_var>AGENT_USER_HOME_</composed_var>${<composed_var>PLATFORM</composed_var>}}"
+
+        <var>multiline</var>='first line
+                   second line
+                   third line'
+        <generic>cat</generic> << EOF
+         Sample text
+        EOF""";
   }
 }

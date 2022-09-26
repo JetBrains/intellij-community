@@ -36,16 +36,18 @@ public class LombokConfigColorSettingsPage implements ColorSettingsPage {
   @NotNull
   @Override
   public String getDemoText() {
-    return "##\n" +
-      "## Key : lombok.log.fieldName\n" +
-      "## Type: string\n" +
-      "##\n" +
-      "## Use this name for the generated logger fields (default: 'log')\n" +
-      "##\n" +
-      "## Examples:\n" +
-      "#\n" +
-      "clear lombok.log.fieldName\n" +
-      "lombok.log.fieldName = LOGGER\n";
+    return """
+      ##
+      ## Key : lombok.log.fieldName
+      ## Type: string
+      ##
+      ## Use this name for the generated logger fields (default: 'log')
+      ##
+      ## Examples:
+      #
+      clear lombok.log.fieldName
+      lombok.log.fieldName = LOGGER
+      """;
   }
 
   @Nullable

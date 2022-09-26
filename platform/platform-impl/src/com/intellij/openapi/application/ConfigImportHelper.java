@@ -1054,11 +1054,12 @@ public final class ConfigImportHelper {
         if (!Files.exists(keymapOptionFile)) {
           try {
             Files.createDirectories(keymapOptionFile.getParent());
-            Files.writeString(keymapOptionFile, ("<application>\n" +
-                                                 "  <component name=\"KeymapManager\">\n" +
-                                                 "    <active_keymap name=\"Mac OS X\" />\n" +
-                                                 "  </component>\n" +
-                                                 "</application>"));
+            Files.writeString(keymapOptionFile, ("""
+                                                   <application>
+                                                     <component name="KeymapManager">
+                                                       <active_keymap name="Mac OS X" />
+                                                     </component>
+                                                   </application>"""));
           }
           catch (IOException e) {
             log.error("Cannot set keymap", e);
