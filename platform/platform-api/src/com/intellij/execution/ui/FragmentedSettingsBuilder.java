@@ -370,5 +370,10 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
       super.update(e);
       e.getPresentation().setVisible(myFragment.isRemovable());
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 }

@@ -23,29 +23,34 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class QuickFixActionRegistrarImpl implements QuickFixActionRegistrar {
+  @NotNull
   private final HighlightInfo myInfo;
 
-  public QuickFixActionRegistrarImpl(@Nullable HighlightInfo info) {
+  public QuickFixActionRegistrarImpl(@NotNull HighlightInfo info) {
     myInfo = info;
   }
 
   @Override
   public void register(@NotNull IntentionAction action) {
-    QuickFixAction.registerQuickFixAction(myInfo, action);
+    myInfo.registerFix(action, null, null, null, null);
   }
 
   @Override
   public void register(@NotNull TextRange fixRange, @NotNull IntentionAction action, HighlightDisplayKey key) {
-    QuickFixAction.registerQuickFixAction(myInfo, fixRange, action, key);
+    myInfo.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
   }
 
   @Override
   public void unregister(@NotNull Condition<? super IntentionAction> condition) {
-    if (myInfo != null) {
-      myInfo.unregisterQuickFix(condition);
-    }
+    myInfo.unregisterQuickFix(condition);
+  }
+
+  @Override
+  public String toString() {
+    return "QuickFixActionRegistrarImpl{" +
+           "myInfo=" + myInfo +
+           '}';
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2011-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -39,15 +25,10 @@ public class ArrayHashCodeInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    switch ((Kind)infos[1]) {
-      case ARRAY_HASH_CODE:
-        return InspectionGadgetsBundle.message("array.hash.code.problem.descriptor");
-      case OBJECTS_HASH:
-          return InspectionGadgetsBundle.message("objects.hash.problem.descriptor");
-      default:
-        assert false;
-        return null;
-    }
+    return switch ((Kind)infos[1]) {
+      case ARRAY_HASH_CODE -> InspectionGadgetsBundle.message("array.hash.code.problem.descriptor");
+      case OBJECTS_HASH -> InspectionGadgetsBundle.message("objects.hash.problem.descriptor");
+    };
   }
 
   @Override
@@ -59,13 +40,10 @@ public class ArrayHashCodeInspection extends BaseInspection {
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiArrayType type = (PsiArrayType)infos[0];
     final boolean deepHashCode = type.getComponentType() instanceof PsiArrayType;
-    switch ((Kind)infos[1]) {
-      case ARRAY_HASH_CODE:
-        return new ArrayHashCodeFix(deepHashCode);
-      case OBJECTS_HASH:
-        return new ObjectsHashFix(deepHashCode);
-      default: return null;
-    }
+    return switch ((Kind)infos[1]) {
+      case ARRAY_HASH_CODE -> new ArrayHashCodeFix(deepHashCode);
+      case OBJECTS_HASH -> new ObjectsHashFix(deepHashCode);
+    };
   }
 
   private static class ArrayHashCodeFix extends InspectionGadgetsFix {
@@ -79,7 +57,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
     @Override
     @NotNull
     public String getName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", deepHashCode ? "Arrays.deepHashCode()" : "Arrays.hashCode()");
+      return CommonQuickFixBundle.message("fix.replace.with.x.call", deepHashCode ? "Arrays.deepHashCode()" : "Arrays.hashCode()");
     }
 
     @NotNull

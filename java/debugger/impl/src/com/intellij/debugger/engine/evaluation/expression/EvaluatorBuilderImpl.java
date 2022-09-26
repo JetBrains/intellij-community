@@ -30,8 +30,12 @@ import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.InstanceOfUtils;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -702,7 +706,6 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     /**
-     * @param type
      * @return promotion type to cast to or null if no casting needed
      */
     @Nullable
@@ -1030,7 +1033,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       CodeFragmentEvaluator oldFragmentEvaluator = parentOfType != null ?
                                                    myCurrentFragmentEvaluator : setNewCodeFragmentEvaluator();
       try {
-        PsiTypeElement checkType = expression.getCheckType();
+        PsiTypeElement checkType = InstanceOfUtils.findCheckTypeElement(expression);
         if (checkType == null) {
           throwExpressionInvalid(expression);
         }
@@ -1283,7 +1286,6 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
      * - array dimension expressions
      * - array index expression
      * - unary +, -, and ~ operations
-     * @param operandExpressionType
      * @param operandEvaluator  @return operandEvaluator possibly 'wrapped' with necessary unboxing and type-casting evaluators to make returning value
      * suitable for mentioned contexts
      */

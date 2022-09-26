@@ -53,32 +53,16 @@ public class XxHash3Test {
       data[i] = random.nextLong();
     }
 
-    long expected;
-    switch (size) {
-      case 1:
-        expected = 6383185674071107836L;
-        break;
-      case 2:
-        expected = -8849141235685524932L;
-        break;
-      case 3:
-        expected = -7554874527885947435L;
-        break;
-      case 10:
-        expected = 8740875949817914742L;
-        break;
-      case 20:
-        expected = -8306236459388834883L;
-        break;
-      case 2048:
-        expected = -4387089420526726675L;
-        break;
-      case 10_000:
-        expected = -4959357597963000776L;
-        break;
-      default:
-        throw new UnsupportedOperationException("Unknown size");
-    }
+    long expected = switch (size) {
+      case 1 -> 6383185674071107836L;
+      case 2 -> -8849141235685524932L;
+      case 3 -> -7554874527885947435L;
+      case 10 -> 8740875949817914742L;
+      case 20 -> -8306236459388834883L;
+      case 2048 -> -4387089420526726675L;
+      case 10_000 -> -4959357597963000776L;
+      default -> throw new UnsupportedOperationException("Unknown size");
+    };
     assertThat(Xxh3.hashLongs(data)).isEqualTo(expected);
   }
 
@@ -86,7 +70,6 @@ public class XxHash3Test {
   public void string() {
     testString("com/intellij/profiler/async/windows/WinAsyncProfilerLocator", 2833214887294487028L);
     testString("test", -7004795540881933248L);
-    //noinspection SpellCheckingInspection
     testString("тест буковок", -2011715203481716521L);
   }
 
@@ -99,7 +82,6 @@ public class XxHash3Test {
   public void unencodedString() {
     testUnencodedString("com/intellij/profiler/async/windows/WinAsyncProfilerLocator", -7916769887311287428L);
     testUnencodedString("test", -1876252253805819900L);
-    //noinspection SpellCheckingInspection
     testUnencodedString("тест буковок", -3590458601327935281L);
   }
 

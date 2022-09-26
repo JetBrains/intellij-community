@@ -21,7 +21,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +47,7 @@ public class MyDiffContainer extends JBLayeredPane implements Disposable {
     myLoadingPanel.add(myIcon);
     Disposer.register(this, myIcon);
     myJLabel = new JLabel(text);
-    myJLabel.setForeground(UIUtil.getInactiveTextColor());
+    myJLabel.setForeground(NamedColorUtil.getInactiveTextColor());
     myLoadingPanel.add(myJLabel);
 
     add(myContent);

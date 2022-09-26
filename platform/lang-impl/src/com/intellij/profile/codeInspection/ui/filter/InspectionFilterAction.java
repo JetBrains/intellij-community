@@ -59,6 +59,11 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     Toggleable.setSelected(e.getPresentation(), !myInspectionsFilter.isEmptyFilter());
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   private void tune(InspectionProfileImpl profile, Project project) {
     addAction(new ResetFilterAction());
     addSeparator();
@@ -125,6 +130,11 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(!myInspectionsFilter.isEmptyFilter());
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class ShowOnlyCleanupInspectionsAction extends CheckboxAction implements DumbAware{
@@ -135,6 +145,11 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     @Override
     public boolean isSelected(@NotNull final AnActionEvent e) {
       return myInspectionsFilter.isShowOnlyCleanupInspections();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -152,6 +167,11 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     @Override
     public boolean isSelected(@NotNull final AnActionEvent e) {
       return myInspectionsFilter.isAvailableOnlyForAnalyze();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -175,6 +195,11 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     @Override
     public boolean isSelected(@NotNull final AnActionEvent e) {
       return myInspectionsFilter.containsSeverity(mySeverity);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -204,6 +229,11 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       final boolean previousState = isSelected(e);
       myInspectionsFilter.setSuitableInspectionsStates(previousState ? null : myShowEnabledActions);
@@ -221,6 +251,11 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myInspectionsFilter.containsLanguage(myLanguage);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -258,6 +293,11 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myInspectionsFilter.isShowOnlyModifiedInspections();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

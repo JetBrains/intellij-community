@@ -7,6 +7,7 @@ import com.intellij.psi.PsiModifier
 import org.jetbrains.kotlin.codegen.kotlinType
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.nullIfStubExpression
 import org.jetbrains.kotlin.nj2k.qualified
 import org.jetbrains.kotlin.nj2k.symbols.*

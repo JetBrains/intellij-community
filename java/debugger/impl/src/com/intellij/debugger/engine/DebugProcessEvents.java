@@ -657,7 +657,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         // special check for smart step into with this breakpoint inside the expressions
         EventSet eventSet = suspendContext.getEventSet();
         if (eventSet != null && eventSet.size() > 1) {
-          List<StepEvent> stepEvents = StreamEx.of(eventSet).select(StepEvent.class).toList();
+          List<StepEvent> stepEvents = ContainerUtil.filterIsInstance(eventSet, StepEvent.class);
           if (!stepEvents.isEmpty()) {
             resumePreferred = resumePreferred ||
                               stepEvents.stream()

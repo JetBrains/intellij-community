@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -127,7 +128,6 @@ public abstract class CoverageEngine {
    * @param coverageByTestEnabled    Collect coverage for test option
    * @param tracingEnabled           Tracing option
    * @param trackTestFolders         Track test folders option
-   * @param project
    * @return Suite
    */
   @Nullable
@@ -146,7 +146,6 @@ public abstract class CoverageEngine {
    *
    * @param covRunner                Coverage Runner
    * @param name                     Suite name
-   * @param coverageDataFileProvider
    * @param config                   Coverage engine configuration
    * @return Suite
    */
@@ -190,8 +189,6 @@ public abstract class CoverageEngine {
    * E.g. all *.class files for java source file with several classes
    *
    *
-   * @param srcFile
-   * @param module
    * @return files
    */
   @NotNull
@@ -205,8 +202,6 @@ public abstract class CoverageEngine {
   /**
    * When output directory is empty we probably should recompile source and then choose suite again
    *
-   * @param module
-   * @param chooseSuiteAction
    * @return True if should stop and wait compilation (e.g. for Java). False if we can ignore output (e.g. for Ruby)
    */
   public abstract boolean recompileProjectAndRerunAction(@NotNull final Module module, @NotNull final CoverageSuitesBundle suite,
@@ -216,9 +211,6 @@ public abstract class CoverageEngine {
    * Qualified name same as in coverage raw project data
    * E.g. java class qualified name by *.class file of some Java class in corresponding source file
    *
-   * @param outputFile
-   * @param sourceFile
-   * @return
    */
   @Nullable
   public String getQualifiedName(@NotNull final File outputFile,
@@ -230,8 +222,6 @@ public abstract class CoverageEngine {
    * Returns the list of qualified names of classes generated from a particular source file.
    * (The concept of "qualified name" is specific to each coverage engine but it should be
    * a valid parameter for {@link com.intellij.rt.coverage.data.ProjectData#getClassData(String)}).
-   * @param sourceFile
-   * @return
    */
   @NotNull
   public abstract Set<String> getQualifiedNames(@NotNull final PsiFile sourceFile);
@@ -240,11 +230,6 @@ public abstract class CoverageEngine {
    * Decide include a file or not in coverage report if coverage data isn't available for the file. E.g file wasn't touched by coverage
    * util
    *
-   * @param qualifiedName
-   * @param outputFile
-   * @param sourceFile
-   * @param suite
-   * @return
    */
   public boolean includeUntouchedFileInCoverage(@NotNull final String qualifiedName,
                                                 @NotNull final File outputFile,
@@ -256,7 +241,6 @@ public abstract class CoverageEngine {
   /**
    * Collect code lines if untouched file should be included in coverage information. These lines will be marked as uncovered.
    *
-   * @param suite
    * @return List (probably empty) of code lines or null if all lines should be marked as uncovered
    */
   @Nullable
@@ -368,10 +352,10 @@ public abstract class CoverageEngine {
     return null;
   }
 
-  public boolean isInLibraryClasses(Project project, VirtualFile file) {
+  public boolean isInLibraryClasses(final Project project, final VirtualFile file) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-    return projectFileIndex.isInLibraryClasses(file) && !projectFileIndex.isInSource(file);
+    return ReadAction.compute(() -> projectFileIndex.isInLibraryClasses(file)) && !projectFileIndex.isInSource(file);
   }
 
   public boolean isInLibrarySource(Project project, VirtualFile file) {

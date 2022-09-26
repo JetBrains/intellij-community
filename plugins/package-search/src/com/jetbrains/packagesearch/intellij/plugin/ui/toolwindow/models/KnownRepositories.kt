@@ -25,7 +25,7 @@ internal sealed class KnownRepositories(
 
     fun containsAnyId(ids: Iterable<String>) = ids.any { repoId -> containsId(repoId) }
 
-    fun containsId(id: String) = findById(id) != null
+    private fun containsId(id: String) = findById(id) != null
 
     fun findById(id: String) = find { repo -> repo.id == id }
 

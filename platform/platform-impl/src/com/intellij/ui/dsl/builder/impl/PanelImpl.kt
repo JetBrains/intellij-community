@@ -20,11 +20,10 @@ import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-// todo remove 'open' in version 2022.2
 @ApiStatus.Internal
-internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
-                              var spacingConfiguration: SpacingConfiguration,
-                              private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
+internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
+                         var spacingConfiguration: SpacingConfiguration,
+                         private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
 
   val rows: List<RowImpl>
     get() = _rows
@@ -246,37 +245,6 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     _rows.add(result)
 
     return result
-  }
-
-  @Deprecated("Use overloaded collapsibleGroup(...) instead")
-  override fun collapsibleGroup(title: String,
-                                indent: Boolean,
-                                topGroupGap: Boolean?,
-                                bottomGroupGap: Boolean?,
-                                init: Panel.() -> Unit): CollapsiblePanel {
-    val row = row { }
-    val result = CollapsiblePanelImpl(dialogPanelConfig, row, title) {
-      if (indent) {
-        indent(init)
-      }
-      else {
-        init()
-      }
-    }
-
-    result.expanded = false
-    row.cell(result)
-
-    setTopGroupGap(row, topGroupGap)
-    setBottomGroupGap(row, bottomGroupGap)
-
-    return result
-  }
-
-  @Deprecated("Use buttonsGroup(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun buttonGroup(title: String?, indent: Boolean, init: Panel.() -> Unit) {
-    buttonsGroup(title, indent, init)
   }
 
   @Deprecated("Use buttonsGroup(...) instead")

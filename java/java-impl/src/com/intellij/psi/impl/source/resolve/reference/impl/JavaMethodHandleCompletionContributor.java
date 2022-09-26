@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.*;
@@ -10,10 +10,9 @@ import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
-import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,18 +80,13 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
         if (ownerClass != null) {
 
           switch (methodName) {
-            case FIND_CONSTRUCTOR:
-              addConstructorSignatures(ownerClass, position, result);
-              break;
-
-            case FIND_VIRTUAL:
-            case FIND_STATIC:
-            case FIND_SPECIAL:
+            case FIND_CONSTRUCTOR -> addConstructorSignatures(ownerClass, position, result);
+            case FIND_VIRTUAL, FIND_STATIC, FIND_SPECIAL -> {
               final String name = arguments.length > 1 ? computeConstantExpression(arguments[1], String.class) : null;
               if (!StringUtil.isEmpty(name)) {
                 addMethodSignatures(ownerClass, name, FIND_STATIC.equals(methodName), position, result);
               }
-              break;
+            }
           }
         }
       }
@@ -145,7 +139,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
     final String presentableText = PsiNameHelper.getShortClassName(JAVA_LANG_INVOKE_METHOD_TYPE) + "." + METHOD_TYPE + shortTypes;
     final String lookupText = METHOD_TYPE + signature.getText(true, PsiNameHelper::getShortClassName);
 
-    return lookupExpression(expression, PlatformIcons.METHOD_ICON, presentableText, lookupText);
+    return lookupExpression(expression, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method), presentableText, lookupText);
   }
 
   private static void addFieldHandleVariants(@NotNull PsiElement position, @NotNull Consumer<? super LookupElement> result) {
@@ -178,7 +172,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
       final PsiExpression expression = factory.createExpressionFromText(typeText + ".class", context);
 
       final String shortType = PsiNameHelper.getShortClassName(typeText);
-      result.consume(lookupExpression(expression, PlatformIcons.CLASS_ICON, shortType + ".class", shortType));
+      result.consume(lookupExpression(expression, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class), shortType + ".class", shortType));
     }
   }
 

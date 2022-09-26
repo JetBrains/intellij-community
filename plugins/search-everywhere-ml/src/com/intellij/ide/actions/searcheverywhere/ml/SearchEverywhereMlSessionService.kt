@@ -18,7 +18,7 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
   private val sessionIdCounter = AtomicInteger()
   private var activeSession: AtomicReference<SearchEverywhereMLSearchSession?> = AtomicReference()
 
-  private val experiment: SearchEverywhereMlExperiment = SearchEverywhereMlExperiment()
+  internal val experiment: SearchEverywhereMlExperiment = SearchEverywhereMlExperiment()
 
   override fun isEnabled(): Boolean {
     val settings = service<SearchEverywhereMlSettings>()
@@ -39,7 +39,9 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
 
   override fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo) {
     if (isEnabled()) {
-      activeSession.updateAndGet { SearchEverywhereMLSearchSession(project, mixedListInfo, sessionIdCounter.incrementAndGet()) }
+      activeSession.updateAndGet {
+        SearchEverywhereMLSearchSession(project, mixedListInfo, sessionIdCounter.incrementAndGet(), FeaturesLoggingRandomisation())
+      }
     }
   }
 

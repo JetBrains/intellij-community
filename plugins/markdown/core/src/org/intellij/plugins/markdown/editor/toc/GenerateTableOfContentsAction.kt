@@ -87,7 +87,7 @@ internal class GenerateTableOfContentsAction: AnAction() {
       return false
     }
 
-    fun buildToc(file: MarkdownFile): String {
+    private fun buildToc(file: MarkdownFile): String {
       val headers = collectHeaders(file)
       return buildString {
         appendLine(sectionDelimiter)

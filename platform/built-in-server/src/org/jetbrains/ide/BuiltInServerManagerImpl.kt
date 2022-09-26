@@ -40,9 +40,10 @@ private val LOG = logger<BuiltInServerManager>()
 class BuiltInServerManagerImpl : BuiltInServerManager() {
   private var serverStartFuture: Job? = null
   private var server: BuiltInServer? = null
+  private var portOverride: Int? = null
 
   override val port: Int
-    get() = server?.port ?: defaultPort
+    get() = portOverride ?: server?.port ?: defaultPort
 
   override val serverDisposable: Disposable?
     get() = server
@@ -148,6 +149,12 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
       // built-in server url contains query only if token specified
       url.parameters != null -> url
       else -> Urls.newUrl(url.scheme!!, url.authority!!, url.path, Collections.singletonMap(TOKEN_PARAM_NAME, acquireToken()))
+    }
+  }
+
+  override fun overridePort(port: Int?) {
+    if (port != this.port) {
+      portOverride = port
     }
   }
 

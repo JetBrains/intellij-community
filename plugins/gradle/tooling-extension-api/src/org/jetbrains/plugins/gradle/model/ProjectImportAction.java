@@ -466,7 +466,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
 
     /**
-     * @deprecated use {@link #getModel(Class<IdeaProject>)}
+     * @deprecated use {@link #getModel(Class)}
      */
     @NotNull
     @Deprecated

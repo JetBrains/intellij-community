@@ -338,7 +338,7 @@ public final class CachedIntentions {
     return IntentionGroup.OTHER;
   }
 
-  @NotNull
+  @Nullable
   public Icon getIcon(@NotNull IntentionActionWithTextCaching value) {
     if (value.getIcon() != null) {
       return value.getIcon();
@@ -365,11 +365,11 @@ public final class CachedIntentions {
     if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
       return myErrorFixes.contains(value) ? AllIcons.Actions.QuickfixBulb
                                           : myInspectionFixes.contains(value) ? AllIcons.Actions.IntentionBulb :
-                                            EmptyIcon.ICON_16;
+                                            null;
     }
     else {
       if (myErrorFixes.contains(value)) return AllIcons.Actions.QuickfixOffBulb;
-      return EmptyIcon.ICON_16;
+      return null;
     }
   }
 

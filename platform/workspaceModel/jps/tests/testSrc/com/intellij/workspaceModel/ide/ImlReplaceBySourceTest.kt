@@ -26,7 +26,7 @@ import java.io.File
 class ImlReplaceBySourceTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before

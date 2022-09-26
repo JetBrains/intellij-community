@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Toggleable;
@@ -282,6 +283,11 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
       Toggleable.setSelected(e.getPresentation(), selected);
       e.getPresentation().setText(selected ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab"));
       e.getPresentation().setEnabledAndVisible(true);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

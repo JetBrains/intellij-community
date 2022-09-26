@@ -132,7 +132,6 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
     });
     configConfirmationForYesAnswer();
     importProject();
-    myProjectsManager.performScheduledImportInTests();
 
     mavenProject = myProjectsManager.findProject(getModule("project"));
     assertEquals("2", mavenProject.getMavenId().getVersion());

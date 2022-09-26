@@ -2,14 +2,11 @@
 package com.intellij.collaboration.ui.codereview.list.search
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.codereview.InlineIconButton
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.showAndAwaitListSubmission
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Separator
-import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.*
@@ -17,25 +14,22 @@ import com.intellij.ui.components.GradientViewport
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBThinOverlappingScrollBar
 import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
-import java.awt.*
-import java.awt.event.ActionListener
-import java.awt.geom.Ellipse2D
-import javax.swing.Icon
+import java.awt.Adjustable
+import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
-abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, VM : ReviewListSearchPanelViewModel<S>>(
+abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : ReviewListQuickFilter<S>, VM : ReviewListSearchPanelViewModel<S, Q>>(
   protected val vm: VM
 ) {
 
-  fun create(viewScope: CoroutineScope, quickFilters: List<Pair<@Nls String, S>>): JComponent {
+  fun create(viewScope: CoroutineScope): JComponent {
     val searchField = ReviewListSearchTextFieldFactory(vm.queryState).create(viewScope, chooseFromHistory = { point ->
       val value = JBPopupFactory.getInstance()
         .createPopupChooserBuilder(vm.getSearchHistory().reversed())
@@ -66,7 +60,7 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, VM : Revi
       }
     }
 
-    val quickFilterButton = QuickFilterButtonFactory().create(viewScope, quickFilters)
+    val quickFilterButton = QuickFilterButtonFactory().create(viewScope, vm.quickFilters)
 
     val filterPanel = JPanel(BorderLayout()).apply {
       border = JBUI.Borders.emptyTop(10)
@@ -88,29 +82,33 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, VM : Revi
 
   protected abstract fun createFilters(viewScope: CoroutineScope): List<JComponent>
 
+  protected abstract fun Q.getQuickFilterTitle(): @Nls String
+
   private inner class QuickFilterButtonFactory {
 
-    fun create(viewScope: CoroutineScope, quickFilters: List<Pair<String, S>>): JComponent {
-      val button = InlineIconButton(AllIcons.General.Filter).apply {
-        border = JBUI.Borders.empty(3)
-      }.also {
-        it.actionListener = ActionListener { _ ->
-          showQuickFiltersPopup(it, quickFilters)
-        }
+    fun create(viewScope: CoroutineScope, quickFilters: List<Q>): JComponent {
+      val toolbar = ActionManager.getInstance().createActionToolbar(
+        "Review.FilterToolbar",
+        DefaultActionGroup(FilterPopupMenuAction(quickFilters)),
+        true
+      ).apply {
+        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+        component.isOpaque = false
+        component.border = null
+        targetComponent = null
       }
 
       viewScope.launch {
         vm.searchState.collect {
-          button.icon = if (it.filterCount == 0) AllIcons.General.Filter else IconWithNotifyDot(AllIcons.General.Filter)
+          toolbar.updateActionsImmediately()
         }
       }
-
-      return button
+      return toolbar.component
     }
 
-    private fun showQuickFiltersPopup(parentComponent: JComponent, quickFilters: List<Pair<@Nls String, S>>) {
+    private fun showQuickFiltersPopup(parentComponent: JComponent, quickFilters: List<Q>) {
       val quickFiltersActions =
-        quickFilters.map { (name, search) -> QuickFilterAction(name, search) } +
+        quickFilters.map { QuickFilterAction(it.getQuickFilterTitle(), it.filter) } +
         Separator() +
         ClearFiltersAction()
 
@@ -123,31 +121,39 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, VM : Revi
         .showUnderneathOf(parentComponent)
     }
 
+    private inner class FilterPopupMenuAction(private val quickFilters: List<Q>) : AnActionButton(), DumbAware {
+      override fun updateButton(e: AnActionEvent) {
+        e.presentation.icon = FILTER_ICON.getLiveIndicatorIcon(vm.searchState.value.filterCount != 0)
+      }
+
+      override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+      override fun actionPerformed(e: AnActionEvent) {
+        showQuickFiltersPopup(e.inputEvent.component as JComponent, quickFilters)
+      }
+    }
+
     private inner class QuickFilterAction(name: @Nls String, private val search: S)
       : DumbAwareAction(name), Toggleable {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
       override fun update(e: AnActionEvent) = Toggleable.setSelected(e.presentation, vm.searchState.value == search)
       override fun actionPerformed(e: AnActionEvent) = vm.searchState.update { search }
     }
 
     private inner class ClearFiltersAction
       : DumbAwareAction(CollaborationToolsBundle.message("review.list.filter.quick.clear", vm.searchState.value.filterCount)) {
+
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
       override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = vm.searchState.value.filterCount > 0
       }
 
       override fun actionPerformed(e: AnActionEvent) = vm.searchState.update { vm.emptySearch }
     }
+  }
 
-    //TODO: request a ready-made icon from UI and also a proper icon for old UI
-    private inner class IconWithNotifyDot(private val originalIcon: Icon) : Icon by originalIcon {
-      override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
-        originalIcon.paintIcon(c, g, x, y)
-        g as Graphics2D
-        val dotSize = JBUIScale.scale(6)
-        val notifyDotShape = Ellipse2D.Float((iconWidth - dotSize).toFloat(), 0f, dotSize.toFloat(), dotSize.toFloat())
-        g.color = ColorUtil.fromHex("#3574F0")
-        g.fill(notifyDotShape)
-      }
-    }
+  companion object {
+    private val FILTER_ICON: BadgeIconSupplier = BadgeIconSupplier(AllIcons.General.Filter)
   }
 }

@@ -207,7 +207,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * @deprecated use {@link #patchCommandLine(GeneralCommandLine, Project, WSLCommandLineOptions)} instead
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @Nullable String remoteWorkingDir,
@@ -569,7 +569,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * @deprecated use {@link WSLDistribution#getUNCRootPath()} instead
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public @NotNull File getUNCRoot() {
     return new File(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
   }

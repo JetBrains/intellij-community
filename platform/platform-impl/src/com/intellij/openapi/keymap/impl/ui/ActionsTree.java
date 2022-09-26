@@ -260,11 +260,11 @@ public final class ActionsTree {
 
     @Override
     public String getColumnName(int column) {
-      switch (column) {
-        case 0: return KeyMapBundle.message("action.column.name");
-        case 1: return KeyMapBundle.message("shortcuts.column.name");
-      }
-      return "";
+      return switch (column) {
+        case 0 -> KeyMapBundle.message("action.column.name");
+        case 1 -> KeyMapBundle.message("shortcuts.column.name");
+        default -> "";
+      };
     }
 
     @Override

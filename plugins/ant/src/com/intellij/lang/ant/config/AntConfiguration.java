@@ -39,7 +39,6 @@ public abstract class AntConfiguration extends SimpleModificationTracker {
   }
 
   /**
-   * @param project
    * @return prefix for all ant actions registered withing this project
    */
   public static String getActionIdPrefix(Project project) {

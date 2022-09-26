@@ -34,7 +34,7 @@ internal class PackageUsagesPanel : HtmlEditorPane() {
     init {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
         border = emptyBorder(top = 8)
-        background = PackageSearchUI.UsualBackgroundColor
+        background = PackageSearchUI.Colors.panelBackground
     }
 
     override fun onLinkClicked(anchor: String) {

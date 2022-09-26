@@ -2,7 +2,10 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.GeneratedCodeCompatibilityChecker
+import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
 
 internal open class ImmutableEntitiesBarrel internal constructor(
   override val entityFamilies: List<ImmutableEntityFamily<out WorkspaceEntity>?>
@@ -23,6 +26,10 @@ internal class MutableEntitiesBarrel private constructor(
 
   fun getEntityDataForModification(id: EntityId): WorkspaceEntityData<*> {
     return getMutableEntityFamily(id.clazz).getEntityDataForModification(id.arrayId)
+  }
+
+  fun getEntityDataForModificationOrNull(id: EntityId): WorkspaceEntityData<*>? {
+    return getMutableEntityFamily(id.clazz).getEntityDataForModificationOrNull(id.arrayId)
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -102,6 +109,10 @@ internal class MutableEntitiesBarrel private constructor(
 
 internal sealed class EntitiesBarrel {
   internal abstract val entityFamilies: List<EntityFamily<out WorkspaceEntity>?>
+
+  fun exists(entityId: EntityId): Boolean {
+    return get(entityId.clazz)?.exists(entityId.arrayId) ?: false
+  }
 
   open operator fun get(clazz: Int): EntityFamily<out WorkspaceEntity>? = entityFamilies.getOrNull(clazz)
 

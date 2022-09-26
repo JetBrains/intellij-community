@@ -5,7 +5,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -28,14 +27,8 @@ public final class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
   }
 
   @Override
-  protected Rectangle updateViewRect(AbstractButton b, Rectangle viewRect) {
-    JBInsets.removeFrom(viewRect, b.getInsets());
-    return viewRect;
-  }
-
-  @Override
-  protected Dimension computeOurPreferredSize(JComponent c) {
-    return null;
+  protected boolean removeInsetsBeforeLayout(AbstractButton b) {
+    return true;
   }
 
   @Override

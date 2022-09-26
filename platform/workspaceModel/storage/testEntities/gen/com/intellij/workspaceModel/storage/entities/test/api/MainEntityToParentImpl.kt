@@ -11,6 +11,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
@@ -21,7 +22,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class MainEntityToParentImpl : MainEntityToParent, WorkspaceEntityBase() {
+open class MainEntityToParentImpl(val dataSource: MainEntityToParentData) : MainEntityToParent, WorkspaceEntityBase() {
 
   companion object {
     internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(MainEntityToParent::class.java, AttachedEntityToParent::class.java,
@@ -36,16 +37,14 @@ open class MainEntityToParentImpl : MainEntityToParent, WorkspaceEntityBase() {
   override val child: AttachedEntityToParent?
     get() = snapshot.extractOneToOneChild(CHILD_CONNECTION_ID, this)
 
-  @JvmField
-  var _x: String? = null
   override val x: String
-    get() = _x!!
+    get() = dataSource.x
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: MainEntityToParentData?) : ModifiableWorkspaceEntityBase<MainEntityToParent>(), MainEntityToParent.Builder {
+  class Builder(var result: MainEntityToParentData?) : ModifiableWorkspaceEntityBase<MainEntityToParent>(), MainEntityToParent.Builder {
     constructor() : this(MainEntityToParentData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -63,6 +62,9 @@ open class MainEntityToParentImpl : MainEntityToParent, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -72,7 +74,7 @@ open class MainEntityToParentImpl : MainEntityToParent, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field MainEntityToParent#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (!getEntityData().isXInitialized()) {
         error("Field MainEntityToParent#x should be initialized")
@@ -84,12 +86,23 @@ open class MainEntityToParentImpl : MainEntityToParent, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as MainEntityToParent
-      this.entitySource = dataSource.entitySource
-      this.x = dataSource.x
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.x != dataSource.x) this.x = dataSource.x
+      if (parents != null) {
+      }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var child: AttachedEntityToParent?
       get() {
@@ -126,15 +139,6 @@ open class MainEntityToParentImpl : MainEntityToParent, WorkspaceEntityBase() {
         changedProperty.add("child")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
-      }
-
     override var x: String
       get() = getEntityData().x
       set(value) {
@@ -166,12 +170,13 @@ class MainEntityToParentData : WorkspaceEntityData<MainEntityToParent>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): MainEntityToParent {
-    val entity = MainEntityToParentImpl()
-    entity._x = x
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = MainEntityToParentImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -189,9 +194,14 @@ class MainEntityToParentData : WorkspaceEntityData<MainEntityToParent>() {
     }
   }
 
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as MainEntityToParentData
 
@@ -202,7 +212,7 @@ class MainEntityToParentData : WorkspaceEntityData<MainEntityToParent>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as MainEntityToParentData
 
@@ -220,5 +230,9 @@ class MainEntityToParentData : WorkspaceEntityData<MainEntityToParent>() {
     var result = javaClass.hashCode()
     result = 31 * result + x.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

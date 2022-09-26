@@ -3,7 +3,9 @@ package com.intellij.workspaceModel.storage
 import com.intellij.workspaceModel.storage.entities.test.api.ChildEntity
 import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.entities.test.api.ParentEntity
+import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -36,7 +38,7 @@ class ParentAndChildTest {
     }
 
     assertNotNull(entity.child)
-    assertEquals("ChildData", entity.child.childData)
+    assertEquals("ChildData", entity!!.child!!.childData)
   }
 
   @Test
@@ -48,7 +50,7 @@ class ParentAndChildTest {
     builder.addEntity(entity)
 
     val single = builder.entities(ParentEntity::class.java).single()
-    assertEquals("ChildData", single.child.childData)
+    assertEquals("ChildData", single.child!!.childData)
   }
 
   @Test
@@ -65,7 +67,7 @@ class ParentAndChildTest {
 
     val builder1 = snapshot.toBuilder()
     builder1.removeEntity(parentSnapshot)
-    builder1.removeEntity(parentSnapshot.child)
+    builder1.removeEntity(parentSnapshot!!.child!!)
 
     val newSnapshot = builder1.toSnapshot()
     (newSnapshot as EntityStorageSnapshotImpl).assertConsistency()
@@ -102,7 +104,7 @@ class ParentAndChildTest {
     builder.addEntity(entity)
 
     val single = builder.entities(ChildEntity::class.java).single()
-    assertEquals("ChildData", single.parentEntity.child.childData)
+    assertEquals("ChildData", single.parentEntity.child!!.childData)
   }
 
   @Test
@@ -114,6 +116,31 @@ class ParentAndChildTest {
     val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
-    assertEquals("ChildData", entity.child.childData)
+    assertEquals("ChildData", entity.child!!.childData)
+  }
+
+  @Test
+  fun `changed properties is empty after adding to storage`() {
+    val entity = ParentEntity("ParentData", MySource)
+
+    val builder = MutableEntityStorage.create()
+    builder.addEntity(entity)
+
+    assertTrue((entity as ModifiableWorkspaceEntityBase<*>).changedProperty.isEmpty())
+  }
+
+  @Test
+  fun `changed properties is empty after adding to storage 2`() {
+    val entity = ParentEntity("ParentData", MySource)
+
+    val builder = MutableEntityStorage.create()
+    builder.addEntity(entity)
+
+    builder.modifyEntity(entity) {
+      this.parentData = "NewData"
+    }
+
+    assertEquals("NewData", entity.parentData)
+    assertEquals("NewData", builder.entities(ParentEntity::class.java).single().parentData)
   }
 }

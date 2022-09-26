@@ -69,10 +69,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.TextRangeUtil;
-import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.TextTransferable;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -278,6 +275,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       .setCancelKeyEnabled(false)
       .setDimensionServiceKey(myProject, getDimensionServiceKey(), true)
       .setCancelCallback(() -> myCanClose)
+      .setAdvertiser(new SpeedSearchAdvertiser().addSpeedSearchAdvertisement())
       .createPopup();
 
     Disposer.register(myPopup, this);
@@ -436,7 +434,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     return PropertiesComponent.getInstance().getBoolean(NARROW_DOWN_PROPERTY_KEY, true);
   }
 
-  protected static @NonNls String getDimensionServiceKey() {
+  private static @NonNls String getDimensionServiceKey() {
     return "StructurePopup";
   }
 
@@ -531,42 +529,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setBorder(IdeBorderFactory.createBorder(JBUI.CurrentTheme.Popup.toolbarBorderColor(), SideBorder.TOP | SideBorder.BOTTOM));
     panel.add(scrollPane, BorderLayout.CENTER);
-    DataManager.registerDataProvider(panel, dataId -> {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myProject;
-      }
-      if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
-        return myFileEditor;
-      }
-      if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-        if (myFileEditor instanceof TextEditor) {
-          return ((TextEditor)myFileEditor).getEditor();
-        }
-      }
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-        return getSelectedElements().filter(PsiElement.class).first();
-      }
-      if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-        return PsiUtilCore.toPsiElementArray(getSelectedElements().filter(PsiElement.class).toList());
-      }
-      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-        return getSelectedElements().filter(Navigatable.class).first();
-      }
-      if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-        List<Navigatable> result = getSelectedElements().filter(Navigatable.class).toList();
-        return result.isEmpty() ? null : result.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-      }
-      if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
-        return myPopup;
-      }
-      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-        return myCopyPasteDelegator.getCopyProvider();
-      }
-      if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-        return myTreeExpander;
-      }
-      return null;
-    });
+    DataManager.registerDataProvider(panel, this::getData);
 
     panel.addFocusListener(new FocusAdapter() {
       @Override
@@ -576,6 +539,53 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     });
 
     return panel;
+  }
+
+  private @Nullable Object getData(@NotNull String dataId) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return myProject;
+    }
+    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
+      return myFileEditor;
+    }
+    if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
+      if (myFileEditor instanceof TextEditor) {
+        return ((TextEditor)myFileEditor).getEditor();
+      }
+    }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      TreePath[] selection = myTree.getSelectionPaths();
+      return (DataProvider)slowId -> getSlowData(slowId, selection);
+    }
+    if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
+      return myPopup;
+    }
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      return myCopyPasteDelegator.getCopyProvider();
+    }
+    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
+      return myTreeExpander;
+    }
+    return null;
+  }
+
+  private static @Nullable Object getSlowData(@NotNull String dataId, TreePath @Nullable [] selection) {
+    JBIterable<Object> selectedElements = JBIterable.of(selection)
+      .filterMap(o -> StructureViewComponent.unwrapValue(o.getLastPathComponent()));
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      return selectedElements.filter(PsiElement.class).first();
+    }
+    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      return PsiUtilCore.toPsiElementArray(selectedElements.filter(PsiElement.class).toList());
+    }
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+      return selectedElements.filter(Navigatable.class).first();
+    }
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      List<Navigatable> result = selectedElements.filter(Navigatable.class).toList();
+      return result.isEmpty() ? null : result.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+    }
+    return null;
   }
 
   private @NotNull JBIterable<Object> getSelectedElements() {
@@ -666,6 +676,11 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setIcon(null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -955,7 +970,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     private volatile boolean myPopupVisible;
 
     MyTreeSpeedSearch() {
-      super(myTree, path -> getSpeedSearchText(TreeUtil.getLastUserObject(path)), true);
+      super(myTree, true, path -> getSpeedSearchText(TreeUtil.getLastUserObject(path)));
     }
 
     @Override
@@ -1074,6 +1089,11 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return isShouldNarrowDown();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

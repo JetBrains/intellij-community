@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
 import com.google.gson.Gson
 import com.sun.jdi.*
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.isSubTypeOrSame
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
 
 class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
         BaseMirror<ObjectReference, MirrorOfDebugProbesImpl>("kotlinx.coroutines.debug.internal.DebugProbesImpl", context) {
@@ -36,7 +36,7 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
     override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext) =
         MirrorOfDebugProbesImpl(value, instance, isInstalled)
 
-    fun isInstalled(context: DefaultExecutionContext): Boolean =
+    private fun isInstalled(context: DefaultExecutionContext): Boolean =
             isInstalledInDebugMethod.value(instance, context)?.booleanValue() ?:
             isInstalledInCoreMethod.value(instance, context)?.booleanValue()  ?:
             false
@@ -185,9 +185,9 @@ class DebugCoroutineInfoImpl(context: DefaultExecutionContext) :
 }
 
 class CoroutineInfo private constructor(
-        private val debugProbesImplMirror: DebugProbesImpl,
-        context: DefaultExecutionContext,
-        val className: String = AGENT_134_CLASS_NAME
+    private val debugProbesImplMirror: DebugProbesImpl,
+    context: DefaultExecutionContext,
+    val className: String = AGENT_134_CLASS_NAME
 ) : BaseMirror<ObjectReference, MirrorOfCoroutineInfo>(className, context) {
     private val stackTraceElement = StackTraceElement(context)
     private val contextFieldRef by FieldMirrorDelegate("context", CoroutineContext(context))

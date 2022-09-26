@@ -14,7 +14,6 @@
     <orderEntry type="module" module-name="intellij.python.community.impl" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.pycharm.community" exported="" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.bootstrap" />
     <orderEntry type="library" name="kotlin-script-runtime" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Ant" level="project" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />

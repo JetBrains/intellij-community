@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBOptionButton
+import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
@@ -63,7 +64,6 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.PopupMenuEvent
 import javax.swing.text.JTextComponent
-import kotlin.streams.toList
 
 internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
   companion object {
@@ -73,7 +73,8 @@ internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     internal val myModel = ApplicationNotificationModel()
 
     fun addNotification(project: Project?, notification: Notification) {
-      if (ActionCenter.isEnabled() && notification.canShowFor(project)) {
+      if (ActionCenter.isEnabled() && notification.canShowFor(project) && NotificationsConfigurationImpl.getSettings(
+          notification.groupId).isShouldLog) {
         myModel.addNotification(project, notification)
       }
     }
@@ -411,9 +412,9 @@ private fun JComponent.mediumFontFunction() {
 }
 
 private fun JComponent.smallFontFunction() {
-  font = JBFont.small()
+  font = JBFont.smallOrNewUiMedium()
   val f: (JComponent) -> Unit = {
-    it.font = JBFont.small()
+    it.font = JBFont.smallOrNewUiMedium()
   }
   putClientProperty(NotificationGroupComponent.FONT_KEY, f)
 }
@@ -479,7 +480,7 @@ private class SearchController(private val mainContent: NotificationContent,
 private class NotificationGroupComponent(private val myMainContent: NotificationContent,
                                          private val mySuggestionType: Boolean,
                                          private val myProject: Project) :
-  JPanel(BorderLayout()), NullableComponent {
+  JBPanel<NotificationGroupComponent>(BorderLayout()), NullableComponent {
 
   companion object {
     const val FONT_KEY = "FontFunction"
@@ -763,7 +764,8 @@ private class NotificationGroupComponent(private val myMainContent: Notification
 private class NotificationComponent(val project: Project,
                                     notification: Notification,
                                     timeComponents: ArrayList<JLabel>,
-                                    val singleSelectionHandler: SingleTextSelectionHandler) : JPanel() {
+                                    val singleSelectionHandler: SingleTextSelectionHandler) :
+  JBPanel<NotificationComponent>() {
 
   companion object {
     val BG_COLOR: Color
@@ -1524,8 +1526,8 @@ internal class ApplicationNotificationModel {
 
     synchronized(myLock) {
       myNotifications.remove(notification)
-      for (model in myProjectToModel.values) {
-        model.expire(notification, runnables)
+      for ((project , model) in myProjectToModel) {
+        model.expire(project, notification, runnables)
       }
     }
 
@@ -1541,8 +1543,8 @@ internal class ApplicationNotificationModel {
     synchronized(myLock) {
       notifications.addAll(myNotifications)
       myNotifications.clear()
-      for (model in myProjectToModel.values) {
-        model.expireAll(notifications, runnables)
+      for ((project, model) in myProjectToModel) {
+        model.expireAll(project, notifications, runnables)
       }
     }
 
@@ -1586,12 +1588,7 @@ private class ProjectNotificationModel {
       notifications.addAll(myNotifications)
 
       runnables.add(Runnable {
-        EventLog.getLogModel(project).setStatusMessage(notification)
-
-        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
-        if (toolWindow != null) {
-          UIUtil.invokeLaterIfNeeded { toolWindow.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(notifications)) }
-        }
+        updateToolWindow(project, notification, notifications, false)
       })
     }
     else {
@@ -1619,17 +1616,25 @@ private class ProjectNotificationModel {
     return myContent!!.getNotifications()
   }
 
-  fun expire(notification: Notification, runnables: MutableList<Runnable>) {
+  fun expire(project: Project, notification: Notification, runnables: MutableList<Runnable>) {
     myNotifications.remove(notification)
-    if (myContent != null) {
+    if (myContent == null) {
+      runnables.add(Runnable {
+        updateToolWindow(project, null, myNotifications, false)
+      })
+    }
+    else {
       runnables.add(Runnable { UIUtil.invokeLaterIfNeeded { myContent!!.expire(notification) } })
     }
   }
 
-  fun expireAll(notifications: MutableList<Notification>, runnables: MutableList<Runnable>) {
+  fun expireAll(project: Project, notifications: MutableList<Notification>, runnables: MutableList<Runnable>) {
     notifications.addAll(myNotifications)
     myNotifications.clear()
-    if (myContent != null) {
+    if (myContent == null) {
+      updateToolWindow(project, null, emptyList(), false)
+    }
+    else {
       runnables.add(Runnable { UIUtil.invokeLaterIfNeeded { myContent!!.expire(null) } })
     }
   }
@@ -1637,16 +1642,30 @@ private class ProjectNotificationModel {
   fun clearAll(project: Project) {
     myNotifications.clear()
     if (myContent == null) {
-      UIUtil.invokeLaterIfNeeded {
-        EventLog.getLogModel(project).setStatusMessage(null)
-        project.closeAllBalloons()
-
-        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
-        toolWindow?.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(emptyList()))
-      }
+      updateToolWindow(project, null, emptyList(), true)
     }
     else {
       UIUtil.invokeLaterIfNeeded { myContent!!.clearAll() }
+    }
+  }
+
+  private fun updateToolWindow(project: Project,
+                               stateNotification: Notification?,
+                               notifications: List<Notification>,
+                               closeBalloons: Boolean) {
+    UIUtil.invokeLaterIfNeeded {
+      if (project.isDisposed) {
+        return@invokeLaterIfNeeded
+      }
+
+      EventLog.getLogModel(project).setStatusMessage(stateNotification)
+
+      if (closeBalloons) {
+        project.closeAllBalloons()
+      }
+
+      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
+      toolWindow?.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(notifications))
     }
   }
 }

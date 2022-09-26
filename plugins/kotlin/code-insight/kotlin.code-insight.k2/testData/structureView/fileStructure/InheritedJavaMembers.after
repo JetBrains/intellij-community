@@ -1,0 +1,8 @@
+-InheritedJavaMembers.kt
+ -class InheritedJavaMembers : Callable<String>
+  constructor()
+  fun call(): String! location=→Callable
+  fun equals(other: Any?): Boolean location=→Any
+  fun hashCode(): Int location=→Any
+  fun test(): Unit
+  fun toString(): String location=→Any

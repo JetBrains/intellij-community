@@ -102,15 +102,6 @@ public class VcsNotifier {
     return notifyError(displayId, title, buildNotificationMessage(message, errors));
   }
 
-  /**
-   * @deprecated use {@link #notifyWeakError(String, String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public Notification notifyWeakError(@NotificationContent @NotNull String message) {
-    return notify(NOTIFICATION_GROUP_ID, null, "", message, NotificationType.ERROR);
-  }
-
   @NotNull
   public Notification notifyWeakError(@NonNls @Nullable String displayId,
                                       @NotificationContent @NotNull String message) {

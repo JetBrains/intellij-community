@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex;
 
-import com.intellij.accessibility.AccessibilityUtils;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
@@ -493,7 +493,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public boolean isShowQuickDocOnMouseOverElement() {
-    return myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT && !AccessibilityUtils.isScreenReaderDetected();
+    return myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT && !GeneralSettings.getInstance().isSupportScreenReaders();
   }
 
   public void setShowQuickDocOnMouseOverElement(boolean show) {
@@ -707,22 +707,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setShowIntentionPreview(boolean show) {
     myOptions.SHOW_INTENTION_PREVIEW = show;
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.codeInsight.hints.HintUtilsKt#isParameterHintsEnabledForLanguage(Language)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public boolean isShowParameterNameHints() {
-    return myOptions.SHOW_PARAMETER_NAME_HINTS;
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.codeInsight.hints.HintUtilsKt#setShowParameterHintsForLanguage(boolean, Language)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void setShowParameterNameHints(boolean value) {
-    myOptions.SHOW_PARAMETER_NAME_HINTS = value;
   }
 
   public boolean isKeepTrailingSpacesOnCaretLine() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
@@ -11,8 +11,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -122,10 +122,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      CommandProcessor.getInstance().executeCommand(
-        mySelection.get(0).getProject(),
-        () -> ApplicationManager.getApplication().runWriteAction(() -> createListener()), UIDesignerBundle.message("create.listener.command"), null
-      );
+      CommandProcessor.getInstance().executeCommand(e.getProject(), () -> createListener(), UIDesignerBundle.message("create.listener.command"), null);
     }
 
     private void createListener() {
@@ -162,8 +159,9 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         LOG.assertTrue(body != null);
 
         @NonNls StringBuilder builder = new StringBuilder();
-        @NonNls String variableName = null;
+        @NonNls String variableName;
         if (boundFields.length == 1) {
+          variableName = null;
           builder.append(boundFields[0].getName());
           builder.append(".");
           builder.append(myDescriptor.getAddListenerMethod().getName());
@@ -190,21 +188,23 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
           builder.append(";");
         }
 
-        PsiStatement stmt = factory.createStatementFromText(builder.toString(), constructor);
-        stmt = (PsiStatement)body.addAfter(stmt, body.getLastBodyElement());
-        stmt = (PsiStatement)JavaCodeStyleManager.getInstance(body.getProject()).shortenClassReferences(stmt);
-
-        if (boundFields.length > 1) {
-          PsiElement anchor = stmt;
-          for (PsiField field : boundFields) {
-            PsiElement addStmt = factory
-              .createStatementFromText(field.getName() + "." + myDescriptor.getAddListenerMethod().getName() + "(" + variableName + ");",
-                                       constructor);
-            addStmt = body.addAfter(addStmt, anchor);
-            anchor = addStmt;
+        PsiStatement stmt = WriteAction.compute(() -> {
+          PsiStatement temp = factory.createStatementFromText(builder.toString(), constructor);
+          temp = (PsiStatement)body.addAfter(temp, body.getLastBodyElement());
+          temp = (PsiStatement)JavaCodeStyleManager.getInstance(body.getProject()).shortenClassReferences(temp);
+          if (boundFields.length > 1) {
+            PsiElement anchor = temp;
+            for (PsiField field : boundFields) {
+              PsiElement addStmt = factory
+                .createStatementFromText(field.getName() + "." + myDescriptor.getAddListenerMethod().getName() + "(" + variableName + ");",
+                                         constructor);
+              addStmt = body.addAfter(addStmt, anchor);
+              anchor = addStmt;
+            }
           }
-        }
-
+          return temp;
+        });
+        
         final SmartPsiElementPointer ptr = SmartPointerManager.getInstance(myClass.getProject()).createSmartPsiElementPointer(stmt);
         final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(myClass);
         final FileEditor[] fileEditors =

@@ -22,6 +22,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.util.IncorrectOperationException;
+import one.util.streamex.MoreCollectors;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,11 +138,9 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
       final HashSet<Module> modules = new HashSet<>();
       ModuleUtilCore.collectModulesDependsOn(productionModule, modules);
       modules.remove(productionModule);
-      List<Module> modulesWithTestRoot = modules.stream()
-        .filter(module -> !computeSuitableTestRootUrls(module).isEmpty())
-        .limit(2)
-        .collect(Collectors.toList());
-      if (modulesWithTestRoot.size() == 1) return modulesWithTestRoot.get(0);
+      Module moduleWithTestRoot = StreamEx.of(modules)
+        .collect(MoreCollectors.onlyOne(module -> !computeSuitableTestRootUrls(module).isEmpty())).orElse(null);
+      if (moduleWithTestRoot != null) return moduleWithTestRoot;
     }
 
     return productionModule;

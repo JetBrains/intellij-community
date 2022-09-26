@@ -62,7 +62,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       reportUnfinishedFreezes();
     });
 
-    if (!DEBUG && PluginManagerCore.isRunningFromSources() || (!app.isEAP() && !app.isInternal())) {
+    if (!DEBUG && PluginManagerCore.isRunningFromSources() || !isEnabled(app)) {
       throw ExtensionNotApplicableException.create();
     }
   }
@@ -78,7 +78,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
         if (files != null) {
           if (duration > FREEZE_THRESHOLD) {
             LifecycleUsageTriggerCollector.onDeadlockDetected();
-            if (app.isEAP() || app.isInternal()) {
+            if (isEnabled(app)) {
               List<Attachment> attachments = new ArrayList<>();
               String message = null;
               String appInfo = null;
@@ -125,6 +125,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       catch (IOException ignored) {
       }
     });
+  }
+
+  private static boolean isEnabled(Application app) {
+    return app.isEAP() || app.isInternal() || Boolean.getBoolean("idea.force.freeze.reports");
   }
 
   static void setAppInfo(IdeaLoggingEvent event, String appInfo) {

@@ -20,7 +20,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ListActions;
+import com.intellij.ui.MouseMovementTracker;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ClosableByLeftArrow;
@@ -30,7 +33,6 @@ import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -431,10 +433,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     disposeChildren();
 
     if (myListModel.getSize() == 0) {
-      setFinalRunnable(myStep.getFinalRunnable());
-      setOk(true);
-      disposeAllParents(e);
-      setIndexForShowingChild(-1);
+      disposePopup(e);
       return true;
     }
 
@@ -442,7 +441,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     Integer inlineButtonIndex = myList.getSelectedButtonIndex();
     if (inlineButtonIndex != null) {
-      myPopupInlineActionsSupport.runInlineAction(selectedValue, inlineButtonIndex, e);
+      if (myPopupInlineActionsSupport.runInlineAction(selectedValue, inlineButtonIndex, e)) {
+        disposePopup(e);
+      }
       return true;
     }
 
@@ -459,6 +460,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
     }
     return handleNextStep(nextStep, selectedValues.length == 1 ? selectedValue : null, e);
+  }
+
+  private void disposePopup(@Nullable InputEvent e) {
+    setFinalRunnable(myStep.getFinalRunnable());
+    setOk(true);
+    disposeAllParents(e);
+    setIndexForShowingChild(-1);
   }
 
   private void valuesSelected(Object[] values) {
@@ -484,10 +492,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       return false;
     }
     else {
-      setOk(true);
-      setFinalRunnable(myStep.getFinalRunnable());
-      disposeAllParents(e);
-      setIndexForShowingChild(-1);
+      disposePopup(e);
       return true;
     }
   }
@@ -626,8 +631,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       Object selectedValue = myListModel.getElementAt(forIndex);
       if (withTimer) {
         myShowSubmenuTimer = new Timer(250, e -> {
-          if (!isDisposed() && myLastSelectedIndex == forIndex)
+          if (!isDisposed() && myLastSelectedIndex == forIndex) {
+            disposeChildren();
             showNextStepPopup(listStep.onChosen(selectedValue, false), selectedValue);
+          }
         });
         myShowSubmenuTimer.setRepeats(false);
         myShowSubmenuTimer.start();
@@ -899,13 +906,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   private Insets getListInsets() {
-    if (!ExperimentalUI.isNewUI()) {
-      return UIUtil.getListViewportPadding(isAdVisible());
-    }
-
-    boolean isTitleAvailable = getStep().getTitle() != null;
-    int topInset = isTitleAvailable ? 0 : JBUI.CurrentTheme.Popup.bodyTopInsetNoHeader();
-    int bottomInset = isAdVisible() ? JBUI.CurrentTheme.Popup.bodyBottomInsetBeforeAd() : JBUI.CurrentTheme.Popup.bodyBottomInsetNoAd();
-    return new JBInsets(topInset, 0, bottomInset, 0);
+    return PopupUtil.getListInsets(getStep().getTitle() != null, isAdVisible());
   }
 }

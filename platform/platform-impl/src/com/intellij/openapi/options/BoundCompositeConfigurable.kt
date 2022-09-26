@@ -45,26 +45,6 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
     }
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", ReplaceWith("appendDslConfigurable"))
-  protected fun RowBuilder.appendDslConfigurableRow(configurable: UnnamedConfigurable) {
-    if (configurable is UiDslConfigurable) {
-      val builder = this
-      with(configurable) {
-        builder.createComponentRow()
-      }
-    }
-    else {
-      val panel = configurable.createComponent()
-      if (panel != null) {
-        row {
-          component(panel)
-            .constraints(CCFlags.growX)
-        }
-      }
-    }
-  }
-
   protected fun Panel.appendDslConfigurable(configurable: UnnamedConfigurable) {
     if (configurable is UiDslUnnamedConfigurable) {
       val builder = this

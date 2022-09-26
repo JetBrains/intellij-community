@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.memory.component;
 
 import com.intellij.openapi.Disposable;
@@ -95,7 +95,7 @@ public class InstancesTracker implements PersistentStateComponent<InstancesTrack
   static class MyState {
     boolean isBackgroundTrackingEnabled = false;
 
-    @XCollection(elementTypes = {Map.Entry.class})
+    @XCollection(elementTypes = Map.Entry.class)
     final Map<String, TrackingType> classes = new ConcurrentHashMap<>();
 
     MyState() {

@@ -137,7 +137,7 @@
     <inspection_tool class="ArgNamesWarningsInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AroundAdviceStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ArraysAsListWithZeroOrOneArgument" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="Tests" level="INFO" enabled="true" />
+      <scope name="Tests" level="INFORMATION" enabled="true" editorAttributes="INFORMATION_ATTRIBUTES" />
     </inspection_tool>
     <inspection_tool class="AssignmentToForLoopParameter" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="m_checkForeachParameters" value="false" />
@@ -310,6 +310,9 @@
     <inspection_tool class="InvalidImplementedBy" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InvalidProvidedBy" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InvalidRequestParameters" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="JavadocDeclaration" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="IGNORE_DEPRECATED_ELEMENTS" value="true" />
+    </inspection_tool>
     <inspection_tool class="JBoss" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="JSDeprecatedSymbols" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="JSDuplicatedDeclaration" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -1101,6 +1104,11 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="Clz" nameOfExprType="javax\.swing\.FocusManager" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="Double ' in without { in property value" description="A double single quote in a propery value without a parameter like &#10;{0} will be rendered as a doubled single quote in the result. When&#10;a parameter is present it will be rendered as a single single &#10;quote." suppressId="DoubleSingleQuote" text="$key$=$value$" recursive="true" caseInsensitive="true" type="Properties" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="key" within="" contains="" />
+        <constraint name="value" regexp="[^{]*''[^{]*" target="true" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="EventLogGroup version should be &gt; 0" text="EventLogGroup($Parameter1$, $Parameter2$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Parameter2" regexp="0" within="" contains="" />
@@ -1484,210 +1492,230 @@
         <constraint name="p" minCount="0" maxCount="2147483647" within="" contains="" />
         <constraint name="message" regexp="message" target="true" within="" contains="" />
       </searchConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" description="stream statements create Stream instance while equivalent ContainerUtil methods aren't" problemDescriptor="can be replaced with ContainerUtil" text="Arrays.stream($m$).allMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$, $p$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" description="Reports stream statements that can be replaced &#10;with a call to a &lt;code&gt;ContainerUtil&lt;/code&gt; method.&#10;Stream statements create Stream instances, while&#10;equivalent ContainerUtil method calls don't." problemDescriptor="Can be replaced with ContainerUtil call" text="Arrays.stream($m$).allMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$, $p$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="m" nameOfExprType="Object\[\]" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($m$).anyMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.exists($m$, $p$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="m" nameOfExprType="Object\[\]" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($m$).noneMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$, $p$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="m" nameOfExprType="Object\[\]" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Stream.of($m$).allMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$, $p$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Arrays.stream($m$).anyMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.exists($m$, $p$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Stream.of($m$).anyMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.or($m$, $p$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Arrays.stream($m$).noneMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$, $p$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Stream.of($m$).noneMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$, $p$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Stream.of($m$).allMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$, $p$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($m$).allMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$, $p$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Stream.of($m$).anyMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.or($m$, $p$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($m$).anyMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.or($m$, $p$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Stream.of($m$).noneMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$, $p$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($m$).noneMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$, $p$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="StreamEx.of($m$).allMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$, $p$)">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="m" within="" contains="" />
-        <constraint name="p" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="StreamEx.of($m$).anyMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.or($m$, $p$)">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="m" within="" contains="" />
-        <constraint name="p" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="StreamEx.of($m$).noneMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$, $p$)">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="m" within="" contains="" />
-        <constraint name="p" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$f$.stream().map($m$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$, $m$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$f$.stream().map($m$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$, $m$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="m" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$f$.stream().map { $m$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$f$.stream().map { $m$ }.collect(Collectors.toList())">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$f$.stream().map { $m$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$f$.stream().map { $m$ }.collect(Collectors.toList())">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
         <constraint name="m" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Arrays.stream($f$).map($m$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$, $m$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($f$).map($m$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$, $m$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
         <constraint name="m" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Arrays.stream($f$).map { $m$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$) { $m$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($f$).map { $m$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$) { $m$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
         <constraint name="m" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Stream.of($f$).map($m$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$, $m$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Stream.of($f$).map($m$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$, $m$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
         <constraint name="m" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Stream.of($f$).map { $m$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$) { $m$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Stream.of($f$).map { $m$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$) { $m$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
         <constraint name="m" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="StreamEx.of($f$).map($m$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$, $m$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($f$).map($m$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$, $m$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
         <constraint name="m" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="StreamEx.of($f$).map { $m$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$) { $m$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($f$).map { $m$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$) { $m$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
         <constraint name="m" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$l$.stream().filter($f$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$, $f$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$l$.stream().filter($f$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$, $f$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$l$.stream().filter { $f$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$) { $f$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$l$.stream().filter { $f$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$) { $f$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Arrays.stream($l$).filter($f$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$, $f$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($l$).filter($f$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$, $f$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Arrays.stream($l$).filter { $f$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$) { $f$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($l$).filter { $f$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$) { $f$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$l$.stream().filter($f$).findAny().orElse(null)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$, $f$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$l$.stream().filter($f$).findAny().orElse(null)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$, $f$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$l$.stream().filter { $f$ }.findAny().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$) { $f$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$l$.stream().filter { $f$ }.findAny().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$) { $f$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$l$.stream().filter($f$).findFirst().orElse(null)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$, $f$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$l$.stream().filter($f$).findFirst().orElse(null)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$, $f$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$l$.stream().filter { $f$ }.findFirst().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$) { $f$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$l$.stream().filter { $f$ }.findFirst().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$) { $f$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Arrays.stream($l$).filter($f$).findAny().orElse(null)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$, $f$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($l$).filter($f$).findAny().orElse(null)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$, $f$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Arrays.stream($l$).filter { $f$ }.findAny().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$) { $f$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($l$).filter { $f$ }.findAny().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$) { $f$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Arrays.stream($l$).filter($f$).findFirst().orElse(null)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$, $f$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($l$).filter($f$).findFirst().orElse(null)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$, $f$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Arrays.stream($l$).filter { $f$ }.findFirst().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$) { $f$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($l$).filter { $f$ }.findFirst().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$) { $f$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Arrays.stream($m$).allMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$) { $p$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($m$).allMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$) { $p$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Arrays.stream($m$).anyMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.exists($m$) { $p$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($m$).anyMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.exists($m$) { $p$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Arrays.stream($m$).noneMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$) { $p$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($m$).noneMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$) { $p$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Stream.of($m$).allMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$) { $p$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Stream.of($m$).allMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$) { $p$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Stream.of($m$).anyMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.or($m$) { $p$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Stream.of($m$).anyMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.or($m$) { $p$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="Stream.of($m$).noneMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$) { $p$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Stream.of($m$).noneMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$) { $p$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="StreamEx.of($m$).allMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$) { $p$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($m$).allMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$) { $p$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="StreamEx.of($m$).anyMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.or($m$) { $p$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($m$).anyMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.or($m$) { $p$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="StreamEx.of($m$).noneMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$) { $p$ }">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($m$).noneMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$) { $p$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$m$.stream().noneMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$, $p$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$m$.stream().noneMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$, $p$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$m$.stream().allMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$, $p$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$m$.stream().allMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$, $p$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$m$.stream().anyMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.exists($m$, $p$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$m$.stream().anyMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.exists($m$, $p$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$l$.stream().map($dd$).toList()" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($l$, $dd$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="dd" within="" contains="" />
+        <constraint name="l" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($states$).map($dd$).toList()" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($states$, $dd$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="states" within="" contains="" />
+        <constraint name="dd" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" text="StreamEx.of($f$).select($c$).toList()" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filterIsInstance($f$, $c$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+        <constraint name="c" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="StreamEx.of($f$).select($c$).collect(Collectors.toList())" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filterIsInstance($f$, $c$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+        <constraint name="c" within="" contains="" />
       </replaceConfiguration>
       <searchConfiguration name="String.getBytes() is current locale-dependant, use String.getBytes(Charset) instead" text="$s$.getBytes()" recursive="false" caseInsensitive="true" type="JAVA">
         <constraint name="s" nameOfExprType="java.lang.String" exprTypeWithinHierarchy="true" within="" contains="" />

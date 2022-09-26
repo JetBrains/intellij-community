@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class SmartTodoItemPointer {
   private final TodoItem myTodoItem;
   private final Document myDocument;

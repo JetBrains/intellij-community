@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 @ApiStatus.Internal
@@ -25,4 +26,9 @@ public interface MavenVersionAwareSupportExtension {
   @Nullable DistributionInfo asDistributionInfo(String mavenHome);
 
   @NotNull List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution);
+
+  @NotNull
+  default List<String> supportedBundles() {
+    return Collections.emptyList();
+  }
 }

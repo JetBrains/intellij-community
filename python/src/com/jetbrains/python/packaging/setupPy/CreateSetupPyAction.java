@@ -32,9 +32,7 @@ import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 
 public class CreateSetupPyAction extends CreateFromTemplateAction {
@@ -75,7 +73,20 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
       defaults.addPredefined("PackageList", getPackageList(dataContext));
       defaults.addPredefined("PackageDirs", getPackageDirs(dataContext));
     }
+    defaults.setAttributeVisibleNames(getVisibleNames());
     return defaults;
+  }
+
+  private static Map<String, String> getVisibleNames() {
+    HashMap<String, String> attributeToName = new HashMap<>();
+    attributeToName.put("Package_name", PyBundle.message("python.packaging.create.setup.package.name"));
+    attributeToName.put("Version", PyBundle.message("python.packaging.create.setup.version"));
+    attributeToName.put("URL", PyBundle.message("python.packaging.create.setup.url"));
+    attributeToName.put("License", PyBundle.message("python.packaging.create.setup.license"));
+    attributeToName.put("Author", PyBundle.message("python.packaging.create.setup.author"));
+    attributeToName.put("Author_Email", PyBundle.message("python.packaging.create.setup.author.email"));
+    attributeToName.put("Description", PyBundle.message("python.packaging.create.setup.description"));
+    return attributeToName;
   }
 
   @NotNull
@@ -104,14 +115,12 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
     final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (module != null) {
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
-      if (sourceRoots.length > 0) {
-        for (VirtualFile sourceRoot : sourceRoots) {
-          // TODO notify if we have multiple source roots and can't build mapping automatically
-          final VirtualFile contentRoot = ProjectFileIndex.getInstance(module.getProject()).getContentRootForFile(sourceRoot);
-          if (contentRoot != null && !Comparing.equal(contentRoot, sourceRoot)) {
-            final String relativePath = VfsUtilCore.getRelativePath(sourceRoot, contentRoot, '/');
-            return "\n    package_dir={'': '" + relativePath + "'},";
-          }
+      for (VirtualFile sourceRoot : sourceRoots) {
+        // TODO notify if we have multiple source roots and can't build mapping automatically
+        final VirtualFile contentRoot = ProjectFileIndex.getInstance(module.getProject()).getContentRootForFile(sourceRoot);
+        if (contentRoot != null && !Comparing.equal(contentRoot, sourceRoot)) {
+          final String relativePath = VfsUtilCore.getRelativePath(sourceRoot, contentRoot, '/');
+          return "\n    package_dir={'': '" + relativePath + "'},";
         }
       }
     }

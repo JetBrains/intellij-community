@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -11,10 +11,10 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,8 +96,9 @@ public final class LightRecordMethod extends LightMethod implements LightRecordM
 
   @Override
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon =
-      IconManager.getInstance().createLayeredIcon(this, PlatformIcons.METHOD_ICON, ElementPresentationUtil.getFlags(this, false));
+    IconManager iconManager = IconManager.getInstance();
+    RowIcon baseIcon =
+      iconManager.createLayeredIcon(this, iconManager.getPlatformIcon(PlatformIcons.Method), ElementPresentationUtil.getFlags(this, false));
     if (BitUtil.isSet(flags, ICON_FLAG_VISIBILITY)) {
       VisibilityIcons.setVisibilityIcon(PsiUtil.ACCESS_LEVEL_PUBLIC, baseIcon);
     }

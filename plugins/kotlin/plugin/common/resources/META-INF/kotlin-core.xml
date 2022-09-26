@@ -166,11 +166,6 @@
     <projectStructure.sourceRootEditHandler implementation="org.jetbrains.kotlin.idea.roots.ui.KotlinModuleSourceRootEditHandler$TestResource"/>
 
 
-    <structureViewBuilder
-            order="first"
-            key="CLASS"
-            factoryClass="org.jetbrains.kotlin.idea.structureView.KtClsStructureViewBuilderProvider"/>
-
     <registryKey
             key="kotlin.code-vision.usages"
             description="Enable Code-Vision usages search"
@@ -192,6 +187,13 @@
             defaultValue="false"
             restartRequired="false"/>
     <iconMapper mappingFile="KotlinIconMappings.json"/>
+  </extensions>
+
+  <!-- Line markers -->
+  <extensions defaultExtensionNs="com.intellij">
+    <runLineMarkerContributor
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.KotlinRunLineMarkerContributor"/>
   </extensions>
 
   <projectListeners>
@@ -335,6 +337,18 @@
                  defaultValue="false"
                  restartRequired="true"/>
 
+    <registryKey
+            key="kotlin.enable.unresolved.reference.importer"
+            description="Unresolved reference importer runs on EDT and could be slow"
+            defaultValue="false"
+            restartRequired="false"/>
+
+    <registryKey
+            key="kotlin.enable.inlay.hint.for.lambda.return.type"
+            description="Show inlay hint for lambda return type"
+            defaultValue="false"
+            restartRequired="false"/>
+
     <registryKey key="kotlin.cache.packages.strong.map"
                  description="Hold info about packages using strong references instead of soft ones"
                  defaultValue="true"
@@ -426,6 +440,11 @@
     <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinConventionMethodReferencesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.DefaultAnnotationMethodKotlinImplicitReferenceSearcher"/>
 
+    <refactoring.safeDelete.JavaSafeDeleteDelegate
+            id="kotlinJavaSafeDeleteDelegate"
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinJavaSafeDeleteDelegate"/>
+    
     <importFilteringRule implementation="org.jetbrains.kotlin.idea.findUsages.KotlinImportFilteringRule"/>
 
     <elementDescriptionProvider order="first" implementation="org.jetbrains.kotlin.idea.findUsages.KotlinElementDescriptionProvider"/>
@@ -441,6 +460,8 @@
     <readWriteAccessDetector implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector" id="kotlin"/>
 
     <dataflowIRProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.dfa.KotlinDataFlowIRProvider"/>
+
+    <projectFileScanner implementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider$LibraryKindScanner"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.jvm">
@@ -531,6 +552,9 @@
         <action
                 id="StoredExceptionsThrowToggleAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.StoredExceptionsThrowToggleAction"/>
+        <action
+                id="DebugTypeResolutionAction"
+                class="org.jetbrains.kotlin.idea.actions.internal.resolutionDebugging.DebugTypeResolutionAction"/>
         <action
                 id="LibraryToSourceDependencySupportToggleAction"
                 class="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.LibraryToSourceDependencySupportToggleAction"/>

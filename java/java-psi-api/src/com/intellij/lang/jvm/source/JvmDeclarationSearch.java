@@ -49,17 +49,14 @@ public final class JvmDeclarationSearch {
 
   private static @Nullable PsiElement findDeclaringElement(@NotNull PsiElement potentiallyIdentifyingElement) {
     PsiElement parent = potentiallyIdentifyingElement.getParent();
-    if (parent instanceof PsiNameIdentifierOwner) {
-      if (((PsiNameIdentifierOwner)parent).getIdentifyingElement() == potentiallyIdentifyingElement) {
-        return parent;
-      }
+    if (parent instanceof PsiNameIdentifierOwner &&
+        ((PsiNameIdentifierOwner)parent).getIdentifyingElement() == potentiallyIdentifyingElement) {
+      return parent;
     }
-    else {
-      for (JvmDeclarationSearcher searcher : JvmDeclarationSearcher.EP.allForLanguage(potentiallyIdentifyingElement.getLanguage())) {
-        PsiElement declaringElement = searcher.adjustIdentifierElement(potentiallyIdentifyingElement);
-        if (declaringElement != null) {
-          return declaringElement;
-        }
+    for (JvmDeclarationSearcher searcher : JvmDeclarationSearcher.EP.allForLanguage(potentiallyIdentifyingElement.getLanguage())) {
+      PsiElement declaringElement = searcher.adjustIdentifierElement(potentiallyIdentifyingElement);
+      if (declaringElement != null) {
+        return declaringElement;
       }
     }
     return null;

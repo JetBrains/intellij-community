@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.components.service
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopupStep
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.ui.RowIcon
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.PlatformIcons
@@ -25,6 +27,7 @@ import com.intellij.util.containers.FList
 import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.actions.branch.GitBranchActionsUtil
+import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
@@ -33,7 +36,7 @@ import javax.swing.Icon
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
-class GitBranchesTreePopupStep(private val project: Project, private val repository: GitRepository) : PopupStep<Any> {
+class GitBranchesTreePopupStep(private val project: Project, internal val repository: GitRepository) : PopupStep<Any> {
 
   private var finalRunnable: Runnable? = null
 
@@ -57,6 +60,12 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
   fun getPreferredSelection(): TreePath? {
     return _treeModel.getPreferredSelection()
   }
+
+  internal fun setPrefixGrouping(state: Boolean) {
+    _treeModel.isPrefixGrouping = state
+  }
+
+  internal fun isSeparatorAboveRequired(path: TreePath) = path.lastPathComponent == GitBranchType.LOCAL
 
   private val LOCAL_SEARCH_PREFIX = "/l"
   private val REMOTE_SEARCH_PREFIX = "/r"
@@ -121,20 +130,44 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
   override fun getTitle(): String =
     DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", repository.vcs.displayName, DvcsUtil.getShortRepositoryName(repository))
 
-  fun getIcon(treeNode: Any?): Icon? {
+  fun getIncomingOutgoingIcon(treeNode: Any?): Icon? {
     val value = treeNode ?: return null
     return when (value) {
-      is GitBranchesTreeModel.BranchesPrefixGroup -> PlatformIcons.FOLDER_ICON
-      is GitBranch -> getBranchIcon(value)
+      is GitBranch -> getIncomingOutgoingBranchIcon(value)
       else -> null
     }
   }
 
-  private fun getBranchIcon(branch: GitBranch): Icon {
+  private fun getIncomingOutgoingBranchIcon(branch: GitBranch): Icon? {
+    val branchName = branch.name
+    val incomingOutgoingManager = project.service<GitBranchIncomingOutgoingManager>()
+    val hasIncoming = incomingOutgoingManager.hasIncomingFor(repository, branchName)
+    val hasOutgoing = incomingOutgoingManager.hasOutgoingFor(repository, branchName)
+
+    return when {
+      hasIncoming && hasOutgoing -> RowIcon(DvcsImplIcons.Incoming, DvcsImplIcons.Outgoing)
+      hasIncoming -> DvcsImplIcons.Incoming
+      hasOutgoing -> DvcsImplIcons.Outgoing
+      else -> null
+    }
+  }
+
+  fun getIcon(treeNode: Any?, isSelected: Boolean): Icon? {
+    val value = treeNode ?: return null
+    return when (value) {
+      is GitBranchesTreeModel.BranchesPrefixGroup -> PlatformIcons.FOLDER_ICON
+      is GitBranch -> getBranchIcon(value, isSelected)
+      else -> null
+    }
+  }
+
+  private fun getBranchIcon(branch: GitBranch, isSelected: Boolean): Icon {
     val isCurrent = repository.currentBranch == branch
     val isFavorite = project.service<GitBranchManager>().isFavorite(GitBranchType.of(branch), repository, branch.name)
 
     return when {
+      isSelected && isFavorite -> AllIcons.Nodes.Favorite
+      isSelected -> AllIcons.Nodes.NotFavoriteOnHover
       isCurrent && isFavorite -> DvcsImplIcons.CurrentBranchFavoriteLabel
       isCurrent -> DvcsImplIcons.CurrentBranchLabel
       isFavorite -> AllIcons.Nodes.Favorite
@@ -148,15 +181,20 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
       GitBranchType.LOCAL -> GitBundle.message("group.Git.Local.Branch.title")
       GitBranchType.REMOTE -> GitBundle.message("group.Git.Remote.Branch.title")
       is GitBranchesTreeModel.BranchesPrefixGroup -> value.prefix.last()
-      is GitBranch -> value.name.split('/').last()
+      is GitBranch -> {
+        if (_treeModel.isPrefixGrouping) value.name.split('/').last() else value.name
+      }
       is PopupFactoryImpl.ActionItem -> value.text
       else -> value.toString()
     }
   }
 
   fun getSecondaryText(treeNode: Any?): @NlsSafe String? {
-    if (treeNode !is GitLocalBranch) return null
-    return treeNode.findTrackedBranch(repository)?.name
+    return when (treeNode) {
+      is PopupFactoryImpl.ActionItem -> KeymapUtil.getFirstKeyboardShortcutText(treeNode.action)
+      is GitLocalBranch -> treeNode.findTrackedBranch(repository)?.name
+      else -> null
+    }
   }
 
   override fun canceled() {}
@@ -177,10 +215,11 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
   override fun isAutoSelectionEnabled() = false
 
   companion object {
+    internal const val HEADER_SETTINGS_ACTION_GROUP = "Git.Branches.Popup.Settings"
     private const val TOP_LEVEL_ACTION_GROUP = "Git.Branches.List"
     private const val BRANCH_ACTION_GROUP = "Git.Branch"
 
-    private val ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup")
+    internal val ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup")
 
     private fun createActionItems(actionGroup: ActionGroup,
                                   project: Project,
@@ -199,7 +238,7 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
         .createActionsStep(actionGroup, dataContext, ACTION_PLACE, false, true, null, null, true, 0, false)
     }
 
-    private fun createDataContext(project: Project, repository: GitRepository, branch: GitBranch? = null): DataContext =
+    internal fun createDataContext(project: Project, repository: GitRepository, branch: GitBranch? = null): DataContext =
       SimpleDataContext.builder()
         .add(CommonDataKeys.PROJECT, project)
         .add(GitBranchActionsUtil.REPOSITORIES_KEY, listOf(repository))

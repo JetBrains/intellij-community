@@ -17,8 +17,8 @@ import java.util.regex.Pattern;
 
 public class LauncherGeneratorMain {
   public static void main(String[] args) {
-    if (args.length != 5) {
-      System.err.println("Usage: LauncherGeneratorMain <template EXE file> <app info file> <resource.h file> <properties> <output>");
+    if (args.length != 6) {
+      System.err.println("Usage: LauncherGeneratorMain <template EXE file> <app info file> <resource.h file> <properties> <path to ico> <output>");
       System.exit(1);
     }
 
@@ -51,27 +51,11 @@ public class LauncherGeneratorMain {
     }
 
     Element appInfoRoot = appInfo.getRootElement();
-    String splashUrl = getChild(appInfoRoot, "logo").getAttributeValue("url");
-    if (splashUrl.startsWith("/")) {
-      splashUrl = splashUrl.substring(1);
-    }
-    InputStream splashStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(splashUrl);
-    if (splashStream == null) {
-      System.err.println("Splash screen image file file " + splashUrl + " not found");
-      System.exit(5);
-    }
 
-    ByteArrayOutputStream splashBmpStream = new ByteArrayOutputStream();
-    try {
-      BufferedImage bufferedImage = Imaging.getBufferedImage(splashStream);
-      Imaging.writeImage(bufferedImage, splashBmpStream, ImageFormats.BMP, new HashMap());
+    String icoUrl = args[4];
+    if (icoUrl == null || icoUrl.isBlank()) {
+      icoUrl = getChild(appInfoRoot, "icon").getAttributeValue("ico");
     }
-    catch (Exception e) {
-      System.err.println("Error converting splash screen to BMP: " + e.getMessage());
-      System.exit(6);
-    }
-
-    String icoUrl = getChild(appInfoRoot, "icon").getAttributeValue("ico");
     if (icoUrl == null) {
       System.err.println(".ico file URL not specified in application info file " + appInfoFileName);
       System.exit(11);
@@ -126,7 +110,7 @@ public class LauncherGeneratorMain {
 
     int year = new GregorianCalendar().get(Calendar.YEAR);
 
-    LauncherGenerator generator = new LauncherGenerator(template, new File(args[4]));
+    LauncherGenerator generator = new LauncherGenerator(template, new File(args[5]));
     try {
       generator.load();
 
@@ -140,7 +124,6 @@ public class LauncherGeneratorMain {
         generator.setResourceString(id, (String) pair.getValue());
       }
 
-      generator.injectBitmap(resourceIDs.get("IDB_SPLASH"), splashBmpStream.toByteArray());
       generator.injectIcon(resourceIDs.get("IDI_WINLAUNCHER"), iconStream);
 
       generator.setVersionInfoString("LegalCopyright", "Copyright (C) 2000-" + year + " " + companyName);

@@ -13,10 +13,6 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class SizePolicyProperty extends Property<RadComponent, Integer> {
   private final Property[] myChildren;
   private final SizePolicyRenderer myRenderer;

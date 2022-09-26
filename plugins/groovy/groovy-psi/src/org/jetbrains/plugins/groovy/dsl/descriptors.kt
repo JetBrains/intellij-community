@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
-import com.intellij.util.containers.ContainerUtil.immutableCopy
 import groovy.lang.Closure
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
@@ -67,7 +66,7 @@ private fun namedParams(args: Map<*, *>): List<NamedParameterDescriptor> {
   val namedParams = args["namedParams"] as? List<*>
                     ?: (args["params"] as? Map<*, *>)?.entries?.firstOrNull()?.value as? List<*>
                     ?: return emptyList()
-  return immutableCopy(namedParams.filterIsInstance<NamedParameterDescriptor>())
+  return java.util.List.copyOf(namedParams.filterIsInstance<NamedParameterDescriptor>())
 }
 
 private fun params(args: Map<*, *>): List<VariableDescriptor> {
@@ -80,13 +79,13 @@ private fun params(args: Map<*, *>): List<VariableDescriptor> {
     }
     first = false
   }
-  return immutableCopy(result)
+  return java.util.List.copyOf(result)
 }
 
 private fun throws(args: Map<*, *>): List<String> {
   val throws = args["throws"]
   return when {
-    throws is List<*> -> immutableCopy(throws.map(::stringifyType))
+    throws is List<*> -> java.util.List.copyOf(throws.map(::stringifyType))
     throws != null -> listOf(stringifyType(throws))
     else -> emptyList()
   }
@@ -129,10 +128,10 @@ fun parseClosure(args: Map<*, *>): ClosureDescriptor? {
 
   return ClosureDescriptor(
     methodName = args["name"].toString(),
-    methodParameterTypes = immutableCopy(methodParameterTypes),
+    methodParameterTypes = java.util.List.copyOf(methodParameterTypes),
     usePlaceContextForTypes = usePlaceContext,
     isMethodConstructor = methodArgs["constructor"] == true,
-    parameters = immutableCopy(params)
+    parameters = java.util.List.copyOf(params)
   )
 }
 

@@ -194,7 +194,7 @@ fun KtCallExpression.receiverValue(): ReceiverValue? {
 
 fun KtCallExpression.receiverType(): KotlinType? = receiverValue()?.type
 
-fun KtExpression.resolveType(): KotlinType? = this.analyze(BodyResolveMode.PARTIAL).getType(this)
+fun KtExpression.resolveType(context: BindingContext = this.analyze(BodyResolveMode.PARTIAL)): KotlinType? = context.getType(this)
 
 fun KtModifierKeywordToken.toVisibility(): DescriptorVisibility {
     return when (this) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -14,16 +14,15 @@ import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.DosFileAttributeView;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
+import static java.nio.file.attribute.PosixFilePermission.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
-/**
- * @author Irina.Chernushina, lene
- */
 public class FileUtilHeavyTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
 
@@ -387,5 +386,20 @@ public class FileUtilHeavyTest {
       assertEquals(StringUtil.trimTrailing(uncDir.toURI().toString(), '/'), FileUtil.fileToUri(uncDir).toString());
       assertEquals(uncDir, new File(FileUtil.fileToUri(uncDir)));
     }
+  }
+
+  @Test
+  public void permissionsCloning() throws IOException {
+    assumeUnix();
+
+    Path donor = tempDir.newFile("donor").toPath();
+    Path recipient = tempDir.newFile("recipient").toPath();
+    Files.setPosixFilePermissions(donor, EnumSet.of(OWNER_READ, OWNER_EXECUTE, GROUP_EXECUTE));
+    Files.setPosixFilePermissions(recipient, EnumSet.of(OWNER_READ, OWNER_WRITE, GROUP_READ, OTHERS_READ, OTHERS_EXECUTE));
+
+    FileUtil.copyContent(donor.toFile(), recipient.toFile());
+
+    assertEquals(EnumSet.of(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_EXECUTE, OTHERS_READ),
+                 Files.getPosixFilePermissions(recipient));
   }
 }

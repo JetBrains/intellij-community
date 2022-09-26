@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.text.StyledTextPane
 import com.intellij.ide.ui.text.paragraph.TextParagraph
 import com.intellij.ide.ui.text.parts.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.ui.scale.JBUIScale
@@ -62,7 +61,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : Styled
           // it is required to not add extra space below the image
           StyleConstants.setLineSpacing(this, 0f)
         }
-        else StyleConstants.setLineSpacing(this, 0.2f)
+        else StyleConstants.setLineSpacing(this, 0.3f)
 
         val properties = textProperties
         if (properties != null) {
@@ -143,18 +142,6 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : Styled
 
   var currentAnimation = 0
   var totalAnimation = 0
-
-  override fun addNotify() {
-    super.addNotify()
-    redraw()
-  }
-
-  override fun updateUI() {
-    super.updateUI()
-    ApplicationManager.getApplication().invokeLater(Runnable {
-      redraw()
-    })
-  }
 
   fun messagesNumber(): Int = activeMessages.size
 
@@ -263,7 +250,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : Styled
         continue
       }
       val icon = if (lessonMessage.state == MessageState.PASSED) {
-        FeaturesTrainerIcons.Img.GreenCheckmark
+        FeaturesTrainerIcons.GreenCheckmark
       }
       else if (!LessonManager.instance.lessonIsRunning()) {
         AllIcons.General.Information

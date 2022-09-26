@@ -4,6 +4,8 @@ package com.intellij.codeInspection.inheritance
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.*
 import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.lang.jvm.JvmClass
@@ -145,6 +147,19 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
         }
         LOG.info(e)
       }
+    }
+
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      val file = previewDescriptor.startElement.containingFile ?: return IntentionPreviewInfo.EMPTY
+      val editor = IntentionPreviewUtils.getPreviewEditor() ?: return IntentionPreviewInfo.EMPTY
+      for (intentionAction in actionsToPerform) {
+        if (intentionAction.isAvailable(project, null, file)) {
+          if (intentionAction.generatePreview(project, editor, file) != IntentionPreviewInfo.DIFF) {
+            return IntentionPreviewInfo.EMPTY
+          }
+        }
+      }
+      return IntentionPreviewInfo.DIFF
     }
 
     private fun collectMakeExtendable(declaration: UDeclaration,

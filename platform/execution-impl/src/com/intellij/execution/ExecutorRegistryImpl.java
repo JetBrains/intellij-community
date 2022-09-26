@@ -43,6 +43,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -86,7 +87,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }, null);
   }
 
-  final static class ExecutorRegistryActionConfigurationTuner implements ActionConfigurationCustomizer {
+  static final class ExecutorRegistryActionConfigurationTuner implements ActionConfigurationCustomizer {
     @Override
     public void customize(@NotNull ActionManager manager) {
       if (Executor.EXECUTOR_EXTENSION_NAME.hasAnyExtensions()) {
@@ -187,13 +188,13 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  @NonNls
-  private static String newConfigurationContextActionId(@NotNull Executor executor) {
+  private static @NonNls String newConfigurationContextActionId(@NotNull Executor executor) {
     return "newConfiguration" + executor.getContextActionId();
   }
 
   private static boolean isExecutorInMainGroup(@NotNull Executor executor) {
-    return !Registry.is("executor.actions.submenu") || executor.getId().equals(ToolWindowId.RUN) || executor.getId().equals(ToolWindowId.DEBUG);
+    String id = executor.getId();
+    return id.equals(ToolWindowId.RUN) || id.equals(ToolWindowId.DEBUG) || !Registry.is("executor.actions.submenu", true);
   }
 
   private static void registerActionInGroup(@NotNull ActionManager actionManager, @NotNull String actionId, @NotNull AnAction anAction, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
@@ -201,11 +202,10 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     ((DefaultActionGroup)actionManager.getAction(groupId)).add(action, actionManager);
   }
 
-  @NotNull
-  private static AnAction registerAction(@NotNull ActionManager actionManager,
-                                         @NotNull String actionId,
-                                         @NotNull AnAction anAction,
-                                         @NotNull Map<String, AnAction> map) {
+  private static @NotNull AnAction registerAction(@NotNull ActionManager actionManager,
+                                                  @NotNull String actionId,
+                                                  @NotNull AnAction anAction,
+                                                  @NotNull Map<String, AnAction> map) {
     AnAction action = actionManager.getAction(actionId);
     if (action == null) {
       actionManager.registerAction(actionId, anAction);
@@ -506,8 +506,13 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         executionManager.getRunningDescriptors(s -> ExecutionManagerImplKt.isOfSameType(s, selectedConfiguration));
       runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> executionManager.getExecutors(descriptor).contains(myExecutor));
 
-      if (!configuration.isAllowRunningInParallel() && !runningDescriptors.isEmpty() && DefaultRunExecutor.EXECUTOR_ID.equals(myExecutor.getId())) {
-        return AllIcons.Actions.Restart;
+      if (!configuration.isAllowRunningInParallel() && !runningDescriptors.isEmpty()) {
+        if (ExperimentalUI.isNewUI() && myExecutor.getIcon() != myExecutor.getRerunIcon()) {
+          return myExecutor.getRerunIcon();
+        }
+        if (DefaultRunExecutor.EXECUTOR_ID.equals(myExecutor.getId())) {
+          return AllIcons.Actions.Restart;
+        }
       }
       if (runningDescriptors.isEmpty()) {
         return myExecutor.getIcon();
@@ -522,8 +527,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     protected @Nullable RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {
-      if (e.getProject() == null) return null;
-      return RunManager.getInstance(e.getProject()).getSelectedConfiguration();
+      Project project = e.getProject();
+      RunManager runManager = project == null ? null : RunManager.getInstanceIfCreated(project);
+      return runManager == null ? null : runManager.getSelectedConfiguration();
     }
 
     protected void run(@NotNull Project project, @NotNull RunnerAndConfigurationSettings settings, @NotNull DataContext dataContext) {

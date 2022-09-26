@@ -11,8 +11,7 @@ import com.intellij.ui.ExperimentalUI
 
 class StatusTextModeAction : ToggleAction(), DumbAware {
   override fun isSelected(e: AnActionEvent): Boolean {
-    val settings = UISettings.getInstance()
-    return !settings.showNavigationBar || settings.navBarLocation != NavBarLocation.BOTTOM
+    return !UISettings.getInstance().showNavigationBarInBottom
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {

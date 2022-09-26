@@ -1,6 +1,6 @@
-<idea-plugin implementation-detail="true">
+<idea-plugin>
   <name>Settings Sync</name>
-  <id>com.jetbrains.settingsSync</id>
+  <id>com.intellij.settingsSync</id>
   <category>IDE Settings</category>
   <description><![CDATA[
   <p>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers.</p>
@@ -41,13 +41,16 @@
   </extensions>
 
   <applicationListeners>
-    <listener class="com.intellij.settingsSync.SettingsSynchronizer" topic="com.intellij.ide.FrameStateListener"
+    <listener class="com.intellij.settingsSync.SettingsSynchronizer" topic="com.intellij.openapi.application.ApplicationActivationListener"
               activeInTestMode="false" activeInHeadlessMode="false"/>
   </applicationListeners>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.settingsSyncMigration" interface="com.intellij.settingsSync.SettingsSyncMigration" dynamic="true"/>
+  </extensionPoints>
+
   <actions>
     <group id="SettingsSync">
-      <action class="com.intellij.settingsSync.ManualSyncAction" id="settingsSync.manualUpdate" icon="AllIcons.Chooser.Bottom"/>
       <action class="com.intellij.settingsSync.ManualPushAction" id="settingsSync.manualPush" icon="AllIcons.Chooser.Top" internal="true"/>
       <action class="com.intellij.settingsSync.SettingsSyncTroubleshootingAction" id="settingsSync.troubleShoot"
               icon="AllIcons.General.Settings"/>

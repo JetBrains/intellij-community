@@ -82,10 +82,7 @@ public final class RefactoringHierarchyUtil {
 
   /**
    *
-   * @param subClass
-   * @param includeNonProject
    * @param sortAlphabetically if false, sorted in DFS order
-   * @return
    */
   public static ArrayList<PsiClass> createBasesList(PsiClass subClass, boolean includeNonProject, boolean sortAlphabetically) {
     LinkedHashSet<PsiClass> bases = new LinkedHashSet<>();
@@ -118,10 +115,6 @@ public final class RefactoringHierarchyUtil {
 
   /**
    * Checks whether given element is below the given superClass in class hierarchy.
-   * @param superClass
-   * @return
-   * @param subClass
-   * @param member
    */
   public static boolean isMemberBetween(PsiClass superClass, PsiClass subClass, PsiMember member) {
     PsiClass elementClass = null;

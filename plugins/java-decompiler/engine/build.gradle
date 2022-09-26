@@ -2,8 +2,8 @@
 apply plugin: 'java'
 
 compileJava {
-  sourceCompatibility '11'
-  targetCompatibility '11'
+  sourceCompatibility '17'
+  targetCompatibility '17'
 }
 
 sourceSets {
@@ -15,7 +15,7 @@ repositories { mavenCentral() }
 dependencies {
   implementation 'org.jetbrains:annotations:20.1.0'
   testImplementation 'junit:junit:4.12'
-  testImplementation 'org.assertj:assertj-core:3.12.2'
+  testImplementation 'org.assertj:assertj-core:3.23.1'
 }
 
 jar {

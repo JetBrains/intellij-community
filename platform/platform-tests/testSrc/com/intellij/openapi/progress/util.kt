@@ -8,7 +8,6 @@ import com.intellij.util.setValue
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertThrows
-import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
@@ -138,7 +137,7 @@ fun loggedError(canThrow: Semaphore): Throwable {
 
 fun currentJobTest(test: (Job) -> Unit) {
   val job = Job()
-  withJob(job) {
+  withCurrentJob(job) {
     test(job)
   }
   assertTrue(job.isActive)

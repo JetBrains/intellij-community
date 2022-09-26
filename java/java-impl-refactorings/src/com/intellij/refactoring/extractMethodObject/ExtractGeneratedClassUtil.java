@@ -7,12 +7,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 final class ExtractGeneratedClassUtil {
   private static final String GENERATED_CLASS_PACKAGE = "idea.debugger.rt";
@@ -118,8 +117,7 @@ final class ExtractGeneratedClassUtil {
         super.visitNewExpression(expression);
         PsiMethod constructor = expression.resolveConstructor();
         if (constructor != null && generatedClass.equals(constructor.getContainingClass())) {
-          List<PsiMethod> methods =
-            Arrays.stream(extractedClass.getConstructors()).filter(x -> isSameMethod(x, constructor)).collect(Collectors.toList());
+          List<PsiMethod> methods = ContainerUtil.filter(extractedClass.getConstructors(), x -> isSameMethod(x, constructor));
           if (methods.size() == 1) {
             LOG.info("Replace constructor: " + constructor.getName());
             constructor.putUserData(LightMethodObjectExtractedData.REFERENCE_METHOD, methods.get(0));
@@ -132,8 +130,7 @@ final class ExtractGeneratedClassUtil {
         super.visitMethodCallExpression(expression);
         PsiMethod method = expression.resolveMethod();
         if (method != null && generatedClass.equals(method.getContainingClass())) {
-          List<PsiMethod> methods =
-            Arrays.stream(extractedClass.getMethods()).filter(x -> isSameMethod(x, method)).collect(Collectors.toList());
+          List<PsiMethod> methods = ContainerUtil.filter(extractedClass.getMethods(), x -> isSameMethod(x, method));
           if (methods.size() == 1) {
             LOG.info("Replace method: " + method.getName());
             method.putUserData(LightMethodObjectExtractedData.REFERENCE_METHOD, methods.get(0));
@@ -141,7 +138,7 @@ final class ExtractGeneratedClassUtil {
         }
       }
 
-      private boolean isSameMethod(@NotNull PsiMethod first, @NotNull PsiMethod second) {
+      private static boolean isSameMethod(@NotNull PsiMethod first, @NotNull PsiMethod second) {
         if (first.getName().equals(second.getName())) {
           return first.getParameterList().getParametersCount() == second.getParameterList().getParametersCount();
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import kotlinx.coroutines.CompletableJob;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CancellationException;
 
-import static com.intellij.openapi.progress.Cancellation.withJob;
+import static com.intellij.openapi.progress.Cancellation.withCurrentJob;
 
 /**
  * A Runnable, which, when run, associates the calling thread with a job,
@@ -29,7 +29,7 @@ public final class CancellationRunnable implements Runnable {
   @Override
   public void run() {
     try {
-      withJob(myJob, () -> {
+      withCurrentJob(myJob, () -> {
         myRunnable.run();
         return null;
       });
@@ -42,5 +42,10 @@ public final class CancellationRunnable implements Runnable {
       myJob.completeExceptionally(e);
       throw e;
     }
+  }
+
+  @Override
+  public String toString() {
+    return myRunnable.toString();
   }
 }

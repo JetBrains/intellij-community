@@ -1,16 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.config
 
+import git4idea.remote.hosting.knownRepositories
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountSerializer
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
 @Service
 @State(name = "GithubPullRequestsUISettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
@@ -27,15 +27,15 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
   var selectedRepoAndAccount: Pair<GHGitRepositoryMapping, GithubAccount>?
     get() {
       val (url, accountId) = state.selectedUrlAndAccountId ?: return null
-      val repo = project.service<GHProjectRepositoriesManager>().knownRepositories.find {
-        it.gitRemoteUrlCoordinates.url == url
+      val repo = project.service<GHHostedRepositoriesManager>().knownRepositories.find {
+        it.remote.url == url
       } ?: return null
       val account = GHAccountSerializer.deserialize(accountId) ?: return null
       return repo to account
     }
     set(value) {
       state.selectedUrlAndAccountId = value?.let { (repo, account) ->
-        UrlAndAccount(repo.gitRemoteUrlCoordinates.url, GHAccountSerializer.serialize(account))
+        UrlAndAccount(repo.remote.url, GHAccountSerializer.serialize(account))
       }
     }
 
@@ -58,7 +58,7 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
     class UrlAndAccount private constructor() {
 
       var url: String = ""
-      var accountId: String = ""
+      private var accountId: String = ""
 
       constructor(url: String, accountId: String) : this() {
         this.url = url

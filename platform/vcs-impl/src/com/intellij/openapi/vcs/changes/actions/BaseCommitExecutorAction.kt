@@ -3,18 +3,23 @@ package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.vcs.actions.getContextCommitWorkflowHandler
+import com.intellij.openapi.vcs.actions.commit.getContextCommitWorkflowHandler
 import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 import com.intellij.util.ui.JButtonAction
 import com.intellij.vcs.commit.CommitWorkflowHandler
 import javax.swing.JButton
 
-abstract class BaseCommitExecutorAction : JButtonAction(null) {
+/**
+ * @see com.intellij.openapi.vcs.VcsActions.PRIMARY_COMMIT_EXECUTORS_GROUP,
+ * @see com.intellij.openapi.vcs.VcsActions.COMMIT_EXECUTORS_GROUP
+ */
+abstract class CommitExecutorAction : JButtonAction(null) {
   init {
     isEnabledInModalContext = true
   }
 
-  override fun createButton(): JButton = JButton().apply { isOpaque = false }
+  override fun createButton(): JButton = JButton()
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.EDT
@@ -22,7 +27,15 @@ abstract class BaseCommitExecutorAction : JButtonAction(null) {
 
   override fun update(e: AnActionEvent) {
     val workflowHandler = e.getContextCommitWorkflowHandler()
-    val executor = getCommitExecutor(workflowHandler)
+    val executor = if (workflowHandler != null) getCommitExecutor(workflowHandler) else null
+
+    if (workflowHandler != null && executor is CommitExecutorWithRichDescription) {
+      val state = workflowHandler.getState()
+      val actionText = executor.getText(state)
+      if (actionText != null) {
+        e.presentation.text = actionText
+      }
+    }
 
     e.presentation.isVisible = workflowHandler != null && executor != null
     e.presentation.isEnabled = workflowHandler != null && executor != null && workflowHandler.isExecutorEnabled(executor)
@@ -35,14 +48,18 @@ abstract class BaseCommitExecutorAction : JButtonAction(null) {
     workflowHandler.execute(executor)
   }
 
-  protected open val executorId: String = ""
-  protected open fun getCommitExecutor(handler: CommitWorkflowHandler?) = handler?.getExecutor(executorId)
+  protected abstract fun getCommitExecutor(handler: CommitWorkflowHandler): CommitExecutor?
 }
 
-internal class DefaultCommitExecutorAction(private val executor: CommitExecutor) : BaseCommitExecutorAction() {
+internal class DefaultCommitExecutorAction(private val executor: CommitExecutor) : CommitExecutorAction() {
   init {
     templatePresentation.text = executor.actionText
   }
 
-  override fun getCommitExecutor(handler: CommitWorkflowHandler?): CommitExecutor = executor
+  override fun getCommitExecutor(handler: CommitWorkflowHandler): CommitExecutor = executor
+}
+
+abstract class BaseCommitExecutorAction : CommitExecutorAction() {
+  protected abstract val executorId: String
+  override fun getCommitExecutor(handler: CommitWorkflowHandler) = handler.getExecutor(executorId)
 }

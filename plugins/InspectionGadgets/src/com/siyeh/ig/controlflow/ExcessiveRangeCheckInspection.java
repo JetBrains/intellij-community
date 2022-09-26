@@ -166,16 +166,12 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
 
     @NonNls String getExpressionSuffix() {
       if (myField == null) return "";
-      switch (myField) {
-        case ARRAY_LENGTH:
-          return ".length";
-        case STRING_LENGTH:
-          return ".length()";
-        case COLLECTION_SIZE:
-          return ".size()";
-        default:
-          return "";
-      }
+      return switch (myField) {
+        case ARRAY_LENGTH -> ".length";
+        case STRING_LENGTH -> ".length()";
+        case COLLECTION_SIZE -> ".size()";
+        default -> "";
+      };
     }
 
     @Nullable

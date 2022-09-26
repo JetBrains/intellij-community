@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import java.util.*
 
 // search by full name, not partially (not by words)
-class SearchConfigurableByNameHelper(name: String, val rootGroup: ConfigurableGroup) {
+class SearchConfigurableByNameHelper(name: String, private val rootGroup: ConfigurableGroup) {
   private val names = name.splitToSequence("--", "|").map { it.trim() }.toList()
 
   private val stack = ArrayDeque<Item>()

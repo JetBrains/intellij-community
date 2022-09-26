@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin on-demand="true">
     <id>TestNG-J</id>
     <name>TestNG</name>
     <description><![CDATA[

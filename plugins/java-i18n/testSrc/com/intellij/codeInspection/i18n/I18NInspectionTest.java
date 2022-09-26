@@ -76,9 +76,10 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testNlsPackage() {
-    myFixture.addFileToProject("package-info.java", "@Nls\n" +
-                                                    "package foo;\n" +
-                                                    "import org.jetbrains.annotations.Nls;");
+    myFixture.addFileToProject("package-info.java", """
+      @Nls
+      package foo;
+      import org.jetbrains.annotations.Nls;""");
     doTestNlsMode();
   }
 

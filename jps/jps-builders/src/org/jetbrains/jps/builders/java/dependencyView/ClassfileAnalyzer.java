@@ -724,7 +724,6 @@ final class ClassfileAnalyzer {
     }
 
     /**
-     * @param handle
      * @return corresponding field access opcode or -1 if the handle does not represent field access handle
      */
     private int getFieldAccessOpcode(Handle handle) {

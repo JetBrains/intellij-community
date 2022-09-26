@@ -331,14 +331,13 @@ public final class StandardMethodContract extends MethodContract {
      * @see #canBeNegated()
      */
     public ValueConstraint negate() {
-      switch (this) {
-        case NULL_VALUE: return NOT_NULL_VALUE;
-        case NOT_NULL_VALUE: return NULL_VALUE;
-        case TRUE_VALUE: return FALSE_VALUE;
-        case FALSE_VALUE: return TRUE_VALUE;
-        default:
-          throw new IllegalStateException("ValueConstraint = " + this);
-      }
+      return switch (this) {
+        case NULL_VALUE -> NOT_NULL_VALUE;
+        case NOT_NULL_VALUE -> NULL_VALUE;
+        case TRUE_VALUE -> FALSE_VALUE;
+        case FALSE_VALUE -> TRUE_VALUE;
+        default -> throw new IllegalStateException("ValueConstraint = " + this);
+      };
     }
 
     @Override

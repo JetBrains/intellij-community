@@ -3,6 +3,8 @@ package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
@@ -26,5 +28,17 @@ public class RedundantMethodOverrideInspectionTest extends LightJavaInspectionTe
   public void testLibraryOverride() {
     myFixture.allowTreeAccessForAllFiles();
     doTest();
+  }
+
+  public void testSwitch() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+  }
+
+  public void testInstanceOf() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+  }
+
+  public void testGuardedAndParenthesizedPatterns() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_17_PREVIEW, this::doTest);
   }
 }

@@ -180,7 +180,7 @@ class CodeVisionView(val project: Project) {
     updateSubscription()
   }
 
-  var subscriptionDef: LifetimeDefinition? = null
+  private var subscriptionDef: LifetimeDefinition? = null
 
   fun setPerAnchorLimits(limits: Map<CodeVisionAnchorKind, Int>) {
     limits.forEach { _ -> projectModel.maxVisibleLensCount.putAll(limits) }

@@ -21,9 +21,6 @@ import com.intellij.openapi.util.TextRange;
 
 import java.util.Comparator;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class SmartTodoItemPointerComparator implements Comparator<TodoItemNode> {
   public static final SmartTodoItemPointerComparator ourInstance=new SmartTodoItemPointerComparator();
 

@@ -43,7 +43,7 @@ public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool 
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlElement(final XmlElement element) {
+      public void visitXmlElement(final @NotNull XmlElement element) {
         if (element instanceof XmlElementContentSpec ||
             element instanceof XmlEntityRef
           ) {

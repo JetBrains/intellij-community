@@ -192,6 +192,11 @@ public class ImplementationViewComponent extends JPanel {
         e.getPresentation().setIcon(AllIcons.Actions.More);
         e.getPresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     };
     gearActions.setPopup(true);
     EditSourceActionBase edit = new EditSourceAction();
@@ -544,6 +549,11 @@ public class ImplementationViewComponent extends JPanel {
           presentation.setVisible(false);
         }
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     });
 
     ForwardAction forward = new ForwardAction();
@@ -598,6 +608,11 @@ public class ImplementationViewComponent extends JPanel {
       presentation.setEnabled(myIndex > 0);
       presentation.setVisible(myElements != null && myElements.length > 1);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
@@ -615,6 +630,11 @@ public class ImplementationViewComponent extends JPanel {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(myElements != null && myIndex < myElements.length - 1);
       presentation.setVisible(myElements != null && myElements.length > 1);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -643,6 +663,11 @@ public class ImplementationViewComponent extends JPanel {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myFileChooser == null || !myFileChooser.isPopupVisible());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

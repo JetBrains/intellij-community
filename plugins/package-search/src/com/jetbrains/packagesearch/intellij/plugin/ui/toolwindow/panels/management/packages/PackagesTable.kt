@@ -1,18 +1,17 @@
-/*******************************************************************************
+/**
+ * ****************************************************************************
  * Copyright 2000-2022 JetBrains s.r.o. and contributors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at
  *
  * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************************/
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations
+ * under the License.
+ * ****************************************************************************
+ */
 
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
@@ -27,15 +26,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.TableUtil
+import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.table.JBTable
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.*
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
@@ -44,7 +41,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ScopeColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.VersionColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.onMouseMotion
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
@@ -55,13 +51,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import java.awt.Color
 import java.awt.Cursor
-import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import javax.swing.JTable
 import javax.swing.ListSelectionModel
 import javax.swing.event.ListSelectionListener
 import javax.swing.table.DefaultTableCellRenderer
@@ -170,18 +167,14 @@ internal class PackagesTable(
         columnSelectionAllowed = false
 
         setShowGrid(false)
-        rowHeight = 20.scaled()
-
-        background = UIUtil.getTableBackground()
-        foreground = UIUtil.getTableForeground()
-        selectionBackground = UIUtil.getTableSelectionBackground(true)
-        selectionForeground = UIUtil.getTableSelectionForeground(true)
+        rowHeight = JBUI.getInt(
+            "PackageSearch.PackagesList.rowHeight",
+            JBUI.getInt("List.rowHeight", if (PackageSearchUI.isNewUI) 24.scaled() else 20.scaled())
+        )
 
         setExpandableItemsEnabled(false)
         selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
         putClientProperty("terminateEditOnFocusLost", true)
-
-        intercellSpacing = Dimension(0, 2)
 
         // By default, JTable uses Tab/Shift-Tab for navigation between cells; Ctrl-Tab/Ctrl-Shift-Tab allows to break out of the JTable.
         // In this table, we don't want to navigate between cells - so override the traversal keys by default values.
@@ -238,21 +231,21 @@ internal class PackagesTable(
             }
         })
 
-        onMouseMotion(
-            onMouseMoved = { mouseEvent ->
-                val point = mouseEvent.point
-                val hoverColumn = columnAtPoint(point)
-                val hoverRow = rowAtPoint(point)
-
-                if (tableModel.items.isEmpty() || hoverRow < 0) {
-                    cursor = Cursor.getDefaultCursor()
-                    return@onMouseMotion
+        val hoverListener = object : TableHoverListener() {
+            override fun onHover(table: JTable, row: Int, column: Int) {
+                val currentCursor = cursor
+                if (tableModel.items.isEmpty() || row < 0) {
+                    if (currentCursor != Cursor.getDefaultCursor()) cursor = Cursor.getDefaultCursor()
+                    return
                 }
 
-                val isHoveringActionsColumn = hoverColumn == actionsColumnIndex
-                cursor = if (isHoveringActionsColumn) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
+                val isHoveringActionsColumn = column == actionsColumnIndex
+                val desiredCursor = if (isHoveringActionsColumn) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
+                if (currentCursor != desiredCursor) cursor = desiredCursor
             }
-        )
+        }
+        hoverListener.addTo(this)
+
         project.uiStateSource.selectedDependencyFlow.onEach { lastSelectedDependency = it }
             .onEach { setSelection(it) }
             .flowOn(Dispatchers.EDT)
@@ -427,4 +420,18 @@ internal class PackagesTable(
             column.preferredWidth = (weights[column.modelIndex] * tW).roundToInt()
         }
     }
+
+    override fun getBackground(): Color =
+        if (PackageSearchUI.isNewUI) PackageSearchUI.Colors.panelBackground else UIUtil.getTableBackground()
+
+    override fun getForeground(): Color =
+        if (PackageSearchUI.isNewUI) UIUtil.getListForeground() else UIUtil.getTableForeground()
+
+    override fun getSelectionBackground(): Color =
+        if (PackageSearchUI.isNewUI) UIUtil.getListSelectionBackground(true) else UIUtil.getTableSelectionBackground(true)
+
+    override fun getSelectionForeground(): Color =
+        if (PackageSearchUI.isNewUI) NamedColorUtil.getListSelectionForeground(true) else UIUtil.getTableSelectionForeground(true)
+
+    override fun getHoveredRowBackground() = null // Renderers will take care of it
 }

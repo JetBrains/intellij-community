@@ -28,6 +28,7 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -86,9 +87,9 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   public void doAction(@NotNull ActionHint actionHint,
-                              @NotNull String testFullPath,
-                              @NotNull String testName,
-                              @NotNull QuickFixTestCase quickFix) throws Exception {
+                       @NotNull String testFullPath,
+                       @NotNull String testName,
+                       @NotNull QuickFixTestCase quickFix) throws Exception {
     IntentionAction action = actionHint.findAndCheck(quickFix.getAvailableActions(),
                                                      () -> getTestInfo(testFullPath, quickFix));
     if (action != null) {
@@ -96,7 +97,8 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       if (actionHint.shouldCheckPreview()) {
         String previewFilePath = ObjectUtils.notNull(quickFix.getBasePath(), "") + "/" + PREVIEW_PREFIX + testName;
         quickFix.checkPreviewAndInvoke(action, previewFilePath);
-      } else {
+      }
+      else {
         quickFix.invoke(action);
       }
       UIUtil.dispatchAllInvocationEvents();
@@ -126,18 +128,19 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
            "Infos: " + infos;
   }
 
-  static String getCurrentHighlightingInfo(@NotNull List<HighlightInfo> infos) {
+  static String getCurrentHighlightingInfo(@NotNull List<? extends HighlightInfo> infos) {
     return StreamEx.of(infos)
       .filter(info -> info.getSeverity() != HighlightInfoType.SYMBOL_TYPE_SEVERITY)
       .map(info -> {
-        String fixes = "";
-        if (info.quickFixActionRanges != null) {
-          fixes = StreamEx.of(info.quickFixActionRanges)
-            .map(p -> p.getSecond()+" "+p.getFirst())
-            .mapLastOrElse("|- "::concat, "\\- "::concat)
-            .map(str -> "        " + str + "\n")
-            .joining();
-        }
+        List<String> s = new ArrayList<>();
+        info.findRegisteredQuickFix((descriptor, range) -> {
+          s.add(range + " " + descriptor);
+          return null;
+        });
+        String fixes = StreamEx.of(s)
+          .mapLastOrElse("|- "::concat, "\\- "::concat)
+          .map(str -> "        " + str + "\n")
+          .joining();
         return info.getSeverity() +
                ": (" + info.getStartOffset() + "," + info.getEndOffset() + ") '" +
                info.getText() + "': " + info.getDescription() + "\n" + fixes;

@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.workspaceModel.storage.*
 import java.io.File
+import java.util.*
 
 internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: MutableEntityStorageImpl) {
 
@@ -15,6 +16,16 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
 
   // Initial storage is required in case something will fail and we need to send a report
   private val initialStorage = if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) target.toSnapshot() else null
+
+  var shaker = -1L
+
+  private fun ChangeLog.shake(): Collection<MutableMap.MutableEntry<EntityId, ChangeEntry>> {
+    return if (shaker != -1L && this.entries.size > 1) {
+      this.entries.toMutableList().shuffleHard(Random(shaker))
+    } else {
+      this.entries
+    }
+  }
 
   fun addDiff() {
     if (target === diff) LOG.error("Trying to apply diff to itself")
@@ -25,7 +36,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
       LOG.trace("Before starting addDiff no consistency issues were found")
     }
 
-    for ((_, change) in diffLog) {
+    for ((_, change) in diffLog.shake()) {
       when (change) {
         is ChangeEntry.AddEntity -> {
           LOG.trace { "addDiff: newEntity" }
@@ -71,7 +82,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           if (!replaceMap.containsValue(sourceEntityId)) {
             target.indexes.entityRemoved(sourceEntityId.id)
             if (target.entityDataById(sourceEntityId.id) != null) {
-              target.removeEntity(sourceEntityId.id)
+              target.removeEntityByEntityId(sourceEntityId.id)
             }
           }
         }
@@ -106,7 +117,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId.id.asThis())
 
     // We don't modify entity that isn't exist in target version of storage
-    val existingEntityData = target.entityDataById(usedPid.id)
+    val existingEntityData = target.entitiesByType.getEntityDataForModificationOrNull(usedPid.id)
     if (existingEntityData != null) {
       val newEntitySource = data.entitySource
       existingEntityData.entitySource = newEntitySource
@@ -244,7 +255,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
       }
       else {
         // Take current children....
-        val mutableChildren = children.toMutableList()
+        val mutableChildren = children.toMutableSet()
 
         val addedChildrenSet = addedChildrenMap[connectionId] ?: emptySet()
         val updatedAddedChildren = addedChildrenSet.mapNotNull { childrenMapper(it) }
@@ -257,7 +268,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
         }
 
         // .... Update if something changed
-        if (children != mutableChildren) {
+        if (children.toSet() != mutableChildren) {
           target.refs.updateChildrenOfParent(connectionId, newEntityId, mutableChildren)
         }
       }
@@ -269,12 +280,9 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
 
     // Do we have more children to add? Add them
     for ((connectionId, children) in addedChildrenMap.asMap()) {
-      val mutableChildren = children.toMutableList()
-
       val updatedChildren = children.mapNotNull { childrenMapper(it) }
-      mutableChildren.addAll(updatedChildren)
 
-      target.refs.updateChildrenOfParent(connectionId, newEntityId, mutableChildren)
+      target.refs.updateChildrenOfParent(connectionId, newEntityId, updatedChildren)
     }
   }
 
@@ -389,6 +397,20 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     target.serializeTo(folder.resolve("Instant_Save_Target").outputStream())
     diff.serializeTo(folder.resolve("Instant_Save_Source").outputStream())
     diff.serializeDiff(folder.resolve("Instant_Save_Diff").outputStream())
+  }
+
+  // I DON'T KNOW WHY KOTLIN SHUFFLE DOESN'T WORK, I JUST DON'T UNDERSTAND WHY
+  private fun <T> MutableList<T>.shuffleHard(rng: Random): MutableList<T> {
+    for (index in 0 until this.size) {
+      val randomIndex = rng.nextInt(index + 1)
+
+      // Swap with the random position
+      val temp = this[index]
+      this[index] = this[randomIndex]
+      this[randomIndex] = temp
+    }
+
+    return this
   }
 
   companion object {

@@ -148,15 +148,11 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     if (!myCanHideWarnings) {
       return false;
     }
-    switch (kind) {
-      case WARNING:
-      case NOTE:
-        return ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings();
-      case INFO:
-        return ErrorTreeViewConfiguration.getInstance(myProject).isHideInfoMessages();
-      default:
-        return false;
-    }
+    return switch (kind) {
+      case WARNING, NOTE -> ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings();
+      case INFO -> ErrorTreeViewConfiguration.getInstance(myProject).isHideInfoMessages();
+      default -> false;
+    };
   }
 
   private boolean shouldShowFileElement(GroupingElement groupingElement) {

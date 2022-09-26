@@ -36,7 +36,7 @@ class SimplifiableCallInspection : AbstractKotlinInspection() {
                 calleeExpression,
                 KotlinBundle.message("0.call.could.be.simplified.to.1", conversion.shortName, replacement),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                SimplifyCallFix(conversion, replacement)
+                SimplifyCallFix(conversion.shortName, replacement)
             )
         })
 
@@ -119,8 +119,8 @@ class SimplifiableCallInspection : AbstractKotlinInspection() {
         )
     }
 
-    private class SimplifyCallFix(val conversion: Conversion, val replacement: String) : LocalQuickFix {
-        override fun getName() = KotlinBundle.message("simplify.call.fix.text", conversion.shortName, replacement)
+    private class SimplifyCallFix(val conversionName: String, val replacement: String) : LocalQuickFix {
+        override fun getName() = KotlinBundle.message("simplify.call.fix.text", conversionName, replacement)
 
         override fun getFamilyName() = name
 

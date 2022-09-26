@@ -88,6 +88,17 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Override
+  public boolean isInProject(@NotNull VirtualFile file) {
+    return getInfoForFileOrDirectory(file).isInProject(file);
+  }
+
+  @Override
+  public boolean isInProjectOrExcluded(@NotNull VirtualFile file) {
+    DirectoryInfo directoryInfo = getInfoForFileOrDirectory(file);
+    return directoryInfo.isInProject(file) || directoryInfo.isExcluded(file);
+  }
+
+  @Override
   public Module getModuleForFile(@NotNull VirtualFile file) {
     return getModuleForFile(file, true);
   }

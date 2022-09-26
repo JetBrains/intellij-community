@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch
 
+import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
@@ -9,6 +10,7 @@ import com.intellij.ui.tree.TreePathUtil
 import com.intellij.util.containers.headTail
 import com.intellij.util.containers.init
 import com.intellij.util.ui.tree.AbstractTreeModel
+import com.intellij.vcsUtil.Delegates.equalVetoingObservable
 import git4idea.GitBranch
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
@@ -36,16 +38,22 @@ class GitBranchesTreeModelImpl(
   private val branchesTreeCache = mutableMapOf<Any, List<Any>>()
 
   private var branchTypeFilter: GitBranchType? = null
-  private var branchNameMatcher: MinusculeMatcher? by observable(null) { _, _, matcher ->
-    branchesTreeCache.keys.clear()
-    localBranchesTree = LazyBranchesSubtreeHolder(repository.branches.localBranches, branchComparator, matcher)
-    remoteBranchesTree = LazyBranchesSubtreeHolder(repository.branches.remoteBranches, branchComparator, matcher)
-    treeStructureChanged(TreePath(arrayOf(root)), null, null)
+  private var branchNameMatcher: MinusculeMatcher? by observable(null) { _, _, matcher -> rebuild(matcher) }
+
+  override var isPrefixGrouping: Boolean by equalVetoingObservable(branchManager.isGroupingEnabled(GROUPING_BY_DIRECTORY)) {
+    branchNameMatcher = null // rebuild tree
   }
 
   init {
     // set trees
     branchNameMatcher = null
+  }
+
+  private fun rebuild(matcher: MinusculeMatcher?) {
+    branchesTreeCache.keys.clear()
+    localBranchesTree = LazyBranchesSubtreeHolder(repository.branches.localBranches, branchComparator, matcher)
+    remoteBranchesTree = LazyBranchesSubtreeHolder(repository.branches.remoteBranches, branchComparator, matcher)
+    treeStructureChanged(TreePath(arrayOf(root)), null, null)
   }
 
   override fun getRoot() = repository
@@ -57,6 +65,8 @@ class GitBranchesTreeModelImpl(
   override fun getIndexOfChild(parent: Any?, child: Any?): Int = getChildren(parent).indexOf(child)
 
   override fun isLeaf(node: Any?): Boolean = (node is GitBranch) || (node is PopupFactoryImpl.ActionItem)
+                                             || (node === GitBranchType.LOCAL && localBranchesTree.empty)
+                                             || (node === GitBranchType.REMOTE && remoteBranchesTree.empty)
 
   private fun getChildren(parent: Any?): List<Any> {
     if (parent == null) return emptyList()
@@ -144,7 +154,7 @@ class GitBranchesTreeModelImpl(
       add(root)
       add(branchType)
     }
-    val nameParts = branch.name.split('/')
+    val nameParts = if (isPrefixGrouping) branch.name.split('/') else listOf(branch.name)
     val currentPrefix = mutableListOf<String>()
     for (prefixPart in nameParts.init()) {
       currentPrefix.add(prefixPart)
@@ -166,13 +176,15 @@ class GitBranchesTreeModelImpl(
     private val matcher: MinusculeMatcher? = null
   ) {
 
+    var empty = false
+
     private val matchingResult: MatchResult by lazy {
       match(branches)
     }
 
     val tree: Map<String, Any> by lazy {
       val branchesList = matchingResult.first.sortedWith(comparator)
-      buildSubTree(branchesList.map { it.name.split('/') to it })
+      buildSubTree(branchesList.map { (if (isPrefixGrouping) it.name.split('/') else listOf(it.name)) to it })
     }
 
     val topMatch: Pair<GitBranch, Int>?
@@ -215,6 +227,9 @@ class GitBranchesTreeModelImpl(
           topMatch = branch to matchingDegree
         }
       }
+
+      empty = result.isEmpty()
+
       return MatchResult(result, topMatch)
     }
   }

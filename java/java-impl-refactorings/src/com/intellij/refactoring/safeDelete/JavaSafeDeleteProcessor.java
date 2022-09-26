@@ -10,8 +10,10 @@ import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
@@ -137,7 +139,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       psiMethods.add((PsiMethod)element);
       return psiMethods;
     }
-    if (element instanceof PsiParameter && ((PsiParameter) element).getDeclarationScope() instanceof PsiMethod) {
+    if (element instanceof PsiParameter param && ((PsiParameter) element).getDeclarationScope() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) ((PsiParameter) element).getDeclarationScope();
       final Set<PsiElement> parametersToDelete = new HashSet<>();
       parametersToDelete.add(element);
@@ -146,14 +148,19 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       if (superMethods.isEmpty()) {
         superMethods.add(method);
       }
-      ContainerUtil.addAllNotNull(superMethods, FindSuperElementsHelper.getSiblingInheritedViaSubClass(method));
-      for (PsiMethod superMethod : superMethods) {
-        parametersToDelete.add(superMethod.getParameterList().getParameters()[parameterIndex]);
-        OverridingMethodsSearch.search(superMethod).forEach(overrider -> {
-          parametersToDelete.add(overrider.getParameterList().getParameters()[parameterIndex].getNavigationElement());
-          return true;
-        });
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
+        ContainerUtil.addAllNotNull(superMethods, FindSuperElementsHelper.getSiblingInheritedViaSubClass(method));
+        for (PsiMethod superMethod : superMethods) {
+          parametersToDelete.add(superMethod.getParameterList().getParameters()[parameterIndex]);
+          OverridingMethodsSearch.search(superMethod).forEach(overrider -> {
+            parametersToDelete.add(overrider.getParameterList().getParameters()[parameterIndex].getNavigationElement());
+            return true;
+          });
+        }
+      }), JavaRefactoringBundle.message("progress.title.collect.hierarchy", param.getName()), true, project)) {
+        return null;
       }
+      
 
       if (parametersToDelete.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
         String message = JavaRefactoringBundle.message("0.is.a.part.of.method.hierarchy.do.you.want.to.delete.multiple.parameters", UsageViewUtil.getLongName(method));
@@ -661,7 +668,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     return true;
   }
 
-  private static void findTypeParameterExternalUsages(final PsiTypeParameter typeParameter, final Collection<? super UsageInfo> usages) {
+  private static void findTypeParameterExternalUsages(final PsiTypeParameter typeParameter, final List<? super UsageInfo> usages) {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();
     if (owner != null) {
       final PsiTypeParameterList parameterList = owner.getTypeParameterList();
@@ -670,15 +677,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         final int index = parameterList.getTypeParameterIndex(typeParameter);
 
         ReferencesSearch.search(owner).forEach(reference -> {
-          if (reference instanceof PsiJavaCodeReferenceElement) {
-            final PsiReferenceParameterList parameterList1 = ((PsiJavaCodeReferenceElement)reference).getParameterList();
-            if (parameterList1 != null) {
-              PsiTypeElement[] typeArgs = parameterList1.getTypeParameterElements();
-              if (typeArgs.length > index) {
-                if (typeArgs.length == 1 && paramsCount > 1 && typeArgs[0].getType() instanceof PsiDiamondType) return true;
-                usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(typeArgs[index], typeParameter, true));
-              }
-            }
+          JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(reference.getElement().getLanguage());
+          if (safeDeleteDelegate != null) {
+            safeDeleteDelegate.createJavaTypeParameterUsageInfo(reference, usages, typeParameter, paramsCount, index);
           }
           return true;
         });
@@ -1003,12 +1004,13 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   private static void findParameterUsages(final PsiParameter parameter, final List<UsageInfo> usages) {
     final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
     final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
+    if (parameterIndex < 0) return;
     //search for refs to current method only, do not search for refs to overriding methods, they'll be searched separately
     ReferencesSearch.search(method).forEach(reference -> {
       PsiElement element = reference.getElement();
       final JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage());
       if (safeDeleteDelegate != null) {
-        safeDeleteDelegate.createUsageInfoForParameter(reference, usages, parameter, method);
+        safeDeleteDelegate.createUsageInfoForParameter(reference, usages, parameter, parameterIndex, parameter.isVarArgs());
       }
       if (!parameter.isVarArgs() && !JavaPsiConstructorUtil.isSuperConstructorCall(element.getParent())) {
         final PsiParameter paramInCaller = SafeDeleteJavaCallerChooser.isTheOnlyOneParameterUsage(element.getParent(), parameterIndex, method);

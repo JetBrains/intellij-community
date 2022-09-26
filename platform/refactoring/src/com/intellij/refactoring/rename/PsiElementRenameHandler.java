@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ui.UIUtil;
@@ -37,7 +38,7 @@ import java.util.Arrays;
  *
  * @author Jeka, dsl
  */
-public class PsiElementRenameHandler implements RenameHandler {
+public class PsiElementRenameHandler implements RenameHandler, PreviewableRefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance(PsiElementRenameHandler.class);
   private static final ExtensionPointName<Condition<? super PsiElement>> VETO_RENAME_CONDITION_EP = ExtensionPointName.create("com.intellij.vetoRenameCondition");
 
@@ -206,7 +207,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   public static boolean isVetoed(PsiElement element) {
     if (element == null ||
         element instanceof SyntheticElement ||
-        element instanceof PsiNamedElement && ((PsiNamedElement)element).getName() == null) {
+        element instanceof PsiNamedElement namedElement && namedElement.getName() == null) {
       return true;
     }
     for(Condition<? super PsiElement> condition: VETO_RENAME_CONDITION_EP.getExtensionList()) {

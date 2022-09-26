@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractManyParent
@@ -28,7 +29,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ModuleOutputPackagingElementEntityImpl : ModuleOutputPackagingElementEntity, WorkspaceEntityBase() {
+open class ModuleOutputPackagingElementEntityImpl(val dataSource: ModuleOutputPackagingElementEntityData) : ModuleOutputPackagingElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -44,16 +45,14 @@ open class ModuleOutputPackagingElementEntityImpl : ModuleOutputPackagingElement
   override val parentEntity: CompositePackagingElementEntity?
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
 
-  @JvmField
-  var _module: ModuleId? = null
   override val module: ModuleId?
-    get() = _module
+    get() = dataSource.module
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: ModuleOutputPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ModuleOutputPackagingElementEntity>(), ModuleOutputPackagingElementEntity.Builder {
+  class Builder(var result: ModuleOutputPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ModuleOutputPackagingElementEntity>(), ModuleOutputPackagingElementEntity.Builder {
     constructor() : this(ModuleOutputPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -71,6 +70,9 @@ open class ModuleOutputPackagingElementEntityImpl : ModuleOutputPackagingElement
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -80,7 +82,7 @@ open class ModuleOutputPackagingElementEntityImpl : ModuleOutputPackagingElement
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ModuleOutputPackagingElementEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
     }
 
@@ -89,12 +91,27 @@ open class ModuleOutputPackagingElementEntityImpl : ModuleOutputPackagingElement
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleOutputPackagingElementEntity
-      this.module = dataSource.module
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.module != dataSource?.module) this.module = dataSource.module
+      if (parents != null) {
+        val parentEntityNew = parents.filterIsInstance<CompositePackagingElementEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
+      }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {
@@ -141,15 +158,6 @@ open class ModuleOutputPackagingElementEntityImpl : ModuleOutputPackagingElement
         checkModificationAllowed()
         getEntityData().module = value
         changedProperty.add("module")
-
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
 
       }
 
@@ -229,12 +237,13 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
   }
 
   override fun createEntity(snapshot: EntityStorage): ModuleOutputPackagingElementEntity {
-    val entity = ModuleOutputPackagingElementEntityImpl()
-    entity._module = module
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ModuleOutputPackagingElementEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -254,20 +263,25 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
     }
   }
 
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ModuleOutputPackagingElementEntityData
 
-    if (this.module != other.module) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.module != other.module) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ModuleOutputPackagingElementEntityData
 
@@ -285,5 +299,10 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
     var result = javaClass.hashCode()
     result = 31 * result + module.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(ModuleId::class.java)
+    collector.sameForAllEntities = true
   }
 }

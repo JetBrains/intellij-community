@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="jcip" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-collections-immutable-jvm" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="lz4-java" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />

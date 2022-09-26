@@ -3,7 +3,7 @@ package com.intellij.featureStatistics
 
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeEventQueue
-import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger.Companion.create
+import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import kotlinx.coroutines.launch
@@ -18,7 +18,7 @@ internal class StatisticsStateCollectorsTrigger : AppLifecycleListener {
         // Only proceed if IDE opens with welcome screen and stays idle on it for some time
         if (WelcomeFrame.getInstance() != null && WelcomeFrame.getInstance() == ref.get()) {
           ApplicationManager.getApplication().coroutineScope.launch {
-            create().logApplicationStatesOnStartup()
+            FUStateUsagesLogger.getInstance().logApplicationStatesOnStartup()
           }
         }
       }

@@ -9,13 +9,13 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-stdlib" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-reflect" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-build-common-tests" level="project" />
     <orderEntry type="library" scope="TEST" name="Guava" level="project" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.util.test-generator" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.util.test-generator-api" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.scripting-support" scope="TEST" />
@@ -38,5 +38,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="TEST" />
   </component>
 </module>

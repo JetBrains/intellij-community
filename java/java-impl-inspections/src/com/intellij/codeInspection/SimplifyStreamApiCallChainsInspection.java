@@ -328,7 +328,6 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     private static final CallMatcher AS_LIST = staticCall(JAVA_UTIL_ARRAYS, "asList").parameterCount(1);
     private static final CallMatcher ENUMSET_OF = staticCall("java.util.EnumSet", "of");
     private static final CallMatcher LIST_OF = staticCall(JAVA_UTIL_LIST, "of");
-    private static final CallMatcher SET_OF = staticCall(JAVA_UTIL_SET, "of");
 
     private static final CallMapper<ReplaceCollectionStreamFix> COLLECTION_TO_STREAM_MAPPER = new CallMapper<ReplaceCollectionStreamFix>()
       .register(EMPTY_LIST,
@@ -345,8 +344,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       .register(ENUMSET_OF, call ->
         isEnumSetReplaceableWithStream(call) ? new ReplaceCollectionStreamFix("EnumSet.of()", JAVA_UTIL_STREAM_STREAM,
                                                                               OF_METHOD) : null)
-      .register(LIST_OF, call -> new ReplaceCollectionStreamFix("List.of()", JAVA_UTIL_STREAM_STREAM, OF_METHOD))
-      .register(SET_OF, call -> new ReplaceCollectionStreamFix("Set.of()", JAVA_UTIL_STREAM_STREAM, OF_METHOD));
+      .register(LIST_OF, call -> new ReplaceCollectionStreamFix("List.of()", JAVA_UTIL_STREAM_STREAM, OF_METHOD));
 
     private static final String STREAM_SUFFIX = ".stream()";
 
@@ -548,14 +546,26 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       handler("summingInt", 1, "mapToInt({0}).sum()", false),
       handler("summingLong", 1, "mapToLong({0}).sum()", false),
       handler("summingDouble", 1, "mapToDouble({0}).sum()", false),
-      CallHandler.of(collectorMatcher("toUnmodifiableList", 0).withLanguageLevelAtLeast(LanguageLevel.JDK_16),
-                     call -> new ReplaceCollectorFix("toUnmodifiableList", "toList()", false)),
+      CallHandler.of(collectorMatcher("toUnmodifiableList", 0).withLanguageLevelAtLeast(LanguageLevel.JDK_16), call -> {
+        return elementTypeMatches(PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class))
+               ? new ReplaceCollectorFix("toUnmodifiableList", "toList()", false) : null;
+      }),
       CallHandler.of(collectorMatcher("toList", 0).withLanguageLevelAtLeast(LanguageLevel.JDK_16), call -> {
         PsiMethodCallExpression collectCall = PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class);
-        return MismatchedCollectionQueryUpdateInspection.isUnmodified(collectCall)
+        return MismatchedCollectionQueryUpdateInspection.isUnmodified(collectCall) && elementTypeMatches(collectCall)
                ? new ReplaceCollectorFix("toList", "toList()", false)
                : null;
       }));
+
+    @Contract("null -> false")
+    private static boolean elementTypeMatches(@Nullable PsiMethodCallExpression collect) {
+      if (collect == null) return false;
+      PsiExpression qualifier = collect.getMethodExpression().getQualifierExpression();
+      if (qualifier == null) return false;
+      PsiType streamElementType = PsiUtil.substituteTypeParameter(qualifier.getType(), JAVA_UTIL_STREAM_STREAM, 0, false);
+      PsiType collectionElementType = PsiUtil.substituteTypeParameter(collect.getType(), JAVA_UTIL_COLLECTION, 0, false);
+      return streamElementType != null && collectionElementType != null && streamElementType.equals(collectionElementType);
+    }
 
     private final String myCollector;
     private final String myStreamSequence;
@@ -590,8 +600,15 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         PsiExpression[] collectorArgs = collectorCall.getArgumentList().getExpressions();
         String result = MessageFormat.format(myStreamSequence, Arrays.stream(collectorArgs).map(PsiExpression::getText).toArray());
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        PsiExpression replacement = factory.createExpressionFromText(qualifierExpression.getText() + "." + result, collectCall);
-        addBoxingIfNecessary(factory, collectCall.replace(replacement));
+        PsiMethodCallExpression mock = (PsiMethodCallExpression)factory.createExpressionFromText(result, collectCall);
+        if (mock.getMethodExpression().getQualifierExpression() == null) {
+          ExpressionUtils.bindCallTo(collectCall, Objects.requireNonNull(mock.getMethodExpression().getReferenceName()));
+          collectCall.getArgumentList().replace(mock.getArgumentList());
+        } else {
+          PsiExpression replacement = factory.createExpressionFromText(qualifierExpression.getText() + "." + result, collectCall);
+          collectCall = (PsiMethodCallExpression)collectCall.replace(replacement);
+        }
+        addBoxingIfNecessary(factory, collectCall);
       }
     }
 
@@ -702,20 +719,21 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       boolean removeParentNegation;
       boolean removeLambdaNegation;
       switch (from) {
-        case ALL_MATCH_METHOD:
+        case ALL_MATCH_METHOD -> {
           removeLambdaNegation = true;
           removeParentNegation = myTo.equals(ANY_MATCH_METHOD);
-          break;
-        case ANY_MATCH_METHOD:
+        }
+        case ANY_MATCH_METHOD -> {
           removeParentNegation = true;
           removeLambdaNegation = myTo.equals(ALL_MATCH_METHOD);
-          break;
-        case NONE_MATCH_METHOD:
+        }
+        case NONE_MATCH_METHOD -> {
           removeParentNegation = myTo.equals(ANY_MATCH_METHOD);
           removeLambdaNegation = myTo.equals(ALL_MATCH_METHOD);
-          break;
-        default:
+        }
+        default -> {
           return null;
+        }
       }
       if (removeParentNegation && !isParentNegated(methodCall)) return null;
       if (removeLambdaNegation && !isArgumentLambdaNegated(methodCall)) return null;
@@ -1611,15 +1629,12 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     private static String getStreamClassName(@NotNull PsiMethodCallExpression call) {
       String name = MethodCallUtils.getMethodName(call);
       if (name == null) return JAVA_UTIL_STREAM_STREAM;
-      switch (name) {
-        case "mapToInt":
-          return JAVA_UTIL_STREAM_INT_STREAM;
-        case "mapToLong":
-          return JAVA_UTIL_STREAM_LONG_STREAM;
-        case "mapToDouble":
-          return JAVA_UTIL_STREAM_DOUBLE_STREAM;
-      }
-      return JAVA_UTIL_STREAM_STREAM;
+      return switch (name) {
+        case "mapToInt" -> JAVA_UTIL_STREAM_INT_STREAM;
+        case "mapToLong" -> JAVA_UTIL_STREAM_LONG_STREAM;
+        case "mapToDouble" -> JAVA_UTIL_STREAM_DOUBLE_STREAM;
+        default -> JAVA_UTIL_STREAM_STREAM;
+      };
     }
   }
 

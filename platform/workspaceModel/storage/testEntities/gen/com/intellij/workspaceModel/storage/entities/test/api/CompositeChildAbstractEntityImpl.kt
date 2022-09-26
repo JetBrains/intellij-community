@@ -1,5 +1,6 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -11,6 +12,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractManyChildren
@@ -27,7 +29,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class CompositeChildAbstractEntityImpl : CompositeChildAbstractEntity, WorkspaceEntityBase() {
+open class CompositeChildAbstractEntityImpl(val dataSource: CompositeChildAbstractEntityData) : CompositeChildAbstractEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTINLIST_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeAbstractEntity::class.java,
@@ -61,7 +63,7 @@ open class CompositeChildAbstractEntityImpl : CompositeChildAbstractEntity, Work
     return connections
   }
 
-  class Builder(val result: CompositeChildAbstractEntityData?) : ModifiableWorkspaceEntityBase<CompositeChildAbstractEntity>(), CompositeChildAbstractEntity.Builder {
+  class Builder(var result: CompositeChildAbstractEntityData?) : ModifiableWorkspaceEntityBase<CompositeChildAbstractEntity>(), CompositeChildAbstractEntity.Builder {
     constructor() : this(CompositeChildAbstractEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -79,6 +81,9 @@ open class CompositeChildAbstractEntityImpl : CompositeChildAbstractEntity, Work
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -87,6 +92,9 @@ open class CompositeChildAbstractEntityImpl : CompositeChildAbstractEntity, Work
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToAbstractManyParent<WorkspaceEntityBase>(PARENTINLIST_CONNECTION_ID, this) == null) {
           error("Field SimpleAbstractEntity#parentInList should be initialized")
@@ -108,9 +116,6 @@ open class CompositeChildAbstractEntityImpl : CompositeChildAbstractEntity, Work
           error("Field CompositeAbstractEntity#children should be initialized")
         }
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field CompositeAbstractEntity#entitySource should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -118,11 +123,30 @@ open class CompositeChildAbstractEntityImpl : CompositeChildAbstractEntity, Work
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as CompositeChildAbstractEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        val parentInListNew = parents.filterIsInstance<CompositeAbstractEntity>().single()
+        if ((this.parentInList as WorkspaceEntityBase).id != (parentInListNew as WorkspaceEntityBase).id) {
+          this.parentInList = parentInListNew
+        }
+        val parentEntityNew = parents.filterIsInstance<ParentChainEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
+      }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentInList: CompositeAbstractEntity
       get() {
@@ -177,11 +201,17 @@ open class CompositeChildAbstractEntityImpl : CompositeChildAbstractEntity, Work
         }
       }
       set(value) {
+        // Set list of ref types for abstract entities
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              // Backref setup before adding to store an abstract entity
+              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
               _diff.addEntity(item_value)
             }
           }
@@ -198,15 +228,6 @@ open class CompositeChildAbstractEntityImpl : CompositeChildAbstractEntity, Work
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
         }
         changedProperty.add("children")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var parentEntity: ParentChainEntity?
@@ -265,11 +286,13 @@ class CompositeChildAbstractEntityData : WorkspaceEntityData<CompositeChildAbstr
   }
 
   override fun createEntity(snapshot: EntityStorage): CompositeChildAbstractEntity {
-    val entity = CompositeChildAbstractEntityImpl()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = CompositeChildAbstractEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -289,9 +312,15 @@ class CompositeChildAbstractEntityData : WorkspaceEntityData<CompositeChildAbstr
     }
   }
 
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(CompositeAbstractEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as CompositeChildAbstractEntityData
 
@@ -301,7 +330,7 @@ class CompositeChildAbstractEntityData : WorkspaceEntityData<CompositeChildAbstr
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as CompositeChildAbstractEntityData
 
@@ -316,5 +345,9 @@ class CompositeChildAbstractEntityData : WorkspaceEntityData<CompositeChildAbstr
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.problems.ProblemListener;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
@@ -101,6 +102,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
   @NotNull private ChangesViewManager.State myState = new ChangesViewManager.State();
 
+  @Nullable private ChangesViewPanel myChangesPanel;
   @Nullable private ChangesViewToolWindowPanel myToolWindowPanel;
 
   @NotNull
@@ -135,7 +137,6 @@ public class ChangesViewManager implements ChangesViewEx,
   }
 
   final static class ContentPredicate implements Predicate<Project> {
-    @NotNull
     @Override
     public boolean test(Project project) {
       return ProjectLevelVcsManager.getInstance(project).hasActiveVcss() &&
@@ -176,19 +177,34 @@ public class ChangesViewManager implements ChangesViewEx,
 
   @NotNull
   @RequiresEdt
+  ChangesViewPanel initChangesPanel() {
+    if (myChangesPanel == null) {
+      Activity activity = StartUpMeasurer.startActivity("ChangesViewPanel initialization", ActivityCategory.DEFAULT);
+      myChangesPanel = new ChangesViewPanel(myProject);
+      activity.end();
+    }
+    return myChangesPanel;
+  }
+
+  @NotNull
+  @RequiresEdt
   private ChangesViewToolWindowPanel initToolWindowPanel() {
     if (myToolWindowPanel == null) {
       Activity activity = StartUpMeasurer.startActivity("ChangesViewToolWindowPanel initialization", ActivityCategory.DEFAULT);
 
-      // changesViewPanel used for a singular ChangesViewToolWindowPanel instance. Cleanup on disposal is not needed (Project is closed).
-      ChangesViewPanel changesViewPanel = ChangesViewWorkflowManager.getInstance(myProject).getChangesPanel();
+      // ChangesViewPanel is used for a singular ChangesViewToolWindowPanel instance. Cleanup is not needed.
+      ChangesViewPanel changesViewPanel = initChangesPanel();
       ChangesViewToolWindowPanel panel = new ChangesViewToolWindowPanel(myProject, this, changesViewPanel);
       Disposer.register(this, panel);
 
       panel.updateCommitWorkflow();
 
       myToolWindowPanel = panel;
-      Disposer.register(panel, () -> myToolWindowPanel = null);
+      Disposer.register(panel, () -> {
+        // Content is removed from TW
+        myChangesPanel = null;
+        myToolWindowPanel = null;
+      });
 
       activity.end();
     }
@@ -663,12 +679,16 @@ public class ChangesViewManager implements ChangesViewEx,
       List<AnAction> actions = new ArrayList<>();
       actions.add(CustomActionsSchema.getInstance().getCorrectedAction(ActionPlaces.CHANGES_VIEW_TOOLBAR));
 
-      actions.add(Separator.getInstance());
-      actions.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
+      if (!ExperimentalUI.isNewUI()) {
+        actions.add(Separator.getInstance());
+      }
 
       DefaultActionGroup viewOptionsGroup =
         DefaultActionGroup.createPopupGroup(() -> VcsBundle.message("action.ChangesViewToolWindowPanel.text"));
+
       viewOptionsGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
+      viewOptionsGroup.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
+      viewOptionsGroup.add(new Separator(VcsBundle.message("action.vcs.log.show.separator")));
       viewOptionsGroup.add(new ToggleShowIgnoredAction());
       viewOptionsGroup.add(ActionManager.getInstance().getAction("ChangesView.ViewOptions"));
 
@@ -852,6 +872,11 @@ public class ChangesViewManager implements ChangesViewEx,
       ToggleShowIgnoredAction() {
         super(VcsBundle.messagePointer("changes.action.show.ignored.text"),
               VcsBundle.messagePointer("changes.action.show.ignored.description"), AllIcons.Actions.ToggleVisibility);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override

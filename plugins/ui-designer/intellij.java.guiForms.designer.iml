@@ -40,6 +40,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.tests" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>

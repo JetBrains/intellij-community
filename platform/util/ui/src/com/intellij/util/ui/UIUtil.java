@@ -35,9 +35,6 @@ import javax.swing.FocusManager;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.FontUIResource;
@@ -48,8 +45,6 @@ import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
-import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
@@ -74,10 +69,6 @@ import java.util.regex.Pattern;
 
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil {
-  static {
-    LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
-  }
-
   public static final @NlsSafe String BORDER_LINE = "<hr size=1 noshade>";
   public static final @NlsSafe String BR = "<br/>";
   public static final @NlsSafe String HR = "<hr/>";
@@ -85,6 +76,8 @@ public final class UIUtil {
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
   public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
+
+  private static final Key<WeakReference<Component>> FOSTER_PARENT = Key.create("Component.fosterParent");
   private static final Key<Boolean> IS_SHOWING = Key.create("Component.isShowing");
   private static final Key<Boolean> HAS_FOCUS = Key.create("Component.hasFocus");
 
@@ -106,12 +99,8 @@ public final class UIUtil {
         pane.putClientProperty("jetbrains.awt.windowDarkAppearance", isUnderDarcula());
       }
       else {
-        if (isUnderDarcula()) {
-          pane.putClientProperty("apple.awt.windowAppearance", "NSAppearanceNameVibrantDark");
-        }
-        else {
-          pane.putClientProperty("apple.awt.windowAppearance", "NSAppearanceNameVibrantLight");
-        }
+        pane.putClientProperty("apple.awt.windowAppearance",
+                               isUnderDarcula() ? "NSAppearanceNameVibrantDark" : "NSAppearanceNameVibrantLight");
       }
     }
   }
@@ -166,28 +155,28 @@ public final class UIUtil {
     {"8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36", "48", "72"};
 
   public static void applyStyle(@NotNull ComponentStyle componentStyle, @NotNull Component comp) {
-    if (!(comp instanceof JComponent)) return;
-
-    JComponent c = (JComponent)comp;
+    if (!(comp instanceof JComponent c)) {
+      return;
+    }
 
     if (isUnderAquaBasedLookAndFeel()) {
       c.putClientProperty("JComponent.sizeVariant", StringUtil.toLowerCase(componentStyle.name()));
     }
-    FontSize fontSize = componentStyle == ComponentStyle.MINI
-                        ? FontSize.MINI
-                        : componentStyle == ComponentStyle.SMALL
-                          ? FontSize.SMALL
-                          : FontSize.NORMAL;
+    FontSize fontSize;
+    if (componentStyle == ComponentStyle.MINI) {
+      fontSize = FontSize.MINI;
+    }
+    else if (componentStyle == ComponentStyle.SMALL) {
+      fontSize = FontSize.SMALL;
+    }
+    else {
+      fontSize = FontSize.NORMAL;
+    }
     c.setFont(getFont(fontSize, c.getFont()));
     Container p = c.getParent();
     if (p != null) {
       SwingUtilities.updateComponentTreeUI(p);
     }
-  }
-
-  public static @NotNull Cursor getTextCursor(@NotNull Color backgroundColor) {
-    return SystemInfoRt.isMac && ColorUtil.isDark(backgroundColor) ?
-           MacUIUtil.getInvertedTextCursor() : Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
   }
 
   public static @Nullable Cursor cursorIfNotDefault(@Nullable Cursor cursorToSet) {
@@ -294,7 +283,7 @@ public final class UIUtil {
     }
 
     public static @NotNull GrayFilter namedFilter(@NotNull String resourceName, @NotNull GrayFilter defaultFilter) {
-      return ObjectUtils.notNull((GrayFilter)UIManager.get(resourceName), defaultFilter);
+      return Objects.requireNonNullElse((GrayFilter)UIManager.get(resourceName), defaultFilter);
     }
   }
 
@@ -333,7 +322,7 @@ public final class UIUtil {
   /**
    * Prevent component DataContext from returning parent editor
    * Useful for components that are manually painted over the editor to prevent shortcuts from falling-through to editor
-   *
+   * <p>
    * Usage: {@code component.putClientProperty(HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE)}
    */
   public static final @NonNls String HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY = "AuxEditorComponent";
@@ -342,10 +331,8 @@ public final class UIUtil {
 
   private static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
 
-  private static final @NonNls String FOCUS_PROXY_KEY = "isFocusProxy";
-
   public static final Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
-  private static final Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
+
   /**
    * Alt+click does copy text from tooltip or balloon to clipboard.
    * We collect this text from components recursively and this generic approach might 'grab' unexpected text fragments.
@@ -353,25 +340,6 @@ public final class UIUtil {
    * Note, main(root) components of BalloonImpl and AbstractPopup are already marked with this key
    */
   public static final Key<Boolean> TEXT_COPY_ROOT = Key.create("TEXT_COPY_ROOT");
-
-  private static final Action REDO_ACTION = new AbstractAction() {
-    @Override
-    public void actionPerformed(@NotNull ActionEvent e) {
-      UndoManager manager = ClientProperty.get(ObjectUtils.tryCast(e.getSource(), Component.class), UNDO_MANAGER);
-      if (manager != null && manager.canRedo()) {
-        manager.redo();
-      }
-    }
-  };
-  private static final Action UNDO_ACTION = new AbstractAction() {
-    @Override
-    public void actionPerformed(@NotNull ActionEvent e) {
-      UndoManager manager = ClientProperty.get(ObjectUtils.tryCast(e.getSource(), Component.class), UNDO_MANAGER);
-      if (manager != null && manager.canUndo()) {
-        manager.undo();
-      }
-    }
-  };
 
   private static final Color ACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.active", 0xa0bad5);
   private static final Color INACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.inactive", Gray._128);
@@ -405,10 +373,6 @@ public final class UIUtil {
     return SystemInfoRt.isMac ? DetectRetinaKit.isMacRetina(graphics) : isRetina();
   }
 
-  //public static boolean isMacRetina(Graphics2D g) {
-  //  return DetectRetinaKit.isMacRetina(g);
-  //}
-
   public static boolean isRetina() {
     if (GraphicsEnvironment.isHeadless()) return false;
 
@@ -429,7 +393,7 @@ public final class UIUtil {
             GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
             final GraphicsDevice device = env.getDefaultScreenDevice();
             Integer scale = ReflectionUtil.getField(device.getClass(), device, int.class, "scale");
-            if (scale != null && scale.intValue() == 2) {
+            if (scale != null && scale == 2) {
               ourRetina.set(true);
               return true;
             }
@@ -441,14 +405,6 @@ public final class UIUtil {
         return ourRetina.get();
       }
     }
-  }
-
-  /**
-   * @deprecated use {@link ClientProperty#isTrue(Component, Object)} instead
-   */
-  @Deprecated
-  public static boolean isWindowClientPropertyTrue(Window window, @NotNull Object key) {
-    return ClientProperty.isTrue(window, key);
   }
 
   /**
@@ -493,8 +449,9 @@ public final class UIUtil {
    * @param component a Swing component that may hold a client property value
    * @return the property value from the specified component or {@code null}
    */
-  public static <T> T getClientProperty(Object component, @NotNull Class<T> type) {
-    return ObjectUtils.tryCast(ClientProperty.get(ObjectUtils.tryCast(component, Component.class), type), type);
+  public static <T> T getClientProperty(Component component, @NotNull Class<T> type) {
+    Object obj = ClientProperty.get(component, type);
+    return type.isInstance(obj) ? type.cast(obj) : null;
   }
 
   /**
@@ -752,14 +709,11 @@ public final class UIUtil {
 
   public static float getFontSize(@NotNull FontSize size) {
     int defSize = StartupUiUtil.getLabelFont().getSize();
-    switch (size) {
-      case SMALL:
-        return Math.max(defSize - JBUIScale.scale(2f), JBUIScale.scale(11f));
-      case MINI:
-        return Math.max(defSize - JBUIScale.scale(4f), JBUIScale.scale(9f));
-      default:
-        return defSize;
-    }
+    return switch (size) {
+      case SMALL -> Math.max(defSize - JBUIScale.scale(2f), JBUIScale.scale(11f));
+      case MINI -> Math.max(defSize - JBUIScale.scale(4f), JBUIScale.scale(9f));
+      default -> defSize;
+    };
   }
 
   public static @NotNull Color getLabelFontColor(@NotNull FontColor fontColor) {
@@ -825,7 +779,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getErrorForeground() {
-    return JBColor.namedColor("Label.errorForeground", new JBColor(new Color(0xC7222D), JBColor.RED));
+    return NamedColorUtil.getErrorForeground();
   }
 
   public static @NotNull Color getLabelDisabledForeground() {
@@ -883,7 +837,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getInactiveTextColor() {
-    return JBColor.namedColor("Component.infoForeground", new JBColor(Gray.x99, Gray.x78));
+    return NamedColorUtil.getInactiveTextColor();
   }
 
   public static Color getInactiveTextFieldBackgroundColor() {
@@ -983,7 +937,7 @@ public final class UIUtil {
   }
 
   public static Color getLabelTextForeground() {
-    return UIManager.getColor("Label.textForeground");
+    return UIManager.getColor("Label.foreground");
   }
 
   public static Color getControlColor() {
@@ -1030,19 +984,19 @@ public final class UIUtil {
   }
 
   public static @NotNull Icon getErrorIcon() {
-    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.errorIcon"), AllIcons.General.ErrorDialog);
+    return Objects.requireNonNullElse(UIManager.getIcon("OptionPane.errorIcon"), AllIcons.General.ErrorDialog);
   }
 
   public static @NotNull Icon getInformationIcon() {
-    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.informationIcon"), AllIcons.General.InformationDialog);
+    return Objects.requireNonNullElse(UIManager.getIcon("OptionPane.informationIcon"), AllIcons.General.InformationDialog);
   }
 
   public static @NotNull Icon getQuestionIcon() {
-    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.questionIcon"), AllIcons.General.QuestionDialog);
+    return Objects.requireNonNullElse(UIManager.getIcon("OptionPane.questionIcon"), AllIcons.General.QuestionDialog);
   }
 
   public static @NotNull Icon getWarningIcon() {
-    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.warningIcon"), AllIcons.General.WarningDialog);
+    return Objects.requireNonNullElse(UIManager.getIcon("OptionPane.warningIcon"), AllIcons.General.WarningDialog);
   }
 
   public static @NotNull Icon getBalloonInformationIcon() {
@@ -1088,12 +1042,12 @@ public final class UIUtil {
 
   public static @NotNull Icon getTreeSelectedCollapsedIcon() {
     Icon icon = UIManager.getIcon("Tree.collapsedSelectedIcon");
-    return icon != null ? icon : getTreeCollapsedIcon();
+    return icon == null ? getTreeCollapsedIcon() : icon;
   }
 
   public static @NotNull Icon getTreeSelectedExpandedIcon() {
     Icon icon = UIManager.getIcon("Tree.expandedSelectedIcon");
-    return icon != null ? icon : getTreeExpandedIcon();
+    return icon == null ? getTreeExpandedIcon() : icon;
   }
 
   public static Color getWindowColor() {
@@ -1129,10 +1083,12 @@ public final class UIUtil {
   }
 
   public static boolean isUnderDefaultMacTheme() {
-    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-    if (SystemInfoRt.isMac && lookAndFeel instanceof UserDataHolder) {
-      UserDataHolder dh = (UserDataHolder)lookAndFeel;
+    if (!SystemInfoRt.isMac) {
+      return false;
+    }
 
+    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+    if (lookAndFeel instanceof UserDataHolder dh) {
       return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
              Objects.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "macOS Light");
     }
@@ -1140,12 +1096,14 @@ public final class UIUtil {
   }
 
   public static boolean isUnderWin10LookAndFeel() {
-    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-    if (SystemInfoRt.isWindows && lookAndFeel instanceof UserDataHolder) {
-      UserDataHolder dh = (UserDataHolder)lookAndFeel;
+    if (!SystemInfoRt.isWindows) {
+      return false;
+    }
 
-      return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
-             Objects.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "Windows 10 Light");
+    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+    if (lookAndFeel instanceof UserDataHolder dataHolder) {
+      return Boolean.TRUE != dataHolder.getUserData(LAF_WITH_THEME_KEY) &&
+             Objects.equals(dataHolder.getUserData(PLUGGABLE_LAF_KEY), "Windows 10 Light");
     }
     return false;
   }
@@ -1532,7 +1490,7 @@ public final class UIUtil {
       LinePainter2D.paint(g, startX, lineY + 2, endX, lineY + 2);
     }
 
-    AppleBoldDottedPainter painter = AppleBoldDottedPainter.forColor(ObjectUtils.notNull(fgColor, oldColor));
+    AppleBoldDottedPainter painter = AppleBoldDottedPainter.forColor(Objects.requireNonNullElse(fgColor, oldColor));
     painter.paint(g, startX, endX, lineY);
   }
 
@@ -1607,9 +1565,8 @@ public final class UIUtil {
     EDT.dispatchAllInvocationEvents();
   }
 
-  public static void addAwtListener(final @NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
-    Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask);
-    Disposer.register(parent, () -> Toolkit.getDefaultToolkit().removeAWTEventListener(listener));
+  public static void addAwtListener(@NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
+    StartupUiUtil.addAwtListener(listener, mask, parent);
   }
 
   public static void addParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
@@ -1712,10 +1669,61 @@ public final class UIUtil {
     if (SwingUtilities.isDescendingFrom(owner, component)) return true;
 
     while (component != null) {
-      if (hasFocus(component)) return true;
+      if (kindaHasFocus(component)) return true;
       component = component.getParent();
     }
     return false;
+  }
+
+  /**
+   * Get the parent of a component in a more general sense than UI parent, i.e.,
+   * if it doesn't have a real UI parent, use a foster one instead.
+   * @see UIUtil#setFosterParent(JComponent, Component)
+   */
+  @ApiStatus.Experimental
+  public static @Nullable Component getParent(@NotNull Component component) {
+    Component realParent = component.getParent();
+    if (realParent != null) {
+      return realParent;
+    }
+    WeakReference<Component> ref = ClientProperty.get(component, FOSTER_PARENT);
+    return ref != null ? ref.get() : null;
+  }
+
+  /**
+   * Set a foster parent for a component, i.e., explicitly specify what should be treated
+   * as the component's parent if it doesn't have a real UI one.
+   * @throws IllegalArgumentException if the establishment of requested link
+   * will form a cycle in a generalized hierarchy graph.
+   * @see UIUtil#getParent(Component)
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static void setFosterParent(@NotNull JComponent component, @Nullable Component parent) {
+    if (parent != null && isGeneralizedAncestor(component, parent)) {
+      throw new IllegalArgumentException("Setting this component as a foster parent will form a cycle in a hierarchy graph");
+    }
+    WeakReference<Component> ref = parent != null ? new WeakReference<>(parent) : null;
+    ClientProperty.put(component, FOSTER_PARENT, ref);
+  }
+
+  private static boolean isGeneralizedAncestor(@NotNull Component ancestor, @NotNull Component descendant) {
+    do {
+      if (descendant == ancestor) {
+        return true;
+      }
+      descendant = getParent(descendant);
+    } while (descendant != null);
+    return false;
+  }
+
+  private static boolean kindaHasFocus(@NotNull Component component) {
+    if (GraphicsEnvironment.isHeadless()) {
+      return true;
+    }
+
+    JComponent jComponent = component instanceof JComponent ? (JComponent)component : null;
+    return jComponent != null && Boolean.TRUE.equals(jComponent.getClientProperty(HAS_FOCUS));
   }
 
   /**
@@ -1726,12 +1734,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean hasFocus(@NotNull Component component) {
-    if (GraphicsEnvironment.isHeadless() || component.hasFocus()) {
-      return true;
-    }
-
-    JComponent jComponent = component instanceof JComponent ? (JComponent)component : null;
-    return jComponent != null && Boolean.TRUE.equals(jComponent.getClientProperty(HAS_FOCUS));
+    return kindaHasFocus(component) || component.hasFocus();
   }
 
   /**
@@ -1796,8 +1799,7 @@ public final class UIUtil {
   //x and y should be from {0, 0} to {parent.getWidth(), parent.getHeight()}
   public static @Nullable Component getDeepestComponentAt(@NotNull Component parent, int x, int y) {
     Component component = SwingUtilities.getDeepestComponentAt(parent, x, y);
-    if (component != null && component.getParent() instanceof JRootPane) { // GlassPane case
-      JRootPane rootPane = (JRootPane)component.getParent();
+    if (component != null && component.getParent() instanceof JRootPane rootPane) { // GlassPane case
       component = getDeepestComponentAtForComponent(parent, x, y, rootPane.getLayeredPane());
       if (component == null) {
         component = getDeepestComponentAtForComponent(parent, x, y, rootPane.getContentPane());
@@ -1850,15 +1852,11 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getFocusedBoundsColor() {
-    return getBoundsColor();
+    return NamedColorUtil.getBoundsColor();
   }
 
   public static @NotNull Color getBoundsColor() {
-    return JBColor.border();
-  }
-
-  public static @NotNull Color getBoundsColor(boolean focused) {
-    return focused ? getFocusedBoundsColor() : getBoundsColor();
+    return NamedColorUtil.getBoundsColor();
   }
 
   public static @NotNull Color toAlpha(final Color color, final int alpha) {
@@ -1945,14 +1943,6 @@ public final class UIUtil {
 
   public static @NotNull Font getTitledBorderFont() {
     return StartupUiUtil.getLabelFont();
-  }
-
-  /**
-   * @deprecated use {@link StyleSheetUtil#loadStyleSheet(InputStream)}
-   */
-  @Deprecated
-  public static @Nullable StyleSheet loadStyleSheet(@Nullable URL url) {
-    return url == null ? null : StyleSheetUtil.INSTANCE.loadStyleSheet(url);
   }
 
   /**
@@ -2046,11 +2036,11 @@ public final class UIUtil {
           scrollPane.setBorder(new SideBorder(color, keepBorderSides.intValue()));
         }
         else {
-          scrollPane.setBorder(new SideBorder(getBoundsColor(), keepBorderSides.intValue()));
+          scrollPane.setBorder(new SideBorder(NamedColorUtil.getBoundsColor(), keepBorderSides.intValue()));
         }
       }
       else {
-        scrollPane.setBorder(new SideBorder(getBoundsColor(), SideBorder.NONE));
+        scrollPane.setBorder(new SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.NONE));
       }
     }
   }
@@ -2170,10 +2160,6 @@ public final class UIUtil {
       });
       if (!ref.isNull()) throw ref.get();
     }
-  }
-
-  public static boolean isFocusProxy(@Nullable Component c) {
-    return c instanceof JComponent && Boolean.TRUE.equals(((JComponent)c).getClientProperty(FOCUS_PROXY_KEY));
   }
 
   public static void maybeInstall(@NotNull InputMap map, String action, KeyStroke stroke) {
@@ -2301,8 +2287,7 @@ public final class UIUtil {
   }
 
   public static @NotNull JBIterable<Component> uiChildren(@Nullable Component component) {
-    if (!(component instanceof Container)) return JBIterable.empty();
-    Container container = (Container)component;
+    if (!(component instanceof Container container)) return JBIterable.empty();
     return JBIterable.of(container.getComponents());
   }
 
@@ -2320,8 +2305,7 @@ public final class UIUtil {
     else {
       result = uiChildren(c);
     }
-    if (c instanceof JComponent) {
-      JComponent jc = (JComponent)c;
+    if (c instanceof JComponent jc) {
       Iterable<? extends Component> orphans = ClientProperty.get(jc, NOT_IN_HIERARCHY_COMPONENTS);
       if (orphans != null) {
         result = result.append(orphans);
@@ -2493,12 +2477,6 @@ public final class UIUtil {
 
   public static void setFutureRootPane(@NotNull JComponent c, @NotNull JRootPane pane) {
     c.putClientProperty(ROOT_PANE, new WeakReference<>(pane));
-  }
-
-  public static boolean isMeaninglessFocusOwner(@Nullable Component c) {
-    if (c == null || !c.isShowing()) return true;
-
-    return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane || isFocusProxy(c);
   }
 
   public static boolean isDialogRootPane(JRootPane rootPane) {
@@ -2755,57 +2733,13 @@ public final class UIUtil {
     return false;
   }
 
-  public static void resetUndoRedoActions(@NotNull JTextComponent textComponent) {
-    UndoManager undoManager = ClientProperty.get(textComponent, UNDO_MANAGER);
-    if (undoManager != null) {
-      undoManager.discardAllEdits();
-    }
-  }
-
-  private static final DocumentListener SET_TEXT_CHECKER = new DocumentAdapter() {
-    @Override
-    protected void textChanged(@NotNull DocumentEvent e) {
-      Document document = e.getDocument();
-      if (document instanceof AbstractDocument) {
-        StackTraceElement[] stackTrace = new Throwable().getStackTrace();
-        for (StackTraceElement element : stackTrace) {
-          if (!element.getClassName().equals(JTextComponent.class.getName()) || !element.getMethodName().equals("setText")) continue;
-          UndoableEditListener[] undoableEditListeners = ((AbstractDocument)document).getUndoableEditListeners();
-          for (final UndoableEditListener listener : undoableEditListeners) {
-            if (listener instanceof UndoManager) {
-              Runnable runnable = ((UndoManager)listener)::discardAllEdits;
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(runnable);
-              return;
-            }
-          }
-        }
-      }
-    }
-  };
-
-  public static void addUndoRedoActions(final @NotNull JTextComponent textComponent) {
-    if (textComponent.getClientProperty(UNDO_MANAGER) instanceof UndoManager) {
-      return;
-    }
-
-    UndoManager undoManager = new UndoManager();
-    textComponent.putClientProperty(UNDO_MANAGER, undoManager);
-    textComponent.getDocument().addUndoableEditListener(undoManager);
-    textComponent.getDocument().addDocumentListener(SET_TEXT_CHECKER);
-    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfoRt.isMac ? Event.META_MASK : Event.CTRL_MASK), "undoKeystroke");
-    textComponent.getActionMap().put("undoKeystroke", UNDO_ACTION);
-    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfoRt.isMac
-                                                                           ? Event.META_MASK : Event.CTRL_MASK) | Event.SHIFT_MASK), "redoKeystroke");
-    textComponent.getActionMap().put("redoKeystroke", REDO_ACTION);
-  }
-
-  public static @Nullable UndoManager getUndoManager(Component component) {
-    if (component instanceof JTextComponent) {
-      Object o = ((JTextComponent)component).getClientProperty(UNDO_MANAGER);
-      if (o instanceof UndoManager) return (UndoManager)o;
-    }
-    return null;
+  /**
+   * Use {@link SwingUndoUtil#addUndoRedoActions(JTextComponent)}
+   * @param textComponent
+   */
+  @Deprecated
+  public static void addUndoRedoActions(@NotNull JTextComponent textComponent) {
+    SwingUndoUtil.addUndoRedoActions(textComponent);
   }
 
   public static void playSoundFromResource(@NotNull String resourceName) {
@@ -2906,8 +2840,7 @@ public final class UIUtil {
         return true;
       }
     }
-    if (component instanceof Container) {
-      Container container = (Container)component;
+    if (component instanceof Container container) {
       for (int i = 0; i < container.getComponentCount(); i++) {
         if (hasComponentOfType(container.getComponent(i), types)) {
           return true;
@@ -3016,6 +2949,10 @@ public final class UIUtil {
     return c instanceof Window ? (Window)c : SwingUtilities.getWindowAncestor(c);
   }
 
+  public static boolean isSimpleWindow(Window window) {
+    return window != null && !(window instanceof Frame || window instanceof Dialog);
+  }
+
   public static boolean isHelpButton(Component button) {
     return button instanceof JButton && "help".equals(((JComponent)button).getClientProperty("JButton.buttonType"));
   }
@@ -3095,7 +3032,7 @@ public final class UIUtil {
   /**
    * @deprecated use {@link #getListSelectionBackground(boolean)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static @NotNull Color getListUnfocusedSelectionBackground() {
     return getListSelectionBackground(false);
   }
@@ -3113,14 +3050,14 @@ public final class UIUtil {
    * @see RenderingUtil#getSelectionForeground(JList)
    */
   public static @NotNull Color getListSelectionForeground(boolean focused) {
-    return JBUI.CurrentTheme.List.Selection.foreground(focused);
+    return NamedColorUtil.getListSelectionForeground(focused);
   }
 
   /**
    * @see RenderingUtil#getForeground(JList, boolean)
    */
   public static @NotNull Color getListForeground(boolean selected, boolean focused) {
-    return !selected ? getListForeground() : getListSelectionForeground(focused);
+    return !selected ? getListForeground() : NamedColorUtil.getListSelectionForeground(focused);
   }
 
   /**
@@ -3136,7 +3073,7 @@ public final class UIUtil {
    */
   @Deprecated
   public static @NotNull Color getListSelectionForeground() {
-    return getListSelectionForeground(true);
+    return NamedColorUtil.getListSelectionForeground(true);
   }
 
   // Tree
@@ -3357,7 +3294,19 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean isShowing(@NotNull Component component) {
-    if (Boolean.getBoolean("java.awt.headless") || component.isShowing()) {
+    return isShowing(component, true);
+  }
+
+  /**
+   * An overload of {@link UIUtil#isShowing(Component)} allowing to ignore headless mode.
+   * @param checkHeadless when {@code true}, the {@code component} will always be considered visible in headless mode.
+   */
+  @ApiStatus.Experimental
+  public static boolean isShowing(@NotNull Component component, boolean checkHeadless) {
+    if (checkHeadless && Boolean.getBoolean("java.awt.headless")) {
+      return true;
+    }
+    if (component.isShowing()) {
       return true;
     }
 
@@ -3507,21 +3456,25 @@ public final class UIUtil {
     if (focusOwner == null || !SwingUtilities.isDescendingFrom(focusOwner, window)) {
       return;
     }
-    ObjectUtils.consumeIfCast(focusOwner, JFormattedTextField.class, field -> {
+    if (focusOwner instanceof JFormattedTextField) {
       try {
         ((JFormattedTextField)focusOwner).commitEdit();
       }
       catch (ParseException ignored) {
       }
-    });
-    ObjectUtils.consumeIfCast(focusOwner.getParent(), JTable.class, table -> TableUtil.stopEditing(table));
-    ObjectUtils.consumeIfCast(focusOwner.getParent(), JTree.class, tree -> tree.stopEditing());
+    }
+    Object obj = focusOwner.getParent();
+    if (obj instanceof JTable) {
+      TableUtil.stopEditing((JTable)obj);
+    }
+    Object obj1 = focusOwner.getParent();
+    if (obj1 instanceof JTree) {
+      ((JTree)obj1).stopEditing();
+    }
   }
 
   public static String colorToHex(final Color color) {
-    return to2DigitsHex(color.getRed())
-           + to2DigitsHex(color.getGreen())
-           + to2DigitsHex(color.getBlue());
+    return to2DigitsHex(color.getRed()) + to2DigitsHex(color.getGreen()) + to2DigitsHex(color.getBlue());
   }
 
   private static String to2DigitsHex(int i) {

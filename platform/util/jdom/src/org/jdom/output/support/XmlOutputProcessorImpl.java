@@ -439,7 +439,7 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
     // access the ContentList because Document throws an exception.
     // so we hack it and just access it by index.
     List<Content> list = doc.hasRootElement() ? doc.getContent() :
-                         new ArrayList<Content>(doc.getContentSize());
+                         new ArrayList<>(doc.getContentSize());
     if (list.isEmpty()) {
       final int sz = doc.getContentSize();
       for (int i = 0; i < sz; i++) {

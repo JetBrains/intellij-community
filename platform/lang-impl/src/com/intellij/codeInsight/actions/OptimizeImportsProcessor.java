@@ -3,20 +3,21 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
-import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.formatting.service.FormattingService;
 import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.HintText;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.FutureTask;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.codeInsight.actions.OptimizeImportsProcessor.NotificationInfo.NOTHING_CHANGED_NOTIFICATION;
 import static com.intellij.codeInsight.actions.OptimizeImportsProcessor.NotificationInfo.SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION;
@@ -81,8 +83,8 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       return emptyTask();
     }
 
-    List<HintAction> hints = ApplicationManager.getApplication().isDispatchThread() ?
-                             Collections.emptyList() : ShowAutoImportPass.getImportHints(file);
+    List<BooleanSupplier> hints = ApplicationManager.getApplication().isDispatchThread()
+                                  ? Collections.emptyList() : collectAutoImports(file);
 
     return new FutureTask<>(() -> {
       ApplicationManager.getApplication().assertIsDispatchThread();
@@ -93,12 +95,55 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
           myOptimizerNotifications.add(getNotificationInfo(runnable));
         }
         putNotificationInfoIntoCollector();
-        ShowAutoImportPass.fixAllImportsSilently(file, hints);
+        fixAllImportsSilently(file, hints);
       }
       finally {
         CoreCodeStyleUtil.setSequentialProcessingAllowed(true);
       }
     }, true);
+  }
+
+  /**
+   * walk PSI and for each unresolved reference ask {@link ReferenceImporter} how to import it
+   */
+  @NotNull
+  private static List<BooleanSupplier> collectAutoImports(@NotNull PsiFile file) {
+    if (file instanceof PsiCompiledElement) return List.of();
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (document == null) return List.of();
+    Editor editor = new ImaginaryEditor(file.getProject(), document);
+    List<ReferenceImporter> referenceImporters = ReferenceImporter.EP_NAME.getExtensionList();
+    List<BooleanSupplier> result = new ArrayList<>();
+    file.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        for (PsiReference reference : element.getReferences()) {
+          if (reference.resolve() == null) {
+            for (ReferenceImporter importer : referenceImporters) {
+              if (importer.isAddUnambiguousImportsOnTheFlyEnabled(file)) {
+                BooleanSupplier action = importer.computeAutoImportAtOffset(editor, file, element.getTextRange().getStartOffset(), true);
+                if (action != null) {
+                  result.add(action);
+                }
+              }
+            }
+          }
+        }
+        super.visitElement(element);
+      }
+    });
+
+    return result;
+  }
+
+  private static void fixAllImportsSilently(@NotNull PsiFile file, @NotNull List<? extends BooleanSupplier> actions) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (actions.isEmpty()) return;
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (document == null) return;
+    for (BooleanSupplier action : actions) {
+      action.getAsBoolean();
+    }
   }
 
   static @NotNull List<Runnable> collectOptimizers(@NotNull PsiFile file) {

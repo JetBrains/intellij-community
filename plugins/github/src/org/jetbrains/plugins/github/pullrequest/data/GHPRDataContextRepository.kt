@@ -3,6 +3,9 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
+import com.intellij.collaboration.ui.icon.CachingIconsProvider
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -11,8 +14,15 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.ImageUtil
+import git4idea.remote.GitRemoteUrlCoordinates
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.future.await
+import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -24,13 +34,13 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInforma
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModelImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.*
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
-import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
+import java.awt.Image
 import java.io.IOException
 import java.util.concurrent.CompletableFuture
+import javax.swing.Icon
 
 @Service
 internal class GHPRDataContextRepository(private val project: Project) {
@@ -137,7 +147,8 @@ internal class GHPRDataContextRepository(private val project: Project) {
                                                         repoOwner,
                                                         repositoryInfo.id, repositoryInfo.defaultBranch, repositoryInfo.isFork)
 
-    val avatarIconsProvider = GHAvatarIconsProvider(CachingGHUserAvatarLoader.getInstance(), requestExecutor)
+    val iconsScope = MainScope()
+    val avatarIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, ImageLoader(requestExecutor)))
 
     val filesManager = GHPRFilesManagerImpl(project, parsedRepositoryCoordinates)
 
@@ -145,7 +156,24 @@ internal class GHPRDataContextRepository(private val project: Project) {
     val creationService = GHPRCreationServiceImpl(ProgressManager.getInstance(), requestExecutor, repoDataService)
     return GHPRDataContext(listLoader, listUpdatesChecker, dataProviderRepository,
                            securityService, repoDataService, creationService, detailsService, avatarIconsProvider, filesManager,
-                           GHPRDiffRequestModelImpl())
+                           GHPRDiffRequestModelImpl()).also {
+      Disposer.register(it, Disposable { iconsScope.cancel() })
+    }
+  }
+
+  private class ImageLoader(private val requestExecutor: GithubApiRequestExecutor)
+    : AsyncImageIconsProvider.AsyncImageLoader<String> {
+
+    private val avatarsLoader = CachingGHUserAvatarLoader.getInstance()
+
+    override suspend fun load(key: String): Image? =
+      avatarsLoader.requestAvatar(requestExecutor, key).await()
+
+    override fun createBaseIcon(key: String?, iconSize: Int): Icon =
+      IconUtil.resizeSquared(GithubIcons.DefaultAvatar, iconSize)
+
+    override suspend fun postProcess(image: Image): Image =
+      ImageUtil.createCircleImage(ImageUtil.toBufferedImage(image))
   }
 
   @RequiresEdt

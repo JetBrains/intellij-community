@@ -276,7 +276,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
      * Rules for type-checking TypedDicts are described in PEP-589
      * @see <a href=https://www.python.org/dev/peps/pep-0589/#type-consistency>PEP-589</a>
      */
-    fun checkStructuralCompatibility(expected: PyType?,
+    private fun checkStructuralCompatibility(expected: PyType?,
                                      actual: PyTypedDictType,
                                      context: TypeEvalContext): TypeCheckingResult? {
       if (expected is PyCollectionType && PyTypingTypeProvider.MAPPING == expected.classQName) {

@@ -5,6 +5,7 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareToggleAction;
@@ -61,6 +62,11 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         FindSettings.getInstance().setShowResultsInSeparateView(state);
       }
@@ -71,6 +77,11 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
         @Override
         public boolean isSelected(@NotNull AnActionEvent e) {
           return UsageViewSettings.getInstance().isSortAlphabetically();
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
         }
 
         @Override
@@ -86,6 +97,11 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return UsageViewSettings.getInstance().isAutoScrollToSource();
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
 
       @Override

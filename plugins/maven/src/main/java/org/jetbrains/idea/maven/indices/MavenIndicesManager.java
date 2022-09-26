@@ -169,8 +169,6 @@ public final class MavenIndicesManager implements Disposable {
   /**
    * Add artifact info to index async.
    *
-   * @param mavenId
-   * @param artifactFile
    */
   public Promise<Void> addArtifactIndexAsync(@Nullable MavenId mavenId, @NotNull File artifactFile) {
     if (myMavenIndices.isNotInit()) return Promises.rejectedPromise();

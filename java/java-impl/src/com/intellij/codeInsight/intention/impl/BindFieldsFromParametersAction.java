@@ -15,16 +15,15 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
@@ -127,7 +126,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
 
   private static void invoke(Project project, Editor editor, PsiFile file, boolean isInteractive) {
     PsiParameter psiParameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
-    if (file.isPhysical() && !FileModificationService.getInstance().prepareFileForWrite(file)) return;
+    if (!IntentionPreviewUtils.prepareElementForWrite(file)) return;
     PsiMethod method = psiParameter != null
                        ? (PsiMethod)psiParameter.getDeclarationScope()
                        : PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiMethod.class);

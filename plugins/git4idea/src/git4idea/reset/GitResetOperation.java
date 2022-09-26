@@ -27,6 +27,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
 
@@ -44,15 +45,25 @@ public class GitResetOperation {
   @NotNull private final Git myGit;
   @NotNull private final VcsNotifier myNotifier;
   @NotNull private final GitBranchUiHandlerImpl myUiHandler;
+  @NotNull private final OperationPresentation myPresentation;
 
   public GitResetOperation(@NotNull Project project,
                            @NotNull Map<GitRepository, Hash> targetCommits,
                            @NotNull GitResetMode mode,
                            @NotNull ProgressIndicator indicator) {
+    this(project, targetCommits, mode, indicator, new OperationPresentation());
+  }
+
+  public GitResetOperation(@NotNull Project project,
+                           @NotNull Map<GitRepository, Hash> targetCommits,
+                           @NotNull GitResetMode mode,
+                           @NotNull ProgressIndicator indicator,
+                           @NotNull OperationPresentation operationPresentation) {
     myProject = project;
     myCommits = targetCommits;
     myMode = mode;
     myIndicator = indicator;
+    myPresentation = operationPresentation;
     myGit = Git.getInstance();
     myNotifier = VcsNotifier.getInstance(project);
     myUiHandler = new GitBranchUiHandlerImpl(myProject, indicator);
@@ -61,7 +72,7 @@ public class GitResetOperation {
   public void execute() {
     saveAllDocuments();
     Map<GitRepository, GitCommandResult> results = new HashMap<>();
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("git.reset.process"))) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message(myPresentation.activityName))) {
       for (Map.Entry<GitRepository, Hash> entry : myCommits.entrySet()) {
         GitRepository repository = entry.getKey();
         VirtualFile root = repository.getRoot();
@@ -91,12 +102,13 @@ public class GitResetOperation {
     Collection<String> absolutePaths = toAbsolute(repository.getRoot(), detector.getRelativeFilePaths());
     List<Change> affectedChanges = findLocalChangesForPaths(myProject, repository.getRoot(), absolutePaths, false);
     GitSmartOperationDialog.Choice choice = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths,
-                                                                                 GitBundle.message("git.reset.operation"),
-                                                                                 GitBundle.message("git.reset.hard.button"));
+                                                                                 GitBundle.message(myPresentation.operationTitle),
+                                                                                 GitBundle.message(myPresentation.forceButtonTitle));
     if (choice == GitSmartOperationDialog.Choice.SMART) {
       final Ref<GitCommandResult> result = Ref.create();
       GitSaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
-      new GitPreservingProcess(myProject, myGit, Collections.singleton(repository.getRoot()), GitBundle.message("git.reset.operation"),
+      new GitPreservingProcess(myProject, myGit, Collections.singleton(repository.getRoot()),
+                               GitBundle.message(myPresentation.operationTitle),
                                target, saveMethod, myIndicator,
                                () -> result.set(myGit.reset(repository, myMode, target))).execute();
       return result.get();
@@ -122,19 +134,18 @@ public class GitResetOperation {
     }
 
     if (errors.isEmpty()) {
-      myNotifier.notifySuccess(RESET_SUCCESSFUL, "", GitBundle.message("git.reset.successful.notification.message"));
+      myNotifier.notifySuccess(RESET_SUCCESSFUL, "", GitBundle.message(myPresentation.notificationSuccess));
     }
     else if (!successes.isEmpty()) {
-
       myNotifier.notifyImportantWarning(RESET_PARTIALLY_FAILED,
-                                        GitBundle.message("git.reset.partially.failed.notification.title"),
-                                        GitBundle.message("git.reset.partially.failed.notification.msg",
+                                        GitBundle.message(myPresentation.notificationPartialFailureTitle),
+                                        GitBundle.message(myPresentation.notificationPartialFailureMessage,
                                                           joinRepos(successes.keySet()),
                                                           joinRepos(errors.keySet()),
                                                           formErrorReport(errors)));
     }
     else {
-      myNotifier.notifyError(RESET_FAILED, GitBundle.message("git.reset.failed.notification.title"), formErrorReport(errors), true);
+      myNotifier.notifyError(RESET_FAILED, GitBundle.message(myPresentation.notificationFailure), formErrorReport(errors), true);
     }
   }
 
@@ -168,4 +179,17 @@ public class GitResetOperation {
     ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
   }
 
+  @PropertyKey(resourceBundle = GitBundle.BUNDLE)
+  public static class OperationPresentation {
+    public String activityName = "git.reset.process";
+    public String operationTitle = "git.reset.operation";
+    public String forceButtonTitle = "git.reset.hard.button";
+    public String notificationSuccess = "git.reset.successful.notification.message";
+    public String notificationFailure = "git.reset.failed.notification.title";
+    public String notificationPartialFailureTitle = "git.reset.partially.failed.notification.title";
+    /**
+     * {0} success repos, {1} failure repos, {2} error message
+     */
+    public String notificationPartialFailureMessage = "git.reset.partially.failed.notification.msg";
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.util;
 
@@ -11,6 +11,7 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -18,14 +19,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.SortedListModel;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UI;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -131,6 +138,11 @@ public final class SpecialAnnotationsUtil {
                 listModel.add(selectedPattern);
               }
             }
+
+            @Override
+            public @NotNull ActionUpdateThread getActionUpdateThread() {
+              return ActionUpdateThread.EDT;
+            }
           }).setButtonComparator(JavaBundle.message("special.annotations.list.add.annotation.class"),
                                  JavaBundle.message("special.annotations.list.annotation.pattern"),
                                  JavaBundle.message("special.annotations.list.remove.pattern"));
@@ -150,6 +162,7 @@ public final class SpecialAnnotationsUtil {
 
   public static IntentionAction createAddToSpecialAnnotationsListIntentionAction(final @IntentionName String text,
                                                                                  final @IntentionFamilyName String family,
+                                                                                 final @Nls String listTitle,
                                                                                  final List<String> targetList,
                                                                                  final String qualifiedName) {
     return new IntentionAction() {
@@ -182,7 +195,8 @@ public final class SpecialAnnotationsUtil {
 
       @Override
       public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-        return new IntentionPreviewInfo.Html(JavaBundle.message("special.annotations.annotations.preview", qualifiedName));
+        List<@NlsSafe String> prefixes = StreamEx.of(targetList).append(qualifiedName).sorted().toList();
+        return IntentionPreviewInfo.addListOption(prefixes, qualifiedName, listTitle);
       }
     };
   }

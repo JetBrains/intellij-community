@@ -40,7 +40,6 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   /**
    * Creates a new, empty fix object.
    * @param node to which the fix applies.
-   * @param referenceType
    * @param name name to import
    * @param qualify if true, add an "import ..." statement and qualify the name; else use "from ... import name"
    */

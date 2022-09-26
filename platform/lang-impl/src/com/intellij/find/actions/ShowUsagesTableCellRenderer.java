@@ -21,9 +21,7 @@ import com.intellij.usages.impl.GroupNode;
 import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.usages.rules.UsageInFile;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +81,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
     Color fileBgColor = getBackgroundColor(false, usage);
     Color selectionBg = UIUtil.getListSelectionBackground(true);
-    Color selectionFg = UIUtil.getListSelectionForeground(true);
+    Color selectionFg = NamedColorUtil.getListSelectionForeground(true);
     Color rowBackground =  fileBgColor == null ? list.getBackground() : fileBgColor;
     Color rowSelectionBackground = isSelected ? selectionBg : null;
     Color rowForeground = isSelected ? selectionFg : list.getForeground();
@@ -141,7 +139,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
     // greying the current usage the "find usages" was originated from
     boolean isOriginUsage = myOriginUsageCheck.test(usage);
-    if (isOriginUsage) {
+    if (isOriginUsage && !ExperimentalUI.isNewUI()) {
       rowBackground = slightlyDifferentColor(rowBackground);
       rowSelectionBackground = slightlyDifferentColor(rowSelectionBackground);
       fileBgColor = slightlyDifferentColor(fileBgColor);
@@ -154,16 +152,20 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     TextChunk[] text = presentation.getText();
 
     switch (column) {
-      case CURRENT_ASTERISK_COL:
-        if (isOriginUsage) {
-          panel.add(new JLabel(isSelected ? AllIcons.General.ModifiedSelected : AllIcons.General.Modified));
-          panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.CURRENT_ASTERISK_COL"));
-        } else panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.OTHER_ASTERISK_COL"));
-        break;
-      case FILE_GROUP_COL:
-        appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
-        break;
-      case LINE_NUMBER_COL: {
+      case CURRENT_ASTERISK_COL -> {
+        if (!ExperimentalUI.isNewUI()) {
+          if (isOriginUsage) {
+            panel.add(new JLabel(isSelected ? AllIcons.General.ModifiedSelected : AllIcons.General.Modified));
+            panel.getAccessibleContext()
+              .setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.CURRENT_ASTERISK_COL"));
+          }
+          else {
+            panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.OTHER_ASTERISK_COL"));
+          }
+        }
+      }
+      case FILE_GROUP_COL -> appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
+      case LINE_NUMBER_COL -> {
         SimpleColoredComponent textChunks = new SimpleColoredComponent();
         textChunks.setOpaque(false);
         if (text.length != 0) {
@@ -173,11 +175,10 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
         SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
 
         panel.add(textChunks);
-        panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.LINE_NUMBER_COL", textChunks.getAccessibleContext().getAccessibleName()));
-        break;
+        panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.LINE_NUMBER_COL",
+                                                                         textChunks.getAccessibleContext().getAccessibleName()));
       }
-
-      case USAGE_TEXT_COL: {
+      case USAGE_TEXT_COL -> {
         SimpleColoredComponent textChunks = new SimpleColoredComponent();
         textChunks.setOpaque(false);
 
@@ -191,27 +192,35 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
         SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
 
         panel.add(textChunks);
-        panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.USAGE_TEXT_COL", textChunks.getAccessibleContext().getAccessibleName()));
+        panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.USAGE_TEXT_COL",
+                                                                         textChunks.getAccessibleContext().getAccessibleName()));
 
         if (isOriginUsage) {
-          SimpleColoredComponent origin = new SimpleColoredComponent();
-          origin.setOpaque(false);
-          origin.setIconTextGap(JBUIScale.scale(5)); // for this particular icon it looks better
+          SimpleColoredComponent origin;
 
-          // use attributes of "line number" to show "Current" word
-          SimpleTextAttributes attributes =
-            text.length == 0 ? SimpleTextAttributes.REGULAR_ATTRIBUTES.derive(-1, new Color(0x808080), null, null) :
-            getAttributes(isSelected, fileBgColor, selectionBg, selectionFg, text[0]);
-          origin.append("| " + FindBundle.message("show.usages.current.usage.label"), attributes);
-          origin.appendTextPadding(JBUIScale.scale(45));
+          if (ExperimentalUI.isNewUI()) {
+            RoundedColoredComponent roundedOrigin = new RoundedColoredComponent(isSelected);
+            roundedOrigin.append(FindBundle.message("show.usages.current.usage.label"));
+            origin = roundedOrigin;
+          }
+          else {
+            origin = new SimpleColoredComponent();
+            origin.setOpaque(false);
+            origin.setIconTextGap(JBUIScale.scale(5)); // for this particular icon it looks better
+
+            // use attributes of "line number" to show "Current" word
+            SimpleTextAttributes attributes =
+              text.length == 0 ? SimpleTextAttributes.REGULAR_ATTRIBUTES.derive(-1, new Color(0x808080), null, null) :
+              getAttributes(isSelected, fileBgColor, selectionBg, selectionFg, text[0]);
+            origin.append("| " + FindBundle.message("show.usages.current.usage.label"), attributes);
+            origin.appendTextPadding(JBUIScale.scale(45));
+          }
           panel.add(origin, BorderLayout.EAST);
-          panel.getAccessibleContext().setAccessibleName(panel.getAccessibleContext().getAccessibleName() + ", " + origin.getAccessibleContext().getAccessibleName());
+          panel.getAccessibleContext()
+            .setAccessibleName(panel.getAccessibleContext().getAccessibleName() + ", " + origin.getAccessibleContext().getAccessibleName());
         }
-        break;
       }
-
-      default:
-        throw new IllegalStateException("unknown column: " + column);
+      default -> throw new IllegalStateException("unknown column: " + column);
     }
 
     return panel;
@@ -346,30 +355,25 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
       Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
       switch (column) {
-        case CURRENT_ASTERISK_COL: {
+        case CURRENT_ASTERISK_COL -> {
           panel.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
           panel.setSelectionArcCorners(SelectablePanel.SelectionArcCorners.LEFT);
           //noinspection UseDPIAwareInsets
           panel.setSelectionInsets(new Insets(0, leftRightInset, 0, 0));
           //noinspection UseDPIAwareBorders
           panel.setBorder(new EmptyBorder(innerInsets.top, leftRightInset + innerInsets.left, innerInsets.bottom, 0));
-          break;
         }
-
-        case USAGE_TEXT_COL: {
+        case USAGE_TEXT_COL -> {
           panel.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
           panel.setSelectionArcCorners(SelectablePanel.SelectionArcCorners.RIGHT);
           //noinspection UseDPIAwareInsets
           panel.setSelectionInsets(new Insets(0, 0, 0, leftRightInset));
           //noinspection UseDPIAwareBorders
           panel.setBorder(new EmptyBorder(innerInsets.top, 0, innerInsets.bottom, innerInsets.right + leftRightInset));
-          break;
         }
-
-        default: {
+        default ->
           //noinspection UseDPIAwareBorders
           panel.setBorder(new EmptyBorder(innerInsets.top, 0, innerInsets.bottom, 0));
-        }
       }
       panel.setBackground(rowBackground);
       panel.setSelectionColor(rowSelectionBackground);
@@ -377,6 +381,52 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     else {
       panel.setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
       panel.setBackground(rowSelectionBackground);
+    }
+  }
+
+  private static final int ARC = 8;
+  private static final int LEFT_OFFSET = 6;
+
+  private static class RoundedColoredComponent extends SimpleColoredComponent {
+
+    private RoundedColoredComponent(boolean isSelected) {
+      if (isSelected) {
+        setOpaque(false);
+      }
+      JBInsets insets = rectInsets();
+      setFont(JBFont.medium());
+      setIpad(JBUI.insets(0, LEFT_OFFSET + insets.left, 0, insets.right));
+      setForeground(JBUI.CurrentTheme.List.Tag.FOREGROUND);
+    }
+
+    @Override
+    protected void paintBackground(Graphics2D g, int x, int width, int height) {
+      super.paintBackground(g, x, width, height);
+
+      int y = 0;
+      int baseline = getBaseline(width, height);
+      if (baseline >= 0) {
+        JBInsets insets = rectInsets();
+        FontMetrics metrics = g.getFontMetrics(getBaseFont());
+        y = baseline - metrics.getAscent() - insets.top;
+        height = metrics.getHeight() + insets.height();
+      }
+
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        GraphicsUtil.setupAAPainting(g2);
+        g2.setColor(JBUI.CurrentTheme.List.Tag.BACKGROUND);
+        int arc = JBUIScale.scale(ARC);
+        int offset = JBUIScale.scale(LEFT_OFFSET);
+        g2.fillRoundRect(x + offset, y, width - offset, height, arc, arc);
+      }
+      finally {
+        g2.dispose();
+      }
+    }
+
+    private static JBInsets rectInsets() {
+      return JBUI.insets(1, 6);
     }
   }
 }

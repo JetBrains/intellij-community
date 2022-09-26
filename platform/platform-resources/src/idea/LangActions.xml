@@ -652,10 +652,7 @@
 
     <!-- Tools -->
     <group id="ToolsBasicGroup">
-
       <add-to-group group-id="ToolsMenu" anchor="first"/>
-
-      <action id="IdeScriptingConsole" class="com.intellij.ide.script.RunIdeConsoleAction"/>
     </group>
     <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction"/>
     <action id="NewScratchBuffer" class="com.intellij.ide.scratch.ScratchFileActions$NewBufferAction"/>
@@ -678,7 +675,7 @@
       <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
 
-    <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup" searchable="false"/>
+    <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup" popup="true" searchable="false"/>
     <reference ref="AssociateWithFileType"/>
 
     <reference id="OpenInRightSplit">
@@ -869,6 +866,8 @@
         <action id="ProjectView.ShowLibraryContents"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowLibraryContents"
                 icon="AllIcons.ObjectBrowser.ShowLibraryContents"/>
+        <action id="ProjectView.ShowScratchesAndConsoles"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowScratchesAndConsoles"/>
         <separator/>
         <action id="ProjectView.FlattenModules"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenModules"
@@ -1582,6 +1581,10 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
+    <action id="IdeScriptingConsole" class="com.intellij.ide.script.RunIdeConsoleAction">
+      <add-to-group group-id="MaintenanceGroup"/>
+    </action>
+
     <action id="TypingLatencyReport" class="com.intellij.internal.performance.TypingLatencyReportAction" internal="true">
       <add-to-group group-id="Internal.Performance" anchor="last"/>
     </action>
@@ -1608,8 +1611,17 @@
     </group>
     
     <group id="RunToolbarWidgetCustomizableActionGroup">
+      <add-to-group group-id="MainToolbarRight" anchor="first"/>
       <action class="com.intellij.execution.ui.RunWithDropDownAction" id="RunWithDropDown"/>
+      <action class="com.intellij.execution.ui.RedesignedRunToolbarWrapper" id="RedesignedRunToolbarWrapper" text="Fictive"/>
       <action class="com.intellij.execution.ui.StopWithDropDownAction" id="StopWithDropDown"/>
+    </group>
+
+    <group id="RunToolbarMainActionGroup">
+      <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
+      <separator/>
+      <group id="RunToolbarTopLevelExecutorActionGroup" class="com.intellij.execution.ui.RunToolbarTopLevelExecutorActionGroup" />
+      <action id="MoreRunToolbarActions" class="com.intellij.execution.ui.MoreRunToolbarActions" />
     </group>
 
     <action id="FileChooser.LightEditGotoOpenedFile"
@@ -1648,6 +1660,7 @@
       <action id="DumpInvalidTipsOfTheDay" internal="true" class="com.intellij.ide.util.DumpInvalidTipsAction"/>
       <action id="SelectAndDumpInvalidTipsOfTheDay" internal="true" class="com.intellij.ide.util.SelectAndDumpInvalidTipsAction"/>
       <action id="DumpIElementTypesAction" internal="true" class="com.intellij.internal.DumpIElementTypesAction"/>
+      <action id="DumpLoadedInspectionsAction" internal="true" class="com.intellij.internal.DumpLoadedInspectionsAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
     <group id="Internal.VFS" popup="true" internal="true">

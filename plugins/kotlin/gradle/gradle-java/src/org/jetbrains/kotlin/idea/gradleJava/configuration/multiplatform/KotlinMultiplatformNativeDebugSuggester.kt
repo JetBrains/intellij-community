@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.notificationGroup
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
@@ -36,7 +37,7 @@ abstract class KotlinMultiplatformNativeDebugSuggester<TModel> {
             }
 
         private fun suggestNativeDebug(projectPath: String) {
-            if (!PlatformUtils.isIdeaUltimate()) return
+            if (!PlatformUtils.isIdeaUltimate() || SystemInfo.isWindows) return
 
             val pluginId = PluginId.getId("com.intellij.nativeDebug")
             if (PluginManagerCore.isPluginInstalled(pluginId)) return

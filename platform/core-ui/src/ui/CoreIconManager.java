@@ -37,11 +37,71 @@ import java.util.function.Supplier;
 public final class CoreIconManager implements IconManager, CoreAwareIconManager {
   private static final List<IconLayer> iconLayers = new CopyOnWriteArrayList<>();
   private static final int FLAGS_LOCKED = 0x800;
-  private static final Logger LOG = Logger.getInstance(CoreIconManager.class);
 
   @Override
-  public @NotNull Icon getStubIcon() {
-    return AllIcons.Actions.Stub;
+  public @NotNull Icon getPlatformIcon(@NotNull PlatformIcons id) {
+    return switch (id) {
+      case Public -> AllIcons.Nodes.Public;
+      case Private -> AllIcons.Nodes.C_private;
+      case Protected -> AllIcons.Nodes.C_protected;
+      case Local -> AllIcons.Nodes.C_plocal;
+
+      case TodoDefault -> AllIcons.General.TodoDefault;
+      case TodoQuestion -> AllIcons.General.TodoQuestion;
+      case TodoImportant -> AllIcons.General.TodoImportant;
+
+      case NodePlaceholder -> AllIcons.Nodes.NodePlaceholder;
+      case WarningDialog -> AllIcons.General.WarningDialog;
+      case Copy -> AllIcons.Actions.Copy;
+      case Import -> AllIcons.ToolbarDecorator.Import;
+      case Export -> AllIcons.ToolbarDecorator.Export;
+      case Stub -> AllIcons.Actions.Stub;
+      case TestStateRun -> AllIcons.RunConfigurations.TestState.Run;
+
+      case Package -> AllIcons.Nodes.Package;
+      case Folder -> AllIcons.Nodes.Folder;
+      case IdeaModule -> AllIcons.Nodes.IdeaModule;
+
+      case TextFileType -> AllIcons.FileTypes.Text;
+      case ArchiveFileType -> AllIcons.FileTypes.Archive;
+      case UnknownFileType -> AllIcons.FileTypes.Unknown;
+      case CustomFileType -> AllIcons.FileTypes.Custom;
+      case JavaClassFileType -> AllIcons.FileTypes.JavaClass;
+      case JspFileType -> AllIcons.FileTypes.Jsp;
+      case JavaFileType -> AllIcons.FileTypes.Java;
+      case PropertiesFileType -> AllIcons.FileTypes.Properties;
+
+      case JavaModule -> AllIcons.Nodes.JavaModule;
+      case Variable -> AllIcons.Nodes.Variable;
+      case Field -> AllIcons.Nodes.Field;
+      case Method -> AllIcons.Nodes.Method;
+      case Class -> AllIcons.Nodes.Class;
+      case AbstractClass -> AllIcons.Nodes.AbstractClass;
+      case AbstractException -> AllIcons.Nodes.AbstractException;
+      case AnonymousClass -> AllIcons.Nodes.AnonymousClass;
+      case Enum -> AllIcons.Nodes.Enum;
+      case Aspect -> AllIcons.Nodes.Aspect;
+      case Annotation -> AllIcons.Nodes.Annotationtype;
+      case Function -> AllIcons.Nodes.Function;
+      case Interface -> AllIcons.Nodes.Interface;
+      case AbstractMethod -> AllIcons.Nodes.AbstractMethod;
+      case MethodReference -> AllIcons.Nodes.MethodReference;
+      case Property -> AllIcons.Nodes.Property;
+      case Parameter -> AllIcons.Nodes.Parameter;
+      case Lambda -> AllIcons.Nodes.Lambda;
+      case Record -> AllIcons.Nodes.Record;
+      case Tag -> AllIcons.Nodes.Tag;
+      case ExceptionClass -> AllIcons.Nodes.ExceptionClass;
+      case ClassInitializer -> AllIcons.Nodes.ClassInitializer;
+      case Plugin -> AllIcons.Nodes.Plugin;
+      case PpWeb -> AllIcons.Nodes.PpWeb;
+
+      case StaticMark -> AllIcons.Nodes.StaticMark;
+      case FinalMark -> AllIcons.Nodes.FinalMark;
+      case TestMark -> AllIcons.RunConfigurations.TestMark;
+      case JunitTestMark -> AllIcons.Nodes.JunitTestMark;
+      case RunnableMark -> AllIcons.Nodes.RunnableMark;
+    };
   }
 
   @Override
@@ -200,7 +260,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
     private final int flagMask;
     private final @NotNull Icon icon;
 
-    private IconLayer(final int flagMask, @NotNull Icon icon) {
+    private IconLayer(int flagMask, @NotNull Icon icon) {
       BitUtil.assertOneBitMask(flagMask);
       this.flagMask = flagMask;
       this.icon = icon;
@@ -242,7 +302,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
       }
     });
     if (result.get() == null && Registry.is("ide.icon.tooltips.trace.missing", false)) {
-      LOG.info("Icon tooltip requested but not found for " + path);
+      Logger.getInstance(CoreIconManager.class).info("Icon tooltip requested but not found for " + path);
     }
     return result.get();
   }

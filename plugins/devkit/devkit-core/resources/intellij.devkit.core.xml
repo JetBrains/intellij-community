@@ -20,6 +20,7 @@
     <httpRequestHandler implementation="org.jetbrains.idea.devkit.debug.HttpDebugListener"/>
 
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
+    <runConfigurationExtension implementation="org.jetbrains.idea.devkit.run.DevKitApplicationPatcher"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.PluginModuleBuildScopeProvider"/>
 
     <xmlStructureViewBuilderProvider
@@ -83,6 +84,11 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDynamicPluginInspection"
                      key="inspection.plugin.xml.dynamic.plugin.display.name"/>
+    <localInspection language="XML" applyToDialects="false"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlExtensionRegistrationInspection"
+                     key="inspection.plugin.xml.extension.registration.display.name"/>
 
     <localInspection language="JVM" shortName="ComponentNotRegistered"
                      groupPathKey="inspections.group.path"
@@ -120,17 +126,11 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PostfixTemplateDescriptionNotFoundInspection"/>
     <!--suppress PluginXmlCapitalization -->
-    <localInspection shortName="ComponentRegistrationProblems"
+    <localInspection language="" shortName="ComponentRegistrationProblems"
                      key="inspections.registration.problems.name"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection"/>
-    <localInspection language="XML" shortName="InspectionMappingConsistency" applyToDialects="false"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.InspectionMappingConsistencyInspection"
-                     key="inspection.inspection.mapping.consistency.display.name"/>
 
     <localInspection language="UAST" shortName="UndesirableClassUsage"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -204,7 +204,7 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesEqualsInspection"
                      key="inspection.use.primitive.types.equals.display.name"/>
     <!--suppress PluginXmlCapitalization -->
-    <localInspection shortName="HighlightVisitorInternal"
+    <localInspection language="" shortName="HighlightVisitorInternal"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" isInternal="true"
                      level="ERROR" implementationClass="org.jetbrains.idea.devkit.inspections.internal.HighlightVisitorInternalInspection"

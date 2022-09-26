@@ -23,7 +23,6 @@ abstract class AnnotationBasedPluginProjectResolverExtension<T : AnnotationBased
 
     override fun getToolingExtensionsClasses() = setOf(
             modelClass,
-            AnnotationBasedPluginProjectResolverExtension::class.java,
             Unit::class.java)
 
     override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {

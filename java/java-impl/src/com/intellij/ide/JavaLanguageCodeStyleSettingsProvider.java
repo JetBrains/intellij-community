@@ -613,6 +613,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "interface Abba {}\n" +
     "record Rec(String s, int i) {}";
 
+  @SuppressWarnings({"UnusedLabel", "InnerClassMayBeStatic"})
   @org.intellij.lang.annotations.Language("JAVA") private static final String WRAPPING_CODE_SAMPLE =
     "/*\n" +
     " * This is a sample file.\n" +

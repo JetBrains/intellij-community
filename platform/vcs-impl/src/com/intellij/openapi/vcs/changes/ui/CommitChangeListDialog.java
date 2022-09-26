@@ -19,10 +19,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
@@ -69,7 +66,7 @@ import static com.intellij.util.ui.SwingHelper.buildHtml;
 import static com.intellij.util.ui.UIUtil.*;
 import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitExecutors;
 import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitHandlerFactories;
-import static com.intellij.vcs.commit.SingleChangeListCommitWorkflowKt.getPresentableText;
+import static com.intellij.vcs.commit.SingleChangeListCommitWorkflowKt.cleanActionText;
 import static java.lang.Math.max;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -93,7 +90,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   private static final boolean DETAILS_SHOW_OPTION_DEFAULT = true;
 
   @NotNull private final Project myProject;
-  @NotNull private final SingleChangeListCommitWorkflow myWorkflow;
+  @NotNull private final CommitChangeListDialogWorkflow myWorkflow;
   @NotNull private final EventDispatcher<CommitWorkflowUiStateListener> myStateEventDispatcher =
     EventDispatcher.create(CommitWorkflowUiStateListener.class);
   @NotNull private final EventDispatcher<CommitExecutorListener> myExecutorEventDispatcher =
@@ -219,16 +216,15 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       }
     }
 
-    boolean isDefaultChangeListFullyIncluded = new HashSet<>(changes).containsAll(defaultList.getChanges());
     SingleChangeListCommitWorkflow workflow =
       new SingleChangeListCommitWorkflow(project, affectedVcses, included, initialSelection, executors, showVcsCommit,
-                                         isDefaultChangeListFullyIncluded, comment, customResultHandler);
+                                         comment, customResultHandler);
     CommitChangeListDialog dialog = new DefaultCommitChangeListDialog(workflow);
 
     return new SingleChangeListCommitWorkflowHandler(workflow, dialog).activate();
   }
 
-  protected CommitChangeListDialog(@NotNull SingleChangeListCommitWorkflow workflow) {
+  protected CommitChangeListDialog(@NotNull CommitChangeListDialogWorkflow workflow) {
     super(workflow.getProject(), true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
     myWorkflow = workflow;
     myProject = myWorkflow.getProject();
@@ -239,7 +235,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       throw new IllegalArgumentException("nothing found to execute commit with");
     }
 
-    setTitle(isDefaultCommitEnabled() ? DIALOG_TITLE : getPresentableText(executors.get(0)));
+    setTitle(isDefaultCommitEnabled() ? DIALOG_TITLE : cleanActionText(executors.get(0).getActionText()));
     myHelpId = isDefaultCommitEnabled() ? HELP_ID : getHelpId(executors);
 
     myDiffDetails = new MyChangeProcessor(myProject, myWorkflow.isPartialCommitEnabled());
@@ -247,7 +243,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
     mySplitter = new Splitter(true);
-    myCommitOptions = new CommitOptionsPanel(() -> getDefaultCommitActionName());
+    boolean nonFocusable = !UISettings.getInstance().getDisableMnemonicsInControls(); // Or that won't be keyboard accessible at all
+    myCommitOptions = new CommitOptionsPanel(() -> getDefaultCommitActionName(), nonFocusable);
     myWarningLabel = new JBLabel();
 
     JPanel mainPanel = new JPanel(new MyOptionsLayout(mySplitter, myCommitOptions, JBUIScale.scale(150), JBUIScale.scale(400)));
@@ -395,8 +392,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     List<CommitExecutorAction> result = new ArrayList<>();
 
     if (isDefaultCommitEnabled() && UISettings.getShadowInstance().getAllowMergeButtons()) {
-      ActionGroup primaryActions = (ActionGroup)ActionManager.getInstance().getAction("Vcs.Commit.PrimaryCommitActions");
-      ActionGroup executorActions = (ActionGroup)ActionManager.getInstance().getAction("Vcs.CommitExecutor.Actions");
+      ActionGroup primaryActions = (ActionGroup)ActionManager.getInstance().getAction(VcsActions.PRIMARY_COMMIT_EXECUTORS_GROUP);
+      ActionGroup executorActions = (ActionGroup)ActionManager.getInstance().getAction(VcsActions.COMMIT_EXECUTORS_GROUP);
 
       result.addAll(map(primaryActions.getChildren(null), CommitExecutorAction::new));
       result.addAll(map(executorActions.getChildren(null), CommitExecutorAction::new));
@@ -694,14 +691,10 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @Override
   public boolean confirmCommitWithEmptyMessage() {
-    return showEmptyCommitMessageConfirmation(myProject);
-  }
-
-  public static boolean showEmptyCommitMessageConfirmation(@NotNull Project project) {
-    return MessageDialogBuilder
-      .yesNo(message("confirmation.title.check.in.with.empty.comment"), message("confirmation.text.check.in.with.empty.comment"))
-      .icon(Messages.getWarningIcon())
-      .ask(project);
+    Messages.showErrorDialog(myProject,
+                             message("error.text.check.in.with.empty.comment"),
+                             message("error.title.check.in.with.empty.comment"));
+    return false;
   }
 
   @Override

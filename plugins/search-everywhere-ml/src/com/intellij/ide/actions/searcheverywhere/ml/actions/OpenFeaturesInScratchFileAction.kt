@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile
 class OpenFeaturesInScratchFileAction : AnAction() {
   companion object {
     private const val SHOULD_ORDER_BY_ML_KEY = "shouldOrderByMl"
+    private const val EXPERIMENT_GROUP_KEY = "experimentGroup"
     private const val CONTEXT_INFO_KEY = "contextInfo"
     private const val SEARCH_STATE_FEATURES_KEY = "searchStateFeatures"
     private const val CONTRIBUTORS_KEY = "contributors"
@@ -87,6 +88,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
     val contributorFeatures = contributors.map { contributorFeaturesProvider.getFeatures(it, searchSession.mixedListInfo)}
     return mapOf(
       SHOULD_ORDER_BY_ML_KEY to state.orderByMl,
+      EXPERIMENT_GROUP_KEY to mlSessionService.experiment.experimentGroup,
       CONTEXT_INFO_KEY to searchSession.cachedContextInfo.features.associate { it.field.name to it.data },
       SEARCH_STATE_FEATURES_KEY to state.searchStateFeatures.associate { it.field.name to it.data },
       CONTRIBUTORS_KEY to contributorFeatures.map { c -> c.associate { it.field.name to it.data }.toSortedMap() },

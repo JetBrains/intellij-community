@@ -125,7 +125,6 @@ public final class RefactoringUtil {
 
 
   /**
-   * @param expression
    * @return loop body if expression is part of some loop's condition or for loop's increment part
    * null otherwise
    */
@@ -650,8 +649,6 @@ public final class RefactoringUtil {
    * <p/>
    * Note that {@code graph.getTargets()} is not necessarily a subset of {@code graph.getVertex()}
    *
-   * @param graph
-   * @param initialRelation
    * @return subset of graph.getVertices()
    */
   public static <T> Set<T> transitiveClosure(Graph<T> graph, Condition<? super T> initialRelation) {
@@ -681,6 +678,20 @@ public final class RefactoringUtil {
     }
     while (anyChanged);
     return result;
+  }
+
+  public static boolean equivalentTypes(PsiType t1, PsiType t2, PsiManager manager) {
+    while (t1 instanceof PsiArrayType) {
+      if (!(t2 instanceof PsiArrayType)) return false;
+      t1 = ((PsiArrayType)t1).getComponentType();
+      t2 = ((PsiArrayType)t2).getComponentType();
+    }
+
+    if (t1 instanceof PsiPrimitiveType) {
+      return t2 instanceof PsiPrimitiveType && t1.equals(t2);
+    }
+
+    return manager.areElementsEquivalent(PsiUtil.resolveClassInType(t1), PsiUtil.resolveClassInType(t2));
   }
 
   public static List<PsiVariable> collectReferencedVariables(PsiElement scope) {

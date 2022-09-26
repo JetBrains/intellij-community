@@ -10,7 +10,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -31,7 +31,7 @@ internal class DependencyGraphBuilder private constructor(
   private fun createVisitor(scope: LocalScopeContext) =
     DependencyGraphBuilder(scope, currentDepth, dependents, dependencies, implicitReceivers, scopesStates, inlinedVariables)
 
-  inline fun <T> checkedDepthCall(node: UElement, body: () -> T): T {
+  private inline fun <T> checkedDepthCall(node: UElement, body: () -> T): T {
     currentDepth++
     try {
       if (currentDepth > maxBuildDepth) {
@@ -308,7 +308,7 @@ internal class DependencyGraphBuilder private constructor(
     val firstExpression = (node.expressions.first() as? UDeclarationsExpression)
                             ?.declarations
                             ?.first()
-                            ?.castSafelyTo<ULocalVariable>()
+                            ?.asSafely<ULocalVariable>()
                             ?.uastInitializer
                             ?.extractBranchesResultAsDependency() ?: return@checkedDepthCall super.visitExpressionList(node)
     val ifExpression = node.expressions.getOrNull(1)

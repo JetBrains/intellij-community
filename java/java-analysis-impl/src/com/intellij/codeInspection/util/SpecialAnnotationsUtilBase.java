@@ -5,11 +5,13 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,9 +21,9 @@ import java.util.List;
 public final class SpecialAnnotationsUtilBase {
   public static LocalQuickFix createAddToSpecialAnnotationsListQuickFix(@NotNull final @IntentionName String text,
                                                                         @NotNull final @IntentionFamilyName String family,
+                                                                        @NotNull final @Nls String listTitle,
                                                                         @NotNull final List<String> targetList,
-                                                                        @NotNull final String qualifiedName,
-                                                                        final PsiElement context) {
+                                                                        @NotNull final String qualifiedName) {
     return new LocalQuickFix() {
       @Override
       @NotNull
@@ -47,7 +49,8 @@ public final class SpecialAnnotationsUtilBase {
 
       @Override
       public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-        return new IntentionPreviewInfo.Html(JavaBundle.message("special.annotations.annotations.preview", qualifiedName));
+        List<@NlsSafe String> prefixes = StreamEx.of(targetList).append(qualifiedName).sorted().toList();
+        return IntentionPreviewInfo.addListOption(prefixes, qualifiedName, listTitle);
       }
     };
   }
@@ -55,19 +58,7 @@ public final class SpecialAnnotationsUtilBase {
   static void doQuickFixInternal(@NotNull Project project, @NotNull List<String> targetList, @NotNull String qualifiedName) {
     targetList.add(qualifiedName);
     Collections.sort(targetList);
-    //correct save settings
-
-    //TODO lesya
     ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
-    /*
-    try {
-      inspectionProfile.save();
-    }
-    catch (IOException e) {
-      Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
-    }
-
-    */
   }
 
   public static void createAddToSpecialAnnotationFixes(@NotNull PsiModifierListOwner owner, @NotNull Processor<? super String> processor) {

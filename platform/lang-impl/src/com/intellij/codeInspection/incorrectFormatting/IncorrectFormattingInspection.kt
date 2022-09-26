@@ -47,17 +47,16 @@ class IncorrectFormattingInspection(
     }
 
     val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return null
-    val scope = CheckingScope(file, document, manager, isOnTheFly)
-    val changes = scope
-                    .getChanges()
-                    .takeIf { it.isNotEmpty() }
-                  ?: return null
 
+    val formattingChanges = detectFormattingChanges(file) ?: return null
+    if (formattingChanges.mismatches.isEmpty()) return null
+
+    val helper = IncorrectFormattingInspectionHelper(formattingChanges, file, document, manager, isOnTheFly)
     return if (reportPerFile) {
-      arrayOf(scope.createGlobalReport())
+      arrayOf(helper.createGlobalReport())
     }
     else {
-      scope.createAllReports(changes)
+      helper.createAllReports()
     }
   }
 

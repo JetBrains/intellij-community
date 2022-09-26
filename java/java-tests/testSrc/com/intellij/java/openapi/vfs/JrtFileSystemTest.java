@@ -66,7 +66,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
 
   private void setupJrtFileSystem() throws IOException {
     Files.createDirectories(myJrtPath);
-    Files.write(myJrtPath.resolve("release"), "JAVA_VERSION=9\n".getBytes(StandardCharsets.UTF_8));
+    Files.writeString(myJrtPath.resolve("release"), "JAVA_VERSION=9\n");
     Path lib = Files.createDirectory(myJrtPath.resolve("lib"));
     Files.copy(myTestData.resolve("jrt-fs.jar"), lib.resolve("jrt-fs.jar"));
     Files.copy(myTestData.resolve("image1"), lib.resolve("modules"));
@@ -111,7 +111,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
     Path modules = myJrtPath.resolve("lib/modules");
     Files.move(modules, myJrtPath.resolve("lib/modules.bak"), StandardCopyOption.ATOMIC_MOVE);
     Files.copy(myTestData.resolve("image2"), modules);
-    Files.write(myJrtPath.resolve("release"), "JAVA_VERSION=9.0.1\n".getBytes(StandardCharsets.UTF_8));
+    Files.writeString(myJrtPath.resolve("release"), "JAVA_VERSION=9.0.1\n");
     List<VFileEvent> events = VfsTestUtil.getEvents(() -> local.refresh(false, true));
     assertThat(childNames(myRoot)).describedAs("events=" + events).containsExactlyInAnyOrder("java.base", "test.a", "test.b");
 

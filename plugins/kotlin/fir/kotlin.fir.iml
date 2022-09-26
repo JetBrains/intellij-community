@@ -2,13 +2,13 @@
 <module type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="5" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
+      <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -Xjvm-default=enable -opt-in=com.intellij.openapi.util.IntellijInternalApi -Xcontext-receivers" />
+          <option name="additionalArguments" value="-Xjvm-default=enable -opt-in=com.intellij.openapi.util.IntellijInternalApi -Xcontext-receivers" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
-            <stringArg name="jvmTarget" arg="11" />
+            <stringArg name="jvmTarget" arg="17" />
             <stringArg name="apiVersion" arg="1.7" />
             <stringArg name="languageVersion" arg="1.7" />
           </stringArguments>
@@ -32,7 +32,6 @@
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fir" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.base.plugin" />
@@ -54,7 +53,6 @@
     <orderEntry type="module" module-name="kotlin.base.scripting" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.highlighting" />
-    <orderEntry type="module" module-name="kotlin.base.line-markers" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" />
     <orderEntry type="module" module-name="kotlin.idea" />
@@ -82,9 +80,14 @@
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
+    <orderEntry type="module" module-name="kotlin.code-insight.utils" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k2" />
+    <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="TEST" />
   </component>
 </module>

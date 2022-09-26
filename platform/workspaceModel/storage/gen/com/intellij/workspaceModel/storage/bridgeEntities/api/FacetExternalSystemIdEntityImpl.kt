@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
@@ -24,7 +25,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, WorkspaceEntityBase() {
+open class FacetExternalSystemIdEntityImpl(val dataSource: FacetExternalSystemIdEntityData) : FacetExternalSystemIdEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val FACET_CONNECTION_ID: ConnectionId = ConnectionId.create(FacetEntity::class.java, FacetExternalSystemIdEntity::class.java,
@@ -36,10 +37,8 @@ open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, Worksp
 
   }
 
-  @JvmField
-  var _externalSystemId: String? = null
   override val externalSystemId: String
-    get() = _externalSystemId!!
+    get() = dataSource.externalSystemId
 
   override val facet: FacetEntity
     get() = snapshot.extractOneToOneParent(FACET_CONNECTION_ID, this)!!
@@ -48,7 +47,7 @@ open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, Worksp
     return connections
   }
 
-  class Builder(val result: FacetExternalSystemIdEntityData?) : ModifiableWorkspaceEntityBase<FacetExternalSystemIdEntity>(), FacetExternalSystemIdEntity.Builder {
+  class Builder(var result: FacetExternalSystemIdEntityData?) : ModifiableWorkspaceEntityBase<FacetExternalSystemIdEntity>(), FacetExternalSystemIdEntity.Builder {
     constructor() : this(FacetExternalSystemIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -66,6 +65,9 @@ open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, Worksp
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -74,11 +76,11 @@ open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, Worksp
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isExternalSystemIdInitialized()) {
         error("Field FacetExternalSystemIdEntity#externalSystemId should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field FacetExternalSystemIdEntity#entitySource should be initialized")
       }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(FACET_CONNECTION_ID, this) == null) {
@@ -97,20 +99,18 @@ open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, Worksp
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FacetExternalSystemIdEntity
-      this.externalSystemId = dataSource.externalSystemId
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.externalSystemId != dataSource.externalSystemId) this.externalSystemId = dataSource.externalSystemId
+      if (parents != null) {
+        val facetNew = parents.filterIsInstance<FacetEntity>().single()
+        if ((this.facet as WorkspaceEntityBase).id != (facetNew as WorkspaceEntityBase).id) {
+          this.facet = facetNew
+        }
+      }
     }
 
-
-    override var externalSystemId: String
-      get() = getEntityData().externalSystemId
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().externalSystemId = value
-        changedProperty.add("externalSystemId")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -119,6 +119,14 @@ open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, Worksp
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var externalSystemId: String
+      get() = getEntityData().externalSystemId
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().externalSystemId = value
+        changedProperty.add("externalSystemId")
       }
 
     override var facet: FacetEntity
@@ -179,12 +187,13 @@ class FacetExternalSystemIdEntityData : WorkspaceEntityData<FacetExternalSystemI
   }
 
   override fun createEntity(snapshot: EntityStorage): FacetExternalSystemIdEntity {
-    val entity = FacetExternalSystemIdEntityImpl()
-    entity._externalSystemId = externalSystemId
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = FacetExternalSystemIdEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -203,20 +212,26 @@ class FacetExternalSystemIdEntityData : WorkspaceEntityData<FacetExternalSystemI
     }
   }
 
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(FacetEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FacetExternalSystemIdEntityData
 
-    if (this.externalSystemId != other.externalSystemId) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.externalSystemId != other.externalSystemId) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FacetExternalSystemIdEntityData
 
@@ -234,5 +249,9 @@ class FacetExternalSystemIdEntityData : WorkspaceEntityData<FacetExternalSystemI
     var result = javaClass.hashCode()
     result = 31 * result + externalSystemId.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

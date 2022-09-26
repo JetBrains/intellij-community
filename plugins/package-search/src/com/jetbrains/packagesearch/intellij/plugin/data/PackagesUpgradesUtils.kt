@@ -46,7 +46,7 @@ internal suspend fun computePackageUpgrades(
         if (installedPackageModel.remoteInfo == null || availableVersions.isEmpty()) continue
 
         for (usageInfo in installedPackageModel.usageInfo) {
-            val currentVersion = usageInfo.getResolvedVersionOrFallback()
+            val currentVersion = usageInfo.getDeclaredVersionOrFallback()
             if (currentVersion !is PackageVersion.Named) continue
 
             val normalizedPackageVersion = runCatching { normalizer.parse(currentVersion) }
@@ -77,7 +77,7 @@ internal suspend fun computePackageUpgrades(
     return PackagesToUpgrade(updatesByModule)
 }
 
-internal inline fun computeUpgradeOperationsForSingleModule(
+private fun computeUpgradeOperationsForSingleModule(
     packageModel: PackageModel.Installed,
     targetModule: ModuleModel,
     knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,

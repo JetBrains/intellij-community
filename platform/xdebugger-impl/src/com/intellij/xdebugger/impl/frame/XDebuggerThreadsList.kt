@@ -7,6 +7,7 @@ import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -132,7 +133,7 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : 
             val stack = value ?: return
             if (selected) {
                 background = UIUtil.getListSelectionBackground(hasFocus)
-                foreground = UIUtil.getListSelectionForeground(hasFocus)
+                foreground = NamedColorUtil.getListSelectionForeground(hasFocus)
                 mySelectionForeground = foreground
             }
             when (stack.kind) {

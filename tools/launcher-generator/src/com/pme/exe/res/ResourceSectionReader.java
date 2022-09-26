@@ -35,6 +35,7 @@ public class ResourceSectionReader extends Bin.Structure {
   private Bin.Value myMainSectionsOffset;
   private Bin.Value mySize;
   private Bin.Bytes myBytes;
+  private long myFileAlignment;
 
   public ResourceSectionReader( ImageSectionHeader sectionHeader, Bin.Value startOffset, Bin.Value mainSectionsOffset, ImageOptionalHeader imageOptionalHeader) {
     super(((Bin.Txt)sectionHeader.getMember("Name")).getText());
@@ -43,6 +44,7 @@ public class ResourceSectionReader extends Bin.Structure {
     Bin.Value virtualSize = sectionHeader.getValueMember( "VirtualSize" );
     myMainSectionsOffset = mainSectionsOffset;
     addOffsetHolder(startOffset);
+    myFileAlignment = imageOptionalHeader.getValue("FileAlignment");
 
     ArrayOfBins imageDataDirs = (ArrayOfBins)imageOptionalHeader.getMember( "ImageDataDirectories" );
     Bin[] bins = imageDataDirs.getArray();
@@ -69,7 +71,10 @@ public class ResourceSectionReader extends Bin.Structure {
   }
 
   public long sizeInBytes() {
-    return super.sizeInBytes() + myBytes.sizeInBytes();
+    long size = super.sizeInBytes() + myBytes.sizeInBytes();
+    if (size % myFileAlignment != 0)
+      size = (size / myFileAlignment + 1) * myFileAlignment;
+    return size;
   }
 
   public void read(DataInput stream) throws IOException {
@@ -85,6 +90,10 @@ public class ResourceSectionReader extends Bin.Structure {
   public void write(DataOutput stream) throws IOException {
     super.write(stream);
     myBytes.write(stream);
+
+    long paddingSize = sizeInBytes() - super.sizeInBytes() - myBytes.sizeInBytes();
+    if (paddingSize != 0)
+      stream.write(new byte[(int)paddingSize]);
   }
 
   public void report(OutputStreamWriter writer) throws IOException {

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 /**
- * @athor Bas Leijdekkers
+ * @author Bas Leijdekkers
  */
 public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
 

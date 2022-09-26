@@ -160,10 +160,12 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
   @Nullable
   private Field mergeFields(@NotNull List<Pair<Field, YamlMetaType>> pairs) {
     switch (pairs.size()) {
-      case 0:
+      case 0 -> {
         return null;
-      case 1:
+      }
+      case 1 -> {
         return pairs.get(0).getFirst();
+      }
     }
     Set<String> allNames = pairs.stream().map(fieldAndType -> fieldAndType.getFirst().getName()).collect(Collectors.toSet());
     assert allNames.size() == 1 : "Can't merge fields with different names: " + allNames;
@@ -173,11 +175,11 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
 
     List<Field> fields = ContainerUtil.map(pairs, pair -> pair.getFirst());
     // we will assume that "positive" field qualities are merged by ANY while "negative" qualities are merged by ALL
-    boolean required = fields.stream().allMatch(f -> f.isRequired());
-    boolean deprecated = fields.stream().allMatch(f -> f.isDeprecated());
-    boolean editable = fields.stream().anyMatch(f -> f.isEditable());
-    boolean emptyAllowed = fields.stream().anyMatch(f -> f.isEmptyValueAllowed());
-    boolean anyName = fields.stream().anyMatch(f -> f.isAnyNameAllowed());
+    boolean required = ContainerUtil.and(fields, f -> f.isRequired());
+    boolean deprecated = ContainerUtil.and(fields, f -> f.isDeprecated());
+    boolean editable = ContainerUtil.exists(fields, f -> f.isEditable());
+    boolean emptyAllowed = ContainerUtil.exists(fields, f -> f.isEmptyValueAllowed());
+    boolean anyName = ContainerUtil.exists(fields, f -> f.isAnyNameAllowed());
 
     YamlMetaType type = composeTypes(pairs.stream().map(p -> p.getSecond()).toArray(YamlMetaType[]::new));
     Field result = new Field(theName, type);

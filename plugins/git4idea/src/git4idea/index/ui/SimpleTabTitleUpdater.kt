@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.branch.BranchData
@@ -52,6 +53,8 @@ abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val 
   }
 
   private fun getDisplayName(): @NotNull @Nls String {
+    if (ExperimentalUI.isNewUI()) return VcsBundle.message("tab.title.commit")
+
     val branchesText = BranchPresentation.getText(branches)
     if (branchesText.isBlank()) return VcsBundle.message("tab.title.commit")
 

@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 import com.sun.jdi.LongValue
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.StringReference
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 
 class CoroutineContext(context: DefaultExecutionContext) :
     BaseMirror<ObjectReference, MirrorOfCoroutineContext>("kotlin.coroutines.CombinedContext", context) {

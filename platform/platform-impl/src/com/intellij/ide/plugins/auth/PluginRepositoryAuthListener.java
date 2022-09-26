@@ -6,7 +6,7 @@ import com.intellij.util.messages.Topic;
 
 /**
  * Post to {@link PluginRepositoryAuthListener#PLUGIN_REPO_AUTH_CHANGED_TOPIC} to invalidate custom plugin repo caches
- * @see {@link PluginRepositoryAuthProvider}
+ * @see PluginRepositoryAuthProvider
  */
 public interface PluginRepositoryAuthListener {
 

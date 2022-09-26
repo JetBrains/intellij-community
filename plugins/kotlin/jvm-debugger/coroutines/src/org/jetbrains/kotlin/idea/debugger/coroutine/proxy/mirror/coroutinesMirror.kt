@@ -6,7 +6,7 @@ import com.sun.jdi.IntegerValue
 import com.sun.jdi.LongValue
 import com.sun.jdi.ObjectReference
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 
 class StandaloneCoroutine private constructor(context: DefaultExecutionContext) :
     BaseMirror<ObjectReference, MirrorOfStandaloneCoroutine>("kotlinx.coroutines.StandaloneCoroutine", context) {

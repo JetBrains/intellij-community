@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors;
 
-import com.intellij.idea.Main;
+import com.intellij.idea.AppMode;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
-import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.AllowedDuringStartupCollector;
+import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LicensingFacade;
@@ -39,7 +39,7 @@ public class EAPUsageCollector extends ApplicationUsagesCollector implements All
   @NotNull
   private static Set<MetricEvent> collectMetrics() {
     try {
-      if (!Main.isHeadless()) {
+      if (!AppMode.isHeadless()) {
         final Set<MetricEvent> result = new HashSet<>();
         if (ApplicationInfoEx.getInstanceEx().isEAP()) {
           result.add(BUILD.metric(BuildType.eap));

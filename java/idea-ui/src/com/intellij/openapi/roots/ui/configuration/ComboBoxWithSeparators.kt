@@ -11,6 +11,7 @@ import com.intellij.ui.components.panels.OpaquePanel
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.Dimension
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JList
 
@@ -46,12 +47,7 @@ abstract class ComboBoxWithSeparators<T> : ComboBox<ComboBoxWithSeparators<T>.En
   }
 
   private inner class MyListCellRenderer: ColoredListCellRenderer<ComboBoxWithSeparators<T>.EntryModel<T>>() {
-    private val separator = GroupHeaderSeparator(JBUI.insets(3, 8, 1, 0)).apply {
-      useComboLineInsets()
-    }
-    private val separatorPanel = OpaquePanel(BorderLayout()).apply {
-      add(separator)
-    }
+    private val separatorRenderer = SeparatorRenderer()
 
     override fun getListCellRendererComponent(list: JList<out EntryModel<T>>?,
                                               value: EntryModel<T>?,
@@ -60,8 +56,9 @@ abstract class ComboBoxWithSeparators<T> : ComboBox<ComboBoxWithSeparators<T>.En
                                               hasFocus: Boolean): Component {
       return when (value) {
         is Separator -> {
-          separator.caption = value.text
-          separatorPanel
+          // index = -1 for ComboBox size calculation, separator shouldn't be taken into account
+          separatorRenderer.init(value.text, index < 0)
+          separatorRenderer
         }
         else -> super.getListCellRendererComponent(list, value, index, selected, hasFocus)
       }
@@ -83,4 +80,30 @@ abstract class ComboBoxWithSeparators<T> : ComboBox<ComboBoxWithSeparators<T>.En
 
   }
 
+}
+
+private class SeparatorRenderer : OpaquePanel() {
+
+  private val separator = GroupHeaderSeparator(JBUI.insets(3, 8, 1, 0))
+
+  private var emptyPreferredHeight = false
+
+  init {
+    layout = BorderLayout()
+    separator.useComboLineInsets()
+    add(separator)
+  }
+
+  fun init(@NlsContexts.Separator caption: String, emptyPreferredHeight: Boolean) {
+    separator.caption = caption
+    this.emptyPreferredHeight = emptyPreferredHeight
+  }
+
+  override fun getPreferredSize(): Dimension {
+    var result = super.getPreferredSize()
+    if (emptyPreferredHeight) {
+      result = Dimension(result.width, 0)
+    }
+    return result
+  }
 }

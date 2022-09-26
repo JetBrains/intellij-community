@@ -99,7 +99,7 @@ public final class NavBarItem extends SimpleColoredComponent implements Disposab
       }
     }
     else {
-      setIconOpaque(true);
+      setIconOpaque(false);
       setFocusBorderAroundIcon(true);
     }
 
@@ -256,7 +256,7 @@ public final class NavBarItem extends SimpleColoredComponent implements Disposab
 
   @Override
   protected boolean shouldDrawBackground() {
-    return isSelected() && isFocusedOrPopupElement();
+    return isSelected() && isFocused() && !isPopupElement;
   }
 
   @Override

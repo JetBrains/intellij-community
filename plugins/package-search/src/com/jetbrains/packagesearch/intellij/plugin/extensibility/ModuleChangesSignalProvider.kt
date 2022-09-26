@@ -19,7 +19,6 @@ package com.jetbrains.packagesearch.intellij.plugin.extensibility
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.util.asCoroutine
-import kotlin.streams.asSequence
 
 /**
  * Extension point that allows to listen to module changes.
@@ -32,7 +31,7 @@ interface ModuleChangesSignalProvider {
             ExtensionPointName.create("com.intellij.packagesearch.moduleChangesSignalProvider")
 
         internal fun extensions(project: Project) =
-            extensionPointName.extensions(project).asSequence()
+            extensionPointName.getExtensionList(project).asSequence()
                 .map { it.asCoroutine().registerModuleChangesListener(project) }
                 .toList()
                 .toTypedArray()

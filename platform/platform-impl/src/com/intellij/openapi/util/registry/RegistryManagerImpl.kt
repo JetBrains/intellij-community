@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry
 
-import com.intellij.application.options.RegistryManager
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.Disposable
@@ -13,7 +12,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ArrayUtilRt
-import com.intellij.util.EarlyAccessRegistryManager
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -27,7 +25,8 @@ internal class RegistryManagerImpl : PersistentStateComponent<Element>, Registry
     }
     Registry.setValueChangeListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
-        ApplicationManager.getApplication().messageBus.syncPublisher(RegistryManager.TOPIC).afterValueChanged(value)
+        ApplicationManager.getApplication().messageBus.syncPublisher(
+          RegistryManager.TOPIC).afterValueChanged(value)
       }
     })
 

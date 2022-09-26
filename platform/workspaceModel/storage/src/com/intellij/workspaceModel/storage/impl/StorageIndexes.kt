@@ -197,7 +197,7 @@ internal class MutableStorageIndexes(
     builder.indexes.persistentIdIndex.getEntryById(oldEntityId)?.also { persistentIdIndex.index(newEntityId, it) }
   }
 
-  fun <T : WorkspaceEntity> simpleUpdateSoftReferences(copiedData: WorkspaceEntityData<T>, modifiableEntity: ModifiableWorkspaceEntityBase<*>?) {
+  private fun <T : WorkspaceEntity> simpleUpdateSoftReferences(copiedData: WorkspaceEntityData<T>, modifiableEntity: ModifiableWorkspaceEntityBase<*>?) {
     val pid = copiedData.createEntityId()
     if (copiedData is SoftLinkable) {
 //      if (modifiableEntity is ModifiableModuleEntity && !modifiableEntity.dependencyChanged) return
@@ -226,17 +226,17 @@ internal class MutableStorageIndexes(
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun updateExternalMappingForEntityId(oldId: EntityId, newId: EntityId = oldId, originStorageIndexes: StorageIndexes) {
-    originStorageIndexes.externalMappings.forEach { (id, mapping) ->
-      val data = mapping.index[oldId] ?: return@forEach
-      val externalMapping = externalMappings[id]
+  fun updateExternalMappingForEntityId(replaceWithEntityId: EntityId, targetEntityId: EntityId, replaceWithIndexes: StorageIndexes) {
+    replaceWithIndexes.externalMappings.forEach { (mappingId, mapping) ->
+      val data = mapping.index[replaceWithEntityId] ?: return@forEach
+      val externalMapping = externalMappings[mappingId]
       if (externalMapping == null) {
         val newMapping = MutableExternalEntityMappingImpl<Any>()
-        newMapping.add(newId, data)
-        externalMappings[id] = newMapping
+        newMapping.add(targetEntityId, data)
+        externalMappings[mappingId] = newMapping
       } else {
         externalMapping as MutableExternalEntityMappingImpl<Any>
-        externalMapping.add(newId, data)
+        externalMapping.add(targetEntityId, data)
       }
     }
   }

@@ -6,6 +6,7 @@ import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
@@ -54,20 +55,18 @@ public class SuspendManagerImpl implements SuspendManager {
         LOG.debug("Start resuming...");
         myDebugProcess.logThreads();
         switch (getSuspendPolicy()) {
-          case EventRequest.SUSPEND_ALL:
+          case EventRequest.SUSPEND_ALL -> {
             myDebugProcess.getVirtualMachineProxy().resume();
             LOG.debug("VM resumed ");
-            break;
-          case EventRequest.SUSPEND_EVENT_THREAD:
+          }
+          case EventRequest.SUSPEND_EVENT_THREAD -> {
             myFrozenThreads.remove(getThread());
             getThread().resume();
             if (LOG.isDebugEnabled()) {
               LOG.debug("Thread resumed : " + getThread().toString());
             }
-            break;
-          case EventRequest.SUSPEND_NONE:
-            LOG.debug("None resumed");
-            break;
+          }
+          case EventRequest.SUSPEND_NONE -> LOG.debug("None resumed");
         }
         if (LOG.isDebugEnabled()) {
           LOG.debug("Suspends = " + suspends);
@@ -86,7 +85,7 @@ public class SuspendManagerImpl implements SuspendManager {
       @Override
       protected void resumeImpl() {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Start resuming eventSet " + set.toString() + " suspendPolicy = " + set.suspendPolicy() + ",size = " + set.size());
+          LOG.debug("Start resuming eventSet " + set + " suspendPolicy = " + set.suspendPolicy() + ",size = " + set.size());
         }
         myDebugProcess.logThreads();
         DebuggerUtilsAsync.resume(set);
@@ -171,7 +170,7 @@ public class SuspendManagerImpl implements SuspendManager {
       suspended = true;
     }
     else {
-      suspended = myEventContexts.stream().anyMatch(suspendContext -> suspendContext.suspends(thread));
+      suspended = ContainerUtil.exists(myEventContexts, suspendContext -> suspendContext.suspends(thread));
     }
 
     //bug in JDI : newly created thread may be resumed even when suspendPolicy == SUSPEND_ALL

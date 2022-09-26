@@ -2,27 +2,18 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.*
+import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
-import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.UISettingsListener
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent
-import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.PopupUtil
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
-import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
@@ -30,11 +21,13 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.ui.popup.PopupState
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import java.awt.BorderLayout
@@ -42,76 +35,29 @@ import java.awt.Component
 import java.awt.event.InputEvent
 import java.util.function.Function
 import javax.swing.*
-import kotlin.properties.Delegates
 
 private const val MAX_RECENT_COUNT = 100
 
-internal class ProjectWidgetFactory : MainToolbarProjectWidgetFactory {
-  override fun createWidget(project: Project): JComponent {
-    val widget = ProjectWidget(project)
-    ProjectWidgetUpdater(project, widget).subscribe()
-    return widget
-  }
+internal val projectKey = Key.create<Project>("project-widget-project")
 
-  override fun getPosition(): Position = Position.Center
-}
+internal class ProjectWidget(private val presentation: Presentation) : ToolbarComboWidget() {
 
-private class ProjectWidgetUpdater(private val proj: Project,
-                                   private val widget: ProjectWidget) : FileEditorManagerListener, UISettingsListener, ProjectManagerListener {
-  private var file: VirtualFile? by Delegates.observable(null) { _, _, _ -> updateText() }
-  private var settings: UISettings by Delegates.observable(UISettings.getInstance()) { _, _, _ -> updateText() }
+  private val popupState = PopupState.forPopup()
+  private val project: Project?
+    get() = presentation.getClientProperty(projectKey)
 
   init {
-    file = FileEditorManager.getInstance(proj).selectedFiles.firstOrNull()
+    presentation.addPropertyChangeListener { updateWidget() }
   }
 
-  private fun updateText() {
-    val currentFile = file
-    val showFileName = settings.editorTabPlacement == UISettings.TABS_NONE && currentFile != null
-    val maxLength = if (showFileName) 12 else 24
-
-    @NlsSafe val fullName = StringBuilder(proj.name)
-    @NlsSafe val cutName = StringBuilder(cutProject(proj.name, maxLength))
-    if (showFileName) {
-      fullName.append(" — ").append(currentFile!!.name)
-      cutName.append(" — ").append(cutFile(currentFile.name, maxLength))
-    }
-
-    widget.text = cutName.toString()
-    widget.toolTipText = if (cutName.toString() == fullName.toString()) null else fullName.toString()
+  private fun updateWidget() {
+    text = presentation.text
+    toolTipText = presentation.description
   }
-
-  private fun cutFile(value: String, maxLength: Int): String {
-    if (value.length <= maxLength) return value
-
-    val extension = value.substringAfterLast(".", "")
-    val name = value.substringBeforeLast(".")
-    if (name.length + extension.length <= maxLength) return value
-
-    return name.substring(0, maxLength - extension.length) + "..." + extension
-  }
-
-  private fun cutProject(value: String, maxLength: Int): String {
-    return if (value.length <= maxLength) value else value.substring(0, maxLength) + "..."
-  }
-
-  fun subscribe() {
-    ApplicationManager.getApplication().messageBus.connect(widget).subscribe(UISettingsListener.TOPIC, this)
-    proj.messageBus.connect(widget).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this)
-  }
-
-  override fun uiSettingsChanged(uiSettings: UISettings) {
-    SwingUtilities.invokeLater { settings = uiSettings }
-  }
-
-  override fun selectionChanged(event: FileEditorManagerEvent) {
-    SwingUtilities.invokeLater { file = event.newFile }
-  }
-}
-
-private class ProjectWidget(private val project: Project): ToolbarComboWidget(), Disposable {
 
   override fun doExpand(e: InputEvent) {
+    if (popupState.isShowing || popupState.isRecentlyHidden) return
+
     val dataContext = DataManager.getInstance().getDataContext(this)
     val anActionEvent = AnActionEvent.createFromInputEvent(e, ActionPlaces.PROJECT_WIDGET_POPUP, null, dataContext)
     val step = createStep(createActionGroup(anActionEvent))
@@ -130,9 +76,14 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
       }
     }
 
-    val popup = JBPopupFactory.getInstance().createListPopup(project, step, renderer)
-    popup.setRequestFocus(false)
-    popup.showUnderneathOf(this)
+    project?.let { createPopup(it, step, renderer) }?.showUnderneathOf(this)
+  }
+
+  private fun createPopup(it: Project, step: ListPopupStep<Any>, renderer: Function<ListCellRenderer<Any>, ListCellRenderer<out Any>>): ListPopup {
+    val res = JBPopupFactory.getInstance().createListPopup(it, step, renderer)
+    res.setRequestFocus(false)
+    popupState.prepareToShow(res)
+    return res
   }
 
   private fun createActionGroup(initEvent: AnActionEvent): ActionGroup {
@@ -140,11 +91,27 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
 
     val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
     res.addAll(group.getChildren(initEvent).asList())
-    res.addSeparator(IdeBundle.message("project.widget.recent.projects"))
-    RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).forEach { res.add(it) }
+    val openProjects = ProjectUtilCore.getOpenProjects()
+    val actionsMap: Map<Boolean, List<AnAction>> = RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).groupBy(createSelector(openProjects))
+
+    actionsMap[true]?.let {
+      res.addSeparator(IdeBundle.message("project.widget.open.projects"))
+      res.addAll(it)
+    }
+
+    actionsMap[false]?.let {
+      res.addSeparator(IdeBundle.message("project.widget.recent.projects"))
+      res.addAll(it)
+    }
 
     return res
   }
+
+  private fun createSelector(openProjects: Array<Project>): (AnAction) -> Boolean {
+    val paths = openProjects.map { it.basePath }
+    return { action -> (action as? ReopenProjectAction)?.projectPath in paths }
+  }
+
 
   private fun createStep(actionGroup: ActionGroup): ListPopupStep<Any> {
     val context = DataManager.getInstance().getDataContext(this)
@@ -152,20 +119,13 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
                                                           null, this, false, 0, false)
   }
 
-  override fun removeNotify() {
-    super.removeNotify()
-    Disposer.dispose(this)
-  }
-
-  override fun dispose() {}
-
   private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionItem> {
     override fun getListCellRendererComponent(list: JList<out PopupFactoryImpl.ActionItem>?,
                                               value: PopupFactoryImpl.ActionItem?,
                                               index: Int,
                                               isSelected: Boolean,
                                               cellHasFocus: Boolean): Component {
-      return createRecentProjectPane(value as PopupFactoryImpl.ActionItem, isSelected, getSeparator(list, value))
+      return createRecentProjectPane(value as PopupFactoryImpl.ActionItem, isSelected, getSeparator(list, value), index == 0)
     }
 
     private fun getSeparator(list: JList<out PopupFactoryImpl.ActionItem>?, value: PopupFactoryImpl.ActionItem?): ListSeparator? {
@@ -175,7 +135,7 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
       return ListSeparator(model.getCaptionAboveOf(value))
     }
 
-    private fun createRecentProjectPane(value: PopupFactoryImpl.ActionItem, isSelected: Boolean, separator: ListSeparator?): JComponent {
+    private fun createRecentProjectPane(value: PopupFactoryImpl.ActionItem, isSelected: Boolean, separator: ListSeparator?, hideLine: Boolean): JComponent {
       val action = value.action as ReopenProjectAction
       val projectPath = action.projectPath
       lateinit var nameLbl: JLabel
@@ -193,13 +153,13 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
                 nameLbl = label(action.projectNameToDisplay ?: "")
                   .customize(JBGaps(bottom = 4))
                   .applyToComponent {
-                    foreground = if (isSelected) UIUtil.getListSelectionForeground(true) else UIUtil.getListForeground()
+                    foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(true) else UIUtil.getListForeground()
                   }.component
               }
               row {
                 pathLbl = label(FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(projectPath), false))
                   .applyToComponent {
-                    font = JBFont.small()
+                    font = JBFont.smallOrNewUiMedium()
                     foreground = UIUtil.getLabelInfoForeground()
                   }.component
               }
@@ -226,14 +186,15 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
 
       val res = NonOpaquePanel(BorderLayout())
       res.border = JBUI.Borders.empty()
-      res.add(createSeparator(separator), BorderLayout.NORTH)
+      res.add(createSeparator(separator, hideLine), BorderLayout.NORTH)
       res.add(result, BorderLayout.CENTER)
       return res
     }
 
-    private fun createSeparator(separator: ListSeparator): JComponent {
+    private fun createSeparator(separator: ListSeparator, hideLine: Boolean): JComponent {
       val res = GroupHeaderSeparator(JBUI.CurrentTheme.Popup.separatorLabelInsets())
       res.caption = separator.text
+      res.setHideLine(hideLine)
 
       val panel = JPanel(BorderLayout())
       panel.border = JBUI.Borders.empty()

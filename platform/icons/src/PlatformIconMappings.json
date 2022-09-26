@@ -1,5 +1,11 @@
 {
   "expui": {
+    "actions": {
+      "playFirst.svg": "actions/play_first.svg",
+      "playBack.svg": "actions/play_back.svg",
+      "playForward.svg": "actions/play_forward.svg",
+      "playLast.svg": "actions/play_last.svg"
+    },
     "bookmarks": {
       "addBookmarksList.svg": "actions/addList.svg",
       "bookmark.svg": "nodes/bookmark.svg",
@@ -153,6 +159,7 @@
         "actions/AddMulticaret.svg"
       ],
       "addAccount.svg": "codeWithMe/cwmAccess.svg",
+      "user.svg": "general/user.svg",
       "chevronDown.svg": [
         "actions/findAndShowNextMatches.svg",
         "actions/findAndShowNextMatchesSmall.svg",
@@ -205,6 +212,7 @@
       ],
       "editorOnly.svg": "general/layoutEditorOnly.svg",
       "editorPreview.svg": "general/layoutEditorPreview.svg",
+      "errorDialog.svg": "general/errorDialog.svg",
       "exit.svg": "actions/exit.svg",
       "expandAll.svg": "actions/expandall.svg",
       "export.svg": "toolbarDecorator/export.svg",
@@ -212,7 +220,10 @@
       "help.svg": "actions/help.svg",
       "hide.svg": "general/hideToolWindow.svg",
       "history.svg": "vcs/history.svg",
+      "ideUpdate.svg": "ide/notification/ideUpdate.svg",
+      "pluginUpdate.svg": "ide/notification/pluginUpdate.svg",
       "import.svg": "toolbarDecorator/import.svg",
+      "informationDialog.svg":"general/informationDialog.svg",
       "layout.svg": "debugger/restoreLayout.svg",
       "left.svg": "actions/back.svg",
       "listFiles.svg": "actions/listFiles.svg",
@@ -248,6 +259,7 @@
       "previewOnly.svg": "general/layoutPreviewOnly.svg",
       "previewVertically.svg": "actions/previewDetails.svg",
       "refresh.svg": "actions/refresh.svg",
+      "reset.svg": "general/reset.svg",
       "remove.svg": [
         "general/remove.svg",
         "actions/RemoveMulticaret.svg"
@@ -263,6 +275,7 @@
         "actions/groupBy.svg",
         "actions/show.svg"
       ],
+      "showAsTree.svg": "actions/showAsTree.svg",
       "splitHorizontally.svg": "actions/splitHorizontally.svg",
       "splitVertically.svg": "actions/splitVertically.svg",
       "unlocked.svg": "ide/readwrite.svg",
@@ -276,7 +289,10 @@
       "projectWideAnalysisOn.svg": "actions/projectWideAnalysisOn.svg",
       "softWrap.svg": "actions/toggleSoftWrap.svg",
       "scrollDown.svg": "runConfigurations/scroll_down.svg",
-      "projectStructure.svg": "general/projectStructure.svg"
+      "projectStructure.svg": "general/projectStructure.svg",
+      "successDialog.svg": "general/successDialog.svg",
+      "questionDialog.svg": "general/questionDialog.svg",
+      "warningDialog.svg": "general/warningDialog.svg"
     },
     "gutter": {
       "bookmark.svg": "gutter/bookmark.svg",
@@ -298,7 +314,6 @@
     },
     "image": {
       "colorPicker_dark.svg": "ide/pipette.svg",
-      "chessboard.svg": "org/intellij/images/icons/ToggleTransparencyChessboard.svg",
       "actualZoom.svg": "graph/actualZoom.svg",
       "colorPicker.svg": "ide/pipette.svg",
       "grid.svg": "graph/grid.svg",
@@ -378,6 +393,7 @@
       "classAnonymous.svg": "nodes/anonymousClass.svg",
       "classInitializer.svg": "nodes/classInitializer.svg",
       "constant.svg": "nodes/constant.svg",
+      "dataSchema.svg": "nodes/dataSchema.svg",
       "editFolder.svg": "modules/editFolder.svg",
       "enum.svg": "nodes/enum.svg",
       "errorIntroduction.svg": "nodes/errorIntroduction.svg",
@@ -477,7 +493,9 @@
       "muteBreakpoints.svg": "debugger/muteBreakpoints.svg",
       "pause.svg": "actions/pause.svg",
       "profile.svg": "actions/profile.svg",
+      "rerun.svg": "actions/rerun.svg",
       "restart.svg": "actions/restart.svg",
+      "restartDebug.svg": "actions/restartDebugger.svg",
       "restartFailedTests.svg": "runConfigurations/rerunFailedTests.svg",
       "restartFrame.svg": "actions/restartFrame.svg",
       "resume.svg": "actions/resume.svg",
@@ -581,7 +599,8 @@
       "revert.svg": "actions/rollback.svg",
       "stash.svg": [
         "vcs/Shelve.svg",
-        "vcs/shelveSilent.svg"
+        "vcs/shelveSilent.svg",
+        "vcs/Stash.svg"
       ],
       "update.svg": "actions/checkOut.svg"
     }

@@ -1407,11 +1407,8 @@ abstract class TreeUiTestCase extends AbstractTreeBuilderTest {
         else if (toInterrupt) {
           wasInterrupted[0] = true;
           switch (interruption) {
-            case throwProcessCancelled:
-              throw new ProcessCanceledException();
-            case invokeCancel:
-              getBuilder().cancelUpdate();
-              break;
+            case throwProcessCancelled -> throw new ProcessCanceledException();
+            case invokeCancel -> getBuilder().cancelUpdate();
           }
         }
       }

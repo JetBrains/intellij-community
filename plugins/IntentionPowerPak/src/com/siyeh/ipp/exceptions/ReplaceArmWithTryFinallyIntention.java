@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @auhor Bas Leijdekkers
+ * @author Bas Leijdekkers
  */
 public class ReplaceArmWithTryFinallyIntention extends Intention {
 

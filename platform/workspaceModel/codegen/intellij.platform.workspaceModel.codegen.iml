@@ -10,19 +10,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
-    <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
-    <orderEntry type="library" name="kotlinx-collections-immutable-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
-    <orderEntry type="module" module-name="intellij.java.psi.impl" />
-    <orderEntry type="module" module-name="intellij.platform.analysis" />
-    <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" />
-    <orderEntry type="module" module-name="intellij.platform.codeStyle" />
   </component>
 </module>

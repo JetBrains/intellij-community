@@ -1,11 +1,16 @@
 package com.intellij.workspaceModel.codegen.fields
 
-import com.intellij.workspaceModel.codegen.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.getRefType
+import com.intellij.workspaceModel.codegen.isRefType
+import com.intellij.workspaceModel.codegen.refsFields
 import com.intellij.workspaceModel.codegen.utils.fqn1
 import com.intellij.workspaceModel.codegen.utils.fqn2
-import com.intellij.workspaceModel.codegen.writer.*
+import com.intellij.workspaceModel.codegen.utils.toQualifiedName
+import com.intellij.workspaceModel.codegen.writer.hasSetter
+import com.intellij.workspaceModel.codegen.writer.isOverride
+import com.intellij.workspaceModel.codegen.writer.javaName
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
 
@@ -17,7 +22,7 @@ val ObjProperty<*, *>.implWsEntityFieldCode: String
       }
       else append(implWsBlockingCode)
     } else {
-      append("override var $javaName: ${valueType.javaType} = super<${owner.javaFullName}>.$javaName\n")
+      append("override var $javaName: ${valueType.javaType} = dataSource.$javaName\n")
     }
   }
 
@@ -26,12 +31,11 @@ private val ObjProperty<*, *>.implWsBlockingCode: String
 
 internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, optionalSuffix: String = ""): String {
   return when (fieldType) {
-    ValueType.Int -> "override var $name: ${fieldType.javaType} = 0"
-    ValueType.Boolean -> "override var $name: ${fieldType.javaType} = false"
+    ValueType.Int -> "override val $name: ${fieldType.javaType} get() = dataSource.$name"
+    ValueType.Boolean -> "override val $name: ${fieldType.javaType} get() = dataSource.$name"
     ValueType.String -> """            
-            @JvmField var $implFieldName: String? = null
             override val $name: ${fieldType.javaType}${optionalSuffix}
-                get() = $implFieldName${if (optionalSuffix.isBlank()) "!!" else ""}
+                get() = dataSource.$name
                                 
         """.trimIndent()
     is ValueType.ObjRef -> {
@@ -62,11 +66,9 @@ internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: St
         }
       }
       else {
-        val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else ""
         """
-                @JvmField var $implFieldName: ${fieldType.javaType}? = null
                 override val $name: ${fieldType.javaType}$optionalSuffix
-                    get() = $implFieldName$notNullAssertion   
+                    get() = dataSource.$name
                 
                 """.trimIndent()
       }
@@ -76,28 +78,24 @@ internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: St
         error("Set of references is not supported")
       }
       else {
-        val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else ""
         """
-                @JvmField var $implFieldName: ${fieldType.javaType}? = null
                 override val $javaName: ${fieldType.javaType}$optionalSuffix
-                    get() = $implFieldName$notNullAssertion   
+                    get() = dataSource.$name
                 
                 """.trimIndent()
       }
     }
     is ValueType.Map<*, *> -> """
-            @JvmField var $implFieldName: ${fieldType.javaType}? = null
             override val $name: ${fieldType.javaType}$optionalSuffix
-                get() = $implFieldName${if (optionalSuffix.isBlank()) "!!" else ""}
+                get() = dataSource.$name
         """.trimIndent()
     is ValueType.Optional<*> -> when (fieldType.type) {
-      ValueType.Int, ValueType.Boolean -> "override var $name: ${fieldType.javaType} = null"
+      ValueType.Int, ValueType.Boolean -> "override val $name: ${fieldType.javaType} get() = dataSource.$name"
       else -> implWsBlockCode(fieldType.type, name, "?")
     }
     is ValueType.JvmClass -> """            
-            @JvmField var $implFieldName: ${fieldType.javaClassName}? = null
-            override val $name: ${fieldType.javaClassName}$optionalSuffix
-                get() = $implFieldName${if (optionalSuffix.isBlank()) "!!" else ""}
+            override val $name: ${fieldType.javaClassName.toQualifiedName()}$optionalSuffix
+                get() = dataSource.$name
                                 
         """.trimIndent()
     else -> error("Unsupported field type: $this")
@@ -106,26 +104,26 @@ internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: St
 
 internal val ObjProperty<*, *>.implWsBlockingCodeOverride: String
   get() {
-    val originalField = owner.refsFields.first { it.type.javaType == type.javaType }
+    val originalField = receiver.refsFields.first { it.valueType.javaType == valueType.javaType }
     val connectionName = originalField.name.uppercase() + "_CONNECTION_ID"
-    var valueType = referencedField.type
+    var valueType = referencedField.valueType
     val notNullAssertion = if (valueType is ValueType.Optional<*>) "" else "!!"
     if (valueType is ValueType.Optional<*>) {
       valueType = valueType.type
     }
     val getterName = when (valueType) {
-      is ValueType.List<*> -> if (owner.openness.extendable)
+      is ValueType.List<*> -> if (receiver.openness.extendable)
         fqn1(EntityStorage::extractOneToAbstractManyParent)
       else
         fqn1(EntityStorage::extractOneToManyParent)
-      is ValueType.ObjRef<*> -> if (owner.openness.extendable)
+      is ValueType.ObjRef<*> -> if (receiver.openness.extendable)
         fqn1(EntityStorage::extractOneToAbstractOneParent)
       else
         fqn1(EntityStorage::extractOneToOneParent)
       else -> error("Unsupported reference type")
     }
     return """
-            override val $name: ${type.javaType}
+            override val $name: ${this.valueType.javaType}
                 get() = snapshot.$getterName($connectionName, this)$notNullAssertion
                 
         """.trimIndent()
@@ -133,27 +131,29 @@ internal val ObjProperty<*, *>.implWsBlockingCodeOverride: String
 
 internal val ObjProperty<*, *>.referencedField: ObjProperty<*, *>
   get() {
-    val ref = type.getRefType()
+    val ref = valueType.getRefType()
     val declaredReferenceFromChild =
-      ref.target.refsFields.filter { it.type.getRefType().target == owner && it != this } +
-      setOf(ref.target.module, receiver.module).flatMap { it.extensions }.filter { it.type.getRefType().target == owner && it.owner == ref.target && it != this }
+      ref.target.refsFields.filter { it.valueType.getRefType().target == receiver && it != this } +
+      setOf(ref.target.module,
+            receiver.module).flatMap { it.extensions }.filter { it.valueType.getRefType().target == receiver && it.receiver == ref.target && it != this }
     if (declaredReferenceFromChild.isEmpty()) {
-      error("Reference should be declared at both entities. It exist at ${owner.name}#$name but absent at ${ref.target.name}")
+      error("Reference should be declared at both entities. It exist at ${receiver.name}#$name but absent at ${ref.target.name}")
     }
     if (declaredReferenceFromChild.size > 1) {
-      error(
-        "More then one reference to ${owner.name} declared at ${declaredReferenceFromChild[0].owner}#${declaredReferenceFromChild[0].name}," +
-        "${declaredReferenceFromChild[1].owner}#${declaredReferenceFromChild[1].name}")
+      error("""
+        |More then one reference to ${receiver.name} declared at ${declaredReferenceFromChild[0].receiver.name}#${declaredReferenceFromChild[0].name}, 
+        |${declaredReferenceFromChild[1].receiver.name}#${declaredReferenceFromChild[1].name}
+        |""".trimMargin())
     }
     val referencedField = declaredReferenceFromChild[0]
-    if (this.type.getRefType().child == referencedField.type.getRefType().child) {
-      val (childStr, fix) = if (this.type.getRefType().child) {
+    if (this.valueType.getRefType().child == referencedField.valueType.getRefType().child) {
+      val (childStr, fix) = if (this.valueType.getRefType().child) {
         "child" to "Have you @Child annotation on both sides?"
       }
       else {
         "parent" to "Did you forget to add @Child annotation?"
       }
-      error("Both fields ${owner.name}#$name and ${ref.target.name} are marked as $childStr. $fix")
+      error("Both fields ${receiver.name}#$name and ${ref.target.name}#${referencedField.name} are marked as $childStr. $fix")
     }
     return referencedField
   }

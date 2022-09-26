@@ -27,16 +27,16 @@ case "$(uname)" in
     ;;
 esac
 
-ZULU_BASE=https://cache-redirector.jetbrains.com/cdn.azul.com/zulu/bin
-ZULU_PREFIX=zulu11.50.19-ca-jdk11.0.12
+JBR_VERSION=17.0.3
+JBR_BUILD=b469.37
 
 if [ "$darwin" = "true" ]; then
     case $(uname -m) in
       x86_64)
-        ZULU_ARCH=macosx_x64
+        JBR_ARCH=osx-x64
         ;;
       arm64)
-        ZULU_ARCH=macosx_aarch64
+        JBR_ARCH=osx-aarch64
         ;;
       *)
         die "Unknown architecture $(uname -m)"
@@ -45,11 +45,10 @@ if [ "$darwin" = "true" ]; then
 else
     case $(uname -m) in
       x86_64)
-        ZULU_ARCH=linux_x64
+        JBR_ARCH=linux-x64
         ;;
       aarch64)
-        ZULU_ARCH=linux_aarch64
-        ZULU_BASE="https://cache-redirector.jetbrains.com/cdn.azul.com/zulu-embedded/bin"
+        JBR_ARCH=linux-aarch64
         ;;
       *)
         die "Unknown architecture $(uname -m)"
@@ -57,8 +56,8 @@ else
     esac
 fi
 
-JVM_URL="$ZULU_BASE/$ZULU_PREFIX-$ZULU_ARCH.tar.gz"
-JVM_TARGET_DIR="$JPS_BOOTSTRAP_PREPARE_DIR/jvm/$ZULU_PREFIX-$ZULU_ARCH-$SCRIPT_VERSION"
+JVM_URL="https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-$JBR_VERSION-$JBR_ARCH-$JBR_BUILD.tar.gz"
+JVM_TARGET_DIR="$JPS_BOOTSTRAP_PREPARE_DIR/jvm/$JBR_VERSION$JBR_BUILD-$JBR_ARCH-$SCRIPT_VERSION"
 
 mkdir -p "$JPS_BOOTSTRAP_PREPARE_DIR/jvm"
 

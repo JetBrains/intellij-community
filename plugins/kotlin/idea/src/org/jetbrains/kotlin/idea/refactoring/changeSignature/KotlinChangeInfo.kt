@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -303,8 +304,25 @@ open class KotlinChangeInfo(
             return signatureParameters[0].getDeclarationSignature(0, inheritedCallable).text
         }
 
-        return signatureParameters.indices.joinToString(separator = ", ") { i ->
-            signatureParameters[i].getDeclarationSignature(i, inheritedCallable).text
+        return buildString {
+            val indices = signatureParameters.indices
+            val lastIndex = indices.last
+            indices.forEach { index ->
+                val parameter = signatureParameters[index].getDeclarationSignature(index, inheritedCallable)
+                if (index == lastIndex) {
+                    append(parameter.text)
+                } else {
+                    val lastCommentsOrWhiteSpaces =
+                        parameter.allChildren.toList().reversed().takeWhile { it is PsiComment || it is PsiWhiteSpace }
+                    if (lastCommentsOrWhiteSpaces.any { it is PsiComment }) {
+                        val commentsText = lastCommentsOrWhiteSpaces.reversed().joinToString(separator = "") { it.text }
+                        lastCommentsOrWhiteSpaces.forEach { it.delete() }
+                        append("${parameter.text},$commentsText\n")
+                    } else {
+                        append("${parameter.text}, ")
+                    }
+                }
+            }
         }
     }
 

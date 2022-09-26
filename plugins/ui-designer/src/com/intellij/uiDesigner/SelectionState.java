@@ -13,9 +13,6 @@ import java.util.ArrayList;
 
 /**
  * This class implements Ctrl+W / Ctrl+Shift+W functionality in the GuiEditor
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public final class SelectionState{
   private final Stack<ComponentPtr[]> mySelectionHistory;

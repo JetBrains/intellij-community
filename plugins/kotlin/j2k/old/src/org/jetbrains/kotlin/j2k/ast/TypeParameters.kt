@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.j2k.Converter
 import org.jetbrains.kotlin.j2k.append
 import org.jetbrains.kotlin.j2k.buildList
 
-class TypeParameter(val name: Identifier, val extendsTypes: List<Type>) : Element() {
+class TypeParameter(val name: Identifier, private val extendsTypes: List<Type>) : Element() {
     fun hasWhere(): Boolean = extendsTypes.size > 1
 
     fun whereToKotlin(builder: CodeBuilder) {

@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
-import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
@@ -60,7 +60,7 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
   }
 
 
-  private static final class RegistryKeyIdReference extends ExtensionPointReferenceBase {
+  private static final class RegistryKeyIdReference extends ExtensionReferenceBase {
 
     private RegistryKeyIdReference(@NotNull PsiElement element) {
       super(element);

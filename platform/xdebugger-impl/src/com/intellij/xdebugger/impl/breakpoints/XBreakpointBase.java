@@ -365,12 +365,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       builder.append(BR_NBSP);
       //noinspection EnumSwitchStatementWhichMissesCases
       switch (getSuspendPolicy()) {
-        case ALL:
-          builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.all"));
-          break;
-        case THREAD:
-          builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.thread"));
-          break;
+        case ALL -> builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.all"));
+        case THREAD -> builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.thread"));
       }
     }
 

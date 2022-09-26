@@ -88,22 +88,18 @@ public final class TabsUtil {
   public static void updateBoundsWithDropSide(@NotNull Rectangle bounds,
                                               @MagicConstant(intValues = {CENTER, TOP, LEFT, BOTTOM, RIGHT, -1}) int dropSide) {
     switch (dropSide) {
-      case TOP:
-        bounds.height /= 2;
-        break;
-      case LEFT:
-        bounds.width /= 2;
-        break;
-      case BOTTOM:
+      case TOP -> bounds.height /= 2;
+      case LEFT -> bounds.width /= 2;
+      case BOTTOM -> {
         int h = bounds.height / 2;
         bounds.height -= h;
         bounds.y += h;
-        break;
-      case RIGHT:
+      }
+      case RIGHT -> {
         int w = bounds.width / 2;
         bounds.width -= w;
         bounds.x += w;
-        break;
+      }
     }
   }
 }

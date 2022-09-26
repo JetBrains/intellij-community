@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilingEvaluator
 
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.sun.jdi.ClassLoaderReference
-import org.jetbrains.kotlin.idea.debugger.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.LOG
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassLoadingAdapter
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad

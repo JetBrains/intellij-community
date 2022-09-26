@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.accessibility.AccessibilityUtils;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -53,10 +53,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 @ApiStatus.Internal
 public class IdeRootPane extends JRootPane implements UISettingsListener {
   /**
@@ -119,7 +115,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
         getLayeredPane().add(myCustomFrameTitlePane.getComponent(), Integer.valueOf(JLayeredPane.DEFAULT_LAYER - 2));
       }
 
-      if (FrameInfoHelper.isFloatingMenuBarSupported() && !isMenuButtonInToolbar()) {
+      if (FrameInfoHelper.isFloatingMenuBarSupported()) {
         menuBar = menu;
         getLayeredPane().add(menuBar, Integer.valueOf(JLayeredPane.DEFAULT_LAYER - 1));
       }
@@ -178,9 +174,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   private void updateScreenState(@NotNull IdeFrame helper) {
     myFullScreen = helper.isInFullScreen();
+    JMenuBar bar = getJMenuBar();
 
     if (isDecoratedMenu()) {
-      JMenuBar bar = getJMenuBar();
       if (bar != null) {
         bar.setVisible(myFullScreen);
       }
@@ -188,6 +184,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       if (myCustomFrameTitlePane != null) {
         myCustomFrameTitlePane.getComponent().setVisible(!myFullScreen);
       }
+    } else if (SystemInfoRt.isXWindow) {
+      if (bar != null) {
+        bar.setVisible(myFullScreen || !isMenuButtonInToolbar());
+      }
+      updateToolbarVisibility(false);
     }
   }
 
@@ -248,11 +249,12 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     ToolbarHolder delegate = getToolbarHolderDelegate();
     if (delegate == null && ExperimentalUI.isNewUI()) {
       MainToolbar toolbar = new MainToolbar();
-      toolbar.setBorder(JBUI.Borders.empty(0, 10));
+      toolbar.setBorder(JBUI.Borders.empty());
 
+      removeToolbar();
       myToolbar = toolbar;
       myNorthPanel.add(myToolbar, 0);
-      updateToolbarVisibility();
+      updateToolbarVisibility(true);
       myContentPane.revalidate();
     }
   }
@@ -289,7 +291,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     removeToolbar();
     myToolbar = createToolbar();
     myNorthPanel.add(myToolbar, 0);
-    updateToolbarVisibility();
+    updateToolbarVisibility(true);
     myContentPane.revalidate();
   }
 
@@ -349,7 +351,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       IdeFrame frame = ComponentUtil.getParentOfType(IdeFrameImpl.class, this);
       MainToolbar toolbar = new MainToolbar();
       toolbar.init(frame == null ? null : frame.getProject());
-      toolbar.setBorder(JBUI.Borders.empty(0, 10));
+      toolbar.setBorder(JBUI.Borders.empty());
       return toolbar;
     }
 
@@ -373,8 +375,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   protected @NotNull IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
-    boolean addToolWindowsWidget = !ExperimentalUI.isNewUI()
-                                   && !AccessibilityUtils.isScreenReaderDetected();
+    boolean addToolWindowsWidget = !ExperimentalUI.isNewUI() && !GeneralSettings.getInstance().isSupportScreenReaders();
     return new IdeStatusBarImpl(frame, addToolWindowsWidget);
   }
 
@@ -387,7 +388,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     return (statusBar != null && statusBar.isVisible()) ? statusBar.getHeight() : 0;
   }
 
-  private void updateToolbarVisibility() {
+  private void updateToolbarVisibility(boolean hideInPresentationMode) {
     if (myToolbar == null) {
       myToolbar = createToolbar();
       myNorthPanel.add(myToolbar, 0);
@@ -397,7 +398,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     boolean isNewToolbar = ExperimentalUI.isNewUI();
     boolean visible = ((isNewToolbar && !MainToolbarKt.isToolbarInHeader(uiSettings))
                        || (!isNewToolbar && uiSettings.getShowMainToolbar()))
-                      && !uiSettings.getPresentationMode();
+                      && (hideInPresentationMode ? !uiSettings.getPresentationMode() : !myFullScreen);
     myToolbar.setVisible(visible);
   }
 
@@ -414,7 +415,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     boolean globalMenuVisible = SystemInfoRt.isLinux && GlobalMenuLinux.isPresented();
     // don't show swing-menu when global (system) menu presented
-    boolean visible = SystemInfo.isMacSystemMenu || (!globalMenuVisible && uiSettings.getShowMainMenu());
+    boolean visible = SystemInfo.isMacSystemMenu ||
+                      (!globalMenuVisible && uiSettings.getShowMainMenu() && !isMenuButtonInToolbar());
     if (menuBar != null && visible != menuBar.isVisible()) {
       menuBar.setVisible(visible);
     }
@@ -466,7 +468,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     UIUtil.decorateWindowHeader(this);
-    updateToolbarVisibility();
+    updateToolbarVisibility(true);
     updateStatusBarVisibility();
     updateMainMenuVisibility();
 
@@ -483,9 +485,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     frame.setBackground(UIUtil.getPanelBackground());
 
-    BalloonLayout layout = frame.getBalloonLayout();
-    if (layout instanceof BalloonLayoutImpl) {
-      ((BalloonLayoutImpl)layout).queueRelayout();
+    if (frame.getBalloonLayout() instanceof BalloonLayoutImpl balloonLayout) {
+      balloonLayout.queueRelayout();
     }
   }
 
@@ -625,7 +626,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
    */
   @ApiStatus.Internal
   public static boolean isMenuButtonInToolbar() {
-    return SystemInfoRt.isLinux && ExperimentalUI.isNewUI() && FrameInfoHelper.isFloatingMenuBarSupported();
+    UISettings uiSettings = UISettings.getShadowInstance();
+    return SystemInfoRt.isXWindow && ExperimentalUI.isNewUI() && !uiSettings.getSeparateMainMenu() && FrameInfoHelper.isFloatingMenuBarSupported();
   }
 
   private static boolean isDecoratedMenu() {

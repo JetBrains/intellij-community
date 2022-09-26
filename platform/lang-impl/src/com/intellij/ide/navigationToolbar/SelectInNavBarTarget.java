@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.SelectInTargetPsiWrapper;
+import com.intellij.ide.navbar.ide.NavigationBarKt;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
@@ -17,7 +18,6 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,6 +42,9 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
 
   @Override
   protected boolean canSelect(final PsiFileSystemItem file) {
+    if (NavigationBarKt.getNavbarV2Enabled()) {
+      return false;
+    }
     return UISettings.getInstance().getShowNavigationBar();
   }
 
@@ -56,6 +59,9 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
   }
 
   public static void selectInNavBar(boolean showPopup) {
+    if (NavigationBarKt.getNavbarV2Enabled()) {
+      return;
+    }
     DataManager.getInstance().getDataContextFromFocus()
       .doWhenDone((Consumer<DataContext>)context -> {
         IdeFrame frame = IdeFrame.KEY.getData(context);
@@ -64,13 +70,7 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
           if (navBarExt != null) {
             final JComponent c = navBarExt.getComponent();
             final NavBarPanel panel = (NavBarPanel)c.getClientProperty(NavBarRootPaneExtension.PANEL_KEY);
-            panel.rebuildAndSelectItem((list) -> {
-              if (UISettings.getInstance().getShowMembersInNavigationBar()) {
-                int lastDirectory = ContainerUtil.lastIndexOf(list, (item) -> NavBarPanel.isExpandable(item.getObject()));
-                if (lastDirectory >= 0 && lastDirectory < list.size() - 1) return lastDirectory;
-              }
-              return list.size() - 1;
-            }, showPopup);
+            panel.rebuildAndSelectLastDirectoryOrTail(showPopup);
           }
         }
       });

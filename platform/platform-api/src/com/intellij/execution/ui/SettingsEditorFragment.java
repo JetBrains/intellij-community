@@ -374,7 +374,6 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   @Override
   protected void applyEditorTo(@NotNull Settings s) {
     myApply.accept(s, myComponent);
-    validate(s);
   }
 
   @Override

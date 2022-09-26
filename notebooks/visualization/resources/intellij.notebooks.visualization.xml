@@ -39,9 +39,6 @@
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellInlayController"
                     interface="org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController$Factory"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellGutterController"
-                    interface="org.jetbrains.plugins.notebooks.visualization.NotebookCellGutterController"
-                    dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.datavis.inlays.components.inlayStateCustomizer"
                     interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayStateCustomizer"
@@ -92,12 +89,6 @@
       key="EDITORS_WITH_OFFSETS_DATA_KEY"
       implementationClass="org.jetbrains.plugins.notebooks.visualization.EditorsWithOffsetsDataRule"
       type="fast"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains.plugins.notebooks">
-    <notebookCellGutterController
-      order="first"
-      implementation="org.jetbrains.plugins.notebooks.visualization.CellBackgroundGutterController"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.notebooks.visualization.r.inlays.visualisation">

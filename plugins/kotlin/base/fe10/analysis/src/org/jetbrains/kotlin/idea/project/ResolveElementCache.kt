@@ -139,7 +139,7 @@ class ResolveElementCache(
         ).bindingContext
     }
 
-    fun getElementsAdditionalResolve(
+    private fun getElementsAdditionalResolve(
         resolveElement: KtElement,
         contextElements: Collection<KtElement>?,
         bodyResolveMode: BodyResolveMode

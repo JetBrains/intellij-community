@@ -140,7 +140,7 @@ public class NumpyDocString extends SectionBasedDocString {
     if (namesPart == null && !isValidType(type.toString())) {
       return Pair.create(null, lineNum);
     }
-    final Pair<List<Substring>, Integer> parsedDescription = parseIndentedBlock(lineNum + 1, getLineIndentSize(lineNum));
+    final Pair<List<Substring>, Integer> parsedDescription = parseFieldContinuation(lineNum, kind);
     final List<Substring> descriptionLines = parsedDescription.getFirst();
     if (!descriptionLines.isEmpty()) {
       description = descriptionLines.get(0).union(descriptionLines.get(descriptionLines.size() - 1));

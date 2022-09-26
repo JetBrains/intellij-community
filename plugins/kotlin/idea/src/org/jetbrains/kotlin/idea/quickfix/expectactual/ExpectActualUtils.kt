@@ -14,11 +14,12 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendantsToWaitingSet
+import org.jetbrains.kotlin.idea.core.OLD_USE_EXPERIMENTAL_FQ_NAME
 import org.jetbrains.kotlin.idea.core.findOrCreateDirectoryForPackage
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
-import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.EMPTY_OR_TEMPLATE
-import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.NO_BODY
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.EmptyOrTemplate
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.NoBody
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject.Companion.create
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.core.overrideImplement.makeNotActual
@@ -29,11 +30,8 @@ import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.hasInlineModifier
-import org.jetbrains.kotlin.idea.util.isEffectivelyActual
-import org.jetbrains.kotlin.idea.util.mustHaveValOrVar
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -171,7 +169,7 @@ internal fun KtPsiFactory.generateClassOrObject(
         }
         generatedClass.addDeclaration(generatedDeclaration)
     }
-    if (!originalClass.isAnnotation() && !originalClass.hasInlineModifier()) {
+    if (!originalClass.isAnnotation() && originalClass.safeAs<KtClass>()?.isInlineOrValue() == false) {
         for (originalProperty in originalClass.primaryConstructorParameters) {
             if (!originalProperty.hasValOrVar() || !originalProperty.hasActualModifier()) continue
             val descriptor = originalProperty.toDescriptor() as? PropertyDescriptor ?: continue
@@ -274,7 +272,7 @@ internal fun generateCallable(
     descriptor.checkAccessibility(checker)
     val memberChooserObject = create(
         originalDeclaration, descriptor, descriptor,
-        if (generateExpect || descriptor.modality == Modality.ABSTRACT) NO_BODY else EMPTY_OR_TEMPLATE
+        if (generateExpect || descriptor.modality == Modality.ABSTRACT) NoBody else EmptyOrTemplate
     )
     return memberChooserObject.generateMember(
         targetClass = generatedClass,

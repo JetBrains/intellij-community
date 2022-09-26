@@ -17,6 +17,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -34,6 +35,10 @@ class RerunAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(myView.isRerunAvailable());
+  }
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

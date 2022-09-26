@@ -31,8 +31,8 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : LibraryEntity, ModifiableWorkspaceEntity<LibraryEntity>, ObjBuilder<LibraryEntity> {
-    override var name: String
     override var entitySource: EntitySource
+    override var name: String
     override var tableId: LibraryTableId
     override var roots: MutableList<LibraryRoot>
     override var excludedRoots: MutableList<VirtualFileUrl>
@@ -79,8 +79,8 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : LibraryPropertiesEntity, ModifiableWorkspaceEntity<LibraryPropertiesEntity>, ObjBuilder<LibraryPropertiesEntity> {
-    override var library: LibraryEntity
     override var entitySource: EntitySource
+    override var library: LibraryEntity
     override var libraryType: String
     override var propertiesXmlTag: String?
   }
@@ -112,8 +112,8 @@ interface SdkEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SdkEntity, ModifiableWorkspaceEntity<SdkEntity>, ObjBuilder<SdkEntity> {
-    override var library: LibraryEntity
     override var entitySource: EntitySource
+    override var library: LibraryEntity
     override var homeUrl: VirtualFileUrl
   }
 

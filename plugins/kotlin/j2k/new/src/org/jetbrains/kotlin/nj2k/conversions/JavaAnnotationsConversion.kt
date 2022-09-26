@@ -8,6 +8,8 @@ import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_6
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames.*
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.nj2k.moduleApiVersion
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.ifEmpty
@@ -21,6 +23,7 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
                 TARGET_ANNOTATION.asString() -> it.convertTargetAnnotation()
                 RETENTION_ANNOTATION.asString() -> it.convertRetentionAnnotation()
                 REPEATABLE_ANNOTATION.asString() -> it.convertRepeatableAnnotation()
+                DOCUMENTED_ANNOTATION.asString() -> it.convertDocumentedAnnotation()
                 "java.lang.SuppressWarnings" -> {
                     if (!it.convertSuppressAnnotation()) {
                         element.annotations -= it
@@ -34,6 +37,10 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
     private fun JKAnnotation.convertDeprecatedAnnotation() {
         classSymbol = symbolProvider.provideClassSymbol("kotlin.Deprecated")
         arguments = listOf(JKAnnotationParameterImpl(JKLiteralExpression("\"\"", JKLiteralExpression.LiteralType.STRING)))
+    }
+
+    private fun JKAnnotation.convertDocumentedAnnotation() {
+        classSymbol = symbolProvider.provideClassSymbol("kotlin.annotation.MustBeDocumented")
     }
 
     private fun JKAnnotation.convertTargetAnnotation() {
@@ -99,7 +106,8 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
             setOf(
                 "deprecation",
                 "unused",
-                "SpellCheckingInspection"
+                "SpellCheckingInspection",
+                "HardCodedStringLiteral"
             )
 
         private val targetMappings: Map<String, List<String>> =

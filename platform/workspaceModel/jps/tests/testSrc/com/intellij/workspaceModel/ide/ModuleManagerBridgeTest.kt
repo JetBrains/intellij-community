@@ -19,7 +19,7 @@ class ModuleManagerBridgeTest {
 
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   @Test
   fun `remove module with module library`() {

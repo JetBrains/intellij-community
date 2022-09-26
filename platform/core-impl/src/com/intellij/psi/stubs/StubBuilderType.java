@@ -58,12 +58,21 @@ class StubBuilderType {
 
   String getVersion() {
     if (myElementType != null) {
-      if (myElementType.getLanguage() instanceof TemplateLanguage &&
-          myElementType.getStubVersion() < IStubFileElementType.getTemplateStubBaseVersion()) {
-        PluginException.logPluginError(LOG, myElementType.getLanguage() + " stub version should call super.getStubVersion()",
-                                       null, myElementType.getClass());
+      int elementTypeStubVersion = myElementType.getStubVersion();
+
+      if (myElementType.getLanguage() instanceof TemplateLanguage) {
+        int templateStubBaseVersion = IStubFileElementType.getTemplateStubBaseVersion();
+        if (elementTypeStubVersion < templateStubBaseVersion) {
+          PluginException.logPluginError(LOG, myElementType.getClass() + " " +
+                                              myElementType.getLanguage() +
+                                              " version=" + elementTypeStubVersion + " " +
+                                              " stub version should call super.getStubVersion() " +
+                                              " template stub version=" + templateStubBaseVersion,
+                                         null, myElementType.getClass());
+        }
       }
-      String baseVersion = myElementType.getClass().getName() + ":" + myElementType.getStubVersion();
+
+      String baseVersion = myElementType.getClass().getName() + ":" + elementTypeStubVersion;
       return myProperties.isEmpty() ? baseVersion : (baseVersion + ":" + StringUtil.join(myProperties, ","));
     } else {
       assert myBinaryFileStubBuilder != null;

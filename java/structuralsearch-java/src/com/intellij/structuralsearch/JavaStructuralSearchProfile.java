@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -6,7 +6,6 @@ import com.intellij.codeInsight.template.JavaCodeContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.dupLocator.iterators.NodeIterator;
-import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -228,23 +227,18 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return new JavaMatchingVisitor(globalVisitor);
   }
 
-  @NotNull
   @Override
-  public NodeFilter getLexicalNodesFilter() {
-    return element -> isLexicalNode(element);
-  }
-
-  private static boolean isLexicalNode(PsiElement element) {
+  public boolean isMatchNode(PsiElement element) {
     if (element instanceof PsiWhiteSpace) {
-      return true;
+      return false;
     }
     else if (element instanceof PsiJavaToken) {
       // do not filter out type keyword of new primitive arrays (e.g. int in new int[10])
-      return !(element instanceof PsiKeyword &&
-               PRIMITIVE_TYPES.contains(element.getText()) &&
-               element.getParent() instanceof PsiNewExpression);
+      return element instanceof PsiKeyword &&
+             PRIMITIVE_TYPES.contains(element.getText()) &&
+             element.getParent() instanceof PsiNewExpression;
     }
-    return false;
+    return true;
   }
 
   @Override
@@ -427,7 +421,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @NotNull
   @Override
   public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
-    return JavaCodeContextType.class;
+    return JavaCodeContextType.Generic.class;
   }
 
   @NotNull
@@ -677,7 +671,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
           @Override
           public void visitElement(@NotNull PsiElement element) {
             final String type = element.getText();
-            if (StructuralSearchUtil.isTypedVariable(type)) {
+            if (MatchUtil.isTypedVariable(type)) {
               final ParameterInfo typeInfo = builder.findParameterization(element);
               if (typeInfo != null) {
                 typeInfo.setArgumentContext(false);
@@ -841,19 +835,10 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (text.length() != 1) {
       return true;
     }
-    switch(text.charAt(0)) {
-      case '<':
-      case '>':
-      case '(':
-      case ')':
-      case '{':
-      case '}':
-      case '[':
-      case ']':
-        return false;
-      default:
-        return true;
-    }
+    return switch (text.charAt(0)) {
+      case '<', '>', '(', ')', '{', '}', '[', ']' -> false;
+      default -> true;
+    };
   }
 
   @Override
@@ -1022,7 +1007,8 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
         return true;
       }
       if (isCompleteStatement((PsiExpressionStatement)grandParent)) {
-        if (greatGrandParent instanceof PsiLoopStatement || greatGrandParent instanceof PsiIfStatement) return false;
+        if (greatGrandParent instanceof PsiLoopStatement ||
+            (greatGrandParent instanceof PsiIfStatement && ((PsiIfStatement)greatGrandParent).getElseBranch() != grandParent)) return false;
         return !(greatGrandParent instanceof PsiCodeBlock) ||
                !(greatGrandParent.getParent() instanceof JavaDummyHolder) ||
                PsiTreeUtil.getChildrenOfAnyType(greatGrandParent, PsiStatement.class, PsiComment.class).size() > 1;

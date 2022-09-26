@@ -42,7 +42,7 @@ abstract class GraphQLApiClient : HttpApiClient() {
   suspend inline fun <reified T> loadGQLResponse(request: HttpRequest, vararg pathFromData: String)
     : HttpResponse<T?> = loadGQLResponse(request, T::class.java, *pathFromData)
 
-  fun <T> gqlBodyHandler(request: HttpRequest, pathFromData: Array<out String>, clazz: Class<T>): HttpResponse.BodyHandler<T?> =
+  private fun <T> gqlBodyHandler(request: HttpRequest, pathFromData: Array<out String>, clazz: Class<T>): HttpResponse.BodyHandler<T?> =
     object : StreamReadingBodyHandler<T?>(request) {
 
       override fun read(bodyStream: InputStream): T? {

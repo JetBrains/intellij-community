@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate.classLoading
 
 import com.sun.jdi.*
-import org.jetbrains.kotlin.idea.debugger.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 
 abstract class AbstractAndroidClassLoadingAdapter : ClassLoadingAdapter {
     protected fun dex(context: ExecutionContext, classes: Collection<ClassToLoad>): ByteArray? {

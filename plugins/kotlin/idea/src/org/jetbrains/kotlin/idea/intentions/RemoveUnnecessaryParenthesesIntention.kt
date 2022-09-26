@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -29,11 +29,11 @@ class RemoveUnnecessaryParenthesesIntention : SelfTargetingRangeIntention<KtPare
             binaryExpressionParent.replace(
                 KtPsiFactory(element).createExpressionByPattern(
                     "$0 $1 $2 $3 $4",
-                    binaryExpressionParent.left!!,
-                    binaryExpressionParent.operationReference,
-                    innerExpression.left!!,
-                    innerExpression.operationReference,
-                    innerExpression.right!!,
+                    binaryExpressionParent.left!!.text,
+                    binaryExpressionParent.operationReference.text,
+                    innerExpression.left!!.text,
+                    innerExpression.operationReference.text,
+                    innerExpression.right!!.text,
                 )
             )
         } else

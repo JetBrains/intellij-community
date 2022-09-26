@@ -19,13 +19,13 @@ public class JavaUsageSimilarityFeaturesProvider implements UsageSimilarityFeatu
   @RequiresReadLock
   @RequiresBackgroundThread
   public @NotNull Bag getFeatures(@NotNull PsiElement usage) {
-    PsiElement statement = getContainingStatement(usage);
-    if (statement != null) {
-      final Bag usageProperties = new JavaSimilarityFeaturesExtractor(statement).getFeatures();
+    PsiElement context = getContainingStatement(usage);
+    if (context != null) {
+      final Bag usageFeatures = new JavaSimilarityFeaturesExtractor(context).getFeatures();
       if (Registry.is("similarity.find.usages.parent.statement.condition.feature")) {
-        usageProperties.addAll(getParentStatementFeatures(statement));
+        usageFeatures.addAll(getParentStatementFeatures(context));
       }
-      return usageProperties;
+      return usageFeatures;
     }
     return Bag.EMPTY_BAG;
   }
@@ -37,20 +37,25 @@ public class JavaUsageSimilarityFeaturesProvider implements UsageSimilarityFeatu
   }
 
   public @Nullable PsiElement getContainingStatement(@NotNull PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class,
-                                       PsiExpressionStatement.class,
-                                       PsiIfStatement.class,
-                                       PsiWhileStatement.class,
-                                       PsiTryStatement.class,
-                                       PsiThrowStatement.class,
-                                       PsiSwitchStatement.class,
-                                       PsiReturnStatement.class,
-                                       PsiLoopStatement.class,
-                                       PsiImportStatement.class,
-                                       PsiForStatement.class,
-                                       PsiForeachStatement.class,
-                                       PsiConditionalLoopStatement.class,
-                                       PsiBlockStatement.class);
+    PsiElement containingStatement = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class,
+                                                                 PsiExpressionStatement.class,
+                                                                 PsiIfStatement.class,
+                                                                 PsiWhileStatement.class,
+                                                                 PsiTryStatement.class,
+                                                                 PsiThrowStatement.class,
+                                                                 PsiSwitchStatement.class,
+                                                                 PsiReturnStatement.class,
+                                                                 PsiLoopStatement.class,
+                                                                 PsiImportStatement.class,
+                                                                 PsiForStatement.class,
+                                                                 PsiForeachStatement.class,
+                                                                 PsiConditionalLoopStatement.class,
+                                                                 PsiBlockStatement.class,
+                                                                 PsiMethod.class);
+    if (containingStatement instanceof PsiDeclarationStatement && containingStatement.getParent() instanceof PsiForStatement) {
+      return containingStatement.getParent();
+    }
+    return containingStatement;
   }
 
   private static @NotNull Bag getParentStatementFeatures(@NotNull PsiElement context) {

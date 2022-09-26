@@ -27,7 +27,7 @@ class KotlinUPostfixExpression(
     }
 
     override val operatorIdentifier: UIdentifier
-        get() = KotlinUIdentifier(sourcePsi.operationReference, this)
+        get() = KotlinUIdentifier(sourcePsi.operationReference.getReferencedNameElement(), this)
 
     override fun resolveOperator(): PsiMethod? =
         baseResolveProviderService.resolveCall(sourcePsi)

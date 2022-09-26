@@ -61,7 +61,7 @@ class ProgressEventConverter {
     return failure?.run { InternalFailure(message, description, causes?.map<Failure?, InternalFailure?>(::convert)) }
   }
 
-  fun convert(operationDescriptor: OperationDescriptor?): InternalOperationDescriptor? {
+  private fun convert(operationDescriptor: OperationDescriptor?): InternalOperationDescriptor? {
     if (operationDescriptor == null) return null
     val id = if (operationDescriptor is org.gradle.tooling.internal.protocol.events.InternalOperationDescriptor) operationDescriptor.id.toString() else operationDescriptor.displayName
     return descriptorsMap.getOrPut(operationDescriptor, {

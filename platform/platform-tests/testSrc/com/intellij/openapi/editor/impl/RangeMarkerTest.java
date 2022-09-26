@@ -19,10 +19,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentListener;
@@ -1585,7 +1582,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       Random random = new Random();
       while (!t.isTimedOut()) {
         int s = random.nextInt(len - 1);
-        marker.setRange(TextRange.toScalarRange(s, s + 1));
+        marker.setRange(TextRangeScalarUtil.toScalarRange(s, s + 1));
       }
     });
     while (!t.isTimedOut()) {

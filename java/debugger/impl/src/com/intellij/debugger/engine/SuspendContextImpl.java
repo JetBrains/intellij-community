@@ -204,13 +204,11 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     if(isEvaluating()) {
       return false;
     }
-    switch(getSuspendPolicy()) {
-      case EventRequest.SUSPEND_ALL:
-        return !isExplicitlyResumed(thread);
-      case EventRequest.SUSPEND_EVENT_THREAD:
-        return thread == getThread();
-    }
-    return false;
+    return switch (getSuspendPolicy()) {
+      case EventRequest.SUSPEND_ALL -> !isExplicitlyResumed(thread);
+      case EventRequest.SUSPEND_EVENT_THREAD -> thread == getThread();
+      default -> false;
+    };
   }
 
   public boolean isEvaluating() {

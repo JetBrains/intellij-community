@@ -137,9 +137,17 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
       PsiElement[] elements = {aClass};
       return DeleteHandler.shouldEnableDeleteAction(elements);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
-
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
   protected static class BaseOnThisTypeAction extends BaseOnThisElementAction {
 
     public BaseOnThisTypeAction() {

@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * @deprecated implement {@link com.intellij.ide.bookmark.BookmarksListProvider} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface FavoritesListProvider extends Comparator<FavoriteTreeNodeDescriptor>, Comparable<FavoritesListProvider> {
   ExtensionPointName<FavoritesListProvider> EP_NAME = new ExtensionPointName<>("com.intellij.favoritesListProvider");
 

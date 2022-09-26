@@ -47,14 +47,16 @@ interface Panel : CellBase<Panel> {
   fun indent(init: Panel.() -> Unit): RowsRange
 
   /**
-   * Adds row with [RowLayout.LABEL_ALIGNED] layout and [label]. Use [EMPTY_LABEL] for empty label.
-   * Do not use row(""), because it creates unnecessary label component in layout
+   * Adds row with [RowLayout.LABEL_ALIGNED] layout and [label]. The label can contain mnemonic and is assigned
+   * to the first component in the row via [JLabel.labelFor] property.
+   * Do not use row(""), because it creates unnecessary label component in layout, use [EMPTY_LABEL] instead.
    */
   fun row(@Nls label: String, init: Row.() -> Unit): Row
 
   /**
-   * Adds row with [RowLayout.LABEL_ALIGNED] layout and [label]. If label is null then
-   * [RowLayout.INDEPENDENT] layout is used
+   * Adds row with [RowLayout.LABEL_ALIGNED] layout and [label]. The label is assigned
+   * to the first component in the row via [JLabel.labelFor] property.
+   * If label is null then [RowLayout.INDEPENDENT] layout is used
    */
   fun row(label: JLabel? = null, init: Row.() -> Unit): Row
 
@@ -135,18 +137,6 @@ interface Panel : CellBase<Panel> {
                        indent: Boolean = true,
                        init: Panel.() -> Unit): CollapsibleRow
 
-  @Deprecated("Use overloaded collapsibleGroup(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  fun collapsibleGroup(@NlsContexts.BorderTitle title: String,
-                       indent: Boolean = true,
-                       topGroupGap: Boolean? = null,
-                       bottomGroupGap: Boolean? = null,
-                       init: Panel.() -> Unit): CollapsiblePanel
-
-  @Deprecated("Use buttonsGroup(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  fun buttonGroup(@NlsContexts.BorderTitle title: String? = null, indent: Boolean = title != null, init: Panel.() -> Unit)
-
   @Deprecated("Use buttonsGroup(...) instead")
   @ApiStatus.ScheduledForRemoval
   fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String? = null,
@@ -179,27 +169,4 @@ interface Panel : CellBase<Panel> {
    * Overrides default spacing configuration. Should be used for very specific cases
    */
   fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit)
-
-}
-
-@Suppress("DEPRECATION")
-@Deprecated("Use buttonsGroup(...) instead")
-@ApiStatus.ScheduledForRemoval
-inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
-                                               noinline setter: (T) -> Unit,
-                                               title: @NlsContexts.BorderTitle String? = null,
-                                               indent: Boolean = title != null,
-                                               crossinline init: Panel.() -> Unit) {
-  buttonGroup(PropertyBinding(getter, setter), title, indent, init)
-}
-
-@Suppress("DEPRECATION")
-@Deprecated("Use buttonsGroup(...) instead")
-@ApiStatus.ScheduledForRemoval
-inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, title: @NlsContexts.BorderTitle String? = null,
-                                               indent: Boolean = title != null,
-                                               crossinline init: Panel.() -> Unit) {
-  buttonGroup(binding, T::class.java, title, indent) {
-    init()
-  }
 }

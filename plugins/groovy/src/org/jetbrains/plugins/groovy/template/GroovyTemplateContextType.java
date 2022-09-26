@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.template;
 
-import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.patterns.PlatformPatterns;
@@ -12,9 +11,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
@@ -30,10 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  */
 public abstract class GroovyTemplateContextType extends TemplateContextType {
 
-  protected GroovyTemplateContextType(@NotNull @NonNls String id,
-                                @NlsContexts.Label @NotNull String presentableName,
-                                @Nullable Class<? extends TemplateContextType> baseContextType) {
-    super(id, presentableName, baseContextType);
+  protected GroovyTemplateContextType(@NlsContexts.Label @NotNull String presentableName) {
+    super(presentableName);
   }
 
   @Override
@@ -53,7 +48,7 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
 
   public static class Generic extends GroovyTemplateContextType {
     public Generic() {
-      super("GROOVY", GroovyBundle.message("language.groovy"), EverywhereContextType.class);
+      super(GroovyBundle.message("language.groovy"));
     }
 
     @Override
@@ -64,7 +59,7 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
 
   public static class Statement extends GroovyTemplateContextType {
     public Statement() {
-      super("GROOVY_STATEMENT", GroovyBundle.message("live.template.context.statement"), Generic.class);
+      super(GroovyBundle.message("live.template.context.statement"));
     }
 
     @Override
@@ -75,10 +70,11 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
     }
 
   }
+
   public static class Expression extends GroovyTemplateContextType {
 
     public Expression() {
-      super("GROOVY_EXPRESSION", GroovyBundle.message("live.template.context.expression"), Generic.class);
+      super(GroovyBundle.message("live.template.context.expression"));
     }
 
     @Override
@@ -115,7 +111,7 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
 
   public static class Declaration extends GroovyTemplateContextType {
     public Declaration() {
-      super("GROOVY_DECLARATION", GroovyBundle.message("live.template.context.declaration"), Generic.class);
+      super(GroovyBundle.message("live.template.context.declaration"));
     }
 
     @Override
@@ -131,6 +127,4 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
       return GroovyCompletionData.suggestClassInterfaceEnum(element) || GroovyCompletionData.suggestFinalDef(element);
     }
   }
-
-
 }

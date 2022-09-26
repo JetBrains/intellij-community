@@ -13,6 +13,11 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Experimental
 public interface PsiDeconstructionPattern extends PsiPrimaryPattern {
   /**
+   * The empty array of PSI deconstruction patterns which can be reused to avoid unnecessary allocations.
+   */
+  PsiDeconstructionPattern[] EMPTY_ARRAY = new PsiDeconstructionPattern[0];
+
+  /**
    * @return element representing code inside '(...)' inclusive parenthesis
    */
   @NotNull

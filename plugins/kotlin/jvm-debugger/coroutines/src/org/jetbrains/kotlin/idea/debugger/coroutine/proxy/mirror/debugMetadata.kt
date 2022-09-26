@@ -6,7 +6,7 @@ import com.sun.jdi.ArrayReference
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.StringReference
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 
 class DebugMetadata private constructor(context: DefaultExecutionContext) :
         BaseMirror<ObjectReference, MirrorOfDebugProbesImpl>("kotlin.coroutines.jvm.internal.DebugMetadataKt", context) {

@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -117,8 +118,8 @@ class MergedCompositeConfigurable extends CompositeConfigurable<Configurable> im
   }
 
   static boolean isTargetedToProduct(@NotNull Configurable configurable) {
-    return DebuggerConfigurableProvider.EXTENSION_POINT.getExtensionList().stream()
-      .anyMatch(provider -> provider.isTargetedToProduct(configurable));
+    return ContainerUtil.exists(DebuggerConfigurableProvider.EXTENSION_POINT.getExtensionList(),
+                                provider -> provider.isTargetedToProduct(configurable));
   }
 
   @NotNull

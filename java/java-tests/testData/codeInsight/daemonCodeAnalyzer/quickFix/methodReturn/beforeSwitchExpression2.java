@@ -1,4 +1,4 @@
-// "Make 'test' return 'java.lang.String'" "false"
+// "Make 'test()' return 'java.lang.String'" "false"
 
 import java.util.stream.Stream;
 

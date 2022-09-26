@@ -2,7 +2,8 @@
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.psi.PsiElement
-import com.intellij.util.PlatformIcons
+import com.intellij.ui.IconManager
+import com.intellij.ui.PlatformIcons
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -29,7 +30,7 @@ object KotlinIconProvider {
                     if (isAbstract) KotlinIcons.ABSTRACT_EXTENSION_FUNCTION else KotlinIcons.EXTENSION_FUNCTION
                 }
                 symbol.symbolKind == KtSymbolKind.CLASS_MEMBER -> {
-                    if (isAbstract) PlatformIcons.ABSTRACT_METHOD_ICON else PlatformIcons.METHOD_ICON
+                    IconManager.getInstance().getPlatformIcon(if (isAbstract) PlatformIcons.AbstractMethod else PlatformIcons.Method)
                 }
                 else -> KotlinIcons.FUNCTION
             }
@@ -48,19 +49,16 @@ object KotlinIconProvider {
             }
         }
 
-        if (symbol is KtValueParameterSymbol) return KotlinIcons.PARAMETER
+        return when (symbol) {
+            is KtValueParameterSymbol -> KotlinIcons.PARAMETER
+            is KtLocalVariableSymbol -> if (symbol.isVal) KotlinIcons.VAL else KotlinIcons.VAR
+            is KtPropertySymbol -> if (symbol.isVal) KotlinIcons.FIELD_VAL else KotlinIcons.FIELD_VAR
+            is KtTypeParameterSymbol -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Class)
+            is KtTypeAliasSymbol -> KotlinIcons.TYPE_ALIAS
+            is KtEnumEntrySymbol -> KotlinIcons.ENUM
+            else -> null
+        }
 
-        if (symbol is KtLocalVariableSymbol) return if (symbol.isVal) KotlinIcons.VAL else KotlinIcons.VAR
-
-        if (symbol is KtPropertySymbol) return if (symbol.isVal) KotlinIcons.FIELD_VAL else KotlinIcons.FIELD_VAR
-
-        if (symbol is KtTypeParameterSymbol) return PlatformIcons.CLASS_ICON
-
-        if (symbol is KtTypeAliasSymbol) return KotlinIcons.TYPE_ALIAS
-
-        if (symbol is KtEnumEntrySymbol) return KotlinIcons.ENUM
-
-        return null
     }
 
     private fun getIconForJavaDeclaration(declaration: PsiElement): Icon? {

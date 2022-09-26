@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling
 
+import org.jetbrains.kotlin.idea.base.codeInsight.PsiOnlyKotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractGenericTestIconProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractNativeIdePlatformKindTooling
-import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.psi.KtFunction
@@ -17,7 +17,7 @@ class FirNativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTooling() {
 
     override fun acceptsAsEntryPoint(function: KtFunction): Boolean {
         return function is KtNamedFunction
-                && KotlinMainFunctionDetector.getInstance().isMain(function)
+                && PsiOnlyKotlinMainFunctionDetector.isMain(function)
                 && super.acceptsAsEntryPoint(function)
     }
 

@@ -368,9 +368,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
    * Given a set of referencedElements, returns a map from containers (in a sense of ConflictsUtil.getContainer)
    * to subsets of referencedElements that are not accessible from that container
    *
-   * @param referencedElements
-   * @param usages
-   * @param elementToInline
    */
   static Map<PsiMember, Set<PsiMember>> getInaccessible(HashSet<? extends PsiMember> referencedElements,
                                                         UsageInfo[] usages,

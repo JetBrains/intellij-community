@@ -60,6 +60,8 @@
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.BuildClasspathModuleGradleDataService"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager"/>
 
+    <properties.implicitPropertyUsageProvider implementation="org.jetbrains.plugins.gradle.findUsages.GradleImplicitPropertyUsageProvider"/>
+
     <compiler.updateResourcesBuildContributor
         implementation="org.jetbrains.plugins.gradle.execution.build.GradleUpdateResourcesBuildContributor"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleResourceCompilerConfigurationGenerator"/>

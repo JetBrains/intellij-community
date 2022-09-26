@@ -19,9 +19,9 @@
     <orderEntry type="module" module-name="intellij.completionMlRanking" />
     <orderEntry type="module-library">
       <library name="completion-ranking-kotlin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-kotlin:0.3.3" />
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-kotlin:0.3.5" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.3.3/completion-ranking-kotlin-0.3.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.3.5/completion-ranking-kotlin-0.3.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

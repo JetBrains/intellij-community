@@ -43,7 +43,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
-final class LanguageResolvingUtil {
+public final class LanguageResolvingUtil {
   private static final String ANY_LANGUAGE_DEFAULT_ID = Language.ANY.getID();
 
   static Collection<LanguageDefinition> getAllLanguageDefinitions(ConvertContext context) {
@@ -333,6 +333,14 @@ final class LanguageResolvingUtil {
       return ANY_LANGUAGE_DEFAULT_ID;
     }
 
+    return getAnyLanguageValue(extensionPoint);
+  }
+
+  /**
+   * @return value for "any language" for given EP {@code language} declaration, with few exceptions it's always {@link Language#ANY} ID.
+   */
+  @NotNull
+  public static String getAnyLanguageValue(ExtensionPoint extensionPoint) {
     final GenericAttributeValue<PsiClass> epBeanClass = extensionPoint.getBeanClass();
     if (EP_WITH_ANY_LANGUAGE_ID.contains(epBeanClass.getStringValue())) {
       return "any";

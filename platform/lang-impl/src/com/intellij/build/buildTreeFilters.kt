@@ -5,6 +5,7 @@ package com.intellij.build
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -12,6 +13,9 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
+
+
+
 
 private val SUCCESSFUL_STEPS_FILTER = Predicate { node: ExecutionNode -> !node.isFailed && !node.hasWarnings() }
 private val WARNINGS_FILTER = Predicate { node: ExecutionNode -> node.hasWarnings() || node.hasInfos() }
@@ -51,6 +55,8 @@ open class FilterToggleAction constructor(@NlsContexts.Command text: String,
 
     return filterable.contains(filter)
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (state) {

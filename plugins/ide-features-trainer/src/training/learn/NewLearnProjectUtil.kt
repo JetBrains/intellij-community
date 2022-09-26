@@ -2,7 +2,7 @@
 package training.learn
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.ide.util.TipDialog
+import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
@@ -27,7 +27,7 @@ object NewLearnProjectUtil {
     val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
 
     ProjectUtils.importOrOpenProject(langSupport, projectToClose) { newProject ->
-      TipDialog.DISABLE_TIPS_FOR_PROJECT.set(newProject, true)
+      TipAndTrickManager.DISABLE_TIPS_FOR_PROJECT.set(newProject, true)
       CodeStyle.setMainProjectSettings(newProject, CodeStyleSettings.getDefaults())
       try {
         val sdkForProject = langSupport.getSdkForProject(newProject, selectedSdk)

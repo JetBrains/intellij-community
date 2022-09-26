@@ -17,6 +17,10 @@ internal class GHAccountsComboBoxModel(accounts: Set<GithubAccount>, selection: 
     selectedItem = account
   }
 
+  override fun updateAccount(account: GithubAccount, token: String) {
+    GithubAuthenticationManager.getInstance().updateAccountToken(account, token)
+  }
+
   override fun isAccountUnique(login: String, server: GithubServerPath): Boolean =
     GithubAuthenticationManager.getInstance().isAccountUnique(login, server)
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.KeyedExtensionCollector;
@@ -14,16 +14,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * @author peter
- */
-public class ReferenceProviderType {
-  @NonNls public static final String EP_NAME = "com.intellij.referenceProviderType";
+public final class ReferenceProviderType {
+  public static final @NonNls String EP_NAME = "com.intellij.referenceProviderType";
   private static final KeyedExtensionCollector<PsiReferenceProvider, ReferenceProviderType> COLLECTOR =
     new KeyedExtensionCollector<PsiReferenceProvider, ReferenceProviderType>(EP_NAME) {
-      @NotNull
       @Override
-      protected String keyToString(@NotNull final ReferenceProviderType key) {
+      protected @NotNull String keyToString(final @NotNull ReferenceProviderType key) {
         return key.myId;
       }
     };
@@ -33,8 +29,7 @@ public class ReferenceProviderType {
     myId = id;
   }
 
-  @NotNull
-  public PsiReferenceProvider getProvider() {
+  public @NotNull PsiReferenceProvider getProvider() {
     return new CompositePsiReferenceProvider(this);
   }
 
@@ -75,9 +70,8 @@ public class ReferenceProviderType {
     }
 
 
-    @Nullable
     @Override
-    public Map<CustomizationKey, Object> getOptions() {
+    public @Nullable Map<CustomizationKey, Object> getOptions() {
       for (PsiReferenceProvider provider : COLLECTOR.forKey(myType)) {
         if (provider instanceof CustomizableReferenceProvider) {
           return ((CustomizableReferenceProvider) provider).getOptions();

@@ -16,12 +16,12 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.ActionUpdateThreadAware;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public interface OccurenceNavigator {
+public interface OccurenceNavigator extends ActionUpdateThreadAware {
   OccurenceNavigator EMPTY = new OccurenceNavigator() {
     @Override
     public boolean hasNextOccurence() {
@@ -53,6 +53,11 @@ public interface OccurenceNavigator {
     @Override
     public String getPreviousOccurenceActionName() {
       return "";
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   };
 
@@ -98,7 +103,9 @@ public interface OccurenceNavigator {
   @ActionText
   @NotNull
   String getPreviousOccurenceActionName();
-  default @Nullable ActionUpdateThread getActionUpdateThread() {
-    return null;
+
+  @Override
+  default @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

@@ -7,7 +7,6 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
-import kotlin.collections.HashMap
 
 fun MutableEntityStorage.addModuleEntity(name: String,
                                          dependencies: List<ModuleDependencyItem>,
@@ -107,25 +106,25 @@ fun MutableEntityStorage.addCustomSourceRootPropertiesEntity(sourceRoot: SourceR
 fun MutableEntityStorage.addContentRootEntity(url: VirtualFileUrl,
                                               excludedUrls: List<VirtualFileUrl>,
                                               excludedPatterns: List<String>,
-                                              module: ModuleEntity): ContentRootEntity {
-  return addContentRootEntityWithCustomEntitySource(url, excludedUrls, excludedPatterns, module, module.entitySource)
-}
-
-/**
- * Entity source of content root is *almost* the same as the entity source of the corresponding module.
- * Please update assertConsistency in [ContentRootEntityData] if you're using this method.
- */
-fun MutableEntityStorage.addContentRootEntityWithCustomEntitySource(url: VirtualFileUrl,
-                                                                    excludedUrls: List<VirtualFileUrl>,
-                                                                    excludedPatterns: List<String>,
-                                                                    module: ModuleEntity,
-                                                                    source: EntitySource): ContentRootEntity {
+                                              module: ModuleEntity,
+                                              source: EntitySource = module.entitySource): ContentRootEntity {
   val entity = ContentRootEntity(url, excludedUrls, excludedPatterns, source) {
     this.module = module
   }
   this.addEntity(entity)
   return entity
 }
+
+@Deprecated(replaceWith = ReplaceWith("addContentRootEntity(url, excludedUrls, excludedPatterns, module, source)"),
+            message = "Zhenja please use addContentRootEntity method")
+fun MutableEntityStorage.addContentRootEntityWithCustomEntitySource(url: VirtualFileUrl,
+                                                                    excludedUrls: List<VirtualFileUrl>,
+                                                                    excludedPatterns: List<String>,
+                                                                    module: ModuleEntity,
+                                                                    source: EntitySource): ContentRootEntity {
+  return addContentRootEntity(url, excludedUrls, excludedPatterns, module, source)
+}
+
 
 fun MutableEntityStorage.addLibraryEntity(name: String, tableId: LibraryTableId, roots: List<LibraryRoot>,
                                           excludedRoots: List<VirtualFileUrl>, source: EntitySource): LibraryEntity {

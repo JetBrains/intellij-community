@@ -37,7 +37,7 @@ internal class ReplaceBySourceAsGraph : ReplaceBySourceOperation {
    *        has a reference to an entity that doesn't exist in current builder.
    *  - Restore references between matched entities.
    */
-  internal fun replaceBySourceAsGraph(
+  private fun replaceBySourceAsGraph(
     thisStorage: MutableEntityStorageImpl,
     replaceWithStorage: AbstractEntityStorage,
     entityFilter: (EntitySource) -> Boolean,
@@ -314,7 +314,7 @@ internal class ReplaceBySourceAsGraph : ReplaceBySourceOperation {
 
     // Some children left without parents. We should delete these children as well.
     for (entityId in lostChildren) {
-      thisStorage.removeEntity(entityId.id)
+      thisStorage.removeEntityByEntityId(entityId.id)
     }
 
     LOG.debug { "5) Restore references in matching ids" }
@@ -467,7 +467,7 @@ internal class ReplaceBySourceAsGraph : ReplaceBySourceOperation {
           if (entityId.id.asThis() in replaceMap) return@mapNotNull null
 
           val childEntityData = entityDataByIdOrDie(entityId.id)
-          removeEntity(entityId.id) { it != localEntityId.id && !replaceMap.containsKey(it.asThis()) }
+          removeEntityByEntityId(entityId.id) { it != localEntityId.id && !replaceMap.containsKey(it.asThis()) }
           return@mapNotNull childEntityData
         }
         return@mapNotNull null

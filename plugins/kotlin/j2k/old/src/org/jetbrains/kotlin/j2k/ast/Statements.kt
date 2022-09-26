@@ -41,10 +41,10 @@ class ReturnStatement(val expression: Expression, val label: Identifier? = null)
 }
 
 class IfStatement(
-        val condition: Expression,
-        val thenStatement: Element,
-        val elseStatement: Element,
-        singleLine: Boolean
+  val condition: Expression,
+  private val thenStatement: Element,
+  private val elseStatement: Element,
+  singleLine: Boolean
 ) : Expression() {
 
     private val br = if (singleLine) " " else "\n"
@@ -83,11 +83,11 @@ class DoWhileStatement(val condition: Expression, val body: Element, singleLine:
 }
 
 class ForeachStatement(
-        val variableName: Identifier,
-        val explicitVariableType: Type?,
-        val collection: Expression,
-        val body: Element,
-        singleLine: Boolean
+  private val variableName: Identifier,
+  private val explicitVariableType: Type?,
+  val collection: Expression,
+  val body: Element,
+  singleLine: Boolean
 ) : Statement() {
 
     private val br = if (singleLine) " " else "\n"
@@ -118,7 +118,7 @@ class ContinueStatement(val label: Identifier = Identifier.Empty) : Statement() 
 
 // Exceptions ----------------------------------------------------------------------------------------------
 
-class TryStatement(val block: Block, val catches: List<CatchStatement>, val finallyBlock: Block) : Statement() {
+class TryStatement(val block: Block, private val catches: List<CatchStatement>, val finallyBlock: Block) : Statement() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append("try\n").append(block).append("\n").append(catches, "\n").append("\n")
         if (!finallyBlock.isEmpty) {
@@ -141,13 +141,13 @@ class CatchStatement(val variable: FunctionParameter, val block: Block) : Statem
 
 // when --------------------------------------------------------------------------------------------------
 
-class WhenStatement(val subject: Expression, val caseContainers: List<WhenEntry>) : Statement() {
+class WhenStatement(val subject: Expression, private val caseContainers: List<WhenEntry>) : Statement() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append("when (").append(subject).append(") {\n").append(caseContainers, "\n").append("\n}")
     }
 }
 
-class WhenEntry(val selectors: List<WhenEntrySelector>, val body: Statement) : Statement() {
+class WhenEntry(private val selectors: List<WhenEntrySelector>, val body: Statement) : Statement() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append(selectors, ", ").append(" -> ").append(body)
     }

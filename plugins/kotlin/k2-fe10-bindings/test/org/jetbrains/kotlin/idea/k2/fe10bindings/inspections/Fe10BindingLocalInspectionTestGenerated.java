@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -186,9 +186,19 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/convertSubClassWithoutParentheses.kt");
         }
 
-        @TestMetadata("data.kt")
-        public void testData() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/data.kt");
+        @TestMetadata("dataClass_dataObjectIsDisabled.kt")
+        public void testDataClass_dataObjectIsDisabled() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/dataClass_dataObjectIsDisabled.kt");
+        }
+
+        @TestMetadata("dataClass_dataObjectIsEnabled.kt")
+        public void testDataClass_dataObjectIsEnabled() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/dataClass_dataObjectIsEnabled.kt");
+        }
+
+        @TestMetadata("dataObject.kt")
+        public void testDataObject() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/dataObject.kt");
         }
 
         @TestMetadata("enum.kt")
@@ -1807,11 +1817,6 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
                 runTest("../idea/tests/testData/inspectionsLocal/replaceAssociateFunction/associateWith/array.kt");
             }
 
-            @TestMetadata("arrayVersion13.kt")
-            public void testArrayVersion13() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/replaceAssociateFunction/associateWith/arrayVersion13.kt");
-            }
-
             @TestMetadata("basic.kt")
             public void testBasic() throws Exception {
                 runTest("../idea/tests/testData/inspectionsLocal/replaceAssociateFunction/associateWith/basic.kt");
@@ -1885,11 +1890,6 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
                 runTest("../idea/tests/testData/inspectionsLocal/replaceAssociateFunction/associateWithTo/array.kt");
             }
 
-            @TestMetadata("arrayVersion13.kt")
-            public void testArrayVersion13() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/replaceAssociateFunction/associateWithTo/arrayVersion13.kt");
-            }
-
             @TestMetadata("basic.kt")
             public void testBasic() throws Exception {
                 runTest("../idea/tests/testData/inspectionsLocal/replaceAssociateFunction/associateWithTo/basic.kt");
@@ -1913,19 +1913,6 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             @TestMetadata("basic5.kt")
             public void testBasic5() throws Exception {
                 runTest("../idea/tests/testData/inspectionsLocal/replaceAssociateFunction/associateWithTo/basic5.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/tests/testData/inspectionsLocal/replaceAssociateFunction")
-        public static class Uncategorized extends AbstractFe10BindingLocalInspectionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("version1_2.kt")
-            public void testVersion1_2() throws Exception {
-                runTest("../idea/tests/testData/inspectionsLocal/replaceAssociateFunction/version1_2.kt");
             }
         }
     }

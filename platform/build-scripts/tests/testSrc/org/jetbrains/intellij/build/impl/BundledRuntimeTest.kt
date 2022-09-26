@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.dependencies.Jdk11Downloader
+import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.junit.Test
 import java.nio.file.Files
 
@@ -55,7 +55,7 @@ class BundledRuntimeTest {
     withCompilationContext { context ->
       val currentJbrHome = BundledRuntimeImpl(context.options, context.paths, context.dependenciesProperties, context.messages::error, context.messages::info)
         .getHomeForCurrentOsAndArch()
-      val javaExe = Jdk11Downloader.getJavaExecutable(currentJbrHome)
+      val javaExe = JdkDownloader.getJavaExecutable(currentJbrHome)
       val process = ProcessBuilder(javaExe.toString(), "-version")
         .inheritIO()
         .start()
@@ -70,7 +70,7 @@ class BundledRuntimeTest {
     val tempDir = Files.createTempDirectory("compilation-context-")
     try {
       val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-      val context = createCompilationContext(
+      val context = createCompilationContextBlocking(
         communityHome = communityHome,
         projectHome = communityHome.communityRoot,
         defaultOutputRoot = tempDir,

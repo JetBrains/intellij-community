@@ -114,6 +114,10 @@ public final class HardcodedContracts {
               ContractProvider.of(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(),
                 returnFalse())))
+    .register(anyOf(instanceCall(JAVA_UTIL_SET, "add").parameterCount(1)),
+              ContractProvider.of(singleConditionContract(
+                ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(),
+                returnTrue())))
     .register(instanceCall(JAVA_UTIL_LIST, "get", "remove").parameterTypes("int"),
               ContractProvider.of(specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE)))
     .register(anyOf(
@@ -379,59 +383,38 @@ public final class HardcodedContracts {
   }
 
   private static @Nullable ValueConstraint constraintFromMatcher(PsiExpression expr, boolean negate) {
-    if (expr instanceof PsiMethodCallExpression) {
-      String calledName = ((PsiMethodCallExpression)expr).getMethodExpression().getReferenceName();
-      PsiExpression[] args = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
-      if (calledName == null) return null;
-      switch (calledName) {
-        case "array":
-        case "arrayWithSize":
-        case "arrayContaining":
-        case "arrayContainingInAnyOrder":
-        case "contains":
-        case "containsInAnyOrder":
-        case "containsString":
-        case "endsWith":
-        case "startsWith":
-        case "stringContainsInOrder":
-        case "empty":
-        case "emptyArray":
-        case "emptyCollectionOf":
-        case "emptyIterable":
-        case "emptyIterableOf":
-        case "hasEntry":
-        case "hasItem":
-        case "hasItems":
-        case "hasKey":
-        case "hasProperty":
-        case "hasSize":
-        case "hasToString":
-        case "hasValue":
-        case "hasXPath":
-          return negate ? null : NULL_VALUE;
-        case "notNullValue":
-          return negate ? NOT_NULL_VALUE : NULL_VALUE;
-        case "nullValue":
-          return negate ? NULL_VALUE : NOT_NULL_VALUE;
-        case "equalTo":
-          if (args.length == 1) {
-            return constraintFromLiteral(args[0], negate);
-          }
-          return null;
-        case "not":
-          if (args.length == 1) {
-            return constraintFromMatcher(args[0], !negate);
-          }
-          return null;
-        case "is":
-          if (args.length == 1) {
-            ValueConstraint fromMatcher = constraintFromMatcher(args[0], negate);
-            return fromMatcher == null ? constraintFromLiteral(args[0], negate) : fromMatcher;
-          }
-          return null;
+    if (!(expr instanceof PsiMethodCallExpression call)) return null;
+    String calledName = call.getMethodExpression().getReferenceName();
+    PsiExpression[] args = call.getArgumentList().getExpressions();
+    if (calledName == null) return null;
+    return switch (calledName) {
+      case "array", "arrayWithSize", "arrayContaining", "arrayContainingInAnyOrder", "contains", "containsInAnyOrder", "containsString",
+        "endsWith", "startsWith", "stringContainsInOrder", "empty", "emptyArray", "emptyCollectionOf", "emptyIterable", "emptyIterableOf",
+        "hasEntry", "hasItem", "hasItems", "hasKey", "hasProperty", "hasSize", "hasToString", "hasValue", "hasXPath" ->
+        negate ? null : NULL_VALUE;
+      case "notNullValue" -> negate ? NOT_NULL_VALUE : NULL_VALUE;
+      case "nullValue" -> negate ? NULL_VALUE : NOT_NULL_VALUE;
+      case "equalTo" -> {
+        if (args.length == 1) {
+          yield constraintFromLiteral(args[0], negate);
+        }
+        yield null;
       }
-    }
-    return null;
+      case "not" -> {
+        if (args.length == 1) {
+          yield constraintFromMatcher(args[0], !negate);
+        }
+        yield null;
+      }
+      case "is" -> {
+        if (args.length == 1) {
+          ValueConstraint fromMatcher = constraintFromMatcher(args[0], negate);
+          yield fromMatcher == null ? constraintFromLiteral(args[0], negate) : fromMatcher;
+        }
+        yield null;
+      }
+      default -> null;
+    };
   }
 
   private static @Nullable ValueConstraint constraintFromLiteral(PsiExpression arg, boolean negate) {

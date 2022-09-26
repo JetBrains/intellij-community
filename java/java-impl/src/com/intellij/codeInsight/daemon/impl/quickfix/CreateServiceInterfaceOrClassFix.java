@@ -3,7 +3,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.actions.TemplateKindCombo;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -17,6 +19,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -114,6 +117,11 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
     }
   }
 
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", "public interface " + myInterfaceName + " {}");
+  }
+
   @NotNull
   private static Map<Module, PsiDirectory[]> getModuleRootDirs(@NotNull PsiPackage psiPackage) {
     ProjectFileIndex index = ProjectFileIndex.getInstance(psiPackage.getProject());
@@ -153,7 +161,8 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       myModuleCombo.setModel(new DefaultComboBoxModel<>(modules));
       updateRootDirsCombo(psiRootDirs);
 
-      myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.CLASS.getDescription()), PlatformIcons.CLASS_ICON, CreateClassKind.CLASS.name());
+      myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.CLASS.getDescription()),
+                          IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class), CreateClassKind.CLASS.name());
       myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.INTERFACE.getDescription()), PlatformIcons.INTERFACE_ICON, CreateClassKind.INTERFACE.name());
       myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.ANNOTATION.getDescription()), PlatformIcons.ANNOTATION_TYPE_ICON, CreateClassKind.ANNOTATION.name());
 

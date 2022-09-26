@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import org.jetbrains.kotlin.builtins.*
@@ -24,10 +24,9 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.error.*
-import org.jetbrains.kotlin.types.typeUtil.isUnresolvedType
 import org.jetbrains.kotlin.types.error.ErrorUtils
+import org.jetbrains.kotlin.types.typeUtil.isUnresolvedType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.ArrayList
 
 /**
  * copy-pasted and inspired by [DescriptorRendererImpl]
@@ -148,15 +147,15 @@ class HintsTypeRenderer private constructor(override val options: HintsDescripto
 
         if (this.isError) {
             if (isUnresolvedType(this) && options.presentableUnresolvedTypes) {
-                list.append(this.debugMessage)
+                list.append(ErrorUtils.unresolvedTypeAsItIs(this))
             } else {
                 if (this is ErrorType && !options.informativeErrorType) {
                     list.append(this.debugMessage)
                 } else {
                     list.append(this.constructor.toString()) // Debug name of an error type is more informative
                 }
+                this.arguments.renderTypeArgumentsTo(list)
             }
-            this.arguments.renderTypeArgumentsTo(list)
         } else {
             this.renderTypeConstructorAndArgumentsTo(list)
         }
@@ -196,7 +195,7 @@ class HintsTypeRenderer private constructor(override val options: HintsDescripto
         this.arguments.renderTypeArgumentsTo(list)
     }
 
-    fun TypeConstructor.renderTypeConstructorOfTypeTo(list: MutableList<InlayInfoDetail>, type: KotlinType){
+    private fun TypeConstructor.renderTypeConstructorOfTypeTo(list: MutableList<InlayInfoDetail>, type: KotlinType){
         val text = when (val cd = this.declarationDescriptor) {
             is TypeParameterDescriptor, is ClassDescriptor, is TypeAliasDescriptor -> renderClassifierNameWithType(cd, type)
             null -> this.toString()
@@ -205,7 +204,7 @@ class HintsTypeRenderer private constructor(override val options: HintsDescripto
         list.append(text, this.declarationDescriptor)
     }
 
-    fun TypeConstructor.renderTypeConstructorTo(list: MutableList<InlayInfoDetail>){
+    private fun TypeConstructor.renderTypeConstructorTo(list: MutableList<InlayInfoDetail>){
         val text = when (val cd = this.declarationDescriptor) {
             is TypeParameterDescriptor, is ClassDescriptor, is TypeAliasDescriptor -> renderClassifierName(cd)
             null -> this.toString()
@@ -285,7 +284,7 @@ class HintsTypeRenderer private constructor(override val options: HintsDescripto
         if (isNullable) list.append("?")
     }
 
-    fun TypeProjection.renderTypeProjectionTo(list: MutableList<InlayInfoDetail>) =
+    private fun TypeProjection.renderTypeProjectionTo(list: MutableList<InlayInfoDetail>) =
         listOf(this).appendTypeProjectionsTo(list)
 
     private fun List<TypeProjection>.appendTypeProjectionsTo(list: MutableList<InlayInfoDetail>) {

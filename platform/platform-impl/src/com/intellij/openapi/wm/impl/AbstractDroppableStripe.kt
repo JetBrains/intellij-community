@@ -3,13 +3,14 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.toolWindow.StripeButtonManager
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.awt.DevicePoint
+import com.intellij.ui.components.JBPanel
 import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import kotlin.math.max
 
@@ -34,7 +35,8 @@ internal class LayoutData(
   var dragInsertPosition: Int = 0,
 )
 
-internal abstract class AbstractDroppableStripe(val paneId: String, layoutManager: LayoutManager) : JPanel(layoutManager) {
+internal abstract class AbstractDroppableStripe(val paneId: String, layoutManager: LayoutManager)
+  : JBPanel<AbstractDroppableStripe>(layoutManager) {
   companion object {
     const val DROP_DISTANCE_SENSITIVITY = 200
 
@@ -62,11 +64,15 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     }
   }
 
+  init {
+    putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, false)
+  }
+
   private var dragButton: StripeButtonManager? = null
   protected var dropRectangle: Rectangle = Rectangle(-1, -1)
   protected val drawRectangle = Rectangle()
   private var dragButtonImage: JComponent? = null
-  protected var isFinishingDrop = false
+  private var isFinishingDrop = false
   private var lastLayoutData: LayoutData? = null
 
   private val buttons: MutableList<StripeButtonManager> = mutableListOf()

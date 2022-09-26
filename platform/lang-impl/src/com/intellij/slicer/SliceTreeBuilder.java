@@ -1,23 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 import java.util.Comparator;
 
-public class SliceTreeBuilder extends AbstractTreeBuilder {
+public class SliceTreeBuilder {
+  private final SliceTreeStructure sliceTreeStructure;
   public final boolean splitByLeafExpressions;
   public final boolean dataFlowToThis;
   public volatile boolean analysisInProgress;
@@ -31,8 +25,8 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
     SliceUsage usage1 = node1.getValue();
     SliceUsage usage2 = node2.getValue();
 
-    PsiElement element1 = usage1.getElement();
-    PsiElement element2 = usage2.getElement();
+    PsiElement element1 = usage1 == null ? null : usage1.getElement();
+    PsiElement element2 = usage2 == null ? null : usage2.getElement();
 
     PsiFile file1 = element1 == null ? null : element1.getContainingFile();
     PsiFile file2 = element2 == null ? null : element2.getContainingFile();
@@ -47,24 +41,20 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
     return Comparing.compare(file1.getName(), file2.getName());
   };
 
-  SliceTreeBuilder(@NotNull JTree tree,
-                   @NotNull Project project,
+  SliceTreeBuilder(@NotNull SliceTreeStructure sliceTreeStructure,
                    boolean dataFlowToThis,
-                   @NotNull SliceNode rootNode,
                    boolean splitByLeafExpressions) {
-    super(tree, (DefaultTreeModel)tree.getModel(), new SliceTreeStructure(project, rootNode), SLICE_NODE_COMPARATOR, false);
+    this.sliceTreeStructure = sliceTreeStructure;
     this.dataFlowToThis = dataFlowToThis;
     this.splitByLeafExpressions = splitByLeafExpressions;
-    initRootNode();
   }
 
-  SliceNode getRootSliceNode() {
-    return (SliceNode)getTreeStructure().getRootElement();
+  public SliceTreeStructure getTreeStructure() {
+    return sliceTreeStructure;
   }
 
-  @Override
-  protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-    return false;
+  public SliceRootNode getRootSliceNode() {
+    return sliceTreeStructure.getRootElement();
   }
 
   void switchToGroupedByLeavesNodes() {
@@ -73,9 +63,8 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
       return;
     }
     analysisInProgress = true;
-    provider.startAnalyzeLeafValues(getTreeStructure(), () -> analysisInProgress = false);
+    provider.startAnalyzeLeafValues(sliceTreeStructure, () -> analysisInProgress = false);
   }
-
 
   public void switchToLeafNulls() {
     SliceLanguageSupportProvider provider = getRootSliceNode().getProvider();
@@ -83,12 +72,6 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
       return;
     }
     analysisInProgress = true;
-    provider.startAnalyzeNullness(getTreeStructure(), () -> analysisInProgress = false);
-  }
-
-  @Nullable
-  @Override
-  protected ProgressIndicator createProgressIndicator() {
-    return new ProgressIndicatorBase(true);
+    provider.startAnalyzeNullness(sliceTreeStructure, () -> analysisInProgress = false);
   }
 }

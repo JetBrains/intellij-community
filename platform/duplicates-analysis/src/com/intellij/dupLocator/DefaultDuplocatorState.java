@@ -17,18 +17,10 @@ public final class DefaultDuplocatorState implements ExternalizableDuplocatorSta
 
   @Override
   public boolean distinguishRole(@NotNull PsiElementRole role) {
-    switch (role) {
-      case VARIABLE_NAME:
-      case FIELD_NAME:
-        return DISTINGUISH_VARIABLES;
-
-      case FUNCTION_NAME:
-        return DISTINGUISH_FUNCTIONS;
-
-      default:
-        LOG.error("Unknown role " + role);
-        return true;
-    }
+    return switch (role) {
+      case VARIABLE_NAME, FIELD_NAME -> DISTINGUISH_VARIABLES;
+      case FUNCTION_NAME -> DISTINGUISH_FUNCTIONS;
+    };
   }
 
   @Override

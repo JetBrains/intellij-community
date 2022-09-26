@@ -69,13 +69,13 @@ internal class ElementAnnotator(
 
     fun registerDiagnosticsQuickFixes(
         diagnostics: List<Diagnostic>,
-        highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>
+        highlightInfoByDiagnostic: Map<Diagnostic, HighlightInfo>
     ) = diagnostics.groupBy { it.factory }
         .forEach { registerDiagnosticsSameFactoryQuickFixes(it.value, highlightInfoByDiagnostic) }
 
     private fun registerDiagnosticsSameFactoryQuickFixes(
         diagnostics: List<Diagnostic>,
-        highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>
+        highlightInfoByDiagnostic: Map<Diagnostic, HighlightInfo>
     ) {
         val presentationInfo = presentationInfo(diagnostics) ?: return
         val fixesMap = createFixesMap(diagnostics) ?: return
@@ -128,10 +128,11 @@ internal class ElementAnnotator(
                     else -> {
                         AnnotationPresentationInfo(
                             ranges,
-                            highlightType = if (factory == Errors.INVISIBLE_REFERENCE)
-                                ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
-                            else
-                                null
+                            highlightType =
+                            when (factory) {
+                                Errors.INVISIBLE_REFERENCE, Errors.DELEGATE_SPECIAL_FUNCTION_MISSING, Errors.DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE, Errors.TOO_MANY_ARGUMENTS -> ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
+                                else -> null
+                            }
                         )
                     }
                 }

@@ -35,9 +35,6 @@ public final class PyUnindentingInsertHandler implements InsertHandler<PythonLoo
   /**
    * Unindent current line to be flush with a starting part, detecting the part if necessary.
    *
-   * @param project
-   * @param editor
-   * @param file
    * @return true if unindenting succeeded
    */
   public static boolean unindentAsNeeded(Project project, Editor editor, PsiFile file) {

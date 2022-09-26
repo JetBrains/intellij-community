@@ -9,7 +9,7 @@ import java.util.function.Supplier
 
 object GrazieBundle {
   const val DEFAULT_BUNDLE_NAME = "messages.GrazieBundle"
-  const val PLUGIN_BUNDLE_NAME = "messages.GraziePluginBundle"
+  private const val PLUGIN_BUNDLE_NAME = "messages.GraziePluginBundle"
 
   private val defaultBundle by lazy { DynamicBundle.getResourceBundle(javaClass.classLoader, DEFAULT_BUNDLE_NAME) }
   private val pluginBundle by lazy { DynamicBundle.getResourceBundle(javaClass.classLoader, PLUGIN_BUNDLE_NAME) }

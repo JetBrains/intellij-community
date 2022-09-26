@@ -2,12 +2,11 @@
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.template.HtmlContextType;
-import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateContext;
+import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.util.containers.ContainerUtil;
 
 public class HtmlEmmetWrapTest extends EmmetAbbreviationTestCase {
   public void testText() {
@@ -108,7 +107,7 @@ public class HtmlEmmetWrapTest extends EmmetAbbreviationTestCase {
     TemplateImpl templateImpl = (TemplateImpl)manager.createTemplate(key, "html", text);
     templateImpl.addVariable(TemplateImpl.SELECTION, "", "", false);
     TemplateContext context = templateImpl.getTemplateContext();
-    context.setEnabled(ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), HtmlContextType.class), true);
+    context.setEnabled(TemplateContextTypes.getByClass(HtmlContextType.class), true);
     CodeInsightTestUtil.addTemplate(templateImpl, getTestRootDisposable());
     return templateImpl;
   }

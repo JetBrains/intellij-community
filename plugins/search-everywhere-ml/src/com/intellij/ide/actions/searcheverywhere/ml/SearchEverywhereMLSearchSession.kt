@@ -17,7 +17,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 internal class SearchEverywhereMLSearchSession(project: Project?,
                                                val mixedListInfo: SearchEverywhereMixedListInfo,
-                                               private val sessionId: Int) {
+                                               private val sessionId: Int,
+                                               private val loggingRandomisation: FeaturesLoggingRandomisation) {
   val itemIdProvider = SearchEverywhereMlItemIdProvider()
   private val sessionStartTime: Long = System.currentTimeMillis()
   private val providersCache = FeaturesProviderCacheDataProvider().getDataToCache(project)
@@ -59,10 +60,11 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
     }
 
     if (prevState != null && experimentStrategy.isLoggingEnabledForTab(prevState.tabId)) {
+      val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(prevState.tabId)
       logger.onSearchRestarted(
         project, sessionId, prevState.searchIndex,
-        itemIdProvider, cachedContextInfo, prevState,
-        prevTimeToResult, mixedListInfo, previousElementsProvider
+        shouldLogFeatures, itemIdProvider, cachedContextInfo,
+        prevState, prevTimeToResult, mixedListInfo, previousElementsProvider
       )
     }
   }
@@ -83,12 +85,13 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
         }
       }
 
+      val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(state.tabId)
       logger.onItemSelected(
         project, sessionId, state.searchIndex,
-        state.experimentGroup, state.orderByMl,
-        itemIdProvider, cachedContextInfo, state,
-        indexes, selectedItems, closePopup,
-        performanceTracker.timeElapsed, mixedListInfo, elementsProvider
+        shouldLogFeatures, state.experimentGroup,
+        state.orderByMl, itemIdProvider, cachedContextInfo,
+        state, indexes, selectedItems,
+        closePopup, performanceTracker.timeElapsed, mixedListInfo, elementsProvider
       )
     }
   }
@@ -98,11 +101,12 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
                        elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
     val state = getCurrentSearchState()
     if (state != null && experimentStrategy.isLoggingEnabledForTab(state.tabId)) {
+      val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(state.tabId)
       logger.onSearchFinished(
         project, sessionId, state.searchIndex,
-        state.experimentGroup, state.orderByMl,
-        itemIdProvider, cachedContextInfo, state,
-        performanceTracker.timeElapsed, mixedListInfo, elementsProvider
+        shouldLogFeatures, state.experimentGroup,
+        state.orderByMl, itemIdProvider, cachedContextInfo,
+        state, performanceTracker.timeElapsed, mixedListInfo, elementsProvider
       )
     }
   }

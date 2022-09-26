@@ -192,7 +192,7 @@ public final class PyPackageManagerUI {
             req -> ContainerUtil.map(req.getInstallOptions(), option -> Pair.create(option, req.getName()))) : null;
         final List<String> packageManagerArguments = exceptions.stream()
           .flatMap(e -> (e instanceof PyExecutionException) ? ((PyExecutionException)e).getArgs().stream() : null)
-          .collect(Collectors.toList());
+          .toList();
         final String packageNames = requirements != null ? requirements.stream()
           .filter(req -> packageManagerArguments.contains(req.first))
           .map(req -> req.second)

@@ -31,6 +31,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
 import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcsUtil.VcsUtil;
@@ -310,7 +311,7 @@ public class VcsStructureChooser extends DialogWrapper {
       myFictive = new JBList();
       myFictive.setBackground(RenderingUtil.getBackground(tree));
       myFictive.setSelectionBackground(UIUtil.getListSelectionBackground(true));
-      myFictive.setSelectionForeground(UIUtil.getListSelectionForeground(true));
+      myFictive.setSelectionForeground(NamedColorUtil.getListSelectionForeground(true));
 
       myTextRenderer = new WithModulesListCellRenderer(project, myModulesSet) {
         @Override

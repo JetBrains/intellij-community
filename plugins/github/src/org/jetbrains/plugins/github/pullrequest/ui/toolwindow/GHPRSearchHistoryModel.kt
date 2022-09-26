@@ -2,10 +2,15 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.ui.codereview.list.search.PersistingReviewListSearchHistoryModel
-import kotlinx.coroutines.CoroutineScope
 
-internal class GHPRSearchHistoryModel(scope: CoroutineScope, private val persistentHistoryComponent: GHPRListPersistentSearchHistory)
-  : PersistingReviewListSearchHistoryModel<GHPRListSearchValue>(scope) {
+internal class GHPRSearchHistoryModel(private val persistentHistoryComponent: GHPRListPersistentSearchHistory)
+  : PersistingReviewListSearchHistoryModel<GHPRListSearchValue>() {
+
+  override var lastFilter: GHPRListSearchValue?
+    get() = persistentHistoryComponent.lastFilter
+    set(value) {
+      persistentHistoryComponent.lastFilter = value
+    }
 
   override var persistentHistory: List<GHPRListSearchValue>
     get() = persistentHistoryComponent.history

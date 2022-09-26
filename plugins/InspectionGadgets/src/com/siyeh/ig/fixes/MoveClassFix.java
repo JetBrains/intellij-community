@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +30,7 @@ public class MoveClassFix extends RefactoringInspectionGadgetsFix {
 
   @NotNull
   @Override
-  public RefactoringActionHandler getHandler() {
-    return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
+  public PreviewableRefactoringActionHandler getHandler() {
+    return (PreviewableRefactoringActionHandler)RefactoringActionHandlerFactory.getInstance().createMoveHandler();
   }
 }

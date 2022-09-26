@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
+import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
 import org.jetbrains.kotlin.idea.kdoc.*
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.appendCodeSnippetHighlightedByLexer
@@ -201,7 +201,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
     }
 
     override fun getDocumentationElementForLookupItem(psiManager: PsiManager, `object`: Any?, element: PsiElement?): PsiElement? {
-        if (`object` is DeclarationLookupObject) {
+        if (`object` is DescriptorBasedDeclarationLookupObject) {
             `object`.psiElement?.let { return it }
             `object`.descriptor?.let { descriptor ->
                 return DescriptorToSourceUtilsIde.getAnyDeclaration(psiManager.project, descriptor)
@@ -260,23 +260,10 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
         // do nothing
     }
 
-    companion object {
-        private val LOG = Logger.getInstance(KotlinDocumentationProvider::class.java)
-        private val javaDocumentProvider = JavaDocumentationProvider()
+    private object Lazy {
+        val javaDocumentProvider = JavaDocumentationProvider()
 
-        //private val DESCRIPTOR_RENDERER = DescriptorRenderer.HTML.withOptions {
-        //    classifierNamePolicy = HtmlClassifierNamePolicy(ClassifierNamePolicy.SHORT)
-        //    valueParametersHandler = WrapValueParameterHandler(valueParametersHandler)
-        //    annotationArgumentsRenderingPolicy = AnnotationArgumentsRenderingPolicy.UNLESS_EMPTY
-        //    renderCompanionObjectName = true
-        //    withDefinedIn = false
-        //    eachAnnotationOnNewLine = true
-        //    boldOnlyForNamesInHtml = true
-        //    excludedTypeAnnotationClasses = NULLABILITY_ANNOTATIONS
-        //    defaultParameterValueRenderer = { (it.source.getPsi() as? KtParameter)?.defaultValue?.text ?: "..." }
-        //}
-
-        private val DESCRIPTOR_RENDERER = KotlinIdeDescriptorRenderer.withOptions {
+        val DESCRIPTOR_RENDERER = KotlinIdeDescriptorRenderer.withOptions {
             textFormat = RenderingFormat.HTML
             modifiers = DescriptorRendererModifier.ALL
             classifierNamePolicy = HtmlClassifierNamePolicy(ClassifierNamePolicy.SHORT)
@@ -289,6 +276,10 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
             excludedTypeAnnotationClasses = NULLABILITY_ANNOTATIONS
             defaultParameterValueRenderer = { (it.source.getPsi() as? KtParameter)?.defaultValue?.text ?: "..." }
         }
+    }
+
+    companion object {
+        private val LOG = Logger.getInstance(KotlinDocumentationProvider::class.java)
 
         private fun renderEnumSpecialFunction(element: KtClass, functionDescriptor: FunctionDescriptor, quickNavigation: Boolean): String {
             val kdoc = run {
@@ -308,7 +299,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
             return buildString {
                 insert(KDocTemplate()) {
                     definition {
-                        renderDefinition(functionDescriptor, DESCRIPTOR_RENDERER
+                        renderDefinition(functionDescriptor, Lazy.DESCRIPTOR_RENDERER
                             .withIdeOptions { highlightingManager = createHighlightingManager(element.project) }
                         )
                     }
@@ -397,7 +388,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                 if (calledElement is KtNamedFunction || calledElement is KtConstructor<*>) { // In case of Kotlin function or constructor
                     return renderKotlinDeclaration(calledElement as KtExpression, quickNavigation)
                 } else if (calledElement is ClsMethodImpl || calledElement is PsiMethod) { // In case of java function or constructor
-                    return javaDocumentProvider.generateDoc(calledElement, referenceExpression)
+                    return Lazy.javaDocumentProvider.generateDoc(calledElement, referenceExpression)
                 }
             } else if (element is KtCallExpression) {
                 val calledElement = element.referenceExpression()?.mainReference?.resolve()
@@ -485,7 +476,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
 
             return KDocTemplate().apply {
                 definition {
-                    renderDefinition(declarationDescriptor, DESCRIPTOR_RENDERER
+                    renderDefinition(declarationDescriptor, Lazy.DESCRIPTOR_RENDERER
                         .withIdeOptions { highlightingManager = createHighlightingManager(ktElement.project) }
                     )
                 }
@@ -635,7 +626,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
 
             val originalInfo = JavaDocumentationProvider().getQuickNavigateInfo(element, originalElement)
             if (originalInfo != null) {
-                val renderedDecl = constant { DESCRIPTOR_RENDERER.withIdeOptions { withDefinedIn = false } }.render(declarationDescriptor)
+                val renderedDecl = constant { Lazy.DESCRIPTOR_RENDERER.withIdeOptions { withDefinedIn = false } }.render(declarationDescriptor)
                 return "$renderedDecl<br/>" + KotlinBundle.message("quick.doc.section.java.declaration") + "<br/>$originalInfo"
             }
 

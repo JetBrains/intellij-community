@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.containers.asJBIterable
 import git4idea.index.createThreeSidesDiffRequestProducer
 import git4idea.index.createTwoSidesDiffRequestProducer
@@ -37,7 +38,9 @@ class GitStageDiffAction : AnActionExtensionProvider {
       val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
       e.presentation.isEnabled = e.project != null &&
                                  nodes.filter { it.kind != NodeKind.IGNORED }.isNotEmpty
-      e.presentation.isVisible = e.presentation.isEnabled || e.isFromActionToolbar
+      e.presentation.isVisible =
+        if (e.isFromActionToolbar && ExperimentalUI.isNewUI()) false
+        else e.presentation.isEnabled || e.isFromActionToolbar
     }
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.ide.ui.text.paragraph.TextParagraph
 import com.intellij.ide.ui.text.parts.*
 import com.intellij.ide.util.TipUIUtil.IconWithRoundedBorder
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ui.JBFont
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
@@ -56,7 +57,7 @@ internal class TipContentConverter(private val tipContent: Element,
         if (icon != null) {
           val roundedIcon = IconWithRoundedBorder(icon)
           return TextParagraph(listOf(IllustrationTextPart(roundedIcon))).editAttributes {
-            StyleConstants.setSpaceAbove(this, TextParagraph.BIG_INDENT)
+            StyleConstants.setSpaceAbove(this, TextParagraph.LARGE_INDENT)
             StyleConstants.setLineSpacing(this, 0f)  // it is required to not add extra space below the image
           }
         }
@@ -122,7 +123,8 @@ internal class TipContentConverter(private val tipContent: Element,
             else ShortcutTextPart(text, isRaw = true, addSpaceAround = true)
           }
           node.tagName() == "span" && node.hasClass("code_emphasis") -> {
-            CodeTextPart(getElementInnerText(node), addSpaceAround = true)
+            val text = getElementInnerText(node).replace(" ", StringUtil.NON_BREAK_SPACE)
+            CodeTextPart(text, addSpaceAround = true)
           }
           node.tagName() == "span" -> {
             // any other span elements: inlined product information

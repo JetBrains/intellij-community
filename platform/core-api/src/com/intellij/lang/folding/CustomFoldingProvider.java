@@ -46,7 +46,6 @@ public abstract class CustomFoldingProvider {
   }
 
   /**
-   * @param foldingBuilder
    * @return true, if custom folding provider is supported
    */
   public boolean isSupportedBy(FoldingBuilder foldingBuilder) {

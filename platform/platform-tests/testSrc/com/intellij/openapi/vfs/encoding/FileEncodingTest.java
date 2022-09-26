@@ -1043,6 +1043,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
     UIUtil.dispatchAllInvocationEvents();
 
+    FileEditorManager.getInstance(getProject()).closeFile(file);
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (exception.get() != null) {

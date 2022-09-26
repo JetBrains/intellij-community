@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -126,7 +127,8 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module == null) return PsiElementVisitor.EMPTY_VISITOR;
 
-    if (InjectedLanguageManager.getInstance(module.getProject()).isInjectedFragment(holder.getFile())) {
+    if (InjectedLanguageManager.getInstance(module.getProject()).isInjectedFragment(holder.getFile())
+        || holder.getFile().getUserData(FileContextUtil.INJECTED_IN_ELEMENT) != null) {
       // Properties inside injected fragments cannot be normally referenced
       return PsiElementVisitor.EMPTY_VISITOR;
     }

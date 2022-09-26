@@ -25,7 +25,7 @@ public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends In
   Map<Key, Value> getIndexedFileData(int fileId) throws StorageException;
 
   /**
-   * Goal of {@link UpdatableIndex#getFileIndexMetaData(IndexedFile)} is to allow
+   * Goal of {@code getFileIndexMetaData()} is to allow
    * saving important data to a cache to use later without read lock in analog of {@link UpdatableIndex#setIndexedStateForFile(int, IndexedFile)}
    */
   @Nullable FileIndexMetaData getFileIndexMetaData(@NotNull IndexedFile file);

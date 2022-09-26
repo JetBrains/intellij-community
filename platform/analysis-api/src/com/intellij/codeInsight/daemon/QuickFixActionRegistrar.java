@@ -22,7 +22,7 @@ public interface QuickFixActionRegistrar {
   void register(@NotNull TextRange fixRange, @NotNull IntentionAction action, @Nullable HighlightDisplayKey key);
 
   /**
-   * Allows to replace some of the built-in quick fixes.
+   * Allows to replace some built-in quick fixes.
    *
    * @param condition condition for quick fixes to remove
    * @deprecated if some fix may be inapplicable under certain circumstances

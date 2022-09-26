@@ -3,7 +3,6 @@ package org.jetbrains.concurrency;
 
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,16 +101,6 @@ public interface Promise<T> {
   Promise<T> onError(@NotNull java.util.function.Consumer<? super Throwable> rejected);
 
   /**
-   * @deprecated Use {@link #onError(java.util.function.Consumer)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @NotNull
-  default Promise<T> rejected(@NotNull Consumer<? super Throwable> rejected) {
-    return onError(it -> rejected.consume(it));
-  }
-
-  /**
    * Resolve or reject passed promise as soon as this promise is resolved or rejected.
    */
   @NotNull
@@ -123,19 +112,6 @@ public interface Promise<T> {
    */
   @NotNull
   Promise<T> onProcessed(@NotNull java.util.function.Consumer<? super T> processed);
-
-  /**
-   * Execute passed handler on promise resolve (result value will be passed),
-   * or on promise reject (null as result value will be passed).
-   *
-   * @deprecated use {@link #onProcessed(java.util.function.Consumer)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @NotNull
-  default Promise<T> processed(@NotNull Consumer<? super T> action) {
-    return onProcessed(it -> action.consume(it));
-  }
 
   /**
    * Get promise state.

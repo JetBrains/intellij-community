@@ -731,6 +731,11 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             public void update(@NotNull AnActionEvent e) {
               e.getPresentation().setEnabledAndVisible(!ContainerUtil.exists(thumbnailView.getSelection(), file -> tagManager.hasTag(tag, file)));
             }
+
+            @Override
+            public @NotNull ActionUpdateThread getActionUpdateThread() {
+              return ActionUpdateThread.EDT;
+            }
           };
         }
         actions[tagsNumber] = new AnAction(IdeBundle.messagePointer("action.Anonymous.text.new.tag")) {

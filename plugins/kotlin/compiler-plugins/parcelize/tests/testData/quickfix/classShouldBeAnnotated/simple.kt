@@ -1,4 +1,4 @@
-// "Annotate containing class with ''@Parcelize''" "true"
+// "Annotate containing class with '@Parcelize'" "true"
 // ERROR: No 'Parcelable' supertype
 // WITH_STDLIB
 

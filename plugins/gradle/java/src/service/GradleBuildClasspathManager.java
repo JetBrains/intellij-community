@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service;
 
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -27,8 +27,8 @@ public class GradleBuildClasspathManager {
   @NotNull
   private final Project myProject;
 
-  @NotNull
-  private volatile List<VirtualFile> allFilesCache;
+  @Nullable
+  private volatile List<VirtualFile> allFilesCache = null;
 
   @NotNull
   private final AtomicReference<Map<String/*module path*/, List<VirtualFile> /*module build classpath*/>> myClasspathMap
@@ -40,7 +40,6 @@ public class GradleBuildClasspathManager {
 
   public GradleBuildClasspathManager(@NotNull Project project) {
     myProject = project;
-    allFilesCache = new ArrayList<>();
   }
 
   @NotNull
@@ -100,7 +99,10 @@ public class GradleBuildClasspathManager {
   @NotNull
   public List<VirtualFile> getAllClasspathEntries() {
     checkRootsValidity(allFilesCache);
-    return allFilesCache;
+    if (allFilesCache == null) {
+      reload();
+    }
+    return Objects.requireNonNull(allFilesCache);
   }
 
   @NotNull

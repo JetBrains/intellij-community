@@ -323,13 +323,10 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     if (HAS_AFFECTED_FILES.is(dataId)) {
       return myAffectedPaths != null;
     }
-    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-      //noinspection unchecked
-      Iterable<DataProvider> superProviders = (Iterable<DataProvider>)super.getData(dataId);
-
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       VcsTreeModelData selectedData = VcsTreeModelData.selected(myViewer);
-      return JBIterable.<DataProvider>of((slowDataId) -> getSlowData(slowDataId, selectedData))
-        .append(superProviders);
+      DataProvider superProvider = (DataProvider)super.getData(dataId);
+      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, selectedData), superProvider);
     }
     else if (QuickActionProvider.KEY.is(dataId)) {
       return new QuickActionProvider() {

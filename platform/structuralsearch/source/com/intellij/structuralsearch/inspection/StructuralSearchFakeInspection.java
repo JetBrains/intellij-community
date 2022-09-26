@@ -68,7 +68,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public String getShortName() {
-    return myMainConfiguration.getShortName();
+    return myMainConfiguration.getUuid();
   }
 
   @Override
@@ -252,7 +252,6 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     final SearchContext searchContext = new SearchContext(project);
     final StructuralSearchDialog dialog = new StructuralSearchDialog(searchContext, !(configuration instanceof SearchConfiguration), true);
     dialog.loadConfiguration(configuration);
-    dialog.setUseLastConfiguration(true);
     if (!dialog.showAndGet()) return;
     final Configuration newConfiguration = dialog.getConfiguration();
     if (configuration.getOrder() == 0) {

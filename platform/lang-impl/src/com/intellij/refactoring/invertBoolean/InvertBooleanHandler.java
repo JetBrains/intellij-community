@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public class InvertBooleanHandler implements RefactoringActionHandler {
+public class InvertBooleanHandler implements PreviewableRefactoringActionHandler {
   public static final String INVERT_BOOLEAN_HELP_ID = "refactoring.invertBoolean";
   private static final Logger LOG = Logger.getInstance(InvertBooleanHandler.class);
 

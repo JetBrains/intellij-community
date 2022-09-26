@@ -135,8 +135,6 @@
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
       "borderInsets": "6,1,6,1",
       "borderCornerRadius": 8,
-      "leftBorderWith": 10,
-      "rightBorderWith": 0,
       "borderWidth": 0,
       "translucentBackground": "#ececec",
       "UI": "com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI"
@@ -216,6 +214,12 @@
       "border": "com.intellij.laf.macos.MacIntelliJTextBorder",
       "disabledBackground": "#ececec",
       "UI": "com.intellij.laf.macos.MacIntelliJTextFieldUI"
+    },
+
+
+    "SearchFieldWithExtension": {
+      "border": "com.intellij.laf.macos.MacIntelliSearchBorder",
+      "UI": "com.intellij.ui.components.DarculaSearchFieldWithExtensionUI"
     },
 
     "Tree": {

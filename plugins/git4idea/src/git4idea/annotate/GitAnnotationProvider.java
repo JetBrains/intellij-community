@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentati
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -106,7 +107,6 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
   @Override
   public String getActionName() {
-    //noinspection DialogTitleCapitalization
     return ActionsBundle.message("action.Annotate.with.Blame.text");
   }
 
@@ -275,6 +275,10 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
                                              @NotNull VirtualFile root,
                                              @NotNull String output) throws VcsException {
     Interner<FilePath> pathInterner = new HashSetInterner<>();
+
+    if (StringUtil.isEmpty(output)) {
+      LOG.warn("Git annotations are empty for file " + file.getPath() + " in revision " + revision);
+    }
 
     try {
       List<LineInfo> lines = new ArrayList<>();

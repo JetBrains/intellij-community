@@ -293,8 +293,8 @@ public final class MethodUtils {
    * Returns true if the method or constructor is trivial, i.e. does nothing of consequence. This is true when the method is empty, but
    * also when it is a constructor which only calls super, contains empty statements, "if (false)" statements or only returns a constant.
    *
-   * @parameter method  the method to check
-   * @parameter considerTrivialPredicate  predicate to consider further statements as trivial.
+   * @param method  the method to check
+   * @param considerTrivialPredicate  predicate to consider further statements as trivial.
    * For example, a predicate which returns {@code true} on {@link PsiThrowStatement}s could be used here.
    */
   public static boolean isTrivial(PsiMethod method, @Nullable Predicate<? super PsiStatement> considerTrivialPredicate) {
@@ -317,9 +317,6 @@ public final class MethodUtils {
       return true;
     }
     final PsiStatement[] statements = codeBlock.getStatements();
-    if (statements.length == 0) {
-      return true;
-    }
     for (PsiStatement statement : statements) {
       ProgressManager.checkCanceled();
       if (statement instanceof PsiEmptyStatement || trivialPredicate != null && trivialPredicate.test(statement)) {

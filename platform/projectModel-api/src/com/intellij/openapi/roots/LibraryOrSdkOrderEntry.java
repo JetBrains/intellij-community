@@ -21,6 +21,34 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.NonExtendable
 public interface LibraryOrSdkOrderEntry extends OrderEntry {
+  /**
+   * Returns files configured as roots in the corresponding library or SDK. Note that only existing files are returned; if you need to get
+   * paths to non-existing files as well, use {@link #getRootUrls(OrderRootType)} instead.
+   */
   VirtualFile @NotNull [] getRootFiles(@NotNull OrderRootType type);
+
+  /**
+   * Returns URLs of roots configured in the corresponding library or SDK.
+   */
   String @NotNull [] getRootUrls(@NotNull OrderRootType type);
+
+  /**
+   * @deprecated use {@link #getRootFiles(OrderRootType)} instead; meaning of this method coming from the base {@link OrderEntry} interface 
+   * is unclear.
+   */
+  @Deprecated
+  @Override
+  default VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type) {
+    return getRootFiles(type);
+  }
+
+  /**
+   * @deprecated use {@link #getRootUrls(OrderRootType)} instead; meaning of this method coming from the base {@link OrderEntry} interface
+   * is unclear.
+   */
+  @Deprecated
+  @Override
+  default String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
+    return getRootUrls(rootType);
+  }
 }

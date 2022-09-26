@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.ui.IconManager
 import com.intellij.util.PlatformIcons
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -185,7 +186,7 @@ class AddFunctionToSupertypeFix private constructor(element: KtNamedFunction, fu
     AddMemberToSupertypeFix(element, functions) {
 
     override val kind: String = "function"
-    override val icon: Icon = PlatformIcons.FUNCTION_ICON
+    override val icon: Icon = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Function)
 
     companion object : AddMemberToSupertypeFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {

@@ -94,19 +94,16 @@ public class TypeAnnotationContainer {
    */
   public TypeAnnotationProvider getProvider(PsiElement parent) {
     if (isEmpty()) return TypeAnnotationProvider.EMPTY;
-    return new TypeAnnotationProvider() {
-      @Override
-      public PsiAnnotation @NotNull [] getAnnotations() {
-        List<PsiAnnotation> result = new ArrayList<>();
-        for (TypeAnnotationEntry entry : myList) {
-          if (entry.myPath.length == 0) {
-            PsiAnnotation anno = parent instanceof PsiCompiledElement ? new ClsTypeAnnotationImpl(parent, entry.myText) :
-                                 JavaPsiFacade.getElementFactory(parent.getProject()).createAnnotationFromText(entry.myText, parent);
-            result.add(anno);
-          }
+    return () -> {
+      List<PsiAnnotation> result = new ArrayList<>();
+      for (TypeAnnotationEntry entry : myList) {
+        if (entry.myPath.length == 0) {
+          PsiAnnotation anno = parent instanceof PsiCompiledElement ? new ClsTypeAnnotationImpl(parent, entry.myText) :
+                               JavaPsiFacade.getElementFactory(parent.getProject()).createAnnotationFromText(entry.myText, parent);
+          result.add(anno);
         }
-        return result.toArray(PsiAnnotation.EMPTY_ARRAY);
       }
+      return result.toArray(PsiAnnotation.EMPTY_ARRAY);
     };
   }
 

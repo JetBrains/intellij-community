@@ -116,7 +116,10 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI"
     },
 
-    "ComboBoxButton.background": "#3c3f41",
+    "ComboBoxButton": {
+      "background": "#3c3f41",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ComboBoxButtonUI"
+    },
     "CompletionPopup.nonFocusedState": true,
 
     "Component": {
@@ -323,8 +326,6 @@
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
       "borderInsets": "6,1,6,1",
       "borderCornerRadius": 8,
-      "leftBorderWith": 10,
-      "rightBorderWith": 0,
       "translucentBackground": "#3c3f41",
       "UI": "com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI"
     },
@@ -469,6 +470,12 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI"
     },
 
+    "SearchFieldWithExtension": {
+      "background": "#45494A",
+      "border": "com.intellij.ui.components.DarculaSearchBorder",
+      "UI": "com.intellij.ui.components.DarculaSearchFieldWithExtensionUI"
+    },
+
     "TitledBorder.titleColor": "#bbbbbb",
 
     "ToggleButton": {
@@ -570,7 +577,34 @@
       }
     },
 
-    "Plugins.borderColor": "#515151"
+    "Plugins.borderColor": "#515151",
+
+    "TipOfTheDay": {
+      "Image.borderColor": "#323232"
+    },
+
+    "PackageSearch": {
+      "SearchResult": {
+        "background": "#3f4749",
+        "hoverBackground": "#464a4d",
+        "PackageTag": {
+          "background": "#4e5658",
+          "foreground": "#8e8f8f",
+          "hoverBackground": "#55585b",
+          "selectedBackground": "#2f65ca",
+          "selectedForeground": "#bbbbbb"
+        }
+      },
+      "PackageTag": {
+        "background": "#4c4e50",
+        "foreground": "#9c9c9c",
+        "hoverBackground": "#55585b",
+        "selectedBackground": "#2f65ca",
+        "selectedForeground": "#bbbbbb"
+      },
+      "PackageTagSelected.background": "#78ade2",
+      "PackageTagSelected.foreground": "#bbbbbb"
+    }
   },
 
   "WelcomeScreen.Projects.actions.selectionBackground": "#326FC1",

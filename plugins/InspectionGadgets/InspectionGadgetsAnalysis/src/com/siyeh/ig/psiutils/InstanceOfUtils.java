@@ -23,6 +23,7 @@ import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -272,6 +273,14 @@ public final class InstanceOfUtils {
     return processParent(cast, context, parent);
   }
 
+  public static @Nullable PsiTypeElement findCheckTypeElement(PsiInstanceOfExpression expression) {
+    PsiTypeElement typeElement = expression.getCheckType();
+    if (typeElement == null) {
+      typeElement = JavaPsiPatternUtil.getPatternTypeElement(expression.getPattern());
+    }
+    return typeElement;
+  }
+
   private static PsiInstanceOfExpression processParent(PsiTypeCastExpression cast, PsiElement context, PsiElement parent) {
     if (parent instanceof PsiIfStatement) {
       PsiIfStatement ifStatement = (PsiIfStatement)parent;
@@ -353,13 +362,7 @@ public final class InstanceOfUtils {
     }
     if (condition instanceof PsiInstanceOfExpression && whenTrue) {
       PsiInstanceOfExpression instanceOf = (PsiInstanceOfExpression)condition;
-      PsiTypeElement typeElement = instanceOf.getCheckType();
-      if (typeElement  == null) {
-        PsiPrimaryPattern pattern = instanceOf.getPattern();
-        if (pattern instanceof PsiTypeTestPattern) {
-          typeElement = ((PsiTypeTestPattern)pattern).getCheckType();
-        }
-      }
+      PsiTypeElement typeElement = findCheckTypeElement(instanceOf);
       if (typeElement != null) {
         PsiType type = typeElement.getType();
         PsiType castType = Objects.requireNonNull(cast.getCastType()).getType();

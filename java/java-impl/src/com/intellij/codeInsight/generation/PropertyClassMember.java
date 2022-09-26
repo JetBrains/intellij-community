@@ -22,13 +22,11 @@ import org.jetbrains.annotations.Nullable;
 public interface PropertyClassMember extends EncapsulatableClassMember {
   /**
    * @return PsiElement or TemplateGenerationInfo
-   * @param aClass
    */
   GenerationInfo @Nullable [] generateGetters(PsiClass aClass) throws IncorrectOperationException;
 
   /**
    * @return PsiElement or TemplateGenerationInfo
-   * @param aClass
    */
   GenerationInfo @Nullable [] generateSetters(PsiClass aClass) throws IncorrectOperationException;
 }

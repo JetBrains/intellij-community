@@ -16,7 +16,6 @@
 
 package org.intellij.plugins.relaxNG.compact.psi.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -25,6 +24,8 @@ import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
@@ -123,7 +124,7 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
   @Override
   @Nullable
   public Icon getIcon(int flags) {
-    return AllIcons.Nodes.Property;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.Property);
   }
 
   public boolean isMetaEnough() {

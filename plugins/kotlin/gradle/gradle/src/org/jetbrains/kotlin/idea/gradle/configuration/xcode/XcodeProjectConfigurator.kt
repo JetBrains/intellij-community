@@ -11,7 +11,7 @@ class XcodeProjectConfigurator {
 
     private val mppDirName = "app"
 
-    fun templatePlist(varyingProperties: String = ""): String {
+    private fun templatePlist(varyingProperties: String = ""): String {
         return """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">

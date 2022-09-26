@@ -356,6 +356,10 @@ internal object BranchesDashboardActions {
       uiController.showOnlyMy = state
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
     override fun update(e: AnActionEvent) {
       super.update(e)
       val project = e.getData(CommonDataKeys.PROJECT)
@@ -412,7 +416,7 @@ internal object BranchesDashboardActions {
       super.actionPerformed(e)
     }
 
-    override fun onFetchFinished(result: GitFetchResult) {
+    override fun onFetchFinished(project: Project, result: GitFetchResult) {
       ui.stopLoadingBranches()
     }
   }
@@ -471,7 +475,7 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class GroupBranchByDirectoryAction : GroupBranchAction(GroupingKey.GROUPING_BY_DIRECTORY) {
+  class GroupBranchByDirectoryAction : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY) {
     override fun update(e: AnActionEvent) {
       super.update(e)
 
@@ -484,7 +488,7 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class GroupBranchByRepositoryAction : GroupBranchAction(GroupingKey.GROUPING_BY_REPOSITORY) {
+  class GroupBranchByRepositoryAction : BranchGroupingAction(GroupingKey.GROUPING_BY_REPOSITORY) {
     override fun update(e: AnActionEvent) {
       super.update(e)
       e.presentation.isEnabledAndVisible = isEnabledAndVisible(e)
@@ -493,12 +497,6 @@ internal object BranchesDashboardActions {
     companion object {
       fun isEnabledAndVisible(e: AnActionEvent): Boolean =
         e.project?.let(RepositoryChangesBrowserNode.Companion::getColorManager)?.hasMultiplePaths() ?: false
-    }
-  }
-
-  abstract class GroupBranchAction(key: GroupingKey) : BranchGroupingAction(key) {
-    override fun setSelected(e: AnActionEvent, key: GroupingKey, state: Boolean) {
-      e.getData(BRANCHES_UI_CONTROLLER)?.toggleGrouping(key, state)
     }
   }
 
@@ -555,6 +553,10 @@ internal object BranchesDashboardActions {
 
     open fun update(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>) {}
     abstract fun doAction(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>)
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
 
     override fun update(e: AnActionEvent) {
       val project = e.project

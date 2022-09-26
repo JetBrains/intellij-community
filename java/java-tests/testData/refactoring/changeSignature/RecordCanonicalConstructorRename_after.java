@@ -22,4 +22,15 @@ class Use {
         System.out.println(rec.z());
         System.out.println(rec.x());
     }
+
+    void foo(Object obj) {
+        switch (obj) {
+            case Rec(int y, int z, int x) when y + z + x == 42 -> System.out.println(y + z + x);
+            default -> throw new IllegalStateException("Unexpected value: " + obj);
+        }
+
+        if (obj instanceof Rec(int y, int z, int x) rec) {
+            System.out.println(y + z + x);
+        }
+    }
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBus;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.GlobalScope;
@@ -26,8 +27,7 @@ public final class DummyProject extends UserDataHolderBase implements Project {
     private static final DummyProject ourInstance = new DummyProject();
   }
 
-  @NotNull
-  public static Project getInstance() {
+  public static @NotNull Project getInstance() {
     return DummyProjectHolder.ourInstance;
   }
 
@@ -39,21 +39,17 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "";
   }
 
   @Override
-  @NotNull
-  public String getLocationHash() {
+  public @NotNull String getLocationHash() {
     return "dummy";
   }
 
   @Override
-  @Nullable
-  @SystemIndependent
-  public String getProjectFilePath() {
+  public @Nullable @SystemIndependent String getProjectFilePath() {
     return null;
   }
 
@@ -63,15 +59,12 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  @Nullable
-  public VirtualFile getBaseDir() {
+  public @Nullable VirtualFile getBaseDir() {
     return null;
   }
 
-  @Nullable
-  @SystemIndependent
   @Override
-  public String getBasePath() {
+  public @Nullable @SystemIndependent String getBasePath() {
     return null;
   }
 
@@ -83,20 +76,18 @@ public final class DummyProject extends UserDataHolderBase implements Project {
     return null;
   }
 
-  @Nullable
   @Override
-  public <T> T getComponent(@NotNull Class<T> interfaceClass) {
+  public @Nullable <T> T getComponent(@NotNull Class<T> interfaceClass) {
     return null;
   }
 
   @Override
-  public <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
-    throw new UnsupportedOperationException();
+  public boolean hasComponent(@NotNull Class<?> interfaceClass) {
+    return false;
   }
 
   @Override
-  @NotNull
-  public PicoContainer getPicoContainer() {
+  public @NotNull PicoContainer getPicoContainer() {
     throw new UnsupportedOperationException("getPicoContainer is not implement in : " + getClass());
   }
 
@@ -105,9 +96,8 @@ public final class DummyProject extends UserDataHolderBase implements Project {
     return false;
   }
 
-  @NotNull
   @Override
-  public ExtensionsArea getExtensionArea() {
+  public @NotNull ExtensionsArea getExtensionArea() {
     throw new UnsupportedOperationException("getExtensionArea is not implement in : " + getClass());
   }
 
@@ -124,8 +114,7 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  @NotNull
-  public Condition<?> getDisposed() {
+  public @NotNull Condition<?> getDisposed() {
     return o -> isDisposed();
   }
 
@@ -144,9 +133,8 @@ public final class DummyProject extends UserDataHolderBase implements Project {
     return GlobalScope.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public MessageBus getMessageBus() {
+  public @NotNull MessageBus getMessageBus() {
     throw new UnsupportedOperationException();
   }
 
@@ -157,6 +145,16 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
     //noinspection unchecked
     return (Class<T>)Class.forName(className);
+  }
+
+  @Override
+  public <T> @NotNull T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
+    try {
+      return ReflectionUtil.newInstance(loadClass(className, pluginDescriptor));
+    }
+    catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

@@ -120,4 +120,9 @@ public interface Project extends ComponentManager, AreaInstance {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   CoroutineScope getCoroutineScope();
+
+  @ApiStatus.Internal
+  default ComponentManager getActualComponentManager() {
+    return this;
+  }
 }

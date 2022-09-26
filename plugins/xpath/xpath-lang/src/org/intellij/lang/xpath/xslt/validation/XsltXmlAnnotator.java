@@ -48,7 +48,7 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
   }
 
   @Override
-  public void visitXmlAttributeValue(final XmlAttributeValue value) {
+  public void visitXmlAttributeValue(final @NotNull XmlAttributeValue value) {
     final PsiElement parent = value.getParent();
     if (parent instanceof XmlAttribute) {
       if (!XsltSupport.isXsltFile(parent.getContainingFile())) {

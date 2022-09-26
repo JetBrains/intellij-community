@@ -19,6 +19,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
@@ -1607,6 +1608,9 @@ public class MavenUtil {
     return repositories;
   }
 
+  public static boolean isMavenizedModule(@NotNull Module m) {
+    return ReadAction.compute(() -> !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized());
+  }
   public static boolean isLinearImportEnabled() {
     return Registry.is("maven.linear.import");
   }

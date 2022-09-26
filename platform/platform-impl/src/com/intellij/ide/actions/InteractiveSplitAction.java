@@ -9,8 +9,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-
-public class InteractiveSplitAction extends AnAction implements DumbAware {
+final class InteractiveSplitAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(e.getProject() != null && e.getData(CommonDataKeys.VIRTUAL_FILE) != null);
@@ -25,9 +24,13 @@ public class InteractiveSplitAction extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull AnActionEvent e) {
     EditorWindow editorWindow = e.getData(EditorWindow.DATA_KEY);
     // When invoked from editor VF in context can be different from actual editor VF, e.g. for diff in editor tab
-    VirtualFile file = editorWindow != null && editorWindow.getSelectedFile() != null
-                       ? editorWindow.getSelectedFile()
-                       : e.getData(CommonDataKeys.VIRTUAL_FILE);
+    VirtualFile file;
+    if (editorWindow != null && editorWindow.getSelectedFile() != null) {
+      file = editorWindow.getSelectedFile();
+    }
+    else {
+      file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    }
     boolean openedFromEditor = true;
     if (editorWindow == null) {
       openedFromEditor = false;

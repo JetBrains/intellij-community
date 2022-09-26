@@ -1,6 +1,18 @@
 <!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
-<svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-<circle cx="12.5" cy="13.5" r="2.5625" stroke="#CED0D6"/>
-<path d="M10.5312 15.4688L14.4688 11.5312" stroke="#CED0D6"/>
-<path d="M2.5 8.25L6 11.75L13.5 4.25" stroke="#5FAD65" stroke-width="2.2" stroke-linecap="round"/>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_3583_52475)">
+<g clip-path="url(#clip1_3583_52475)">
+<circle cx="12.5" cy="12.5" r="2.5625" stroke="#CED0D6"/>
+<path d="M10.5312 14.4688L14.4688 10.5312" stroke="#CED0D6"/>
+<path d="M2.5 7.25L6 10.75L13.5 3.25" stroke="#5FAD65" stroke-width="2.2" stroke-linecap="round"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_3583_52475">
+<rect width="16" height="16" fill="white"/>
+</clipPath>
+<clipPath id="clip1_3583_52475">
+<rect width="16" height="16" fill="white"/>
+</clipPath>
+</defs>
 </svg>

@@ -21,7 +21,6 @@ import com.intellij.util.containers.ConcurrentMostlySingularMultiMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.text.CharSequenceReader;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.Attributes;
@@ -124,9 +123,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       return null;
     }
     List<AnnotationData> result = collectDefaultConstructorExternalAnnotations(aClass);
-    return StreamEx.of(result)
-      .map(data -> data.getAnnotation(this))
-      .toCollection(SmartList::new);
+    return ContainerUtil.map(result, data -> data.getAnnotation(this));
   }
 
   @Override

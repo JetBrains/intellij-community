@@ -2,10 +2,19 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.ui.scale.TestScaleHelper
-import org.junit.AfterClass
+import com.intellij.testFramework.RegistryKeyRule
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+@RunWith(JUnit4::class)
+@Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
+  @get:Rule
+  val rule = RegistryKeyRule("markdown.tables.editing.support.enable", true)
+
+  @Test
   fun `test right after cell content`() {
     // language=Markdown
     doTest(
@@ -22,6 +31,7 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test between spaces on the right side`() {
     // language=Markdown
     doTest(
@@ -38,6 +48,7 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test just before right pipe`() {
     // language=Markdown
     doTest(
@@ -54,6 +65,7 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test right before cell content`() {
     // language=Markdown
     doTest(
@@ -70,6 +82,7 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test just after left pipe`() {
     // language=Markdown
     doTest(
@@ -86,6 +99,7 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test in separator`() {
     doTest(
       """
@@ -101,6 +115,7 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test in separator with colon`() {
     doTest(
       """

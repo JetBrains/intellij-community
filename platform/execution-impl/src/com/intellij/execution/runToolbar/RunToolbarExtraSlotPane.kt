@@ -29,7 +29,7 @@ import javax.swing.SwingUtilities
 
 class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): RWActiveListener {
   private val manager = RunToolbarSlotManager.getInstance(project)
-  val slotPane = JPanel(VerticalLayout(JBUI.scale(3))).apply {
+  private val slotPane = JPanel(VerticalLayout(JBUI.scale(3))).apply {
     isOpaque = false
     border = JBUI.Borders.empty()
   }
@@ -72,7 +72,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
   }
 
   private var added = false
-  val newSlotDetails = object : JLabel(LangBundle.message("run.toolbar.add.slot.details")){
+  private val newSlotDetails = object : JLabel(LangBundle.message("run.toolbar.add.slot.details")){
     override fun getFont(): Font {
       return JBUI.Fonts.toolbarFont()
     }

@@ -17,6 +17,7 @@
 package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.ProjectBundle;

@@ -3,9 +3,8 @@ class SomeServiceUsage {
         get() = SomeService.getInstanceNotNull()
     val serviceNullable: SomeService
         get() = SomeService.getInstanceNullable()
-
-    // elvis
     val serviceNotNullByDataFlow: SomeService
+        // elvis
         get() {
             val s = SomeService.getInstanceNullable()
             return s ?: SomeService.getInstanceNotNull()

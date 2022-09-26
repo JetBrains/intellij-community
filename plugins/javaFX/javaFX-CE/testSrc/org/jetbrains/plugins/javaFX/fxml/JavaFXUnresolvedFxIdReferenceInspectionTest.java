@@ -42,17 +42,20 @@ public class JavaFXUnresolvedFxIdReferenceInspectionTest extends AbstractJavaFXQ
   }
 
   public void testIncludeBtnWithController() {
-    myFixture.addFileToProject("btn.fxml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                           "<?import javafx.scene.control.*?>\n" +
-                                           "<Button/>");
+    myFixture.addFileToProject("btn.fxml", """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <?import javafx.scene.control.*?>
+      <Button/>""");
     doTest("MyController", VisibilityUtil.ESCALATE_VISIBILITY);
   }
 
   public void testFieldsFromControllerSuper() {
-    myFixture.addClass("import javafx.scene.control.RadioButton;\n" +
-                       "public class SuperController {\n" +
-                       "    public RadioButton option1;\n" +
-                       "}\n");
+    myFixture.addClass("""
+                         import javafx.scene.control.RadioButton;
+                         public class SuperController {
+                             public RadioButton option1;
+                         }
+                         """);
     myFixture.addClass("public class Controller extends SuperController {}");
     final String testFxml = getTestName(true) + ".fxml";
     myFixture.configureByFile(testFxml);

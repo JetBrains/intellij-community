@@ -66,6 +66,12 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleIncorrectDependencyNotationArgumentInspection"/>
 
+    <localInspection language="Groovy" groupPath="Gradle" shortName="ForeignDelegate"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.foreign.delegate" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleForeignDelegateInspection"/>
+
     <localInspection language="Groovy" groupPath="Gradle" shortName="IncorrectPluginDslStructure"
                      bundle="messages.GradleInspectionBundle"
                      key="inspection.display.name.incorrect.plugin.dsl.structure" groupKey="inspection.validity" groupBundle="messages.GroovyBundle"

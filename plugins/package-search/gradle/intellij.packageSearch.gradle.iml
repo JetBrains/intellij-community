@@ -2,19 +2,21 @@
 <module type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="3" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
+      <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -Xjvm-default=enable -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -opt-in=kotlin.ExperimentalStdlibApi -opt-in=kotlinx.coroutines.FlowPreview -opt-in=kotlin.time.ExperimentalTime" />
+          <option name="additionalArguments" value="-Xjvm-default=enable -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -opt-in=kotlin.ExperimentalStdlibApi -opt-in=kotlinx.coroutines.FlowPreview -opt-in=kotlin.time.ExperimentalTime -opt-in=kotlinx.serialization.ExperimentalSerializationApi" />
         </compilerSettings>
         <compilerArguments>
-          <option name="jvmTarget" value="11" />
-          <option name="languageVersion" value="1.7" />
-          <option name="apiVersion" value="1.7" />
-          <option name="pluginClasspaths">
-            <array>
-              <option value="$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar" />
-            </array>
-          </option>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="17" />
+            <stringArg name="apiVersion" arg="1.7" />
+            <stringArg name="languageVersion" arg="1.7" />
+          </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+            </arrayArg>
+          </arrayArguments>
         </compilerArguments>
       </configuration>
     </facet>
@@ -39,5 +41,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="module" module-name="intellij.packageSearch.gradle.tooling" />
+    <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
   </component>
 </module>

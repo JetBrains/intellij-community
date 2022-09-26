@@ -1,0 +1,61 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.framework"
+                    beanClass="com.intellij.webSymbols.framework.impl.WebFrameworkRegistrationExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.webSymbols.framework.WebFramework"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.context"
+                    beanClass="com.intellij.webSymbols.framework.impl.WebFrameworkExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.webSymbols.framework.WebFrameworkContext"/>
+    </extensionPoint>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes"
+                    beanClass="com.intellij.webSymbols.webTypes.impl.WebTypesDefinitionsEP"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes.symbolTypeResolverFactory"
+                    beanClass="com.intellij.webSymbols.webTypes.impl.WebTypesSymbolTypeResolverFactoryEP"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.webSymbols.webTypes.WebTypesSymbolTypeResolver$Factory"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.additionalContextProvider"
+                    interface="com.intellij.webSymbols.WebSymbolsAdditionalContextProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.filter"
+                    beanClass="com.intellij.webSymbols.impl.WebSymbolsFilterEP"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.webSymbols.WebSymbolsFilter"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.documentationCustomizer"
+                    interface="com.intellij.webSymbols.WebSymbolDocumentationCustomizer"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.codeCompletionItemCustomizer"
+                    interface="com.intellij.webSymbols.WebSymbolCodeCompletionItemCustomizer"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.defaultIconProvider"
+                    interface="com.intellij.webSymbols.WebSymbolDefaultIconProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.scopeProvider"
+                    interface="com.intellij.webSymbols.WebSymbolsScopeProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.declarationProvider"
+                    interface="com.intellij.webSymbols.WebSymbolDeclarationProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.psiSourcedSymbolProvider"
+                    interface="com.intellij.webSymbols.PsiSourcedWebSymbolProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.psiSourcedSymbol"
+                    beanClass="com.intellij.webSymbols.findUsages.impl.WebSymbolPsiSourcedSymbolHostClassEP"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.inspectionToolMapping"
+                    beanClass="com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.highlightInLanguage"
+                    beanClass="com.intellij.webSymbols.inspections.impl.WebSymbolsHighlightInLanguageEP"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.dependencyProximityProvider"
+                    interface="com.intellij.webSymbols.framework.DependencyProximityProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

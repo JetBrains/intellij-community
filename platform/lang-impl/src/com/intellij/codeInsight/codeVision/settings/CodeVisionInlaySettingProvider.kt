@@ -18,5 +18,5 @@ class CodeVisionInlaySettingProvider : InlaySettingsProvider {
     return codeVisionGroupModels.filter { it.groupId in groupIdsOfExistingProviders }.map { it.createModel(project) }
   }
 
-  override fun getSupportedLanguages(project: Project) = listOf(Language.ANY)
+  override fun getSupportedLanguages(project: Project): List<Language> = listOf(Language.ANY)
 }

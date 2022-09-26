@@ -18,6 +18,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,6 +83,10 @@ public class SubstitutionHandler extends MatchingHandler {
     this.subtype = subtype;
   }
 
+  public void setRepeatedVar(boolean repeatedVar) {
+    myRepeatedVar = repeatedVar;
+  }
+
   public void setPredicate(@NotNull MatchPredicate handler) {
     predicate = handler;
   }
@@ -90,25 +95,28 @@ public class SubstitutionHandler extends MatchingHandler {
     return predicate;
   }
 
+  /**
+   * @deprecated Use {@link SubstitutionHandler#findPredicate instead}
+   */
   @Nullable
+  @Deprecated(forRemoval = true)
   public RegExpPredicate findRegExpPredicate() {
-    return findRegExpPredicate(getPredicate());
+    return findPredicate(getPredicate(), RegExpPredicate.class);
   }
 
-  public void setRepeatedVar(boolean repeatedVar) {
-    myRepeatedVar = repeatedVar;
+  public @Nullable <T extends MatchPredicate> T findPredicate(@NotNull Class<T> aClass) {
+    return findPredicate(getPredicate(), aClass);
   }
 
-  private static RegExpPredicate findRegExpPredicate(MatchPredicate start) {
-    if (start==null) return null;
-    if (start instanceof RegExpPredicate) return (RegExpPredicate)start;
-
-    if(start instanceof AndPredicate) {
-      final AndPredicate binary = (AndPredicate)start;
-      final RegExpPredicate result = findRegExpPredicate(binary.getFirst());
-      if (result!=null) return result;
-
-      return findRegExpPredicate(binary.getSecond());
+  @Contract("null, _ -> null")
+  private static @Nullable <T extends MatchPredicate> T findPredicate(@Nullable MatchPredicate start, @NotNull Class<T> aClass) {
+    if (start == null) return null;
+    if (aClass.isInstance(start)) return aClass.cast(start);
+    if (start instanceof AndPredicate) {
+      final AndPredicate binaryPredicate = (AndPredicate)start;
+      final T firstBranchCheck = findPredicate(binaryPredicate.getFirst(), aClass);
+      if (firstBranchCheck != null) return firstBranchCheck;
+      return findPredicate(binaryPredicate.getSecond(), aClass);
     } else if (start instanceof NotPredicate) {
       return null;
     }

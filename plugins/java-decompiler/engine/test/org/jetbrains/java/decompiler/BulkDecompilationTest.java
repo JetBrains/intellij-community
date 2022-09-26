@@ -1,19 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler;
 
-import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.*;
-import java.util.Enumeration;
-import java.util.zip.ZipEntry;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
 import java.util.zip.ZipFile;
 
 import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqual;
-import static org.junit.Assert.assertTrue;
 
 public class BulkDecompilationTest {
   private DecompilerTestFixture fixture;
@@ -21,25 +21,25 @@ public class BulkDecompilationTest {
   @Before
   public void setUp() throws IOException {
     fixture = new DecompilerTestFixture();
-    fixture.setUp();
+    fixture.setUp(Map.of());
   }
 
   @After
-  public void tearDown() {
+  public void tearDown() throws IOException {
     fixture.tearDown();
     fixture = null;
   }
 
   @Test
   public void testDirectory() {
-    File classes = new File(fixture.getTempDir(), "classes");
-    unpack(new File(fixture.getTestDataDir(), "bulk.jar"), classes);
+    var classes = fixture.getTempDir().resolve("classes");
+    unpack(fixture.getTestDataDir().resolve("bulk.jar"), classes);
 
-    ConsoleDecompiler decompiler = fixture.getDecompiler();
-    decompiler.addSource(classes);
+    var decompiler = fixture.getDecompiler();
+    decompiler.addSource(classes.toFile());
     decompiler.decompileContext();
 
-    assertFilesEqual(new File(fixture.getTestDataDir(), "bulk"), fixture.getTargetDir());
+    assertFilesEqual(fixture.getTestDataDir().resolve("bulk"), fixture.getTargetDir());
   }
 
   @Test
@@ -58,33 +58,34 @@ public class BulkDecompilationTest {
   }
 
   private void doTestJar(String name) {
-    ConsoleDecompiler decompiler = fixture.getDecompiler();
-    String jarName = name + ".jar";
-    decompiler.addSource(new File(fixture.getTestDataDir(), jarName));
+    var decompiler = fixture.getDecompiler();
+    var jarName = name + ".jar";
+    decompiler.addSource(fixture.getTestDataDir().resolve(jarName).toFile());
     decompiler.decompileContext();
 
-    File unpacked = new File(fixture.getTempDir(), "unpacked");
-    unpack(new File(fixture.getTargetDir(), jarName), unpacked);
+    var unpacked = fixture.getTempDir().resolve("unpacked");
+    unpack(fixture.getTargetDir().resolve(jarName), unpacked);
 
-    assertFilesEqual(new File(fixture.getTestDataDir(), name), unpacked);
+    assertFilesEqual(fixture.getTestDataDir().resolve(name), unpacked);
   }
 
-  private static void unpack(File archive, File targetDir) {
-    try (ZipFile zip = new ZipFile(archive)) {
-      Enumeration<? extends ZipEntry> entries = zip.entries();
+  private static void unpack(Path archive, Path targetDir) {
+    try (var zip = new ZipFile(archive.toFile())) {
+      var entries = zip.entries();
       while (entries.hasMoreElements()) {
-        ZipEntry entry = entries.nextElement();
+        var entry = entries.nextElement();
         if (!entry.isDirectory()) {
-          File file = new File(targetDir, entry.getName());
-          assertTrue(file.getParentFile().mkdirs() || file.getParentFile().isDirectory());
-          try (InputStream in = zip.getInputStream(entry); OutputStream out = new FileOutputStream(file)) {
-            InterpreterUtil.copyStream(in, out);
+          if (entry.getName().contains("..")) throw new IllegalArgumentException("Invalid entry: " + entry.getName());
+          var file = targetDir.resolve(entry.getName());
+          Files.createDirectories(file.getParent());
+          try (InputStream in = zip.getInputStream(entry)) {
+            Files.copy(in, file);
           }
         }
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new UncheckedIOException(e);
     }
   }
 }

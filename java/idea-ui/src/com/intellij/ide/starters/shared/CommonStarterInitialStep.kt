@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starters.shared
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.local.StarterModuleBuilder
@@ -10,18 +11,23 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.joinCanonicalPath
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -41,8 +47,8 @@ abstract class CommonStarterInitialStep(
 
   protected val propertyGraph: PropertyGraph = PropertyGraph()
   protected val entityNameProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestName)
-  protected val locationProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestLocationByName)
-  protected val canonicalPathProperty = locationProperty.joinCanonicalPath(entityNameProperty)
+  private val locationProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestLocationByName)
+  private val canonicalPathProperty = locationProperty.joinCanonicalPath(entityNameProperty)
   protected val groupIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { starterContext.group }
   protected val artifactIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { entityName }
   protected val sdkProperty: GraphProperty<Sdk?> = propertyGraph.lazyProperty { null }
@@ -178,10 +184,20 @@ abstract class CommonStarterInitialStep(
   protected fun <T : JComponent> Cell<T>.withSpecialValidation(vararg errorValidationUnits: TextValidationFunction): Cell<T> =
     withValidation(this, errorValidationUnits.asList(), null, validatedTextComponents, parentDisposable)
 
-  protected fun <T : JComponent> Cell<T>.withSpecialValidation(
+  private fun <T : JComponent> Cell<T>.withSpecialValidation(
     errorValidationUnits: List<TextValidationFunction>,
     warningValidationUnit: TextValidationFunction?
   ): Cell<T> {
     return withValidation(this, errorValidationUnits, warningValidationUnit, validatedTextComponents, parentDisposable)
+  }
+
+  private fun Row.projectLocationField(locationProperty: GraphProperty<String>,
+                                       wizardContext: WizardContext): Cell<TextFieldWithBrowseButton> {
+    val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
+    val fileChosen = { file: VirtualFile -> getPresentablePath(file.path) }
+    val title = IdeBundle.message("title.select.project.file.directory", wizardContext.presentationName)
+    val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
+    return this.textFieldWithBrowseButton(title, wizardContext.project, fileChooserDescriptor, fileChosen)
+      .bindText(property)
   }
 }

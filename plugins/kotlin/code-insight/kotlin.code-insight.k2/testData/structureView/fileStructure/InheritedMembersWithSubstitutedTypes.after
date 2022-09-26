@@ -1,0 +1,7 @@
+-InheritedMembersWithSubstitutedTypes.kt
+ -interface Third : Second<String>
+  fun equals(other: Any?): Boolean location=→Any
+  fun foo(a: T): Unit location=→First
+  fun hashCode(): Int location=→Any
+  fun toString(): String location=→Any
+  val a: U location=→Second

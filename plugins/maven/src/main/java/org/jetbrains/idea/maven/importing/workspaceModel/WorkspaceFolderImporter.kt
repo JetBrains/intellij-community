@@ -14,8 +14,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.BuildHelperMavenPluginUtil
 import org.jetbrains.idea.maven.importing.MavenImporter
-import org.jetbrains.idea.maven.importing.MavenModuleType
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
+import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder.*
 import org.jetbrains.idea.maven.project.MavenProject
@@ -34,12 +34,12 @@ internal class WorkspaceFolderImporter(
   private val importingSettings: MavenImportingSettings,
   private val importingContext: FolderImportingContext) {
 
-  fun createContentRoots(mavenProject: MavenProject, moduleType: MavenModuleType, module: ModuleEntity,
-                         configuratorTimings: ConfiguratorTimings): CachedProjectFolders {
+  fun createContentRoots(mavenProject: MavenProject, moduleType: StandardMavenModuleType, module: ModuleEntity,
+                         stats: WorkspaceImportStats): CachedProjectFolders {
     val allFolders = mutableListOf<ContentRootCollector.ImportedFolder>()
 
     val cachedFolders = importingContext.projectToCachedFolders.getOrPut(mavenProject) {
-      collectMavenFolders(mavenProject, configuratorTimings)
+      collectMavenFolders(mavenProject, stats)
     }
 
     addContentRoot(cachedFolders, allFolders)
@@ -70,7 +70,7 @@ internal class WorkspaceFolderImporter(
     importingContext.alreadyRegisteredContentRoots.add(contentRoot)
   }
 
-  private fun addCachedFolders(moduleType: MavenModuleType,
+  private fun addCachedFolders(moduleType: StandardMavenModuleType,
                                cachedFolders: CachedProjectFolders,
                                allFolders: MutableList<ContentRootCollector.ImportedFolder>) {
     fun includeIf(it: ContentRootCollector.ImportedFolder, forTests: Boolean) =
@@ -82,10 +82,10 @@ internal class WorkspaceFolderImporter(
     fun exceptSources(it: ContentRootCollector.ImportedFolder) = it !is ContentRootCollector.UserOrGeneratedSourceFolder
 
     allFolders.addAll(when (moduleType) {
-                        MavenModuleType.MAIN_ONLY -> cachedFolders.folders.filter { includeIf(it, forTests = false) }
-                        MavenModuleType.TEST_ONLY -> cachedFolders.folders.filter { includeIf(it, forTests = true) }
-                        MavenModuleType.COMPOUND_MODULE -> cachedFolders.folders.filter { exceptSources(it) }
-                        MavenModuleType.AGGREGATOR -> emptyList()
+                        StandardMavenModuleType.MAIN_ONLY -> cachedFolders.folders.filter { includeIf(it, forTests = false) }
+                        StandardMavenModuleType.TEST_ONLY -> cachedFolders.folders.filter { includeIf(it, forTests = true) }
+                        StandardMavenModuleType.COMPOUND_MODULE -> cachedFolders.folders.filter { exceptSources(it) }
+                        StandardMavenModuleType.AGGREGATOR -> emptyList()
                         else -> cachedFolders.folders
                       })
   }
@@ -116,7 +116,7 @@ internal class WorkspaceFolderImporter(
     }
   }
 
-  private fun collectMavenFolders(mavenProject: MavenProject, configuratorTimings: ConfiguratorTimings): CachedProjectFolders {
+  private fun collectMavenFolders(mavenProject: MavenProject, stats: WorkspaceImportStats): CachedProjectFolders {
     val folders = mutableListOf<ContentRootCollector.ImportedFolder>()
 
     val configuratorContext = object : MavenWorkspaceConfigurator.FoldersContext {
@@ -124,7 +124,7 @@ internal class WorkspaceFolderImporter(
     }
     val legacyImporters = MavenImporter.getSuitableImporters(mavenProject, true)
 
-    collectSourceFolders(mavenProject, folders, configuratorContext, legacyImporters, configuratorTimings)
+    collectSourceFolders(mavenProject, folders, configuratorContext, legacyImporters, stats)
     collectGeneratedFolders(folders, mavenProject)
 
     val outputPath = mavenProject.toAbsolutePath(mavenProject.outputDirectory)
@@ -147,7 +147,7 @@ internal class WorkspaceFolderImporter(
       excludes.forEach { folders.add(ContentRootCollector.ExcludedFolderAndPreventSubfolders(mavenProject.toAbsolutePath(it))) }
     }
     for (each in WORKSPACE_CONFIGURATOR_EP.extensionList) {
-      configuratorTimings.record(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
+      stats.recordConfigurator(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
         each.getFoldersToExclude(configuratorContext)
       }.forEach {
         folders.add(ContentRootCollector.ExcludedFolderAndPreventSubfolders(mavenProject.toAbsolutePath(it)))
@@ -179,7 +179,7 @@ internal class WorkspaceFolderImporter(
                                    result: MutableList<ContentRootCollector.ImportedFolder>,
                                    configuratorContext: MavenWorkspaceConfigurator.FoldersContext,
                                    legacyImporters: List<MavenImporter>,
-                                   configuratorTimings: ConfiguratorTimings) {
+                                   stats: WorkspaceImportStats) {
     fun toAbsolutePath(path: String) = MavenUtil.toPath(mavenProject, path).path
 
     mavenProject.sources.forEach { result.add(ContentRootCollector.SourceFolder(it, JavaSourceRootType.SOURCE)) }
@@ -206,12 +206,12 @@ internal class WorkspaceFolderImporter(
     }
 
     for (each in WORKSPACE_CONFIGURATOR_EP.extensionList) {
-      configuratorTimings.record(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
+      stats.recordConfigurator(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
         each.getAdditionalSourceFolders(configuratorContext)
       }.forEach {
         result.add(ContentRootCollector.SourceFolder(toAbsolutePath(it), JavaSourceRootType.SOURCE))
       }
-      configuratorTimings.record(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
+      stats.recordConfigurator(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
         each.getAdditionalTestSourceFolders(configuratorContext)
       }.forEach {
         result.add(ContentRootCollector.SourceFolder(toAbsolutePath(it), JavaSourceRootType.TEST_SOURCE))

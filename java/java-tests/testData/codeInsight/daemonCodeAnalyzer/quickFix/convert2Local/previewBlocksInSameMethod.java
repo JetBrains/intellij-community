@@ -5,7 +5,9 @@ class ITest {
 
     public IntelliJBugConvertToLocal(int x, int z) {
 
-    if (x == 5) {
+        //my comment to keep in code
+        ArrayList<String> mayBeLocal = new ArrayList<String>();
+        if (x == 5) {
       mayBeLocal.add("jjj");
     }
 

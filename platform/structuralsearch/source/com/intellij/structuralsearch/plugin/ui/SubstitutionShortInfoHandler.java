@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.template.Template;
@@ -74,7 +74,6 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
         if (myCurrentVariableCallback != null) {
           myCurrentVariableCallback.accept(Configuration.CONTEXT_VAR_NAME);
         }
-        configuration.setCurrentVariableName(Configuration.CONTEXT_VAR_NAME);
       }
       return;
     }
@@ -90,7 +89,6 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
       if (myCurrentVariableCallback != null) {
         myCurrentVariableCallback.accept(currentVariableName);
       }
-      configuration.setCurrentVariableName(currentVariableName);
     }
   }
 

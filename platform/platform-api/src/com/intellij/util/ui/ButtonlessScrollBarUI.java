@@ -35,12 +35,6 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   public static JBColor getTrackBackgroundDefault() {
     return new JBColor(LightColors.SLIGHTLY_GRAY, UIUtil.getListBackground());
   }
-
-  @Deprecated(forRemoval = true)
-  public static JBColor getTrackBorderColorDefault() {
-    return new JBColor(Gray._230, UIUtil.getListBackground());
-  }
-
   private JBColor getTrackBackground() {
     return jbColor(LightColors.SLIGHTLY_GRAY, UIUtil.getListBackground());
   }
@@ -441,12 +435,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
             && setValueFrom != null) {
 
           switch (scrollbar.getOrientation()) {
-            case Adjustable.VERTICAL:
-              offset = getThumbBounds().height / 2;
-              break;
-            case Adjustable.HORIZONTAL:
-              offset = getThumbBounds().width / 2;
-              break;
+            case Adjustable.VERTICAL -> offset = getThumbBounds().height / 2;
+            case Adjustable.HORIZONTAL -> offset = getThumbBounds().width / 2;
           }
           isDragging = true;
           try {
@@ -751,19 +741,13 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   @Deprecated
   protected int getThumbOffset(int value) {
     // com.intellij.ui.components.AbstractScrollBarUI.scale
-    float scale = JBUIScale.scale(10);
-    //noinspection EnumSwitchStatementWhichMissesCases
-    switch (UIUtil.getComponentStyle(scrollbar)) {
-      case LARGE:
-        scale *= 1.15f;
-        break;
-      case SMALL:
-        scale *= 0.857f;
-        break;
-      case MINI:
-        scale *= 0.714f;
-        break;
-    }
+    float multiplier = switch (UIUtil.getComponentStyle(scrollbar)) {
+      case LARGE -> 1.15f;
+      case SMALL -> 0.857f;
+      case MINI -> 0.714f;
+      case REGULAR -> 1f;
+    };
+    float scale = JBUIScale.scale(10) * multiplier;
     return value - (int)scale;
   }
 

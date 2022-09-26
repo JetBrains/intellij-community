@@ -87,9 +87,6 @@ public final class InheritanceUtil {
 
   /**
    * Gets all superclasses. Classes are added to result in DFS order
-   * @param aClass
-   * @param results
-   * @param includeNonProject
    */
   public static void getSuperClasses(@NotNull PsiClass aClass, @NotNull Set<? super PsiClass> results, boolean includeNonProject) {
     getSuperClassesOfList(aClass.getSuperTypes(), results, includeNonProject, new HashSet<>(), aClass.getManager());

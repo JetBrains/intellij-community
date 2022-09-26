@@ -50,12 +50,11 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
 
     commitMessage.setChangesSupplier { state.stagedChanges }
     progressPanel.setup(this, commitMessage.editorField)
-    bottomPanel = {
+    buildLayout {
       add(progressPanel.apply { border = empty(6) })
       add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
       add(commitActionsPanel)
     }
-    buildLayout()
   }
 
   fun setIncludedRoots(includedRoots: Collection<VirtualFile>) {

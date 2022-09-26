@@ -4,10 +4,7 @@ package com.intellij.ide.bookmark.actions
 import com.intellij.icons.AllIcons.Actions.Checked
 import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.BookmarkType
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.EditorGutter
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo
@@ -46,6 +43,11 @@ internal class ToggleBookmarkAction : Toggleable, DumbAwareAction(BookmarkBundle
     val bookmark = event.contextBookmark ?: return
     val type = manager.getType(bookmark) ?: BookmarkType.DEFAULT
     manager.toggle(bookmark, type)
+
+    val selectedText = event.getData(CommonDataKeys.EDITOR)?.selectionModel?.selectedText
+    if (!selectedText.isNullOrBlank()) {
+      manager.getGroups(bookmark).forEach { group -> group.setDescription(bookmark, selectedText) }
+    }
   }
 
   private val MouseEvent.isUnexpected // see MouseEvent.isUnexpected in LineBookmarkProvider

@@ -147,7 +147,6 @@ public class PythonUiService {
   /**
    * Shows a panel with name redefinition conflicts, if needed.
    *
-   * @param project
    * @param conflicts what {@link #findDefinitions} would return
    * @param obscured  name or its topmost qualifier that is obscured, used at top of pane.
    * @param name      full name (maybe qualified) to show as obscured and display as qualifier in "would be" chunks.

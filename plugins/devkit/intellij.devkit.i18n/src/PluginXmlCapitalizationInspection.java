@@ -1,12 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.i18n;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.NlsCapitalizationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.i18n.NlsInfo;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.PropertyReference;
@@ -219,40 +221,88 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
       return;
     }
 
-    final LocalQuickFix quickFix = new LocalQuickFix() {
-      @Override
-      public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-        return property != null ? property : currentFile;
-      }
-
-      @Override
-      public @IntentionName @NotNull String getName() {
-        return DevKitI18nBundle.message("inspections.plugin.xml.capitalization.fix.properly.capitalize", escapedValue);
-      }
-
-      @Override
-      public @IntentionFamilyName @NotNull String getFamilyName() {
-        return DevKitI18nBundle.message("inspections.plugin.xml.capitalization.fix.properly.capitalize.family.name");
-      }
-
-      @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        if (property != null) {
-          property.setValue(NlsCapitalizationUtil.fixValue(value, capitalization));
-        }
-        else {
-          assert domElement instanceof GenericDomValue : domElement;
-          if (!domElement.isValid()) return;
-          ((GenericDomValue<?>)domElement).setStringValue(NlsCapitalizationUtil.fixValue(value, capitalization));
-        }
-      }
-    };
-
-
+    LocalQuickFix quickFix = property != null
+                             ? new FixPropertyCapitalizationFix(property, escapedValue, capitalization)
+                             : new FixDomValueCapitalizationFix(escapedValue, capitalization);
     holder.createProblem(domElement,
                          DevKitI18nBundle.message("inspections.plugin.xml.capitalization.error",
-                                              escapedValue,
-                                              capitalization == Nls.Capitalization.Title ? 0 : 1),
+                                                  escapedValue,
+                                                  capitalization == Nls.Capitalization.Title ? 0 : 1),
                          quickFix);
+  }
+
+
+  private abstract static class FixCapitalizationFixBase implements LocalQuickFix {
+
+    protected final String myValue;
+    protected final Nls.Capitalization myCapitalization;
+
+    private FixCapitalizationFixBase(String value, Nls.Capitalization capitalization) {
+      this.myValue = value;
+      myCapitalization = capitalization;
+    }
+
+    @Override
+    public @IntentionName @NotNull String getName() {
+      return DevKitI18nBundle.message("inspections.plugin.xml.capitalization.fix.properly.capitalize", myValue);
+    }
+
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return DevKitI18nBundle.message("inspections.plugin.xml.capitalization.fix.properly.capitalize.family.name");
+    }
+  }
+
+  private static class FixPropertyCapitalizationFix extends FixCapitalizationFixBase {
+
+    @SafeFieldForPreview
+    private final @NotNull SmartPsiElementPointer<Property> myPropertyPointer;
+
+    private FixPropertyCapitalizationFix(Property property, String value, Nls.Capitalization capitalization) {
+      super(value, capitalization);
+      myPropertyPointer = SmartPointerManager.createPointer(property);
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      Property property = myPropertyPointer.getElement();
+      if (property == null) return IntentionPreviewInfo.EMPTY;
+
+      PsiFile containingFile = myPropertyPointer.getContainingFile();
+      assert containingFile != null;
+      String propertyKey = property.getKey();
+      String newValue = NlsCapitalizationUtil.fixValue(myValue, myCapitalization);
+
+      return new IntentionPreviewInfo.CustomDiff(PropertiesFileType.INSTANCE,
+                                                 containingFile.getName(),
+                                                 property.getText(),
+                                                 propertyKey + "=" + newValue);
+    }
+
+    @Override
+    public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+      return myPropertyPointer.getContainingFile();
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      Property propertyToFix = myPropertyPointer.getElement();
+      if (propertyToFix == null) return;
+
+      propertyToFix.setValue(NlsCapitalizationUtil.fixValue(myValue, myCapitalization));
+    }
+  }
+
+  private static class FixDomValueCapitalizationFix extends FixCapitalizationFixBase {
+
+    private FixDomValueCapitalizationFix(String escapedValue, Nls.Capitalization capitalization) { super(escapedValue, capitalization); }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      DomElement domElement = DomUtil.getDomElement(descriptor.getPsiElement());
+      if (!(domElement instanceof GenericDomValue)) return;
+
+      ((GenericDomValue<?>)domElement).setStringValue(NlsCapitalizationUtil.fixValue(myValue, myCapitalization));
+    }
   }
 }

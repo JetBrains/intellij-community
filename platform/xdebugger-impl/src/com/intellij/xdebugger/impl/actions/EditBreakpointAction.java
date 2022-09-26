@@ -41,9 +41,4 @@ public class EditBreakpointAction extends XDebuggerActionBase implements DumbAwa
   protected DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
     return debuggerSupport.getEditBreakpointAction();
   }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
-  }
 }

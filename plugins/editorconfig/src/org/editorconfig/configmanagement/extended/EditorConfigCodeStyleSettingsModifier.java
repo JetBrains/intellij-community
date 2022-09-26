@@ -2,10 +2,12 @@
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper;
+import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.lang.Language;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -15,7 +17,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -31,6 +33,7 @@ import org.editorconfig.EditorConfigNotifier;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.EditorConfigFilesCollector;
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
+import org.editorconfig.configmanagement.EditorConfigUsagesCollector;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.core.EditorConfigException;
@@ -47,6 +50,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("SameParameterValue")
 public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsModifier {
@@ -68,7 +72,7 @@ public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSet
         // Get editorconfig settings
         try {
           final MyContext context = new MyContext(settings, psiFile);
-            return runWithTimeout(() -> {
+            return runWithTimeout(project, () -> {
               processEditorConfig(project, psiFile, context);
               // Apply editorconfig settings for the current editor
               if (applyCodeStyleSettings(context)) {
@@ -83,6 +87,20 @@ public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSet
             });
         }
         catch (TimeoutException toe) {
+          StackTraceElement[] trace = psiFile.getUserData(CodeStyleCachingService.CALL_TRACE);
+          StringBuilder messageBuilder = new StringBuilder();
+          if (trace != null) {
+            messageBuilder.append("Timeout which searching .editorconfig for ").append(file.getName()).append("\n        at ");
+            messageBuilder.append(Arrays.stream(trace)
+                                    .skip(1)
+                                    .limit(15)
+                                    .map(e->e.toString())
+                                    .collect(Collectors.joining("\n        at ")));
+            LOG.warn(messageBuilder.toString());
+          }
+          else {
+            LOG.warn(toe);
+          }
           if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
             error(project, "timeout", EditorConfigBundle.message("error.timeout"), new DisableEditorConfigAction(project), true);
           }
@@ -98,8 +116,10 @@ public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSet
     return false;
   }
 
-  private static boolean runWithTimeout(@NotNull Callable<Boolean> callable) throws TimeoutException, EditorConfigException {
-    Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(callable);
+  private static boolean runWithTimeout(@NotNull Project project,
+                                        @NotNull Callable<Boolean> callable) throws TimeoutException, EditorConfigException {
+    @SuppressWarnings("deprecation")
+    CompletableFuture<Boolean> future = ProjectUtilKt.computeOnPooledThread(project, callable);
     try {
       return future.get(TIMEOUT.toSeconds(), TimeUnit.SECONDS);
     }
@@ -170,6 +190,10 @@ public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSet
       isModified |= processOptions(context, mapper, false, processed);
       isModified |= processOptions(context, mapper, true, processed);
     }
+    if (isModified) {
+      ObjectUtils.consumeIfNotNull(
+        context.myOptions, options-> EditorConfigUsagesCollector.logEditorConfigUsed(context.myFile, options));
+    }
     return isModified;
   }
 
@@ -211,9 +235,9 @@ public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSet
   }
 
   private static @NotNull List<String> getDependentProperties(@NotNull String property, @Nullable String langPrefix) {
-    property = StringUtil.trimStart(property, EditorConfigIntellijNameUtil.IDE_PREFIX);
+    property = Strings.trimStart(property, EditorConfigIntellijNameUtil.IDE_PREFIX);
     if (langPrefix != null && property.startsWith(langPrefix)) {
-      property = StringUtil.trimStart(property, langPrefix);
+      property = Strings.trimStart(property, langPrefix);
     }
     if ("indent_size".equals(property)) {
       return Collections.singletonList("continuation_indent_size");
@@ -246,7 +270,7 @@ public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSet
                                                                      @Nullable String langPrefix) {
     if (langPrefix != null) {
       if (propertyName.startsWith(langPrefix)) {
-        final String prefixlessName = StringUtil.trimStart(propertyName, langPrefix);
+        final String prefixlessName = Strings.trimStart(propertyName, langPrefix);
         final EditorConfigPropertyKind propertyKind = IntellijPropertyKindMap.getPropertyKind(prefixlessName);
         if (propertyKind == EditorConfigPropertyKind.LANGUAGE || propertyKind == EditorConfigPropertyKind.COMMON ||
             EditorConfigIntellijNameUtil.isIndentProperty(prefixlessName)) {
@@ -373,7 +397,7 @@ public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSet
       }
       else {
         providers.clear();
-        providers.addAll(LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList());
+        providers.addAll(LanguageCodeStyleSettingsProvider.getAllProviders());
         break;
       }
     }

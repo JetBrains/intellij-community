@@ -81,6 +81,10 @@ public class MavenId implements Serializable, MavenCoordinate {
 
   public static void append(StringBuilder builder, String part) {
     if (builder.length() != 0) builder.append(':');
+    appendFirst(builder, part);
+  }
+
+  public static void appendFirst(StringBuilder builder, String part) {
     builder.append(part == null ? "<unknown>" : part);
   }
 

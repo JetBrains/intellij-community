@@ -19,7 +19,6 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 public interface CloseableMaplet {
   /**
-   * @throws BuildDataCorruptedException
    */
   void close() throws BuildDataCorruptedException;
 }

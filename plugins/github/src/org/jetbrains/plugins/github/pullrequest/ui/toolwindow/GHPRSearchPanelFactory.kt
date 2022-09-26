@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.PopupItemPresentation
@@ -9,10 +9,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.JComponent
 
-internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel) :
-  ReviewListSearchPanelFactory<GHPRListSearchValue, GHPRSearchPanelViewModel>(vm) {
+internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val avatarIconsProvider: GHAvatarIconsProvider) :
+  ReviewListSearchPanelFactory<GHPRListSearchValue, GHPRListQuickFilter, GHPRSearchPanelViewModel>(vm) {
 
   override fun getShortText(searchValue: GHPRListSearchValue): @Nls String = with(searchValue) {
     @Suppress("HardCodedStringLiteral")
@@ -32,21 +34,21 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel) :
               GHPRListSearchValue.State.values().asList(),
               ::getShortText),
     DropDownComponentFactory(vm.authorFilterState)
-      .create(viewScope, GithubBundle.message("pull.request.list.filter.author")) { point ->
-        showAsyncChooserPopup(point, { vm.getAuthors() }) {
-          PopupItemPresentation.Simple(it.shortName, vm.avatarIconsProvider.getIcon(it.avatarUrl), it.name)
+      .create(viewScope, GithubBundle.message("pull.request.list.filter.author")) { point, popupState ->
+        showAsyncChooserPopup(point, popupState, { vm.getAuthors() }) {
+          PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl, GHUIUtil.AVATAR_SIZE), it.name)
         }?.login
       },
     DropDownComponentFactory(vm.labelFilterState)
-      .create(viewScope, GithubBundle.message("pull.request.list.filter.label")) { point ->
-        showAsyncChooserPopup(point, { vm.getLabels() }) {
+      .create(viewScope, GithubBundle.message("pull.request.list.filter.label")) { point, popupState ->
+        showAsyncChooserPopup(point, popupState, { vm.getLabels() }) {
           PopupItemPresentation.Simple(it.name)
         }?.name
       },
     DropDownComponentFactory(vm.assigneeFilterState)
-      .create(viewScope, GithubBundle.message("pull.request.list.filter.assignee")) { point ->
-        showAsyncChooserPopup(point, { vm.getAssignees() }) {
-          PopupItemPresentation.Simple(it.shortName, vm.avatarIconsProvider.getIcon(it.avatarUrl), it.name)
+      .create(viewScope, GithubBundle.message("pull.request.list.filter.assignee")) { point, popupState ->
+        showAsyncChooserPopup(point, popupState, { vm.getAssignees() }) {
+          PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl, GHUIUtil.AVATAR_SIZE), it.name)
         }?.login
       },
     DropDownComponentFactory(vm.reviewFilterState)
@@ -56,6 +58,12 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel) :
         PopupItemPresentation.Simple(getFullText(it))
       }
   )
+
+  override fun GHPRListQuickFilter.getQuickFilterTitle(): String = when (this) {
+    is GHPRListQuickFilter.Open -> GithubBundle.message("pull.request.list.filter.quick.open")
+    is GHPRListQuickFilter.YourPullRequests -> GithubBundle.message("pull.request.list.filter.quick.yours")
+    is GHPRListQuickFilter.AssignedToYou -> GithubBundle.message("pull.request.list.filter.quick.assigned")
+  }
 
   companion object {
     private fun getShortText(stateFilterValue: GHPRListSearchValue.State): @Nls String = when (stateFilterValue) {

@@ -666,7 +666,6 @@
           <action id="EditorToggleShowLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersAction"/>
           <action id="EditorToggleShowGutterIcons" class="com.intellij.openapi.editor.actions.ToggleShowGutterIconsAction"/>
           <action id="EditorToggleShowIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesAction"/>
-          <action id="EditorToggleVisualFormattingLayer" class="com.intellij.formatting.visualLayer.ToggleVisualLayerAction"/>
           <separator/>
           <reference ref="EditorIncreaseFontSize"/>
           <reference ref="EditorDecreaseFontSize"/>
@@ -910,7 +909,11 @@
       <reference ref="SettingsEntryPoint"/>
     </group>
 
-    <group id="ExperimentalToolbarActions">
+    <group id="MainToolbarLeft" searchable="false">
+      <action id="main.toolbar.Project" class="com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction"/>
+    </group>
+    <group id="MainToolbarCenter" searchable="false"/>
+    <group id="MainToolbarRight" searchable="false">
       <reference ref="SearchEverywhere"/>
       <reference ref="SettingsEntryPoint"/>
     </group>
@@ -1074,7 +1077,7 @@
       <action id="FileChooser.GotoHome" class="com.intellij.openapi.fileChooser.actions.GotoHomeAction"
               icon="AllIcons.Nodes.HomeFolder"/>
       <action id="FileChooser.GoToWslHome" class="com.intellij.openapi.fileChooser.actions.GoToWslHomeAction"
-              icon="AllIcons.RunConfigurations.Wsl"/>
+              icon="AllIcons.Linux.Linux"/>
       <action id="FileChooser.GotoDesktop" class="com.intellij.openapi.fileChooser.actions.GotoDesktopDirAction"
               icon="AllIcons.Nodes.Desktop"/>
       <action id="FileChooser.GotoProject" class="com.intellij.openapi.fileChooser.actions.GotoProjectDirAction"
@@ -1100,7 +1103,7 @@
     <group id="FileChooserList">
       <action id="FileChooserList.Root" class="com.intellij.openapi.fileChooser.impl.FileChooserPanelActions$Root"/>
       <action id="FileChooserList.LevelUp" class="com.intellij.openapi.fileChooser.impl.FileChooserPanelActions$LevelUp"
-              icon="com.intellij.icons.AllIcons.Nodes.UpFolder"/>
+              icon="AllIcons.Nodes.UpFolder"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
@@ -1179,6 +1182,7 @@
           <action id="JTabbedPaneDemo" internal="true" class="com.intellij.internal.JTabbedPaneDemoAction"/>
           <action id="TestTooltipsAction" internal="true" class="com.intellij.internal.TestTooltipsAction"/>
         </group>
+        <action id="TransferSettingsDemoAction" class="com.intellij.ide.customize.transferSettings.TransferSettingsDemoAction"/>
         <action id="JBCefOsrMeasureFps" class="com.intellij.internal.jcef.JBCefOsrBrowserMeasureFpsAction"/>
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"/>
         <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction"/>

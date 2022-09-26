@@ -6,8 +6,8 @@
 package com.intellij.debugger.jdi;
 
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,10 +86,9 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
 
   /**
    * @return a list of waiting ThreadReferenceProxies
-   * @throws IncompatibleThreadStateException
    */
   public List<ThreadReferenceProxyImpl> waitingThreads() throws IncompatibleThreadStateException {
-    return StreamEx.of(getObjectReference().waitingThreads()).map(getVirtualMachineProxy()::getThreadReferenceProxy).toList();
+    return ContainerUtil.map(getObjectReference().waitingThreads(), getVirtualMachineProxy()::getThreadReferenceProxy);
   }
 
   public ThreadReferenceProxyImpl owningThread() throws IncompatibleThreadStateException {

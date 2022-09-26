@@ -29,7 +29,6 @@ public interface CompilerFilter {
     }
   };
   /**
-   * @param compiler
    * @return true if this compiler can be executed
    */
   boolean acceptCompiler(Compiler compiler);

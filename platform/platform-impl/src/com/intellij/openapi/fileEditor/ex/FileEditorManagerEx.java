@@ -18,13 +18,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class FileEditorManagerEx extends FileEditorManager implements BusyObject {
   private final List<EditorDataProvider> myDataProviders = new ArrayList<>();
@@ -62,7 +62,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   /**
    * Asynchronous version of {@link #getCurrentWindow()}. Execution happens after focus settle down. Can be invoked on any thread.
    */
-  public abstract @NotNull Promise<EditorWindow> getActiveWindow();
+  public abstract @NotNull CompletableFuture<@Nullable EditorWindow> getActiveWindow();
 
   public abstract void setCurrentWindow(EditorWindow window);
 
@@ -103,6 +103,10 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
     return FileEditorProviderManager.getInstance().getProviderList(getProject(), file).size() > 0;
   }
 
+  protected boolean canOpenFile(@NotNull VirtualFile file, @NotNull List<FileEditorProvider> providers) {
+    return !providers.isEmpty();
+  }
+
   public abstract @Nullable VirtualFile getCurrentFile();
 
   public abstract @Nullable FileEditorWithProvider getSelectedEditorWithProvider(@NotNull VirtualFile file);
@@ -138,8 +142,8 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
                                                                                  @Nullable EditorWindow window,
                                                                                  @NotNull FileEditorOpenOptions options) {
-    return window != null && !window.isDisposed() ? openFileWithProviders(file, options.getRequestFocus(), window)
-                                                  : openFileWithProviders(file, options.getRequestFocus(), options.getReuseOpen());
+    return window != null && !window.isDisposed() ? openFileWithProviders(file, options.requestFocus, window)
+                                                  : openFileWithProviders(file, options.requestFocus, options.reuseOpen);
   }
 
   public abstract boolean isChanged(@NotNull EditorComposite editor);
@@ -168,11 +172,10 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   }
 
   public void refreshIcons() {
-    if (this instanceof FileEditorManagerImpl) {
-      final FileEditorManagerImpl mgr = (FileEditorManagerImpl)this;
-      Set<EditorsSplitters> splitters = mgr.getAllSplitters();
+    if (this instanceof FileEditorManagerImpl manager) {
+      Set<EditorsSplitters> splitters = manager.getAllSplitters();
       for (EditorsSplitters each : splitters) {
-        for (VirtualFile file : mgr.getOpenFiles()) {
+        for (VirtualFile file : manager.getOpenFiles()) {
           each.updateFileIcon(file);
         }
       }

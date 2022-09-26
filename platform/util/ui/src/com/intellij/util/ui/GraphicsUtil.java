@@ -86,6 +86,12 @@ public final class GraphicsUtil {
     return new GraphicsConfig(g).paintWithAlpha(alpha);
   }
 
+  public static void paintWithAlpha(Graphics g, float alpha, @NotNull Runnable paint) {
+    GraphicsConfig config = paintWithAlpha(g, alpha);
+    paint.run();
+    config.restore();
+  }
+
   /**
    * <p>Invoking {@link Component#getGraphics()} disables true double buffering withing {@link JRootPane},
    * even if no subsequent drawing is actually performed.</p>

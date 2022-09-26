@@ -40,21 +40,22 @@
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
     <orderEntry type="module" module-name="intellij.groovy.psi" />
     <orderEntry type="module" module-name="kotlin.tests-common" />
     <orderEntry type="module" module-name="kotlin.test-framework" />
     <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="intellij.gradle.tests" />
-    <orderEntry type="library" name="kotlinc.kotlin-reflect" level="project" />
+    <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="module" module-name="intellij.gradle.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.native" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" scope="TEST" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" exported="" name="kotlin-tooling-core" level="project" />
     <orderEntry type="module" module-name="kotlin.run-configurations.jvm" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.junit.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="TEST" />
   </component>
 </module>

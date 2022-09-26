@@ -27,7 +27,7 @@ fun foo6() = when (2 + 3) { /// M, L
 // Line breakpoint should not be displayed for lambda literal results
 fun foo7() = { println() } /// M, λ
 
-fun foo8() = (3 + 5).run { /// M, L
+fun foo8() = (3 + 5).run { /// *, L, M, λ
     println() /// L
 } /// L
 
@@ -42,5 +42,3 @@ fun foo10(a: () -> Unit = { println() }) { /// *, L, M, λ
 // If a default parameter value is not just a lambda, but a function call with a lambda argument,
 // there should be a line breakpoint as well
 fun foo11(a: String = run { "foo" }) = a /// *, L, M, λ
-
-// IGNORE_K2

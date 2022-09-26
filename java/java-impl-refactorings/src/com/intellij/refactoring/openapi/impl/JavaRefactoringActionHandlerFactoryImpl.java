@@ -1,8 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.openapi.impl;
 
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringActionHandlerOnPsiElement;
 import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureHandler;
 import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodHandler;
@@ -16,7 +19,6 @@ import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableOnPreviewHandler;
 import com.intellij.refactoring.invertBoolean.InvertBooleanHandler;
 import com.intellij.refactoring.makeStatic.MakeStaticHandler;
 import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
@@ -28,7 +30,7 @@ import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 
 public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActionHandlerFactory {
   @Override
-  public RefactoringActionHandler createAnonymousToInnerHandler() {
+  public RefactoringActionHandlerOnPsiElement<PsiAnonymousClass> createAnonymousToInnerHandler() {
     return new AnonymousToInnerHandler();
   }
 
@@ -63,12 +65,12 @@ public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActi
   }
 
   @Override
-  public RefactoringActionHandler createReplaceConstructorWithFactoryHandler() {
+  public PreviewableRefactoringActionHandler createReplaceConstructorWithFactoryHandler() {
     return new ReplaceConstructorWithFactoryHandler();
   }
 
   @Override
-  public RefactoringActionHandler createEncapsulateFieldsHandler() {
+  public PreviewableRefactoringActionHandler createEncapsulateFieldsHandler() {
     return new EncapsulateFieldsHandler();
   }
 
@@ -98,12 +100,12 @@ public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActi
   }
 
   @Override
-  public RefactoringActionHandler createExtractMethodHandler() {
+  public PreviewableRefactoringActionHandler createExtractMethodHandler() {
     return new ExtractMethodHandler();
   }
 
   @Override
-  public RefactoringActionHandler createInheritanceToDelegationHandler() {
+  public PreviewableRefactoringActionHandler createInheritanceToDelegationHandler() {
     return new InheritanceToDelegationHandler();
   }
 
@@ -118,22 +120,17 @@ public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActi
   }
 
   @Override
-  public RefactoringActionHandler createIntroduceVariableHandler() {
+  public PreviewableRefactoringActionHandler createIntroduceVariableHandler() {
     return new IntroduceVariableHandler();
   }
 
   @Override
-  public RefactoringActionHandler createIntroduceConstantHandler() {
+  public PreviewableRefactoringActionHandler createIntroduceConstantHandler() {
     return new IntroduceConstantHandler();
   }
 
   @Override
-  public RefactoringActionHandler createInvertBooleanHandler() {
+  public PreviewableRefactoringActionHandler createInvertBooleanHandler() {
     return new InvertBooleanHandler();
-  }
-
-  @Override
-  public RefactoringActionHandler createIntroduceVariableOnPreviewHandler() {
-    return new IntroduceVariableOnPreviewHandler();
   }
 }

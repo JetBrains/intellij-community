@@ -139,7 +139,7 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
     UndoUtil.markPsiFileForUndo(file);
   }
 
-  protected boolean replaceSuppressionComments(PsiElement container) {
+  protected boolean replaceSuppressionComments(@NotNull PsiElement container) {
     List<? extends PsiElement> comments = getCommentsFor(container);
     if (comments != null) {
       for (PsiElement comment : comments) {

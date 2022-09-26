@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'foobar'" "true"
 package p
 
 class T

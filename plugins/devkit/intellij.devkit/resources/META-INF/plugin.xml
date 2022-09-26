@@ -1,6 +1,7 @@
-<idea-plugin package="org.jetbrains.idea.devkit.dummy">
+<!--suppress PluginXmlValidity -->
+<idea-plugin package="org.jetbrains.idea.devkit.dummy"
+             on-demand="true">
   <id>DevKit</id>
-  <!--suppress PluginXmlValidity -->
   <name>Plugin DevKit</name>
   <category>Plugin Development</category>
   <vendor>JetBrains</vendor>
@@ -25,4 +26,9 @@
     <module name="intellij.java.devkit"/>
     <module name="intellij.groovy.devkit"/>
   </content>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <dependencySupport coordinate="com.jetbrains:ideaIC" kind="java" displayName="IntelliJ Platform Community"/>
+    <dependencySupport coordinate="com.jetbrains:ideaIU" kind="java" displayName="IntelliJ Platform Ultimate"/>
+  </extensions>
 </idea-plugin>

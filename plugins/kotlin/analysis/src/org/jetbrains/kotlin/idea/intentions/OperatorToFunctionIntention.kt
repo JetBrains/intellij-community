@@ -93,7 +93,7 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
             val opRef = element.operationReference
             if (!opRef.textRange.containsOffset(caretOffset)) return false
             return when (opRef.getReferencedNameElementType()) {
-                KtTokens.PLUS, KtTokens.MINUS, KtTokens.MUL, KtTokens.DIV, KtTokens.PERC, KtTokens.RANGE,
+                KtTokens.PLUS, KtTokens.MINUS, KtTokens.MUL, KtTokens.DIV, KtTokens.PERC, KtTokens.RANGE, KtTokens.RANGE_UNTIL,
                 KtTokens.IN_KEYWORD, KtTokens.NOT_IN, KtTokens.PLUSEQ, KtTokens.MINUSEQ, KtTokens.MULTEQ, KtTokens.DIVEQ, KtTokens.PERCEQ,
                 KtTokens.GT, KtTokens.LT, KtTokens.GTEQ, KtTokens.LTEQ
                 -> true
@@ -180,6 +180,7 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
                 KtTokens.DIV -> "$0.div($1)"
                 KtTokens.PERC -> "$0.rem($1)"
                 KtTokens.RANGE -> "$0.rangeTo($1)"
+                KtTokens.RANGE_UNTIL -> "$0.rangeUntil($1)"
                 KtTokens.IN_KEYWORD -> "$1.contains($0)"
                 KtTokens.NOT_IN -> "!$1.contains($0)"
                 KtTokens.PLUSEQ -> if (functionName == "plusAssign") "$0.plusAssign($1)" else "$0 = $0.plus($1)"

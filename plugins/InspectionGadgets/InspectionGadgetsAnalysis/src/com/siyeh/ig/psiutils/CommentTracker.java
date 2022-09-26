@@ -138,7 +138,7 @@ public final class CommentTracker {
 
   /**
    * Returns the comments which are located between the supplied element
-   * and the previous element passed into {@link #textWithComments(PsiElement)} or {@link #commentsBefore(PsiElement)}.
+   * and the previous element passed into {@link #textWithComments(PsiElement)} or {@code commentsBefore()}.
    * The used comments are deleted from the original document.
    *
    * <p>This method can be used if several parts of original code are reused in the generated replacement.
@@ -192,7 +192,7 @@ public final class CommentTracker {
 
   /**
    * Returns the text of the specified element, possibly prepended with comments which are located between the supplied element
-   * and the preceding element passed into {@link #textWithComments(PsiElement)} or {@link #commentsBefore(PsiElement)}.
+   * and the preceding element passed into {@code textWithComments()} or {@link #commentsBefore(PsiElement)}.
    * The used comments are deleted from the original document.
    *
    * <p>Note that if PsiExpression was passed, the resulting text may not parse as an PsiExpression,
@@ -518,7 +518,6 @@ public final class CommentTracker {
    *
    * <p>After calling this method the tracker cannot be used anymore.</p>
    *
-   * @param anchor
    */
   public void insertCommentsBefore(@NotNull PsiElement anchor) {
     checkState();

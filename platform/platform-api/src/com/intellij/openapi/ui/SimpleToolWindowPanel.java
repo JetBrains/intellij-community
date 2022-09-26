@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
@@ -126,6 +124,11 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
   public @Nullable Object getData(@NotNull @NonNls String dataId) {
     if (QuickActionProvider.KEY.is(dataId) && myProvideQuickActions) {
       return this;
+    }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      List<DataProvider> providers = JBIterable.from(myDataProviders).filterMap(
+        o -> PlatformCoreDataKeys.BGT_DATA_PROVIDER.getData(o)).toList();
+      return providers.isEmpty() ? null : CompositeDataProvider.compose(providers);
     }
 
     for (DataProvider dataProvider : myDataProviders) {

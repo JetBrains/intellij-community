@@ -122,18 +122,13 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
       String nextClassName = nextClass.getQualifiedName();
       if(nextClassName == null) return null;
       if(prevClassName.equals(nextClassName)) return "map";
-      switch(nextClassName) {
-        case CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM:
-          return "mapToInt";
-        case CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM:
-          return "mapToLong";
-        case CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM:
-          return "mapToDouble";
-        case CommonClassNames.JAVA_UTIL_STREAM_STREAM:
-          return "mapToObj";
-        default:
-          return null;
-      }
+      return switch (nextClassName) {
+        case CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM -> "mapToInt";
+        case CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM -> "mapToLong";
+        case CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM -> "mapToDouble";
+        case CommonClassNames.JAVA_UTIL_STREAM_STREAM -> "mapToObj";
+        default -> null;
+      };
     }
     if(nextName.equals("flatMap") && prevClassName.equals(CommonClassNames.JAVA_UTIL_STREAM_STREAM)) {
       return mapToFlatMap(prevName);
@@ -144,33 +139,26 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
   @Contract(pure = true)
   @Nullable
   private static String mapToFlatMap(String mapMethod) {
-    switch (mapMethod) {
-      case "map":
-        return "flatMap";
-      case "mapToInt":
-        return "flatMapToInt";
-      case "mapToLong":
-        return "flatMapToLong";
-      case "mapToDouble":
-        return "flatMapToDouble";
-    }
-    // Something unsupported passed: ignore
-    return null;
+    return switch (mapMethod) {
+      case "map" -> "flatMap";
+      case "mapToInt" -> "flatMapToInt";
+      case "mapToLong" -> "flatMapToLong";
+      case "mapToDouble" -> "flatMapToDouble";
+      default ->
+        // Something unsupported passed: ignore
+        null;
+    };
   }
 
   @Contract(pure = true)
   @NotNull
   private static String translateMap(String nextMethod) {
-    switch (nextMethod) {
-      case "boxed":
-        return "mapToObj";
-      case "asLongStream":
-        return "mapToLong";
-      case "asDoubleStream":
-        return "mapToDouble";
-      default:
-        return nextMethod;
-    }
+    return switch (nextMethod) {
+      case "boxed" -> "mapToObj";
+      case "asLongStream" -> "mapToLong";
+      case "asDoubleStream" -> "mapToDouble";
+      default -> nextMethod;
+    };
   }
 
   @Override
@@ -260,20 +248,21 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     String varName;
     String type;
     switch (className) {
-      case CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM:
+      case CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM -> {
         varName = "i";
         type = CommonClassNames.JAVA_LANG_INTEGER;
-        break;
-      case CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM:
+      }
+      case CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM -> {
         varName = "l";
         type = CommonClassNames.JAVA_LANG_LONG;
-        break;
-      case CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM:
+      }
+      case CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM -> {
         varName = "d";
         type = CommonClassNames.JAVA_LANG_DOUBLE;
-        break;
-      default:
+      }
+      default -> {
         return null;
+      }
     }
     varName = JavaCodeStyleManager.getInstance(call.getProject()).suggestUniqueVariableName(varName, call, true);
     String expression;

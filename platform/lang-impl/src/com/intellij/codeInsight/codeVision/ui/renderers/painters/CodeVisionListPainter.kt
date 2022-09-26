@@ -18,9 +18,9 @@ class CodeVisionListPainter(
   theme: CodeVisionTheme? = null
 ) : ICodeVisionEntryBasePainter<CodeVisionListData?> {
 
-  val theme = theme ?: CodeVisionTheme()
+  val theme: CodeVisionTheme = theme ?: CodeVisionTheme()
 
-  var loadingPainter = CodeVisionStringPainter("Loading...")
+  private var loadingPainter: CodeVisionStringPainter = CodeVisionStringPainter("Loading...")
 
   private fun getRelativeBounds(
     editor: Editor,

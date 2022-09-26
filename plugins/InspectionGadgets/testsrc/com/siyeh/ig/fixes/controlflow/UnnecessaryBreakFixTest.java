@@ -11,6 +11,7 @@ import com.siyeh.ig.controlflow.UnnecessaryBreakInspection;
 /**
  * @author Fabrice TIERCELIN
  */
+@SuppressWarnings("UnnecessaryBreak")
 public class UnnecessaryBreakFixTest extends IGQuickFixesTestCase {
   @Override
   protected void tuneFixture(final JavaModuleFixtureBuilder builder) throws Exception {

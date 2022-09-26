@@ -34,7 +34,7 @@ import java.io.IOException;
  */
 public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnitTestConfiguration> {
   /**
-   * Prefix to use test pattern. See {@link #TEST_PATTERN_PREFIX} doc because it is similar
+   * Prefix to use test pattern. See {@link #TEST_TARGET_PREFIX} doc because it is similar
    */
   public static final String TEST_PATTERN_PREFIX = "pattern:";
 

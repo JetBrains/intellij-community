@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
-import org.jetbrains.kotlin.idea.codeInsight.hints.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.util.RangeKtExpressionType
+import org.jetbrains.kotlin.idea.util.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression

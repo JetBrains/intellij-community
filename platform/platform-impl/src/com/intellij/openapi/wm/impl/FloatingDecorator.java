@@ -14,10 +14,7 @@ import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.toolWindow.InternalDecoratorImpl;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.ToolbarUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
@@ -27,15 +24,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 @ApiStatus.Internal
 public final class FloatingDecorator extends JDialog implements FloatingDecoratorMarker {
   private static final Logger LOG = Logger.getInstance(FloatingDecorator.class);
@@ -91,8 +81,14 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
       @Override
       public void windowClosing(WindowEvent event) {
         ToolWindowImpl toolWindow = decorator.toolWindow;
-        toolWindow.getToolWindowManager().resized(decorator);
+        toolWindow.getToolWindowManager().movedOrResized(decorator);
         toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false);
+      }
+    });
+    addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentMoved(ComponentEvent e) {
+        decorator.toolWindow.onMovedOrResized();
       }
     });
 
@@ -111,6 +107,10 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     //workaround: we need to add this IdeGlassPane instance as dispatcher in IdeEventQueue
     ideGlassPane.addMousePreprocessor(new MouseAdapter() {
     }, myDisposable);
+
+    if (SystemInfo.isWindows && WindowRoundedCornersManager.isAvailable()) {
+      WindowRoundedCornersManager.setRoundedCorners(this);
+    }
   }
 
   @Override
@@ -159,7 +159,15 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   public void apply(@NotNull WindowInfo info) {
     LOG.assertTrue(info.getType() == ToolWindowType.FLOATING);
     myInfo = info;
-    // set alpha mode
+    applyBounds(info);
+    applyAlphaMode(info);
+  }
+
+  private void applyBounds(WindowInfo info) {
+    setBounds(info.getFloatingBounds());
+  }
+
+  private void applyAlphaMode(@NotNull WindowInfo info) {
     UISettings uiSettings = UISettings.getInstance();
     if (!uiSettings.getState().getEnableAlphaMode() || !isShowing() || !isDisplayable()) {
       return;
@@ -278,20 +286,20 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     @Override
     protected void processMouseEvent(final MouseEvent e){
       super.processMouseEvent(e);
-      switch(e.getID()){
-        case MouseEvent.MOUSE_PRESSED:{
-          myLastPoint=e.getPoint();
-          SwingUtilities.convertPointToScreen(myLastPoint,this);
+      switch (e.getID()) {
+        case MouseEvent.MOUSE_PRESSED -> {
+          myLastPoint = e.getPoint();
+          SwingUtilities.convertPointToScreen(myLastPoint, this);
           setMotionMask(e.getPoint());
-          myDragging=true;
-          break;
-        }case MouseEvent.MOUSE_RELEASED:{
+          myDragging = true;
+        }
+        case MouseEvent.MOUSE_RELEASED -> {
           FloatingDecorator.this.validate();
           FloatingDecorator.this.repaint();
-          myDragging=false;
-          break;
-        }case MouseEvent.MOUSE_ENTERED:{
-          if(!myDragging){
+          myDragging = false;
+        }
+        case MouseEvent.MOUSE_ENTERED -> {
+          if (!myDragging) {
             setMotionMask(e.getPoint());
           }
         }
@@ -349,8 +357,8 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     @Override
     public void paint(final Graphics g) {
       super.paint(g);
-      final JBColor lightGray = new JBColor(Color.lightGray, Gray._95);
-      final JBColor gray = new JBColor(Color.gray, Gray._95);
+      final JBColor lightGray = new JBColor(JBColor.LIGHT_GRAY, Gray._95);
+      final JBColor gray = new JBColor(JBColor.GRAY, Gray._95);
       if (ANCHOR_TOP == myAnchor) {
         g.setColor(lightGray);
         LinePainter2D.paint((Graphics2D)g, 0, 0, getWidth() - 1, 0);

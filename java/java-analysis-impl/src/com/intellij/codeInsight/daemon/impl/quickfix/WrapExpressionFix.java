@@ -76,7 +76,7 @@ public class WrapExpressionFix implements IntentionAction {
   private static String getMethodPresentation(PsiExpression expression, PsiClassType expectedType, boolean primitiveExpected) {
     PsiType type = expression.getType();
     if (expectedType != null && type != null) {
-      final PsiMethod wrapper = findWrapper(type, expectedType, primitiveExpected);
+      final PsiMethod wrapper = findWrapper(type, expectedType, primitiveExpected, expression);
       if (wrapper != null) {
         final PsiClass containingClass = wrapper.getContainingClass();
         if (containingClass != null) {
@@ -88,12 +88,18 @@ public class WrapExpressionFix implements IntentionAction {
   }
 
   @Nullable
-  private static PsiMethod findWrapper(@NotNull PsiType type, @NotNull PsiClassType expectedType, boolean primitiveExpected) {
+  private static PsiMethod findWrapper(@NotNull PsiType type, @NotNull PsiClassType expectedType,
+                                       boolean primitiveExpected, @NotNull PsiElement context) {
     PsiClass aClass = expectedType.resolve();
     if (aClass != null) {
       PsiType expectedReturnType = expectedType;
       if (primitiveExpected) {
         expectedReturnType = PsiPrimitiveType.getUnboxedType(expectedType);
+      }
+      boolean isString = CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName());
+      if (type instanceof PsiArrayType && isString) {
+        aClass = PsiResolveHelper.getInstance(aClass.getProject()).resolveReferencedClass(CommonClassNames.JAVA_UTIL_ARRAYS, aClass);
+        if (aClass == null) return null;
       }
       if (expectedReturnType == null) return null;
       PsiMethod[] methods = aClass.getMethods();
@@ -105,7 +111,7 @@ public class WrapExpressionFix implements IntentionAction {
             && method.getReturnType() != null
             && expectedReturnType.equals(method.getReturnType())) {
           final String methodName = method.getName();
-          if (methodName.startsWith("parse") || methodName.equals("valueOf")) {
+          if (methodName.startsWith("parse") || methodName.equals("valueOf") || (isString && methodName.equals("toString"))) {
             return method;
           }
           wrapperMethods.add(method);
@@ -132,7 +138,7 @@ public class WrapExpressionFix implements IntentionAction {
            && myExpectedType != null
            && myExpectedType.isValid()
            && myExpression.getType() != null
-           && findWrapper(myExpression.getType(), myExpectedType, myPrimitiveExpected) != null;
+           && findWrapper(myExpression.getType(), myExpectedType, myPrimitiveExpected, myExpression) != null;
   }
 
   @Override
@@ -142,7 +148,7 @@ public class WrapExpressionFix implements IntentionAction {
       LOG.error("Expression type is null");
       return;
     }
-    PsiMethod wrapper = findWrapper(type, myExpectedType, myPrimitiveExpected);
+    PsiMethod wrapper = findWrapper(type, myExpectedType, myPrimitiveExpected, myExpression);
     if (wrapper == null) {
       LOG.error("Wrapper not found; expectedType = " + myExpectedType.getCanonicalText() + "; primitiveExpected = " + myPrimitiveExpected);
       return;
@@ -190,7 +196,8 @@ public class WrapExpressionFix implements IntentionAction {
           paramType = substitutor.substitute(paramType);
           if (paramType.isAssignableFrom(exprType)) continue;
           final PsiClassType classType = getClassType(paramType, expression);
-          if (expectedType == null && classType != null && findWrapper(exprType, classType, paramType instanceof PsiPrimitiveType) != null) {
+          if (expectedType == null && classType != null && findWrapper(exprType, classType, paramType instanceof PsiPrimitiveType,
+                                                                       expression) != null) {
             expectedType = paramType;
             expr = expression;
           }

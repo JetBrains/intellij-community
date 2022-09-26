@@ -101,7 +101,6 @@ public class OldReferencesResolver {
 
   /**
    * checks for the case: qualifier.getFoo()(args)
-   * @param methodExpression
    */
   @Nullable
   private static GrExpression getQualifierFromGetterCall(GrMethodCall methodExpression) {

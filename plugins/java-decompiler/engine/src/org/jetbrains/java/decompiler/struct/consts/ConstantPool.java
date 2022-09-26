@@ -38,62 +38,43 @@ public class ConstantPool implements NewClassNameBuilder {
       byte tag = (byte)in.readUnsignedByte();
 
       switch (tag) {
-        case CodeConstants.CONSTANT_Utf8:
+        case CodeConstants.CONSTANT_Utf8 ->
           pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Utf8, in.readUTF()));
-          break;
-
-        case CodeConstants.CONSTANT_Integer:
+        case CodeConstants.CONSTANT_Integer ->
           pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Integer, Integer.valueOf(in.readInt())));
-          break;
-
-        case CodeConstants.CONSTANT_Float:
+        case CodeConstants.CONSTANT_Float ->
           pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Float, in.readFloat()));
-          break;
-
-        case CodeConstants.CONSTANT_Long:
+        case CodeConstants.CONSTANT_Long -> {
           pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Long, in.readLong()));
           pool.add(null);
           i++;
-          break;
-
-        case CodeConstants.CONSTANT_Double:
+        }
+        case CodeConstants.CONSTANT_Double -> {
           pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Double, in.readDouble()));
           pool.add(null);
           i++;
-          break;
-
-        case CodeConstants.CONSTANT_Class:
-        case CodeConstants.CONSTANT_String:
-        case CodeConstants.CONSTANT_MethodType:
-        case CodeConstants.CONSTANT_Module:
-        case CodeConstants.CONSTANT_Package:
+        }
+        case CodeConstants.CONSTANT_Class, CodeConstants.CONSTANT_String, CodeConstants.CONSTANT_MethodType, CodeConstants.CONSTANT_Module, CodeConstants.CONSTANT_Package -> {
           pool.add(new PrimitiveConstant(tag, in.readUnsignedShort()));
           nextPass[0].set(i);
-          break;
-
-        case CodeConstants.CONSTANT_NameAndType:
+        }
+        case CodeConstants.CONSTANT_NameAndType -> {
           pool.add(new LinkConstant(tag, in.readUnsignedShort(), in.readUnsignedShort()));
           nextPass[0].set(i);
-          break;
-
-        case CodeConstants.CONSTANT_Fieldref:
-        case CodeConstants.CONSTANT_Methodref:
-        case CodeConstants.CONSTANT_InterfaceMethodref:
-        case CodeConstants.CONSTANT_Dynamic:
-        case CodeConstants.CONSTANT_InvokeDynamic:
+        }
+        case CodeConstants.CONSTANT_Fieldref, CodeConstants.CONSTANT_Methodref, CodeConstants.CONSTANT_InterfaceMethodref, CodeConstants.CONSTANT_Dynamic, CodeConstants.CONSTANT_InvokeDynamic -> {
           pool.add(new LinkConstant(tag, in.readUnsignedShort(), in.readUnsignedShort()));
           nextPass[1].set(i);
-          break;
-
-        case CodeConstants.CONSTANT_MethodHandle:
+        }
+        case CodeConstants.CONSTANT_MethodHandle -> {
           pool.add(new LinkConstant(tag, in.readUnsignedByte(), in.readUnsignedShort()));
           nextPass[2].set(i);
-          break;
-
-        default:
+        }
+        default ->
           // Fail-fast on unknown constant pool entry.
           // We have no chance to process this class correctly.
-          throw new ClassFormatException(String.format("Unsupported constant pool entry type %d at index #%d! ", Byte.toUnsignedInt(tag), i));
+          throw new ClassFormatException(
+            String.format("Unsupported constant pool entry type %d at index #%d! ", Byte.toUnsignedInt(tag), i));
       }
     }
 
@@ -114,35 +95,15 @@ public class ConstantPool implements NewClassNameBuilder {
 
     for (int i = 1; i < size; i++) {
       switch (in.readUnsignedByte()) {
-        case CodeConstants.CONSTANT_Utf8:
-          in.readUTF();
-          break;
-
-        case CodeConstants.CONSTANT_Integer:
-        case CodeConstants.CONSTANT_Float:
-        case CodeConstants.CONSTANT_Fieldref:
-        case CodeConstants.CONSTANT_Methodref:
-        case CodeConstants.CONSTANT_InterfaceMethodref:
-        case CodeConstants.CONSTANT_NameAndType:
-        case CodeConstants.CONSTANT_Dynamic:
-        case CodeConstants.CONSTANT_InvokeDynamic:
+        case CodeConstants.CONSTANT_Utf8 -> in.readUTF();
+        case CodeConstants.CONSTANT_Integer, CodeConstants.CONSTANT_Float, CodeConstants.CONSTANT_Fieldref, CodeConstants.CONSTANT_Methodref, CodeConstants.CONSTANT_InterfaceMethodref, CodeConstants.CONSTANT_NameAndType, CodeConstants.CONSTANT_Dynamic, CodeConstants.CONSTANT_InvokeDynamic ->
           in.discard(4);
-          break;
-
-        case CodeConstants.CONSTANT_Long:
-        case CodeConstants.CONSTANT_Double:
+        case CodeConstants.CONSTANT_Long, CodeConstants.CONSTANT_Double -> {
           in.discard(8);
           i++;
-          break;
-
-        case CodeConstants.CONSTANT_Class:
-        case CodeConstants.CONSTANT_String:
-        case CodeConstants.CONSTANT_MethodType:
-          in.discard(2);
-          break;
-
-        case CodeConstants.CONSTANT_MethodHandle:
-          in.discard(3);
+        }
+        case CodeConstants.CONSTANT_Class, CodeConstants.CONSTANT_String, CodeConstants.CONSTANT_MethodType -> in.discard(2);
+        case CodeConstants.CONSTANT_MethodHandle -> in.discard(3);
       }
     }
   }

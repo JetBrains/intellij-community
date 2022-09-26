@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -874,14 +875,16 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
     if (!ShutDownTracker.isShutdownHookRunning()) {
       DocumentListener[] listeners = getListeners();
-      for (int i = listeners.length - 1; i >= 0; i--) {
-        try {
-          listeners[i].beforeDocumentChange(event);
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        for (int i = listeners.length - 1; i >= 0; i--) {
+          try {
+            listeners[i].beforeDocumentChange(event);
+          }
+          catch (Throwable e) {
+            exceptions.register(e);
+          }
         }
-        catch (Throwable e) {
-          exceptions.register(e);
-        }
-      }
+      });
     }
 
     myEventsHandling = true;
@@ -913,14 +916,16 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
       if (!ShutDownTracker.isShutdownHookRunning()) {
         DocumentListener[] listeners = getListeners();
-        for (DocumentListener listener : listeners) {
-          try {
-            listener.documentChanged(event);
+        ProgressManager.getInstance().executeNonCancelableSection(() -> {
+          for (DocumentListener listener : listeners) {
+            try {
+              listener.documentChanged(event);
+            }
+            catch (Throwable e) {
+              exceptions.register(e);
+            }
           }
-          catch (Throwable e) {
-            exceptions.register(e);
-          }
-        }
+        });
       }
     }
     finally {

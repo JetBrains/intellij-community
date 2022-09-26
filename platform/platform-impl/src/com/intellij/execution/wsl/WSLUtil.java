@@ -135,7 +135,6 @@ public final class WSLUtil {
   }
 
   /**
-   * @param distribution
    * @return version if it can be determined or -1 instead
    */
   static int getWslVersion(@NotNull WSLDistribution distribution) {
@@ -229,7 +228,7 @@ public final class WSLUtil {
    *
    * @deprecated remove after everyone migrates to the new prefix
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static void fixWslPrefix(@NotNull Sdk sdk) {
     if (sdk instanceof ProjectJdkImpl) {
       var path = sdk.getHomePath();

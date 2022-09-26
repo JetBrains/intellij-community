@@ -149,9 +149,6 @@ public final class NameSuggester {
    * before first word. Furthermore, first may be equal to {@code propertyWords.length}  - in
    * that case replacements transormates to appending.
    *
-   * @param propertyWords
-   * @param matches
-   * @return
    */
   private TreeMap<Pair<Integer, Integer>, String> calculateReplacements(String[] propertyWords, Int2IntMap matches) {
     TreeMap<Pair<Integer, Integer>, String> replacements = new TreeMap<>(Pair.comparingByFirst());

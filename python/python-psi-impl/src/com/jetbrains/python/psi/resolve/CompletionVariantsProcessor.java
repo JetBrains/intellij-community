@@ -11,15 +11,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.completion.PyClassInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PyFunctionInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PythonCompletionWeigher;
-import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -166,7 +166,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
   protected void addImportedElement(@NotNull String name, @NotNull PyElement element) {
     Icon icon = element.getIcon(0);
     // things like PyTargetExpression cannot have a general icon, but here we only have variables
-    if (icon == null) icon = PlatformIcons.VARIABLE_ICON;
+    if (icon == null) icon = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable);
     markAsProcessed(name);
     myVariants.put(name, setupItem(LookupElementBuilder.createWithSmartPointer(name, element).withIcon(icon)));
   }

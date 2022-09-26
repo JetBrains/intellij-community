@@ -46,8 +46,7 @@ public final class ByteBufferUtil {
                                                      MethodType.methodType(long.class));
       }
     }
-    catch (Throwable t) {
-      getLogger().warn(t);
+    catch (Throwable ignored) {
     }
     return address;
   }

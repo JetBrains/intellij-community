@@ -92,7 +92,7 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
     if (owner == null || owner.getModifierList() == null || !ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(owner)) {
       return false;
     }
-    List<AnnotationProvider> annotations = availableAnnotations(owner, project).limit(2).collect(Collectors.toList());
+    List<AnnotationProvider> annotations = availableAnnotations(owner, project).limit(2).toList();
     if (annotations.isEmpty()) return false;
     if (mySingleAnnotationName != null && canAnnotateWith(file, owner, mySingleAnnotationName)) return true;
     if (annotations.size() == 1) {

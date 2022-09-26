@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.diagnostic.PluginException;
@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,7 +49,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     myTracker.incModificationCount();
   }
 
-  private void addExtensionPointListener(@NotNull ExtensionPoint<KeyedLazyInstance<T>> point) {
+  private void addExtensionPointListener(@NotNull ExtensionPoint<@NotNull KeyedLazyInstance<T>> point) {
     if (myEpListenerAdded.compareAndSet(false, true)) {
       point.addExtensionPointListener(new MyExtensionPointListener(), false, null);
     }
@@ -102,16 +101,28 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
    * @see #findSingle(Object)
    */
   public @NotNull List<T> forKey(@NotNull KeyT key) {
-    final String stringKey = keyToString(key);
+    String stringKey = keyToString(key);
 
     List<T> cached = myCache.get(stringKey);
-    if (cached == null) {
-      List<T> list = buildExtensions(stringKey, key);
-      // tiny optimisations to save memory
-      cached = ContainerUtil.immutableCopy(list);
-      cached = ConcurrencyUtil.cacheOrGet(myCache, stringKey, cached);
+    if (cached != null) {
+      return cached;
     }
-    return cached;
+
+    List<T> list = buildExtensions(stringKey, key);
+    // tiny optimisations to save memory
+    if (list.isEmpty()) {
+      cached = Collections.emptyList();
+    }
+    else if (list.size() == 1) {
+      cached = Collections.singletonList(list.get(0));
+    }
+    else {
+      //noinspection unchecked,SuspiciousArrayCast
+      cached = ContainerUtil.immutableList((T[])list.toArray());
+    }
+
+    List<T> prev = myCache.putIfAbsent(stringKey, cached);
+    return prev == null ? cached : prev;
   }
 
   public T findSingle(@NotNull KeyT key) {
@@ -132,7 +143,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
 
   // must be called not under our lock
   protected final @NotNull List<KeyedLazyInstance<T>> getExtensions() {
-    ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
+    ExtensionPoint<@NotNull KeyedLazyInstance<T>> point = getPoint();
     if (point == null) {
       return Collections.emptyList();
     }
@@ -203,7 +214,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   @ApiStatus.Internal
-  public final @Nullable ExtensionPoint<KeyedLazyInstance<T>> getPoint() {
+  public final @Nullable ExtensionPoint<@NotNull KeyedLazyInstance<T>> getPoint() {
     return Extensions.getRootArea().getExtensionPointIfRegistered(myEpName);
   }
 
@@ -213,7 +224,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
         return true;
       }
 
-      ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
+      ExtensionPoint<@NotNull KeyedLazyInstance<T>> point = getPoint();
       return point != null && point.size() != 0;
     }
   }
@@ -228,7 +239,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   protected void ensureValuesLoaded() {
-    ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
+    ExtensionPoint<@NotNull KeyedLazyInstance<T>> point = getPoint();
     if (point != null) {
       for (KeyedLazyInstance<T> bean : point.getExtensionList()) {
         bean.getInstance();

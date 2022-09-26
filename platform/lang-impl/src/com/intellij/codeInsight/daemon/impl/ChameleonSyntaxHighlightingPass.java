@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -78,18 +79,26 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
 
     List<PsiElement> lazyOutside = new ArrayList<>(100);
     List<PsiElement> lazyInside = new ArrayList<>(100);
-    List<HighlightInfo> outside = new ArrayList<>(100);
-    List<HighlightInfo> inside = new ArrayList<>(100);
 
     for (PsiElement e : s) {
       (e.getTextRange().intersects(myPriorityRange) ? lazyInside : lazyOutside).add(e);
     }
+    HighlightInfoHolder holderInside = new HighlightInfoHolder(myFile);
+    HighlightInfoHolder holderOutside = new HighlightInfoHolder(myFile);
     for (PsiElement e : lazyInside) {
-      collectHighlights(e, inside, outside, myPriorityRange);
+      collectHighlights(e, holderInside, holderOutside, myPriorityRange);
+    }
+    List<HighlightInfo> inside = new ArrayList<>(100);
+    List<HighlightInfo> outside = new ArrayList<>(100);
+    for (int i=0; i<holderInside.size();i++) {
+      inside.add(holderInside.get(i));
     }
     myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), inside, myPriorityRange, myRestrictRange, getId());
     for (PsiElement e : lazyOutside) {
-      collectHighlights(e, inside, outside, myPriorityRange);
+      collectHighlights(e, holderInside, holderOutside, myPriorityRange);
+    }
+    for (int i=0; i<holderOutside.size();i++) {
+      outside.add(holderOutside.get(i));
     }
     myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, getEditor(), outside, myPriorityRange, myRestrictRange, getId());
     myHighlights.addAll(inside);
@@ -97,8 +106,8 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
   }
 
   private void collectHighlights(@NotNull PsiElement element,
-                                 @NotNull List<? super HighlightInfo> inside,
-                                 @NotNull List<? super HighlightInfo> outside,
+                                 @NotNull HighlightInfoHolder inside,
+                                 @NotNull HighlightInfoHolder outside,
                                  @NotNull ProperTextRange priorityRange) {
     EditorColorsScheme scheme = ObjectUtils.notNull(getColorsScheme(), EditorColorsManager.getInstance().getGlobalScheme());
 
@@ -110,9 +119,9 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
       TextRange tokenRange = token.getTextRange();
       if (tokenRange.isEmpty()) continue;
       IElementType type = PsiUtilCore.getElementType(token);
-      List<? super HighlightInfo> result = priorityRange.contains(tokenRange) ? inside : outside;
+      @NotNull HighlightInfoHolder holder = priorityRange.contains(tokenRange) ? inside : outside;
       TextAttributesKey[] keys = syntaxHighlighter.getTokenHighlights(type);
-      result.addAll(InjectedGeneralHighlightingPass.overrideDefaultHighlights(scheme, tokenRange, keys));
+      InjectedGeneralHighlightingPass.overrideDefaultHighlights(scheme, tokenRange, keys, holder);
     }
   }
 

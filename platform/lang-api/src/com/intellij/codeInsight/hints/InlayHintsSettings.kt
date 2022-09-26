@@ -41,7 +41,7 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
 
     var disabledHintProviderIds: TreeSet<String> = sortedSetOf()
     // We can't store Map<String, Any> directly, because values deserialized as Object
-    var settingsMapElement = Element("settingsMapElement")
+    var settingsMapElement: Element = Element("settingsMapElement")
 
     var lastViewedProviderKeyId: String? = null
 
@@ -96,7 +96,7 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     }
   }
 
-  fun saveLastViewedProviderId(providerId: String) = synchronized(lock) {
+  fun saveLastViewedProviderId(providerId: String): Unit = synchronized(lock) {
     myState.lastViewedProviderKeyId = providerId
   }
 
@@ -194,7 +194,7 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     return myState
   }
 
-  override fun loadState(state: State) = synchronized(lock) {
+  override fun loadState(state: State): Unit = synchronized(lock) {
     val elementChanged = myState.settingsMapElement != state.settingsMapElement
     if (elementChanged) {
       myCachedSettingsMap.clear()

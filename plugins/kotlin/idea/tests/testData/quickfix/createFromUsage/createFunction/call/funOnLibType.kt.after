@@ -1,6 +1,5 @@
 // "Create extension function 'Int.foo'" "true"
 // WITH_STDLIB
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 class A<T>(val n: T)
 

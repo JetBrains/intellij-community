@@ -100,16 +100,12 @@ public class UpgradeFormatDialog extends DialogWrapper  {
   }
 
   protected @NlsContexts.RadioButton @NotNull String getFormatText(@NotNull WorkingCopyFormat format) {
-    switch (format) {
-      case ONE_DOT_SIX:
-        return isVersioned ? message("radio.configure.upgrade.auto.16format") : message("radio.configure.create.auto.16format");
-      case ONE_DOT_SEVEN:
-        return isVersioned ? message("radio.configure.upgrade.auto.17format") : message("radio.configure.create.auto.17format");
-      case ONE_DOT_EIGHT:
-        return isVersioned ? message("radio.configure.upgrade.auto.18format") : message("radio.configure.create.auto.18format");
-      default:
-        throw new IllegalArgumentException("unsupported format " + format);
-    }
+    return message(switch (format) {
+      case ONE_DOT_SIX -> isVersioned ? "radio.configure.upgrade.auto.16format" : "radio.configure.create.auto.16format";
+      case ONE_DOT_SEVEN -> isVersioned ? "radio.configure.upgrade.auto.17format" : "radio.configure.create.auto.17format";
+      case ONE_DOT_EIGHT -> isVersioned ? "radio.configure.upgrade.auto.18format" : "radio.configure.create.auto.18format";
+      default -> throw new IllegalArgumentException("unsupported format " + format);
+    });
   }
 
   @Override

@@ -21,12 +21,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.reference.SoftReference
@@ -137,7 +135,13 @@ internal class TextSearchContributor(
     return listOf(CaseSensitiveAction(case, onChanged), WordAction(word, onChanged), RegexpAction(regexp, onChanged))
   }
 
-  override fun getDataForItem(element: SearchEverywhereItem, dataId: String): Any? = null
+  override fun getDataForItem(element: SearchEverywhereItem, dataId: String): Any? {
+    if (CommonDataKeys.PSI_ELEMENT.`is`(dataId)) {
+      return element.usage.element
+    }
+
+    return null
+  }
 
   private fun getInitialSelectedScope(scopeDescriptors: List<ScopeDescriptor>): ScopeDescriptor {
     val scope = SE_TEXT_SELECTED_SCOPE.get(project) ?: return ScopeDescriptor(projectScope)

@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
@@ -26,7 +27,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntityBase() {
+open class LibraryPropertiesEntityImpl(val dataSource: LibraryPropertiesEntityData) : LibraryPropertiesEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, LibraryPropertiesEntity::class.java,
@@ -41,21 +42,17 @@ open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntit
   override val library: LibraryEntity
     get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _libraryType: String? = null
   override val libraryType: String
-    get() = _libraryType!!
+    get() = dataSource.libraryType
 
-  @JvmField
-  var _propertiesXmlTag: String? = null
   override val propertiesXmlTag: String?
-    get() = _propertiesXmlTag
+    get() = dataSource.propertiesXmlTag
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: LibraryPropertiesEntityData?) : ModifiableWorkspaceEntityBase<LibraryPropertiesEntity>(), LibraryPropertiesEntity.Builder {
+  class Builder(var result: LibraryPropertiesEntityData?) : ModifiableWorkspaceEntityBase<LibraryPropertiesEntity>(), LibraryPropertiesEntity.Builder {
     constructor() : this(LibraryPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -73,6 +70,9 @@ open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntit
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -81,6 +81,9 @@ open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntit
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(LIBRARY_CONNECTION_ID, this) == null) {
           error("Field LibraryPropertiesEntity#library should be initialized")
@@ -90,9 +93,6 @@ open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntit
         if (this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] == null) {
           error("Field LibraryPropertiesEntity#library should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field LibraryPropertiesEntity#entitySource should be initialized")
       }
       if (!getEntityData().isLibraryTypeInitialized()) {
         error("Field LibraryPropertiesEntity#libraryType should be initialized")
@@ -104,13 +104,28 @@ open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntit
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LibraryPropertiesEntity
-      this.entitySource = dataSource.entitySource
-      this.libraryType = dataSource.libraryType
-      this.propertiesXmlTag = dataSource.propertiesXmlTag
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.libraryType != dataSource.libraryType) this.libraryType = dataSource.libraryType
+      if (this.propertiesXmlTag != dataSource?.propertiesXmlTag) this.propertiesXmlTag = dataSource.propertiesXmlTag
+      if (parents != null) {
+        val libraryNew = parents.filterIsInstance<LibraryEntity>().single()
+        if ((this.library as WorkspaceEntityBase).id != (libraryNew as WorkspaceEntityBase).id) {
+          this.library = libraryNew
+        }
+      }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var library: LibraryEntity
       get() {
@@ -145,15 +160,6 @@ open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntit
           this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] = value
         }
         changedProperty.add("library")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var libraryType: String
@@ -196,13 +202,13 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
   }
 
   override fun createEntity(snapshot: EntityStorage): LibraryPropertiesEntity {
-    val entity = LibraryPropertiesEntityImpl()
-    entity._libraryType = libraryType
-    entity._propertiesXmlTag = propertiesXmlTag
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = LibraryPropertiesEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -222,9 +228,15 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
     }
   }
 
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(LibraryEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as LibraryPropertiesEntityData
 
@@ -236,7 +248,7 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as LibraryPropertiesEntityData
 
@@ -257,5 +269,9 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
     result = 31 * result + libraryType.hashCode()
     result = 31 * result + propertiesXmlTag.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

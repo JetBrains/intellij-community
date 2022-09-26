@@ -172,6 +172,8 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
                 if (FileUtil.loadFile(expectedFile).contains("<lineMarker") && markers.isEmpty()) {
                     throw AssertionError("Some line markers are expected, but nothing is present at all")
                 }
+            } catch (failure: FileComparisonFailure) {
+                throw failure
             } catch (error: AssertionError) {
                 try {
                     val actualTextWithTestData = TagsTestDataUtil.insertInfoTags(markers, true, documentToAnalyze.text)

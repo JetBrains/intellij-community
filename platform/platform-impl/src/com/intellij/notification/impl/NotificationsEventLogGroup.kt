@@ -72,7 +72,7 @@ class NotificationsEventLogGroup : CounterUsagesCollector() {
     @JvmField
     val BALLOON_COLLAPSED = registerNotificationEvent("balloon.collapsed")
 
-    fun registerNotificationEvent(eventId: String, vararg extraFields: EventField<*>): VarargEventId {
+    private fun registerNotificationEvent(eventId: String, vararg extraFields: EventField<*>): VarargEventId {
       return GROUP.registerVarargEvent(
         eventId,
         ID,

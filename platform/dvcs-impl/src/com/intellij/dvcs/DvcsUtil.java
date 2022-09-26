@@ -253,7 +253,6 @@ public final class DvcsUtil {
     }
   }
 
-  @RequiresEdt
   public static void addMappingIfSubRoot(@NotNull Project project,
                                          @NotNull @NonNls String newRepositoryPath,
                                          @NotNull @NonNls String vcsName) {
@@ -276,6 +275,22 @@ public final class DvcsUtil {
                                                                @NotNull AbstractRepositoryManager<T> manager,
                                                                @Nullable @NonNls @SystemIndependent String recentRootPath) {
     VirtualFile file = getSelectedFile(project); // last active FileEditor
+    T repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, file));
+    if (repository != null) return repository;
+
+    repository = manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), recentRootPath));
+    if (repository != null) return repository;
+
+    return null;
+  }
+
+  @Nullable
+  @CalledInAny
+  public static <T extends Repository> T guessWidgetRepository(@NotNull Project project,
+                                                               @NotNull AbstractRepositoryManager<T> manager,
+                                                               @Nullable @NonNls @SystemIndependent String recentRootPath,
+                                                               @NotNull DataContext dataContext) {
+    VirtualFile file = getSelectedFile(dataContext);
     T repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, file));
     if (repository != null) return repository;
 

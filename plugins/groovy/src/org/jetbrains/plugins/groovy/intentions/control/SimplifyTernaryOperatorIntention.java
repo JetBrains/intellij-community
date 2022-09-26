@@ -86,7 +86,6 @@ public class SimplifyTernaryOperatorIntention extends Intention {
    * Convert an expression into something which can be put inside ( a && b )
    * Wrap in parenthesis, if necessary
    *
-   * @param expression
    * @return a string representing the expression
    */
   @NotNull

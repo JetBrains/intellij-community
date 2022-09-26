@@ -34,7 +34,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
   override fun collectNotificationData(
     project: Project,
     file: VirtualFile,
-  ): Function<in FileEditor, out JComponent?> {
+  ): Function<in FileEditor, out JComponent?>? {
     val suggestionData = getSuggestionData(project, ApplicationInfo.getInstance().build.productCode, file.name, file.fileType)
 
     if (suggestionData == null) {
@@ -58,7 +58,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
         LOG.debug("Tried to update extensions cache for file '${file.name}'. shouldUpdateNotifications=$shouldUpdateNotifications")
       }
 
-      return EditorNotificationProvider.CONST_NULL
+      return null
     }
 
     return suggestionData
@@ -94,7 +94,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
 
     override fun apply(fileEditor: FileEditor): EditorNotificationPanel? {
       lateinit var label: JLabel
-      val panel = object : EditorNotificationPanel(fileEditor) {
+      val panel = object : EditorNotificationPanel(fileEditor, Status.Info) {
         init {
           label = myLabel
         }
@@ -265,7 +265,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
     }
 
     val ideaUltimate = SuggestedIde("IntelliJ IDEA Ultimate", "https://www.jetbrains.com/idea/download/")
-    val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")
+    private val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")
 
     private val ides = linkedMapOf(
       "WS" to SuggestedIde("WebStorm", "https://www.jetbrains.com/webstorm/download/"),

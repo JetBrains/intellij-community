@@ -201,7 +201,7 @@ class KotlinFieldBreakpoint(
         return super.evaluateCondition(context, event)
     }
 
-    fun matchesEvent(event: LocatableEvent): Boolean {
+    private fun matchesEvent(event: LocatableEvent): Boolean {
         val method = event.location()?.method()
         // TODO check property type
         return method != null && method.name() in getMethodsName()

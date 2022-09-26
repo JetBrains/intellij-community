@@ -50,17 +50,6 @@ public final class LocalChangesWouldBeOverwrittenHelper {
     }
   }
 
-  /**
-   * @deprecated use {@link #showErrorNotification(Project, String, VirtualFile, String, Collection)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static void showErrorNotification(@NotNull final Project project,
-                                           @NotNull final VirtualFile root,
-                                           @NotNull final String operationName,
-                                           @NotNull final Collection<String> relativeFilePaths) {
-    showErrorNotification(project, null, root, operationName, relativeFilePaths);
-  }
-
   public static void showErrorNotification(@NotNull final Project project,
                                            @NonNls @Nullable String displayId,
                                            @NotNull final VirtualFile root,

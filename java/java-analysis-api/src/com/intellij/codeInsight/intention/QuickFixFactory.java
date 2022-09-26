@@ -32,7 +32,7 @@ public abstract class QuickFixFactory {
    * {@link QuickFixFactory#createModifierListFix(PsiModifierListOwner, String, boolean, boolean)} for java only fix or
    * {@link JvmElementActionsFactory#createChangeModifierActions(com.intellij.lang.jvm.JvmModifiersOwner, com.intellij.lang.jvm.actions.ChangeModifierRequest)}
    * for jvm languages transparent fix
-   *
+   * <p>
    * Usage of this method might be unsafe in case of fixing java multi variable declaration modifier list
    */
   @NotNull
@@ -162,9 +162,6 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createAddTypeCastFix(@NotNull PsiType type, @NotNull PsiExpression expression);
-
-  @NotNull
-  public abstract IntentionAction createWrapExpressionFix(@NotNull PsiType type, @NotNull PsiExpression expression);
 
   @NotNull
   public abstract IntentionAction createReuseVariableDeclarationFix(@NotNull PsiLocalVariable variable);
@@ -593,9 +590,9 @@ public abstract class QuickFixFactory {
    * @param parameter receiver parameter to change name for
    * @param newName   new name of the receiver parameter
    *                  <p>
-   *                  In an instance method the name of the receiver parameter must be <code>this</code>.
+   *                  In an instance method the name of the receiver parameter must be {@code this}.
    *                  <p>
-   *                  In an inner class's constructor the name of the receiver parameter must be <i>Identifier</i> . <code>this</code>
+   *                  In an inner class's constructor the name of the receiver parameter must be <i>Identifier</i>.{@code this}
    *                  where <i>Identifier</i> is the simple name of the class or interface which is the immediately enclosing type
    *                  declaration of the inner class.
    * @return a new fix
@@ -612,4 +609,18 @@ public abstract class QuickFixFactory {
    */
   public abstract @NotNull IntentionAction createRemoveRedundantLambdaParameterTypesFix(@NotNull PsiLambdaExpression lambdaExpression,
                                                                                         @IntentionName String message);
+
+  /**
+   * @param anonymousClass class to convert
+   * @return a fix that converts an anonymous class to an inner class
+   */
+  public abstract @NotNull IntentionAction createConvertAnonymousToInnerAction(@NotNull PsiAnonymousClass anonymousClass);
+
+  public abstract @NotNull IntentionAction createSplitSwitchBranchWithSeveralCaseValuesAction();
+
+  /**
+   * @param variable variable to make an effectively final
+   * @return a fix that refactors code to make variable effectively final when possible. Null, if it cannot create such a fix.
+   */
+  public abstract @Nullable IntentionAction createMakeVariableEffectivelyFinalFix(@NotNull PsiVariable variable);
 }

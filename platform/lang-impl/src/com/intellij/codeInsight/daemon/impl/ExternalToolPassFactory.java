@@ -10,30 +10,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory, MainHighlightingPassFactory {
-  private final MergingUpdateQueue myExternalActivitiesQueue;
-
-  static final class MyRegistrar implements TextEditorHighlightingPassFactoryRegistrar {
-    @Override
-    public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-      new ExternalToolPassFactory(project, registrar);
-    }
-  }
-
-  private ExternalToolPassFactory(@NotNull Project project, @NotNull TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
+final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory, MainHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
+  @Override
+  public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
     // start after PostHighlightingPass completion since it could report errors that can prevent us to run
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, null, true, Pass.EXTERNAL_TOOLS);
-
-    myExternalActivitiesQueue = new MergingUpdateQueue("ExternalActivitiesQueue", 300, true, MergingUpdateQueue.ANY_COMPONENT, project,
-                                                       null, false)
-      .usePassThroughInUnitTestMode();
+    registrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, null, true, Pass.EXTERNAL_TOOLS);
   }
 
   @Override
@@ -43,7 +29,7 @@ final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory
     if (textRange == null || !externalAnnotatorsDefined(file)) {
       return null;
     }
-    return new ExternalToolPass(this, file, editor, textRange.getStartOffset(), textRange.getEndOffset());
+    return new ExternalToolPass(file, editor.getDocument(), editor, textRange.getStartOffset(), textRange.getEndOffset(), new DefaultHighlightInfoProcessor(), false);
   }
 
   private static boolean externalAnnotatorsDefined(@NotNull PsiFile file) {
@@ -56,10 +42,6 @@ final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory
     return false;
   }
 
-  void scheduleExternalActivity(@NotNull Update update) {
-    myExternalActivitiesQueue.queue(update);
-  }
-
   @Nullable
   @Override
   public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
@@ -69,6 +51,6 @@ final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory
     if (range == null || !externalAnnotatorsDefined(file)) {
       return null;
     }
-    return new ExternalToolPass(this, file, document, null, range.getStartOffset(), range.getEndOffset(), highlightInfoProcessor, true);
+    return new ExternalToolPass(file, document, null, range.getStartOffset(), range.getEndOffset(), highlightInfoProcessor, true);
   }
 }

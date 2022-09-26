@@ -39,7 +39,7 @@
   <li>Refactoring actions (lombok and delombok)</li>
 </ul>
 <br/>]]></description>
-  <category>Tools Integration</category>
+  <category>JVM Frameworks</category>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
@@ -248,26 +248,31 @@
       key="inspection.redundant.slf.4.j.definition.display.name" bundle="messages.LombokBundle"/>
 
     <intentionAction>
+      <language>JAVA</language>
       <className>de.plushnikov.intellij.plugin.intention.valvar.to.ReplaceExplicitTypeWithValIntentionAction</className>
       <bundleName>messages.LombokBundle</bundleName>
       <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>JAVA</language>
       <className>de.plushnikov.intellij.plugin.intention.valvar.to.ReplaceExplicitTypeWithVarIntentionAction</className>
       <bundleName>messages.LombokBundle</bundleName>
       <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>JAVA</language>
       <className>de.plushnikov.intellij.plugin.intention.valvar.from.ReplaceValWithExplicitTypeIntentionAction</className>
       <bundleName>messages.LombokBundle</bundleName>
       <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>JAVA</language>
       <className>de.plushnikov.intellij.plugin.intention.valvar.from.ReplaceVarWithExplicitTypeIntentionAction</className>
       <bundleName>messages.LombokBundle</bundleName>
       <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>JAVA</language>
       <className>de.plushnikov.intellij.plugin.intention.ReplaceWithLombokAnnotationAction</className>
       <bundleName>messages.LombokBundle</bundleName>
       <categoryKey>intention.category.lombok</categoryKey>

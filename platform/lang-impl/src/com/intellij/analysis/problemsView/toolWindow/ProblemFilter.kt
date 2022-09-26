@@ -44,6 +44,10 @@ internal class SeverityFiltersActionGroup : DumbAware, ActionGroup() {
 private abstract class SeverityFilterActionBase(name: @Nls String, protected val panel: HighlightingPanel): DumbAwareToggleAction(name) {
   abstract fun updateState(selected: Boolean): Boolean
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun setSelected(event: AnActionEvent, selected: Boolean) {
     val changed = updateState(selected)
     if (changed) {

@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.util.caching.ConcurrentFactoryCache
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationStatus.EvaluationContextLanguage
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
@@ -385,10 +386,10 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 factory == Errors.ILLEGAL_SUSPEND_FUNCTION_CALL
 
     private fun evaluateWithCompilation(
-        context: ExecutionContext,
-        compiledData: CompiledCodeFragmentData,
-        classLoader: ClassLoaderReference,
-        status: EvaluationStatus
+      context: ExecutionContext,
+      compiledData: CompiledCodeFragmentData,
+      classLoader: ClassLoaderReference,
+      status: EvaluationStatus
     ): Value? {
         return runEvaluation(context, compiledData, classLoader, status) { args ->
             val mainClassType = context.findClass(GENERATED_CLASS_NAME, classLoader) as? ClassType
@@ -432,11 +433,11 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     }
 
     private fun <T> runEvaluation(
-        context: ExecutionContext,
-        compiledData: CompiledCodeFragmentData,
-        classLoader: ClassLoaderReference?,
-        status: EvaluationStatus,
-        block: (List<Value?>) -> T
+      context: ExecutionContext,
+      compiledData: CompiledCodeFragmentData,
+      classLoader: ClassLoaderReference?,
+      status: EvaluationStatus,
+      block: (List<Value?>) -> T
     ): T {
         // Preload additional classes
         compiledData.classes

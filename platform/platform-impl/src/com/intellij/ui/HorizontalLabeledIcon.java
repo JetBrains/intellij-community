@@ -2,15 +2,13 @@
 package com.intellij.ui;
 
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class HorizontalLabeledIcon implements Icon {
   private final Icon myIcon;
   private final String[] myStrings;
@@ -103,7 +101,7 @@ public class HorizontalLabeledIcon implements Icon {
         y += fontMetrics.getHeight();
       }
       if (myMnemonic != null) {
-        g.setColor(UIUtil.getInactiveTextColor());
+        g.setColor(NamedColorUtil.getInactiveTextColor());
         int offset = fontMetrics.stringWidth(myStrings[myStrings.length-1]+" ");
         y -= fontMetrics.getHeight();
         g.drawString(myMnemonic, x + offset, y);

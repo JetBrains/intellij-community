@@ -9,7 +9,7 @@ import java.awt.Point
 import javax.swing.Icon
 import kotlin.math.roundToInt
 
-class CodeVisionScaledIconPainter(val yShiftIconMultiplier: Double = 0.865, val scaleMultiplier: Double = 0.8) : ICodeVisionPainter {
+class CodeVisionScaledIconPainter(private val yShiftIconMultiplier: Double = 0.865, private val scaleMultiplier: Double = 0.8) : ICodeVisionPainter {
 
   fun paint(editor: Editor, g: Graphics, icon: Icon, point: Point, scaleFactor: Float) {
     val scaledIcon = IconUtil.scale(icon, editor.component, scaleFactor)
@@ -20,7 +20,7 @@ class CodeVisionScaledIconPainter(val yShiftIconMultiplier: Double = 0.865, val 
     g2d.composite = composite
   }
 
-  fun scaleFactor(iconValue: Int, neededValue: Int) = (neededValue * scaleMultiplier).toFloat() / iconValue
+  fun scaleFactor(iconValue: Int, neededValue: Int): Float = (neededValue * scaleMultiplier).toFloat() / iconValue
   fun width(icon: Icon, scaleFactor: Float): Int = (icon.iconWidth * scaleFactor).toDouble().roundToInt()
   fun height(icon: Icon, scaleFactor: Float): Int = (icon.iconHeight * scaleFactor).toDouble().roundToInt()
 

@@ -8,9 +8,13 @@ import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ExceptionUtil
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.buildDistributions
+import org.jetbrains.intellij.build.impl.doRunTestBuild
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
 import org.opentest4j.TestAbortedException
@@ -44,12 +48,12 @@ fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: Produ
   options.buildMacArtifactsWithRuntime = false
   options.buildMacArtifactsWithoutRuntime = false
   options.buildUnixSnaps = false
-  options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).absolutePath
+  options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).toPath()
   options.useCompiledClassesFromProjectOutput = true
   options.compilationLogEnabled = false
 }
 
-fun createBuildContext(
+suspend fun createBuildContext(
   homePath: Path, productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   communityHomePath: BuildDependenciesCommunityRoot,
@@ -57,6 +61,8 @@ fun createBuildContext(
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ): BuildContext {
   val options = BuildOptions()
+  options.signNativeFiles = false
+  options.compressZipFiles = false
   customizeBuildOptionsForTest(options, productProperties, skipDependencySetup)
   buildOptionsCustomizer(options)
   return BuildContextImpl.createContext(communityHome = communityHomePath,
@@ -66,13 +72,20 @@ fun createBuildContext(
                                         options = options)
 }
 
+// don't expose BuildDependenciesCommunityRoot
+fun runTestBuild(homePath: Path,
+                 productProperties: ProductProperties,
+                 buildTools: ProprietaryBuildTools) {
+  runTestBuild(homePath, productProperties, buildTools, traceSpanName = null)
+}
+
 fun runTestBuild(
   homePath: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   communityHomePath: BuildDependenciesCommunityRoot = BuildDependenciesCommunityRoot(homePath.resolve("community")),
   traceSpanName: String? = null,
-  onFinish: (context: BuildContext) -> Unit = {},
+  onFinish: suspend (context: BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
 ) {
   val buildArtifactsReproducibilityTest = BuildArtifactsReproducibilityTest()
@@ -102,20 +115,22 @@ private fun testBuild(
   buildTools: ProprietaryBuildTools,
   communityHomePath: BuildDependenciesCommunityRoot,
   traceSpanName: String?,
-  onFinish: (context: BuildContext) -> Unit,
+  onFinish: suspend (context: BuildContext) -> Unit,
   buildOptionsCustomizer: (BuildOptions) -> Unit,
 ) {
-  val context = createBuildContext(
-    homePath = homePath,
-    productProperties = productProperties,
-    buildTools = buildTools,
-    skipDependencySetup = false,
-    communityHomePath = communityHomePath,
-    buildOptionsCustomizer = buildOptionsCustomizer,
-  )
+  val context = runBlocking(Dispatchers.Default) {
+    createBuildContext(
+      homePath = homePath,
+      productProperties = productProperties,
+      buildTools = buildTools,
+      skipDependencySetup = false,
+      communityHomePath = communityHomePath,
+      buildOptionsCustomizer = buildOptionsCustomizer,
+    )
+  }
 
   runTestBuild(
-    buildContext = context,
+    context = context,
     traceSpanName = traceSpanName,
     onFinish = onFinish,
   )
@@ -123,13 +138,13 @@ private fun testBuild(
 
 // FIXME: test reproducibility
 fun runTestBuild(
-  buildContext: BuildContext,
+  context: BuildContext,
   traceSpanName: String? = null,
-  onFinish: (context: BuildContext) -> Unit = {},
+  onFinish: suspend (context: BuildContext) -> Unit = {},
 ) {
   initializeTracer
 
-  val productProperties = buildContext.productProperties
+  val productProperties = context.productProperties
 
   // to see in Jaeger as a one trace
   val traceFileName = "${productProperties.baseFileName}-trace.json"
@@ -138,12 +153,19 @@ fun runTestBuild(
   val spanScope = span.makeCurrent()
 
   try {
-    val outDir = buildContext.paths.buildOutputDir
+    val outDir = context.paths.buildOutputDir
     span.setAttribute("outDir", outDir.toString())
-    val messages = buildContext.messages as BuildMessagesImpl
+    val messages = context.messages as BuildMessagesImpl
     try {
-      BuildTasks.create(buildContext).runTestBuild()
-      onFinish(buildContext)
+      runBlocking(Dispatchers.Default) {
+        doRunTestBuild(context)
+        if (context.options.targetOs == OsFamily.ALL) {
+          buildDistributions(context)
+        }
+        else {
+          onFinish(context)
+        }
+      }
     }
     catch (e: Throwable) {
       if (e !is FileComparisonData) {
@@ -192,7 +214,7 @@ private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMe
   try {
     val targetFile = TestLoggerFactory.getTestLogDir().resolve("${productProperties.baseFileName}-test-build-debug.log")
     Files.createDirectories(targetFile.parent)
-    Files.copy(messages.debugLogFile, targetFile, StandardCopyOption.REPLACE_EXISTING)
+    Files.copy(messages.debugLogFile!!, targetFile, StandardCopyOption.REPLACE_EXISTING)
     messages.info("Debug log copied to $targetFile")
   }
   catch (e: Throwable) {

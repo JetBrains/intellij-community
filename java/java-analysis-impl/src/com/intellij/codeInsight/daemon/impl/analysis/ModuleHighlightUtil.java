@@ -25,7 +25,6 @@ import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -121,21 +120,18 @@ final class ModuleHighlightUtil {
     return null;
   }
 
-  @NotNull
-  static List<HighlightInfo> checkDuplicateStatements(@NotNull PsiJavaModule module) {
-    List<HighlightInfo> results = new SmartList<>();
-    checkDuplicateRefs(module.getRequires(), st -> st.getModuleName(), "module.duplicate.requires", results);
-    checkDuplicateRefs(module.getExports(), st -> st.getPackageName(), "module.duplicate.exports", results);
-    checkDuplicateRefs(module.getOpens(), st -> st.getPackageName(), "module.duplicate.opens", results);
-    checkDuplicateRefs(module.getUses(), st -> qName(st.getClassReference()), "module.duplicate.uses", results);
-    checkDuplicateRefs(module.getProvides(), st -> qName(st.getInterfaceReference()), "module.duplicate.provides", results);
-    return results;
+  static void checkDuplicateStatements(@NotNull PsiJavaModule module, @NotNull HighlightInfoHolder holder) {
+    checkDuplicateRefs(module.getRequires(), st -> st.getModuleName(), "module.duplicate.requires", holder);
+    checkDuplicateRefs(module.getExports(), st -> st.getPackageName(), "module.duplicate.exports", holder);
+    checkDuplicateRefs(module.getOpens(), st -> st.getPackageName(), "module.duplicate.opens", holder);
+    checkDuplicateRefs(module.getUses(), st -> qName(st.getClassReference()), "module.duplicate.uses", holder);
+    checkDuplicateRefs(module.getProvides(), st -> qName(st.getInterfaceReference()), "module.duplicate.provides", holder);
   }
 
   private static <T extends PsiStatement> void checkDuplicateRefs(@NotNull Iterable<? extends T> statements,
                                                                   @NotNull Function<? super T, String> ref,
                                                                   @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key,
-                                                                  @NotNull List<? super HighlightInfo> results) {
+                                                                  @NotNull HighlightInfoHolder holder) {
     Set<String> filter = new HashSet<>();
     for (T statement : statements) {
       String refText = ref.apply(statement);
@@ -144,42 +140,38 @@ final class ModuleHighlightUtil {
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
         QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(statement));
         QuickFixAction.registerQuickFixAction(info, MergeModuleStatementsFix.createFix(statement));
-        results.add(info);
+        holder.add(info);
       }
     }
   }
 
-  @NotNull
-  static List<HighlightInfo> checkUnusedServices(@NotNull PsiJavaModule module, @NotNull PsiFile file) {
-    List<HighlightInfo> results = new ArrayList<>();
-
+  static void checkUnusedServices(@NotNull PsiJavaModule module, @NotNull PsiFile file, @NotNull HighlightInfoHolder holder) {
     Module host = ModuleUtilCore.findModuleForFile(file);
-    if (host != null) {
-      List<PsiProvidesStatement> provides = JBIterable.from(module.getProvides()).toList();
-      if (!provides.isEmpty()) {
-        Set<String> exports = JBIterable.from(module.getExports()).map(PsiPackageAccessibilityStatement::getPackageName).filter(Objects::nonNull).toSet();
-        Set<String> uses = JBIterable.from(module.getUses()).map(st -> qName(st.getClassReference())).filter(Objects::nonNull).toSet();
-        for (PsiProvidesStatement statement : provides) {
-          PsiJavaCodeReferenceElement ref = statement.getInterfaceReference();
-          if (ref != null) {
-            PsiElement target = ref.resolve();
-            if (target instanceof PsiClass && ModuleUtilCore.findModuleForFile(target.getContainingFile()) == host) {
-              String className = qName(ref);
-              String packageName = StringUtil.getPackageName(className);
-              if (!exports.contains(packageName) && !uses.contains(className)) {
-                String message = JavaErrorBundle.message("module.service.unused");
-                HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).descriptionAndTooltip(message).create();
-                QuickFixAction.registerQuickFixAction(info, new AddExportsDirectiveFix(module, packageName, ""));
-                QuickFixAction.registerQuickFixAction(info, new AddUsesDirectiveFix(module, className));
-                results.add(info);
-              }
+    if (host == null) {
+      return;
+    }
+    List<PsiProvidesStatement> provides = JBIterable.from(module.getProvides()).toList();
+    if (!provides.isEmpty()) {
+      Set<String> exports = JBIterable.from(module.getExports()).map(PsiPackageAccessibilityStatement::getPackageName).filter(Objects::nonNull).toSet();
+      Set<String> uses = JBIterable.from(module.getUses()).map(st -> qName(st.getClassReference())).filter(Objects::nonNull).toSet();
+      for (PsiProvidesStatement statement : provides) {
+        PsiJavaCodeReferenceElement ref = statement.getInterfaceReference();
+        if (ref != null) {
+          PsiElement target = ref.resolve();
+          if (target instanceof PsiClass && ModuleUtilCore.findModuleForFile(target.getContainingFile()) == host) {
+            String className = qName(ref);
+            String packageName = StringUtil.getPackageName(className);
+            if (!exports.contains(packageName) && !uses.contains(className)) {
+              String message = JavaErrorBundle.message("module.service.unused");
+              HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).descriptionAndTooltip(message).create();
+              QuickFixAction.registerQuickFixAction(info, new AddExportsDirectiveFix(module, packageName, ""));
+              QuickFixAction.registerQuickFixAction(info, new AddUsesDirectiveFix(module, className));
+              holder.add(info);
             }
           }
         }
       }
     }
-
-    return results;
   }
 
   private static String qName(PsiJavaCodeReferenceElement ref) {
@@ -300,10 +292,8 @@ final class ModuleHighlightUtil {
     }
   }
 
-  @NotNull
-  static List<HighlightInfo> checkPackageAccessTargets(@NotNull PsiPackageAccessibilityStatement statement) {
-    List<HighlightInfo> results = new SmartList<>();
-
+  static void checkPackageAccessTargets(@NotNull PsiPackageAccessibilityStatement statement,
+                                        @NotNull HighlightInfoHolder holder) {
     Set<String> targets = new HashSet<>();
     for (PsiJavaModuleReferenceElement refElement : statement.getModuleReferences()) {
       String refText = refElement.getReferenceText();
@@ -313,15 +303,13 @@ final class ModuleHighlightUtil {
         boolean exports = statement.getRole() == Role.EXPORTS;
         String message = JavaErrorBundle.message(exports ? "module.duplicate.exports.target" : "module.duplicate.opens.target", refText);
         HighlightInfo info = duplicateReference(refElement, message);
-        results.add(info);
+        holder.add(info);
       }
       else if (ref.multiResolve(true).length == 0) {
         String message = JavaErrorBundle.message("module.not.found", refElement.getReferenceText());
-        results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).descriptionAndTooltip(message).create());
+        holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).descriptionAndTooltip(message).create());
       }
     }
-
-    return results;
   }
 
   static HighlightInfo checkServiceReference(@Nullable PsiJavaCodeReferenceElement refElement) {
@@ -340,12 +328,11 @@ final class ModuleHighlightUtil {
     return null;
   }
 
-  @NotNull
-  static List<HighlightInfo> checkServiceImplementations(@NotNull PsiProvidesStatement statement, @NotNull PsiFile file) {
+  static void checkServiceImplementations(@NotNull PsiProvidesStatement statement, @NotNull PsiFile file,
+                                          @NotNull HighlightInfoHolder holder) {
     PsiReferenceList implRefList = statement.getImplementationList();
-    if (implRefList == null) return Collections.emptyList();
+    if (implRefList == null) return;
 
-    List<HighlightInfo> results = new SmartList<>();
     PsiJavaCodeReferenceElement intRef = statement.getInterfaceReference();
     PsiElement intTarget = intRef != null ? intRef.resolve() : null;
 
@@ -355,7 +342,7 @@ final class ModuleHighlightUtil {
       if (!filter.add(refText)) {
         String message = JavaErrorBundle.message("module.duplicate.impl", refText);
         HighlightInfo info = duplicateReference(implRef, message);
-        results.add(info);
+        holder.add(info);
         continue;
       }
 
@@ -367,7 +354,7 @@ final class ModuleHighlightUtil {
 
         if (ModuleUtilCore.findModuleForFile(file) != ModuleUtilCore.findModuleForFile(implClass.getContainingFile())) {
           String message = JavaErrorBundle.message("module.service.alien");
-          results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
+          holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
         }
 
         PsiMethod provider = ContainerUtil.find(
@@ -378,21 +365,21 @@ final class ModuleHighlightUtil {
           PsiClass typeClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
           if (!InheritanceUtil.isInheritorOrSelf(typeClass, (PsiClass)intTarget, true)) {
             String message = JavaErrorBundle.message("module.service.provider.type", implClass.getName());
-            results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
+            holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
           }
         }
         else if (InheritanceUtil.isInheritorOrSelf(implClass, (PsiClass)intTarget, true)) {
           if (implClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
             String message = JavaErrorBundle.message("module.service.abstract", implClass.getName());
-            results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
+            holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
           }
           else if (!(ClassUtil.isTopLevelClass(implClass) || implClass.hasModifierProperty(PsiModifier.STATIC))) {
             String message = JavaErrorBundle.message("module.service.inner", implClass.getName());
-            results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
+            holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
           }
           else if (!PsiUtil.hasDefaultConstructor(implClass)) {
             String message = JavaErrorBundle.message("module.service.no.ctor", implClass.getName());
-            results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
+            holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
           }
         }
         else {
@@ -401,12 +388,10 @@ final class ModuleHighlightUtil {
             HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create();
            PsiClassType type = JavaPsiFacade.getElementFactory(file.getProject()).createType((PsiClass)intTarget);
            QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createExtendsListFix(implClass, type, true));
-          results.add(info);
+          holder.add(info);
         }
       }
     }
-
-    return results;
   }
 
   static HighlightInfo checkClashingReads(@NotNull PsiJavaModule module) {
@@ -420,22 +405,18 @@ final class ModuleHighlightUtil {
     return null;
   }
 
-  @NotNull
-  static List<HighlightInfo> checkModifiers(@NotNull PsiRequiresStatement statement) {
+  static void checkModifiers(@NotNull PsiRequiresStatement statement, @NotNull HighlightInfoHolder holder) {
     PsiModifierList modList = statement.getModifierList();
     if (modList != null && PsiJavaModule.JAVA_BASE.equals(statement.getModuleName())) {
-      return SyntaxTraverser.psiTraverser().children(modList)
-          .filter(PsiKeyword.class)
-          .map(keyword -> {
-            @PsiModifier.ModifierConstant String modifier = keyword.getText();
-            String message = JavaErrorBundle.message("modifier.not.allowed", modifier);
-            HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
-            QuickFixAction.registerQuickFixAction(info, factory().createModifierListFix(modList, modifier, false, false));
-            return info;
-          }).toList();
+      PsiTreeUtil.processElements(modList, PsiKeyword.class, keyword -> {
+        @PsiModifier.ModifierConstant String modifier = keyword.getText();
+        String message = JavaErrorBundle.message("modifier.not.allowed", modifier);
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
+        QuickFixAction.registerQuickFixAction(info, factory().createModifierListFix(modList, modifier, false, false));
+        holder.add(info);
+        return true;
+      });
     }
-
-    return Collections.emptyList();
   }
 
   @NotNull

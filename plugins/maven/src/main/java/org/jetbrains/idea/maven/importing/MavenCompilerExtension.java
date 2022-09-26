@@ -51,11 +51,14 @@ public interface MavenCompilerExtension {
                                          @NotNull MavenEmbedderWrapper embedder,
                                          @NotNull ResolveContext context) throws MavenProcessCanceledException { return false; }
 
+  @Nullable
+  default String getDefaultCompilerTargetLevel(@NotNull MavenProject mavenProject, @NotNull Module module) { return null; }
+
   default void configureOptions(CompilerOptions compilerOptions,
                                 Module module,
                                 MavenProject mavenProject,
                                 List<String> compilerArgs) {
-    if(compilerOptions instanceof JpsJavaCompilerOptions){
+    if (compilerOptions instanceof JpsJavaCompilerOptions) {
       JpsJavaCompilerOptions javaCompilerOptions = (JpsJavaCompilerOptions)compilerOptions;
 
       CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(module.getProject());

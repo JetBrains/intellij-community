@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -277,6 +277,99 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
         @TestMetadata("whenWithOneEntry.kt")
         public void testWhenWithOneEntry() throws Exception {
             runTest("../testData/intentions/addBracesToAllBranches/whenWithOneEntry.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/convertToForEachFunctionCall")
+    public static class ConvertToForEachFunctionCall extends AbstractSharedK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("binaryExpressionLoopRange.kt")
+        public void testBinaryExpressionLoopRange() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/binaryExpressionLoopRange.kt");
+        }
+
+        @TestMetadata("blockBodyExpression.kt")
+        public void testBlockBodyExpression() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/blockBodyExpression.kt");
+        }
+
+        @TestMetadata("blockCommentOnly.kt")
+        public void testBlockCommentOnly() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/blockCommentOnly.kt");
+        }
+
+        @TestMetadata("commentsInBody.kt")
+        public void testCommentsInBody() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/commentsInBody.kt");
+        }
+
+        @TestMetadata("commentsInBody2.kt")
+        public void testCommentsInBody2() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/commentsInBody2.kt");
+        }
+
+        @TestMetadata("commentsOutsideBody.kt")
+        public void testCommentsOutsideBody() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/commentsOutsideBody.kt");
+        }
+
+        @TestMetadata("continueToReturnWithLabel.kt")
+        public void testContinueToReturnWithLabel() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/continueToReturnWithLabel.kt");
+        }
+
+        @TestMetadata("continueToReturnWithoutLabel.kt")
+        public void testContinueToReturnWithoutLabel() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/continueToReturnWithoutLabel.kt");
+        }
+
+        @TestMetadata("emptyBody.kt")
+        public void testEmptyBody() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/emptyBody.kt");
+        }
+
+        @TestMetadata("endOfLineComment1.kt")
+        public void testEndOfLineComment1() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/endOfLineComment1.kt");
+        }
+
+        @TestMetadata("endOfLineComment2.kt")
+        public void testEndOfLineComment2() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/endOfLineComment2.kt");
+        }
+
+        @TestMetadata("endOfLineComment3.kt")
+        public void testEndOfLineComment3() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/endOfLineComment3.kt");
+        }
+
+        @TestMetadata("iterativeElementTypeSpecified.kt")
+        public void testIterativeElementTypeSpecified() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/iterativeElementTypeSpecified.kt");
+        }
+
+        @TestMetadata("noCurlyBraces.kt")
+        public void testNoCurlyBraces() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/noCurlyBraces.kt");
+        }
+
+        @TestMetadata("noStatements.kt")
+        public void testNoStatements() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/noStatements.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/simple.kt");
+        }
+
+        @TestMetadata("typeAnnotatedWithNonBlockBody.kt")
+        public void testTypeAnnotatedWithNonBlockBody() throws Exception {
+            runTest("../testData/intentions/convertToForEachFunctionCall/typeAnnotatedWithNonBlockBody.kt");
         }
     }
 

@@ -13,10 +13,9 @@ import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
 public class XmlContextType extends TemplateContextType {
   public XmlContextType() {
-    super("XML", XmlBundle.message("dialog.edit.template.checkbox.xml"));
+    super(XmlBundle.message("dialog.edit.template.checkbox.xml"));
   }
 
   @Override

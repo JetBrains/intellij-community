@@ -178,9 +178,9 @@
     <localInspection language="Python" shortName="PyRelativeImportInspection" suppressId="PyPackages" bundle="messages.PyPsiBundle" key="INSP.NAME.relative.import" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyRelativeImportInspection"/>
 
     <defaultLiveTemplates file="liveTemplates/Python.xml"/>
-    <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
-    <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$Class"/>
-    <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$TopLevel"/>
+    <liveTemplateContext contextId="Python" implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
+    <liveTemplateContext contextId="Python_Class" baseContextId="Python" implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$Class"/>
+    <liveTemplateContext contextId="Python_Top_Level" baseContextId="Python" implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$TopLevel"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.CollectionElementNameMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyClassNameMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyFunctionNameMacro"/>

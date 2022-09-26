@@ -4,10 +4,7 @@ package com.intellij.workspaceModel.storage
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
-import com.intellij.workspaceModel.storage.entities.test.api.CollectionFieldEntity
-import com.intellij.workspaceModel.storage.entities.test.api.MySource
-import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity
-import com.intellij.workspaceModel.storage.entities.test.api.SampleEntitySource
+import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
@@ -129,6 +126,21 @@ class EntityStorageSerializationTest {
     val builder = createEmptyBuilder()
 
     builder.addSampleEntity("myString")
+
+    val stream = ByteArrayOutputStream()
+    val result = serializer.serializeCache(stream, builder.toSnapshot())
+
+    assertTrue(result is SerializationResult.Success)
+  }
+
+  @Test
+  fun `serialize rider like`() {
+    val virtualFileManager = VirtualFileUrlManagerImpl()
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
+
+    val builder = createEmptyBuilder()
+
+    builder.addEntity(ProjectModelTestEntity("info", DescriptorInstance("info"), MySource))
 
     val stream = ByteArrayOutputStream()
     val result = serializer.serializeCache(stream, builder.toSnapshot())

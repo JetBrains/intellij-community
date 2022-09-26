@@ -225,59 +225,40 @@ public class JUnitConfigurationModel {
   }
 
   public static @NotNull @NlsContexts.Label String getKindName(int value) {
-    switch (value) {
-      case ALL_IN_PACKAGE:
-        return JUnitBundle.message("junit.configuration.kind.all.in.package");
-      case DIR:
-        return JUnitBundle.message("junit.configuration.kind.all.in.directory");
-      case PATTERN:
-        return JUnitBundle.message("junit.configuration.kind.by.pattern");
-      case CLASS:
-        return JUnitBundle.message("junit.configuration.kind.class");
-      case METHOD:
-        return JUnitBundle.message("junit.configuration.kind.method");
-      case CATEGORY:
-        return JUnitBundle.message("junit.configuration.kind.category");
-      case UNIQUE_ID:
-        return JUnitBundle.message("junit.configuration.kind.by.unique.id");
-      case TAGS:
-        return JUnitBundle.message("junit.configuration.kind.by.tags");
-      case BY_SOURCE_POSITION:
-        return "Through source location"; //NON-NLS internal option
-      case BY_SOURCE_CHANGES:
-        return "Over changes in sources"; //NON-NLS internal option
-    }
-    throw new IllegalArgumentException(String.valueOf(value));
+    return switch (value) {
+      case ALL_IN_PACKAGE -> JUnitBundle.message("junit.configuration.kind.all.in.package");
+      case DIR -> JUnitBundle.message("junit.configuration.kind.all.in.directory");
+      case PATTERN -> JUnitBundle.message("junit.configuration.kind.by.pattern");
+      case CLASS -> JUnitBundle.message("junit.configuration.kind.class");
+      case METHOD -> JUnitBundle.message("junit.configuration.kind.method");
+      case CATEGORY -> JUnitBundle.message("junit.configuration.kind.category");
+      case UNIQUE_ID -> JUnitBundle.message("junit.configuration.kind.by.unique.id");
+      case TAGS -> JUnitBundle.message("junit.configuration.kind.by.tags");
+      case BY_SOURCE_POSITION -> "Through source location"; //NON-NLS internal option
+      case BY_SOURCE_CHANGES -> "Over changes in sources"; //NON-NLS internal option
+      default -> throw new IllegalArgumentException(String.valueOf(value));
+    };
   }
 
   public static @NotNull @NlsContexts.Label String getRepeatModeName(@NotNull @NonNls String value) {
-    switch (value) {
-      case RepeatCount.ONCE:
-        return JUnitBundle.message("junit.configuration.repeat.mode.once");
-      case RepeatCount.N:
-        return JUnitBundle.message("junit.configuration.repeat.mode.n.times");
-      case RepeatCount.UNTIL_FAILURE:
-        return JUnitBundle.message("junit.configuration.repeat.mode.until.failure");
-      case RepeatCount.UNLIMITED:
-        return JUnitBundle.message("junit.configuration.repeat.mode.until.stopped");
-    }
+    return JUnitBundle.message(switch (value) {
+      case RepeatCount.ONCE -> "junit.configuration.repeat.mode.once";
+      case RepeatCount.N -> "junit.configuration.repeat.mode.n.times";
+      case RepeatCount.UNTIL_FAILURE -> "junit.configuration.repeat.mode.until.failure";
+      case RepeatCount.UNLIMITED -> "junit.configuration.repeat.mode.until.stopped";
+      default -> throw new IllegalArgumentException(value);
+    });
 
-    throw new IllegalArgumentException(value);
   }
 
   public static @NotNull @NlsContexts.Label String getForkModeName(@NotNull @NonNls String value) {
-    switch (value) {
-      case JUnitConfiguration.FORK_NONE:
-        return JUnitBundle.message("junit.configuration.fork.mode.none");
-      case JUnitConfiguration.FORK_METHOD:
-        return JUnitBundle.message("junit.configuration.fork.mode.method");
-      case JUnitConfiguration.FORK_KLASS:
-        return JUnitBundle.message("junit.configuration.fork.mode.class");
-      case JUnitConfiguration.FORK_REPEAT:
-        return JUnitBundle.message("junit.configuration.fork.mode.repeat");
-    }
-
-    throw new IllegalArgumentException(value);
+    return JUnitBundle.message(switch (value) {
+      case JUnitConfiguration.FORK_NONE -> "junit.configuration.fork.mode.none";
+      case JUnitConfiguration.FORK_METHOD -> "junit.configuration.fork.mode.method";
+      case JUnitConfiguration.FORK_KLASS -> "junit.configuration.fork.mode.class";
+      case JUnitConfiguration.FORK_REPEAT -> "junit.configuration.fork.mode.repeat";
+      default -> throw new IllegalArgumentException(value);
+    });
   }
 
   public void reloadTestKindModel(JComboBox<Integer> comboBox, Module module) {

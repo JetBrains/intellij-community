@@ -3,17 +3,15 @@ package com.intellij.execution.process
 
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder
 import com.pty4j.windows.WinPtyProcess
 import com.pty4j.windows.conpty.WinConPtyProcess
-import org.jetbrains.annotations.ApiStatus
 import org.jvnet.winp.WinProcess
 import java.io.File
-import java.lang.UnsupportedOperationException
+import java.io.OutputStream
 
 class ProcessServiceImpl : ProcessService {
   override fun startPtyProcess(command: Array<String>,
@@ -40,9 +38,17 @@ class ProcessServiceImpl : ProcessService {
   }
 
   override fun sendWinProcessCtrlC(process: Process): Boolean {
-    val r = createWinProcess(process).sendCtrlC()
+    return sendWinProcessCtrlC(process.pid().toInt(), process.outputStream)
+  }
+
+  override fun sendWinProcessCtrlC(pid: Int): Boolean {
+    return sendWinProcessCtrlC(pid, null)
+  }
+
+  override fun sendWinProcessCtrlC(pid: Int, processOutputStream: OutputStream?): Boolean {
+    val r = createWinProcess(pid).sendCtrlC()
     try {
-      process.outputStream?.apply {
+      processOutputStream?.apply {
         // CTRL-C on Windows sends "-1" to the stdin
         // It unblocks ReadConsoleW/ReadFile
         // Sending CTRL+C with GenerateConsoleCtrlEvent is not enough, because it doesn't unblock ReadConsoleW
@@ -55,18 +61,6 @@ class ProcessServiceImpl : ProcessService {
     catch (_: Exception) {
     }
     return r
-  }
-
-  /**
-   * pid is not enough to emulate CTRL+C on Windows, we need a real process with stdin
-   *
-   * @deprecated use {@link #sendWinProcessCtrlC(Process)}
-   */
-  @Deprecated(message = "pid is not enough to emulate CTRL+C on Windows, we need a real process with stdin")
-  @ApiStatus.ScheduledForRemoval
-  override fun sendWinProcessCtrlC(pid: Int): Boolean {
-    Logger.getInstance(ProcessServiceImpl::class.java).warn("Deprecated method will be removed")
-    return createWinProcess(pid).sendCtrlC()
   }
 
   override fun killWinProcessRecursively(process: Process) {

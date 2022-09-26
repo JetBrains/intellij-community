@@ -85,7 +85,7 @@ class MavenImportBadJvmConfigEventParser : MavenImportLoggedEventParser {
   }
 }
 
-class MavenJvmConfigOpenQuickFix(val jvmConfig: VirtualFile) : BuildIssueQuickFix {
+class MavenJvmConfigOpenQuickFix(private val jvmConfig: VirtualFile) : BuildIssueQuickFix {
 
   override val id: String = "open_maven_jvm_config_quick_fix_" + jvmConfig
 
@@ -95,7 +95,7 @@ class MavenJvmConfigOpenQuickFix(val jvmConfig: VirtualFile) : BuildIssueQuickFi
   }
 }
 
-class MavenRunConfigurationOpenQuickFix(val runnerAndConfigurationSettings: RunnerAndConfigurationSettings) : BuildIssueQuickFix {
+class MavenRunConfigurationOpenQuickFix(private val runnerAndConfigurationSettings: RunnerAndConfigurationSettings) : BuildIssueQuickFix {
 
   override val id: String = "open_maven_run_configuration_open_quick_fix"
 

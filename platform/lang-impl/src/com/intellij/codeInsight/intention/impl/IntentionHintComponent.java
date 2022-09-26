@@ -416,6 +416,18 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     Disposer.dispose(this);
   }
 
+  /**
+   * Hides this component if it is visible and bound to the supplied editor
+   *
+   * @param editor editor to check against
+   * @return true if hidden successfully; false if it's not displayed already, or bound to another editor
+   */
+  public boolean hideIfDisplayedForEditor(@NotNull Editor editor) {
+    if (isDisposed() || !isVisible() || editor != myEditor) return false;
+    hide();
+    return true;
+  }
+
   private void onMouseExit(boolean small) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myPopup.isVisible()) {

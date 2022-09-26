@@ -27,13 +27,17 @@ class IndexIdRuleValidator : CustomValidationRule() {
       return ValidationResultType.ACCEPTED
     }
 
+    val runningFromSources = PluginManagerCore.isRunningFromSources()
+
     val id = ID.findByName<Any, Any>(data) ?: return ValidationResultType.REJECTED
     val pluginId = id.pluginId
     if (pluginId != null) {
       return validatePlugin(getPluginInfoById(pluginId))
-    }
+    }else if(!runningFromSources){
+      //if pluginId is null & not from sources -> this is core index, so allow it
+      return ValidationResultType.ACCEPTED;
+    }else{ // if (runningFromSources)
 
-    if (PluginManagerCore.isRunningFromSources()) {
       //RC: isn't it taxing to scan the lists of all file/stub indexes on _each_ indexId validation?
       val extension = FileBasedIndexExtension.EXTENSION_POINT_NAME.findFirstSafe { ex -> ex.name.name == data }
       if (extension != null) {

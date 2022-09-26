@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.openapi.util.text.StringUtil
@@ -24,8 +24,8 @@ import org.jetbrains.kotlin.resolve.constants.KClassValue
 import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.declaresOrInheritsDefaultValue
 import org.jetbrains.kotlin.types.*
-import org.jetbrains.kotlin.types.error.*
 import org.jetbrains.kotlin.types.TypeUtils.CANNOT_INFER_FUNCTION_PARAM_TYPE
+import org.jetbrains.kotlin.types.error.*
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.isUnresolvedType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
@@ -97,7 +97,7 @@ open class KotlinIdeDescriptorRenderer(
     }
 
     /* FORMATTING */
-    protected fun renderKeyword(keyword: String): String {
+    private fun renderKeyword(keyword: String): String {
         val highlighted = highlight(keyword) { asKeyword }
         return when (textFormat) {
             RenderingFormat.PLAIN -> highlighted
@@ -349,15 +349,15 @@ open class KotlinIdeDescriptorRenderer(
 
         if (type.isError) {
             if (isUnresolvedType(type) && presentableUnresolvedTypes) {
-                appendHighlighted(type.debugMessage) { asError }
+                appendHighlighted(ErrorUtils.unresolvedTypeAsItIs(type)) { asError }
             } else {
                 if (type is ErrorType && !informativeErrorType) {
                     appendHighlighted(type.debugMessage) { asError }
                 } else {
                     appendHighlighted(type.constructor.toString()) { asError } // Debug name of an error type is more informative
                 }
+                appendHighlighted(renderTypeArguments(type.arguments)) { asError }
             }
-            appendHighlighted(renderTypeArguments(type.arguments)) { asError }
         } else {
             appendTypeConstructorAndArguments(type)
         }
@@ -405,7 +405,7 @@ open class KotlinIdeDescriptorRenderer(
         else -> error("Unexpected classifier: " + cd::class.java)
     }
 
-    fun renderTypeConstructorOfType(typeConstructor: TypeConstructor, type: KotlinType): String =
+    private fun renderTypeConstructorOfType(typeConstructor: TypeConstructor, type: KotlinType): String =
         when (val cd = typeConstructor.declarationDescriptor) {
             is TypeParameterDescriptor -> highlight(renderClassifierNameWithType(cd, type)) { asTypeParameterName }
             is ClassDescriptor -> highlight(renderClassifierNameWithType(cd, type)) { asClassName }

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionRenderer
 import com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionTheme
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
@@ -36,8 +37,8 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
                                                         val projectModel: ProjectCodeVisionModel) {
 
   companion object {
-    val map = HashMap<Editor, CodeVisionSelectionController>()
-    val logger = logger<CodeVisionSelectionController>()
+    val map: HashMap<Editor, CodeVisionSelectionController> = HashMap<Editor, CodeVisionSelectionController>()
+    val logger: Logger = logger<CodeVisionSelectionController>()
 
     fun install(editor: EditorImpl, projectModel: ProjectCodeVisionModel) {
       var controller = map[editor]

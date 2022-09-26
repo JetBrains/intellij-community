@@ -3,7 +3,11 @@ class TestFieldConversion
 {
 
     public void someMethod(int s) {
-    switch (s) {
+        /**
+         * doc1
+         */
+        int someInt = 0;
+        switch (s) {
       case 1:
         System.out.println(someInt);
         break;

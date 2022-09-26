@@ -1160,6 +1160,14 @@
     <keyboard-shortcut first-keystroke="Shift F6"/>
   </action>
 
+  <action id="GitNewBranchAction">
+    <keyboard-shortcut first-keystroke="control alt N"/>
+  </action>
+
+  <action id="Git.New.Branch.In.Log">
+    <keyboard-shortcut first-keystroke="control alt N"/>
+  </action>
+
   <action id="ChangesView.SetDefault">
     <keyboard-shortcut first-keystroke="control SPACE" />
   </action>

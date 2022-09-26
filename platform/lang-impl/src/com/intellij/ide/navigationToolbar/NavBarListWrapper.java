@@ -18,6 +18,7 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
@@ -56,18 +57,27 @@ class NavBarListWrapper extends JBScrollPane implements DataProvider {
     });
 
     ScrollingUtil.installActions(list);
+    myList = list;
 
-    final int modelSize = list.getModel().getSize();
-    setBorder(BorderFactory.createEmptyBorder());
-    if (modelSize > 0 && modelSize <= MAX_SIZE) {
+    if (isPopupHeightStatic()) {
       list.setVisibleRowCount(0);
-      getViewport().setPreferredSize(list.getPreferredSize());
+      updateViewportPreferredSizeIfNeeded();
     } else {
       list.setVisibleRowCount(MAX_SIZE);
     }
-    myList = list;
   }
 
+  void updateViewportPreferredSizeIfNeeded() {
+    if (isPopupHeightStatic()) {
+      getViewport().setPreferredSize(myList.getPreferredSize());
+    }
+  }
+
+  private boolean isPopupHeightStatic() {
+    if (ExperimentalUI.isNewUI()) return false;
+    final int modelSize = myList.getModel().getSize();
+    return modelSize > 0 && modelSize <= MAX_SIZE;
+  }
 
   @Override
   @Nullable

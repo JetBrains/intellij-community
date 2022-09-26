@@ -20,6 +20,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.render.RendererPanelsUtils;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -97,8 +98,6 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
 
   public static class PsiItemWithPresentation extends Pair<PsiElement, TargetPresentation> {
     /**
-     * @param first
-     * @param second
      * @see #create(Object, Object)
      */
     PsiItemWithPresentation(PsiElement first, TargetPresentation second) {
@@ -142,7 +141,7 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
         locationLabel = new JLabel(presentation.getLocationText(), presentation.getLocationIcon(), SwingConstants.RIGHT);
         locationLabel.setHorizontalTextPosition(SwingConstants.LEFT);
         locationLabel.setIconTextGap(RendererPanelsUtils.getIconTextGap());
-        locationLabel.setForeground(isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
+        locationLabel.setForeground(isSelected ? NamedColorUtil.getListSelectionForeground(true) : NamedColorUtil.getInactiveTextColor());
         add(locationLabel, BorderLayout.EAST);
       }
       else {

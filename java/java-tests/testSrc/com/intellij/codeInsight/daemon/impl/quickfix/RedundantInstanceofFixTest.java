@@ -17,7 +17,7 @@ public class RedundantInstanceofFixTest extends LightQuickFixParameterizedTestCa
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_17;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_19;
   }
 
   @Override

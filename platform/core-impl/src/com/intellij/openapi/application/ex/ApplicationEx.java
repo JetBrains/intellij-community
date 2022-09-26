@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
@@ -24,11 +24,6 @@ public interface ApplicationEx extends Application {
   int EXIT_CONFIRMED = 0x02;
   int SAVE = 0x04;
   int ELEVATE = 0x08;
-
-  /**
-   * Loads the application configuration.
-   */
-  void load();
 
   /**
    * @return true if this thread is inside read action.
@@ -214,4 +209,11 @@ public interface ApplicationEx extends Application {
   default boolean isComponentCreated() {
     return true;
   }
+
+  // in some cases we cannot get service by class
+  /**
+   * Light service is not supported.
+   */
+  @ApiStatus.Internal
+  <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName);
 }

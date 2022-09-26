@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.storage.entities.test.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import java.util.UUID
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -26,8 +27,8 @@ interface SampleEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SampleEntity, ModifiableWorkspaceEntity<SampleEntity>, ObjBuilder<SampleEntity> {
-    override var booleanProperty: Boolean
     override var entitySource: EntitySource
+    override var booleanProperty: Boolean
     override var stringProperty: String
     override var stringListProperty: MutableList<String>
     override var stringMapProperty: Map<String, String>
@@ -72,8 +73,8 @@ interface ChildSampleEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildSampleEntity, ModifiableWorkspaceEntity<ChildSampleEntity>, ObjBuilder<ChildSampleEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var parentEntity: SampleEntity?
   }
 
@@ -117,8 +118,8 @@ interface SecondSampleEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SecondSampleEntity, ModifiableWorkspaceEntity<SecondSampleEntity>, ObjBuilder<SecondSampleEntity> {
-    override var intProperty: Int
     override var entitySource: EntitySource
+    override var intProperty: Int
   }
 
   companion object : Type<SecondSampleEntity, Builder>() {
@@ -146,8 +147,8 @@ interface SourceEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SourceEntity, ModifiableWorkspaceEntity<SourceEntity>, ObjBuilder<SourceEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var children: List<ChildSourceEntity>
   }
 
@@ -176,8 +177,8 @@ interface ChildSourceEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildSourceEntity, ModifiableWorkspaceEntity<ChildSourceEntity>, ObjBuilder<ChildSourceEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var parentEntity: SourceEntity
   }
 
@@ -209,8 +210,8 @@ interface PersistentIdEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : PersistentIdEntity, ModifiableWorkspaceEntity<PersistentIdEntity>, ObjBuilder<PersistentIdEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
   }
 
   companion object : Type<PersistentIdEntity, Builder>() {

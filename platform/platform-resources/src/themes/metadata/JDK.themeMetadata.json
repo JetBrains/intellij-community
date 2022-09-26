@@ -727,7 +727,7 @@
     },
     {
       "key": "PopupMenu.borderInsets",
-      "description": "Inner insets along the context or the main menu's borders. Default is \"1,1,1,1\" on Windows/Linux, \"4,0,4,0\" on Mac"
+      "description": "Inner insets along the context menu's borders. Default is \"1,1,1,1\" on Windows/Linux, \"4,0,4,0\" on Mac"
     },
     {
       "key": "PopupMenu.borderWidth",

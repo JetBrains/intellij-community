@@ -22,7 +22,7 @@ open class TextParagraph(val textParts: List<TextPart>) {
     StyleConstants.setLeftIndent(this, NO_INDENT)
     StyleConstants.setSpaceAbove(this, MEDIUM_INDENT)
     StyleConstants.setSpaceBelow(this, NO_INDENT)
-    StyleConstants.setLineSpacing(this, 0.2f)
+    StyleConstants.setLineSpacing(this, 0.3f)
   }
 
   open val attributes: SimpleAttributeSet
@@ -78,8 +78,9 @@ open class TextParagraph(val textParts: List<TextPart>) {
 
   companion object {
     const val NO_INDENT: Float = 0f
-    const val SMALL_INDENT: Float = 6f
-    const val MEDIUM_INDENT: Float = 12f
-    const val BIG_INDENT: Float = 20f
+    const val SMALL_INDENT: Float = 4f
+    const val MEDIUM_INDENT: Float = 8f
+    const val BIG_INDENT: Float = 12f
+    const val LARGE_INDENT: Float = 20f
   }
 }

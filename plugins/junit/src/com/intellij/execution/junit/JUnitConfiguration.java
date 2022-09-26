@@ -218,18 +218,11 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public String suggestedName() {
-    String repeat;
-    switch (getRepeatMode()) {
-      case RepeatCount.UNLIMITED :
-      case RepeatCount.UNTIL_FAILURE :
-        repeat = " [*]";
-        break;
-      case RepeatCount.N:
-        repeat = " [" + getRepeatCount() + "]";
-        break;
-      default:
-        repeat = "";
-    }
+    String repeat = switch (getRepeatMode()) {
+      case RepeatCount.UNLIMITED, RepeatCount.UNTIL_FAILURE -> " [*]";
+      case RepeatCount.N -> " [" + getRepeatCount() + "]";
+      default -> "";
+    };
     String generatedName = myData.getGeneratedName(getConfigurationModule());
     if (generatedName == null) return null;
     return generatedName + repeat;

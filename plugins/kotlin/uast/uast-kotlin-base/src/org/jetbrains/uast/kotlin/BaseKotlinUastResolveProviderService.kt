@@ -56,7 +56,7 @@ interface BaseKotlinUastResolveProviderService {
 
     fun resolveCall(ktElement: KtElement): PsiMethod?
 
-    fun resolveAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod?
+    fun resolveSyntheticJavaPropertyAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod?
 
     fun isResolvedToExtension(ktCallElement: KtCallElement): Boolean
 

@@ -28,23 +28,14 @@ data class CompilerTestLanguageVersionSettings(
         override val languageVersion: LanguageVersion,
         val analysisFlags: Map<AnalysisFlag<*>, Any?> = emptyMap()
 ) : LanguageVersionSettings {
-    val extraLanguageFeatures = specificFeaturesForTests() + initialLanguageFeatures
-    private val delegate = LanguageVersionSettingsImpl(languageVersion, apiVersion, emptyMap(), extraLanguageFeatures)
+    private val delegate = LanguageVersionSettingsImpl(languageVersion, apiVersion, emptyMap(), initialLanguageFeatures)
 
-    override fun getFeatureSupport(feature: LanguageFeature): LanguageFeature.State =
-            extraLanguageFeatures[feature] ?: delegate.getFeatureSupport(feature)
+    override fun getFeatureSupport(feature: LanguageFeature): LanguageFeature.State = delegate.getFeatureSupport(feature)
 
     override fun isPreRelease(): Boolean = false
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> getFlag(flag: AnalysisFlag<T>): T = analysisFlags[flag] as T? ?: flag.defaultValue
-}
-
-private fun specificFeaturesForTests(): Map<LanguageFeature, LanguageFeature.State> {
-    return if (System.getProperty("kotlin.ni") == "true")
-        mapOf(LanguageFeature.NewInference to LanguageFeature.State.ENABLED)
-    else
-        emptyMap()
 }
 
 fun parseLanguageVersionSettingsOrDefault(directiveMap: Directives): CompilerTestLanguageVersionSettings =
@@ -63,9 +54,6 @@ fun parseLanguageVersionSettings(directives: Directives): CompilerTestLanguageVe
         analysisFlag(JvmAnalysisFlags.inheritMultifileParts, if (INHERIT_MULTIFILE_PARTS in directives) true else null),
         analysisFlag(JvmAnalysisFlags.sanitizeParentheses, if (SANITIZE_PARENTHESES in directives) true else null),
         analysisFlag(JvmAnalysisFlags.enableJvmPreview, if (ENABLE_JVM_PREVIEW in directives) true else null),
-        analysisFlag(AnalysisFlags.constraintSystemForOverloadResolution, directives[CONSTRAINT_SYSTEM_FOR_OVERLOAD_RESOLUTION]?.let {
-            ConstraintSystemForOverloadResolutionMode.valueOf(it)
-        }),
         analysisFlag(AnalysisFlags.explicitApiVersion, if (apiVersionString != null) true else null)
     )
 

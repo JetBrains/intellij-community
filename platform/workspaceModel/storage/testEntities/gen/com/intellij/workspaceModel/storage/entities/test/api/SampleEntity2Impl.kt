@@ -10,6 +10,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
@@ -19,7 +20,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SampleEntity2Impl : SampleEntity2, WorkspaceEntityBase() {
+open class SampleEntity2Impl(val dataSource: SampleEntity2Data) : SampleEntity2, WorkspaceEntityBase() {
 
   companion object {
 
@@ -29,22 +30,18 @@ open class SampleEntity2Impl : SampleEntity2, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
-  override var boolData: Boolean = false
-  @JvmField
-  var _optionalData: String? = null
+  override val boolData: Boolean get() = dataSource.boolData
   override val optionalData: String?
-    get() = _optionalData
+    get() = dataSource.optionalData
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: SampleEntity2Data?) : ModifiableWorkspaceEntityBase<SampleEntity2>(), SampleEntity2.Builder {
+  class Builder(var result: SampleEntity2Data?) : ModifiableWorkspaceEntityBase<SampleEntity2>(), SampleEntity2.Builder {
     constructor() : this(SampleEntity2Data())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -62,6 +59,9 @@ open class SampleEntity2Impl : SampleEntity2, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -70,11 +70,11 @@ open class SampleEntity2Impl : SampleEntity2, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field SampleEntity2#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SampleEntity2#entitySource should be initialized")
       }
     }
 
@@ -83,22 +83,16 @@ open class SampleEntity2Impl : SampleEntity2, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SampleEntity2
-      this.data = dataSource.data
-      this.entitySource = dataSource.entitySource
-      this.boolData = dataSource.boolData
-      this.optionalData = dataSource.optionalData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.boolData != dataSource.boolData) this.boolData = dataSource.boolData
+      if (this.optionalData != dataSource?.optionalData) this.optionalData = dataSource.optionalData
+      if (parents != null) {
+      }
     }
 
-
-    override var data: String
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -107,6 +101,14 @@ open class SampleEntity2Impl : SampleEntity2, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
       }
 
     override var boolData: Boolean
@@ -151,14 +153,13 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): SampleEntity2 {
-    val entity = SampleEntity2Impl()
-    entity._data = data
-    entity.boolData = boolData
-    entity._optionalData = optionalData
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SampleEntity2Impl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -177,14 +178,19 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
     }
   }
 
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SampleEntity2Data
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     if (this.boolData != other.boolData) return false
     if (this.optionalData != other.optionalData) return false
     return true
@@ -192,7 +198,7 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SampleEntity2Data
 
@@ -216,5 +222,9 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
     result = 31 * result + boolData.hashCode()
     result = 31 * result + optionalData.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

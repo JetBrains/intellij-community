@@ -111,7 +111,6 @@ public final class GroupBasedTestClassFilter extends TestClassesFilter {
    * closed on caller side.
    *
    * @param reader         reader that points to the target test groups config
-   * @param testGroupNames
    * @return newly created {@link GroupBasedTestClassFilter} object with the data contained at the given reader
    * @see TestClassesFilter#matches(String, String)
    */
@@ -146,7 +145,6 @@ public final class GroupBasedTestClassFilter extends TestClassesFilter {
    * returns {@code true} only if all registered patterns (for all test groups) don't match given test class name.
    *
    * @param className  target test class name to check
-   * @param moduleName
    * @return {@code true} if given test group name is defined (not {@code null}) and test class with given
    * name belongs to the test group with given name;
    * {@code true} if given group if undefined or equal to {@link #ALL_EXCLUDE_DEFINED} and given test

@@ -20,6 +20,7 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -51,8 +52,10 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -132,6 +135,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();
 
+    putClientProperty(ActionUtil.ALLOW_ACTION_PERFORM_WHEN_HIDDEN, true);
     Disposer.register(project, this);
     AccessibleContextUtil.setName(this, IdeBundle.message("navigation.bar"));
   }
@@ -241,6 +245,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return myUpdateQueue;
   }
 
+  boolean isNodePopupSpeedSearchActive() {
+    return isNodePopupActive() && SpeedSearchSupply.getSupply(myNodePopup.getList()) != null;
+  }
+
   public void escape() {
     if (isNodePopupActive()) cancelPopup();
     else {
@@ -344,6 +352,16 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         wrapperPanel.repaint();
       }
     }
+  }
+
+  public void rebuildAndSelectLastDirectoryOrTail(boolean showPopup) {
+    rebuildAndSelectItem((list) -> {
+      if (UISettings.getInstance().getShowMembersInNavigationBar()) {
+        int lastDirectory = ContainerUtil.lastIndexOf(list, (item) -> NavBarPanel.isExpandable(item.getObject()));
+        if (lastDirectory >= 0 && lastDirectory < list.size() - 1) return lastDirectory;
+      }
+      return list.size() - 1;
+    }, showPopup);
   }
 
   public void rebuildAndSelectItem(final Function<? super List<NavBarItem>, Integer> indexToSelectCallback, boolean showPopup) {
@@ -766,7 +784,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     List<Object> popupObjects = null;
 
     if (mySelection != null) {
-      barObject = myModel.getElement(mySelection.myBarIndex);
+      barObject = myModel.getRawElement(mySelection.myBarIndex);
       popupObjects = mySelection.myNodePopupObjects;
     }
 
@@ -776,12 +794,12 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
     if (popupObjects == null) {
       final Object obj = barObject;
-      return getDataImpl(dataId, this, () -> JBIterable.of(obj));
+      return getDataImpl(dataId, this, () -> JBIterable.of(obj).filterMap(myModel::unwrapRaw));
     }
 
     if (!popupObjects.isEmpty()) {
       final List<Object> objects = popupObjects;
-      return getDataImpl(dataId, this, () -> JBIterable.from(objects));
+      return getDataImpl(dataId, this, () -> JBIterable.from(objects).filterMap(myModel::unwrapRaw));
     }
 
     return getDataImpl(dataId, this, this::getSelection);
@@ -809,9 +827,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return !myProject.isDisposed() ? myProject : null;
     }
-    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       JBIterable<?> finalSelection = selection.get();
-      return Collections.<DataProvider>singletonList(o -> getSlowData(o, myProject, finalSelection));
+      return (DataProvider)slowId -> getSlowData(slowId, myProject, finalSelection);
     }
     if (LangDataKeys.IDE_VIEW.is(dataId)) {
       return myIdeView;
@@ -993,7 +1011,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         });
       }
 
-      rebuildAndSelectTail(true);
+      rebuildAndSelectLastDirectoryOrTail(true);
     });
   }
 

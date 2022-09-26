@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
   @Nullable
@@ -171,8 +170,8 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
     @Nullable
     @Override
     public Object getData(@NotNull String dataId) {
-      if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-        return List.of((DataProvider)this::getSlowData);
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)this::getSlowData;
       }
       return null;
     }

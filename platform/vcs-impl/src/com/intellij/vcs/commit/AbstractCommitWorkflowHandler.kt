@@ -4,6 +4,9 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
@@ -11,13 +14,18 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
+import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
+import com.intellij.openapi.vcs.changes.ui.SessionDialog
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CommitInfo
 import com.intellij.openapi.vcs.ui.Refreshable
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.forEachLoggingErrors
 import com.intellij.util.containers.mapNotNullLoggingErrors
 import com.intellij.util.ui.UIUtil.replaceMnemonicAmpersand
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitHandlers
+import com.intellij.vcs.commit.AbstractCommitWorkflowHandler.Companion.getActionTextWithoutEllipsis
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -26,13 +34,6 @@ private val LOG = logger<AbstractCommitWorkflowHandler<*, *>>()
 // Need to support '_' for mnemonics as it is supported in DialogWrapper internally
 @Nls
 private fun String.fixUnderscoreMnemonic() = replace('_', '&')
-
-internal fun getDefaultCommitActionName(vcses: Collection<AbstractVcs> = emptyList()): @Nls String =
-  replaceMnemonicAmpersand(
-    (vcses.mapNotNull { it.checkinEnvironment?.checkinOperationName }.distinct().singleOrNull()
-     ?: VcsBundle.message("commit.dialog.default.commit.operation.name")
-    ).fixUnderscoreMnemonic()
-  )
 
 internal fun CommitWorkflowUi.getDisplayedPaths(): List<FilePath> =
   getDisplayedChanges().map { getFilePath(it) } + getDisplayedUnversionedFiles()
@@ -68,14 +69,8 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   fun setCommitMessage(text: String?) = ui.commitMessageUi.setText(text)
 
   protected val commitContext get() = workflow.commitContext
-  protected val commitHandlers get() = workflow.commitHandlers
+  private val commitHandlers get() = workflow.commitHandlers
   protected val commitOptions get() = workflow.commitOptions
-
-  fun getCommitActionName() = getDefaultCommitActionName(workflow.vcses)
-
-  open fun updateDefaultCommitActionName() {
-    ui.defaultCommitActionName = getCommitActionName()
-  }
 
   protected open fun createDataProvider() = DataProvider { dataId ->
     when {
@@ -94,6 +89,8 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     getAfterOptions(workflow.commitHandlers, this)
   )
 
+  abstract fun updateDefaultCommitActionName()
+
   override fun inclusionChanged() = commitHandlers.forEachLoggingErrors(LOG) { it.includedChangesChanged() }
 
   override fun getExecutor(executorId: String): CommitExecutor? = workflow.commitExecutors.find { it.id == executorId }
@@ -102,80 +99,66 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   override fun execute(executor: CommitExecutor) = executorCalled(executor)
   override fun executorCalled(executor: CommitExecutor?) =
     workflow.startExecution {
-      val session = executor?.createCommitSession(commitContext)
+      val sessionInfo = if (executor != null) {
+        val session = executor.createCommitSession(commitContext)
+        CommitSessionInfo.Custom(executor, session)
+      }
+      else {
+        CommitSessionInfo.Default
+      }
 
-      if (session == null || session === CommitSession.VCS_COMMIT) executeDefault(executor)
-      else executeCustom(executor, session)
+      executeSession(sessionInfo)
     }
 
-  override fun executionStarted() = Unit
-  override fun executionEnded() = Unit
+  override fun beforeCommitChecksStarted(sessionInfo: CommitSessionInfo) = ui.startBeforeCommitChecks()
+  override fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) = ui.endBeforeCommitChecks(result)
 
-  override fun beforeCommitChecksStarted() = ui.startBeforeCommitChecks()
-  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) = ui.endBeforeCommitChecks(result)
-
-  private fun executeDefault(executor: CommitExecutor?): Boolean {
-    val proceed = checkCommit(executor) &&
-                  addUnversionedFiles() &&
+  @RequiresEdt
+  private fun executeSession(sessionInfo: CommitSessionInfo): Boolean {
+    val proceed = checkCommit(sessionInfo) &&
+                  prepareForCommitExecution(sessionInfo) &&
                   saveCommitOptionsOnCommit()
     if (!proceed) return false
 
     saveCommitMessage(true)
-    logCommitEvent(executor)
+    logCommitEvent(sessionInfo)
 
     refreshChanges {
+      val commitInfo = DynamicCommitInfoImpl(commitContext, sessionInfo, ui, workflow)
       workflow.continueExecution {
-        updateWorkflow()
-        doExecuteDefault(executor)
+        updateWorkflow(sessionInfo) &&
+        doExecuteSession(sessionInfo, commitInfo)
       }
     }
     return true
   }
 
-  private fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean {
-    val proceed = checkCommit(executor) &&
-                  canExecute(executor) &&
-                  saveCommitOptionsOnCommit()
-    if (!proceed) return false
-
-    saveCommitMessage(true)
-    logCommitEvent(executor)
-
-    refreshChanges {
-      workflow.continueExecution {
-        updateWorkflow()
-        doExecuteCustom(executor, session)
-      }
-    }
-    return true
-  }
-
-  private fun logCommitEvent(executor: CommitExecutor?) {
-    CommitSessionCollector.getInstance(project).logCommit(executor?.id,
+  private fun logCommitEvent(sessionInfo: CommitSessionInfo) {
+    CommitSessionCollector.getInstance(project).logCommit(sessionInfo.executor?.id,
                                                           ui.getIncludedChanges().size,
                                                           ui.getIncludedUnversionedFiles().size)
   }
 
-  protected open fun updateWorkflow() = Unit
+  protected abstract fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean
 
-  protected abstract fun checkCommit(executor: CommitExecutor?): Boolean
-
-  protected abstract fun addUnversionedFiles(): Boolean
-
-  protected fun addUnversionedFiles(changeList: LocalChangeList, inclusionModel: InclusionModel): Boolean {
-    val unversionedFiles = getIncludedUnversionedFiles().mapNotNull { it.virtualFile }
-    return workflow.addUnversionedFiles(changeList, unversionedFiles) { newChanges ->
-      inclusionModel.addInclusion(newChanges)
-    }
+  /**
+   * Check that commit can be performed with given parameters.
+   */
+  @RequiresEdt
+  protected open fun checkCommit(sessionInfo: CommitSessionInfo): Boolean {
+    return workflow.canExecute(sessionInfo, getIncludedChanges())
   }
 
-  protected open fun doExecuteDefault(executor: CommitExecutor?): Boolean {
-    return workflow.executeDefault(executor)
-  }
+  /**
+   * Prepare for the commit operation. Ex: add selected unversioned files into VCS.
+   *
+   * @return false if commit operation should be cancelled.
+   */
+  @RequiresEdt
+  protected open fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean = true
 
-  private fun canExecute(executor: CommitExecutor): Boolean = workflow.canExecute(executor, getIncludedChanges())
-  private fun doExecuteCustom(executor: CommitExecutor, session: CommitSession): Boolean {
-    return workflow.executeCustom(executor, session)
+  protected open fun doExecuteSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
+    return workflow.executeSession(sessionInfo, commitInfo)
   }
 
   protected open fun saveCommitOptionsOnCommit(): Boolean {
@@ -208,4 +191,101 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     }
 
   override fun dispose() = Unit
+
+  companion object {
+    fun getDefaultCommitActionName(vcses: Collection<AbstractVcs>): @Nls String = getDefaultCommitActionName(vcses, false, false)
+
+    fun getDefaultCommitActionName(vcses: Collection<AbstractVcs>, isAmend: Boolean, isSkipCommitChecks: Boolean): @Nls String {
+      val actionName = vcses.mapNotNull { it.checkinEnvironment?.checkinOperationName }.distinct().singleOrNull()
+                       ?: VcsBundle.message("commit.dialog.default.commit.operation.name")
+      val commitText = replaceMnemonicAmpersand(actionName.fixUnderscoreMnemonic())
+
+      return when {
+        isAmend && isSkipCommitChecks -> VcsBundle.message("action.amend.commit.anyway.text")
+        isAmend && !isSkipCommitChecks -> VcsBundle.message("amend.action.name", commitText)
+        !isAmend && isSkipCommitChecks -> VcsBundle.message("action.commit.anyway.text", commitText)
+        else -> commitText
+      }
+    }
+
+    fun getActionTextWithoutEllipsis(vcses: Collection<AbstractVcs>,
+                                     executor: CommitExecutor?,
+                                     isAmend: Boolean,
+                                     isSkipCommitChecks: Boolean): @Nls String {
+      if (executor == null) {
+        val actionText = getDefaultCommitActionName(vcses, isAmend, isSkipCommitChecks)
+        return StringUtil.removeEllipsisSuffix(actionText)
+      }
+
+      if (executor is CommitExecutorWithRichDescription) {
+        val state = CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
+        val actionText = executor.getText(state)
+        if (actionText != null) {
+          return StringUtil.removeEllipsisSuffix(actionText)
+        }
+      }
+
+      // We ignore 'isAmend == true' for now - unclear how to handle without CommitExecutorWithRichDescription.
+      // Ex: executor might not support this flag.
+      val actionText = executor.actionText
+      if (isSkipCommitChecks) {
+        return VcsBundle.message("commit.checks.failed.notification.commit.anyway.action", StringUtil.removeEllipsisSuffix(actionText))
+      }
+      else {
+        return StringUtil.removeEllipsisSuffix(actionText)
+      }
+    }
+
+    fun configureCommitSession(project: Project,
+                               sessionInfo: CommitSessionInfo,
+                               changes: List<Change>,
+                               commitMessage: String): Boolean {
+      if (sessionInfo is CommitSessionInfo.Custom) {
+        val title = cleanActionText(sessionInfo.executor.actionText)
+        return SessionDialog.configureCommitSession(project, title, sessionInfo.session, changes, commitMessage)
+      }
+      return true
+    }
+
+    fun addUnversionedFiles(project: Project,
+                            unversionedFilePaths: Iterable<FilePath>,
+                            changeList: LocalChangeList,
+                            inclusionModel: InclusionModel): Boolean {
+      val unversionedFiles = unversionedFilePaths.mapNotNull { it.virtualFile }
+      if (unversionedFiles.isEmpty()) return true
+
+      FileDocumentManager.getInstance().saveAllDocuments()
+      return ScheduleForAdditionAction.addUnversionedFilesToVcs(project, changeList, unversionedFiles,
+                                                                { newChanges -> inclusionModel.addInclusion(newChanges) }, null)
+    }
+  }
+}
+
+class StaticCommitInfo(
+  override val commitContext: CommitContext,
+  override val executor: CommitExecutor?,
+  override val commitActionText: String,
+  override val committedChanges: List<Change>,
+  override val affectedVcses: List<AbstractVcs>,
+  override val commitMessage: String,
+) : CommitInfo
+
+class DynamicCommitInfoImpl(
+  override val commitContext: CommitContext,
+  private val sessionInfo: CommitSessionInfo,
+  private val workflowUi: CommitWorkflowUi,
+  private val workflow: AbstractCommitWorkflow
+) : DynamicCommitInfo {
+  override val executor: CommitExecutor? get() = sessionInfo.executor
+
+  override val committedChanges: List<Change> get() = workflowUi.getIncludedChanges()
+  override val affectedVcses: List<AbstractVcs> get() = workflow.vcses.toList()
+  override val commitMessage: String get() = workflowUi.commitMessageUi.text
+
+  override val commitActionText: String
+    get() = getActionTextWithoutEllipsis(workflow.vcses, executor, commitContext.isAmendCommitMode, false)
+
+  override fun asStaticInfo(): CommitInfo {
+    return StaticCommitInfo(commitContext, executor, commitActionText, committedChanges, affectedVcses, commitMessage)
+  }
 }

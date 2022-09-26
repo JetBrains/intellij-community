@@ -1,0 +1,2 @@
+// "Add 'val' to parameter 'x'" "true"
+annotation class A(val x: Int)

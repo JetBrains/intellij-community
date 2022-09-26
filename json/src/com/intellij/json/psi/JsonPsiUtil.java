@@ -157,7 +157,6 @@ public final class JsonPsiUtil {
    * </ul>
    *
    * @param text presumably result of {@link JsonStringLiteral#getText()}
-   * @return
    */
   @NotNull
   public static String stripQuotes(@NotNull String text) {

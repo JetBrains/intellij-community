@@ -102,6 +102,7 @@ public final class QuickFixPreviewPanelFactory {
       }
 
       if (actions.getChildrenCount() != 0) {
+        view.setFixesAvailable(true);
         final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("inspection.view.quick.fix.preview", actions, true);
         final JComponent component = toolbar.getComponent();
         toolbar.setTargetComponent(view);

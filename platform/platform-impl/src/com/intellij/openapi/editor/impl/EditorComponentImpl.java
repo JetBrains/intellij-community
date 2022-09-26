@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -94,7 +95,11 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         VisualPosition magnificationPosition = myEditor.xyToVisualPosition(at);
         float currentSize = myEditor.getColorsScheme().getEditorFontSize2D();
         float defaultFontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
-        myEditor.setFontSize(Math.max((float)(currentSize * scale), defaultFontSize));
+        float size = Math.max((float)(currentSize * scale), defaultFontSize);
+        myEditor.setFontSize(size);
+        if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
+          myEditor.adjustGlobalFontSize(size);
+        }
 
         return myEditor.visualPositionToXY(magnificationPosition);
       }
@@ -353,17 +358,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   @Override
   public AccessibleContext getAccessibleContext() {
     if (accessibleContext == null) {
-      accessibleContext = new AccessibleContextDelegateWithContextMenu(new AccessibleEditorComponentImpl()) {
-        @Override
-        protected void doShowContextMenu() {
-          ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, EditorComponentImpl.this.getEditor().getContentComponent(), null, true);
-        }
-
-        @Override
-        protected Container getDelegateParent() {
-          return getParent();
-        }
-      };
+      accessibleContext = new EditorAccessibleContextDelegate();
     }
     return accessibleContext;
   }
@@ -1325,18 +1320,17 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       }
 
       switch (type) {
-        case AccessibleText.CHARACTER:
+        case AccessibleText.CHARACTER -> {
           AccessibleTextSequence charSequence = null;
           if (offset + direction < document.getTextLength() &&
               offset + direction >= 0) {
             int startOffset = offset + direction;
             charSequence = new AccessibleTextSequence(startOffset, startOffset + 1,
-                                         document.getCharsSequence().subSequence(startOffset, startOffset + 1).toString());
+                                                      document.getCharsSequence().subSequence(startOffset, startOffset + 1).toString());
           }
           return charSequence;
-
-        case AccessibleExtendedText.ATTRIBUTE_RUN:
-        case AccessibleText.WORD: {
+        }
+        case AccessibleExtendedText.ATTRIBUTE_RUN, AccessibleText.WORD -> {
           int wordStart = getWordAtOffsetStart(offset, direction);
           int wordEnd = getWordAtOffsetEnd(offset, direction);
           if (wordStart == -1 || wordEnd == -1) {
@@ -1345,9 +1339,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
           return new AccessibleTextSequence(wordStart, wordEnd,
                                             document.getCharsSequence().subSequence(wordStart, wordEnd).toString());
         }
-
-        case AccessibleExtendedText.LINE:
-        case AccessibleText.SENTENCE: {
+        case AccessibleExtendedText.LINE, AccessibleText.SENTENCE -> {
           int lineStart = getLineAtOffsetStart(offset, direction);
           int lineEnd = getLineAtOffsetEnd(offset, direction);
           if (lineStart == -1 || lineEnd == -1) {
@@ -1528,6 +1520,75 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       }
 
       return newOffset;
+    }
+  }
+
+  private class EditorAccessibleContextDelegate extends AccessibleContextDelegateWithContextMenu implements AccessibleText {
+    public EditorAccessibleContextDelegate() { super(new AccessibleEditorComponentImpl()); }
+
+    @Override
+    protected void doShowContextMenu() {
+      ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, EditorComponentImpl.this.getEditor().getContentComponent(), null, true);
+    }
+
+    @Override
+    protected Container getDelegateParent() {
+      return getParent();
+    }
+
+    @Override
+    public int getIndexAtPoint(Point point) {
+      return ((AccessibleText) getDelegate()).getIndexAtPoint(point);
+    }
+
+    @Override
+    public Rectangle getCharacterBounds(int i) {
+      return ((AccessibleText) getDelegate()).getCharacterBounds(i);
+    }
+
+    @Override
+    public int getCharCount() {
+      return ((AccessibleText) getDelegate()).getCharCount();
+    }
+
+    @Override
+    public int getCaretPosition() {
+      return ((AccessibleText) getDelegate()).getCaretPosition();
+    }
+
+    @Override
+    public String getAtIndex(int part, int index) {
+      return ((AccessibleText) getDelegate()).getAtIndex(part, index);
+    }
+
+    @Override
+    public String getAfterIndex(int part, int index) {
+      return ((AccessibleText) getDelegate()).getAfterIndex(part, index);
+    }
+
+    @Override
+    public String getBeforeIndex(int part, int index) {
+      return ((AccessibleText) getDelegate()).getBeforeIndex(part, index);
+    }
+
+    @Override
+    public AttributeSet getCharacterAttribute(int i) {
+      return ((AccessibleText) getDelegate()).getCharacterAttribute(i);
+    }
+
+    @Override
+    public int getSelectionStart() {
+      return ((AccessibleText) getDelegate()).getSelectionStart();
+    }
+
+    @Override
+    public int getSelectionEnd() {
+      return ((AccessibleText) getDelegate()).getSelectionEnd();
+    }
+
+    @Override
+    public String getSelectedText() {
+      return ((AccessibleText) getDelegate()).getSelectedText();
     }
   }
 }

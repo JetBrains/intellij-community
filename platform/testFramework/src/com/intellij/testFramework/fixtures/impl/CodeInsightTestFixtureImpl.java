@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -92,9 +93,13 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.ProjectRootManagerComponent;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -153,6 +158,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -319,6 +325,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @NotNull
+  @TestOnly
   public static List<IntentionAction> getAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
     return ReadAction.compute(() -> doGetAvailableIntentions(editor, file));
   }
@@ -329,6 +336,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (current != null) {
       current.waitForHighlighting(file.getProject(), editor);
     }
+    waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
     ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file, false);
 
     List<IntentionAction> result = new ArrayList<>();
@@ -341,22 +349,31 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(file.getProject()).getFileLevelHighlights(file.getProject(), file);
     for (HighlightInfo info : infos) {
-      List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> fixRanges = info.quickFixActionRanges;
-      if (fixRanges != null) {
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : fixRanges) {
-          HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
-          if (actionInGroup.getAction().isAvailable(file.getProject(), editor, file)) {
-            result.add(actionInGroup.getAction());
-            for (IntentionAction subAction : actionInGroup.getOptions(file, editor)) {
-              if (subAction.isAvailable(file.getProject(), editor, file)) {
-                result.add(subAction);
-              }
+      info.findRegisteredQuickFix((descriptor, range) -> {
+        if (descriptor.getAction().isAvailable(file.getProject(), editor, file)) {
+          result.add(descriptor.getAction());
+          for (IntentionAction subAction : descriptor.getOptions(file, editor)) {
+            if (subAction.isAvailable(file.getProject(), editor, file)) {
+              result.add(subAction);
             }
           }
         }
-      }
+        return null;
+      });
     }
     return result;
+  }
+
+  public static void waitForUnresolvedReferencesQuickFixesUnderCaret(@NotNull PsiFile file, @NotNull Editor editor) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ActionUtil.underModalProgress(file.getProject(), CodeInsightBundle.message("progress.title.searching.for.context.actions"), () -> {
+        DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+        return null;
+      });
+    }
+    else {
+      DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+    }
   }
 
   @NotNull
@@ -550,8 +567,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, false, myMessageBundles);
       datum.init();
       return Trinity.create(psiFile, createEditor(file), datum);
-    })
-      .collect(Collectors.toList());
+    }).toList();
     long elapsed = 0;
     for (Trinity<PsiFile, Editor, ExpectedHighlightingData> trinity : data) {
       setFileAndEditor(trinity.first.getVirtualFile(), trinity.second);
@@ -1331,6 +1347,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void tearDown() throws Exception {
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
+    AtomicReference<ProjectRootManagerComponent> projectRootManagerComponentRef = new AtomicReference<>();
     runAll(
       () -> EdtTestUtil.runInEdtAndWait(() -> {
         if (ApplicationManager.getApplication() == null) {
@@ -1366,6 +1383,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
           // needed for myVirtualFilePointerTracker check below
           ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
+          projectRootManagerComponentRef.set(ObjectUtils.tryCast(ProjectRootManager.getInstance(project), ProjectRootManagerComponent.class));
         }
       }),
       () -> {
@@ -1377,6 +1395,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       () -> EdtTestUtil.runInEdtAndWait(() -> myTempDirFixture.tearDown()),
       () -> super.tearDown(),
       () -> {
+        // Even ProjectRootManagerComponent is a project service implementing Disposable, it might be not disposed in test light projects.
+        // Virtual file pointers could be created too late - during `myProjectFixture.tearDown()` - on
+        // `fixture.getTestRootDisposable()` disposing or on project files cleanup.
+        // Need to dispose virtual file pointers after that moment.
+        // It wouldn't be needed if `ProjectRootManagerComponent.dispose()` would get called in tests, like in production.
+        ProjectRootManagerComponent projectRootManagerComponent = projectRootManagerComponentRef.getAndSet(null);
+        if (projectRootManagerComponent != null) {
+          projectRootManagerComponent.disposeVirtualFilePointersAfterTest();
+        }
         if (myVirtualFilePointerTracker != null) {
           myVirtualFilePointerTracker.assertPointersAreDisposed();
         }

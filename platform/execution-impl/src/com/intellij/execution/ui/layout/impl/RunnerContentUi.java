@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.content.SelectContentStep;
 import com.intellij.toolWindow.InternalDecoratorImpl;
@@ -275,7 +274,6 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     NonOpaquePanel wrapper = new MyComponent();
     wrapper.add(myToolbar, BorderLayout.WEST);
     wrapper.add(myTabs.getComponent(), BorderLayout.CENTER);
-    wrapper.setBorder(JBUI.Borders.emptyTop(-1));
 
     myComponent = wrapper;
 
@@ -948,7 +946,16 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     myMinimizedButtonsPlaceholder.put(grid, minimizedToolbar);
 
 
-    final Wrapper searchComponent = new Wrapper();
+    final Wrapper searchComponent = new Wrapper() {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        if (size.height > 0) {
+          size.height = JBRunnerTabs.getTabLabelPreferredHeight() - ((JBRunnerTabs)myTabs).getBorderThickness();
+        }
+        return size;
+      }
+    };
     if (content.getSearchComponent() != null) {
       searchComponent.setContent(content.getSearchComponent());
     }
@@ -1561,21 +1568,19 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       Dimension size = component.getSize();
       Rectangle r = new Rectangle(size);
       switch (targetPlaceInGrid) {
-        case left:
-          r.width /= 3;
-          break;
-        case center:
+        case left -> r.width /= 3;
+        case center -> {
           r.width /= 3;
           r.x += r.width;
-          break;
-        case right:
+        }
+        case right -> {
           r.width /= 3;
           r.x += 2 * r.width;
-          break;
-        case bottom:
+        }
+        case bottom -> {
           r.height /= 4;
           r.y += 3 * r.height;
-          break;
+        }
       }
       // adjust the rectangle if the target grid cell is already present and showing
       for (Content c : ui.getContentManager().getContents()) {
@@ -1599,8 +1604,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       super(new BorderLayout());
       setOpaque(true);
       setFocusCycleRoot(!ScreenReader.isActive());
-      setBorder(new ToolWindowEx.Border(false, false, false, false));
-
+      setBorder();
     }
 
     @Override
@@ -1690,6 +1694,16 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       if (myWasEverAdded) {
         saveUiState();
       }
+    }
+
+    @Override
+    public void updateUI() {
+      super.updateUI();
+      setBorder();
+    }
+
+    private void setBorder() {
+      setBorder(JBUI.Borders.emptyTop(-1));
     }
   }
 
@@ -2008,8 +2022,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
     public ShowDebugContentAction(RunnerContentUi runner, JComponent component, @NotNull Disposable parentDisposable) {
       myContentUi = runner;
-      AnAction original = ActionManager.getInstance().getAction(ShowContentAction.ACTION_ID);
-      new ShadowAction(this, original, component, parentDisposable);
+      new ShadowAction(this, ShowContentAction.ACTION_ID, component, parentDisposable);
       ActionUtil.copyFrom(this, ShowContentAction.ACTION_ID);
     }
 
@@ -2017,6 +2030,11 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myContentUi != null && myContentUi.getPopupContents().size() > 1);
       e.getPresentation().setText(ExecutionBundle.messagePointer("action.presentation.RunnerContentUi.text.show.list.of.tabs"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -2040,6 +2058,11 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     public boolean isSelected(@NotNull AnActionEvent e) {
       boolean isSelected = delegate.isSelected(e);
       return myInverted ? !isSelected : isSelected;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return delegate.getActionUpdateThread();
     }
 
     @Override

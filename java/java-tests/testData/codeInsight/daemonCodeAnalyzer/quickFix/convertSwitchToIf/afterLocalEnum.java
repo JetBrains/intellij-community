@@ -1,3 +1,5 @@
+import java.util.Objects;
+
 // "Replace 'switch' with 'if'" "true-preview"
 class Test {
     void test() {
@@ -5,7 +7,7 @@ class Test {
             s;
         }
         P p = null;
-        if (p == P.s) {
+        if (Objects.requireNonNull(p) == P.s) {
         }
     }
 }

@@ -37,14 +37,6 @@ public final class ImmutableZipEntry {
     this.method = method;
   }
 
-  ImmutableZipEntry(String name, int compressedSize, int uncompressedSize, byte method) {
-    this.name = name;
-    this.offsets = 0;
-    this.compressedSize = compressedSize;
-    this.uncompressedSize = uncompressedSize;
-    this.method = method;
-  }
-
   public boolean isCompressed() {
     return method != STORED;
   }
@@ -81,13 +73,13 @@ public final class ImmutableZipEntry {
     }
 
     switch (method) {
-      case STORED: {
+      case STORED -> {
         ByteBuffer inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer);
         byte[] result = new byte[uncompressedSize];
         inputBuffer.get(result);
         return result;
       }
-      case DEFLATED: {
+      case DEFLATED -> {
         ByteBuffer inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer);
         Inflater inflater = new Inflater(true);
         inflater.setInput(inputBuffer);
@@ -114,9 +106,7 @@ public final class ImmutableZipEntry {
           inflater.end();
         }
       }
-
-      default:
-        throw new ZipException("Found unsupported compression method " + method);
+      default -> throw new ZipException("Found unsupported compression method " + method);
     }
   }
 
@@ -126,7 +116,7 @@ public final class ImmutableZipEntry {
   }
 
   /**
-   * Release returned buffer using {@link #releaseBuffer} after use.
+   * Release returned buffer using {@link ZipFile#releaseBuffer} after use.
    */
   @ApiStatus.Internal
   public ByteBuffer getByteBuffer(@NotNull HashMapZipFile file) throws IOException {
@@ -139,10 +129,10 @@ public final class ImmutableZipEntry {
     }
 
     switch (method) {
-      case STORED: {
+      case STORED -> {
         return computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer);
       }
-      case DEFLATED: {
+      case DEFLATED -> {
         ByteBuffer inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer);
         Inflater inflater = new Inflater(true);
         inflater.setInput(inputBuffer);
@@ -164,9 +154,7 @@ public final class ImmutableZipEntry {
           inflater.end();
         }
       }
-
-      default:
-        throw new ZipException("Found unsupported compression method " + method);
+      default -> throw new ZipException("Found unsupported compression method " + method);
     }
   }
 

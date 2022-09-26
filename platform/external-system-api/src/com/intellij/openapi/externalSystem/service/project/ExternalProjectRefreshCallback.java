@@ -48,8 +48,6 @@ public interface ExternalProjectRefreshCallback {
    * throws an exception.
    *
    * @param externalTaskId id of task being called (to use when reporting issues)
-   * @param errorMessage
-   * @param errorDetails
    */
   default void onFailure(@NotNull ExternalSystemTaskId externalTaskId, @NotNull String errorMessage, @Nullable String errorDetails) {
     onFailure(errorMessage, errorDetails);

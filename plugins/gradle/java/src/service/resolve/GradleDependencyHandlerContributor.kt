@@ -79,7 +79,7 @@ class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
       }
       putUserData(NonCodeMembersHolder.DOCUMENTATION, description)
       if (worthLifting(place)) {
-        GradleLookupWeigher.setGradleCompletionPriority(this, 10)
+        GradleLookupWeigher.setGradleCompletionPriority(this, GradleLookupWeigher.DEFAULT_COMPLETION_PRIORITY * 2)
       }
     }
     return processor.execute(method, state)

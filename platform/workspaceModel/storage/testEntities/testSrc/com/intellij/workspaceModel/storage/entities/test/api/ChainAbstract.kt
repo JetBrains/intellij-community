@@ -1,25 +1,25 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
-import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
 
 interface ParentChainEntity : WorkspaceEntity {
-  val root: @Child CompositeAbstractEntity
+  val root: @Child CompositeAbstractEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ParentChainEntity, ModifiableWorkspaceEntity<ParentChainEntity>, ObjBuilder<ParentChainEntity> {
-    override var root: CompositeAbstractEntity
     override var entitySource: EntitySource
+    override var root: CompositeAbstractEntity?
   }
 
   companion object : Type<ParentChainEntity, Builder>() {
@@ -47,8 +47,8 @@ interface SimpleAbstractEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder<T : SimpleAbstractEntity> : SimpleAbstractEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
-    override var parentInList: CompositeAbstractEntity
     override var entitySource: EntitySource
+    override var parentInList: CompositeAbstractEntity
   }
 
   companion object : Type<SimpleAbstractEntity, Builder<SimpleAbstractEntity>>() {
@@ -72,9 +72,9 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder<T : CompositeAbstractEntity> : CompositeAbstractEntity, SimpleAbstractEntity.Builder<T>, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
+    override var entitySource: EntitySource
     override var parentInList: CompositeAbstractEntity
     override var children: List<SimpleAbstractEntity>
-    override var entitySource: EntitySource
     override var parentEntity: ParentChainEntity?
   }
 
@@ -94,9 +94,9 @@ interface CompositeChildAbstractEntity : CompositeAbstractEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : CompositeChildAbstractEntity, CompositeAbstractEntity.Builder<CompositeChildAbstractEntity>, ModifiableWorkspaceEntity<CompositeChildAbstractEntity>, ObjBuilder<CompositeChildAbstractEntity> {
+    override var entitySource: EntitySource
     override var parentInList: CompositeAbstractEntity
     override var children: List<SimpleAbstractEntity>
-    override var entitySource: EntitySource
     override var parentEntity: ParentChainEntity?
   }
 
@@ -122,8 +122,8 @@ interface SimpleChildAbstractEntity : SimpleAbstractEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SimpleChildAbstractEntity, SimpleAbstractEntity.Builder<SimpleChildAbstractEntity>, ModifiableWorkspaceEntity<SimpleChildAbstractEntity>, ObjBuilder<SimpleChildAbstractEntity> {
-    override var parentInList: CompositeAbstractEntity
     override var entitySource: EntitySource
+    override var parentInList: CompositeAbstractEntity
   }
 
   companion object : Type<SimpleChildAbstractEntity, Builder>(SimpleAbstractEntity) {

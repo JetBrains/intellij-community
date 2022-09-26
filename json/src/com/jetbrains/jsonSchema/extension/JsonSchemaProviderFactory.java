@@ -34,7 +34,6 @@ public interface JsonSchemaProviderFactory {
   /**
    * Finds a {@link VirtualFile} instance corresponding to a specified resource path (relative or absolute).
    *
-   * @param baseClass
    * @param resourcePath  String identifying a resource (relative or absolute)
    *                      See {@link Class#getResource(String)} for more details
    * @return VirtualFile instance, or null if not found

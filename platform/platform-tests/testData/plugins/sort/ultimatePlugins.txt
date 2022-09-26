@@ -125,9 +125,6 @@
 + -com-intellij-javaee-webSocket-
 + -JSR45Plugin-
 + -com-intellij-jsf-
-+ -com-intellij-seam-
-+ -com-intellij-seam-pages-
-+ -com-intellij-seam-pageflow-
 + -com-intellij-spring-
 + -CloudFoundry-
 + -com-intellij-dmserver-
@@ -162,7 +159,6 @@
 + -WebSphere-
 + -com-intellij-javaee-batch-
 + -com-intellij-aspectj-
-+ -com-intellij-vaadin-
 + -org-jetbrains-android-
 + -com-intellij-appengine-
 + -NodeJS-

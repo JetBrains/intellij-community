@@ -75,7 +75,7 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
         PsiElementKind kind = getKind(element, syntaxHighlighter);
         TextRange valueRange; // the range inside element with the actual contents with quotes/comment prefixes stripped out
         switch (kind) {
-          case STRING:
+          case STRING -> {
             if (CHECK_FOR_NOT_ASCII_STRING_LITERAL || CHECK_FOR_DIFFERENT_LANGUAGES_IN_STRING) {
               String text = element.getText();
               valueRange = StringUtil.isQuotedString(text) ? new TextRange(1, text.length() - 1) : null;
@@ -86,16 +86,16 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
                 reportNonAsciiRange(element, text, holder, valueRange);
               }
             }
-            break;
-          case IDENTIFIER:
+          }
+          case IDENTIFIER -> {
             if (CHECK_FOR_NOT_ASCII_IDENTIFIER_NAME) {
               reportNonAsciiRange(element, element.getText(), holder, null);
             }
             if (CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME) {
               reportMixedLanguages(element, element.getText(), holder, null);
             }
-            break;
-          case COMMENT:
+          }
+          case COMMENT -> {
             if (CHECK_FOR_NOT_ASCII_COMMENT || CHECK_FOR_DIFFERENT_LANGUAGES_IN_COMMENTS) {
               String text = element.getText();
               valueRange = getCommentRange(element, text);
@@ -106,8 +106,8 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
                 reportMixedLanguages(element, text, holder, valueRange);
               }
             }
-            break;
-          case OTHER:
+          }
+          case OTHER -> {
             if (CHECK_FOR_NOT_ASCII_IN_ANY_OTHER_WORD) {
               String text = element.getText();
               iterateWordsInLeafElement(text, range -> reportMixedLanguages(element, text, holder, range));
@@ -116,7 +116,7 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
               String text = element.getText();
               iterateWordsInLeafElement(text, range -> reportMixedLanguages(element, text, holder, range));
             }
-            break;
+          }
         }
       }
 

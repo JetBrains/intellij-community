@@ -1,16 +1,16 @@
 <component name="libraryTable">
   <library name="bouncy-castle-provider" type="repository">
-    <properties maven-id="org.bouncycastle:bcpkix-jdk18on:1.71" />
+    <properties maven-id="org.bouncycastle:bcpkix-jdk18on:1.71.1" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk18on/1.71/bcpkix-jdk18on-1.71.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk18on/1.71/bcprov-jdk18on-1.71.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcutil-jdk18on/1.71/bcutil-jdk18on-1.71.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk18on/1.71.1/bcpkix-jdk18on-1.71.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk18on/1.71.1/bcprov-jdk18on-1.71.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcutil-jdk18on/1.71.1/bcutil-jdk18on-1.71.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk18on/1.71/bcpkix-jdk18on-1.71-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk18on/1.71/bcprov-jdk18on-1.71-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcutil-jdk18on/1.71/bcutil-jdk18on-1.71-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk18on/1.71.1/bcpkix-jdk18on-1.71.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk18on/1.71.1/bcprov-jdk18on-1.71.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcutil-jdk18on/1.71.1/bcutil-jdk18on-1.71.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

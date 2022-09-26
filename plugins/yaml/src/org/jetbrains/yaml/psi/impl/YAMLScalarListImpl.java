@@ -23,7 +23,7 @@ import static org.jetbrains.yaml.psi.impl.YAMLBlockScalarImplKt.isEol;
 
 /**
  * @author oleg
- * @see <http://www.yaml.org/spec/1.2/spec.html#id2795688>
+ * @see <a href="https://yaml.org/spec/1.2-old/spec.html#id2795688">YAML spec, 8.1.2</a>
  */
 public class YAMLScalarListImpl extends YAMLBlockScalarImpl implements YAMLScalarList, YAMLBlockScalar {
   public YAMLScalarListImpl(@NotNull final ASTNode node) {

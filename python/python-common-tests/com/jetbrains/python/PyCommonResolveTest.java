@@ -1540,4 +1540,122 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     assertEquals("ModuleType", target.getContainingClass().getName());
     assertEquals("types.pyi", target.getContainingFile().getName());
   }
+
+  // PY-16760
+  public void testGoogleDocstringAttributeNameResolvesToClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyTargetExpression.class, "attr1"));
+  }
+
+  // PY-16760
+  public void testGoogleDocstringAttributeNameResolvesToInstanceAttributeOverClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> {
+      PyTargetExpression definition = assertResolvesTo(PyTargetExpression.class, "attr1");
+      assertTrue(PyUtil.isInstanceAttribute(definition));
+    });
+  }
+
+  // PY-16760
+  public void testGoogleDocstringAttributeNameResolvesToInstanceAttributeOverInitParameter() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyTargetExpression.class, "attr1"));
+  }
+
+  // PY-16760
+  public void testNumpyDocstringAttributeNameResolvesToClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertResolvesTo(PyTargetExpression.class, "attr1"));
+  }
+
+  // PY-28549
+  public void testGoogleDocstringAttributeNameResolvesToDataclassClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyTargetExpression.class, "attr1"));
+  }
+
+  // PY-28549
+  public void testNumpyDocstringAttributeNameResolvesToDataclassClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertResolvesTo(PyTargetExpression.class, "attr1"));
+  }
+
+  // PY-28549
+  public void testNumpyDocstringParameterNameResolvesToDataclassClassAttributeWithoutInit() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertResolvesTo(PyTargetExpression.class, "attr1"));
+  }
+
+  // PY-28549
+  public void testNumpyDocstringParameterNameUnresolvedWithInit() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertUnresolved());
+  }
+
+  // PY-28549
+  public void testNumpyDocstringParameterNameResolvesToDataclassInitParameterOverClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertResolvesTo(PyNamedParameter.class, "attr1"));
+  }
+
+  // PY-35743
+  public void testGoogleDocstringAttributeNameResolvesToNamedTupleClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyTargetExpression.class, "attr1"));
+  }
+
+  // PY-35743
+  public void testNumpyDocstringAttributeNameResolvesToNamedTupleClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertResolvesTo(PyTargetExpression.class, "attr1"));
+  }
+
+  // PY-55609
+  public void testRestDocstringVarNameResolvesToInstanceAttributeOverInitParameter() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> {
+      PyTargetExpression definition = assertResolvesTo(PyTargetExpression.class, "var1");
+      assertTrue(PyUtil.isInstanceAttribute(definition));
+    });
+  }
+
+  // PY-55609
+  public void testRestDocstringVarNameResolvesToInstanceAttributeOverClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> {
+      PyTargetExpression definition = assertResolvesTo(PyTargetExpression.class, "var1");
+      assertTrue(PyUtil.isInstanceAttribute(definition));
+    });
+  }
+
+  // PY-55609
+  public void testRestDocstringIvarNameResolvesToInstanceAttributeOverInitParameter() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> {
+      PyTargetExpression definition = assertResolvesTo(PyTargetExpression.class, "var1");
+      assertTrue(PyUtil.isInstanceAttribute(definition));
+    });
+  }
+
+  // PY-55609
+  public void testRestDocstringCvarNameResolvesToClassAttributeOverInitParameter() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> {
+      PyTargetExpression definition = assertResolvesTo(PyTargetExpression.class, "var1");
+      assertTrue(PyUtil.isClassAttribute(definition));
+    });
+  }
+
+  // PY-55609
+  public void testRestDocstringCvarNameResolvesToClassAttributeOverInstanceAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> {
+      PyTargetExpression definition = assertResolvesTo(PyTargetExpression.class, "var1");
+      assertTrue(PyUtil.isClassAttribute(definition));
+    });
+  }
+
+  // PY-55609
+  public void testRestDocstringVarNameResolvesToClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyTargetExpression.class, "var1"));
+  }
+
+  // PY-55609
+  public void testRestDocstringTypeOwnerNameResolvesToInitParameterOverClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyNamedParameter.class, "p"));
+  }
+
+  // PY-55609
+  public void testRestDocstringTypeOwnerNameResolvesToInitParameterOverInstanceAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyNamedParameter.class, "p"));
+  }
+
+  // PY-46654
+  public void testRestDocstringIvarNameResolvesToDataClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyTargetExpression.class, "var1"));
+  }
 }

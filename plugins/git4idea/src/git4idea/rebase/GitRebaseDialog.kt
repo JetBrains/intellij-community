@@ -29,7 +29,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.JBVerticalGaps
 import com.intellij.util.IconUtil
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -329,7 +329,9 @@ internal class GitRebaseDialog(private val project: Project,
       row {
         if (showRootField()) {
           cell(rootField)
-            .applyToComponent { rootField.columns(COLUMNS_SHORT) }
+            .columns(COLUMNS_SHORT)
+            .resizableColumn()
+            .horizontalAlign(HorizontalAlign.FILL)
         }
 
         cell(createCmdLabel())
@@ -663,4 +665,4 @@ internal class GitRebaseDialog(private val project: Project,
   }
 }
 
-private val JComboBox<String>.mutableModel get() = this.model.castSafelyTo<MutableCollectionComboBoxModel<String>>()
+private val JComboBox<String>.mutableModel get() = this.model.asSafely<MutableCollectionComboBoxModel<String>>()

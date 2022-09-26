@@ -1,11 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
@@ -55,11 +57,12 @@ public class UndoManagerImpl extends UndoManager {
   private CurrentEditorProvider myEditorProvider;
 
   static final class ClientState implements Disposable {
-    private final UndoRedoStacksHolder myUndoStacksHolder = new UndoRedoStacksHolder(true);
-    private final UndoRedoStacksHolder myRedoStacksHolder = new UndoRedoStacksHolder(false);
+    final ClientId myClientId = ClientId.getCurrent();
+    final UndoRedoStacksHolder myUndoStacksHolder = new UndoRedoStacksHolder(true);
+    final UndoRedoStacksHolder myRedoStacksHolder = new UndoRedoStacksHolder(false);
 
     private final CommandMerger myMerger;
-    private final UndoManagerImpl myManager;
+    final UndoManagerImpl myManager;
 
     private CommandMerger myCurrentMerger;
     private Project myCurrentActionProject = DummyProject.getInstance();
@@ -75,20 +78,20 @@ public class UndoManagerImpl extends UndoManager {
     @SuppressWarnings("unused")
     private ClientState() {
       myManager = getUndoManager(ApplicationManager.getApplication());
-      myMerger = new CommandMerger(myManager);
+      myMerger = new CommandMerger(this);
     }
 
     @SuppressWarnings("unused")
     private ClientState(@NotNull Project project) {
       myManager = getUndoManager(project);
-      myMerger = new CommandMerger(myManager);
+      myMerger = new CommandMerger(this);
     }
 
     private static @NotNull UndoManagerImpl getUndoManager(@NotNull ComponentManager manager) {
       return (UndoManagerImpl)manager.getService(UndoManager.class);
     }
 
-    private int nextCommandTimestamp() {
+    int nextCommandTimestamp() {
       return ++myCommandTimestamp;
     }
 
@@ -136,6 +139,21 @@ public class UndoManagerImpl extends UndoManager {
 
   private @Nullable ClientState getClientState() {
     return getComponentManager().getService(ClientState.class);
+  }
+
+  @Nullable
+  private ClientState getClientState(@Nullable FileEditor editor) {
+    ClientState state = getClientState();
+    if (myProject == null || editor == null) return state;
+
+    try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(editor))) {
+      ClientState editorState = getClientState();
+      LOG.assertTrue(state == editorState,
+                     "Using editor belonging to '" + (editorState != null ? editorState.myClientId.getValue() : "null") +
+                     "' under '" + (state != null ? state.myClientId.getValue() : "null") + "'");
+    }
+
+    return state;
   }
 
   private List<ClientState> getAllClientStates() {
@@ -189,14 +207,18 @@ public class UndoManagerImpl extends UndoManager {
       }
     }
 
-    commandStarted(undoConfirmationPolicy, myProject == project && recordOriginalReference);
+    if (state != null) {
+      commandStarted(state, undoConfirmationPolicy, myProject == project && recordOriginalReference);
+    }
 
     LOG.assertTrue(state == null || state.myCommandLevel == 0 || !(state.myCurrentActionProject instanceof DummyProject));
   }
 
   private void onCommandFinished(final Project project, final @NlsContexts.Command String commandName, final Object commandGroupId) {
     ClientState state = getClientState();
-    commandFinished(commandName, commandGroupId);
+    if (state != null) {
+      commandFinished(state, commandName, commandGroupId);
+    }
     if (state == null || state.myCommandLevel == 0) {
       for (UndoProvider undoProvider : getUndoProviders()) {
         undoProvider.commandFinished(project);
@@ -208,13 +230,9 @@ public class UndoManagerImpl extends UndoManager {
     LOG.assertTrue(state == null || state.myCommandLevel == 0 || !(state.myCurrentActionProject instanceof DummyProject));
   }
 
-  private void commandStarted(UndoConfirmationPolicy undoConfirmationPolicy, boolean recordOriginalReference) {
-    ClientState state = getClientState();
-    if (state == null) {
-      return;
-    }
+  private void commandStarted(@NotNull ClientState state, UndoConfirmationPolicy undoConfirmationPolicy, boolean recordOriginalReference) {
     if (state.myCommandLevel == 0) {
-      state.myCurrentMerger = new CommandMerger(this, CommandProcessor.getInstance().isUndoTransparentActionInProgress());
+      state.myCurrentMerger = new CommandMerger(state, CommandProcessor.getInstance().isUndoTransparentActionInProgress());
 
       if (recordOriginalReference && myProject != null) {
         Editor editor = null;
@@ -245,11 +263,7 @@ public class UndoManagerImpl extends UndoManager {
     state.myCommandLevel++;
   }
 
-  private void commandFinished(@NlsContexts.Command String commandName, Object groupId) {
-    ClientState state = getClientState();
-    if (state == null) {
-      return;
-    }
+  private void commandFinished(@NotNull ClientState state, @NlsContexts.Command String commandName, Object groupId) {
     if (state.myCommandLevel == 0) return; // possible if command listener was added within command
     state.myCommandLevel--;
     if (state.myCommandLevel > 0) return;
@@ -319,9 +333,9 @@ public class UndoManagerImpl extends UndoManager {
     if (state.myCommandLevel == 0) {
       LOG.assertTrue(action instanceof NonUndoableAction,
                      "Undoable actions allowed inside commands only (see com.intellij.openapi.command.CommandProcessor.executeCommand())");
-      commandStarted(UndoConfirmationPolicy.DEFAULT, false);
+      commandStarted(state, UndoConfirmationPolicy.DEFAULT, false);
       state.myCurrentMerger.addAction(action);
-      commandFinished("", null);
+      commandFinished(state, "", null);
       return;
     }
 
@@ -403,7 +417,7 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   private void undoOrRedo(final FileEditor editor, final boolean isUndo) {
-    ClientState state = getClientState();
+    ClientState state = getClientState(editor);
     if (state == null) {
       return;
     }
@@ -461,12 +475,12 @@ public class UndoManagerImpl extends UndoManager {
     ApplicationManager.getApplication().assertIsWriteThread();
 
     Collection<DocumentReference> refs = getDocRefs(editor);
-    return refs != null && isUndoOrRedoAvailable(refs, undo);
+    return refs != null && isUndoOrRedoAvailable(getClientState(editor), refs, undo);
   }
 
   boolean isUndoOrRedoAvailable(@NotNull DocumentReference ref) {
     Set<DocumentReference> refs = Collections.singleton(ref);
-    return isUndoOrRedoAvailable(refs, true) || isUndoOrRedoAvailable(refs, false);
+    return isUndoOrRedoAvailable(getClientState(), refs, true) || isUndoOrRedoAvailable(getClientState(), refs, false);
   }
 
   /**
@@ -478,7 +492,7 @@ public class UndoManagerImpl extends UndoManager {
     if (refs == null || refs.size() != 1) return false;
     var docRef = refs.iterator().next();
 
-    var clientState = getClientState();
+    var clientState = getClientState(undoRedo.myEditor);
     if (clientState == null) return false;
     var stackHolder = getStackHolder(clientState, true);
 
@@ -550,7 +564,7 @@ public class UndoManagerImpl extends UndoManager {
     if (refs.size() > 1) return;
     var docRef = refs.iterator().next();
 
-    var clientState = getClientState();
+    var clientState = getClientState(undoRedo.myEditor);
     if (clientState == null) return;
     var stackHolder = getStackHolder(clientState, true);
     var stack = stackHolder.getStack(docRef);
@@ -563,11 +577,10 @@ public class UndoManagerImpl extends UndoManager {
     stack.add(context.getOriginalGroup());
   }
 
-  private boolean isUndoOrRedoAvailable(@NotNull Collection<? extends DocumentReference> refs, boolean isUndo) {
-    ClientState state = getClientState();
-    if (state == null) {
-      return false;
-    }
+  private static boolean isUndoOrRedoAvailable(@Nullable ClientState state,
+                                               @NotNull Collection<? extends DocumentReference> refs,
+                                               boolean isUndo) {
+    if (state == null) return false;
     if (isUndo && state.myMerger.isUndoAvailable(refs)) return true;
     UndoRedoStacksHolder stackHolder = getStackHolder(state, isUndo);
     return stackHolder.canBeUndoneOrRedone(refs);
@@ -633,8 +646,8 @@ public class UndoManagerImpl extends UndoManager {
                              : ActionsBundle.message("action.redo.description", desc)).trim());
   }
 
-  private @Nullable String doFormatAvailableUndoRedoAction(FileEditor editor, boolean isUndo) {
-    ClientState state = getClientState();
+  private @Nullable String doFormatAvailableUndoRedoAction(@Nullable FileEditor editor, boolean isUndo) {
+    ClientState state = getClientState(editor);
     if (state == null) {
       return null;
     }
@@ -654,26 +667,6 @@ public class UndoManagerImpl extends UndoManager {
     return mySharedRedoStacksHolder;
   }
 
-  @NotNull
-  UndoRedoStacksHolder getUndoStacksHolder() {
-    ClientState state = getClientState();
-    LOG.assertTrue(state != null);
-    return state.myUndoStacksHolder;
-  }
-
-  @NotNull
-  UndoRedoStacksHolder getRedoStacksHolder() {
-    ClientState state = getClientState();
-    LOG.assertTrue(state != null);
-    return state.myRedoStacksHolder;
-  }
-
-  int nextCommandTimestamp() {
-    ClientState state = getClientState();
-    LOG.assertTrue(state != null);
-    return state.nextCommandTimestamp();
-  }
-
   private static @NotNull Document getOriginal(@NotNull Document document) {
     Document result = document.getUserData(ORIGINAL_DOCUMENT);
     return result == null ? document : result;
@@ -683,9 +676,8 @@ public class UndoManagerImpl extends UndoManager {
     return d.getUserData(ORIGINAL_DOCUMENT) != null;
   }
 
-  protected void compact() {
-    ClientState state = getClientState();
-    if (state != null && state.myCurrentOperationState == OperationState.NONE && state.myCommandTimestamp % COMMAND_TO_RUN_COMPACT == 0) {
+  protected void compact(@NotNull ClientState state) {
+    if (state.myCurrentOperationState == OperationState.NONE && state.myCommandTimestamp % COMMAND_TO_RUN_COMPACT == 0) {
       doCompact(state);
     }
   }

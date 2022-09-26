@@ -24,12 +24,14 @@ import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
@@ -94,7 +96,7 @@ class ModuleBridgesTest {
       val contentRootUrl = temporaryDirectoryRule.newPath("contentRoot").toVirtualFileUrl(virtualFileManager)
 
       WorkspaceModel.getInstance(project).updateProjectModel {
-        val moduleEntity = it.findModuleEntity(module)!!
+        val moduleEntity = module.findModuleEntity(it)!!
         it.addContentRootEntity(contentRootUrl, emptyList(), emptyList(), moduleEntity)
       }
 
@@ -281,6 +283,38 @@ class ModuleBridgesTest {
       // Trying to assert that a particular warning isn't presented in logs
       assertFalse("name.iml does not exist" in caughtLogs)
     }
+
+  @Test
+  fun `test remove and add module with the same name 2`() = WriteCommandAction.runWriteCommandAction(project) {
+    val moduleManager = ModuleManager.getInstance(project)
+    for (module in moduleManager.modules) {
+      moduleManager.disposeModule(module)
+    }
+
+    val moduleDirUrl = virtualFileManager.fromPath(project.basePath!!)
+    val projectModel = WorkspaceModel.getInstance(project)
+
+    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(
+      project.messageBus.connect(disposableRule.disposable),
+      object : WorkspaceModelChangeListener {
+        override fun beforeChanged(event: VersionedStorageChange) {
+          val moduleBridge = event.storageAfter.resolve(ModuleId("name"))!!.findModule(event.storageAfter)
+          assertNotNull(moduleBridge)
+        }
+
+        override fun changed(event: VersionedStorageChange) {
+          val moduleBridge = event.storageAfter.resolve(ModuleId("name"))!!.findModule(event.storageAfter)
+          assertNotNull(moduleBridge)
+        }
+      }
+    )
+
+    projectModel.updateProjectModel {
+      it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, getJpsProjectConfigLocation(project)!!))
+    }
+
+    assertNotNull(moduleManager.findModuleByName("name"))
+  }
 
   @Test
   fun `test LibraryEntity is removed after removing module library order entry`() =
@@ -476,7 +510,7 @@ class ModuleBridgesTest {
       assertTrue(libraryOrderEntry.isModuleLevel)
       assertSame(libraryOrderEntry.library, libraries[0])
       assertEquals(JpsLibraryTableSerializer.MODULE_LEVEL, libraryOrderEntry.libraryLevel)
-      assertSameElements(libraryOrderEntry.getUrls(OrderRootType.CLASSES), tempDir.toVirtualFileUrl(virtualFileManager).url)
+      assertSameElements(libraryOrderEntry.getRootUrls(OrderRootType.CLASSES), tempDir.toVirtualFileUrl(virtualFileManager).url)
     }
   }
 
@@ -825,15 +859,9 @@ class ModuleBridgesTest {
     }
 
     fun catchLog(): String {
-      return try {
-        val outCatcher = OutCatcher(System.out)
-        System.setOut(outCatcher)
-        TestLoggerFactory.dumpLogToStdout(logLine)
-        outCatcher.catcher
-      }
-      finally {
-        System.setOut(System.out)
-      }
+      val outCatcher = OutCatcher(System.out)
+      TestLoggerFactory.dumpLogTo(logLine, outCatcher)
+      return outCatcher.catcher
     }
   }
 }

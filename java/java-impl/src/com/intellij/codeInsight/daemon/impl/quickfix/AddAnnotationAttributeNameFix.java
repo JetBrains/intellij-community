@@ -121,8 +121,7 @@ public class AddAnnotationAttributeNameFix extends LocalQuickFixAndIntentionActi
 
           final Collection<PsiMethod> availableMethods = Arrays.stream(annotationClass.getMethods())
             .filter(PsiAnnotationMethod.class::isInstance)
-            .filter(psiMethod -> !usedNames.contains(psiMethod.getName()))
-            .collect(Collectors.toList());
+            .filter(psiMethod -> !usedNames.contains(psiMethod.getName())).toList();
 
           if (!availableMethods.isEmpty()) {
             final PsiType valueType = CreateAnnotationMethodFromUsageFix.getAnnotationValueType(value);

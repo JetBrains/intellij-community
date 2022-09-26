@@ -3,12 +3,13 @@ package org.jetbrains.kotlin.idea.base.util.caching
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 
 abstract class WorkspaceEntityChangeListener<Entity : WorkspaceEntity, Value : Any>(
@@ -48,9 +49,18 @@ abstract class WorkspaceEntityChangeListener<Entity : WorkspaceEntity, Value : A
     }
 }
 
-abstract class ModuleEntityChangeListener(project: Project) : WorkspaceEntityChangeListener<ModuleEntity, Module>(project) {
+abstract class ModuleEntityChangeListener(project: Project, afterChangeApplied: Boolean = true) : WorkspaceEntityChangeListener<ModuleEntity, Module>(project, afterChangeApplied) {
     override val entityClass: Class<ModuleEntity>
         get() = ModuleEntity::class.java
 
-    override fun map(storage: EntityStorage, entity: ModuleEntity): Module? = storage.findModuleByEntity(entity)
+    override fun map(storage: EntityStorage, entity: ModuleEntity): Module? =
+        storage.findModuleByEntityWithHack(entity, project)
+}
+
+abstract class LibraryEntityChangeListener(project: Project, afterChangeApplied: Boolean = true) : WorkspaceEntityChangeListener<LibraryEntity, Library>(project, afterChangeApplied) {
+    override val entityClass: Class<LibraryEntity>
+        get() = LibraryEntity::class.java
+
+    override fun map(storage: EntityStorage, entity: LibraryEntity): Library? =
+        storage.findLibraryByEntityWithHack(entity, project)
 }

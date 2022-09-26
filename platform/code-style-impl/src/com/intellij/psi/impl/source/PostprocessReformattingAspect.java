@@ -193,11 +193,8 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
 
         final ChangeInfo childChange = treeChange.getChangeByChild(affectedChild);
         switch (childChange.getChangeType()) {
-          case ChangeInfo.ADD:
-          case ChangeInfo.REPLACE:
-            postponeFormatting(viewProvider, affectedChild);
-            break;
-          case ChangeInfo.CONTENTS_CHANGED:
+          case ChangeInfo.ADD, ChangeInfo.REPLACE -> postponeFormatting(viewProvider, affectedChild);
+          case ChangeInfo.CONTENTS_CHANGED -> {
             if (!CodeEditUtil.isNodeGenerated(affectedChild)) {
               ((TreeElement)affectedChild).acceptTree(new RecursiveTreeElementWalkingVisitor() {
                 @Override
@@ -210,7 +207,7 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
                 }
               });
             }
-            break;
+          }
         }
       }
     }

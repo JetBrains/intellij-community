@@ -670,7 +670,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     else if (CloseAction.CloseTarget.KEY.is(dataId)) {
       return computeCloseTarget();
     }
-    else if (MorePopupAware.KEY.is(dataId)) {
+    else if (MorePopupAware.KEY_TOOLWINDOW_TITLE.is(dataId)) {
       ContentLayout layout = getCurrentLayout();
       return  (layout instanceof MorePopupAware) ? layout : null;
     }

@@ -37,7 +37,7 @@ internal object PluginEnvironment {
     val ideBuildNumber
         get() = ApplicationInfo.getInstance().build
 
-    val isTestEnvironment
+    private val isTestEnvironment
         get() = ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isHeadlessEnvironment
 
     val isNonModalLoadingEnabled

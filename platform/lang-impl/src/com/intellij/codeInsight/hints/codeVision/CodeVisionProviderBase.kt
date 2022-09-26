@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -16,10 +17,21 @@ import java.awt.event.MouseEvent
 
 abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
 
+  /**
+   * WARNING! This method is executed also before the file is open. It must be fast! During it users see no editor.
+   * @return true iff this provider may provide lenses for this file.
+   */
   abstract fun acceptsFile(file: PsiFile): Boolean
 
+  /**
+   * WARNING! This method is executed also before the file is open. It must be fast! During it users see no editor.
+   * @return true iff this provider may provide lenses for this element.
+   */
   abstract fun acceptsElement(element: PsiElement): Boolean
 
+  /**
+   * @return text that user sees for a given element as a code lens
+   */
   abstract fun getHint(element: PsiElement, file: PsiFile): String?
 
   open fun logClickToFUS(element: PsiElement) {}
@@ -29,6 +41,10 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
 
     // we want to let this provider work only in tests dedicated for code vision, otherwise they harm performance
     if (ApplicationManager.getApplication().isUnitTestMode && !CodeVisionHost.isCodeLensTest(editor)) return emptyList()
+
+    val virtualFile = file.virtualFile ?: return emptyList()
+    if (ProjectFileIndex.getInstance(file.project).isInLibrarySource(virtualFile)) return emptyList()
+
     val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
     val traverser = SyntaxTraverser.psiTraverser(file)
     for (element in traverser) {

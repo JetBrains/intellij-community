@@ -244,16 +244,11 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
 
   @NotNull
   private static TextDiffType getDiffType(@NotNull InnerChangeType changeType) {
-    switch (changeType) {
-      case DELETED:
-        return TextDiffType.DELETED;
-      case INSERTED:
-        return TextDiffType.INSERTED;
-      case MODIFIED:
-        return TextDiffType.MODIFIED;
-      default:
-        throw new IllegalArgumentException(changeType.name());
-    }
+    return switch (changeType) {
+      case DELETED -> TextDiffType.DELETED;
+      case INSERTED -> TextDiffType.INSERTED;
+      case MODIFIED -> TextDiffType.MODIFIED;
+    };
   }
 
   private static boolean mouseIsInsideAnnotationArea(@NotNull EditorEx editor, @NotNull MouseEvent event) {

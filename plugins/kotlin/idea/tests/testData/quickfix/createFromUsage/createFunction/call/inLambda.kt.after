@@ -1,5 +1,4 @@
 // "Create function 'foo'" "true"
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 fun <T> run(f: () -> T) = f()
 
@@ -7,6 +6,6 @@ fun test() {
     run { foo() }
 }
 
-fun foo(): Any {
+fun foo() {
     TODO("Not yet implemented")
 }

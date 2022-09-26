@@ -12,6 +12,7 @@ import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import org.jetbrains.deft.ObjBuilder
@@ -19,7 +20,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SecondEntityWithPIdImpl : SecondEntityWithPId, WorkspaceEntityBase() {
+open class SecondEntityWithPIdImpl(val dataSource: SecondEntityWithPIdData) : SecondEntityWithPId, WorkspaceEntityBase() {
 
   companion object {
 
@@ -29,16 +30,14 @@ open class SecondEntityWithPIdImpl : SecondEntityWithPId, WorkspaceEntityBase() 
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: SecondEntityWithPIdData?) : ModifiableWorkspaceEntityBase<SecondEntityWithPId>(), SecondEntityWithPId.Builder {
+  class Builder(var result: SecondEntityWithPIdData?) : ModifiableWorkspaceEntityBase<SecondEntityWithPId>(), SecondEntityWithPId.Builder {
     constructor() : this(SecondEntityWithPIdData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -56,6 +55,9 @@ open class SecondEntityWithPIdImpl : SecondEntityWithPId, WorkspaceEntityBase() 
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -64,11 +66,11 @@ open class SecondEntityWithPIdImpl : SecondEntityWithPId, WorkspaceEntityBase() 
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field SecondEntityWithPId#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SecondEntityWithPId#entitySource should be initialized")
       }
     }
 
@@ -77,20 +79,14 @@ open class SecondEntityWithPIdImpl : SecondEntityWithPId, WorkspaceEntityBase() 
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SecondEntityWithPId
-      this.data = dataSource.data
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (parents != null) {
+      }
     }
 
-
-    override var data: String
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -99,6 +95,14 @@ open class SecondEntityWithPIdImpl : SecondEntityWithPId, WorkspaceEntityBase() 
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
       }
 
     override fun getEntityData(): SecondEntityWithPIdData = result ?: super.getEntityData() as SecondEntityWithPIdData
@@ -124,12 +128,13 @@ class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<S
   }
 
   override fun createEntity(snapshot: EntityStorage): SecondEntityWithPId {
-    val entity = SecondEntityWithPIdImpl()
-    entity._data = data
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SecondEntityWithPIdImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {
@@ -151,20 +156,25 @@ class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<S
     }
   }
 
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SecondEntityWithPIdData
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SecondEntityWithPIdData
 
@@ -182,5 +192,9 @@ class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<S
     var result = javaClass.hashCode()
     result = 31 * result + data.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

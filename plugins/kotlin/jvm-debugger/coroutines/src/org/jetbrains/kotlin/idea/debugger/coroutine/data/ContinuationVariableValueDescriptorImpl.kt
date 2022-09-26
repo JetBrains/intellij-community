@@ -8,13 +8,13 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 
 class ContinuationVariableValueDescriptorImpl(
-    val defaultExecutionContext: DefaultExecutionContext,
-    val continuation: ObjectReference,
-    val fieldName: String,
-    private val variableName: String
+  private val defaultExecutionContext: DefaultExecutionContext,
+  val continuation: ObjectReference,
+  val fieldName: String,
+  private val variableName: String
 ) : ValueDescriptorImpl(defaultExecutionContext.project) {
 
     init {

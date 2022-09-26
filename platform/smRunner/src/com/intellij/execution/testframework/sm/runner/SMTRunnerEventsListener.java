@@ -17,7 +17,6 @@ public interface SMTRunnerEventsListener {
 
   /**
    * On start testing, before tests and suits launching
-   * @param testsRoot
    */
   void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot);
 
@@ -30,7 +29,6 @@ public interface SMTRunnerEventsListener {
   /**
    * After test framework finish testing.
    * @see #onBeforeTestingFinished(SMTestProxy.SMRootTestProxy)
-   * @param testsRoot
    */
   void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot);
   /*

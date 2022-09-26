@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
@@ -24,32 +25,36 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ModuleTestEntityImpl : ModuleTestEntity, WorkspaceEntityBase() {
+open class ModuleTestEntityImpl(val dataSource: ModuleTestEntityData) : ModuleTestEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val CONTENTROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleTestEntity::class.java,
                                                                                 ContentRootTestEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val FACETS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleTestEntity::class.java, FacetTestEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     val connections = listOf<ConnectionId>(
       CONTENTROOTS_CONNECTION_ID,
+      FACETS_CONNECTION_ID,
     )
 
   }
 
-  @JvmField
-  var _name: String? = null
   override val name: String
-    get() = _name!!
+    get() = dataSource.name
 
   override val contentRoots: List<ContentRootTestEntity>
     get() = snapshot.extractOneToManyChildren<ContentRootTestEntity>(CONTENTROOTS_CONNECTION_ID, this)!!.toList()
+
+  override val facets: List<FacetTestEntity>
+    get() = snapshot.extractOneToManyChildren<FacetTestEntity>(FACETS_CONNECTION_ID, this)!!.toList()
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: ModuleTestEntityData?) : ModifiableWorkspaceEntityBase<ModuleTestEntity>(), ModuleTestEntity.Builder {
+  class Builder(var result: ModuleTestEntityData?) : ModifiableWorkspaceEntityBase<ModuleTestEntity>(), ModuleTestEntity.Builder {
     constructor() : this(ModuleTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,6 +72,9 @@ open class ModuleTestEntityImpl : ModuleTestEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -75,11 +83,11 @@ open class ModuleTestEntityImpl : ModuleTestEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isNameInitialized()) {
         error("Field ModuleTestEntity#name should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ModuleTestEntity#entitySource should be initialized")
       }
       // Check initialization for list with ref type
       if (_diff != null) {
@@ -92,6 +100,17 @@ open class ModuleTestEntityImpl : ModuleTestEntity, WorkspaceEntityBase() {
           error("Field ModuleTestEntity#contentRoots should be initialized")
         }
       }
+      // Check initialization for list with ref type
+      if (_diff != null) {
+        if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(FACETS_CONNECTION_ID, this) == null) {
+          error("Field ModuleTestEntity#facets should be initialized")
+        }
+      }
+      else {
+        if (this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] == null) {
+          error("Field ModuleTestEntity#facets should be initialized")
+        }
+      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -99,20 +118,14 @@ open class ModuleTestEntityImpl : ModuleTestEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleTestEntity
-      this.name = dataSource.name
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.name != dataSource.name) this.name = dataSource.name
+      if (parents != null) {
+      }
     }
 
-
-    override var name: String
-      get() = getEntityData().name
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().name = value
-        changedProperty.add("name")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -121,6 +134,14 @@ open class ModuleTestEntityImpl : ModuleTestEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var name: String
+      get() = getEntityData().name
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().name = value
+        changedProperty.add("name")
       }
 
     // List of non-abstract referenced types
@@ -144,6 +165,12 @@ open class ModuleTestEntityImpl : ModuleTestEntity, WorkspaceEntityBase() {
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                item_value.entityLinks[EntityLink(false, CONTENTROOTS_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
               _diff.addEntity(item_value)
             }
           }
@@ -160,6 +187,52 @@ open class ModuleTestEntityImpl : ModuleTestEntity, WorkspaceEntityBase() {
           this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] = value
         }
         changedProperty.add("contentRoots")
+      }
+
+    // List of non-abstract referenced types
+    var _facets: List<FacetTestEntity>? = emptyList()
+    override var facets: List<FacetTestEntity>
+      get() {
+        // Getter of the list of non-abstract referenced types
+        val _diff = diff
+        return if (_diff != null) {
+          _diff.extractOneToManyChildren<FacetTestEntity>(FACETS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true,
+                                                                                                                                FACETS_CONNECTION_ID)] as? List<FacetTestEntity>
+                                                                                                    ?: emptyList())
+        }
+        else {
+          this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetTestEntity> ?: emptyList()
+        }
+      }
+      set(value) {
+        // Setter of the list of non-abstract referenced types
+        checkModificationAllowed()
+        val _diff = diff
+        if (_diff != null) {
+          for (item_value in value) {
+            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                item_value.entityLinks[EntityLink(false, FACETS_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
+              _diff.addEntity(item_value)
+            }
+          }
+          _diff.updateOneToManyChildrenOfParent(FACETS_CONNECTION_ID, this, value)
+        }
+        else {
+          for (item_value in value) {
+            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              item_value.entityLinks[EntityLink(false, FACETS_CONNECTION_ID)] = this
+            }
+            // else you're attaching a new entity to an existing entity that is not modifiable
+          }
+
+          this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] = value
+        }
+        changedProperty.add("facets")
       }
 
     override fun getEntityData(): ModuleTestEntityData = result ?: super.getEntityData() as ModuleTestEntityData
@@ -185,12 +258,13 @@ class ModuleTestEntityData : WorkspaceEntityData.WithCalculablePersistentId<Modu
   }
 
   override fun createEntity(snapshot: EntityStorage): ModuleTestEntity {
-    val entity = ModuleTestEntityImpl()
-    entity._name = name
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ModuleTestEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {
@@ -212,20 +286,25 @@ class ModuleTestEntityData : WorkspaceEntityData.WithCalculablePersistentId<Modu
     }
   }
 
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ModuleTestEntityData
 
-    if (this.name != other.name) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.name != other.name) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ModuleTestEntityData
 
@@ -243,5 +322,9 @@ class ModuleTestEntityData : WorkspaceEntityData.WithCalculablePersistentId<Modu
     var result = javaClass.hashCode()
     result = 31 * result + name.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

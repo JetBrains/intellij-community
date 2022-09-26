@@ -73,12 +73,13 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
                 val statements = loopStatement.updaters.map { it.copyTreeAndDetach() } + element.copyTreeAndDetach()
                 return if (element.parent is JKBlock)
                     JKBlockStatementWithoutBrackets(statements)
-                else JKBlockStatement(JKBlockImpl(statements))
+                else blockStatement(statements)
             }
         }
 
         val body = continueStatementConverter.applyToElement(loopStatement::body.detached())
 
+        val statements: List<JKStatement>
         if (body is JKBlockStatement) {
             val hasNameConflict = loopStatement.initializers.any { initializer ->
                 initializer is JKDeclarationStatement && initializer.declaredStatements.any { loopVar ->
@@ -90,18 +91,17 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
                 }
             }
 
-            val statements =
+            statements =
                 if (hasNameConflict) {
                     listOf(JKExpressionStatement(runExpression(body, symbolProvider))) + loopStatement::updaters.detached()
                 } else {
                     body.block::statements.detached() + loopStatement::updaters.detached()
                 }
-            return JKBlockStatement(JKBlockImpl(statements))
         } else {
-            val statements =
-                listOf(body as JKStatement) + loopStatement::updaters.detached()
-            return JKBlockStatement(JKBlockImpl(statements))
+            statements = listOf(body as JKStatement) + loopStatement::updaters.detached()
         }
+
+        return blockStatement(statements)
     }
 
     private fun convertToForeach(loopStatement: JKJavaForLoopStatement): JKForInStatement? {

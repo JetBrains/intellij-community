@@ -12,15 +12,13 @@
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-ir" level="project" />
+    <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
     <orderEntry type="library" name="maven-resolver-provider" level="project" />
+    <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="module" module-name="kotlin.base.util" />
-    <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
-    <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.util" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.core-fe10" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
@@ -32,6 +30,5 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
-    <orderEntry type="library" name="gson" level="project" />
   </component>
 </module>

@@ -2,6 +2,7 @@
 package com.intellij.psi;
 
 import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.NotNull;
 
 public interface PsiRecordComponent extends PsiMember, PsiVariable {
   PsiRecordComponent[] EMPTY_ARRAY = new PsiRecordComponent[]{};
@@ -14,4 +15,10 @@ public interface PsiRecordComponent extends PsiMember, PsiVariable {
    * @return true if the record component is a vararg, false otherwise
    */
   boolean isVarArgs();
+
+  /**
+   * @return name of the record component; never null, as incomplete component like {@code record R(int)} is not parsed as component at all.
+   */
+  @Override
+  @NotNull String getName();
 }

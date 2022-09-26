@@ -1,18 +1,21 @@
 package com.intellij.ide.starter.utils
 
 import com.intellij.ide.starter.di.di
-import com.intellij.ide.starter.exec.ExecOutputRedirect
-import com.intellij.ide.starter.exec.ProcessExecutor
+import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.path.GlobalPaths
+import com.intellij.ide.starter.process.exec.ExecOutputRedirect
+import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.system.SystemInfo
 import org.kodein.di.direct
 import org.kodein.di.instance
-import java.io.*
-import java.lang.Long.numberOfLeadingZeros
+import java.io.File
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.nio.charset.Charset
 import java.nio.file.FileStore
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.io.path.*
@@ -164,11 +167,11 @@ private fun quoteArg(arg: String): String {
  * Writes list of Java arguments to the Java Command-Line Argument File
  * See https://docs.oracle.com/javase/9/tools/java.htm, section "java Command-Line Argument Files"
  **/
-fun writeJvmArgsFile(argFile: File,
+fun writeJvmArgsFile(argFile: Path,
                      args: List<String>,
                      lineSeparator: String = System.lineSeparator(),
                      charset: Charset = Charsets.UTF_8) {
-  BufferedWriter(OutputStreamWriter(FileOutputStream(argFile), charset)).use { writer ->
+  Files.newBufferedWriter(argFile, charset).use { writer ->
     for (arg in args) {
       writer.write(quoteArg(arg))
       writer.write(lineSeparator)
@@ -203,6 +206,19 @@ fun takeScreenshot(logsDir: Path) {
   }
   else {
     error("Couldn't take screenshot")
+  }
+}
+
+fun collectJBRDiagnosticFilesIfExist(context: IDETestContext) {
+  val userHome = System.getProperty("user.home")
+  val pathUserHome = Paths.get(userHome)
+  val listOfJavaErrorFiles = pathUserHome.toFile().listFiles().filter { it.nameWithoutExtension.startsWith("java_error_in_idea_") && it.extension == "log" }
+  if(listOfJavaErrorFiles.isNotEmpty()) {
+    listOfJavaErrorFiles.forEach {
+    if (!context.paths.jbrDiagnostic.resolve(it.name).toFile().exists())
+      it.copyTo(context.paths.jbrDiagnostic.resolve(it.name).toFile())
+    }
+    context.publishArtifact(context.paths.jbrDiagnostic)
   }
 }
 
@@ -270,12 +286,6 @@ private fun downloadAsyncProfilerIfNeeded(profiler: Path, toolsDir: Path) {
                         archivePath)
     FileSystem.unpack(archivePath, toolsDir)
   }
-}
-
-fun Long.formatSize(): String {
-  if (this < 1024) return "$this B"
-  val z = (63 - numberOfLeadingZeros(this)) / 10
-  return String.format("%.1f %sB", this.toDouble() / (1L shl z * 10), " KMGTPE"[z])
 }
 
 fun pathInsideJarFile(

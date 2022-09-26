@@ -112,7 +112,7 @@ public final class PyExtractSuperclassHelper {
     return ContainerUtil.exists(clazz.getSuperClassExpressions(), o -> PyNames.OBJECT.equals(o.getName()));
   }
 
-  private static boolean isRefactoredClassInBackedFile(VirtualFile targetFile, PyClass pyClass) {
+  private static boolean isRefactoredClassInBackedFile(@Nullable VirtualFile targetFile, @NotNull PyClass pyClass) {
     VirtualFile file = pyClass.getContainingFile().getVirtualFile();
     return file instanceof BackedVirtualFile &&
            Comparing.equal(((BackedVirtualFile)file).getOriginFile(), targetFile);
@@ -166,11 +166,7 @@ public final class PyExtractSuperclassHelper {
   /**
    * Places a file at the end of given path, creating intermediate dirs and inits.
    *
-   * @param project
-   * @param path
-   * @param filename
    * @return the placed file
-   * @throws IOException
    */
   public static PsiFile placeFile(Project project, String path, String filename) throws IOException {
     return placeFile(project, path, filename, null);
@@ -198,7 +194,6 @@ public final class PyExtractSuperclassHelper {
   /**
    * Create all intermediate dirs with inits from one of roots up to target dir.
    *
-   * @param project
    * @param target  a full path to target dir
    * @return deepest child directory, or null if target is not in roots or process fails at some point.
    */

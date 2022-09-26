@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.diff.DiffContentFactory
@@ -38,7 +38,7 @@ class LibrarySourceNotificationProvider : EditorNotificationProvider {
   override fun collectNotificationData(
     project: Project,
     file: VirtualFile,
-  ): Function<in FileEditor, out JComponent?> {
+  ): Function<in FileEditor, out JComponent?>? {
     if (file.fileType is LanguageFileType && ProjectRootManager.getInstance(project).fileIndex.isInLibrarySource(file)) {
       val psiFile = PsiManager.getInstance(project).findFile(file)
       if (psiFile is PsiJavaFile) {
@@ -47,7 +47,7 @@ class LibrarySourceNotificationProvider : EditorNotificationProvider {
           val clsFile = offender.originalElement.containingFile?.virtualFile
           if (clsFile != null && !clsFile.path.matches(ANDROID_SDK_PATTERN)) {
             return Function {
-              val panel = EditorNotificationPanel(LightColors.RED)
+              val panel = EditorNotificationPanel(LightColors.RED, EditorNotificationPanel.Status.Error)
               panel.text = JavaUiBundle.message("library.source.mismatch", offender.name)
               panel.createActionLabel(JavaUiBundle.message("library.source.open.class")) {
                 if (!project.isDisposed && clsFile.isValid) {
@@ -69,7 +69,7 @@ class LibrarySourceNotificationProvider : EditorNotificationProvider {
       }
     }
 
-    return EditorNotificationProvider.CONST_NULL
+    return null
   }
 
   private fun differs(src: PsiClass): Boolean {

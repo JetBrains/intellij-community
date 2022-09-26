@@ -28,13 +28,9 @@ public abstract class CoverageDataManager {
    * List coverage suite for presentation from IDEA
    *
    * @param name                  presentable name of a suite
-   * @param fileProvider
    * @param filters               configured filters for this suite
    * @param lastCoverageTimeStamp when this coverage data was gathered
    * @param suiteToMergeWith      null remove coverage pack from prev run and get from new
-   * @param coverageRunner
-   * @param collectLineInfo
-   * @param tracingEnabled
    */
   public abstract CoverageSuite addCoverageSuite(String name,
                                                  CoverageFileProvider fileProvider,
@@ -97,9 +93,6 @@ public abstract class CoverageDataManager {
 
   /**
    * This method attach process listener to process handler. Listener will load coverage information after process termination
-   * @param handler
-   * @param configuration
-   * @param runnerSettings
    */
   public abstract void attachToProcess(@NotNull final ProcessHandler handler,
                                        @NotNull final RunConfigurationBase configuration, RunnerSettings runnerSettings);

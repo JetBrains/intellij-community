@@ -194,7 +194,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   private void updateCurrentSelectionOnMoveOrResize() {
-    if (UIUtil.isClientPropertyTrue(myComponent, IGNORE_ITEM_SELECTION)) {
+    if (ClientProperty.isTrue(myComponent, IGNORE_ITEM_SELECTION)) {
       hideHint();
     }
     else {
@@ -207,7 +207,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   protected void handleMouseEvent(MouseEvent e, boolean forceUpdate) {
-    if (UIUtil.isClientPropertyTrue(myComponent, IGNORE_MOUSE_HOVER)) return;
+    if (ClientProperty.isTrue(myComponent, IGNORE_MOUSE_HOVER)) return;
     KeyType selected = getCellKeyForPoint(e.getPoint());
     if (forceUpdate || !Comparing.equal(myKey, selected)) {
       handleSelectionChange(selected, true);
@@ -220,7 +220,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   protected void handleSelectionChange(KeyType selected) {
-    handleSelectionChange(UIUtil.isClientPropertyTrue(myComponent, IGNORE_ITEM_SELECTION) ? myKey : selected, false);
+    handleSelectionChange(ClientProperty.isTrue(myComponent, IGNORE_ITEM_SELECTION) ? myKey : selected, false);
   }
 
   protected void handleSelectionChange(final KeyType selected, final boolean processIfUnfocused) {
@@ -271,9 +271,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   protected boolean isPopup() {
     Window window = SwingUtilities.getWindowAncestor(myComponent);
-    return window != null
-           && !(window instanceof Dialog || window instanceof Frame)
-           && !isHintsAllowed(window);
+    return UIUtil.isSimpleWindow(window) && !isHintsAllowed(window);
   }
 
   private static boolean isHintsAllowed(Window window) {
@@ -333,16 +331,16 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   @Nullable
   private Point createToolTipImage(@NotNull KeyType key) {
-    ComponentUtil.putClientProperty(myComponent, EXPANDED_RENDERER, true);
+    ClientProperty.put(myComponent, EXPANDED_RENDERER, true);
     Pair<Component, Rectangle> rendererAndBounds = getCellRendererAndBounds(key);
-    ComponentUtil.putClientProperty(myComponent, EXPANDED_RENDERER, null);
+    ClientProperty.put(myComponent, EXPANDED_RENDERER, null);
     if (rendererAndBounds == null) return null;
 
     JComponent renderer = ObjectUtils.tryCast(rendererAndBounds.first, JComponent.class);
     if (renderer == null) return null;
-    if (UIUtil.isClientPropertyTrue(renderer, RENDERER_DISABLED)) return null;
+    if (ClientProperty.isTrue(renderer, RENDERER_DISABLED)) return null;
 
-    if (UIUtil.isClientPropertyTrue(rendererAndBounds.getFirst(), USE_RENDERER_BOUNDS)) {
+    if (ClientProperty.isTrue(rendererAndBounds.getFirst(), USE_RENDERER_BOUNDS)) {
       rendererAndBounds.getSecond().translate(renderer.getX(), renderer.getY());
       rendererAndBounds.getSecond().setSize(renderer.getSize());
     }

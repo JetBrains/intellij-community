@@ -7,6 +7,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityExtensionDelegate
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.annotations.Abstract
 import kotlin.reflect.KClass
@@ -94,6 +95,13 @@ interface WorkspaceEntity : Obj {
 }
 
 /**
+ * Add this annotation to the field to mark this fields as a key field for replaceBySource operation.
+ * Entities will be compared based on these fields.
+ */
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE)
+annotation class EqualsBy
+
+/**
  * Base interface for modifiable variant of [Unmodifiable] entity. The implementation can be used to [create a new entity][MutableEntityStorage.addEntity]
  * or [modify an existing value][MutableEntityStorage.modifyEntity].
  *
@@ -132,42 +140,6 @@ interface EntitySource {
  * of `ModuleEntity`.
  */
 interface DummyParentEntitySource : EntitySource
-
-/**
- * Base interface for entities which may need to find all entities referring to them.
- */
-@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
-@Abstract
-interface ReferableWorkspaceEntity : WorkspaceEntity {
-  /**
-   * Returns all entities of type [R] which [propertyName] property refers to this entity. Consider using type-safe variant referrers(KProperty1) instead.
-   */
-  fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R>
-}
-
-@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
-@Abstract
-interface ModifiableReferableWorkspaceEntity : ReferableWorkspaceEntity  {
-  fun linkExternalEntity(entityClass: KClass<out WorkspaceEntity>, isThisFieldChild: Boolean, entities: List<WorkspaceEntity?>)
-}
-
-/**
- * Returns all entities of type [R] which [property] refers to this entity.
- */
-@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
-inline fun <E : ReferableWorkspaceEntity, reified R : WorkspaceEntity> E.referrersx(property: KProperty1<R, E?>): Sequence<R> {
-  return referrers(R::class.java, property.name)
-}
-
-@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
-inline fun <E : WorkspaceEntity, reified R : WorkspaceEntity> E.referrersx(property: KProperty1<R, E?>): List<R> {
-  return (this as ReferableWorkspaceEntity).referrers(R::class.java, property.name).toList()
-}
-
-@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
-inline fun <E : WorkspaceEntity, reified R : WorkspaceEntity, reified X : List<E>> E.referrersy(property: KProperty1<R, X?>): List<R> {
-  return (this as ReferableWorkspaceEntity).referrers(R::class.java, property.name).toList()
-}
 
 /**
  * Represents a reference to an entity inside of [WorkspaceEntity].
@@ -209,6 +181,7 @@ interface EntityStorage {
   fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>, property: KProperty1<R, EntityReference<E>>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E?
+  operator fun <E : WorkspaceEntityWithPersistentId> contains(id: PersistentEntityId<E>): Boolean
 
   /**
    * Please select a name for your mapping in a form `<product_id>.<mapping_name>`.
@@ -239,11 +212,15 @@ interface EntityStorageSnapshot : EntityStorage {
  */
 interface MutableEntityStorage : EntityStorage {
   fun isEmpty(): Boolean
-  fun <T : WorkspaceEntity> addEntity(entity: T)
+  infix fun <T : WorkspaceEntity> addEntity(entity: T): T
 
   fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
 
-  fun removeEntity(e: WorkspaceEntity)
+  /**
+   * Remove the entity from the builder.
+   * Returns true if the entity was removed, false if the entity was not in the storage
+   */
+  fun removeEntity(e: WorkspaceEntity): Boolean
   fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: EntityStorage)
 
   /**
@@ -260,6 +237,9 @@ interface MutableEntityStorage : EntityStorage {
   fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex
 
   val modificationCount: Long
+
+  @ApiStatus.Internal
+  fun setUseNewRbs(value: Boolean)
 
   companion object {
     @JvmStatic
@@ -298,4 +278,19 @@ sealed class EntityChange<T : WorkspaceEntity> {
       get() = null
   }
   data class Replaced<T : WorkspaceEntity>(override val oldEntity: T, override val newEntity: T) : EntityChange<T>()
+}
+
+open class NotGeneratedRuntimeException(message: String) : RuntimeException(message)
+class NotGeneratedMethodRuntimeException(val methodName: String)
+  : NotGeneratedRuntimeException("Method `$methodName` uses default implementation. Please regenerate entities")
+
+
+// Internal tools, not sure if we can open them
+
+
+/**
+ * Return same entity, but in different entity storage. Fail if no entity
+ */
+internal fun <T: WorkspaceEntity> T.from(storage: EntityStorage): T {
+  return this.createReference<T>().resolve(storage)!!
 }

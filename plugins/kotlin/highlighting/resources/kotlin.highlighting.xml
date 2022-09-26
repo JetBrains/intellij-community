@@ -1,0 +1,14 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.highlighting">
+
+  <extensions defaultExtensionNs="com.intellij">
+    <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.highlighting.KotlinDiagnosticHighlightingPassFactory"/>
+    <highlightRangeExtension implementation="org.jetbrains.kotlin.idea.highlighting.KotlinFirPsiChecker"/>
+    <annotator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.highlighting.KotlinFirPsiChecker"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.highlighting.DeclarationHighlightingExtension"/>
+    <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.highlighting.AnnotationsHighlightingExtension"/>
+  </extensions>
+
+</idea-plugin>

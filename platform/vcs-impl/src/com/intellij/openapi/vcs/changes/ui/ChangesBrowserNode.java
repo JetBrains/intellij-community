@@ -487,4 +487,9 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   public Stream<ChangesBrowserNode<?>> getNodesUnderStream() {
     return traverse().toStream();
   }
+
+  interface NodeWithFilePath {
+    @NotNull
+    FilePath getNodeFilePath();
+  }
 }

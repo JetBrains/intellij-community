@@ -301,6 +301,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
+  @Deprecated
   public int getModificationCount() {
     return FSRecords.getLocalModCount();
   }
@@ -470,6 +471,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         return info;
       }
     }
+    //FIXME RC: above check is 'strict' only if nameId is unique identifier for a name. We're going to change that, hence
+    //          the code below should be run not only for caseSensitive systems, but for all them, as 'slow path'
     // for case-sensitive systems, the above check is exhaustive in consistent state of VFS
     if (!parent.isCaseSensitive()) {
       for (ChildInfo info : children) {
@@ -1364,8 +1367,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     // assume roots have the FS default case sensitivity
     attributes = attributes.withCaseSensitivity(fs.isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
     // avoid creating gazillions of roots which are not actual roots
-    String parentPath = fs instanceof LocalFileSystem ? PathUtil.getParentPath(rootPath) : "";
-    if (!parentPath.isEmpty()) {
+    String parentPath;
+    if (fs instanceof LocalFileSystem && !(parentPath = PathUtil.getParentPath(rootPath)).isEmpty()) {
       FileAttributes parentAttributes = loadAttributes(fs, parentPath);
       if (parentAttributes != null) {
         throw new IllegalArgumentException("Must pass FS root path, but got: '" + path + "', which has a parent '" + parentPath + "'." +
@@ -1431,11 +1434,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   public @Nullable NewVirtualFile findFileById(int id) {
     VirtualFileSystemEntry cached = myIdToDirCache.getCachedDir(id);
     return cached != null ? cached : FSRecords.findFileById(id, myIdToDirCache);
-  }
-
-  @Override
-  public NewVirtualFile findFileByIdIfCached(int id) {
-    return myVfsData.hasLoadedFile(id) ? findFileById(id) : null;
   }
 
   @Override
@@ -1510,24 +1508,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         VirtualFile file = propertyChangeEvent.getFile();
         Object newValue = propertyChangeEvent.getNewValue();
         switch (propertyChangeEvent.getPropertyName()) {
-          case VirtualFile.PROP_NAME:
-            executeRename(file, (String)newValue);
-            break;
-          case VirtualFile.PROP_WRITABLE:
+          case VirtualFile.PROP_NAME -> executeRename(file, (String)newValue);
+          case VirtualFile.PROP_WRITABLE -> {
             executeSetWritable(file, ((Boolean)newValue).booleanValue());
             if (LOG.isDebugEnabled()) {
               LOG.debug("File " + file + " writable=" + file.isWritable() + " id=" + getFileId(file));
             }
-            break;
-          case VirtualFile.PROP_HIDDEN:
-            executeSetHidden(file, ((Boolean)newValue).booleanValue());
-            break;
-          case VirtualFile.PROP_SYMLINK_TARGET:
-            executeSetTarget(file, (String)newValue);
-            break;
-          case VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY:
-            executeChangeCaseSensitivity(file, (FileAttributes.CaseSensitivity)newValue);
-            break;
+          }
+          case VirtualFile.PROP_HIDDEN -> executeSetHidden(file, ((Boolean)newValue).booleanValue());
+          case VirtualFile.PROP_SYMLINK_TARGET -> executeSetTarget(file, (String)newValue);
+          case VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY -> executeChangeCaseSensitivity(file, (FileAttributes.CaseSensitivity)newValue);
         }
       }
     }
@@ -1628,6 +1618,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                                                               @Nullable FileAttributes attributes,
                                                                               @Nullable String symlinkTarget) {
     if (attributes == null) {
+      if (".".equals(name) || "..".equals(name)) {
+        //these names have special meaning, so FS will report that such children exist, but they must not be added to VFS
+        return null;
+      }
       FakeVirtualFile virtualFile = new FakeVirtualFile(parent, name);
       attributes = fs.getAttributes(virtualFile);
       symlinkTarget = attributes != null && attributes.isSymLink() ? fs.resolveSymLink(virtualFile) : null;
@@ -1702,6 +1696,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static void executeSetHidden(@NotNull VirtualFile file, boolean hiddenFlag) {
     setFlag(file, Flags.IS_HIDDEN, hiddenFlag);
     ((VirtualFileSystemEntry)file).setHiddenFlag(hiddenFlag);
+  }
+
+  @ApiStatus.Experimental
+  public static void setOfflineByDefault(@NotNull VirtualFile file, boolean offlineByDefaultFlag) {
+    setFlag(file, Flags.OFFLINE_BY_DEFAULT, offlineByDefaultFlag);
+    if (offlineByDefaultFlag) {
+      ((VirtualFileSystemEntry)file).setOffline(true);
+    }
   }
 
   private static void executeSetTarget(@NotNull VirtualFile file, @Nullable String target) {

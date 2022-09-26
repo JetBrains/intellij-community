@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.*
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
@@ -114,6 +115,14 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     result
   }
 
+  private val moveOrResizeAlarm = SingleAlarm(Runnable {
+    val decorator = this@ToolWindowImpl.decorator
+    if (decorator != null) {
+      toolWindowManager.movedOrResized(decorator)
+    }
+    this@ToolWindowImpl.windowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
+  }, 100, disposable)
+
   init {
     if (component != null) {
       val content = ContentImpl(component, "", false)
@@ -170,13 +179,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
     decorator.applyWindowInfo(windowInfo)
     decorator.addComponentListener(object : ComponentAdapter() {
-      private val alarm = SingleAlarm(Runnable {
-        toolWindowManager.resized(decorator)
-        windowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
-      }, 100, disposable)
-
       override fun componentResized(e: ComponentEvent) {
-        alarm.cancelAndRequest()
+        onMovedOrResized()
       }
     })
 
@@ -196,6 +200,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
 
     return contentManager
+  }
+
+  fun onMovedOrResized() {
+    moveOrResizeAlarm.cancelAndRequest()
   }
 
   internal fun setWindowInfoSilently(info: WindowInfo) {
@@ -246,7 +254,6 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   override fun isActive(): Boolean {
-    toolWindowManager.assertIsEdt()
     return windowInfo.isVisible && decorator != null && toolWindowManager.activeToolWindowId == id
   }
 
@@ -726,7 +733,11 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     focusTask.resetStartTime()
     val alarm = focusAlarm
     alarm.cancelAllRequests()
-    alarm.request(delay = 0)
+    if (Registry.`is`("toolwindow.immediate.focus")) {
+      focusTask.run()
+    } else {
+      alarm.request(delay = 0)
+    }
   }
 }
 

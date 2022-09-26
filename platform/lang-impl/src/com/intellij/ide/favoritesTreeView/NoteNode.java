@@ -17,8 +17,7 @@ package com.intellij.ide.favoritesTreeView;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
+@Deprecated(forRemoval = true)
 public class NoteNode {
 
   @NotNull

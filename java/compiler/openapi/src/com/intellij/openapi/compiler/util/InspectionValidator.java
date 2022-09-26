@@ -52,16 +52,6 @@ public abstract class InspectionValidator {
   @Nullable
   private final InspectionToolProvider myInspectionToolProvider;
 
-  /**
-   * @deprecated use {@link #InspectionValidator(String, String, String)} instead; this constructor uses {@code description} which may
-   * be localized as ID which must not be localized
-   */
-  @Deprecated(forRemoval = true)
-  protected InspectionValidator(@NotNull @Nls String description,
-                                @NotNull @Nls String progressIndicatorText) {
-    this(description, description, progressIndicatorText);
-  }
-
   protected InspectionValidator(@NotNull @NonNls String id, @NotNull @Nls String description,
                                 @NotNull @Nls String progressIndicatorText) {
     myId = id;

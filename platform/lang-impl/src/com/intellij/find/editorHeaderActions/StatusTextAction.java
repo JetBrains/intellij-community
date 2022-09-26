@@ -4,6 +4,7 @@ package com.intellij.find.editorHeaderActions;
 import com.intellij.find.SearchSession;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -25,6 +26,11 @@ public class StatusTextAction extends DumbAwareAction implements CustomComponent
     label.setForeground(search == null ?
                         ExperimentalUI.isNewUI() ? UIUtil.getLabelInfoForeground() : UIUtil.getLabelForeground() :
                         search.getComponent().getStatusColor());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

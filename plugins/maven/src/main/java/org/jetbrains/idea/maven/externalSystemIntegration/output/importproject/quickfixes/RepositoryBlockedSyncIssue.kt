@@ -73,7 +73,7 @@ object RepositoryBlockedSyncIssue {
   }
 }
 
-class FindBlockedRepositoryQuickFix(val repoUrl: String) : BuildIssueQuickFix {
+class FindBlockedRepositoryQuickFix(private val repoUrl: String) : BuildIssueQuickFix {
 
   override val id: String get() = "maven_find_blocked_repository_quick_fix_$repoUrl"
 

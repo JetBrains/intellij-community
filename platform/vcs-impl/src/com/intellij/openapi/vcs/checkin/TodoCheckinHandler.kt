@@ -4,14 +4,14 @@ package com.intellij.openapi.vcs.checkin
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.todo.*
-import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.ProgressSink
+import com.intellij.openapi.progress.asContextElement
+import com.intellij.openapi.progress.progressSink
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
@@ -20,70 +20,79 @@ import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.YesNoCancelResult
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsContexts.DialogMessage
-import com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix
+import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
+import com.intellij.openapi.vcs.checkin.TodoCheckinHandler.Companion.showDialog
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.wm.ToolWindowId.TODO_VIEW
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.search.TodoItem
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
-import com.intellij.util.PairConsumer
 import com.intellij.util.text.DateFormatUtil.formatDateTime
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.getWarningIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.swing.JComponent
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.coroutineContext
 
 class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
-  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler = TodoCheckinHandler(panel)
+  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+    return TodoCheckinHandler(panel.project)
+  }
 }
 
-class TodoCommitProblem(val changes: Collection<Change>, val todoItems: Collection<TodoItem>) : CommitProblem {
-  override val text: String get() = message("label.todo.items.found", todoItems.size)
+class TodoCommitProblem(val worker: TodoCheckinHandlerWorker) : CommitProblemWithDetails {
+  override val text: String get() = message("label.todo.items.found", worker.inOneList().size)
+
+  override fun showDetails(project: Project, commitInfo: CommitInfo) {
+    TodoCheckinHandler.showTodoItems(project, worker.changes, worker.inOneList())
+  }
+
+  override fun showModalSolution(project: Project, commitInfo: CommitInfo): CheckinHandler.ReturnResult {
+    return showDialog(project, worker, commitInfo.commitActionText)
+  }
 }
 
-class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck<TodoCommitProblem>, DumbAware {
-  private val project: Project get() = commitPanel.project
+class TodoCheckinHandler(private val project: Project) : CheckinHandler(), CommitCheck, DumbAware {
   private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
   private val todoSettings: TodoPanelSettings get() = settings.myTodoPanelSettings
 
-  private var todoFilter: TodoFilter? = null
-
   override fun isEnabled(): Boolean = settings.CHECK_NEW_TODO
 
-  override suspend fun runCheck(indicator: ProgressIndicator): TodoCommitProblem? {
-    indicator.text = message("progress.text.checking.for.todo")
+  override suspend fun runCheck(commitInfo: CommitInfo): TodoCommitProblem? {
+    val sink = coroutineContext.progressSink
+    sink?.text(message("progress.text.checking.for.todo"))
 
-    val changes = commitPanel.selectedChanges
+    val todoFilter = settings.myTodoPanelSettings.todoFilterName?.let { TodoConfiguration.getInstance().getTodoFilter(it) }
+    val changes = commitInfo.committedChanges
     val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
 
-    withContext(Dispatchers.Default) {
-      ProgressManager.getInstance().executeProcessUnderProgress(
-        { worker.execute() },
-        TextToText2Indicator(indicator)
-      )
+    withContext(Dispatchers.Default + textToDetailsSinkContext(sink)) {
+      runUnderIndicator {
+        worker.execute()
+      }
     }
 
-    val todoItems = worker.inOneList()
-    return if (todoItems.isNotEmpty()) TodoCommitProblem(changes, todoItems) else null
+    val noTodo = worker.inOneList().isEmpty()
+    val noSkipped = worker.skipped.isEmpty()
+    if (noTodo && noSkipped) return null
+
+    return TodoCommitProblem(worker)
   }
 
-  override fun showDetails(problem: TodoCommitProblem) = showTodoItems(problem.changes, problem.todoItems)
-
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    object : BooleanCommitOption(commitPanel, "", false, settings::CHECK_NEW_TODO) {
+    object : BooleanCommitOption(project, "", false, settings::CHECK_NEW_TODO) {
       override fun getComponent(): JComponent {
         setFilterText(todoSettings.todoFilterName)
-        todoSettings.todoFilterName?.let { todoFilter = TodoConfiguration.getInstance().getTodoFilter(it) }
 
         val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
           val group = SetTodoFilterAction.createPopupActionGroup(project, todoSettings) { setFilter(it) }
@@ -95,7 +104,6 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
       }
 
       private fun setFilter(filter: TodoFilter?) {
-        todoFilter = filter
         todoSettings.todoFilterName = filter?.name
         setFilterText(filter?.name)
       }
@@ -106,73 +114,70 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
       }
     }
 
-  override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
-    if (!isEnabled()) return ReturnResult.COMMIT
+  companion object {
+    internal fun showDialog(project: Project,
+                            worker: TodoCheckinHandlerWorker,
+                            @NlsContexts.Button commitActionText: String): ReturnResult {
+      val noTodo = worker.addedOrEditedTodos.isEmpty() && worker.inChangedTodos.isEmpty()
+      val noSkipped = worker.skipped.isEmpty()
 
-    val worker = FindTodoItemsTask(project, commitPanel.selectedChanges, todoFilter).find() ?: return ReturnResult.CANCEL
-    val commitActionText = removeEllipsisSuffix(executor?.actionText ?: commitPanel.commitActionName)
-    val noTodo = worker.addedOrEditedTodos.isEmpty() && worker.inChangedTodos.isEmpty()
-    val noSkipped = worker.skipped.isEmpty()
+      return when {
+        noTodo && noSkipped -> ReturnResult.COMMIT
+        noTodo -> if (confirmCommitWithSkippedFiles(worker, commitActionText)) ReturnResult.COMMIT else ReturnResult.CANCEL
+        else -> processFoundTodoItems(project, worker, commitActionText)
+      }
+    }
 
-    return when {
-      noTodo && noSkipped -> ReturnResult.COMMIT
-      noTodo -> if (confirmCommitWithSkippedFiles(worker, commitActionText)) ReturnResult.COMMIT else ReturnResult.CANCEL
-      else -> processFoundTodoItems(worker, commitActionText)
+    private fun processFoundTodoItems(project: Project,
+                                      worker: TodoCheckinHandlerWorker,
+                                      @NlsContexts.Button commitActionText: String): ReturnResult =
+      when (askReviewCommitCancel(worker, commitActionText)) {
+        Messages.YES -> {
+          showTodoItems(project, worker.changes, worker.inOneList())
+          ReturnResult.CLOSE_WINDOW
+        }
+        Messages.NO -> ReturnResult.COMMIT
+        else -> ReturnResult.CANCEL
+      }
+
+    internal fun showTodoItems(project: Project, changes: Collection<Change>, todoItems: Collection<TodoItem>) {
+      val todoView = project.service<TodoView>()
+      todoView.addCustomTodoView(
+        TodoTreeBuilderFactory { tree, project -> CustomChangelistTodosTreeBuilder(tree, project, changes, todoItems) },
+        message("checkin.title.for.commit.0", formatDateTime(System.currentTimeMillis())),
+        TodoPanelSettings(VcsConfiguration.getInstance(project).myTodoPanelSettings)
+      )
+
+      runInEdt(ModalityState.NON_MODAL) {
+        if (project.isDisposed) return@runInEdt
+        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TODO_VIEW) ?: return@runInEdt
+
+        toolWindow.show {
+          val lastContent = toolWindow.contentManager.contents.lastOrNull()
+          if (lastContent != null) toolWindow.contentManager.setSelectedContent(lastContent, true)
+        }
+      }
     }
   }
+}
 
-  private fun processFoundTodoItems(worker: TodoCheckinHandlerWorker, @NlsContexts.Button commitActionText: String): ReturnResult =
-    when (askReviewCommitCancel(worker, commitActionText)) {
-      Messages.YES -> {
-        showTodoItems(worker.changes, worker.inOneList())
-        ReturnResult.CLOSE_WINDOW
-      }
-      Messages.NO -> ReturnResult.COMMIT
-      else -> ReturnResult.CANCEL
-    }
+internal fun textToDetailsSinkContext(sink: ProgressSink?): CoroutineContext {
+  if (sink == null) {
+    return EmptyCoroutineContext
+  }
+  else {
+    return TextToDetailsProgressSink(sink).asContextElement()
+  }
+}
 
-  private fun showTodoItems(changes: Collection<Change>, todoItems: Collection<TodoItem>) {
-    project.service<TodoView>().addCustomTodoView(
-      TodoTreeBuilderFactory { tree, project -> CustomChangelistTodosTreeBuilder(tree, project, changes, todoItems) },
-      message("checkin.title.for.commit.0", formatDateTime(System.currentTimeMillis())),
-      TodoPanelSettings(todoSettings)
+internal class TextToDetailsProgressSink(private val original: ProgressSink) : ProgressSink {
+
+  override fun update(text: @ProgressText String?, details: @ProgressDetails String?, fraction: Double?) {
+    original.update(
+      text = null,
+      details = text, // incoming text will be shown as details in the original sink
+      fraction = fraction,
     )
-
-    runInEdt(ModalityState.NON_MODAL) {
-      if (project.isDisposed) return@runInEdt
-      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TODO_VIEW) ?: return@runInEdt
-
-      toolWindow.show {
-        val lastContent = toolWindow.contentManager.contents.lastOrNull()
-        if (lastContent != null) toolWindow.contentManager.setSelectedContent(lastContent, true)
-      }
-    }
-  }
-}
-
-internal class TextToText2Indicator(indicator: ProgressIndicator) : DelegatingProgressIndicator(indicator) {
-  override fun setText(text: String?) = super.setText2(text)
-  override fun setText2(text: String?) = Unit
-}
-
-private class FindTodoItemsTask(project: Project, changes: Collection<Change>, todoFilter: TodoFilter?) :
-  Task.Modal(project, message("checkin.dialog.title.looking.for.new.edited.todo.items"), true) {
-
-  private val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
-  private var result: TodoCheckinHandlerWorker? = null
-
-  fun find(): TodoCheckinHandlerWorker? {
-    queue()
-    return result
-  }
-
-  override fun run(indicator: ProgressIndicator) {
-    indicator.isIndeterminate = false
-    worker.execute()
-  }
-
-  override fun onSuccess() {
-    result = worker
   }
 }
 

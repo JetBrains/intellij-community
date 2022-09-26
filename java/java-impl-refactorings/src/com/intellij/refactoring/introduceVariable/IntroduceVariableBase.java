@@ -94,16 +94,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
 
     public PsiExpression[] filter(ExpressionOccurrenceManager manager) {
-      switch (myChoice) {
-        case NO:
-          return new PsiExpression[]{manager.getMainOccurence()};
-        case NO_WRITE:
-          return StreamEx.of(manager.getOccurrences()).filter(expr -> !PsiUtil.isAccessedForWriting(expr)).toArray(PsiExpression.EMPTY_ARRAY);
-        case ALL:
-          return manager.getOccurrences();
-        default:
-          throw new IllegalStateException("Unexpected value: " + myChoice);
-      }
+      return switch (myChoice) {
+        case NO -> new PsiExpression[]{manager.getMainOccurence()};
+        case NO_WRITE ->
+          StreamEx.of(manager.getOccurrences()).filter(expr -> !PsiUtil.isAccessedForWriting(expr)).toArray(PsiExpression.EMPTY_ARRAY);
+        case ALL -> manager.getOccurrences();
+      };
     }
 
     @Override

@@ -88,6 +88,34 @@ class RunBlockingCancellableTest : CancellationTest() {
   }
 
   @Test
+  fun `with current job child failure`() {
+    currentJobTest {
+      testRunBlockingCancellableChildFailure()
+    }
+  }
+
+  @Test
+  fun `with indicator child failure`() {
+    indicatorTest {
+      testRunBlockingCancellableChildFailure()
+    }
+  }
+
+  private fun testRunBlockingCancellableChildFailure() {
+    testRunBlockingCancellableChildFailure(object : Throwable() {})
+    testRunBlockingCancellableChildFailure(ProcessCanceledException())
+  }
+
+  private inline fun <reified T : Throwable> testRunBlockingCancellableChildFailure(t: T) {
+    val thrown = assertThrows<T> {
+      runBlockingCancellable {
+        Job(parent = coroutineContext.job).completeExceptionally(t)
+      }
+    }
+    assertSame(t, thrown)
+  }
+
+  @Test
   fun `delegates reporting to current indicator`() {
     val indicator = object : EmptyProgressIndicator() {
 
@@ -112,7 +140,7 @@ class RunBlockingCancellableTest : CancellationTest() {
       runBlockingCancellable {
         progressSink?.text("Hello")
         progressSink?.details("World")
-        progressSink()?.fraction(0.42)
+        coroutineContext.progressSink?.fraction(0.42)
       }
     }
 

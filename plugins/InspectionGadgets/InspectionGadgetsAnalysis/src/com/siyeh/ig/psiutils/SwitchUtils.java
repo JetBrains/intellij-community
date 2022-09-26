@@ -397,8 +397,7 @@ public final class SwitchUtils {
 
   public static @Nullable @NonNls String createPatternCaseText(PsiExpression expression){
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression instanceof PsiInstanceOfExpression) {
-      final PsiInstanceOfExpression instanceOf = (PsiInstanceOfExpression)expression;
+    if (expression instanceof PsiInstanceOfExpression instanceOf) {
       final PsiPrimaryPattern pattern = instanceOf.getPattern();
       if (pattern != null) return pattern.getText();
       final PsiTypeElement typeElement = instanceOf.getCheckType();
@@ -407,17 +406,18 @@ public final class SwitchUtils {
       String typeText = typeElement != null ? typeElement.getText() : CommonClassNames.JAVA_LANG_OBJECT;
       return typeText + " " + name;
     }
-    if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    if (expression instanceof PsiPolyadicExpression polyadicExpression) {
       final IElementType operationToken = polyadicExpression.getOperationTokenType();
       if (JavaTokenType.ANDAND.equals(operationToken)){
         final PsiExpression[] operands = polyadicExpression.getOperands();
         final PsiExpression instanceOf = ContainerUtil.find(operands, operand -> operand instanceof PsiInstanceOfExpression);
         StringBuilder builder = new StringBuilder();
         builder.append(createPatternCaseText(instanceOf));
+        boolean needAppendWhen = HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(expression);
         for (PsiExpression operand : operands) {
           if (operand != instanceOf) {
-            builder.append(" && ").append(operand.getText());
+            builder.append(needAppendWhen ? " when " : " && ").append(operand.getText());
+            needAppendWhen = false;
           }
         }
         return builder.toString();

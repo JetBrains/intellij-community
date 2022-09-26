@@ -45,7 +45,6 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
    * Get all local Python Sdks, sort them by version and put the currently selected Sdk (if it exists) to the beginning.
    * Create a debuggers for attaching based on this list of Sdks.
    *
-   * @param project
    * @return list of debuggers for attaching to process
    */
   @NotNull

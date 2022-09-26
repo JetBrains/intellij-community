@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -294,6 +295,11 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
         @Override
         public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(myEnableUpdateAction);
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
         }
 
         @Override

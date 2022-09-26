@@ -1208,9 +1208,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     private @Nullable final PsiUnaryExpression myUnaryExpression;
 
     /**
-     * @param condition
      * @param type            if not null, equivalent form of update is: variable type= expression;
-     * @param unaryExpression
      */
     protected IterateStreamSource(
       @NotNull PsiLoopStatement loop,

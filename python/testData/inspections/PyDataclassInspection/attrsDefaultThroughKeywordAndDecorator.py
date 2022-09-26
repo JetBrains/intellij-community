@@ -1,12 +1,22 @@
 import attr
+import attrs
 
 
 @attr.s
-class A1:
+class AttrFactory:
     x = attr.ib(default=attr.Factory(int))
 
     @x.default
     def <error descr="A default is set using 'attr.ib()'">__init_x__</error>(self):
+        return 1
+
+
+@attrs.define
+class AttrsFactory:
+    x = attrs.field(default=attrs.Factory(int))
+
+    @x.default
+    def <error descr="A default is set using 'attrs.field()'">__init_x__</error>(self):
         return 1
 
 

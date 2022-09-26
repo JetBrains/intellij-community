@@ -99,18 +99,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   @Nullable
   @Override
   public Action getResolveAction(@NotNull MergeResult result) {
-    switch (result) {
-      case CANCEL:
-        return myCancelResolveAction;
-      case LEFT:
-        return myLeftResolveAction;
-      case RIGHT:
-        return myRightResolveAction;
-      case RESOLVED:
-        return myAcceptResolveAction;
-      default:
-        return null;
-    }
+    return switch (result) {
+      case CANCEL -> myCancelResolveAction;
+      case LEFT -> myLeftResolveAction;
+      case RIGHT -> myRightResolveAction;
+      case RESOLVED -> myAcceptResolveAction;
+    };
   }
 
   @Override

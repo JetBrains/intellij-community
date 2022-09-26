@@ -5,13 +5,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcs
-import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitResultHandler
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
-import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.util.ui.UIUtil.removeMnemonic
-import com.intellij.vcs.commit.SingleChangeListCommitter.Companion.moveToFailedList
 import org.jetbrains.annotations.Nls
 
 private val LOG = logger<SingleChangeListCommitWorkflow>()
@@ -28,94 +28,89 @@ internal fun CommitOptions.saveChangeListSpecificOptions() = changeListSpecificO
 @Nls
 internal fun String.removeEllipsisSuffix() = StringUtil.removeEllipsisSuffix(this)
 
-@Nls
-internal fun CommitExecutor.getPresentableText() = removeMnemonic(actionText).removeEllipsisSuffix()
+internal fun cleanActionText(text: @Nls String): @Nls String = removeMnemonic(text).removeEllipsisSuffix()
 
-open class SingleChangeListCommitWorkflow(
+class SingleChangeListCommitWorkflow(
   project: Project,
   affectedVcses: Set<AbstractVcs>,
   val initiallyIncluded: Collection<*>,
-  val initialChangeList: LocalChangeList? = null,
-  executors: List<CommitExecutor> = emptyList(),
-  final override val isDefaultCommitEnabled: Boolean = executors.isEmpty(),
-  private val isDefaultChangeListFullyIncluded: Boolean = true,
-  val initialCommitMessage: String? = null,
-  private val resultHandler: CommitResultHandler? = null
-) : AbstractCommitWorkflow(project) {
+  val initialChangeList: LocalChangeList?,
+  executors: List<CommitExecutor>,
+  override val isDefaultCommitEnabled: Boolean,
+  initialCommitMessage: String?,
+  private val resultHandler: CommitResultHandler?
+) : CommitChangeListDialogWorkflow(project, initialCommitMessage) {
 
   init {
     updateVcses(affectedVcses)
     initCommitExecutors(executors)
   }
 
-  val isPartialCommitEnabled: Boolean =
+  override val isPartialCommitEnabled: Boolean =
     vcses.any { it.arePartialChangelistsSupported() } && (isDefaultCommitEnabled || commitExecutors.any { it.supportsPartialCommit() })
 
-  internal val commitMessagePolicy: SingleChangeListCommitMessagePolicy = SingleChangeListCommitMessagePolicy(project, initialCommitMessage)
-
-  internal lateinit var commitState: ChangeListCommitState
-
-  override fun processExecuteDefaultChecksResult(result: CommitChecksResult) = when {
-    result.shouldCommit -> DefaultNameChangeListCleaner(project, commitState).use { doCommit(commitState) }
-    result.shouldCloseWindow ->
-      moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
-    else -> Unit
+  override fun performCommit(sessionInfo: CommitSessionInfo) {
+    if (sessionInfo.isVcsCommit) {
+      doCommit(sessionInfo)
+    }
+    else {
+      doCommitCustom(sessionInfo)
+    }
   }
 
-  override fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean =
-    executeCustom(executor, session, commitState.changes, commitState.commitMessage)
+  override fun getBeforeCommitChecksChangelist(): LocalChangeList = commitState.changeList
 
-  override fun processExecuteCustomChecksResult(executor: CommitExecutor, session: CommitSession, result: CommitChecksResult) =
-    when {
-      result.shouldCommit -> doCommitCustom(executor, session)
-      result.shouldCloseWindow ->
-        moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
-      else -> Unit
-    }
-
-  override fun doRunBeforeCommitChecks(checks: Runnable) =
-    PartialChangesUtil.runUnderChangeList(project, commitState.changeList, checks)
-
-  protected open fun doCommit(commitState: ChangeListCommitState) {
+  private fun doCommit(sessionInfo: CommitSessionInfo) {
     LOG.debug("Do actual commit")
 
-    with(object : SingleChangeListCommitter(project, commitState, commitContext, DIALOG_TITLE, isDefaultChangeListFullyIncluded) {
-      override fun afterRefreshChanges() = endExecution { super.afterRefreshChanges() }
-    }) {
-      addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(getCommitEventDispatcher())
-      addResultHandler(resultHandler ?: ShowNotificationCommitResultHandler(this))
-
-      runCommit(DIALOG_TITLE, false)
+    val committer = SingleChangeListCommitter.create(project, commitState, commitContext, DIALOG_TITLE)
+    addCommonResultHandlers(sessionInfo, committer)
+    if (resultHandler != null) {
+      committer.addResultHandler(CommitResultHandlerNotifier(committer, resultHandler))
     }
+    else {
+      committer.addResultHandler(ShowNotificationCommitResultHandler(committer))
+    }
+
+    committer.runCommit(DIALOG_TITLE, false)
   }
 
-  private fun doCommitCustom(executor: CommitExecutor, session: CommitSession) {
-    val cleaner = DefaultNameChangeListCleaner(project, commitState)
+  private fun doCommitCustom(sessionInfo: CommitSessionInfo) {
+    sessionInfo as CommitSessionInfo.Custom
 
-    with(CustomCommitter(project, session, commitState.changes, commitState.commitMessage)) {
-      addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(CommitResultHandler { cleaner.clean() })
-      addResultHandler(getCommitCustomEventDispatcher())
-      resultHandler?.let { addResultHandler(it) }
-      addResultHandler(getEndExecutionHandler())
-
-      runCommit(executor.actionText)
+    val committer = CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)
+    addCommonResultHandlers(sessionInfo, committer)
+    if (resultHandler != null) {
+      committer.addResultHandler(CommitResultHandlerNotifier(committer, resultHandler))
     }
+
+    committer.runCommit(sessionInfo.executor.actionText)
   }
 }
 
-private class DefaultNameChangeListCleaner(val project: Project, commitState: ChangeListCommitState) {
+abstract class CommitChangeListDialogWorkflow(
+  project: Project,
+  initialCommitMessage: String?
+) : AbstractCommitWorkflow(project) {
+
+  abstract val isPartialCommitEnabled: Boolean
+
+  internal val commitMessagePolicy: SingleChangeListCommitMessagePolicy = SingleChangeListCommitMessagePolicy(project, initialCommitMessage)
+
+  lateinit var commitState: ChangeListCommitState
+
+  override fun addCommonResultHandlers(sessionInfo: CommitSessionInfo, committer: Committer) {
+    super.addCommonResultHandlers(sessionInfo, committer)
+    committer.addResultHandler(DefaultNameChangeListCleaner(project, commitState))
+  }
+}
+
+private class DefaultNameChangeListCleaner(val project: Project, commitState: ChangeListCommitState) : CommitterResultHandler {
   private val isChangeListFullyIncluded = commitState.changeList.changes.size == commitState.changes.size
   private val isDefaultNameChangeList = commitState.changeList.hasDefaultName()
   private val listName = commitState.changeList.name
 
-  fun use(block: () -> Unit) {
-    block()
-    clean()
-  }
-
-  fun clean() {
+  override fun onSuccess() {
     if (isDefaultNameChangeList && isChangeListFullyIncluded) {
       ChangeListManager.getInstance(project).editComment(listName, "")
     }

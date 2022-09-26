@@ -16,7 +16,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,7 +110,7 @@ public final class ExceptionUtil {
       public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
         final PsiExpression expr = statement.getException();
         if (expr != null) {
-          addExceptions(result, StreamEx.of(getPreciseThrowTypes(expr)).select(PsiClassType.class).toList());
+          addExceptions(result, ContainerUtil.filterIsInstance(getPreciseThrowTypes(expr), PsiClassType.class));
         }
         super.visitThrowStatement(statement);
       }

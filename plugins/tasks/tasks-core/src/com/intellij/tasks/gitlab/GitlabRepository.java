@@ -326,7 +326,6 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
    * @param task      The local task we are submitting time for.
    * @param timeSpent The amount of time spent on the issue in the format 0h0m.
    * @param comment   The comment to also add to the issue.
-   * @throws Exception
    */
   @Override
   public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {

@@ -8,13 +8,12 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
@@ -127,7 +126,7 @@ public class CommonJavaRefactoringUtil {
   public static String qNameToCreateInSourceRoot(PackageWrapper aPackage, final VirtualFile sourceRoot) throws IncorrectOperationException {
     String targetQName = aPackage.getQualifiedName();
     String sourceRootPackage =
-      ProjectRootManager.getInstance(aPackage.getManager().getProject()).getFileIndex().getPackageNameByDirectory(sourceRoot);
+      PackageIndex.getInstance(aPackage.getManager().getProject()).getPackageNameByDirectory(sourceRoot);
     if (!canCreateInSourceRoot(sourceRootPackage, targetQName)) {
       throw new IncorrectOperationException(
         "Cannot create package '" + targetQName + "' in source folder " + sourceRoot.getPresentableUrl());

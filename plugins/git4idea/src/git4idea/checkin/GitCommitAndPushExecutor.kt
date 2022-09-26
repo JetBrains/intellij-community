@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin
 
+import com.intellij.dvcs.commit.getCommitAndPushActionName
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 import com.intellij.openapi.vcs.changes.CommitSession
+import com.intellij.vcs.commit.CommitWorkflowHandlerState
 import com.intellij.vcs.commit.commitProperty
 import org.jetbrains.annotations.Nls
 
@@ -14,9 +16,13 @@ private val IS_PUSH_AFTER_COMMIT_KEY = Key.create<Boolean>("Git.Commit.IsPushAft
 internal var CommitContext.isPushAfterCommit: Boolean by commitProperty(IS_PUSH_AFTER_COMMIT_KEY)
 
 @Service(Service.Level.PROJECT)
-internal class GitCommitAndPushExecutor : CommitExecutor {
+internal class GitCommitAndPushExecutor : CommitExecutorWithRichDescription {
   @Nls
   override fun getActionText(): String = DvcsBundle.message("action.commit.and.push.text")
+
+  override fun getText(state: CommitWorkflowHandlerState): String {
+    return getCommitAndPushActionName(state)
+  }
 
   override fun useDefaultAction(): Boolean = false
 

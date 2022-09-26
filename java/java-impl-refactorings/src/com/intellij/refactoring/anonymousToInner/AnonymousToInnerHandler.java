@@ -22,7 +22,7 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringActionHandlerOnPsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class AnonymousToInnerHandler implements RefactoringActionHandler {
+public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiElement<PsiAnonymousClass> {
   private static final Logger LOG = Logger.getInstance(AnonymousToInnerHandler.class);
 
   private Project myProject;
@@ -80,6 +80,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     CommonRefactoringUtil.showErrorHint(myProject, editor, message, getRefactoringName(), HelpID.ANONYMOUS_TO_INNER);
   }
 
+  @Override
   public void invoke(final Project project, Editor editor, final PsiAnonymousClass anonymousClass) {
     myProject = project;
 
@@ -116,17 +117,9 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     collectUsedVariables(variableInfoMap, myAnonClass);
     final VariableInfo[] infos = variableInfoMap.values().toArray(new VariableInfo[0]);
     myVariableInfos = infos;
-    Arrays.sort(myVariableInfos, (o1, o2) -> {
-      final PsiType type1 = o1.variable.getType();
-      final PsiType type2 = o2.variable.getType();
-      if (type1 instanceof PsiEllipsisType) {
-        return 1;
-      }
-      if (type2 instanceof PsiEllipsisType) {
-        return -1;
-      }
-      return ArrayUtil.find(infos, o1) > ArrayUtil.find(infos, o2) ? 1 : -1;
-    });
+    Arrays.sort(myVariableInfos,
+                Comparator.comparing((VariableInfo vi) -> vi.variable.getType() instanceof PsiEllipsisType)
+                  .thenComparing(vi -> ArrayUtil.find(infos, vi)));
     if (!showRefactoringDialog()) return;
 
     CommandProcessor.getInstance().executeCommand(

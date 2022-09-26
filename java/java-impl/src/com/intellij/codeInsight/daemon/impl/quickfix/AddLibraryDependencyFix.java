@@ -34,10 +34,10 @@ class AddLibraryDependencyFix extends OrderEntryFix {
   private final DependencyScope myScope;
   private final boolean myExported;
 
-  AddLibraryDependencyFix(PsiReference reference,
-                          Module currentModule,
-                          Map<Library, String> libraries,
-                          DependencyScope scope,
+  AddLibraryDependencyFix(@NotNull PsiReference reference,
+                          @NotNull Module currentModule,
+                          @NotNull Map<Library, String> libraries,
+                          @NotNull DependencyScope scope,
                           boolean exported) {
     super(reference);
     myCurrentModule = currentModule;
@@ -115,8 +115,8 @@ class AddLibraryDependencyFix extends OrderEntryFix {
     return new IntentionPreviewInfo.Html(
       HtmlChunk.text(JavaBundle.message("adds.library.preview",
                                          myLibraries.size(),
-                                         firstItem.getName(),
-                                         NlsMessages.formatAndList(ContainerUtil.map2List(myLibraries.keySet(), library -> "'" + library.getName() + "'")),
+                                         firstItem.getPresentableName(),
+                                         NlsMessages.formatAndList(ContainerUtil.map2List(myLibraries.keySet(), library -> "'" + library.getPresentableName() + "'")),
                                          myCurrentModule.getName(),
                                          refName)));
   }

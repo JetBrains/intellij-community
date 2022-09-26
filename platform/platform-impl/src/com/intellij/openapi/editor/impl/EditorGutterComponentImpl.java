@@ -54,7 +54,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -784,14 +783,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
               g.drawString(s, textOffset,y + myEditor.getAscent());
             } else if (hoverIcon != null && iconOnTheLine == null) {
-              hoverIcon = scaleIcon(hoverIcon);
-              int iconX = offset - hoverIcon.getIconWidth();
-              int iconY = y + (visLinesIterator.getLineHeight() - hoverIcon.getIconHeight()) / 2;
+              Icon icon = scaleIcon(hoverIcon);
+              int iconX = offset - icon.getIconWidth();
+              int iconY = y + (visLinesIterator.getLineHeight() - icon.getIconHeight()) / 2;
               float alpha = JBUI.getFloat("Breakpoint.iconHoverAlpha", 0.5f);
               alpha = alpha > 1f ? 1f : Math.max(alpha, 0f);
-              GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, alpha);
-              hoverIcon.paintIcon(this, g, iconX, iconY);
-              config.restore();
+              GraphicsUtil.paintWithAlpha(g, alpha, () -> icon.paintIcon(this, g, iconX, iconY));
             }
           }
         }
@@ -1293,20 +1290,19 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     int w;
     int x;
     switch (position) {
-      case LEFT:
+      case LEFT -> {
         w = getLeftFreePaintersAreaWidth();
         x = getLeftFreePaintersAreaOffset();
-        break;
-      case RIGHT:
+      }
+      case RIGHT -> {
         w = getRightFreePaintersAreaWidth();
         x = getLineMarkerFreePaintersAreaOffset();
-        break;
-      case CUSTOM:
+      }
+      case CUSTOM -> {
         w = getWidth();
         x = 0;
-        break;
-      default:
-        throw new IllegalArgumentException(position.name());
+      }
+      default -> throw new IllegalArgumentException(position.name());
     }
 
     int height = endY - startY;
@@ -1350,17 +1346,22 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
     for (GutterMark r : row) {
       if (!checkDumbAware(r)) continue;
-      final GutterIconRenderer.Alignment alignment = ((GutterIconRenderer)r).getAlignment();
       final Icon icon = scaleIcon(r.getIcon());
-      if (alignment == GutterIconRenderer.Alignment.LEFT) {
-        processor.process(x, y + getTextAlignmentShift(icon), r);
-        x += icon.getIconWidth() + getGapBetweenIcons();
+      GutterIconRenderer.Alignment alignment = ((GutterIconRenderer)r).getAlignment();
+      if (alignment == GutterIconRenderer.Alignment.LINE_NUMBERS && !isLineNumbersShown()) {
+        alignment = GutterIconRenderer.Alignment.LEFT;
       }
-      else if (alignment == GutterIconRenderer.Alignment.CENTER) {
-        middleCount++;
-        middleSize += icon.getIconWidth() + getGapBetweenIcons();
-      } else if (alignment == GutterIconRenderer.Alignment.LINE_NUMBERS) {
-        processor.process(getLineNumberAreaOffset() + getLineNumberAreaWidth() - icon.getIconWidth(), y + getTextAlignmentShift(icon), r);
+      switch (alignment) {
+        case LEFT -> {
+          processor.process(x, y + getTextAlignmentShift(icon), r);
+          x += icon.getIconWidth() + getGapBetweenIcons();
+        }
+        case CENTER -> {
+          middleCount++;
+          middleSize += icon.getIconWidth() + getGapBetweenIcons();
+        }
+        case LINE_NUMBERS -> processor.process(getLineNumberAreaOffset() + getLineNumberAreaWidth() - icon.getIconWidth(),
+                                               y + getTextAlignmentShift(icon), r);
       }
     }
 
@@ -1533,28 +1534,27 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     // need to have the same sub-device-pixel offset as centerX for the square_with_plus rect to have equal dev width/height
     double centerY = PaintUtil.alignToInt(y + width / 2, g) + strokeOff;
     switch (type) {
-      case COLLAPSED:
-      case COLLAPSED_SINGLE_LINE:
+      case COLLAPSED, COLLAPSED_SINGLE_LINE -> {
         if (y <= clip.y + clip.height && y + height >= clip.y) {
           drawSquareWithPlusOrMinus(g, centerX, centerY, width, true, active, visualLine);
         }
-        break;
-      case EXPANDED_SINGLE_LINE:
+      }
+      case EXPANDED_SINGLE_LINE -> {
         if (y <= clip.y + clip.height && y + height >= clip.y) {
           drawSquareWithPlusOrMinus(g, centerX, centerY, width, false, active, visualLine);
         }
-        break;
-      case EXPANDED_TOP:
+      }
+      case EXPANDED_TOP -> {
         if (y <= clip.y + clip.height && y + height >= clip.y) {
           drawDirectedBox(g, centerX, centerY, width, height, baseHeight, active, visualLine);
         }
-        break;
-      case EXPANDED_BOTTOM:
+      }
+      case EXPANDED_BOTTOM -> {
         y += width;
         if (y - height <= clip.y + clip.height && y >= clip.y) {
           drawDirectedBox(g, centerX, centerY, width, -height, -baseHeight, active, visualLine);
         }
-        break;
+      }
     }
   }
 

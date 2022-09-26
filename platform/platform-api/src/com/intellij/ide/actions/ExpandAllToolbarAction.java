@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @deprecated use {@link ExpandAllAction} instead
  */
+@SuppressWarnings("MissingActionUpdateThread")
 @Deprecated(forRemoval = true)
 public class ExpandAllToolbarAction extends TreeExpandAllActionBase {
   private TreeExpander myTreeExpander;

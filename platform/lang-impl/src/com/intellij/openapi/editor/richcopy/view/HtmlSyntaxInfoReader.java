@@ -68,12 +68,12 @@ public class HtmlSyntaxInfoReader extends AbstractSyntaxAwareReader implements M
   }
 
   protected void appendCloseTags() {
-    myResultBuffer.append("</pre></body></html>");
+    myResultBuffer.append("</pre></div></body></html>");
   }
 
   protected void appendStartTags() {
     myResultBuffer.append("<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\"></head><body>")
-                  .append("<pre style=\"background-color:");
+                  .append("<div style=\"background-color:");
     appendColor(myResultBuffer, myDefaultBackground);
     myResultBuffer.append(";color:");
     appendColor(myResultBuffer, myDefaultForeground);
@@ -91,6 +91,7 @@ public class HtmlSyntaxInfoReader extends AbstractSyntaxAwareReader implements M
     // this is the correction factor
     if (SystemInfo.isMac) fontSize *= 0.75f;
     myResultBuffer.append(String.format("font-size:%.1fpt;\">", fontSize));
+    myResultBuffer.append("<pre>");
   }
 
   protected void appendFontFamilyRule(@NotNull StringBuilder styleBuffer, int fontFamilyId) {
@@ -167,38 +168,41 @@ public class HtmlSyntaxInfoReader extends AbstractSyntaxAwareReader implements M
     for (int i = start; i < end; i++) {
       char c = myRawText.charAt(i);
       switch (c) {
-        case '<': myResultBuffer.append("&lt;"); break;
-        case '>': myResultBuffer.append("&gt;"); break;
-        case '&': myResultBuffer.append("&amp;"); break;
-        case ' ': myResultBuffer.append("&#32;"); break;
-        case '\n': myResultBuffer.append("<br>"); myCurrentColumn = 0; break;
-        case '\t':
+        case '<' -> myResultBuffer.append("&lt;");
+        case '>' -> myResultBuffer.append("&gt;");
+        case '&' -> myResultBuffer.append("&amp;");
+        case ' ' -> myResultBuffer.append("&#32;");
+        case '\n' -> {
+          myResultBuffer.append("<br>");
+          myCurrentColumn = 0;
+        }
+        case '\t' -> {
           int newColumn = (myCurrentColumn / myTabSize + 1) * myTabSize;
           for (; myCurrentColumn < newColumn; myCurrentColumn++) myResultBuffer.append("&#32;");
-          break;
-        default: myResultBuffer.append(c);
+        }
+        default -> myResultBuffer.append(c);
       }
       myCurrentColumn++;
     }
   }
 
   @Override
-  public void handleForeground(int foregroundId) throws Exception {
+  public void handleForeground(int foregroundId) {
     myForeground = foregroundId;
   }
 
   @Override
-  public void handleBackground(int backgroundId) throws Exception {
+  public void handleBackground(int backgroundId) {
     myBackground = backgroundId;
   }
 
   @Override
-  public void handleFont(int fontNameId) throws Exception {
+  public void handleFont(int fontNameId) {
     myFontFamily = fontNameId;
   }
 
   @Override
-  public void handleStyle(int style) throws Exception {
+  public void handleStyle(int style) {
     myBold = (Font.BOLD & style) != 0;
     myItalic = (Font.ITALIC & style) != 0;
   }

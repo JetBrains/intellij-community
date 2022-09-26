@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import junit.framework.TestCase.*
-import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Test
 
 class AddChildrenTest {
@@ -106,5 +105,25 @@ class AddChildrenTest {
     val childFromStore = builder.entities(ChildNullableEntity::class.java).single()
     assertEquals("ChildDataTwo", childFromStore.childData)
     assertEquals(anotherParent, childFromStore.parentEntity)
+  }
+
+  @Test
+  fun `adding new entity via modifyEntity`() {
+    val builder = createEmptyBuilder()
+    val right = builder addEntity RightEntity(MySource)
+
+    builder.modifyEntity(right) {
+      this.children = listOf(MiddleEntity("prop", MySource))
+    }
+  }
+
+  @Test
+  fun `adding new entity via modifyEntity 2`() {
+    val builder = createEmptyBuilder()
+    val right = builder addEntity ParentAbEntity(MySource)
+
+    builder.modifyEntity(right) {
+      this.children = listOf(ChildSecondEntity("data", "Data", MySource))
+    }
   }
 }

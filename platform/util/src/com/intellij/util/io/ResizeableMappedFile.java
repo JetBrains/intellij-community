@@ -311,4 +311,9 @@ public class ResizeableMappedFile implements Forceable, Closeable {
   public void unlockWrite() {
     myStorage.unlockWrite();
   }
+
+  @Override
+  public String toString() {
+    return "ResizeableMappedFile[" + myStorage.toString() + "]";
+  }
 }

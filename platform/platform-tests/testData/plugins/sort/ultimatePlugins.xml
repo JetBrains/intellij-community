@@ -522,23 +522,6 @@
     <depends>com.intellij.modules.java</depends>
     <depends>com.intellij.modules.microservices</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.jboss.seam/META-INF/plugin.xml">
-    <id>-com-intellij-seam-</id>
-    <name>JBoss Seam</name>
-    <depends>-com-intellij-javaee-</depends>
-    <depends>-com-intellij-jsp-</depends>
-    <depends>-com-intellij-jsf-</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.jboss.seam.pageflow/META-INF/plugin.xml">
-    <id>-com-intellij-seam-pageflow-</id>
-    <name>JBoss Seam Pageflow</name>
-    <depends>-com-intellij-seam-</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.jboss.seam.navigation/META-INF/plugin.xml">
-    <id>-com-intellij-seam-pages-</id>
-    <name>JBoss Seam Pages</name>
-    <depends>-com-intellij-seam-</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.yaml/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-yaml-</id>
     <name>YAML</name>
@@ -982,12 +965,6 @@
     <depends>com.intellij.modules.pycharm.professional</depends>
     <depends>-com-jetbrains-plugins-webDeployment-</depends>
     <depends>-org-jetbrains-plugins-remote-run-</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.vaadin/META-INF/plugin.xml">
-    <id>-com-intellij-vaadin-</id>
-    <name>Vaadin</name>
-    <depends>-com-intellij-gwt-</depends>
-    <depends optional="true">-org-jetbrains-idea-maven-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.tasks.timeTracking/META-INF/plugin.xml">
     <id>-com-intellij-tasks-timeTracking-</id>

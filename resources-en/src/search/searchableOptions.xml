@@ -3411,15 +3411,6 @@
     <option name="file" path="ActionManager" hit="Create new Struts Config file" />
     <option name="new" path="ActionManager" hit="Create new Struts Config file" />
     <option name="struts" path="ActionManager" hit="Create new Struts Config file" />
-    <option name="component" path="ActionManager" hit="Create new Vaadin custom component" />
-    <option name="create" path="ActionManager" hit="Create new Vaadin custom component" />
-    <option name="custom" path="ActionManager" hit="Create new Vaadin custom component" />
-    <option name="new" path="ActionManager" hit="Create new Vaadin custom component" />
-    <option name="vaadin" path="ActionManager" hit="Create new Vaadin custom component" />
-    <option name="create" path="ActionManager" hit="Create new Vaadin widget" />
-    <option name="new" path="ActionManager" hit="Create new Vaadin widget" />
-    <option name="vaadin" path="ActionManager" hit="Create new Vaadin widget" />
-    <option name="widget" path="ActionManager" hit="Create new Vaadin widget" />
     <option name="create" path="ActionManager" hit="Create new Web Flow file" />
     <option name="file" path="ActionManager" hit="Create new Web Flow file" />
     <option name="flow" path="ActionManager" hit="Create new Web Flow file" />
@@ -30912,21 +30903,6 @@
     <option name="template" hit="TestUnit Test Template" />
     <option name="test" hit="TestUnit Test Template" />
     <option name="testunit" hit="TestUnit Test Template" />
-    <option name="vaadin6application" hit="Vaadin6Application" />
-    <option name="vaadin6clientwidget" hit="Vaadin6ClientWidget" />
-    <option name="vaadin6widget" hit="Vaadin6Widget" />
-    <option name="gwt" hit="Vaadin6WidgetSet.gwt" />
-    <option name="vaadin6widgetset" hit="Vaadin6WidgetSet.gwt" />
-    <option name="vaadin7clientwidget" hit="Vaadin7ClientWidget" />
-    <option name="vaadin7ui" hit="Vaadin7UI" />
-    <option name="vaadin7widget" hit="Vaadin7Widget" />
-    <option name="vaadin7widgetclientrpc" hit="Vaadin7WidgetClientRpc" />
-    <option name="vaadin7widgetconnector" hit="Vaadin7WidgetConnector" />
-    <option name="vaadin7widgetserverrpc" hit="Vaadin7WidgetServerRpc" />
-    <option name="gwt" hit="Vaadin7WidgetSet.gwt" />
-    <option name="vaadin7widgetset" hit="Vaadin7WidgetSet.gwt" />
-    <option name="vaadin7widgetstate" hit="Vaadin7WidgetState" />
-    <option name="vaadincustomcomponent" hit="VaadinCustomComponent" />
     <option name="stylesheet" hit="XSLT Stylesheet" />
     <option name="xslt" hit="XSLT Stylesheet" />
     <option name="1_2" hit="application.1_2" />

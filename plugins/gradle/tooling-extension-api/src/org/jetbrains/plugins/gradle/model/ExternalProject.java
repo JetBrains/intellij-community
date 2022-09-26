@@ -67,7 +67,6 @@ public interface ExternalProject extends Model, Serializable {
   /**
    * The paths where the artifacts is constructed
    *
-   * @return
    */
   @NotNull
   List<File> getArtifacts();

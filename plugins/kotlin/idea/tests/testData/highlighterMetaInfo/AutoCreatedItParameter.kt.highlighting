@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>test<!>() {
     val <!HIGHLIGHTING("textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>vect<!> = <!HIGHLIGHTING("textAttributesKey='KOTLIN_CONSTRUCTOR'")!>MyIterable<!><<!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>>()
 

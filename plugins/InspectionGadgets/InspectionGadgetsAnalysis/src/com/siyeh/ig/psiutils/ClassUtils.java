@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.openapi.util.Predicates.nonNull;
 
 public final class ClassUtils {
 
@@ -135,11 +136,14 @@ public final class ClassUtils {
     if (aClass == null) {
       return false;
     }
-    if (isImmutableClass(aClass)) return true;
-    return JCiPUtil.isImmutable(aClass, checkDocComment);
+    return isImmutableClass(aClass, checkDocComment);
   }
 
   public static boolean isImmutableClass(@NotNull PsiClass aClass) {
+    return isImmutableClass(aClass, false);
+  }
+
+  private static boolean isImmutableClass(@NotNull PsiClass aClass, boolean checkDocComment) {
     if (aClass.isRecord()) {
       return true;
     }
@@ -148,13 +152,16 @@ public final class ClassUtils {
         (immutableTypes.contains(qualifiedName) || qualifiedName.startsWith("com.google.common.collect.Immutable"))) {
       return true;
     }
+    if (JCiPUtil.isImmutable(aClass, checkDocComment)) {
+      return true;
+    }
 
     return aClass.hasModifierProperty(PsiModifier.FINAL) &&
-           Arrays.stream(aClass.getAllFields())
-             .filter(field -> !field.hasModifierProperty(PsiModifier.STATIC))
-             .allMatch(field -> field.hasModifierProperty(PsiModifier.FINAL) &&
-                                (TypeConversionUtil.isPrimitiveAndNotNull(field.getType()) ||
-                                 immutableTypes.contains(field.getType().getCanonicalText())));
+           ContainerUtil.and(aClass.getAllFields(),
+                             field -> !field.hasModifierProperty(PsiModifier.STATIC) &&
+                                      field.hasModifierProperty(PsiModifier.FINAL) &&
+                                      (TypeConversionUtil.isPrimitiveAndNotNull(field.getType()) ||
+                                       immutableTypes.contains(field.getType().getCanonicalText())));
   }
 
   public static boolean inSamePackage(@Nullable PsiElement element1, @Nullable PsiElement element2) {
@@ -357,7 +364,7 @@ public final class ClassUtils {
     Stream<PsiField> fieldStream = Arrays.stream(aClass.getFields());
 
     StreamEx<PsiField> enclosingClassFields =
-      StreamEx.iterate(aClass.getContainingClass(), Objects::nonNull, c -> c.getContainingClass()).filter(Objects::nonNull)
+      StreamEx.iterate(aClass.getContainingClass(), nonNull(), c -> c.getContainingClass()).filter(nonNull())
               .flatMap(c -> Stream.of(c.getFields()));
     fieldStream = Stream.concat(fieldStream, enclosingClassFields);
 
@@ -366,7 +373,7 @@ public final class ClassUtils {
                                       .filter(innerClass -> innerClass.hasModifierProperty(PsiModifier.STATIC))
                                       .flatMap(innerClass -> Arrays.stream(innerClass.getFields())));
 
-    final List<PsiField> fields = fieldStream.filter(field -> resolveToSingletonField(aClass, field)).limit(2).collect(Collectors.toList());
+    final List<PsiField> fields = fieldStream.filter(field -> resolveToSingletonField(aClass, field)).limit(2).toList();
     return fields.size() == 1 ? fields.get(0) : null;
   }
 

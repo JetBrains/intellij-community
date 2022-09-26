@@ -14,6 +14,7 @@ import com.intellij.debugger.ui.tree.StaticDescriptor;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.TypeComponent;
 
@@ -24,7 +25,7 @@ public class StaticDescriptorImpl extends NodeDescriptorImpl implements StaticDe
 
   public StaticDescriptorImpl(ReferenceType refType) {
     myType = refType;
-    myHasStaticFields = myType.allFields().stream().anyMatch(TypeComponent::isStatic);
+    myHasStaticFields = ContainerUtil.exists(myType.allFields(), TypeComponent::isStatic);
   }
 
   @Override

@@ -18,7 +18,6 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -38,7 +37,7 @@ import javax.swing.tree.TreeSelectionModel
 
 open class StarterLibrariesStep(contextProvider: StarterContextProvider) : ModuleWizardStep() {
   protected val starterContext = contextProvider.starterContext
-  protected val starterSettings: StarterWizardSettings = contextProvider.settings
+  private val starterSettings: StarterWizardSettings = contextProvider.settings
   protected val moduleBuilder: StarterModuleBuilder = contextProvider.moduleBuilder
 
   private val topLevelPanel: BorderLayoutPanel = BorderLayoutPanel()
@@ -157,13 +156,13 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
       }
     }
 
-    TreeSpeedSearch(librariesList, Convertor { treePath: TreePath ->
+    TreeSpeedSearch(librariesList, false) { treePath: TreePath ->
       when (val dataObject = (treePath.lastPathComponent as DefaultMutableTreeNode).userObject) {
         is LibraryCategory -> dataObject.title
         is Library -> dataObject.title
         else -> ""
       }
-    })
+    }
 
     librariesList.selectionModel.addTreeSelectionListener(TreeSelectionListener { e ->
       val path = e.path

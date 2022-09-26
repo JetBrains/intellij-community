@@ -22,8 +22,8 @@ interface XParentEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : XParentEntity, ModifiableWorkspaceEntity<XParentEntity>, ObjBuilder<XParentEntity> {
-    override var parentProperty: String
     override var entitySource: EntitySource
+    override var parentProperty: String
     override var children: List<XChildEntity>
     override var optionalChildren: List<XChildWithOptionalParentEntity>
     override var childChild: List<XChildChildEntity>
@@ -60,8 +60,8 @@ interface XChildEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : XChildEntity, ModifiableWorkspaceEntity<XChildEntity>, ObjBuilder<XChildEntity> {
-    override var childProperty: String
     override var entitySource: EntitySource
+    override var childProperty: String
     override var dataClass: DataClassX?
     override var parentEntity: XParentEntity
     override var childChild: List<XChildChildEntity>
@@ -92,8 +92,8 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : XChildWithOptionalParentEntity, ModifiableWorkspaceEntity<XChildWithOptionalParentEntity>, ObjBuilder<XChildWithOptionalParentEntity> {
-    override var childProperty: String
     override var entitySource: EntitySource
+    override var childProperty: String
     override var optionalParent: XParentEntity?
   }
 
@@ -125,8 +125,8 @@ interface XChildChildEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : XChildChildEntity, ModifiableWorkspaceEntity<XChildChildEntity>, ObjBuilder<XChildChildEntity> {
-    override var parent1: XParentEntity
     override var entitySource: EntitySource
+    override var parent1: XParentEntity
     override var parent2: XChildEntity
   }
 

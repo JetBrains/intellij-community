@@ -663,7 +663,15 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           @org.junit.jupiter.api.BeforeAll
           fun beforeAll(foo: String) { println(foo) }
         }
-      }    
+      }
+      
+      @org.junit.jupiter.api.extension.ExtendWith(TestParameterResolver::class)
+      open class AbstractTest { }
+      
+      class TestImplementation: AbstractTest() {
+          @org.junit.jupiter.api.BeforeEach
+          fun beforeEach(valueBox : String){ }
+      }
       
       @org.junit.jupiter.api.extension.ExtendWith(TestParameterResolver::class)
       annotation class CustomTestAnnotation
@@ -675,7 +683,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           @org.junit.jupiter.api.BeforeAll
           fun beforeAll(foo: String) { println(foo) }
         }
-      }      
+      }
     """.trimIndent())
   }
   fun `test malformed before class method that is non-static`() {
@@ -901,7 +909,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
   fun `test malformed setup highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class C : junit.framework.TestCase() {
-        private fun <warning descr="Method 'setUp' should be a non-private, non-static, have no parameters and be of type void">setUp</warning>(i: Int) { System.out.println(i) }
+        private fun <warning descr="Method 'setUp' should be non-private, non-static, have no parameters and of type void">setUp</warning>(i: Int) { System.out.println(i) }
       }  
     """.trimIndent())
   }
@@ -994,7 +1002,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         private var <warning descr="Field 'x' annotated with '@ClassRule' should be public">x</warning> = SomeTestRule()
       
         @org.junit.ClassRule
-        private var <warning descr="Field 'y' annotated with '@ClassRule' should be public and be of type 'org.junit.rules.TestRule'">y</warning> = 0
+        private var <warning descr="Field 'y' annotated with '@ClassRule' should be public and of type 'org.junit.rules.TestRule'">y</warning> = 0
       }
     """.trimIndent())
   }
@@ -1040,13 +1048,13 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       public class JUnit3TestMethodIsPublicVoidNoArg : junit.framework.TestCase() {
         fun testOne() { }
-        public fun <warning descr="Method 'testTwo' should be a public, non-static, have no parameters and be of type void">testTwo</warning>(): Int { return 2 }
-        public fun <warning descr="Method 'testFour' should be a public, non-static, have no parameters and be of type void">testFour</warning>(i: Int) { println(i) }
+        public fun <warning descr="Method 'testTwo' should be public, non-static, have no parameters and of type void">testTwo</warning>(): Int { return 2 }
+        public fun <warning descr="Method 'testFour' should be public, non-static, have no parameters and of type void">testFour</warning>(i: Int) { println(i) }
         public fun testFive() { }
         private fun testSix(i: Int) { println(i) } //ignore when method doesn't look like test anymore
         companion object {
           @JvmStatic
-          public fun <warning descr="Method 'testThree' should be a public, non-static, have no parameters and be of type void">testThree</warning>() { }
+          public fun <warning descr="Method 'testThree' should be public, non-static, have no parameters and of type void">testThree</warning>() { }
         }
       }
     """.trimIndent())
@@ -1093,7 +1101,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
   fun `test malformed suite highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class Junit3Suite : junit.framework.TestCase() {          
-          fun <warning descr="Method 'suite' should be a non-private, static and have no parameters">suite</warning>() = junit.framework.TestSuite()
+          fun <warning descr="Method 'suite' should be non-private, static and have no parameters">suite</warning>() = junit.framework.TestSuite()
       }
     """.trimIndent())
   }

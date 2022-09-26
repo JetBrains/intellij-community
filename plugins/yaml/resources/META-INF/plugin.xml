@@ -11,8 +11,6 @@
     <plugin id="com.intellij.modules.lang"/>
   </dependencies>
 
-  <depends optional="true" config-file="ml-in-se.xml">com.intellij.searcheverywhere.ml</depends>
-
   <extensions defaultExtensionNs="com.intellij">
     <!-- YAML -->
     <additionalTextAttributes scheme="Default" file="colorSchemes/YAMLDefault.xml"/>

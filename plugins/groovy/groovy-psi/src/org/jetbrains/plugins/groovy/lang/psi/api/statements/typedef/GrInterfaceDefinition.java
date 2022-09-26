@@ -18,8 +18,5 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
 
-/**
- * @autor: Dmitry.Krasilschikov
- */
 public interface GrInterfaceDefinition extends GrTypeDefinition, GrTypeParameterListOwner {
 }

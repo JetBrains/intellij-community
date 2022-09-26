@@ -20,7 +20,6 @@ public interface PostfixTemplateEditor extends Disposable {
    * Creates a template from settings defined in the UI form.
    *
    * @param templateId unique template ID
-   * @param templateName
    * @return created template
    */
   @NotNull

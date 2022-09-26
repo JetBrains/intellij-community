@@ -7,10 +7,7 @@ interface CodeWithMeSessionInfoProvider {
   val hostBuildNumber: String
 
   val compatibleClientUrl: String
-  val compatibleClientName: String
-
-  val compatibleJreUrl: String
-  val compatibleJreName: String
+  val compatibleJreUrl: String?
   val isUnattendedMode: Boolean
 
   // todo: do i need these fields?

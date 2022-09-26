@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.os
 
 import com.intellij.diagnostic.VMOptions
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Version
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
 import com.sun.management.OperatingSystemMXBean
+import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.util.*
@@ -69,7 +70,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartu
 
     result += GC.metric(getGcName())
 
-    // Proper detection implemented only for macOS
+    // proper detection is implemented only for macOS
     if (SystemInfo.isMac) result += RENDERING.metric(getRenderingPipelineName())
 
     result += JVM.metric(
@@ -96,11 +97,12 @@ class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartu
   private fun getPhysicalMemoryAndSwapSize(): Pair<Int, Int> {
     @Suppress("FunctionName") fun GiB(bytes: Long) = (bytes.toDouble() / (1 shl 30)).roundToInt()
     val bean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
-    val physicalMemory = StatisticsUtil.roundToUpperBound(GiB(bean.totalPhysicalMemorySize), intArrayOf(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256))
+    val physicalMemory = StatisticsUtil.roundToUpperBound(GiB(bean.totalMemorySize), intArrayOf(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256))
     val swapSize = StatisticsUtil.roundToPowerOfTwo(min(GiB(bean.totalSwapSpaceSize), physicalMemory))
     return physicalMemory to swapSize
   }
 
+  @Suppress("LocalVariableName")
   private fun getIndexVolumeSizeAndFreeSpace(): Pair<Int, Int>? {
     try {
       val fileStore = Files.getFileStore(PathManager.getIndexRoot())
@@ -111,8 +113,9 @@ class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartu
         return size to freeSpace
       }
     }
+    catch (_: IOException) { }  // missing directory or something
     catch (_: UnsupportedOperationException) { }  // some non-standard FS
-    catch (_: SecurityException) { }  // security manager denies reading of FS attributes
+    catch (_: SecurityException) { }  // the security manager denies reading of FS attributes
     return null
   }
 

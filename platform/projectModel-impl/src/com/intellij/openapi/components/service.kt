@@ -4,7 +4,6 @@ package com.intellij.openapi.components
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.IComponentStoreOwner
 
 /**
  * This is primarily intended to be used by the service implementation. When introducing a new service,
@@ -54,11 +53,4 @@ inline fun <reified T : Any> serviceIfCreated(): T? = ApplicationManager.getAppl
 inline fun <reified T : Any> services(includeLocal: Boolean): List<T> = ApplicationManager.getApplication().getServices(T::class.java, includeLocal)
 
 val ComponentManager.stateStore: IComponentStore
-  get() {
-    return when (this) {
-      is IComponentStoreOwner -> this.componentStore
-      else -> {
-        getService(IComponentStore::class.java)
-      }
-    }
-  }
+  get() = if (this is ComponentStoreOwner) this.componentStore else service()

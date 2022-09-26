@@ -806,22 +806,8 @@ public final class LambdaUtil {
 
   public static PsiCall copyTopLevelCall(@NotNull PsiCall call) {
     if (call instanceof PsiEnumConstant) {
-      PsiClass containingClass = ((PsiEnumConstant)call).getContainingClass();
-      if (containingClass == null) {
-        return null;
-      }
-      String enumName = containingClass.getName();
-      if (enumName == null) {
-        return null;
-      }
-      PsiMethod resolveMethod = call.resolveMethod();
-      if (resolveMethod == null) {
-        return null;
-      }
-      PsiElement contextFile = call.getContainingFile().copy();
-      PsiClass anEnum = (PsiClass)contextFile.add(JavaPsiFacade.getElementFactory(call.getProject()).createEnum(enumName));
-      anEnum.add(resolveMethod);
-      return  (PsiCall)anEnum.add(call);
+      PsiFile contextFile = (PsiFile)call.getContainingFile().copy();
+      return PsiTreeUtil.findSameElementInCopy(call, contextFile);
     }
     PsiElement expressionForType = call;
     while (true) {

@@ -12,9 +12,10 @@ import com.intellij.openapi.ui.Messages.getQuestionIcon
 import com.intellij.openapi.ui.Messages.showOkCancelDialog
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
+import com.intellij.openapi.vcs.changes.ChangesUtil
 
 private sealed class SaveState
 private object SaveDenied : SaveState()
@@ -50,24 +51,26 @@ internal class SaveCommittingDocumentsVetoer : FileDocumentSynchronizationVetoer
       is ConfirmSave -> confirmSave(saveState.project, listOf(document))
       null -> true
     }
+}
 
-  companion object {
-    fun run(project: Project, changes: Collection<Change>, block: () -> Unit) {
-      val confirmSaveState = ConfirmSave(project)
-      val documents = runReadAction { getDocuments(changes).also { setSaveState(it, confirmSaveState) } }
-      try {
-        block()
-      }
-      finally {
-        runReadAction { setSaveState(documents, null) }
-      }
-    }
+fun vetoDocumentSaving(project: Project, changes: Collection<Change>, block: () -> Unit) {
+  vetoDocumentSavingForPaths(project, ChangesUtil.getPaths(changes), block)
+}
+
+fun vetoDocumentSavingForPaths(project: Project, filePaths: Collection<FilePath>, block: () -> Unit) {
+  val confirmSaveState = ConfirmSave(project)
+  val documents = runReadAction { getDocuments(filePaths).also { setSaveState(it, confirmSaveState) } }
+  try {
+    block()
+  }
+  finally {
+    runReadAction { setSaveState(documents, null) }
   }
 }
 
-private fun getDocuments(changes: Collection<Change>): Collection<Document> =
-  changes
-    .mapNotNull { getFilePath(it).virtualFile }
+private fun getDocuments(filePaths: Iterable<FilePath>): List<Document> =
+  filePaths
+    .mapNotNull { it.virtualFile }
     .filterNot { it.fileType.isBinary }
     .mapNotNull { FileDocumentManager.getInstance().getDocument(it) }
     .toList()

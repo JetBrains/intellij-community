@@ -4,6 +4,7 @@ package com.intellij.ide.fileTemplates.actions;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
@@ -43,6 +44,11 @@ public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
     Presentation presentation = e.getPresentation();
     boolean isEnabled = CreateFromTemplateGroup.canCreateFromTemplate(e, myTemplate.get());
     presentation.setEnabledAndVisible(isEnabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @NotNull

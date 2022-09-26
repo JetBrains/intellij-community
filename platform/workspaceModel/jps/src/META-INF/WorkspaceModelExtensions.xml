@@ -10,6 +10,9 @@
     <extensionPoint name="workspaceModel.customModuleComponentSerializer"
                     interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleComponentSerializer"
                     dynamic="true"/>
+    <extensionPoint name="workspaceModel.customFacetRelatedEntitySerializer"
+                    interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomFacetRelatedEntitySerializer"
+                    dynamic="true"/>
     <extensionPoint name="workspaceModel.preUpdateHandler"
                     interface="com.intellij.workspaceModel.ide.WorkspaceModelPreUpdateHandler"
                     dynamic="true"/>
@@ -28,5 +31,10 @@
                  description="Enable locks during artifacts initialization"/>
     <registryKey key="ide.workspace.model.assertions.on.update" defaultValue="false" restartRequired="false"
                  description="Enable workspace model consistency checking after every update"/>
+    <registryKey key="ide.workspace.model.rbs.as.tree" defaultValue="true" restartRequired="false"
+                 description="Enable new algorithm for ReplaceBySource operation"/>
+    <registryKey key="ide.workspace.model.generated.code.for.cache" defaultValue="true" restartRequired="false"
+                 description="Enable new method of workspace model caching"/>
+    <workspaceModel.customFacetRelatedEntitySerializer implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DefaultFacetEntitySerializer" />
   </extensions>
 </idea-plugin>

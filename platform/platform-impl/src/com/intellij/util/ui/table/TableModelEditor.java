@@ -2,6 +2,7 @@
 package com.intellij.util.ui.table;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -248,6 +249,10 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
 
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
           TableUtil.updateScroller(table);
+        }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
         }
       }
     ).createPanel();

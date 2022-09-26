@@ -107,6 +107,10 @@ internal fun convertParentImpl(
 
     if (parent is KtLambdaArgument) {
         parent = parent.parent
+    } 
+    
+    if (parent is KtParameter && parent.ownerFunction == null) {
+        parent = parent.parent
     }
 
     if (parent is KtUserType &&  parent.parent.parent is KtConstructorCalleeExpression) {

@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
@@ -25,8 +26,9 @@ object EventFields {
    * @param regexpRef reference to global regexp, e.g "integer" for "{regexp#integer}"
    */
   @JvmStatic
-  fun StringValidatedByRegexp(@NonNls name: String, @NonNls regexpRef: String): StringEventField =
-    StringEventField.ValidatedByRegexp(name, regexpRef)
+  fun StringValidatedByRegexp(@NonNls name: String, @NonNls regexpRef: String): StringEventField {
+    return StringEventField.ValidatedByRegexp(name, regexpRef)
+  }
 
   /**
    * Creates a field that will be validated by global enum rule
@@ -34,8 +36,9 @@ object EventFields {
    * @param enumRef reference to global enum, e.g "os" for "{enum#os}"
    */
   @JvmStatic
-  fun StringValidatedByEnum(@NonNls name: String, @NonNls enumRef: String): StringEventField =
-    StringEventField.ValidatedByEnum(name, enumRef)
+  fun StringValidatedByEnum(@NonNls name: String, @NonNls enumRef: String): StringEventField {
+    return StringEventField.ValidatedByEnum(name, enumRef)
+  }
 
   /**
    * Creates a field that will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
@@ -46,8 +49,9 @@ object EventFields {
   @kotlin.Deprecated("Please use EventFields.StringValidatedByCustomRule(String, Class<out CustomValidationRule>)",
                      ReplaceWith("EventFields.StringValidatedByCustomRule(name, customValidationRule)"))
   @JvmStatic
-  fun StringValidatedByCustomRule(@NonNls name: String, @NonNls customRuleId: String): StringEventField =
-    StringEventField.ValidatedByCustomRule(name, customRuleId)
+  fun StringValidatedByCustomRule(@NonNls name: String, @NonNls customRuleId: String): StringEventField {
+    return StringEventField.ValidatedByCustomRule(name, customRuleId)
+  }
 
   /**
    * Creates a field that will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
@@ -442,6 +446,18 @@ object EventFields {
 
   @JvmField
   val DurationMs = LongEventField("duration_ms")
+
+  @JvmField
+  val IdeActivityIdField = object : PrimitiveEventField<StructuredIdeActivity>() {
+    override val name: String = "ide_activity_id"
+
+    override fun addData(fuData: FeatureUsageData, value: StructuredIdeActivity) {
+      fuData.addData(name, value.id)
+    }
+
+    override val validationRule: List<String>
+      get() = listOf("{regexp#integer}")
+  }
 
   @JvmField
   val TimeToShowMs = LongEventField("time_to_show")

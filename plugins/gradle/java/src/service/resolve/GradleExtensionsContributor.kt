@@ -11,7 +11,7 @@ import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.service.resolve.staticModel.impl.getStaticPluginModel
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
@@ -105,7 +105,7 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
   }
 
   companion object {
-    private fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> = sequence {
+    fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> = sequence {
       val externalRootProjectPath = place.getRootGradleProjectPath() ?: return@sequence
       val userHomePropertiesFile = getGradleUserHomePropertiesPath()?.parent?.toString()?.getGradlePropertiesFile(place.project)
       if (userHomePropertiesFile != null) {
@@ -124,7 +124,7 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
 
     private fun String.getGradlePropertiesFile(project: Project): PropertiesFile? {
       val file = VfsUtil.findFile(Path.of(this), false)?.findChild(PROPERTIES_FILE_NAME)
-      return file?.let { PsiUtilCore.getPsiFile(project, it) }.castSafelyTo<PropertiesFile>()
+      return file?.let { PsiUtilCore.getPsiFile(project, it) }.asSafely<PropertiesFile>()
     }
 
     private fun createGroovyProperty(aClass: PsiClass,

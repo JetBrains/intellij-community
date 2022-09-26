@@ -16,7 +16,7 @@ open class CodeVisionVisionTextPainter<T>(
   theme: CodeVisionTheme? = null
 ) : ICodeVisionEntryBasePainter<T> {
 
-  val theme = theme ?: CodeVisionTheme()
+  val theme: CodeVisionTheme = theme ?: CodeVisionTheme()
 
   override fun paint(
     editor: Editor,

@@ -65,7 +65,7 @@ final class WinShellIntegration implements Disposable {
   public static final boolean isAvailable;
 
   /**
-   * @returns null if !{@link #isAvailable}
+   * @return null if !{@link #isAvailable}
    */
   @Nullable
   public static WinShellIntegration getInstance() {

@@ -142,6 +142,10 @@ public final class JavaUsageTypeProvider implements UsageTypeProviderEx {
       return UsageType.ANNOTATION;
     }
 
+    if (element.getParent() instanceof PsiTypeElement && element.getParent().getParent() instanceof PsiPattern) {
+      return UsageType.PATTERN;
+    }
+
     if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class, false) != null) return UsageType.CLASS_IMPORT;
     PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(element, PsiReferenceList.class);
     if (referenceList != null) {

@@ -39,14 +39,14 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
   fun addTemplateProperties(vararg properties: Pair<String, Any>) =
     addTemplateProperties(properties.toMap())
 
-  fun addTemplateProperties(properties: Map<String, Any>) {
+  private fun addTemplateProperties(properties: Map<String, Any>) {
     templateProperties.putAll(properties)
   }
 
   fun addFilesToOpen(vararg relativeCanonicalPaths: String) =
     addFilesToOpen(relativeCanonicalPaths.toList())
 
-  fun addFilesToOpen(relativeCanonicalPaths: Iterable<String>) {
+  private fun addFilesToOpen(relativeCanonicalPaths: Iterable<String>) {
     filesToOpen.addAll(relativeCanonicalPaths.map { "$outputDirectory/$it" })
   }
 

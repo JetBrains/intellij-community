@@ -65,21 +65,10 @@ public interface RegExpLanguageHost {
   }
 
   default boolean supportsBoundary(RegExpBoundary boundary) {
-    switch (boundary.getType()) {
-      case UNICODE_EXTENDED_GRAPHEME:
-      case RESET_MATCH:
-        return false;
-      case LINE_START:
-      case LINE_END:
-      case WORD:
-      case NON_WORD:
-      case BEGIN:
-      case END:
-      case END_NO_LINE_TERM:
-      case PREVIOUS_MATCH:
-      default:
-        return true;
-    }
+    return switch (boundary.getType()) {
+      case UNICODE_EXTENDED_GRAPHEME, RESET_MATCH -> false;
+      case LINE_START, LINE_END, WORD, NON_WORD, BEGIN, END, END_NO_LINE_TERM, PREVIOUS_MATCH -> true;
+    };
   }
 
   default boolean supportsLiteralBackspace(RegExpChar aChar) {

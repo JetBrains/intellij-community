@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.idea.fir.completion.test.handlers
 
+import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractBasicCompletionHandlerTest
+import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.jetbrains.kotlin.test.utils.withExtension
 import java.io.File
@@ -11,6 +13,13 @@ abstract class AbstractHighLevelBasicCompletionHandlerTest : AbstractBasicComple
     override val captureExceptions: Boolean = false
 
     override fun isFirPlugin(): Boolean = true
+
+    override fun tearDown() {
+        runAll(
+            { project.invalidateCaches() },
+            { super.tearDown() },
+        )
+    }
 
     override fun handleTestPath(path: String): File =
         IgnoreTests.getFirTestFileIfFirPassing(File(path), IgnoreTests.DIRECTIVES.FIR_COMPARISON, ".after")

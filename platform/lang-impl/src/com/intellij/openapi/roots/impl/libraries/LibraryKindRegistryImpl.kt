@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.libraries
 
 import com.intellij.openapi.application.WriteAction
@@ -16,7 +16,7 @@ internal class LibraryKindRegistryImpl private constructor() : LibraryKindRegist
     //In order to properly fix the problem we should extract all UI-related methods from LibraryType to a separate class and move LibraryType to intellij.platform.projectModel.impl module
     LibraryType.EP_NAME.extensionList
 
-    LibraryType.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<LibraryType<*>?> {
+    LibraryType.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<LibraryType<*>> {
       override fun extensionAdded(extension: LibraryType<*>, pluginDescriptor: PluginDescriptor) {
         WriteAction.run<RuntimeException> {
           LibraryKind.registerKind(extension.kind)

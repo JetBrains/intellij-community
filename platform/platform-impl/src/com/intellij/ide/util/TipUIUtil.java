@@ -18,10 +18,11 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.TextAccessor;
+import com.intellij.ui.icons.LoadIconParameters;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
@@ -208,6 +209,7 @@ public final class TipUIUtil {
 
       Image image = null;
       if (loader == null) {
+        // This case is required only for testing by opening tip from the file (see TipDialog.OpenTipsAction)
         try {
           URL imageUrl = new File(tipsPath, path).toURI().toURL();
           image = loadFromUrl(imageUrl);
@@ -215,17 +217,33 @@ public final class TipUIUtil {
         catch (MalformedURLException e) {
           handleError(e, isStrict);
         }
+        // This case is required only for Startdust Tips of the Day preview
+        if (image == null) {
+          try {
+            URL imageUrl = new URL(null, path);
+            image = loadFromUrl(imageUrl);
+          }
+          catch (MalformedURLException e) {
+            handleError(e, isStrict);
+          }
+        }
       }
       else {
         int flags = USE_SVG | ALLOW_FLOAT_SCALING | USE_CACHE;
-        if (StartupUiUtil.isUnderDarcula()) {
+        boolean isDark = StartupUiUtil.isUnderDarcula();
+        if (isDark) {
           flags |= USE_DARK;
         }
-        image = loadImage(tipsPath + path, Collections.emptyList(), null, loader, flags, ScaleContext.create(), !path.endsWith(".svg"));
+        image = loadImage(tipsPath + path, LoadIconParameters.defaultParameters(isDark),
+                          null, loader, flags, !path.endsWith(".svg"));
       }
 
       if (image != null) {
         Icon icon = new JBImageIcon(image);
+        int maxWidth = TipUiSettings.getImageMaxWidth();
+        if (icon.getIconWidth() > maxWidth) {
+          icon = IconUtil.scale(icon, null, maxWidth * 1f / icon.getIconWidth());
+        }
         icons.put(path, icon);
       }
       else {
@@ -533,9 +551,7 @@ public final class TipUIUtil {
 
       delegate.paintIcon(c, g2d, x, y);
 
-      // TODO: extract color as TipOfTheDay.Image.borderColor key
-      Color color = new JBColor(new Color(0xDFE1E5), new Color(0x393B40));
-      g2d.setPaint(color);
+      g2d.setPaint(TipUiSettings.getImageBorderColor());
       g2d.setStroke(new BasicStroke(2f));
       g2d.draw(clipBounds);
 

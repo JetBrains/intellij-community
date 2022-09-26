@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.diagnostic.LoadingStateUtilKt;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
@@ -141,7 +142,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
     Map<String, String> vars = Map.of("$NAME$", name, "$SCRIPT$", execPath, "$ICON$", iconPath, "$COMMENT$", comment, "$WM_CLASS$", wmClass);
     String content = ExecUtil.loadTemplate(CreateDesktopEntryAction.class.getClassLoader(), "entry.desktop", vars);
     Path entryFile = Paths.get(PathManager.getTempPath(), wmClass + ".desktop");
-    Files.write(entryFile, content.getBytes(StandardCharsets.UTF_8));
+    Files.writeString(entryFile, content);
     return entryFile;
   }
 
@@ -180,7 +181,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
     return new CapturingProcessHandler(cmd) {
       @Override
       public boolean hasPty() {
-        if (ApplicationManager.getApplication() == null) return false;
+        if (!LoadingStateUtilKt.getAreComponentsInitialized()) return false;
         return super.hasPty();
       }
     }.runProcess();

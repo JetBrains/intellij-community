@@ -787,12 +787,9 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   @TestOnly
   public String availableTemplateGroupsToString() {
     ListModel<TemplatesGroup> model = myProjectTypeList.getModel();
-    StringBuilder builder = new StringBuilder();
+    StringJoiner builder = new StringJoiner(", ");
     for (int i = 0; i < model.getSize(); i++) {
-      if (builder.length() > 0) {
-        builder.append(", ");
-      }
-      builder.append(model.getElementAt(i).getName());
+      builder.add(model.getElementAt(i).getName());
     }
     return builder.toString();
   }

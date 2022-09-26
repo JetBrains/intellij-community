@@ -9,7 +9,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.ExtensionPointName
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 @State(name = "PluginFeatureService", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 class PluginFeatureService : SerializablePersistentStateComponent<PluginFeatureService.State>(State()) {
@@ -36,7 +38,7 @@ class PluginFeatureService : SerializablePersistentStateComponent<PluginFeatureS
     idMapping: (T) -> String,
     displayNameMapping: (T) -> String,
   ) {
-    val featureMap = LinkedHashMap(featureMap(featureType))
+    val featureMap = LinkedHashMap<String, FeaturePluginData>()
 
     // fold
     ep.processWithPluginDescriptor { ext, descriptor ->
@@ -48,15 +50,27 @@ class PluginFeatureService : SerializablePersistentStateComponent<PluginFeatureS
       featureMap.put(idMapping(ext), pluginData)
     }
 
+    updateFeatureMapping(featureType, featureMap)
+  }
+
+  @ApiStatus.Experimental
+  fun updateFeatureMapping(
+    featureType: String,
+    featureMap: Map<String, FeaturePluginData>,
+  ) {
     updateState { oldState ->
-      State(oldState.features + (featureType to FeaturePluginList(featureMap)))
+      val oldFeatures = oldState.features
+      val newFeatureMap = LinkedHashMap(oldFeatures.getFeatureMap(featureType) ?: emptyMap()) +
+                          featureMap
+
+      State(oldFeatures + (featureType to FeaturePluginList(newFeatureMap)))
     }
   }
 
   fun getPluginForFeature(
     featureType: String,
     implementationName: String,
-  ): FeaturePluginData? = featureMap(featureType).get(implementationName)
+  ): FeaturePluginData? = state.features.getFeatureMap(featureType)?.get(implementationName)
 
-  private fun featureMap(featureType: String) = state.features.get(featureType)?.featureMap ?: emptyMap()
+  private fun Map<String, FeaturePluginList>.getFeatureMap(featureType: String) = get(featureType)?.featureMap
 }

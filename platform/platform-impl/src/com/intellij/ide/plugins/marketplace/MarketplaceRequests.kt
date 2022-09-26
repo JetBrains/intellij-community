@@ -10,6 +10,8 @@ import com.intellij.ide.plugins.auth.PluginRepositoryAuthService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -77,8 +79,9 @@ class MarketplaceRequests : PluginInfoProvider {
     fun loadLastCompatiblePluginDescriptors(
       pluginIds: Set<PluginId>,
       buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false
     ): List<PluginNode> {
-      return getLastCompatiblePluginUpdate(pluginIds, buildNumber)
+      return getLastCompatiblePluginUpdate(pluginIds, buildNumber, throwExceptions)
         .map { loadPluginDescriptor(it.pluginId, it, null) }
     }
 
@@ -89,6 +92,7 @@ class MarketplaceRequests : PluginInfoProvider {
     fun getLastCompatiblePluginUpdate(
       ids: Set<PluginId>,
       buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false
     ): List<IdeCompatibleUpdate> {
       try {
         if (ids.isEmpty()) {
@@ -96,14 +100,15 @@ class MarketplaceRequests : PluginInfoProvider {
         }
 
         val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(ids, buildNumber))
-        return HttpRequests
-          .post(Urls.newFromEncoded(compatibleUpdateUrl).toExternalForm(), HttpRequests.JSON_CONTENT_TYPE)
-          .productNameAsUserAgent()
-          .throwStatusCodeException(false)
-          .connect {
+        return HttpRequests.post(Urls.newFromEncoded(compatibleUpdateUrl).toExternalForm(), HttpRequests.JSON_CONTENT_TYPE).run {
+          productNameAsUserAgent()
+          throwStatusCodeException(throwExceptions)
+          connect {
             it.write(data)
             objectMapper.readValue(it.inputStream, object : TypeReference<List<IdeCompatibleUpdate>>() {})
           }
+        }
+
       }
       catch (e: Exception) {
         LOG.infoOrDebug("Can not get compatible updates from Marketplace", e)
@@ -149,11 +154,9 @@ class MarketplaceRequests : PluginInfoProvider {
           if (eTag != null) {
             connection.setRequestProperty("If-None-Match", eTag)
           }
-          if (ApplicationManager.getApplication() != null) {
-            serviceOrNull<PluginRepositoryAuthService>()
-              ?.connectionTuner
-              ?.tune(connection)
-          }
+          serviceIfCreated<PluginRepositoryAuthService>()
+            ?.connectionTuner
+            ?.tune(connection)
         }
         .productNameAsUserAgent()
         .connect { request ->
@@ -410,17 +413,6 @@ class MarketplaceRequests : PluginInfoProvider {
     }
   }
 
-  @Deprecated("Please use `PluginId`", replaceWith = ReplaceWith("getLastCompatiblePluginUpdate(PluginId.get(id), buildNumber, indicator)"))
-  @ApiStatus.ScheduledForRemoval
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
-  @JvmOverloads
-  fun getLastCompatiblePluginUpdate(
-    id: String,
-    buildNumber: BuildNumber? = null,
-    indicator: ProgressIndicator? = null,
-  ): PluginNode? = getLastCompatiblePluginUpdate(PluginId.getId(id), buildNumber, indicator)
-
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   @JvmOverloads
@@ -524,7 +516,7 @@ class MarketplaceRequests : PluginInfoProvider {
  */
 fun RequestBuilder.setHeadersViaTuner(): RequestBuilder {
   return ApplicationManager.getApplication()
-           ?.getService(PluginRepositoryAuthService::class.java)
+           ?.getServiceIfCreated(PluginRepositoryAuthService::class.java)
            ?.connectionTuner
            ?.let(::tuner)
          ?: this

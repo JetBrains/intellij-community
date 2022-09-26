@@ -3,14 +3,15 @@ package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.openapi.util.ClearableLazyValue.createAtomic;
 import static com.intellij.openapi.util.NlsContexts.Label;
 
 /**
@@ -18,22 +19,34 @@ import static com.intellij.openapi.util.NlsContexts.Label;
  * Contexts are available for the user in the Live Template management UI.
  */
 public abstract class TemplateContextType {
-  public static final ExtensionPointName<TemplateContextType> EP_NAME = new ExtensionPointName<>("com.intellij.liveTemplateContext");
+  String myContextId;
+  ClearableLazyValue<@Nullable TemplateContextType> myBaseContextType;
 
-  private final @NotNull String myContextId;
   private final @NotNull @Label String myPresentableName;
-  private final TemplateContextTypeCache myBaseContextType;
 
+  protected TemplateContextType(@Label @NotNull String presentableName) {
+    myPresentableName = presentableName;
+  }
+
+  /**
+   * @deprecated Set contextId in plugin.xml instead
+   */
+  @Deprecated
   protected TemplateContextType(@NotNull String id, @Label @NotNull String presentableName) {
     this(id, presentableName, EverywhereContextType.class);
   }
 
+  /**
+   * @deprecated Set contextId and baseContextId in plugin.xml instead
+   */
+  @Deprecated
   protected TemplateContextType(@NotNull String id,
                                 @Label @NotNull String presentableName,
                                 @Nullable Class<? extends TemplateContextType> baseContextType) {
     myContextId = id;
     myPresentableName = presentableName;
-    myBaseContextType = new TemplateContextTypeCache(baseContextType);
+    Class<? extends TemplateContextType> actualBaseClass = baseContextType != null ? baseContextType : EverywhereContextType.class;
+    myBaseContextType = createAtomic(() -> LiveTemplateContextService.getInstance().getTemplateContextType(actualBaseClass));
   }
 
   /**
@@ -48,7 +61,10 @@ public abstract class TemplateContextType {
    * @return unique ID to be used on configuration files to flag if this context is enabled for particular template
    */
   @NotNull
-  public String getContextId() {
+  public final String getContextId() {
+    if (myContextId == null) {
+      throw new AssertionError("contextId must be set for liveTemplateContext " + this);
+    }
     return myContextId;
   }
 
@@ -93,14 +109,15 @@ public abstract class TemplateContextType {
    *   enabled for the template.</li>
    * </ol>
    */
-  @Nullable
-  public TemplateContextType getBaseContextType() {
-    return myBaseContextType.getValue();
+  public @Nullable TemplateContextType getBaseContextType() {
+    return myBaseContextType != null ? myBaseContextType.getValue() : null;
   }
 
   @ApiStatus.Internal
-  public void clearCachedBaseContextType() {
-    myBaseContextType.drop();
+  void clearCachedBaseContextType() {
+    if (myBaseContextType != null) {
+      myBaseContextType.drop();
+    }
   }
 
   /**
@@ -109,28 +126,5 @@ public abstract class TemplateContextType {
    */
   public Document createDocument(CharSequence text, Project project) {
     return EditorFactory.getInstance().createDocument(text);
-  }
-
-  private static class TemplateContextTypeCache {
-    private final @Nullable Class<? extends TemplateContextType> myBaseContextType;
-    private boolean myComputed;
-    private @Nullable TemplateContextType myValue;
-
-    private TemplateContextTypeCache(@Nullable Class<? extends TemplateContextType> baseContextType) {
-      myBaseContextType = baseContextType;
-    }
-
-    private synchronized @Nullable TemplateContextType getValue() {
-      if (!myComputed) {
-        myValue = myBaseContextType == null ? null : EP_NAME.findExtension(myBaseContextType);
-        myComputed = true;
-      }
-      return myValue;
-    }
-
-    private synchronized void drop() {
-      myComputed = false;
-      myValue = null;
-    }
   }
 }

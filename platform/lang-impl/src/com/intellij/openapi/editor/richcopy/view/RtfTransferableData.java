@@ -134,16 +134,15 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
         }
 
         switch (c) {
-          case '\t':
+          case '\t' -> {
             myBuffer.append(TAB);
             continue;
-          case '\n':
+          }
+          case '\n' -> {
             myBuffer.append(NEW_LINE);
             continue;
-          case '\\':
-          case '{':
-          case '}':
-            myBuffer.append('\\');
+          }
+          case '\\', '{', '}' -> myBuffer.append('\\');
         }
         myBuffer.append(c);
       }

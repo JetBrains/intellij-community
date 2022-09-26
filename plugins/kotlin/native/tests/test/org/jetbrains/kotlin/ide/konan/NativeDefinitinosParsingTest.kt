@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.ide.konan
 
 import com.intellij.testFramework.ParsingTestCase
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 
 class NativeDefinitionsParsingTest : ParsingTestCase("", "def", NativeDefinitionsParserDefinition()) {

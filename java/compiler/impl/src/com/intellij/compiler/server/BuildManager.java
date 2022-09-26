@@ -3,7 +3,6 @@ package com.intellij.compiler.server;
 
 import com.intellij.DynamicBundle;
 import com.intellij.ProjectTopics;
-import com.intellij.application.options.RegistryManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
@@ -62,6 +61,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -104,6 +104,8 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.ThreadLocalRandom;
+import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -511,14 +513,6 @@ public final class BuildManager implements Disposable {
         return;
       }
       synchronized (myProjectDataMap) {
-        //if (IS_UNIT_TEST_MODE) {
-        //  if (notifyDeletion) {
-        //    LOG.info("Registering deleted paths: " + filtered);
-        //  }
-        //  else {
-        //    LOG.info("Registering changed paths: " + filtered);
-        //  }
-        //}
         for (Map.Entry<String, ProjectData> entry : myProjectDataMap.entrySet()) {
           final ProjectData data = entry.getValue();
           if (notifyDeletion) {
@@ -747,15 +741,18 @@ public final class BuildManager implements Disposable {
       return openProjects.get(0);
     }
 
-    Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    if (window == null) {
-      window = ComponentUtil.getActiveWindow();
-    }
-
-    final Component comp = ComponentUtil.findUltimateParent(window);
     Project project = null;
-    if (comp instanceof IdeFrame) {
-      project = ((IdeFrame)comp).getProject();
+    if (!GraphicsEnvironment.isHeadless()) {
+      Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      if (window == null) {
+        window = ComponentUtil.getActiveWindow();
+      }
+
+      final Component comp = ComponentUtil.findUltimateParent(window);
+      project = null;
+      if (comp instanceof IdeFrame) {
+        project = ((IdeFrame)comp).getProject();
+      }
     }
 
     return isValidProject(project)? project : null;
@@ -1110,7 +1107,7 @@ public final class BuildManager implements Disposable {
   }
 
   public static @NotNull Pair<Sdk, JavaSdkVersion> getBuildProcessRuntimeSdk(@NotNull Project project) {
-    return getRuntimeSdk(project, 8);
+    return getRuntimeSdk(project, 11);
   }
 
   public static @NotNull Pair<Sdk, JavaSdkVersion> getJavacRuntimeSdk(@NotNull Project project) {
@@ -1139,15 +1136,17 @@ public final class BuildManager implements Disposable {
     if (configuration.getJavacCompiler().equals(configuration.getDefaultCompiler()) && JavacConfiguration.getOptions(project, JavacConfiguration.class).PREFER_TARGET_JDK_COMPILER) {
       // for javac, if compiler from associated SDK instead of cross-compilation is preferred, use a different policy:
       // select the most frequently used jdk from the sdks that are associated with the project, but not older than <oldestPossibleVersion>
-      // this policy attempts to compile as much modules as possible without spawning a separate javac process
+      // this policy attempts to compile as many modules as possible without spawning a separate javac process
 
-      final List<Pair<Sdk, JavaSdkVersion>> sortedSdks = candidates.entrySet().stream()
-        .sorted(Map.Entry.<Sdk, Integer>comparingByValue().reversed())
-        .map(entry -> Pair.create(entry.getKey(), JavaVersion.tryParse(entry.getKey().getVersionString())))
-        .filter(p -> p.second != null && p.second.isAtLeast(oldestPossibleVersion))
-        .map(p -> Pair.create(p.first, JavaSdkVersion.fromJavaVersion(p.second)))
-        .filter(p -> p.second != null)
-        .collect(Collectors.toList());
+      final List<Pair<Sdk, JavaSdkVersion>> sortedSdks = EntryStream.of(candidates)
+        .reverseSorted(Map.Entry.comparingByValue())
+        .keys()
+        .mapToEntry(sdk -> JavaVersion.tryParse(sdk.getVersionString()))
+        .filterValues(version -> version != null && version.isAtLeast(oldestPossibleVersion))
+        .mapValues(JavaSdkVersion::fromJavaVersion)
+        .nonNullValues()
+        .mapKeyValue(Pair::create)
+        .toList();
 
       if (!sortedSdks.isEmpty()) {
         // first try to find most used JDK of version 9 and newer => JRT FS support will be needed
@@ -1157,11 +1156,11 @@ public final class BuildManager implements Disposable {
     }
 
     // now select the latest version from the sdks that are used in the project, but not older than <oldestPossibleVersion>
-    return candidates.keySet().stream()
-      .map(sdk -> Pair.create(sdk, JavaVersion.tryParse(sdk.getVersionString())))
-      .filter(p -> p.second != null && p.second.isAtLeast(oldestPossibleVersion))
-      .max(Pair.comparingBySecond())
-      .map(p -> Pair.create(p.first, JavaSdkVersion.fromJavaVersion(p.second)))
+    return StreamEx.ofKeys(candidates)
+      .mapToEntry(sdk -> JavaVersion.tryParse(sdk.getVersionString()))
+      .filterValues(version -> version != null && version.isAtLeast(oldestPossibleVersion))
+      .max(Map.Entry.comparingByValue())
+      .map(p -> Pair.create(p.getKey(), JavaSdkVersion.fromJavaVersion(p.getValue())))
       .filter(p -> p.second != null)
       .orElseGet(() -> {
         Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();

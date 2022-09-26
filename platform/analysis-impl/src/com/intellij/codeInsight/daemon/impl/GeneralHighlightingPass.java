@@ -391,7 +391,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       holder.clear();
 
       // include infos which we got while visiting nested elements with the same range
-      while (!nestedRange.empty() && TextRange.contains(elementRange, nestedRange.peek())) {
+      while (!nestedRange.empty() && TextRangeScalarUtil.contains(elementRange, nestedRange.peek())) {
         long oldRange = nestedRange.pop();
         List<HighlightInfo> oldInfos = nestedInfos.pop();
         if (elementRange == oldRange) {
@@ -500,7 +500,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     PsiTodoSearchHelper helper = PsiTodoSearchHelper.getInstance(file.getProject());
     if (helper == null || !shouldHighlightTodos(helper, file)) return;
     TodoItem[] todoItems = helper.findTodoItems(file, startOffset, endOffset);
-    if (todoItems.length == 0) return;
 
     for (TodoItem todoItem : todoItems) {
       ProgressManager.checkCanceled();

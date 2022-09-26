@@ -115,7 +115,7 @@ class JdkInstaller : JdkInstallerBase() {
     return defaultInstallDir()
   }
 
-  fun defaultInstallDir(wslDistribution: WSLDistribution?) : Path {
+  private fun defaultInstallDir(wslDistribution: WSLDistribution?) : Path {
     wslDistribution?.let { dist ->
       dist.userHome?.let { home ->
         return Paths.get(dist.getWindowsPath("$home/.jdks"))
@@ -373,7 +373,7 @@ abstract class JdkInstallerBase {
     }
   }
 
-  fun findJdkItemForInstalledJdk(jdkPath: Path?): JdkItem? {
+  private fun findJdkItemForInstalledJdk(jdkPath: Path?): JdkItem? {
     try {
       if (jdkPath == null) return null
       if (!jdkPath.isDirectory()) return null
@@ -524,7 +524,7 @@ class JdkInstallerStateEntry : BaseState() {
   var url by string()
   var sha256 by string()
   var installDir by string()
-  var javaHomeDir by string()
+  private var javaHomeDir by string()
 
   fun copyForm(item: JdkItem, targetPath: Path) {
     fullText = item.fullPresentationText

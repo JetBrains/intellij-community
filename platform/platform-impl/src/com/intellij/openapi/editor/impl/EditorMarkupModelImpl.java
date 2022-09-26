@@ -138,7 +138,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private int myCurrentHintAnchorY;
   private boolean myKeepHint;
 
-  private final ActionToolbar statusToolbar;
+  private final ActionToolbarImpl statusToolbar;
   private boolean showToolbar;
   private boolean trafficLightVisible;
   private final ComponentListener toolbarComponentListener;
@@ -236,17 +236,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
           }
         };
 
-        actionButton.setLook(editorButtonLook);
+        applyToolbarLook(look, presentation, actionButton);
         return actionButton;
-      }
-
-      @Override
-      protected @NotNull JComponent createCustomComponent(@NotNull CustomComponentAction action, @NotNull Presentation presentation) {
-        JComponent component = super.createCustomComponent(action, presentation);
-        if (component instanceof ActionButton) {
-          ((ActionButton)component).setLook(editorButtonLook);
-        }
-        return component;
       }
 
       @Override
@@ -272,6 +263,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     };
 
     statusToolbar.setMiniMode(true);
+    statusToolbar.setCustomButtonLook(editorButtonLook);
     toolbarComponentListener = new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent event) {

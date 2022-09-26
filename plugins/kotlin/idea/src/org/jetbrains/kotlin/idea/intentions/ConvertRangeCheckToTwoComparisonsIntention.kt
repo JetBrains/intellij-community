@@ -4,9 +4,14 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
+import org.jetbrains.kotlin.idea.util.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.calls.util.getType
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ConvertRangeCheckToTwoComparisonsIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
@@ -15,24 +20,30 @@ class ConvertRangeCheckToTwoComparisonsIntention : SelfTargetingOffsetIndependen
     private fun KtExpression?.isSimple() = this is KtConstantExpression || this is KtNameReferenceExpression
 
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
-        if (element.operationToken != KtTokens.IN_KEYWORD) return
-        val rangeExpression = element.right as? KtBinaryExpression ?: return
-        val min = rangeExpression.left ?: return
-        val arg = element.left ?: return
-        val max = rangeExpression.right ?: return
-        val comparisonsExpression = KtPsiFactory(element).createExpressionByPattern("$0 <= $1 && $1 <= $2", min, arg, max)
-        element.replace(comparisonsExpression)
+        element.replace(convertToComparison(element)?.value ?: return)
     }
 
-    override fun isApplicableTo(element: KtBinaryExpression): Boolean {
-        if (element.operationToken != KtTokens.IN_KEYWORD) return false
+    override fun isApplicableTo(element: KtBinaryExpression) = convertToComparison(element) != null
 
+    private fun convertToComparison(element: KtBinaryExpression): Lazy<KtExpression>? {
+        if (element.operationToken != KtTokens.IN_KEYWORD) return null
         // ignore for-loop. for(x in 1..2) should not be convert to for(1<=x && x<=2)
-        if (element.parent is KtForExpression) return false
+        if (element.parent is KtForExpression) return null
+        val rangeExpression = element.right ?: return null
 
-        val rangeExpression = element.right as? KtBinaryExpression ?: return false
-        if (rangeExpression.operationToken != KtTokens.RANGE) return false
+        val arg = element.left ?: return null
+        val (left, right) = rangeExpression.getArguments() ?: return null
+        val context = lazy { rangeExpression.analyze(BodyResolveMode.PARTIAL) }
+        if (!arg.isSimple() || left?.isSimple() != true || right?.isSimple() != true ||
+            setOf(arg.getType(context.value), left.getType(context.value), right.getType(context.value)).size != 1) return null
 
-        return element.left.isSimple() && rangeExpression.left.isSimple() && rangeExpression.right.isSimple()
+        val pattern = when (rangeExpression.getRangeBinaryExpressionType(context)) {
+            RANGE_TO -> "$0 <= $1 && $1 <= $2"
+            UNTIL, RANGE_UNTIL -> "$0 <= $1 && $1 < $2"
+            DOWN_TO -> "$0 >= $1 && $1 >= $2"
+            null -> return null
+        }
+
+        return lazy { KtPsiFactory(element).createExpressionByPattern(pattern, left, arg, right, reformat = false) }
     }
 }

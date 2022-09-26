@@ -3,6 +3,7 @@ package com.intellij.ui.components;
 
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBFont;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.components.JBComponent;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,11 @@ public class JBPanel<T extends JBPanel> extends JPanel implements JBComponent<T>
 
   public JBPanel() {
     super();
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   @Override

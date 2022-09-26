@@ -94,7 +94,7 @@ public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsT
 
     Future<?> f4 = service.submit((Runnable)() -> log.add(new LogInfo(0)));
 
-    assertTrue(f.stream().noneMatch(Future::isDone));
+    assertFalse(ContainerUtil.exists(f, Future::isDone));
 
     TimeoutUtil.sleep(delay/2);
     Stream<Pair<? extends ScheduledFuture<?>, Boolean>> done = f.stream().map(f1 -> Pair.create(f1, f1.isDone()));

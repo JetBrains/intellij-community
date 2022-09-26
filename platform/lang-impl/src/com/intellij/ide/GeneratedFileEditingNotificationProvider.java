@@ -28,7 +28,7 @@ public class GeneratedFileEditingNotificationProvider extends EditorNotification
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
     if (!GeneratedSourceFileChangeTracker.getInstance(project).isEditedGeneratedFile(file)) return null;
 
-    EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
+    EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning);
     panel.setText(getText(file, project));
     return panel;
   }

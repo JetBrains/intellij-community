@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test
 
@@ -18,6 +18,7 @@ import java.io.PrintStream
 import java.lang.ref.SoftReference
 import java.net.URLClassLoader
 import java.nio.charset.StandardCharsets
+import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlin.reflect.KClass
@@ -165,7 +166,7 @@ class KotlinCompilerStandalone @JvmOverloads constructor(
             compileKotlin()
         }
 
-        val copyFun = if (target.extension.toLowerCase() == "jar") ::copyToJar else ::copyToDirectory
+        val copyFun = if (target.extension.lowercase(Locale.getDefault()) == "jar") ::copyToJar else ::copyToDirectory
         copyFun(compilerTargets, target)
 
         compilerTargets.forEach { it.deleteRecursively() }
@@ -188,7 +189,7 @@ class KotlinCompilerStandalone @JvmOverloads constructor(
 
         args += "-no-stdlib"
 
-        if (files.none { it.extension.toLowerCase() == "kts" }) {
+        if (files.none { it.extension.lowercase(Locale.getDefault()) == "kts" }) {
             args += "-Xdisable-default-scripting-plugin"
         }
 

@@ -28,7 +28,6 @@ public final class ChangesViewWorkflowManager implements Disposable {
 
   @NotNull private final Project myProject;
 
-  @Nullable private ChangesViewPanel myChangesPanel;
   @Nullable private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
 
   private boolean myInitialized = false;
@@ -42,29 +41,20 @@ public final class ChangesViewWorkflowManager implements Disposable {
     myProject = project;
 
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
-    CommitModeManager.subscribeOnCommitModeChange(busConnection, () -> updateCommitWorkflow());
-    ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflow(), ModalityState.NON_MODAL, myProject.getDisposed());
-  }
-
-  @NotNull
-  @RequiresEdt
-  ChangesViewPanel getChangesPanel() {
-    if (myChangesPanel == null) {
-      myChangesPanel = new ChangesViewPanel(myProject);
-    }
-    return myChangesPanel;
+    CommitModeManager.subscribeOnCommitModeChange(busConnection, () -> updateCommitWorkflowHandler());
+    ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflowHandler(), ModalityState.NON_MODAL, myProject.getDisposed());
   }
 
   @Nullable
   public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
     if (ApplicationManager.getApplication().isDispatchThread() && !myInitialized) {
-      updateCommitWorkflow();
+      updateCommitWorkflowHandler();
     }
     return myCommitWorkflowHandler;
   }
 
   @RequiresEdt
-  private void updateCommitWorkflow() {
+  private void updateCommitWorkflowHandler() {
     myInitialized = true;
 
     boolean isNonModal = CommitModeManager.getInstance(myProject).getCurrentCommitMode() instanceof CommitMode.NonModalCommitMode;
@@ -72,7 +62,8 @@ public final class ChangesViewWorkflowManager implements Disposable {
       if (myCommitWorkflowHandler == null) {
         Activity activity = StartUpMeasurer.startActivity("ChangesViewWorkflowManager initialization", ActivityCategory.DEFAULT);
 
-        ChangesViewPanel changesPanel = getChangesPanel(); // can be reused between workflow instances -> should clean up after ourselves
+        // ChangesViewPanel can be reused between workflow instances -> should clean up after ourselves
+        ChangesViewPanel changesPanel = ((ChangesViewManager)ChangesViewManager.getInstance(myProject)).initChangesPanel();
         ChangesViewCommitWorkflow workflow = new ChangesViewCommitWorkflow(myProject);
         ChangesViewCommitPanel commitPanel = new ChangesViewCommitPanel(myProject, changesPanel);
         myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(workflow, commitPanel);

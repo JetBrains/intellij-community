@@ -57,6 +57,7 @@ public class MavenImportingSettingsForm {
   private JCheckBox myAutoDetectCompilerCheckBox;
 
   private final ComponentValidator myImporterJdkValidator;
+  private volatile boolean myMuteJdkValidation = false;
 
   public MavenImportingSettingsForm(Project project, @NotNull Disposable disposable) {
     myJdkForImporterComboBox.setProject(project);
@@ -122,9 +123,9 @@ public class MavenImportingSettingsForm {
   }
 
   public void getData(@NotNull MavenImportingSettings data) {
-    if (!"true".equals(System.getProperty("maven.import.to.workspace.model"))) { // enabled system property should not affect user settings
+    //if (!"true".equals(System.getProperty("maven.import.to.workspace.model"))) { // enabled system property should not affect user settings
       data.setWorkspaceImportEnabled(myWorkspaceImportCheckBox.isSelected());
-    }
+    //}
 
     data.setLookForNested(mySearchRecursivelyCheckBox.isSelected());
     LookForNestedToggleAction.setSelected(mySearchRecursivelyCheckBox.isSelected());
@@ -154,6 +155,7 @@ public class MavenImportingSettingsForm {
   public void setData(MavenImportingSettings data, @Nullable Project project) {
     mySearchRecursivelyCheckBox.setSelected(LookForNestedToggleAction.isSelected());
 
+    /*
     if ("true".equals(System.getProperty("maven.import.to.workspace.model"))) {
       myWorkspaceImportCheckBox.setSelected(true);
       myWorkspaceImportCheckBox.setEnabled(false);
@@ -161,8 +163,9 @@ public class MavenImportingSettingsForm {
       myWorkspaceImportCheckBox.setText(myWorkspaceImportCheckBox.getText() + " - enabled since '-Dmaven.import.to.workspace.model=true'");
     }
     else {
+    */
       myWorkspaceImportCheckBox.setSelected(data.isWorkspaceImportEnabled());
-    }
+    //}
 
     mySeparateModulesDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));
     mySeparateModulesDirChooser.setText(data.getDedicatedModuleDir());
@@ -193,10 +196,21 @@ public class MavenImportingSettingsForm {
     myDependencyTypes.setText(data.getDependencyTypes());
 
     myVMOptionsForImporter.setText(data.getVmOptionsForImporter());
-    myJdkForImporterComboBox.refreshData(data.getJdkForImporter());
+    skipValidationDuring(() -> myJdkForImporterComboBox.refreshData(data.getJdkForImporter()));
 
     updateImportControls();
     updateModuleDirControls();
+  }
+
+
+  private void skipValidationDuring(Runnable r) {
+    myMuteJdkValidation = true;
+    try {
+      r.run();
+    } finally {
+      myMuteJdkValidation = false;
+      validateImporterJDK();
+    }
   }
 
   private static boolean isCurrentlyStoredExternally(@Nullable Project project) {
@@ -222,6 +236,9 @@ public class MavenImportingSettingsForm {
   }
 
   private void validateImporterJDK() {
+    if (myMuteJdkValidation) {
+      return;
+    }
     myImporterJdkValidator.revalidate();
     if (myImporterJdkValidator.getValidationInfo() == null) {
       myImporterJdkWarning.setVisible(false);

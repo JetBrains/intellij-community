@@ -16,10 +16,6 @@ Supports Maven and Gradle projects.
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider"
                         dynamic="true"/>
 
-        <extensionPoint qualifiedName="com.intellij.packagesearch.dependenciesToolwindowTabProvider"
-                        interface="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.DependenciesToolwindowTabProvider"
-                        dynamic="true"/>
-
         <extensionPoint qualifiedName="com.intellij.packagesearch.coroutineProjectModuleOperationProvider"
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider"
                         dynamic="true"/>
@@ -67,6 +63,7 @@ Supports Maven and Gradle projects.
     </content>
     <dependencies>
         <plugin id="com.intellij.java"/>
+        <plugin id="org.jetbrains.idea.reposearch"/>
     </dependencies>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -83,10 +80,10 @@ Supports Maven and Gradle projects.
         <packagesearch.flowModuleChangesSignalProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.extensibility.ExternalProjectSignalProvider"/>
 
-        <packagesearch.dependenciesToolwindowTabProvider
+        <dependenciesToolWindow.tabProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackagesListPanelProvider"/>
 
-        <packagesearch.dependenciesToolwindowTabProvider
+        <dependenciesToolWindow.tabProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.RepositoryManagementPanelProvider"/>
 
         <projectService
@@ -127,8 +124,6 @@ Supports Maven and Gradle projects.
                 implementationClass="com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger"/>
 
         <statistics.validation.customValidationRule implementation="com.jetbrains.packagesearch.intellij.plugin.fus.TopPackageIdValidationRule"/>
-
-        <backgroundPostStartupActivity implementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory"/>
 
         <!--suppress PluginXmlCapitalization -->
         <notificationGroup displayType="BALLOON"

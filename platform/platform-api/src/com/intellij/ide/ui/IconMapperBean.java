@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class IconMapperBean implements PluginAware {
-  public static final ExtensionPointName<IconMapperBean> EP_NAME = ExtensionPointName.create("com.intellij.iconMapper");
+public final class IconMapperBean implements PluginAware {
+  public static final ExtensionPointName<IconMapperBean> EP_NAME = new ExtensionPointName<>("com.intellij.iconMapper");
   private ClassLoader pluginClassLoader;
 
   @Attribute("mappingFile")

@@ -2,6 +2,7 @@
 
 package org.jetbrains.plugins.github.pullrequest.action
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
@@ -28,6 +29,8 @@ import org.jetbrains.plugins.github.util.GithubSettings
 class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.branch.checkout.create.action"),
                                                GithubBundle.messagePointer("pull.request.branch.checkout.create.action.description"),
                                                null) {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)

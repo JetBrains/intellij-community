@@ -157,7 +157,6 @@ public final class MacroManager {
    * @param defaultExpandValue if macro is expended to null, {@code defaultExpandValue} will be used instead
    * @param onlySilent does not expand macros that may require interaction with user; {@code defaultExpandValue} will be used for such macros
    * @return string with macros expanded or null if some macro is expanded to null and {@code defaultExpandValue} is null
-   * @throws ExecutionCancelledException
    */
   @Nullable
   public String expandMacrosInString(@Nullable String str,

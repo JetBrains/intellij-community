@@ -136,8 +136,7 @@ class KotlinAliasedImportedElementSearcher : QueryExecutorBase<PsiReference, Ref
                 )
             }
             function
-        }).inSmartMode(parameters.project)
-            .executeSynchronously()
+        }).executeSynchronously()
         queryFunction?.invoke()
     }
 
@@ -207,8 +206,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                 classNameForCompanionObject = elementToSearch.getClassNameForCompanionObject()
 
                 SmartPointerManager.createPointer(elementToSearch) to effectiveSearchScope
-            }).inSmartMode(queryParameters.project)
-                .executeSynchronously() ?: return
+            }).executeSynchronously() ?: return
 
             runReadAction { element?.element } ?: return
 

@@ -160,7 +160,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       }
       restoreState {
         val vcsLogUi = VcsProjectLog.getInstance(project).mainLogUi ?: return@restoreState false
-        vcsLogUi.filterUi.textFilterComponent.text == ""
+        vcsLogUi.filterUi.textFilterComponent.textField.text == ""
       }
       showWarningIfGitWindowClosed()
       test {

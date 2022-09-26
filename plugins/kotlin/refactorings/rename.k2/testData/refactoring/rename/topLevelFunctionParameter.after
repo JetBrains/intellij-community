@@ -1,0 +1,14 @@
+// NEW_NAME: bar
+
+package test
+
+fun otherUsage() {
+    function(bar = 10)
+    function(foo = "")
+}
+
+fun function(foo: String) {}
+
+fun function(bar: Int): Int {
+    bar + bar
+}

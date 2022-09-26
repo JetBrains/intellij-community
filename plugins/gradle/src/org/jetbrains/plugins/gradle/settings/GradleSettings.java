@@ -44,11 +44,6 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   }
 
   @Override
-  public void subscribe(@NotNull ExternalSystemSettingsListener<GradleProjectSettings> listener) {
-    doSubscribe(new DelegatingGradleSettingsListenerAdapter(listener), getProject());
-  }
-
-  @Override
   public void subscribe(@NotNull ExternalSystemSettingsListener<GradleProjectSettings> listener, @NotNull Disposable parentDisposable) {
     doSubscribe(new DelegatingGradleSettingsListenerAdapter(listener), parentDisposable);
   }

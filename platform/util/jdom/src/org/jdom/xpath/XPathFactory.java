@@ -89,7 +89,7 @@ public abstract class XPathFactory {
   /**
    * An atomic reference storing an instance of the default XPathFactory.
    */
-  private static final AtomicReference<XPathFactory> defaultreference = new AtomicReference<XPathFactory>();
+  private static final AtomicReference<XPathFactory> defaultreference = new AtomicReference<>();
 
   /**
    * Obtain an instance of an XPathFactory using the default mechanisms to

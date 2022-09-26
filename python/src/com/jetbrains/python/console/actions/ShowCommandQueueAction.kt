@@ -2,6 +2,7 @@
 package com.jetbrains.python.console.actions
 
 import com.intellij.execution.runners.ExecutionUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
@@ -47,6 +48,10 @@ class ShowCommandQueueAction(private val consoleView: PythonConsoleView)
         e.presentation.isEnabled = false
       }
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {

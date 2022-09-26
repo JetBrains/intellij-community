@@ -2,17 +2,14 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections
 
-import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -90,7 +87,7 @@ abstract class IntentionBasedInspection<TElement : PsiElement> private construct
                 val targetElement = element as TElement
 
                 var problemRange: TextRange? = null
-                var fixes: SmartList<LocalQuickFix>? = null
+                val fixes = SmartList<LocalQuickFix>()
 
                 val additionalChecker = intentionInfo.additionalChecker
                 run {
@@ -101,26 +98,22 @@ abstract class IntentionBasedInspection<TElement : PsiElement> private construct
                     }
 
                     if (range != null && additionalChecker(targetElement, this@IntentionBasedInspection)) {
-                        problemRange = problemRange?.union(range) ?: range
-                        if (fixes == null) {
-                            fixes = SmartList()
-                        }
-                        fixes!!.add(createQuickFix(intention, additionalChecker, targetElement))
+                        problemRange = range
+                        fixes.add(createQuickFix(intention, additionalChecker, targetElement))
                     }
                 }
 
                 val range = inspectionTarget(targetElement)?.toRange(element) ?: problemRange
                 if (range != null) {
-                    val allFixes = fixes ?: SmartList()
-                    additionalFixes(targetElement)?.let { allFixes.addAll(it) }
-                    if (!allFixes.isEmpty()) {
+                    additionalFixes(targetElement)?.let { fixes.addAll(it) }
+                    if (!fixes.isEmpty()) {
                         holder.registerProblemWithoutOfflineInformation(
                             targetElement,
-                            inspectionProblemText(element) ?: problemText ?: allFixes.first().name,
+                            inspectionProblemText(element) ?: problemText ?: fixes.first().name,
                             isOnTheFly,
                             problemHighlightType(targetElement),
                             range,
-                            *allFixes.toTypedArray()
+                            *fixes.toTypedArray()
                         )
                     }
                 }
@@ -157,7 +150,7 @@ abstract class IntentionBasedInspection<TElement : PsiElement> private construct
 
         override fun startInWriteAction() = intention.startInWriteAction()
 
-        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = isAvailable()
+        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = isAvailable
 
         override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
             assert(startElement == endElement)
@@ -175,7 +168,7 @@ abstract class IntentionBasedInspection<TElement : PsiElement> private construct
         override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
             assert(startElement == endElement)
             if (!isAvailable(project, file, startElement, endElement)) return
-            if (file.isPhysical && !FileModificationService.getInstance().prepareFileForWrite(file)) return
+            if (!IntentionPreviewUtils.prepareElementForWrite(file)) return
 
             val editor = startElement.findExistingEditor()
             editor?.caretModel?.moveToOffset(startElement.textOffset)

@@ -23,10 +23,8 @@ public interface MavenArtifactBuilder {
 
   /**
    * build maven custom artifact.
-   * @param project
    * @param task - build task model.
    * @param context - task context, include {@link RunConfiguration} and other data.
-   * @param callback
    */
   void build(@NotNull Project project,
              @NotNull ProjectModelBuildTask task,

@@ -61,9 +61,7 @@ private fun cdShowRightMargin(project: Project): CheckboxDescriptor {
 // @formatter:off
 fun cdShowDirtyRecursively(project: Project): CheckboxDescriptor =                  CheckboxDescriptor(VcsBundle.message("checkbox.show.dirty.recursively"), vcsConfiguration(project)::SHOW_DIRTY_RECURSIVELY, groupName = vcsOptionGroupName)
 private fun cdWrapTypingOnRightMargin(project: Project): CheckboxDescriptor =       CheckboxDescriptor(ApplicationBundle.message("checkbox.wrap.typing.on.right.margin"), vcsConfiguration(project)::WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN, groupName = commitMessageOptionGroupName)
-private fun cdForceNonEmptyCommitMessage(project: Project): CheckboxDescriptor =    CheckboxDescriptor(VcsBundle.message("checkbox.force.non.empty.messages"), vcsConfiguration(project)::FORCE_NON_EMPTY_COMMENT, groupName = commitMessageOptionGroupName)
 private fun cdClearInitialCommitMessage(project: Project): CheckboxDescriptor =     CheckboxDescriptor(VcsBundle.message("checkbox.clear.initial.commit.message"), vcsConfiguration(project)::CLEAR_INITIAL_COMMIT_MESSAGE, groupName = commitMessageOptionGroupName)
-private fun cdOfferMoveAnotherChangelist(project: Project): CheckboxDescriptor =    CheckboxDescriptor(VcsBundle.message("checkbox.changelist.move.offer"), vcsConfiguration(project)::OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT, groupName = confirmationOptionGroupName)
 private fun cdIncludeShelfBaseContent(project: Project): CheckboxDescriptor =       CheckboxDescriptor(VcsBundle.message("vcs.shelf.store.base.content"), vcsConfiguration(project)::INCLUDE_TEXT_INTO_SHELF, groupName = confirmationOptionGroupName)
 private fun cdChangelistConflictDialog(project: Project): CheckboxDescriptor =      CheckboxDescriptor(VcsBundle.message("settings.show.conflict.resolve.dialog.checkbox"), changelistsOptions(project)::SHOW_DIALOG, groupName = changelistsOptionGroupName)
 private fun cdChangelistShowConflicts(project: Project): CheckboxDescriptor =       CheckboxDescriptor(VcsBundle.message("settings.highlight.files.with.conflicts.checkbox"), changelistsOptions(project)::HIGHLIGHT_CONFLICTS, groupName = changelistsOptionGroupName)
@@ -87,9 +85,7 @@ class VcsOptionsTopHitProvider : VcsOptionsTopHitProviderBase() {
       cdShowRightMargin(project),
       cdShowDirtyRecursively(project),
       cdWrapTypingOnRightMargin(project),
-      cdForceNonEmptyCommitMessage(project),
       cdClearInitialCommitMessage(project),
-      cdOfferMoveAnotherChangelist(project),
       cdIncludeShelfBaseContent(project),
       cdChangelistConflictDialog(project),
       cdChangelistShowConflicts(project),

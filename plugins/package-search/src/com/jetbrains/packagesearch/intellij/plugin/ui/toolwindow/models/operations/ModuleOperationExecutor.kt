@@ -150,8 +150,7 @@ internal class ModuleOperationExecutor {
         val projectModule = operation.projectModule
         val operationProvider = readAction {
             CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType)
-                ?: throw OperationException.unsupportedBuildSystem(projectModule)
-        }
+        } ?: throw OperationException.unsupportedBuildSystem(projectModule)
 
         logDebug("ModuleOperationExecutor#changePackage()") { "Changing package ${operation.model.displayName} in ${projectModule.name}" }
 

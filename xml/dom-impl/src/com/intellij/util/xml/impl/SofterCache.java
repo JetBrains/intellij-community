@@ -9,10 +9,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
 final class SofterCache<T,V> {
-  private final Function<? super T, ? extends V> myValueProvider;
+  private final Function<? super T, ? extends @NotNull V> myValueProvider;
   private SofterReference<ConcurrentMap<T, V>> myCache;
 
-  SofterCache(Function<? super T, @NotNull ? extends V> valueProvider) {
+  SofterCache(Function<? super T, ? extends @NotNull V> valueProvider) {
     myValueProvider = valueProvider;
   }
 

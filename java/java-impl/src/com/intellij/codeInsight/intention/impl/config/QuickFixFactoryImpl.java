@@ -259,12 +259,6 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createWrapExpressionFix(@NotNull PsiType type, @NotNull PsiExpression expression) {
-    return new WrapExpressionFix(type, expression, null);
-  }
-
-  @NotNull
-  @Override
   public IntentionAction createReuseVariableDeclarationFix(@NotNull PsiLocalVariable variable) {
     return new ReuseVariableDeclarationFix(variable);
   }
@@ -379,7 +373,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public IntentionAction createUpgradeSdkFor(@NotNull LanguageLevel level) {
+  public @NotNull IntentionAction createUpgradeSdkFor(@NotNull LanguageLevel level) {
     return new UpgradeSdkFix(level);
   }
 
@@ -743,7 +737,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
       QuickFixBundle.message("fix.unused.symbol.injection.text", qualifiedName),
       QuickFixBundle.message("fix.unused.symbol.injection.family"),
-      entryPointsManager.ADDITIONAL_ANNOTATIONS, qualifiedName);
+      JavaBundle.message("separator.mark.as.entry.point.if.annotated.by"), entryPointsManager.ADDITIONAL_ANNOTATIONS, qualifiedName);
   }
 
   @NotNull
@@ -1160,6 +1154,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return new RemoveRedundantLambdaParameterTypesFix(lambdaExpression, message);
   }
 
+  @Override
+  public @NotNull IntentionAction createConvertAnonymousToInnerAction(@NotNull PsiAnonymousClass anonymousClass) {
+    return new MoveAnonymousToInnerFix(anonymousClass);
+  }
+
   private final static class RemoveRedundantLambdaParameterTypesFix extends RemoveRedundantParameterTypesFix {
     private final @IntentionName String myMessage;
 
@@ -1173,5 +1172,15 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     public @NotNull String getText() {
       return myMessage;
     }
+  }
+
+  @Override
+  public @NotNull IntentionAction createSplitSwitchBranchWithSeveralCaseValuesAction() {
+    return new SplitSwitchBranchWithSeveralCaseValuesAction();
+  }
+
+  @Override
+  public @Nullable IntentionAction createMakeVariableEffectivelyFinalFix(@NotNull PsiVariable variable) {
+    return MakeVarEffectivelyFinalFix.createFix(variable);
   }
 }

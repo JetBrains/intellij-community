@@ -23,18 +23,20 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.Experimental
 interface CodeVisionProvider<T> {
   companion object {
-    val EP_NAME = "com.intellij.codeInsight.codeVisionProvider"
-    val providersExtensionPoint = ExtensionPointName.create<CodeVisionProvider<*>>(EP_NAME)
+    const val EP_NAME: String = "com.intellij.codeInsight.codeVisionProvider"
+    val providersExtensionPoint: ExtensionPointName<CodeVisionProvider<*>> = ExtensionPointName.create(EP_NAME)
   }
 
   /**
-   * It affects  whether the group will be shown in settings or not.
-   *
+   * WARNING! Must work very fast, it is invoked for a file during its opening. The user won't see the file's content if this method works long.
    * @return true iff it could potentially provide any lenses for the project
    */
   @JvmDefault
-  fun isAvailableFor(project: Project) = true
+  fun isAvailableFor(project: Project): Boolean = true
 
+  /**
+   * Prepares data for preview (to understand later that it is a preview), for example, stores user data in the editor/file.
+   */
   @JvmDefault
   fun preparePreview(editor: Editor, file: PsiFile) {
   }
@@ -49,7 +51,7 @@ interface CodeVisionProvider<T> {
    *  Return true if [computeForEditor] should be called
    *  false otherwise
    */
-  fun shouldRecomputeForEditor(editor: Editor, uiData: T?) = true
+  fun shouldRecomputeForEditor(editor: Editor, uiData: T?): Boolean = true
 
   /**
    * Should return text ranges and applicable hints for them, invoked on background thread.
@@ -77,11 +79,11 @@ interface CodeVisionProvider<T> {
   /**
    * Handle click on an extra action on a lens at a given range
    */
-  fun handleExtraAction(editor: Editor, textRange: TextRange, actionId: String) = Unit
+  fun handleExtraAction(editor: Editor, textRange: TextRange, actionId: String): Unit = Unit
 
   /**
    * Calls on background BEFORE editor opening
-   * Returns ranges where placeholders should be when editor opens
+   * @return ranges where placeholders should be when editor opens
    */
   @Deprecated("use getPlaceholderCollector")
   fun collectPlaceholders(editor: Editor): List<TextRange> = emptyList()

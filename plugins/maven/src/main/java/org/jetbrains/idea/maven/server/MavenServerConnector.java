@@ -15,7 +15,7 @@ import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.util.*;
 
-public abstract class MavenServerConnector implements @NotNull Disposable {
+public abstract class MavenServerConnector implements Disposable {
   public static final Logger LOG = Logger.getInstance(MavenServerConnector.class);
 
   protected final Project myProject;

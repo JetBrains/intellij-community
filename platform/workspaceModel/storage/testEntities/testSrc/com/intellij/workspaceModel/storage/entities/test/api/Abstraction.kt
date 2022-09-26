@@ -13,7 +13,7 @@ import org.jetbrains.deft.annotations.Child
 
 interface HeadAbstractionEntity : WorkspaceEntityWithPersistentId {
   val data: String
-  val child: @Child CompositeBaseEntity
+  val child: @Child CompositeBaseEntity?
 
   override val persistentId: PersistentEntityId<WorkspaceEntityWithPersistentId>
     get() = HeadAbstractionPersistentId(data)
@@ -21,9 +21,9 @@ interface HeadAbstractionEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : HeadAbstractionEntity, ModifiableWorkspaceEntity<HeadAbstractionEntity>, ObjBuilder<HeadAbstractionEntity> {
-    override var data: String
     override var entitySource: EntitySource
-    override var child: CompositeBaseEntity
+    override var data: String
+    override var child: CompositeBaseEntity?
   }
 
   companion object : Type<HeadAbstractionEntity, Builder>() {
@@ -53,8 +53,8 @@ interface BaseEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder<T : BaseEntity> : BaseEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
-    override var parentEntity: CompositeBaseEntity?
     override var entitySource: EntitySource
+    override var parentEntity: CompositeBaseEntity?
   }
 
   companion object : Type<BaseEntity, Builder<BaseEntity>>() {
@@ -78,9 +78,9 @@ interface CompositeBaseEntity : BaseEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder<T : CompositeBaseEntity> : CompositeBaseEntity, BaseEntity.Builder<T>, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
+    override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity?
     override var children: List<BaseEntity>
-    override var entitySource: EntitySource
     override var parent: HeadAbstractionEntity?
   }
 
@@ -102,9 +102,9 @@ interface MiddleEntity : BaseEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : MiddleEntity, BaseEntity.Builder<MiddleEntity>, ModifiableWorkspaceEntity<MiddleEntity>, ObjBuilder<MiddleEntity> {
+    override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity?
     override var property: String
-    override var entitySource: EntitySource
   }
 
   companion object : Type<MiddleEntity, Builder>(BaseEntity) {
@@ -137,9 +137,9 @@ interface LeftEntity : CompositeBaseEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : LeftEntity, CompositeBaseEntity.Builder<LeftEntity>, ModifiableWorkspaceEntity<LeftEntity>, ObjBuilder<LeftEntity> {
+    override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity?
     override var children: List<BaseEntity>
-    override var entitySource: EntitySource
     override var parent: HeadAbstractionEntity?
   }
 
@@ -174,9 +174,9 @@ interface RightEntity : CompositeBaseEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : RightEntity, CompositeBaseEntity.Builder<RightEntity>, ModifiableWorkspaceEntity<RightEntity>, ObjBuilder<RightEntity> {
+    override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity?
     override var children: List<BaseEntity>
-    override var entitySource: EntitySource
     override var parent: HeadAbstractionEntity?
   }
 

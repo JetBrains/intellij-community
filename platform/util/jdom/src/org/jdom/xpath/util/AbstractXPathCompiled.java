@@ -97,9 +97,9 @@ public abstract class AbstractXPathCompiled<T> implements XPathExpression<T> {
     throw new IllegalStateException("No namespace defined with URI " + uri);
   }
 
-  private final Map<String, Namespace> xnamespaces = new HashMap<String, Namespace>();
+  private final Map<String, Namespace> xnamespaces = new HashMap<>();
   // Not final to support cloning.
-  private Map<String, Map<String, Object>> xvariables = new HashMap<String, Map<String, Object>>();
+  private Map<String, Map<String, Object>> xvariables = new HashMap<>();
   private final String xquery;
   private final Filter<T> xfilter;
 
@@ -174,7 +174,7 @@ public abstract class AbstractXPathCompiled<T> implements XPathExpression<T> {
 
         Map<String, Object> vmap = xvariables.get(ns.getURI());
         if (vmap == null) {
-          vmap = new HashMap<String, Object>();
+          vmap = new HashMap<>();
           xvariables.put(ns.getURI(), vmap);
         }
 
@@ -222,9 +222,9 @@ public abstract class AbstractXPathCompiled<T> implements XPathExpression<T> {
         "Should never be getting a CloneNotSupportedException!",
         cnse);
     }
-    Map<String, Map<String, Object>> vmt = new HashMap<String, Map<String, Object>>();
+    Map<String, Map<String, Object>> vmt = new HashMap<>();
     for (Map.Entry<String, Map<String, Object>> me : xvariables.entrySet()) {
-      final Map<String, Object> cmap = new HashMap<String, Object>(me.getValue());
+      final Map<String, Object> cmap = new HashMap<>(me.getValue());
       vmt.put(me.getKey(), cmap);
     }
     ret.xvariables = vmt;
@@ -317,7 +317,7 @@ public abstract class AbstractXPathCompiled<T> implements XPathExpression<T> {
    * @return the variables set on this instance.
    */
   protected Map<String, Object> getVariables() {
-    HashMap<String, Object> vars = new HashMap<String, Object>();
+    HashMap<String, Object> vars = new HashMap<>();
     Namespace[] nsa = getNamespaces();
     for (Map.Entry<String, Map<String, Object>> ue : xvariables.entrySet()) {
       final String uri = ue.getKey();
@@ -361,7 +361,7 @@ public abstract class AbstractXPathCompiled<T> implements XPathExpression<T> {
     final List<?> result = firstonly ? Collections
       .singletonList(evaluateRawFirst(context))
                                      : evaluateRawAll(context);
-    return new XPathDiagnosticImpl<T>(context, this, result, firstonly);
+    return new XPathDiagnosticImpl<>(context, this, result, firstonly);
   }
 
   @Override

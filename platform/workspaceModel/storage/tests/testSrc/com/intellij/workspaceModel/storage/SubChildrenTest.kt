@@ -17,7 +17,7 @@ class SubChildrenTest {
       }
     }
 
-    assertEquals("ChildData", entity.child.child.childData)
+    assertEquals("ChildData", entity.child?.child?.childData)
   }
 
   @Test
@@ -32,7 +32,7 @@ class SubChildrenTest {
     builder.addEntity(entity)
 
     val parentEntity = builder.entities(ParentSubEntity::class.java).single()
-    assertEquals("ChildData", parentEntity.child.child.childData)
+    assertEquals("ChildData", parentEntity.child?.child?.childData)
   }
 
   @Test
@@ -47,7 +47,7 @@ class SubChildrenTest {
     val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
-    assertEquals("ChildData", entity.child.child.childData)
+    assertEquals("ChildData", entity.child?.child?.childData)
   }
 
   @Test

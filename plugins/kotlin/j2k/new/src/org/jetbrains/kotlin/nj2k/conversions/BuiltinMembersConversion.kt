@@ -31,7 +31,6 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
         if (this is JKQualifiedExpression && conversion.replaceType == ReplaceType.REPLACE_WITH_QUALIFIER) {
             newSelector.leadingComments += receiver.trailingComments
-            newSelector.leadingComments += receiver.trailingComments
             newSelector.leadingComments += receiver.leadingComments
             newSelector.leadingComments += selector.trailingComments
             newSelector.leadingComments += selector.leadingComments
@@ -321,14 +320,6 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     sinceKotlin ApiVersion.KOTLIN_1_5
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
-            Method("java.io.PrintStream.println") convertTo Method("kotlin.io.println")
-                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
-                    withFilter ::isSystemOutCall,
-
-            Method("java.io.PrintStream.print") convertTo Method("kotlin.io.print")
-                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
-                    withFilter ::isSystemOutCall,
-
             Method("java.lang.Object.getClass") convertTo Field("kotlin.jvm.javaClass"),
 
             Method("java.util.Map.entrySet") convertTo Field("kotlin.collections.Map.entries"),
@@ -401,25 +392,12 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
             Method("java.lang.String.replaceAll")
                     convertTo Method("kotlin.text.replace")
-                    withArgumentsProvider { arguments ->
-                val detachedArguments = arguments::arguments.detached()
-                val first =
-                    detachedArguments.first()::value.detached().callOn(
-                        symbolProvider.provideMethodSymbol("kotlin.text.toRegex")
-                    )
-                JKArgumentList(listOf(JKArgumentImpl(first)) + detachedArguments.drop(1))
-            },
+                    withArgumentsProvider ::convertFirstArgumentToRegex,
+
             Method("java.lang.String.replaceFirst")
                     convertTo Method("kotlin.text.replaceFirst")
-                    withArgumentsProvider { arguments ->
-                val detachedArguments = arguments::arguments.detached()
-                val first =
-                    detachedArguments.first()::value.detached().callOn(
-                        symbolProvider.provideMethodSymbol("kotlin.text.toRegex")
+                    withArgumentsProvider ::convertFirstArgumentToRegex,
 
-                    )
-                JKArgumentList(listOf(JKArgumentImpl(first)) + detachedArguments.drop(1))
-            },
             Method("java.lang.String.equalsIgnoreCase")
                     convertTo Method("kotlin.text.equals")
                     withArgumentsProvider { arguments ->
@@ -448,7 +426,10 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     )
                 )
             },
-            Method("java.lang.String.matches") convertTo Method("kotlin.text.matches"),
+            Method("java.lang.String.matches")
+                    convertTo Method("kotlin.text.matches")
+                    withArgumentsProvider ::convertFirstArgumentToRegex,
+
             Method("java.lang.String.regionMatches")
                     convertTo Method("kotlin.text.regionMatches")
                     withByArgumentsFilter { it.size == 5 }
@@ -575,21 +556,43 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     (expression as JKCallExpression).arguments::arguments.detached()
                 )
             } withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
-
-            NewExpression("java.lang.String") convertTo Method("kotlin.text.String"),
-            NewExpression("kotlin.String") convertTo Method("kotlin.text.String"),
-
-            Method("java.util.Collections.singletonList") convertTo Method("kotlin.collections.listOf")
+            
+            NewExpression("java.lang.String")
+                    convertTo Method("kotlin.text.String")
+                    withByArgumentsFilter { it.isNotEmpty() },
+            Method("java.util.Collections.singletonList")
+                    convertTo Method("kotlin.collections.listOf")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
-            Method("java.util.Collections.singleton") convertTo Method("kotlin.collections.setOf")
+            Method("java.util.Collections.singleton")
+                    convertTo Method("kotlin.collections.setOf")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.util.Collections.emptyList")
-                    convertTo Method("kotlin.collections.emptyList") withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+                    convertTo Method("kotlin.collections.emptyList")
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.util.Collections.emptySet")
-                    convertTo Method("kotlin.collections.emptySet") withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+                    convertTo Method("kotlin.collections.emptySet")
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.util.Collections.emptyMap")
-                    convertTo Method("kotlin.collections.emptyMap") withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
+                    convertTo Method("kotlin.collections.emptyMap")
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.io.PrintStream.println")
+                    convertTo Method("kotlin.io.println")
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
+                    withFilter ::isSystemOutCall,
+            Method("java.io.PrintStream.print")
+                    convertTo Method("kotlin.io.print")
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
+                    withFilter ::isSystemOutCall
         ).groupBy { it.from.fqName }
+
+    private fun convertFirstArgumentToRegex(arguments: JKArgumentList): JKArgumentList {
+        val detachedArguments = arguments::arguments.detached()
+        val first =
+            detachedArguments.first()::value.detached().callOn(
+                symbolProvider.provideMethodSymbol("kotlin.text.toRegex")
+            )
+        return JKArgumentList(listOf(JKArgumentImpl(first)) + detachedArguments.drop(1))
+    }
 
 
     private fun JKExpression.callOn(symbol: JKMethodSymbol, arguments: List<JKArgument> = emptyList()) =

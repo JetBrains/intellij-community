@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -26,10 +26,5 @@ public class KDocHighlightingTestGenerated extends AbstractKDocHighlightingTest 
     @TestMetadata("MissingDocumentation.kt")
     public void testMissingDocumentation() throws Exception {
         runTest("testData/kdoc/highlighting/MissingDocumentation.kt");
-    }
-
-    @TestMetadata("UnresolvedReference.kt")
-    public void testUnresolvedReference() throws Exception {
-        runTest("testData/kdoc/highlighting/UnresolvedReference.kt");
     }
 }

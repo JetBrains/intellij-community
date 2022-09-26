@@ -1,5 +1,4 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
-// PARAM_TYPES: kotlin.String
+// PARAM_TYPES: kotlin.Any
 // PARAM_DESCRIPTOR: value-parameter p: kotlin.Any defined in foo
 
 fun foo(p: Any) {

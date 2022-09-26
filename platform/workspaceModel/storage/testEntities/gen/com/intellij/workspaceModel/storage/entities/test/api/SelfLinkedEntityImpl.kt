@@ -12,6 +12,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
@@ -22,7 +23,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SelfLinkedEntityImpl : SelfLinkedEntity, WorkspaceEntityBase() {
+open class SelfLinkedEntityImpl(val dataSource: SelfLinkedEntityData) : SelfLinkedEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(SelfLinkedEntity::class.java, SelfLinkedEntity::class.java,
@@ -41,7 +42,7 @@ open class SelfLinkedEntityImpl : SelfLinkedEntity, WorkspaceEntityBase() {
     return connections
   }
 
-  class Builder(val result: SelfLinkedEntityData?) : ModifiableWorkspaceEntityBase<SelfLinkedEntity>(), SelfLinkedEntity.Builder {
+  class Builder(var result: SelfLinkedEntityData?) : ModifiableWorkspaceEntityBase<SelfLinkedEntity>(), SelfLinkedEntity.Builder {
     constructor() : this(SelfLinkedEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -59,6 +60,9 @@ open class SelfLinkedEntityImpl : SelfLinkedEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -68,7 +72,7 @@ open class SelfLinkedEntityImpl : SelfLinkedEntity, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SelfLinkedEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
     }
 
@@ -77,11 +81,26 @@ open class SelfLinkedEntityImpl : SelfLinkedEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SelfLinkedEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        val parentEntityNew = parents.filterIsInstance<SelfLinkedEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
+      }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: SelfLinkedEntity?
       get() {
@@ -122,15 +141,6 @@ open class SelfLinkedEntityImpl : SelfLinkedEntity, WorkspaceEntityBase() {
         changedProperty.add("parentEntity")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
-      }
-
     override fun getEntityData(): SelfLinkedEntityData = result ?: super.getEntityData() as SelfLinkedEntityData
     override fun getEntityClass(): Class<SelfLinkedEntity> = SelfLinkedEntity::class.java
   }
@@ -152,11 +162,13 @@ class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): SelfLinkedEntity {
-    val entity = SelfLinkedEntityImpl()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SelfLinkedEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -175,9 +187,14 @@ class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
     }
   }
 
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SelfLinkedEntityData
 
@@ -187,7 +204,7 @@ class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SelfLinkedEntityData
 
@@ -202,5 +219,9 @@ class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

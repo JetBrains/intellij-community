@@ -154,7 +154,7 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
         val module = project.modules.singleOrNull() ?: return@addCallback
         PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, module)
       }
-      if (useUserProjects || isLearningProject(project, this@PythonBasedLangSupport)) {
+      if (useUserProjects || isLearningProject(project, primaryLanguage)) {
         showWarning(PythonLessonsBundle.message("no.interpreter.in.learning.project", configureCallbackId),
                     problem = LearningInternalProblems.NO_SDK_CONFIGURED) {
           !isSdkConfigured(project)

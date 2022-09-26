@@ -219,7 +219,7 @@ public final class GradleUtil {
     try (Stream<Path> pathsStream = Files.list(wrapperDir)) {
       List<Path> candidates = pathsStream
         .filter(path -> FileUtilRt.extensionEquals(path.getFileName().toString(), "properties") && Files.isRegularFile(path))
-        .collect(Collectors.toList());
+        .toList();
 
       if (candidates.isEmpty()) {
         GradleLog.LOG.warn("No *.properties file is found at the gradle wrapper directory " + wrapperDir);

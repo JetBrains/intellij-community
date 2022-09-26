@@ -7,9 +7,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +54,7 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
   @Override
   public Icon getElementIcon(final int flags) {
     final RowIcon baseIcon =
-      IconManager.getInstance().createLayeredIcon(this, PlatformIcons.METHOD_ICON, ElementPresentationUtil.getFlags(this, false));
+      IconManager.getInstance().createLayeredIcon(this, IconManager.getInstance().getPlatformIcon(PlatformIcons.Method), ElementPresentationUtil.getFlags(this, false));
     if (BitUtil.isSet(flags, ICON_FLAG_VISIBILITY)) {
       VisibilityIcons.setVisibilityIcon(getContainingClass().getModifierList(), baseIcon);
     }

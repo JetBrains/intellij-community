@@ -7,5 +7,8 @@ enum class EventState {
   BEFORE,
 
   /** After the action was completed */
-  AFTER
+  AFTER,
+
+  /** When action started */
+  IN_TIME
 }

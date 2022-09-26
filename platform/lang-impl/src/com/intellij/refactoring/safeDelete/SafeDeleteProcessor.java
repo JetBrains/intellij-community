@@ -221,8 +221,8 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
         UnsafeUsagesDialog dialog = new UnsafeUsagesDialog(ArrayUtilRt.toStringArray(conflicts), myProject);
         if (!dialog.showAndGet()) {
           final int exitCode = dialog.getExitCode();
+          prepareSuccessful(); // dialog is always dismissed;
           if (exitCode == UnsafeUsagesDialog.VIEW_USAGES_EXIT_CODE) {
-            prepareSuccessful();
             showUsages(Arrays.stream(usages)
                          .filter(usage -> usage instanceof SafeDeleteReferenceUsageInfo &&
                                           !((SafeDeleteReferenceUsageInfo)usage).isSafeDelete()).toArray(UsageInfo[]::new),
@@ -318,7 +318,6 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   /**
-   * @param usages
    * @return Map from elements to UsageHolders
    */
   private static HashMap<PsiElement,UsageHolder> sortUsages(UsageInfo @NotNull [] usages) {
@@ -389,6 +388,7 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
         for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
           if (delegate.handlesElement(element)) {
             delegate.prepareForDeletion(element);
+            break;
           }
         }
       }

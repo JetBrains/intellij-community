@@ -51,6 +51,8 @@ internal class FileTestFixtureImpl(
     fixtureRoot = createFixtureRoot(relativePath)
     fixtureStateFile = createFixtureStateFile()
 
+    val oldState = readFixtureState()
+
     installFixtureFilesWatcher()
 
     val configuration = createFixtureConfiguration()
@@ -60,14 +62,12 @@ internal class FileTestFixtureImpl(
       .toSet()
 
     withSuppressedErrors {
-      repairFixtureCaches()
-      dumpFixtureState()
+      repairFixtureCaches(oldState)
     }
-
+    dumpFixtureState()
 
     withSuppressedErrors {
       configureFixtureCaches(configuration)
-      root.refreshAndWait()
     }
 
     isInitialized = true
@@ -99,8 +99,7 @@ internal class FileTestFixtureImpl(
     }
   }
 
-  private fun repairFixtureCaches() {
-    val state = readFixtureState()
+  private fun repairFixtureCaches(state: State) {
     val isInitialized = state.isInitialized ?: false
     val isSuppressedErrors = state.isSuppressedErrors ?: false
     val errors = state.errors ?: emptyList()
@@ -154,6 +153,7 @@ internal class FileTestFixtureImpl(
         createFiles(configuration.files)
         configuration.builders.forEach { it(root) }
       }
+      root.refreshAndWait()
     }
       .onFailureCatching { invalidateFixtureCaches() }
       .getOrThrow()

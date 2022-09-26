@@ -472,6 +472,10 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myProfile.resetToEmpty(getProject());
         loadDescriptorsConfigs(false);
@@ -599,7 +603,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     });
 
-    new TreeSpeedSearch(tree, o -> {
+    new TreeSpeedSearch(tree, false, o -> {
       final InspectionConfigTreeNode node = (InspectionConfigTreeNode)o.getLastPathComponent();
       return InspectionsConfigTreeComparator.getDisplayTextToSort(node.getText());
     });
@@ -879,12 +883,14 @@ public class SingleInspectionProfilePanel extends JPanel {
           .withLabel(InspectionsBundle.message("inspection.severity"))
           .moveLabelOnTop()
           .createPanel();
+        severityLevelChooserPanel.setMinimumSize(severityLevelChooserPanel.getPreferredSize());
         severityPanel.add(severityLevelChooserPanel, constraint.next());
 
         final var highlightChooserPanel = UI.PanelFactory.panel(highlightsChooserComponent)
           .withLabel(InspectionsBundle.message("inspection.highlighting"))
           .moveLabelOnTop()
           .createPanel();
+        highlightChooserPanel.setMinimumSize(highlightChooserPanel.getPreferredSize());
         severityPanel.add(highlightChooserPanel, constraint.next());
 
         if (toolState != null) {
@@ -955,6 +961,11 @@ public class SingleInspectionProfilePanel extends JPanel {
               if (dlg.showAndGet()) {
                 tableSettings.onScopesOrderChanged();
               }
+            }
+
+            @Override
+            public @NotNull ActionUpdateThread getActionUpdateThread() {
+              return ActionUpdateThread.EDT;
             }
           });
         severityPanel = wrappedTable.createPanel();
@@ -1137,7 +1148,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     mainSplitter.setSplitterProportionKey("SingleInspectionProfilePanel.VERTICAL_DIVIDER_PROPORTION");
     mainSplitter.setFirstComponent(tree);
     mainSplitter.setSecondComponent(rightSplitter);
-    mainSplitter.setHonorComponentsMinimumSize(false);
     mainSplitter.setDividerWidth(SECTION_GAP);
 
     final JPanel inspectionTreePanel = new JPanel(new BorderLayout());

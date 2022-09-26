@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
@@ -58,18 +59,22 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
     }
   }
 
-  fun testCompletion(expression: String, vararg completionCandidates: String) {
+  fun testCompletion(expression: String, checker: (Array<LookupElement>) -> Unit) {
     checkCaret(expression)
     val file = findOrCreateFile("build.gradle", expression)
     runInEdtAndWait {
       codeInsightFixture.configureFromExistingVirtualFile(file)
-      val lookup = listOf(*codeInsightFixture.completeBasic())
-      var startIndex = 0
-      for (candidate in completionCandidates) {
-        val newIndex = lookup.subList(startIndex, lookup.size).indexOfFirst { it.lookupString == candidate }
-        assertTrue(newIndex != -1, "Element '$candidate' must be in the lookup")
-        startIndex = newIndex + 1
-      }
+      checker(codeInsightFixture.completeBasic())
+    }
+  }
+
+  fun testCompletion(expression: String, vararg completionCandidates: String) = testCompletion(expression) {
+    val lookup = listOf(*it)
+    var startIndex = 0
+    for (candidate in completionCandidates) {
+      val newIndex = lookup.subList(startIndex, lookup.size).indexOfFirst { it.lookupString == candidate }
+      assertTrue(newIndex != -1, "Element '$candidate' must be in the lookup")
+      startIndex = newIndex + 1
     }
   }
 

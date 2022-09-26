@@ -4,7 +4,6 @@ package org.jetbrains.uast.internal
 import com.intellij.diagnostic.AttachmentFactory
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastFacade
@@ -29,6 +28,7 @@ fun <U : UElement> Array<out Class<out UElement>>.accommodate(vararg makers: UEl
     .distinct()
     .mapNotNull { it.make.invoke() }
 }
+
 fun <U : UElement> Class<out UElement>.accommodate(a1: UElementAlternative<out U>, a2: UElementAlternative<out U>): U? {
   return if (this.isAssignableFrom(a1.uType)) {
     a1.make.invoke()
@@ -46,11 +46,16 @@ class UElementAlternative<U : UElement>(val uType: Class<U>, val make: () -> U?)
 inline fun <reified T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement): T? =
   convertOrReport(psiElement, parent, T::class.java)
 
+
+private val isInsideReporting = ThreadLocal<Boolean>()
+
 fun <T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement, expectedType: Class<T>): T? {
 
-  fun UElement.safeToString(): String = RecursionManager.doPreventingRecursion(this, false) {
-    toString()
-  } ?: "<recursive `toString()` computation $javaClass>"
+  fun UElement.safeToString(): String = if (isInsideReporting.get() != true)
+    isInsideReporting.withValue(true) {
+      toString()
+    }
+  else "<recursive `safeToString()` computation $javaClass>"
 
   fun mkAttachments(): Array<Attachment> = ArrayList<Attachment>().also { result ->
     result.add(Attachment("info.txt", buildString {
@@ -67,14 +72,30 @@ fun <T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement, exp
 
   val plugin = parent.sourcePsi?.let { UastFacade.findPlugin(it) } ?: UastFacade.findPlugin(psiElement)
   if (plugin == null) {
-    Logger.getInstance(parent.javaClass)
-      .error("cant get UAST plugin for ${parent.safeToString()} to convert element $psiElement", *mkAttachments())
+    if (isInsideReporting.get() != true)
+      Logger.getInstance(parent.javaClass)
+        .error("cant get UAST plugin for ${parent.safeToString()} to convert element $psiElement", *mkAttachments())
     return null
   }
   val result = expectedType.cast(plugin.convertElement(psiElement, parent, expectedType))
-  if (result == null) {
+  if (result == null && isInsideReporting.get() != true) {
     Logger.getInstance(parent.javaClass)
       .error("failed to convert element $psiElement in ${parent.safeToString()}", *mkAttachments())
   }
   return result
+}
+
+private inline fun <T, R> ThreadLocal<T>.withValue(value: T, block: () -> R): R {
+  val old = this.get()
+  if (old == value) return block.invoke();
+  try {
+    this.set(value)
+    return block.invoke();
+  }
+  finally {
+    if (old == null)
+      this.remove()
+    else
+      this.set(old)
+  }
 }

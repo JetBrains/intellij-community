@@ -62,6 +62,9 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             directives["OPEN_BY_DEFAULT"]?.let {
                 settings.openByDefault = it.toBoolean()
             }
+            directives["PUBLIC_BY_DEFAULT"]?.let {
+                settings.publicByDefault = it.toBoolean()
+            }
 
             val rawConverted = WriteCommandAction.runWriteCommandAction(project, Computable {
                 PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()

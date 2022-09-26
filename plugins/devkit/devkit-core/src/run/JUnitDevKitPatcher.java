@@ -37,7 +37,7 @@ import java.util.List;
 
 final class JUnitDevKitPatcher extends JUnitPatcher {
   private static final Logger LOG = Logger.getInstance(JUnitDevKitPatcher.class);
-  private static final String SYSTEM_CL_PROPERTY = "java.system.class.loader";
+  static final String SYSTEM_CL_PROPERTY = "java.system.class.loader";
   private static final Key<Boolean> LOADER_VALID = Key.create("LOADER_VALID_9");
 
   @Override
@@ -145,7 +145,7 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
     }
   }
 
-  private static boolean loaderValid(Project project, Module module, String qualifiedName) {
+  static boolean loaderValid(Project project, Module module, String qualifiedName) {
     UserDataHolder holder = module == null ? project : module;
     Key<Boolean> cacheKey = LOADER_VALID;
     Boolean result = holder.getUserData(cacheKey);

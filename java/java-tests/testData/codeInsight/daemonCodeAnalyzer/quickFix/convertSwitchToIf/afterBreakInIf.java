@@ -1,7 +1,7 @@
 // "Replace 'switch' with 'if'" "true-preview"
 class X {
   void m(String s, boolean r) {
-      if ("a".equals(s)) {
+      if (s.equals("a")) {
           System.out.println("a");
           if (r) {
               return;

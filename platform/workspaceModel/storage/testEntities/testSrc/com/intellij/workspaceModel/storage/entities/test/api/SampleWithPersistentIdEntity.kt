@@ -28,8 +28,8 @@ interface SampleWithPersistentIdEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SampleWithPersistentIdEntity, ModifiableWorkspaceEntity<SampleWithPersistentIdEntity>, ObjBuilder<SampleWithPersistentIdEntity> {
-    override var booleanProperty: Boolean
     override var entitySource: EntitySource
+    override var booleanProperty: Boolean
     override var stringProperty: String
     override var stringListProperty: MutableList<String>
     override var stringMapProperty: Map<String, String>
@@ -79,8 +79,8 @@ interface ChildWpidSampleEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildWpidSampleEntity, ModifiableWorkspaceEntity<ChildWpidSampleEntity>, ObjBuilder<ChildWpidSampleEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var parentEntity: SampleWithPersistentIdEntity?
   }
 

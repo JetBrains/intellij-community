@@ -62,7 +62,7 @@ internal class PrefixTreeMap<K, V> : Map<List<K>, V> {
       private set
 
     private fun calculateCurrentSize() =
-      children.values.sumBy { it.size } + if (value.isPresent) 1 else 0
+      children.values.sumOf { it.size } + if (value.isPresent) 1 else 0
 
     private fun getAndSet(value: Value<V>) =
       this.value.also {

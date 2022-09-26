@@ -1,6 +1,8 @@
 package com.intellij.ide.starter.tests.examples.junit5
 
 import com.intellij.ide.starter.ide.command.CommandChain
+import com.intellij.ide.starter.junit5.JUnit5StarterAssistant
+import com.intellij.ide.starter.junit5.hyphenateWithClass
 import com.intellij.ide.starter.runner.TestContainerImpl
 import com.intellij.ide.starter.tests.examples.data.TestCases
 import com.jetbrains.performancePlugin.commands.chain.exitApp

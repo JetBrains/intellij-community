@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.ide.navbar.ide.NavBarService;
+import com.intellij.ide.navbar.ide.NavigationBarKt;
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.ide.ui.NavBarLocation;
 import com.intellij.ide.ui.ToolbarSettings;
@@ -44,7 +46,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
 
   private final Project myProject;
   private JComponent myWrapperPanel;
-  private NavBarPanel myNavigationBar;
+  private JComponent myNavigationBar;
   private JComponent myNavBarPanel;
   private JPanel myRunPanel;
   private Boolean myNavToolbarGroupExist;
@@ -57,6 +59,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
       toggleRunPanel(isShowToolPanel(uiSettings));
       toggleNavPanel(uiSettings);
     });
+
   }
 
   @Override
@@ -232,15 +235,17 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
       if (ExperimentalUI.isNewUI()) {
         boolean visible = settings.getShowNavigationBar() && !settings.getPresentationMode();
         myScrollPane.setVisible(visible);
-        myNavigationBar.updateState(visible);
+        if (myNavigationBar instanceof NavBarPanel) {
+          ((NavBarPanel)myNavigationBar).updateState(visible);
+        }
       }
       myNavigationBar.setBorder(null);
     }
 
     @Override
     public void updateAutoscrollLimit(InfoAndProgressPanel.AutoscrollLimit limit) {
-      if (myNavigationBar != null) {
-        myNavigationBar.updateAutoscrollLimit(limit);
+      if (myNavigationBar != null && myNavigationBar instanceof NavBarPanel) {
+        ((NavBarPanel)myNavigationBar).updateAutoscrollLimit(limit);
       }
     }
   }
@@ -248,8 +253,13 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   private JComponent getNavBarPanel() {
     if (myNavBarPanel != null) return myNavBarPanel;
 
-    myNavigationBar = new ReusableNavBarPanel(myProject, true);
-    myNavigationBar.getModel().setFixedComponent(true);
+    if (NavigationBarKt.getNavbarV2Enabled()) {
+      myNavigationBar = myProject.getService(NavBarService.class).getStaticNavbarPanel();
+    }
+    else {
+      myNavigationBar = new ReusableNavBarPanel(myProject, true);
+      ((NavBarPanel)myNavigationBar).getModel().setFixedComponent(true);
+    }
     myScrollPane = ScrollPaneFactory.createScrollPane(myNavigationBar);
     updateScrollBarFlippedState(null);
 
@@ -287,11 +297,18 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
 
   @Override
   public void uiSettingsChanged(@NotNull UISettings settings) {
+
+    if (NavigationBarKt.getNavbarV2Enabled()) {
+      myProject.getService(NavBarService.class).uiSettingsChanged(settings);
+    }
+
     if (myNavigationBar == null) {
       return;
     }
 
-    myNavigationBar.updateState(settings.getShowNavigationBar());
+    if (myNavigationBar instanceof NavBarPanel) {
+      ((NavBarPanel)myNavigationBar).updateState(settings.getShowNavigationBar());
+    }
     boolean visible = settings.getShowNavigationBar() && !settings.getPresentationMode();
     if (ExperimentalUI.isNewUI()) {
       myScrollPane.setVisible(visible);
@@ -397,7 +414,6 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   public static class NavBarWrapperPanel extends JPanel {
     public NavBarWrapperPanel(LayoutManager layout) {
       super(layout);
-      setName("navbar");
     }
 
     @Override

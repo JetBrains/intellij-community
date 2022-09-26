@@ -29,6 +29,30 @@ object DefaultLibraryDependenciesFilter : LibraryDependenciesFilter {
 }
 
 /**
+ * Similar to [DefaultLibraryDependenciesFilter], but checks for precise platforms match for platform dependencies.
+ *
+ *    jvm -> jvm { OK }
+ *    js -> js { OK }
+ *    jvm -> jvm, js { NOT OK } <- difference from [DefaultLibraryDependenciesFilter] !
+ *    jvm, js -> jvm, js, native { OK }.
+ *
+ * It is useful for Gradle Metadata-unaware clients, like Maven, as they might receive
+ * dependencies on the common parts of a library along with platform-specific parts,
+ * leading to potential clash in resolution. See KTIJ-15758
+ */
+@ApiStatus.Internal
+object StrictEqualityForPlatformSpecificCandidatesFilter : LibraryDependenciesFilter {
+    override fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
+        return candidates.filterTo(LinkedHashSet(candidates.size)) { candidate ->
+            if (platform.size == 1)
+                platform == candidate.platform
+            else
+                platform representsSubsetOf candidate.platform
+        }
+    }
+}
+
+/**
  * Returns only "fallback" libraries for shared native dependee libraries depending on interop libraries.
  * User projects might have less native targets than the libraries it is using. This is OK, however we therefore
  * do not generate the "perfect" commonization for this libraries.

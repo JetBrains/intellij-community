@@ -12,6 +12,9 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.JavaBundle;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -64,6 +67,9 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   private static final String SUGGEST_ANNOTATION_DEPENDENCY = "java.suggest.annotation.dependency";
   @NonNls private static final String ANNOTATE_LOCAL_VARIABLES = "checkbox.annotate.local.variables";
   private final InferNullityAdditionalUi myUi = new InferNullityAdditionalUi();
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager
+    .getInstance()
+    .getNotificationGroup("Infer Nullity");
 
   public InferNullityAnnotationsAction() {
     super(JavaBundle.messagePointer("dialog.title.infer.nullity"), JavaBundle.messagePointer("action.title.infer.nullity.annotations"));
@@ -256,6 +262,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             };
             CommandProcessor.getInstance()
               .executeCommand(project, command, JavaBundle.message("action.title.infer.nullity.annotations"), null);
+            NOTIFICATION_GROUP.createNotification(JavaBundle.message("notification.content.added.annotations", infos.length), NotificationType.INFORMATION)
+              .notify(project);
           }
           else {
             NullityInferrer.nothingFoundMessage(project);

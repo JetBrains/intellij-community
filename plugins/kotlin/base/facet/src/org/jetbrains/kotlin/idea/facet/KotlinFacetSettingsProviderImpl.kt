@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.facet
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.kotlin.config.KotlinFacetSettings
@@ -21,7 +20,7 @@ class KotlinFacetSettingsProviderImpl(private val project: Project) : KotlinFace
             CachedValueProvider.Result.create(
                 kotlinFacetSettings,
                 KotlinCompilerSettingsTracker.getInstance(project),
-                ProjectRootModificationTracker.getInstance(project),
+                KotlinFacetModificationTracker.getInstance(project),
             )
         }
 }

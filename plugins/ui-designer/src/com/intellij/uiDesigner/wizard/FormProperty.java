@@ -19,10 +19,6 @@ import com.intellij.uiDesigner.lw.LwComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class FormProperty {
   @NotNull private final LwComponent myLwComponent;
   @NotNull private final String myComponentPropertyGetterName;

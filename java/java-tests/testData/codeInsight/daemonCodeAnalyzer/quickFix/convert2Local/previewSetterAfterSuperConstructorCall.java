@@ -6,7 +6,8 @@ class FieldCanBeLocalTest extends JPanel {
 
     public FieldCanBeLocalTest() {
     super();
-    setName(name);
+        String name = "MyName";
+        setName(name);
   }
 
   public static void main(String[] args) {}

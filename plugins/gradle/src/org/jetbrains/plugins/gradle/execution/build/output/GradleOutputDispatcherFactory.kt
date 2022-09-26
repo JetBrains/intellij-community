@@ -167,7 +167,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         line
       }
       else {
-        line.drop(list.sumBy { it.length } + 2).trimStart()
+        line.drop(list.sumOf { it.length } + 2).trimStart()
       }
     }
 

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @see {@link com.maddyhome.idea.copyright.options.Options} for storing language settings
+ * @see com.maddyhome.idea.copyright.options.Options Options for storing language settings
  */
 public final class CopyrightUpdaters extends FileTypeExtension<UpdateCopyrightsProvider> {
   public static final ExtensionPointName<KeyedLazyInstance<UpdateCopyrightsProvider>> EP_NAME =

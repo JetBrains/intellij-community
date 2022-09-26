@@ -43,9 +43,7 @@ object ThinClientSessionInfoFetcher {
         val sessionInfo = objectMapper.value.reader().readTree(responseString)
         return@connect object : CodeWithMeSessionInfoProvider {
           override val hostBuildNumber = sessionInfo["hostBuildNumber"].asText()
-          override val compatibleClientName = sessionInfo["compatibleClientName"].asText()
           override val compatibleClientUrl = sessionInfo["compatibleClientUrl"].asText()
-          override val compatibleJreName = sessionInfo["compatibleJreName"].asText()
           override val isUnattendedMode = false
           override val compatibleJreUrl = sessionInfo["compatibleJreUrl"].asText()
           override val hostFeaturesToEnable: Set<String>
@@ -73,6 +71,7 @@ object ThinClientSessionInfoFetcher {
       SystemInfo.isLinux && CpuArch.isArm64() -> "linux-aarch64"
       SystemInfo.isLinux && CpuArch.isIntel64() -> "linux-x64"
       SystemInfo.isWindows && CpuArch.isIntel64() -> "windows-x64"
+      SystemInfo.isWindows && CpuArch.isArm64() -> "windows-aarch64"
       else -> error("Unsupported OS type: ${SystemInfo.OS_NAME}, CpuArch: ${CpuArch.CURRENT}")
     }
   }

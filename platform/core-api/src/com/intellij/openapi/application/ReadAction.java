@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -120,5 +120,10 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
 
     @Internal
     public CannotReadException() { super(); }
+
+    @Internal
+    public CannotReadException(@NotNull Throwable cause) {
+      super(cause);
+    }
   }
 }

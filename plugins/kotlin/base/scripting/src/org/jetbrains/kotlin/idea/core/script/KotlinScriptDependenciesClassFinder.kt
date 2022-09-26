@@ -20,6 +20,8 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptMarkerFileSystem
+import org.jetbrains.kotlin.idea.core.script.ucache.computeClassRoots
+import org.jetbrains.kotlin.idea.core.script.ucache.scriptsAsEntities
 import org.jetbrains.kotlin.resolve.jvm.KotlinSafeClassFinder
 
 internal class KotlinScriptDependenciesClassFinder(private val project: Project) : NonClasspathClassFinder(project), KotlinSafeClassFinder {
@@ -38,6 +40,7 @@ internal class KotlinScriptDependenciesClassFinder(private val project: Project)
     }
 
     override fun getClassRoots(scope: GlobalSearchScope?): List<VirtualFile> {
+        if (scriptsAsEntities) return super.getClassRoots(scope)
         var result = super.getClassRoots(scope)
         if (scope is EverythingGlobalScope) {
             result = result + KotlinScriptMarkerFileSystem.rootFile
@@ -46,10 +49,7 @@ internal class KotlinScriptDependenciesClassFinder(private val project: Project)
     }
 
     override fun calcClassRoots(): List<VirtualFile> {
-        val manager = ScriptConfigurationManager.getInstance(project)
-        return (manager.getAllScriptsDependenciesClassFiles() +
-                manager.getAllScriptsSdkDependenciesClassFiles()
-                ).filter { it.isValid }
+        return computeClassRoots(project)
     }
 
     private val everywhereCache = CachedValuesManager.getManager(project).createCachedValue {
@@ -65,6 +65,7 @@ internal class KotlinScriptDependenciesClassFinder(private val project: Project)
     }
 
     override fun findClass(qualifiedName: String, scope: GlobalSearchScope): PsiClass? {
+        if (scriptsAsEntities) return null
         return if (isApplicable(scope)) everywhereCache.value[qualifiedName]?.takeIf { isInScope(it, scope) } else null
     }
 
@@ -105,26 +106,32 @@ internal class KotlinScriptDependenciesClassFinder(private val project: Project)
     }
 
     override fun findClasses(qualifiedName: String, scope: GlobalSearchScope): Array<PsiClass> {
+        if (scriptsAsEntities) return emptyArray()
         return if (isApplicable(scope)) super.findClasses(qualifiedName, scope) else emptyArray()
     }
 
     override fun getSubPackages(psiPackage: PsiPackage, scope: GlobalSearchScope): Array<PsiPackage> {
+        if (scriptsAsEntities) return emptyArray()
         return if (isApplicable(scope)) super.getSubPackages(psiPackage, scope) else emptyArray()
     }
 
     override fun getClasses(psiPackage: PsiPackage, scope: GlobalSearchScope): Array<PsiClass> {
+        if (scriptsAsEntities) return emptyArray()
         return if (isApplicable(scope)) super.getClasses(psiPackage, scope) else emptyArray()
     }
 
     override fun getPackageFiles(psiPackage: PsiPackage, scope: GlobalSearchScope): Array<PsiFile> {
+        if (scriptsAsEntities) return emptyArray()
         return if (isApplicable(scope)) super.getPackageFiles(psiPackage, scope) else emptyArray()
     }
 
     override fun getPackageFilesFilter(psiPackage: PsiPackage, scope: GlobalSearchScope): Condition<PsiFile>? {
+        if (scriptsAsEntities) return null
         return if (isApplicable(scope)) super.getPackageFilesFilter(psiPackage, scope) else null
     }
 
     override fun getClassNames(psiPackage: PsiPackage, scope: GlobalSearchScope): Set<String> {
+        if (scriptsAsEntities) return emptySet()
         return if (isApplicable(scope)) super.getClassNames(psiPackage, scope) else emptySet()
     }
 
@@ -132,6 +139,7 @@ internal class KotlinScriptDependenciesClassFinder(private val project: Project)
         psiPackage: PsiPackage, scope: GlobalSearchScope,
         consumer: Processor<in PsiDirectory>, includeLibrarySources: Boolean
     ): Boolean {
+        if (scriptsAsEntities) return true
         return if (isApplicable(scope)) super.processPackageDirectories(psiPackage, scope, consumer, includeLibrarySources) else true
     }
 }

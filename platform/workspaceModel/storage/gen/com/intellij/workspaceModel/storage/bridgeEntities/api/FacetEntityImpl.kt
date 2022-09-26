@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
@@ -26,7 +27,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class FacetEntityImpl : FacetEntity, WorkspaceEntityBase() {
+open class FacetEntityImpl(val dataSource: FacetEntityData) : FacetEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java,
@@ -41,28 +42,20 @@ open class FacetEntityImpl : FacetEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _name: String? = null
   override val name: String
-    get() = _name!!
+    get() = dataSource.name
 
   override val module: ModuleEntity
     get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _facetType: String? = null
   override val facetType: String
-    get() = _facetType!!
+    get() = dataSource.facetType
 
-  @JvmField
-  var _configurationXmlTag: String? = null
   override val configurationXmlTag: String?
-    get() = _configurationXmlTag
+    get() = dataSource.configurationXmlTag
 
-  @JvmField
-  var _moduleId: ModuleId? = null
   override val moduleId: ModuleId
-    get() = _moduleId!!
+    get() = dataSource.moduleId
 
   override val underlyingFacet: FacetEntity?
     get() = snapshot.extractOneToManyParent(UNDERLYINGFACET_CONNECTION_ID, this)
@@ -71,7 +64,7 @@ open class FacetEntityImpl : FacetEntity, WorkspaceEntityBase() {
     return connections
   }
 
-  class Builder(val result: FacetEntityData?) : ModifiableWorkspaceEntityBase<FacetEntity>(), FacetEntity.Builder {
+  class Builder(var result: FacetEntityData?) : ModifiableWorkspaceEntityBase<FacetEntity>(), FacetEntity.Builder {
     constructor() : this(FacetEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -89,6 +82,9 @@ open class FacetEntityImpl : FacetEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -97,11 +93,11 @@ open class FacetEntityImpl : FacetEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isNameInitialized()) {
         error("Field FacetEntity#name should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field FacetEntity#entitySource should be initialized")
       }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
@@ -126,23 +122,25 @@ open class FacetEntityImpl : FacetEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FacetEntity
-      this.name = dataSource.name
-      this.entitySource = dataSource.entitySource
-      this.facetType = dataSource.facetType
-      this.configurationXmlTag = dataSource.configurationXmlTag
-      this.moduleId = dataSource.moduleId
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.name != dataSource.name) this.name = dataSource.name
+      if (this.facetType != dataSource.facetType) this.facetType = dataSource.facetType
+      if (this.configurationXmlTag != dataSource?.configurationXmlTag) this.configurationXmlTag = dataSource.configurationXmlTag
+      if (this.moduleId != dataSource.moduleId) this.moduleId = dataSource.moduleId
+      if (parents != null) {
+        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
+        val underlyingFacetNew = parents.filterIsInstance<FacetEntity?>().singleOrNull()
+        if ((underlyingFacetNew == null && this.underlyingFacet != null) || (underlyingFacetNew != null && this.underlyingFacet == null) || (underlyingFacetNew != null && this.underlyingFacet != null && (this.underlyingFacet as WorkspaceEntityBase).id != (underlyingFacetNew as WorkspaceEntityBase).id)) {
+          this.underlyingFacet = underlyingFacetNew
+        }
+      }
     }
 
-
-    override var name: String
-      get() = getEntityData().name
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().name = value
-        changedProperty.add("name")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -151,6 +149,14 @@ open class FacetEntityImpl : FacetEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var name: String
+      get() = getEntityData().name
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().name = value
+        changedProperty.add("name")
       }
 
     override var module: ModuleEntity
@@ -321,15 +327,13 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
   }
 
   override fun createEntity(snapshot: EntityStorage): FacetEntity {
-    val entity = FacetEntityImpl()
-    entity._name = name
-    entity._facetType = facetType
-    entity._configurationXmlTag = configurationXmlTag
-    entity._moduleId = moduleId
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = FacetEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {
@@ -354,14 +358,20 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
     }
   }
 
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FacetEntityData
 
-    if (this.name != other.name) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.name != other.name) return false
     if (this.facetType != other.facetType) return false
     if (this.configurationXmlTag != other.configurationXmlTag) return false
     if (this.moduleId != other.moduleId) return false
@@ -370,7 +380,7 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FacetEntityData
 
@@ -397,5 +407,10 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
     result = 31 * result + configurationXmlTag.hashCode()
     result = 31 * result + moduleId.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(ModuleId::class.java)
+    collector.sameForAllEntities = true
   }
 }

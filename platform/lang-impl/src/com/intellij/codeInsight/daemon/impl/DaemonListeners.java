@@ -33,7 +33,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
@@ -61,7 +60,6 @@ import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -163,7 +161,7 @@ public final class DaemonListeners implements Disposable {
         if (UIUtil.isShowing(editor.getContentComponent()) && worthBothering(editor.getDocument(), editor.getProject())) {
           ApplicationManager.getApplication().invokeLater(() -> {
             if (!myProject.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
-              IntentionsUI.getInstance(myProject).invalidate();
+              IntentionsUI.getInstance(myProject).invalidateForEditor(editor);
             }
           }, ModalityState.current(), myProject.getDisposed());
         }
@@ -185,7 +183,8 @@ public final class DaemonListeners implements Disposable {
 
       ErrorStripeUpdateManager errorStripeUpdateManager = ErrorStripeUpdateManager.getInstance(myProject);
       for (Editor editor : activeEditors) {
-        errorStripeUpdateManager.repaintErrorStripePanel(editor);
+        PsiFile file = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument());
+        errorStripeUpdateManager.repaintErrorStripePanel(editor, file);
       }
     });
 
@@ -209,7 +208,7 @@ public final class DaemonListeners implements Disposable {
           return;
         }
 
-        ErrorStripeUpdateManager.getInstance(myProject).repaintErrorStripePanel(editor);
+        ErrorStripeUpdateManager.getInstance(myProject).repaintErrorStripePanel(editor, file);
       }
 
       @Override
@@ -220,7 +219,7 @@ public final class DaemonListeners implements Disposable {
           UIUtil.invokeLaterIfNeeded(() -> {
             IntentionsUI intentionUI = myProject.getServiceIfCreated(IntentionsUI.class);
             if (intentionUI != null) {
-              intentionUI.invalidate();
+              intentionUI.invalidateForEditor(event.getEditor());
             }
           });
         }
@@ -647,15 +646,18 @@ public final class DaemonListeners implements Disposable {
     }
 
     Object errorStripeTooltip = highlighter.getErrorStripeTooltip();
-    if (errorStripeTooltip instanceof HighlightInfo && ((HighlightInfo)errorStripeTooltip).quickFixActionMarkers != null) {
-      for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> marker : ((HighlightInfo)errorStripeTooltip).quickFixActionMarkers) {
-        IntentionAction intentionAction = IntentionActionDelegate.unwrap(marker.first.getAction());
-        if (intentionAction.getClass().getClassLoader() == pluginClassLoader ||
-            intentionAction instanceof QuickFixWrapper && ((QuickFixWrapper)intentionAction).getFix().getClass().getClassLoader() ==
-                                                          pluginClassLoader) {
-          return true;
-        }
-      }
+    if (errorStripeTooltip instanceof HighlightInfo) {
+      IntentionAction quickFixFromPlugin =
+        ((HighlightInfo)errorStripeTooltip).findRegisteredQuickFix((descriptor, range) -> {
+          IntentionAction intentionAction = IntentionActionDelegate.unwrap(descriptor.getAction());
+          if (intentionAction.getClass().getClassLoader() == pluginClassLoader ||
+              intentionAction instanceof QuickFixWrapper && ((QuickFixWrapper)intentionAction).getFix().getClass().getClassLoader() ==
+                                                            pluginClassLoader) {
+            return intentionAction;
+          }
+          return null;
+        });
+      if (quickFixFromPlugin != null) return true;
     }
 
     LineMarkerInfo<?> info = LineMarkersUtil.getLineMarkerInfo(highlighter);

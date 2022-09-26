@@ -247,6 +247,9 @@ public final class RunContentBuilder extends RunTab {
         }
       }
 
+      moreGroup.addSeparator();
+      moreGroup.add(new CreateAction());
+
       actionGroup.add(moreGroup);
     }
     return actionGroup;

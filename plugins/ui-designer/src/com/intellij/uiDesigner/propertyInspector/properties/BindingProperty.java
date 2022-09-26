@@ -47,10 +47,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class BindingProperty extends Property<RadComponent, String> {
   private static final Logger LOG = Logger.getInstance(BindingProperty.class);
 

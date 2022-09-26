@@ -103,14 +103,7 @@ public final class PersistentFSContentAccessor {
       if (myUseContentHashes) {
         page = findOrCreateContentRecord(bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
 
-        if (page < 0 || connection.getRecords().getContentRecordId(fileId) != page) {
-          modified = true;
-          int value = page > 0 ? page : -page;
-          connection.getRecords().setContentRecordId(fileId, value);
-        }
-
-        int value = page > 0 ? page : -page;
-        connection.getRecords().setContentRecordId(fileId, value);
+        modified = connection.getRecords().setContentRecordId(fileId, (page>0?page:-page) );
 
         if (page > 0) return modified;
         page = -page;

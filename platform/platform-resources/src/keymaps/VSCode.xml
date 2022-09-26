@@ -666,4 +666,9 @@
   <action id="CollapseDocComments">
     <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="ctrl SLASH"/>
   </action>
+  <action id="$Redo">
+    <keyboard-shortcut first-keystroke="control Y"/>
+    <keyboard-shortcut first-keystroke="control shift Z"/>
+    <keyboard-shortcut first-keystroke="alt shift BACK_SPACE"/>
+  </action>
 </keymap>

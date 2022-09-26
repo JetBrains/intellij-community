@@ -3,6 +3,7 @@
 package com.intellij.execution.ui.layout.actions;
 
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.ui.content.Content;
@@ -28,6 +29,11 @@ public class RestoreViewAction extends DumbAwareToggleAction implements ViewLayo
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return myLayoutSettings.isSelected();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

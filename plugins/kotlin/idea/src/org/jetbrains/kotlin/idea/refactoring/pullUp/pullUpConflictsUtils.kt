@@ -250,7 +250,7 @@ private fun KotlinPullUpData.checkInnerClassToInterface(
     conflicts: MultiMap<PsiElement, String>
 ) {
     if (isInterfaceTarget && memberDescriptor is ClassDescriptor && memberDescriptor.isInner) {
-        val message = KotlinBundle.message("text.inner.class.0.cannot.be.moved.to.intefrace", memberDescriptor.renderForConflicts())
+        val message = KotlinBundle.message("text.inner.class.0.cannot.be.moved.to.interface", memberDescriptor.renderForConflicts())
         conflicts.putValue(member, message.capitalize())
     }
 }

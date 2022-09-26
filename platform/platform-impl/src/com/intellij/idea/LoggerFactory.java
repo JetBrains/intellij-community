@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.DialogAppender;
@@ -6,7 +6,6 @@ import com.intellij.diagnostic.JsonLogHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -24,7 +23,7 @@ public final class LoggerFactory implements Logger.Factory {
     java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
     rootLogger.setLevel(Level.INFO);
 
-    boolean logToJsonStdout = SystemProperties.getBooleanProperty("intellij.log.to.json.stdout", false);
+    boolean logToJsonStdout = Boolean.getBoolean("intellij.log.to.json.stdout");
     if (logToJsonStdout) {
       System.setProperty("intellij.log.stdout", "false");
       JsonLogHandler jsonLogHandler = new JsonLogHandler();

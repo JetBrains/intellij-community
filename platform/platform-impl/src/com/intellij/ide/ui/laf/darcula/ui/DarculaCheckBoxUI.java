@@ -5,14 +5,15 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.*;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.LafIconLookup;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.ThreeStateCheckBox;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.plaf.metal.MetalCheckBoxUI;
-import javax.swing.text.View;
 import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
@@ -72,37 +73,21 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   @Override
   public void paint(Graphics g2d, JComponent c) {
     Graphics2D g = (Graphics2D)g2d;
-    Dimension size = c.getSize();
+    AbstractButton button = (AbstractButton)c;
+    AbstractButtonLayout layout = createLayout(button, button.getSize());
 
-    AbstractButton b = (AbstractButton)c;
-    Rectangle viewRect = updateViewRect(b, new Rectangle(size));
-    Rectangle iconRect = new Rectangle();
-    Rectangle textRect = new Rectangle();
-
-    Font f = c.getFont();
-    g.setFont(f);
-    FontMetrics fm = UIUtilities.getFontMetrics(c, g, f);
-
-    String text = SwingUtilities.layoutCompoundLabel(
-      c, fm, b.getText(), getDefaultIcon(),
-      b.getVerticalAlignment(), b.getHorizontalAlignment(),
-      b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
-      viewRect, iconRect, textRect, b.getIconTextGap());
-
-    if (c.isOpaque()) {
-      g.setColor(b.getBackground());
-      g.fillRect(0, 0, size.width, size.height);
-    }
-
-    drawCheckIcon(c, g, b, iconRect, b.isSelected(), b.isEnabled());
-    drawText(c, g, b, fm, textRect, text);
+    layout.paint(g, getDisabledTextColor(), getMnemonicIndex(button));
+    drawCheckIcon(c, g, button, layout.iconRect, button.isSelected(), button.isEnabled());
   }
 
-  protected Rectangle updateViewRect(AbstractButton b, Rectangle viewRect) {
-    if (!(b.getBorder() instanceof DarculaCheckBoxBorder)) {
-      JBInsets.removeFrom(viewRect, b.getInsets());
-    }
-    return viewRect;
+  @Override
+  public int getBaseline(JComponent c, int width, int height) {
+    AbstractButtonLayout layout = createLayout(c, new Dimension(width, height));
+    return layout.getBaseline();
+  }
+
+  protected boolean removeInsetsBeforeLayout(AbstractButton b) {
+    return !(b.getBorder() instanceof DarculaCheckBoxBorder);
   }
 
   protected void drawCheckIcon(JComponent c, Graphics2D g, AbstractButton b, Rectangle iconRect, boolean selected, boolean enabled) {
@@ -135,92 +120,19 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
     }
   }
 
-  protected void drawText(JComponent c, Graphics2D g, AbstractButton b, FontMetrics fm, Rectangle textRect, String text) {
-    if (text != null) {
-      View v = (View)b.getClientProperty(BasicHTML.propertyKey);
-      if (v != null) {
-        v.paint(g, textRect);
-      }
-      else {
-        g.setColor(b.isEnabled() ? b.getForeground() : getDisabledTextColor());
-        UIUtilities.drawStringUnderlineCharAt(b, g, text, getMnemonicIndex(b), textRect.x, textRect.y + fm.getAscent());
-      }
-    }
-  }
-
   protected int getMnemonicIndex(AbstractButton b) {
     return DarculaLaf.isAltPressed() ? b.getDisplayedMnemonicIndex() : -1;
   }
 
   @Override
   public Dimension getPreferredSize(JComponent c) {
-    Dimension dimension = computeOurPreferredSize(c);
-    return dimension != null ? dimension : super.getPreferredSize(c);
+    AbstractButtonLayout layout = createLayout(c, new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
+    return layout.getPreferredSize();
   }
 
   @Override
   public Dimension getMaximumSize(JComponent c) {
     return getPreferredSize(c);
-  }
-
-  protected Dimension computeOurPreferredSize(JComponent c) {
-    return computeCheckboxPreferredSize(c, getDefaultIcon());
-  }
-
-  /**
-   * @See {@link javax.swing.plaf.basic.BasicRadioButtonUI#getPreferredSize}
-   * The difference is that we do not include `DarculaCheckBoxBorder` insets to the icon size.
-   */
-  @Nullable
-  static Dimension computeCheckboxPreferredSize(JComponent c, Icon defaultIcon) {
-    if (c.getComponentCount() > 0) {
-      return null;
-    }
-
-    AbstractButton b = (AbstractButton)c;
-    Rectangle prefViewRect = new Rectangle();
-    Rectangle prefIconRect = new Rectangle();
-    Rectangle prefTextRect = new Rectangle();
-
-    String text = b.getText();
-
-    Icon buttonIcon = b.getIcon();
-    if (buttonIcon == null) {
-      buttonIcon = defaultIcon;
-    }
-
-    Font font = b.getFont();
-    FontMetrics fm = b.getFontMetrics(font);
-
-    prefViewRect.x = prefViewRect.y = 0;
-    prefViewRect.width = Short.MAX_VALUE;
-    prefViewRect.height = Short.MAX_VALUE;
-    prefIconRect.x = prefIconRect.y = prefIconRect.width = prefIconRect.height = 0;
-    prefTextRect.x = prefTextRect.y = prefTextRect.width = prefTextRect.height = 0;
-
-    SwingUtilities.layoutCompoundLabel(
-      c, fm, text, buttonIcon,
-      b.getVerticalAlignment(), b.getHorizontalAlignment(),
-      b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
-      prefViewRect, prefIconRect, prefTextRect,
-      text == null ? 0 : b.getIconTextGap());
-
-    Insets insets = b.getInsets();
-    if (!(b.getBorder() instanceof DarculaCheckBoxBorder)) {
-      JBInsets.addTo(prefIconRect, insets);
-    }
-    JBInsets.addTo(prefTextRect, insets);
-
-    // find the union of the icon and text rects (from Rectangle.java)
-    int x1 = Math.min(prefIconRect.x, prefTextRect.x);
-    int x2 = Math.max(prefIconRect.x + prefIconRect.width,
-                      prefTextRect.x + prefTextRect.width);
-    int y1 = Math.min(prefIconRect.y, prefTextRect.y);
-    int y2 = Math.max(prefIconRect.y + prefIconRect.height,
-                      prefTextRect.y + prefTextRect.height);
-    int width = x2 - x1;
-    int height = y2 - y1;
-    return new Dimension(width, height);
   }
 
   @Override
@@ -231,5 +143,10 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   protected boolean isIndeterminate(AbstractButton checkBox) {
     return "indeterminate".equals(checkBox.getClientProperty("JButton.selectedState")) ||
            checkBox instanceof ThreeStateCheckBox && ((ThreeStateCheckBox)checkBox).getState() == ThreeStateCheckBox.State.DONT_CARE;
+  }
+
+  private @NotNull AbstractButtonLayout createLayout(JComponent c, Dimension size) {
+    AbstractButton button = (AbstractButton)c;
+    return new AbstractButtonLayout(button, size, removeInsetsBeforeLayout(button), getDefaultIcon());
   }
 }

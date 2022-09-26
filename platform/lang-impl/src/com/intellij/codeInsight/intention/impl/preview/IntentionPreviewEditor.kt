@@ -10,13 +10,8 @@ import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.psi.PsiFile
 import kotlin.math.min
 
-internal class IntentionPreviewEditor(psiFileCopy: PsiFile, caretOffset: Int, private val settings: EditorSettings)
+internal class IntentionPreviewEditor(psiFileCopy: PsiFile, private val settings: EditorSettings)
   : ImaginaryEditor(psiFileCopy.project, psiFileCopy.viewProvider.document!!) {
-
-  init {
-    caretModel.moveToOffset(caretOffset)
-  }
-
   override fun notImplemented(): RuntimeException = IntentionPreviewUnsupportedOperationException()
 
   override fun isViewer(): Boolean = true
@@ -44,9 +39,10 @@ internal class IntentionPreviewEditor(psiFileCopy: PsiFile, caretOffset: Int, pr
   }
 
   override fun offsetToLogicalPosition(offset: Int): LogicalPosition {
+    val clamped = offset.coerceIn(0, document.textLength)
     val document = document
-    val line = document.getLineNumber(offset)
-    val col = offset - document.getLineStartOffset(line)
+    val line = document.getLineNumber(clamped)
+    val col = clamped - document.getLineStartOffset(line)
     return LogicalPosition(line, col)
   }
 

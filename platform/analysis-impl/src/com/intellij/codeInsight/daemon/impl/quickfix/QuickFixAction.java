@@ -30,7 +30,7 @@ public final class QuickFixAction {
   @Deprecated(forRemoval = true)
   public static void registerQuickFixAction(@Nullable HighlightInfo info,
                                             @Nullable IntentionAction action,
-                                            @Nullable List<IntentionAction> options,
+                                            @Nullable List<? extends IntentionAction> options,
                                             @Nullable @Nls String displayName) {
     if (info == null) return;
     info.registerFix(action, options, displayName, null, null);

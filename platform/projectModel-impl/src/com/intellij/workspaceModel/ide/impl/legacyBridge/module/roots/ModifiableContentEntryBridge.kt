@@ -2,16 +2,14 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ExcludeFolder
-import com.intellij.openapi.roots.ModuleRootModel
-import com.intellij.openapi.roots.SourceFolder
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.isEqualOrParentOf
+import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
@@ -43,7 +41,10 @@ internal class ModifiableContentEntryBridge(
     CachedValueProvider.Result.createSingleDependency(contentEntry, modifiableRootModel)
   }
 
-  private fun <P : JpsElement> addSourceFolder(sourceFolderUrl: VirtualFileUrl, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {
+  private fun <P : JpsElement> addSourceFolder(sourceFolderUrl: VirtualFileUrl,
+                                               type: JpsModuleSourceRootType<P>,
+                                               properties: P,
+                                               folderEntitySource: EntitySource): SourceFolder {
     if (!contentEntryUrl.isEqualOrParentOf(sourceFolderUrl)) {
       error("Source folder $sourceFolderUrl must be under content entry $contentEntryUrl")
     }
@@ -58,12 +59,11 @@ internal class ModifiableContentEntryBridge(
                                                                  ?: error("Module source root type $type is not registered as JpsModelSerializerExtension")
 
     val contentRootEntity = currentContentEntry.value.entity
-    val entitySource = contentRootEntity.entitySource
     val sourceRootEntity = diff.addSourceRootEntity(
       contentRoot = contentRootEntity,
       url = sourceFolderUrl,
       rootType = serializer.typeId,
-      source = entitySource
+      source = folderEntitySource
     )
 
     SourceRootPropertiesHelper.addPropertiesEntity(diff, sourceRootEntity, properties, serializer)
@@ -190,7 +190,7 @@ internal class ModifiableContentEntryBridge(
 
   override fun addSourceFolder(file: VirtualFile, isTestSource: Boolean, packagePrefix: String): SourceFolder =
     addSourceFolder(file, if (isTestSource) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE,
-                    JavaSourceRootProperties(packagePrefix, false))
+                                                      JavaSourceRootProperties(packagePrefix, false))
 
   override fun <P : JpsElement> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>): SourceFolder =
     addSourceFolder(file, type, type.createDefaultProperties())
@@ -198,14 +198,36 @@ internal class ModifiableContentEntryBridge(
   override fun addSourceFolder(url: String, isTestSource: Boolean): SourceFolder =
     addSourceFolder(url, if (isTestSource) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE)
 
-  override fun <P : JpsElement> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>): SourceFolder =
-    addSourceFolder(url, type, type.createDefaultProperties())
+  override fun <P : JpsElement> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>): SourceFolder {
+    return addSourceFolder(url, type, type.createDefaultProperties())
+  }
 
-  override fun <P : JpsElement> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder =
-    addSourceFolder(file.toVirtualFileUrl(virtualFileManager), type, properties)
+  override fun <P : JpsElement> addSourceFolder(url: String,
+                                                 type: JpsModuleSourceRootType<P>,
+                                                 externalSource: ProjectModelExternalSource): SourceFolder {
+    return addSourceFolder(url, type, type.createDefaultProperties(), externalSource)
+  }
 
-  override fun <P : JpsElement> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder =
-    addSourceFolder(virtualFileManager.fromUrl(url), type, properties)
+  override fun <P : JpsElement> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {
+    val contentRootSource = currentContentEntry.value.entity.entitySource
+    val source: EntitySource = getInternalFileSource(contentRootSource) ?: contentRootSource
+    return addSourceFolder(file.toVirtualFileUrl(virtualFileManager), type, properties, source)
+  }
+
+  override fun <P : JpsElement> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {
+    val contentRootSource = currentContentEntry.value.entity.entitySource
+    val source: EntitySource = getInternalFileSource(contentRootSource) ?: contentRootSource
+    return addSourceFolder(virtualFileManager.fromUrl(url), type, properties, source)
+  }
+
+  override fun <P : JpsElement> addSourceFolder(url: String,
+                                                type: JpsModuleSourceRootType<P>,
+                                                properties: P,
+                                                externalSource: ProjectModelExternalSource?): SourceFolder {
+    val contentRootSource = currentContentEntry.value.entity.entitySource
+    val source = if (externalSource != null) contentRootSource else getInternalFileSource(contentRootSource) ?: contentRootSource
+    return addSourceFolder(virtualFileManager.fromUrl(url), type, properties, source)
+  }
 
   override fun getFile(): VirtualFile? = currentContentEntry.value.file
   override fun getUrl(): String = contentEntryUrl.url

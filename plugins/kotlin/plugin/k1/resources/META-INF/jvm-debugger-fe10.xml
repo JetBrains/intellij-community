@@ -5,10 +5,6 @@
             serviceInterface="org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerLegacyFacade"
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.fe10.core.Fe10KotlinDebuggerLegacyFacade"/>
 
-
-    <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointType"/>
-    <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointHandlerFactory"/>
-
     <debugger.sourcePositionProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinSourcePositionProvider"/>
     <debugger.jvmSmartStepIntoHandler implementation="org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler"/>
     <debugger.frameExtraVarsProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinFrameExtraVariablesProvider"/>
@@ -16,18 +12,6 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <diagnosticSuppressor implementation="org.jetbrains.kotlin.idea.debugger.core.DiagnosticSuppressorForDebugger"/>
-  </extensions>
-
-  <!-- Coroutines -->
-
-  <extensions defaultExtensionNs="com.intellij">
-    <debugger.asyncStackTraceProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider"/>
-
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor"
-            serviceImplementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineStackFrameInterceptor"/>
-
-    <runConfigurationExtension implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebugConfigurationExtension"/>
   </extensions>
 
   <!-- Evaluation -->

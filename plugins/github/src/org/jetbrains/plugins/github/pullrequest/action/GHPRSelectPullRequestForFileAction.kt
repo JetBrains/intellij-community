@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.components.service
@@ -15,6 +16,8 @@ import java.util.function.Supplier
 class GHPRSelectPullRequestForFileAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.select.action"),
                                                            Supplier<String?> { null },
                                                            AllIcons.General.Locate) {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val project = e.project

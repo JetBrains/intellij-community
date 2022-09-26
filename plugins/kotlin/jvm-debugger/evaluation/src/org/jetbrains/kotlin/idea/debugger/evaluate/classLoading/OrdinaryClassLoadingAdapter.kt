@@ -8,7 +8,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.sun.jdi.ClassLoaderReference
 import com.sun.jdi.ClassType
 import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
-import org.jetbrains.kotlin.idea.debugger.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluationBundle
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.ReflectionCallClassPatcher
 import org.jetbrains.org.objectweb.asm.*

@@ -146,7 +146,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
   public static Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor,
                                                         @Nullable Caret hostCaret,
                                                         @Nullable final PsiFile injectedFile) {
-    if (injectedFile == null || hostEditor instanceof EditorWindow || hostEditor.isDisposed()) return hostEditor;
+    if (injectedFile == null || !(hostEditor instanceof EditorImpl) || hostEditor.isDisposed()) return hostEditor;
     Project project = hostEditor.getProject();
     if (project == null) project = injectedFile.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(injectedFile);

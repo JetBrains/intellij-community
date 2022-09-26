@@ -59,18 +59,17 @@ class KotlinTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspe
       import junit.framework.TestCase
 
       class TestCaseWithConstructorInspection1() : TestCase() {
-          <warning descr="Initialization logic in constructor 'constructor()' instead of 'setup' life cycle method">constructor</warning>(x: Int) : this() {
+          <warning descr="Initialization logic in constructor 'constructor()' instead of 'setup()' life cycle method">constructor</warning>(x: Int) : this() {
               println(x)
           }
       }
     """.trimIndent(), "TestCaseWithConstructorInspection1")
   }
 
-
   fun `test highlighting Junit 4`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       public class JUnit4TestCaseWithConstructor {
-        <warning descr="Initialization logic in constructor 'constructor()' instead of 'setup' life cycle method">constructor</warning>() {
+        <warning descr="Initialization logic in constructor 'constructor()' instead of 'setup()' life cycle method">constructor</warning>() {
           println()
           println()
           println()

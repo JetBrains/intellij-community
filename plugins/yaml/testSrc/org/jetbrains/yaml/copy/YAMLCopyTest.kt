@@ -16,6 +16,36 @@ class YAMLCopyTest : BasePlatformTestCase() {
     doTest(source, expected)
   }
 
+  fun testNoAdjustOnSameLine() {
+    val source = """
+      object:
+        <selection>someKey</selection>: just hello world
+        otherKey: other value
+    """.trimIndent()
+    val expected = "someKey"
+    doTest(source, expected)
+  }
+
+  fun testNoAdjustOnSameLineUpToTheEnd() {
+    val source = """
+      object:
+        <selection>someKey: just hello world</selection>
+        otherKey: other value
+    """.trimIndent()
+    val expected = "someKey: just hello world"
+    doTest(source, expected)
+  }
+
+  fun testNoAdjustOnSameLineInFileEnd() {
+    val source = """
+      object:
+        someKey: just hello world
+        <selection>otherKey: other value</selection>
+    """.trimIndent()
+    val expected = "otherKey: other value"
+    doTest(source, expected)
+  }
+
   fun testNoAdjustAcrossMapBorder() { // let's leave this copy action as it is
     val source = """
       someKey:

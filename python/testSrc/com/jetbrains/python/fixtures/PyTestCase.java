@@ -332,7 +332,6 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   /**
-   * @param name
    * @return class by its name from file
    */
   @NotNull

@@ -855,7 +855,6 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   /**
    *
-   * @param methodSignature
    * @return Visibility
    */
   @PsiModifier.ModifierConstant

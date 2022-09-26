@@ -7,6 +7,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,29 +35,36 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.IntConsumer;
+import java.util.stream.Collectors;
 
 import static com.intellij.vcs.log.history.FileHistoryKt.FILE_PATH_HASHING_STRATEGY;
 
 public final class IndexDataGetter {
   @NotNull private final Project myProject;
-  @NotNull private final Set<? extends VirtualFile> myRoots;
+  @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
   @NotNull private final VcsLogPersistentIndex.IndexStorage myIndexStorage;
   @NotNull private final VcsLogStorage myLogStorage;
   @NotNull private final VcsLogErrorHandler myErrorHandler;
   @NotNull private final VcsDirectoryRenamesProvider myDirectoryRenamesProvider;
+  private final boolean myIsProjectLog;
 
   public IndexDataGetter(@NotNull Project project,
-                         @NotNull Set<? extends VirtualFile> roots,
+                         @NotNull Map<VirtualFile, VcsLogProvider> providers,
                          @NotNull VcsLogPersistentIndex.IndexStorage indexStorage,
                          @NotNull VcsLogStorage logStorage,
                          @NotNull VcsLogErrorHandler errorHandler) {
     myProject = project;
-    myRoots = roots;
+    myProviders = providers;
     myIndexStorage = indexStorage;
     myLogStorage = logStorage;
     myErrorHandler = errorHandler;
 
     myDirectoryRenamesProvider = VcsDirectoryRenamesProvider.getInstance(myProject);
+
+    myIsProjectLog = Arrays.stream(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots())
+      .map(VcsRoot::getPath)
+      .collect(Collectors.toSet())
+      .containsAll(myProviders.keySet());
   }
 
   //
@@ -133,7 +142,7 @@ public final class IndexDataGetter {
       }
       if (filter instanceof VcsLogStructureFilter) {
         Collection<FilePath> files = ((VcsLogStructureFilter)filter).getFiles();
-        return ContainerUtil.find(files, file -> file.isDirectory() && myRoots.contains(file.getVirtualFile())) == null;
+        return ContainerUtil.find(files, file -> file.isDirectory() && myProviders.containsKey(file.getVirtualFile())) == null;
       }
       return false;
     });
@@ -153,7 +162,7 @@ public final class IndexDataGetter {
     IntSet filteredByUser = null;
     if (userFilter != null) {
       Set<VcsUser> users = new HashSet<>();
-      for (VirtualFile root : myRoots) {
+      for (VirtualFile root : myProviders.keySet()) {
         users.addAll(userFilter.getUsers(root));
       }
 
@@ -267,8 +276,8 @@ public final class IndexDataGetter {
   private Int2ObjectMap<Int2ObjectMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
     Int2ObjectMap<Int2ObjectMap<VcsLogPathsIndex.ChangeKind>> affectedCommits = new Int2ObjectOpenHashMap<>();
 
-    VirtualFile root = VcsLogUtil.getActualRoot(myProject, path);
-    if (myRoots.contains(root) && root != null) {
+    VirtualFile root = getRoot(path);
+    if (myProviders.containsKey(root) && root != null) {
       executeAndCatch(() -> {
         myIndexStorage.paths.iterateCommits(root, path, (changes, commit) -> executeAndCatch(() -> {
           List<Integer> parents = myIndexStorage.parents.get(commit);
@@ -331,7 +340,7 @@ public final class IndexDataGetter {
     @Nullable
     @Override
     public EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
-      VirtualFile root = Objects.requireNonNull(VcsLogUtil.getActualRoot(myProject, path));
+      VirtualFile root = Objects.requireNonNull(getRoot(path));
       return executeAndCatch(() -> {
         return myIndexStorage.paths.findRename(parent, child, root, path, isChildPath);
       });
@@ -414,6 +423,12 @@ public final class IndexDataGetter {
   @NotNull
   public VcsLogStorage getLogStorage() {
     return myLogStorage;
+  }
+
+  @Nullable
+  private VirtualFile getRoot(@NotNull FilePath path) {
+    if (myIsProjectLog) return VcsLogUtil.getActualRoot(myProject, path);
+    return VcsLogUtil.getActualRoot(myProject, myProviders, path);
   }
 
   private static <T> void processKeys(@NotNull PersistentMap<Integer, T> map, @NotNull Processor<? super Integer> processor)

@@ -49,7 +49,7 @@ final class HidpiInfo extends AnAction implements DumbAware {
   // must be not constant to avoid call to JBUIScale
   public static String getUsrScaleDesc() {
     return "<html><span style='font-size:x-small'>The global IDE scale factor" +
-           (JBUIScale.DEBUG_USER_SCALE_FACTOR.get() != null ?
+           (JBUIScale.DEBUG_USER_SCALE_FACTOR.getValue() != null ?
             ", overridden by the debug property." :
      ", derived from the main font size: <code>$LABEL_FONT_SIZE" +
      (ENABLED ? "pt" : "px") + "</code><br>" +
@@ -107,7 +107,7 @@ final class HidpiInfo extends AnAction implements DumbAware {
 
     if (SystemInfo.isLinux && SystemInfo.isJetBrainsJvm) {
       try {
-        Class cls = Class.forName("sun.awt.X11GraphicsDevice");
+        Class<?> cls = Class.forName("sun.awt.X11GraphicsDevice");
         MethodInvocator getDpiInfo = new MethodInvocator(cls, "getDpiInfo");
         if (getDpiInfo.isAvailable()) {
           GraphicsDevice gd = null;

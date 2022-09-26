@@ -44,6 +44,9 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     checkHighlighting()
   }
 
+  /**
+   * Runs all quickfixes in [hints] on [before] at the cursor position marked with <caret> and compares it with [after].
+   */
   protected fun JavaCodeInsightTestFixture.testQuickFix(
     lang: ULanguage,
     before: String,
@@ -58,6 +61,10 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     checkResult(after)
   }
 
+  /**
+   * Runs all quickfixes in [hints] on [before] and compares it with [after]. This test checks all quick fixes in [before], compared to
+   * [testQuickFix] which only runs the quick fix at the <caret> position.
+   */
   protected fun JavaCodeInsightTestFixture.testAllQuickfixes(
     lang: ULanguage,
     before: String,

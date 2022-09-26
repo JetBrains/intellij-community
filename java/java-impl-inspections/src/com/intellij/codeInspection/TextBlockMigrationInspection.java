@@ -19,8 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -43,12 +41,11 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     return new JavaElementVisitor() {
       @Override
       public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
-        if (!isConcatenation(expression)) return;
+        if (!ExpressionUtils.hasStringType(expression)) return;
         int nNewLines = 0;
-        PsiExpression[] operands = expression.getOperands();
         TextRange firstNewLineTextRange = null;
         boolean hasEscapedQuotes = false;
-        for (PsiExpression operand : operands) {
+        for (PsiExpression operand : expression.getOperands()) {
           PsiLiteralExpression literal = getLiteralExpression(operand);
           if (literal == null) return;
           if (nNewLines > 1) continue;
@@ -70,9 +67,8 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
           holder.registerProblem(expression, quickFixOnly ? null : firstNewLineTextRange,
                                  JavaBundle.message("inspection.text.block.migration.concatenation.message"),
                                  new ReplaceWithTextBlockFix());
-          return;
         }
-        if (isOnTheFly && hasEscapedQuotes) {
+        else if (isOnTheFly && hasEscapedQuotes) {
           holder.registerProblem(expression,
                                  JavaBundle.message("inspection.text.block.migration.string.message"),
                                  ProblemHighlightType.INFORMATION, new ReplaceWithTextBlockFix());
@@ -92,9 +88,8 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
           holder.registerProblem(expression, quickFixOnly ? null : new TextRange(newLineIdx, newLineIdx + 2),
                                  JavaBundle.message("inspection.text.block.migration.string.message"),
                                  new ReplaceWithTextBlockFix());
-          return;
         }
-        if (isOnTheFly && getQuoteIndex(text) != -1) {
+        else if (isOnTheFly && getQuoteIndex(text) != -1) {
           holder.registerProblem(expression, 
                                  JavaBundle.message("inspection.text.block.migration.string.message"),
                                  ProblemHighlightType.INFORMATION, new ReplaceWithTextBlockFix());
@@ -124,42 +119,32 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
         return;
       }
       PsiPolyadicExpression polyadicExpression = tryCast(expression, PsiPolyadicExpression.class);
-      if (polyadicExpression == null || !isConcatenation(polyadicExpression)) return;
+      if (polyadicExpression == null || !ExpressionUtils.hasStringType(polyadicExpression)) return;
       replaceWithTextBlock(polyadicExpression.getOperands(), polyadicExpression);
     }
 
     private static void replaceWithTextBlock(PsiExpression @NotNull [] operands, @NotNull PsiExpression toReplace) {
       String[] lines = getContentLines(operands);
       if (lines == null) return;
-      String textBlock = getTextBlock(lines);
       CommentTracker tracker = new CommentTracker();
-      tracker.replaceAndRestoreComments(toReplace, textBlock);
+      tracker.replaceAndRestoreComments(toReplace, getTextBlock(lines));
     }
 
     @NotNull
     private static String getTextBlock(String @NotNull [] lines) {
-      lines = getTextBlockLines(lines);
+      lines = PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.join(lines), true, true, false).split("(?<=\n)");
       int indent = PsiLiteralUtil.getTextBlockIndent(lines, true, true);
-      // we need additional indent call only when significant trailing line is missing
-      if (indent > 0 && lines.length > 0 && lines[lines.length - 1].endsWith("\n")) indent = 0;
-      return "\"\"\"\n" + concatenateTextBlockLines(lines, indent) + "\"\"\"" + (indent > 0 ? ".indent(" + indent + ")" : "");
-    }
-
-    private static String @NotNull [] getTextBlockLines(String @NotNull [] lines) {
-      String blockLines = PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.join(lines), true, true, true);
-      return blockLines.split("(?<=\n)");
-    }
-
-    private static String concatenateTextBlockLines(String @NotNull [] lines, int indent) {
-      if (indent <= 0) return StringUtil.join(lines);
-      return Arrays.stream(lines).map(line -> indent < line.length() ? line.substring(indent) : line).collect(Collectors.joining());
+      if (indent != 0 && lines.length > 0 && !lines[lines.length - 1].endsWith("\n")) {
+        // append \ + newline at the end of the last line, so we can use closing """ to indent
+        lines[lines.length - 1] += "\\\n";
+      }
+      return "\"\"\"\n" + StringUtil.join(lines) + "\"\"\"";
     }
 
     private static String @Nullable [] getContentLines(PsiExpression @NotNull [] operands) {
       String[] lines = new String[operands.length];
       for (int i = 0; i < operands.length; i++) {
-        PsiExpression operand = operands[i];
-        PsiLiteralExpression literal = getLiteralExpression(operand);
+        PsiLiteralExpression literal = getLiteralExpression(operands[i]);
         if (literal == null) return null;
         String line = getLiteralText(literal);
         if (line == null) return null;
@@ -199,15 +184,9 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     return -1;
   }
 
-  private static boolean isConcatenation(@NotNull PsiPolyadicExpression expression) {
-    PsiType type = expression.getType();
-    return type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
-  }
-
   @Nullable
   private static PsiLiteralExpression getLiteralExpression(@NotNull PsiExpression expression) {
     PsiLiteralExpression literal = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiLiteralExpression.class);
-    if (literal == null || literal.isTextBlock()) return null;
-    return literal;
+    return (literal == null || literal.isTextBlock()) ? null : literal;
   }
 }

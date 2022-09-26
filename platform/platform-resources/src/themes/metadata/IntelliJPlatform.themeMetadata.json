@@ -3,8 +3,29 @@
   "fixed": false,
   "ui": [
     {
+      "key": "Banner.infoBackground"
+    },
+    {
+      "key": "Banner.infoBorderColor"
+    },
+    {
+      "key": "Banner.successBackground"
+    },
+    {
+      "key": "Banner.successBorderColor"
+    },
+    {
       "key": "Banner.warningBackground",
       "description": "The background of banners (experimental UI only)"
+    },
+    {
+      "key": "Banner.warningBorderColor"
+    },
+    {
+      "key": "Banner.errorBackground"
+    },
+    {
+      "key": "Banner.errorBorderColor"
     },
     {
       "key": "Bookmark.iconBackground",
@@ -25,40 +46,42 @@
       "deprecated": true
     },
     {
-      "key": "BookmarkMnemonicAvailable.buttonForeground",
-      "description": "The button text color for the not assigned bookmark mnemonic."
+      "key": "Bookmark.MnemonicAvailable.foreground",
+      "description": "The button text color for unassigned bookmark mnemonics."
     },
     {
-      "key": "BookmarkMnemonicAvailable.buttonBackground",
-      "description": "The button background for the not assigned bookmark mnemonic."
+      "key": "Bookmark.MnemonicAvailable.background",
+      "description": "The button background for unassigned bookmark mnemonics."
     },
     {
-      "key": "BookmarkMnemonicAvailable.borderColor",
-      "description": "The button border color for the not assigned bookmark mnemonic."
+      "key": "Bookmark.MnemonicAvailable.borderColor",
+      "description": "The button border color for unassigned bookmark mnemonics."
     },
     {
-      "key": "BookmarkMnemonicAssigned.buttonForeground",
-      "description": "The button text color for the already assigned bookmark mnemonic."
+      "key": "Bookmark.MnemonicAssigned.foreground",
+      "description": "The button text color for already assigned bookmark mnemonics."
     },
     {
-      "key": "BookmarkMnemonicAssigned.buttonBackground",
-      "description": "The button background for the already assigned bookmark mnemonic."
+      "key": "Bookmark.MnemonicAssigned.background",
+      "description": "The button background for already assigned bookmark mnemonics."
     },
     {
       "key": "BookmarkMnemonicAssigned.borderColor",
-      "description": "The button border color for the already assigned bookmark mnemonic."
+      "description": "The button border color for already assigned bookmark mnemonics.",
+      "deprecated": true
     },
     {
-      "key": "BookmarkMnemonicCurrent.buttonForeground",
+      "key": "Bookmark.MnemonicCurrent.foreground",
       "description": "The button text color for the currently selected bookmark mnemonic."
     },
     {
-      "key": "BookmarkMnemonicCurrent.buttonBackground",
+      "key": "Bookmark.MnemonicCurrent.background",
       "description": "The button background for the currently selected bookmark mnemonic."
     },
     {
       "key": "BookmarkMnemonicCurrent.borderColor",
-      "description": "The button border color for the currently selected bookmark mnemonic."
+      "description": "The button border color for the currently selected bookmark mnemonic.",
+      "deprecated": true
     },
     {
       "key": "Breakpoint.iconHoverAlpha",
@@ -625,6 +648,26 @@
       "since": "2019.2"
     },
     {
+      "key": "Menu.borderInsets",
+      "description": "Border insets of main menu borders",
+      "since": "2022.3"
+    },
+    {
+      "key": "Menu.Selection.innerInsets",
+      "description": "Inner insets in selection line. In experimental UI top and bottom values are ignored, row height is used",
+      "since": "2022.3"
+    },
+    {
+      "key": "Menu.Selection.outerInsets",
+      "description": "Outer insets for menu item",
+      "since": "2022.3"
+    },
+    {
+      "key": "Menu.Selection.arc",
+      "description": "Selection border corners radius in selection",
+      "since": "2022.3"
+    },
+    {
       "key": "NavBar.borderColor",
       "description": "Border above the navbar, visible when the toolbar is on"
     },
@@ -973,6 +1016,20 @@
       "description": "Insets around separator label (experimental UI only)"
     },
     {
+      "key": "PopupMenu.Selection.innerInsets",
+      "description": "Inner insets in selection line. In experimental UI top and bottom values are ignored, row height is used",
+      "since": "2022.3"
+    },
+    {
+      "key": "PopupMenu.Selection.outerInsets",
+      "description": "Outer insets for menu item",
+      "since": "2022.3"
+    },
+    {
+      "key": "PopupMenu.Selection.arc",
+      "description": "Selection border corners radius in selection"
+    },
+    {
       "key": "ProgressBar.failedColor",
       "description": "Use the \"Test Progress Indicators\" action in internal mode to preview progress bars"
     },
@@ -1118,6 +1175,36 @@
       "key": "List.hoverInactiveBackground",
       "since": "2020.3",
       "description": "A background of a hovered row in an unfocused list if hover is allowed."
+    },
+    {
+      "key": "List.Button.leftRightInset",
+      "since": "2022.3",
+      "description": "An insets for popup inline actions buttons"
+    },
+    {
+      "key": "List.Button.separatorColor",
+      "since": "2022.3",
+      "description": "A color for inline buttons separator"
+    },
+    {
+      "key": "List.Button.hoverBackground",
+      "since": "2022.3",
+      "description": "Hover background for inline buttons in list popups"
+    },
+    {
+      "key": "List.Line.hoverBackground",
+      "since": "2022.3",
+      "description": "Hover background for list item in list popups (when inline buttons are shown)"
+    },
+    {
+      "key": "List.Tag.background",
+      "since": "2022.3",
+      "description": "Background for tags in list items"
+    },
+    {
+      "key": "List.Tag.foreground",
+      "since": "2022.3",
+      "description": "Foreground for tags in list items"
     },
     {
       "key": "TabbedPane.tabSelectionArc",
@@ -1661,12 +1748,22 @@
       "since": "2021.2"
     },
     {
+      "key": "TipOfTheDay.Image.borderColor",
+      "description": "Border color of the rounded illustrations in Tips of the Day dialog",
+      "since": "2022.3"
+    },
+    {
       "key": "ProblemsView.projectAnalysisButtonBackground",
       "description": "Background for Project-Wide analysis button when enabled",
       "since": "2021.2"
     },
     {
       "key": "Tag.background"
+    },
+    {
+      "key": "MainToolbar.separatorColor",
+      "description": "Color of the Main Toolbar separators",
+      "since": "2022.3"
     }
   ]
 }

@@ -11,7 +11,6 @@ import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,20 +30,7 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
 
   @Override
   public PsiTypeElement getCheckType() {
-    PsiPrimaryPattern pattern = getPattern();
-    if (pattern == null) {
-      return (PsiTypeElement)findChildByRoleAsPsiElement(ChildRole.TYPE);
-    }
-    PsiPattern naked = JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern);
-    if (naked instanceof PsiTypeTestPattern) {
-      return ((PsiTypeTestPattern)naked).getCheckType();
-    }
-    else if (naked instanceof PsiDeconstructionPattern) {
-      return ((PsiDeconstructionPattern)naked).getTypeElement();
-    }
-    else {
-      return null;
-    }
+    return (PsiTypeElement)findChildByRoleAsPsiElement(ChildRole.TYPE);
   }
 
   @Override

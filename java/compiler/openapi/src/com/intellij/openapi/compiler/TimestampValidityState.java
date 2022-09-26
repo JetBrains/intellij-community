@@ -46,7 +46,6 @@ public final class TimestampValidityState implements ValidityState {
   /**
    * Saves the validity state to the specified stream.
    *
-   * @param out
    * @throws IOException if the stream write fails.
    */
   @Override

@@ -16,6 +16,12 @@ final class IconWrapperWithToolTipComposite implements IconWithToolTip, Copyable
     myIcon = icon;
   }
 
+  @NotNull
+  @Override
+  public IconWrapperWithToolTipComposite replaceBy(@NotNull IconReplacer replacer) {
+    return new IconWrapperWithToolTipComposite(replacer.replaceIcon(myIcon));
+  }
+
   @Override
   public @Nullable String getToolTip(boolean composite) {
     if (!composite) return null;

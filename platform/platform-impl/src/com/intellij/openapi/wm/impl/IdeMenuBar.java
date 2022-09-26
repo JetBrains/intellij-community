@@ -28,6 +28,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.ui.mac.screenmenu.MenuBar;
+import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.*;
@@ -48,10 +49,6 @@ import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatcher, UISettingsListener {
   private static final Logger LOG = Logger.getInstance(IdeMenuBar.class);
   private static final int COLLAPSED_HEIGHT = 2;
@@ -477,7 +474,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
 
     if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      g.setColor(UIManager.getColor("MenuItem.background"));
+      g.setColor(IdeaMenuUI.getMenuBackgroundColor());
       g.fillRect(0, 0, getWidth(), getHeight());
     }
   }
@@ -584,13 +581,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     protected void paintCycleEnd() {
       myProgress = 1;
       switch (getState()) {
-        case COLLAPSING:
-          setState(State.COLLAPSED);
-          break;
-        case EXPANDING:
-          setState(State.TEMPORARY_EXPANDED);
-          break;
-        default:
+        case COLLAPSING -> setState(State.COLLAPSED);
+        case EXPANDING -> setState(State.TEMPORARY_EXPANDED);
+        default -> {
+        }
       }
       if (!isShowing()) {
         return;

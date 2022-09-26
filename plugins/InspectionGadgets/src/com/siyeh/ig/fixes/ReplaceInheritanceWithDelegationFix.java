@@ -16,7 +16,7 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +31,7 @@ public class ReplaceInheritanceWithDelegationFix extends RefactoringInspectionGa
 
   @NotNull
   @Override
-  public RefactoringActionHandler getHandler() {
+  public PreviewableRefactoringActionHandler getHandler() {
     return JavaRefactoringActionHandlerFactory.getInstance().createInheritanceToDelegationHandler();
   }
 }

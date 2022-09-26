@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package org.jetbrains.intellij.build
 
@@ -27,12 +27,7 @@ class ConsoleSpanExporter : SpanExporter {
     fun setPathRoot(dir: Path) {
       val s1 = dir.toString() + File.separatorChar
       val s2 = dir.toRealPath().toString() + File.separatorChar
-      if (s1 == s2) {
-        rootPathsWithEndSlash = java.util.List.of(s1)
-      }
-      else {
-        rootPathsWithEndSlash = java.util.List.of(s1, s2)
-      }
+      rootPathsWithEndSlash = if (s1 == s2) java.util.List.of(s1) else java.util.List.of(s1, s2)
     }
   }
 
@@ -81,7 +76,7 @@ private fun writeSpan(sb: StringBuilder, span: SpanData, duration: Long, endEpoc
     sb.append(", error=")
     sb.append(span.status.description)
   }
-  writeAttributesAsHumanReadable(span.attributes, sb)
+  writeAttributesAsHumanReadable(span.attributes, sb, writeFirstComma = true)
   sb.append(')')
   sb.append('\n')
   val events = span.events
@@ -105,9 +100,15 @@ private fun writeSpan(sb: StringBuilder, span: SpanData, duration: Long, endEpoc
       }
       sb.append(prefix)
       sb.append(event.name)
-      sb.append(" (time=")
+      sb.append(" (")
+      writeAttributesAsHumanReadable(event.attributes, sb, writeFirstComma = false)
+
+      if (!event.attributes.isEmpty) {
+        sb.append(", ")
+      }
+      sb.append("time=")
       writeTime(event.epochNanos, sb)
-      writeAttributesAsHumanReadable(event.attributes, sb)
+
       sb.append(')')
       sb.append('\n')
     }
@@ -131,12 +132,15 @@ private fun writeValueAsHumanReadable(s: String, sb: StringBuilder) {
   sb.append(s)
 }
 
-private fun writeAttributesAsHumanReadable(attributes: Attributes, sb: StringBuilder) {
+private fun writeAttributesAsHumanReadable(attributes: Attributes, sb: StringBuilder, writeFirstComma: Boolean) {
   attributes.forEach(BiConsumer { k, v ->
     if (k == SemanticAttributes.THREAD_NAME || k == SemanticAttributes.THREAD_ID) {
       return@BiConsumer
     }
-    sb.append(", ")
+
+    if (writeFirstComma) {
+      sb.append(", ")
+    }
     sb.append(k.key)
     sb.append('=')
     if (k == SemanticAttributes.EXCEPTION_STACKTRACE) {

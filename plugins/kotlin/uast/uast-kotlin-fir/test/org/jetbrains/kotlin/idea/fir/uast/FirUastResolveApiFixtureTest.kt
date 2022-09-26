@@ -26,8 +26,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         "MultiResolveJava",
         // TODO: multiResolve, getArgumentForParameter, return type for ambiguous call
         "MultiResolveJavaAmbiguous",
-        // TODO: resolve to setter, not getter
-        "ResolveFromBaseJava",
         // TODO: multiResolve
         "MultiResolveInClass",
         // TODO: multiResolve, return type for ambiguous call
@@ -151,6 +149,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("ListIterator", ::checkListIterator)
     }
 
+    fun testStringJVM() {
+        doCheck("StringJVM", ::checkStringJVM)
+    }
+
     fun testDivByZero() {
         doCheck("DivByZero", ::checkDivByZero)
     }
@@ -198,4 +200,17 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     fun testOperatorOverloads() {
         doCheck("OperatorOverloads", ::checkOperatorOverloads)
     }
+
+    fun testResolveSyntheticJavaPropertyAccessor() {
+        doCheck("ResolveSyntheticJavaPropertyAccessor", ::checkResolveSyntheticJavaPropertyAccessor)
+    }
+
+    fun testResolveKotlinPropertyAccessor() {
+        doCheck("ResolveKotlinPropertyAccessor", ::checkResolveKotlinPropertyAccessor)
+    }
+
+    fun testResolveToSubstituteOverride() {
+        doCheck("ResolveToSubstituteOverride", ::checkResolveToSubstituteOverride)
+    }
+
 }

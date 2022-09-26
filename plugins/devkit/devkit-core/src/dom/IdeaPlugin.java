@@ -156,8 +156,8 @@ public interface IdeaPlugin extends DomElement {
   @NotNull List<? extends Listeners> getProjectListeners();
 
   /**
-   * @deprecated not used anymore
+   * @deprecated the corresponding tag in plugin.xml is not supported anymore, this method is used to highlight occurrences of such tag  
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   @NotNull List<? extends Helpset> getHelpsets();
 }

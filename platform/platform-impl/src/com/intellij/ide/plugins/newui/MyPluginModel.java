@@ -129,9 +129,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     assertCanApply(pluginIdMap);
 
     PluginEnabler pluginEnabler = PluginEnabler.getInstance();
-    DynamicPluginEnablerState pluginEnablerState = pluginEnabler instanceof DynamicPluginEnabler ?
-                                                   ((DynamicPluginEnabler)pluginEnabler).getState() :
-                                                   null;
     Set<PluginId> uninstallsRequiringRestart = new HashSet<>();
     for (IdeaPluginDescriptorImpl pluginDescriptor : myDynamicPluginsToUninstall) {
       myDiff.remove(pluginDescriptor);
@@ -152,10 +149,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       }
       else {
         getEnabledMap().remove(pluginId);
-      }
-
-      if (pluginEnablerState != null) {
-        pluginEnablerState.stopTracking(List.of(pluginId));
       }
     }
 
@@ -241,17 +234,25 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
     boolean appliedWithoutRestart = true;
     for (Map.Entry<PluginEnableDisableAction, List<IdeaPluginDescriptor>> entry : descriptorsByAction.entrySet()) {
-      PluginEnableDisableAction action = entry.getKey();
+      boolean enable = entry.getKey().isEnable();
       List<IdeaPluginDescriptor> descriptors = entry.getValue();
 
-      appliedWithoutRestart &= pluginEnabler instanceof DynamicPluginEnabler ?
-                               ((DynamicPluginEnabler)pluginEnabler).updatePluginsState(descriptors,
-                                                                                        action,
-                                                                                        getProject(),
-                                                                                        parentComponent) :
-                               action.isEnable() ?
-                               pluginEnabler.enable(descriptors) :
-                               pluginEnabler.disable(descriptors);
+
+      boolean applied;
+      if (pluginEnabler instanceof DynamicPluginEnabler dynamicPluginEnabler) {
+        Project project = getProject();
+        applied = enable ?
+                  dynamicPluginEnabler.enable(descriptors, project) :
+                  dynamicPluginEnabler.disable(descriptors, project, parentComponent);
+      }
+      else {
+        applied = enable ?
+                  pluginEnabler.enable(descriptors) :
+                  pluginEnabler.disable(descriptors);
+      }
+
+
+      appliedWithoutRestart &= applied;
     }
     return appliedWithoutRestart;
   }
@@ -826,13 +827,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return getState(descriptor.getPluginId());
   }
 
-  @NotNull ProjectDependentPluginEnabledState getProjectDependentState(@NotNull IdeaPluginDescriptor descriptor) {
-    PluginId pluginId = descriptor.getPluginId();
-    return new ProjectDependentPluginEnabledState(pluginId,
-                                                  getState(pluginId),
-                                                  getProject());
-  }
-
   /**
    * @see #isEnabled(PluginId, Map)
    */
@@ -1052,6 +1046,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginId)) {
       // we'll actually install the plugin when the configurable is closed; at this time we don't know if there's any loadingError
       return List.of();
+    }
+
+    if (descriptor.isOnDemand() && !EnabledOnDemandPluginsState.isEnabled(pluginId)) {
+      return List.of(createTextChunk(IdeBundle.message("plugin.manager.on.demand.plugin.not.loaded")));
     }
 
     PluginLoadingError loadingError = PluginManagerCore.getLoadingError(pluginId);

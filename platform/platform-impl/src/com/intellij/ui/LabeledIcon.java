@@ -2,15 +2,13 @@
 package com.intellij.ui;
 
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class LabeledIcon implements Icon {
   private final Icon myIcon;
   private final String myMnemonic;
@@ -23,7 +21,6 @@ public class LabeledIcon implements Icon {
    * @param icon     not {@code null} icon.
    * @param text     to be painted under the <code>icon<code>. This parameter can
    *                 be {@code null} if text isn't specified. In that case {@code LabeledIcon}
-   * @param mnemonic
    */
   public LabeledIcon(Icon icon, String text, String mnemonic) {
     myIcon = icon;
@@ -127,7 +124,7 @@ public class LabeledIcon implements Icon {
 
       if (myMnemonic != null) {
         y -= fontMetrics.getHeight();
-        g.setColor(UIUtil.getInactiveTextColor());
+        g.setColor(NamedColorUtil.getInactiveTextColor());
         int offset = getTextWidth() - fontMetrics.stringWidth(myMnemonic);
         g.drawString(myMnemonic, x + offset, y);
       }

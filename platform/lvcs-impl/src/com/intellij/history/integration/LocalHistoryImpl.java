@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
 import com.intellij.history.*;
@@ -68,7 +68,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
       return;
     }
 
-    // initialize persistent f
+    // initialize persistent fs
     @SuppressWarnings("unused")
     PersistentFS instance = PersistentFS.getInstance();
 

@@ -4,6 +4,7 @@
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
@@ -16,12 +17,12 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.LightColors
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.addPropertyChangeListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.awt.Point
 import java.awt.event.KeyAdapter
@@ -97,6 +98,8 @@ internal class SearchModel(ui: DocumentationUI) : Disposable {
         e.presentation.isEnabled = hasPrev
       }
 
+      override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
       override fun actionPerformed(e: AnActionEvent) = prev()
     },
     object : DumbAwareAction() {
@@ -109,6 +112,8 @@ internal class SearchModel(ui: DocumentationUI) : Disposable {
       override fun update(e: AnActionEvent) {
         e.presentation.isEnabled = hasNext
       }
+
+      override fun getActionUpdateThread() = ActionUpdateThread.BGT
     },
   )
 
@@ -188,7 +193,7 @@ internal class SearchModel(ui: DocumentationUI) : Disposable {
     }
     else {
       searchField.textEditor.background = LightColors.RED
-      matchLabel.foreground = UIUtil.getErrorForeground()
+      matchLabel.foreground = NamedColorUtil.getErrorForeground()
       matchLabel.text = ApplicationBundle.message("editorsearch.matches", matches)
     }
   }

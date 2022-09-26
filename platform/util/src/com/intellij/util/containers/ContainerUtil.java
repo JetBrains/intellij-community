@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
@@ -12,11 +12,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.*;
 import java.util.WeakHashMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
@@ -26,7 +27,6 @@ import java.util.stream.Stream;
  * @see CollectionFactory
  * @see com.intellij.concurrency.ConcurrentCollectionFactory
  */
-
 @ApiStatus.NonExtendable
 public final class ContainerUtil {
   private static final int INSERTION_SORT_THRESHOLD = 10;
@@ -840,6 +840,10 @@ public final class ContainerUtil {
 
   @Contract(mutates = "param2")
   public static <T, V> V @NotNull [] map2Array(@NotNull Collection<? extends T> collection, V @NotNull [] to, @NotNull Function<? super T, ? extends V> mapper) {
+    return map2List(collection, mapper).toArray(to);
+  }
+  @Contract(mutates = "param2")
+  public static <T, V> V @NotNull [] map2Array(T @NotNull [] collection, V @NotNull [] to, @NotNull Function<? super T, ? extends V> mapper) {
     return map2List(collection, mapper).toArray(to);
   }
 
@@ -2185,43 +2189,26 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only list consisting of the elements from all collections in order
-   */
-  @Contract(pure = true)
-  public static @NotNull <E> List<E> flattenIterables(@NotNull Iterable<? extends Iterable<? extends E>> collections) {
-    int totalSize = 0;
-    for (Iterable<? extends E> list : collections) {
-      totalSize += list instanceof Collection ? ((Collection<?>)list).size() : 10;
-    }
-    List<E> result = new ArrayList<>(totalSize);
-    for (Iterable<? extends E> list : collections) {
-      for (E e : list) {
-        result.add(e);
-      }
-    }
-    return result.isEmpty() ? emptyList() : result;
-  }
-
-  /**
    * @return read-only list consisting of the elements from all collections returned by the mapping function,
    * or a read-only view of the list returned by the mapping function, if it only returned a single list that was not empty
    */
-  public static @NotNull <T, V> List<V> flatMap(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends @NotNull List<V>> mapping) {
+  public static @NotNull <T, V> List<V> flatMap(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends @NotNull List<? extends V>> mapping) {
     // GC optimization for critical clients
     List<V> result = null;
     boolean isOriginal = true;
 
     for (T each : iterable) {
-      List<V> toAdd = mapping.fun(each);
+      List<? extends V> toAdd = mapping.fun(each);
       if (toAdd.isEmpty()) continue;
 
       if (result == null) {
-        result = toAdd;
+        //noinspection unchecked
+        result = (List<V>)toAdd;
         continue;
       }
 
       if (isOriginal) {
-        List<V> original = result;
+        List<? extends V> original = result;
         result = new ArrayList<>(Math.max(10, result.size() + toAdd.size()));
         result.addAll(original);
         isOriginal = false;
@@ -2402,16 +2389,6 @@ public final class ContainerUtil {
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentIntObjectMap<@NotNull V> createConcurrentIntObjectMap() {
     return new ConcurrentIntObjectHashMap<>();
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentIntObjectWeakValueMap()} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  @Contract(value = " -> new", pure = true)
-  public static @NotNull <V> ConcurrentIntObjectMap<@NotNull V> createConcurrentIntObjectWeakValueMap() {
-    return new ConcurrentIntKeyWeakValueHashMap<>();
   }
 
   @Contract(value = " -> new", pure = true)
@@ -2758,14 +2735,6 @@ public final class ContainerUtil {
     return new WeakHashMap<>();
   }
 
-  /**
-   * @deprecated use {@link java.util.WeakHashMap} instead
-   */
-  @Deprecated
-  public static @NotNull <K,V> Map<@NotNull K,V> createWeakMap(int initialCapacity) {
-    return new WeakHashMap<>(initialCapacity);
-  }
-
   @Contract(value = " -> new", pure = true)
   public static @NotNull <T> Set<@NotNull T> createWeakSet() {
     return new WeakHashSet<>();
@@ -2779,23 +2748,6 @@ public final class ContainerUtil {
   @Contract(value = " -> new", pure = true)
   public static @NotNull <T> ObjectIntMap<@NotNull T> createWeakKeyIntValueMap() {
     return new WeakKeyIntValueHashMap<>();
-  }
-
-  /**
-   * Creates an immutable copy of the {@code list},
-   * or returns {@link Collections#emptyList} if the {@code list} is empty.
-   * Modifications of the {@code list} have no effect on the returned copy.
-   */
-  @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <T> List<T> immutableCopy(@NotNull List<? extends T> list) {
-    if (list.isEmpty()) {
-      return Collections.emptyList();
-    }
-    if (list.size() == 1) {
-      return Collections.singletonList(list.get(0));
-    }
-    //noinspection unchecked,SuspiciousArrayCast
-    return immutableList((T[])list.toArray());
   }
 
   public static <T> T reduce(@NotNull List<? extends T> list, T identity, @NotNull BinaryOperator<T> accumulator) {
@@ -2817,5 +2769,22 @@ public final class ContainerUtil {
     int numberOfChunks = listSize / chunkSize;
     return IntStream.range(0, numberOfChunks * chunkSize == listSize ? numberOfChunks : numberOfChunks + 1)
       .mapToObj(i -> list.subList(i * chunkSize, Math.min(listSize, i * chunkSize + chunkSize)));
+  }
+
+  public static <T> @NotNull List<List<T>> groupSublistRuns(@NotNull List<T> list,
+                                                            @NotNull BiPredicate<? super T, ? super T> equality) {
+    if (list.isEmpty()) {
+      return emptyList();
+    }
+
+    List<List<T>> result = new ArrayList<>();
+    int lastIndex = 0;
+    for (int i = 0, size = list.size(); i < size; i++) {
+      if (i == size - 1 || !equality.test(list.get(i), list.get(i + 1))) {
+        result.add(list.subList(lastIndex, i + 1));
+        lastIndex = i + 1;
+      }
+    }
+    return result;
   }
 }

@@ -66,12 +66,12 @@ fun runChangeSignature(
 }
 
 class KotlinChangeSignature(
-    project: Project,
-    editor: Editor?,
-    callableDescriptor: CallableDescriptor,
-    val configuration: KotlinChangeSignatureConfiguration,
-    val defaultValueContext: PsiElement,
-    @NlsContexts.Command commandName: String?
+  project: Project,
+  editor: Editor?,
+  callableDescriptor: CallableDescriptor,
+  val configuration: KotlinChangeSignatureConfiguration,
+  private val defaultValueContext: PsiElement,
+  @NlsContexts.Command commandName: String?
 ) : CallableRefactoring<CallableDescriptor>(
     project,
     editor,

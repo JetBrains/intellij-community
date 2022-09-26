@@ -58,7 +58,7 @@ public class DynamicBundle extends AbstractBundle {
   private static @NotNull ResourceBundle resolveResourceBundle(
     @NotNull ClassLoader bundleClassLoader,
     @NotNull ClassLoader baseLoader,
-    @NotNull Function<@NotNull ClassLoader, @NotNull ResourceBundle> bundleResolver
+    @NotNull Function<? super @NotNull ClassLoader, ? extends @NotNull ResourceBundle> bundleResolver
   ) {
     ResourceBundle base = bundleResolver.apply(baseLoader);
     ClassLoader pluginClassLoader = languagePluginClassLoader(bundleClassLoader);

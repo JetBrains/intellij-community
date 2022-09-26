@@ -19,7 +19,7 @@ import javax.swing.border.Border
 
 open class SegmentedActionToolbarComponent(place: String,
                                            group: ActionGroup,
-                                           val paintBorderForSingleItem: Boolean = true) : ActionToolbarImpl(place, group, true) {
+                                           private val paintBorderForSingleItem: Boolean = true) : ActionToolbarImpl(place, group, true) {
   companion object {
     internal const val CONTROL_BAR_PROPERTY = "CONTROL_BAR_PROPERTY"
     internal const val CONTROL_BAR_FIRST = "CONTROL_BAR_PROPERTY_FIRST"
@@ -31,7 +31,7 @@ open class SegmentedActionToolbarComponent(place: String,
 
     private val LOG = Logger.getInstance(SegmentedActionToolbarComponent::class.java)
 
-    internal val segmentedButtonLook = object : ActionButtonLook() {
+    val segmentedButtonLook = object : ActionButtonLook() {
       override fun paintBorder(g: Graphics, c: JComponent, state: Int) {
       }
 
@@ -54,6 +54,8 @@ open class SegmentedActionToolbarComponent(place: String,
 
   init {
     layoutPolicy = NOWRAP_LAYOUT_POLICY
+    setActionButtonBorder(JBUI.Borders.empty(0, 3))
+    setCustomButtonLook(segmentedButtonLook)
   }
 
   private var isActive = false
@@ -68,11 +70,10 @@ open class SegmentedActionToolbarComponent(place: String,
   }
 
   override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
-    if (!isActive) {
-      return super.createCustomComponent(action, presentation)
-    }
-
     var component = super.createCustomComponent(action, presentation)
+    if (!isActive) {
+      return component
+    }
 
     if (action is ComboBoxAction) {
       UIUtil.uiTraverser(component).filter(ComboBoxButton::class.java).firstOrNull()?.let {
@@ -81,38 +82,11 @@ open class SegmentedActionToolbarComponent(place: String,
       }
     }
 
-    if (component is ActionButton) {
-      val actionButton = component as ActionButton
-      updateActionButtonLook(actionButton)
-    }
-    else {
+    if (component !is ActionButton) {
       component.border = JBUI.Borders.empty()
     }
 
     return component
-  }
-
-  override fun createToolbarButton(action: AnAction,
-                                   look: ActionButtonLook?,
-                                   place: String,
-                                   presentation: Presentation,
-                                   minimumSize: Dimension): ActionButton {
-
-    val createToolbarButton = if (!isActive) {
-      super.createToolbarButton(action, look, place, presentation, minimumSize)
-    }
-    else {
-      super.createToolbarButton(action, segmentedButtonLook, place, presentation, minimumSize)
-    }
-
-    updateActionButtonLook(createToolbarButton)
-
-    return createToolbarButton
-  }
-
-  private fun updateActionButtonLook(actionButton: ActionButton) {
-    actionButton.border = JBUI.Borders.empty(0, 3)
-    actionButton.setLook(segmentedButtonLook)
   }
 
   override fun fillToolBar(actions: List<AnAction>, layoutSecondaries: Boolean) {
@@ -203,6 +177,7 @@ open class SegmentedActionToolbarComponent(place: String,
   }
 
   private var lastIds: List<String> = emptyList()
+  private var lastActions: List<AnAction> = emptyList()
 
   private fun update(forced: Boolean, newVisibleActions: List<AnAction>) {
     val filtered = newVisibleActions.filter { isSuitableAction(it) }
@@ -211,9 +186,13 @@ open class SegmentedActionToolbarComponent(place: String,
     val filteredIds = filtered.map { ActionManager.getInstance().getId(it) }.toList()
 
     traceState(lastIds, filteredIds, ides)
-    lastIds = filteredIds
+
     isActive = newVisibleActions.size > 1
-    super.actionsUpdated(forced, if (filtered.size > 1) filtered else newVisibleActions)
+
+    super.actionsUpdated(forced, if (filtered.size > 1) filtered else if(lastActions.isEmpty()) newVisibleActions else lastActions)
+
+    lastIds = filteredIds
+    lastActions = filtered
     ApplicationManager.getApplication().messageBus.syncPublisher(ToolbarActionsUpdatedListener.TOPIC).actionsUpdated()
   }
 

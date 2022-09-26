@@ -118,11 +118,9 @@ suspend fun <T> writeAction(action: () -> T): T {
 
 private fun readActionSupport() = ApplicationManager.getApplication().getService(ReadActionSupport::class.java)
 
-/**
- * The code within [ModalityState.any] context modality state must only perform pure UI operations,
- * it must not access any PSI, VFS, project model, or indexes. It also must not show any modal dialogs.
- */
-fun ModalityState.asContextElement(): CoroutineContext = coroutineSupport().asContextElement(this)
+@Suppress("CONFLICTING_OVERLOADS")
+@Deprecated("Moved to modality.kt", level = DeprecationLevel.HIDDEN)
+fun ModalityState.asContextElement(): CoroutineContext = asContextElement()
 
 /**
  * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].

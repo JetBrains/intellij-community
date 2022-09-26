@@ -15,17 +15,18 @@ import java.util.Collection;
 import java.util.function.Function;
 
 /**
- * <p>A standard interface to write to {@code `%system%/log/idea.log`} (or {@code `%system%/testlog/idea.log`} in tests).<p/>
+ * <p>A standard interface to write to {@code %system%/log/idea.log} (or {@code %system%/testlog/idea.log} in tests).
  *
- * <p>In addition to writing to log file, "error" methods result in showing "IDE fatal errors" dialog in the IDE
- * (in EAP versions or if "idea.fatal.error.notification" system property is set to "true").
- * See {@link com.intellij.diagnostic.DefaultIdeaErrorLogger#canHandle} for more details.<p/>
+ * <p>The {@code error} methods, in addition to writing to the log file,
+ * result in showing the "IDE fatal errors" dialog in the IDE
+ * (in EAP versions or if the {@code idea.fatal.error.notification} system property is set to {@code true}).
+ * See {@link com.intellij.diagnostic.DefaultIdeaErrorLogger#canHandle} for more details.
  *
- * <p>Note that in production, a call to "error" doesn't throw exceptions so the execution continues.
- * In tests, however, an {@link AssertionError} is thrown.<p/>
+ * <p>The {@code error} methods, when run in unit test mode, throw an {@linkplain AssertionError}.
+ * In production, they do not throw exceptions, so the execution continues.
  *
- * <p>In most non-performance tests, debug level is enabled by default -
- * so that when a test fails, the full contents of its log is printed to stdout.</p>
+ * <p>In most non-performance tests, the debug level is enabled by default -
+ * so that when a test fails, the full content of its log is printed to stdout.
  */
 public abstract class Logger {
   private static boolean isUnitTestMode;
@@ -102,6 +103,14 @@ public abstract class Logger {
 
   public abstract void debug(String message, @Nullable Throwable t);
 
+  /**
+   * Concatenate the message and all details, without any separator, then log the resulting string.
+   * <p>
+   * This format differs from {@linkplain #debugValues(String, Collection)} and
+   * {@linkplain #error(String, String...)}, which write each detail on a line of its own.
+   *
+   * @param message the first part of the log message, a plain string without any placeholders
+   */
   public void debug(@NotNull String message, Object @NotNull ... details) {
     if (isDebugEnabled()) {
       StringBuilder sb = new StringBuilder();
@@ -113,6 +122,13 @@ public abstract class Logger {
     }
   }
 
+  /**
+   * Compose a multi-line log message from the header and the values, writing each value on a line of its own.
+   * <p>
+   * See {@linkplain #debug(String, Object...)} for a variant using a more compressed format.
+   *
+   * @param header the main log message, a plain string without any placeholders
+   */
   public void debugValues(@NotNull String header, @NotNull Collection<?> values) {
     if (isDebugEnabled()) {
       StringBuilder text = new StringBuilder();
@@ -151,8 +167,10 @@ public abstract class Logger {
   }
 
   /**
-   * Log a message with 'trace' level which finer-grained than 'debug' level. Use this method instead of {@link #debug(String)} for internal
-   * events of a subsystem to avoid overwhelming the log if 'debug' level is enabled.
+   * Log a message with 'trace' level, which is finer-grained than the 'debug' level.
+   *
+   * <p>Use this method instead of {@link #debug(String)} for internal events of a subsystem,
+   * to avoid overwhelming the log if 'debug' level is enabled.
    */
   public void trace(String message) {
     debug(message);
@@ -198,6 +216,14 @@ public abstract class Logger {
     error(message, t, ContainerUtil.map2Array(attachments, String.class, ATTACHMENT_TO_STRING::apply));
   }
 
+  /**
+   * Compose an error message from the message and the details, then log it.
+   * <p>
+   * The exact format of the resulting log message depends on the actual logger.
+   * The typical format is a multi-line message, with each detail on a line of its own.
+   *
+   * @param message a plain string, without any placeholders
+   */
   public void error(String message, String @NotNull ... details) {
     error(message, new Throwable(message), details);
   }
@@ -210,6 +236,14 @@ public abstract class Logger {
     error(t.getMessage(), t, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
+  /**
+   * Compose an error message from the message and the details, then log it.
+   * <p>
+   * The exact format of the resulting log message depends on the actual logger.
+   * The typical format is a multi-line message, with each detail on a line of its own.
+   *
+   * @param message a plain string, without any placeholders
+   */
   public abstract void error(String message, @Nullable Throwable t, String @NotNull ... details);
 
   @Contract("false,_->fail") // wrong, but avoid quite a few warnings in the code

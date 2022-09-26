@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.openapi.util.Predicates.nonNull;
 import static com.intellij.openapi.util.TextRange.EMPTY_RANGE;
 import static com.intellij.util.DocumentUtil.getLineTextRange;
 import static java.util.Collections.singletonList;
@@ -54,7 +55,7 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
                                 problemText, new WrapLineQuickFix(),
                                 new ReformatCommitMessageQuickFix());
       })
-      .filter(Objects::nonNull)
+      .filter(nonNull())
       .toArray(ProblemDescriptor[]::new);
   }
 

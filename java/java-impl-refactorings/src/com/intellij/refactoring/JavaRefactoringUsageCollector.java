@@ -192,26 +192,20 @@ public class JavaRefactoringUsageCollector extends ApplicationUsagesCollector {
   }
   
   private static String getJavadocOption(int javadoc) {
-    switch (javadoc) {
-      case DocCommentPolicy.ASIS:
-        return "as is";
-      case DocCommentPolicy.COPY:
-        return "copy";
-      case DocCommentPolicy.MOVE:
-        return "move";
-    }
-    return "unknown";
+    return switch (javadoc) {
+      case DocCommentPolicy.ASIS -> "as is";
+      case DocCommentPolicy.COPY -> "copy";
+      case DocCommentPolicy.MOVE -> "move";
+      default -> "unknown";
+    };
   }
 
   private static String getReplaceGettersOption(int getters) {
-    switch (getters) {
-      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE:
-        return "none";
-      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE:
-        return "inaccessible";
-      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL:
-        return "all";
-    }
-    return "unknown";
+    return switch (getters) {
+      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE -> "none";
+      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE -> "inaccessible";
+      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL -> "all";
+      default -> "unknown";
+    };
   }
 }

@@ -11,6 +11,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -73,19 +74,25 @@ public class SwitchBlockHighlightingModel {
     PsiFile file = block.getContainingFile();
     SwitchBlockHighlightingModel model = createInstance(PsiUtil.getLanguageLevel(file), block, file);
     if (model == null) return null;
-    List<HighlightInfo> infos = model.checkSwitchLabelValues();
-    if (infos.isEmpty()) return null;
-    var templateFix = (IntentionActionWithFixAllOption)QuickFixFactory.getInstance().createAddSwitchDefaultFix(block, null);
-    return StreamEx.of(infos).map(info -> info.getSameFamilyFix(templateFix)).nonNull().findFirst().orElse(null);
+    IntentionActionWithFixAllOption templateFix = (IntentionActionWithFixAllOption)QuickFixFactory.getInstance().createAddSwitchDefaultFix(block, null);
+    Ref<IntentionAction> found = new Ref<>();
+    HighlightInfoHolder holder = new HighlightInfoHolder(file){
+      @Override
+      public boolean add(@Nullable HighlightInfo info) {
+        found.setIfNull(info == null ? null : info.getSameFamilyFix(templateFix));
+        return false;
+      }
+    };
+    model.checkSwitchLabelValues(holder);
+    return found.get();
   }
 
-  @NotNull
-  List<HighlightInfo> checkSwitchBlockStatements() {
+  void checkSwitchBlockStatements(@NotNull HighlightInfoHolder holder) {
     PsiCodeBlock body = myBlock.getBody();
-    if (body == null) return Collections.emptyList();
+    if (body == null) return;
     PsiElement first = PsiTreeUtil.skipWhitespacesAndCommentsForward(body.getLBrace());
     if (first != null && !(first instanceof PsiSwitchLabelStatementBase) && !PsiUtil.isJavaToken(first, JavaTokenType.RBRACE)) {
-      return Collections.singletonList(createError(first, JavaErrorBundle.message("statement.must.be.prepended.with.case.label")));
+      holder.add(createError(first, JavaErrorBundle.message("statement.must.be.prepended.with.case.label")));
     }
     PsiElement element = first;
     PsiStatement alien = null;
@@ -96,7 +103,10 @@ public class SwitchBlockHighlightingModel {
       if (element instanceof PsiSwitchLabeledRuleStatement) {
         if (!levelChecked) {
           HighlightInfo info = HighlightUtil.checkFeature(element, HighlightingFeature.ENHANCED_SWITCH, myLevel, myFile);
-          if (info != null) return Collections.singletonList(info);
+          if (info != null) {
+            holder.add(info);
+            return;
+          }
           levelChecked = true;
         }
         if (classicLabels) {
@@ -117,29 +127,32 @@ public class SwitchBlockHighlightingModel {
         @Nullable PsiCaseLabelElementList values = ((PsiSwitchLabelStatementBase)element).getCaseLabelElementList();
         if (values != null && values.getElementCount() > 1) {
           HighlightInfo info = HighlightUtil.checkFeature(values, HighlightingFeature.ENHANCED_SWITCH, myLevel, myFile);
-          if (info != null) return Collections.singletonList(info);
+          if (info != null) {
+            holder.add(info);
+            return;
+          }
           levelChecked = true;
         }
       }
 
       element = PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
     }
-    if (alien == null) return Collections.emptyList();
+    if (alien == null) return;
     if (enhancedLabels && !(alien instanceof PsiSwitchLabelStatementBase)) {
       PsiSwitchLabeledRuleStatement previousRule = PsiTreeUtil.getPrevSiblingOfType(alien, PsiSwitchLabeledRuleStatement.class);
       HighlightInfo info = createError(alien, JavaErrorBundle.message("statement.must.be.prepended.with.case.label"));
       if (previousRule != null) {
         QuickFixAction.registerQuickFixAction(info, getFixFactory().createWrapSwitchRuleStatementsIntoBlockFix(previousRule));
       }
-      return Collections.singletonList(info);
+      holder.add(info);
+      return;
     }
-    return Collections.singletonList(createError(alien, JavaErrorBundle.message("different.case.kinds.in.switch")));
+    holder.add(createError(alien, JavaErrorBundle.message("different.case.kinds.in.switch")));
   }
 
-  @NotNull
-  List<HighlightInfo> checkSwitchSelectorType() {
+  void checkSwitchSelectorType(@NotNull HighlightInfoHolder holder) {
     SelectorKind kind = getSwitchSelectorKind();
-    if (kind == SelectorKind.INT) return Collections.emptyList();
+    if (kind == SelectorKind.INT) return;
 
     LanguageLevel requiredLevel = null;
     if (kind == SelectorKind.ENUM) requiredLevel = LanguageLevel.JDK_1_5;
@@ -160,18 +173,16 @@ public class SwitchBlockHighlightingModel {
       if (requiredLevel != null) {
         QuickFixAction.registerQuickFixAction(info, getFixFactory().createIncreaseLanguageLevelFix(requiredLevel));
       }
-      return Collections.singletonList(info);
+      holder.add(info);
     }
-    return checkIfAccessibleType();
+    checkIfAccessibleType(holder);
   }
 
-  @NotNull
-  List<HighlightInfo> checkSwitchLabelValues() {
+  void checkSwitchLabelValues(@NotNull HighlightInfoHolder holder) {
     PsiCodeBlock body = myBlock.getBody();
-    if (body == null) return Collections.emptyList();
+    if (body == null) return;
 
     MultiMap<Object, PsiElement> values = new MultiMap<>();
-    List<HighlightInfo> results = new ArrayList<>();
     boolean hasDefaultCase = false;
 
     for (PsiStatement st : body.getStatements()) {
@@ -193,7 +204,7 @@ public class SwitchBlockHighlightingModel {
         if (expr == null) continue;
         HighlightInfo result = HighlightUtil.checkAssignability(mySelectorType, expr.getType(), expr, expr);
         if (result != null) {
-          results.add(result);
+          holder.add(result);
           continue;
         }
         Object value = null;
@@ -203,7 +214,7 @@ public class SwitchBlockHighlightingModel {
             value = enumConstName;
             HighlightInfo info = createQualifiedEnumConstantInfo((PsiReferenceExpression)expr);
             if (info != null) {
-              results.add(info);
+              holder.add(info);
               continue;
             }
           }
@@ -212,37 +223,35 @@ public class SwitchBlockHighlightingModel {
           value = ConstantExpressionUtil.computeCastTo(expr, mySelectorType);
         }
         if (value == null) {
-          results.add(createError(expr, JavaErrorBundle.message("constant.expression.required")));
+          holder.add(createError(expr, JavaErrorBundle.message("constant.expression.required")));
           continue;
         }
         fillElementsToCheckDuplicates(values, expr);
       }
     }
 
-    checkDuplicates(values, results);
+    checkDuplicates(values, holder);
     // todo replace with needToCheckCompleteness
-    if (results.isEmpty() && myBlock instanceof PsiSwitchExpression && !hasDefaultCase) {
+    if (!holder.hasErrorResults() && myBlock instanceof PsiSwitchExpression && !hasDefaultCase) {
       PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
       if (selectorClass == null) {
-        results.add(createCompletenessInfoForSwitch(!values.keySet().isEmpty()));
+        holder.add(createCompletenessInfoForSwitch(!values.keySet().isEmpty()));
       }
       else {
-        checkEnumCompleteness(selectorClass, ContainerUtil.map(values.keySet(), String::valueOf), results);
+        checkEnumCompleteness(selectorClass, ContainerUtil.map(values.keySet(), String::valueOf), holder);
       }
     }
-
-    return results;
   }
 
   @Nullable
-  static String evaluateEnumConstantName(@NotNull PsiReferenceExpression expr) {
+  private static String evaluateEnumConstantName(@NotNull PsiReferenceExpression expr) {
     PsiElement element = expr.resolve();
     if (element instanceof PsiEnumConstant) return ((PsiEnumConstant)element).getName();
     return null;
   }
 
   @Nullable
-  static HighlightInfo createQualifiedEnumConstantInfo(@NotNull PsiReferenceExpression expr) {
+  private static HighlightInfo createQualifiedEnumConstantInfo(@NotNull PsiReferenceExpression expr) {
     PsiElement qualifier = expr.getQualifier();
     if (qualifier == null) return null;
     HighlightInfo result = createError(expr, JavaErrorBundle.message("qualified.enum.constant.in.switch"));
@@ -251,18 +260,16 @@ public class SwitchBlockHighlightingModel {
     return result;
   }
 
-  static QuickFixFactory getFixFactory() {
+  private static QuickFixFactory getFixFactory() {
     return QuickFixFactory.getInstance();
   }
 
-  @NotNull
-  List<HighlightInfo> checkIfAccessibleType() {
+  void checkIfAccessibleType(@NotNull HighlightInfoHolder holder) {
     PsiClass member = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
     if (member != null && !PsiUtil.isAccessible(member.getProject(), member, mySelector, null)) {
       String className = PsiFormatUtil.formatClass(member, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME);
-      return Collections.singletonList(createError(mySelector, JavaErrorBundle.message("inaccessible.type", className)));
+      holder.add(createError(mySelector, JavaErrorBundle.message("inaccessible.type", className)));
     }
-    return Collections.emptyList();
   }
 
   void fillElementsToCheckDuplicates(@NotNull MultiMap<Object, PsiElement> elements, @NotNull PsiCaseLabelElement labelElement) {
@@ -281,7 +288,7 @@ public class SwitchBlockHighlightingModel {
     }
   }
 
-  final void checkDuplicates(@NotNull MultiMap<Object, PsiElement> values, @NotNull List<HighlightInfo> results) {
+  final void checkDuplicates(@NotNull MultiMap<Object, PsiElement> values, @NotNull HighlightInfoHolder results) {
     for (Map.Entry<Object, Collection<PsiElement>> entry : values.entrySet()) {
       if (entry.getValue().size() <= 1) continue;
       Object duplicateKey = entry.getKey();
@@ -304,16 +311,16 @@ public class SwitchBlockHighlightingModel {
     return info;
   }
 
-  boolean needToCheckCompleteness(@NotNull List<PsiCaseLabelElement> elements) {
+  boolean needToCheckCompleteness(@NotNull List<? extends PsiCaseLabelElement> elements) {
     return myBlock instanceof PsiSwitchExpression || myBlock instanceof PsiSwitchStatement && isEnhancedSwitch(elements);
   }
 
-  private boolean isEnhancedSwitch(@NotNull List<PsiCaseLabelElement> labelElements) {
+  private boolean isEnhancedSwitch(@NotNull List<? extends PsiCaseLabelElement> labelElements) {
     if (getSwitchSelectorKind() == SelectorKind.CLASS_OR_ARRAY) return true;
     return ContainerUtil.exists(labelElements, st -> st instanceof PsiPattern || isNullType(st));
   }
 
-  static boolean isNullType(@NotNull PsiElement element) {
+  private static boolean isNullType(@NotNull PsiElement element) {
     return element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType());
   }
 
@@ -321,7 +328,7 @@ public class SwitchBlockHighlightingModel {
     return list.subList(1, list.size());
   }
 
-  void checkEnumCompleteness(@NotNull PsiClass selectorClass, @NotNull List<String> enumElements, @NotNull List<HighlightInfo> results) {
+  void checkEnumCompleteness(@NotNull PsiClass selectorClass, @NotNull List<String> enumElements, @NotNull HighlightInfoHolder results) {
     LinkedHashSet<String> missingConstants =
       StreamEx.of(selectorClass.getFields()).select(PsiEnumConstant.class).map(PsiField::getName).toCollection(LinkedHashSet::new);
     if (!enumElements.isEmpty()) {
@@ -389,9 +396,11 @@ public class SwitchBlockHighlightingModel {
     return patternClasses;
   }
 
-  private static @NotNull Set<PsiClass> findMissedClasses(@NotNull PsiType selectorType,
-                                                          LinkedHashMap<PsiClass, PsiPattern> patternClasses) {
+  private static @NotNull Set<PsiClass> findMissedClasses(@NotNull PsiType selectorType, Map<PsiClass, PsiPattern> patternClasses) {
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
+    if (selectorClass instanceof PsiTypeParameter) {
+      selectorClass = selectorClass.getSuperClass();
+    }
     if (selectorClass == null) return Collections.emptySet();
     Queue<PsiClass> nonVisited = new ArrayDeque<>();
     nonVisited.add(selectorClass);
@@ -404,8 +413,10 @@ public class SwitchBlockHighlightingModel {
         for (PsiClass permittedClass : PatternsInSwitchBlockHighlightingModel.getPermittedClasses(psiClass)) {
           if (!visited.add(permittedClass)) continue;
           PsiPattern pattern = patternClasses.get(permittedClass);
+          PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(selectorClass, permittedClass, PsiSubstitutor.EMPTY);
+          PsiType permittedType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, substitutor);
           if (pattern == null && (PsiUtil.getLanguageLevel(permittedClass).isLessThan(LanguageLevel.JDK_18_PREVIEW) ||
-                                  TypeConversionUtil.areTypesConvertible(selectorType, TypeUtils.getType(permittedClass))) ||
+                                  TypeConversionUtil.areTypesConvertible(selectorType, permittedType)) ||
               pattern != null && !JavaPsiPatternUtil.isTotalForType(pattern, TypeUtils.getType(permittedClass), false)) {
             nonVisited.add(permittedClass);
           }
@@ -432,11 +443,10 @@ public class SwitchBlockHighlightingModel {
       super(languageLevel, switchBlock, psiFile);
     }
 
-    @NotNull
     @Override
-    List<HighlightInfo> checkSwitchSelectorType() {
+    void checkSwitchSelectorType(@NotNull HighlightInfoHolder holder) {
       SelectorKind kind = getSwitchSelectorKind();
-      if (kind == SelectorKind.INT) return Collections.emptyList();
+      if (kind == SelectorKind.INT) return;
       if (kind == null) {
         HighlightInfo info = createError(mySelector, JavaErrorBundle.message("switch.invalid.selector.types",
                                                                              JavaHighlightUtil.formatType(mySelectorType)));
@@ -447,9 +457,9 @@ public class SwitchBlockHighlightingModel {
           QuickFixAction.registerQuickFixAction(info, getFixFactory().createAddTypeCastFix(PsiType.INT, mySelector));
           QuickFixAction.registerQuickFixAction(info, getFixFactory().createWrapWithAdapterFix(PsiType.INT, mySelector));
         }
-        return Collections.singletonList(info);
+        holder.add(info);
       }
-      return checkIfAccessibleType();
+      checkIfAccessibleType(holder);
     }
 
     @Override
@@ -466,16 +476,14 @@ public class SwitchBlockHighlightingModel {
       return SelectorKind.CLASS_OR_ARRAY;
     }
 
-    @NotNull
     @Override
-    List<HighlightInfo> checkSwitchLabelValues() {
+    void checkSwitchLabelValues(@NotNull HighlightInfoHolder holder) {
       PsiCodeBlock body = myBlock.getBody();
-      if (body == null) return Collections.emptyList();
-      var elementsToCheckDuplicates = new MultiMap<Object, PsiElement>();
+      if (body == null) return;
+      MultiMap<Object, PsiElement> elementsToCheckDuplicates = new MultiMap<>();
       List<List<PsiSwitchLabelStatementBase>> elementsToCheckFallThroughLegality = new SmartList<>();
       List<PsiCaseLabelElement> elementsToCheckDominance = new ArrayList<>();
       List<PsiCaseLabelElement> elementsToCheckCompleteness = new ArrayList<>();
-      List<HighlightInfo> results = new SmartList<>();
       int switchBlockGroupCounter = 0;
       for (PsiStatement st : body.getStatements()) {
         if (!(st instanceof PsiSwitchLabelStatementBase)) continue;
@@ -491,9 +499,8 @@ public class SwitchBlockHighlightingModel {
         PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
         if (labelElementList == null) continue;
         for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
-          List<HighlightInfo> compatibilityInfo = checkLabelAndSelectorCompatibility(labelElement);
-          if (!compatibilityInfo.isEmpty()) {
-            results.addAll(compatibilityInfo);
+          checkLabelAndSelectorCompatibility(labelElement, holder);
+          if (holder.hasErrorResults()) {
             continue;
           }
           fillElementsToCheckDuplicates(elementsToCheckDuplicates, labelElement);
@@ -502,40 +509,40 @@ public class SwitchBlockHighlightingModel {
         }
       }
 
-      checkDuplicates(elementsToCheckDuplicates, results);
-      if (!results.isEmpty()) return results;
+      checkDuplicates(elementsToCheckDuplicates, holder);
+      if (holder.hasErrorResults()) return;
 
-      checkFallThroughFromToPattern(elementsToCheckFallThroughLegality, results);
-      if (!results.isEmpty()) return results;
+      checkFallThroughFromToPattern(elementsToCheckFallThroughLegality, holder);
+      if (holder.hasErrorResults()) return;
 
-      checkDominance(elementsToCheckDominance, results);
-      if (!results.isEmpty()) return results;
+      checkDominance(elementsToCheckDominance, holder);
+      if (holder.hasErrorResults()) return;
 
       if (needToCheckCompleteness(elementsToCheckCompleteness)) {
-        checkCompleteness(elementsToCheckCompleteness, results, true);
+        checkCompleteness(elementsToCheckCompleteness, holder, true);
       }
-      return results;
     }
 
-    private @NotNull List<HighlightInfo> checkLabelAndSelectorCompatibility(@NotNull PsiCaseLabelElement label) {
-      if (label instanceof PsiDefaultCaseLabelElement) return Collections.emptyList();
+    private void checkLabelAndSelectorCompatibility(@NotNull PsiCaseLabelElement label, @NotNull HighlightInfoHolder holder) {
+      if (label instanceof PsiDefaultCaseLabelElement) return;
       if (isNullType(label)) {
         if (mySelectorType instanceof PsiPrimitiveType && !isNullType(mySelector)) {
           HighlightInfo error = createError(label, JavaErrorBundle.message("incompatible.switch.null.type", "null",
                                                                            JavaHighlightUtil.formatType(mySelectorType)));
-          return ContainerUtil.packNullables(error);
+          holder.add(error);
         }
-        return Collections.emptyList();
+        return;
       }
-      else if (label instanceof PsiPatternGuard) {
+      if (label instanceof PsiPatternGuard) {
         PsiPattern pattern = ((PsiPatternGuard)label).getPattern();
-        return checkLabelAndSelectorCompatibility(pattern);
+        checkLabelAndSelectorCompatibility(pattern, holder);
+        return;
       }
-      else if (label instanceof PsiPattern) {
+      if (label instanceof PsiPattern) {
         PsiPattern elementToReport = JavaPsiPatternUtil.getTypedPattern(label);
-        if (elementToReport == null) return Collections.emptyList();
+        if (elementToReport == null) return;
         PsiTypeElement typeElement = JavaPsiPatternUtil.getPatternTypeElement(elementToReport);
-        if (typeElement == null) return Collections.emptyList();
+        if (typeElement == null) return;
         PsiType patternType = typeElement.getType();
         if (!(patternType instanceof PsiClassType) && !(patternType instanceof PsiArrayType)) {
           String expectedTypes = JavaErrorBundle.message("switch.class.or.array.type.expected");
@@ -546,45 +553,55 @@ public class SwitchBlockHighlightingModel {
             IntentionAction fix = getFixFactory().createReplacePrimitiveWithBoxedTypeAction(mySelectorType, typeElement);
             QuickFixAction.registerQuickFixAction(info, fix);
           }
-          return ContainerUtil.packNullables(info);
+          holder.add(info);
+          return;
         }
         if (!TypeConversionUtil.areTypesConvertible(mySelectorType, patternType)) {
           HighlightInfo error =
             HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, elementToReport.getTextRange(), 0);
-          return ContainerUtil.packNullables(error);
+          holder.add(error);
+          return;
         }
-        else if (JavaGenericsUtil.isUncheckedCast(patternType, mySelectorType)) {
+        if (JavaGenericsUtil.isUncheckedCast(patternType, mySelectorType)) {
           String message = JavaErrorBundle.message("unsafe.cast.in.instanceof", JavaHighlightUtil.formatType(mySelectorType),
                                                    JavaHighlightUtil.formatType(patternType));
-          return ContainerUtil.packNullables(createError(elementToReport, message));
+          holder.add(createError(elementToReport, message));
+          return;
         }
         PsiDeconstructionPattern deconstructionPattern = JavaPsiPatternUtil.findDeconstructionPattern(elementToReport);
-        return PatternHighlightingModel.createDeconstructionErrors(deconstructionPattern);
+        PatternHighlightingModel.createDeconstructionErrors(deconstructionPattern, holder);
+        return;
       }
       else if (label instanceof PsiExpression) {
         PsiExpression expr = (PsiExpression)label;
         HighlightInfo info = HighlightUtil.checkAssignability(mySelectorType, expr.getType(), expr, expr);
-        if (info != null) return List.of(info);
+        holder.add(info);
+        if (info != null) {
+          return;
+        }
         if (label instanceof PsiReferenceExpression) {
           String enumConstName = evaluateEnumConstantName((PsiReferenceExpression)label);
           if (enumConstName != null) {
             HighlightInfo error = createQualifiedEnumConstantInfo((PsiReferenceExpression)label);
-            return ContainerUtil.packNullables(error);
+            holder.add(error);
+            return;
           }
         }
         Object constValue = evaluateConstant(expr);
         if (constValue == null) {
           HighlightInfo error = createError(expr, JavaErrorBundle.message("constant.expression.required"));
-          return ContainerUtil.packNullables(error);
+          holder.add(error);
+          return;
         }
         if (ConstantExpressionUtil.computeCastTo(constValue, mySelectorType) == null) {
           HighlightInfo error = HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, expr.getType(), label.getTextRange(), 0);
-          return ContainerUtil.packNullables(error);
+          holder.add(error);
+          return;
         }
-        return Collections.emptyList();
+        return;
       }
       HighlightInfo error = createError(label, JavaErrorBundle.message("switch.constant.expression.required"));
-      return ContainerUtil.packNullables(error);
+      holder.add(error);
     }
 
     @Override
@@ -622,7 +639,7 @@ public class SwitchBlockHighlightingModel {
     }
 
     @NotNull
-    private Map<PsiCaseLabelElement, PsiCaseLabelElement> findDominatedLabels(@NotNull List<PsiCaseLabelElement> switchLabels) {
+    private Map<PsiCaseLabelElement, PsiCaseLabelElement> findDominatedLabels(@NotNull List<? extends PsiCaseLabelElement> switchLabels) {
       Map<PsiCaseLabelElement, PsiCaseLabelElement> result = new HashMap<>();
       for (int i = 0; i < switchLabels.size() - 1; i++) {
         PsiCaseLabelElement current = switchLabels.get(i);
@@ -640,7 +657,7 @@ public class SwitchBlockHighlightingModel {
             continue;
           }
           if (isNullType(next) && JavaPsiPatternUtil.isTotalForType(current, mySelectorType)
-              && (PsiUtil.getLanguageLevel(next).isLessThan(LanguageLevel.JDK_19_PREVIEW))) {
+              && PsiUtil.getLanguageLevel(next).isLessThan(LanguageLevel.JDK_19_PREVIEW)) {
             result.put(next, current);
             continue;
           }
@@ -686,18 +703,24 @@ public class SwitchBlockHighlightingModel {
      * <li>patterns with default</li>
      * </ul>
      */
-    private static void checkFallThroughFromToPattern(@NotNull List<List<PsiSwitchLabelStatementBase>> switchBlockGroup,
-                                                      @NotNull List<HighlightInfo> results) {
+    private static void checkFallThroughFromToPattern(@NotNull List<? extends List<PsiSwitchLabelStatementBase>> switchBlockGroup,
+                                                      @NotNull HighlightInfoHolder holder) {
       if (switchBlockGroup.isEmpty()) return;
       Set<PsiElement> alreadyFallThroughElements = new HashSet<>();
       for (var switchLabel : switchBlockGroup) {
-        boolean existPattern = false, existsTypeTestPattern = false, existsConst = false, existsNull = false, existsDefault = false;
+        boolean existPattern = false;
+        boolean existsTypeTestPattern = false;
+        boolean existsConst = false;
+        boolean existsNull = false;
+        boolean existsDefault = false;
         for (PsiSwitchLabelStatementBase switchLabelElement : switchLabel) {
           if (switchLabelElement.isDefaultCase()) {
             if (existPattern) {
               PsiElement defaultKeyword = switchLabelElement.getFirstChild();
               alreadyFallThroughElements.add(defaultKeyword);
-              results.add(createError(defaultKeyword, JavaErrorBundle.message("switch.illegal.fall.through.from")));
+              HighlightInfo info = createError(defaultKeyword, JavaErrorBundle.message("switch.illegal.fall.through.from"));
+              QuickFixAction.registerQuickFixAction(info, getFixFactory().createSplitSwitchBranchWithSeveralCaseValuesAction());
+              holder.add(info);
             }
             existsDefault = true;
             continue;
@@ -711,48 +734,58 @@ public class SwitchBlockHighlightingModel {
               }
               if (existPattern || existsConst || (existsNull && !existsTypeTestPattern) || existsDefault) {
                 alreadyFallThroughElements.add(currentElement);
-                results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.to")));
+                HighlightInfo info = createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.to"));
+                QuickFixAction.registerQuickFixAction(info, getFixFactory().createSplitSwitchBranchWithSeveralCaseValuesAction());
+                holder.add(info);
               }
               existPattern = true;
             }
             else if (isNullType(currentElement)) {
               if (existPattern && !existsTypeTestPattern) {
                 alreadyFallThroughElements.add(currentElement);
-                results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from")));
+                HighlightInfo info = createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from"));
+                QuickFixAction.registerQuickFixAction(info, getFixFactory().createSplitSwitchBranchWithSeveralCaseValuesAction());
+                holder.add(info);
               }
               existsNull = true;
             }
             else if (isConstantLabelElement(currentElement)) {
               if (existPattern) {
                 alreadyFallThroughElements.add(currentElement);
-                results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from")));
+                HighlightInfo info = createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from"));
+                QuickFixAction.registerQuickFixAction(info, getFixFactory().createSplitSwitchBranchWithSeveralCaseValuesAction());
+                holder.add(info);
               }
               existsConst = true;
             }
             else if (currentElement instanceof PsiDefaultCaseLabelElement) {
               if (existPattern) {
                 alreadyFallThroughElements.add(currentElement);
-                results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from")));
+                HighlightInfo info = createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from"));
+                QuickFixAction.registerQuickFixAction(info, getFixFactory().createSplitSwitchBranchWithSeveralCaseValuesAction());
+                holder.add(info);
               }
               existsDefault = true;
             }
           }
         }
       }
-      checkFallThroughInSwitchLabels(switchBlockGroup, results, alreadyFallThroughElements);
+      checkFallThroughInSwitchLabels(switchBlockGroup, holder, alreadyFallThroughElements);
     }
 
-    private static void checkFallThroughInSwitchLabels(@NotNull List<List<PsiSwitchLabelStatementBase>> switchBlockGroup,
-                                                       @NotNull List<HighlightInfo> results,
+    private static void checkFallThroughInSwitchLabels(@NotNull List<? extends List<? extends PsiSwitchLabelStatementBase>> switchBlockGroup,
+                                                       @NotNull HighlightInfoHolder results,
                                                        @NotNull Set<PsiElement> alreadyFallThroughElements) {
       for (int i = 1; i < switchBlockGroup.size(); i++) {
-        List<PsiSwitchLabelStatementBase> switchLabels = switchBlockGroup.get(i);
+        List<? extends PsiSwitchLabelStatementBase> switchLabels = switchBlockGroup.get(i);
         PsiSwitchLabelStatementBase firstSwitchLabelInGroup = switchLabels.get(0);
         for (PsiSwitchLabelStatementBase switchLabel : switchLabels) {
           if (!(switchLabel instanceof PsiSwitchLabelStatement)) return;
           PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
           if (labelElementList == null) continue;
-          var patternElements = ContainerUtil.filter(labelElementList.getElements(), labelElement -> labelElement instanceof PsiPattern);
+          List<PsiCaseLabelElement> patternElements = ContainerUtil.filter(labelElementList.getElements(),
+             labelElement -> labelElement instanceof PsiPattern || labelElement instanceof PsiPatternGuard
+          );
           if (patternElements.isEmpty()) continue;
           PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(firstSwitchLabelInGroup, PsiStatement.class);
           if (prevStatement == null) continue;
@@ -774,7 +807,7 @@ public class SwitchBlockHighlightingModel {
      * @see JavaPsiPatternUtil#isTotalForType(PsiCaseLabelElement, PsiType)
      * @see JavaPsiPatternUtil#dominates(PsiCaseLabelElement, PsiCaseLabelElement)
      */
-    private void checkDominance(@NotNull List<PsiCaseLabelElement> switchLabels, @NotNull List<HighlightInfo> results) {
+    private void checkDominance(@NotNull List<? extends PsiCaseLabelElement> switchLabels, @NotNull HighlightInfoHolder results) {
       Map<PsiCaseLabelElement, PsiCaseLabelElement> dominatedLabels = findDominatedLabels(switchLabels);
       dominatedLabels.forEach((overWhom, who) -> {
         HighlightInfo info = createError(overWhom, JavaErrorBundle.message("switch.dominance.of.preceding.label", who.getText()));
@@ -797,7 +830,7 @@ public class SwitchBlockHighlightingModel {
      *
      * @see JavaPsiPatternUtil#isTotalForType(PsiCaseLabelElement, PsiType)
      */
-    private void checkCompleteness(@NotNull List<PsiCaseLabelElement> elements, @NotNull List<HighlightInfo> results,
+    private void checkCompleteness(@NotNull List<? extends PsiCaseLabelElement> elements, @NotNull HighlightInfoHolder results,
                                    boolean inclusiveTotalAndDefault) {
       if (inclusiveTotalAndDefault) {
         PsiCaseLabelElement elementCoversType = findTotalPatternForType(elements, mySelectorType);
@@ -814,7 +847,15 @@ public class SwitchBlockHighlightingModel {
         }
         if (defaultElement != null || elementCoversType != null) return;
       }
-      PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
+      PsiType selectorType = mySelectorType;
+      if (selectorType instanceof PsiCapturedWildcardType) {
+        selectorType = ((PsiCapturedWildcardType)selectorType).getUpperBound();
+      }
+      else if (selectorType instanceof PsiWildcardType) {
+        selectorType = ((PsiWildcardType)selectorType).getExtendsBound();
+      }
+
+      PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
       if (selectorClass != null && getSwitchSelectorKind() == SelectorKind.ENUM) {
         List<String> enumElements = new SmartList<>();
         for (PsiCaseLabelElement labelElement : elements) {
@@ -830,8 +871,8 @@ public class SwitchBlockHighlightingModel {
         }
         checkEnumCompleteness(selectorClass, enumElements, results);
       }
-      else if (selectorClass != null && selectorClass.hasModifierProperty(SEALED)) {
-        HighlightInfo info = checkSealedClassCompleteness(mySelectorType, elements);
+      else if (isSealed(selectorClass)) {
+        HighlightInfo info = checkSealedClassCompleteness(selectorType, elements);
         if (info != null) {
           results.add(info);
         }
@@ -849,7 +890,12 @@ public class SwitchBlockHighlightingModel {
       }
     }
 
-    private static void fillElementsToCheckDominance(@NotNull List<PsiCaseLabelElement> elements,
+    private static boolean isSealed(@Nullable PsiClass psiClass){
+      PsiClass effectiveClass = psiClass instanceof PsiTypeParameter ? psiClass.getSuperClass() : psiClass;
+      return effectiveClass != null && effectiveClass.hasModifierProperty(SEALED);
+    }
+
+    private static void fillElementsToCheckDominance(@NotNull List<? super PsiCaseLabelElement> elements,
                                                      @NotNull PsiCaseLabelElement labelElement) {
       if (labelElement instanceof PsiPattern || labelElement instanceof PsiPatternGuard) {
         elements.add(labelElement);
@@ -871,7 +917,7 @@ public class SwitchBlockHighlightingModel {
 
     @Nullable
     private HighlightInfo checkSealedClassCompleteness(@NotNull PsiType selectorType,
-                                                       @NotNull List<PsiCaseLabelElement> elements) {
+                                                       @NotNull List<? extends PsiCaseLabelElement> elements) {
       LinkedHashMap<PsiClass, PsiPattern> patternClasses = findPatternClasses(elements);
       Set<PsiClass> missingClasses = findMissedClasses(selectorType, patternClasses);
       if (missingClasses.isEmpty()) return null;
@@ -899,9 +945,7 @@ public class SwitchBlockHighlightingModel {
         List<PsiType> recordTypes =
           ContainerUtil.map(selectorClass.getRecordComponents(), component -> substitutor.substitute(component.getType()));
 
-        List<List<PsiPattern>> deconstructionComponentsGroup = ContainerUtil.map(entry.getValue(), deconstruction -> {
-          return Arrays.asList(deconstruction.getDeconstructionList().getDeconstructionComponents());
-        });
+        List<List<PsiPattern>> deconstructionComponentsGroup = ContainerUtil.map(entry.getValue(), deconstruction -> Arrays.asList(deconstruction.getDeconstructionList().getDeconstructionComponents()));
         if (ContainerUtil.exists(deconstructionComponentsGroup, group -> group.size() != recordTypes.size())) {
           return true;
         }
@@ -923,20 +967,19 @@ public class SwitchBlockHighlightingModel {
         return findUnconditionalDeconstruction(((PsiPatternGuard)caseElement).getPattern());
       }
       else if (caseElement instanceof PsiDeconstructionPattern) {
-        return ((PsiDeconstructionPattern)caseElement);
+        return (PsiDeconstructionPattern)caseElement;
       }
       else {
         return null;
       }
     }
 
-    private static boolean isExhaustiveInGroup(List<PsiType> recordTypes, List<List<PsiPattern>> deconstructions) {
+    private static boolean isExhaustiveInGroup(@NotNull List<? extends PsiType> recordTypes, List<? extends List<PsiPattern>> deconstructions) {
       if (recordTypes.isEmpty()) return true;
       PsiType typeToCheck = recordTypes.get(0);
 
-      MultiMap<PsiType, List<PsiPattern>> deconstructionGroups = ContainerUtil.groupBy(deconstructions, deconstructionComponents -> {
-        return JavaPsiPatternUtil.getPatternType(deconstructionComponents.get(0));
-      });
+      MultiMap<PsiType, List<PsiPattern>> deconstructionGroups = ContainerUtil.groupBy(deconstructions,
+         deconstructionComponents -> JavaPsiPatternUtil.getPatternType(deconstructionComponents.get(0)));
 
       List<Map.Entry<PsiType, Collection<List<PsiPattern>>>> exhaustiveGroups =
         ContainerUtil.filter(deconstructionGroups.entrySet(), deconstructionGroup -> {
@@ -952,7 +995,7 @@ public class SwitchBlockHighlightingModel {
 
       if (exhaustiveGroups.isEmpty()) return false;
       List<PsiPattern> patterns = ContainerUtil.map(exhaustiveGroups, it -> it.getValue().iterator().next().get(0));
-      if (ContainerUtil.exists(patterns, (pattern) -> JavaPsiPatternUtil.isTotalForType(pattern, typeToCheck, false))) {
+      if (ContainerUtil.exists(patterns, pattern -> JavaPsiPatternUtil.isTotalForType(pattern, typeToCheck, false))) {
         return true;
       }
       LinkedHashMap<PsiClass, PsiPattern> patternClasses = SwitchBlockHighlightingModel.findPatternClasses(patterns);
@@ -960,9 +1003,9 @@ public class SwitchBlockHighlightingModel {
     }
 
     @NotNull
-    private static List<String> collectLabelElementNames(@NotNull List<PsiCaseLabelElement> elements,
-                                                         @NotNull Set<PsiClass> missingClasses,
-                                                         @NotNull LinkedHashMap<PsiClass, PsiPattern> patternClasses) {
+    private static List<String> collectLabelElementNames(@NotNull List<? extends PsiCaseLabelElement> elements,
+                                                         @NotNull Set<? extends PsiClass> missingClasses,
+                                                         @NotNull Map<PsiClass, PsiPattern> patternClasses) {
       List<String> result = new ArrayList<>(ContainerUtil.map(elements, PsiElement::getText));
       for (PsiClass aClass : missingClasses) {
         String className = aClass.getQualifiedName();
@@ -997,7 +1040,7 @@ public class SwitchBlockHighlightingModel {
     }
 
     @Nullable
-    private static PsiCaseLabelElement findTotalPatternForType(@NotNull List<PsiCaseLabelElement> labelElements, @NotNull PsiType type) {
+    private static PsiCaseLabelElement findTotalPatternForType(@NotNull List<? extends PsiCaseLabelElement> labelElements, @NotNull PsiType type) {
       return ContainerUtil.find(labelElements, element ->
         element instanceof PsiPattern && JavaPsiPatternUtil.isTotalForType(element, type));
     }
@@ -1020,8 +1063,7 @@ public class SwitchBlockHighlightingModel {
     }
 
     /**
-     * @param switchBlock
-     * @return {@link CompletenessResult#UNEVALUATED}, if switch is incomplete and it produces a compilation error
+     * @return {@link CompletenessResult#UNEVALUATED}, if switch is incomplete, and it produces a compilation error
      * (this is already covered by highlighting)
      * <p>{@link CompletenessResult#INCOMPLETE}, if selector type is not enum or reference type(except boxing primitives and String) or switch is incomplete
      * <p>{@link CompletenessResult#COMPLETE_WITH_TOTAL}, if switch is complete because a total pattern exists
@@ -1037,13 +1079,13 @@ public class SwitchBlockHighlightingModel {
       List<PsiCaseLabelElement> labelElements = StreamEx.of(SwitchUtils.getSwitchBranches(switchBlock)).select(PsiCaseLabelElement.class)
         .filter(element -> !(element instanceof PsiDefaultCaseLabelElement)).toList();
       if (labelElements.isEmpty()) return UNEVALUATED;
-      List<HighlightInfo> results = new SmartList<>();
       boolean needToCheckCompleteness = switchModel.needToCheckCompleteness(labelElements);
       boolean isEnumSelector = switchModel.getSwitchSelectorKind() == SelectorKind.ENUM;
+      HighlightInfoHolder holder = new HighlightInfoHolder(switchBlock.getContainingFile());
       if (switchModel instanceof PatternsInSwitchBlockHighlightingModel) {
         if (findTotalPatternForType(labelElements, switchModel.mySelectorType) != null) return COMPLETE_WITH_TOTAL;
         if (!needToCheckCompleteness && !isEnumSelector) return INCOMPLETE;
-        ((PatternsInSwitchBlockHighlightingModel)switchModel).checkCompleteness(labelElements, results, false);
+        ((PatternsInSwitchBlockHighlightingModel)switchModel).checkCompleteness(labelElements, holder, false);
       }
       else {
         if (!needToCheckCompleteness && !isEnumSelector) return INCOMPLETE;
@@ -1052,11 +1094,11 @@ public class SwitchBlockHighlightingModel {
         List<PsiSwitchLabelStatementBase> labels =
           PsiTreeUtil.getChildrenOfTypeAsList(switchBlock.getBody(), PsiSwitchLabelStatementBase.class);
         List<String> enumConstants = StreamEx.of(labels).flatCollection(SwitchUtils::findEnumConstants).map(PsiField::getName).toList();
-        switchModel.checkEnumCompleteness(selectorClass, enumConstants, results);
+        switchModel.checkEnumCompleteness(selectorClass, enumConstants, holder);
       }
       // if switch block is needed to check completeness and switch is incomplete, we let highlighting to inform about it as it's a compilation error
-      if (needToCheckCompleteness) return results.isEmpty() ? COMPLETE_WITHOUT_TOTAL : UNEVALUATED;
-      return results.isEmpty() ? COMPLETE_WITHOUT_TOTAL : INCOMPLETE;
+      if (needToCheckCompleteness) return holder.size() == 0 ? COMPLETE_WITHOUT_TOTAL : UNEVALUATED;
+      return holder.size() == 0 ? COMPLETE_WITHOUT_TOTAL : INCOMPLETE;
     }
 
     public enum CompletenessResult {
@@ -1073,9 +1115,10 @@ public class SwitchBlockHighlightingModel {
    * then dominated label elements will be also included in the result set.
    */
   public static @NotNull Set<PsiElement> findSuspiciousLabelElements(@NotNull PsiSwitchBlock switchBlock) {
-    var switchModel = createInstance(PsiUtil.getLanguageLevel(switchBlock), switchBlock, switchBlock.getContainingFile());
+    SwitchBlockHighlightingModel switchModel = createInstance(PsiUtil.getLanguageLevel(switchBlock), switchBlock, switchBlock.getContainingFile());
     if (switchModel == null) return Collections.emptySet();
-    var labelElements = StreamEx.of(SwitchUtils.getSwitchBranches(switchBlock)).select(PsiCaseLabelElement.class).toList();
+    List<PsiCaseLabelElement> labelElements =
+      ContainerUtil.filterIsInstance(SwitchUtils.getSwitchBranches(switchBlock), PsiCaseLabelElement.class);
     if (labelElements.isEmpty()) return Collections.emptySet();
     MultiMap<Object, PsiElement> duplicateCandidates = new MultiMap<>();
     labelElements.forEach(branch -> switchModel.fillElementsToCheckDuplicates(duplicateCandidates, branch));
@@ -1087,12 +1130,12 @@ public class SwitchBlockHighlightingModel {
       result.addAll(entry.getValue());
     }
 
-    var patternInSwitchModel = ObjectUtils.tryCast(switchModel, PatternsInSwitchBlockHighlightingModel.class);
+    PatternsInSwitchBlockHighlightingModel patternInSwitchModel = ObjectUtils.tryCast(switchModel, PatternsInSwitchBlockHighlightingModel.class);
     if (patternInSwitchModel == null) return result;
     List<PsiCaseLabelElement> dominanceCheckingCandidates = new SmartList<>();
     labelElements.forEach(label -> PatternsInSwitchBlockHighlightingModel.fillElementsToCheckDominance(dominanceCheckingCandidates, label));
     if (dominanceCheckingCandidates.isEmpty()) return result;
-    var dominatedPatterns = StreamEx.ofKeys(
+    Set<PsiCaseLabelElement> dominatedPatterns = StreamEx.ofKeys(
       patternInSwitchModel.findDominatedLabels(dominanceCheckingCandidates), value -> value instanceof PsiPattern).toSet();
     result.addAll(dominatedPatterns);
 

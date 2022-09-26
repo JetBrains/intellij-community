@@ -68,16 +68,39 @@ public abstract class DvcsBranchManager {
         myBranchSettings.getExcludedFavorites().add(branchTypeName, repository, branchName);
       }
     }
-    notifySettingsChanged();
+    notifyFavoriteSettingsChanged();
   }
 
-  private void notifySettingsChanged() {
+  private void notifyFavoriteSettingsChanged() {
     BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
-      myProject.getMessageBus().syncPublisher(DVCS_BRANCH_SETTINGS_CHANGED).branchSettingsChanged();
+      myProject.getMessageBus().syncPublisher(DVCS_BRANCH_SETTINGS_CHANGED).branchFavoriteSettingsChanged();
+    });
+  }
+
+  public boolean isGroupingEnabled(@NotNull GroupingKey key) {
+    return myBranchSettings.getGroupingKeyIds().contains(key.getId());
+  }
+
+  public void setGrouping(@NotNull GroupingKey key, boolean state) {
+    if (state) {
+      myBranchSettings.getGroupingKeyIds().add(key.getId());
+    }
+    else {
+      myBranchSettings.getGroupingKeyIds().remove(key.getId());
+    }
+
+    myBranchSettings.intIncrementModificationCount();
+    notifyGroupingSettingsChanged(key, state);
+  }
+
+  private void notifyGroupingSettingsChanged(@NotNull GroupingKey key, boolean state) {
+    BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+      myProject.getMessageBus().syncPublisher(DVCS_BRANCH_SETTINGS_CHANGED).branchGroupingSettingsChanged(key, state);
     });
   }
 
   public interface DvcsBranchManagerListener {
-    void branchSettingsChanged();
+    default void branchFavoriteSettingsChanged() { }
+    default void branchGroupingSettingsChanged(@NotNull GroupingKey key, boolean state) { }
   }
 }

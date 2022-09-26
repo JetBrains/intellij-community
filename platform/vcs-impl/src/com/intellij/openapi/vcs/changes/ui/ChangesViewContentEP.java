@@ -65,7 +65,7 @@ public final class ChangesViewContentEP implements PluginAware {
   public String preloaderClassName;
 
   /**
-   * {@link Supplier<@NlsContexts.TabTitle String>} instance that returns user-visible title.
+   * {@link Supplier Supplier<@NlsContexts.TabTitle String>} instance that returns user-visible title.
    *
    * @see Content#getDisplayName()
    */

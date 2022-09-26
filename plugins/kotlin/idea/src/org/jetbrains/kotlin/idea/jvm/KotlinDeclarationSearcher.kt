@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.asJava.toPsiParameters
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -37,9 +36,5 @@ class KotlinDeclarationSearcher : JvmDeclarationSearcher {
         }
         is KtElement -> declaringElement.toLightElements()
         else -> emptyList()
-    }
-
-    override fun adjustIdentifierElement(identifierElement: PsiElement): PsiElement? {
-        return if (identifierElement is KtObjectDeclaration) identifierElement else null
     }
 }

@@ -170,7 +170,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       .filter(desc -> !isDescriptorExcluded.test(desc))
       .map(desc -> new ProblemDescriptorKey(desc))
       .sorted()
-      .collect(Collectors.toList());
+      .toList();
 
     for (ProblemDescriptorKey key : keys) {
       final var descriptor = key.descriptor;

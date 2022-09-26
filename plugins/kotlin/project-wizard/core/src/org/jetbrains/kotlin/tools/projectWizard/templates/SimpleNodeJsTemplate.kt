@@ -39,7 +39,7 @@ object SimpleNodeJsTemplate : Template() {
     private const val mainFile = "Main.kt"
     override val filesToOpenInEditor = listOf(mainFile)
 
-    val useKotlinxNodejs by booleanSetting(
+    private val useKotlinxNodejs by booleanSetting(
         KotlinNewProjectWizardBundle.message("module.template.simple.nodejs.use.kotlinx.nodejs"),
         GenerationPhase.PROJECT_GENERATION
     ) {

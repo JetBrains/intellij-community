@@ -5,6 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -305,6 +307,33 @@ public class YAMLUtil {
     }
     return offset;
   }
+
+  public static boolean psiAreAtTheSameLine(@NotNull PsiElement psi1, @NotNull PsiElement psi2) {
+    PsiElement leaf = firstLeaf(psi1);
+    PsiElement lastLeaf = firstLeaf(psi2);
+    while (leaf != null) {
+      if (PsiUtilCore.getElementType(leaf) == YAMLTokenTypes.EOL) {
+        return false;
+      }
+      if (leaf == lastLeaf) {
+        return true;
+      }
+      leaf = PsiTreeUtil.nextLeaf(leaf);
+    }
+    // It is a kind of magic, normally we should return from the `while` above
+    return false;
+  }
+
+  private static @Nullable PsiElement firstLeaf(PsiElement psi1) {
+    LeafElement leaf = TreeUtil.findFirstLeaf(psi1.getNode());
+    if (leaf != null) {
+      return leaf.getPsi();
+    }
+    else {
+      return null;
+    }
+  }
+
 
   /**
    * Deletes surrounding whitespace contextually. First attempts to delete {@link YAMLTokenTypes#COMMENT}s on the same line and

@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -133,6 +133,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("testData/multiplatform/duplicateExpectsWithStrongIncompatibility/");
     }
 
+    @TestMetadata("enumFromCommonSerlializableSupertype")
+    public void testEnumFromCommonSerlializableSupertype() throws Exception {
+        runTest("testData/multiplatform/enumFromCommonSerlializableSupertype/");
+    }
+
     @TestMetadata("expectActualLineMarkers")
     public void testExpectActualLineMarkers() throws Exception {
         runTest("testData/multiplatform/expectActualLineMarkers/");
@@ -198,6 +203,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("testData/multiplatform/kt48291/");
     }
 
+    @TestMetadata("ktij22295")
+    public void testKtij22295() throws Exception {
+        runTest("testData/multiplatform/ktij22295/");
+    }
+
     @TestMetadata("lambdas")
     public void testLambdas() throws Exception {
         runTest("testData/multiplatform/lambdas/");
@@ -216,6 +226,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
     @TestMetadata("multiplatformLibrary")
     public void testMultiplatformLibrary() throws Exception {
         runTest("testData/multiplatform/multiplatformLibrary/");
+    }
+
+    @TestMetadata("nativeStdlib")
+    public void testNativeStdlib() throws Exception {
+        runTest("testData/multiplatform/nativeStdlib/");
     }
 
     @TestMetadata("overrideExpect")

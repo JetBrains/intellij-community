@@ -600,16 +600,6 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       return editor != null ? new VirtualFile[]{editor.getFile()} : VirtualFile.EMPTY_ARRAY;
     }
-    else if (CommonDataKeys.PSI_FILE.is(dataId)) {
-      return findPsiFile();
-    }
-    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      return findPsiFile();
-    }
-    else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      PsiElement psi = findPsiFile();
-      return psi != null ? new PsiElement[]{psi} : PsiElement.EMPTY_ARRAY;
-    }
     else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;
     }
@@ -622,7 +612,23 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     else if (ImageComponentDecorator.DATA_KEY.is(dataId)) {
       return editor != null ? editor : this;
     }
+    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return (DataProvider)slowId -> getSlowData(slowId);
+    }
+    return null;
+  }
 
+  private @Nullable Object getSlowData(@NotNull String dataId) {
+    if (CommonDataKeys.PSI_FILE.is(dataId)) {
+      return findPsiFile();
+    }
+    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      return findPsiFile();
+    }
+    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      PsiElement psi = findPsiFile();
+      return psi != null ? new PsiElement[]{psi} : PsiElement.EMPTY_ARRAY;
+    }
     return null;
   }
 

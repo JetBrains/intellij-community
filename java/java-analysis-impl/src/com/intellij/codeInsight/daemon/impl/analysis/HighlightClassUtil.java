@@ -611,7 +611,7 @@ public final class HighlightClassUtil {
         return (parameters.length == 0 || parameters.length == 1 && parameters[0].isVarArgs()) &&
                resolveHelper.isAccessible(constructor, aClass, null);
       })
-      .limit(2).collect(Collectors.toList());
+      .limit(2).toList();
 
     if (constructorCandidates.size() >= 2) {// two ambiguous var-args-only constructors
       String m1 = PsiFormatUtil.formatMethod(constructorCandidates.get(0), PsiSubstitutor.EMPTY,
@@ -1126,9 +1126,11 @@ public final class HighlightClassUtil {
     if (aClass != null) {
       PsiClass superClass = aClass.getBaseClassType().resolve();
       if (superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED)) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(aClass.getBaseClassReference())
           .descriptionAndTooltip(JavaErrorBundle.message("anonymous.classes.must.not.extend.sealed.classes")).create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createConvertAnonymousToInnerAction(aClass));
+        return info;
       }
     }
     return null;

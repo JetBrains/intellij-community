@@ -5,6 +5,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
@@ -166,7 +167,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (myStartInWriteAction) {
+    if (myStartInWriteAction || IntentionPreviewUtils.isPreviewElement(startElement)) {
       PsiModifierList modifierList;
       PsiVariable variable = ObjectUtils.tryCast(startElement, PsiVariable.class);
       if (variable != null && variable.isValid()) {
@@ -179,13 +180,12 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
       updateModifier(modifierList, modifierList.getParent());
       return;
     }
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(startElement)) return;
+    if (!IntentionPreviewUtils.prepareElementForWrite(startElement)) return;
     PsiModifierListOwner owner = (PsiModifierListOwner)startElement;
     PsiModifierList modifierList = owner.getModifierList();
     assert modifierList != null;
     updateAccessInHierarchy(project, modifierList, owner);
-
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    IntentionPreviewUtils.write(() -> {
       updateModifier(modifierList, owner);
       UndoUtil.markPsiFileForUndo(modifierList.getContainingFile());
     });

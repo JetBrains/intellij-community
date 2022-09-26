@@ -381,4 +381,22 @@ class AsyncPromiseTest {
       assertThat(loggedError.get()).isTrue()
     }
   }
+
+  @Test
+  fun `processed method should reject the passed promise`() {
+    fun <T> AsyncPromise<T>.onErrorIgnore(): AsyncPromise<T> =
+      onError { /* ignore to not throw as an unobserved exception in tests */ }
+
+    fun doTest(promise: Promise<Any>) {
+      val newPromise = AsyncPromise<Any>().onErrorIgnore()
+      promise.processed(newPromise)
+      assertTrue(promise.isRejected)
+      assertTrue(newPromise.isRejected, "A promise $newPromise should be rejected by a promise $promise")
+    }
+
+    doTest(AsyncPromise<Any>().onErrorIgnore().apply {
+      setError("error 1")
+    })
+    doTest(rejectedPromise("error 2"))
+  }
 }

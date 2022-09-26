@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
@@ -18,6 +19,11 @@ class AnnotateDiffOnHoverToggleAction extends ToggleAction implements DumbAware 
   AnnotateDiffOnHoverToggleAction(@NotNull FileAnnotation annotation) {
     super(VcsBundle.messagePointer("action.annotate.show.diff.preview.on.hover.text"));
     myProvider = annotation.getLineModificationDetailsProvider();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

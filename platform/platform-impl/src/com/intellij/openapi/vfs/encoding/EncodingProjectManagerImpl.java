@@ -82,8 +82,11 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   static final class EncodingProjectManagerStartUpActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
+      // do not try to init on EDT due to VFS usage in loadState
+      EncodingProjectManagerImpl service = (EncodingProjectManagerImpl)getInstance(project);
+
       ApplicationManager.getApplication().invokeLater(() -> {
-        ((EncodingProjectManagerImpl)getInstance(project)).reloadAlreadyLoadedDocuments();
+        service.reloadAlreadyLoadedDocuments();
       }, project.getDisposed());
     }
   }
@@ -599,15 +602,10 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
   @Override
   public boolean shouldAddBOMForNewUtf8File() {
-    switch (myBomForNewUtf8Files) {
-      case ALWAYS:
-        return true;
-      case NEVER:
-        return false;
-      case WINDOWS_ONLY:
-        return SystemInfo.isWindows;
-      default:
-        throw new IllegalStateException(myBomForNewUtf8Files.toString());
-    }
+    return switch (myBomForNewUtf8Files) {
+      case ALWAYS -> true;
+      case NEVER -> false;
+      case WINDOWS_ONLY -> SystemInfo.isWindows;
+    };
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,6 +39,19 @@ import java.util.Locale;
  * author: lesya
  */
 public class CalendarView extends JPanel {
+  public enum Mode {
+    DATE,
+    TIME,
+    DATETIME;
+
+    boolean hasDate() {
+      return this == DATE || this == DATETIME;
+    }
+
+    boolean hasTime() {
+      return this == TIME || this == DATETIME;
+    }
+  }
 
   private final static int[] DAYS_IN_THE_MONTH = new int[]{
     31,
@@ -65,8 +79,16 @@ public class CalendarView extends JPanel {
   private final JSpinner mySeconds = new JBIntSpinner(59, 0, 59);
   private final Calendar myCalendar = Calendar.getInstance();
 
+  private final Mode myMode;
+
   public CalendarView() {
-    super(new GridLayout(2, 0));
+    this(Mode.DATETIME);
+  }
+
+  public CalendarView(@NotNull Mode mode) {
+    super(new GridLayout(mode == Mode.DATETIME ? 2 : 1, 0));
+
+    myMode = mode;
 
     fillMonths();
 
@@ -82,8 +104,12 @@ public class CalendarView extends JPanel {
 
     setDate(new Date());
 
-    addDateFields();
-    addTimeFields();
+    if (myMode.hasDate()) {
+      addDateFields();
+    }
+    if (myMode.hasTime()) {
+      addTimeFields();
+    }
 
     int height = Math.max(myYears.getPreferredSize().height, myDays.getPreferredSize().height);
     height = Math.max(myMonths.getPreferredSize().height, height);
@@ -249,6 +275,10 @@ public class CalendarView extends JPanel {
         e.getPresentation().setEnabled(!myMonths.isPopupVisible() && !myDays.isPopupVisible());
       }
 
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         runnable.run();

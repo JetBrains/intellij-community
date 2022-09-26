@@ -2,11 +2,14 @@
 package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.navigation.History;
@@ -33,9 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 import static com.intellij.ui.JBColor.namedColor;
 
@@ -127,28 +129,27 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       return;
     }
 
+    List<NamedRunnable> actions = new ArrayList<>();
     if (getFilterUi().getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null) {
-      String text = VcsLogBundle.message("file.history.commit.not.found.in.branch",
-                                         getCommitPresentation(commitId), myPath.getName());
-      showWarningWithLink(text, VcsLogBundle.message("file.history.commit.not.found.view.and.show.all.branches.link"), () -> {
-        myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
-        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true));
+      actions.add(new NamedRunnable(VcsLogBundle.message("file.history.commit.not.found.view.and.show.all.branches.link")) {
+        @Override
+        public void run() {
+          myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
+          invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true));
+        }
       });
     }
-    else {
-      String text = VcsLogBundle.message("file.history.commit.not.found",
-                                         getCommitPresentation(commitId), myPath.getName());
-      showWarningWithLink(text, VcsLogBundle.message("file.history.commit.not.found.view.in.log.link"), () -> {
+    String text = VcsLogBundle.message("file.history.commit.not.found",
+                                       getCommitPresentation(commitId), myPath.getName());
+    actions.add(new NamedRunnable(VcsLogBundle.message("file.history.commit.not.found.view.in.log.link")) {
+      @Override
+      public void run() {
         VcsLogContentUtil.runInMainLog(myProject, ui -> {
-          if (commitId instanceof Hash) {
-            ui.getVcsLog().jumpToCommit((Hash)commitId, myRoot);
-          }
-          else if (commitId instanceof String) {
-            ui.getVcsLog().jumpToReference((String)commitId);
-          }
+          ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false, true);
         });
-      });
-    }
+      }
+    });
+    VcsBalloonProblemNotifier.showOverChangesView(myProject, text, MessageType.WARNING, actions.toArray(new NamedRunnable[0]));
   }
 
   public boolean matches(@NotNull FilePath targetPath, @Nullable Hash targetRevision) {

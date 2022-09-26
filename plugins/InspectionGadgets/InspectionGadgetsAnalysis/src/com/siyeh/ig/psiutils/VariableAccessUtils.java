@@ -147,7 +147,6 @@ public final class VariableAccessUtils {
    * Returns true if the specified variable is assigned in the specified context.
    * @param variable  the variable to check
    * @param context  the context to check for assignments
-   * @param recurseIntoClasses
    * @return true, if the specified variable was assigned in the specified context, false otherwise
    */
   public static boolean variableIsAssigned(@NotNull PsiVariable variable, @Nullable PsiElement context, boolean recurseIntoClasses) {

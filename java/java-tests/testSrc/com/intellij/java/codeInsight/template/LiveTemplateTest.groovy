@@ -33,7 +33,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.DocumentUtil
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
@@ -56,7 +55,7 @@ class LiveTemplateTest extends LiveTemplateTestCase {
     String group = "user"
     final Template template = manager.createTemplate(templateName, group, templateText)
     template.addVariable("ARG", "", "", false)
-    TemplateContextType contextType = contextType(JavaCodeContextType.class)
+    TemplateContextType contextType = contextType(JavaCodeContextType.Generic.class)
     ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true)
     CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
 
@@ -279,7 +278,7 @@ class Foo {
   }
 
   private static <T extends TemplateContextType> T contextType(Class<T> clazz) {
-    ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), clazz)
+    return TemplateContextTypes.getByClass(clazz)
   }
 
   private void configure() {
@@ -355,7 +354,7 @@ class Foo {
   }
 
   void testJavaOtherContext() throws IOException {
-    def stmtContext = TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Statement)
+    def stmtContext = TemplateContextTypes.getByClass(JavaCodeContextType.Statement)
 
     configureFromFileText("a.java", "class Foo {{ iter<caret>  }}")
 
@@ -383,16 +382,16 @@ class Foo {
     def defContext = new TemplateContext()
     defContext.readTemplateContext(defElement)
 
-    assert !defContext.isEnabled(TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Statement))
-    assert defContext.isEnabled(TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Declaration))
-    assert defContext.isEnabled(TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Generic))
+    assert !defContext.isEnabled(TemplateContextTypes.getByClass(JavaCodeContextType.Statement))
+    assert defContext.isEnabled(TemplateContextTypes.getByClass(JavaCodeContextType.Declaration))
+    assert defContext.isEnabled(TemplateContextTypes.getByClass(JavaCodeContextType.Generic))
 
     def copy = defContext.createCopy()
 
     def write = copy.writeTemplateContext(null)
     assert write.children.size() == 2 : JDOMUtil.writeElement(write)
 
-    copy.setEnabled(TemplateContextType.EP_NAME.findExtension(JavaCommentContextType), false)
+    copy.setEnabled(TemplateContextTypes.getByClass(JavaCommentContextType), false)
 
     write = copy.writeTemplateContext(null)
     assert write.children.size() == 3 : JDOMUtil.writeElement(write)
@@ -403,12 +402,12 @@ class Foo {
     context.readTemplateContext(new Element("context"))
 
     def defContext = new TemplateContext()
-    def commentContext = TemplateContextType.EP_NAME.findExtension(JavaCommentContextType)
+    def commentContext = TemplateContextTypes.getByClass(JavaCommentContextType)
     defContext.setEnabled(commentContext, true)
 
     context.setDefaultContext(defContext)
     assert context.isEnabled(commentContext)
-    assert !context.isEnabled(TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Generic))
+    assert !context.isEnabled(TemplateContextTypes.getByClass(JavaCodeContextType.Generic))
   }
 
   void "test adding new context to Other"() {
@@ -419,7 +418,7 @@ class Foo {
     def context = new TemplateContext()
     context.readTemplateContext(defElement)
 
-    def javaContext = TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Generic)
+    def javaContext = TemplateContextTypes.getByClass(JavaCodeContextType.Generic)
     context.setEnabled(javaContext, true)
 
     def saved = context.writeTemplateContext(null)
@@ -428,7 +427,7 @@ class Foo {
     context.readTemplateContext(saved)
 
     assert context.isEnabled(javaContext)
-    assert context.isEnabled(TemplateContextType.EP_NAME.findExtension(EverywhereContextType))
+    assert context.isEnabled(TemplateContextTypes.getByClass(EverywhereContextType))
   }
 
   private static writeCommand(Runnable runnable) {
@@ -685,7 +684,7 @@ class Foo {
     final Template template = manager.createTemplate("xxx", "user", '$VAR1$ $VAR2$ $VAR1$')
     template.addVariable("VAR1", "", "", true)
     template.addVariable("VAR2", new MacroCallNode(new FilePathMacroBase.FileNameMacro()), new ConstantNode("default"), true)
-    ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
+    ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.Generic.class), true)
     CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
 
     startTemplate(template)

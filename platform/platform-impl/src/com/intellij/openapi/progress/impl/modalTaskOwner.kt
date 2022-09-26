@@ -11,7 +11,7 @@ internal class ComponentModalTaskOwner(val component: Component) : ModalTaskOwne
 
 internal class ProjectModalTaskOwner(val project: Project) : ModalTaskOwner
 
-internal suspend fun ownerWindow(owner: ModalTaskOwner): Window? {
+internal fun ownerWindow(owner: ModalTaskOwner): Window? {
   return when (owner) {
     is ComponentModalTaskOwner -> ProgressWindow.calcParentWindow(owner.component, null)
     is ProjectModalTaskOwner -> ProgressWindow.calcParentWindow(null, owner.project)

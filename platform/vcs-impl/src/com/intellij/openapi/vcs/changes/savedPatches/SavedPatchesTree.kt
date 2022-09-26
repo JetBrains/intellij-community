@@ -166,7 +166,7 @@ class SavedPatchesTree(project: Project,
   }
 
   private class MySpeedSearch(tree: JTree) :
-    TreeSpeedSearch(tree, ChangesBrowserNode.TO_TEXT_CONVERTER, true) {
+    TreeSpeedSearch(tree, true, ChangesBrowserNode.TO_TEXT_CONVERTER.asFunction()) {
     override fun isMatchingElement(element: Any?, pattern: String?): Boolean {
       val isMatching = super.isMatchingElement(element, pattern)
       if (isMatching) return true

@@ -67,7 +67,7 @@ public final class EmptyIntentionAction extends AbstractEmptyIntentionAction imp
 
   @Override
   public Icon getIcon(@IconFlags int flags) {
-    return EmptyIcon.ICON_16;
+    return EmptyIcon.ICON_0;
   }
 
   @Override

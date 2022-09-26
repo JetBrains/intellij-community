@@ -1,18 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.synthetic
 
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.usages.Usage
-import org.jetbrains.kotlin.idea.testFramework.Parameter
+import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
+import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
-import org.jetbrains.kotlin.idea.perf.suite.DefaultProfile
-import org.jetbrains.kotlin.idea.perf.suite.PerformanceSuite
-import org.jetbrains.kotlin.idea.perf.suite.StatsScopeConfig
-import org.jetbrains.kotlin.idea.perf.suite.suite
+import org.jetbrains.kotlin.idea.perf.suite.*
 import org.jetbrains.kotlin.idea.perf.util.*
-import org.jetbrains.kotlin.idea.perf.util.registerLoadingErrorsHeadlessNotifier
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.testFramework.Parameter
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.junit.runner.RunWith
 
 @RunWith(JUnit3RunnerWithInners::class)
@@ -322,7 +324,7 @@ open class PerformanceStressTest : UsefulTestCase() {
                     descriptor {
                         name("ten_modules")
 
-                        for(index in 0 until 10) {
+                        for (index in 0 until 10) {
                             module("module$index") {
                                 kotlinStandardLibrary()
 
@@ -336,6 +338,61 @@ open class PerformanceStressTest : UsefulTestCase() {
                                     topClass("SomeService$index") {
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun testFacadeClasses() {
+        suiteWithConfig("Lots of facade classes", "kt-53543 project") {
+            app {
+                warmUpProject()
+                project {
+                    descriptor {
+                        name("KT-53543")
+
+                        module {
+                            kotlinStandardLibrary()
+
+                            for (index in 0..50_000) {
+                                kotlinFile("AaaaFacade$index") {
+                                    for (funIndex in 0..2) {
+                                        topFunction("aaaaFunction${index}_$funIndex") {}
+                                    }
+                                }
+
+                                kotlinFile("AaaaFacadeNon$index") {
+                                    topClass("AaaaClass$index") {}
+                                }
+                            }
+
+                            kotlinFile("SomeKotlinClass") {
+                                topFunction("foo") {}
+                            }
+                        }
+                    }
+
+                    profile(DefaultProfile)
+
+                    fixture("SomeKotlinClass.kt").use { fixture ->
+                        measure<Unit>("findFacadeClass") {
+                            test = {
+                                val facadeClass = fixture.psiFile.cast<KtFile>().findFacadeClass()
+                                assertNotNull(facadeClass)
+                            }
+                        }
+
+                        measure<Unit>("getFacadeClassesInPackage") {
+                            test = {
+                                val classes = KotlinAsJavaSupport.getInstance(fixture.project).getFacadeClassesInPackage(
+                                    FqName(""),
+                                    GlobalSearchScope.projectScope(fixture.project),
+                                )
+
+                                assertEquals(50002, classes.size)
                             }
                         }
                     }

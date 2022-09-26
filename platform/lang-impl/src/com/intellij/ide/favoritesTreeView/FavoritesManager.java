@@ -3,7 +3,6 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.bookmark.BookmarksListener;
-import com.intellij.ide.favoritesTreeView.actions.AddToFavoritesAction;
 import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
@@ -41,11 +40,15 @@ import java.util.function.Function;
 
 import static com.intellij.ide.favoritesTreeView.FavoritesListProvider.EP_NAME;
 
+/**
+ * @deprecated Use Bookmarks API instead.
+ */
 @Service
 @State(name = "FavoritesManager", storages = {
   @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
   @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true),
 })
+@Deprecated(forRemoval = true)
 public final class FavoritesManager implements PersistentStateComponent<Element> {
   private final static Logger LOG = Logger.getInstance(FavoritesManager.class);
   // fav list name -> list of (root: root url, root class)
@@ -145,19 +148,6 @@ public final class FavoritesManager implements PersistentStateComponent<Element>
         myListeners.remove(listener);
       }
     });
-  }
-
-  List<AbstractTreeNode<?>> createRootNodes() {
-    List<AbstractTreeNode<?>> result = new ArrayList<>();
-    for (String listName : myFavoritesRootsOrder) {
-      result.add(new FavoritesListNode(myProject, listName, myDescriptions.get(listName)));
-    }
-    ArrayList<FavoritesListProvider> providers = new ArrayList<>(getProviders().values());
-    Collections.sort(providers);
-    for (FavoritesListProvider provider : providers) {
-      result.add(provider.createFavoriteListNode(myProject));
-    }
-    return result;
   }
 
   @NotNull
@@ -286,16 +276,6 @@ public final class FavoritesManager implements PersistentStateComponent<Element>
       return true;
     }
     return false;
-  }
-
-  public synchronized boolean removeRoot(@NotNull String name, @NotNull List<? extends AbstractTreeNode<?>> elements) {
-    Function<AbstractTreeNode, AbstractUrl> convertor = obj -> createUrlByElement(obj.getValue(), myProject);
-    boolean result = true;
-    for (AbstractTreeNode element : elements) {
-      final List<AbstractTreeNode<?>> path = TaskDefaultFavoriteListProvider.getPathToUsualNode(element);
-      result &= findListToRemoveFrom(name, path.subList(1, path.size()), convertor);
-    }
-    return result;
   }
 
   private static TreeItem<Pair<AbstractUrl, String>> findNextItem(AbstractUrl url, Collection<? extends TreeItem<Pair<AbstractUrl, String>>> list) {

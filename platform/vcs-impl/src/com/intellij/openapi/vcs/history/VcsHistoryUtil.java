@@ -67,8 +67,6 @@ public final class VcsHistoryUtil {
    * @param path      file which revisions are compared.
    * @param revision1 first revision - 'before', to the left.
    * @param revision2 second revision - 'after', to the right.
-   * @throws VcsException
-   * @throws IOException
    */
   public static void showDiff(@NotNull final Project project, @NotNull FilePath path,
                               @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2,

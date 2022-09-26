@@ -83,7 +83,7 @@ internal class CollectFUStatisticsAction : GotoActionBase(), DumbAware {
     }
     val collector = item.usagesCollector
     val metricsPromise = when (collector) {
-      is ApplicationUsagesCollector -> resolvedPromise(collector.metrics)
+      is ApplicationUsagesCollector -> resolvedPromise(collector.getMetrics())
       is ProjectUsagesCollector -> collector.getMetrics(project, indicator)
       else -> throw IllegalArgumentException("Unsupported collector: $collector")
     }

@@ -62,7 +62,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
           LessonsBundle.message("recent.files.dialog.title"),
           CommonBundle.message("button.ok"),
           LearnBundle.message("learn.stop.lesson"),
-          FeaturesTrainerIcons.Img.PluginIcon
+          FeaturesTrainerIcons.PluginIcon
         )
         if (userDecision != Messages.OK) {
           LessonManager.instance.stopLesson()
@@ -226,8 +226,6 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
   override val testScriptProperties: TaskTestContext.TestScriptProperties
     get() = TaskTestContext.TestScriptProperties(duration = 20)
-
-  override val suitableTips = listOf("recent-locations", "RecentFiles")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("recent.files.locations.help.link"),

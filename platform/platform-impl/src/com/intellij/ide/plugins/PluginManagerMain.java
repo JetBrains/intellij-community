@@ -7,7 +7,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum;
-import com.intellij.idea.Main;
+import com.intellij.idea.AppMode;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -283,18 +283,16 @@ public final class PluginManagerMain {
   @ApiStatus.Internal
   public static void onEvent(String description) {
     switch (description) {
-      case PluginManagerCore.DISABLE:
-        PluginManagerCore.onEnable(false);
-        break;
-      case PluginManagerCore.ENABLE:
+      case PluginManagerCore.DISABLE -> PluginManagerCore.onEnable(false);
+      case PluginManagerCore.ENABLE -> {
         if (PluginManagerCore.onEnable(true)) {
           notifyPluginsUpdated(null);
         }
-        break;
-      case PluginManagerCore.EDIT:
+      }
+      case PluginManagerCore.EDIT -> {
         IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(null);
         PluginManagerConfigurable.showPluginConfigurable(frame != null ? frame.getComponent() : null, null, List.of());
-        break;
+      }
     }
   }
 
@@ -329,7 +327,7 @@ public final class PluginManagerMain {
       return true;
     }
 
-    if (Main.isHeadless()) {
+    if (AppMode.isHeadless()) {
       // postponing the dialog till the next start
       PluginManagerCore.write3rdPartyPlugins(aliens);
       return true;

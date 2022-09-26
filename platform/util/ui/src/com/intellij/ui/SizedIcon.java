@@ -37,6 +37,12 @@ public class SizedIcon extends JBCachingScalableIcon implements MenuBarIconProvi
 
   @NotNull
   @Override
+  public SizedIcon replaceBy(@NotNull IconReplacer replacer) {
+    return new SizedIcon(replacer.replaceIcon(myDelegate), myWidth, myHeight);
+  }
+
+  @NotNull
+  @Override
   public SizedIcon copy() {
     return new SizedIcon(this);
   }

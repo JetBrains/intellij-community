@@ -37,7 +37,6 @@ public abstract class CreateConfigurationTask<T extends AbstractPythonRunConfigu
 
   /**
    * @param expectedConfigurationType type configuration tha should be produced
-   * @param relativeTestDataPath
    */
   protected CreateConfigurationTask(@NotNull final Class<T> expectedConfigurationType,
                           @NotNull String relativeTestDataPath) {

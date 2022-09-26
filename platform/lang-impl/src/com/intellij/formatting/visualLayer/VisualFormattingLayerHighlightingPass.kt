@@ -22,22 +22,12 @@ class VisualFormattingLayerHighlightingPass(editor: Editor, file: PsiFile) : Edi
 
   val service: VisualFormattingLayerService by lazy { VisualFormattingLayerService.getInstance() }
 
-  var myRunnable: ((Editor) -> Unit)? = null
+  private var myVisualFormattingLayerElements: List<VisualFormattingLayerElement>? = null
 
   override fun doCollectInformation(progress: ProgressIndicator) {
     //progress.start()
 
-    if (service.enabledForEditor(myEditor)) {
-      myRunnable = { editor: Editor ->
-        service.getVisualFormattingLayerElements(myFile)
-          .forEach {
-            it.applyToEditor(editor)
-          }
-      }
-    }
-    else {
-      myRunnable = null
-    }
+    myVisualFormattingLayerElements = service.getVisualFormattingLayerElements(myEditor)
 
     //progress.stop()
   }
@@ -58,7 +48,9 @@ class VisualFormattingLayerHighlightingPass(editor: Editor, file: PsiFile) : Edi
         .forEach { it.dispose() }
     }, true, false)
 
-    myRunnable?.invoke(myEditor)
+    myVisualFormattingLayerElements?.forEach {
+      it.applyToEditor(myEditor)
+    }
   }
 
 }

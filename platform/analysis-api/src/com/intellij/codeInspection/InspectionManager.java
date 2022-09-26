@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,13 +29,13 @@ public abstract class InspectionManager {
   @NotNull
   @Contract(pure = true)
   public abstract CommonProblemDescriptor createProblemDescriptor(@NotNull @InspectionMessage String descriptionTemplate,
-                                                                  QuickFix @Nullable ... fixes);
+                                                                  QuickFix<?> @Nullable ... fixes);
 
   @NotNull
   @Contract(pure = true)
   public abstract ModuleProblemDescriptor createProblemDescriptor(@NotNull @InspectionMessage String descriptionTemplate,
                                                                   @NotNull Module module,
-                                                                  QuickFix @Nullable ... fixes);
+                                                                  QuickFix<?> @Nullable ... fixes);
 
   /**
    * Factory method for ProblemDescriptor. Should be called from LocalInspectionTool.checkXXX() methods.
@@ -57,7 +58,7 @@ public abstract class InspectionManager {
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
                                                             boolean onTheFly,
-                                                            LocalQuickFix[] fixes,
+                                                            LocalQuickFix @Nullable [] fixes,
                                                             @NotNull ProblemHighlightType highlightType);
 
   @NotNull
@@ -76,25 +77,25 @@ public abstract class InspectionManager {
                                                             @NotNull @InspectionMessage String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
-                                                            LocalQuickFix... fixes);
+                                                            LocalQuickFix @Nullable ... fixes);
 
   @NotNull
   @Contract(pure = true)
-  public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
+  public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @Nullable("null means the text range of the element") TextRange rangeInElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
-                                                            LocalQuickFix... fixes);
+                                                            LocalQuickFix @Nullable ... fixes);
 
   @NotNull
   @Contract(pure = true)
-  public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
+  public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
-                                                            final boolean showTooltip,
+                                                            boolean showTooltip,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
-                                                            final LocalQuickFix... fixes);
+                                                            LocalQuickFix @Nullable ... fixes);
 
   /**
    * @deprecated use {@link #createProblemDescriptor(PsiElement, String, boolean, LocalQuickFix[], ProblemHighlightType)} instead
@@ -115,7 +116,7 @@ public abstract class InspectionManager {
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
-                                                            LocalQuickFix[] fixes,
+                                                            LocalQuickFix @Nullable [] fixes,
                                                             @NotNull ProblemHighlightType highlightType);
 
   /**
@@ -126,7 +127,7 @@ public abstract class InspectionManager {
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
-                                                            LocalQuickFix[] fixes,
+                                                            LocalQuickFix @Nullable [] fixes,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean isAfterEndOfLine);
 
@@ -140,20 +141,8 @@ public abstract class InspectionManager {
                                                             @NotNull PsiElement endElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
-                                                            LocalQuickFix... fixes);
+                                                            LocalQuickFix @Nullable ... fixes);
 
-
-  /**
-   * @deprecated use {@link #createProblemDescriptor(PsiElement, TextRange, String, ProblemHighlightType, boolean, LocalQuickFix...)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  @Contract(pure = true)
-  public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
-                                                            final TextRange rangeInElement,
-                                                            @NotNull @InspectionMessage String descriptionTemplate,
-                                                            @NotNull ProblemHighlightType highlightType,
-                                                            final LocalQuickFix... fixes);
 
   /**
    * @deprecated use {@link #createNewGlobalContext()} instead
@@ -168,5 +157,6 @@ public abstract class InspectionManager {
   public abstract GlobalInspectionContext createNewGlobalContext();
 
   @NotNull
+  @ApiStatus.Internal
   public abstract List<ProblemDescriptor> defaultProcessFile(@NotNull LocalInspectionTool tool, @NotNull PsiFile file);
 }

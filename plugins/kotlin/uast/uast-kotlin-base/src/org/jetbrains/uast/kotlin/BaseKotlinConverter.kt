@@ -333,7 +333,7 @@ interface BaseKotlinConverter {
     ): Sequence<UElement> =
         requiredTypes.accommodate(
             alternative uParam@{
-                val lightMethod = when (val ownerFunction = element.ownerFunction) {
+                when (val ownerFunction = element.ownerFunction) {
                     is KtFunction -> LightClassUtil.getLightClassMethod(ownerFunction)
                         ?: getLightClassForFakeMethod(ownerFunction)
                             ?.takeIf { !it.isAnnotationType }
@@ -341,9 +341,15 @@ interface BaseKotlinConverter {
 
                     is KtPropertyAccessor -> LightClassUtil.getLightClassAccessorMethod(ownerFunction)
                     else -> null
-                } ?: return@uParam null
-                val lightParameter = lightMethod.parameterList.parameters.find { it.name == element.name } ?: return@uParam null
-                KotlinUParameter(lightParameter, element, givenParent)
+                }?.let { lightMethod ->
+                    val lightParameter = lightMethod.parameterList.parameters.find { it.name == element.name } ?: return@uParam null
+                    KotlinUParameter(lightParameter, element, givenParent)
+                } ?:
+                // Of course, it is a hack to pick-up KotlinUParameter from another declaration
+                // instead of creating it directly with `givenParent`, but anyway better than have unexpected nulls here
+                element.parent.parent.safeAs<KtCallableDeclaration>()
+                    ?.toUElementOfType<ULambdaExpression>()?.valueParameters
+                    ?.find { it.name == element.name }
             },
             alternative catch@{
                 val uCatchClause = element.parent?.parent?.safeAs<KtCatchClause>()?.toUElementOfType<UCatchClause>() ?: return@catch null
@@ -616,7 +622,7 @@ interface BaseKotlinConverter {
             when (element) {
                 is KtParameterList -> {
                     el<UDeclarationsExpression> {
-                        val declarationsExpression = KotlinUDeclarationsExpression(null, givenParent, null)
+                        val declarationsExpression = KotlinUDeclarationsExpression(element, givenParent, null)
                         declarationsExpression.apply {
                             declarations = element.parameters.mapIndexed { i, p ->
                                 KotlinUParameter(UastKotlinPsiParameter.create(p, element, declarationsExpression, i), p, this)

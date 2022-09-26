@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.CloneableProjectItem
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemIndependent
 import java.util.*
@@ -27,7 +28,7 @@ import java.util.*
 class CloneableProjectsService {
   private val cloneableProjects: MutableSet<CloneableProject> = Collections.synchronizedSet(mutableSetOf())
 
-  @RequiresEdt
+  @CalledInAny
   fun runCloneTask(projectPath: @SystemIndependent String, cloneTask: CloneTask) {
     val taskInfo = cloneTask.taskInfo()
     val progressIndicator = CloneableProjectProgressIndicator(taskInfo)
@@ -49,11 +50,13 @@ class CloneableProjectsService {
         }
         VcsCloneCollector.cloneFinished(activity, cloneStatus)
 
-        when (cloneStatus) {
-          CloneStatus.SUCCESS -> onSuccess(cloneableProject)
-          CloneStatus.FAILURE -> onFailure(cloneableProject)
-          CloneStatus.CANCEL -> onCancel(cloneableProject)
-          else -> {}
+        ApplicationManager.getApplication().invokeLater {
+          when (cloneStatus) {
+            CloneStatus.SUCCESS -> onSuccess(cloneableProject)
+            CloneStatus.FAILURE -> onFailure(cloneableProject)
+            CloneStatus.CANCEL -> onCancel(cloneableProject)
+            else -> {}
+          }
         }
       }, progressIndicator)
     }
@@ -72,11 +75,11 @@ class CloneableProjectsService {
   }
 
   fun cloneCount(): Int {
-    return cloneableProjects.size
+    return cloneableProjects.filter { it.cloneStatus == CloneStatus.PROGRESS }.size
   }
 
   fun isCloneActive(): Boolean {
-    return !cloneableProjects.isEmpty()
+    return cloneableProjects.any { it.cloneStatus == CloneStatus.PROGRESS }
   }
 
   fun cancelClone(cloneableProject: CloneableProject) {
@@ -193,18 +196,23 @@ class CloneableProjectsService {
   }
 
   interface CloneProjectListener {
+    @RequiresEdt
     fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) {
     }
 
+    @RequiresEdt
     fun onCloneRemoved() {
     }
 
+    @RequiresEdt
     fun onCloneSuccess() {
     }
 
+    @RequiresEdt
     fun onCloneFailed() {
     }
 
+    @RequiresEdt
     fun onCloneCanceled() {
     }
   }

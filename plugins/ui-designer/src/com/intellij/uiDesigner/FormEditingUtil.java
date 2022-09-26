@@ -46,10 +46,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class FormEditingUtil {
   private FormEditingUtil() {
   }
@@ -560,7 +556,6 @@ public final class FormEditingUtil {
   }
 
   /**
-   * @param rootContainer
    * @return id
    */
   public static String generateId(final RadRootContainer rootContainer) {
@@ -601,8 +596,6 @@ public final class FormEditingUtil {
   }
 
   /**
-   * @param componentToAssignBinding
-   * @param binding
    * @param component                topmost container where to find duplicate binding. In most cases
    *                                 it should be {@link GuiEditor#getRootContainer()}
    */
@@ -672,7 +665,6 @@ public final class FormEditingUtil {
    * Selects the component and ensures that the tabbed panes containing the component are
    * switched to the correct tab.
    *
-   * @param editor
    * @param component the component to select. @return true if the component is enclosed in at least one tabbed pane, false otherwise.
    */
   public static boolean selectComponent(final GuiEditor editor, @NotNull final RadComponent component) {

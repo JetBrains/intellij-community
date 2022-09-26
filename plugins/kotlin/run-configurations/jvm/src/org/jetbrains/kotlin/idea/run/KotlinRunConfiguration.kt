@@ -46,11 +46,14 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle.message
-import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
+import org.jetbrains.kotlin.idea.base.codeInsight.PsiOnlyKotlinMainFunctionDetector
+import org.jetbrains.kotlin.idea.base.codeInsight.findMainOwner
+import org.jetbrains.kotlin.idea.base.codeInsight.hasMain
 import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
-import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.getStartClassFqName
+import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.getMainClassJvmName
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.psi.*
@@ -175,18 +178,24 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
     @Throws(RuntimeConfigurationException::class)
     override fun checkConfiguration() {
         JavaParametersUtil.checkAlternativeJRE(this)
-        ProgramParametersUtil.checkWorkingDirectoryExist(this, project, configurationModule!!.module)
-        checkConfigurationIsValid(this)
-        val module = configurationModule!!.module
+
+        val module = configurationModule?.module
             ?: throw RuntimeConfigurationError(message("run.configuration.error.no.module"))
-        val mainClassName = options.mainClassName?.takeIf { !StringUtil.isEmpty(it) } ?:
-            throw RuntimeConfigurationError(message("run.configuration.error.no.main.class"))
-        val mainFile = findMainClassFile(module, mainClassName) ?:
-            throw RuntimeConfigurationWarning(
-                message("run.configuration.error.class.not.found", mainClassName, configurationModule!!.moduleName)
-            )
-        if (!mainFile.hasMainFun()) {
-            throw RuntimeConfigurationWarning(message("run.configuration.error.class.no.main.method", mainClassName))
+
+        ProgramParametersUtil.checkWorkingDirectoryExist(this, project, module)
+        checkConfigurationIsValid(this)
+
+        val mainClassName = options.mainClassName?.takeIf { !StringUtil.isEmpty(it) }
+            ?: throw RuntimeConfigurationError(message("run.configuration.error.no.main.class"))
+
+        val mainFile = findMainClassFile(module, mainClassName)
+
+        if (mainFile == null) {
+            val message = message("run.configuration.error.class.not.found", mainClassName, configurationModule!!.moduleName)
+            throw RuntimeConfigurationWarning(message)
+        } else if (PsiOnlyKotlinMainFunctionDetector.findMainOwner(mainFile) == null) {
+            val message = message("run.configuration.error.class.no.main.method", mainClassName)
+            throw RuntimeConfigurationWarning(message)
         }
     }
 
@@ -197,7 +206,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
 
     override fun getRefactoringElementListener(element: PsiElement): RefactoringElementListener? {
         val fqNameBeingRenamed: String? = when (element) {
-          is KtDeclarationContainer -> getStartClassFqName(element as KtDeclarationContainer)
+          is KtDeclarationContainer -> getMainClassJvmName(element as KtDeclarationContainer)
             is PsiPackage -> element.qualifiedName
             else -> null
         }
@@ -231,11 +240,8 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
     }
 
     private fun updateMainClassName(element: PsiElement) {
-        val container = EntryPointContainerFinder.find(element) ?: return
-        val name = getStartClassFqName(container)
-        if (name != null) {
-            runClass = name
-        }
+        val mainOwner = KotlinMainFunctionDetector.getInstance().findMainOwner(element) ?: return
+        runClass = getMainClassJvmName(mainOwner) ?: return
     }
 
     private fun updateMainClassNameWithSuffix(element: PsiElement, suffix: String) {
@@ -469,7 +475,8 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                 return true
             }
 
-            return KotlinMainFunctionDetector.getInstance().hasMain(mainFunCandidates)
+            val mainFunctionDetector = KotlinMainFunctionDetector.getInstance()
+            return mainFunCandidates.any { mainFunctionDetector.isMain(it) }
         }
 
     }

@@ -63,9 +63,11 @@
     <lang.surroundDescriptor language="JSON" implementationClass="com.intellij.json.surroundWith.JsonSurroundDescriptor"/>
     <lang.findUsagesProvider language="JSON" implementationClass="com.intellij.json.findUsages.JsonFindUsagesProvider"/>
     <statementUpDownMover implementation="com.intellij.json.editor.lineMover.JsonLineMover" id="JSON" order="before line"/>
-    <liveTemplateContext implementation="com.intellij.json.liveTemplates.JsonContextType"/>
-    <liveTemplateContext implementation="com.intellij.json.liveTemplates.JsonInLiteralsContextType"/>
-    <liveTemplateContext implementation="com.intellij.json.liveTemplates.JsonInPropertyKeysContextType"/>
+
+    <liveTemplateContext contextId="JSON" implementation="com.intellij.json.liveTemplates.JsonContextType"/>
+    <liveTemplateContext contextId="JSON_STRING_VALUES" baseContextId="JSON" implementation="com.intellij.json.liveTemplates.JsonInLiteralsContextType"/>
+    <liveTemplateContext contextId="JSON_PROPERTY_KEYS" baseContextId="JSON" implementation="com.intellij.json.liveTemplates.JsonInPropertyKeysContextType"/>
+
     <spellchecker.support language="JSON" implementationClass="com.intellij.json.JsonSpellcheckerStrategy"/>
     <extendWordSelectionHandler implementation="com.intellij.json.editor.selection.JsonStringLiteralSelectionHandler"/>
 
@@ -131,6 +133,7 @@
     <copyPastePostProcessor implementation="com.intellij.json.editor.JsonCopyPastePostProcessor"/>
     <highlightVisitor implementation="com.intellij.json.highlighting.JsonRainbowVisitor"/>
     <intentionAction>
+      <language>JSON</language>
       <className>com.intellij.json.intentions.JsonSortPropertiesIntention</className>
       <bundleName>messages.JsonBundle</bundleName>
       <categoryKey>json.intention.category.name</categoryKey>
@@ -167,6 +170,7 @@
     <toolWindowAllowlist id="JSONPathEvaluate"/>
 
     <intentionAction>
+      <language>JSONPath</language>
       <className>com.intellij.jsonpath.ui.JsonPathEvaluateIntentionAction</className>
       <bundleName>messages.JsonBundle</bundleName>
       <categoryKey>json.intention.category.name</categoryKey>

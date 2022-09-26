@@ -8,7 +8,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.PlatformUtils
-import com.intellij.util.lang.Java11Shim
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -84,12 +83,6 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
 
   private fun add(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber) {
     val pluginId = descriptor.pluginId
-    if (java.lang.Boolean.getBoolean("ide.per.project.instance")
-        && !PathManager.getPluginsDir().name.startsWith("perProject_")
-        && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(pluginId)) {
-      return
-    }
-
     descriptor.isIncomplete?.let { error ->
       addIncompletePlugin(descriptor, error.takeIf { !it.isDisabledError })
       return
@@ -108,7 +101,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     // remove any error that occurred for plugin with the same `id`
     pluginErrors.remove(pluginId)
     incompletePlugins.remove(pluginId)
-    val prevDescriptor = if (descriptor.onDemand) null else enabledPluginsById.put(pluginId, descriptor)
+    val prevDescriptor = enabledPluginsById.put(pluginId, descriptor)
     if (prevDescriptor == null) {
       idMap.put(pluginId, descriptor)
       for (module in descriptor.modules) {
@@ -155,14 +148,11 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
 
 // todo merge into PluginSetState?
 @ApiStatus.Internal
-class PluginManagerState internal constructor(@JvmField val pluginSet: PluginSet,
-                                              disabledRequiredIds: Set<IdeaPluginDescriptorImpl>,
-                                              effectiveDisabledIds: Set<IdeaPluginDescriptorImpl>) {
-  @JvmField val effectiveDisabledIds: Set<PluginId> =
-    Java11Shim.INSTANCE.copyOf(effectiveDisabledIds.mapTo(HashSet(effectiveDisabledIds.size), IdeaPluginDescriptorImpl::getPluginId))
-  @JvmField val disabledRequiredIds: Set<PluginId> =
-    Java11Shim.INSTANCE.copyOf(disabledRequiredIds.mapTo(HashSet(disabledRequiredIds.size), IdeaPluginDescriptorImpl::getPluginId))
-}
+data class PluginManagerState internal constructor(
+  @JvmField val pluginSet: PluginSet,
+  @JvmField val pluginIdsToDisable: Set<PluginId>,
+  @JvmField val pluginIdsToEnable: Set<PluginId>,
+)
 
 internal fun hasModuleDependencies(descriptor: IdeaPluginDescriptorImpl): Boolean {
   for (dependency in descriptor.pluginDependencies) {

@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.gradle.dsl
 
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.service.completion.GradleLookupWeigher
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleCompletionTest : GradleCodeInsightTestCase() {
@@ -22,6 +24,25 @@ class GradleCompletionTest : GradleCodeInsightTestCase() {
     // 'implementation' should appear before 'invokeMethod'
     testJavaProject(gradleVersion) {
       testCompletion("dependencies { im<caret> }", "implementation", "invokeMethod")
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testGrayOutForeignCompletionElement(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      testCompletion("repositories { mavenCentral { go<caret> } }") {
+        var hasGoogle = false
+        for (element in it) {
+          if (element.lookupString != "google") {
+            continue
+          } else {
+            hasGoogle = true
+          }
+          assertTrue(GradleLookupWeigher.getGradleCompletionPriority(element) == GradleLookupWeigher.DEFAULT_COMPLETION_PRIORITY - 1)
+        }
+        assertTrue(hasGoogle)
+      }
     }
   }
 }

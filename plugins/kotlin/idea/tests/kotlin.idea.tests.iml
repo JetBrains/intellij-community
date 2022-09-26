@@ -2,14 +2,8 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../../completion/tests">
-      <sourceFolder url="file://$MODULE_DIR$/../../completion/tests/test" isTestSource="true" />
-    </content>
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../live-templates/tests">
-      <sourceFolder url="file://$MODULE_DIR$/../../live-templates/tests/test" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -20,7 +14,6 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.android-extensions-compiler-plugin" level="project" />
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="library" scope="TEST" name="Guava" level="project" />
-    <orderEntry type="library" scope="TEST" name="Trove4j" level="project" />
     <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="TEST" />
@@ -55,7 +48,7 @@
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.sam-with-receiver-compiler-plugin" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-reflect" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-common" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-jvm" level="project" />
     <orderEntry type="module" module-name="kotlin.idea" scope="TEST" />
@@ -83,16 +76,23 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.formatter" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-jps-common" level="project" />
+    <orderEntry type="module" module-name="kotlin.completion.api" />
+    <orderEntry type="module" module-name="kotlin.completion.impl-shared" />
+    <orderEntry type="module" module-name="kotlin.completion.impl-k1" />
+    <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.util" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.j2k.services" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.j2k.post-processing" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.project-configuration" />
     <orderEntry type="module" module-name="kotlin.i18n" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.maven" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.migration" />
     <orderEntry type="module" module-name="kotlin.inspections" />
     <orderEntry type="module" module-name="kotlin.preferences" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k1" />
     <orderEntry type="module" module-name="kotlin.run-configurations.junit" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.run-configurations.junit-fe10" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.ml-completion" scope="TEST" />
@@ -116,7 +116,8 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.resources" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.junit.rt" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k1" scope="TEST" />
   </component>
 </module>

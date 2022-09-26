@@ -1,3 +1,4 @@
+// PROBLEM: none
 fun test(): (Int) -> Int {
     return when {
         true -> {

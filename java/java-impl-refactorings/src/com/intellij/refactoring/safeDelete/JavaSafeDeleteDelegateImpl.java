@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo;
@@ -25,8 +11,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -36,9 +20,8 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
   @Override
   public void createUsageInfoForParameter(@NotNull PsiReference reference,
                                           @NotNull List<UsageInfo> usages,
-                                          @NotNull PsiParameter parameter,
-                                          @NotNull PsiMethod method) {
-    int index = method.getParameterList().getParameterIndex(parameter);
+                                          @NotNull PsiNamedElement parameter,
+                                          int paramIdx, boolean isVararg) {
     final PsiElement element = reference.getElement();
     PsiCall call = null;
     if (element instanceof PsiCall) {
@@ -56,12 +39,12 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
       final PsiExpressionList argList = call.getArgumentList();
       if (argList != null) {
         final PsiExpression[] args = argList.getExpressions();
-        if (index < args.length) {
-          if (!parameter.isVarArgs()) {
-            usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[index], parameter));
+        if (paramIdx < args.length) {
+          if (!isVararg) {
+            usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[paramIdx], parameter));
           }
           else {
-            for (int i = index; i < args.length; i++) {
+            for (int i = paramIdx; i < args.length; i++) {
               usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[i], parameter));
             }
           }
@@ -69,20 +52,29 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
       }
     }
     else if (element instanceof PsiDocMethodOrFieldRef) {
-      if (((PsiDocMethodOrFieldRef)element).getSignature() != null) {
+      String[] signature = ((PsiDocMethodOrFieldRef)element).getSignature();
+      PsiElement nameElement = ((PsiDocMethodOrFieldRef)element).getNameElement();
+      if (signature != null && nameElement != null) {
         @NonNls final StringBuffer newText = new StringBuffer();
-        newText.append("/** @see #").append(method.getName()).append('(');
-        final List<PsiParameter> parameters = new ArrayList<>(Arrays.asList(method.getParameterList().getParameters()));
-        parameters.remove(parameter);
-        newText.append(StringUtil.join(parameters, psiParameter -> psiParameter.getType().getCanonicalText(), ","));
+        newText.append("/** @see #").append(nameElement.getText()).append('(');
+        boolean hasParams = false;
+        for (int i = 0; i < signature.length; i++) {
+          if (i == paramIdx) continue;
+          if (hasParams) {
+            newText.append(",");
+          }
+          else {
+            hasParams = true;
+          }
+          newText.append(signature[i]);
+        }
         newText.append(")*/");
         usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, parameter, true) {
           @Override
           public void deleteElement() throws IncorrectOperationException {
-            final PsiDocMethodOrFieldRef.MyReference javadocMethodReference =
-              (PsiDocMethodOrFieldRef.MyReference)element.getReference();
+            final PsiDocMethodOrFieldRef.MyReference javadocMethodReference = (PsiDocMethodOrFieldRef.MyReference)element.getReference();
             if (javadocMethodReference != null) {
-              javadocMethodReference.bindToText(method.getContainingClass(), newText);
+              javadocMethodReference.bindToText(newText);
             }
           }
         });
@@ -97,13 +89,39 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
             final PsiExpressionList expressionList = ((PsiCallExpression)callExpression).getArgumentList();
             if (expressionList != null) {
               final PsiExpression[] args = expressionList.getExpressions();
-              if (index < args.length) {
-                args[index].delete();
+              if (paramIdx < args.length) {
+                args[paramIdx].delete();
               }
             }
           }
         }
       });
+    }
+  }
+
+  @Override
+  public void createJavaTypeParameterUsageInfo(@NotNull PsiReference reference, @NotNull List<? super UsageInfo> usages, @NotNull PsiElement typeParameter,
+                                               int paramsCount,
+                                               int index)  {
+    if (reference instanceof PsiJavaCodeReferenceElement) {
+      final PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)reference).getParameterList();
+      if (parameterList != null) {
+        PsiTypeElement[] typeArgs = parameterList.getTypeParameterElements();
+        if (typeArgs.length > index) {
+          if (typeArgs.length == 1 && paramsCount > 1 && typeArgs[0].getType() instanceof PsiDiamondType) {
+            return;
+          }
+          usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(typeArgs[index], typeParameter, true));
+        }
+      }
+    }
+  }
+
+  @Override
+  public void removeOverriding(@NotNull PsiElement overriddenMethod) {
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiModifierListOwner)overriddenMethod, true, Override.class.getName());
+    if (annotation != null) {
+      annotation.delete();
     }
   }
 }

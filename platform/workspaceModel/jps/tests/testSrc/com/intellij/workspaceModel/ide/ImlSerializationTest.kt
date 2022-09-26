@@ -6,10 +6,10 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.SerializationRoundTripChecker
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.SerializationRoundTripChecker
 import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity2
-import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.Assert.assertTrue
 import org.junit.Before
@@ -22,7 +22,7 @@ import kotlin.system.measureTimeMillis
 class ImlSerializationTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
 
@@ -46,7 +46,7 @@ class ImlSerializationTest {
     checkSerializationSize(bytes, expectedSize, 2_000)
 
     assertTrue("This assertion is a reminder. Have you updated the serializer? Update the serializer version!",
-               "v38" == EntityStorageSerializerImpl.SERIALIZER_VERSION)
+               "v40" == EntityStorageSerializerImpl.SERIALIZER_VERSION)
   }
 
   @Test

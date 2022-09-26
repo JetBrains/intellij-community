@@ -11,7 +11,6 @@ import java.util.function.BiConsumer;
 @ApiStatus.Internal
 public enum LoadingState {
   BOOTSTRAP("bootstrap"),
-  BASE_LAF_INITIALIZED("LaF is initialized"),
   COMPONENTS_REGISTERED("app component registered"),
   CONFIGURATION_STORE_INITIALIZED("app store initialized"),
   COMPONENTS_LOADED("app component loaded"),

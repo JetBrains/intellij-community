@@ -4,12 +4,12 @@ package com.intellij.ide.ui.text.parts
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.ide.ui.text.StyledTextPaneUtils.drawRectangleAroundText
 import com.intellij.ide.ui.text.showActionKeyPopup
+import com.intellij.openapi.util.text.StringUtil.NON_BREAK_SPACE
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
-import java.awt.Graphics2D
 import java.awt.Point
 import javax.swing.JTextPane
 import javax.swing.KeyStroke
@@ -54,7 +54,7 @@ open class ShortcutTextPart(text: String, val isRaw: Boolean, private val addSpa
     val shortcutAttributes = attributes
     val sepAttributes = separatorAttributes
     if (addSpaceAround) {
-      curOffset = insertText(textPane, " ", curOffset, shortcutAttributes)
+      curOffset = insertText(textPane, "$NON_BREAK_SPACE$NON_BREAK_SPACE", curOffset, sepAttributes)
     }
     for (part in split) {
       curOffset = insertText(textPane, shortcut.substring(start, part.first), curOffset, sepAttributes)
@@ -64,13 +64,13 @@ open class ShortcutTextPart(text: String, val isRaw: Boolean, private val addSpa
       val partEnd = curOffset
 
       textPane.highlighter.addHighlight(partStart, partEnd) { g, _, _, _, c ->
-        c.drawRectangleAroundText(partStart, partEnd, g as Graphics2D, backgroundColor, fill = true)
+        c.drawRectangleAroundText(partStart, partEnd, g, backgroundColor, fontGetter(), fill = true)
       }
       start = part.last + 1
     }
     curOffset = insertText(textPane, shortcut.substring(start), curOffset, sepAttributes)
     if (addSpaceAround) {
-      curOffset = insertText(textPane, " ", curOffset, shortcutAttributes)
+      curOffset = insertText(textPane, "$NON_BREAK_SPACE$NON_BREAK_SPACE", curOffset, sepAttributes)
     }
     return curOffset
   }
@@ -104,7 +104,7 @@ open class ShortcutTextPart(text: String, val isRaw: Boolean, private val addSpa
       if (keyStroke != null) {
         ShortcutsRenderingUtil.getKeyStrokeData(keyStroke)
       }
-      else text to listOf(text.indices)
+      else ShortcutsRenderingUtil.getRawShortcutData(text)
     }
   }
 }

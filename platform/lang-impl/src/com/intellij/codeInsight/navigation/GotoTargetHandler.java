@@ -225,7 +225,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   /**
    * @deprecated use {@link #computePresentation}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   @SuppressWarnings("rawtypes")
   public static PsiElementListCellRenderer createRenderer(@NotNull GotoData gotoData, @NotNull PsiElement eachTarget) {
     for (GotoTargetRendererProvider eachProvider : GotoTargetRendererProvider.EP_NAME.getExtensionList()) {
@@ -254,7 +254,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
 
   /**
-   * @deprecated, use getChooserTitle(PsiElement, String, int, boolean) instead
+   * @deprecated use getChooserTitle(PsiElement, String, int, boolean) instead
    */
   @Deprecated(forRemoval = true)
   @NotNull

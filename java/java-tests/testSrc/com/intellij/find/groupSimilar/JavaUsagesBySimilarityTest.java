@@ -7,7 +7,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.usages.similarity.bag.Bag;
-import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
+import com.intellij.usages.similarity.clustering.Distance;
 
 public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
   @Override
@@ -89,6 +89,13 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  public void testDeclarationInForStatement() {
+    myFixture.configureByFile("DeclarationInForStatement.java");
+    PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
+    final Bag features = new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret);
+    assertEquals(1, features.get("FOR"));
+  }
+
   public void testBag() {
     final Bag bag = new Bag("a", "b");
     assertEquals("a : 1\n" +
@@ -102,7 +109,7 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testDistance() {
-    assertEquals(0.6, ClusteringSearchSession.jaccardSimilarity(new Bag("a", "b", "c", "d", "e", "f", "g", "h"),
-                                                                new Bag("a", "z", "c", "y", "e", "f", "g", "h")));
+    assertEquals(0.6, Distance.jaccardSimilarityWithThreshold(new Bag("a", "b", "c", "d", "e", "f", "g", "h"),
+                                                                             new Bag("a", "z", "c", "y", "e", "f", "g", "h"), 0.6));
   }
 }

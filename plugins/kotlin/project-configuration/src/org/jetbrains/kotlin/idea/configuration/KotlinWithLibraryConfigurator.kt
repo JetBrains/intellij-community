@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.facet.FacetManager
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RepositoryAddLibraryAction
 import com.intellij.jarRepository.RepositoryLibraryType
@@ -21,11 +22,11 @@ import com.intellij.openapi.roots.libraries.LibraryType
 import com.intellij.psi.PsiElement
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
-import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.idea.base.platforms.StdlibDetectorFacility
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.util.findLibrary
@@ -245,7 +246,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         writeActions.addOrExecute { runWriteAction { model.commit() } }
     }
 
-    fun createNewLibrary(
+    private fun createNewLibrary(
         project: Project,
         collector: NotificationMessageCollector
     ): Library {
@@ -327,17 +328,19 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
             return
         }
 
-        val facetSettings = KotlinFacetSettingsProvider.getInstance(module.project)?.getInitializedSettings(module)
+        val facetSettings = KotlinFacetSettingsProvider.getInstance(module.project)?.getSettings(module)
         if (facetSettings != null) {
-            ModuleRootModificationUtil.updateModel(module) {
-                with(facetSettings) {
-                    if (languageVersion != null) {
-                        languageLevel = LanguageVersion.fromVersionString(languageVersion)
-                    }
-                    if (apiVersion != null) {
-                        apiLevel = LanguageVersion.fromVersionString(apiVersion)
-                    }
+            val model = FacetManager.getInstance(module).createModifiableModel()
+            with(facetSettings) {
+                if (languageVersion != null) {
+                    languageLevel = LanguageVersion.fromVersionString(languageVersion)
                 }
+                if (apiVersion != null) {
+                    apiLevel = LanguageVersion.fromVersionString(apiVersion)
+                }
+            }
+            runWriteAction {
+                model.commit()
             }
         }
     }

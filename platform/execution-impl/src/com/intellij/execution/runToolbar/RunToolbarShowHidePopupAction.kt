@@ -7,6 +7,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import net.miginfocom.swing.MigLayout
@@ -67,6 +68,10 @@ internal class RunToolbarShowHidePopupAction : AnAction(ActionsBundle.message("a
                                        place: String) : ActionButton(action, presentation, place,
                                                                      ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE), PopupControllerComponent {
     private var project: Project? = null
+
+    init {
+      setLook(SegmentedActionToolbarComponent.segmentedButtonLook)
+    }
 
     private fun getProject(): Project? {
       return project ?: run {

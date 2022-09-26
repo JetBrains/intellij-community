@@ -4,16 +4,19 @@ package com.intellij.ui.popup.list
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl.ActionItem
 import com.intellij.ui.popup.PopupFactoryImpl.InlineActionItem
 import com.intellij.ui.popup.list.ListPopupImpl.ListWithInlineButtons
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import java.awt.BorderLayout
 import java.awt.Point
 import java.awt.event.InputEvent
 import javax.swing.*
+
+private const val INLINE_BUTTON_WIDTH = 16
 
 class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : PopupInlineActionsSupport {
 
@@ -41,24 +44,27 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
     if (buttonsCount <= 0) return null
 
     val distanceToRight = bounds.x + bounds.width - point.x
-    val buttonsToRight = distanceToRight / (PopupListElementRenderer.INLINE_BUTTON_WIDTH + PopupListElementRenderer.INLINE_BUTTONS_GAP)
+    val buttonsToRight = distanceToRight / buttonWidth()
     if (buttonsToRight >= buttonsCount) return null
 
-    val distanceToNearest = distanceToRight - buttonsToRight * (PopupListElementRenderer.INLINE_BUTTON_WIDTH + PopupListElementRenderer.INLINE_BUTTONS_GAP)
-    return if (distanceToNearest > PopupListElementRenderer.INLINE_BUTTON_WIDTH) null else buttonsCount - buttonsToRight - 1
+    return buttonsCount - buttonsToRight - 1
   }
 
-  override fun runInlineAction(element: Any, index: Int, event: InputEvent?) = getExtraButtonsActions(element, event)[index].run()
+  override fun runInlineAction(element: Any, index: Int, event: InputEvent?) : Boolean {
+    val pair = getExtraButtonsActions(element, event)[index]
+    pair.first.run()
+    return pair.second
+  }
 
-  private fun getExtraButtonsActions(element: Any, event: InputEvent?): List<Runnable> {
+  private fun getExtraButtonsActions(element: Any, event: InputEvent?): List<Pair<Runnable, Boolean>> {
     if (!ExperimentalUI.isNewUI() || element !is ActionItem) return emptyList()
 
-    val res: MutableList<Runnable> = ArrayList()
+    val res: MutableList<Pair<Runnable, Boolean>> = mutableListOf()
 
     res.addAll(myStep.getInlineActions(element).map {
-      item: InlineActionItem -> createInlineActionRunnable(item.action, event)
+      item: InlineActionItem -> Pair(createInlineActionRunnable(item.action, event), true)
     })
-    if (!res.isEmpty() && myStep.hasSubstep(element)) res.add(createNextStepRunnable(element))
+    if (!res.isEmpty() && myStep.hasSubstep(element)) res.add(Pair(createNextStepRunnable(element), false))
     return res
   }
 
@@ -89,21 +95,21 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
 
   private fun createExtraButton(icon: Icon, active: Boolean): JComponent {
     val label = JLabel(icon)
-    val panel = JPanel(BorderLayout())
-    panel.add(label)
+    val leftRightInsets = JBUI.CurrentTheme.List.buttonLeftRightInsets()
+    label.border = JBUI.Borders.empty(0, leftRightInsets)
+    val panel = Wrapper(label)
     val size = panel.preferredSize
-    size.width = PopupListElementRenderer.INLINE_BUTTON_WIDTH
+    size.width = buttonWidth(leftRightInsets)
     panel.preferredSize = size
     panel.minimumSize = size
     panel.isOpaque = active
-    panel.background = JBUI.CurrentTheme.Table.Hover.background(true)
+    panel.background = JBUI.CurrentTheme.List.buttonHoverBackground()
     return panel
   }
 
-  private fun createNextStepRunnable(element: ActionItem) =
-    Runnable { myListPopup.showNextStepPopup(myStep.onChosen(element, false), element) }
+  private fun buttonWidth(leftRightInsets: Int = JBUI.CurrentTheme.List.buttonLeftRightInsets()) : Int = JBUIScale.scale(INLINE_BUTTON_WIDTH + leftRightInsets * 2)
 
-  private fun createInlineActionRunnable(action: AnAction, inputEvent: InputEvent?) = Runnable {
-    myStep.performAction(action, inputEvent)
-  }
+  private fun createNextStepRunnable(element: ActionItem) = Runnable { myListPopup.showNextStepPopup(myStep.onChosen(element, false), element) }
+
+  private fun createInlineActionRunnable(action: AnAction, inputEvent: InputEvent?) = Runnable { myStep.performAction(action, inputEvent) }
 }

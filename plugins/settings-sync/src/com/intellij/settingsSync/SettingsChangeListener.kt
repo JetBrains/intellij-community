@@ -1,10 +1,5 @@
 package com.intellij.settingsSync
 
-import com.intellij.openapi.application.PathManager
-import com.intellij.util.SystemProperties
-import org.jetbrains.annotations.ApiStatus
-import java.net.InetAddress
-import java.time.Instant
 import java.util.*
 
 internal fun interface SettingsChangeListener : EventListener {
@@ -14,30 +9,24 @@ internal fun interface SettingsChangeListener : EventListener {
 }
 
 internal sealed class SyncSettingsEvent {
-  class IdeChange(val snapshot: SettingsSnapshot) : SyncSettingsEvent()
-  class CloudChange(val snapshot: SettingsSnapshot) : SyncSettingsEvent()
-  object MustPushRequest: SyncSettingsEvent()
-  object LogCurrentSettings: SyncSettingsEvent()
+  class IdeChange(snapshot: SettingsSnapshot) : EventWithSnapshot(snapshot)
+  class CloudChange(snapshot: SettingsSnapshot, val serverVersionId: String?) : EventWithSnapshot(snapshot)
+  object MustPushRequest : SyncSettingsEvent()
+  object LogCurrentSettings : SyncSettingsEvent()
 
   /**
    * Special request to ping the merge and push procedure in case there are settings which weren't pushed yet.
    */
   object PingRequest : SyncSettingsEvent()
+
+  override fun toString(): String {
+    return javaClass.simpleName
+  }
+
+  internal open class EventWithSnapshot(val snapshot: SettingsSnapshot) : SyncSettingsEvent() {
+    override fun toString(): String {
+      return "${javaClass.simpleName}[${snapshot.fileStates.joinToString(limit = 5) { it.file }}]"
+    }
+  }
 }
 
-@ApiStatus.Internal
-data class SettingsSnapshot(val metaInfo: MetaInfo, val fileStates: Set<FileState>) {
-
-  data class MetaInfo(val dateCreated: Instant, val appInfo: AppInfo?)
-
-  data class AppInfo(val applicationId: UUID, val userName: String, val hostName: String, val configFolder: String)
-
-  fun isEmpty(): Boolean = fileStates.isEmpty()
-}
-
-internal fun getLocalApplicationInfo(): SettingsSnapshot.AppInfo {
-  return SettingsSnapshot.AppInfo(SettingsSyncLocalSettings.getInstance().applicationId,
-                                  SystemProperties.getUserName(),
-                                  InetAddress.getLocalHost().hostName,
-                                  PathManager.getConfigPath())
-}

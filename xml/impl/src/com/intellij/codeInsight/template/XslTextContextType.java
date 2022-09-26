@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class XslTextContextType extends TemplateContextType {
   public XslTextContextType() {
-    super("XSL_TEXT", XmlBundle.message("dialog.edit.template.checkbox.xsl.text"), XmlContextType.class);
+    super(XmlBundle.message("dialog.edit.template.checkbox.xsl.text"));
   }
 
   @Override

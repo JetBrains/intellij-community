@@ -1,4 +1,4 @@
-class jj {
+class jj_ {
     void t() {
         new JJ().test();
     }

@@ -41,6 +41,8 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Objects;
 
+import static com.intellij.openapi.util.Predicates.nonNull;
+
 public class ForLoopReplaceableByWhileInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   /**
@@ -163,7 +165,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection implemen
       return StreamEx.of(initialization.getDeclaredElements())
         .select(PsiNamedElement.class)
         .map(namedElement -> namedElement.getName())
-        .filter(Objects::nonNull)
+        .filter(nonNull())
         .anyMatch(name -> !name.equals(manager.suggestUniqueVariableName(name, newStatement, true)));
     }
   }

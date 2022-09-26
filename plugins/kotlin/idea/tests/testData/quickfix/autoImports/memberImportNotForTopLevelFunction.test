@@ -2,7 +2,7 @@
 // "class org.jetbrains.kotlin.idea.quickfix.ImportMemberFix" "false"
 // ERROR: Unresolved reference: foobar
 // ACTION: Create function 'foobar'
-// ACTION: Import
+// ACTION: Import function 'foobar'
 // ACTION: Rename reference
 
 //KT-9009

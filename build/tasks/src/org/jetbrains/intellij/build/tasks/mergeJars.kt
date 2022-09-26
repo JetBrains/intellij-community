@@ -3,21 +3,20 @@
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 package org.jetbrains.intellij.build.tasks
 
-import com.intellij.diagnostic.telemetry.use
 import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.context.Context
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.io.*
-import org.jetbrains.intellij.build.tracer
 import java.nio.file.Path
 import java.nio.file.PathMatcher
-import java.util.concurrent.ForkJoinTask
 import java.util.function.IntConsumer
 import java.util.zip.Deflater
 
-private const val DO_NOT_EXPORT_TO_CONSOLE = "_CES_"
-
 sealed interface Source {
   val sizeConsumer: IntConsumer?
+
+  val filter: ((String) -> Boolean)?
+    get() = null
 }
 
 private val USER_HOME = Path.of(System.getProperty("user.home"))
@@ -25,6 +24,7 @@ private val MAVEN_REPO = USER_HOME.resolve(".m2/repository")
 
 data class ZipSource(val file: Path,
                      val excludes: List<Regex> = emptyList(),
+                     override val filter: ((String) -> Boolean)? = null,
                      override val sizeConsumer: IntConsumer? = null) : Source, Comparable<ZipSource> {
   override fun compareTo(other: ZipSource) = file.compareTo(other.file)
 
@@ -79,47 +79,12 @@ data class InMemoryContentSource(val relativePath: String, val data: ByteArray, 
   }
 }
 
-fun createZipSource(file: Path, sizeConsumer: IntConsumer?): ZipSource {
-  return ZipSource(file = file, sizeConsumer = sizeConsumer)
-}
-
-fun buildJars(descriptors: List<Triple<Path, String, List<Source>>>, dryRun: Boolean) {
-  val uniqueFiles = HashMap<Path, List<Source>>()
-  for (descriptor in descriptors) {
-    val existing = uniqueFiles.putIfAbsent(descriptor.first, descriptor.third)
-    if (existing != null) {
-      throw IllegalStateException(
-        "File ${descriptor.first} is already associated." +
-        "\nPrevious:\n  ${existing.joinToString(separator = "\n  ")}" +
-        "\nCurrent:\n  ${descriptor.third.joinToString(separator = "\n  ")}"
-      )
-    }
-  }
-
-  val traceContext = Context.current()
-
-  ForkJoinTask.invokeAll(descriptors.map { item ->
-    ForkJoinTask.adapt {
-      val file = item.first
-      tracer.spanBuilder("build jar")
-        .setParent(traceContext)
-        .setAttribute(DO_NOT_EXPORT_TO_CONSOLE, true)
-        .setAttribute("jar", file.toString())
-        .setAttribute(AttributeKey.stringArrayKey("sources"), item.third.map { item.toString() })
-        .use {
-          buildJar(file, item.third, dryRun = dryRun)
-        }
-
-      // app.jar is combined later with other JARs and then re-ordered
-      if (!dryRun && item.second.isNotEmpty() && item.second != "lib/app.jar") {
-        reorderJar(relativePath = item.second, file = file, traceContext = traceContext)
-      }
-    }
-  })
-}
-
 @JvmOverloads
-fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false, dryRun: Boolean = false) {
+fun buildJar(targetFile: Path,
+             sources: List<Source>,
+             compress: Boolean = false,
+             dryRun: Boolean = false,
+             nativeFiles: MutableMap<ZipSource, MutableList<String>>? = null) {
   if (dryRun) {
     for (source in sources) {
       source.sizeConsumer?.accept(0)
@@ -127,18 +92,17 @@ fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false,
     return
   }
 
-  val forbidNativeFiles = targetFile.fileName.toString() == "app.jar"
-  val packageIndexBuilder = if (!compress) PackageIndexBuilder() else null
+  val packageIndexBuilder = if (compress) null else PackageIndexBuilder()
   writeNewFile(targetFile) { outChannel ->
     ZipFileWriter(outChannel, if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use { zipCreator ->
-      val uniqueNames = HashSet<String>()
+      val uniqueNames = HashMap<String, Path>()
 
       for (source in sources) {
         val positionBefore = outChannel.position()
         when (source) {
           is DirSource -> {
             val archiver = ZipArchiver(zipCreator, fileAdded = {
-              if (uniqueNames.add(it)) {
+              if (uniqueNames.putIfAbsent(it, source.dir) == null) {
                 packageIndexBuilder?.addFile(it)
                 true
               }
@@ -148,11 +112,11 @@ fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false,
             })
             val normalizedDir = source.dir.toAbsolutePath().normalize()
             archiver.setRootDir(normalizedDir, source.prefix)
-            compressDir(normalizedDir, archiver, excludes = source.excludes.takeIf(List<PathMatcher>::isNotEmpty))
+            archiveDir(normalizedDir, archiver, excludes = source.excludes.takeIf(List<PathMatcher>::isNotEmpty))
           }
 
           is InMemoryContentSource -> {
-            if (!uniqueNames.add(source.relativePath)) {
+            if (uniqueNames.putIfAbsent(source.relativePath, Path.of(source.relativePath)) != null) {
               throw IllegalStateException("in-memory source must always be first " +
                                           "(targetFile=$targetFile, source=${source.relativePath}, sources=${sources.joinToString()})")
             }
@@ -167,18 +131,37 @@ fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false,
             val sourceFile = source.file
             val requiresMavenFiles = targetFile.fileName.toString().startsWith("junixsocket-")
             readZipFile(sourceFile) { name, entry ->
-              if (forbidNativeFiles && (name.endsWith(".jnilib") || name.endsWith(".dylib") || name.endsWith(".so"))) {
-                throw IllegalStateException("Library with native files must be packed separately " +
-                                            "(sourceFile=$sourceFile, targetFile=$targetFile, fileName=${name})")
-              }
+              if (nativeFiles != null && isNative(name)) {
+                if (isDuplicated(uniqueNames, name, sourceFile)) {
+                  return@readZipFile
+                }
 
-              if (checkName(name, uniqueNames, source.excludes, includeManifest = sources.size == 1, requiresMavenFiles = requiresMavenFiles)) {
-                packageIndexBuilder?.addFile(name)
-                zipCreator.uncompressedData(name, entry.getByteBuffer())
+                nativeFiles.computeIfAbsent(source) { mutableListOf() }.add(name)
+              }
+              else {
+                val filter = source.filter
+                val isIncluded = if (filter == null) {
+                  checkName(name = name,
+                            excludes = source.excludes,
+                            includeManifest = sources.size == 1,
+                            requiresMavenFiles = requiresMavenFiles)
+                }
+                else {
+                  filter(name)
+                }
+
+                if (isIncluded) {
+                  if (isDuplicated(uniqueNames, name, sourceFile)) {
+                    return@readZipFile
+                  }
+
+                  packageIndexBuilder?.addFile(name)
+                  zipCreator.uncompressedData(name, entry.getByteBuffer())
+                }
               }
             }
           }
-        }.let { } // sealed when
+        }
 
         source.sizeConsumer?.accept((zipCreator.resultStream.getChannelPosition() - positionBefore).toInt())
       }
@@ -186,6 +169,23 @@ fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false,
       packageIndexBuilder?.writePackageIndex(zipCreator)
     }
   }
+}
+
+private fun isDuplicated(uniqueNames: HashMap<String, Path>, name: String, sourceFile: Path): Boolean {
+  val old = uniqueNames.putIfAbsent(name, sourceFile) ?: return false
+  Span.current().addEvent("$name is duplicated and ignored", Attributes.of(
+    AttributeKey.stringKey("firstSource"), old.toString(),
+    AttributeKey.stringKey("secondSource"), sourceFile.toString(),
+  ))
+  return true
+}
+
+private fun isNative(name: String): Boolean {
+  return name.endsWith(".jnilib") ||
+         name.endsWith(".dylib") ||
+         name.endsWith(".so") ||
+         name.endsWith(".dll") ||
+         name.endsWith(".tbd")
 }
 
 private fun getIgnoredNames(): Set<String> {
@@ -204,6 +204,8 @@ private fun getIgnoredNames(): Set<String> {
   set.add("native-image")
   set.add("native")
   set.add("licenses")
+  set.add("META-INF/LGPL2.1")
+  set.add("META-INF/AL2.0")
   @Suppress("SpellCheckingInspection")
   set.add(".gitkeep")
   set.add(INDEX_FILENAME)
@@ -223,7 +225,6 @@ private fun getIgnoredNames(): Set<String> {
 private val ignoredNames = java.util.Set.copyOf(getIgnoredNames())
 
 private fun checkName(name: String,
-                      uniqueNames: MutableSet<String>,
                       excludes: List<Regex>,
                       includeManifest: Boolean,
                       requiresMavenFiles: Boolean): Boolean {
@@ -232,11 +233,11 @@ private fun checkName(name: String,
          !name.endsWith(".kotlin_metadata") &&
          (includeManifest || name != "META-INF/MANIFEST.MF") &&
          !name.startsWith("license/") &&
+         !name.startsWith("META-INF/license/") &&
          !name.startsWith("native-image/") &&
          !name.startsWith("native/") &&
          !name.startsWith("licenses/") &&
          (requiresMavenFiles || (name != "META-INF/maven" && !name.startsWith("META-INF/maven/"))) &&
          !name.startsWith("META-INF/INDEX.LIST") &&
-         (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA"))) &&
-         uniqueNames.add(name)
+         (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA")))
 }

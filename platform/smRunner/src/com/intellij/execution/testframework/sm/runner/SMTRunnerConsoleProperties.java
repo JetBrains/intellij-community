@@ -42,10 +42,8 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   private boolean myPrintTestingStartedTime = true;
 
   /**
-   * @param config
-   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit". 
+   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit".
    *                          Is used to distinguish problems of different test frameworks in logged exceptions
-   * @param executor
    */
   public SMTRunnerConsoleProperties(@NotNull RunConfiguration config, @NlsSafe @NotNull String testFrameworkName, @NotNull Executor executor) {
     this(config.getProject(), config, testFrameworkName, executor);
@@ -65,7 +63,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
    * If enabled, runner must add new line char (\n) before each TC message. This char is not reported to user.
    * @deprecated Fix your runner and stop adding "\n" before TC message.
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public boolean serviceMessageHasNewLinePrefix() {
     return false;
   }

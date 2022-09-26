@@ -9,14 +9,12 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class WolfPassFactory implements TextEditorHighlightingPassFactory {
+final class WolfPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   private long myPsiModificationCount;
 
-  static final class MyRegistrar implements TextEditorHighlightingPassFactoryRegistrar {
-    @Override
-    public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-      registrar.registerTextEditorHighlightingPass(new WolfPassFactory(), new int[]{Pass.UPDATE_ALL}, new int[]{Pass.LOCAL_INSPECTIONS}, false, Pass.WOLF);
-    }
+  @Override
+  public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
+    registrar.registerTextEditorHighlightingPass(new WolfPassFactory(), new int[]{Pass.UPDATE_ALL}, new int[]{Pass.LOCAL_INSPECTIONS}, false, Pass.WOLF);
   }
 
   @Override

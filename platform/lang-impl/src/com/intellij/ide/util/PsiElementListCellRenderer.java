@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
@@ -33,6 +34,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -53,11 +55,12 @@ import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgro
 @DirtyUI
 // extends ListCellRenderer<Object> because it can render strings too
 public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer<Object> {
+  public static final Key<TargetPresentation> TARGET_PRESENTATION_KEY = Key.create("cell.target.presentation");
   private static final Logger LOG = Logger.getInstance(PsiElementListCellRenderer.class);
   private static final String LEFT = BorderLayout.WEST;
   private static final Pattern CONTAINER_PATTERN = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?");
-  private static final SimpleTextAttributes DEFAULT_ERROR_ATTRIBUTES =
-    new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, UIUtil.getInactiveTextColor(), JBColor.RED);
+  private static final SimpleTextAttributes DEFAULT_ERROR_ATTRIBUTES
+    = new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, NamedColorUtil.getInactiveTextColor(), JBColor.RED);
 
   protected int myRightComponentWidth;
 
@@ -66,7 +69,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   protected PsiElementListCellRenderer() {
     super(new BorderLayout());
     myBackgroundRenderer =
-      Registry.is("psi.element.list.cell.renderer.background") && !ApplicationManager.getApplication().isHeadlessEnvironment()
+      Registry.is("psi.element.list.cell.renderer.background")
       ? new PsiElementBackgroundListCellRenderer(this)
       : null;
   }
@@ -88,6 +91,12 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       accessibleContext = new MyAccessibleContext();
     }
     return accessibleContext;
+  }
+
+  public void setUsedInPopup(boolean value) {
+    if (myBackgroundRenderer instanceof PsiElementBackgroundListCellRenderer psiElementRenderer) {
+      psiElementRenderer.setUsedInPopup(value);
+    }
   }
 
   public static class ItemMatchers {
@@ -208,7 +217,11 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-    if (myBackgroundRenderer != null && value instanceof PsiElement) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() && value instanceof PsiElement) {
+      putClientProperty(TARGET_PRESENTATION_KEY, computePresentation((PsiElement)value));
+      return this;
+    }
+    else if (myBackgroundRenderer != null && value instanceof PsiElement) {
       //noinspection unchecked
       return myBackgroundRenderer.getListCellRendererComponent(list, (PsiElement)value, index, isSelected, cellHasFocus);
     }
@@ -230,7 +243,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       locationComponent = new JLabel(itemLocation.getText(), itemLocation.getIcon(), SwingConstants.RIGHT);
       locationComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, UIUtil.getListCellHPadding()));
       locationComponent.setHorizontalTextPosition(SwingConstants.LEFT);
-      locationComponent.setForeground(isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
+      locationComponent.setForeground(isSelected ? NamedColorUtil.getListSelectionForeground(true) : NamedColorUtil.getInactiveTextColor());
 
       add(locationComponent, BorderLayout.EAST);
       spacer = new JPanel();
@@ -265,12 +278,6 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   public ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
     return new ItemMatchers(MatcherHolder.getAssociatedMatcher(list), null);
   }
-
-  /**
-   * @deprecated method has no effect
-   */
-  @Deprecated(forRemoval = true)
-  protected final void setFocusBorderEnabled(boolean enabled) { }
 
   protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
                                                        JList list,

@@ -2,14 +2,16 @@
 <module type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="3" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
+      <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -Xjvm-default=enable -opt-in=org.jetbrains.kotlin.gradle.ExperimentalGradleToolingApi -opt-in=com.intellij.openapi.util.IntellijInternalApi" />
+          <option name="additionalArguments" value="-Xjvm-default=enable -opt-in=org.jetbrains.kotlin.gradle.ExperimentalGradleToolingApi -opt-in=com.intellij.openapi.util.IntellijInternalApi" />
         </compilerSettings>
         <compilerArguments>
-          <option name="jvmTarget" value="11" />
-          <option name="languageVersion" value="1.7" />
-          <option name="apiVersion" value="1.7" />
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="17" />
+            <stringArg name="apiVersion" arg="1.7" />
+            <stringArg name="languageVersion" arg="1.7" />
+          </stringArguments>
         </compilerArguments>
       </configuration>
     </facet>
@@ -56,7 +58,7 @@
     <orderEntry type="module" module-name="kotlin.preferences" />
     <orderEntry type="module" module-name="kotlin.native" />
     <orderEntry type="module" module-name="kotlin.project-configuration" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
@@ -73,6 +75,5 @@
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
-    <orderEntry type="module" module-name="kotlin.base.line-markers" />
   </component>
 </module>

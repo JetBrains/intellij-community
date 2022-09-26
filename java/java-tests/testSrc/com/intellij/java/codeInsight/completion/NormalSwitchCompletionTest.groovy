@@ -33,9 +33,9 @@ class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   void testCompleteReturnInSwitch() { doTest() }
 
   @NeedsIndex.Full
-  void testCompleteConstantInSwitchExpr() { doTest() }
+  void testCompleteConstantInSwitchExpr() { doTest('\n') }
   @NeedsIndex.Full
-  void testCompleteConstantInSwitchStmt() { doTest() }
+  void testCompleteConstantInSwitchStmt() { doTest('\n') }
 
   void testCompleteNullInSwitchStmt() { doTest() }
   void testCompleteNullInSwitchExpr() { doTest() }
@@ -48,8 +48,20 @@ class NormalSwitchCompletionTest extends NormalCompletionTestCase {
 
   void testCompleteSealedLabelSwitch() { doTest() }
 
+  void testCompleteReturnInSwitchRule() { doTest() }
+  void testCompleteReturnInSwitchRule2() { doTest() }
+  void testCompleteThrowInSwitchRule() { doTest() }
+
+  @NeedsIndex.Full(reason = "Other options do not appear if there's no index. As a result, '\n' goes right into the editor")
+  void testCompleteIfInSwitchRule() { doTest('\n') }
+
   void testCompleteSwitchObjectSelectorPostfix() { doTestPostfixCompletion() }
   void testCompleteSwitchSealedSelectorPostfix() { doTestPostfixCompletion() }
+
+  @NeedsIndex.ForStandardLibrary
+  void testCompleteReferencesInExpressionSwitch() {
+    doTest()
+  }
 
   private void doTestPostfixCompletion() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)

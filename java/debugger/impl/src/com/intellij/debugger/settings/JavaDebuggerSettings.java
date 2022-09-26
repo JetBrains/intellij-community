@@ -33,20 +33,19 @@ public class JavaDebuggerSettings extends XDebuggerSettings<Element> {
   @NotNull
   @Override
   public Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
-    switch (category) {
-      case GENERAL:
-        return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.launching", JavaBundle.message("options.java.display.name"),
-                                                       DebuggerLaunchingConfigurable.class, DebuggerSettings::getInstance));
-      case DATA_VIEWS:
-        return createDataViewsConfigurable();
-      case STEPPING:
-        return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.stepping", JavaBundle.message("options.java.display.name"),
-                                                       DebuggerSteppingConfigurable.class, DebuggerSettings::getInstance));
-      case HOTSWAP:
-        return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.hotswap", JavaBundle.message("options.java.display.name"),
-                                                       JavaHotSwapConfigurableUi.class, DebuggerSettings::getInstance));
-    }
-    return Collections.emptyList();
+    return switch (category) {
+      case GENERAL ->
+        singletonList(SimpleConfigurable.create("reference.idesettings.debugger.launching", JavaBundle.message("options.java.display.name"),
+                                                DebuggerLaunchingConfigurable.class, DebuggerSettings::getInstance));
+      case DATA_VIEWS -> createDataViewsConfigurable();
+      case STEPPING ->
+        singletonList(SimpleConfigurable.create("reference.idesettings.debugger.stepping", JavaBundle.message("options.java.display.name"),
+                                                DebuggerSteppingConfigurable.class, DebuggerSettings::getInstance));
+      case HOTSWAP ->
+        singletonList(SimpleConfigurable.create("reference.idesettings.debugger.hotswap", JavaBundle.message("options.java.display.name"),
+                                                JavaHotSwapConfigurableUi.class, DebuggerSettings::getInstance));
+      default -> Collections.emptyList();
+    };
   }
 
   @SuppressWarnings("SpellCheckingInspection")

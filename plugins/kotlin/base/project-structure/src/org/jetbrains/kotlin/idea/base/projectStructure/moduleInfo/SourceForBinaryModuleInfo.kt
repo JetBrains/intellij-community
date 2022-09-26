@@ -16,6 +16,7 @@ interface SourceForBinaryModuleInfo : IdeaModuleInfo {
         get() = GlobalSearchScope.EMPTY_SCOPE
 
     override fun dependencies() = listOf(this) + binariesModuleInfo.dependencies()
+    override fun dependenciesWithoutSelf(): Sequence<IdeaModuleInfo> = binariesModuleInfo.dependencies().asSequence()
 
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.OTHER

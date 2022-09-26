@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryForDeprecation
 import org.jetbrains.kotlin.diagnostics.Errors.*
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixFactory
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
 import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementAsConstructorParameter
 import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
 import org.jetbrains.kotlin.idea.inspections.AddModifierFixFactory
@@ -39,6 +40,7 @@ import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.*
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative.INCOMPATIBLE_THROWS_OVERRIDE
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative.MISSING_EXCEPTION_IN_THROWS_ON_SUSPEND
@@ -179,6 +181,7 @@ class QuickFixRegistrar : QuickFixContributor {
         ITERATOR_MISSING.registerFactory(IteratorImportFix)
 
         DELEGATE_SPECIAL_FUNCTION_MISSING.registerFactory(DelegateAccessorsImportFix)
+        DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE.registerFactory(DelegateAccessorsImportFix)
         COMPONENT_FUNCTION_MISSING.registerFactory(ComponentsImportFix, AddDataModifierFix)
 
         NO_GET_METHOD.registerFactory(ArrayAccessorImportFix)
@@ -511,7 +514,7 @@ class QuickFixRegistrar : QuickFixContributor {
         TYPE_INFERENCE_UPPER_BOUND_VIOLATED.registerFactory(AddGenericUpperBoundFix.Factory)
         UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS.registerFactory(AddGenericUpperBoundFix.Factory)
 
-        TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH.registerFactory(ConvertClassToKClassFix)
+        TYPE_MISMATCH.registerFactory(ConvertClassToKClassFix)
 
         NON_CONST_VAL_USED_IN_CONSTANT_EXPRESSION.registerFactory(ConstFixFactory)
 
@@ -535,7 +538,11 @@ class QuickFixRegistrar : QuickFixContributor {
 
         COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT.registerFactory(CommaInWhenConditionWithoutArgumentFix)
 
-        DATA_CLASS_NOT_PROPERTY_PARAMETER.registerFactory(AddValVarToConstructorParameterAction.DataClassVsPropertyQuickFixFactory)
+        DATA_CLASS_NOT_PROPERTY_PARAMETER.registerFactory(AddValVarToConstructorParameterAction.DataClassConstructorNotPropertyQuickFixFactory)
+        MISSING_VAL_ON_ANNOTATION_PARAMETER.registerFactory(AddValVarToConstructorParameterAction.AnnotationClassConstructorNotValPropertyQuickFixFactory)
+        VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER.registerFactory(AddValVarToConstructorParameterAction.ValueClassConstructorNotValPropertyQuickFixFactory)
+
+        VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION.registerFactory(AddJvmInlineAnnotationFix)
 
         NON_LOCAL_RETURN_NOT_ALLOWED.registerFactory(AddInlineModifierFix.CrossInlineFactory)
         USAGE_IS_NOT_INLINABLE.registerFactory(AddInlineModifierFix.NoInlineFactory)
@@ -667,7 +674,6 @@ class QuickFixRegistrar : QuickFixContributor {
         ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS.registerFactory(RemoveDefaultParameterValueFix)
 
         RESOLUTION_TO_CLASSIFIER.registerFactory(ConvertToAnonymousObjectFix)
-        RESOLUTION_TO_PRIVATE_CONSTRUCTOR_OF_SEALED_CLASS.registerFactory(RemoveModifierFixBase.createRemovePrivateModifierFromSealedConstructor())
 
         NOTHING_TO_INLINE.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
 
@@ -693,8 +699,8 @@ class QuickFixRegistrar : QuickFixContributor {
         CONSTRUCTOR_IN_OBJECT.registerFactory(ChangeObjectToClassFix)
 
         REDUNDANT_LABEL_WARNING.registerFactory(RemoveRedundantLabelFix)
-        NOT_A_FUNCTION_LABEL.registerFactory(RemoveReturnLabelFix)
-        NOT_A_FUNCTION_LABEL_WARNING.registerFactory(RemoveReturnLabelFix)
+        NOT_A_FUNCTION_LABEL.registerFactory(RemoveReturnLabelFixFactory)
+        NOT_A_FUNCTION_LABEL_WARNING.registerFactory(RemoveReturnLabelFixFactory)
 
         ANNOTATION_ON_SUPERCLASS.registerFactory(RemoveAnnotationFix)
 
@@ -720,8 +726,6 @@ class QuickFixRegistrar : QuickFixContributor {
         INCOMPATIBLE_THROWS_OVERRIDE.registerFactory(RemoveAnnotationFix)
 
         COMPATIBILITY_WARNING.registerFactory(UseFullyQualifiedCallFix)
-
-        VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER.registerFactory(InlineClassConstructorNotValParameterFactory)
 
         INLINE_CLASS_DEPRECATED.registerFactory(InlineClassDeprecatedFix)
 
@@ -754,5 +758,10 @@ class QuickFixRegistrar : QuickFixContributor {
         WRONG_NULLABILITY_FOR_JAVA_OVERRIDE.registerFactory(ChangeMemberFunctionSignatureFix)
         CONFUSING_BRANCH_CONDITION.registerFactory(ConfusingExpressionInWhenBranchFix)
         PROGRESSIONS_CHANGING_RESOLVE.registerFactory(OverloadResolutionChangeFix)
+
+        ENUM_DECLARING_CLASS_DEPRECATED.registerFactory(DeclaringJavaClassMigrationFix)
+
+        ABSTRACT_SUPER_CALL.registerFactory(AbstractSuperCallFix)
+        ABSTRACT_SUPER_CALL_WARNING.registerFactory(AbstractSuperCallFix)
     }
 }

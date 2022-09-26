@@ -1,4 +1,4 @@
-// "Escape trailing whitespaces" "true"
+// "Escape trailing whitespace characters" "true"
 
 class Foo {
   void test() {

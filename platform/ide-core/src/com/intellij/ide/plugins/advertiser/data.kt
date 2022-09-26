@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.Nls
 
 @Serializable
 data class PluginData(
@@ -37,8 +38,8 @@ data class PluginData(
 
 @Serializable
 data class FeaturePluginData(
-  val displayName: String = "",
-  val pluginData: PluginData = PluginData()
+  val displayName: @Nls String = "",
+  val pluginData: PluginData = PluginData(),
 )
 
 @Serializable

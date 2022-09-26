@@ -234,16 +234,23 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   protected void setUpFixtures() throws Exception {
     String wslMsId = System.getProperty("wsl.distribution.name");
+
+    boolean isDirectoryBasedProject = useDirectoryBasedProjectFormat();
     if (wslMsId != null) {
       Path path = TemporaryDirectory
         .generateTemporaryPath(FileUtil.sanitizeFileName(getName(), false), Paths.get("\\\\wsl$\\" + wslMsId + "\\tmp"));
-      myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName(), path, false).getFixture();
+      myTestFixture =
+        IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName(), path, isDirectoryBasedProject).getFixture();
     }
     else {
-      myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).getFixture();
+      myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName(), isDirectoryBasedProject).getFixture();
     }
 
     myTestFixture.setUp();
+  }
+
+  protected boolean useDirectoryBasedProjectFormat() {
+    return false;
   }
 
   protected void setUpInWriteAction() throws Exception {

@@ -2,6 +2,7 @@
 package git4idea.rebase.log
 
 import com.intellij.dvcs.repo.Repository
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -9,6 +10,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
+import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
@@ -122,6 +124,8 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     logData: VcsLogData
   ): CommitEditingDataCreationResult<T>
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   protected open fun update(e: AnActionEvent, commitEditingData: T) {
   }
 
@@ -156,7 +160,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
 
     // editing merge commit or root commit is not allowed
     commitList.forEach { commit ->
-      if (commit.isRootOrMerge()) {
+      if (commit !is LoadingDetails && commit.isRootOrMerge()) {
         e.presentation.description = GitBundle.message("rebase.log.commit.editing.action.disabled.parents.description", commit.parents.size)
         return
       }

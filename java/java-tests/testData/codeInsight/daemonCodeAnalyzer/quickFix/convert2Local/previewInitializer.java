@@ -2,7 +2,7 @@
 class TestInitializer {
 
     {
-    field = true;
+        boolean field = true;
     System.out.println(field);
   }
 

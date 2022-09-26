@@ -62,7 +62,7 @@ public class SuppressParameterFix extends AbstractBatchSuppressByNoInspectionCom
   }
 
   @Override
-  protected boolean replaceSuppressionComments(PsiElement container) {
+  protected boolean replaceSuppressionComments(@NotNull PsiElement container) {
     return false;
   }
 

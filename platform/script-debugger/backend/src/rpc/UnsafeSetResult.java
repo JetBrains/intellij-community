@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 
 // we cannot fix all WIP types to be nullable for now,
-// but don't want to to use explicitly nullable result type for method setResult
+// but don't want to use explicitly nullable result type for method setResult
 final class UnsafeSetResult {
   static <T> void setResult(@NotNull AsyncPromise<T> promise, @Nullable Object result) {
     //noinspection unchecked

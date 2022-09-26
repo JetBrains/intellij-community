@@ -140,7 +140,6 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
    * @throws IllegalAccessException   in case of incorrect assumptions about server class interface
    * @throws InstantiationException   in case of incorrect assumptions about server class interface
    * @throws ClassNotFoundException   in case of incorrect assumptions about server class interface
-   * @throws RemoteException
    */
   protected abstract  <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass,
                                                                                               final @NotNull C impl)

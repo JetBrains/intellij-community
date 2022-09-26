@@ -11,6 +11,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
@@ -23,7 +24,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SetVFUEntityImpl : SetVFUEntity, WorkspaceEntityBase() {
+open class SetVFUEntityImpl(val dataSource: SetVFUEntityData) : SetVFUEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -33,21 +34,17 @@ open class SetVFUEntityImpl : SetVFUEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
-  @JvmField
-  var _fileProperty: Set<VirtualFileUrl>? = null
   override val fileProperty: Set<VirtualFileUrl>
-    get() = _fileProperty!!
+    get() = dataSource.fileProperty
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: SetVFUEntityData?) : ModifiableWorkspaceEntityBase<SetVFUEntity>(), SetVFUEntity.Builder {
+  class Builder(var result: SetVFUEntityData?) : ModifiableWorkspaceEntityBase<SetVFUEntity>(), SetVFUEntity.Builder {
     constructor() : this(SetVFUEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -65,6 +62,9 @@ open class SetVFUEntityImpl : SetVFUEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "fileProperty", this.fileProperty.toHashSet())
       // Process linked entities that are connected without a builder
@@ -74,11 +74,11 @@ open class SetVFUEntityImpl : SetVFUEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field SetVFUEntity#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SetVFUEntity#entitySource should be initialized")
       }
       if (!getEntityData().isFilePropertyInitialized()) {
         error("Field SetVFUEntity#fileProperty should be initialized")
@@ -89,22 +89,23 @@ open class SetVFUEntityImpl : SetVFUEntity, WorkspaceEntityBase() {
       return connections
     }
 
-    // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
-      dataSource as SetVFUEntity
-      this.data = dataSource.data
-      this.entitySource = dataSource.entitySource
-      this.fileProperty = dataSource.fileProperty.toMutableSet()
+    override fun afterModification() {
+      val collection_fileProperty = getEntityData().fileProperty
+      if (collection_fileProperty is MutableWorkspaceSet<*>) {
+        collection_fileProperty.cleanModificationUpdateAction()
+      }
     }
 
-
-    override var data: String
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as SetVFUEntity
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.fileProperty != dataSource.fileProperty) this.fileProperty = dataSource.fileProperty.toMutableSet()
+      if (parents != null) {
       }
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -113,6 +114,14 @@ open class SetVFUEntityImpl : SetVFUEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
       }
 
     private val filePropertyUpdater: (value: Set<VirtualFileUrl>) -> Unit = { value ->
@@ -124,7 +133,12 @@ open class SetVFUEntityImpl : SetVFUEntity, WorkspaceEntityBase() {
       get() {
         val collection_fileProperty = getEntityData().fileProperty
         if (collection_fileProperty !is MutableWorkspaceSet) return collection_fileProperty
-        collection_fileProperty.setModificationUpdateAction(filePropertyUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_fileProperty.setModificationUpdateAction(filePropertyUpdater)
+        }
+        else {
+          collection_fileProperty.cleanModificationUpdateAction()
+        }
         return collection_fileProperty
       }
       set(value) {
@@ -158,13 +172,13 @@ class SetVFUEntityData : WorkspaceEntityData<SetVFUEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): SetVFUEntity {
-    val entity = SetVFUEntityImpl()
-    entity._data = data
-    entity._fileProperty = fileProperty.toSet()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SetVFUEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): SetVFUEntityData {
@@ -189,21 +203,26 @@ class SetVFUEntityData : WorkspaceEntityData<SetVFUEntity>() {
     }
   }
 
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SetVFUEntityData
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     if (this.fileProperty != other.fileProperty) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SetVFUEntityData
 
@@ -224,5 +243,10 @@ class SetVFUEntityData : WorkspaceEntityData<SetVFUEntity>() {
     result = 31 * result + data.hashCode()
     result = 31 * result + fileProperty.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.fileProperty?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

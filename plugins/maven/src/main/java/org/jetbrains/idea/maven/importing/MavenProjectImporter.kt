@@ -76,7 +76,7 @@ interface MavenProjectImporter {
     @JvmStatic
     fun tryUpdateTargetFolders(project: Project) {
       if (isImportToWorkspaceModelEnabled(project)) {
-        WorkspaceProjectImporter.tryUpdateTargetFolders(project)
+        WorkspaceProjectImporter.updateTargetFolders(project)
       }
       else {
         MavenLegacyFoldersImporter.updateProjectFolders(/* project = */ project, /* updateTargetFoldersOnly = */ true)
@@ -92,7 +92,9 @@ interface MavenProjectImporter {
 
     @JvmStatic
     fun isImportToWorkspaceModelEnabled(project: Project?): Boolean {
-      if ("true" == System.getProperty("maven.import.to.workspace.model")) return true
+      val property = System.getProperty("maven.import.to.workspace.model")
+      if ("true" == property) return true
+      if ("false" == property) return false
       if (project == null) return false
       return MavenProjectsManager.getInstance(project).importingSettings.isWorkspaceImportEnabled
     }

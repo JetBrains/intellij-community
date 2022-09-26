@@ -20,6 +20,7 @@ class GroovyDeclarationSearcher : JvmDeclarationSearcher {
   }
 
   override fun adjustIdentifierElement(identifierElement: PsiElement): PsiElement? {
-    return if (identifierElement is GrAnonymousClassDefinition) identifierElement else null
+    val parent = identifierElement.parent as? GrAnonymousClassDefinition
+    return if (parent?.baseClassReferenceGroovy === identifierElement) parent else null
   }
 }

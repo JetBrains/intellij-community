@@ -264,7 +264,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
                 root.acceptChildren(new XmlElementVisitor() {
 
                   @Override
-                  public void visitXmlText(XmlText text) {
+                  public void visitXmlText(@NotNull XmlText text) {
                     XmlTag xmlTag = PsiTreeUtil.getParentOfType(text, XmlTag.class);
                     if (xmlTag != null && !xmlTag.getName().equals(myPropertyName)) {
                       usages.addAll(getUsages(text));
@@ -272,7 +272,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
                   }
 
                   @Override
-                  public void visitXmlAttributeValue(XmlAttributeValue value) {
+                  public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
                     XmlTag xmlTag = PsiTreeUtil.getParentOfType(value, XmlTag.class);
                     if (xmlTag != null && !xmlTag.equals(root)) {
                       usages.addAll(getUsages(value));
@@ -280,7 +280,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
                   }
 
                   @Override
-                  public void visitXmlElement(XmlElement element) {
+                  public void visitXmlElement(@NotNull XmlElement element) {
                     element.acceptChildren(this);
                   }
                 });

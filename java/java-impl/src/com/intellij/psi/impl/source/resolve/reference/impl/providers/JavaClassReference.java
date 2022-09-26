@@ -55,11 +55,12 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   private static final Logger LOG = Logger.getInstance(JavaClassReference.class);
   protected final int myIndex;
   private TextRange myRange;
+  @NotNull
   private final String myText;
   private final boolean myInStaticImport;
   private final JavaClassReferenceSet myJavaClassReferenceSet;
 
-  public JavaClassReference(JavaClassReferenceSet referenceSet, TextRange range, int index, String text, boolean staticImport) {
+  public JavaClassReference(@NotNull JavaClassReferenceSet referenceSet, @NotNull TextRange range, int index, @NotNull String text, boolean staticImport) {
     super(referenceSet.getProvider());
     myInStaticImport = staticImport;
     LOG.assertTrue(range.getEndOffset() <= referenceSet.getElement().getTextLength());
@@ -373,7 +374,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
         PsiElement member = doResolveMember((PsiClass)context, myText);
         return member == null ? JavaResolveResult.EMPTY : new CandidateInfo(member, PsiSubstitutor.EMPTY, false, false, psiElement);
       }
-      else if (!myInStaticImport && myJavaClassReferenceSet.isAllowDollarInNames()) {
+      if (!myInStaticImport && myJavaClassReferenceSet.isAllowDollarInNames()) {
         return JavaResolveResult.EMPTY;
       }
     }
@@ -460,6 +461,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
            : JavaResolveResult.EMPTY;
   }
 
+  @NotNull
   private GlobalSearchScope getScope(@NotNull PsiFile containingFile) {
     Project project = containingFile.getProject();
     GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope(project);
@@ -561,7 +563,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Nullable
-  public static PsiElement resolveMember(String fqn, PsiManager manager, GlobalSearchScope resolveScope) {
+  public static PsiElement resolveMember(@NotNull String fqn, @NotNull PsiManager manager, GlobalSearchScope resolveScope) {
     PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(fqn, resolveScope);
     if (aClass != null) return aClass;
     int i = fqn.lastIndexOf('.');
@@ -574,7 +576,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Nullable
-  private static PsiElement doResolveMember(PsiClass aClass, String memberName) {
+  private static PsiElement doResolveMember(@NotNull PsiClass aClass, @NotNull String memberName) {
     PsiMember member = aClass.findFieldByName(memberName, true);
     if (member != null) return member;
 
@@ -582,6 +584,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return methods.length == 0 ? null : methods[0];
   }
 
+  @NotNull
   public JavaClassReferenceSet getJavaClassReferenceSet() {
     return myJavaClassReferenceSet;
   }

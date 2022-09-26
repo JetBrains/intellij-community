@@ -12,7 +12,7 @@ class InBottomActualIntermediate {
     val callingInteral = tlInternalInCommon
 }
 
-expect class <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.dummyiOSMain, multimod-hmpp-top-mpp, top-mpp] module'")!>IntermediateMPPClassInBottomActual<!>()
+expect class <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.dummyiOSMain, multimod-hmpp.top-mpp.jsMain, multimod-hmpp.top-mpp.jvm18Main] module'")!>IntermediateMPPClassInBottomActual<!>()
 
 
 class Subclass : Outer() {
@@ -34,4 +34,3 @@ class ChildOfCommonInShared : Outer() {
 class ChildOfMPOuterInShared : MPOuter() {
     private val sav = MPNested()
 }
-

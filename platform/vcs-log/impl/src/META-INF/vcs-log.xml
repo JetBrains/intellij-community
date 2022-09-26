@@ -117,8 +117,12 @@
     <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowCommitTooltipAction" id="Vcs.Log.ShowTooltip"
             use-shortcut-of="QuickJavaDoc"/>
-    <action class="com.intellij.vcs.log.ui.actions.EnableFilterByRegexAction" id="Vcs.Log.EnableFilterByRegexAction"/>
-    <action class="com.intellij.vcs.log.ui.actions.EnableMatchCaseAction" id="Vcs.Log.MatchCaseAction"/>
+    <action class="com.intellij.vcs.log.ui.actions.EnableFilterByRegexAction"
+            id="Vcs.Log.EnableFilterByRegexAction"
+            icon="AllIcons.Actions.Regex"/>
+    <action class="com.intellij.vcs.log.ui.actions.EnableMatchCaseAction"
+            id="Vcs.Log.MatchCaseAction"
+            icon="AllIcons.Actions.MatchCase"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowOtherBranchesAction" id="Vcs.Log.ShowOtherBranches"/>
     <action class="com.intellij.vcs.log.ui.actions.history.OpenRepositoryVersionFromHistoryAction" id="Vcs.Log.OpenRepositoryVersion"
             use-shortcut-of="Vcs.OpenRepositoryVersion"/>
@@ -152,11 +156,12 @@
       <reference id="Vcs.Log.HighlightersActionGroup"/>
       <separator/>
       <separator key="action.vcs.log.branches.separator"/>
+      <reference ref="Vcs.Log.IntelliSortChooser"/>
       <reference id="Vcs.Log.CollapseAll"/>
       <reference id="Vcs.Log.ExpandAll"/>
     </group>
-    <group id="Vcs.Log.TextFilterSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
-           icon="AllIcons.General.GearPlain" popup="true">
+    <group id="Vcs.Log.TextFilterSettings"
+           icon="AllIcons.General.GearPlain">
       <reference id="Vcs.Log.EnableFilterByRegexAction"/>
       <reference id="Vcs.Log.MatchCaseAction"/>
     </group>
@@ -256,8 +261,6 @@
       <reference ref="Vcs.Log.GoToChild"/>
       <reference ref="Vcs.Log.FocusTextFilter"/>
       <reference ref="Vcs.Log.TextFilterSettings"/>
-      <separator/>
-      <reference ref="Vcs.Log.IntelliSortChooser"/>
       <separator/>
       <reference ref="Vcs.Log.PresentationSettings"/>
       <separator/>

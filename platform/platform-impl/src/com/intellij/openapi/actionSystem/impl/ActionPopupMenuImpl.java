@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.diagnostic.IdeHeartbeatEventReporter;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.inspector.UiInspectorUtil;
@@ -24,7 +25,6 @@ import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -37,10 +37,6 @@ import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.util.function.Supplier;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivationListener {
   private static final Logger LOG = Logger.getInstance(ActionPopupMenuImpl.class);
   private static final IntSet SEEN_ACTION_GROUPS = new IntOpenHashSet(50);
@@ -83,7 +79,12 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
   @Override
   public void setTargetComponent(@NotNull JComponent component) {
-    myDataContextProvider = () -> DataManager.getInstance().getDataContext(component);
+    setDataContext(() -> DataManager.getInstance().getDataContext(component));
+  }
+
+  @Override
+  public void setDataContext(@NotNull Supplier<? extends DataContext> dataProvider) {
+    myDataContextProvider = dataProvider;
   }
 
   private class MyMenu extends JBPopupMenu implements PlaceProvider {
@@ -93,12 +94,15 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     private final ActionGroup myGroup;
     private DataContext myContext;
     private final PresentationFactory myPresentationFactory;
+    @NotNull
+    private final MyPopupMenuListener myListener;
 
     MyMenu(@NotNull String place, @NotNull ActionGroup group, @Nullable PresentationFactory factory) {
       myPlace = place;
       myGroup = group;
       myPresentationFactory = factory != null ? factory : new MenuItemPresentationFactory();
-      addPopupMenuListener(new MyPopupMenuListener());
+      myListener = new MyPopupMenuListener();
+      addPopupMenuListener(myListener);
       BegMenuItemUI.registerMultiChoiceSupport(this, popupMenu -> {
         Utils.updateMenuItems(popupMenu, myContext, myPlace, myPresentationFactory);
       });
@@ -139,6 +143,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
           myConnection.subscribe(ApplicationActivationListener.TOPIC, ActionPopupMenuImpl.this);
         }
       }
+      myListener.targetComponent = component;
       super.show(component, x, y);
     }
 
@@ -168,10 +173,8 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
     private void updateChildren(@Nullable RelativePoint point) {
       removeAll();
-      TimeoutUtil.run(
-        () -> Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(),
-                             myPresentationFactory, myContext, myPlace, false, false, point, null),
-        1000, ms -> LOG.warn(ms + " ms to fill popup menu " + myPlace));
+      Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(),
+                     myPresentationFactory, myContext, myPlace, false, false, point, null);
     }
 
     private void disposeMenu() {
@@ -186,6 +189,8 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     }
 
     private class MyPopupMenuListener implements PopupMenuListener {
+      Component targetComponent;
+
       @Override
       public void popupMenuCanceled(PopupMenuEvent e) {
         disposeMenu();
@@ -193,11 +198,13 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
       @Override
       public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+        HelpTooltip.enableTooltip(targetComponent);
         disposeMenu();
       }
 
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+        HelpTooltip.disableTooltip(targetComponent);
         if (getComponentCount() == 0) {
           updateChildren(null);
         }

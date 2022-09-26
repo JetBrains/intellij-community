@@ -217,6 +217,22 @@ open class TestProjectManager : ProjectManagerImpl() {
     return projects.keys.asSequence()
   }
 
+  /**
+   * Having a leaked project means having an unintended hard reference to a ProjectImpl
+   * while your test is in the tearDown phase (or, in a production scenario, while you
+   * close a project).
+   *
+   * If you hit the "Too many projects leaked" assertion error in your tests, keep in mind
+   * that hard references to ProjectImpl may exist indirectly. For example, any PsiElement
+   * owns such a hard reference. So one way to create a leaked project is by having a static
+   * class that owns a PsiElement.
+   *
+   * If the above does not trigger enough "aha" to go and fix things, you can find a
+   * leakedProjects.hprof.zip in your build config (not aggregator) artifacts. Open it in
+   * YourKit's Memory Profiling > Object explorer view. In the search box type ProjectImpl.
+   * The search results include all ProjectImpl instances. Select one and click "Calculate
+   * paths". Traverse down a bit and you should see who's owning the hard reference.
+   */
   private fun checkProjectLeaksInTests() {
     if (!LOG_PROJECT_LEAKAGE || getLeakedProjectCount() < MAX_LEAKY_PROJECTS) {
       return
@@ -241,7 +257,10 @@ open class TestProjectManager : ProjectManagerImpl() {
       projects.clear()
       if (copy.iterator().asSequence().count() >= MAX_LEAKY_PROJECTS) {
         reportLeakedProjects(copy)
-        throw AssertionError("Too many projects leaked, again.")
+        throw AssertionError("""
+          Too many projects leaked.
+          See build log and com.intellij.project.TestProjectManager.checkProjectLeaksInTests docs for more details.")
+        """.trimIndent())
       }
     }
   }
@@ -254,24 +273,35 @@ open class TestProjectManager : ProjectManagerImpl() {
 
 private fun reportLeakedProjects(leakedProjects: Iterable<Project>) {
   val hashCodes = HashSet<Int>()
+  val message = StringBuilder("Too many projects leaked: \n")
   for (project in leakedProjects) {
-    hashCodes.add(System.identityHashCode(project))
+    val hashCode = System.identityHashCode(project)
+    hashCodes.add(hashCode)
+    appendProjectDetails(message, project, hashCode, null)
   }
   val dumpPath = publishHeapDump("leakedProjects")
-  val leakers = StringBuilder()
-  leakers.append("Too many projects leaked (hashCodes=$hashCodes): \n")
   LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl::class.java,
                           { hashCodes.contains(System.identityHashCode(it)) },
                           { leaked: ProjectImpl?, backLink: Any? ->
                             val hashCode = System.identityHashCode(leaked)
-                            leakers.append("Leaked project found:").append(leaked)
-                              .append(", hash=").append(hashCode)
-                              .append(", place=").append(LeakHunter.getCreationPlace(leaked!!)).append('\n')
-                              .append(backLink).append('\n')
-                              .append("-----\n")
+                            appendProjectDetails(message, leaked!!, hashCode, backLink)
                             hashCodes.remove(hashCode)
                             !hashCodes.isEmpty()
                           })
-  leakers.append("\nPlease see `").append(dumpPath).append("` for a memory dump")
-  throw AssertionError(leakers.toString())
+  message.append("\nPlease see `").append(dumpPath).append("` for a memory dump")
+  throw AssertionError(message.toString())
+}
+
+private fun appendProjectDetails(message: StringBuilder,
+                                 leaked: Project,
+                                 hashCode: Int,
+                                 backLink: Any?) {
+  message.append("Leaked project ").append(leaked)
+    .append(", hash=").append(hashCode)
+    .append(", creation place=").append(LeakHunter.getCreationPlace(leaked)).append('\n')
+  if (backLink != null) {
+    message.append(" retained by:\n")
+      .append(backLink).append('\n')
+      .append("-----\n")
+  }
 }

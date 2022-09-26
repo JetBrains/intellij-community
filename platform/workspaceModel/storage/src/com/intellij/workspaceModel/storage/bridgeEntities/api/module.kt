@@ -34,8 +34,8 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ModuleEntity, ModifiableWorkspaceEntity<ModuleEntity>, ObjBuilder<ModuleEntity> {
-    override var name: String
     override var entitySource: EntitySource
+    override var name: String
     override var type: String?
     override var dependencies: MutableList<ModuleDependencyItem>
     override var contentRoots: List<ContentRootEntity>
@@ -80,8 +80,8 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ModuleCustomImlDataEntity, ModifiableWorkspaceEntity<ModuleCustomImlDataEntity>, ObjBuilder<ModuleCustomImlDataEntity> {
-    override var module: ModuleEntity
     override var entitySource: EntitySource
+    override var module: ModuleEntity
     override var rootManagerTagCustomData: String?
     override var customModuleOptions: Map<String, String>
   }
@@ -115,8 +115,8 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ModuleGroupPathEntity, ModifiableWorkspaceEntity<ModuleGroupPathEntity>, ObjBuilder<ModuleGroupPathEntity> {
-    override var module: ModuleEntity
     override var entitySource: EntitySource
+    override var module: ModuleEntity
     override var path: MutableList<String>
   }
 
@@ -150,8 +150,8 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : JavaModuleSettingsEntity, ModifiableWorkspaceEntity<JavaModuleSettingsEntity>, ObjBuilder<JavaModuleSettingsEntity> {
-    override var module: ModuleEntity
     override var entitySource: EntitySource
+    override var module: ModuleEntity
     override var inheritedCompilerOutput: Boolean
     override var excludeOutput: Boolean
     override var compilerOutput: VirtualFileUrl?
@@ -196,8 +196,8 @@ interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ExternalSystemModuleOptionsEntity, ModifiableWorkspaceEntity<ExternalSystemModuleOptionsEntity>, ObjBuilder<ExternalSystemModuleOptionsEntity> {
-    override var module: ModuleEntity
     override var entitySource: EntitySource
+    override var module: ModuleEntity
     override var externalSystem: String?
     override var externalSystemModuleVersion: String?
     override var linkedProjectPath: String?

@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.ide.actions.searcheverywhere.ml">
   <id>com.intellij.searcheverywhere.ml</id>
   <name>Machine Learning in Search Everywhere</name>
   <vendor>JetBrains</vendor>
@@ -11,7 +11,12 @@
     <i>Note that sorting by machine learning is currently available only for the Actions tab.</i>
   ]]></description>
 
-  <depends optional="true" config-file="vcs-feature-provider.xml">Git4Idea</depends>
+  <content>
+    <module name="intellij.searchEverywhereMl.yaml"/>
+    <module name="intellij.searchEverywhereMl.vcs"/>
+  </content>
+
+  <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
     <searchEverywhereMlService implementation="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService"/>
@@ -113,10 +118,12 @@
     <listener class="com.intellij.filePrediction.features.history.FileHistoryManagerWrapper$ProjectClosureListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
+
   <projectListeners>
     <listener class="com.intellij.filePrediction.features.history.FileHistoryManagerWrapper$EditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
+
   <actions>
     <action id="com.intellij.ide.actions.searcheverywhere.ml.actions.OpenFeaturesInScratchFileAction"
             class="com.intellij.ide.actions.searcheverywhere.ml.actions.OpenFeaturesInScratchFileAction">
@@ -124,5 +131,4 @@
       <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt 1"/>
     </action>
   </actions>
-  <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
 </idea-plugin>

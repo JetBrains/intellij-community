@@ -9,9 +9,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +65,12 @@ public abstract class DataValidators {
     //noinspection unchecked
     Validator<Object>[] validators = (Validator<Object>[])getValidators(dataId);
     if (validators == null) return true;
+    if (data instanceof PsiElement && !(data instanceof FakePsiElement) &&
+        EDT.isCurrentThreadEdt() &&
+        SlowOperations.isInsideActivity(SlowOperations.FORCE_ASSERT)) {
+      LOG.error("PSI element is provided on EDT by " + source.getClass().getName() + ".getData(\"" + dataId + "\"). " +
+                "Please move that to a BGT data provider using PlatformCoreDataKeys.BGT_DATA_PROVIDER");
+    }
     try {
       for (Validator<Object> validator : validators) {
         if (!validator.checkValid(data, dataId, source)) return false;

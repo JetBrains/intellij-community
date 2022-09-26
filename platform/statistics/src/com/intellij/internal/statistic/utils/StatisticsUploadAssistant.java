@@ -19,8 +19,6 @@ public final class StatisticsUploadAssistant {
   private static final String ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT = "idea.local.statistics.without.report";
   private static final String USE_TEST_STATISTICS_CONFIG = "idea.use.test.statistics.config";
 
-  public static final Object LOCK = new Object();
-
   private StatisticsUploadAssistant() {}
 
   public static boolean isSendAllowed() {

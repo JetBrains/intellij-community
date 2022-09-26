@@ -24,7 +24,7 @@ public abstract class JavaCompilerConfigurationProxy {
 
   /**
    * Returns additional compiler options applicable to the given module, if any.
-   * @see JavaCompilerConfigurationProxy#setAdditionalOptions(Project, Module, List<String>)
+   * @see JavaCompilerConfigurationProxy#setAdditionalOptions(Project, Module, List)
    */
   abstract protected List<String> getAdditionalOptionsImpl(@NotNull Project project, @NotNull Module module);
 

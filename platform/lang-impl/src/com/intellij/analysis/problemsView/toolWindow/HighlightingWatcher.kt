@@ -60,12 +60,12 @@ internal class HighlightingWatcher(
 
   fun getProblems(): Collection<Problem> = synchronized(problems) { problems.values.toList() }
 
-  fun findProblem(highlighter: RangeHighlighterEx) = synchronized(problems) { problems[highlighter] }
+  fun findProblem(highlighter: RangeHighlighterEx): Problem? = synchronized(problems) { problems[highlighter] }
 
   private fun getHighlightingProblem(highlighter: RangeHighlighterEx): HighlightingProblem
     = HighlightingProblem(provider, file, highlighter)
 
-  private fun getProblem(highlighter: RangeHighlighterEx) = when {
+  private fun getProblem(highlighter: RangeHighlighterEx): Problem? = when {
     !isValid(highlighter) -> null
     else -> synchronized(problems) {
       problems.computeIfAbsent(highlighter) { getHighlightingProblem(highlighter) }

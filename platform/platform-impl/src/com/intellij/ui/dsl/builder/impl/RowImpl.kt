@@ -11,7 +11,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
@@ -90,16 +89,12 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  override fun rowComment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int): Row {
-    this.rowComment = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
-    return this
-  }
-
   override fun rowComment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int, action: HyperlinkEventAction): RowImpl {
     this.rowComment = createComment(comment, maxLineLength, action)
     return this
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun <T : JComponent> cell(component: T, viewComponent: JComponent): CellImpl<T> {
     val result = CellImpl(dialogPanelConfig, component, this, viewComponent)
     cells.add(result)
@@ -122,11 +117,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun <T : JComponent> scrollCell(component: T): CellImpl<T> {
     return cell(component, JBScrollPane(component))
-  }
-
-  @Deprecated("Remove with deprecated collapsibleGroup")
-  fun cell(cell: CellBaseImpl<*>) {
-    cells.add(cell)
   }
 
   override fun placeholder(): PlaceholderImpl {
@@ -203,11 +193,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
       isOpaque = false
     }
   }
-
-  override fun radioButton(@NlsContexts.RadioButton text: String): Cell<JBRadioButton> {
-    return radioButton(text, null)
-  }
-
+  
   override fun radioButton(text: String, value: Any?): Cell<JBRadioButton> {
     val result = cell(JBRadioButton(text)).applyToComponent {
       isOpaque = false
@@ -242,6 +228,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(ActionButton(actionGroup, actionGroup.templatePresentation.clone(), actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE))
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar> {
     val actionGroup = DefaultActionGroup(options.map { DeprecatedSegmentedButtonAction(it, property, renderer(it)) })
     val toolbar = SegmentedButtonToolbar(actionGroup, parent.spacingConfiguration)
@@ -278,11 +265,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun label(text: String): CellImpl<JLabel> {
-    return cell(Label(text))
-  }
-
-  override fun labelHtml(@NlsContexts.Label text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
-    return text(removeHtml(text), MAX_LINE_LENGTH_WORD_WRAP, action)
+    return cell(JLabel(text))
   }
 
   override fun text(@NlsContexts.Label text: String, maxLineLength: Int, action: HyperlinkEventAction): Cell<JEditorPane> {
@@ -292,21 +275,9 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     dslLabel.text = text
     return cell(dslLabel)
   }
-
-  override fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int): Cell<JLabel> {
-    return cell(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength, true))
-  }
-
+  
   override fun comment(comment: String, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<JEditorPane> {
     return cell(createComment(comment, maxLineLength, action))
-  }
-
-  override fun commentNoWrap(text: String): Cell<JLabel> {
-    return cell(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
-  }
-
-  override fun commentHtml(text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
-    return comment(text, MAX_LINE_LENGTH_WORD_WRAP, action)
   }
 
   override fun link(text: String, action: (ActionEvent) -> Unit): CellImpl<ActionLink> {
@@ -435,6 +406,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(component)
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
     val component = ComboBox(items)
     component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }

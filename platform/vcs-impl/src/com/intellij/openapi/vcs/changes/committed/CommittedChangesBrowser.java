@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -14,7 +11,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,13 +51,11 @@ public class CommittedChangesBrowser extends SimpleChangesBrowser {
     if (CommittedChangesBrowserUseCase.DATA_KEY.is(dataId)) {
       return myUseCase;
     }
-    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-      //noinspection unchecked
-      Iterable<DataProvider> superProviders = (Iterable<DataProvider>)super.getData(dataId);
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      DataProvider superProvider = (DataProvider)super.getData(dataId);
 
       VcsTreeModelData selectedData = VcsTreeModelData.selected(myViewer);
-      return JBIterable.<DataProvider>of((slowDataId) -> getSlowData(slowDataId, selectedData))
-        .append(superProviders);
+      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, selectedData), superProvider);
     }
     return super.getData(dataId);
   }

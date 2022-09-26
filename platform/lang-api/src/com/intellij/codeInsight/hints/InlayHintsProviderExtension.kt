@@ -21,5 +21,5 @@ object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>(EX
     }
   }
 
-  val inlayProviderName = ExtensionPointName<InlayHintsProviderExtensionBean>(EXTENSION_POINT_NAME)
+  val inlayProviderName: ExtensionPointName<InlayHintsProviderExtensionBean> = ExtensionPointName(EXTENSION_POINT_NAME)
 }

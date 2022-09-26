@@ -515,17 +515,17 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
                 }
               }
               switch (state) {
-                case 0:
+                case 0 -> {
                   m = defaultValueJavaDoc.matcher(s);
                   if (m.matches()) {
                     state = 1;
                     value = m.group(1);
                   }
-                  break;
-                case 1:
+                }
+                case 1 -> {
                   if (s.contains("*/")) state = 2;
-                  break;
-                case 2:
+                }
+                case 2 -> {
                   if (!s.trim().isEmpty()) {
                     state = 0;
                     m = fieldDecl.matcher(s);
@@ -543,7 +543,7 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
                     }
                     name = value = null;
                   }
-                  break;
+                }
               }
             }
           }

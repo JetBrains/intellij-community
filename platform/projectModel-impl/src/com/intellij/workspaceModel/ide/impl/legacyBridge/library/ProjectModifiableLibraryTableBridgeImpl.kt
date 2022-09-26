@@ -19,7 +19,9 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class ProjectModifiableLibraryTableBridgeImpl(
@@ -108,7 +110,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
     modelIsCommittedOrDisposed = true
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
     myAddedLibraries.forEach { library ->
-      if (storage.resolve(library.libraryId) != null) {
+      if (library.libraryId in storage) {
         // it may happen that actual library table already has a library with such name (e.g. when multiple projects are imported in parallel)
         // in such case we need to skip the new library to avoid exceptions.
         diff.removeEntity(diff.libraryMap.getEntities(library).first())

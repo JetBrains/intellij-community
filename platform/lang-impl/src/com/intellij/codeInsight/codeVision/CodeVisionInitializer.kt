@@ -10,10 +10,10 @@ import kotlinx.coroutines.withContext
 
 open class CodeVisionInitializer(project: Project) {
   companion object {
-    fun getInstance(project: Project) = project.service<CodeVisionInitializer>()
+    fun getInstance(project: Project): CodeVisionInitializer = project.service<CodeVisionInitializer>()
   }
 
-  protected open val host = CodeVisionHost(project)
+  protected open val host: CodeVisionHost = CodeVisionHost(project)
 
   open fun getCodeVisionHost(): CodeVisionHost = host
 

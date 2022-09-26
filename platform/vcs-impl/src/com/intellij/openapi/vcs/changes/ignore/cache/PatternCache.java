@@ -224,8 +224,7 @@ public class PatternCache implements Disposable {
       }
 
       switch (ch) {
-
-        case '\\':
+        case '\\' -> {
           if (escape) {
             sb.append("\\\\");
             escape = false;
@@ -233,9 +232,8 @@ public class PatternCache implements Disposable {
           else {
             escape = true;
           }
-          break;
-
-        case '?':
+        }
+        case '?' -> {
           if (escape) {
             sb.append("\\?");
             escape = false;
@@ -243,9 +241,8 @@ public class PatternCache implements Disposable {
           else {
             sb.append('.');
           }
-          break;
-
-        case '[':
+        }
+        case '[' -> {
           if (escape) {
             sb.append('\\');
             escape = false;
@@ -254,34 +251,24 @@ public class PatternCache implements Disposable {
             bracket = true;
           }
           sb.append(ch);
-          break;
-
-        case ']':
+        }
+        case ']' -> {
           if (!bracket) {
             sb.append('\\');
           }
           sb.append(ch);
           bracket = false;
           escape = false;
-          break;
-
-        case '.':
-        case '(':
-        case ')':
-        case '+':
-        case '|':
-        case '^':
-        case '$':
-        case '@':
-        case '%':
+        }
+        case '.', '(', ')', '+', '|', '^', '$', '@', '%' -> {
           sb.append('\\');
           sb.append(ch);
           escape = false;
-          break;
-
-        default:
+        }
+        default -> {
           escape = false;
           sb.append(ch);
+        }
       }
     }
 

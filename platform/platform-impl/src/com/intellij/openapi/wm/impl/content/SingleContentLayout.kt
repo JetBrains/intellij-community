@@ -32,7 +32,7 @@ import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.TabLabel
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.UIUtil
@@ -104,7 +104,7 @@ internal class SingleContentLayout(
       resetSingleContentView()
     }
 
-    val toolwindow = ui.getWindow().castSafelyTo<ToolWindowEx>()
+    val toolwindow = ui.getWindow().asSafely<ToolWindowEx>()
     if (toolwindow != null) {
       val group = toolwindow.decoration?.actionGroup
       if (isSingleContentView) {
@@ -578,7 +578,7 @@ internal class SingleContentLayout(
    *
    * All unused methods throw [IllegalStateException].
    */
-  private class FakeContent(val supplier: SingleContentSupplier, val info: TabInfo) : Content {
+  internal class FakeContent(val supplier: SingleContentSupplier, val info: TabInfo) : Content {
 
     private val pcs = PropertyChangeSupport(this)
 

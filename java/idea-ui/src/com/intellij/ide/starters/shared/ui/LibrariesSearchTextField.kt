@@ -2,6 +2,7 @@
 package com.intellij.ide.starters.shared.ui
 
 import com.intellij.ide.starters.JavaStartersBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
@@ -9,11 +10,13 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 
-internal class LibrariesSearchTextField : SearchTextField() {
+@ApiStatus.Internal
+class LibrariesSearchTextField : SearchTextField() {
 
   var list: JComponent? = null
 
@@ -57,6 +60,10 @@ internal class LibrariesSearchTextField : SearchTextField() {
     object : AnAction() {
       override fun update(e: AnActionEvent) {
         e.presentation.isEnabled = text.isNotEmpty()
+      }
+
+      override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
       }
 
       override fun actionPerformed(e: AnActionEvent) {

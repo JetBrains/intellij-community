@@ -172,46 +172,29 @@ public class TypeEvaluator {
       final PsiType thenType = evaluateType(thenExpression);
       final PsiType elseType = evaluateType(elseExpression);
 
-      switch ((thenType == null ? 0 : 1) + (elseType == null ? 0 : 2)) {
-        case 0:
-          return expr.getType();
-
-        case 1:
-          return thenType;
-
-        case 2:
-          return elseType;
-
-        case 3:
+      return switch ((thenType == null ? 0 : 1) + (elseType == null ? 0 : 2)) {
+        case 0 -> expr.getType();
+        case 1 -> thenType;
+        case 2 -> elseType;
+        case 3 -> {
           if (TypeConversionUtil.areTypesConvertible(thenType, elseType)) {
-            return thenType;
+            yield thenType;
           }
           else if (TypeConversionUtil.areTypesConvertible(elseType, thenType)) {
-            return elseType;
-          } else {
-            switch ((thenType.equals(thenExpression.getType()) ? 0 : 1) + (elseType.equals(elseExpression.getType()) ? 0 : 2)) {
-              case 0:
-                return expr.getType();
-
-              case 1:
-                return thenType;
-
-              case 2:
-                return elseType;
-
-              case 3:
-                return expr.getType();
-
-              default:
-                LOG.error("Must not happen.");
-                return null;
-            }
+            yield elseType;
           }
-
-        default:
-          LOG.error("Must not happen.");
-      }
-
+          else {
+            yield switch ((thenType.equals(thenExpression.getType()) ? 0 : 1) + (elseType.equals(elseExpression.getType()) ? 0 : 2)) {
+              case 0 -> expr.getType();
+              case 1 -> thenType;
+              case 2 -> elseType;
+              case 3 -> expr.getType();
+              default -> throw new AssertionError();
+            };
+          }
+        }
+        default -> throw new AssertionError();
+      };
     }
     else if (expr instanceof PsiNewExpression) {
       final PsiExpression qualifier = ((PsiNewExpression)expr).getQualifier();

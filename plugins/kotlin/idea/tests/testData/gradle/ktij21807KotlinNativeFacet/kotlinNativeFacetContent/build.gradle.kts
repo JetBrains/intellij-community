@@ -2,6 +2,10 @@ plugins {
     kotlin("multiplatform") version "{{kotlin_plugin_version}}"
 }
 
+repositories {
+    { { kts_kotlin_plugin_repositories } }
+}
+
 kotlin {
     val hostOs = System.getProperty("os.name")
     val isMingwX64 = hostOs.startsWith("Windows")

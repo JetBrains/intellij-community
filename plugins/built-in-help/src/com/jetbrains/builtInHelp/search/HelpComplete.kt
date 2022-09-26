@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NonNls
 class HelpComplete {
 
   companion object {
-    val resources = arrayOf("_0.cfe", "_0.cfs", "_0.si", "segments_1")
+    private val resources = arrayOf("_0.cfe", "_0.cfs", "_0.si", "segments_1")
     @NonNls
     val PREFIX = "/search/"
     @NonNls

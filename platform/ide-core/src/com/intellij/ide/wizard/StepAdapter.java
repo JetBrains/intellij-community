@@ -7,9 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class StepAdapter implements Step {
 
   private final List<StepListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();

@@ -6,9 +6,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.changes.CommitSession
-import com.intellij.vcs.commit.*
+import com.intellij.vcs.commit.CommitSessionInfo
+import com.intellij.vcs.commit.NonModalCommitWorkflow
+import com.intellij.vcs.commit.isCleanupCommitMessage
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitCommitTemplateTracker
@@ -34,25 +34,17 @@ class GitStageCommitWorkflow(project: Project) : NonModalCommitWorkflow(project)
     updateVcses(setOf(GitVcs.getInstance(project)))
   }
 
-  override fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean = error("Not supported currently")
-
-  override fun processExecuteDefaultChecksResult(result: CommitChecksResult) {
-    if (result.shouldCommit) doCommit()
-  }
-
-  private fun doCommit() {
+  override fun performCommit(sessionInfo: CommitSessionInfo) {
+    assert(sessionInfo.isVcsCommit) { "Custom commit sessions are not supported with staging area: ${sessionInfo.executor.toString()}" }
     LOG.debug("Do actual commit")
 
     commitContext.isCleanupCommitMessage = project.service<GitCommitTemplateTracker>().exists()
 
     val fullyStaged = trackerState.rootStates.filter { commitState.roots.contains(it.key) }.mapValues { it.value.getFullyStagedPaths() }
-    with(GitStageCommitter(project, commitState, fullyStaged, commitContext)) {
-      addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(getCommitEventDispatcher())
-      addResultHandler(GitStageShowNotificationCommitResultHandler(this))
-      addResultHandler(EdtCommitResultHandler(getEndExecutionHandler()))
+    val committer = GitStageCommitter(project, commitState, fullyStaged, commitContext)
+    addCommonResultHandlers(sessionInfo, committer)
+    committer.addResultHandler(GitStageShowNotificationCommitResultHandler(committer))
 
-      runCommit(message("stage.commit.process"), false)
-    }
+    committer.runCommit(message("stage.commit.process"), false)
   }
 }

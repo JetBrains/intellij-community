@@ -41,8 +41,8 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
   private val expandedCourseContent: JComponent by lazy { data.getExpandContent() }
   private val chevronPanel = JPanel()
   private val chevronLabel = JLabel(AllIcons.General.ChevronDown)
-  val pluginPanel = JPanel()
-  val pluginLabel = JLabel(data.getIcon())
+  private val pluginPanel = JPanel()
+  private val pluginLabel = JLabel(data.getIcon())
 
   private val roundBorder1pxActive = CompoundBorder(RoundedLineBorder(LearnIdeContentColorsAndFonts.ActiveInteractiveCoursesBorder, 8, 1), JBUI.Borders.emptyRight(5))
 

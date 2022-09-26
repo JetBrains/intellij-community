@@ -19,7 +19,6 @@ import com.intellij.openapi.project.NOTIFICATIONS_SILENT_MODE
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.util.Consumer
 import com.intellij.util.io.createDirectories
@@ -63,9 +62,6 @@ object ProjectUtils {
           dest.delete()
         }
         langSupport.installAndOpenLearningProject(dest, projectToClose) {
-          it.basePath?.let { path ->
-            copyLearnProjectIcon(File(path))
-          }
           postInitCallback(it)
         }
       }
@@ -78,7 +74,7 @@ object ProjectUtils {
   }
 
   private fun getLearningInstallationContentRoot(langSupport: LangSupport): Path? {
-    val storedProjectPath = LangManager.getInstance().getLearningProjectPath(langSupport)
+    val storedProjectPath = LangManager.getInstance().getLearningProjectPath(langSupport.primaryLanguage)
     val path = if (storedProjectPath != null) langSupport.getContentRootPath(Paths.get(storedProjectPath)) else null
     val canonicalPlace = learningProjectsPath.resolve(langSupport.contentRootDirectoryName)
 
@@ -228,15 +224,6 @@ object ProjectUtils {
     val chosen = directories.single()
     val canonicalPath = chosen.canonicalPath ?: error("No canonical path for $chosen")
     return File(canonicalPath, langSupport.contentRootDirectoryName).toPath()
-  }
-
-  private fun copyLearnProjectIcon(projectDir: File) {
-    val iconPath = "learnProjects/.idea"
-    val iconUrl = ProjectUtils::class.java.classLoader.getResource(iconPath) ?: throw IllegalArgumentException(
-      "Unable to locate icon for learn project by path: $iconPath")
-    val ideaDir = File(projectDir, ".idea")
-    FileUtil.ensureExists(ideaDir)
-    FileUtils.copyResourcesRecursively(iconUrl, ideaDir)
   }
 
   private fun createVersionFile(newProjectDirectory: Path) {

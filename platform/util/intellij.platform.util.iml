@@ -2,14 +2,16 @@
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="3" platform="JVM 1.8" allPlatforms="JVM [1.8]" useProjectSettings="false">
+      <configuration version="5" platform="JVM 1.8" allPlatforms="JVM [1.8]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -Xjvm-default=enable -opt-in=com.intellij.openapi.util.IntellijInternalApi" />
+          <option name="additionalArguments" value="-Xjvm-default=enable -opt-in=com.intellij.openapi.util.IntellijInternalApi" />
         </compilerSettings>
         <compilerArguments>
-          <option name="jvmTarget" value="1.8" />
-          <option name="languageVersion" value="1.7" />
-          <option name="apiVersion" value="1.7" />
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="1.8" />
+            <stringArg name="apiVersion" arg="1.7" />
+            <stringArg name="languageVersion" arg="1.7" />
+          </stringArguments>
         </compilerArguments>
       </configuration>
     </facet>
@@ -27,7 +29,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="Log4J" level="project" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" exported="" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
@@ -43,7 +44,7 @@
     <orderEntry type="library" name="aalto-xml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
+    <orderEntry type="module" module-name="intellij.platform.util.trove" />
   </component>
   <component name="copyright">
     <Base>

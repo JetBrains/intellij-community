@@ -76,7 +76,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
 
         changeListManager.moveChangesTo(targetList, *changes.toTypedArray())
         if (unversionedFiles.isNotEmpty()) {
-          changeListManager.addUnversionedFiles(targetList, unversionedFiles)
+          ScheduleForAdditionAction.addUnversionedFilesToVcsInBackground(project, targetList, unversionedFiles)
         }
         return true
       }

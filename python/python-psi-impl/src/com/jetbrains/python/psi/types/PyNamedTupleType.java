@@ -5,9 +5,9 @@ import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyCallSiteExpression;
@@ -68,7 +68,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     Collections.addAll(result, super.getCompletionVariants(completionPrefix, location, context));
 
     for (String field : myFields.keySet()) {
-      result.add(LookupElementBuilder.create(field).withIcon(PlatformIcons.FIELD_ICON));
+      result.add(LookupElementBuilder.create(field).withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Field)));
     }
 
     if (completionPrefix == null) {

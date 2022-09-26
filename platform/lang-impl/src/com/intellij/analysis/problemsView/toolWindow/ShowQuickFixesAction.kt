@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.impl.IntentionListStep
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEM
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager.getApplication
@@ -21,7 +22,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.isAncestor
@@ -32,23 +32,21 @@ internal class ShowQuickFixesAction : AnAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
-    val panel = ProblemsView.getSelectedPanel(event.project)
-    val node = panel?.let { SELECTED_ITEM.getData(it) as? ProblemNode }
+    val node = event.getData(SELECTED_ITEM) as? ProblemNode
     val problem = node?.problem
     with(event.presentation) {
-      isVisible = getApplication().isInternal || panel is HighlightingPanel
+      isVisible = getApplication().isInternal || ProblemsView.getSelectedPanel(event.project) is HighlightingPanel
       isEnabled = isVisible && when (problem) {
-        is HighlightingProblem -> isEnabled(event, panel, problem)
+        is HighlightingProblem -> isEnabled(event, problem)
         else -> false
       }
     }
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    val panel = ProblemsView.getSelectedPanel(event.project)
-    val node = panel?.let { SELECTED_ITEM.getData(it) as? ProblemNode }
+    val node = event.getData(SELECTED_ITEM) as? ProblemNode
     when (val problem = node?.problem) {
-      is HighlightingProblem -> actionPerformed(event, panel, problem)
+      is HighlightingProblem -> actionPerformed(event, problem)
     }
   }
 
@@ -81,12 +79,12 @@ internal class ShowQuickFixesAction : AnAction() {
   }
 
 
-  private fun isEnabled(event: AnActionEvent, panel: ProblemsViewPanel, problem: HighlightingProblem): Boolean {
-    return getCachedIntentions(event, panel, problem, false) != null
+  private fun isEnabled(event: AnActionEvent, problem: HighlightingProblem): Boolean {
+    return getCachedIntentions(event, problem, false) != null
   }
 
-  private fun actionPerformed(event: AnActionEvent, panel: ProblemsViewPanel, problem: HighlightingProblem) {
-    val intentions = getCachedIntentions(event, panel, problem, true) ?: return
+  private fun actionPerformed(event: AnActionEvent, problem: HighlightingProblem) {
+    val intentions = getCachedIntentions(event, problem, true) ?: return
     val editor: Editor = intentions.editor ?: return
     if (intentions.offset >= 0) editor.caretModel.moveToOffset(intentions.offset.coerceAtMost(editor.document.textLength))
     show(event, JBPopupFactory.getInstance().createListPopup(
@@ -98,26 +96,25 @@ internal class ShowQuickFixesAction : AnAction() {
           getApplication().invokeLater(
             {
               IdeFocusManager.getInstance(project).doWhenFocusSettlesDown({
-                super.chooseActionAndInvoke(cachedAction, file, project, editor)
-              }, modality)
+                                                                            super.chooseActionAndInvoke(cachedAction, file, project, editor)
+                                                                          }, modality)
             }, modality, project.disposed)
         }
       }
     ))
   }
 
-  private fun getCachedIntentions(event: AnActionEvent,
-                                  panel: ProblemsViewPanel,
-                                  problem: HighlightingProblem,
-                                  showEditor: Boolean): CachedIntentions? {
-    val project = event.project ?: return null
-    val psi = PsiManager.getInstance(project).findFile(panel.selectedFile ?: return null) ?: return null
+  private fun getCachedIntentions(event: AnActionEvent, problem: HighlightingProblem, showEditor: Boolean): CachedIntentions? {
+    val psi = event.getData(CommonDataKeys.PSI_FILE) ?: return null
+    val panel = ProblemsView.getSelectedPanel(event.project) ?: return null
     if (!UIUtil.isShowing(panel)) return null
     val editor = panel.preview ?: getEditor(psi, showEditor) ?: return null
-    val markers = problem.info?.quickFixActionMarkers ?: return null
-
     val info = ShowIntentionsPass.IntentionsInfo()
-    markers.filter { it.second.isValid }.forEach { info.intentionsToShow.add(it.first) }
+    problem.info?.findRegisteredQuickFix { desc, range ->
+      info.intentionsToShow.add(desc)
+      null
+    }
+    if (info.isEmpty) return null
     info.offset = problem.info?.actualStartOffset ?: -1
 
     val intentions = CachedIntentions.createAndUpdateActions(psi.project, psi, editor, info)

@@ -91,8 +91,6 @@ public final class GroovyCompletionUtil {
   /**
    * Return true if last element of current statement is expression
    *
-   * @param statement
-   * @return
    */
   public static boolean endsWithExpression(PsiElement statement) {
     while (statement != null &&
@@ -143,9 +141,7 @@ public final class GroovyCompletionUtil {
   /**
    * Shows whether keyword may be placed as a new statement beginning
    *
-   * @param element
    * @param canBeAfterBrace May be after '{' symbol or not
-   * @return
    */
   public static boolean isNewStatement(PsiElement element, boolean canBeAfterBrace) {
     PsiElement previousLeaf = getLeafByOffset(element.getTextRange().getStartOffset() - 1, element);

@@ -9,7 +9,6 @@ import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor
 import org.intellij.markdown.parser.MarkdownParser
-import org.intellij.plugins.markdown.extensions.CodeFencePluginFlavourDescriptor
 import java.util.concurrent.atomic.AtomicReference
 
 @Service
@@ -47,9 +46,6 @@ class MarkdownParserManager: Disposable {
 
     @JvmField
     val FLAVOUR = GFMCommentAwareFlavourDescriptor()
-
-    @JvmField
-    val CODE_FENCE_PLUGIN_FLAVOUR = CodeFencePluginFlavourDescriptor()
 
     @JvmStatic
     fun getInstance(): MarkdownParserManager {

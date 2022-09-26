@@ -79,6 +79,6 @@ final class PassThroughFilter extends AbstractFilter<Object> {
     if (content instanceof RandomAccess) {
       return Collections.unmodifiableList(content);
     }
-    return new ArrayList<Object>(content);
+    return new ArrayList<>(content);
   }
 }

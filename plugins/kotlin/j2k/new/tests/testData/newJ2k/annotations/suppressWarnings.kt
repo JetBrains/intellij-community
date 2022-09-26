@@ -6,4 +6,7 @@ class A @Suppress("unused") constructor() {
     @Suppress("unused")
     fun a(i: Int) {
     }
+
+    @Suppress("HardCodedStringLiteral")
+    var s = "hello"
 }

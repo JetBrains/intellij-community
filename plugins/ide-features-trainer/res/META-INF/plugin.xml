@@ -31,7 +31,7 @@
 
   <extensionPoints>
     <extensionPoint name="ift.language.extension"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+                    beanClass="training.lang.LangSupportBean" dynamic="true">
       <with attribute="implementationClass" implements="training.lang.LangSupport"/>
     </extensionPoint>
 
@@ -70,7 +70,7 @@
     <applicationService serviceImplementation="training.learn.lesson.LessonStateBase"/>
     <toolWindow id="Learn"
                 canCloseContents="true"
-                icon="training.FeaturesTrainerIcons.Img.FeatureTrainerToolWindow"
+                icon="training.FeaturesTrainerIcons.FeatureTrainerToolWindow"
                 factoryClass="training.ui.LearnToolWindowFactory"
     />
 
@@ -87,6 +87,7 @@
       <action internal="true" id="AutorunAllLessons" class="training.actions.AutorunAllLessons"/>
       <action internal="true" id="AutorunCurrentLesson" class="training.actions.AutorunCurrentLesson"/>
       <action internal="true" id="SetCurrentLessonAsPassed" class="training.actions.SetCurrentLessonAsPassed"/>
+      <action internal="true" id="ResetOnboardingFeedbackState" class="training.actions.ResetOnboardingFeedbackStateAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
@@ -98,7 +99,7 @@
     <!-- Help -->
     <group id="LearnGroup">
       <separator/>
-      <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="training.FeaturesTrainerIcons.Img.FeatureTrainerToolWindow"/>
+      <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="training.FeaturesTrainerIcons.FeatureTrainerToolWindow"/>
       <separator/>
       <add-to-group group-id="HelpMenu" relative-to-action="HelpTopics" anchor="after"/>
     </group>

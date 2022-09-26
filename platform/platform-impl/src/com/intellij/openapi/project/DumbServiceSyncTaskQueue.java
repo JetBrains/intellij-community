@@ -29,7 +29,7 @@ public final class DumbServiceSyncTaskQueue {
    * another synchronous task execution (e.g. when project roots are changes,
    * or in IDEA-240591). Instead of running recursive tasks in-place, we
    * queue these tasks and execute them before we quit from the very first
-   * {@link #runTaskSynchronously(DumbModeTask)}. This behaviour is somewhat
+   * {@code runTaskSynchronously()}. This behaviour is somewhat
    * similar to what we have in the GUI version of {@link DumbServiceImpl}
    */
   public void runTaskSynchronously(@NotNull DumbModeTask task) {

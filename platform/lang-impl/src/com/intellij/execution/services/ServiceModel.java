@@ -168,26 +168,13 @@ final class ServiceModel implements Disposable, InvokerSupplier {
     Runnable handler = () -> {
       LOG.debug("Handle event: " + e);
       switch (e.type) {
-        case SERVICE_ADDED:
-          addService(e);
-          break;
-        case SERVICE_REMOVED:
-          removeService(e);
-          break;
-        case SERVICE_CHANGED:
-          serviceChanged(e);
-          break;
-        case SERVICE_STRUCTURE_CHANGED:
-          serviceStructureChanged(e);
-          break;
-        case SERVICE_GROUP_CHANGED:
-          serviceGroupChanged(e);
-          break;
-        case GROUP_CHANGED:
-          groupChanged(e);
-          break;
-        default:
-          reset(e.contributorClass);
+        case SERVICE_ADDED -> addService(e);
+        case SERVICE_REMOVED -> removeService(e);
+        case SERVICE_CHANGED -> serviceChanged(e);
+        case SERVICE_STRUCTURE_CHANGED -> serviceStructureChanged(e);
+        case SERVICE_GROUP_CHANGED -> serviceGroupChanged(e);
+        case GROUP_CHANGED -> groupChanged(e);
+        default -> reset(e.contributorClass);
       }
       for (ServiceModelEventListener listener : myListeners) {
         listener.eventProcessed(e);

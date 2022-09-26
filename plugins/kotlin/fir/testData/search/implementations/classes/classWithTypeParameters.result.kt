@@ -1,2 +1,2 @@
-FirLightClassForSymbol: Y
-FirLightClassForSymbol: Z
+SymbolLightClass: Y
+SymbolLightClass: Z

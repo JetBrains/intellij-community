@@ -56,9 +56,9 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
 
   private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHActor?): UserPresentation? {
     if (user == null) return null
-    return UserPresentation.Simple(user.login, null, avatarIconsProvider.getIcon(user.avatarUrl))
+    return UserPresentation.Simple(user.login, null, avatarIconsProvider.getIcon(user.avatarUrl, GHUIUtil.AVATAR_SIZE))
   }
 
   private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHUser): UserPresentation =
-    UserPresentation.Simple(user.login, user.name, avatarIconsProvider.getIcon(user.avatarUrl))
+    UserPresentation.Simple(user.login, user.name, avatarIconsProvider.getIcon(user.avatarUrl, GHUIUtil.AVATAR_SIZE))
 }

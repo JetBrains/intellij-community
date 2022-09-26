@@ -21,9 +21,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class AllTodosTreeStructure extends TodoTreeStructure {
   public AllTodosTreeStructure(final Project project) {
     super(project);

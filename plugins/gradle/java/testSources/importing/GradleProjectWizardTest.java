@@ -72,6 +72,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
         assertNull(GradleJavaNewProjectWizardData.getParentData(step));
         assertEquals("untitled", NewProjectWizardBaseData.getName(step));
         assertEquals(projectPath, NewProjectWizardBaseData.getPath(step));
+        GradleJavaNewProjectWizardData.setAddSampleCode(step, false);
       });
     });
     GradleImportingTestUtil.waitForProjectReload(() -> {
@@ -81,6 +82,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
         assertNull(GradleJavaNewProjectWizardData.getParentData(step));
         assertEquals("untitled1", NewProjectWizardBaseData.getName(step));
         assertEquals(projectPath, NewProjectWizardBaseData.getPath(step));
+        GradleJavaNewProjectWizardData.setAddSampleCode(step, false);
       });
     });
     assertModules(
@@ -98,6 +100,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
         GradleJavaNewProjectWizardData.setParentData(step, projectNode1.getData());
         assertEquals("untitled2", NewProjectWizardBaseData.getName(step));
         assertEquals(externalProjectPath1, NewProjectWizardBaseData.getPath(step));
+        GradleJavaNewProjectWizardData.setAddSampleCode(step, false);
       });
     });
     GradleImportingTestUtil.waitForProjectReload(() -> {
@@ -107,6 +110,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
         GradleJavaNewProjectWizardData.setParentData(step, projectNode2.getData());
         assertEquals("untitled2", NewProjectWizardBaseData.getName(step));
         assertEquals(externalProjectPath2, NewProjectWizardBaseData.getPath(step));
+        GradleJavaNewProjectWizardData.setAddSampleCode(step, false);
       });
     });
     assertModules(
@@ -125,7 +129,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
         NewProjectWizardBaseData.setName(step, projectName);
         LanguageNewProjectWizardData.setLanguage(step, "Java");
         BuildSystemJavaNewProjectWizardData.setBuildSystem(step, "Gradle");
-        GradleJavaNewProjectWizardData.setGroupId(step, "");
+        GradleJavaNewProjectWizardData.setAddSampleCode(step, false);
       });
     });
 
@@ -147,6 +151,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
                  "    id 'java'\n" +
                  "}\n" +
                  "\n" +
+                 "group 'org.example'\n" +
                  "version '1.0-SNAPSHOT'\n" +
                  "\n" +
                  "repositories {\n" +
@@ -173,7 +178,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
         BuildSystemJavaNewProjectWizardData.setBuildSystem(step, "Gradle");
         assertEquals(projectName, GradleJavaNewProjectWizardData.getParentData(step).getExternalName());
         GradleJavaNewProjectWizardData.setArtifactId(step, "childModule");
-        GradleJavaNewProjectWizardData.setGroupId(step, "");
+        GradleJavaNewProjectWizardData.setAddSampleCode(step, false);
       });
     });
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());

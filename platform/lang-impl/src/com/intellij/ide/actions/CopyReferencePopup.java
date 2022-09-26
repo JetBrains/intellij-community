@@ -19,6 +19,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,7 +108,8 @@ public class CopyReferencePopup extends NonTrivialActionGroup {
             if (qualifiedName != null) {
               myInfoLabel.setText(qualifiedName);
             }
-            Color foreground = isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor();
+            Color foreground;
+            foreground = isSelected ? NamedColorUtil.getListSelectionForeground(true) : NamedColorUtil.getInactiveTextColor();
             myInfoLabel.setForeground(foreground);
             myShortcutLabel.setForeground(foreground);
 

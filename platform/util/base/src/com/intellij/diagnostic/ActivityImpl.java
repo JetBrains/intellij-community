@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -29,6 +29,10 @@ public final class ActivityImpl implements Activity {
   @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
   public static volatile Consumer<ActivityImpl> listener;
+
+  ActivityImpl(@Nullable String name, long start, @Nullable ActivityImpl parent) {
+    this(name, start, parent, null);
+  }
 
   ActivityImpl(@Nullable String name, long start, @Nullable ActivityImpl parent, @Nullable String pluginId) {
     this(name, start, parent, pluginId, null);
@@ -107,8 +111,12 @@ public final class ActivityImpl implements Activity {
 
   @Override
   public void end() {
+    end(StartUpMeasurer.getCurrentTime());
+  }
+
+  void end(long time) {
     assert end == 0 : "not started or already ended";
-    end = StartUpMeasurer.getCurrentTime();
+    end = time;
     StartUpMeasurer.addActivity(this);
 
     Consumer<ActivityImpl> listener = ActivityImpl.listener;
@@ -123,8 +131,12 @@ public final class ActivityImpl implements Activity {
   }
 
   @Override
-  public @NotNull Activity endAndStart(@NotNull String name) {
-    end();
+  public @NotNull ActivityImpl endAndStart(@NotNull String name) {
+    return endAndStart(StartUpMeasurer.getCurrentTime(), name);
+  }
+
+  @NotNull ActivityImpl endAndStart(long time, @NotNull String name) {
+    end(time);
     return new ActivityImpl(name, /* start = */end, parent, /* level = */ pluginId, category);
   }
 

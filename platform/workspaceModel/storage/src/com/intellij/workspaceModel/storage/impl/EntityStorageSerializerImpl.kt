@@ -16,6 +16,7 @@ import com.esotericsoftware.kryo.kryo5.serializers.MapSerializer
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.*
@@ -38,6 +39,7 @@ import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
 import java.util.*
 import kotlin.reflect.KClass
+import kotlin.system.measureNanoTime
 
 private val LOG = logger<EntityStorageSerializerImpl>()
 
@@ -77,7 +79,7 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v38"
+    const val SERIALIZER_VERSION = "v40"
   }
 
   internal val KRYO_BUFFER_SIZE = 64 * 1024
@@ -326,17 +328,30 @@ class EntityStorageSerializerImpl(
 
       saveContributedVersions(kryo, output)
 
-      val entityDataSequence = storage.entitiesByType.entityFamilies.filterNotNull().asSequence().flatMap { family ->
-        family.entities.asSequence().filterNotNull()
+      var newCacheType = Registry.`is`("ide.workspace.model.generated.code.for.cache", true)
+      if (newCacheType) {
+        try {
+          collectAndRegisterClasses(kryo, output, storage)
+        }
+        catch (e: NotGeneratedRuntimeException) {
+          LOG.warn(e)
+          newCacheType = false
+        }
       }
-      collectAndRegisterClasses(kryo, output, entityDataSequence)
+      if (!newCacheType) {
+        val entityDataSequence = storage.entitiesByType.entityFamilies.filterNotNull().asSequence().flatMap { family ->
+          family.entities.asSequence().filterNotNull()
+        }
+        collectAndRegisterClasses(kryo, output, entityDataSequence)
+      }
+
 
       // Serialize and register persistent ids
-      val persistentIds = storage.indexes.persistentIdIndex.entries().toSet()
-      output.writeVarInt(persistentIds.size, true)
-      persistentIds.forEach {
-        val typeInfo = it::class.java.typeInfo
-        kryo.register(it::class.java)
+      val persistentIdClasses = storage.indexes.persistentIdIndex.entries().mapTo(HashSet()) { it::class.java }
+      output.writeVarInt(persistentIdClasses.size, true)
+      persistentIdClasses.forEach {
+        val typeInfo = it.typeInfo
+        kryo.register(it)
         kryo.writeClassAndObject(output, typeInfo)
       }
 
@@ -377,6 +392,52 @@ class EntityStorageSerializerImpl(
     }
   }
 
+  private fun collectAndRegisterClasses(kryo: Kryo, output: Output, entityStorage: EntityStorageSnapshotImpl) {
+    val collector = UsedClassesCollector()
+    for (entityFamily in entityStorage.entitiesByType.entityFamilies) {
+      entityFamily?.entities?.forEach { entity ->
+        if (entity == null) return@forEach
+        collector.add(entity::class.java)
+        entity.collectClassUsagesData(collector)
+        if (collector.sameForAllEntities) {
+          return@forEach
+        }
+      }
+    }
+
+    val simpleClasses = HashMap<TypeInfo, Class<out Any>>()
+    val objectClasses = HashMap<TypeInfo, Class<out Any>>()
+    entityStorage.indexes.entitySourceIndex.entries().forEach {
+      collector.add(it::class.java)
+      recursiveClassFinder(kryo, it, simpleClasses, objectClasses)
+    }
+
+    entityStorage.indexes.virtualFileIndex.vfu2EntityId.forEach { virtualFileUrl, object2LongOpenHashMap ->
+      collector.add(virtualFileUrl::class.java)
+    }
+
+    collector.collectionToInspection.forEach { data ->
+      recursiveClassFinder(kryo, data, simpleClasses, objectClasses)
+    }
+
+    simpleClasses.forEach { collector.add(it.value) }
+    objectClasses.forEach { collector.addObject(it.value) }
+
+    output.writeVarInt(collector.collectionObjects.size, true)
+    collector.collectionObjects.forEach { clazz ->
+      kryo.register(clazz)
+      // TODO switch to only write object
+      kryo.writeClassAndObject(output, clazz.typeInfo)
+    }
+
+    output.writeVarInt(collector.collection.size, true)
+    collector.collection.forEach { clazz ->
+      kryo.register(clazz)
+      // TODO switch to only write object
+      kryo.writeClassAndObject(output, clazz.typeInfo)
+    }
+  }
+
   internal fun collectAndRegisterClasses(kryo: Kryo, output: Output, entityDataSequence: Sequence<WorkspaceEntityData<*>>) {
     // Collect all classes existing in entity data
     val simpleClasses = HashMap<TypeInfo, Class<out Any>>()
@@ -399,35 +460,50 @@ class EntityStorageSerializerImpl(
   }
 
   override fun deserializeCache(stream: InputStream): Result<MutableEntityStorage?> {
+    LOG.debug("Start deserializing workspace model cache")
     val deserializedCache = Input(stream, KRYO_BUFFER_SIZE).use { input ->
       val (kryo, classesCache) = createKryo()
 
       try { // Read version
-        val cacheVersion = input.readString()
-        if (cacheVersion != serializerDataFormatVersion) {
-          LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
-          return Result.success(null)
-        }
+        measureNanoTime {
+          val cacheVersion = input.readString()
+          if (cacheVersion != serializerDataFormatVersion) {
+            LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
+            return Result.success(null)
+          }
 
-        if (!checkContributedVersion(kryo, input)) return Result.success(null)
+          if (!checkContributedVersion(kryo, input)) return Result.success(null)
+        }.also { LOG.debug("Load version and contributed versions: $it ns") }
 
-        readAndRegisterClasses(input, kryo, classesCache)
+        measureNanoTime {
+          readAndRegisterClasses(input, kryo, classesCache)
+        }.also { LOG.debug("Read and register classes: $it ns") }
 
         // Read and register persistent ids
-        val persistentIdCount = input.readVarInt(true)
-        repeat(persistentIdCount) {
-          val objectClass = kryo.readClassAndObject(input) as TypeInfo
-          val resolvedClass = typesResolver.resolveClass(objectClass.name, objectClass.pluginId)
-          kryo.register(resolvedClass)
-          classesCache.putIfAbsent(objectClass, resolvedClass.toClassId())
-        }
+        measureNanoTime {
+          val persistentIdCount = input.readVarInt(true)
+          repeat(persistentIdCount) {
+            val objectClass = kryo.readClassAndObject(input) as TypeInfo
+            val resolvedClass = typesResolver.resolveClass(objectClass.name, objectClass.pluginId)
+            kryo.register(resolvedClass)
+            classesCache.putIfAbsent(objectClass, resolvedClass.toClassId())
+          }
+        }.also { LOG.debug("Read and register persistent ids: $it ns") }
+
+        var time = System.nanoTime()
 
         // Read entity data and references
         val entitiesBarrel = kryo.readClassAndObject(input) as ImmutableEntitiesBarrel
         val refsTable = kryo.readObject(input, RefsTable::class.java)
 
+        LOG.debug("Read data and references: " + (System.nanoTime() - time) + " ns")
+        time = System.nanoTime()
+
         // Read indexes
         val softLinks = kryo.readObject(input, MultimapStorageIndex::class.java)
+
+        LOG.debug("Read soft links: " + (System.nanoTime() - time) + " ns")
+        time = System.nanoTime()
 
         val entityId2VirtualFileUrlInfo = kryo.readObject(input, Long2ObjectOpenHashMap::class.java) as Long2ObjectOpenHashMap<Any>
         val vfu2VirtualFileUrlInfo = kryo.readObject(input,
@@ -436,8 +512,18 @@ class EntityStorageSerializerImpl(
 
         val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo, entityId2JarDir)
 
+        LOG.debug("Read virtual file index: " + (System.nanoTime() - time) + " ns")
+        time = System.nanoTime()
+
         val entitySourceIndex = kryo.readObject(input, EntityStorageInternalIndex::class.java) as EntityStorageInternalIndex<EntitySource>
+
+        LOG.debug("Read virtual file index: " + (System.nanoTime() - time) + " ns")
+        time = System.nanoTime()
+
         val persistentIdIndex = kryo.readObject(input, PersistentIdInternalIndex::class.java)
+
+        LOG.debug("Persistent id index: " + (System.nanoTime() - time) + " ns")
+
         val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
 
         val storage = EntityStorageSnapshotImpl(entitiesBarrel, refsTable, storageIndexes)

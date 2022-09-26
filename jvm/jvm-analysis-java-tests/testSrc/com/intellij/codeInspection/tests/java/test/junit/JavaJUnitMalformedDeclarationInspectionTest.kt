@@ -683,7 +683,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
   fun `test malformed setup highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class C extends junit.framework.TestCase {
-        private void <warning descr="Method 'setUp' should be a non-private, non-static, have no parameters and be of type void">setUp</warning>(int i) { }
+        private void <warning descr="Method 'setUp' should be non-private, non-static, have no parameters and of type void">setUp</warning>(int i) { }
       }  
     """.trimIndent())
   }
@@ -897,10 +897,10 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
   fun `test malformed test for JUnit 3 highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class JUnit3TestMethodIsPublicVoidNoArg extends junit.framework.TestCase {
-        void <warning descr="Method 'testOne' should be a public, non-static, have no parameters and be of type void">testOne</warning>() { }
-        public int <warning descr="Method 'testTwo' should be a public, non-static, have no parameters and be of type void">testTwo</warning>() { return 2; }
-        public static void <warning descr="Method 'testThree' should be a public, non-static, have no parameters and be of type void">testThree</warning>() { }
-        public void <warning descr="Method 'testFour' should be a public, non-static, have no parameters and be of type void">testFour</warning>(int i) { }
+        void <warning descr="Method 'testOne' should be public, non-static, have no parameters and of type void">testOne</warning>() { }
+        public int <warning descr="Method 'testTwo' should be public, non-static, have no parameters and of type void">testTwo</warning>() { return 2; }
+        public static void <warning descr="Method 'testThree' should be public, non-static, have no parameters and of type void">testThree</warning>() { }
+        public void <warning descr="Method 'testFour' should be public, non-static, have no parameters and of type void">testFour</warning>(int i) { }
         public void testFive() { }
         void testSix(int i) { } //ignore when method doesn't look like test anymore
       }
@@ -930,39 +930,45 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       }
     """.trimIndent())
   }
-
-  fun `test malformed test for JUnit 5 with ParameterResolver`() {
+  fun `test malformed test with parameter resolver`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
-      class SampleClazz {
+      import org.junit.jupiter.api.extension.*;
+      import org.junit.jupiter.api.Test;
+      
+      class MyResolver implements ParameterResolver {
+        @Override
+        public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+          return true;
+        }
+           
+        @Override
+        public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException { 
+          return null;
+        }
+      }
+      
+      @ExtendWith(MyResolver.class)
+      class Foo {
+        @Test
+        void parametersExample(String a, String b) { }
+      }
+      
+      @ExtendWith(MyResolver.class)
+      @interface ResolverAnnotation { }
+      
+      @ExtendWith(MyResolver.class)
+      class Bar {
         @org.junit.jupiter.api.extension.RegisterExtension
-        static final IntegerResolver integerResolver = new IntegerResolver();
-
-        @org.junit.jupiter.params.ParameterizedTest
-        @org.junit.jupiter.params.provider.MethodSource("factoryMethodWithArguments")
-        void testWithArgumentsProviderUsingParameterResolvers(String argument) {}
-
-        static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> factoryMethodWithArguments(int quantity) {
-            return java.util.stream.Stream.of(
-                    org.junit.jupiter.params.provider.Arguments.arguments(quantity + " apple"),
-                    org.junit.jupiter.params.provider.Arguments.arguments(quantity + " lemon")
-            );
-        }
-    
-        static class IntegerResolver implements org.junit.jupiter.api.extension.ParameterResolver {
-    
-            @Override
-            public boolean supportsParameter(org.junit.jupiter.api.extension.ParameterContext parameterContext, org.junit.jupiter.api.extension.ExtensionContext extensionContext)
-                    throws org.junit.jupiter.api.extension.ParameterResolutionException {
-                return parameterContext.getParameter().getType() == int.class;
-            }
-    
-            @Override
-            public Object resolveParameter(org.junit.jupiter.api.extension.ParameterContext parameterContext, org.junit.jupiter.api.extension.ExtensionContext extensionContext)
-                    throws org.junit.jupiter.api.extension.ParameterResolutionException {
-                return 2;
-            }
-        }
-    }
+        static final MyResolver integerResolver = new MyResolver();
+      
+        @Test
+        void parametersExample(String a, String b) { }
+      }
+      
+      class FooBar {
+        @Test
+        void parametersExample(@ResolverAnnotation String a, @ResolverAnnotation String b) { }
+      }
     """.trimIndent())
   }
 }

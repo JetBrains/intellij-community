@@ -623,7 +623,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public boolean isMavenizedModule(@NotNull Module m) {
-    return ReadAction.compute(() -> !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized());
+    return MavenUtil.isMavenizedModule(m);
   }
 
   @TestOnly
@@ -791,7 +791,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       return VirtualFileManager.getInstance().findFileByUrl(pomFileUrl);
     }
     for (VirtualFile root : modelsProvider.getContentRoots(module)) {
-      List<VirtualFile> pomFiles = MavenUtil.streamPomFiles(module.getProject(), root).collect(Collectors.toList());
+      List<VirtualFile> pomFiles = MavenUtil.streamPomFiles(module.getProject(), root).toList();
       if (pomFiles.isEmpty()) {
         continue;
       }
@@ -1052,7 +1052,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         return;
       }
 
-      final ResolveContext context = new ResolveContext();
+      final ResolveContext context = new ResolveContext(getProjectsTree());
       Runnable onCompletion = () -> {
         if (hasScheduledProjects()) {
           scheduleImportChangedProjects().processed(result);
@@ -1256,6 +1256,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @TestOnly
   public boolean hasScheduledImportsInTests() {
+    checkNoLegacyImportInNewTests();
     if (!isInitialized()) return false;
     return !myImportingQueue.isEmpty();
   }
@@ -1264,6 +1265,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   public void performScheduledImportInTests() {
     if (!isInitialized()) return;
     runWhenFullyOpen(() -> myImportingQueue.flush());
+  }
+
+  private static void checkNoLegacyImportInNewTests() {
+    if (ApplicationManager.getApplication().isUnitTestMode() && MavenUtil.isLinearImportEnabled()) {
+      throw new IllegalStateException("Do not call this API in tests");
+    }
   }
 
   private void runWhenFullyOpen(final Runnable runnable) {
@@ -1446,7 +1453,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
 
   /**
-   * @param listener
    * @deprecated use addManagerListener(Listener, Disposable) instead
    */
   @Deprecated

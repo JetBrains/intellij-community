@@ -14,6 +14,7 @@ interface ModuleTestEntity : WorkspaceEntityWithPersistentId {
   val name: String
 
   val contentRoots: List<@Child ContentRootTestEntity>
+  val facets: List<@Child FacetTestEntity>
 
   override val persistentId: PersistentEntityId<WorkspaceEntityWithPersistentId>
     get() = ModuleTestEntityPersistentId(name)
@@ -21,9 +22,10 @@ interface ModuleTestEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ModuleTestEntity, ModifiableWorkspaceEntity<ModuleTestEntity>, ObjBuilder<ModuleTestEntity> {
-    override var name: String
     override var entitySource: EntitySource
+    override var name: String
     override var contentRoots: List<ContentRootTestEntity>
+    override var facets: List<FacetTestEntity>
   }
 
   companion object : Type<ModuleTestEntity, Builder>() {
@@ -51,8 +53,8 @@ interface ContentRootTestEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ContentRootTestEntity, ModifiableWorkspaceEntity<ContentRootTestEntity>, ObjBuilder<ContentRootTestEntity> {
-    override var module: ModuleTestEntity
     override var entitySource: EntitySource
+    override var module: ModuleTestEntity
     override var sourceRootOrder: SourceRootTestOrderEntity?
     override var sourceRoots: List<SourceRootTestEntity>
   }
@@ -80,8 +82,8 @@ interface SourceRootTestOrderEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SourceRootTestOrderEntity, ModifiableWorkspaceEntity<SourceRootTestOrderEntity>, ObjBuilder<SourceRootTestOrderEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var contentRoot: ContentRootTestEntity
   }
 
@@ -110,8 +112,8 @@ interface SourceRootTestEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SourceRootTestEntity, ModifiableWorkspaceEntity<SourceRootTestEntity>, ObjBuilder<SourceRootTestEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var contentRoot: ContentRootTestEntity
   }
 
@@ -136,3 +138,43 @@ data class ModuleTestEntityPersistentId(val name: String) : PersistentEntityId<M
   override val presentableName: String
     get() = name
 }
+
+data class FacetTestEntityPersistentId(val name: String) : PersistentEntityId<FacetTestEntity> {
+  override val presentableName: String
+    get() = name
+}
+
+interface FacetTestEntity : WorkspaceEntityWithPersistentId {
+  val data: String
+  val moreData: String
+  val module: ModuleTestEntity
+
+  override val persistentId: PersistentEntityId<WorkspaceEntityWithPersistentId>
+    get() = FacetTestEntityPersistentId(data)
+
+  //region generated code
+  @GeneratedCodeApiVersion(1)
+  interface Builder : FacetTestEntity, ModifiableWorkspaceEntity<FacetTestEntity>, ObjBuilder<FacetTestEntity> {
+    override var entitySource: EntitySource
+    override var data: String
+    override var moreData: String
+    override var module: ModuleTestEntity
+  }
+
+  companion object : Type<FacetTestEntity, Builder>() {
+    operator fun invoke(data: String, moreData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FacetTestEntity {
+      val builder = builder()
+      builder.data = data
+      builder.moreData = moreData
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
+  }
+  //endregion
+}
+
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: FacetTestEntity, modification: FacetTestEntity.Builder.() -> Unit) = modifyEntity(
+  FacetTestEntity.Builder::class.java, entity, modification)
+//endregion

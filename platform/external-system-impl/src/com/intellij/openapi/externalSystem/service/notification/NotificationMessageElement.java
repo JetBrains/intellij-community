@@ -64,25 +64,13 @@ public class NotificationMessageElement extends NavigatableMessageElement {
 
       @NotNull
       private Icon getIcon(@NotNull ErrorTreeElementKind kind) {
-        Icon icon = ICON_16;
-        switch (kind) {
-          case INFO:
-            icon = AllIcons.General.Information;
-            break;
-          case ERROR:
-            icon = AllIcons.General.Error;
-            break;
-          case WARNING:
-            icon = AllIcons.General.Warning;
-            break;
-          case NOTE:
-            icon = AllIcons.General.Tip;
-            break;
-          case GENERIC:
-            icon = ICON_16;
-            break;
-        }
-        return icon;
+        return switch (kind) {
+          case INFO -> AllIcons.General.Information;
+          case ERROR -> AllIcons.General.Error;
+          case WARNING -> AllIcons.General.Warning;
+          case NOTE -> AllIcons.General.Tip;
+          case GENERIC -> ICON_16;
+        };
       }
     };
 

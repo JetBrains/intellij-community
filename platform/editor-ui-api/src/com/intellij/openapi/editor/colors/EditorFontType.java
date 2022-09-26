@@ -43,15 +43,11 @@ public enum EditorFontType {
   }
 
   public static @NotNull EditorFontType forJavaStyle(@JdkConstants.FontStyle int style) {
-    switch (style) {
-      case Font.BOLD:
-        return BOLD;
-      case Font.ITALIC:
-        return ITALIC;
-      case Font.BOLD | Font.ITALIC :
-        return BOLD_ITALIC;
-      default:
-        return PLAIN;
-    }
+    return switch (style) {
+      case Font.BOLD -> BOLD;
+      case Font.ITALIC -> ITALIC;
+      case Font.BOLD | Font.ITALIC -> BOLD_ITALIC;
+      default -> PLAIN;
+    };
   }
 }

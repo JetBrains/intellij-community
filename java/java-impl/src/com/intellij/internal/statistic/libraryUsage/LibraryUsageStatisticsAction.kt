@@ -18,7 +18,6 @@ internal class LibraryUsageStatisticsAction : AnAction() {
     e.presentation.isEnabledAndVisible = e.project != null
   }
 
-
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val editor = e.getRequiredData(CommonDataKeys.EDITOR)
@@ -27,11 +26,10 @@ internal class LibraryUsageStatisticsAction : AnAction() {
     val fileType = psiFile.fileType
     fun showErrorHint(message: String): Unit = HintManager.getInstance().showErrorHint(editor, message)
 
-    val processor = LibraryUsageImportProcessor.EP_NAME.findFirstSafe { it.isApplicable(fileType) }
+    val processor = LibraryUsageImportProcessorBean.INSTANCE.forLanguage(psiFile.language)
                     ?: return showErrorHint("LibraryUsageImportProcessor is not found for ${fileType.name} file type")
 
-    val libraryDescriptorFinder = service<LibraryDescriptorFinderService>().cachedLibraryDescriptorFinder()
-                                  ?: return showErrorHint("LibraryDescriptorFinder is not cached")
+    val libraryDescriptorFinder = service<LibraryDescriptorFinderService>()
 
     val import = processor.imports(psiFile).find { caretOffset in it.textRange } ?: return showErrorHint("import at caret is not found")
     val qualifier = processor.importQualifier(import) ?: return showErrorHint("qualifier is null")

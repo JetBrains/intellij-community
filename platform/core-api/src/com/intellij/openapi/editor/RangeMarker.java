@@ -70,8 +70,8 @@ public interface RangeMarker extends UserDataHolder, Segment {
   int getEndOffset();
 
   /**
-   * Checks if the marker has been invalidated by deleting the entire fragment of text
-   * containing the marker.
+   * Checks whether the marker is still alive, or it has been invalidated, either by deleting
+   * the entire fragment of text containing the marker, or by an explicit call to {@link #dispose()}.
    *
    * @return true if the marker is valid, false if it has been invalidated.
    */
@@ -108,10 +108,11 @@ public interface RangeMarker extends UserDataHolder, Segment {
 
   /**
    * Destroys and de-registers the range marker.
-   * After this method call the {@link #isValid()} returns {@code true} always,
-   * and the behaviour of all other methods is undefined, which means they could throw exceptions.                    `
-   * Calling this method is not strictly necessary, because range markers are garbage-collectable,
-   * but could help performance in case of high GC pressure (see {@link RangeMarker} javadoc).
+   * <p>
+   * From the moment this method is called, {@link #isValid()} starts returning {@code false},
+   * and the behaviour of all other methods becomes undefined, which means they can throw exceptions.
+   * Calling this method is not strictly necessary because range markers are garbage-collectable,
+   * but may help improve performance in case of a high GC pressure (see the {@link RangeMarker} javadoc).
    */
   void dispose();
 

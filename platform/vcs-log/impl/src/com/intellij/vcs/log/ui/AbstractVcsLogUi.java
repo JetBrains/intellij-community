@@ -199,16 +199,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
     return commitId.toString();
   }
 
-  protected void showWarningWithLink(@Nls @NotNull String mainText, @Nls @NotNull String linkText, @NotNull Runnable onClick) {
-    VcsBalloonProblemNotifier.showOverChangesView(myProject, mainText, MessageType.WARNING,
-                                                  new NamedRunnable(linkText) {
-                                                    @Override
-                                                    public void run() {
-                                                      onClick.run();
-                                                    }
-                                                  });
-  }
-
   @Override
   public void addLogListener(@NotNull VcsLogListener listener) {
     ApplicationManager.getApplication().assertIsDispatchThread();

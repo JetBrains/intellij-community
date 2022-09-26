@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.*;
@@ -30,10 +29,6 @@ import java.util.Map;
  */
 @SuppressWarnings("UseJBColor")
 public final class JBUI {
-  static {
-    LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
-  }
-
   /**
    * Returns the pixel scale factor, corresponding to the default monitor device.
    */
@@ -391,7 +386,19 @@ public final class JBUI {
     }
 
     public static final class Banner {
+      public static final Color INFO_BACKGROUND = JBColor.namedColor("Banner.infoBackground", 0xF5F8FE, 0x25324D);
+      public static final Color INFO_BORDER_COLOR = JBColor.namedColor("Banner.infoBorderColor", 0xCFDEFC, 0x35538F);
+
+      public static final Color SUCCESS_BACKGROUND = JBColor.namedColor("Banner.successBackground", 0xF2FCF3, 0x253627);
+      public static final Color SUCCESS_BORDER_COLOR = JBColor.namedColor("Banner.successBorderColor", 0xC1E5C3, 0x375239);
+
       public static final Color WARNING_BACKGROUND = JBColor.namedColor("Banner.warningBackground", 0xfff8e3, 0x3d3223);
+      public static final Color WARNING_BORDER_COLOR = JBColor.namedColor("Banner.warningBorderColor", 0xFCDB8D, 0x5E4D33);
+
+      public static final Color ERROR_BACKGROUND = JBColor.namedColor("Banner.errorBackground", 0xFFF5F5, 0x402929);
+      public static final Color ERROR_BORDER_COLOR = JBColor.namedColor("Banner.errorBorderColor", 0xFCD4D4, 0x5E3838);
+
+      public static final Color FOREGROUND = JBColor.namedColor("Banner.foreground", 0x0, 0xDFE1E5);
     }
 
     public static final class Button {
@@ -488,7 +495,7 @@ public final class JBUI {
       }
 
       public static int menuPopupMinWidth() {
-        return JBUI.scale(180);
+        return scale(180);
       }
     }
 
@@ -812,6 +819,21 @@ public final class JBUI {
       }
     }
 
+    public static final class Toolbar {
+
+      public static Insets toolbarButtonInsets(boolean isMainToolbar) {
+        return isMainToolbar ? mainToolbarButtonInsets() : toolbarButtonInsets();
+      }
+
+      public static Insets toolbarButtonInsets() {
+        return insets("Toolbar.Button.buttonInsets", JBInsets.create(1, 2));
+      }
+
+      public static Insets mainToolbarButtonInsets() {
+        return insets("MainToolbar.Button.buttonInsets", JBInsets.create(1, 2));
+      }
+    }
+
     public static final class Label {
       public static @NotNull Color foreground(boolean selected) {
         return selected ? JBColor.namedColor("Label.selectedForeground", 0xFFFFFF)
@@ -978,6 +1000,36 @@ public final class JBUI {
       }
     }
 
+    public static final class Menu {
+
+      public static final class Selection {
+        public static @NotNull JBInsets innerInsets() {
+          return insets("Menu.Selection.innerInsets", insets(2, 2));
+        }
+
+        public static @NotNull JBInsets outerInsets() {
+          return insets("Menu.Selection.outerInsets", insets(1, 4));
+        }
+
+        public static final JBValue ARC = new JBValue.UIInteger("Menu.Selection.arc", 8);
+      }
+    }
+
+    public static final class PopupMenu {
+
+      public static final class Selection {
+        public static @NotNull JBInsets innerInsets() {
+          return insets("PopupMenu.Selection.innerInsets", insets(2, 10));
+        }
+
+        public static @NotNull JBInsets outerInsets() {
+          return insets("PopupMenu.Selection.outerInsets", insets(1, 4));
+        }
+
+        public static final JBValue ARC = new JBValue.UIInteger("PopupMenu.Selection.arc", 8);
+      }
+    }
+
     public static final class Focus {
       private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
 
@@ -1135,30 +1187,6 @@ public final class JBUI {
       @Deprecated(forRemoval = true)
       public static @NotNull Color linkColor() {
         return Foreground.ENABLED;
-      }
-
-      /**
-       * @deprecated use {@link Foreground#HOVERED} instead
-       */
-      @Deprecated(forRemoval = true)
-      public static @NotNull Color linkHoverColor() {
-        return Foreground.HOVERED;
-      }
-
-      /**
-       * @deprecated use {@link Foreground#PRESSED} instead
-       */
-      @Deprecated(forRemoval = true)
-      public static @NotNull Color linkPressedColor() {
-        return Foreground.PRESSED;
-      }
-
-      /**
-       * @deprecated use {@link Foreground#VISITED} instead
-       */
-      @Deprecated(forRemoval = true)
-      public static @NotNull Color linkVisitedColor() {
-        return Foreground.VISITED;
       }
     }
 
@@ -1330,6 +1358,22 @@ public final class JBUI {
         return result <= 0 ? defaultHeight : result;
       }
 
+      static int buttonLeftRightInsets() {
+        return getInt("List.Button.leftRightInset", 8);
+      }
+
+      static Color buttonHoverBackground() {
+        return JBColor.namedColor("List.Button.hoverBackground");
+      }
+
+      static Color buttonSeparatorColor() {
+        return JBColor.namedColor("List.Button.separatorColor", Popup.BACKGROUND);
+      }
+
+      static Color lineHoverBackground(boolean focused) {
+        return JBColor.namedColor("List.Line.hoverBackground", Selection.background(focused));
+      }
+
       final class Selection {
         private static final Color BACKGROUND = JBColor.namedColor("List.selectionBackground", DEFAULT_RENDERER_SELECTION_BACKGROUND);
         private static final Color FOREGROUND = JBColor.namedColor("List.selectionForeground", Label.foreground(true));
@@ -1363,6 +1407,11 @@ public final class JBUI {
         private interface Inactive {
           Color BACKGROUND = JBColor.namedColor("List.hoverInactiveBackground", DEFAULT_RENDERER_HOVER_INACTIVE_BACKGROUND);
         }
+      }
+
+      interface Tag {
+        Color BACKGROUND = JBColor.namedColor("List.Tag.background", new JBColor(0xEBECF0, 0x393B40));
+        Color FOREGROUND = JBColor.namedColor("List.Tag.foreground", new JBColor(0x494B57, 0xA8ADBD));
       }
     }
 

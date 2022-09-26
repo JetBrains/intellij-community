@@ -13,6 +13,7 @@ import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.impl.artifacts.UnknownPackagingElementTypeException
 import com.intellij.packaging.impl.elements.*
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
@@ -87,7 +88,7 @@ internal fun CompositePackagingElementEntity.toCompositeElement(
             mutableMapping.addMapping(this, element)
           }
           else {
-            WorkspaceModel.getInstance(project).updateProjectModelSilent {
+            (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent {
               val mutableMapping = it.mutableElements
               mutableMapping.addMapping(this, element)
             }
@@ -216,7 +217,7 @@ fun PackagingElementEntity.toElement(project: Project, storage: VersionedEntityS
           mutableMapping.addIfAbsent(this, element)
         }
         else {
-          WorkspaceModel.getInstance(project).updateProjectModelSilent {
+          (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent {
             val mutableMapping = it.mutableElements
             mutableMapping.addIfAbsent(this, element)
           }

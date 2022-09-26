@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.idea.Main;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.diagnostic.*;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -40,7 +40,7 @@ public final class DialogAppender extends Handler {
 
   @Override
   public void publish(LogRecord event) {
-    if (event.getLevel().intValue() < Level.SEVERE.intValue() || Main.isCommandLine()) {
+    if (event.getLevel().intValue() < Level.SEVERE.intValue() || AppMode.isCommandLine()) {
       return;  // the dialog appender doesn't deal with non-critical errors and is meaningless when there is no frame to show an error icon
     }
 

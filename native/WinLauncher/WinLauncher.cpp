@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include <algorithm>
 #include <cstdio>
@@ -37,6 +37,7 @@ HANDLE hFileMapping;
 HANDLE hEvent;
 HANDLE hSingleInstanceWatcherThread;
 const int FILE_MAPPING_SIZE = 16000;
+const int FILE_MAPPING_CMD_OFFSET = sizeof(DWORD);
 
 void TrimLine(char* line);
 
@@ -723,9 +724,10 @@ DWORD WINAPI SingleInstanceThread(LPVOID args)
     WaitForSingleObject(hEvent, INFINITE);
     if (terminating) break;
 
-    wchar_t *view = static_cast<wchar_t *>(MapViewOfFile(hFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0));
+    void *view = MapViewOfFile(hFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
     if (!view) continue;
-    std::wstring command(view);
+    void *cmdView = (char*)view + FILE_MAPPING_CMD_OFFSET;
+    std::wstring command(static_cast<wchar_t *>(cmdView));
     int pos = command.find('\n');
     if (pos >= 0)
     {
@@ -779,10 +781,32 @@ void SendCommandLineToFirstInstance(int response_id)
   void *view = MapViewOfFile(hFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
   if (view)
   {
-    memcpy(view, command.c_str(), (command.size() + 1) * sizeof(wchar_t));
+    DWORD pid = *(DWORD*)view;
+    AllowSetForegroundWindow(pid);
+
+    void *cmdView = (char*)view + FILE_MAPPING_CMD_OFFSET;
+    memcpy(cmdView, command.c_str(), (command.size() + 1) * sizeof(wchar_t));
     UnmapViewOfFile(view);
   }
   SetEvent(hEvent);
+}
+
+// returns 'true' if file mapping has been created, and 'false' if existing one has been opened
+static bool CreateOrOpenFileMapping(const char* name) {
+  hFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, name);
+  if (hFileMapping) {
+    return false;
+  } else {
+    hFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE, name);
+    if (hFileMapping) {
+      DWORD *view = (DWORD*)MapViewOfFile(hFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+      if (view) {
+        *view = GetCurrentProcessId();
+        UnmapViewOfFile(view);
+      }
+    }
+    return true;
+  }
 }
 
 int CheckSingleInstance()
@@ -802,11 +826,8 @@ int CheckSingleInstance()
 
   hEvent = CreateEventA(NULL, FALSE, FALSE, eventName.c_str());
 
-  hFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, mappingName.c_str());
-  if (!hFileMapping)
+  if (CreateOrOpenFileMapping(mappingName.c_str()))
   {
-    hFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE,
-      mappingName.c_str());
     // Means we're the first instance
     return -1;
   }
@@ -846,12 +867,9 @@ int CheckSingleInstance()
     while (WaitForSingleObject(hResponseEvent, waitTimeoutMs) == WAIT_TIMEOUT)
     {
       // Check if the file mapping still exists outside the current process:
-      hFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, mappingName.c_str());
-      if (!hFileMapping)
+      if (CreateOrOpenFileMapping(mappingName.c_str()))
       {
         // Means the mapping was abandoned by the initial process we observed. So, we should take over.
-        hFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE,
-          mappingName.c_str());
         CloseHandle(hResultFileMapping);
         CloseHandle(hResponseEvent);
         return -1;
@@ -879,149 +897,6 @@ int CheckSingleInstance()
 
     CloseHandle(hResultFileMapping);
     return exitCode;
-  }
-}
-
-void DrawSplashImage(HWND hWnd)
-{
-  HBITMAP hSplashBitmap = (HBITMAP)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-  PAINTSTRUCT ps;
-  HDC hDC = BeginPaint(hWnd, &ps);
-  HDC hMemDC = CreateCompatibleDC(hDC);
-  HBITMAP hOldBmp = (HBITMAP)SelectObject(hMemDC, hSplashBitmap);
-  BITMAP splashBitmap;
-  GetObject(hSplashBitmap, sizeof(splashBitmap), &splashBitmap);
-  BitBlt(hDC, 0, 0, splashBitmap.bmWidth, splashBitmap.bmHeight, hMemDC, 0, 0, SRCCOPY);
-  SelectObject(hMemDC, hOldBmp);
-  DeleteDC(hMemDC);
-  EndPaint(hWnd, &ps);
-}
-
-LRESULT CALLBACK SplashScreenWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-  switch (uMsg)
-  {
-  case WM_PAINT:
-    DrawSplashImage(hWnd);
-    break;
-  }
-  return DefWindowProc(hWnd, uMsg, wParam, lParam);
-}
-
-const TCHAR splashClassName[] = _T("IntelliJLauncherSplash");
-
-void RegisterSplashScreenWndClass()
-{
-  WNDCLASSEX wcx;
-  wcx.cbSize = sizeof(wcx);
-  wcx.style = 0;
-  wcx.lpfnWndProc = SplashScreenWndProc;
-  wcx.cbClsExtra = 0;
-  wcx.cbWndExtra = 0;
-  wcx.hInstance = hInst;
-  wcx.hIcon = 0;
-  wcx.hCursor = LoadCursor(NULL, IDC_WAIT);
-  wcx.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
-  wcx.lpszMenuName = 0;
-  wcx.lpszClassName = splashClassName;
-  wcx.hIconSm = 0;
-
-  RegisterClassEx(&wcx);
-}
-
-HWND ShowSplashScreenWindow(HBITMAP hSplashBitmap)
-{
-  RECT workArea;
-  SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
-  BITMAP splashBitmap;
-  GetObject(hSplashBitmap, sizeof(splashBitmap), &splashBitmap);
-  int x = workArea.left + ((workArea.right - workArea.left) - splashBitmap.bmWidth) / 2;
-  int y = workArea.top + ((workArea.bottom - workArea.top) - splashBitmap.bmHeight) / 2;
-
-  HWND splashWindow = CreateWindowEx(WS_EX_TOOLWINDOW, splashClassName, splashClassName, WS_POPUP,
-    x, y, splashBitmap.bmWidth, splashBitmap.bmHeight, NULL, NULL, NULL, NULL);
-  SetWindowLongPtr(splashWindow, GWLP_USERDATA, (LONG_PTR)hSplashBitmap);
-  ShowWindow(splashWindow, SW_SHOW);
-  UpdateWindow(splashWindow);
-  return splashWindow;
-}
-
-DWORD parentProcId;
-HANDLE parentProcHandle;
-
-BOOL IsParentProcessRunning(HANDLE hProcess)
-{
-  if (hProcess == NULL) return FALSE;
-  DWORD ret = WaitForSingleObject(hProcess, 0);
-  return ret == WAIT_TIMEOUT;
-}
-
-BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
-{
-  DWORD procId = 0;
-  GetWindowThreadProcessId(hWnd, &procId);
-  if (parentProcId == procId)
-  {
-    WINDOWINFO wi;
-    wi.cbSize = sizeof(WINDOWINFO);
-    GetWindowInfo(hWnd, &wi);
-    if ((wi.dwStyle & WS_VISIBLE) != 0)
-    {
-      HWND *phNewWindow = (HWND *)lParam;
-      *phNewWindow = hWnd;
-      return FALSE;
-    }
-  }
-  return TRUE;
-}
-
-DWORD WINAPI SplashScreen(HBITMAP hSplashBitmap)
-{
-  RegisterSplashScreenWndClass();
-  HWND splashWindow = ShowSplashScreenWindow(hSplashBitmap);
-  MSG msg;
-  while (true)
-  {
-    while (PeekMessage(&msg, splashWindow, 0, 0, PM_REMOVE))
-    {
-      TranslateMessage(&msg);
-      DispatchMessage(&msg);
-    }
-    Sleep(50);
-    HWND hNewWindow = NULL;
-    EnumWindows(EnumWindowsProc, (LPARAM)&hNewWindow);
-    if (hNewWindow)
-    {
-      BringWindowToTop(hNewWindow);
-      Sleep(100);
-      DeleteObject(hSplashBitmap);
-      DestroyWindow(splashWindow);
-      break;
-    }
-    if (!IsParentProcessRunning(parentProcHandle)) break;
-  }
-  return 0;
-}
-
-void StartSplashProcess()
-{
-  TCHAR ownPath[_MAX_PATH];
-  TCHAR params[_MAX_PATH];
-
-  PROCESS_INFORMATION splashProcessInformation;
-  STARTUPINFO startupInfo;
-  memset(&splashProcessInformation, 0, sizeof(splashProcessInformation));
-  memset(&startupInfo, 0, sizeof(startupInfo));
-  startupInfo.cb = sizeof(startupInfo);
-  startupInfo.dwFlags = STARTF_USESHOWWINDOW;
-  startupInfo.wShowWindow = SW_SHOW;
-
-  GetModuleFileName(NULL, ownPath, (sizeof(ownPath)));
-  _snwprintf(params, _MAX_PATH, _T("SPLASH %d"), GetCurrentProcessId());
-  if (CreateProcess(ownPath, params, NULL, NULL, FALSE, 0, NULL, NULL, &startupInfo, &splashProcessInformation))
-  {
-    CloseHandle(splashProcessInformation.hProcess);
-    CloseHandle(splashProcessInformation.hThread);
   }
 }
 
@@ -1079,19 +954,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
   hInst = hInstance;
 
-  if (__argc == 2 && _wcsicmp(__wargv[0], _T("SPLASH")) == 0)
-  {
-    HBITMAP hSplashBitmap = static_cast<HBITMAP>(LoadImage(hInst, MAKEINTRESOURCE(IDB_SPLASH), IMAGE_BITMAP, 0, 0, 0));
-    if (hSplashBitmap)
-    {
-      parentProcId = _wtoi(__wargv[1]);
-      parentProcHandle = OpenProcess(SYNCHRONIZE, FALSE, parentProcId);
-      if (IsParentProcessRunning(parentProcHandle)) SplashScreen(hSplashBitmap);
-    }
-    CloseHandle(parentProcHandle);
-    return 0;
-  }
-
   for (int i = 1; i < __argc; i++)
   {
     if (wcscmp(L"-h", __wargv[i]) == 0 || wcscmp(L"-?", __wargv[i]) == 0 || wcscmp(L"--help", __wargv[i]) == 0)
@@ -1116,14 +978,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
   std::vector<LPWSTR> args = ParseCommandLine(GetCommandLineW());
 
-  bool nativesplash = false;
-  for (int i = 0; i < args.size(); i++)
-  {
-    if (_wcsicmp(args[i], _T("/nativesplash")) == 0) nativesplash = true;
-  }
   args = RemovePredefinedArgs(args);
-
-  if (nativesplash) StartSplashProcess();
 
   if (!LocateJVM()) return 1;
   if (!LoadVMOptions()) return 1;

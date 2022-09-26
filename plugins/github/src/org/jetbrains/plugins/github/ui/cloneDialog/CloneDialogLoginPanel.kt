@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts.ENTER
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
@@ -204,6 +205,9 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
     }
 
   private inner class LoginAction : DumbAwareAction() {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = e.getData(CONTEXT_COMPONENT) != backLink
     }

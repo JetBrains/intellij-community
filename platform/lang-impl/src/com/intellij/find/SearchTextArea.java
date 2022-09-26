@@ -26,6 +26,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupState;
@@ -56,7 +57,7 @@ import java.util.List;
 import static java.awt.event.InputEvent.*;
 import static javax.swing.ScrollPaneConstants.*;
 
-public class SearchTextArea extends JPanel implements PropertyChangeListener {
+public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyChangeListener {
 
   private static final JBColor BUTTON_SELECTED_BACKGROUND = JBColor.namedColor("SearchOption.selectedBackground", 0xDAE4ED, 0x5C6164);
   private static final JBColor BUTTON_SELECTED_PRESSED_BACKGROUND =

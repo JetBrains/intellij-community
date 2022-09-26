@@ -2,10 +2,7 @@
 package com.jetbrains.python.ui.targetPathEditor
 
 import com.intellij.execution.Platform
-import com.intellij.execution.target.BrowsableTargetEnvironmentType
-import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.getTargetType
-import com.intellij.execution.target.textFieldWithBrowseTargetButton
+import com.intellij.execution.target.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
@@ -41,7 +38,7 @@ class ManualPathEntryDialog(private val project: Project?,
         val textFieldComponent = if (targetConfigAndType == null)
           textField(prop = ::path)
         else
-          textFieldWithBrowseTargetButton(this, targetConfigAndType.second, Supplier { targetConfigAndType.first }, project!!, label, this@ManualPathEntryDialog::path.toBinding(), false)
+          textFieldWithBrowseTargetButton(this, targetConfigAndType.second, Supplier { targetConfigAndType.first }, project!!, label, this@ManualPathEntryDialog::path.toBinding(), TargetBrowserHints(true))
         textFieldComponent.withValidationOnApply { textField ->
           val text = textField.text
           when {

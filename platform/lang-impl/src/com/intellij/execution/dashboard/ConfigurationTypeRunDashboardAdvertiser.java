@@ -7,6 +7,7 @@ import com.intellij.execution.RunManagerListener;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -35,6 +36,7 @@ public final class ConfigurationTypeRunDashboardAdvertiser implements RunManager
   private final Project myProject;
   private final String myRunConfigurationTypeId;
   private Notification myNotification;
+  private volatile boolean myDisposed;
 
   public ConfigurationTypeRunDashboardAdvertiser(@NotNull Project project, String runConfigurationTypeId) {
     myProject = project;
@@ -47,28 +49,27 @@ public final class ConfigurationTypeRunDashboardAdvertiser implements RunManager
       myNotification.expire();
       myNotification = null;
     }
+    myDisposed = true;
   }
 
-  public final void subscribe(Supplier<? extends Disposable> parentDisposableSupplier) {
+  public void subscribe(Supplier<? extends Disposable> parentDisposableSupplier) {
     if (myProject.isDefault() || ApplicationManager.getApplication().isUnitTestMode() || myProject.isDisposed()) {
       return;
     }
-
-    if (!isEnabled(myProject)) return;
 
     Disposable parentDisposable = parentDisposableSupplier.get();
     MessageBusConnection connection = myProject.getMessageBus().connect(parentDisposable);
     Disposer.register(parentDisposable, this);
     connection.subscribe(RunManagerListener.TOPIC, this);
-    checkRunDashboardAvailability();
+    if (!migrateNotificationProperty(myProject) && isEnabled(myProject)) {
+      checkRunDashboardAvailability();
+    }
   }
 
   @Override
-  public final void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
-    if (!isEnabled(myProject)) return;
-
-    if (myRunConfigurationTypeId.equals(settings.getType().getId())) {
-      ApplicationManager.getApplication().invokeLater(this::checkRunDashboardAvailability, o -> Disposer.isDisposed(this));
+  public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
+    if (myRunConfigurationTypeId.equals(settings.getType().getId()) && isEnabled(myProject)) {
+      ApplicationManager.getApplication().invokeLater(this::checkRunDashboardAvailability, o -> myDisposed);
     }
   }
 
@@ -111,17 +112,18 @@ public final class ConfigurationTypeRunDashboardAdvertiser implements RunManager
           showInRunDashboard(project, typeId);
         }
       })
-      .addAction(new NotificationAction(ExecutionBundle.message("run.dashboard.hide.multiple.run.config.notification.action")) {
+      .addAction(new NotificationAction(IdeBundle.message("notifications.toolwindow.dont.show.again")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          PropertiesComponent.getInstance(project).setValue(SHOW_RUN_DASHBOARD_NOTIFICATION, false, true);
+          notification.setDoNotAskFor(null);
           notification.expire();
         }
       });
   }
 
   private static boolean isEnabled(Project project) {
-    return PropertiesComponent.getInstance(project).getBoolean(SHOW_RUN_DASHBOARD_NOTIFICATION, true);
+    Notification notification = createNotification(project, "", "");
+    return notification.canShowFor(project);
   }
 
   private static void showInRunDashboard(Project project, String typeId) {
@@ -129,5 +131,15 @@ public final class ConfigurationTypeRunDashboardAdvertiser implements RunManager
     Set<String> types = new HashSet<>(dashboardManager.getTypes());
     types.add(typeId);
     dashboardManager.setTypes(types);
+  }
+
+  private static boolean migrateNotificationProperty(Project project) {
+    boolean isEnabled = PropertiesComponent.getInstance(project).getBoolean(SHOW_RUN_DASHBOARD_NOTIFICATION, true);
+    if (isEnabled) return false;
+
+    PropertiesComponent.getInstance(project).setValue(SHOW_RUN_DASHBOARD_NOTIFICATION, true, true);
+    Notification notification = createNotification(project, "", "");
+    notification.setDoNotAskFor(project);
+    return true;
   }
 }

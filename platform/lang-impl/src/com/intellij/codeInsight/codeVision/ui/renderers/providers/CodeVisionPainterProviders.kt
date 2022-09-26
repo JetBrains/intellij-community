@@ -14,7 +14,7 @@ import com.intellij.openapi.util.ClassExtension
 
 class CodeVisionPainterProviders : ClassExtension<ICodeVisionEntryBasePainter<CodeVisionEntry>>("com.intellij.codeVisionPainterProvider") {
   companion object {
-    val INSTANCE = CodeVisionPainterProviders()
+    val INSTANCE: CodeVisionPainterProviders = CodeVisionPainterProviders()
   }
 
   fun <T : CodeVisionEntry> getPainter(element: T): ICodeVisionEntryBasePainter<T> {

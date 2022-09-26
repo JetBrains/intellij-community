@@ -2,10 +2,7 @@
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
@@ -26,6 +23,8 @@ internal class DocumentationSearchHandler(
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = searchDisposable == null
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun actionPerformed(e: AnActionEvent) {
       startSearch()

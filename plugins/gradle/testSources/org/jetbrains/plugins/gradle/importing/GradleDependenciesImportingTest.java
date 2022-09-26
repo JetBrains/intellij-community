@@ -500,7 +500,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertEquals(1, unresolvableDep.size());
     LibraryOrderEntry unresolvableEntry = unresolvableDep.iterator().next();
     assertEquals(DependencyScope.COMPILE, unresolvableEntry.getScope());
-    assertEmpty(unresolvableEntry.getUrls(OrderRootType.CLASSES));
+    assertEmpty(unresolvableEntry.getRootUrls(OrderRootType.CLASSES));
 
     assertModuleLibDep("project.test", depName, depJar.getUrl());
     assertModuleLibDepScope("project.test", depName, DependencyScope.COMPILE);
@@ -524,7 +524,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       unresolvableEntry = unresolvableDep.iterator().next();
       assertTrue(unresolvableEntry.isModuleLevel());
     }
-    assertEmpty(unresolvableEntry.getUrls(OrderRootType.CLASSES));
+    assertEmpty(unresolvableEntry.getRootUrls(OrderRootType.CLASSES));
   }
 
   @Test

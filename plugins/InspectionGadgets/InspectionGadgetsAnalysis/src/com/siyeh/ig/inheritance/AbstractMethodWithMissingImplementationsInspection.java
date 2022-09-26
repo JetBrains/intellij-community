@@ -101,7 +101,6 @@ public class AbstractMethodWithMissingImplementationsInspection
 
     /**
      * @param method the method of which to find an override.
-     * @param superClass
      * @param aClass subclass to find the method in.
      * @return the overriding method.
      */

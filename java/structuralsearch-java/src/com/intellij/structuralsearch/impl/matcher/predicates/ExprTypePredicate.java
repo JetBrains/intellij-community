@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.structuralsearch.MatchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +21,7 @@ public class ExprTypePredicate extends MatchPredicate {
   private final boolean needsTypeParameters;
   private final boolean needsFullyQualified;
   private final boolean needsArrayType;
+  private final boolean needsAnnotations;
   private final boolean myCaseSensitive;
   private final List<String> myTypes;
 
@@ -28,8 +31,27 @@ public class ExprTypePredicate extends MatchPredicate {
     needsTypeParameters = type.indexOf('<') >= 0;
     needsFullyQualified = type.indexOf('.') >= 0;
     needsArrayType = type.indexOf('[') >= 0;
+    needsAnnotations = type.indexOf('@') >= 0;
     myCaseSensitive = caseSensitiveMatch;
-    myTypes = regex ? null : StringUtil.split(type, "|");
+    myTypes = regex ? null : split(type);
+  }
+
+  private static List<String> split(String types) {
+    List<String> result = new ArrayList<>();
+    int pos = 0;
+    while (true) {
+      int index = types.indexOf('|', pos);
+      if (index == -1) break;
+      String token = MatchUtil.normalizeWhiteSpace(types.substring(pos, index));
+      if (!token.isEmpty()) {
+        result.add(token);
+      }
+      pos = index + 1;
+    }
+    if (pos < types.length()) {
+      result.add(MatchUtil.normalizeWhiteSpace(types.substring(pos)));
+    }
+    return result;
   }
 
   @Override
@@ -85,10 +107,11 @@ public class ExprTypePredicate extends MatchPredicate {
   }
 
   private boolean doMatch(String text) {
-    return myTypes.stream().anyMatch(type -> myCaseSensitive ? type.equals(text) : type.equalsIgnoreCase(text));
+    return ContainerUtil.exists(myTypes, type -> myCaseSensitive ? type.equals(text) : type.equalsIgnoreCase(text));
   }
 
   private List<String> getTextPermutations(PsiType type) {
+    final String annotationString = getAnnotationString(type);
     final String dimensions;
     if (type instanceof PsiArrayType) {
       if (!needsArrayType) return Collections.emptyList();
@@ -108,16 +131,16 @@ public class ExprTypePredicate extends MatchPredicate {
         final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
         buildText(aClass, substitutor, true, typeText);
         typeText.append(dimensions);
-        final String unqualified = typeText.toString();
+        final String typeString = annotationString + typeText;
         if (needsTypeParameters) {
-          result.add(unqualified); // unqualified with type parameters if present
+          result.add(typeString); // unqualified with type parameters if present
         }
-        addWithoutTypeParameters(unqualified, dimensions, result);
-        if (typeText.indexOf(".") >= 0) {
+        addWithoutTypeParameters(typeString, dimensions, result);
+        if (typeText.indexOf(".") >= 0) { // inner class qualified with outer class (we currently support one level)
           typeText.setLength(0);
           buildText(aClass, substitutor, false, typeText);
           typeText.append(dimensions);
-          final String outerClassQualified = typeText.toString();
+          final String outerClassQualified = annotationString + typeText;
           if (needsTypeParameters) {
             result.add(outerClassQualified); // inner class without enclosing class qualifier with type parameters if present
           }
@@ -128,12 +151,36 @@ public class ExprTypePredicate extends MatchPredicate {
         }
       }
     }
-    final String fullyQualified = type.getCanonicalText() + dimensions;
+    final String fullyQualified = annotationString + type.getCanonicalText() + dimensions;
     if (needsTypeParameters) {
       result.add(fullyQualified); // fully qualified if possible with type parameters if present
     }
     addWithoutTypeParameters(fullyQualified, dimensions, result);
     return result;
+  }
+
+  @NotNull
+  private String getAnnotationString(PsiType type) {
+    if (!needsAnnotations) {
+      return "";
+    }
+    final PsiAnnotation[] annotations = type.getAnnotations();
+    if (annotations.length <= 0) {
+      return "";
+    }
+    StringBuilder result = new StringBuilder();
+    for (PsiAnnotation annotation : annotations) {
+      final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
+      if (nameReferenceElement != null) {
+        final PsiElement referenceNameElement = nameReferenceElement.getReferenceNameElement();
+        if (referenceNameElement != null) {
+          result.append('@').append(referenceNameElement.getText())
+            .append(annotation.getParameterList().getText())
+            .append(' ');
+        }
+      }
+    }
+    return result.toString();
   }
 
   private static void addWithoutTypeParameters(String typeText, String suffix, List<? super String> result) {

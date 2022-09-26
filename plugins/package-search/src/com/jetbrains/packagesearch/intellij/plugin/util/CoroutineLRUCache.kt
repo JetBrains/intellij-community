@@ -16,6 +16,7 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.util
 
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.KSerializer
@@ -66,7 +67,7 @@ class CoroutineLRUCache<K : Any, V>(val maxSize: Int, initialValues: Map<K, V> =
 
             override fun serialize(encoder: Encoder, value: CoroutineLRUCache<K, V>) = encoder.encodeStructure(descriptor) {
                 encodeIntElement(descriptor, 0, value.maxSize)
-                encodeSerializableElement(descriptor, 1, mapSerializer, value.cachedElements())
+                encodeSerializableElement(descriptor, 1, mapSerializer, runBlocking { value.cachedElements() })
             }
         }
     }
@@ -101,6 +102,6 @@ class CoroutineLRUCache<K : Any, V>(val maxSize: Int, initialValues: Map<K, V> =
         syncMutex.withLock { cache.clear() }
     }
 
-    fun cachedElements() =
-        cache.map { (k, v) -> k as K to v as V }.toMap()
+    suspend fun cachedElements() =
+        syncMutex.withLock { cache.map { (k, v) -> k as K to v as V }.toMap() }
 }

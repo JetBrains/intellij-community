@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter
 
@@ -33,7 +33,6 @@ class AnnotationPresentationInfo(
 ) {
     companion object {
         private const val KOTLIN_COMPILER_WARNING_ID = "KotlinCompilerWarningOptions"
-        private const val KOTLIN_COMPILER_ERROR_ID = "KotlinCompilerErrorOptions"
     }
 
     fun processDiagnostics(
@@ -66,22 +65,18 @@ class AnnotationPresentationInfo(
         diagnostic: Diagnostic,
         info: HighlightInfo
     ) {
-        val warning = diagnostic.severity == Severity.WARNING
-        val error = diagnostic.severity == Severity.ERROR
+        val isWarning = diagnostic.severity == Severity.WARNING
+        val isError = diagnostic.severity == Severity.ERROR
 
         val fixes = quickFixes[diagnostic].takeIf { it.isNotEmpty() }
-            ?: if (warning) listOf(CompilerWarningIntentionAction(diagnostic.factory.name)) else emptyList()
+            ?: if (isWarning) listOf(CompilerWarningIntentionAction(diagnostic.factory.name)) else emptyList()
 
-        val keyForSuppressOptions = when {
-            error -> HighlightDisplayKey.findOrRegister(
-                KOTLIN_COMPILER_ERROR_ID,
-                KotlinBaseFe10HighlightingBundle.message("kotlin.compiler.error")
-            )
-            else -> HighlightDisplayKey.findOrRegister(
+        val keyForSuppressOptions = if (isWarning) {
+            HighlightDisplayKey.findOrRegister(
                 KOTLIN_COMPILER_WARNING_ID,
                 KotlinBaseFe10HighlightingBundle.message("kotlin.compiler.warning")
             )
-        }
+        } else null
 
         for (fix in fixes) {
             if (fix !is IntentionAction) {
@@ -99,7 +94,7 @@ class AnnotationPresentationInfo(
                 options += problemGroup.getSuppressActions(diagnostic.psiElement).mapNotNull { it as IntentionAction }
             }
 
-            val message = KotlinBaseFe10HighlightingBundle.message(if (error) "kotlin.compiler.error" else "kotlin.compiler.warning")
+            val message = KotlinBaseFe10HighlightingBundle.message(if (isError) "kotlin.compiler.error" else "kotlin.compiler.warning")
             info.registerFix(fix, options, message, null, keyForSuppressOptions)
         }
     }

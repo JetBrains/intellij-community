@@ -124,7 +124,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
     return parent.version
   }
 
-  protected fun suggestPathByParent(): String {
+  private fun suggestPathByParent(): String {
     return if (parent.isPresent) parent.location else context.projectFileDirectory
   }
 

@@ -57,25 +57,16 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
    * @deprecated use {@link DependencySearchService}
    * or use {@link MavenGroupIdCompletionContributor} for example to fill async completion variants.
    **/
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public Set<String> getGroupIds() {
-    return getGroupIds("");
-  }
-
-  /**
-   * @deprecated use {@link DependencySearchService}
-   * or use {@link MavenGroupIdCompletionContributor} for example to fill async completion variants.
-   **/
-  @Deprecated(forRemoval = true)
-  public Set<String> getGroupIds(String pattern) {
-    return DependencySearchService.getInstance(myProject).getGroupIds(pattern);
+    return DependencySearchService.getInstance(myProject).getGroupIds("");
   }
 
   /**
    * @deprecated use {@link DependencySearchService}
    * or use {@link MavenArtifactIdCompletionContributor} for example to fill async completion variants.
    **/
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public Set<String> getArtifactIds(String groupId) {
     return DependencySearchService.getInstance(myProject).getArtifactIds(groupId);
   }

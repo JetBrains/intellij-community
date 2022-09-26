@@ -59,8 +59,8 @@ internal class GHPRListPanelFactory(private val project: Project,
 
     val actionManager = ActionManager.getInstance()
 
-    val historyModel = GHPRSearchHistoryModel(scope, project.service())
-    val searchVm = GHPRSearchPanelViewModel(scope, repositoryDataService, historyModel, avatarIconsProvider)
+    val historyModel = GHPRSearchHistoryModel(project.service<GHPRListPersistentSearchHistory>())
+    val searchVm = GHPRSearchPanelViewModel(scope, repositoryDataService, historyModel, securityService.currentUser)
     scope.launch {
       searchVm.searchState.collectLatest {
         listLoader.searchQuery = it.toQuery()
@@ -69,7 +69,7 @@ internal class GHPRListPanelFactory(private val project: Project,
 
     ListEmptyTextController(scope, listLoader, searchVm, list.emptyText, disposable)
 
-    val searchPanel = GHPRSearchPanelFactory(searchVm).create(scope, createQuickFilters())
+    val searchPanel = GHPRSearchPanelFactory(searchVm, avatarIconsProvider).create(scope)
 
     val outdatedStatePanel = JPanel(FlowLayout(FlowLayout.LEFT, JBUIScale.scale(5), 0)).apply {
       background = UIUtil.getPanelBackground()
@@ -111,15 +111,6 @@ internal class GHPRListPanelFactory(private val project: Project,
       actionManager.getAction("Github.PullRequest.List.Reload").registerCustomShortcutSet(it, disposable)
     }
   }
-
-  private fun createQuickFilters() = listOf(
-    GithubBundle.message("pull.request.list.filter.quick.open") to
-      GHPRListSearchValue(state = GHPRListSearchValue.State.OPEN),
-    GithubBundle.message("pull.request.list.filter.quick.yours") to
-      GHPRListSearchValue(state = GHPRListSearchValue.State.OPEN, author = securityService.currentUser.login),
-    GithubBundle.message("pull.request.list.filter.quick.assigned") to
-      GHPRListSearchValue(state = GHPRListSearchValue.State.OPEN, assignee = securityService.currentUser.login)
-  )
 
   private fun createListLoaderPanel(loader: GHListLoader<*>, list: JComponent, disposable: Disposable): JComponent {
 

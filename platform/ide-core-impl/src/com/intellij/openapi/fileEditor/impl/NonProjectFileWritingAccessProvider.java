@@ -77,15 +77,9 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     if (unlockOption == null) return deniedFiles;
 
     switch (unlockOption) {
-      case UNLOCK:
-        allowWriting(deniedFiles);
-        break;
-      case UNLOCK_DIR:
-        allowWriting(ContainerUtil.map(deniedFiles, VirtualFile::getParent));
-        break;
-      case UNLOCK_ALL:
-        ACCESS_ALLOWED.getValue(getApp()).incrementAndGet();
-        break;
+      case UNLOCK -> allowWriting(deniedFiles);
+      case UNLOCK_DIR -> allowWriting(ContainerUtil.map(deniedFiles, VirtualFile::getParent));
+      case UNLOCK_ALL -> ACCESS_ALLOWED.getValue(getApp()).incrementAndGet();
     }
 
     return Collections.emptyList();

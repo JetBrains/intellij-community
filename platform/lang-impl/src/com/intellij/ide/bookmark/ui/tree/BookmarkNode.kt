@@ -24,7 +24,7 @@ abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B)
   val bookmarksView
     get() = parentRootNode?.value
 
-  val bookmarkType
+  private val bookmarkType
     get() = bookmarksManager?.getType(value)
 
   val bookmarkDescription

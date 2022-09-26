@@ -20,12 +20,14 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,6 +41,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   private final CachedIntentions myCachedIntentions;
   @Nullable
   private final IntentionHintComponent.IntentionPopup myPopup;
+  private final Dimension myMaxIconSize;
 
   private Runnable myFinalRunnable;
   private final Project myProject;
@@ -56,6 +59,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     myFile = file;
     myEditor = editor;
     myCachedIntentions = intentions;
+    myMaxIconSize = getMaxIconSize();
   }
 
   @Override
@@ -97,7 +101,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     ApplicationManager.getApplication().invokeLater(() ->
        StackingPopupDispatcher.getInstance().getPopupStream()
          .filter(popup -> popup.getUserData(IntentionPreviewPopupUpdateProcessor.IntentionPreviewPopupKey.class) != null)
-         .collect(Collectors.toList())
+         .toList()
          .forEach(popup -> popup.cancel()));
   }
 
@@ -220,6 +224,15 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   @Override
   public Icon getIconFor(IntentionActionWithTextCaching value) {
+    Icon icon = getOriginalIconFor(value);
+    if (icon == null) {
+      icon = EmptyIcon.create(myMaxIconSize.width, myMaxIconSize.height);
+    }
+    return icon;
+  }
+
+  @Nullable
+  public Icon getOriginalIconFor(@NotNull IntentionActionWithTextCaching value) {
     if (!value.isShowIcon()) return null;
 
     return myCachedIntentions.getIcon(value);
@@ -260,4 +273,18 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   //speed search filter
   @Override
   public String getIndexedString(IntentionActionWithTextCaching value) { return getTextFor(value);}
+
+
+  private @NotNull Dimension getMaxIconSize() {
+    int maxWidth = -1;
+    int maxHeight = -1;
+    for (IntentionActionWithTextCaching action : myCachedIntentions.getAllActions()) {
+      if (!action.isShowIcon()) continue;
+      Icon icon = myCachedIntentions.getIcon(action);
+      if (icon == null) continue;
+      maxWidth = Math.max(maxWidth, icon.getIconWidth());
+      maxHeight = Math.max(maxHeight, icon.getIconHeight());
+    }
+    return new Dimension(maxWidth, maxHeight);
+  }
 }

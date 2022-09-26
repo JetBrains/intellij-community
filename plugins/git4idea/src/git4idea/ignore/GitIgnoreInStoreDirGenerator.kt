@@ -158,7 +158,7 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
 
     LOG.debug("Generate $GITIGNORE in $projectConfigDirPath for ${gitVcsKey.name}")
     val gitIgnoreFile = createGitignore(projectConfigDirVFile)
-    for (ignoredFileProvider in IgnoredFileProvider.IGNORE_FILE.extensions) {
+    for (ignoredFileProvider in IgnoredFileProvider.IGNORE_FILE.extensionList) {
       val ignoresInStoreDir =
         ignoredFileProvider.getIgnoredFiles(project).filter { ignore -> inStoreDir(projectConfigDirPath.systemIndependentPath, ignore) }.toTypedArray()
       if (ignoresInStoreDir.isEmpty()) continue

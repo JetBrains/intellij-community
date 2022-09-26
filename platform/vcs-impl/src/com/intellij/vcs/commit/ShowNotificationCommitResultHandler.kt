@@ -13,21 +13,20 @@ import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FAILED
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED_WITH_WARNINGS
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vcs.changes.CommitResultHandler
-import com.intellij.vcs.commit.AbstractCommitter.Companion.collectErrors
+import com.intellij.vcs.commit.Committer.Companion.collectErrors
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 private fun hasOnlyWarnings(exceptions: List<VcsException>) = exceptions.all { it.isWarning }
 
-class ShowNotificationCommitResultHandler(private val committer: AbstractCommitter) : CommitResultHandler {
+class ShowNotificationCommitResultHandler(private val committer: VcsCommitter) : CommitterResultHandler {
   private val notifier = VcsNotifier.getInstance(committer.project)
 
-  override fun onSuccess(commitMessage: String) = reportResult()
+  override fun onSuccess() = reportResult()
   override fun onCancel() {
     notifier.notifyMinorWarning(COMMIT_CANCELED, "", message("vcs.commit.canceled"))
   }
-  override fun onFailure(errors: List<VcsException>) = reportResult()
+  override fun onFailure() = reportResult()
 
   private fun reportResult() {
     val message = getCommitSummary()

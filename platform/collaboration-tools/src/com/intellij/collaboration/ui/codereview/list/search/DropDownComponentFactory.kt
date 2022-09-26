@@ -1,105 +1,62 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.list.search
 
-import com.intellij.collaboration.ui.SimpleFocusBorder
-import com.intellij.icons.AllIcons
-import com.intellij.ui.ClickListener
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.FilterComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
-import java.awt.Cursor
 import java.awt.Point
-import java.awt.event.ActionListener
-import java.awt.event.KeyEvent
-import java.awt.event.MouseEvent
-import javax.swing.*
+import java.util.function.Supplier
+import javax.swing.JComponent
 
 class DropDownComponentFactory<T : Any>(private val state: MutableStateFlow<T?>) {
 
   fun create(vmScope: CoroutineScope,
              filterName: @Nls String,
              valuePresenter: (T) -> @Nls String = Any::toString,
-             chooseValue: suspend (RelativePoint) -> T?): JComponent {
-    var valueSet = false
+             chooseValue: suspend (RelativePoint, PopupState<JBPopup>) -> T?): JComponent {
+    val popupState: PopupState<JBPopup> = PopupState.forPopup()
 
-    val text = JLabel().apply {
-      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-      toolTipText = filterName
-      isFocusable = false
-    }
+    return object : FilterComponent(Supplier<@NlsContexts.Label String?> { filterName }) {
 
-    val icon = JLabel().apply {
-      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-      isFocusable = false
-    }
-
-    fun showChooserPopup() {
-      val point = RelativePoint(text, Point(0, text.height + JBUIScale.scale(4)))
-      vmScope.launch {
-        val newValue = chooseValue(point)
-        state.update { newValue }
+      override fun getCurrentText(): String {
+        val value = state.value
+        return if (value != null) valuePresenter(value) else emptyFilterValue
       }
-    }
 
-    text.also { label ->
-      object : ClickListener() {
-        override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-          showChooserPopup()
-          return true
-        }
-      }.installOn(label)
-    }
+      override fun getEmptyFilterValue(): String = ""
 
+      override fun isValueSelected(): Boolean = state.value != null
 
-    object : ClickListener() {
-      override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-        if (valueSet) state.update { null }
-        else showChooserPopup()
-        return true
-      }
-    }.installOn(icon)
-
-    vmScope.launch {
-      state.collectLatest {
-        if (it == null) {
-          icon.icon = AllIcons.General.LinkDropTriangle
-          text.text = filterName
-          text.foreground = UIUtil.getContextHelpForeground()
-          valueSet = false
-        }
-        else {
-          icon.icon = AllIcons.Actions.Close
-          text.text = valuePresenter(it)
-          text.foreground = UIUtil.getLabelForeground()
-          valueSet = true
+      override fun installChangeListener(onChange: Runnable) {
+        vmScope.launch {
+          state.collectLatest {
+            onChange.run()
+          }
         }
       }
-    }
 
-    return JPanel(HorizontalLayout(0, SwingConstants.CENTER)).apply {
-      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-      isFocusable = true
-      border = JBUI.Borders.compound(SimpleFocusBorder(), JBUI.Borders.empty(0, 2))
+      override fun createResetAction(): Runnable = Runnable { state.update { null } }
 
-      registerKeyboardAction(ActionListener {
-        showChooserPopup()
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), JComponent.WHEN_FOCUSED)
-
-      registerKeyboardAction(ActionListener {
-        state.update { null }
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), JComponent.WHEN_FOCUSED)
-
-      add(text)
-      add(icon)
-    }
+      override fun shouldDrawLabel(): DrawLabelMode = DrawLabelMode.WHEN_VALUE_NOT_SET
+    }.apply {
+      setShowPopupAction {
+        val point = RelativePoint(this, Point(0, this.height + JBUIScale.scale(4)))
+        if (popupState.isRecentlyHidden) return@setShowPopupAction
+        vmScope.launch {
+          val newValue = chooseValue(point, popupState)
+          state.update { newValue }
+        }
+      }
+    }.initUi()
   }
 
 
@@ -107,8 +64,8 @@ class DropDownComponentFactory<T : Any>(private val state: MutableStateFlow<T?>)
              filterName: @Nls String,
              items: List<T>,
              valuePresenter: (T) -> @Nls String = Any::toString): JComponent =
-    create(vmScope, filterName, valuePresenter) { point ->
-      ChooserPopupUtil.showChooserPopup(point, items) {
+    create(vmScope, filterName, valuePresenter) { point, popupState ->
+      ChooserPopupUtil.showChooserPopup(point, popupState, items) {
         ChooserPopupUtil.PopupItemPresentation.Simple(valuePresenter(it))
       }
     }
@@ -118,8 +75,8 @@ class DropDownComponentFactory<T : Any>(private val state: MutableStateFlow<T?>)
              items: List<T>,
              valuePresenter: (T) -> @Nls String = Any::toString,
              popupItemPresenter: (T) -> ChooserPopupUtil.PopupItemPresentation): JComponent =
-    create(vmScope, filterName, valuePresenter) { point ->
-      ChooserPopupUtil.showChooserPopup(point, items, popupItemPresenter)
+    create(vmScope, filterName, valuePresenter) { point, popupState ->
+      ChooserPopupUtil.showChooserPopup(point, popupState, items, popupItemPresenter)
     }
 
 }

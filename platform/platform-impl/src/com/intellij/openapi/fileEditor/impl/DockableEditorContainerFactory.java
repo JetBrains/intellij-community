@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class DockableEditorContainerFactory implements DockContainerFactory.Persistent {
-  @NonNls public static final String TYPE = "file-editors";
+  public static final @NonNls String TYPE = "file-editors";
 
   private final Project myProject;
   private final FileEditorManagerImpl myFileEditorManager;
@@ -28,9 +28,8 @@ public final class DockableEditorContainerFactory implements DockContainerFactor
     myFileEditorManager = fileEditorManager;
   }
 
-  @NotNull
   @Override
-  public DockContainer createContainer(@Nullable DockableContent content) {
+  public @NotNull DockContainer createContainer(@Nullable DockableContent content) {
     return createContainer(false);
   }
 
@@ -38,7 +37,7 @@ public final class DockableEditorContainerFactory implements DockContainerFactor
     Ref<DockableEditorTabbedContainer> containerRef = new Ref<>();
     EditorsSplitters splitters = new EditorsSplitters(myFileEditorManager) {
       @Override
-      protected void afterFileClosed(@NotNull VirtualFile file) {
+      public void afterFileClosed$intellij_platform_ide_impl(@NotNull VirtualFile file) {
         containerRef.get().fireContentClosed(file);
       }
 

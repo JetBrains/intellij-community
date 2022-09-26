@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.List;
 
@@ -24,6 +25,8 @@ public abstract class FileEditorManager {
   public static FileEditorManager getInstance(@NotNull Project project) {
     return project.getComponent(FileEditorManager.class);
   }
+
+  public abstract @Nullable FileEditorComposite getComposite(@NotNull VirtualFile file);
 
   /**
    * @param file file to open. File should be valid.
@@ -201,6 +204,8 @@ public abstract class FileEditorManager {
   public abstract void removeBottomComponent(final @NotNull FileEditor editor, final @NotNull JComponent component);
 
   public static final Key<Boolean> SEPARATOR_DISABLED = Key.create("FileEditorSeparatorDisabled");
+
+  public static final Key<Border> SEPARATOR_BORDER = Key.create("FileEditorSeparatorBorder");
 
   public static final Key<Color> SEPARATOR_COLOR = Key.create("FileEditorSeparatorColor");
 

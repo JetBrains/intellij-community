@@ -4,8 +4,8 @@ abstract class Test {
 
   void foo() {
       Class<?> aClass = getObject().getClass();
-      if (RuntimeException.class.equals(aClass)) {
-      } else if (IOException.class.equals(aClass)) {
+      if (aClass.equals(RuntimeException.class)) {
+      } else if (aClass.equals(IOException.class)) {
       }
   }
 }

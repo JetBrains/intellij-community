@@ -6,10 +6,6 @@ import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 interface FileEditorProviderManager {
   companion object {
     @JvmStatic

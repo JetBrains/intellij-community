@@ -26,7 +26,7 @@ class RangeCodeVisionModel(
 
   private val projectModel = ProjectCodeVisionModel.getInstance(project)
   private val lensForRange: List<CodeVisionEntry>
-  val inlays = ArrayList<Inlay<*>>()
+  val inlays: ArrayList<Inlay<*>> = ArrayList<Inlay<*>>()
 
   init {
     lensForRange = lensMap.flatMap { it.value }
@@ -45,7 +45,7 @@ class RangeCodeVisionModel(
     projectModel.handleLensExtraAction(editor, anchoringRange, selectedValue, actionId)
   }
 
-  fun sortedLenses(): List<CodeVisionEntry> {
+  private fun sortedLenses(): List<CodeVisionEntry> {
     return lensForRange.sortedBy { projectModel.getLensIndex(it) }
   }
 
@@ -53,5 +53,5 @@ class RangeCodeVisionModel(
     return sortedLenses().filter { it.showInMorePopup }
   }
 
-  fun state() = InlayState.NORMAL
+  fun state(): InlayState = InlayState.NORMAL
 }

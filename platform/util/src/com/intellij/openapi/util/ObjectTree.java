@@ -10,6 +10,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -52,6 +53,7 @@ final class ObjectTree {
       ObjectNode childNode = getParentNode(child).moveChildNodeToOtherParent(child, parentNode);
       myObject2ParentNode.put(child, parentNode);
 
+      assert childNode.getObject() == child;
       checkWasNotAddedAlreadyAsChild(parentNode, childNode);
     }
   }
@@ -208,6 +210,7 @@ final class ObjectTree {
     }
   }
 
+  @ApiStatus.Internal
   void assertIsEmpty(boolean throwError) {
     synchronized (getTreeLock()) {
       myRootNode.assertNoChildren(throwError);

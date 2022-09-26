@@ -16,12 +16,14 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.actions
 
+import com.intellij.dependencytoolwindow.DependencyToolWindowFactory
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiDirectory
@@ -30,11 +32,11 @@ import com.intellij.psi.util.PsiUtilBase
 import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackagesListPanelProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
-import com.jetbrains.packagesearch.intellij.plugin.util.uiStateModifier
+import com.jetbrains.packagesearch.intellij.plugin.util.pkgsUiStateModifier
 
 class AddDependencyAction : AnAction(
     PackageSearchBundle.message("packagesearch.actions.addDependency.text"),
@@ -69,8 +71,8 @@ class AddDependencyAction : AnAction(
 
         val selectedModule = findSelectedModule(e, modules) ?: return
 
-        PackageSearchToolWindowFactory.activateToolWindow(project) {
-            project.uiStateModifier.setTargetModules(TargetModules.One(selectedModule))
+        DependencyToolWindowFactory.activateToolWindow(project, PackagesListPanelProvider) {
+            project.pkgsUiStateModifier.setTargetModules(TargetModules.One(selectedModule))
         }
     }
 

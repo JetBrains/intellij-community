@@ -1,4 +1,4 @@
-// "Add ''@IgnoredOnParcel'' annotation" "true"
+// "Add '@IgnoredOnParcel' annotation" "true"
 // WITH_STDLIB
 
 package com.myapp.activity

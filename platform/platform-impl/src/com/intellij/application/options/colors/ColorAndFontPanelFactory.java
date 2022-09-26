@@ -22,7 +22,7 @@ public interface ColorAndFontPanelFactory {
   String getPanelDisplayName();
 
   /**
-   * @see {@link com.intellij.openapi.options.SearchableConfigurable#getOriginalClass()}
+   * @see com.intellij.openapi.options.SearchableConfigurable#getOriginalClass()
    */
   @NotNull
   default Class<?> getOriginalClass() {

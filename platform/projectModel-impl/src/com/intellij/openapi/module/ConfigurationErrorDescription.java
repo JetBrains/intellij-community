@@ -3,28 +3,27 @@ package com.intellij.openapi.module;
 
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ConfigurationErrorDescription {
+
   private final String myElementName;
   private final @DetailedDescription String myDescription;
-  private final ConfigurationErrorType myErrorType;
 
-  protected ConfigurationErrorDescription(@NotNull String elementName, @DetailedDescription @NotNull String description, @NotNull ConfigurationErrorType errorType) {
+  protected ConfigurationErrorDescription(@NotNull String elementName, @DetailedDescription @NotNull String description) {
     myElementName = elementName;
-    myErrorType = errorType;
     myDescription = description;
   }
 
-  public @NlsSafe @NotNull String getElementName() {
+  public final @NlsSafe @NotNull String getElementName() {
     return myElementName;
   }
 
-  public @NotNull ConfigurationErrorType getErrorType() {
-    return myErrorType;
-  }
+  public abstract @NotNull ConfigurationErrorType getErrorType();
 
-  public @DetailedDescription String getDescription() {
+  public final @DetailedDescription String getDescription() {
     return myDescription;
   }
 
@@ -34,5 +33,9 @@ public abstract class ConfigurationErrorDescription {
 
   public boolean isValid() {
     return true;
+  }
+
+  public @Nullable @NonNls String getImplementationName() {
+    return null;
   }
 }

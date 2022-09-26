@@ -2,14 +2,37 @@
 package com.intellij.ide;
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+import java.awt.event.WindowEvent;
+
 final class FrameStateManagerAppListener implements ApplicationActivationListener {
   private final FrameStateListener publisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(FrameStateListener.TOPIC);
+
+  private FrameStateManagerAppListener() {
+    Toolkit.getDefaultToolkit().addAWTEventListener(e -> {
+      if (e.getID() == WindowEvent.WINDOW_ACTIVATED || e.getID() == WindowEvent.WINDOW_DEACTIVATED) {
+        IdeFrame frame = ProjectUtil.getRootFrameForWindow(((WindowEvent)e).getWindow());
+        if (frame != null) {
+          IdeFrame otherFrame = ProjectUtil.getRootFrameForWindow(((WindowEvent)e).getOppositeWindow());
+          if (frame != otherFrame) {
+            if (e.getID() == WindowEvent.WINDOW_ACTIVATED) {
+              publisher.onFrameActivated(frame);
+            }
+            else {
+              publisher.onFrameDeactivated(frame);
+            }
+          }
+        }
+      }
+    }, AWTEvent.WINDOW_EVENT_MASK);
+  }
 
   @Override
   public void applicationActivated(@NotNull IdeFrame ideFrame) {

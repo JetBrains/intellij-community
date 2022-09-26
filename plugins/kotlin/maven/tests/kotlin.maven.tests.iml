@@ -45,6 +45,5 @@
     <orderEntry type="module" module-name="intellij.maven" />
     <orderEntry type="module" module-name="intellij.maven.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.junit.rt" scope="TEST" />
   </component>
 </module>

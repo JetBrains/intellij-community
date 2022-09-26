@@ -15,7 +15,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -23,10 +23,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -51,11 +48,10 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.basicAttributesIfExists
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.annotations.SystemDependent
@@ -68,6 +64,9 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.Callable
+import java.util.concurrent.CompletableFuture
+import kotlin.Result
 
 private val LOG = Logger.getInstance(ProjectUtil::class.java)
 private var ourProjectsPath: String? = null
@@ -152,16 +151,18 @@ object ProjectUtil {
       }
     }
 
-    val lazyVirtualFile = lazy {
-      ProjectUtilCore.getFileAndRefresh(file)
-    }
+    var virtualFileResult: Result<VirtualFile>? = null
     for (provider in ProjectOpenProcessor.EXTENSION_POINT_NAME.iterable) {
       if (!provider.isStrongProjectInfoHolder) {
         continue
       }
 
       // `PlatformProjectOpenProcessor` is not a strong project info holder, so there is no need to optimize (VFS not required)
-      val virtualFile = lazyVirtualFile.value ?: return null
+      val virtualFile: VirtualFile = virtualFileResult?.getOrThrow() ?: blockingContext {
+        ProjectUtilCore.getFileAndRefresh(file)
+      }?.also {
+        virtualFileResult = Result.success(it)
+      } ?: return null
       if (provider.canOpenProject(virtualFile)) {
         return chooseProcessorAndOpenAsync(mutableListOf(provider), virtualFile, options)
       }
@@ -187,7 +188,20 @@ object ProjectUtil {
       catch (ignore: IOException) {
       }
     }
-    val processors = computeProcessors(file, lazyVirtualFile)
+    var nullableVirtualFileResult: Result<VirtualFile?>? = virtualFileResult
+    val processors = blockingContext {
+      computeProcessors(file) {
+        val capturedNullableVirtualFileResult = nullableVirtualFileResult
+        if (capturedNullableVirtualFileResult != null) {
+          capturedNullableVirtualFileResult.getOrThrow()
+        }
+        else {
+          ProjectUtilCore.getFileAndRefresh(file).also {
+            nullableVirtualFileResult = Result.success(it)
+          }
+        }
+      }
+    }
     if (processors.isEmpty()) {
       return null
     }
@@ -208,13 +222,17 @@ object ProjectUtil {
       )
     }
     else {
-      val virtualFile = lazyVirtualFile.value ?: return null
+      val virtualFile = nullableVirtualFileResult?.let {
+        it.getOrThrow() ?: return null
+      } ?: blockingContext {
+        ProjectUtilCore.getFileAndRefresh(file)
+      } ?: return null
       project = chooseProcessorAndOpenAsync(processors, virtualFile, options)
     }
     return postProcess(project)
   }
 
-  private fun computeProcessors(file: Path, lazyVirtualFile: Lazy<VirtualFile?>): MutableList<ProjectOpenProcessor> {
+  private fun computeProcessors(file: Path, lazyVirtualFile: () -> VirtualFile?): MutableList<ProjectOpenProcessor> {
     val processors = ArrayList<ProjectOpenProcessor>()
     ProjectOpenProcessor.EXTENSION_POINT_NAME.forEachExtensionSafe { processor: ProjectOpenProcessor ->
       if (processor is PlatformProjectOpenProcessor) {
@@ -223,7 +241,7 @@ object ProjectUtil {
         }
       }
       else {
-        val virtualFile = lazyVirtualFile.value
+        val virtualFile = lazyVirtualFile()
         if (virtualFile != null && processor.canOpenProject(virtualFile)) {
           processors.add(processor)
         }
@@ -556,20 +574,16 @@ object ProjectUtil {
     return Files.isDirectory(projectDir.resolve(Project.DIRECTORY_STORE_FOLDER))
   }
 
-  @JvmOverloads
-  fun openOrCreateProject(name: String, projectCreatedCallback: ProjectCreatedCallback? = null): Project? {
-    return openOrCreateProject(name, getProjectPath(name), projectCreatedCallback)
-  }
-
   @JvmStatic
-  fun openOrCreateProject(name: String, file: Path, projectCreatedCallback: ProjectCreatedCallback?): Project? {
-    return ProgressManager.getInstance().computeInNonCancelableSection<Project?, RuntimeException> {
-      openOrCreateProjectInner(name, file, projectCreatedCallback)
+  fun openOrCreateProject(name: String, file: Path): Project? {
+    return runBlockingUnderModalProgress {
+      openOrCreateProjectInner(name, file)
     }
   }
 
-  private fun openOrCreateProjectInner(name: String, file: Path, projectCreatedCallback: ProjectCreatedCallback?): Project? {
+  private suspend fun openOrCreateProjectInner(name: String, file: Path): Project? {
     val existingFile = if (isProjectFile(file)) file else null
+    val projectManager = ProjectManagerEx.getInstanceEx()
     if (existingFile != null) {
       val openProjects = ProjectManager.getInstance().openProjects
       for (p in openProjects) {
@@ -578,10 +592,14 @@ object ProjectUtil {
           return p
         }
       }
-      return ProjectManagerEx.getInstanceEx().openProject(existingFile, OpenProjectTask().copy(runConfigurators = true))
+      return projectManager.openProjectAsync(existingFile, OpenProjectTask { runConfigurators = true })
     }
+
+    @Suppress("BlockingMethodInNonBlockingContext")
     val created = try {
-      !Files.exists(file) && Files.createDirectories(file) != null || Files.isDirectory(file)
+      withContext(Dispatchers.IO) {
+        !Files.exists(file) && Files.createDirectories(file) != null || Files.isDirectory(file)
+      }
     }
     catch (e: IOException) {
       false
@@ -589,37 +607,44 @@ object ProjectUtil {
 
     var projectFile: Path? = null
     if (created) {
-      val options = OpenProjectTask().asNewProject().copy(runConfigurators = true, projectName = name)
-      val project = ProjectManagerEx.getInstanceEx().newProject(file, options)
-      if (project != null) {
-        projectCreatedCallback?.projectCreated(project)
-        runInAutoSaveDisabledMode {
-          runBlocking {
-            saveSettings(componentManager = project, forceSavingAllSettings = true)
-          }
-        }
-        ApplicationManager.getApplication().invokeAndWait { WriteAction.run<RuntimeException> { Disposer.dispose(project) } }
-        projectFile = file
+      val options = OpenProjectTask {
+        isNewProject = true
+        runConfigurators = true
+        projectName = name
       }
+
+      val project = projectManager.newProjectAsync(file = file, options = options)
+      runInAutoSaveDisabledMode {
+        saveSettings(componentManager = project, forceSavingAllSettings = true)
+      }
+      writeAction {
+        Disposer.dispose(project)
+      }
+      projectFile = file
     }
 
     if (projectFile == null) {
       return null
     }
 
-    return ProjectManagerEx.getInstanceEx().openProject(projectStoreBaseDir = projectFile, options = OpenProjectTask {
+    return projectManager.openProjectAsync(projectStoreBaseDir = projectFile, options = OpenProjectTask {
       runConfigurators = true
       isProjectCreatedWithWizard = true
       isRefreshVfsNeeded = false
     })
   }
 
-  fun getProjectForWindow(window: Window?): Project? {
+  @JvmStatic
+  fun getRootFrameForWindow(window: Window?): IdeFrame? {
     var w = window ?: return null
     while (w.owner != null) {
       w = w.owner
     }
-    return if (w is IdeFrame) (w as IdeFrame).project else null
+    return w as? IdeFrame
+  }
+
+  fun getProjectForWindow(window: Window?): Project? {
+    return getRootFrameForWindow(window)?.project
   }
 
   @JvmStatic
@@ -665,18 +690,37 @@ object ProjectUtil {
   }
 }
 
+private val delegateToCoroutineOnlyRunBlocking: Boolean =
+  System.getProperty("ide.use.coroutine.only.runBlocking", "true").toBoolean()
+
+@Suppress("DeprecatedCallableAddReplaceWith")
 @Internal
+@ScheduledForRemoval
+@Deprecated(
+  "Use runBlockingModal on EDT with proper owner and title, " +
+  "or runBlockingCancellable(+withBackgroundProgressIndicator with proper title) on BGT"
+)
 // inline is not used - easier debug
-fun <T> runUnderModalProgressIfIsEdt(task: suspend () -> T): T {
+fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
   if (!ApplicationManager.getApplication().isDispatchThread) {
+    if (delegateToCoroutineOnlyRunBlocking) {
+      return runBlockingMaybeCancellable(task)
+    }
     return runBlocking(CoreProgressManager.getCurrentThreadProgressModality().asContextElement()) { task() }
   }
   return runBlockingUnderModalProgress(task = task)
 }
 
+@Suppress("DeprecatedCallableAddReplaceWith")
 @Internal
 @RequiresEdt
-inline fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: String = "", project: Project? = null, crossinline task: suspend () -> T): T {
+@ScheduledForRemoval
+@Deprecated("Use runBlockingModal with proper owner and title")
+fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: String = "", project: Project? = null, task: suspend CoroutineScope.() -> T): T {
+  if (delegateToCoroutineOnlyRunBlocking) {
+    val owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project)
+    return runBlockingModal(owner, title, TaskCancellation.cancellable(), task)
+  }
   return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
     runBlocking(modalityState.asContextElement()) {
@@ -690,6 +734,13 @@ inline fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: S
 @Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
 fun Project.executeOnPooledThread(task: Runnable) {
   coroutineScope.launch { task.run() }
+}
+
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Internal
+@Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
+fun <T> Project.computeOnPooledThread(task: Callable<T>): CompletableFuture<T> {
+  return coroutineScope.async { task.call() }.asCompletableFuture()
 }
 
 @Suppress("DeprecatedCallableAddReplaceWith")

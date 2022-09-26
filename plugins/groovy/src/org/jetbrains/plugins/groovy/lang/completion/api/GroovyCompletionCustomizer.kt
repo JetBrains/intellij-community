@@ -3,17 +3,17 @@ package org.jetbrains.plugins.groovy.lang.completion.api
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Allows to tune completions for the plugins of Groovy language.
- * See its implementor in Gradle for typical usage.
+ * Allows to tune completions for the plugins depending on Groovy language.
+ * See its implementor in Gradle as an example of typical usage.
  */
 @ApiStatus.Experimental
 interface GroovyCompletionCustomizer {
 
   fun customizeCompletionConsumer(completionParameters: CompletionParameters, resultSet: CompletionResultSet): CompletionResultSet
 
-  fun generateCompletionConsumer(file: PsiFile, resultSet: CompletionResultSet): GroovyCompletionConsumer?
+  fun generateCompletionConsumer(element: PsiElement, resultSet: CompletionResultSet): GroovyCompletionConsumer?
 }

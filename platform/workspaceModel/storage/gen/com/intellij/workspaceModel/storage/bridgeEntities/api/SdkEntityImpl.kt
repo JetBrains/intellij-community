@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
@@ -26,7 +27,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SdkEntityImpl : SdkEntity, WorkspaceEntityBase() {
+open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, SdkEntity::class.java,
@@ -41,16 +42,14 @@ open class SdkEntityImpl : SdkEntity, WorkspaceEntityBase() {
   override val library: LibraryEntity
     get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _homeUrl: VirtualFileUrl? = null
   override val homeUrl: VirtualFileUrl
-    get() = _homeUrl!!
+    get() = dataSource.homeUrl
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: SdkEntityData?) : ModifiableWorkspaceEntityBase<SdkEntity>(), SdkEntity.Builder {
+  class Builder(var result: SdkEntityData?) : ModifiableWorkspaceEntityBase<SdkEntity>(), SdkEntity.Builder {
     constructor() : this(SdkEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -68,6 +67,9 @@ open class SdkEntityImpl : SdkEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "homeUrl", this.homeUrl)
       // Process linked entities that are connected without a builder
@@ -77,6 +79,9 @@ open class SdkEntityImpl : SdkEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(LIBRARY_CONNECTION_ID, this) == null) {
           error("Field SdkEntity#library should be initialized")
@@ -86,9 +91,6 @@ open class SdkEntityImpl : SdkEntity, WorkspaceEntityBase() {
         if (this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] == null) {
           error("Field SdkEntity#library should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SdkEntity#entitySource should be initialized")
       }
       if (!getEntityData().isHomeUrlInitialized()) {
         error("Field SdkEntity#homeUrl should be initialized")
@@ -100,12 +102,27 @@ open class SdkEntityImpl : SdkEntity, WorkspaceEntityBase() {
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SdkEntity
-      this.entitySource = dataSource.entitySource
-      this.homeUrl = dataSource.homeUrl
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.homeUrl != dataSource.homeUrl) this.homeUrl = dataSource.homeUrl
+      if (parents != null) {
+        val libraryNew = parents.filterIsInstance<LibraryEntity>().single()
+        if ((this.library as WorkspaceEntityBase).id != (libraryNew as WorkspaceEntityBase).id) {
+          this.library = libraryNew
+        }
+      }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var library: LibraryEntity
       get() {
@@ -142,15 +159,6 @@ open class SdkEntityImpl : SdkEntity, WorkspaceEntityBase() {
         changedProperty.add("library")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
-      }
-
     override var homeUrl: VirtualFileUrl
       get() = getEntityData().homeUrl
       set(value) {
@@ -184,12 +192,13 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): SdkEntity {
-    val entity = SdkEntityImpl()
-    entity._homeUrl = homeUrl
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SdkEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -208,9 +217,15 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
     }
   }
 
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(LibraryEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SdkEntityData
 
@@ -221,7 +236,7 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SdkEntityData
 
@@ -239,5 +254,10 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
     var result = javaClass.hashCode()
     result = 31 * result + homeUrl.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.homeUrl?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

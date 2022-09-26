@@ -44,5 +44,4 @@ public final class PsiReferenceUtil {
     }
     return ContainerUtil.immutableSingletonList(maybeMultiReference);
   }
-
 }

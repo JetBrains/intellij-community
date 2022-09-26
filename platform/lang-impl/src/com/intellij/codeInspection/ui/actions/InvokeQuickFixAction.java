@@ -3,8 +3,6 @@
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.InspectionRVContentProvider;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.icons.AllIcons;
@@ -27,18 +25,12 @@ public class InvokeQuickFixAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
-    InspectionToolWrapper toolWrapper = InspectionViewActionBase.getToolWrapper(e);
-    final InspectionRVContentProvider provider = myView.getProvider();
-    if (toolWrapper == null) {
-      presentation.setEnabled(false);
-      return;
-    }
-    if (canApplyFixes(e)) {
-      presentation.setEnabled(false);
-      return;
-    }
-    presentation.setEnabled(provider.hasQuickFixes(e));
+    e.getPresentation().setEnabled(myView.areFixesAvailable());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

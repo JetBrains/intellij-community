@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
@@ -25,7 +26,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class JavaModuleSettingsEntityImpl : JavaModuleSettingsEntity, WorkspaceEntityBase() {
+open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntityData) : JavaModuleSettingsEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, JavaModuleSettingsEntity::class.java,
@@ -40,28 +41,22 @@ open class JavaModuleSettingsEntityImpl : JavaModuleSettingsEntity, WorkspaceEnt
   override val module: ModuleEntity
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
-  override var inheritedCompilerOutput: Boolean = false
-  override var excludeOutput: Boolean = false
-  @JvmField
-  var _compilerOutput: VirtualFileUrl? = null
+  override val inheritedCompilerOutput: Boolean get() = dataSource.inheritedCompilerOutput
+  override val excludeOutput: Boolean get() = dataSource.excludeOutput
   override val compilerOutput: VirtualFileUrl?
-    get() = _compilerOutput
+    get() = dataSource.compilerOutput
 
-  @JvmField
-  var _compilerOutputForTests: VirtualFileUrl? = null
   override val compilerOutputForTests: VirtualFileUrl?
-    get() = _compilerOutputForTests
+    get() = dataSource.compilerOutputForTests
 
-  @JvmField
-  var _languageLevelId: String? = null
   override val languageLevelId: String?
-    get() = _languageLevelId
+    get() = dataSource.languageLevelId
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: JavaModuleSettingsEntityData?) : ModifiableWorkspaceEntityBase<JavaModuleSettingsEntity>(), JavaModuleSettingsEntity.Builder {
+  class Builder(var result: JavaModuleSettingsEntityData?) : ModifiableWorkspaceEntityBase<JavaModuleSettingsEntity>(), JavaModuleSettingsEntity.Builder {
     constructor() : this(JavaModuleSettingsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -79,6 +74,9 @@ open class JavaModuleSettingsEntityImpl : JavaModuleSettingsEntity, WorkspaceEnt
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "compilerOutput", this.compilerOutput)
       index(this, "compilerOutputForTests", this.compilerOutputForTests)
@@ -89,6 +87,9 @@ open class JavaModuleSettingsEntityImpl : JavaModuleSettingsEntity, WorkspaceEnt
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
           error("Field JavaModuleSettingsEntity#module should be initialized")
@@ -99,9 +100,6 @@ open class JavaModuleSettingsEntityImpl : JavaModuleSettingsEntity, WorkspaceEnt
           error("Field JavaModuleSettingsEntity#module should be initialized")
         }
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field JavaModuleSettingsEntity#entitySource should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -109,16 +107,31 @@ open class JavaModuleSettingsEntityImpl : JavaModuleSettingsEntity, WorkspaceEnt
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as JavaModuleSettingsEntity
-      this.entitySource = dataSource.entitySource
-      this.inheritedCompilerOutput = dataSource.inheritedCompilerOutput
-      this.excludeOutput = dataSource.excludeOutput
-      this.compilerOutput = dataSource.compilerOutput
-      this.compilerOutputForTests = dataSource.compilerOutputForTests
-      this.languageLevelId = dataSource.languageLevelId
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.inheritedCompilerOutput != dataSource.inheritedCompilerOutput) this.inheritedCompilerOutput = dataSource.inheritedCompilerOutput
+      if (this.excludeOutput != dataSource.excludeOutput) this.excludeOutput = dataSource.excludeOutput
+      if (this.compilerOutput != dataSource?.compilerOutput) this.compilerOutput = dataSource.compilerOutput
+      if (this.compilerOutputForTests != dataSource?.compilerOutputForTests) this.compilerOutputForTests = dataSource.compilerOutputForTests
+      if (this.languageLevelId != dataSource?.languageLevelId) this.languageLevelId = dataSource.languageLevelId
+      if (parents != null) {
+        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
+      }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var module: ModuleEntity
       get() {
@@ -153,15 +166,6 @@ open class JavaModuleSettingsEntityImpl : JavaModuleSettingsEntity, WorkspaceEnt
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var inheritedCompilerOutput: Boolean
@@ -234,16 +238,13 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
   }
 
   override fun createEntity(snapshot: EntityStorage): JavaModuleSettingsEntity {
-    val entity = JavaModuleSettingsEntityImpl()
-    entity.inheritedCompilerOutput = inheritedCompilerOutput
-    entity.excludeOutput = excludeOutput
-    entity._compilerOutput = compilerOutput
-    entity._compilerOutputForTests = compilerOutputForTests
-    entity._languageLevelId = languageLevelId
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = JavaModuleSettingsEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -265,9 +266,15 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
     }
   }
 
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as JavaModuleSettingsEntityData
 
@@ -282,7 +289,7 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as JavaModuleSettingsEntityData
 
@@ -312,5 +319,11 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
     result = 31 * result + compilerOutputForTests.hashCode()
     result = 31 * result + languageLevelId.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.compilerOutputForTests?.let { collector.add(it::class.java) }
+    this.compilerOutput?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

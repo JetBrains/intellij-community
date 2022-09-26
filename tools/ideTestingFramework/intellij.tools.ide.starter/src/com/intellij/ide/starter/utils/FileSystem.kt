@@ -1,9 +1,9 @@
 package com.intellij.ide.starter.utils
 
 import com.intellij.ide.starter.di.di
-import com.intellij.ide.starter.exec.ExecOutputRedirect
-import com.intellij.ide.starter.exec.ProcessExecutor
 import com.intellij.ide.starter.path.GlobalPaths
+import com.intellij.ide.starter.process.exec.ExecOutputRedirect
+import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.system.SystemInfo
 import org.kodein.di.instance
 import org.rauschig.jarchivelib.ArchiveFormat
@@ -119,7 +119,7 @@ object FileSystem {
     unpackTarGz(tarFile.toPath(), targetDir.toPath())
   }
 
-  fun unpackTarGz(tarFile: Path, targetDir: Path) {
+  private fun unpackTarGz(tarFile: Path, targetDir: Path) {
     require(tarFile.fileName.toString().endsWith(".tar.gz")) { "File $tarFile must be tar.gz archive" }
 
     try {
@@ -234,7 +234,7 @@ object FileSystem {
     }
   }
 
-  fun Path.isUpToDate(): Boolean {
+  private fun Path.isUpToDate(): Boolean {
     val lastModified = this.toFile().lastModified()
     val currentTime = System.currentTimeMillis()
 

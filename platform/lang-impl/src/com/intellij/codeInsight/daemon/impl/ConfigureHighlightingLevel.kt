@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.codeInsight.daemon.DaemonBundle.message
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil.forceRootHighlighting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.lang.Language
@@ -18,7 +19,9 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Key
 import com.intellij.psi.FileViewProvider
+import com.intellij.psi.PsiFile
 
 fun getConfigureHighlightingLevelPopup(context: DataContext): JBPopup? {
   val psi = context.getData(PSI_FILE) ?: return null
@@ -62,6 +65,8 @@ private class LevelAction(val level: InspectionsLevel, val provider: FileViewPro
     return level == configuredLevel
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun setSelected(event: AnActionEvent, state: Boolean) {
     if (!state) return
     val file = provider.getPsi(language) ?: return
@@ -90,5 +95,31 @@ internal class ConfigureHighlightingLevelAction : DumbAwareAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val popup = getConfigureHighlightingLevelPopup(event.dataContext)
     popup?.showInBestPositionFor(event.dataContext)
+  }
+}
+
+object NotebookInjectedCodeUtility {
+  val ANALYZER_PASS_INJECTION_IGNORED_HOST_KEY: Key<Boolean> = Key.create("injection.host.ignored.mark")
+  val ANALYZER_PASS_INJECTED_INFO_HOLDER_KEY: Key<HighlightInfoHolder> = Key.create("injected.element.pass.info.holder")
+  private const val notebookInjectedFileExtension: String = "jupyter-kts"
+
+  fun isSuitableKtNotebookFragment(psiFile: PsiFile?): Boolean =
+    psiFile?.name?.endsWith(notebookInjectedFileExtension) == true
+
+  fun tryGetPreviousPassHolderFromInjected(psiFile: PsiFile?, injectedLanguageManager: InjectedLanguageManager): HighlightInfoHolder? {
+    psiFile ?: return null
+    if (isSuitableKtNotebookFragment(psiFile)) {
+      return if (injectedLanguageManager.getInjectionHost(psiFile)?.getCopyableUserData(ANALYZER_PASS_INJECTION_IGNORED_HOST_KEY) != null) null
+      else psiFile.getUserData(ANALYZER_PASS_INJECTED_INFO_HOLDER_KEY)
+    }
+    return null
+  }
+
+  fun ensureStateAfterHighlightingAnalysis(psiFile: PsiFile?, holder: HighlightInfoHolder?, injectedLanguageManager: InjectedLanguageManager) {
+    if (!isSuitableKtNotebookFragment(psiFile)
+        || psiFile == null
+        || injectedLanguageManager.getInjectionHost(psiFile)?.getCopyableUserData(ANALYZER_PASS_INJECTION_IGNORED_HOST_KEY) != null) return
+
+    psiFile.putUserData(ANALYZER_PASS_INJECTED_INFO_HOLDER_KEY, holder)
   }
 }

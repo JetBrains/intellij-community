@@ -32,15 +32,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairFunction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @experimental
- */
+@ApiStatus.Experimental
 public final class LanguageConsoleBuilder {
   @Nullable
   private LanguageConsoleView consoleView;

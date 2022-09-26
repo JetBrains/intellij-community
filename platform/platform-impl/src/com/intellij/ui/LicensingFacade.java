@@ -84,7 +84,6 @@ public final class LicensingFacade {
   }
 
   /**
-   * @param productCode
    * @return a "confirmation stamp" string describing the license obtained by the licensing subsystem for the product with the given productCode.
    *  returns null, if no license is currently obtained for the product.
    *

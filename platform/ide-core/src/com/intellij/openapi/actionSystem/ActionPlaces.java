@@ -200,6 +200,10 @@ public abstract class ActionPlaces {
     return KEYBOARD_SHORTCUT.equals(place) || MOUSE_SHORTCUT.equals(place) || FORCE_TOUCH.equals(place);
   }
 
+  public static boolean isMainToolbar(String place) {
+    return MAIN_TOOLBAR.equals(place);
+  }
+
   private static final Set<String> ourCommonPlaces = ContainerUtil.newHashSet(
     UNKNOWN, KEYBOARD_SHORTCUT, MOUSE_SHORTCUT, FORCE_TOUCH,
     TOOLBAR, MAIN_MENU, MAIN_TOOLBAR, EDITOR_TOOLBAR, TABS_MORE_TOOLBAR, EDITOR_TAB, COMMANDER_TOOLBAR, CONTEXT_TOOLBAR, TOOLWINDOW_TITLE,

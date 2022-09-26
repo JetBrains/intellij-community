@@ -89,13 +89,12 @@ public final class CompileScopeUtil {
   }
 
   private static BuildTargetType<?> toTargetType(ModuleSourceSet set) {
-    switch (set.getType()) {
-      case TEST: return JavaModuleBuildTargetType.TEST;
-      case PRODUCTION: return JavaModuleBuildTargetType.PRODUCTION;
-      case RESOURCES: return ResourcesTargetType.PRODUCTION;
-      case RESOURCES_TEST: return ResourcesTargetType.TEST;
-      default: return null;
-    }
+    return switch (set.getType()) {
+      case TEST -> JavaModuleBuildTargetType.TEST;
+      case PRODUCTION -> JavaModuleBuildTargetType.PRODUCTION;
+      case RESOURCES -> ResourcesTargetType.PRODUCTION;
+      case RESOURCES_TEST -> ResourcesTargetType.TEST;
+    };
   }
 
   public static List<TargetTypeBuildScope> getBaseScopeForExternalBuild(@NotNull CompileScope scope) {

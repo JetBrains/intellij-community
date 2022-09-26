@@ -131,6 +131,9 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
     }
 
     private fun doMultiOverrideImplement(handler: AbstractGenerateMembersHandler<T>) {
+        if (isFirPlugin && InTextDirectivesUtils.isDirectiveDefined(myFixture.file.text, IgnoreTests.DIRECTIVES.IGNORE_FIR)) {
+            return
+        }
         val elementAtCaret = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)
         val classOrObject = PsiTreeUtil.getParentOfType(elementAtCaret, KtClassOrObject::class.java)
             ?: error("Caret should be inside class or object")

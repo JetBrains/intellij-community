@@ -3,7 +3,10 @@ package com.intellij.keymap;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   /**
@@ -14,7 +17,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   private static final Map<String, String[][]> DEFAULT_DUPLICATES = Map.ofEntries(
     Map.entry("$default", new String[][]{
       {"ADD",                      "ExpandTreeNode", "Graph.ZoomIn"},
-      {"BACK_SPACE",               "EditorBackSpace", "FileChooserList.LevelUp", "JupyterNotebookDeleteCellCommandModeAction"},
+      {"BACK_SPACE",               "EditorBackSpace", "FileChooserList.LevelUp"},
       {"C",                        "Uml.CollapseNodes", "JupyterNotebookCopyCellCommandModeAction"},
       {"DELETE",                   "$Delete", "DatabaseView.DropAction", "JupyterNotebookDeleteCellCommandModeAction"},
       {"ENTER",                    "Console.Execute", "Console.TableResult.EditValue", "DirDiffMenu.SynchronizeDiff", "EditorChooseLookupItem",
@@ -28,14 +31,14 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"F5",                       "Graph.RouteEdges", "CopyElement", "PoBrowserRefresh"},
       {"F7",                       "NextDiff", "StepInto"},
       {"F12",                      "JumpToLastWindow","PoToggleSelection"},
-      {"INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomElementsTreeView.AddElement", "DomCollectionControl.Add",
+      {"INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomCollectionControl.Add",
                                    "XDebugger.NewWatch"},
       {"SPACE",                    "Console.TableResult.ColumnVisibility", "QuickPreview", "SplitChooser.SplitCenter", "CollapsiblePanel-toggle"},
       {"SUBTRACT",                 "CollapseTreeNode", "Graph.ZoomOut"},
       {"TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
                                    "EditorTab", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow"},
       {"alt DOWN",                 "MethodDown", "ShowContent", "ShowSearchHistory", "JupyterNotebookMoveCellDownCommandModeAction"},
-      {"alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue"},
+      {"alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "JupyterNotebookRunCellInsertBelowCommandModeAction"},
       {"alt F6",                   "CommanderSyncViews", "EditPropertyValue"},
       {"alt INSERT",               "FileChooser.NewFolder", "Generate", "NewElement"},
       {"alt J",                    "SelectNextOccurrence", "JupyterNotebookMoveCellDownCommandModeAction"},
@@ -142,9 +145,10 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt S",         "ShowProjectStructureSettings", "GoShareInPlaygroundAction"},
       {"shift ctrl alt RIGHT",     "MoveElementRight", "ResizeToolWindowRight"},
       {"shift ctrl alt UP",        "ResizeToolWindowUp", "VcsShowPrevChangeMarker"},
+      {"ctrl alt N",               "Console.TableResult.SetNull", "Git.New.Branch.In.Log", "GitNewBranchAction", "Inline"},
     }),
     Map.entry("Mac OS X 10.5+", new String[][]{
-      {"BACK_SPACE",               "$Delete", "EditorBackSpace", "JupyterNotebookDeleteCellCommandModeAction"},
+      {"BACK_SPACE",               "$Delete", "EditorBackSpace"},
       {"F1",                       "QuickJavaDoc", "org.jetbrains.r.actions.REditorHelpAction"},
       {"Force touch",              "GotoDeclaration", "RunToCursor"},
       {"alt DOWN",                 "EditorUnSelectWord", "MethodOverloadSwitchDown", "ShowSearchHistory", "JupyterNotebookMoveCellDownCommandModeAction"},
@@ -182,7 +186,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift meta R",             "PoBrowserRefresh", "ReplaceInPath"},
     }),
     Map.entry("Mac OS X", new String[][]{
-      {"BACK_SPACE",               "$Delete", "EditorBackSpace", "JupyterNotebookDeleteCellCommandModeAction"},
+      {"BACK_SPACE",               "$Delete", "EditorBackSpace"},
       {"Force touch",              "GotoDeclaration", "RunToCursor"},
       {"alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction"},
       {"control DOWN",             "EditorLookupDown", "NotebookSelectCellBelowAction", "MethodDown"},

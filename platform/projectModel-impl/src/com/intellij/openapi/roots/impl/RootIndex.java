@@ -27,6 +27,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.*;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.ide.impl.UtilsKt;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
@@ -196,7 +197,7 @@ class RootIndex {
 
           info.excludedFromModule.put(excludeRoot, module);
         }
-        VirtualFile contentRoot = myRootSupplier.getContentRoot(contentEntry);
+        VirtualFile contentRoot = myRootSupplier.getContentRoot(contentEntry);//todo[lene] here!
         if (contentRoot != null && ensureValid(contentRoot, module)) {
           if (!info.contentRootOf.containsKey(contentRoot)) {
             info.contentRootOf.put(contentRoot, module);
@@ -369,7 +370,7 @@ class RootIndex {
         VirtualFile libraryClass = myRootSupplier.correctRoot(root, entity, provider);
         if (libraryClass == null) continue;
 
-        info.libraryOrSdkSources.add(libraryClass);
+        info.libraryOrSdkClasses.add(libraryClass);
         info.classAndSourceRoots.add(libraryClass);
         info.classOfLibraries.putValue(libraryClass, entity);
       }
@@ -390,7 +391,7 @@ class RootIndex {
     for (CustomEntityProjectModelInfoProvider.@NotNull ExcludeStrategy<T> excludeStrategy :
       SequencesKt.asIterable(provider.getExcludeSdkRootStrategies(entities))) {
       T entity = excludeStrategy.generativeEntity;
-      List<VirtualFile> files = ContainerUtil.mapNotNull(excludeStrategy.excludeUrls, myRootSupplier::findFileByUrl);
+      List<VirtualFile> files = ContainerUtil.mapNotNull(excludeStrategy.excludeUrls, UtilsKt::getVirtualFile);
       info.excludedFromProject.addAll(ContainerUtil.filter(files, file -> RootFileSupplier.ensureValid(file, entity, provider)));
 
       java.util.function.@Nullable Function<Sdk, List<VirtualFile>> fun = excludeStrategy.excludeSdkRootsStrategy;
@@ -1016,17 +1017,10 @@ class RootIndex {
       for (Object library : producers) {
         if (librariesToIgnore.contains(library)) continue;
         if (library instanceof SyntheticLibrary) {
-          Condition<VirtualFile> exclusion = ((SyntheticLibrary)library).getExcludeFileCondition();
+          Condition<VirtualFile> exclusion = ((SyntheticLibrary)library).getUnitedExcludeCondition();
           if (exclusion != null) {
             exclusions.add(exclusion);
             if (exclusion.value(root)) {
-              continue;
-            }
-          }
-          Condition<VirtualFile> constantCondition = ((SyntheticLibrary)library).getConstantExcludeConditionAsCondition();
-          if (constantCondition != null) {
-            exclusions.add(constantCondition);
-            if (constantCondition.value(root)) {
               continue;
             }
           }

@@ -141,15 +141,12 @@ public class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspection
       String valueTypeArg = valueType == null ? "" : "<" + valueType.getCanonicalText() + ">";
       String merger;
       switch (downstreamName) {
-        case "minBy":
-        case "maxBy":
+        case "minBy", "maxBy" ->
           merger = "java.util.function.BinaryOperator." + valueTypeArg + downstreamName + "(" + ct.text(downstreamArg) + ")";
-          break;
-        case "reducing":
-          merger = ct.text(downstreamArg);
-          break;
-        default:
+        case "reducing" -> merger = ct.text(downstreamArg);
+        default -> {
           return;
+        }
       }
       String keyMapper = ct.text(args[0]);
       String mapSupplier = args.length == 3 ? ct.text(args[1]) : null;

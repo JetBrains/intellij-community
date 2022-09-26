@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -2837,6 +2837,31 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("returnedExpressionTypeMismatchFunctionParameterType.kt")
             public void testReturnedExpressionTypeMismatchFunctionParameterType() throws Exception {
                 runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/returnedExpressionTypeMismatchFunctionParameterType.kt");
+            }
+
+            @TestMetadata("twoDimensionalArray.kt")
+            public void testTwoDimensionalArray() throws Exception {
+                runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/twoDimensionalArray.kt");
+            }
+
+            @TestMetadata("twoDimensionalArray2.kt")
+            public void testTwoDimensionalArray2() throws Exception {
+                runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/twoDimensionalArray2.kt");
+            }
+
+            @TestMetadata("twoDimensionalArray3.kt")
+            public void testTwoDimensionalArray3() throws Exception {
+                runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/twoDimensionalArray3.kt");
+            }
+
+            @TestMetadata("twoDimensionalList.kt")
+            public void testTwoDimensionalList() throws Exception {
+                runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/twoDimensionalList.kt");
+            }
+
+            @TestMetadata("twoDimensionalList2.kt")
+            public void testTwoDimensionalList2() throws Exception {
+                runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/twoDimensionalList2.kt");
             }
 
             @TestMetadata("typeMismatchInIfStatementReturnedByFunction.kt")

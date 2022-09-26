@@ -177,7 +177,6 @@ class CompilerArgumentsCachingTest {
         noInline = Random.nextBoolean()
         skipMetadataVersionCheck = Random.nextBoolean()
         skipPrereleaseCheck = Random.nextBoolean()
-        newInference = Random.nextBoolean()
         allowKotlinPackage = Random.nextBoolean()
         reportOutputFiles = Random.nextBoolean()
         multiPlatform = Random.nextBoolean()
@@ -260,7 +259,6 @@ class CompilerArgumentsCachingTest {
         inheritMultifileParts = Random.nextBoolean()
         useTypeTable = Random.nextBoolean()
         useOldClassFilesReading = Random.nextBoolean()
-        singleModule = Random.nextBoolean()
         suppressMissingBuiltinsError = Random.nextBoolean()
         useJavac = Random.nextBoolean()
         compileJava = Random.nextBoolean()
@@ -446,7 +444,6 @@ class CompilerArgumentsCachingTest {
             "noInline",
             "skipMetadataVersionCheck",
             "skipPrereleaseCheck",
-            "newInference",
             "allowKotlinPackage",
             "reportOutputFiles",
             "multiPlatform",
@@ -535,7 +532,6 @@ class CompilerArgumentsCachingTest {
             "useTypeTable",
             "skipRuntimeVersionCheck",
             "useOldClassFilesReading",
-            "singleModule",
             "suppressMissingBuiltinsError",
             "useJavac",
             "compileJava",

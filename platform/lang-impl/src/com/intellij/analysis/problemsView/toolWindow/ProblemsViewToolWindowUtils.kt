@@ -34,7 +34,12 @@ object ProblemsViewToolWindowUtils {
     }
   }
 
-  private fun getContentById(project: Project, id: String): Content? {
+  @JvmStatic
+  fun selectProjectErrorsTab(project: Project) {
+    selectTab(project, ProblemsViewProjectErrorsPanelProvider.ID)
+  }
+  
+  fun getContentById(project: Project, id: String): Content? {
     val toolWindow = getToolWindow(project) ?: return null
     val content = toolWindow.contentManager.contents.filter {
       val problemsView = it.component as? ProblemsViewTab

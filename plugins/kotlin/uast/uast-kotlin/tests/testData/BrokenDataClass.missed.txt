@@ -1,5 +1,5 @@
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (Cls)) <- UClass (name = Cls) <- UFile (package = )
-org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression
+org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UMethod (name = Cls) <- UClass (name = Cls) <- UFile (package = )
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (a)) <- UParameter (name = a) <- UMethod (name = Cls) <- UClass (name = Cls) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtTypeReference: UTypeReferenceExpression (name = long) <- UParameter (name = a) <- UMethod (name = Cls) <- UClass (name = Cls) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = Long) <- UTypeReferenceExpression (name = long) <- UParameter (name = a) <- UMethod (name = Cls) <- UClass (name = Cls)

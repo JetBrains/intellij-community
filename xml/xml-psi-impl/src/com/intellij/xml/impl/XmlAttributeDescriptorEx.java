@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 public interface XmlAttributeDescriptorEx extends XmlAttributeDescriptor {
 
   /**
-   * @param newTargetName
    * @return new attribute local name
    */
   @Nullable

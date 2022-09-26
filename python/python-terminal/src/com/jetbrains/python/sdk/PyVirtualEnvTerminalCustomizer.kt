@@ -17,6 +17,7 @@ import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import java.io.File
 import java.nio.file.Path
+import java.nio.file.Paths
 import javax.swing.JCheckBox
 import kotlin.io.path.Path
 import kotlin.io.path.exists
@@ -67,7 +68,10 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
                                               workingDirectory: String?,
                                               command: Array<out String>,
                                               envs: MutableMap<String, String>): Array<out String> {
-    val sdk: Sdk? = PySdkUtil.findSdkForDirectory(project, workingDirectory)
+    var sdk: Sdk? = null
+    if (workingDirectory != null) {
+      sdk = PySdkUtil.findSdkForDirectory(project, Paths.get(workingDirectory), false)
+    }
 
     if (sdk != null &&
         (PythonSdkUtil.isVirtualEnv(sdk) || PythonSdkUtil.isConda(sdk)) &&
@@ -136,7 +140,7 @@ class SettingsState {
 
 @State(name = "PyVirtualEnvTerminalCustomizer", storages = [(Storage("python-terminal.xml"))])
 class PyVirtualEnvTerminalSettings : PersistentStateComponent<SettingsState> {
-  var myState: SettingsState = SettingsState()
+  private var myState: SettingsState = SettingsState()
 
   var virtualEnvActivate: Boolean
     get() = myState.virtualEnvActivate

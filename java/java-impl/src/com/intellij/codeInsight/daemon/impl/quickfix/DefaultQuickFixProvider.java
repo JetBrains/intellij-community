@@ -115,9 +115,9 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
 
   @NotNull
   private static Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
-    final Collection<IntentionAction> result = new ArrayList<>();
+    Collection<IntentionAction> result = new ArrayList<>();
     boolean isQualified = refExpr.isQualified();
-    final VariableKind kind = getKind(refExpr);
+    VariableKind kind = getKind(refExpr);
 
     if (!isQualified) {
       IntentionAction createLocalFix = new CreateLocalFromUsageFix(refExpr);
@@ -140,16 +140,16 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
 
   @Nullable
   private static VariableKind getKind(@NotNull PsiReferenceExpression refExpr) {
-    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
-    final String reference = refExpr.getText();
+    JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
+    String reference = refExpr.getText();
 
     if (StringUtil.isUpperCase(reference)) {
       return VariableKind.STATIC_FINAL_FIELD;
     }
 
     for (VariableKind kind : VariableKind.values()) {
-      final String prefix = styleManager.getPrefixByVariableKind(kind);
-      final String suffix = styleManager.getSuffixByVariableKind(kind);
+      String prefix = styleManager.getPrefixByVariableKind(kind);
+      String suffix = styleManager.getSuffixByVariableKind(kind);
 
       if (prefix.isEmpty() && suffix.isEmpty()) {
         continue;

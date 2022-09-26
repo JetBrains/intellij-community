@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.customization.ActionUrl;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -741,6 +742,21 @@ public final class ActionsTreeUtil {
   @Nls
   public static String getMainToolbar() {
     return KeyMapBundle.message("main.toolbar.title");
+  }
+
+  @Nls
+  public static String getMainToolbarLeft() {
+    return ActionsBundle.message("group.MainToolbarLeft.text");
+  }
+
+  @Nls
+  public static String getMainToolbarCenter() {
+    return ActionsBundle.message("group.MainToolbarCenter.text");
+  }
+
+  @Nls
+  public static String getMainToolbarRight() {
+    return ActionsBundle.message("group.MainToolbarRight.text");
   }
 
   @Nls

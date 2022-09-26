@@ -35,7 +35,6 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
    * Selects the corrected method by argument types
    * @param inputTypes the array of FQN of the parameter types or wildcards.
    * The special values are:<bl><li>"?" - means any type</li><li>".." - instructs pattern to accept the rest of the arguments</li></bl>
-   * @return
    */
   public PsiMethodPattern withParameters(@NonNls final String... inputTypes) {
     final String[] types = inputTypes.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : inputTypes;

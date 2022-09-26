@@ -7,12 +7,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -20,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -136,7 +136,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     });
 
-    new AnAction() {
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         final String prefix = getEnteredPrefix();
@@ -150,6 +150,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(isPopupActive() && !StringUtil.isEmpty(getEnteredPrefix()));
+      }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myComponent);
 
@@ -537,13 +541,14 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (e.isConsumed()) {
         updateLastPattern();
         String s = mySearchField.getText();
-        int keyCode = e.getKeyCode();
         Object element;
-        if (isUpDownHomeEnd(keyCode)) {
-          element = findTargetElement(keyCode, s);
+
+        int navKeyCode = getNavigationKeyCode(e);
+        if (navKeyCode != 0) {
+          element = findTargetElement(navKeyCode, s);
           if (myClearSearchOnNavigateNoMatch && element == null) {
             manageSearchPopup(null);
-            element = findTargetElement(keyCode, "");
+            element = findTargetElement(navKeyCode, "");
           }
         }
         else {
@@ -575,6 +580,34 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
   }
 
+  private static int getNavigationKeyCode(KeyEvent e) {
+    KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
+    if (isUpDownHomeEnd(e.getKeyCode())) {
+      return e.getKeyCode();
+    }
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    if (keymapManager != null) {
+      @NotNull String @NotNull[] actionIds = keymapManager.getActiveKeymap().getActionIds(keyStroke);
+      for (String id : actionIds) {
+        switch (id) {
+          case IdeActions.ACTION_EDITOR_MOVE_CARET_UP -> {
+            return KeyEvent.VK_UP;
+          }
+          case IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN -> {
+            return KeyEvent.VK_DOWN;
+          }
+          case IdeActions.ACTION_EDITOR_MOVE_LINE_START -> {
+            return KeyEvent.VK_HOME;
+          }
+          case IdeActions.ACTION_EDITOR_MOVE_LINE_END -> {
+            return KeyEvent.VK_END;
+          }
+        }
+      }
+    }
+    return 0;
+  }
+
   protected void onSearchFieldUpdated(String pattern) {
     if (Registry.is("ide.speed.search.close.when.empty") && StringUtil.isEmpty(pattern)) hidePopup();
   }
@@ -600,6 +633,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       };
 
       addExtension(leftExtension);
+
+      Extension rightExtension = createSearchFieldExtension();
+      if (rightExtension != null) {
+        addExtension(rightExtension);
+      }
     }
 
     @Override
@@ -655,6 +693,17 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     }
 
+  }
+
+  /**
+   * Creates an additional extension.
+   * SpeedSearch calls this method when creating the search text field.
+   * If the result of this method is not null, the caller adds it as a serach text field extension.
+   * @return an extension, or null.
+   */
+  @Nullable
+  protected ExtendableTextComponent.Extension createSearchFieldExtension() {
+    return null;
   }
 
   private static boolean isUpDownHomeEnd(int keyCode) {

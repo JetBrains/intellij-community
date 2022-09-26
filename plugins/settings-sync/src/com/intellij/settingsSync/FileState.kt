@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.intellij.util.io.isFile
 import com.intellij.util.io.readBytes
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.annotations.ApiStatus
@@ -48,6 +49,22 @@ internal fun getFileStateFromFileWithDeletedMarker(file: Path, storageBasePath: 
   } else {
     FileState.Modified(fileSpec, bytes, bytes.size)
   }
+}
+
+internal fun collectFileStatesFromFiles(paths: Set<Path>, rootConfigPath: Path): Set<FileState> {
+  val fileStates = mutableSetOf<FileState>()
+  for (path in paths) {
+    if (path.isFile()) {
+      fileStates += getFileStateFromFileWithDeletedMarker(path, rootConfigPath)
+    }
+    else { // 'path' is e.g. 'ROOT_CONFIG/keymaps/'
+      val fileStatesFromFolder = path.toFile().walkTopDown()
+        .filter { it.isFile }
+        .mapTo(HashSet()) { getFileStateFromFileWithDeletedMarker(it.toPath(), rootConfigPath) }
+      fileStates.addAll(fileStatesFromFolder)
+    }
+  }
+  return fileStates
 }
 
 internal const val DELETED_FILE_MARKER = "DELETED"

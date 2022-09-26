@@ -26,11 +26,6 @@ fun <S, T> GraphProperty<S>.transform(map: (S) -> T, comap: (T) -> S): GraphProp
 fun <T> ObservableMutableProperty<T>.map(transform: (T) -> T) = transform(transform, { it })
 
 @Deprecated("Use transformations from PropertyOperationUtil",
-            ReplaceWith("transform({ it }, transform)", "com.intellij.openapi.observable.util.transform"))
-@ApiStatus.ScheduledForRemoval
-fun <T> ObservableMutableProperty<T>.comap(transform: (T) -> T) = transform({ it }, transform)
-
-@Deprecated("Use transformations from PropertyOperationUtil",
             ReplaceWith("transform(map, comap)", "com.intellij.openapi.observable.util.transform"))
 @ApiStatus.ScheduledForRemoval
 fun <S, T> ObservableMutableProperty<S>.transform(map: (S) -> T, comap: (T) -> S): ObservableMutableProperty<T> =

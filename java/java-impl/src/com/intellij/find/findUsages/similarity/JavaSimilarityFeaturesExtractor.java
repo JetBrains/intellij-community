@@ -4,6 +4,7 @@ package com.intellij.find.findUsages.similarity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesRecorder;
 import com.intellij.util.ObjectUtils;
@@ -173,6 +174,24 @@ public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor
   public void visitAnonymousClass(@NotNull PsiAnonymousClass clazz) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(clazz, "anonymousClazz");
     super.visitAnonymousClass(clazz);
+  }
+
+  @Override
+  public void visitMethod(@NotNull PsiMethod method) {
+    if (method.equals(myContext)) {
+      final MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
+      myUsageSimilarityFeaturesRecorder.addFeature(method.isConstructor() ? "CONSTRUCTOR: " : methodSignature.getName());
+      for (PsiType type : methodSignature.getParameterTypes()) {
+        myUsageSimilarityFeaturesRecorder.addFeature("PARAMETER: " + type.getCanonicalText());
+      }
+      PsiType returnType = method.getReturnType();
+      if (returnType != null) {
+        myUsageSimilarityFeaturesRecorder.addFeature("RETURN_TYPE: " + returnType.getCanonicalText());
+      }
+    }
+    else {
+      super.visitMethod(method);
+    }
   }
 
   private static @Nullable String viaResolve(@NotNull PsiMethodReferenceExpression expression) {

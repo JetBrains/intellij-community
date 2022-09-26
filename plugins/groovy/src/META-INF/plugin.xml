@@ -526,10 +526,10 @@
 
     <codeInsight.template.postfixTemplateProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.template.postfix.GroovyPostfixTemplateProvider"/>
 
-    <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Generic"/>
-    <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Expression"/>
-    <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Statement"/>
-    <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Declaration"/>
+    <liveTemplateContext contextId="GROOVY" implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Generic"/>
+    <liveTemplateContext contextId="GROOVY_EXPRESSION" baseContextId="GROOVY" implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Expression"/>
+    <liveTemplateContext contextId="GROOVY_STATEMENT" baseContextId="GROOVY" implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Statement"/>
+    <liveTemplateContext contextId="GROOVY_DECLARATION" baseContextId="GROOVY" implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Declaration"/>
 
     <defaultLiveTemplates file="liveTemplates/Groovy.xml"/>
 
@@ -1326,6 +1326,9 @@
     <newProjectWizard.groovy.buildSystem implementation="org.jetbrains.plugins.groovy.config.wizard.IntelliJGroovyNewProjectWizard"/>
 
     <persistentFsConnectionListener implementation="org.jetbrains.plugins.groovy.bundled.BundledGroovyPersistentFsConnectionListener"/>
+
+    <internal.statistic.libraryUsageImportProcessor language="Groovy"
+                                                    implementationClass="org.jetbrains.plugins.groovy.stats.GroovyLibraryUsageImportProcessor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

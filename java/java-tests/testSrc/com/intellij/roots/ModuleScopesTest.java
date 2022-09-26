@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +22,7 @@ import com.intellij.util.PathsList;
 import java.io.IOException;
 import java.util.Collections;
 
+import static org.junit.Assert.assertNotEquals;
 
 public class ModuleScopesTest extends JavaModuleTestCase {
   private LightTempDirTestFixtureImpl myFixture;
@@ -90,31 +91,25 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     assertFalse(moduleA.getModuleWithDependenciesAndLibrariesScope(false).contains(classB));
     assertFalse(moduleA.getModuleWithDependenciesAndLibrariesScope(false).isSearchInModuleContent(moduleB));
 
-    final VirtualFile[] compilationClasspath = getCompilationClasspath(moduleA);
+    VirtualFile[] compilationClasspath = getCompilationClasspath(moduleA);
     assertEquals(1, compilationClasspath.length);
-    final VirtualFile[] productionCompilationClasspath = getProductionCompileClasspath(moduleA);
+    VirtualFile[] productionCompilationClasspath = getProductionCompileClasspath(moduleA);
     assertEmpty(productionCompilationClasspath);
 
-    final PathsList pathsList = OrderEnumerator.orderEntries(moduleA).recursively().getPathsList();
+    PathsList pathsList = OrderEnumerator.orderEntries(moduleA).recursively().getPathsList();
     assertEquals(1, pathsList.getPathList().size());
-    final PathsList pathsListWithoutTests = OrderEnumerator.orderEntries(moduleA).productionOnly().recursively().getPathsList();
+    PathsList pathsListWithoutTests = OrderEnumerator.orderEntries(moduleA).productionOnly().recursively().getPathsList();
     assertEquals(0, pathsListWithoutTests.getPathList().size());
   }
 
-  private Module addDependentModule(final Module moduleA, final DependencyScope scope) {
-    return addDependentModule("b", moduleA, scope, false);
-  }
-
-  private Module addDependentModule(final String name, final Module moduleA,
-                                    final DependencyScope scope,
-                                    final boolean exported) {
-    final Module moduleB = createModule(name + ".iml", StdModuleTypes.JAVA);
+  private Module addDependentModule(Module moduleA, DependencyScope scope) {
+    Module moduleB = createModule("b" + ".iml", StdModuleTypes.JAVA);
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      VirtualFile rootB = myFixture.findOrCreateDir(name);
+      VirtualFile rootB = myFixture.findOrCreateDir("b");
       VirtualFile outB = myFixture.findOrCreateDir("out");
 
-      ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, exported);
+      ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, false);
 
       PsiTestUtil.addSourceRoot(moduleB, rootB);
       PsiTestUtil.setCompilerOutputPath(moduleB, outB.getUrl(), false);
@@ -186,18 +181,18 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     assertTrue(m.getModuleWithDependenciesAndLibrariesScope(true).contains(libraryClass));
     assertFalse(m.getModuleWithDependenciesAndLibrariesScope(false).contains(libraryClass));
 
-    final VirtualFile[] compilationClasspath = getCompilationClasspath(m);
+    VirtualFile[] compilationClasspath = getCompilationClasspath(m);
     assertEquals(1, compilationClasspath.length);
-    final VirtualFile[] productionCompilationClasspath = getProductionCompileClasspath(m);
+    VirtualFile[] productionCompilationClasspath = getProductionCompileClasspath(m);
     assertEmpty(productionCompilationClasspath);
   }
 
   public void testRuntimeModuleDependency() {
     Module moduleA = createModule("a.iml", StdModuleTypes.JAVA);
     addDependentModule(moduleA, DependencyScope.RUNTIME);
-    final VirtualFile[] runtimeClasspath = getRuntimeClasspath(moduleA);
+    VirtualFile[] runtimeClasspath = getRuntimeClasspath(moduleA);
     assertEquals(1, runtimeClasspath.length);
-    final VirtualFile[] compilationClasspath = getCompilationClasspath(moduleA);
+    VirtualFile[] compilationClasspath = getCompilationClasspath(moduleA);
     assertEquals(1, compilationClasspath.length);
     VirtualFile[] production = getProductionCompileClasspath(moduleA);
     assertEmpty(production);
@@ -207,10 +202,10 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     Module m = createModule("a.iml", StdModuleTypes.JAVA);
     VirtualFile libraryRoot = addLibrary(m, DependencyScope.RUNTIME);
 
-    final VirtualFile[] runtimeClasspath = getRuntimeClasspath(m);
+    VirtualFile[] runtimeClasspath = getRuntimeClasspath(m);
     assertOrderedEquals(runtimeClasspath, libraryRoot);
 
-    final VirtualFile[] compilationClasspath = getCompilationClasspath(m);
+    VirtualFile[] compilationClasspath = getCompilationClasspath(m);
     assertEquals(1, compilationClasspath.length);
     VirtualFile[] production = getProductionCompileClasspath(m);
     assertEmpty(production);
@@ -228,7 +223,7 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     addDependentModule(moduleA, DependencyScope.PROVIDED);
     VirtualFile[] runtimeClasspath = getRuntimeClasspath(moduleA);
     assertEmpty(runtimeClasspath);
-    final VirtualFile[] compilationClasspath = getCompilationClasspath(moduleA);
+    VirtualFile[] compilationClasspath = getCompilationClasspath(moduleA);
     assertEquals(1, compilationClasspath.length);
   }
 
@@ -236,10 +231,10 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     Module m = createModule("a.iml", StdModuleTypes.JAVA);
     VirtualFile libraryRoot = addLibrary(m, DependencyScope.PROVIDED);
 
-    final VirtualFile[] runtimeClasspath = getRuntimeClasspath(m);
+    VirtualFile[] runtimeClasspath = getRuntimeClasspath(m);
     assertEmpty(runtimeClasspath);
 
-    final VirtualFile[] compilationClasspath = getCompilationClasspath(m);
+    VirtualFile[] compilationClasspath = getCompilationClasspath(m);
     assertOrderedEquals(compilationClasspath, libraryRoot);
 
     VirtualFile libraryClass = myFixture.createFile("lib/Test.class");
@@ -263,8 +258,8 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     return ModuleRootManager.getInstance(m).orderEntries().recursively().exportedOnly().getClassesRoots();
   }
 
-  private VirtualFile addLibrary(final Module m, final DependencyScope scope) {
-    final VirtualFile libraryRoot = myFixture.findOrCreateDir("lib");
+  private VirtualFile addLibrary(Module m, DependencyScope scope) {
+    VirtualFile libraryRoot = myFixture.findOrCreateDir("lib");
 
     ModuleRootModificationUtil.addModuleLibrary(m, "l", Collections.singletonList(libraryRoot.getUrl()),
                                                 Collections.emptyList(), scope);
@@ -288,16 +283,16 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     GlobalSearchScope deps = module.getModuleWithDependentsScope();
     GlobalSearchScope depsTests = module.getModuleTestsWithDependentsScope();
 
-    assertFalse(deps.equals(depsTests));
-    assertFalse(depsTests.equals(deps));
+    assertNotEquals(deps, depsTests);
+    assertNotEquals(depsTests, deps);
 
     ((ModuleEx)module).clearScopesCache();
 
     GlobalSearchScope deps2 = module.getModuleWithDependentsScope();
     GlobalSearchScope depsTests2 = module.getModuleTestsWithDependentsScope();
 
-    assertFalse(deps2.equals(depsTests2));
-    assertFalse(depsTests2.equals(deps2));
+    assertNotEquals(deps2, depsTests2);
+    assertNotEquals(depsTests2, deps2);
     assertNotSame(deps, deps2);
     assertNotSame(depsTests, depsTests2);
     assertEquals(deps, deps2);
@@ -311,8 +306,8 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     ModuleRootModificationUtil.addDependency(a, b, DependencyScope.COMPILE, true);
     ModuleRootModificationUtil.addDependency(b, c, DependencyScope.COMPILE, true);
 
-    final VirtualFile libFile1 = myFixture.createFile("lib1/a.txt", "");
-    final VirtualFile libFile2 = myFixture.createFile("lib2/a.txt", "");
+    VirtualFile libFile1 = myFixture.createFile("lib1/a.txt", "");
+    VirtualFile libFile2 = myFixture.createFile("lib2/a.txt", "");
 
     ModuleRootModificationUtil.addModuleLibrary(a, "l", Collections.singletonList(libFile1.getParent().getUrl()),
                                                 Collections.emptyList(), Collections.emptyList(), DependencyScope.COMPILE, true);

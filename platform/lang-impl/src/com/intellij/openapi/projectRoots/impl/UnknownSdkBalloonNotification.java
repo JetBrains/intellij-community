@@ -1,7 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.notification.*;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
@@ -14,11 +16,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static com.intellij.notification.NotificationAction.createSimple;
 
-public class UnknownSdkBalloonNotification {
+@Service(Service.Level.PROJECT)
+public final class UnknownSdkBalloonNotification {
   public static @NotNull UnknownSdkBalloonNotification getInstance(@NotNull Project project) {
     return project.getService(UnknownSdkBalloonNotification.class);
   }

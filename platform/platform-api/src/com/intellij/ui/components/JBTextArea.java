@@ -7,6 +7,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,6 +64,11 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
         repaint();
       }
     });
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   @Override

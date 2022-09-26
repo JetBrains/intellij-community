@@ -73,7 +73,7 @@ public class FillPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiElem
         return null;
       }
       String qualifiedName = Objects.requireNonNull(inheritor.getQualifiedName());
-      if (!permittedClasses.contains(inheritor)) missingInheritors.add(qualifiedName);
+      if (!ContainerUtil.exists(permittedClasses, cls -> cls.isEquivalentTo(inheritor))) missingInheritors.add(qualifiedName);
     }
 
     if (missingInheritors.isEmpty()) {

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @ApiStatus.Internal
 public interface MeasurableIndexStore {
-  public static final int KEYS_COUNT_UNKNOWN = -1;
+  int KEYS_COUNT_UNKNOWN = -1;
 
   /**
    * Method was introduced for analytics purposes, and for that it is not required to be precise,
@@ -24,7 +24,7 @@ public interface MeasurableIndexStore {
   @ApiStatus.Internal
   int keysCountApproximately();
 
-  public static int keysCountApproximatelyIfPossible(final Object o) {
+  static int keysCountApproximatelyIfPossible(final Object o) {
     if (o instanceof MeasurableIndexStore) {
       return ((MeasurableIndexStore)o).keysCountApproximately();
     }

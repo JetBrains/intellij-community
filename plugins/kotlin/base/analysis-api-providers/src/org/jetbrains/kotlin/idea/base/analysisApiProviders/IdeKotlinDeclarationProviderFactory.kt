@@ -9,6 +9,8 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory
+import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
+import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -45,10 +47,11 @@ private class IdeKotlinDeclarationProvider(
     }
 
     override fun getClassLikeDeclarationByClassId(classId: ClassId): KtClassLikeDeclaration? {
-        return firstMatchingOrNull(KotlinFullClassNameIndex.KEY, key = classId.asStringForIndexes()) {
-            candidate -> candidate.getClassId() == classId
+        return firstMatchingOrNull(KotlinFullClassNameIndex.KEY, key = classId.asStringForIndexes()) { candidate ->
+            candidate.getClassId() == classId
         } ?: getTypeAliasByClassId(classId)
     }
+
     override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> {
         return KotlinFullClassNameIndex
             .get(classId.asStringForIndexes(), project, scope)
@@ -59,27 +62,17 @@ private class IdeKotlinDeclarationProvider(
         return listOfNotNull(getTypeAliasByClassId(classId)) //todo
     }
 
-    override fun getTypeAliasNamesInPackage(packageFqName: FqName): Set<Name> {
-        return KotlinTopLevelTypeAliasByPackageIndex
-            .get(packageFqName.asStringForIndexes(), project, scope)
-            .mapNotNullTo(mutableSetOf()) { it.nameAsName }
+    override fun getTopLevelCallableNamesInPackage(packageFqName: FqName): Set<Name> {
+        return KotlinTopLevelCallableByPackageShortNameIndex.getNamesInPackage(packageFqName, scope)
+
     }
 
-    override fun getPropertyNamesInPackage(packageFqName: FqName): Set<Name> {
-        return KotlinTopLevelPropertyByPackageIndex
-            .get(packageFqName.asStringForIndexes(), project, scope)
-            .mapNotNullTo(mutableSetOf()) { it.nameAsName }
+    override fun getTopLevelKotlinClassLikeDeclarationNamesInPackage(packageFqName: FqName): Set<Name> {
+        return KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex.getNamesInPackage(packageFqName, scope)
     }
 
-    override fun getFunctionsNamesInPackage(packageFqName: FqName): Set<Name> {
-        return KotlinTopLevelFunctionByPackageIndex
-            .get(packageFqName.asStringForIndexes(), project, scope)
-            .mapNotNullTo(mutableSetOf()) { it.nameAsName }
-    }
-
-    override fun getFacadeFilesInPackage(packageFqName: FqName): Collection<KtFile> {
-        return KotlinFileFacadeClassByPackageIndex
-            .get(packageFqName.asString(), project, scope)
+    override fun findFilesForFacadeByPackage(packageFqName: FqName): Collection<KtFile> {
+        return KotlinFileFacadeClassByPackageIndex.get(packageFqName.asString(), project, scope)
     }
 
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
@@ -103,12 +96,6 @@ private class IdeKotlinDeclarationProvider(
 
     override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> =
         KotlinTopLevelFunctionFqnNameIndex.get(callableId.asStringForIndexes(), project, scope)
-
-
-    override fun getClassNamesInPackage(packageFqName: FqName): Set<Name> =
-        KotlinTopLevelClassByPackageIndex
-            .get(packageFqName.asStringForIndexes(), project, scope)
-            .mapNotNullTo(hashSetOf()) { it.nameAsName }
 
     companion object {
         private fun CallableId.asStringForIndexes(): String =

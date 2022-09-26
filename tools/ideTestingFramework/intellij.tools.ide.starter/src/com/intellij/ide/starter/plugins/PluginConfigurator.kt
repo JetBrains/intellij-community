@@ -75,18 +75,18 @@ open class PluginConfigurator(val testContext: IDETestContext) {
 
   fun enablePlugins(vararg pluginIds: String) = enablePlugins(pluginIds.toSet())
 
-  fun enablePlugins(pluginIds: Set<String>) = also {
+  private fun enablePlugins(pluginIds: Set<String>) = also {
     disabledPluginsPath.writeLines(disabledPluginIds - pluginIds)
   }
 
-  val disabledPluginIds: Set<String>
+  private val disabledPluginIds: Set<String>
     get() {
       val file = disabledPluginsPath
       return if (file.exists()) file.readLines().toSet() else emptySet()
     }
 
 
-  fun findPluginXmlByPluginIdInAGivenDir(pluginId: String, bundledPluginsDir: Path): Boolean {
+  private fun findPluginXmlByPluginIdInAGivenDir(pluginId: String, bundledPluginsDir: Path): Boolean {
     val jarFiles = bundledPluginsDir.toFile().walk().filter { it.name.endsWith(".jar") }.toList()
     jarFiles.forEach {
       val jarFile = JarFile(it)

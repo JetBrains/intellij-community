@@ -1,7 +1,9 @@
 <idea-plugin>
 
   <extensions defaultExtensionNs="com.intellij">
-    <codeInsight.gotoSuper language="kotlin" implementationClass="org.jetbrains.kotlin.idea.fir.codeInsight.handlers.HLGotoSuperActionHandler"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.SymbolBasedShortenReferencesFacility"/>
   </extensions>
 
 </idea-plugin>

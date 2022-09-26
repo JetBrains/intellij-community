@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.extensions.common.highlighter
 
-import com.intellij.ide.ui.LafManager
-import com.intellij.ide.ui.LafManagerListener
 import com.intellij.lang.Language
 import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,30 +12,11 @@ import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider
-import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
-import java.lang.ref.SoftReference
-import java.util.concurrent.ConcurrentHashMap
 
 internal class MarkdownCodeFencePreviewHighlighter : CodeFenceGeneratingProvider {
-  companion object {
-    private const val expiration = 5 * 60 * 1000
-  }
+  private val cacheManager
+    get() = HtmlCacheManager.getInstance()
 
-  /**
-   * HTML generated for this CodeFence and allocated in memory by SoftReference
-   *
-   * All expired entities (System.currentTimeMillis() > expires) will be removed on update of cache
-   *
-   * [html] is referenced by SoftReference to be sure that cache will be removed from memory if JVM
-   * need more memory
-   */
-  private data class CachedHTMLResult(val html: SoftReference<String>, var expires: Long) {
-    fun resolve() = html.get()?.let { HTMLResult(it, expires) }
-
-    data class HTMLResult(val html: String, val expires: Long)
-  }
-
-  private val values = ConcurrentHashMap<String, CachedHTMLResult>()
   private val currentFile: ThreadLocal<VirtualFile?> = ThreadLocal()
 
   override fun isApplicable(language: String): Boolean {
@@ -52,33 +31,18 @@ internal class MarkdownCodeFencePreviewHighlighter : CodeFenceGeneratingProvider
   }
 
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
-    val lang = CodeFenceLanguageGuesser.guessLanguageForInjection(language) ?: return DefaultCodeFenceGeneratingProvider.escape(raw)
-
-    val md5 = MarkdownUtil.md5(raw, language)
-
-    val cached = values[md5]
-
-    val resolved = cached?.resolve()
-    if (resolved != null) {
-      cached.expires += expiration
-      return resolved.html
+    val lang = CodeFenceLanguageGuesser.guessLanguageForInjection(language)
+    if (lang == null) {
+      return DefaultCodeFenceGeneratingProvider.escape(raw)
     }
-
-    cleanup()
-
+    val cacheKey = cacheManager.obtainCacheKey(raw, language)
+    val cached = cacheManager.obtainCachedHtml(cacheKey)
+    if (cached != null) {
+      return cached
+    }
     val text = render(lang, raw, node)
-    val html = CachedHTMLResult(SoftReference(text), System.currentTimeMillis() + expiration)
-
-    values[md5] = html
-
+    cacheManager.cacheHtml(cacheKey, text)
     return text
-  }
-
-  private fun cleanup() {
-    val time = System.currentTimeMillis()
-
-    val toRemove = values.filter { it.value.expires < time }.keys
-    toRemove.forEach { values.remove(it) }
   }
 
   private fun render(lang: Language, text: String, node: ASTNode): String {
@@ -137,14 +101,4 @@ internal class MarkdownCodeFencePreviewHighlighter : CodeFenceGeneratingProvider
   private fun processCodeLine(rawCodeLine: String): String = currentFile.get()?.let { file ->
     CommandRunnerExtension.getRunnerByFile(file)?.processCodeLine(rawCodeLine, true)
   } ?: ""
-
-  internal class InvalidateCacheLafListener: LafManagerListener {
-    override fun lookAndFeelChanged(source: LafManager) {
-      val providers = CodeFenceGeneratingProvider.collectProviders()
-      val highlighters = providers.filterIsInstance<MarkdownCodeFencePreviewHighlighter>()
-      for (highlighter in highlighters) {
-        highlighter.values.clear()
-      }
-    }
-  }
 }

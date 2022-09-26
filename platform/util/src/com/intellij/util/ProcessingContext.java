@@ -39,38 +39,41 @@ public class ProcessingContext {
   public ProcessingContext() {
   }
 
-  public ProcessingContext(final SharedProcessingContext sharedContext) {
+  public ProcessingContext(@NotNull SharedProcessingContext sharedContext) {
     mySharedContext = sharedContext;
   }
 
   @NotNull
   public SharedProcessingContext getSharedContext() {
-    if (mySharedContext == null) {
-      return mySharedContext = new SharedProcessingContext();
+    SharedProcessingContext context = mySharedContext;
+    if (context == null) {
+      mySharedContext = context = new SharedProcessingContext();
     }
-    return mySharedContext;
+    return context;
   }
 
   public Object get(@NotNull @NonNls final Object key) {
-    return myMap == null? null : myMap.get(key);
+    Map<Object, Object> map = myMap;
+    return map == null ? null : map.get(key);
   }
 
   public void put(@NotNull @NonNls final Object key, @NotNull final Object value) {
-    checkMapInitialized();
-    myMap.put(key, value);
+    ensureMapInitialized().put(key, value);
   }
 
-  public <T> void put(Key<T> key, T value) {
-    checkMapInitialized();
-    myMap.put(key, value);
+  public <T> void put(@NotNull Key<T> key, T value) {
+    ensureMapInitialized().put(key, value);
   }
 
-  public <T> T get(Key<T> key) {
-    return myMap == null ? null : (T)myMap.get(key);
+  public <T> T get(@NotNull Key<T> key) {
+    return (T)get((Object)key);
   }
 
-  private void checkMapInitialized() {
-    if (myMap == null) myMap = new HashMap<>(1);
+  @NotNull
+  private Map<Object, Object> ensureMapInitialized() {
+    Map<Object, Object> map = myMap;
+    if (map == null) myMap = map = new HashMap<>(1);
+    return map;
   }
 
 }

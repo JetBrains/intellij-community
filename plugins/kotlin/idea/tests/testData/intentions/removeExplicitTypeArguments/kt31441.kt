@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:+NewInference
 // IS_APPLICABLE: false
 
 interface List<T>

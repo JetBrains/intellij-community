@@ -9,6 +9,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -137,6 +138,11 @@ public class StructContext {
         }
 
         String name = entry.getName();
+        Path testPath = Path.of(file.getAbsolutePath(), name);
+        if (!testPath.normalize().startsWith(file.toPath().normalize())) { // check for zip slip exploit
+          throw new RuntimeException("Zip entry '" + entry.getName() + "' tries to escape target directory");
+        }
+
         if (!entry.isDirectory()) {
           if (name.endsWith(".class")) {
             byte[] bytes = InterpreterUtil.getBytes(archive, entry);

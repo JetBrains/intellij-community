@@ -5,14 +5,13 @@ package com.intellij.ide.plugins
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
+import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.PropertyKey
-import org.jetbrains.annotations.VisibleForTesting
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
+import org.jetbrains.annotations.*
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
@@ -22,9 +21,22 @@ import java.util.*
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
 
+
+fun Collection<String>.toPluginIds(): Set<PluginId> = PluginManagerCore.toPluginIds(this)
+
 fun Iterable<IdeaPluginDescriptor>.toPluginIdSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
 
-fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> = mapNotNull(PluginManagerCore::findPlugin)
+fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> {
+  val pluginIdMap = PluginManagerCore.buildPluginIdMap()
+  return mapNotNull { pluginIdMap[it] }
+}
+
+internal fun Iterable<PluginId>.joinedPluginIds(operation: String): String {
+  return joinToString(
+    prefix = "Plugins to $operation: [",
+    postfix = "]",
+  ) { it.idString }
+}
 
 @ApiStatus.Internal
 class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
@@ -81,15 +93,34 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   }
 
   companion object {
-    @ApiStatus.Internal
-    @JvmField
-    var disableNonBundledPlugins = false
+
+    private var _isOnDemandEnabled: Boolean? = null
 
     @VisibleForTesting
-    const val ON_DEMAND_ENABLED_KEY = "idea.on.demand.plugins"
+    const val ON_DEMAND_ENABLED_KEY: String = "ide.plugins.allow.on.demand"
 
-    val isOnDemandEnabled
-      @ApiStatus.Experimental get() = java.lang.Boolean.getBoolean(ON_DEMAND_ENABLED_KEY)
+    @JvmStatic
+    var isOnDemandEnabled: Boolean
+      @ApiStatus.Experimental get() {
+        var result = _isOnDemandEnabled
+
+        if (result == null) {
+          synchronized(Companion::class.java) {
+            if (_isOnDemandEnabled == null) {
+              result = !AppMode.isHeadless()
+                       && EarlyAccessRegistryManager.getBoolean(ON_DEMAND_ENABLED_KEY)
+              _isOnDemandEnabled = result
+            }
+          }
+        }
+
+        return result!!
+      }
+      @TestOnly set(value) {
+        synchronized(Companion::class.java) {
+          _isOnDemandEnabled = value
+        }
+      }
   }
 
   @Transient @JvmField var jarFiles: List<Path>? = null
@@ -106,7 +137,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   @JvmField val content: PluginContentDescriptor = raw.contentModules?.let { PluginContentDescriptor(it) } ?: PluginContentDescriptor.EMPTY
   @JvmField val dependencies = raw.dependencies
-  @JvmField val modules: List<PluginId> = raw.modules ?: Collections.emptyList()
+  @JvmField var modules: List<PluginId> = raw.modules ?: Collections.emptyList()
 
   private val descriptionChildText = raw.description
 
@@ -193,6 +224,10 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     }
 
     if (!isSub) {
+      if (id == PluginManagerCore.CORE_ID) {
+        modules = modules + IdeaPluginPlatform.getHostPlatformModuleIds()
+      }
+
       if (context.isPluginDisabled(id)) {
         markAsIncomplete(disabledDependency = null, shortMessage = null)
       }
@@ -294,7 +329,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       isEnabled = false
     }
 
-    if (disableNonBundledPlugins) {
+    if (AppMode.isDisableNonBundledPlugins()) {
       markAsIncompatible(PluginLoadingError(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.custom.plugin.loading.disabled", getName()) },

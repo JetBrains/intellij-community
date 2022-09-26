@@ -166,6 +166,11 @@ public class ChooseActionsDialog extends DialogWrapper {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myFilteringPanel.setShortcut(null);
         myActionsTree.filter(null, myQuicklists); //clear filtering

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -17,6 +18,11 @@ public final class ToggleShowDocsOnHoverAction extends ToggleAction implements H
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

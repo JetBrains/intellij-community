@@ -57,10 +57,9 @@ public class BigDecimalLegacyMethodInspection extends BaseInspection implements 
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement grandParent = element.getParent().getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length != 2 && arguments.length != 3) {
@@ -74,30 +73,14 @@ public class BigDecimalLegacyMethodInspection extends BaseInspection implements 
       CommentTracker commentTracker = new CommentTracker();
       final int roundingMode = (Integer)value;
       switch (roundingMode) {
-        case 0:
-          PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.UP", commentTracker);
-          break;
-        case 1:
-          PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.DOWN", commentTracker);
-          break;
-        case 2:
-          PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.CEILING", commentTracker);
-          break;
-        case 3:
-          PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.FLOOR", commentTracker);
-          break;
-        case 4:
-          PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.HALF_UP", commentTracker);
-          break;
-        case 5:
-          PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.HALF_DOWN", commentTracker);
-          break;
-        case 6:
-          PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.HALF_EVEN", commentTracker);
-          break;
-        case 7:
-          PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.UNNECESSARY", commentTracker);
-          break;
+        case 0 -> PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.UP", commentTracker);
+        case 1 -> PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.DOWN", commentTracker);
+        case 2 -> PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.CEILING", commentTracker);
+        case 3 -> PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.FLOOR", commentTracker);
+        case 4 -> PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.HALF_UP", commentTracker);
+        case 5 -> PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.HALF_DOWN", commentTracker);
+        case 6 -> PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.HALF_EVEN", commentTracker);
+        case 7 -> PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.UNNECESSARY", commentTracker);
       }
     }
   }

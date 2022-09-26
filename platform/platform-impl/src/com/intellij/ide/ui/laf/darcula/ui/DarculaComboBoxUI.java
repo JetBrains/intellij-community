@@ -2,9 +2,9 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.ErrorBorderCapable;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -465,7 +465,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
             paintOutlineBorder(g2, r.width, r.height, myArc, true, true, Outline.focus);
           }
 
-          paintBorder(c, g2, isBorderless(c) ? lw : bw, r, lw, myArc);
+          if (comboBox.getClientProperty("JComboBox.noPaintBorder") != Boolean.TRUE) {
+            paintBorder(c, g2, isBorderless(c) ? lw : bw, r, lw, myArc);
+          }
         }
       }
       else {
@@ -722,13 +724,28 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
         @Override
         public Popup getPopup(JPopupMenu popup, int x, int y) {
+          PopupFactory factory = PopupFactory.getSharedInstance();
+          int oldType = -1;
+          boolean isRoundBorder = WindowRoundedCornersManager.isAvailable();
+          if (isRoundBorder) {
+            oldType = PopupUtil.getPopupType(factory);
+            if (oldType == 2) {
+              oldType = -1;
+            } else {
+              PopupUtil.setPopupType(factory, 2);
+            }
+          }
           Popup p = super.getPopup(popup, x, y);
-          if (SystemInfoRt.isMac && ExperimentalUI.isNewUI()) {
+          if (oldType >= 0) {
+            PopupUtil.setPopupType(factory, oldType);
+          }
+          if (isRoundBorder) {
             Window window = ComponentUtil.getWindow(popup);
             if (window != null) {
-              JRootPane rootPane = ((RootPaneContainer)window).getRootPane();
-              rootPane.putClientProperty("apple.awt.windowCornerRadius", Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat()));
-              popup.setBorder(null);
+              WindowRoundedCornersManager.setRoundedCorners(window);
+              if (SystemInfoRt.isMac) {
+                popup.setBorder(null);
+              }
             }
           }
           return p;

@@ -105,6 +105,8 @@ public class CommonDataKeys {
    * Returns a list of target symbols.
    * If there is an editor in the context, then it will return referenced or declared symbols
    * by the current editor file and the caret offset.
+   *
+   * @see com.intellij.model.psi.impl.TargetSymbolsDataRule
    */
   public static final DataKey<List<Symbol>> SYMBOLS = DataKey.create("symbols");
 }

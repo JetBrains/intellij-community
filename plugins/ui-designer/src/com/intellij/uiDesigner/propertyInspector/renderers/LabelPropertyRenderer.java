@@ -13,9 +13,6 @@ import javax.swing.*;
 /**
  * This is convenient class for implementing property renderers which
  * are based on JLabel.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer<V> {
   private @Nls String myStaticText;

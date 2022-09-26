@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VfsData;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiBinaryFile;
@@ -62,7 +63,6 @@ import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.contentQueue.CachedFileContent;
 import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
-import com.intellij.util.indexing.diagnostic.IndexOperationFusStatisticsCollector;
 import com.intellij.util.indexing.diagnostic.StorageDiagnosticData;
 import com.intellij.util.indexing.events.ChangedFilesCollector;
 import com.intellij.util.indexing.events.DeletedVirtualFileStub;
@@ -800,7 +800,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         try {
           if (!RebuildStatus.isOk(indexId)) {
             if (getCurrentDumbModeAccessType_NoDumbChecks() == null) {
-              throw new ServiceNotReadyException();
+              throw new ServiceNotReadyException("index " + indexId + " has status " + RebuildStatus.getStatus(indexId));
             }
             return false;
           }
@@ -900,7 +900,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private static void scheduleIndexRescanningForAllProjects(@NotNull String reason) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      new UnindexedFilesUpdater(project, reason).queue(project);
+      new UnindexedFilesUpdater(project, reason).queue();
     }
   }
 
@@ -1159,7 +1159,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Override
   public @Nullable VirtualFile findFileById(int id) {
-    return PersistentFS.getInstance().findFileByIdIfCached(id);
+    return PersistentFS.getInstance().findFileById(id);
   }
 
   @Override
@@ -2036,6 +2036,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Override
   public boolean isFileIndexedInCurrentSession(@NotNull VirtualFile file, @NotNull ID<?, ?> indexId) {
+    if (VfsData.isIsIndexedFlagDisabled) {
+      return false;
+    }
     if (!file.isValid() ||
         !(file instanceof VirtualFileSystemEntry) ||
         !(((VirtualFileSystemEntry)file).isFileIndexed())) {

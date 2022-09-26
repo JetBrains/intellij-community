@@ -16,7 +16,7 @@ class KotlinFacetConfigurationImpl : KotlinFacetConfiguration {
 
     @Suppress("OVERRIDE_DEPRECATION")
     override fun readExternal(element: Element) {
-        settings = deserializeFacetSettings(element)
+        settings = deserializeFacetSettings(element).also { it.updateMergedArguments() }
     }
 
     @Suppress("OVERRIDE_DEPRECATION")
@@ -32,7 +32,7 @@ class KotlinFacetConfigurationImpl : KotlinFacetConfiguration {
 
         val tabs = arrayListOf<FacetEditorTab>()
         tabs += KotlinFacetEditorProviderService.getInstance(editorContext.project).getEditorTabs(this, editorContext, validatorsManager)
-        KotlinFacetConfigurationExtension.EP_NAME.extensions.flatMapTo(tabs) { it.createEditorTabs(editorContext, validatorsManager) }
+        KotlinFacetConfigurationExtension.EP_NAME.extensionList.flatMapTo(tabs) { it.createEditorTabs(editorContext, validatorsManager) }
         return tabs.toTypedArray()
     }
 }

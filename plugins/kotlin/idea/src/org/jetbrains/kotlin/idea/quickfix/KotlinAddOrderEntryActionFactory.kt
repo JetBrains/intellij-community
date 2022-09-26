@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -52,6 +52,6 @@ object KotlinAddOrderEntryActionFactory : KotlinIntentionActionsFactory() {
         }
 
         @Suppress("UNCHECKED_CAST")
-        return OrderEntryFix.registerFixes(QuickFixActionRegistrarImpl(null), reference) as List<IntentionAction>? ?: emptyList()
+        return OrderEntryFix.registerFixes(QuickFixActionRegistrar.IGNORE_ALL, reference) as List<IntentionAction>? ?: emptyList()
     }
 }

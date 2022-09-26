@@ -86,8 +86,10 @@ private class ReaderModeActionProvider : InspectionWidgetActionProvider {
         }
 
         override fun getInsets(): Insets = JBUI.insets(2)
-        override fun getMargins(): Insets = if (myPresentation.icon == AllIcons.General.ReaderMode) JBInsets.emptyInsets()
-        else JBUI.insetsRight(5)
+        override fun getMargins(): Insets = JBInsets.addInsets(
+          super.getMargins(),
+          if (myPresentation.icon == AllIcons.General.ReaderMode) JBInsets.emptyInsets() else JBUI.insetsRight(5)
+        )
 
         override fun updateUI() {
           super.updateUI()

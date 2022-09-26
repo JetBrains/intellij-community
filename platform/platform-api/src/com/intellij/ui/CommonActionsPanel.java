@@ -112,14 +112,13 @@ public final class CommonActionsPanel extends JPanel {
     AnActionButton[] actions = new AnActionButton[buttons.length + (additionalActions == null ? 0 : additionalActions.length)];
     for (int i = 0; i < buttons.length; i++) {
       Buttons button = buttons[i];
-      String name = null;
-      switch (button) {
-        case ADD:    name = addName;      break;
-        case EDIT:   name = editName;     break;
-        case REMOVE: name = removeName;   break;
-        case UP:     name = moveUpName;   break;
-        case DOWN:   name = moveDownName; break;
-      }
+      String name = switch (button) {
+        case ADD -> addName;
+        case EDIT -> editName;
+        case REMOVE -> removeName;
+        case UP -> moveUpName;
+        case DOWN -> moveDownName;
+      };
       AnActionButton b = button.createButton(listener, name, button == Buttons.ADD && addIcon != null ? addIcon : button.getIcon());
       actions[i] = b;
       myButtons.put(button, b);
@@ -236,6 +235,11 @@ public final class CommonActionsPanel extends JPanel {
         }
         removeButton.update(e);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), removeButton.getContextComponent());
   }
 
@@ -297,6 +301,11 @@ public final class CommonActionsPanel extends JPanel {
       }
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     protected abstract boolean isEnabled(int size, int min, int max);
   }
 
@@ -310,6 +319,10 @@ public final class CommonActionsPanel extends JPanel {
       return true;
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myListener.doAdd();
@@ -401,15 +414,13 @@ public final class CommonActionsPanel extends JPanel {
   }
 
   public static @NotNull ShortcutSet getCommonShortcut(@NotNull Buttons button) {
-    switch (button) {
-      case ADD: return CommonShortcuts.getNewForDialogs();
-      case EDIT: return CustomShortcutSet.fromString("ENTER");
-      case REMOVE: return CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "alt DELETE");
-      case UP: return CommonShortcuts.MOVE_UP;
-      case DOWN: return CommonShortcuts.MOVE_DOWN;
-      default:
-        throw new IllegalStateException("Unexpected value: " + button);
-    }
+    return switch (button) {
+      case ADD -> CommonShortcuts.getNewForDialogs();
+      case EDIT -> CustomShortcutSet.fromString("ENTER");
+      case REMOVE -> CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "alt DELETE");
+      case UP -> CommonShortcuts.MOVE_UP;
+      case DOWN -> CommonShortcuts.MOVE_DOWN;
+    };
   }
 
   interface ListenerFactory {

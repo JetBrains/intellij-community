@@ -23,6 +23,7 @@ PORT_ENV = int(os.getenv("PYCHARM_DISPLAY_PORT", "-1"))
 PORT = PORT_ENV
 if PORT == -1:
     PORT = None
+PYCHARM_DISPLAY_HTTP_PROXY = os.getenv("PYCHARM_DISPLAY_HTTP_PROXY", None)
 
 
 def display(data):
@@ -71,9 +72,18 @@ def _send_display_message(message_spec):
     serialized = json.dumps(message_spec)
     buffer = serialized.encode()
     try:
-        debug("Sending display message to %s:%s\n" % (HOST, PORT))
+        debug("Sending display message to %s:%s" % (HOST, PORT))
         url = HOST + ":" + str(PORT) + "/api/python.scientific"
-        urllib_request.urlopen(url, buffer)
+
+        if PYCHARM_DISPLAY_HTTP_PROXY is not None:
+            debug("Using HTTP proxy %s" % PYCHARM_DISPLAY_HTTP_PROXY)
+            proxy_handler = urllib_request.ProxyHandler(
+                {'http': PYCHARM_DISPLAY_HTTP_PROXY}
+            )
+            opener = urllib_request.build_opener(proxy_handler)
+            opener.open(url, buffer)
+        else:
+            urllib_request.urlopen(url, buffer)
     except:
         # urllib will auto-detect proxy settings and use those, so it might break connection to localhost
         debug("Retry with empty proxy")

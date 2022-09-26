@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.module.Module
@@ -350,7 +351,7 @@ class LibraryKindSearchScope(
         if (!super.contains(file)) return false
         val orderEntry = ModuleRootManager.getInstance(module).fileIndex.getOrderEntryForFile(file)
         if (orderEntry is LibraryOrderEntry) {
-            return LibraryEffectiveKindProvider.getInstance(module.project).getEffectiveKind(orderEntry.library as LibraryEx) == libraryKind
+            return module.project.service<LibraryEffectiveKindProvider>().getEffectiveKind(orderEntry.library as LibraryEx) == libraryKind
         }
         return true
     }

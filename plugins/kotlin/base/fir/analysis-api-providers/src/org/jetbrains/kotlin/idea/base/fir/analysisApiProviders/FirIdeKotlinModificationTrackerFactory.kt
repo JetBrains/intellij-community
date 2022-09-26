@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.providers.KtModuleStateTracker
+import org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateTrackerProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 

@@ -162,8 +162,6 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
   /**
    * Adds myModuleName as a qualifier to target.
    * @param target_node what to qualify
-   * @param project
-   * @param qualifier
    */
   private static void qualifyTarget(ASTNode target_node, Project project, String qualifier) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(project);

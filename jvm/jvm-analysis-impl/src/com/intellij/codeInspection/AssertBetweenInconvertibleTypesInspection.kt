@@ -48,11 +48,17 @@ class AssertBetweenInconvertibleTypesInspection : AbstractBaseUastLocalInspectio
       return true
     }
 
-    private fun processAssertHint(assertHint: UAssertHint?, expression: UCallExpression, holder : ProblemsHolder ) {
+    private fun processAssertHint(assertHint: UAssertHint?, expression: UCallExpression, holder : ProblemsHolder) {
       if (assertHint == null) return
-      val firstArgument = assertHint.firstArgument
-      val secondArgument = assertHint.secondArgument
-
+      val firstArgument: UExpression
+      val secondArgument: UExpression
+      try {
+        firstArgument = assertHint.firstArgument
+        secondArgument = assertHint.secondArgument
+      }
+      catch (ignored: Exception) {
+        return
+      }
       val firstParameter = expression.getParameterForArgument(firstArgument)
       if (firstParameter == null || !TypeUtils.isJavaLangObject(firstParameter.type)) return
       val secondParameter = expression.getParameterForArgument(secondArgument)

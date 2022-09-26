@@ -316,4 +316,9 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
   public void testNamespacePackageReferenceInDocstringType() {
     doMultiFileTest();
   }
+
+  // PY-46257
+  public void testNoWarningForTypeGetItem() {
+    doTestByText("expr: type[str]");
+  }
 }

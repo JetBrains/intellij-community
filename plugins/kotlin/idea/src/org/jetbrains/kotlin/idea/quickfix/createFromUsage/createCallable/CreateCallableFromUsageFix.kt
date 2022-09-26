@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeCommand
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.isAbstract
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
@@ -82,12 +83,12 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
     protected open val callableInfo: CallableInfo?
         get() = throw UnsupportedOperationException()
 
-    protected fun callableInfos(): List<CallableInfo> =
+    private fun callableInfos(): List<CallableInfo> =
         callableInfoReference?.get() ?: callableInfos.also {
             callableInfoReference = WeakReference(it)
         }
 
-    protected fun notEmptyCallableInfos() = callableInfos().takeIf { it.isNotEmpty() }
+    private fun notEmptyCallableInfos() = callableInfos().takeIf { it.isNotEmpty() }
 
     private var initialized: Boolean = false
 
@@ -248,6 +249,8 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
 
+    override fun startInWriteAction(): Boolean = false
+
     override fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile): Boolean {
         checkIsInitialized()
         element ?: return false
@@ -301,8 +304,12 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                     val receiverClass = it.second as? KtClass
                     if (staticContextRequired && receiverClass?.isWritable == true) {
                         val hasCompanionObject = receiverClass.companionObjects.isNotEmpty()
-                        val companionObject = receiverClass.getOrCreateCompanionObject()
-                        if (!hasCompanionObject && this@CreateCallableFromUsageFixBase.isExtension) companionObject.body?.delete()
+                        val companionObject = runWriteAction {
+                            val companionObject = receiverClass.getOrCreateCompanionObject()
+                            if (!hasCompanionObject && this@CreateCallableFromUsageFixBase.isExtension) companionObject.body?.delete()
+
+                            companionObject
+                        }
                         val classValueType = (companionObject.descriptor as? ClassDescriptor)?.classValueType
                         val receiverTypeCandidate = if (classValueType != null) TypeCandidate(classValueType) else it.first
                         CallablePlacement.WithReceiver(receiverTypeCandidate)

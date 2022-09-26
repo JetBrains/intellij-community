@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -13,7 +14,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
-import org.jetbrains.kotlin.idea.util.textRangeIn
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -94,7 +95,7 @@ class ReplaceIsEmptyWithIfEmptyInspection : AbstractKotlinInspection() {
         )
     })
 
-    private class ReplaceFix(private val replacement: Replacement) : LocalQuickFix {
+    private class ReplaceFix(@SafeFieldForPreview private val replacement: Replacement) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("replace.with.0", "${replacement.replacementFunctionName} {...}")
 
         override fun getFamilyName() = name

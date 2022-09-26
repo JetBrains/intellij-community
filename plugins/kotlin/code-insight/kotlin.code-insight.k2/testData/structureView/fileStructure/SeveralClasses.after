@@ -1,0 +1,5 @@
+-SeveralClasses.kt
+ class B
+ class Other : A
+ class Some : B, A
+ interface A

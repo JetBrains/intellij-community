@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.remote.GitHttpAuthDataProvider
+import git4idea.remote.hosting.GitHostingUrlUtil.match
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
@@ -48,7 +49,7 @@ internal class GHHttpAuthDataProvider : GitHttpAuthDataProvider {
       val authenticationFailureManager = project.service<GHGitAuthenticationFailureManager>()
       val authenticationManager = GithubAuthenticationManager.getInstance()
       val potentialAccounts = authenticationManager.getAccounts()
-        .filter { it.server.matches(url) }
+        .filter { match(it.server.toURI(), url) }
         .filterNot { authenticationFailureManager.isAccountIgnored(url, it) }
         .filter { login == null || login == getAccountDetails(it)?.login }
 

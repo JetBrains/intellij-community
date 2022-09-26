@@ -29,7 +29,6 @@ public interface TypingActionsExtension {
    *
    * @param project       current project
    * @param editor        target editor
-   * @return
    */
   boolean isSuitableContext(@NotNull Project project, @NotNull Editor editor);
 

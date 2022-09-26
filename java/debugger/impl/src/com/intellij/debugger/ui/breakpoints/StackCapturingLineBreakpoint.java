@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -195,7 +195,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
     if (process != null && key != null) {
       Map<Object, List<StackFrameItem>> data = process.getUserData(CAPTURED_STACKS);
       if (data != null) {
-        return data.get(key);
+        return data.get(getKey(key));
       }
     }
     return null;

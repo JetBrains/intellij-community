@@ -181,6 +181,11 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Range newRange = myTracker.findRange(myRange);
       e.getPresentation().setEnabled(newRange != null && !myEditor.isDisposed() && isEnabled(myEditor, newRange));
@@ -281,6 +286,11 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       myEditor = editor;
       myRange = range;
       myMousePosition = position;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

@@ -115,7 +115,12 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
      public void update(@NotNull final AnActionEvent e) {
      }
 
-     @NotNull
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @NotNull
      @Override
      protected DefaultActionGroup createPopupActionGroup(JComponent button) {
        return createCharsetsActionGroup(clearItemText, null, charset -> IdeBundle.message("action.text.change.encoding", charset.displayName()));

@@ -21,7 +21,6 @@ public abstract class JUnitPatcher implements PluginAware {
 
   /**
    * Called by the framework. Allows to identify the plugin that provided this extension.
-   * @param plugin
    */
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor plugin) {

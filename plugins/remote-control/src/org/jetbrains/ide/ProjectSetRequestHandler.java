@@ -29,6 +29,7 @@ import java.io.IOException;
  * @apiUse OpenProjectSetRequestExample
  * @apiUse OpenProjectSetRequestExampleMulti
  */
+@SuppressWarnings("JavadocDeclaration")
 final class ProjectSetRequestHandler extends RestService {
   @Override
   protected boolean isMethodSupported(@NotNull HttpMethod method) {

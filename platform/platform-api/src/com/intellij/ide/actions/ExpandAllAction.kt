@@ -33,7 +33,7 @@ class ExpandAllAction : DumbAwareAction {
     val expander = getTreeExpander(event)
     val hideIfMissing = event.getData(TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER) ?: false
     event.presentation.isVisible = expander == null && !hideIfMissing ||
-                                   expander != null && expander.isExpandAllVisible && expander.isVisible(event)
+                                   expander != null && expander.isExpandAllVisible
     event.presentation.isEnabled = expander != null && expander.canExpand()
     if (ExperimentalUI.isNewUI() && ActionPlaces.isPopupPlace(event.place)) {
       event.presentation.icon = null

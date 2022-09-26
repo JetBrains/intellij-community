@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.debugger.core
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.KtSuccessCallInfo
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -17,13 +16,12 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
 object AnalysisApiBasedInlineUtil {
-    fun isInlinedArgument(argument: KtFunction, checkNonLocalReturn: Boolean): Boolean =
-        analyze(argument) {
-            val argumentSymbol = getInlineArgumentSymbol(argument) ?: return false
-            val argumentType = argumentSymbol.returnType
-            return !argumentSymbol.isNoinline && isNotNullableFunctionType(argumentType) &&
-                    (!checkNonLocalReturn || !argumentSymbol.isCrossinline)
-        }
+    fun KtAnalysisSession.isInlinedArgument(argument: KtFunction, checkNonLocalReturn: Boolean): Boolean {
+        val argumentSymbol = getInlineArgumentSymbol(argument) ?: return false
+        val argumentType = argumentSymbol.returnType
+        return !argumentSymbol.isNoinline && isNotNullableFunctionType(argumentType) &&
+                (!checkNonLocalReturn || !argumentSymbol.isCrossinline)
+    }
 
     private fun KtAnalysisSession.getInlineArgumentSymbol(argument: KtFunction): KtValueParameterSymbol? {
         if (argument !is KtFunctionLiteral && argument !is KtNamedFunction) return null

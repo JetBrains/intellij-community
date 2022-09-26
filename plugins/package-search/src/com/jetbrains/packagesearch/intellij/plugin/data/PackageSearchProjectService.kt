@@ -17,6 +17,8 @@
 package com.jetbrains.packagesearch.intellij.plugin.data
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.dependencytoolwindow.DependencyToolWindowFactory
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -24,21 +26,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiManager
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
-import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
-import com.jetbrains.packagesearch.intellij.plugin.api.ServerURLs
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackagesToUpgrade
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.util.BackgroundLoadingBarController
+import com.jetbrains.packagesearch.intellij.plugin.util.PowerSaveModeState
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.batchAtIntervals
 import com.jetbrains.packagesearch.intellij.plugin.util.catchAndLog
+import com.jetbrains.packagesearch.intellij.plugin.util.combineLatest
 import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
-import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.packagesearch.intellij.plugin.util.mapLatestTimedWithLoading
 import com.jetbrains.packagesearch.intellij.plugin.util.modifiedBy
@@ -49,21 +48,23 @@ import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectCach
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelUpdatedKeys
+import com.jetbrains.packagesearch.intellij.plugin.util.powerSaveModeFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.replayOnSignals
+import com.jetbrains.packagesearch.intellij.plugin.util.send
 import com.jetbrains.packagesearch.intellij.plugin.util.showBackgroundLoadingBar
 import com.jetbrains.packagesearch.intellij.plugin.util.throttle
 import com.jetbrains.packagesearch.intellij.plugin.util.timer
 import com.jetbrains.packagesearch.intellij.plugin.util.toolWindowManagerFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.trustedProjectFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.trySend
 import com.jetbrains.packagesearch.intellij.plugin.util.whileLoading
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.consumeAsFlow
@@ -80,6 +81,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.serialization.json.Json
+import org.jetbrains.idea.packagesearch.api.PackageSearchApiClient
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 
@@ -87,9 +89,8 @@ import kotlin.time.Duration.Companion.seconds
 internal class PackageSearchProjectService(private val project: Project) {
 
     private val retryFromErrorChannel = Channel<Unit>()
-    private val restartChannel = Channel<Unit>()
     val dataProvider = ProjectDataProvider(
-        PackageSearchApiClient(ServerURLs.base),
+        PackageSearchApiClient(),
         project.packageSearchProjectCachesService.installedDependencyCache
     )
 
@@ -102,6 +103,21 @@ internal class PackageSearchProjectService(private val project: Project) {
     private val installedPackagesDifferenceLoadingFlow = MutableStateFlow(false)
     private val packageUpgradesLoadingFlow = MutableStateFlow(false)
     private val availableUpgradesLoadingFlow = MutableStateFlow(false)
+
+    private val computationInterruptedChannel = Channel<Unit>()
+    private val computationStartedChannel = Channel<Unit>()
+
+    private val computationAllowedState = channelFlow {
+        computationInterruptedChannel.consumeAsFlow()
+            .onEach { send(false) }
+            .launchIn(this)
+        computationStartedChannel.consumeAsFlow()
+            .onEach { send(true) }
+            .launchIn(this)
+    }.stateIn(project.lifecycleScope, SharingStarted.Eagerly, true)
+
+    val isComputationAllowed
+        get() = computationAllowedState.value
 
     private val canShowLoadingBar = MutableStateFlow(false)
 
@@ -123,24 +139,30 @@ internal class PackageSearchProjectService(private val project: Project) {
     ) { booleans -> emit(booleans.any { it }) }
         .stateIn(project.lifecycleScope, SharingStarted.Eagerly, false)
 
-    private val projectModulesSharedFlow = project.trustedProjectFlow
-        .flatMapLatest { isProjectTrusted -> if (isProjectTrusted) project.nativeModulesFlow else flowOf(emptyList()) }
-        .replayOnSignals(
-            retryFromErrorChannel.receiveAsFlow().throttle(10.seconds),
-            project.moduleChangesSignalFlow,
-            restartChannel.receiveAsFlow()
-        )
-        .mapLatestTimedWithLoading("projectModulesSharedFlow", projectModulesLoadingFlow) { modules ->
-            project.moduleTransformers
-                .map { async { it.transformModules(project, modules) } }
-                .awaitAll()
-                .flatten()
+    private val projectModulesSharedFlow =
+        combine(
+            project.trustedProjectFlow,
+            ApplicationManager.getApplication().powerSaveModeFlow.map { it == PowerSaveModeState.ENABLED },
+            computationAllowedState
+        ) { isProjectTrusted, powerSaveModeEnabled, computationEnabled ->
+            isProjectTrusted && !powerSaveModeEnabled && computationEnabled
         }
-        .catchAndLog(
-            context = "${this::class.qualifiedName}#projectModulesSharedFlow",
-            message = "Error while elaborating latest project modules"
-        )
-        .shareIn(project.lifecycleScope, SharingStarted.Eagerly)
+            .flatMapLatest { isPkgsEnabled -> if (isPkgsEnabled) project.nativeModulesFlow else flowOf(emptyList()) }
+            .replayOnSignals(
+                retryFromErrorChannel.receiveAsFlow().throttle(10.seconds),
+                project.moduleChangesSignalFlow,
+            )
+            .mapLatestTimedWithLoading("projectModulesSharedFlow", projectModulesLoadingFlow) { modules ->
+                project.moduleTransformers
+                    .map { async { it.transformModules(project, modules) } }
+                    .awaitAll()
+                    .flatten()
+            }
+            .catchAndLog(
+                context = "${this::class.qualifiedName}#projectModulesSharedFlow",
+                message = "Error while elaborating latest project modules"
+            )
+            .shareIn(project.lifecycleScope, SharingStarted.Eagerly)
 
     val projectModulesStateFlow = projectModulesSharedFlow.stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
@@ -238,31 +260,29 @@ internal class PackageSearchProjectService(private val project: Project) {
         )
         .stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
-    val packageUpgradesStateFlow = combine(
+    val packageUpgradesStateFlow = combineLatest(
         installedPackagesStateFlow,
         moduleModelsStateFlow,
         knownRepositoriesFlow
-    ) { installedPackages, moduleModels, repos ->
-        coroutineScope {
-            availableUpgradesLoadingFlow.whileLoading {
-                val allKnownRepos = allKnownRepositoryModels(moduleModels, repos)
-                val nativeModulesMap = moduleModels.associateBy { it.projectModule }
-
-                val getUpgrades: suspend (Boolean) -> PackagesToUpgrade = {
-                    computePackageUpgrades(installedPackages, it, packageVersionNormalizer, allKnownRepos, nativeModulesMap)
-                }
-
-                val stableUpdates = async { getUpgrades(true) }
-                val allUpdates = async { getUpgrades(false) }
-                PackageUpgradeCandidates(stableUpdates.await(), allUpdates.await())
-            }.value
+    ) { (installedPackages, moduleModels, repos) ->
+            availableUpgradesLoadingFlow.emit(true)
+            val result = PackageUpgradeCandidates(
+                computePackageUpgrades(
+                    installedPackages = installedPackages,
+                    onlyStable = false,
+                    normalizer = packageVersionNormalizer,
+                    repos = allKnownRepositoryModels(moduleModels, repos),
+                    nativeModulesMap = moduleModels.associateBy { it.projectModule }
+                )
+            )
+            availableUpgradesLoadingFlow.emit(false)
+            result
         }
-    }
         .catchAndLog(
             context = "${this::class.qualifiedName}#packageUpgradesStateFlow",
             message = "Error while evaluating packages upgrade candidates"
         )
-        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, PackageUpgradeCandidates.EMPTY)
+        .stateIn(project.lifecycleScope, SharingStarted.Lazily, PackageUpgradeCandidates.EMPTY)
 
     init {
         // allows rerunning PKGS inspections on already opened files
@@ -283,7 +303,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         var controller: BackgroundLoadingBarController? = null
 
         project.toolWindowManagerFlow
-            .filter { it.id == PackageSearchToolWindowFactory.ToolWindowId }
+            .filter { it.id == DependencyToolWindowFactory.toolWindowId }
             .take(1)
             .onEach { canShowLoadingBar.emit(true) }
             .launchIn(project.lifecycleScope)
@@ -296,10 +316,15 @@ internal class PackageSearchProjectService(private val project: Project) {
                 .filter { it }
                 .onEach {
                     controller = showBackgroundLoadingBar(
-                        project,
-                        PackageSearchBundle.message("toolwindow.stripe.Dependencies"),
-                        PackageSearchBundle.message("packagesearch.ui.loading")
-                    )
+                        project = project,
+                        title = PackageSearchBundle.message("toolwindow.stripe.Dependencies"),
+                        upperMessage = PackageSearchBundle.message("packagesearch.ui.loading"),
+                        cancellable = true
+                    ).also {
+                        it.addOnComputationInterruptedCallback {
+                            computationInterruptedChannel.trySend()
+                        }
+                    }
                 }.launchIn(project.lifecycleScope)
         }
     }
@@ -309,6 +334,11 @@ internal class PackageSearchProjectService(private val project: Project) {
     }
 
     suspend fun restart() {
-        restartChannel.send(Unit)
+        computationStartedChannel.send()
+        retryFromErrorChannel.send()
+    }
+
+    fun resumeComputation() {
+        computationStartedChannel.trySend()
     }
 }

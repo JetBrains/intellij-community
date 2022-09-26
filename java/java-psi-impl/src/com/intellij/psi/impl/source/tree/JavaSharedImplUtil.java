@@ -233,7 +233,8 @@ public final class JavaSharedImplUtil {
         return nextParent.getParent();
       }
       if (nextParent instanceof PsiPattern || nextParent instanceof PsiCaseLabelElementList || nextParent instanceof PsiPatternGuard ||
-          (parent instanceof PsiPattern && nextParent instanceof PsiInstanceOfExpression)) {
+          (parent instanceof PsiPattern && nextParent instanceof PsiInstanceOfExpression) ||
+          (parent instanceof PsiPattern && nextParent instanceof PsiDeconstructionList)) {
         continue;
       }
       return parent;

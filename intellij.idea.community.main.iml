@@ -146,11 +146,11 @@
     <orderEntry type="module" module-name="intellij.space.java.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.packageSearch" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.packageSearch.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.packageSearch.gradle.tooling" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.packageSearch.kotlin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.packageSearch.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.emojipicker" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.dependencyUpdater" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.settingsRepository.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.settingsSync" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.settingsSync.git" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.featuresTrainer" scope="RUNTIME" />
@@ -165,10 +165,8 @@
     <orderEntry type="module" module-name="intellij.configurationScript.test.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics.envTests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.toml.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.googleAppEngine" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.googleAppEngine.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.reStructuredText" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.uast.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.remoteServers.targetsIntegrationTests" scope="TEST" />
@@ -182,17 +180,21 @@
     <orderEntry type="module" module-name="intellij.platform.tracing.ide" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.notebooks.visualization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.refactoring.detector" scope="RUNTIME" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinx.kotlinx-serialization-compiler-plugin-for-compilation" level="project" />
     <orderEntry type="module" module-name="intellij.keymap.eclipse" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.keymap.visualStudio" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.keymap.netbeans" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.languages.java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.devkit.jps.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy.jps.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.ant.jps.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.gitlab" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.warmup" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.codegen.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.devkit.workspaceModel.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.remoteControl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.webSymbols" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.fullLine" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.fullLine.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.fullLine.kotlin" scope="RUNTIME" />

@@ -87,7 +87,6 @@ public interface FormattingService {
    *                                or removed.
    * @param quickFormat             Only quick format is allowed. The {@code true} value is passed if the service supports
    *                                {@link Feature#AD_HOC_FORMATTING}. This mode is used, for example, in quick fixes and refactorings.
-   * @return The formatted equivalent of the original element.
    */
   void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly, boolean quickFormat);
 

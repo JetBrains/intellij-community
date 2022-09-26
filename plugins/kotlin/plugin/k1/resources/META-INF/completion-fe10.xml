@@ -14,7 +14,7 @@
     <editorFactoryListener implementation="org.jetbrains.kotlin.idea.completion.LookupCancelWatcher"/>
 
     <applicationService
-            serviceInterface="org.jetbrains.kotlin.idea.completion.CompletionDummyIdentifierProviderService"
+            serviceInterface="org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.completion.FE10CompletionDummyIdentifierProviderService"/>
 
     <applicationService

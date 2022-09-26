@@ -2,7 +2,7 @@
 class X {
   int m(String s, boolean r) {
       //ignore
-      if ("x".equals(s)) {
+      if (s.equals("x")) {
           System.out.println("foo");
       }
   }

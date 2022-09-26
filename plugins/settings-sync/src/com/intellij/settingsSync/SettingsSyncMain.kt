@@ -16,7 +16,7 @@ private const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
 
 @ApiStatus.Internal
 fun isSettingsSyncEnabledByKey(): Boolean =
-  SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, false)
+  SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, true)
 
 internal fun isSettingsSyncEnabledInSettings(): Boolean =
   SettingsSyncSettings.getInstance().syncEnabled
@@ -56,8 +56,8 @@ class SettingsSyncMain : Disposable {
         // the push will happen automatically after updating and merging (if there is anything to merge)
       }
       ServerState.FileNotExists -> {
-        LOG.info("No file on server, we must push")
-        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.MustPushRequest)
+        LOG.info("No file on server, disable settings sync")
+        SettingsSyncSettings.getInstance().syncEnabled = false
       }
       ServerState.UpToDate -> {
         LOG.info("Updating settings is not needed, will check if push is needed")
@@ -89,9 +89,9 @@ class SettingsSyncMain : Disposable {
                       remoteCommunicator: SettingsSyncRemoteCommunicator,
                       ideMediator: SettingsSyncIdeMediator): SettingsSyncControls {
       val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable,
-                                       ideMediator.collectFilesToExportFromSettings(appConfigPath))
+        initialSnapshotProvider = { currentSnapshot -> ideMediator.getInitialSnapshot(appConfigPath, currentSnapshot) })
       val updateChecker = SettingsSyncUpdateChecker(remoteCommunicator)
-      val bridge = SettingsSyncBridge(parentDisposable, settingsLog, ideMediator, remoteCommunicator, updateChecker)
+      val bridge = SettingsSyncBridge(parentDisposable, appConfigPath, settingsLog, ideMediator, remoteCommunicator, updateChecker)
       return SettingsSyncControls(ideMediator, updateChecker, bridge, remoteCommunicator, settingsSyncStorage)
     }
 

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.facet
 import com.intellij.facet.Facet
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.module.Module
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 
 class KotlinFacet(
     module: Module,
@@ -18,3 +19,8 @@ class KotlinFacet(
         }
     }
 }
+
+fun KotlinCommonCompilerArgumentsHolder.Companion.getInstance(module: Module) =
+    // When the user ticks `useProjectSettings` the facet stays, so we have to check `useProjectSettings` manually
+    KotlinFacet.get(module)?.configuration?.settings?.takeUnless { it.useProjectSettings }?.compilerArguments
+        ?: getInstance(module.project).settings

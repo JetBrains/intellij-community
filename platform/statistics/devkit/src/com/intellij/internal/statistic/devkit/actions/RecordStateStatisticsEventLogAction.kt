@@ -48,7 +48,7 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
     ProgressManager.getInstance().run(object : Backgroundable(project, message, false) {
       override fun run(indicator: ProgressIndicator) {
         rollOver()
-        val state = FusStatesRecorder.recordStateAndWait(project, indicator, recorderId)
+        val state = FusStatesRecorder.recordStateAndWait(project, recorderId)
         if (state == null) {
           StatisticsDevKitUtil.showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.failed.recording.state"))
         }

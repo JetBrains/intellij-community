@@ -58,8 +58,8 @@ interface OneEntityWithPersistentId : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : OneEntityWithPersistentId, ModifiableWorkspaceEntity<OneEntityWithPersistentId>, ObjBuilder<OneEntityWithPersistentId> {
-    override var myName: String
     override var entitySource: EntitySource
+    override var myName: String
   }
 
   companion object : Type<OneEntityWithPersistentId, Builder>() {
@@ -104,8 +104,8 @@ interface EntityWithSoftLinks : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : EntityWithSoftLinks, ModifiableWorkspaceEntity<EntityWithSoftLinks>, ObjBuilder<EntityWithSoftLinks> {
-    override var link: OnePersistentId
     override var entitySource: EntitySource
+    override var link: OnePersistentId
     override var manyLinks: MutableList<OnePersistentId>
     override var optionalLink: OnePersistentId?
     override var inContainer: Container
@@ -165,8 +165,8 @@ interface SoftLinkReferencedChild : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SoftLinkReferencedChild, ModifiableWorkspaceEntity<SoftLinkReferencedChild>, ObjBuilder<SoftLinkReferencedChild> {
-    override var parentEntity: EntityWithSoftLinks
     override var entitySource: EntitySource
+    override var parentEntity: EntityWithSoftLinks
   }
 
   companion object : Type<SoftLinkReferencedChild, Builder>() {

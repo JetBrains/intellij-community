@@ -23,6 +23,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.Arrays;
+import java.util.Optional;
 
 /**
  * @author Sergey Zhulin
@@ -146,15 +148,26 @@ public class ExeReader extends Bin.Structure{
   public void sectionVirtualAddressFixup() {
     long virtualAddress = ((ImageSectionHeader)mySectionHeaders.get(0)).getValueMember("VirtualAddress").getValue();
 
+    long sectionAlignment = myImageOptionalHeader.getValue("SectionAlignment");
     for (Bin sectionHeader : mySectionHeaders.getArray()) {
       Value virtualAddressMember = ((ImageSectionHeader)sectionHeader).getValueMember("VirtualAddress");
 
-      // Section always starts from an address divisible by 0x1000
-      if (virtualAddress % 0x1000 != 0)
-        virtualAddress += 0x1000 - virtualAddress % 0x1000;
+      // Section always starts from an address aligned to IMAGE_OPTIONAL_HEADER::SectionAlignment, which is 0x1000 by default
+      if (virtualAddress % sectionAlignment != 0)
+        virtualAddress += sectionAlignment - virtualAddress % sectionAlignment;
 
       virtualAddressMember.setValue(virtualAddress);
       virtualAddress += ((ImageSectionHeader)sectionHeader).getValueMember("VirtualSize").getValue();
+    }
+
+    // Update the relative virtual address of the Base Relocation Table, if any.
+    Optional<ImageSectionHeader> relocationSectionHeader = Arrays.stream((ImageSectionHeader[])mySectionHeaders.getArray())
+      .filter(sectionHeader -> ".reloc".equals(sectionHeader.getTxtMember("Name").getText())).findFirst();
+    if (relocationSectionHeader.isPresent()) {
+      Bin.ArrayOfBins imageDataDirectories = (Bin.ArrayOfBins)myImageOptionalHeader.getMember("ImageDataDirectories");
+      ImageDataDirectory relocationDataDirectory = (ImageDataDirectory)imageDataDirectories.get(5);
+      Value virtualAddressMember = relocationDataDirectory.getValueMember("VirtualAddress");
+      virtualAddressMember.setValue(relocationSectionHeader.get().getValue("VirtualAddress"));
     }
 
     // The binary size has been changed as the result, update it in the size holders:
@@ -185,6 +198,9 @@ public class ExeReader extends Bin.Structure{
     }
     if (machine == 0x8664) {
       return ExeFormat.X64;
+    }
+    if (machine == 0xAA64) {
+      return ExeFormat.ARM64;
     }
     throw new UnsupportedOperationException("Unsupported machine code " + machine);
   }

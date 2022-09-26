@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.caches.resolve
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.util.analyzeControlFlow
+import org.jetbrains.kotlin.idea.core.util.externalDescriptors
 import org.jetbrains.kotlin.idea.project.ResolveElementCache
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -14,7 +14,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.codeFragmentUtil.suppressDiagnosticsInDebugMode
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes3
+import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 import org.jetbrains.kotlin.resolve.*
+import org.jetbrains.kotlin.resolve.BindingContext.USED_AS_EXPRESSION
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoAfter
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfo
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -23,9 +25,6 @@ import org.jetbrains.kotlin.resolve.scopes.*
 import org.jetbrains.kotlin.resolve.scopes.utils.addImportingScopes
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
-import org.jetbrains.kotlin.idea.core.util.externalDescriptors
-import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
-import org.jetbrains.kotlin.resolve.BindingContext.USED_AS_EXPRESSION
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingServices
 import javax.inject.Inject
 
@@ -101,7 +100,7 @@ class CodeFragmentAnalyzer(
                 }
             }
             is KtSecondaryConstructor -> {
-                val expression = (context.bodyExpression ?: context.getDelegationCall().calleeExpression) as? KtExpression
+                val expression = context.bodyExpression ?: context.getDelegationCallOrNull()
                 if (expression != null) {
                     bindingContext = resolutionFactory(expression)
                     scope = bindingContext[BindingContext.LEXICAL_SCOPE, expression]

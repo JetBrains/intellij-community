@@ -32,7 +32,6 @@ public abstract class LightMarkedTestCase extends PyTestCase {
    * @see #configureByFileText(String, String, String)
    * @param filePath file to load and parse
    * @return a mapping of markers to PSI elements
-   * @throws Exception
    */
   protected Map<String, PsiElement> configureByFile(@TestDataFile @NonNls String filePath) {
     return configureByFile(filePath, MARKER);
@@ -43,7 +42,6 @@ public abstract class LightMarkedTestCase extends PyTestCase {
    * @param filePath file to read and parse
    * @param markerRegexp regexp for markers
    * @return a mapping of markers to PSI elements
-   * @throws Exception
    */
   protected Map<String, PsiElement> configureByFile(@TestDataFile @NonNls String filePath, @NonNls String markerRegexp) {
     final String fullPath = getTestDataPath() + filePath;
@@ -71,7 +69,6 @@ public abstract class LightMarkedTestCase extends PyTestCase {
    * @param fileName name to give to the PSI file
    * @param markerRegexp regexp to detect markers in the text
    * @return mapping of markers to the PSI elements
-   * @throws Exception
    */
   protected Map<String, PsiElement> configureByFileText(String fileText, final String fileName, @NonNls String markerRegexp) {
     // build a map of marks to positions, and the text with marks stripped

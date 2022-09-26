@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.test
 
 import com.intellij.analysis.JvmAnalysisBundle
+import com.intellij.codeInsight.TestFrameworks
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
@@ -11,7 +12,7 @@ import com.intellij.codeInspection.ui.ListTable
 import com.intellij.codeInspection.ui.ListWrappingTableModel
 import com.intellij.psi.*
 import com.intellij.uast.UastHintedVisitorAdapter
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.ui.CheckBox
 import com.intellij.util.ui.FormBuilder
 import com.siyeh.InspectionGadgetsBundle
@@ -96,7 +97,7 @@ private class TestMethodWithoutAssertionVisitor(
 ) : AbstractUastNonRecursiveVisitor() {
   override fun visitMethod(node: UMethod): Boolean {
     val javaMethod = node.javaPsi
-    if (!TestUtils.isTestMethod(javaMethod)) return true
+    if (!TestFrameworks.getInstance().isTestMethod(javaMethod)) return true
     if (TestUtils.hasExpectedExceptionAnnotation(javaMethod)) return true
     if (ignoreIfExceptionThrown && javaMethod.throwsList.referenceElements.isNotEmpty()) return true
     if (containsAssertion(node)) return true
@@ -108,11 +109,11 @@ private class TestMethodWithoutAssertionVisitor(
 
   private fun lastStatementIsCallToMethodWithAssertion(method: UMethod): Boolean {
     val lastExpression = when (method.uastBody) {
-                           is UBlockExpression -> method.uastBody.castSafelyTo<UBlockExpression>()?.expressions?.lastOrNull()
+                           is UBlockExpression -> method.uastBody.asSafely<UBlockExpression>()?.expressions?.lastOrNull()
                            else -> method.uastBody
                          } ?: return false
-    val callExpression = lastExpression.castSafelyTo<UCallExpression>() ?: return false
-    val targetMethod = callExpression.resolveToUElement()?.castSafelyTo<UMethod>() ?: return false
+    val callExpression = lastExpression.asSafely<UCallExpression>() ?: return false
+    val targetMethod = callExpression.resolveToUElement()?.asSafely<UMethod>() ?: return false
     return containsAssertion(targetMethod)
   }
 

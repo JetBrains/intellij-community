@@ -26,6 +26,8 @@ import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
+import java.util.Arrays;
+
 public class VersionMatcherRule extends TestWatcher {
 
   /**
@@ -56,7 +58,7 @@ public class VersionMatcherRule extends TestWatcher {
     final TargetVersions targetVersions = d.getAnnotation(TargetVersions.class);
     if (targetVersions == null) return;
 
-    myMatcher = new CustomMatcher<String>("Gradle version '" + targetVersions.value() + "'") {
+    myMatcher = new CustomMatcher<String>("Gradle version '" + Arrays.toString(targetVersions.value()) + "'") {
       @Override
       public boolean matches(Object item) {
         return item instanceof String && new VersionMatcher(GradleVersion.version(item.toString())).isVersionMatch(targetVersions);

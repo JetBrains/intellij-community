@@ -3,17 +3,18 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.primitiveTypes
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 class BoxedTypeOperationsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         return recurse(
             when (element) {
-                is JKCallExpression ->
-                    convertBoxedTypeUnwrapping(element)
+                is JKQualifiedExpression -> convertBoxedTypeUnwrapping(element)
                 is JKNewExpression -> convertCreationOfBoxedType(element)
                 else -> null
             } ?: element
@@ -26,7 +27,8 @@ class BoxedTypeOperationsConversion(context: NewJ2kConverterContext) : Recursive
         return singleArgument::value.detached()
     }
 
-    private fun convertBoxedTypeUnwrapping(methodCallExpression: JKCallExpression): JKExpression? {
+    private fun convertBoxedTypeUnwrapping(qualifiedExpression: JKQualifiedExpression): JKExpression? {
+        val methodCallExpression = qualifiedExpression.selector.safeAs<JKCallExpression>() ?: return null
         val (boxedJavaType, operationType) =
             primitiveTypeUnwrapRegexp.matchEntire(methodCallExpression.identifier.fqName)
                 ?.groupValues
@@ -35,6 +37,13 @@ class BoxedTypeOperationsConversion(context: NewJ2kConverterContext) : Recursive
                 } ?: return null
         val primitiveTypeName = boxedTypeToPrimitiveType[boxedJavaType] ?: return null
         if (operationType !in primitiveTypeNames) return null
+
+        val receiver = qualifiedExpression::receiver.detached()
+        if (primitiveTypeName == operationType) {
+            // This is a call like `integer.intValue()`, useless from Kotlin's point of view.
+            // Just return the receiver itself.
+            return receiver.withFormattingFrom(qualifiedExpression)
+        }
 
         val shouldConvertToIntFirst =
             primitiveTypeName in floatingPointPrimitiveTypeNames && operationType in typeNameOfIntegersLesserThanInt
@@ -46,10 +55,13 @@ class BoxedTypeOperationsConversion(context: NewJ2kConverterContext) : Recursive
         }
 
         val typeName = primitiveTypeName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
-        return JKCallExpressionImpl(
-            symbolProvider.provideMethodSymbol("kotlin.$typeName.to$conversionType"),
-            JKArgumentList()
-        ).withFormattingFrom(methodCallExpression)
+        return JKQualifiedExpression(
+            receiver,
+            JKCallExpressionImpl(
+                symbolProvider.provideMethodSymbol("kotlin.$typeName.to$conversionType"),
+                JKArgumentList()
+            )
+        ).withFormattingFrom(qualifiedExpression)
     }
 
     companion object {

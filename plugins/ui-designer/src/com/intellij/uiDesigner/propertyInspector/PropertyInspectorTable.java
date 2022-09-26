@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -63,10 +62,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class PropertyInspectorTable extends JBTable implements DataProvider {
   private static final Logger LOG = Logger.getInstance(PropertyInspectorTable.class);
 
@@ -74,8 +69,8 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
 
   public static final DataKey<PropertyInspectorTable> DATA_KEY = DataKey.create(PropertyInspectorTable.class.getName());
 
-  private static final Color SYNTETIC_PROPERTY_BACKGROUND = new JBColor(Gray._230, UIUtil.getPanelBackground().brighter());
-  private static final Color SYNTETIC_SUBPROPERTY_BACKGROUND = new JBColor(Gray._240, UIUtil.getPanelBackground().brighter());
+  private static final Color SYNTHETIC_PROPERTY_BACKGROUND = new JBColor(Gray._230, UIUtil.getPanelBackground().brighter());
+  private static final Color SYNTHETIC_SUBPROPERTY_BACKGROUND = new JBColor(Gray._240, UIUtil.getPanelBackground().brighter());
 
   private final ComponentTree myComponentTree;
   private final ArrayList<Property> myProperties;
@@ -238,48 +233,21 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
     return myProperties.get(selectedRow);
   }
 
-  /**
-   * @return {@link PsiClass} of the component which properties are displayed inside the inspector
-   */
-  public PsiClass getComponentClass(){
-    final Module module = myEditor.getModule();
-
+  public @Nullable String getSelectedRadComponentClassName() {
     if (mySelection.size() == 0) return null;
     String className = mySelection.get(0).getComponentClassName();
-    for(int i=1; i<mySelection.size(); i++) {
+    for (int i = 1; i < mySelection.size(); i++) {
       if (!Objects.equals(mySelection.get(i).getComponentClassName(), className)) {
         return null;
       }
     }
-
-    return JavaPsiFacade.getInstance(module.getProject())
-      .findClass(className, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+    return className;
   }
 
   @Override
-  public Object getData(@NotNull final String dataId) {
-    if(getClass().getName().equals(dataId)){
+  public @Nullable Object getData(@NotNull String dataId) {
+    if (DATA_KEY.is(dataId)) {
       return this;
-    }
-    else if(CommonDataKeys.PSI_ELEMENT.is(dataId)){
-      final IntrospectedProperty introspectedProperty = getSelectedIntrospectedProperty();
-      if(introspectedProperty == null){
-        return null;
-      }
-      final PsiClass aClass = getComponentClass();
-      if(aClass == null){
-        return null;
-      }
-
-      final PsiMethod getter = PropertyUtilBase.findPropertyGetter(aClass, introspectedProperty.getName(), false, true);
-      if(getter != null){
-        return getter;
-      }
-
-      return PropertyUtilBase.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
-    }
-    else if (CommonDataKeys.PSI_FILE.is(dataId) && myEditor != null) {
-      return PsiManager.getInstance(myEditor.getProject()).findFile(myEditor.getFile());
     }
     else if (GuiEditor.DATA_KEY.is(dataId)) {
       return myEditor;
@@ -288,12 +256,39 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
       GuiEditor designer = myProject.isDisposed() ? null : DesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
       return designer == null ? null : designer.getEditor();
     }
+    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      IntrospectedProperty<?> property = getSelectedIntrospectedProperty();
+      String className = getSelectedRadComponentClassName();
+      return (DataProvider)slowId -> getSlowData(slowId, className, property);
+    }
     else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }
-    else {
-      return null;
+    return null;
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId,
+                                       @Nullable String radComponentClassName,
+                                       @Nullable IntrospectedProperty<?> introspectedProperty) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      if (introspectedProperty == null || radComponentClassName == null || myEditor == null) {
+        return null;
+      }
+      PsiClass aClass = JavaPsiFacade.getInstance(myEditor.getProject()).findClass(
+        radComponentClassName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myEditor.getModule()));
+      if (aClass == null) {
+        return null;
+      }
+      PsiMethod getter = PropertyUtilBase.findPropertyGetter(aClass, introspectedProperty.getName(), false, true);
+      if (getter != null) {
+        return getter;
+      }
+      return PropertyUtilBase.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
     }
+    else if (CommonDataKeys.PSI_FILE.is(dataId)) {
+      return myEditor != null ? PsiManager.getInstance(myEditor.getProject()).findFile(myEditor.getFile()) : null;
+    }
+    return null;
   }
 
   /**
@@ -1062,8 +1057,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
         background = table.getBackground();
       }
       else {
-        // syntetic property
-        background = parent == null ? SYNTETIC_PROPERTY_BACKGROUND : SYNTETIC_SUBPROPERTY_BACKGROUND;
+        background = parent == null ? SYNTHETIC_PROPERTY_BACKGROUND : SYNTHETIC_SUBPROPERTY_BACKGROUND;
       }
 
       if (!selected){

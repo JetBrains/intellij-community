@@ -197,7 +197,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       new XDebuggerTreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
     }
     else {
-      new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
+      new TreeSpeedSearch(this, false, SPEED_SEARCH_CONVERTER.asFunction());
     }
     PopupHandler.installPopupMenu(this, popupActionGroupId, "XDebuggerTreePopup");
     registerShortcuts();

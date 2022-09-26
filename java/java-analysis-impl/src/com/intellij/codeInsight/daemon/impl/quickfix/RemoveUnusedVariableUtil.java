@@ -139,7 +139,6 @@ public final class RemoveUnusedVariableUtil {
    * @param sideEffects if null, delete usages, otherwise collect side effects
    * @return true if there are at least one unrecoverable side effect found, false if no side effects,
    *         null if read usage found (may happen if interval between fix creation in invoke() call was long enough)
-   * @throws IncorrectOperationException
    */
   static Boolean processUsage(PsiElement element, PsiVariable variable, List<? super PsiElement> sideEffects, @NotNull RemoveMode deleteMode)
     throws IncorrectOperationException {

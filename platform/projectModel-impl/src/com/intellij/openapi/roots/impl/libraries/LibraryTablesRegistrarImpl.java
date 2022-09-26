@@ -43,14 +43,11 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
 
   @Override
   public LibraryTable getLibraryTableByLevel(String level, @NotNull Project project) {
-    switch (level) {
-      case LibraryTablesRegistrar.PROJECT_LEVEL:
-        return getLibraryTable(project);
-      case LibraryTablesRegistrar.APPLICATION_LEVEL:
-        return getLibraryTable();
-      default:
-        return getCustomLibraryTableByLevel(level);
-    }
+    return switch (level) {
+      case LibraryTablesRegistrar.PROJECT_LEVEL -> getLibraryTable(project);
+      case LibraryTablesRegistrar.APPLICATION_LEVEL -> getLibraryTable();
+      default -> getCustomLibraryTableByLevel(level);
+    };
   }
 
   @Override
@@ -84,15 +81,6 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
       }
     }
     return myCustomLibraryTables;
-  }
-
-  @Override
-  public void registerLibraryTable(@NotNull LibraryTable libraryTable) {
-    String tableLevel = libraryTable.getTableLevel();
-    final LibraryTable oldTable = myCustomLibraryTables.put(tableLevel, (LibraryTableBase)libraryTable);
-    if (oldTable != null) {
-      throw new IllegalArgumentException("Library table '" + tableLevel + "' already registered.");
-    }
   }
 
   @Override

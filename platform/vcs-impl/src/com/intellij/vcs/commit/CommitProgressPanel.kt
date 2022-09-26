@@ -12,10 +12,15 @@ import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressSink
+import com.intellij.openapi.progress.asContextElement
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.ProgressDetails
+import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsBundle.messagePointer
@@ -29,11 +34,10 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.util.progress.DelegatingProgressIndicatorEx
 import com.intellij.util.ui.HtmlPanel
 import com.intellij.util.ui.JBUI.Borders.empty
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil.getErrorForeground
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -51,7 +55,7 @@ import kotlin.properties.ReadWriteProperty
 private fun JBLabel.setError(@NlsContexts.Label errorText: String) {
   text = errorText
   icon = AllIcons.General.Error
-  foreground = getErrorForeground()
+  foreground = NamedColorUtil.getErrorForeground()
   isVisible = true
 }
 
@@ -113,20 +117,27 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
 
   override fun dispose() = Unit
 
-  override fun startProgress(isOnlyRunCommitChecks: Boolean): ProgressIndicatorEx {
+  override suspend fun <T> runWithProgress(isOnlyRunCommitChecks: Boolean, action: suspend CoroutineScope.() -> T): T {
     check(progress == null) { "Commit checks indicator already created" }
 
     val indicator = InlineCommitChecksProgressIndicator(isOnlyRunCommitChecks)
     Disposer.register(this, indicator)
+    progress = indicator
 
+    val context = currentCoroutineContext()
     indicator.component.isVisible = false
     indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
       override fun start() = progressStarted(indicator)
       override fun stop() = progressStopped(indicator)
+      override fun cancel() = context.cancel() // cancel coroutine
     })
-
-    progress = indicator
-    return IndeterminateIndicator(indicator)
+    indicator.start()
+    try {
+      return withContext(IndeterminateProgressSink(indicator).asContextElement(), block = action)
+    }
+    finally {
+      indicator.stop()
+    }
   }
 
   private fun progressStarted(indicator: InlineCommitChecksProgressIndicator) {
@@ -201,7 +212,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     }
 }
 
-class CommitCheckFailure(@Nls val text: String, val detailsViewer: (() -> Unit)?)
+class CommitCheckFailure(@Nls val text: String?, val detailsViewer: (() -> Unit)?)
 
 private class FailuresPanel : JBPanel<FailuresPanel>() {
   private var nextFailureId = 0
@@ -269,14 +280,16 @@ private class FailuresDescriptionPanel : HtmlPanel() {
   private fun buildDescription(): HtmlChunk {
     if (failures.isEmpty()) return HtmlChunk.empty()
 
-    val failureLinks = formatNarrowAndList(failures.map {
+    val failureLinks = formatNarrowAndList(failures.mapNotNull {
+      val text = it.value.text ?: return@mapNotNull null
       if (it.value.detailsViewer != null) {
-        HtmlChunk.link(it.key.toString(), it.value.text)
+        HtmlChunk.link(it.key.toString(), text)
       }
       else {
-        HtmlChunk.text(it.value.text)
+        HtmlChunk.text(text)
       }
     })
+    if (failureLinks.isBlank()) return HtmlChunk.text(message("label.commit.checks.failed.unknown.reason"))
     return HtmlChunk.raw(message("label.commit.checks.failed", failureLinks))
   }
 
@@ -319,7 +332,15 @@ private class RerunCommitChecksAction :
   }
 }
 
-private class IndeterminateIndicator(indicator: ProgressIndicatorEx) : DelegatingProgressIndicatorEx(indicator) {
-  override fun setIndeterminate(indeterminate: Boolean) = Unit
-  override fun setFraction(fraction: Double) = Unit
+private class IndeterminateProgressSink(private val indicator: ProgressIndicator) : ProgressSink {
+
+  override fun update(text: @ProgressText String?, details: @ProgressDetails String?, fraction: Double?) {
+    if (text != null) {
+      indicator.text = text
+    }
+    if (details != null) {
+      indicator.text2 = details
+    }
+    // ignore fraction updates
+  }
 }

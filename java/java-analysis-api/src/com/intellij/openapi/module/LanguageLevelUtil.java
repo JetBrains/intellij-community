@@ -88,6 +88,10 @@ public class LanguageLevelUtil {
     return ourPresentableShortMessage.get(languageLevel);
   }
 
+  /**
+   * For performance reasons the forbidden API is pre-generated.
+   * @see com.intellij.codeInspection.tests.JavaApiUsageGenerator
+   */
   @Nullable
   private static Set<String> getForbiddenApi(@NotNull LanguageLevel languageLevel) {
     if (!ourPresentableShortMessage.containsKey(languageLevel)) return null;
@@ -110,9 +114,10 @@ public class LanguageLevelUtil {
   /**
    * @param member The {@link PsiMember} to get the language level from
    * @param languageLevel The effective language level
-   * @return The last compatible language level for a {@link PsiMember} as annotated by the @since javadoc
+   * @return The last incompatible language level for a {@link PsiMember} as annotated by the @since javadoc or null if it is unknown.
+   * For example, if a method is annotated as @since 9 this method will return {@link LanguageLevel#JDK_1_8}.
    */
-  public static LanguageLevel getLastIncompatibleLanguageLevel(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {
+  public static @Nullable LanguageLevel getLastIncompatibleLanguageLevel(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {
     if (member instanceof PsiAnonymousClass) return null;
     PsiClass containingClass = member.getContainingClass();
     if (containingClass instanceof PsiAnonymousClass) return null;

@@ -69,6 +69,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       "kotlin.coroutines.CoroutineContext$Key",
       "kotlin.Result",
       "kotlin.Result$Failure",
+      "kotlin.Result$Companion",
       // Even though it's internal class, it can leak (and it does) into API surface because it's exposed by public
       // `kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED` property
       "kotlin.coroutines.intrinsics.CoroutineSingletons",
@@ -375,10 +376,23 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     // some commonly used classes from kotlin-runtime must be loaded by the platform classloader. Otherwise, if a plugin bundles its own version
     // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
     // We assume that these classes don't change between Kotlin versions, so it's safe to always load them from platform's kotlin-runtime.
-    return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") ||
-                                               (className.startsWith("kotlin.reflect.") &&
-                                                className.indexOf('.', 15 /* "kotlin.reflect.".length */) < 0) ||
-                                               KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
+    return className.startsWith("kotlin.") &&
+           (className.startsWith("kotlin.jvm.functions.") ||
+            // Those are kotlin-reflect related classes but unfortunately, they are placed in kotlin-stdlib. Since we always
+            // want to load reflect from platform, we should force those classes with platform classloader as well
+            className.startsWith("kotlin.reflect.") ||
+            className.startsWith("kotlin.jvm.internal.CallableReference") ||
+            className.startsWith("kotlin.jvm.internal.ClassReference") ||
+            className.startsWith("kotlin.jvm.internal.FunInterfaceConstructorReference") ||
+            className.startsWith("kotlin.jvm.internal.FunctionReference") ||
+            className.startsWith("kotlin.jvm.internal.MutablePropertyReference") ||
+            className.startsWith("kotlin.jvm.internal.PropertyReference") ||
+            className.startsWith("kotlin.jvm.internal.TypeReference") ||
+            className.startsWith("kotlin.jvm.internal.LocalVariableReference") ||
+            className.startsWith("kotlin.jvm.internal.MutableLocalVariableReference") ||
+            className.equals("kotlin.jvm.internal.ReflectionFactory") ||
+            className.equals("kotlin.jvm.internal.Reflection") ||
+            KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
   }
 
   @Override

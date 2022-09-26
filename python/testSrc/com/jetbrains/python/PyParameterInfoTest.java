@@ -42,9 +42,9 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     return configureByFile(fname);
   }
 
-  private Map<String, PsiElement> loadTest(int expected_marks) {
+  private Map<String, PsiElement> loadTest(int expectedMarks) {
     Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), expected_marks);
+    assertEquals("Test data sanity", expectedMarks, marks.size());
     return marks;
   }
 
@@ -728,7 +728,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithAdditionalClassEntryInSdkRoots(
       "packages",
       () -> {
-        final Map<String, PsiElement> marks = loadTest(7);
+        final Map<String, PsiElement> marks = loadTest(8);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x, y, z: int = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x, y, z: int = ...", new String[]{"x, "});
@@ -737,6 +737,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x, y: int = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg6>").getTextOffset()).check("x, y: str = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int = ...", new String[]{"x: int = ..."});
+        feignCtrlP(marks.get("<arg8>").getTextOffset()).check("x, y, z: list = ...", new String[]{"x, "});
       }
     );
   }
@@ -892,7 +893,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithAdditionalClassEntryInSdkRoots(
       "packages",
       () -> {
-        final Map<String, PsiElement> marks = loadTest(8);
+        final Map<String, PsiElement> marks = loadTest(10);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("inst: A, *, a: int = ..., b: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("inst: A, *, a: int = ..., b: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
@@ -902,6 +903,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg6>").getTextOffset()).check("inst: _T, **changes", new String[]{"**changes"});
         feignCtrlP(marks.get("<arg7>").getTextOffset()).check("inst: D, *, a: int = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
         feignCtrlP(marks.get("<arg8>").getTextOffset()).check("inst: D, *, a: int = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg9>").getTextOffset()).check("inst: E, *, a: int = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg10>").getTextOffset()).check("inst: E, *, a: int = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
       }
     );
   }
@@ -942,6 +945,23 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("inst: C5, *, x: int = ..., z: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
       }
     );
+  }
+
+  // PY-47532
+  public void testAttrDataclassDecoratorAliases() {
+    final Map<String, PsiElement> marks = loadTest(11);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg6>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg8>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg9>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg10>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg11>").getTextOffset()).check("x, y", new String[]{"x, "});
   }
 
   // EA-102450

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl.singleRow;
 
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.*;
@@ -47,18 +48,12 @@ public abstract class SingleRowLayout extends TabLayout {
   }
 
   SingleRowLayoutStrategy getStrategy() {
-    switch (myTabs.getPresentation().getTabsPosition()) {
-      case top:
-        return myTop;
-      case left:
-        return myLeft;
-      case bottom:
-        return myBottom;
-      case right:
-        return myRight;
-    }
-
-    return null;
+    return switch (myTabs.getPresentation().getTabsPosition()) {
+      case top -> myTop;
+      case left -> myLeft;
+      case bottom -> myBottom;
+      case right -> myRight;
+    };
   }
 
   protected boolean checkLayoutLabels(SingleRowPassInfo data) {
@@ -120,11 +115,17 @@ public abstract class SingleRowLayout extends TabLayout {
 
       layoutTitle(data);
 
-      layoutLabels(data);
-
-      layoutEntryPointButton(data);
-
-      layoutMoreButton(data);
+      if (ExperimentalUI.isNewUI() && myTabs.getTabsPosition().isSide()) {
+        // Layout buttons first because their position will be used to calculate label positions
+        layoutEntryPointButton(data);
+        layoutMoreButton(data);
+        layoutLabels(data);
+      }
+      else {
+        layoutLabels(data);
+        layoutEntryPointButton(data);
+        layoutMoreButton(data);
+      }
     }
 
     if (selected != null) {
@@ -140,7 +141,9 @@ public abstract class SingleRowLayout extends TabLayout {
       if (firstLabel != null && lastLabel != null) {
         data.tabRectangle.x = firstLabel.getBounds().x;
         data.tabRectangle.y = firstLabel.getBounds().y;
-        data.tabRectangle.width = (int)lastLabel.getBounds().getMaxX() - data.tabRectangle.x;
+        data.tabRectangle.width = ExperimentalUI.isNewUI()
+                                  ? (int)data.entryPointRect.getMaxX() - data.tabRectangle.x + 1
+                                  : (int)lastLabel.getBounds().getMaxX() - data.tabRectangle.x;
         data.tabRectangle.height = (int)lastLabel.getBounds().getMaxY() - data.tabRectangle.y;
       }
     }
@@ -227,6 +230,7 @@ public abstract class SingleRowLayout extends TabLayout {
       data.requiredLength += getRequiredLength(eachInfo);
       data.toLayout.add(eachInfo);
     }
+    data.requiredLength += getStrategy().getAdditionalLength();
   }
 
   protected int getRequiredLength(TabInfo eachInfo) {

@@ -185,18 +185,13 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
   @Override
   public String getHelpTopic() {
     int index = myTabbedPane.getSelectedIndex();
-    switch (index) {
-      case 0:
-        return "fileTemplates.templates";
-      case 1:
-        return "fileTemplates.includes";
-      case 2:
-        return "fileTemplates.code";
-      case 3:
-        return "fileTemplates.j2ee";
-      default:
-        throw new IllegalStateException("wrong index: " + index);
-    }
+    return switch (index) {
+      case 0 -> "fileTemplates.templates";
+      case 1 -> "fileTemplates.includes";
+      case 2 -> "fileTemplates.code";
+      case 3 -> "fileTemplates.j2ee";
+      default -> throw new IllegalStateException("wrong index: " + index);
+    };
   }
 
   @Override
@@ -284,6 +279,10 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
         FileTemplate selectedItem = getSelectedTemplate();
         e.getPresentation().setEnabled(selectedItem != null && !isInternalTemplate(selectedItem.getName(), currentTab.getTitle()));
       }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
     AnAction addAction = new DumbAwareAction(IdeBundle.message("action.create.template"), null, AllIcons.General.Add) {
       @Override
@@ -294,6 +293,10 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(!(currentTab == myCodeTemplatesList || currentTab == otherTemplatesList));
+      }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
     AnAction addChildAction = new DumbAwareAction(IdeBundle.message("action.create.child.template"), null, AllIcons.Actions.AddFile) {
@@ -310,6 +313,10 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
                                        !FileTemplateBase.isChild(getSelectedTemplate()) &&
                                        currentTab == myTemplatesList);
       }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
     AnAction cloneAction = new DumbAwareAction(IdeBundle.message("action.copy.template"), null, PlatformIcons.COPY_ICON) {
       @Override
@@ -322,6 +329,10 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
         e.getPresentation().setEnabled(currentTab != myCodeTemplatesList
                                        && currentTab != otherTemplatesList
                                        && getSelectedTemplate() != null);
+      }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
     AnAction resetAction = new DumbAwareAction(IdeBundle.message("action.reset.to.default"), null, AllIcons.Actions.Rollback) {
@@ -338,6 +349,10 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
         }
         final FileTemplate selectedItem = getSelectedTemplate();
         e.getPresentation().setEnabled(selectedItem instanceof BundledFileTemplate && !selectedItem.isDefault());
+      }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
     group.add(addAction);

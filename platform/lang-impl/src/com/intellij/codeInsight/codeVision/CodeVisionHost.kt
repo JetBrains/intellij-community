@@ -16,7 +16,6 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
@@ -31,10 +30,11 @@ import com.intellij.openapi.fileEditor.impl.BaseRemoteFileEditor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.rd.createNestedDisposable
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -44,13 +44,13 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
-import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.reactive.whenTrue
 import com.jetbrains.rd.util.trace
@@ -60,9 +60,9 @@ import java.util.concurrent.CompletableFuture
 open class CodeVisionHost(val project: Project) {
   companion object {
     private val logger = getLogger<CodeVisionHost>()
-    const val defaultVisibleLenses = 5
-    const val settingsLensProviderId = "!Settings"
-    const val moreLensProviderId = "!More"
+    const val defaultVisibleLenses: Int = 5
+    const val settingsLensProviderId: String = "!Settings"
+    const val moreLensProviderId: String = "!More"
 
     /**
      * Flag which is enabled when executed test in [com.intellij.java.codeInsight.codeVision.CodeVisionTestCase].
@@ -81,7 +81,9 @@ open class CodeVisionHost(val project: Project) {
     }
   }
 
-  protected val codeVisionLifetime = project.createLifetime()
+  // used externally
+  @Suppress("MemberVisibilityCanBePrivate")
+  val codeVisionLifetime: Lifetime = project.createLifetime()
 
   /**
    * Pass empty list to update ALL providers in editor
@@ -94,7 +96,7 @@ open class CodeVisionHost(val project: Project) {
 
   @Suppress("MemberVisibilityCanBePrivate")
   // Uses in Rider
-  protected val lifeSettingModel = CodeVisionSettingsLiveModel(codeVisionLifetime)
+  protected val lifeSettingModel: CodeVisionSettingsLiveModel = CodeVisionSettingsLiveModel(codeVisionLifetime)
 
   var providers: List<CodeVisionProvider<*>> = CodeVisionProviderFactory.createAllProviders(project)
 
@@ -168,13 +170,21 @@ open class CodeVisionHost(val project: Project) {
   }
 
 
-  // run in read action
+  @RequiresReadLock
   fun collectPlaceholders(editor: Editor,
                           psiFile: PsiFile?): List<Pair<TextRange, CodeVisionEntry>> {
+    return ProgressIndicatorUtils.withTimeout(100) {
+      collectPlaceholdersInner(editor, psiFile)
+    } ?: emptyList()
+  }
+
+  private fun collectPlaceholdersInner(editor: Editor,
+                    psiFile: PsiFile?): List<Pair<TextRange, CodeVisionEntry>> {
     if (!lifeSettingModel.isEnabledWithRegistry.value) return emptyList()
     val project = editor.project ?: return emptyList()
-    if (psiFile != null && psiFile.virtualFile != null &&
-        !ProjectRootManager.getInstance(project).fileIndex.isInSourceContent(psiFile.virtualFile)) return emptyList()
+    if (psiFile != null && psiFile.virtualFile != null) {
+      if (ProjectFileIndex.getInstance(project).isInLibrarySource(psiFile.virtualFile)) return emptyList()
+    }
     val bypassBasedCollectors = ArrayList<Pair<BypassBasedPlaceholderCollector, CodeVisionProvider<*>>>()
     val placeholders = ArrayList<Pair<TextRange, CodeVisionEntry>>()
     val settings = CodeVisionSettings.instance()
@@ -263,8 +273,9 @@ open class CodeVisionHost(val project: Project) {
     logger.trace { "No provider found with id ${entry.providerId}" }
   }
 
-  protected fun CodeVisionAnchorKind?.nullIfDefault(): CodeVisionAnchorKind? = if (this === CodeVisionAnchorKind.Default) null else this
-
+  // used externally
+  @Suppress("MemberVisibilityCanBePrivate")
+  fun CodeVisionAnchorKind?.nullIfDefault(): CodeVisionAnchorKind? = if (this === CodeVisionAnchorKind.Default) null else this
 
   open fun getAnchorForEntry(entry: CodeVisionEntry): CodeVisionAnchorKind {
     val provider = getProviderById(entry.providerId) ?: return lifeSettingModel.defaultPosition.value

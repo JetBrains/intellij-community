@@ -37,7 +37,7 @@ class JavaTargetParameter private constructor(
   }
 
   class Builder(
-    val targetPaths: TargetPaths
+    private val targetPaths: TargetPaths
   ) {
 
     constructor(uploadPaths: Set<String> = setOf(),

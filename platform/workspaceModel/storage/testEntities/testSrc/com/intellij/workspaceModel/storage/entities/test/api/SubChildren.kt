@@ -1,13 +1,13 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
-import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
 
@@ -15,14 +15,14 @@ interface ParentSubEntity : WorkspaceEntity {
   val parentData: String
 
   @Child
-  val child: ChildSubEntity
+  val child: ChildSubEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ParentSubEntity, ModifiableWorkspaceEntity<ParentSubEntity>, ObjBuilder<ParentSubEntity> {
-    override var parentData: String
     override var entitySource: EntitySource
-    override var child: ChildSubEntity
+    override var parentData: String
+    override var child: ChildSubEntity?
   }
 
   companion object : Type<ParentSubEntity, Builder>() {
@@ -47,14 +47,14 @@ interface ChildSubEntity : WorkspaceEntity {
   val parentEntity: ParentSubEntity
 
   @Child
-  val child: ChildSubSubEntity
+  val child: ChildSubSubEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildSubEntity, ModifiableWorkspaceEntity<ChildSubEntity>, ObjBuilder<ChildSubEntity> {
-    override var parentEntity: ParentSubEntity
     override var entitySource: EntitySource
-    override var child: ChildSubSubEntity
+    override var parentEntity: ParentSubEntity
+    override var child: ChildSubSubEntity?
   }
 
   companion object : Type<ChildSubEntity, Builder>() {
@@ -82,8 +82,8 @@ interface ChildSubSubEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildSubSubEntity, ModifiableWorkspaceEntity<ChildSubSubEntity>, ObjBuilder<ChildSubSubEntity> {
-    override var parentEntity: ChildSubEntity
     override var entitySource: EntitySource
+    override var parentEntity: ChildSubEntity
     override var childData: String
   }
 

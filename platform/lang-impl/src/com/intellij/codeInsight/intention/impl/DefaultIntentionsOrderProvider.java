@@ -57,17 +57,12 @@ public class DefaultIntentionsOrderProvider implements IntentionsOrderProvider {
 
   public static int getPriorityWeight(@Nullable Priority priority) {
     if (priority == null) return 0;
-    switch (priority) {
-      case TOP:
-        return 20;
-      case HIGH:
-        return 3;
-      case LOW:
-        return -3;
-      case ERROR_FIX_LESS_IMPORTANT_THAN_INSPECTION_FIX:
-        return IntentionGroup.INSPECTION.getPriority() - IntentionGroup.ERROR.getPriority() - 1;
-      default:
-        return 0;
-    }
+    return switch (priority) {
+      case TOP -> 20;
+      case HIGH -> 3;
+      case LOW -> -3;
+      case ERROR_FIX_LESS_IMPORTANT_THAN_INSPECTION_FIX -> IntentionGroup.INSPECTION.getPriority() - IntentionGroup.ERROR.getPriority() - 1;
+      default -> 0;
+    };
   }
 }

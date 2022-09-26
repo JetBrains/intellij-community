@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
@@ -30,7 +31,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
+open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val SDK_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, SdkEntity::class.java,
@@ -51,25 +52,17 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _name: String? = null
   override val name: String
-    get() = _name!!
+    get() = dataSource.name
 
-  @JvmField
-  var _tableId: LibraryTableId? = null
   override val tableId: LibraryTableId
-    get() = _tableId!!
+    get() = dataSource.tableId
 
-  @JvmField
-  var _roots: List<LibraryRoot>? = null
   override val roots: List<LibraryRoot>
-    get() = _roots!!
+    get() = dataSource.roots
 
-  @JvmField
-  var _excludedRoots: List<VirtualFileUrl>? = null
   override val excludedRoots: List<VirtualFileUrl>
-    get() = _excludedRoots!!
+    get() = dataSource.excludedRoots
 
   override val sdk: SdkEntity?
     get() = snapshot.extractOneToOneChild(SDK_CONNECTION_ID, this)
@@ -84,7 +77,7 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
     return connections
   }
 
-  class Builder(val result: LibraryEntityData?) : ModifiableWorkspaceEntityBase<LibraryEntity>(), LibraryEntity.Builder {
+  class Builder(var result: LibraryEntityData?) : ModifiableWorkspaceEntityBase<LibraryEntity>(), LibraryEntity.Builder {
     constructor() : this(LibraryEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -102,6 +95,9 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "excludedRoots", this.excludedRoots.toHashSet())
       indexLibraryRoots(roots)
@@ -112,11 +108,11 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isNameInitialized()) {
         error("Field LibraryEntity#name should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field LibraryEntity#entitySource should be initialized")
       }
       if (!getEntityData().isTableIdInitialized()) {
         error("Field LibraryEntity#tableId should be initialized")
@@ -133,14 +129,27 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    override fun afterModification() {
+      val collection_roots = getEntityData().roots
+      if (collection_roots is MutableWorkspaceList<*>) {
+        collection_roots.cleanModificationUpdateAction()
+      }
+      val collection_excludedRoots = getEntityData().excludedRoots
+      if (collection_excludedRoots is MutableWorkspaceList<*>) {
+        collection_excludedRoots.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LibraryEntity
-      this.name = dataSource.name
-      this.entitySource = dataSource.entitySource
-      this.tableId = dataSource.tableId
-      this.roots = dataSource.roots.toMutableList()
-      this.excludedRoots = dataSource.excludedRoots.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.name != dataSource.name) this.name = dataSource.name
+      if (this.tableId != dataSource.tableId) this.tableId = dataSource.tableId
+      if (this.roots != dataSource.roots) this.roots = dataSource.roots.toMutableList()
+      if (this.excludedRoots != dataSource.excludedRoots) this.excludedRoots = dataSource.excludedRoots.toMutableList()
+      if (parents != null) {
+      }
     }
 
     private fun indexLibraryRoots(libraryRoots: List<LibraryRoot>) {
@@ -156,14 +165,6 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
     }
 
 
-    override var name: String
-      get() = getEntityData().name
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().name = value
-        changedProperty.add("name")
-      }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -171,6 +172,14 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var name: String
+      get() = getEntityData().name
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().name = value
+        changedProperty.add("name")
       }
 
     override var tableId: LibraryTableId
@@ -195,7 +204,12 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
       get() {
         val collection_roots = getEntityData().roots
         if (collection_roots !is MutableWorkspaceList) return collection_roots
-        collection_roots.setModificationUpdateAction(rootsUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_roots.setModificationUpdateAction(rootsUpdater)
+        }
+        else {
+          collection_roots.cleanModificationUpdateAction()
+        }
         return collection_roots
       }
       set(value) {
@@ -213,7 +227,12 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
       get() {
         val collection_excludedRoots = getEntityData().excludedRoots
         if (collection_excludedRoots !is MutableWorkspaceList) return collection_excludedRoots
-        collection_excludedRoots.setModificationUpdateAction(excludedRootsUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_excludedRoots.setModificationUpdateAction(excludedRootsUpdater)
+        }
+        else {
+          collection_excludedRoots.cleanModificationUpdateAction()
+        }
         return collection_excludedRoots
       }
       set(value) {
@@ -346,12 +365,12 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     val result = HashSet<PersistentEntityId<*>>()
     val _tableId = tableId
     when (_tableId) {
+      is LibraryTableId.GlobalLibraryTableId -> {
+      }
       is LibraryTableId.ModuleLibraryTableId -> {
         result.add(_tableId.moduleId)
       }
       is LibraryTableId.ProjectLibraryTableId -> {
-      }
-      is LibraryTableId.GlobalLibraryTableId -> {
       }
     }
     for (item in roots) {
@@ -364,12 +383,12 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
     val _tableId = tableId
     when (_tableId) {
+      is LibraryTableId.GlobalLibraryTableId -> {
+      }
       is LibraryTableId.ModuleLibraryTableId -> {
         index.index(this, _tableId.moduleId)
       }
       is LibraryTableId.ProjectLibraryTableId -> {
-      }
-      is LibraryTableId.GlobalLibraryTableId -> {
       }
     }
     for (item in roots) {
@@ -383,6 +402,8 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     val mutablePreviousSet = HashSet(prev)
     val _tableId = tableId
     when (_tableId) {
+      is LibraryTableId.GlobalLibraryTableId -> {
+      }
       is LibraryTableId.ModuleLibraryTableId -> {
         val removedItem__tableId_moduleId = mutablePreviousSet.remove(_tableId.moduleId)
         if (!removedItem__tableId_moduleId) {
@@ -390,8 +411,6 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
         }
       }
       is LibraryTableId.ProjectLibraryTableId -> {
-      }
-      is LibraryTableId.GlobalLibraryTableId -> {
       }
     }
     for (item in roots) {
@@ -407,6 +426,9 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     var changed = false
     val _tableId = tableId
     val res_tableId = when (_tableId) {
+      is LibraryTableId.GlobalLibraryTableId -> {
+        _tableId
+      }
       is LibraryTableId.ModuleLibraryTableId -> {
         val _tableId_moduleId_data = if (_tableId.moduleId == oldLink) {
           changed = true
@@ -422,9 +444,6 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
         _tableId_data
       }
       is LibraryTableId.ProjectLibraryTableId -> {
-        _tableId
-      }
-      is LibraryTableId.GlobalLibraryTableId -> {
         _tableId
       }
     }
@@ -447,15 +466,13 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   }
 
   override fun createEntity(snapshot: EntityStorage): LibraryEntity {
-    val entity = LibraryEntityImpl()
-    entity._name = name
-    entity._tableId = tableId
-    entity._roots = roots.toList()
-    entity._excludedRoots = excludedRoots.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = LibraryEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): LibraryEntityData {
@@ -485,14 +502,19 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     }
   }
 
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as LibraryEntityData
 
-    if (this.name != other.name) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.name != other.name) return false
     if (this.tableId != other.tableId) return false
     if (this.roots != other.roots) return false
     if (this.excludedRoots != other.excludedRoots) return false
@@ -501,7 +523,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as LibraryEntityData
 
@@ -528,5 +550,19 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     result = 31 * result + roots.hashCode()
     result = 31 * result + excludedRoots.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(LibraryRootTypeId::class.java)
+    collector.add(LibraryRoot.InclusionOptions::class.java)
+    collector.add(LibraryRoot::class.java)
+    collector.add(LibraryTableId::class.java)
+    collector.add(LibraryTableId.ModuleLibraryTableId::class.java)
+    collector.add(LibraryTableId.GlobalLibraryTableId::class.java)
+    collector.add(ModuleId::class.java)
+    collector.addObject(LibraryTableId.ProjectLibraryTableId::class.java)
+    this.roots?.let { collector.add(it::class.java) }
+    this.excludedRoots?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

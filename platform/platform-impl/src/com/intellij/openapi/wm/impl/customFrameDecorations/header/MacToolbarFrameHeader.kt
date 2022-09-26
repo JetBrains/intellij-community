@@ -14,6 +14,8 @@ import com.jetbrains.JBR
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Rectangle
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -27,29 +29,38 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
                                      private val ideMenu: IdeMenuBar) : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder {
   private var toolbar: MainToolbar?
 
+  private val LEFT_GAP = JBUI.scale(16)
+  private val RIGHT_GAP = JBUI.scale(24)
+
   init {
     layout = BorderLayout()
     root.addPropertyChangeListener(MacMainFrameDecorator.FULL_SCREEN, PropertyChangeListener { updateBorders() })
     add(ideMenu, BorderLayout.NORTH)
 
-    val toolbar = createToolBar()
-    this.toolbar = toolbar
+    toolbar = createToolBar()
   }
 
   private fun createToolBar(): MainToolbar {
     val toolbar = MainToolbar()
     toolbar.isOpaque = false
+    toolbar.border = JBUI.Borders.empty(0, LEFT_GAP, 0, RIGHT_GAP)
+    toolbar.addComponentListener(object: ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent?) {
+        updateCustomDecorationHitTestSpots()
+        super.componentResized(e)
+      }
+    })
     add(toolbar, BorderLayout.CENTER)
     return toolbar
   }
 
   override fun initToolbar() {
-    var toolbar = toolbar
-    if (toolbar == null) {
-      toolbar = createToolBar()
-      this.toolbar = toolbar
+    var tb = toolbar
+    if (tb == null) {
+      tb = createToolBar()
+      toolbar = tb
     }
-    toolbar.init((frame as? IdeFrame)?.project)
+    tb.init((frame as? IdeFrame)?.project)
   }
 
   override fun updateToolbar() {

@@ -7,7 +7,6 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.IndexableFilesIterator
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.isEqualOrParentOf
 import com.intellij.workspaceModel.storage.EntityStorage

@@ -37,6 +37,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.Nls;
@@ -154,6 +155,10 @@ public class RecentProjectPanel extends JPanel {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(true);
+      }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
     };
     removeRecentProjectAction.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), myList, parentDisposable);
@@ -479,7 +484,7 @@ public class RecentProjectPanel extends JPanel {
       Color back = getListBackground(selected, list.hasFocus());
 
       myName.setForeground(fore);
-      myPath.setForeground(UIUtil.getInactiveTextColor());
+      myPath.setForeground(NamedColorUtil.getInactiveTextColor());
 
       setBackground(back);
 

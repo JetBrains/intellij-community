@@ -4,6 +4,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsActions;
@@ -24,6 +25,11 @@ public class LocalQuickFixesWrapper extends QuickFixAction {
     super(StringUtil.escapeMnemonics(name),
           fixes.get(0) instanceof Iconable ? ((Iconable)fixes.get(0)).getIcon(0) : null, null, toolWrapper);
     fixes.forEach(f -> addFixAction(f, toolWrapper));
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(true);
   }
 
   public void setText(@NotNull @NlsActions.ActionText String text) {

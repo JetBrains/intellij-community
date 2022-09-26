@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -13,6 +14,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseSwitchFix implements LocalQuickFix, IntentionAction {
   protected final SmartPsiElementPointer<PsiSwitchBlock> myBlock;
@@ -20,6 +22,13 @@ public abstract class BaseSwitchFix implements LocalQuickFix, IntentionAction {
   public BaseSwitchFix(@NotNull PsiSwitchBlock block) {
     myBlock = SmartPointerManager.createPointer(block);
   }
+
+  /**
+   * {@inheritDoc}
+   * Must be implemented in subclasses to remap {@link #myBlock}
+   */
+  @Override
+  abstract public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target);
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

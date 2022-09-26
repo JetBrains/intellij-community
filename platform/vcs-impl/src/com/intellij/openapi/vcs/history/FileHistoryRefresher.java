@@ -88,7 +88,6 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
   }
 
   /**
-   * @param canUseCache
    */
   @Override
   public void refresh(boolean canUseCache) {

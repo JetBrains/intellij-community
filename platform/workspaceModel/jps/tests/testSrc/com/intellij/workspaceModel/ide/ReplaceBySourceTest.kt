@@ -15,7 +15,7 @@ import org.junit.*
 class ReplaceBySourceTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before

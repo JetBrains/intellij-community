@@ -20,6 +20,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 
 class LibraryModificationTracker(project: Project) : SimpleModificationTracker() {
@@ -72,6 +76,13 @@ class LibraryModificationTracker(project: Project) : SimpleModificationTracker()
                 incModificationCount()
             }
         })
+
+        WorkspaceModelTopics.getInstance(project).subscribeImmediately(connection, object : WorkspaceModelChangeListener {
+            override fun changed(event: VersionedStorageChange) {
+                event.getChanges(LibraryEntity::class.java).ifEmpty { return }
+                incModificationCount()
+            }
+        })
     }
 
     private val projectFileIndex = ProjectFileIndex.getInstance(project)
@@ -95,6 +106,7 @@ class LibraryModificationTracker(project: Project) : SimpleModificationTracker()
         val archiveRoot = JarFileSystem.getInstance().getRootByLocal(virtualFile) ?: return false
         return projectFileIndex.isInLibraryClasses(archiveRoot)
     }
+
 }
 
 private fun isRelevantEvent(vFileEvent: VFileEvent): Boolean {

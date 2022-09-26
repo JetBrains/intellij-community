@@ -34,9 +34,6 @@ public abstract class SourceSearcher {
   }
 
   /**
-   * @param indicator
-   * @param artifactId
-   * @param version
    * @return url of found artifact
    */
   @Nullable
@@ -46,9 +43,6 @@ public abstract class SourceSearcher {
   }
 
   /**
-   * @param indicator
-   * @param artifactId
-   * @param version
    * @param classesJar classes jar
    * @return url of found artifact
    */

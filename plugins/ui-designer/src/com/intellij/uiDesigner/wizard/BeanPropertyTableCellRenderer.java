@@ -9,10 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class BeanPropertyTableCellRenderer extends ColoredTableCellRenderer{
   private final SimpleTextAttributes myAttrs1;
   private final SimpleTextAttributes myAttrs2;

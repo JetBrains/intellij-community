@@ -12,6 +12,5 @@ class MyClassTest {
   }
 
   public void setEditable1(final boolean editable1) {
-    this.editable1 = editable1;
   }
 }

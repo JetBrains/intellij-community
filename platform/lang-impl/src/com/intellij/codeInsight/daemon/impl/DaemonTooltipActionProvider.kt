@@ -83,10 +83,11 @@ fun extractMostPriorityFixFromHighlightInfo(highlightInfo: HighlightInfo, editor
   ApplicationManager.getApplication().assertReadAccessAllowed()
 
   val fixes = mutableListOf<HighlightInfo.IntentionActionDescriptor>()
-  val quickFixActionMarkers = highlightInfo.quickFixActionRanges
-  if (quickFixActionMarkers.isNullOrEmpty()) return null
+  highlightInfo.findRegisteredQuickFix<Any?> { desc, _ ->
+    fixes.add(desc)
 
-  fixes.addAll(quickFixActionMarkers.map { it.first }.toList())
+    null
+  }
 
   val intentionsInfo = ShowIntentionsPass.IntentionsInfo()
   ShowIntentionsPass.fillIntentionsInfoForHighlightInfo(highlightInfo, intentionsInfo, fixes)
@@ -130,7 +131,14 @@ fun wrapIntentionToTooltipAction(intention: IntentionAction,
     //try to avoid caret movements
     return DaemonTooltipAction(text, intention.text, editorOffset)
   }
-  val pair = info.quickFixActionMarkers?.find { it.first?.action == intention }
-  val offset = if (pair?.second?.isValid == true) pair.second.startOffset else info.actualStartOffset
+  val offset: Int =
+  info.findRegisteredQuickFix { descriptor, range ->
+    if (descriptor.action == intention) {
+      range.startOffset
+    }
+    else {
+      null
+    }
+  }?:info.actualStartOffset
   return DaemonTooltipAction(text, intention.text, offset)
 }

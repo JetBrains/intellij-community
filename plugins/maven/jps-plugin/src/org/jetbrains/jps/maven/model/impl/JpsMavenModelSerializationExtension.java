@@ -30,25 +30,11 @@ public final class JpsMavenModelSerializationExtension extends JpsModelSerialize
       }
     }
   }
-
-  @Override
-  public void saveModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
-    if (JpsMavenExtensionService.getInstance().getExtension(module) != null) {
-      rootElement.setAttribute(MAVEN_MODULE_ATTRIBUTE, "true");
-    }
-  }
-
+  
   @Override
   public void loadModuleDependencyProperties(JpsDependencyElement dependency, Element orderEntry) {
     if (orderEntry.getAttributeValue(PRODUCTION_ON_TEST_ATTRIBUTE) != null) {
       JpsMavenExtensionService.getInstance().setProductionOnTestDependency(dependency, true);
-    }
-  }
-
-  @Override
-  public void saveModuleDependencyProperties(JpsDependencyElement dependency, Element orderEntry) {
-    if (JpsMavenExtensionService.getInstance().isProductionOnTestDependency(dependency)) {
-      orderEntry.setAttribute(PRODUCTION_ON_TEST_ATTRIBUTE, "");
     }
   }
 }

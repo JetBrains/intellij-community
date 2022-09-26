@@ -9,5 +9,7 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinPackageProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinPackageProviderFactory"/>
+    <projectService
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateTrackerProvider"/>
   </extensions>
 </idea-plugin>

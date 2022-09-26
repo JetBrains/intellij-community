@@ -45,7 +45,6 @@ public class PyMemberSelectionPanel extends JPanel {
   /**
    * Creates empty panel to be filled later by {@link #init(MemberInfoModel, Collection)}
    *
-   * @param title
    */
   public PyMemberSelectionPanel(@NotNull @BorderTitle String title, boolean supportAbstract) {
     this(title, EMPTY_MEMBER_INFO, null, supportAbstract);

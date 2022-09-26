@@ -593,13 +593,9 @@ public class ExprProcessor implements CodeConstants {
     InstructionSequence seq = block.getSeq();
     while (++index < seq.length()) {
       switch (seq.getInstr(index).opcode) {
-        case opc_nop:
-        case opc_istore:
-        case opc_lstore:
-        case opc_fstore:
-        case opc_dstore:
-        case opc_astore:
+        case opc_nop, opc_istore, opc_lstore, opc_fstore, opc_dstore, opc_astore -> {
           continue;
+        }
       }
       return block.getOriginalOffset(index);
     }
@@ -1050,12 +1046,10 @@ public class ExprProcessor implements CodeConstants {
   private static boolean isIntConstant(Exprent exprent) {
     if (exprent.type == Exprent.EXPRENT_CONST) {
       switch (((ConstExprent)exprent).getConstType().getType()) {
-        case CodeConstants.TYPE_BYTE:
-        case CodeConstants.TYPE_BYTECHAR:
-        case CodeConstants.TYPE_SHORT:
-        case CodeConstants.TYPE_SHORTCHAR:
-        case CodeConstants.TYPE_INT:
+        case CodeConstants.TYPE_BYTE, CodeConstants.TYPE_BYTECHAR, CodeConstants.TYPE_SHORT,
+          CodeConstants.TYPE_SHORTCHAR, CodeConstants.TYPE_INT -> {
           return true;
+        }
       }
     }
 

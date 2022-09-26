@@ -38,26 +38,23 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
       return resolveParameter((PyFunction)owner);
     }
     if (owner instanceof PyClass) {
-      final PyFunction init = ((PyClass)owner).findMethodByName(PyNames.INIT, false, null);
-      if (init != null) {
-        PyElement element = resolveParameter(init);
-        if (element == null && (myType.equals(ReferenceType.CLASS_VARIABLE) || myType.equals(ReferenceType.PARAMETER_TYPE))) {
-          element = resolveClassVariable((PyClass)owner);
-        }
-        if (element == null && (myType.equals(ReferenceType.INSTANCE_VARIABLE) || myType.equals(ReferenceType.PARAMETER_TYPE))) {
-          element = resolveInstanceVariable((PyClass)owner);
-        }
-        return element;
+      PyClass pyClass = (PyClass)owner;
+      final PyFunction init = pyClass.findMethodByName(PyNames.INIT, false, null);
+      if (myType == ReferenceType.PARAMETER) {
+        return init != null ? resolveParameter(init) : resolveClassVariable(pyClass);
       }
-      else {
-        PyElement element = null;
-        if (myType.equals(ReferenceType.CLASS_VARIABLE) || myType.equals(ReferenceType.PARAMETER_TYPE)) {
-          element = resolveClassVariable((PyClass)owner);
+      if (myType == ReferenceType.INSTANCE_VARIABLE || myType == ReferenceType.VARIABLE || myType == ReferenceType.PARAMETER_TYPE) {
+        if (myType == ReferenceType.PARAMETER_TYPE && init != null) {
+          PyNamedParameter parameter = resolveParameter(init);
+          if (parameter != null) {
+            return parameter;
+          }
         }
-        if (element == null && (myType.equals(ReferenceType.INSTANCE_VARIABLE) || myType.equals(ReferenceType.PARAMETER_TYPE))) {
-          element = resolveInstanceVariable((PyClass)owner);
-        }
-        return element;
+        PyElement instanceAttr = resolveInstanceVariable(pyClass);
+        return instanceAttr != null ? instanceAttr : resolveClassVariable(pyClass);
+      }
+      if (myType == ReferenceType.CLASS_VARIABLE) {
+        return resolveClassVariable(pyClass);
       }
     }
     if (owner instanceof PyFile && myType == ReferenceType.GLOBAL_VARIABLE) {

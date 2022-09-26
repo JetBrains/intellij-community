@@ -7,10 +7,10 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.util.ui.UIUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -106,7 +106,7 @@ public class RunHotswapDialog extends OptionsDialog {
   }
 
   public Collection<DebuggerSession> getSessionsToReload() {
-    return StreamEx.of(myElementsChooser.getMarkedElements()).map(SessionItem::getSession).toList();
+    return ContainerUtil.map(myElementsChooser.getMarkedElements(), SessionItem::getSession);
   }
 
   private static class SessionItem {

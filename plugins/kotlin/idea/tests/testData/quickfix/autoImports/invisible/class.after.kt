@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import class 'F'" "true"
 // ERROR: Cannot access 'F': it is private in file
 
 package my.pack

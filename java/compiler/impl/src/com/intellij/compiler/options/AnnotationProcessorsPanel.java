@@ -3,6 +3,7 @@ package com.intellij.compiler.options;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -361,6 +362,11 @@ public class AnnotationProcessorsPanel extends JPanel {
     @Override
     public ShortcutSet getShortcut() {
       return ActionManager.getInstance().getAction("Move").getShortcutSet();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

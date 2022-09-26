@@ -104,7 +104,6 @@ public abstract class RunAnythingProviderBase<V> implements RunAnythingProvider<
   /**
    * Null means no help command
    *
-   * @return
    */
   @Nullable
   public @NlsSafe String getHelpCommand() {

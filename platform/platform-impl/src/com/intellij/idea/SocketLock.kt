@@ -8,7 +8,10 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.SpecialConfigFiles
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.util.User32Ex
+import com.sun.jna.platform.win32.WinDef
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufOutputStream
 import io.netty.channel.ChannelHandlerContext
@@ -55,7 +58,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
   }
 
   private val commandProcessorRef: AtomicReference<Function<List<String>, Future<CliResult>>> = AtomicReference(Function {
-    CliResult.error(Main.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized"))
+    CliResult.error(AppExitCodes.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized"))
   })
 
   private val lockedFiles = ArrayList<AutoCloseable>(4)
@@ -102,7 +105,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
 
   fun getServer(): BuiltInServer? = serverFuture?.asCompletableFuture()?.join()
 
-  fun lockAndTryActivate(args: Array<String>, scope: CoroutineScope): Map.Entry<ActivationStatus, CliResult?> {
+  fun lockAndTryActivate(args: List<String>, mainScope: CoroutineScope): Pair<ActivationStatus, CliResult?> {
     log("enter: lock(config=%s system=%s)", configPath, systemPath)
     lockPortFiles()
     val portToPath = HashMap<Int, MutableList<String>>()
@@ -111,15 +114,15 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
     if (!portToPath.isEmpty()) {
       for ((key, value) in portToPath) {
         val status = tryActivate(key, value, args)
-        if (status.key != ActivationStatus.NO_INSTANCE) {
-          log("exit: lock(): " + status.value)
+        if (status.first != ActivationStatus.NO_INSTANCE) {
+          log("exit: lock(): " + status.second)
           unlockPortFiles()
           return status
         }
       }
     }
 
-    serverFuture = scope.async(Dispatchers.IO) {
+    serverFuture = mainScope.async(Dispatchers.IO) {
       val activity = StartUpMeasurer.startActivity("built-in server launch", ActivityCategory.DEFAULT)
       val token = UUID.randomUUID().toString()
       val lockedPaths = arrayOf(configPath, systemPath)
@@ -146,7 +149,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
       server
     }
     log("exit: lock(): succeed")
-    return AbstractMap.SimpleEntry(ActivationStatus.NO_INSTANCE, null)
+    return ActivationStatus.NO_INSTANCE to null
   }
 
   /**
@@ -182,7 +185,17 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
     lockedFiles.clear()
   }
 
-  private fun tryActivate(portNumber: Int, paths: List<String>, args: Array<String>): Map.Entry<ActivationStatus, CliResult?> {
+  private fun allowActivation(input: DataInputStream) {
+    if (SystemInfo.isWindows) {
+      try {
+        User32Ex.INSTANCE.AllowSetForegroundWindow(WinDef.DWORD(input.readLong()))
+      } catch (e: Exception) {
+        log(e)
+      }
+    }
+  }
+
+  private fun tryActivate(portNumber: Int, paths: List<String>, args: List<String>): Pair<ActivationStatus, CliResult?> {
     log("trying: port=%s", portNumber)
     try {
       Socket(InetAddress.getByName("127.0.0.1"), portNumber).use { socket ->
@@ -193,6 +206,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
         val result = paths.any(stringList::contains)
         if (result) {
           try {
+            allowActivation(input)
             val token = readOneLine(systemPath.resolve(SpecialConfigFiles.TOKEN_FILE))
             val out = DataOutputStream(socket.getOutputStream())
             var currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
@@ -200,13 +214,13 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
               currentDirectory = "."
             }
             out.writeUTF(
-              ACTIVATE_COMMAND + token + '\u0000' + Paths.get(currentDirectory).toAbsolutePath() + '\u0000' + java.lang.String.join("\u0000", *args))
+              ACTIVATE_COMMAND + token + '\u0000' + Path.of(currentDirectory).toAbsolutePath() + '\u0000' + args.joinToString(separator = "\u0000"))
             out.flush()
             socket.soTimeout = 0
             val response = readStringSequence(input)
             log("read: response=%s", java.lang.String.join(";", response))
             if (!response.isEmpty() && OK_RESPONSE == response[0]) {
-              return AbstractMap.SimpleEntry(ActivationStatus.ACTIVATED, mapResponseToCliResult(response))
+              return ActivationStatus.ACTIVATED to mapResponseToCliResult(response)
             }
           }
           catch (e: IOException) {
@@ -215,7 +229,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
           catch (e: IllegalArgumentException) {
             log(e)
           }
-          return AbstractMap.SimpleEntry<ActivationStatus, CliResult?>(ActivationStatus.CANNOT_ACTIVATE, null)
+          return ActivationStatus.CANNOT_ACTIVATE to null
         }
       }
     }
@@ -225,7 +239,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
     catch (e: IOException) {
       log(e)
     }
-    return AbstractMap.SimpleEntry<ActivationStatus, CliResult?>(ActivationStatus.NO_INSTANCE, null)
+    return ActivationStatus.NO_INSTANCE to null
   }
 }
 
@@ -291,6 +305,10 @@ private fun sendStringSequence(context: ChannelHandlerContext, strings: List<Str
         out.writeUTF(s)
       }
       out.writeUTF(PATHS_EOT_RESPONSE)
+      if (SystemInfo.isWindows) {
+        // see 'allowActivation' function
+        out.writeLong(ProcessHandle.current().pid())
+      }
       success = true
     }
   }
@@ -343,11 +361,11 @@ private class MyChannelInboundHandler(lockedPaths: Array<Path>,
               while (tokenizer.hasMoreTokens()) {
                 list.add(tokenizer.nextToken())
               }
-              CliResult.unmap(commandProcessorRef.get().apply(list), Main.ACTIVATE_ERROR)
+              CliResult.unmap(commandProcessorRef.get().apply(list), AppExitCodes.ACTIVATE_ERROR)
             }
             else {
               log(UnsupportedOperationException("unauthorized request: $command"))
-              CliResult(Main.ACTIVATE_WRONG_TOKEN_CODE, IdeBundle.message("activation.auth.message"))
+              CliResult(AppExitCodes.ACTIVATE_WRONG_TOKEN_CODE, IdeBundle.message("activation.auth.message"))
             }
 
             val exitCode = result.exitCode.toString()

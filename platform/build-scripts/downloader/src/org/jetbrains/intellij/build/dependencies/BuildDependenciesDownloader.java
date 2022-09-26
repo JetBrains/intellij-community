@@ -41,8 +41,6 @@ final public class BuildDependenciesDownloader {
   private static final Logger LOG = Logger.getLogger(BuildDependenciesDownloader.class.getName());
 
   private static final String HTTP_HEADER_CONTENT_LENGTH = "Content-Length";
-  private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
-    .version(HttpClient.Version.HTTP_1_1).build();
   private static final Striped<Lock> fileLocks = Striped.lock(1024);
   private static final AtomicBoolean cleanupFlag = new AtomicBoolean(false);
 
@@ -60,9 +58,19 @@ final public class BuildDependenciesDownloader {
   @NotNull
   public static BuildDependenciesTracer TRACER = BuildDependenciesNoopTracer.INSTANCE;
 
-  public static Map<String, String> getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
-    Path propertiesFile = communityRoot.getCommunityRoot().resolve("build").resolve("dependencies").resolve("dependencies.properties");
-    return BuildDependenciesUtil.loadPropertiesFile(propertiesFile);
+  // init is very expensive due to SSL initialization
+  private static final class HttpClientHolder {
+    private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
+      .version(HttpClient.Version.HTTP_1_1).build();
+  }
+
+  public static DependenciesProperties getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
+    try {
+      return new DependenciesProperties(communityRoot);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static URI getUriForMavenArtifact(String mavenRepository, String groupId, String artifactId, String version, String packaging) {
@@ -335,17 +343,15 @@ final public class BuildDependenciesDownloader {
 
           LOG.info(" * Downloading " + uri + " -> " + target);
 
-          HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
+          HttpResponse<Path> response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
           if (response.statusCode() != 200) {
             StringBuilder builder =
               new StringBuilder("Error downloading " + uri + ": non-200 http status code " + response.statusCode() + "\n");
 
             Map<String, List<String>> headers = response.headers().map();
-            for (String headerName : headers.keySet().stream().sorted().collect(Collectors.toList())) {
-              for (String value : headers.get(headerName)) {
-                builder.append("Header: ").append(headerName).append(": ").append(value).append("\n");
-              }
-            }
+            headers.keySet().stream().sorted()
+              .flatMap(headerName -> headers.get(headerName).stream().map(value -> "Header: " + headerName + ": " + value + "\n"))
+              .forEach(builder::append);
 
             builder.append("\n");
             if (Files.exists(tempFile)) {

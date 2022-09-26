@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import java.io.IOException;
 import java.util.List;
 
+@Deprecated(forRemoval = true)
 public class NoteSerializable implements WorkingSetSerializable<NoteNode, NoteNode> {
 
   @Override

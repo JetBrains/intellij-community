@@ -816,6 +816,10 @@ final class ComponentPanelTestAction extends DumbAwareAction {
         public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(enabledArray[0]);
         }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -831,6 +835,10 @@ final class ComponentPanelTestAction extends DumbAwareAction {
         public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(enabledArray[1]);
         }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -844,6 +852,10 @@ final class ComponentPanelTestAction extends DumbAwareAction {
         @Override
         public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(enabledArray[2]);
+        }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
         }
 
         @Override

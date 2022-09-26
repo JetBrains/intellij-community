@@ -15,12 +15,14 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.StartPagePromoter;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.ClickListener;
@@ -329,9 +331,24 @@ public final class WelcomeScreenComponentFactory {
 
   public static @NotNull JPanel createNotificationPanel(@NotNull Disposable parentDisposable) {
     JPanel panel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
-    panel.setBorder(JBUI.Borders.emptyTop(10));
+    panel.setBorder(JBUI.Borders.empty(10, 0, 0, 3));
     panel.add(createErrorsLink(parentDisposable));
     panel.add(createEventLink("", parentDisposable));
     return panel;
+  }
+
+  @Nullable
+  static JPanel getSinglePromotion(boolean isEmptyState) {
+    StartPagePromoter[] extensions = StartPagePromoter.START_PAGE_PROMOTER_EP.getExtensions();
+    JPanel result = null;
+    for (StartPagePromoter promoter : extensions) {
+      JPanel content = promoter.getPromotion(isEmptyState);
+      if (content == null) continue;
+      if (result != null) {
+        Logger.getInstance(WelcomeScreenComponentFactory.class).error("Several welcome screen promotions are found.");
+      }
+      result = content;
+    }
+    return result;
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
@@ -21,7 +22,7 @@ public class DarculaPopupMenuBorder extends AbstractBorder implements UIResource
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    if (IdeaPopupMenuUI.isUnderPopup(c)) {
+    if (IdeaPopupMenuUI.isUnderPopup(c) && (!SystemInfoRt.isWindows || IdeaPopupMenuUI.isRoundBorder())) {
       return;
     }
 
@@ -52,13 +53,17 @@ public class DarculaPopupMenuBorder extends AbstractBorder implements UIResource
 
   @Override
   public Insets getBorderInsets(Component c) {
+    JBInsets result;
     if (isComboPopup(c)) {
-      return JBInsets.create(1, 2).asUIResource();
+      result = JBInsets.create(1, 2);
     }
-    if (IdeaPopupMenuUI.isUnderPopup(c)) {
-      return JBUI.insets("PopupMenu.borderInsets", DEFAULT_INSETS).asUIResource();
+    else if (IdeaPopupMenuUI.isUnderPopup(c)) {
+      result = JBUI.insets("PopupMenu.borderInsets", DEFAULT_INSETS);
     }
-    return DEFAULT_INSETS.asUIResource();
+    else {
+      result = JBUI.insets("Menu.borderInsets", DEFAULT_INSETS);
+    }
+    return result.asUIResource();
   }
 
   protected static boolean isComboPopup(Component c) {

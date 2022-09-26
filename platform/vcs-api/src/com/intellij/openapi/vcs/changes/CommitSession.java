@@ -12,6 +12,9 @@ import javax.swing.*;
 import java.util.Collection;
 
 public interface CommitSession {
+  /**
+   * Marker object for 'default' commit session via {@link com.intellij.openapi.vcs.checkin.CheckinEnvironment}.
+   */
   CommitSession VCS_COMMIT = new CommitSession() {
     @Override
     public void execute(@NotNull Collection<Change> changes, @Nullable @NlsSafe String commitMessage) {
@@ -19,7 +22,7 @@ public interface CommitSession {
   };
 
   /**
-   * @deprecated Since version 7.0, {@link #getAdditionalConfigurationUI(Collection, String)} is called instead
+   * @deprecated Since version 7.0, implement {@link #getAdditionalConfigurationUI(Collection, String)} instead
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
@@ -28,22 +31,33 @@ public interface CommitSession {
     return null;
   }
 
+  /**
+   * Show dialog with additional options before running pre-commit checks.
+   *
+   * @see com.intellij.openapi.vcs.changes.ui.SessionDialog
+   */
   @Nullable
   default JComponent getAdditionalConfigurationUI(@NotNull Collection<Change> changes, @Nullable @NlsSafe String commitMessage) {
     return getAdditionalConfigurationUI();
   }
 
+  /**
+   * Whether OK action is enabled for the {@link #getAdditionalConfigurationUI} dialog.
+   */
   default boolean canExecute(Collection<Change> changes, @NlsSafe String commitMessage) {
     return true;
   }
 
   void execute(@NotNull Collection<Change> changes, @Nullable @NlsSafe String commitMessage);
 
+  /**
+   * Called if commit operation was cancelled.
+   */
   default void executionCanceled() {
   }
 
   /**
-   * @return the ID of the help topic to show for the dialog
+   * @return the ID of the help topic to show for the {@link #getAdditionalConfigurationUI} dialog.
    */
   @Nullable
   @NonNls
@@ -51,6 +65,9 @@ public interface CommitSession {
     return null;
   }
 
+  /**
+   * @return fields validation for the {@link #getAdditionalConfigurationUI} dialog.
+   */
   @RequiresEdt
   default ValidationInfo validateFields() {
     return null;

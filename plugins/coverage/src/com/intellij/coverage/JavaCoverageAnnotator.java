@@ -153,7 +153,6 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
    *
    * @param psiPackage qualified name of a package to obtain coverage information for
    * @param module optional parameter to restrict coverage to source directories of a certain module
-   * @param coverageDataManager
    * @return human-readable coverage information
    */
   @Nullable
@@ -168,8 +167,6 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
    *
    * @param psiPackage qualified name of a package to obtain coverage information for
    * @param module optional parameter to restrict coverage to source directories of a certain module
-   * @param coverageDataManager
-   * @param flatten
    * @return human-readable coverage information
    */
   @Nullable

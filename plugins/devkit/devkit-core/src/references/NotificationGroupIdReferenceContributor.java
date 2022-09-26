@@ -48,7 +48,7 @@ public class NotificationGroupIdReferenceContributor extends PsiReferenceContrib
                                   }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
-  private static class NotificationGroupIdReference extends ExtensionPointReferenceBase {
+  private static class NotificationGroupIdReference extends ExtensionReferenceBase {
 
     private NotificationGroupIdReference(PsiElement element) {
       super(element);

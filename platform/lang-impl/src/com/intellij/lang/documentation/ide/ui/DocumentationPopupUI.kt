@@ -35,6 +35,7 @@ import java.awt.BorderLayout
 import java.util.function.Supplier
 import javax.swing.JComponent
 
+
 internal class DocumentationPopupUI(
   private val project: Project,
   ui: DocumentationUI,
@@ -182,6 +183,8 @@ internal class DocumentationPopupUI(
       return Registry.get("documentation.show.toolbar").asBoolean()
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       Registry.get("documentation.show.toolbar").setValue(state)
       showToolbar(state)
@@ -224,6 +227,8 @@ internal class DocumentationPopupUI(
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = manuallyResized
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun actionPerformed(e: AnActionEvent) {
       restoreSize()

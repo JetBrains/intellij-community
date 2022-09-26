@@ -129,7 +129,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   private val syncThemeProperty = propertyGraph.graphProperty { lafManager.autodetect }
 
   override fun createPanel(): DialogPanel {
-    lafProperty.afterChange({ QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true) }, disposable!!)
+    val updateLaf: (LafManager.LafReference) -> Unit = {
+      ApplicationManager.getApplication().invokeLater {
+        QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true)
+      }
+    }
+    lafProperty.afterChange(updateLaf, disposable!!)
     syncThemeProperty.afterChange({ lafManager.autodetect = it }, disposable!!)
 
     return panel {
@@ -202,7 +207,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             .enabled(!isOverridden)
 
           comment(if (isOverridden) message("overridden.by.jvm.property", GeneralSettings.SUPPORT_SCREEN_READERS)
-                  else message("support.screen.readers.comment"))
+                  else message("ide.restart.required.comment"))
         }
 
         row {
@@ -255,8 +260,14 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           yield({ checkBox(cdUseCompactTreeIndents) })
           yield({ checkBox(cdEnableMenuMnemonics) })
           yield({ checkBox(cdEnableControlsMnemonics) })
-          if (SystemInfo.isWindows && ExperimentalUI.isNewUI()) {
-            yield({ checkBox(cdSeparateMainMenu) })
+          if ((SystemInfo.isWindows || SystemInfo.isXWindow) && ExperimentalUI.isNewUI()) {
+            yield({
+                    checkBox(cdSeparateMainMenu).apply {
+                      if (SystemInfo.isXWindow) {
+                        comment(message("ide.restart.required.comment"))
+                      }
+                    }
+                  })
           }
         }
         val rightColumnControls = sequence<Row.() -> Unit> {
@@ -275,7 +286,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                     if (overridden) {
                       contextHelp(message("option.is.overridden.by.jvm.property", UISettings.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))
                     }
-                    comment(message("checkbox.merge.main.menu.with.window.title.comment"))
+                    comment(message("ide.restart.required.comment"))
                   })
           }
           yield({ checkBox(cdFullPathsInTitleBar) })

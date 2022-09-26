@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.*;
 import org.jdom.Element;
@@ -142,9 +143,10 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
         if (t instanceof ReferenceType) {
           return DebuggerUtilsAsync.methods((ReferenceType)t)
             .thenApply(methods -> {
-              return methods.stream().anyMatch(m -> !m.isAbstract() &&
-                                                    DebuggerUtilsEx.methodMatches(m, "toString", "()Ljava/lang/String;") &&
-                                                    !CommonClassNames.JAVA_LANG_OBJECT.equals(m.declaringType().name()));
+              return ContainerUtil.exists(methods,
+                                          m -> !m.isAbstract() &&
+                                               DebuggerUtilsEx.methodMatches(m, "toString", "()Ljava/lang/String;") &&
+                                               !CommonClassNames.JAVA_LANG_OBJECT.equals(m.declaringType().name()));
             });
         }
         return CompletableFuture.completedFuture(false);

@@ -467,7 +467,7 @@ public final class LogLoadedApplicationClassesAgent {
 
     @NotNull
     public List<String> generateReportWarnings() {
-      List<ClassInfo> allInfos = myClasses.values().stream().sorted(Comparator.comparing(info -> info.name)).collect(Collectors.toList());
+      List<ClassInfo> allInfos = myClasses.values().stream().sorted(Comparator.comparing(info -> info.name)).toList();
 
       List<String> lines = new ArrayList<>();
       lines.add("Pre 1.6 classes:");

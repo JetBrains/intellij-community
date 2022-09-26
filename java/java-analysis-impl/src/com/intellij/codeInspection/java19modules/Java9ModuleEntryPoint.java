@@ -13,16 +13,12 @@ import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
-import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Pavel.Dolgov
@@ -167,7 +163,7 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
       Set<String> packages = StreamEx.of(javaModule.getExports().spliterator())
         .map(PsiPackageAccessibilityStatement::getPackageName)
         .nonNull()
-        .toCollection(THashSet::new);
+        .toCollection(HashSet::new);
       return CachedValueProvider.Result.create(packages, javaModule);
     });
   }
@@ -186,7 +182,7 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
         .nonNull()
         .map(PsiClass::getQualifiedName)
         .nonNull()
-        .toCollection(THashSet::new);
+        .toCollection(HashSet::new);
       return CachedValueProvider.Result.create(classes, javaModule);
     });
   }

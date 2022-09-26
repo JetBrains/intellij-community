@@ -559,7 +559,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     );
     context.setReportedProblemFilter(
       (element, descriptors) -> {
-        List<ProblemDescriptorBase> problemDescriptors = StreamEx.of(descriptors).select(ProblemDescriptorBase.class).toList();
+        List<ProblemDescriptorBase> problemDescriptors = ContainerUtil.filterIsInstance(descriptors, ProblemDescriptorBase.class);
         if (!problemDescriptors.isEmpty()) {
           ProblemDescriptorBase problemDescriptor = problemDescriptors.get(0);
           VirtualFile file = problemDescriptor.getContainingFile();
@@ -588,7 +588,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     );
     context.setReportedProblemFilter(
       (element, descriptors) -> {
-        List<ProblemDescriptorBase> any = StreamEx.of(descriptors).select(ProblemDescriptorBase.class).toList();
+        List<ProblemDescriptorBase> any = ContainerUtil.filterIsInstance(descriptors, ProblemDescriptorBase.class);
         if (!any.isEmpty()) {
           ProblemDescriptorBase problemDescriptor = any.get(0);
           String text = problemDescriptor.toString();

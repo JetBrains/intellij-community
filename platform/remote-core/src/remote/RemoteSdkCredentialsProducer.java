@@ -30,8 +30,6 @@ public interface RemoteSdkCredentialsProducer<T extends RemoteSdkCredentials> {
    * Produces remote sdk credentials for instances saved on application level,
    * e.g. only application level deployment configurations will be available.
    *
-   * @param allowSynchronousInteraction
-   * @param remoteSdkCredentialsConsumer
    * @deprecated use {@link #produceRemoteSdkCredentials(Project, boolean, Consumer)}
    */
   @Deprecated
@@ -42,7 +40,6 @@ public interface RemoteSdkCredentialsProducer<T extends RemoteSdkCredentials> {
                                    Consumer<? super T> remoteSdkCredentialsConsumer);
 
   /**
-   * @param remoteSdkCredentialsConsumer
    * @deprecated use {@link #produceRemoteSdkCredentials(Project, boolean, Consumer)}
    */
   @Deprecated

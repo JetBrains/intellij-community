@@ -62,4 +62,10 @@ class GitLearningCourse : LearningCourse {
       private val LOG = logger<GitLearningModule>()
     }
   }
+
+  override fun getLessonIdToTipsMap(): Map<String, List<String>> = mapOf(
+    "Git.QuickStart" to listOf("VCS_general"),
+    "Git.Commit" to listOf("partial_git_commit"),
+    "Git.Annotate" to listOf("AnnotationsAndDiffs"),
+  )
 }

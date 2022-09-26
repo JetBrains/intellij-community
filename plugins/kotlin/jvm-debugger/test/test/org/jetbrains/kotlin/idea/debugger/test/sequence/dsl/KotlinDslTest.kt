@@ -5,7 +5,7 @@ import com.intellij.debugger.streams.test.DslTestCase
 import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinCollectionsPeekCallFactory
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinStatementFactory
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File

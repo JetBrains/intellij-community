@@ -34,10 +34,7 @@ public final class ExtensionProcessingHelper {
       try {
         extensionConsumer.accept(t);
       }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (CancellationException e) {
+      catch (ProcessCanceledException | CancellationException e) {
         throw e;
       }
       catch (Throwable e) {
@@ -76,10 +73,10 @@ public final class ExtensionProcessingHelper {
   /**
    * See {@link com.intellij.openapi.extensions.ExtensionPointName#getByGroupingKey}.
    */
-  public static <@NotNull K, @NotNull T> @NotNull List<T> getByGroupingKey(@NotNull ExtensionPointImpl<T> point,
-                                                                           @NotNull Class<?> cacheId,
-                                                                           @NotNull K key,
-                                                                           @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper) {
+  public static <K extends @NotNull Object, T extends @NotNull Object> @NotNull List<T> getByGroupingKey(@NotNull ExtensionPointImpl<T> point,
+                                                         @NotNull Class<?> cacheId,
+                                                         @NotNull K key,
+                                                         @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper) {
     ConcurrentMap<Class<?>, Map<K, List<T>>> keyMapperToCache = point.getCacheMap();
     Map<K, List<T>> cache = keyMapperToCache.get(cacheId);
     if (cache == null) {
@@ -98,11 +95,11 @@ public final class ExtensionProcessingHelper {
    * See {@link com.intellij.openapi.extensions.ExtensionPointName#getByKey}.
    */
   @ApiStatus.Internal
-  public static <@NotNull K, @NotNull T, @NotNull V> @Nullable V getByKey(@NotNull ExtensionPointImpl<T> point,
-                                                                          @NotNull K key,
-                                                                          @NotNull Class<?> cacheId,
-                                                                          @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper,
-                                                                          @NotNull Function<? super @NotNull T, ? extends @Nullable V> valueMapper) {
+  public static <K extends @NotNull Object, T extends @NotNull Object, V extends @NotNull Object> @Nullable V getByKey(@NotNull ExtensionPointImpl<T> point,
+                                               @NotNull K key,
+                                               @NotNull Class<?> cacheId,
+                                               @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper,
+                                               @NotNull Function<? super @NotNull T, ? extends @Nullable V> valueMapper) {
     return doGetByKey(point, cacheId, key, keyMapper, valueMapper, point.getCacheMap());
   }
 
@@ -110,10 +107,10 @@ public final class ExtensionProcessingHelper {
    * See {@link com.intellij.openapi.extensions.ExtensionPointName#getByKey}.
    */
   @ApiStatus.Internal
-  public static <@NotNull K, @NotNull T> @Nullable T getByKey(@NotNull ExtensionPointImpl<T> point,
-                                                              @NotNull K key,
-                                                              @NotNull Class<?> cacheId,
-                                                              @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper) {
+  public static <K extends @NotNull Object, T extends @NotNull Object> @Nullable T getByKey(@NotNull ExtensionPointImpl<T> point,
+                                            @NotNull K key,
+                                            @NotNull Class<?> cacheId,
+                                            @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper) {
     return doGetByKey(point, cacheId, key, keyMapper, Function.identity(), point.getCacheMap());
   }
 
@@ -121,19 +118,19 @@ public final class ExtensionProcessingHelper {
    * See {@link com.intellij.openapi.extensions.ExtensionPointName#getByKey}.
    */
   @ApiStatus.Internal
-  public static <@NotNull K, @NotNull T, @NotNull V> @NotNull V computeIfAbsent(@NotNull ExtensionPointImpl<T> point,
-                                                                                @NotNull K key,
-                                                                                @NotNull Class<?> cacheId,
-                                                                                @NotNull Function<? super K, ? extends V> valueProducer) {
+  public static <K extends @NotNull Object, T extends @NotNull Object, V extends @NotNull Object> @NotNull V computeIfAbsent(@NotNull ExtensionPointImpl<T> point,
+                                                     @NotNull K key,
+                                                     @NotNull Class<?> cacheId,
+                                                     @NotNull Function<? super @NotNull K, ? extends @NotNull V> valueProducer) {
     // Or to have double look-up (map for valueProducer, map for key), or using of composite key. Java GC is quite good, so, composite key.
     ConcurrentMap<SimpleImmutableEntry<K, Class<?>>, V> cache = point.getCacheMap();
     return cache.computeIfAbsent(new SimpleImmutableEntry<>(key, cacheId), entry -> valueProducer.apply(entry.getKey()));
   }
 
   @ApiStatus.Internal
-  public static <@NotNull T, @NotNull V> @NotNull V computeIfAbsent(@NotNull ExtensionPointImpl<T> point,
-                                                                    @NotNull Class<?> cacheId,
-                                                                    @NotNull Supplier<? extends V> valueProducer) {
+  public static <T extends @NotNull Object, V extends @NotNull Object> @NotNull V computeIfAbsent(@NotNull ExtensionPointImpl<T> point,
+                                                  @NotNull Class<?> cacheId,
+                                                  @NotNull Supplier<? extends @NotNull V> valueProducer) {
     ConcurrentMap<Class<?>, V> cache = point.getCacheMap();
     return cache.computeIfAbsent(cacheId, __ -> valueProducer.get());
   }

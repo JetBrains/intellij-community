@@ -1,5 +1,4 @@
 // "Create type parameter 'X' in function 'foo'" "true"
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 class A<T : List<Int>>
 
 fun <X : List<Int>> foo(x: A<X>) {
@@ -7,6 +6,6 @@ fun <X : List<Int>> foo(x: A<X>) {
 }
 
 fun test() {
-    foo<List<Int>>(A())
+    foo(A())
     foo(A<List<Int>>())
 }

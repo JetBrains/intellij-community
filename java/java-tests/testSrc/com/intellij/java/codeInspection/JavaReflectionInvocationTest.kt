@@ -41,7 +41,8 @@ class JavaReflectionInvocationTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testConstructorParamCount() = doTest()
   fun testConstructorParamTypes() = doTest()
-  
+  fun testConstructorParamTypesTernary() = doTest()
+
   fun testNonVarargCall() = doTest()
 
   private fun doTest() {

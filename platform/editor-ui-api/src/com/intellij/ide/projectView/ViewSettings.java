@@ -49,6 +49,13 @@ public interface ViewSettings extends NodeOptions {
   }
 
   /**
+   * @return {@code true} if scratches and consoles node should be shown as a root node in this pane
+   */
+  default boolean isShowScratchesAndConsoles() {
+    return true;
+  }
+
+  /**
    * @return {@code true} if modules should be shown in a flat list without grouping accordingly to qualified names
    */
   default boolean isFlattenModules() {
@@ -73,6 +80,7 @@ public interface ViewSettings extends NodeOptions {
     private final boolean myShowModules;
     private final boolean myFlattenModules;
     private final boolean myShowURL;
+    private final boolean myShowScratchesAndConsoles;
 
     public Immutable(ViewSettings settings) {
       super(settings);
@@ -82,6 +90,7 @@ public interface ViewSettings extends NodeOptions {
       myShowModules = settings == null || settings.isShowModules();
       myFlattenModules = settings != null && settings.isFlattenModules();
       myShowURL = settings == null || settings.isShowURL();
+      myShowScratchesAndConsoles = settings == null || settings.isShowScratchesAndConsoles();
     }
 
     @Override
@@ -115,6 +124,11 @@ public interface ViewSettings extends NodeOptions {
     }
 
     @Override
+    public boolean isShowScratchesAndConsoles() {
+      return myShowScratchesAndConsoles;
+    }
+
+    @Override
     public boolean equals(Object object) {
       if (object == this) return true;
       if (!super.equals(object)) return false;
@@ -123,7 +137,8 @@ public interface ViewSettings extends NodeOptions {
              settings.isStructureView() == isStructureView() &&
              settings.isShowModules() == isShowModules() &&
              settings.isFlattenModules() == isFlattenModules() &&
-             settings.isShowURL() == isShowURL();
+             settings.isShowURL() == isShowURL() &&
+             settings.isShowScratchesAndConsoles() == isShowScratchesAndConsoles();
     }
 
     @Override
@@ -134,6 +149,7 @@ public interface ViewSettings extends NodeOptions {
       result = 31 * result + Boolean.hashCode(isShowModules());
       result = 31 * result + Boolean.hashCode(isFlattenModules());
       result = 31 * result + Boolean.hashCode(isShowURL());
+      result = 31 * result + Boolean.hashCode(isShowScratchesAndConsoles());
       return result;
     }
   }

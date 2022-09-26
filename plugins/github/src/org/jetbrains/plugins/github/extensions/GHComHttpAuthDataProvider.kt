@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.remote.GitHttpAuthDataProvider
+import git4idea.remote.hosting.GitHostingUrlUtil.match
 import org.jetbrains.plugins.github.api.GithubServerPath.DEFAULT_SERVER
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 
@@ -14,20 +15,20 @@ private class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun isSilent(): Boolean = false
 
   override fun getAuthData(project: Project, url: String, login: String): AuthData? {
-    if (!DEFAULT_SERVER.matches(url)) return null
+    if (!match(DEFAULT_SERVER.toURI(), url)) return null
 
     return getAuthDataOrCancel(project, url, login)
   }
 
   override fun getAuthData(project: Project, url: String): AuthData? {
-    if (!DEFAULT_SERVER.matches(url)) return null
+    if (!match(DEFAULT_SERVER.toURI(), url)) return null
 
     return getAuthDataOrCancel(project, url, null)
   }
 }
 
 private fun getAuthDataOrCancel(project: Project, url: String, login: String?): AuthData {
-  val accounts = GithubAuthenticationManager.getInstance().getAccounts().filter { it.server.matches(url) }
+  val accounts = GithubAuthenticationManager.getInstance().getAccounts().filter { match(it.server.toURI(), url) }
   val provider = when (accounts.size) {
     0 -> GHCreateAccountHttpAuthDataProvider(project, DEFAULT_SERVER, login)
     1 -> GHUpdateTokenHttpAuthDataProvider(project, accounts.first())

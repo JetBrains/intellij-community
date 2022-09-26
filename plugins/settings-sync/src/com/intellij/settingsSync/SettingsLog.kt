@@ -34,7 +34,7 @@ interface SettingsLog {
    * Records the current local state of the settings.
    */
   @RequiresBackgroundThread
-  fun applyIdeState(snapshot: SettingsSnapshot)
+  fun applyIdeState(snapshot: SettingsSnapshot, message: String)
 
   /**
    * Records the state of the settings received from the server.
@@ -42,7 +42,7 @@ interface SettingsLog {
    * returns true if merge has happened, false in case of fast-forward
    */
   @RequiresBackgroundThread
-  fun applyCloudState(snapshot: SettingsSnapshot)
+  fun applyCloudState(snapshot: SettingsSnapshot, message: String)
 
   /**
    * Returns the current state of the settings as it is now from the SettingsLog point of view,
@@ -57,6 +57,7 @@ interface SettingsLog {
 
   fun setIdePosition(position: Position)
   fun setCloudPosition(position: Position)
+  fun setMasterPosition(position: Position)
 
   /**
    * Moves the master branch to the actual position, which is defined as following:
@@ -79,5 +80,5 @@ interface SettingsLog {
    *
    * @return New position of 'master'.
    */
-  fun forceWriteToMaster(snapshot: SettingsSnapshot) : Position
+  fun forceWriteToMaster(snapshot: SettingsSnapshot, message: String) : Position
 }

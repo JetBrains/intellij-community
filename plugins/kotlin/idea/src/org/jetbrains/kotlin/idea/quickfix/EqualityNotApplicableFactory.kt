@@ -46,5 +46,5 @@ object EqualityNotApplicableFactory : KotlinIntentionActionsFactory() {
         return emptyList()
     }
 
-    fun KotlinType.isNumberType() = this.makeNotNullable().isSignedOrUnsignedNumberType()
+    private fun KotlinType.isNumberType() = this.makeNotNullable().isSignedOrUnsignedNumberType()
 }

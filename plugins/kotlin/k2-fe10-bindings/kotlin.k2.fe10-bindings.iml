@@ -2,13 +2,13 @@
 <module type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="5" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
+      <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -Xjvm-default=enable -opt-in=com.intellij.openapi.util.IntellijInternalApi -Xskip-prerelease-check" />
+          <option name="additionalArguments" value="-Xjvm-default=enable -opt-in=com.intellij.openapi.util.IntellijInternalApi -Xskip-prerelease-check" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
-            <stringArg name="jvmTarget" arg="11" />
+            <stringArg name="jvmTarget" arg="17" />
             <stringArg name="apiVersion" arg="1.7" />
             <stringArg name="languageVersion" arg="1.7" />
           </stringArguments>
@@ -53,5 +53,6 @@
     <orderEntry type="library" name="kotlinc.analysis-api-providers" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-project-structure" level="project" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.highlighting" scope="TEST" />
   </component>
 </module>

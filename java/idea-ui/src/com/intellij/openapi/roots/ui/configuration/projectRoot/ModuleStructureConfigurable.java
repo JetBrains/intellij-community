@@ -789,6 +789,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         .ifEq(LangDataKeys.MODULE_CONTEXT_ARRAY).thenGet(this::getModuleContexts)
         .ifEq(LangDataKeys.MODULE_CONTEXT).thenGet(() -> getSelectedModule())
         .ifEq(LangDataKeys.MODIFIABLE_MODULE_MODEL).thenGet(() -> myContext.myModulesConfigurator.getModuleModel())
+        .ifEq(PlatformCoreDataKeys.SELECTED_ITEM).thenGet(() -> getSelectedObject())
         .orNull();
     }
 
@@ -838,6 +839,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       if (myContext.myModulesConfigurator != null) {
         presentation.setVisible(myContext.myModulesConfigurator.getModuleModel().hasModuleGroups());
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -1008,6 +1014,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         final NamedConfigurable<?> selectedConfigurable = getSelectedConfigurable();
         e.getPresentation().setEnabled(selectedConfigurable instanceof ModuleConfigurable || canBeCopiedByExtension(selectedConfigurable));
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

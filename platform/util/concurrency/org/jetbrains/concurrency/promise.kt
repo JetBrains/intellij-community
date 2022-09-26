@@ -368,7 +368,12 @@ private class DonePromise<T>(private val value: PromiseValue<T>) : Promise<T>, F
   @Suppress("UNCHECKED_CAST")
   override fun processed(child: Promise<in T?>): Promise<T> {
     if (child is CompletablePromise<*>) {
-      (child as CompletablePromise<T>).setResult(value.result)
+      if (value.error != null) {
+        child.setError(value.error)
+      }
+      else {
+        (child as CompletablePromise<T>).setResult(value.result)
+      }
     }
     return this
   }

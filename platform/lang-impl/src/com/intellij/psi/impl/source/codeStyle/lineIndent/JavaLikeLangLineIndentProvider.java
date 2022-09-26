@@ -349,7 +349,6 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
    * is the first in the code line.
    * In C-like languages it is one of {@code if, else, for, while, do, try}.
    *
-   * @param position
    */
   protected boolean isStartOfStatementWithOptionalBlock(@NotNull SemanticEditorPosition position) {
     return position.matchesRule(
@@ -386,7 +385,6 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
    * 4  [position]
    * </pre>
    * The method will return an offset of the first {@code for} on line 1.
-   * @return
    */
   private int getFirstUppermostControlStructureKeywordOffset(@NotNull SemanticEditorPosition position) {
     SemanticEditorPosition curr = position.copy();

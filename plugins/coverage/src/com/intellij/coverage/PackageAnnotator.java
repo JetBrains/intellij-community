@@ -63,6 +63,8 @@ public final class PackageAnnotator {
     myAnnotator = annotator;
     myIgnoreEmptyPrivateConstructors = ignoreEmptyPrivateConstructors;
     myIgnoreImplicitConstructor = ignoreImplicitConstructor;
+    IDEACoverageRunner.setExcludeAnnotations(project, myProjectData);
+    IDEACoverageRunner.setExcludeAnnotations(project, myUnloadedClassesProjectData);
   }
 
   public interface Annotator {
@@ -273,8 +275,9 @@ public final class PackageAnnotator {
                                                                             final String className) {
     final PackageAnnotator.ClassCoverageInfo info = new PackageAnnotator.ClassCoverageInfo();
     ClassData classData = myProjectData.getClassData(className);
-    if ((classData == null || classData.getLines() == null) && (myRunner == null || myRunner.shouldProcessUnloadedClasses())) {
-      classData = collectNonCoveredClassInfo(classFile, className, myUnloadedClassesProjectData);
+    final boolean classExists = classData != null && classData.getLines() != null;
+    if ((!classExists || !classData.isFullyAnalysed()) && (myRunner == null || myRunner.shouldProcessUnloadedClasses())) {
+      classData = collectNonCoveredClassInfo(classFile, className, classExists ? myProjectData : myUnloadedClassesProjectData);
     }
 
     if (classData != null && classData.getLines() != null) {

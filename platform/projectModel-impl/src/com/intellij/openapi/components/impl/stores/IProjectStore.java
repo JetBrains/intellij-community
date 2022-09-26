@@ -23,7 +23,6 @@ public interface IProjectStore extends IComponentStore {
 
   /**
    * The path to project configuration file - `misc.xml` for directory-based and `*.ipr` for file-based.
-   * @return
    */
   @NotNull Path getProjectFilePath();
 

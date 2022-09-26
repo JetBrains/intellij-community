@@ -5,10 +5,12 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +90,13 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
           if (requiredType != null) {
             final PsiExpression argument = actualArguments.expressions[i];
             if (argument != null) {
-              final PsiType actualType = argument.getType();
+              PsiType actualType = argument.getType();
+              if (TypeUtils.isJavaLangObject(actualType) && !requiredType.isAssignableFrom(actualType) &&
+                  PsiPolyExpressionUtil.isPolyExpression(argument)) {
+                // We make a copy here to avoid surrounding call affecting the inferred type,
+                // as sometimes in complex expressions it causes the final type to be inferred to Object
+                actualType = ((PsiExpression)argument.copy()).getType();
+              }
               if (actualType != null && !requiredType.isAssignableFrom(actualType)) {
                 if (PsiTreeUtil.isAncestor(argumentList, argument, false)) {
                   // either varargs or in-place arguments array

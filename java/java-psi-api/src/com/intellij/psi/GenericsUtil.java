@@ -620,7 +620,6 @@ public final class GenericsUtil {
   }
 
   /**
-   * @param type
    * @return type where "? extends FinalClass" components are replaced with "FinalClass" components.
    */
   public static @NotNull PsiType eliminateExtendsFinalWildcard(@NotNull PsiType type) {

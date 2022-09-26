@@ -27,8 +27,6 @@ public interface TestProxyTreeSelectionListener {
   /**
    * When element in tree was selected
    * @param selectedTestProxy Selected Element
-   * @param viewer
-   * @param model
    */
   void onSelected(@Nullable SMTestProxy selectedTestProxy,
                   @NotNull TestResultsViewer viewer,

@@ -1,8 +1,7 @@
 // FILE: first.before.kt
-// "Import" "true"
-// ERROR: Type inference failed: Not enough information to infer parameter T in fun <T> foo(): Unit<br>Please specify it explicitly.<br>
+// "Import function 'foo'" "true"
+// ERROR: Not enough information to infer type variable T
 // ACTION: Create type parameter in function 'shade'
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 /* IGNORE_FIR */
 
 package pack_one
@@ -18,10 +17,9 @@ package pack_one.sub
 fun foo() {}
 
 // FILE: first.after.kt
-// "Import" "true"
-// ERROR: Type inference failed: Not enough information to infer parameter T in fun <T> foo(): Unit<br>Please specify it explicitly.<br>
+// "Import function 'foo'" "true"
+// ERROR: Not enough information to infer type variable T
 // ACTION: Create type parameter in function 'shade'
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 /* IGNORE_FIR */
 
 package pack_one

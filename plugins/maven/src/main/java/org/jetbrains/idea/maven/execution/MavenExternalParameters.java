@@ -74,13 +74,7 @@ public final class MavenExternalParameters {
   }
 
   /**
-   * @param project
-   * @param parameters
-   * @param coreSettings
-   * @param runnerSettings
    * @param runConfiguration used to creation fix if maven home not found
-   * @return
-   * @throws ExecutionException
    */
   public static JavaParameters createJavaParameters(@Nullable final Project project,
                                                     @NotNull final MavenRunnerParameters parameters,
@@ -117,6 +111,10 @@ public final class MavenExternalParameters {
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.3") >= 0) {
       params.getVMParametersList().addProperty("maven.multiModuleProjectDirectory",
                                                MavenServerUtil.findMavenBasedir(parameters.getWorkingDirFile()).getPath());
+    }
+
+    if (StringUtil.compareVersionNumbers(mavenVersion, "3.5") >= 0) {
+      params.getVMParametersList().addProperty("jansi.passthrough", "true");
     }
 
     String vmOptions = getRunVmOptions(runnerSettings, project, parameters.getWorkingDirPath());
@@ -439,11 +437,8 @@ public final class MavenExternalParameters {
   }
 
   /**
-   * @param coreSettings
    * @param project          used to creation fix if maven home not found
    * @param runConfiguration used to creation fix if maven home not found
-   * @return
-   * @throws ExecutionException
    */
   @NotNull
   @NlsSafe

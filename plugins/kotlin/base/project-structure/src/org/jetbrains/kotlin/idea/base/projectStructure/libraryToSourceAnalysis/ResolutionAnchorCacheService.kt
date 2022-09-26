@@ -12,7 +12,7 @@ interface ResolutionAnchorCacheService {
     fun getDependencyResolutionAnchors(libraryInfo: LibraryInfo): Set<ModuleSourceInfo>
 
     companion object {
-        val Default = object : ResolutionAnchorCacheService {
+        val Empty = object : ResolutionAnchorCacheService {
             override val resolutionAnchorsForLibraries: Map<LibraryInfo, ModuleSourceInfo>
                 get() = emptyMap()
 
@@ -20,7 +20,7 @@ interface ResolutionAnchorCacheService {
         }
 
         fun getInstance(project: Project): ResolutionAnchorCacheService {
-            return project.serviceOrNull() ?: Default
+            return project.serviceOrNull() ?: Empty
         }
     }
 }

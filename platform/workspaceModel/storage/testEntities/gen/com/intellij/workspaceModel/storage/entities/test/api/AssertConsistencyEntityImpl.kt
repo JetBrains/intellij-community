@@ -11,6 +11,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import org.jetbrains.deft.ObjBuilder
@@ -18,7 +19,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class AssertConsistencyEntityImpl : AssertConsistencyEntity, WorkspaceEntityBase() {
+open class AssertConsistencyEntityImpl(val dataSource: AssertConsistencyEntityData) : AssertConsistencyEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -28,13 +29,13 @@ open class AssertConsistencyEntityImpl : AssertConsistencyEntity, WorkspaceEntit
 
   }
 
-  override var passCheck: Boolean = false
+  override val passCheck: Boolean get() = dataSource.passCheck
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: AssertConsistencyEntityData?) : ModifiableWorkspaceEntityBase<AssertConsistencyEntity>(), AssertConsistencyEntity.Builder {
+  class Builder(var result: AssertConsistencyEntityData?) : ModifiableWorkspaceEntityBase<AssertConsistencyEntity>(), AssertConsistencyEntity.Builder {
     constructor() : this(AssertConsistencyEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -52,6 +53,9 @@ open class AssertConsistencyEntityImpl : AssertConsistencyEntity, WorkspaceEntit
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -61,7 +65,7 @@ open class AssertConsistencyEntityImpl : AssertConsistencyEntity, WorkspaceEntit
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field AssertConsistencyEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
     }
 
@@ -70,20 +74,14 @@ open class AssertConsistencyEntityImpl : AssertConsistencyEntity, WorkspaceEntit
     }
 
     // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity) {
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as AssertConsistencyEntity
-      this.passCheck = dataSource.passCheck
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.passCheck != dataSource.passCheck) this.passCheck = dataSource.passCheck
+      if (parents != null) {
+      }
     }
 
-
-    override var passCheck: Boolean
-      get() = getEntityData().passCheck
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().passCheck = value
-        changedProperty.add("passCheck")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -92,6 +90,14 @@ open class AssertConsistencyEntityImpl : AssertConsistencyEntity, WorkspaceEntit
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var passCheck: Boolean
+      get() = getEntityData().passCheck
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().passCheck = value
+        changedProperty.add("passCheck")
       }
 
     override fun getEntityData(): AssertConsistencyEntityData = result ?: super.getEntityData() as AssertConsistencyEntityData
@@ -116,12 +122,13 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
   }
 
   override fun createEntity(snapshot: EntityStorage): AssertConsistencyEntity {
-    val entity = AssertConsistencyEntityImpl()
-    entity.passCheck = passCheck
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = AssertConsistencyEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -139,20 +146,25 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
     }
   }
 
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as AssertConsistencyEntityData
 
-    if (this.passCheck != other.passCheck) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.passCheck != other.passCheck) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as AssertConsistencyEntityData
 
@@ -170,5 +182,9 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
     var result = javaClass.hashCode()
     result = 31 * result + passCheck.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

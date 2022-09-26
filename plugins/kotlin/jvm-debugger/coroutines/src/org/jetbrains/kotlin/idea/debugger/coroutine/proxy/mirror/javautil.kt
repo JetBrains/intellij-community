@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
 import com.sun.jdi.*
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 
 class JavaLangObjectToString(context: DefaultExecutionContext) : BaseMirror<ObjectReference, String>("java.lang.Object", context) {
     private val toString by MethodDelegate<StringReference>("toString", "()Ljava/lang/String;")
