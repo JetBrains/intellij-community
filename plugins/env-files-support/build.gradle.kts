@@ -1,9 +1,9 @@
 plugins {
-    id("org.jetbrains.intellij") version "1.5.3"
+    id("org.jetbrains.intellij") version "1.9.0"
 }
 
 group = "ru.adelf"
-version = "2022.2"
+version = "2022.3"
 
 repositories {
     mavenCentral()
@@ -16,8 +16,8 @@ apply {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 sourceSets {
@@ -32,18 +32,16 @@ sourceSets {
 }
 
 intellij {
-    version.set("IU-222.2270.31-EAP-SNAPSHOT")
+    version.set("IU-223.4884.69-EAP-SNAPSHOT")
     plugins.set(
         listOf(
-            "com.jetbrains.php:222.2270.31",
+            "com.jetbrains.php:223.4884.75",
             "yaml",
-            "org.jetbrains.plugins.go:222.2270.31",
+            "org.jetbrains.plugins.go:223.4884.65",
             "Docker",
-            "pythonid:222.2270.35",
-            "org.jetbrains.plugins.ruby:222.2270.31",
+            "pythonid:223.4884.69",
+            "org.jetbrains.plugins.ruby:223.4884.69",
             "Kotlin",
-            "coverage",
-            "CSS",
             "java-i18n",
             "properties",
             "java"
@@ -54,8 +52,8 @@ intellij {
 
 tasks {
     patchPluginXml {
-        sinceBuild.set("212")
-        untilBuild.set("222.*")
+        sinceBuild.set("223")
+        untilBuild.set("223.*")
     }
 
     buildSearchableOptions {
@@ -63,7 +61,7 @@ tasks {
     }
 
     runPluginVerifier {
-        ideVersions.set(listOf("IU-213.3714.440"))
+        ideVersions.set(listOf("IU-223.4884.69"))
     }
 }
 

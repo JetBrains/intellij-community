@@ -6,14 +6,7 @@
     <description><![CDATA[
     <a href="https://plugins.jetbrains.com/plugin/9525--env-files-support">Homepage</a> | <a href="https://github.com/adelf/idea-php-dotenv-plugin/">Github</a> | <a href="https://github.com/adelf/idea-php-dotenv-plugin/issues">Issues</a>.<br />
     <br/>
-    <b>Sponsors</b>
-    <br/>
-    <br/>
-    <a href="https://sponsorlink.codestream.com/?utm_source=jbmarket&utm_campaign=env&utm_medium=banner" title="Try CodeStream" target="_blank">
-        <img src="https://alt-images.codestream.com/codestream_logo_env.png" alt="Codestream" border=0></a>
-    <br/>
-    Eliminate context switching and costly distractions. Create and merge PRs and perform code reviews from inside your IDE while using jump-to-definition, your keybindings, and other IDE favorites. <a href="https://sponsorlink.codestream.com/?utm_source=jbmarket&utm_campaign=env&utm_medium=banner" target="_blank">Learn more</a>.
-
+    <b>Sponsor:</b>
     <br/>
     <br/>
     <a href="https://laravel-idea.com/?utm_source=idea&utm_campaign=env&utm_medium=banner" title="Laravel Idea" target="_blank">
@@ -30,20 +23,6 @@
         <li>.env file syntax highlighter</li>
     </ul>
     ]]></description>
-
-    <change-notes><![CDATA[
-      2022.1
-      <ul>
-        <li>IDE 2022.1 releases support</li>
-        <li>Additional inspections and quickfixes</li>
-      </ul>
-      2021.2
-      <ul>
-        <li>Kotlin and Java support</li>
-        <li>.env syntax improvements</li>
-        <li>Configurable completion and values storing</li>
-      </ul>
-  ]]></change-notes>
 
     <extensionPoints>
         <extensionPoint interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider"
