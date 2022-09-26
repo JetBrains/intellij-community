@@ -579,6 +579,59 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/destructuringWrongNameInspection")
+        public static class DestructuringWrongNameInspection extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("flexibleTypeDestructuring.kt")
+            public void testFlexibleTypeDestructuring() throws Exception {
+                runTest("testData/inspectionsLocal/destructuringWrongNameInspection/flexibleTypeDestructuring.kt");
+            }
+
+            @TestMetadata("forDestructuring.kt")
+            public void testForDestructuring() throws Exception {
+                runTest("testData/inspectionsLocal/destructuringWrongNameInspection/forDestructuring.kt");
+            }
+
+            @TestMetadata("fullDestructuring.kt")
+            public void testFullDestructuring() throws Exception {
+                runTest("testData/inspectionsLocal/destructuringWrongNameInspection/fullDestructuring.kt");
+            }
+
+            @TestMetadata("hasSyntheticComponent.kt")
+            public void testHasSyntheticComponent() throws Exception {
+                runTest("testData/inspectionsLocal/destructuringWrongNameInspection/hasSyntheticComponent.kt");
+            }
+
+            @TestMetadata("lambdaDestructuring.kt")
+            public void testLambdaDestructuring() throws Exception {
+                runTest("testData/inspectionsLocal/destructuringWrongNameInspection/lambdaDestructuring.kt");
+            }
+
+            @TestMetadata("nonDataClass.kt")
+            public void testNonDataClass() throws Exception {
+                runTest("testData/inspectionsLocal/destructuringWrongNameInspection/nonDataClass.kt");
+            }
+
+            @TestMetadata("nullableDataClass.kt")
+            public void testNullableDataClass() throws Exception {
+                runTest("testData/inspectionsLocal/destructuringWrongNameInspection/nullableDataClass.kt");
+            }
+
+            @TestMetadata("partialDestructuring.kt")
+            public void testPartialDestructuring() throws Exception {
+                runTest("testData/inspectionsLocal/destructuringWrongNameInspection/partialDestructuring.kt");
+            }
+
+            @TestMetadata("wrongNameForSyntheticComponent.kt")
+            public void testWrongNameForSyntheticComponent() throws Exception {
+                runTest("testData/inspectionsLocal/destructuringWrongNameInspection/wrongNameForSyntheticComponent.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/mainFunctionReturnUnit")
         public abstract static class MainFunctionReturnUnit extends AbstractK2LocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
