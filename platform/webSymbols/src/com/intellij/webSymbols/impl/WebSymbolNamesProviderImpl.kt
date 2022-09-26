@@ -5,8 +5,8 @@ import com.intellij.model.Pointer
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbolNamesProvider.Target.*
 import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_JS
-import com.intellij.webSymbols.framework.WebFramework
-import com.intellij.webSymbols.framework.WebFrameworksConfiguration
+import com.intellij.webSymbols.framework.WebSymbolsFramework
+import com.intellij.webSymbols.framework.WebSymbolsFrameworksConfiguration
 import java.util.*
 import java.util.function.Function
 
@@ -24,7 +24,7 @@ internal class WebSymbolNamesProviderImpl(
   private val nameVariantsProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>,
     Function<String, List<String>>>
 
-  private val webFramework get() = framework?.let { WebFramework.get(it) }
+  private val webSymbolsFramework get() = framework?.let { WebSymbolsFramework.get(it) }
 
   init {
     val canonicalNamesProviders = mutableMapOf<Triple<FrameworkId?, SymbolNamespace, SymbolKind>,
@@ -50,7 +50,7 @@ internal class WebSymbolNamesProviderImpl(
       @Suppress("UNCHECKED_CAST")
       val newConfiguration = configuration.map { it.dereference() }
                                .takeIf { it.all { config -> config != null } }
-                               as? List<WebFrameworksConfiguration>
+                               as? List<WebSymbolsFrameworksConfiguration>
                              ?: return@Pointer null
       WebSymbolNamesProviderImpl(framework, newConfiguration)
     }
@@ -74,7 +74,7 @@ internal class WebSymbolNamesProviderImpl(
                         kind: SymbolKind,
                         name: String,
                         target: WebSymbolNamesProvider.Target): List<String> =
-    webFramework?.getNames(namespace, kind, name, target)?.takeIf { it.isNotEmpty() }
+    webSymbolsFramework?.getNames(namespace, kind, name, target)?.takeIf { it.isNotEmpty() }
     ?: when (target) {
       CODE_COMPLETION_VARIANTS -> {
         nameVariantsProviders[Triple(framework, namespace, kind)]?.apply(name)

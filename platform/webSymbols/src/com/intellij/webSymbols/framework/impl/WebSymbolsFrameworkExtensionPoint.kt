@@ -7,7 +7,7 @@ import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.TestOnly
 
-open class WebFrameworkExtensionPoint<T : Any> : BaseKeyedLazyInstance<T>, KeyedLazyInstance<T> {
+open class WebSymbolsFrameworkExtensionPoint<T : Any> : BaseKeyedLazyInstance<T>, KeyedLazyInstance<T> {
   // these must be public for scrambling compatibility
   @Attribute("framework")
   @RequiredElement

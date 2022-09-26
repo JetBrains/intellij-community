@@ -7,9 +7,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
-import com.intellij.webSymbols.framework.impl.WebFrameworkExtension
+import com.intellij.webSymbols.framework.impl.WebSymbolsFrameworkExtension
 
-interface WebFrameworkContext {
+interface WebSymbolsFrameworkContext {
   /**
    * Determines whether a particular, parsed file should have a particular web framework support enabled.
    * Such files will for example have dedicated JS expressions injected. This API serves for a purpose of enabling the
@@ -64,7 +64,7 @@ interface WebFrameworkContext {
   fun isForbidden(contextFile: VirtualFile, project: Project): Boolean = false
 
   companion object {
-    internal val WEB_FRAMEWORK_CONTEXT_EP = WebFrameworkExtension<WebFrameworkContext>("com.intellij.webSymbols.context")
-    internal val WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED = WebFrameworkExtension<WebFrameworkContext>("com.intellij.javascript.web.context")
+    internal val WEB_FRAMEWORK_CONTEXT_EP = WebSymbolsFrameworkExtension<WebSymbolsFrameworkContext>("com.intellij.webSymbols.frameworkContext")
+    internal val WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED = WebSymbolsFrameworkExtension<WebSymbolsFrameworkContext>("com.intellij.javascript.web.context")
   }
 }

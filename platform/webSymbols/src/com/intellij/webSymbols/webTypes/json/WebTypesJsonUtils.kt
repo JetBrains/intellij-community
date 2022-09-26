@@ -2,8 +2,6 @@
 package com.intellij.webSymbols.webTypes.json
 
 import com.intellij.model.Pointer
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_CLASSES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_FUNCTIONS
@@ -20,11 +18,10 @@ import com.intellij.webSymbols.WebSymbol.Companion.PROP_HIDE_FROM_COMPLETION
 import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_CSS
 import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_HTML
 import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_JS
-import com.intellij.webSymbols.framework.WebFrameworksConfiguration
+import com.intellij.webSymbols.framework.WebSymbolsFrameworksConfiguration
 import com.intellij.webSymbols.impl.WebSymbolsRegistryImpl.Companion.asSymbolNamespace
 import com.intellij.webSymbols.impl.WebSymbolsRegistryImpl.Companion.parsePath
 import com.intellij.webSymbols.utils.NameCaseUtils
-import com.intellij.webSymbols.webTypes.WebTypesSymbolTypeResolver
 import com.intellij.webSymbols.webTypes.json.NameConversionRulesSingle.NameConverter
 import java.util.*
 import java.util.function.Function
@@ -201,8 +198,8 @@ internal fun Reference.codeCompletion(name: String,
   }
 }
 
-internal fun EnablementRules.wrap(): WebFrameworksConfiguration.EnablementRules =
-  WebFrameworksConfiguration.EnablementRules(
+internal fun EnablementRules.wrap(): WebSymbolsFrameworksConfiguration.EnablementRules =
+  WebSymbolsFrameworksConfiguration.EnablementRules(
     nodePackages,
     fileExtensions,
     ideLibraries,
@@ -210,8 +207,8 @@ internal fun EnablementRules.wrap(): WebFrameworksConfiguration.EnablementRules 
     scriptUrlPatterns.mapNotNull { it.toRegex() }
   )
 
-internal fun DisablementRules.wrap(): WebFrameworksConfiguration.DisablementRules =
-  WebFrameworksConfiguration.DisablementRules(
+internal fun DisablementRules.wrap(): WebSymbolsFrameworksConfiguration.DisablementRules =
+  WebSymbolsFrameworksConfiguration.DisablementRules(
     fileExtensions,
     fileNamePatterns.mapNotNull { it.toRegex() },
   )

@@ -8,11 +8,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.SymbolKind
 import com.intellij.webSymbols.SymbolNamespace
 import com.intellij.webSymbols.WebSymbolNamesProvider
-import com.intellij.webSymbols.WebSymbolsContainer
 import com.intellij.webSymbols.framework.impl.findWebSymbolsFrameworkInContext
 import javax.swing.Icon
 
-abstract class WebFramework {
+abstract class WebSymbolsFramework {
 
   lateinit var id: String
     internal set
@@ -32,12 +31,12 @@ abstract class WebFramework {
 
   companion object {
 
-    private val WEB_FRAMEWORK_EP = object : KeyedExtensionCollector<WebFramework, String>("com.intellij.webSymbols.framework") {
+    private val WEB_FRAMEWORK_EP = object : KeyedExtensionCollector<WebSymbolsFramework, String>("com.intellij.webSymbols.framework") {
       val all get() = extensions.asSequence().map { it.instance }
     }
 
     @JvmStatic
-    fun get(id: String): WebFramework = WEB_FRAMEWORK_EP.findSingle(id) ?: UnregisteredWebFramework(id)
+    fun get(id: String): WebSymbolsFramework = WEB_FRAMEWORK_EP.findSingle(id) ?: UnregisteredWebFramework(id)
 
     @JvmStatic
     fun forContext(context: VirtualFile, project: Project) = findWebSymbolsFrameworkInContext(context, project)
@@ -46,16 +45,16 @@ abstract class WebFramework {
     fun forContext(context: PsiElement) = findWebSymbolsFrameworkInContext(context)
 
     @JvmStatic
-    val all: List<WebFramework>
+    val all: List<WebSymbolsFramework>
       get() = WEB_FRAMEWORK_EP.all.toList()
 
     @JvmStatic
-    internal val allAsSequence: Sequence<WebFramework>
+    internal val allAsSequence: Sequence<WebSymbolsFramework>
       get() = WEB_FRAMEWORK_EP.all
 
   }
 
-  private class UnregisteredWebFramework(id: String) : WebFramework() {
+  private class UnregisteredWebFramework(id: String) : WebSymbolsFramework() {
     init {
       this.id = id
     }

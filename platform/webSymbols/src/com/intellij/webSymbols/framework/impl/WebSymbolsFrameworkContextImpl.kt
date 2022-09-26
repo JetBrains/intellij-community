@@ -25,11 +25,11 @@ import com.intellij.webSymbols.WebSymbolsRegistryManager
 import com.intellij.webSymbols.framework.DependencyProximityProvider
 import com.intellij.webSymbols.framework.DependencyProximityProvider.Companion.mergeProximity
 import com.intellij.webSymbols.framework.DependencyProximityProvider.DependenciesKind
-import com.intellij.webSymbols.framework.WebFramework
-import com.intellij.webSymbols.framework.WebFrameworkContext
-import com.intellij.webSymbols.framework.WebFrameworkContext.Companion.WEB_FRAMEWORK_CONTEXT_EP
-import com.intellij.webSymbols.framework.WebFrameworkContext.Companion.WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED
-import com.intellij.webSymbols.framework.WebFrameworksConfiguration
+import com.intellij.webSymbols.framework.WebSymbolsFramework
+import com.intellij.webSymbols.framework.WebSymbolsFrameworkContext
+import com.intellij.webSymbols.framework.WebSymbolsFrameworkContext.Companion.WEB_FRAMEWORK_CONTEXT_EP
+import com.intellij.webSymbols.framework.WebSymbolsFrameworkContext.Companion.WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED
+import com.intellij.webSymbols.framework.WebSymbolsFrameworksConfiguration
 import com.intellij.webSymbols.impl.WebSymbolsRegistryManagerImpl
 import com.intellij.webSymbols.utils.findOriginalFile
 import java.util.*
@@ -42,9 +42,9 @@ private val CONTEXT_KEY: Key<MutableMap<String, CachedValue<Int?>>> = Key("web.i
 private val PREV_CONTEXT_KEY = Key<MutableMap<VirtualFile, Optional<String>>>("web.isContext.prev")
 private val CONTEXT_RELOAD_MARKER_KEY = Key<Any>("web.isContext.reloadMarker")
 private val reloadMonitor = Any()
-private val LOG = Logger.getInstance(WebFrameworkContext::class.java)
+private val LOG = Logger.getInstance(WebSymbolsFrameworkContext::class.java)
 
-internal fun findWebSymbolsFrameworkInContext(context: PsiElement): WebFramework? {
+internal fun findWebSymbolsFrameworkInContext(context: PsiElement): WebSymbolsFramework? {
   if (!context.isValid) {
     return null
   }
@@ -64,7 +64,7 @@ internal fun findWebSymbolsFrameworkInContext(context: PsiElement): WebFramework
     psiFile.project)
 }
 
-internal fun findWebSymbolsFrameworkInContext(context: VirtualFile, project: Project): WebFramework? {
+internal fun findWebSymbolsFrameworkInContext(context: VirtualFile, project: Project): WebSymbolsFramework? {
   if (project.isDisposed) return null
   val dirContext = context.isDirectory
   val file: VirtualFile? = findOriginalFile(context)
@@ -78,7 +78,7 @@ internal fun findWebSymbolsFrameworkInContext(context: VirtualFile, project: Pro
   return withContextChangeCheck(psiDir, file)
 }
 
-private fun findWebFrameworkInContextCached(directory: PsiDirectory, file: VirtualFile?): WebFramework? {
+private fun findWebFrameworkInContextCached(directory: PsiDirectory, file: VirtualFile?): WebSymbolsFramework? {
   val project = directory.project
   val configInDir = CachedValuesManager.getCachedValue(directory) {
     val result = loadFrameworkConfiguration(directory)
@@ -93,7 +93,7 @@ private fun findWebFrameworkInContextCached(directory: PsiDirectory, file: Virtu
   val proximityPerFrameworkFromExtensionsMap = (directory.getUserData(CONTEXT_KEY)
                                                 ?: (directory as UserDataHolderEx).putUserDataIfAbsent(CONTEXT_KEY, ConcurrentHashMap()))
 
-  val proximityPerFrameworkFromExtensions = WebFramework.all.asSequence()
+  val proximityPerFrameworkFromExtensions = WebSymbolsFramework.all.asSequence()
     .map { it.id }
     .map { framework ->
       Pair(framework,
@@ -119,11 +119,11 @@ private fun findWebFrameworkInContextCached(directory: PsiDirectory, file: Virtu
     .minByOrNull { it.second!! }
     ?.first
     ?.takeIf { file == null || !isAnyForbidden(file, project) }
-    ?.let { WebFramework.get(it) }
+    ?.let { WebSymbolsFramework.get(it) }
 }
 
 private fun calcProximityPerFrameworkFromRules(directory: PsiDirectory,
-                                               enableWhen: Map<String, List<WebFrameworksConfiguration.EnablementRules>>): Pair<Map<String, Double>, Set<ModificationTracker>> {
+                                               enableWhen: Map<String, List<WebSymbolsFrameworksConfiguration.EnablementRules>>): Pair<Map<String, Double>, Set<ModificationTracker>> {
   val result = mutableMapOf<String, Double>()
   val modificationTrackers = mutableSetOf<ModificationTracker>()
 
@@ -179,8 +179,8 @@ private fun loadFrameworkConfiguration(directory: PsiDirectory): FrameworkConfig
 }
 
 private class FrameworkConfigInDir(val directory: PsiDirectory,
-                                   val enableWhen: Map<String, List<WebFrameworksConfiguration.EnablementRules>>,
-                                   val disableWhen: Map<String, List<WebFrameworksConfiguration.DisablementRules>>,
+                                   val enableWhen: Map<String, List<WebSymbolsFrameworksConfiguration.EnablementRules>>,
+                                   val disableWhen: Map<String, List<WebSymbolsFrameworksConfiguration.DisablementRules>>,
                                    val dependencies: List<Any>) {
 
   private val frameworkByFile = ConcurrentHashMap<String, Any>()
@@ -192,7 +192,7 @@ private class FrameworkConfigInDir(val directory: PsiDirectory,
 
   val proximityPerFramework: Map<String, Double> get() = proximityCache.value
 
-  fun findByFileName(file: VirtualFile): WebFramework? =
+  fun findByFileName(file: VirtualFile): WebSymbolsFramework? =
     frameworkByFile.computeIfAbsent(file.name) { fileName ->
       enableWhen.keys
         .find { framework ->
@@ -204,16 +204,16 @@ private class FrameworkConfigInDir(val directory: PsiDirectory,
           } != true
         }
         ?.let {
-          WebFramework.get(it)
+          WebSymbolsFramework.get(it)
         } ?: ""
-    } as? WebFramework
+    } as? WebSymbolsFramework
 
 }
 
 private fun isForbiddenFromProviders(framework: String,
                                      file: VirtualFile,
                                      project: Project,
-                                     disableWhen: List<WebFrameworksConfiguration.DisablementRules>?): Boolean =
+                                     disableWhen: List<WebSymbolsFrameworksConfiguration.DisablementRules>?): Boolean =
   WEB_FRAMEWORK_CONTEXT_EP.allFor(framework).plus(WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED.allFor(framework))
     .any { it.isForbidden(file, project) }
   || disableWhen?.any { matchFileName(file.name, it.fileNamePatterns) || matchFileExt(file.name, it.fileExtensions) } == true
@@ -221,11 +221,11 @@ private fun isForbiddenFromProviders(framework: String,
 private fun isAnyForbidden(context: VirtualFile, project: Project): Boolean =
   WEB_FRAMEWORK_CONTEXT_EP.forAny().plus(WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED.forAny()).any { it.isForbidden(context, project) }
 
-private fun findEnabledFromProviders(psiFile: PsiFile): WebFramework? =
+private fun findEnabledFromProviders(psiFile: PsiFile): WebSymbolsFramework? =
   WEB_FRAMEWORK_CONTEXT_EP.all.asSequence().plus(WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED.all.asSequence())
     .filter { extension -> extension.value.any { it.isEnabled(psiFile) } }.firstOrNull()?.key
 
-private fun findEnabledFromProviders(file: VirtualFile, project: Project): WebFramework? =
+private fun findEnabledFromProviders(file: VirtualFile, project: Project): WebSymbolsFramework? =
   WEB_FRAMEWORK_CONTEXT_EP.all.asSequence().plus(WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED.all.asSequence())
     .filter { extension -> extension.value.any { it.isEnabled(file, project) } }.firstOrNull()?.key
 
@@ -251,7 +251,7 @@ private fun webContextProximityFromProviders(framework: String,
   return CachedValueProvider.Result(proximity, *dependencies.toTypedArray())
 }
 
-private fun withContextChangeCheck(psiDir: PsiDirectory, file: VirtualFile?): WebFramework? {
+private fun withContextChangeCheck(psiDir: PsiDirectory, file: VirtualFile?): WebSymbolsFramework? {
   val project = psiDir.project
   val currentState = findWebFrameworkInContextCached(psiDir, file)
 

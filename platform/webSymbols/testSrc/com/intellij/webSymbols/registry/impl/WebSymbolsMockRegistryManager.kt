@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.framework.WebFrameworksConfiguration
+import com.intellij.webSymbols.framework.WebSymbolsFrameworksConfiguration
 
 class WebSymbolsMockRegistryManager : WebSymbolsRegistryManager {
 
@@ -16,7 +16,7 @@ class WebSymbolsMockRegistryManager : WebSymbolsRegistryManager {
 
   override fun get(contextElement: PsiElement?, allowResolve: Boolean): WebSymbolsRegistry =
     WebSymbolsRegistryImpl(contributionsContainers,
-                           WebSymbolNamesProviderImpl(framework, contributionsContainers.filterIsInstance<WebFrameworksConfiguration>()),
+                           WebSymbolNamesProviderImpl(framework, contributionsContainers.filterIsInstance<WebSymbolsFrameworksConfiguration>()),
                            WebSymbolsScopeProvider.getScope(contextElement, framework), framework, allowResolve)
 
   override fun addSymbolsContainer(container: WebSymbolsContainer,

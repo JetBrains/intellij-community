@@ -5,12 +5,12 @@ import com.intellij.model.Pointer
 import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.WebSymbolNameConversionRules
 
-interface WebFrameworksConfiguration : WebSymbolNameConversionRules {
+interface WebSymbolsFrameworksConfiguration : WebSymbolNameConversionRules {
 
   val enableWhen: Map<FrameworkId, List<EnablementRules>>
   val disableWhen: Map<FrameworkId, List<DisablementRules>>
 
-  override fun createPointer(): Pointer<out WebFrameworksConfiguration>
+  override fun createPointer(): Pointer<out WebSymbolsFrameworksConfiguration>
 
   data class DisablementRules(val fileExtensions: List<String>,
                               val fileNamePatterns: List<Regex>)

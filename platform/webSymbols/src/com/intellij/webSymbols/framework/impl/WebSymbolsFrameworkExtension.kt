@@ -4,14 +4,14 @@ package com.intellij.webSymbols.framework.impl
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.util.KeyedLazyInstance
-import com.intellij.webSymbols.framework.WebFramework
+import com.intellij.webSymbols.framework.WebSymbolsFramework
 import org.jetbrains.annotations.NotNull
 
-internal class WebFrameworkExtension<T> : KeyedExtensionCollector<T, String> {
+internal class WebSymbolsFrameworkExtension<T> : KeyedExtensionCollector<T, String> {
 
-  val all: Map<WebFramework, List<T>>
-    get() = WebFramework.allAsSequence
-      .mapNotNull<WebFramework, Pair<WebFramework, @NotNull MutableList<T>>> { framework ->
+  val all: Map<WebSymbolsFramework, List<T>>
+    get() = WebSymbolsFramework.allAsSequence
+      .mapNotNull<WebSymbolsFramework, Pair<WebSymbolsFramework, @NotNull MutableList<T>>> { framework ->
         forKey(framework.id).takeIf { it.isNotEmpty() }?.let { Pair(framework, it) }
       }
       .toMap()
