@@ -73,6 +73,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private @NotNull Set<GroupNode> myPreviousSelectedGroupNodes = new HashSet<>();
   private @Nullable UsagePreviewToolbarWithSimilarUsagesLink myToolbarWithSimilarUsagesLink;
+  private @Nullable MostCommonUsagePatternsComponent myMostCommonUsagePatternsComponent;
 
   public UsagePreviewPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
     this(project, presentation, false);
@@ -447,9 +448,12 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     if (!myPreviousSelectedGroupNodes.equals(selectedGroupNodes)) {
       releaseEditor();
       removeAll();
-      MostCommonUsagePatternsComponent mostCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl, session);
-      add(mostCommonUsagePatternsComponent);
-      Disposer.register(this, mostCommonUsagePatternsComponent);
+      if (myMostCommonUsagePatternsComponent == null) {
+        myMostCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl, session);
+        Disposer.register(this, myMostCommonUsagePatternsComponent);
+      }
+      add(myMostCommonUsagePatternsComponent);
+      myMostCommonUsagePatternsComponent.refresh();
     }
   }
 
