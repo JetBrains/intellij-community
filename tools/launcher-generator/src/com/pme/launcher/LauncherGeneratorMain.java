@@ -8,7 +8,9 @@ import org.jdom.input.SAXBuilder;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -101,9 +103,15 @@ public class LauncherGeneratorMain {
     int minorVersion = Integer.parseInt(matcher.group(1));
     int bugfixVersion = matcher.group(3) != null ? Integer.parseInt(matcher.group(3)) : 0;
     String buildNumber = getChild(appInfoRoot, "build").getAttributeValue("number");
+    String buildDate = getChild(appInfoRoot, "build").getAttributeValue("date");
     String versionString = majorVersion + "." + minorVersion + "." + bugfixVersion + "." + buildNumber;
 
-    int year = new GregorianCalendar().get(Calendar.YEAR);
+
+    String copyrightStart = getChild(appInfoRoot, "company").getAttributeValue("copyrightStart");
+    if (copyrightStart == null) {
+      copyrightStart = "2000";
+    }
+    String copyrightEnd = buildDate.substring(0, 4);
 
     File out = new File(args[5]);
     LauncherGenerator generator = new LauncherGenerator(template, out);
@@ -111,18 +119,21 @@ public class LauncherGeneratorMain {
       generator.load();
 
       for (Map.Entry<Object, Object> pair : properties.entrySet()) {
-        String key = (String) pair.getKey();
+        String key = (String)pair.getKey();
         Integer id = resourceIDs.get(key);
         if (id == null) {
-          System.err.println("Invalid stringtable ID found: " + key);
+          //noinspection SpellCheckingInspection
+          System.err.println("Invalid STRINGTABLE ID, missing in '" + args[2] + "': " + key);
           System.exit(9);
         }
-        generator.setResourceString(id, (String) pair.getValue());
+        generator.setResourceString(id, (String)pair.getValue());
       }
 
+      //noinspection SpellCheckingInspection
       generator.injectIcon(resourceIDs.get("IDI_WINLAUNCHER"), iconStream);
 
-      generator.setVersionInfoString("LegalCopyright", "Copyright (C) 2000-" + year + " " + companyName);
+      generator.setVersionInfoString("CompanyName", companyName);
+      generator.setVersionInfoString("LegalCopyright", "Copyright (C) " + copyrightStart + "-" + copyrightEnd + " " + companyName);
       generator.setVersionInfoString("ProductName", productFullName);
       generator.setVersionInfoString("FileVersion", versionString);
       generator.setVersionInfoString("FileDescription", productFullName);
