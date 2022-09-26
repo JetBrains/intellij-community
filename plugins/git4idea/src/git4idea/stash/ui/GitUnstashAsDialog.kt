@@ -7,7 +7,9 @@ import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.vcs.branch.BranchPresentation
 import git4idea.GitUtil
 import git4idea.i18n.GitBundle
@@ -17,13 +19,9 @@ import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 
 internal class GitUnstashAsDialog(private val project: Project, private val stashInfo: StashInfo) : DialogWrapper(project) {
-  private val branchTextField = JBTextField()
-  private val popStashCheckbox = JBCheckBox(GitBundle.message("unstash.pop.stash")).apply {
-    toolTipText = GitBundle.message("unstash.pop.stash.tooltip")
-  }
-  private val keepIndexCheckbox = JBCheckBox(GitBundle.message("unstash.reinstate.index")).apply {
-    toolTipText = GitBundle.message("unstash.reinstate.index.tooltip")
-  }
+  private lateinit var branchTextField: JBTextField
+  private lateinit var popStashCheckbox: JBCheckBox
+  private lateinit var keepIndexCheckbox: JBCheckBox
 
   var popStash: Boolean = false
     private set
@@ -36,12 +34,6 @@ internal class GitUnstashAsDialog(private val project: Project, private val stas
     title = GitBundle.message("stash.unstash.changes.in.root.dialog.title", stashInfo.root.presentableName)
     init()
 
-    branchTextField.document.addDocumentListener(object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent) {
-        onBranchChanged()
-      }
-    })
-    popStashCheckbox.addActionListener { onPopStashChanged() }
     updateOkButtonText()
   }
 
@@ -51,26 +43,38 @@ internal class GitUnstashAsDialog(private val project: Project, private val stas
         label(CurrentBranchComponent.getCurrentBranch(project, stashInfo.root)?.let { BranchPresentation.getPresentableText(it) } ?: "")
       }
       row(GitBundle.message("unstash.branch.label")) {
-        branchTextField().withBinding(JBTextField::getText, JBTextField::setText,
-                                      PropertyBinding({ branch }, { value -> branch = value })
-        ).withValidationOnInput {
-          if (it.text.isBlank()) return@withValidationOnInput null
-          val repository = GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(stashInfo.root)
-                           ?: return@withValidationOnInput null
-          validateName(listOf(repository), it.text)
-        }.focused()
+        branchTextField = textField()
+          .bindText(::branch)
+          .validationOnInput {
+            if (it.text.isBlank()) return@validationOnInput null
+            val repository = GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(stashInfo.root)
+                             ?: return@validationOnInput null
+            validateName(listOf(repository), it.text)
+          }
+          .applyToComponent {
+            document.addDocumentListener(object : DocumentAdapter() {
+              override fun textChanged(e: DocumentEvent) {
+                onBranchChanged()
+              }
+            })
+          }
+          .focused()
+          .component
       }
       row {
-        popStashCheckbox().withBinding(
-          JBCheckBox::isSelected, JBCheckBox::setSelected,
-          PropertyBinding({ popStash }, { value -> popStash = value }),
-        )
+        popStashCheckbox = checkBox(GitBundle.message("unstash.pop.stash"))
+          .applyToComponent {
+            toolTipText = GitBundle.message("unstash.pop.stash.tooltip")
+            addActionListener { onPopStashChanged() }
+          }
+          .bindSelected(::popStash)
+          .component
       }
       row {
-        keepIndexCheckbox().withBinding(
-          JBCheckBox::isSelected, JBCheckBox::setSelected,
-          PropertyBinding({ keepIndex }, { value -> keepIndex = value }),
-        )
+        keepIndexCheckbox = checkBox(GitBundle.message("unstash.reinstate.index"))
+          .applyToComponent { toolTipText = GitBundle.message("unstash.reinstate.index.tooltip") }
+          .bindSelected(::popStash)
+          .component
       }
     }
   }
