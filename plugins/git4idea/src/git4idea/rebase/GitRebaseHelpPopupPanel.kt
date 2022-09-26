@@ -3,7 +3,7 @@ package git4idea.rebase
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.components.BrowserLink
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ui.JBImageIcon
 import com.intellij.util.ui.StartupUiUtil
@@ -41,10 +41,10 @@ class GitRebaseHelpPopupPanel : JPanel() {
       label(GitBundle.message("rebase.help.rebase.branch"))
     }
     row {
-      rebaseBranchImage()
+      cell(rebaseBranchImage)
     }
     row {
-      helpLink()
+      cell(helpLink)
     }
   }
 
