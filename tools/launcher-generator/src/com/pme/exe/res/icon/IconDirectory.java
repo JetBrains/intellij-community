@@ -17,41 +17,23 @@
 
 package com.pme.exe.res.icon;
 
-import com.pme.exe.res.LevelEntry;
-
-import java.io.DataInput;
-import java.io.IOException;
-
 /**
  * @author Sergey Zhulin
  * Date: Apr 27, 2006
  * Time: 1:13:15 PM
  */
-public class IconDirectory extends LevelEntry {
-  private RawBytes myRawBytes;
+public class IconDirectory extends IconBase {
+  private final Bytes myBytes;
+
   public IconDirectory() {
     super("Icon Directory");
-    addMember( new Byte( "bWidth" ) );
-    addMember( new Byte( "bHeight" ) );
-    addMember( new Byte( "bColorCount" ) );
-    addMember( new Byte( "bReserved" ) );
-    addMember( new Word( "wPlanes" ) );
-    addMember( new Word( "wBitCount" ) );
-    addMember( new DWord( "dwBytesInRes" ) );
-    addMember( new DWord( "dwImageOffset" ) );
+    DWord dwImageOffset = addMember(new DWord("dwImageOffset"));
+    myBytes = new Bytes("Raw Bytes internal", dwImageOffset, myDwBytesInRes);
+    myBytes.addOffsetHolder(dwImageOffset);
+    myBytes.addSizeHolder(myDwBytesInRes);
   }
 
-  public byte[] getRawBytes(){
-    Bytes bytes = (Bytes)myRawBytes.getMember( "Raw Bytes" );
-    return bytes.getBytes();
-  }
-
-  @Override
-  public void read(DataInput stream) throws IOException {
-    super.read(stream);
-    RawBytes bytes = new RawBytes( getValueMember( "dwImageOffset" ),
-        getValueMember( "dwBytesInRes" ));
-    myRawBytes = bytes;
-    getLevel().addLevelEntry( bytes );
+  public Bytes getBytes() {
+    return myBytes;
   }
 }

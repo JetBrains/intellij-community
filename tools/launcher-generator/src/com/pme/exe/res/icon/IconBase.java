@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,19 @@
 package com.pme.exe.res.icon;
 
 import com.pme.exe.res.LevelEntry;
-import com.pme.exe.Bin;
 
-/**
- * @author Sergey Zhulin
- * Date: Apr 27, 2006
- * Time: 1:44:11 PM
- */
-public class RawBytes extends LevelEntry {
-  public RawBytes( Bin.Value offsetHolder, Bin.Value size ) {
-    super("Raw Bytes");
-    Bytes bytes = new Bytes("Raw Bytes", offsetHolder, size);
-    bytes.addOffsetHolder( offsetHolder );
-    bytes.addSizeHolder( size );
-    addMember( bytes );
+
+public abstract class IconBase extends LevelEntry {
+  protected final DWord myDwBytesInRes;
+
+  public IconBase(String name) {
+    super(name);
+    addMember(new Byte("bWidth"));
+    addMember(new Byte("bHeight"));
+    addMember(new Byte("bColorCount"));
+    addMember(new Byte("bReserved"));
+    addMember(new Word("wPlanes"));
+    addMember(new Word("wBitCount"));
+    myDwBytesInRes = addMember(new DWord("dwBytesInRes"));
   }
 }

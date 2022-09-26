@@ -18,13 +18,17 @@
 package com.pme.exe;
 
 import com.pme.util.BitsUtil;
-import com.pme.util.OffsetTrackingInputStream;
+import com.pme.util.StreamUtil;
 
-import java.io.*;
-import java.lang.reflect.Array;
-import java.nio.charset.StandardCharsets;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 
 /**
  * @author Sergey Zhulin
@@ -99,8 +103,8 @@ public abstract class Bin {
   public abstract void report(OutputStreamWriter writer) throws IOException;
 
   public static class Structure extends Bin {
-    private ArrayList<Bin> myMembers = new ArrayList<>(1);
-    private final HashMap<String, Bin> myMembersMap = new HashMap<>(1);
+    private final ArrayList<Bin> myMembers = new ArrayList<>(1);
+    private final HashMap<String, Bin> myMembersMap = new LinkedHashMap<>(1);
 
     public Structure(String name) {
       super(name);
@@ -122,7 +126,7 @@ public abstract class Bin {
       Bin.Structure structure = (Bin.Structure)binStructure;
       ArrayList<Bin> members = structure.getMembers();
       for (Bin bin : members) {
-        Bin valueMember = getMember(bin.getName());
+        Bin valueMember = myMembersMap.get(bin.getName());
         if (valueMember != null) {
           valueMember.copyFrom(bin);
         }
@@ -141,25 +145,13 @@ public abstract class Bin {
     public ArrayList<Bin> getMembers() {
       return myMembers;
     }
-    public void addMember(Bin bin, String description) {
+
+    public <T extends Bin> T addMember(T bin, String description) {
       bin.setDescription(description);
-      addMember(bin);
+      return addMember(bin);
     }
 
-    public void insertMember(int index, Bin bin) {
-      ArrayList<Bin> list = new ArrayList<>(myMembers.size() + 1);
-      for ( int i = 0; i < index; ++i ){
-        list.add( myMembers.get( i ) );
-      }
-      list.add( bin );
-      for ( int i = index; i < myMembers.size(); ++i ){
-        list.add( myMembers.get( i ) );
-      }
-      myMembers = list;
-      addMemberToMapOnly(bin);
-    }
-
-    public Bin addMember(Bin bin) {
+    public <T extends Bin> T addMember(T bin) {
       myMembers.add(bin);
       addMemberToMapOnly(bin);
       return bin;
@@ -169,24 +161,6 @@ public abstract class Bin {
     //it is read by parent in overrode 'read' method
     public void addMemberToMapOnly(Bin bin) {
       myMembersMap.put(bin.getName(), bin);
-    }
-
-    public Bin getMember(String name) {
-      return myMembersMap.get(name);
-    }
-
-    public Bin.Value getValueMember(String name) {
-      return (Bin.Value) myMembersMap.get(name);
-    }
-
-    public Bin.Structure getStructureMember(String name) {
-      return (Bin.Structure) myMembersMap.get(name);
-    }
-
-    public Bin.Txt getTxtMember(String name) { return (Bin.Txt)myMembersMap.get(name); }
-
-    public long getValue(String name) {
-      return ((Bin.Value) myMembersMap.get(name)).getValue();
     }
 
     @Override
@@ -238,6 +212,37 @@ public abstract class Bin {
     }
   }
 
+  public static abstract class ReadOnlyValue extends Value {
+    public ReadOnlyValue(String name) {
+      super(name);
+    }
+
+    @Override
+    public long sizeInBytes() {
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public void read(DataInput stream) {
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public void write(DataOutput stream) {
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public void report(OutputStreamWriter writer) {
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public Value setValue(long value) {
+      throw new IllegalStateException();
+    }
+  }
+
   public static class Byte extends Value {
     public Byte(String name) {
       super(name);
@@ -252,8 +257,9 @@ public abstract class Bin {
     public long getValue() {
       return getRawValue();
     }
+
     @Override
-    public Value setValue(long value) {
+    public Byte setValue(long value) {
       setRawValue(value);
       return this;
     }
@@ -265,14 +271,17 @@ public abstract class Bin {
 
     @Override
     public void write(DataOutput stream) throws IOException {
-      stream.writeByte((byte) getRawValue());
+      stream.writeByte((byte)getRawValue());
     }
 
     @Override
     public void report(OutputStreamWriter writer) throws IOException {
-      _report(writer, getDescription(), (byte) getValue());
+      _report(writer, getDescription(), (byte)getValue());
     }
 
+    public String toString() {
+      return BitsUtil.byteToHexString((int)getValue());
+    }
   }
 
   public static class Word extends Value {
@@ -295,7 +304,7 @@ public abstract class Bin {
     }
 
     @Override
-    public Value setValue(long value) {
+    public Word setValue(long value) {
       setRawValue(Short.toUnsignedLong(Short.reverseBytes((short)value)));
       return this;
     }
@@ -321,6 +330,10 @@ public abstract class Bin {
   }
 
   public static class DWord extends Value {
+    public DWord() {
+      super("");
+    }
+
     public DWord(String name) {
       super(name);
     }
@@ -331,7 +344,7 @@ public abstract class Bin {
     }
 
     @Override
-    public Value setValue(long value) {
+    public DWord setValue(long value) {
       setRawValue(Integer.toUnsignedLong(Integer.reverseBytes((int)value)));
       return this;
     }
@@ -371,7 +384,7 @@ public abstract class Bin {
     }
 
     @Override
-    public Value setValue(long value) {
+    public LongLong setValue(long value) {
       setRawValue(Long.reverseBytes(value));
       return this;
     }
@@ -400,8 +413,8 @@ public abstract class Bin {
   public static class Padding extends Bin {
     private final int myBytes;
 
-    public Padding(int bytes) {
-      super("Padding");
+    public Padding(String name, int bytes) {
+      super(name);
       myBytes = bytes;
     }
 
@@ -412,13 +425,12 @@ public abstract class Bin {
 
     @Override
     public void read(DataInput stream) throws IOException {
-      if (stream instanceof OffsetTrackingInputStream) {
-        long offset = ((OffsetTrackingInputStream) stream).getOffset();
-        int skip = bytesToSkip(offset);
-        if (skip > 0) {
-          stream.skipBytes(skip);
-        }
+      long offset = StreamUtil.getOffset(stream);
+      int skip = bytesToSkip(offset);
+      if (skip > 0) {
+        stream.skipBytes(skip);
       }
+      //resetOffsets(offset);
     }
 
     private int bytesToSkip(long offset) {
@@ -438,43 +450,28 @@ public abstract class Bin {
     @Override
     public void report(OutputStreamWriter writer) {
     }
+
+    @Override
+    public String toString() {
+      return "Padding{" + getName() + "," + myBytes + '}';
+    }
   }
 
-  public static class Txt extends Bin {
+  /**
+   * Fixed size character (1 byte) string, UTF-8
+   */
+  public static class CharStringFS extends Bin {
     private final StringBuffer myBuffer = new StringBuffer();
     private final Bin.Value mySize;
     private byte[] myBytes;
 
-    public Txt(String name, byte[] bytes) {
-      super(name);
-      myBytes = bytes;
-      mySize = new DWord("").setValue(bytes.length);
-      setValue();
-    }
-
-    public Txt(String name, String string) {
-      super(name);
-      myBytes = new byte[string.length() * 2];
-      byte[] bytes = string.getBytes(StandardCharsets.US_ASCII);
-      for (int i = 0; i < bytes.length; ++i) {
-        myBytes[i * 2] = bytes[i];
-        myBytes[i * 2 + 1] = 0;
-      }
-      mySize = new DWord("").setValue(myBytes.length);
-      setValue();
-    }
-
-    public Txt(String name, Bin.Value size) {
+    public CharStringFS(String name, Bin.Value size) {
       super(name);
       mySize = size;
     }
 
-    public Txt(String name, int size) {
+    public CharStringFS(String name, int size) {
       this(name, new DWord("size").setValue(size));
-    }
-
-    public String getText() {
-      return myBuffer.toString();
     }
 
     @Override
@@ -482,23 +479,20 @@ public abstract class Bin {
       return mySize.getValue();
     }
 
-    private void setValue(){
-      for (int i = 0; i < mySize.getValue(); ++i) {
-        int b = java.lang.Byte.toUnsignedInt(myBytes[i]);
-        if (b != 0) {
-          myBuffer.append((char) b);
-        }
-      }
-    }
-
     @Override
     public void read(DataInput stream) throws IOException {
+      long size = mySize.getValue();
       myBuffer.setLength(0);
-      myBytes = new byte[(int) mySize.getValue()];
-      for (int i = 0; i < mySize.getValue(); ++i) {
+      myBytes = new byte[(int)size];
+      for (int i = 0; i < size; ++i) {
         myBytes[i] = stream.readByte();
       }
-      setValue();
+      for (int i = 0; i < size; ++i) {
+        int b = java.lang.Byte.toUnsignedInt(myBytes[i]);
+        if (b != 0) {
+          myBuffer.append((char)b);
+        }
+      }
     }
 
     @Override
@@ -510,12 +504,96 @@ public abstract class Bin {
     public void report(OutputStreamWriter writer) throws IOException {
       _report(writer, myBuffer.toString());
     }
+
+    public String getValue() {
+      return myBuffer.toString();
+    }
+
+    @Override
+    public String toString() {
+      return "CharStringFS{size=" + mySize.getValue() + ", value=" + getValue() + "}";
+    }
   }
 
-  public static class WChar extends Bin {
+  /**
+   * Size-prefixed wide character (2 bytes) string, UTF-16.
+   * <p>
+   * Size is {@linkplain Word} by default.
+   */
+  public static class WCharStringSP extends Bin {
+    private static final String EMPTY_STRING = "";
+    private final Value mySize;
     private String myValue;
 
-    public WChar(String name) {
+    public WCharStringSP() {
+      this(new Word());
+    }
+
+    public WCharStringSP(Value size) {
+      super("");
+      mySize = size;
+    }
+
+    public String getValue() {
+      return myValue;
+    }
+
+    public void setValue(String value) {
+      myValue = value;
+      mySize.setValue(value.length());
+    }
+
+    @Override
+    public long sizeInBytes() {
+      return mySize.sizeInBytes() + mySize.getValue() * 2;
+    }
+
+    @Override
+    public void read(DataInput stream) throws IOException {
+      mySize.read(stream);
+      long size = mySize.getValue();
+      if (size == 0) {
+        myValue = EMPTY_STRING;
+        return;
+      }
+      StringBuilder builder = new StringBuilder();
+      for (int i = 0; i < size; ++i) {
+        char c = BitsUtil.readChar(stream);
+        builder.append(c);
+      }
+      myValue = builder.toString();
+    }
+
+    @Override
+    public void write(DataOutput stream) throws IOException {
+      assert mySize.getValue() == myValue.length();
+      mySize.write(stream);
+      for (int i = 0; i < myValue.length(); i++) {
+        stream.writeShort(Short.toUnsignedInt(Short.reverseBytes((short)myValue.charAt(i))));
+      }
+    }
+
+    @Override
+    public void report(OutputStreamWriter writer) throws IOException {
+      _report(writer, myValue);
+    }
+
+    @Override
+    public String toString() {
+      return "WCharStringSP{" +
+             "size=" + mySize +
+             ", value=" + myValue +
+             '}';
+    }
+  }
+
+  /**
+   * Null-terminated wide character (2 bytes) string, UTF-16
+   */
+  public static class WCharStringNT extends Bin {
+    private String myValue;
+
+    public WCharStringNT(String name) {
       super(name);
     }
 
@@ -555,34 +633,33 @@ public abstract class Bin {
     public void setValue(String value) {
       myValue = value;
     }
+
+    @Override
+    public String toString() {
+      return "WCharStringNT{value=" + myValue + '}';
+    }
   }
 
   public static class Bytes extends Bin {
     private byte[] myBytes;
-    private Value myStartOffset;
-    private Value mySize;
+    private final Value myStartOffset;
+    private final Value mySize;
     private static final int ourBytesInRow = 16;
 
     public Bytes(String name, Bin.Value size) {
       super(name);
+      myStartOffset = null;
       mySize = size;
     }
 
     public Bytes(String name, long size) {
       super(name);
+      myStartOffset = null;
       mySize = new DWord("size").setValue(size);
     }
 
     public Bytes(String name, Bin.Value startOffset, Bin.Value size) {
       super(name);
-      reset(startOffset, size);
-    }
-
-    public void reset(int startOffset, int size) {
-      reset(new DWord("startOffset").setValue(startOffset), new DWord("size").setValue(size));
-    }
-
-    public void reset(Bin.Value startOffset, Bin.Value size) {
       myStartOffset = startOffset;
       mySize = size;
     }
@@ -611,8 +688,18 @@ public abstract class Bin {
     @Override
     public void read(DataInput stream) throws IOException {
       if (myStartOffset != null) {
-        RandomAccessFile file = (RandomAccessFile) stream;
-        file.seek(myStartOffset.getValue());
+        long offset = myStartOffset.getValue();
+        long streamOffset = StreamUtil.getOffset(stream);
+        if (streamOffset != offset) {
+          if (offset > streamOffset) {
+            //noinspection UseOfSystemOutOrSystemErr
+            System.err.printf("WARN: non-continuous read: reading offset %#x, current stream offset %#x %n", offset, streamOffset);
+          } else {
+            //noinspection UseOfSystemOutOrSystemErr
+            System.err.printf("WARN: out of order read: reading offset %#x, current stream offset %#x %n", offset, streamOffset);
+          }
+          StreamUtil.seek(stream, offset);
+        }
       }
       myBytes = new byte[(int) mySize.getValue()];
       stream.readFully(myBytes);
@@ -623,8 +710,6 @@ public abstract class Bin {
       stream.write(myBytes, 0, (int) sizeInBytes());
     }
 
-    private final StringBuffer myBuffer = new StringBuffer();
-
     @Override
     public void report(OutputStreamWriter writer) throws IOException {
       _report(writer, getName());
@@ -634,6 +719,7 @@ public abstract class Bin {
         rowCount++;
       }
       int byteCount = 0;
+      StringBuilder myBuffer = new StringBuilder();
       for (int i = 0; i < rowCount; i++) {
         myBuffer.setLength(0);
         myBuffer.append("\n");
@@ -644,10 +730,18 @@ public abstract class Bin {
         writer.write(myBuffer.toString());
       }
     }
+
+    @Override
+    public String toString() {
+      return "Bytes{" +
+             "StartOffset=" + myStartOffset +
+             ", Size=" + mySize +
+             '}';
+    }
   }
 
-  public static class ArrayOfBins<T extends Bin> extends Bin {
-    private Bin[] myValues;
+  public static class ArrayOfBins<T extends Bin> extends Bin implements Iterable<T> {
+    private ArrayList<T> myValues;
     private final Bin.Value mySize;
     private final Class<T> myClass;
     private Bin.Value myCountHolder = null;
@@ -663,20 +757,19 @@ public abstract class Bin {
       this(name, cl, new DWord("size").setValue(size));
     }
 
-    public void addBin( Bin bin ){
-      Bin[] newArray = new Bin[myValues.length+1];
-      System.arraycopy( myValues, 0, newArray, 0, myValues.length );
-      newArray[myValues.length] = bin;
-      myValues = newArray;
-      mySize.setValue( mySize.getValue() + 1 );
+    public void addBin(T bin) {
+      myValues.add(bin);
+      if (myCountHolder != null) {
+        myCountHolder.setValue(myValues.size());
+      }
     }
 
     @Override
     public void copyFrom(Bin bin) {
       //noinspection unchecked
       ArrayOfBins<T> value = (ArrayOfBins<T>)bin;
-      for (int i = 0; i < myValues.length; i++) {
-        myValues[i].copyFrom( value.get(i) );
+      for (int i = 0; i < myValues.size(); i++) {
+        myValues.get(i).copyFrom(value.myValues.get(i));
       }
     }
 
@@ -685,14 +778,16 @@ public abstract class Bin {
     }
 
     private void init() {
-      myValues = (Bin[]) Array.newInstance(myClass, (int) mySize.getValue());
+      int size = (int)mySize.getValue();
+      myValues = new ArrayList<>(size);
 
-      for (int i = 0; i < myValues.length; i++) {
+      for (int i = 0; i < size; i++) {
         try {
-          Bin bin = myClass.newInstance();
+          T bin = myClass.getDeclaredConstructor().newInstance();
           bin.setName("[" + i + "]");
-          myValues[i] = bin;
-        } catch (InstantiationException | IllegalAccessException e) {
+          myValues.add(bin);
+        }
+        catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
           throw new RuntimeException(e.getMessage());
         }
       }
@@ -703,7 +798,7 @@ public abstract class Bin {
       super.resetOffsets(newOffset);
       long offset = getOffset();
       if (myCountHolder != null) {
-        myCountHolder.setValue(myValues.length);
+        myCountHolder.setValue(myValues.size());
       }
       for (Bin bin : myValues) {
         bin.resetOffsets(offset);
@@ -712,16 +807,11 @@ public abstract class Bin {
     }
 
     public int size() {
-      return myValues.length;
-    }
-
-    public Bin[] getArray() {
-      return myValues;
+      return myValues.size();
     }
 
     public T get(int index) {
-      //noinspection unchecked
-      return (T) myValues[index];
+      return myValues.get(index);
     }
 
     @Override
@@ -750,10 +840,15 @@ public abstract class Bin {
 
     @Override
     public void report(OutputStreamWriter writer) throws IOException {
-      writer.write("\n" + "Array size: " + myValues.length);
+      writer.write("\n" + getName() + " array size: " + myValues.size());
       for (Bin value : myValues) {
         value.report(writer);
       }
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+      return myValues.iterator();
     }
   }
 

@@ -20,10 +20,9 @@ package com.pme.exe.res;
 import com.pme.exe.Bin;
 
 import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * @author Sergey Zhulin
@@ -31,27 +30,40 @@ import java.util.ArrayList;
  * Time: 11:22:12 PM
  */
 public class DirectoryEntry extends LevelEntry {
-  private ArrayOfBins<EntryDescription> myIdEntries;
+  private static final long DIRECTORY_ENTRY_FLAG = 0xffff_ffff_8000_0000L;
+  public static final int RT_BITMAP = 2;
+  public static final int RT_ICON = 3;
+  public static final int RT_STRING = 6;
+  public static final int RT_GROUP_ICON = RT_ICON + 11;
+  public static final int RT_VERSION = 16;
+
+  private final ArrayOfBins<EntryDescription> myNamedEntries;
+  private final ArrayOfBins<EntryDescription> myIdEntries;
   private final ResourceSectionReader mySection;
   private final ArrayList<DirectoryEntry> mySubDirs = new ArrayList<>();
   private final ArrayList<DataEntry> myData = new ArrayList<>();
   private final long myIdOrName;
 
   public DirectoryEntry(ResourceSectionReader section, EntryDescription entry, long idOrName) {
-    super( createName( entry ) );
+    super(String.valueOf(idOrName));
     myIdOrName = idOrName;
     addMember(new DWord("Characteristics"));
     addMember(new DWord("TimeDateStamp"));
     addMember(new Word("MajorVersion"));
     addMember(new Word("MinorVersion"));
-    addMember(new Word("NumberOfNamedEntries"));
-    addMember(new Word("NumberOfIdEntries"));
+    Word numberOfNamedEntries = addMember(new Word("NumberOfNamedEntries"));
+    Word numberOfIdEntries = addMember(new Word("NumberOfIdEntries"));
     mySection = section;
-    if ( entry != null ){
-      Value flagValue = new DWord( "flag" ).setValue(0xffff_ffff_8000_0000L);
-      Bin.Value offset = entry.getValueMember("OffsetToData");
-      addOffsetHolder( new ValuesSub( offset, new ValuesAdd( mySection.getStartOffset(), flagValue ) ));
+    if (entry != null) {
+      Value flagValue = new DWord("flag").setValue(DIRECTORY_ENTRY_FLAG);
+      Bin.Value offset = entry.getOffsetToData();
+      addOffsetHolder(new ValuesSub(offset, new ValuesAdd(mySection.getStartOffset(), flagValue)));
     }
+    myNamedEntries = addMember(new ArrayOfBins<>("Named entries", EntryDescription.class, numberOfNamedEntries));
+    myNamedEntries.setCountHolder(numberOfNamedEntries);
+
+    myIdEntries = addMember(new ArrayOfBins<>("Id entries", EntryDescription.class, numberOfIdEntries));
+    myIdEntries.setCountHolder(numberOfIdEntries);
   }
 
   public long getIdOrName() {
@@ -62,103 +74,72 @@ public class DirectoryEntry extends LevelEntry {
     return mySection;
   }
 
-  public static String createName( EntryDescription entry ){
-    String name = "IRD";
-    if ( entry != null ){
-      name += entry.getValueMember( "Name" ).getValue();
-    }
-    return name;
-  }
-
   public ArrayList<DirectoryEntry> getSubDirs() {
     return mySubDirs;
   }
 
-  public DirectoryEntry findSubDir( String name ){
+  public ArrayList<DataEntry> getData() {
+    return myData;
+  }
+
+  public DirectoryEntry findSubDir(long id) {
     for (DirectoryEntry directoryEntry : mySubDirs) {
-      if (directoryEntry.getName().equals(name)) {
+      if (directoryEntry.getIdOrName() == id) {
         return directoryEntry;
       }
     }
     return null;
   }
 
-  public RawResource getRawResource(int index) {
-    DataEntry dataEntry = myData.get(index);
+  public RawResource getRawResource() {
+    Iterator<DataEntry> iterator = myData.iterator();
+    assert iterator.hasNext();
+    DataEntry dataEntry = iterator.next();
+    assert !iterator.hasNext();
     return dataEntry.getRawResource();
   }
 
-  public void insertDataEntry( int index, DataEntry dataEntry ){
-    myData.add(dataEntry );
-    getLevel().insertLevelEntry( index, dataEntry );
+  public void addDataEntry(DataEntry dataEntry) {
+    getLevel().addLevelEntry(dataEntry);
+    myData.add(dataEntry);
   }
 
-  public void addDataEntry( DataEntry dataEntry ){
-    myData.add(dataEntry );
-    getLevel().addLevelEntry( dataEntry );
+  public void addDirectoryEntry(DirectoryEntry dir) {
+    getLevel().addLevelEntry(dir);
+    mySubDirs.add(dir);
   }
 
-  public void insertDirectoryEntry( int index, DirectoryEntry dir ){
-    getLevel().insertLevelEntry( index, dir );
-    mySubDirs.add( dir );
-  }
-
-  public void addDirectoryEntry( DirectoryEntry dir ){
-    getLevel().addLevelEntry( dir );
-    mySubDirs.add( dir );
-  }
-
-  public void addIdEntry( EntryDescription entry ){
-    if ( myIdEntries == null ){
-      Word numberOfNamedEntries = (Word) getMember("NumberOfIdEntries");
-      myIdEntries = new ArrayOfBins<>("Id entries", EntryDescription.class, 0);
-      addMember(myIdEntries);
-      myIdEntries.setCountHolder(numberOfNamedEntries);
-    }
-    myIdEntries.addBin( entry );
+  public void addIdEntry(EntryDescription entry) {
+    myIdEntries.addBin(entry);
   }
 
   @Override
   public void read(DataInput stream) throws IOException {
     super.read(stream);
 
-    Word numberOfNamedEntries = (Word) getMember("NumberOfNamedEntries");
-    ArrayOfBins<EntryDescription> namedEntries = new ArrayOfBins<>("Named entries", EntryDescription.class, numberOfNamedEntries);
-    addMember(namedEntries);
-    namedEntries.setCountHolder(numberOfNamedEntries);
-    namedEntries.read(stream);
-
-    Word numberOfIdEntries = (Word) getMember("NumberOfIdEntries");
-    myIdEntries = new ArrayOfBins<>("Id entries", EntryDescription.class, numberOfIdEntries);
-    addMember(myIdEntries);
-    myIdEntries.setCountHolder(numberOfIdEntries);
-    myIdEntries.read(stream);
-
-    processEntries(namedEntries);
+    processEntries(myNamedEntries);
     processEntries(myIdEntries);
   }
 
   private void processEntries(ArrayOfBins<EntryDescription> entries) {
-    for (int i = 0; i < entries.size(); ++i) {
-      EntryDescription entry = entries.get(i);
-      Bin.Value offset = entry.getValueMember("OffsetToData");
-      Bin.Value name = entry.getValueMember("Name");
-      if ((offset.getValue() & 0xffff_ffff_8000_0000L) != 0) {
-        addDirectoryEntry( new DirectoryEntry( mySection, entry, name.getValue()) );
-      } else {
-        addDataEntry( new DataEntry( mySection, offset) );
+    for (EntryDescription entry : entries) {
+      DWord offset = entry.getOffsetToData();
+      DWord name = entry.getNameW();
+      if ((offset.getValue() & DIRECTORY_ENTRY_FLAG) != 0) {
+        addDirectoryEntry(new DirectoryEntry(mySection, entry, name.getValue()));
+      }
+      else {
+        addDataEntry(new DataEntry(mySection, offset, name));
       }
     }
   }
 
   @Override
-  public void report(OutputStreamWriter writer) throws IOException {
-    super.report(writer);
+  public String toString() {
+    return "DirectoryEntry{" +
+           ", idOrName=" + myIdOrName +
+           ", subs=" + mySubDirs +
+           ", data=" + myData +
+           '}';
   }
-
-  @Override
-  public void write(DataOutput stream) throws IOException {
-    super.write(stream);
-  }
-
 }

@@ -18,8 +18,6 @@
 package com.pme.exe.res.icon;
 
 import com.pme.exe.Bin;
-import com.pme.exe.res.Level;
-import com.pme.exe.res.LevelEntry;
 
 import java.io.*;
 
@@ -29,43 +27,54 @@ import java.io.*;
  * Time: 12:52:09 PM
  */
 public class IconFile extends Bin.Structure {
-  private final Level myImages = new Level();
-  private final File myFile;
+  private final IconHeader myHeader;
+  private final ArrayOfBins<IconDirectory> myIcons;
 
   public static class IconWrongFormat extends IOException {
-    public IconWrongFormat( File file ) {
+    public IconWrongFormat(File file) {
       super("Icon file has wrong format:" + file.getPath());
     }
   }
 
-  public IconFile(File file) {
-    super(file.getName());
-    myFile = file;
-    addMember(new IconHeader());
+  public IconFile() {
+    super("IconFile");
+    myHeader = addMember(new IconHeader());
+    Word idCount = myHeader.getCount();
+    myIcons = addMember(new ArrayOfBins<>("Icon directories", IconDirectory.class, idCount));
+    myIcons.setCountHolder(idCount);
   }
 
-  public void read() throws IOException {
-    try (RandomAccessFile stream = new RandomAccessFile(myFile, "r")) {
+  public IconHeader getHeader() {
+    return myHeader;
+  }
+
+  public ArrayOfBins<IconDirectory> getIcons() {
+    return myIcons;
+  }
+
+  public void read(File file) throws IOException {
+    setName(file.getName());
+    try (RandomAccessFile stream = new RandomAccessFile(file, "r")) {
       read(stream);
+    }
+    catch (IOException exception) {
+      throw new IconWrongFormat(file);
     }
   }
 
   @Override
   public void read(DataInput stream) throws IOException {
-    try {
-      super.read(stream);
-      Word idCount = (Word) ((Bin.Structure) getMember("Header")).getMember("idCount");
-      ArrayOfBins<IconDirectory> iconDirs = new ArrayOfBins<>("Icon directories", IconDirectory.class, idCount);
-      iconDirs.setCountHolder(idCount);
-      addMember(myImages);
-      Bin[] array = iconDirs.getArray();
-      for (Bin bin : array) {
-        myImages.addLevelEntry((LevelEntry) bin);
-      }
-      myImages.read(stream);
+    super.read(stream);
+    for (IconDirectory icon : myIcons) {
+      icon.getBytes().read(stream);
     }
-    catch (IOException exception) {
-      throw new IconWrongFormat(myFile);
+  }
+
+  @Override
+  public void write(DataOutput stream) throws IOException {
+    super.write(stream);
+    for (IconDirectory icon : myIcons) {
+      icon.getBytes().write(stream);
     }
   }
 }

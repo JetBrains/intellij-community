@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,19 +28,21 @@ import java.io.IOException;
  * Time: 1:35:49 PM
  */
 public class FixedFileInfo extends Bin.Structure {
-  public static final String FILE_VERSION_MS = "dwFileVersionMS";
-  public static final String FILE_VERSION_LS = "dwFileVersionLS";
-  public static final String PRODUCT_VERSION_MS = "dwProductVersionMS";
-  public static final String PRODUCT_VERSION_LS = "dwProductVersionLS";
+  public static final long MAGIC = 0xFEEF04BDL;
+  private final DWord mySignature;
+  private final DWord myFileVersionMS;
+  private final DWord myFileVersionLS;
+  private final DWord myProductVersionMS;
+  private final DWord myProductVersionLS;
 
   public FixedFileInfo() {
     super("FixedFileInfo");
-    addMember( new DWord( "dwSignature" ) );
+    mySignature = addMember(new DWord("dwSignature"));
     addMember( new DWord( "dwStrucVersion" ) );
-    addMember( new DWord(FILE_VERSION_MS) );
-    addMember( new DWord(FILE_VERSION_LS) );
-    addMember( new DWord(PRODUCT_VERSION_MS) );
-    addMember( new DWord(PRODUCT_VERSION_LS) );
+    myFileVersionMS = addMember(new DWord("dwFileVersionMS"));
+    myFileVersionLS = addMember(new DWord("dwFileVersionLS"));
+    myProductVersionMS = addMember(new DWord("dwProductVersionMS"));
+    myProductVersionLS = addMember(new DWord("dwProductVersionLS"));
     addMember( new DWord( "dwFileFlagsMask" ) );
     addMember( new DWord( "dwFileFlags" ) );
     addMember( new DWord( "dwFileOS" ) );
@@ -53,17 +55,19 @@ public class FixedFileInfo extends Bin.Structure {
   @Override
   public void read(DataInput stream) throws IOException {
     super.read(stream);
-    long signature = getValue("dwSignature");
-    assert signature == 0xFEEF04BDL : "Incorrect signature; expected " + 0xFEEF04BDL + ", found " + signature;
+    long signature = mySignature.getValue();
+    if (signature != MAGIC) {
+      throw new IllegalStateException(String.format("Incorrect signature; expected %#010x, found %#010x", MAGIC, signature));
+    }
   }
 
   public void setFileVersion(int mostSignificantVersion, int leastSignificantVersion) {
-    ((DWord) getMember(FILE_VERSION_MS)).setValue(mostSignificantVersion);
-    ((DWord) getMember(FILE_VERSION_LS)).setValue(leastSignificantVersion);
+    myFileVersionMS.setValue(mostSignificantVersion);
+    myFileVersionLS.setValue(leastSignificantVersion);
   }
 
   public void setProductVersion(int mostSignificantVersion, int leastSignificantVersion) {
-    ((DWord) getMember(PRODUCT_VERSION_MS)).setValue(mostSignificantVersion);
-    ((DWord) getMember(PRODUCT_VERSION_LS)).setValue(leastSignificantVersion);
+    myProductVersionMS.setValue(mostSignificantVersion);
+    myProductVersionLS.setValue(leastSignificantVersion);
   }
 }

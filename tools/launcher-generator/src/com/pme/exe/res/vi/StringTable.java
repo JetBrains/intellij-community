@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,11 @@ package com.pme.exe.res.vi;
 
 import com.pme.exe.Bin;
 
+/**
+ * <a href="https://learn.microsoft.com/en-us/windows/win32/menurc/stringtable">StringTable structure</a>
+ * <p>
+ * Each StringTable structure's szKey member indicates the appropriate language and code page for displaying the text in that StringTable structure.
+ */
 public class StringTable extends VersionInfoBin {
 
   public StringTable(String name) {
@@ -30,15 +35,21 @@ public class StringTable extends VersionInfoBin {
     });
   }
 
+  public String getStringValue(String key) {
+    for (Bin bin : getMembers()) {
+      if (bin instanceof StringTableEntry entry && bin.getName().equals(key)) {
+        return entry.getValue();
+      }
+    }
+    throw new IllegalStateException("Could not find string with key: " + key);
+  }
   public void setStringValue(String key, String value) {
     for (Bin bin : getMembers()) {
-      if (bin.getName().equals(key)) {
-        StringTableEntry entry = (StringTableEntry) bin;
-        ((WChar) entry.getMember("Value")).setValue(value);
-        ((Word) entry.getMember("wValueLength")).setValue(value.length() + 1);
+      if (bin instanceof StringTableEntry entry && bin.getName().equals(key)) {
+        entry.setValue(value);
         return;
       }
     }
-    assert false: "Could not find string with key " + key;
+    throw new IllegalStateException("Could not find string with key: " + key);
   }
 }

@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,10 @@
 
 package com.pme.exe.res.vi;
 
+import com.pme.exe.Bin;
+
+import java.util.Optional;
+
 /**
  * @author Sergey Zhulin
  * Date: May 10, 2006
@@ -32,7 +36,15 @@ public class StringFileInfo extends VersionInfoBin {
     });
   }
 
-  public StringTable getFirstStringTable() {
-    return (StringTable) getMember("StringTable0");
+  public StringTable getSoleStringTable() {
+    long count = getMembers().stream().filter(bin -> bin instanceof StringTable).count();
+    if (count > 1) {
+      throw new IllegalStateException("More than one StringTable found, indicates that there's more than one lanugage in executable");
+    }
+    Optional<Bin> optional = getMembers().stream().filter(bin -> bin instanceof StringTable).findFirst();
+    if (optional.isEmpty()) {
+      throw new IllegalStateException("No StringTable's found");
+    }
+    return (StringTable)optional.get();
   }
 }

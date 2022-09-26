@@ -19,7 +19,11 @@ package com.pme.exe.res;
 
 import com.pme.exe.Bin;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 
 /**
  * @author Sergey Zhulin
@@ -28,33 +32,28 @@ import java.io.*;
  */
 public class Level extends Bin.Structure {
   private Level mySubLevel = null;
+  private final int myDepth;
 
-  public Level() {
-    super("Level");
+  public Level(int depth) {
+    super("Level" + depth);
+    myDepth = depth;
   }
 
   public void addLevelEntry(LevelEntry dir) {
     if (mySubLevel == null) {
-      mySubLevel = new Level();
+      mySubLevel = new Level(myDepth + 1);
     }
     dir.setLevel(mySubLevel);
     addMember(dir);
   }
 
-  public void insertLevelEntry(int index, LevelEntry dir) {
-    if (mySubLevel == null) {
-      mySubLevel = new Level();
-    }
-    dir.setLevel(mySubLevel);
-    insertMember(index,dir);
-  }
-
   @Override
   public long sizeInBytes() {
+    long size = super.sizeInBytes();
     if (mySubLevel != null) {
-      return super.sizeInBytes() + mySubLevel.sizeInBytes();
+      size += mySubLevel.sizeInBytes();
     }
-    return super.sizeInBytes();
+    return size;
   }
 
   @Override
@@ -67,6 +66,7 @@ public class Level extends Bin.Structure {
 
   @Override
   public void read(DataInput stream) throws IOException {
+    sortMembersIfNeeded();
     super.read(stream);
     if (mySubLevel != null) {
       mySubLevel.read(stream);
@@ -81,11 +81,33 @@ public class Level extends Bin.Structure {
     }
   }
 
+  @SuppressWarnings("SSBasedInspection")
+  private void sortMembersIfNeeded() {
+    ArrayList<Bin> members = getMembers();
+    if (members.stream().allMatch(bin -> bin instanceof RawResource)) {
+      // Somehow RawResources could go out of order on disk, let's sort them, so we won't need to seek them in input stream
+      members.sort((o1, o2) -> {
+        assert o1 instanceof RawResource;
+        assert o2 instanceof RawResource;
+        return Long.compare(((RawResource)o1).getRawOffset().getValue(), ((RawResource)o2).getRawOffset().getValue());
+      });
+    }
+  }
+
   @Override
   public void report(OutputStreamWriter writer) throws IOException {
     super.report(writer);
     if (mySubLevel != null) {
       mySubLevel.report(writer);
     }
+  }
+
+  @Override
+  public String toString() {
+    return "Level{" +
+           "depth=" + myDepth +
+           ", members_num=" + getMembers().size() +
+           ", sub=" + mySubLevel +
+           '}';
   }
 }

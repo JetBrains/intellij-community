@@ -35,8 +35,9 @@ public class ValuesSub extends Bin.DWord {
   }
 
   @Override
-  public Value setValue(long value) {
-    return myActual.setValue(value - myMinus.getValue());
+  public DWord setValue(long value) {
+    myActual.setValue(value - myMinus.getValue());
+    return this;
   }
 
   @Override

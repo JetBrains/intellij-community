@@ -39,6 +39,6 @@ public class BitsUtil {
   public static char readChar(DataInput stream) throws IOException {
     int b1 = stream.readByte();
     int b2 = stream.readByte();
-    return (char) (b1 + (b2 << 8));
+    return (char) (b1 & 0xFF | ((b2 & 0xFF) << 8));
   }
 }

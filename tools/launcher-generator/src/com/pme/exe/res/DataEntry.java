@@ -17,11 +17,9 @@
 
 package com.pme.exe.res;
 
-import com.pme.exe.Bin;
-
-import java.io.IOException;
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.IOException;
 
 /**
  * @author Sergey Zhulin
@@ -29,29 +27,32 @@ import java.io.DataOutput;
  * Time: 3:58:05 PM
  */
 public class DataEntry extends LevelEntry {
-  private final ResourceSectionReader mySection;
-  private RawResource myRawResource = null;
-  public DataEntry( ResourceSectionReader section, Bin.Value offsetHolder ) {
+  private final DWord myRVA;
+  private final DWord mySize;
+  private final RawResource myRawResource;
+  private final DWord myLanguage;
+
+  public DataEntry(ResourceSectionReader section, DWord offset, DWord language) {
     super("DataEntry");
-    addMember(new DWord("RVA"));
-    addMember(new DWord("Size"));
+    myLanguage = language;
+    addMember(myRVA = new DWord("RVA"));
+    addMember(mySize = new DWord("Size"));
     addMember(new DWord("Code Page"));
     addMember(new DWord("Reserved"));
-    mySection = section;
-    addOffsetHolder( new ValuesSub( offsetHolder, mySection.getStartOffset() ) );
+    addOffsetHolder(new ValuesSub(offset, section.getStartOffset()));
+    myRawResource = new RawResource(section, myRVA, mySize);
   }
 
   public RawResource getRawResource() {
     return myRawResource;
   }
 
-  public void initRawData(){
-    myRawResource = new RawResource( mySection, (DWord) getValueMember("RVA"), (DWord) getValueMember("Size"));
-    getLevel().addLevelEntry( myRawResource );
+  public DWord getLanguage() {
+    return myLanguage;
   }
-  public void insertRawData( int index ){
-    myRawResource = new RawResource( mySection, (DWord) getValueMember("RVA"), (DWord) getValueMember("Size"));
-    getLevel().insertLevelEntry( index, myRawResource );
+
+  public void initRawData(){
+    getLevel().addLevelEntry(myRawResource);
   }
 
   @Override
@@ -63,5 +64,13 @@ public class DataEntry extends LevelEntry {
   @Override
   public void write(DataOutput stream) throws IOException {
     super.write(stream);
+  }
+
+  @Override
+  public String toString() {
+    return "DataEntry{" +
+           "RVA=" + myRVA +
+           ", Size=" + mySize +
+           '}';
   }
 }

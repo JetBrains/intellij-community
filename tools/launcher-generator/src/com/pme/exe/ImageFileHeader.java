@@ -27,12 +27,12 @@ import java.io.OutputStreamWriter;
  */
 public class ImageFileHeader extends Bin.Structure {
   private final ImageFileHeader.Machine myMachine;
+  private final Word myNumberOfSections;
 
   public ImageFileHeader() {
     super("Image File Header");
-    myMachine = new Machine();
-    addMember(myMachine);
-    addMember( new Word( "NumberOfSections" ) );
+    myMachine = addMember(new Machine());
+    myNumberOfSections = addMember(new Word("NumberOfSections"));
     addMember( new DWord( "TimeDateStamp" ) );
     addMember( new DWord( "PointerToSymbolTable" ) );
     addMember( new DWord( "NumberOfSymbols" ) );
@@ -42,6 +42,10 @@ public class ImageFileHeader extends Bin.Structure {
 
   public long getMachine() {
     return myMachine.getValue();
+  }
+
+  public Word getNumberOfSections() {
+    return myNumberOfSections;
   }
 
   static class Machine extends Bin.Word{
@@ -58,8 +62,12 @@ public class ImageFileHeader extends Bin.Structure {
         _report(writer ,"Machine: Intel 386" );
       } else if ( machine == 0x0002 ) {
         _report( writer, "Machine: Intel 64" );
+      } else if ( machine == 0x8664 ) {
+        _report( writer, "Machine: AMD64" );
+      } else if ( machine == 0xAA64 ) {
+        _report( writer, "Machine: ARM64" );
       } else {
-        _report( writer, "Machine: Unknown" );
+        _report( writer, String.format("Machine: Unknown (%#06x)", machine));
       }
     }
   }

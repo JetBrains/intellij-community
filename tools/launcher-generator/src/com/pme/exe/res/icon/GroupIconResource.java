@@ -18,8 +18,6 @@
 package com.pme.exe.res.icon;
 
 import com.pme.exe.Bin;
-import com.pme.exe.res.Level;
-import com.pme.exe.res.LevelEntry;
 
 /**
  * @author Sergey Zhulin
@@ -27,17 +25,23 @@ import com.pme.exe.res.LevelEntry;
  * Time: 11:35:48 AM
  */
 public class GroupIconResource extends Bin.Structure {
-  public GroupIconResource( Bin.Value idCount ) {
+
+  private final ArrayOfBins<GroupIconResourceDirectory> myIcons;
+  private final IconHeader myHeader;
+
+  public GroupIconResource() {
     super("GroupIcon");
-    addMember(new IconHeader());
-    Level level = new Level();
-    ArrayOfBins<GroupIconResourceDirectory> arrayOfBins = new ArrayOfBins<>("Icon directories", GroupIconResourceDirectory.class, idCount);
+    myHeader = addMember(new IconHeader());
+    Word count = myHeader.getCount();
+    myIcons = addMember(new ArrayOfBins<>("Icon directories", GroupIconResourceDirectory.class, count));
+    myIcons.setCountHolder(count);
+  }
 
-    addMember(level);
-    Bin[] array = arrayOfBins.getArray();
-    for (Bin bin : array) {
-      level.addLevelEntry((LevelEntry) bin);
-    }
+  public IconHeader getHeader() {
+    return myHeader;
+  }
 
+  public ArrayOfBins<GroupIconResourceDirectory> getIcons() {
+    return myIcons;
   }
 }
