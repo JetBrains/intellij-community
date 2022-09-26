@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.actions
 
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.TipAndTrickBean
-import com.intellij.ide.util.TipUIUtil
+import com.intellij.ide.util.TipUtils
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -22,7 +22,7 @@ class DumpFeaturesAndTipsAction : AnAction(), DumbAware {
         featuresRegistry.getFeatureDescriptor(featureId)?.let { feature ->
           featureTipRow.group = feature.groupId
           featureTipRow.featureProvider = feature.provider?.let { PluginManager.getPluginByClass(it)?.pluginId?.idString }
-          TipUIUtil.getTip(feature)?.let { tip ->
+          TipUtils.getTip(feature)?.let { tip ->
             featureTipRow.tipFile = tip.fileName
             featureTipRow.tipProvider = tip.pluginDescriptor?.pluginId?.idString
             featureTipRow.tipProblem = checkTipLoadingAndParsing(tip)
@@ -45,7 +45,7 @@ class DumpFeaturesAndTipsAction : AnAction(), DumbAware {
   private fun checkTipLoadingAndParsing(tip: TipAndTrickBean): String {
     return try {
       @Suppress("TestOnlyProblems")
-      TipUIUtil.loadAndParseTipStrict(tip)
+      TipUtils.loadAndParseTipStrict(tip)
       ""
     }
     catch (t: Throwable) {

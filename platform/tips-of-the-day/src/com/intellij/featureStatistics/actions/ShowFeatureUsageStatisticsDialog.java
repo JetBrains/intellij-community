@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.actions;
 
 import com.intellij.CommonBundle;
@@ -8,7 +8,7 @@ import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.ui.text.StyledTextPane;
 import com.intellij.ide.ui.text.paragraph.TextParagraph;
 import com.intellij.ide.util.TipAndTrickBean;
-import com.intellij.ide.util.TipUIUtil;
+import com.intellij.ide.util.TipUtils;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -192,8 +192,8 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
           textPane.clear();
         }
         else {
-          TipAndTrickBean tip = TipUIUtil.getTip(selection.iterator().next());
-          List<TextParagraph> paragraphs = TipUIUtil.loadAndParseTip(tip);
+          TipAndTrickBean tip = TipUtils.getTip(selection.iterator().next());
+          List<TextParagraph> paragraphs = TipUtils.loadAndParseTip(tip);
           textPane.setParagraphs(paragraphs);
         }
       }

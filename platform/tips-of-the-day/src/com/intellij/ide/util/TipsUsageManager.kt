@@ -44,7 +44,7 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
     ProductivityFeaturesRegistry.getInstance()?.let { featuresRegistry ->
       for (featureId in featuresRegistry.featureIds) {
         val feature = featuresRegistry.getFeatureDescriptor(featureId)
-        val tip = TipUIUtil.getTip(feature) ?: continue
+        val tip = TipUtils.getTip(feature) ?: continue
         if (!tips.contains(tip)) continue
         if (System.currentTimeMillis() - feature.lastTimeUsed < DateFormatUtil.MONTH) {
           usedTips.add(tip)
@@ -102,7 +102,7 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
 
   private class TipsUsageListener : FeaturesRegistryListener {
     override fun featureUsed(feature: FeatureDescriptor) {
-      val tip = TipUIUtil.getTip(feature) ?: return
+      val tip = TipUtils.getTip(feature) ?: return
       val timestamp = getInstance().shownTips.getLong(tip.fileName)
       if (timestamp != 0L) {
         TipsOfTheDayUsagesCollector.triggerTipUsed(tip.fileName, System.currentTimeMillis() - timestamp)

@@ -43,6 +43,7 @@
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
 
   <xi:include href="intellij.platform.feedback.xml"/>
+  <xi:include href="intellij.platform.tips.xml"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"

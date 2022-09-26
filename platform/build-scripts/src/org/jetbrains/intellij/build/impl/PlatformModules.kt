@@ -112,6 +112,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.idea.community.build.dependencies",
   "intellij.platform.usageView.impl",
   "intellij.platform.ml.impl",
+  "intellij.platform.tips",
 )
 
 object PlatformModules {

@@ -4,7 +4,7 @@ package com.intellij.ide.util
 import com.intellij.ide.ui.text.paragraph.ListParagraph
 import com.intellij.ide.ui.text.paragraph.TextParagraph
 import com.intellij.ide.ui.text.parts.*
-import com.intellij.ide.util.TipUIUtil.IconWithRoundedBorder
+import com.intellij.ide.util.TipUtils.IconWithRoundedBorder
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ui.JBFont

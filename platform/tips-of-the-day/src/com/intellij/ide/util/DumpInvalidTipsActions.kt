@@ -28,7 +28,7 @@ open class DumpInvalidTipsAction : AnAction() {
     val tipToError: List<Pair<TipAndTrickBean, Throwable>> = tips.mapNotNull { tip ->
       try {
         @Suppress("TestOnlyProblems")
-        TipUIUtil.loadAndParseTipStrict(tip)
+        TipUtils.loadAndParseTipStrict(tip)
         null
       }
       catch (throwable: Throwable) {
