@@ -10,7 +10,7 @@ abstract class A {
 
 class B : A(), I {
     override fun equals(other: Any?): Boolean {
-        if (this<caret> === other) return true
+        if (this === other) return true
         if (javaClass != other?.javaClass) return false
         return true
     }

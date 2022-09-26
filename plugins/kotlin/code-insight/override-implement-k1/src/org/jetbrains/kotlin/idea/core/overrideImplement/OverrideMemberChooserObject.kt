@@ -317,7 +317,7 @@ private fun generateFunction(
     } else ""
 
     val factory = KtPsiFactory(project)
-    val functionText = renderer.render(newDescriptor) + body
+    val functionText = "${renderer.render(newDescriptor)} $body"
     return when (descriptor) {
         is ClassConstructorDescriptor -> {
             if (descriptor.isPrimary) {
