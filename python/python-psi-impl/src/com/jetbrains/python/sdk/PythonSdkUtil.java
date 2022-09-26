@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 
 /**
  * Utility methods for Python {@link Sdk} based on the project model and the file system.
- *
+ * <p>
  * TODO: Extract SDK "flavor" specific methods into a "Python SDK provider" so that each SDK flavor can be defined independently
  *
  * @see PySdkUtil for run-time Python SDK utils
@@ -410,6 +410,10 @@ public class PythonSdkUtil {
     return findPythonSdk(ModuleUtilCore.findModuleForPsiElement(element));
   }
 
+  /**
+   * @deprecated path is not unique, use {@link #findSdkByKey(String)} instead
+   */
+  @Deprecated
   @Nullable
   public static Sdk findSdkByPath(@Nullable String path) {
     if (path != null) {
@@ -418,6 +422,11 @@ public class PythonSdkUtil {
     return null;
   }
 
+
+  /**
+   * @deprecated path is not unique, use {@link #findSdkByKey(String)} instead
+   */
+  @Deprecated
   @Nullable
   public static Sdk findSdkByPath(List<? extends Sdk> sdkList, @Nullable String path) {
     if (path != null) {
