@@ -44,7 +44,9 @@ class DistributionBuilderState(pluginsToPublish: Set<PluginLayout>, private val 
     val result = LinkedHashSet<String>()
     result.addAll(platform.includedArtifacts.keys)
 
-    getPluginLayoutsByJpsModuleNames(getEnabledPluginModules(pluginsToPublish, context.productProperties), context)
+    getPluginLayoutsByJpsModuleNames(modules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish,
+                                                                       productProperties = context.productProperties),
+                                     productLayout = context.productProperties.productLayout)
       .flatMapTo(result) { it.includedArtifacts.keys }
     return result
   }
@@ -99,7 +101,7 @@ private fun getEnabledPluginModules(pluginsToPublish: Set<PluginLayout>, product
 private fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): SortedSet<ProjectLibraryData> {
   val result = ObjectLinkedOpenHashSet<ProjectLibraryData>()
 
-  for (plugin in getPluginLayoutsByJpsModuleNames(enabledPluginModules, context)) {
+  for (plugin in getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules, productLayout = context.productProperties.productLayout)) {
     val libsToUnpack = plugin.projectLibrariesToUnpack.values()
     for (moduleName in plugin.includedModuleNames) {
       val dependencies = JpsJavaExtensionService.dependencies(context.findRequiredModule(moduleName))
