@@ -16,13 +16,13 @@ internal class CustomEntityProjectModelInfoProviderBridge<E : WorkspaceEntity>(p
     get() = provider.entityClass
 
   override fun registerFileSets(entity: E, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-    provider.getContentRoots(sequenceOf(entity)).forEach { 
+    provider.getContentRoots(sequenceOf(entity), storage).forEach {
       val module = it.parentModule.findModule(storage)
       if (module != null) {
         registrar.registerFileSet(it.root, WorkspaceFileKind.CONTENT, entity, ModuleContentRootData(module, it.root))
       }
     }
-    provider.getLibraryRoots(sequenceOf(entity)).forEach { libraryRoots ->
+    provider.getLibraryRoots(sequenceOf(entity), storage).forEach { libraryRoots ->
       libraryRoots.classes.forEach { 
         registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL, entity, null)
       }
@@ -40,7 +40,7 @@ internal class CustomEntityProjectModelInfoProviderBridge<E : WorkspaceEntity>(p
         }
       }
     }
-    provider.getExcludeSdkRootStrategies(sequenceOf(entity)).forEach { excludeStrategy -> 
+    provider.getExcludeSdkRootStrategies(sequenceOf(entity), storage).forEach { excludeStrategy ->
       excludeStrategy.excludeUrls.forEach { 
         registrar.registerExcludedRoot(it, entity)
       }
