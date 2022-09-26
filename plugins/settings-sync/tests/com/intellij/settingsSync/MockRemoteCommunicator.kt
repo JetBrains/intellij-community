@@ -4,7 +4,6 @@ import org.junit.Assert
 import java.util.concurrent.CountDownLatch
 
 internal class MockRemoteCommunicator : TestRemoteCommunicator() {
-  private var versionOnServer: SettingsSnapshot? = null
   private var downloadedLatestVersion = false
 
   private lateinit var pushedLatch: CountDownLatch
@@ -27,11 +26,11 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
   override fun awaitForPush(): SettingsSnapshot? {
     pushedLatch = CountDownLatch(1)
     Assert.assertTrue("Didn't await until changes are pushed", pushedLatch.await(5, TIMEOUT_UNIT))
-    return latestPushedSnapshot
+    return versionOnServer
   }
 
   override fun push(snapshot: SettingsSnapshot, force: Boolean, expectedServerVersionId: String?): SettingsSyncPushResult {
-    latestPushedSnapshot = snapshot
+    versionOnServer = snapshot
     if (::pushedLatch.isInitialized) pushedLatch.countDown()
     return SettingsSyncPushResult.Success(null)
   }

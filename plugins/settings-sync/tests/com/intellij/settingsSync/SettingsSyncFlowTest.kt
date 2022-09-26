@@ -43,7 +43,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
-    val pushedSnapshot = remoteCommunicator.latestPushedSnapshot
+    val pushedSnapshot = remoteCommunicator.versionOnServer
     assertNotNull("Nothing has been pushed", pushedSnapshot)
     pushedSnapshot!!.assertSettingsSnapshot {
       fileState(fileName, initialContent)
@@ -65,7 +65,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     initSettingsSync()
 
-    val pushedSnapshot = remoteCommunicator.latestPushedSnapshot
+    val pushedSnapshot = remoteCommunicator.versionOnServer
     assertNotNull("Nothing has been pushed", pushedSnapshot)
     pushedSnapshot!!.assertSettingsSnapshot {
       fileState(fileName, contentBetweenSessions)
@@ -87,7 +87,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     initSettingsSync()
 
-    val pushedSnapshot = remoteCommunicator.latestPushedSnapshot
+    val pushedSnapshot = remoteCommunicator.versionOnServer
     assertNotNull("Nothing has been pushed", pushedSnapshot)
     pushedSnapshot!!.assertSettingsSnapshot {
       fileState(lafXml, lafContent)
@@ -110,7 +110,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
-    val pushedSnapshot = remoteCommunicator.latestPushedSnapshot
+    val pushedSnapshot = remoteCommunicator.versionOnServer
     assertNotNull("Nothing has been pushed", pushedSnapshot)
     pushedSnapshot!!.assertSettingsSnapshot {
       fileState(lafXml, lafContent)
