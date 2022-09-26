@@ -19,4 +19,8 @@ class BadgeIcon(icon: Icon, private val paint: Paint, private val provider: Badg
     g.paint = paint
     g.fill(shape)
   }
+
+  override fun replaceBy(replacer: IconReplacer): BadgeIcon {
+    return BadgeIcon(replacer.replaceIcon(icon), paint, provider)
+  }
 }
