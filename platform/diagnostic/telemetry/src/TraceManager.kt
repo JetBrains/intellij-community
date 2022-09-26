@@ -23,6 +23,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit.SECONDS
 
@@ -60,10 +62,7 @@ object TraceManager {
                                        serviceNamespace = serviceNamespace)
       spanExporters.add(jsonSpanExporter)
 
-      val metricsFile = if (traceFile.endsWith(".json"))
-        traceFile.replace(Regex(".json$"), ".metrics.csv")
-      else
-        "$traceFile.metrics.csv"
+      val metricsFile = deriveMetricsFile(traceFile)
       metricsExporters.add(CsvMetricsExporter(metricsFile))
     }
 
@@ -126,6 +125,16 @@ object TraceManager {
         verboseSdk = sdk
       }
     }
+  }
+
+  private fun deriveMetricsFile(traceFile: String): String {
+    val sessionLocalDateTime = LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault())
+    val datetimeStr = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS")
+      .format(sessionLocalDateTime)
+    val metricsFile =
+      (if (traceFile.endsWith(".json")) traceFile.replace(Regex(".json$"), "")
+      else traceFile) + ".metrics.$datetimeStr.csv"
+    return metricsFile
   }
 
   /**
