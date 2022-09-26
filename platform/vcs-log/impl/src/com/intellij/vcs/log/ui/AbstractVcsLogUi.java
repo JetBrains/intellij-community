@@ -199,7 +199,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
     }
     if (commitId instanceof String) {
       String commitString = (String)commitId;
-      if (VcsLogUtil.HASH_REGEX.matcher(commitString).matches()) {
+      if (VcsLogUtil.HASH_PREFIX_REGEX.matcher(commitString).matches()) {
         return VcsLogBundle.message("vcs.log.commit.or.reference.prefix", VcsLogUtil.getShortHash(commitString));
       }
     }
