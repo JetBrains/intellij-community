@@ -7,7 +7,7 @@ import com.intellij.util.KeyedLazyInstance
 import com.intellij.webSymbols.framework.WebSymbolsFramework
 import org.jetbrains.annotations.NotNull
 
-internal class WebSymbolsFrameworkExtension<T> : KeyedExtensionCollector<T, String> {
+class WebSymbolsFrameworkExtension<T> : KeyedExtensionCollector<T, String> {
 
   val all: Map<WebSymbolsFramework, List<T>>
     get() = WebSymbolsFramework.allAsSequence

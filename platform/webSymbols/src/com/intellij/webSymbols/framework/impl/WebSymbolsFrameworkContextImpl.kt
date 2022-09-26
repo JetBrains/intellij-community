@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems")
+
 package com.intellij.webSymbols.framework.impl
 
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -22,14 +24,10 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.WebSymbolsRegistryManager
-import com.intellij.webSymbols.framework.DependencyProximityProvider
+import com.intellij.webSymbols.framework.*
 import com.intellij.webSymbols.framework.DependencyProximityProvider.Companion.mergeProximity
 import com.intellij.webSymbols.framework.DependencyProximityProvider.DependenciesKind
-import com.intellij.webSymbols.framework.WebSymbolsFramework
-import com.intellij.webSymbols.framework.WebSymbolsFrameworkContext
 import com.intellij.webSymbols.framework.WebSymbolsFrameworkContext.Companion.WEB_FRAMEWORK_CONTEXT_EP
-import com.intellij.webSymbols.framework.WebSymbolsFrameworkContext.Companion.WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED
-import com.intellij.webSymbols.framework.WebSymbolsFrameworksConfiguration
 import com.intellij.webSymbols.impl.WebSymbolsRegistryManagerImpl
 import com.intellij.webSymbols.utils.findOriginalFile
 import java.util.*

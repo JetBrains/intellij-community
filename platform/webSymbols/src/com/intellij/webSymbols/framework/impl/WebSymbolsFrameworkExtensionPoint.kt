@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.framework.impl
 
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.serviceContainer.BaseKeyedLazyInstance
 import com.intellij.util.KeyedLazyInstance
@@ -23,6 +24,7 @@ open class WebSymbolsFrameworkExtensionPoint<T : Any> : BaseKeyedLazyInstance<T>
   constructor(framework: String, instance: T) : super(instance) {
     this.framework = framework
     implementation = instance::class.java.name
+    pluginDescriptor = DefaultPluginDescriptor("test")
   }
 
   override fun getImplementationClassName(): String? {

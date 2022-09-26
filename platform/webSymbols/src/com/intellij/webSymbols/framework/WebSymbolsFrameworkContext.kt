@@ -8,6 +8,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.webSymbols.framework.impl.WebSymbolsFrameworkExtension
+import org.jetbrains.annotations.TestOnly
 
 interface WebSymbolsFrameworkContext {
   /**
@@ -64,7 +65,10 @@ interface WebSymbolsFrameworkContext {
   fun isForbidden(contextFile: VirtualFile, project: Project): Boolean = false
 
   companion object {
-    internal val WEB_FRAMEWORK_CONTEXT_EP = WebSymbolsFrameworkExtension<WebSymbolsFrameworkContext>("com.intellij.webSymbols.frameworkContext")
-    internal val WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED = WebSymbolsFrameworkExtension<WebSymbolsFrameworkContext>("com.intellij.javascript.web.context")
+    @TestOnly
+    @JvmField
+    val WEB_FRAMEWORK_CONTEXT_EP = WebSymbolsFrameworkExtension<WebSymbolsFrameworkContext>("com.intellij.webSymbols.frameworkContext")
   }
 }
+
+internal val WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED = WebSymbolsFrameworkExtension<WebSymbolsFrameworkContext>("com.intellij.javascript.web.context")
