@@ -38,12 +38,6 @@ class DummyMavenServerConnector(project: @NotNull Project,
     return DummyMavenServer(myProject)
   }
 
-  override fun addDownloadListener(listener: MavenServerDownloadListener?) {
-  }
-
-  override fun removeDownloadListener(listener: MavenServerDownloadListener?) {
-  }
-
   override fun stop(wait: Boolean) {
   }
 

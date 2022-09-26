@@ -232,9 +232,8 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     myFixture.configureFromExistingVirtualFile(myProjectPom);
 
     LookupElement[] elements = myFixture.completeBasic();
-    assertSize(2, elements);
 
-    assertCompletionVariants(myFixture, RENDERING_TEXT, "asm", "asm-attrs");
+    assertCompletionVariants(myFixture, RENDERING_TEXT, "asm-attrs", "asm", "asm-analysis", "asm-parent", "asm-tree", "asm-util");
 
     myFixture.type('\n');
 
@@ -308,6 +307,9 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
 
     myFixture.type('\n');
 
+    assertCompletionVariants(myFixture, RENDERING_TEXT, "2.4", "1.4");
+
+    myFixture.type('\n');
 
     myFixture.checkResult(createPomXml("<groupId>test</groupId>" +
                                        "<artifactId>project</artifactId>" +

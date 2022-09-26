@@ -614,7 +614,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                      "<build>\n" +
                      "  <plugins>\n" +
                      "    <plugin>\n" +
-                     "      <artifactId><error descr=\"Plugin 'maven-resources-plugin:' not found\">maven-resources-plugin</error></artifactId>" +
+                     "      <artifactId>maven-resources-plugin</artifactId>" +
                      "      <configuration>\n" +
                      "        <delimiters>\n" +
                      "          <delimiter>${*}</delimiter>\n" +

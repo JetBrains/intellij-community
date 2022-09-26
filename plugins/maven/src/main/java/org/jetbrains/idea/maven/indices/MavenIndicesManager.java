@@ -24,10 +24,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
-import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
-import org.jetbrains.idea.maven.server.MavenServerDownloadListener;
-import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
@@ -76,10 +73,6 @@ public final class MavenIndicesManager implements Disposable {
     if (MavenUtil.isMavenUnitTestModeEnabled()) {
       PathKt.delete(getIndicesDir());
     }
-    MavenServerManager mavenServerManager = MavenServerManager.getInstanceIfCreated();
-    if (mavenServerManager != null) {
-      mavenServerManager.removeDownloadListener(myDownloadListener);
-    }
   }
 
   /**
@@ -105,7 +98,9 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   private void initListeners() {
-    MavenServerManager.getInstance().addDownloadListener(myDownloadListener);
+
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(MavenServerConnector.DOWNLOAD_LISTENER_TOPIC, myDownloadListener);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       MavenProjectsManager.getInstance(myProject).addProjectsTreeListener(new MavenProjectsTree.Listener() {

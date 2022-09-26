@@ -455,18 +455,6 @@ public final class MavenServerManager implements Disposable {
     };
   }
 
-  public void addDownloadListener(MavenServerDownloadListener listener) {
-    synchronized (myMultimoduleDirToConnectorMap) {
-      myMultimoduleDirToConnectorMap.values().forEach(connector -> connector.addDownloadListener(listener));
-    }
-  }
-
-  public void removeDownloadListener(MavenServerDownloadListener listener) {
-    synchronized (myMultimoduleDirToConnectorMap) {
-      myMultimoduleDirToConnectorMap.values().forEach(connector -> connector.removeDownloadListener(listener));
-    }
-  }
-
   public static MavenServerSettings convertSettings(@NotNull Project project, @Nullable MavenGeneralSettings settings) {
     if (settings == null) {
       settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings().getGeneralSettings();
