@@ -260,14 +260,6 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     return myContext;
   }
 
-  public @Nullable DfaValue getPrecalculatedReturnValue() {
-    return myPrecalculatedReturnValue;
-  }
-
-  public @NotNull Nullability getReturnNullability() {
-    return myReturnNullability;
-  }
-
   public String toString() {
     if (myContext instanceof PsiCall) {
       return "CALL_METHOD: " + myContext.getText();
@@ -363,23 +355,20 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
                                                  @NotNull DfaMemoryState state, 
                                                  @NotNull DfaValueFactory factory, 
                                                  PsiMethod realMethod) {
-    if (callArguments.getArguments() != null) {
-      PsiMethod method = myTargetMethod;
-      if (method != null) {
-        CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(method);
-        if (handler != null) {
-          DfaValue value = handler.getMethodResultValue(callArguments, state, factory, method);
-          if (value != null) {
-            return value;
-          }
+    if (callArguments.getArguments() != null && myTargetMethod != null) {
+      CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(myTargetMethod);
+      if (handler != null) {
+        DfaValue value = handler.getMethodResultValue(callArguments, state, factory, myTargetMethod);
+        if (value != null) {
+          return value;
         }
       }
     }
     DfaValue qualifierValue = callArguments.getQualifier();
-    DfaValue precalculated = getPrecalculatedReturnValue();
+    DfaValue precalculated = myPrecalculatedReturnValue;
     PsiType type = getResultType();
 
-    VariableDescriptor descriptor = JavaDfaValueFactory.getAccessedVariableOrGetter(myTargetMethod);
+    VariableDescriptor descriptor = JavaDfaValueFactory.getAccessedVariableOrGetter(realMethod);
     if (descriptor instanceof SpecialField || descriptor != null && qualifierValue instanceof DfaVariableValue) {
       return descriptor.createValue(factory, qualifierValue);
     }

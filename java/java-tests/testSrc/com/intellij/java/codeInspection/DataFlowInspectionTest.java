@@ -723,4 +723,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNestedVersusSuper() { doTest(); }
   public void testChangeFieldUsedInPureMethod() { doTest(); }
   public void testSuppression() { doTest(); }
+  public void testRewiringSubclassMethod() { doTest(); }
 }
