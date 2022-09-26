@@ -239,7 +239,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   protected static JComponent createButtonsSeparator() {
     SeparatorComponent separator = new SeparatorComponent(JBUI.CurrentTheme.List.buttonSeparatorColor(), SeparatorOrientation.VERTICAL);
     separator.setHGap(1);
-    separator.setVGap(0);
+    separator.setVGap(JBUI.CurrentTheme.List.buttonSeparatorInset());
     return separator;
   }
 

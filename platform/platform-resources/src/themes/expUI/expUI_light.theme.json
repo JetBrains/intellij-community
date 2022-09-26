@@ -263,7 +263,8 @@
       "rowHeight": "24",
       "border": "4,0,4,0",
       "Button": {
-        "separatorColor": "Grey13",
+        "separatorColor": "#FFFFFFB3",
+        "separatorInset": 4,
         "hoverBackground": "Blue12",
         "leftRightInset": 8
       },

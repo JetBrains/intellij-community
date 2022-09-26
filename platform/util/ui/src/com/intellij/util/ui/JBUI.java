@@ -1370,6 +1370,10 @@ public final class JBUI {
         return JBColor.namedColor("List.Button.separatorColor", Popup.BACKGROUND);
       }
 
+      static int buttonSeparatorInset() {
+        return getInt("List.Button.separatorInset", 4);
+      }
+
       static Color lineHoverBackground(boolean focused) {
         return JBColor.namedColor("List.Line.hoverBackground", Selection.background(focused));
       }

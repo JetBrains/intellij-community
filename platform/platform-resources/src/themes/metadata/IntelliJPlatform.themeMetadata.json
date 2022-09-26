@@ -1187,6 +1187,11 @@
       "description": "A color for inline buttons separator"
     },
     {
+      "key": "List.Button.separatorInset",
+      "since": "2022.3",
+      "description": "A top an bottom insets for inline buttons separator"
+    },
+    {
       "key": "List.Button.hoverBackground",
       "since": "2022.3",
       "description": "Hover background for inline buttons in list popups"
