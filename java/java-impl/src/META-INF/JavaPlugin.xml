@@ -1954,12 +1954,6 @@
     </intentionAction>
     <intentionAction>
       <language>JAVA</language>
-      <className>com.intellij.codeInsight.intention.impl.ReplaceCastWithVariableAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <language>JAVA</language>
       <className>com.intellij.codeInsight.intention.impl.SortContentAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
