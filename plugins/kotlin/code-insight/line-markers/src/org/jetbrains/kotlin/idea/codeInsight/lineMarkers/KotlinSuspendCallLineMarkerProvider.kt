@@ -6,23 +6,24 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo
 import com.intellij.ide.util.EditSourceUtil
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.parentOfType
+import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import java.awt.event.MouseEvent
 
@@ -36,6 +37,8 @@ class KotlinSuspendCallLineMarkerProvider : LineMarkerProvider {
             PsiComment::class.java,
             KDoc::class.java
         )
+
+        private val COROUTINE_CONTEXT_CALLABLE_ID = CallableId(FqName("kotlin.coroutines"), Name.identifier("coroutineContext"))
     }
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
@@ -76,6 +79,13 @@ class KotlinSuspendCallLineMarkerProvider : LineMarkerProvider {
         val reference = element.mainReference ?: return
 
         analyze(element) {
+            val anchor by lazy {
+                when (element) {
+                    is LeafPsiElement -> element
+                    else -> generateSequence<PsiElement>(element) { it.firstChild }.last()
+                }
+            }
+
             for (symbol in reference.resolveToSymbols()) {
                 if (symbol is KtFunctionSymbol && symbol.isSuspend) {
                     val name = symbol.name.asString()
@@ -90,14 +100,10 @@ class KotlinSuspendCallLineMarkerProvider : LineMarkerProvider {
                         else -> KotlinLineMarkersBundle.message("line.markers.suspend.function.call.description", declarationName)
                     }
 
-                    symbol.createPointer()
-
-                    val anchor = when (element) {
-                        is LeafPsiElement -> element
-                        else -> generateSequence<PsiElement>(element) { it.firstChild }.last()
-                    }
-
-                    result += SuspendCallLineMarkerInfo(anchor, message, declarationName, symbol.createPointer())
+                    result += SuspendCallLineMarkerInfo(anchor, message, declarationName, symbol.psi?.createSmartPointer())
+                } else if (symbol is KtKotlinPropertySymbol && symbol.callableIdIfNonLocal == COROUTINE_CONTEXT_CALLABLE_ID) {
+                    val message = KotlinLineMarkersBundle.message("line.markers.coroutine.context.call.description")
+                    result += SuspendCallLineMarkerInfo(anchor, message, symbol.name.asString(), symbol.psi?.createSmartPointer())
                 }
             }
         }
@@ -107,13 +113,13 @@ class KotlinSuspendCallLineMarkerProvider : LineMarkerProvider {
         anchor: PsiElement,
         message: String,
         @NlsSafe private val declarationName: String,
-        symbolPointer: KtSymbolPointer<KtFunctionSymbol>,
+        targetElementPointer: SmartPsiElementPointer<PsiElement>?,
     ) : MergeableLineMarkerInfo<PsiElement>(
         /* element = */ anchor,
         /* textRange = */ anchor.textRange,
         /* icon = */ KotlinIcons.SUSPEND_CALL,
         /* tooltipProvider = */ { message },
-        /* navHandler = */ SymbolNavigationHandler(symbolPointer),
+        /* navHandler = */ targetElementPointer?.let(::SymbolNavigationHandler),
         /* alignment = */ GutterIconRenderer.Alignment.RIGHT,
         /* accessibleNameProvider = */ { message }
     ) {
@@ -124,22 +130,11 @@ class KotlinSuspendCallLineMarkerProvider : LineMarkerProvider {
         override fun getCommonIcon(infos: List<MergeableLineMarkerInfo<*>>) = infos.firstNotNullOf { it.icon }
     }
 
-    private class SymbolNavigationHandler(private val symbolPointer: KtSymbolPointer<KtFunctionSymbol>) : GutterIconNavigationHandler<PsiElement> {
+    private class SymbolNavigationHandler(
+        private val targetElementPointer: SmartPsiElementPointer<PsiElement>
+    ) : GutterIconNavigationHandler<PsiElement> {
         override fun navigate(event: MouseEvent, element: PsiElement) {
-            val progressMessage = KotlinLineMarkersBundle.message("line.markers.navigate.progress.message.resolving.target.element")
-
-            val task = object : Task.WithResult<PsiElement, Exception>(element.project, progressMessage, true) {
-                private fun getTargetElement(): PsiElement? {
-                    val kotlinElement = element.parentOfType<KtElement>() ?: return null
-                    return analyze(kotlinElement) { symbolPointer.restoreSymbol()?.psi }
-                }
-
-                override fun compute(indicator: ProgressIndicator): PsiElement? {
-                    return ReadAction.nonBlocking<PsiElement>(::getTargetElement).executeSynchronously()
-                }
-            }
-
-            val targetElement = ProgressManager.getInstance().run(task) ?: return
+            val targetElement = targetElementPointer.element ?: return
 
             EditSourceUtil.getDescriptor(targetElement)
                 ?.takeIf { it.canNavigate() }
