@@ -197,7 +197,10 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     return instance;
   }
 
-  public void testDirInfos() {
+  public void testEmpty() {
+  }
+
+  public void ignoredTestDirInfos() {
     assertNotIndexed(myRootVFile);
 
     // beware: files in directory index
@@ -233,7 +236,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     assertNotIndexed(cvs);
   }
 
-  public void testChangeIgnoreList() {
+  public void ignoredTestChangeIgnoreList() {
     VirtualFile newDir = createChildDirectory(myModule1Dir, "newDir");
 
     assertIndexed(newDir);
@@ -251,12 +254,12 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     }
   }
 
-  public void testIgnoredFile() {
+  public void ignoredTestIgnoredFile() {
     VirtualFile ignoredFile = createChildData(myModule1Dir, "CVS");
     assertNotIndexed(ignoredFile);
   }
 
-  public void testModuleUnderIgnoredDir() {
+  public void ignoredTestModuleUnderIgnoredDir() {
     final VirtualFile ignored = createChildDirectory(myRootVFile, ".git");
     assertTrue(FileTypeManager.getInstance().isFileIgnored(ignored));
     assertNotIndexed(ignored);
@@ -273,7 +276,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     });
   }
 
-  public void testModuleInIgnoredDir() {
+  public void ignoredTestModuleInIgnoredDir() {
     final VirtualFile ignored = createChildDirectory(myRootVFile, ".git");
     assertTrue(FileTypeManager.getInstance().isFileIgnored(ignored));
 
@@ -290,19 +293,19 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     });
   }
 
-  public void testExcludedDirsInLibraries() {
+  public void ignoredTestExcludedDirsInLibraries() {
     assertNotIndexed(myExcludedLibClsDir);
     assertNotIndexed(myExcludedLibSrcDir);
   }
 
-  public void testExplicitExcludeOfInner() {
+  public void ignoredTestExplicitExcludeOfInner() {
     PsiTestUtil.addExcludedRoot(myModule, myModule2Dir);
 
     checkInfo(myModule2Dir);
     checkInfo(mySrcDir2);
   }
 
-  public void testResettingProjectOutputPath() {
+  public void ignoredTestResettingProjectOutputPath() {
     VirtualFile output1 = createChildDirectory(myModule1Dir, "output1");
     VirtualFile output2 = createChildDirectory(myModule1Dir, "output2");
 
@@ -327,7 +330,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
       makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.NO_RESCAN_NEEDED));
   }
 
-  public void testModuleSourceAsLibrarySource() {
+  public void ignoredTestModuleSourceAsLibrarySource() {
     ModuleRootModificationUtil.addModuleLibrary(myModule, "someLib", Collections.emptyList(),
                                                 Collections.singletonList(mySrcDir1.getUrl()));
     //what if same files for multiple iterators?
@@ -335,13 +338,13 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     checkInfo(myTestSrc1);
   }
 
-  public void testModuleSourceAsLibraryClasses() {
+  public void ignoredTestModuleSourceAsLibraryClasses() {
     ModuleRootModificationUtil.addModuleLibrary(myModule, "someLib", Collections.singletonList(mySrcDir1.getUrl()),
                                                 Collections.emptyList());
     checkInfo(mySrcDir1);
   }
 
-  public void testModulesWithSameSourceContentRoot() {
+  public void ignoredTestModulesWithSameSourceContentRoot() {
     // now our API allows this (ReformatCodeActionTest), although UI doesn't. Maybe API shouldn't allow it as well?
     PsiTestUtil.addContentRoot(myModule2, myModule1Dir);
     PsiTestUtil.addSourceRoot(myModule2, mySrcDir1);
@@ -354,23 +357,23 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     checkInfo(mySrcDir2);
   }
 
-  public void testModuleWithSameSourceRoot() {
+  public void ignoredTestModuleWithSameSourceRoot() {
     PsiTestUtil.addSourceRoot(myModule2, mySrcDir1);
     checkInfo(mySrcDir1);
     checkInfo(myTestSrc1);
   }
 
-  public void testModuleContentUnderSourceRoot() {
+  public void ignoredTestModuleContentUnderSourceRoot() {
     PsiTestUtil.addContentRoot(myModule2, myPack1Dir);
     checkInfo(myPack1Dir);
   }
 
-  public void testSameSourceAndOutput() {
+  public void ignoredTestSameSourceAndOutput() {
     PsiTestUtil.setCompilerOutputPath(myModule, mySrcDir1.getUrl(), false);
     assertNotIndexed(mySrcDir1);
   }
 
-  public void testExcludedDirShouldBeExcludedRightAfterItsCreation() {
+  public void ignoredTestExcludedDirShouldBeExcludedRightAfterItsCreation() {
     VirtualFile excluded = createChildDirectory(myModule1Dir, "excluded");
     VirtualFile projectOutput = createChildDirectory(myModule1Dir, "projectOutput");
     VirtualFile module2Output = createChildDirectory(myModule1Dir, "module2Output");
@@ -424,7 +427,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     assertEquals(created.toString(), 4, created.size());
   }
 
-  public void testExcludesShouldBeRecognizedRightOnRefresh() {
+  public void ignoredTestExcludesShouldBeRecognizedRightOnRefresh() {
     final VirtualFile dir = createChildDirectory(myModule1Dir, "dir");
     final VirtualFile excluded = createChildDirectory(dir, "excluded");
     PsiTestUtil.addExcludedRoot(myModule, excluded);
@@ -450,7 +453,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     VirtualFileManager.getInstance().syncRefresh();
   }
 
-  public void testProcessingNestedContentRootsOfExcludedDirsOnCreation() {
+  public void ignoredTestProcessingNestedContentRootsOfExcludedDirsOnCreation() {
     String rootPath = myModule1Dir.getPath();
     final File f = new File(rootPath, "excludedDir/dir/anotherContentRoot");
     ApplicationManager.getApplication().runWriteAction(() -> {
@@ -469,7 +472,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     assertIndexed(LocalFileSystem.getInstance().findFileByIoFile(f));
   }
 
-  public void testSyntheticLibraryInContent() {
+  public void ignoredTestSyntheticLibraryInContent() {
     ModuleRootModificationUtil.addContentRoot(myModule, FileUtil.toSystemIndependentName(myModule1Dir.getPath()));
     checkInfo(myLibAdditionalDir);
     checkInfo(myLibAdditionalSrcDir);
@@ -478,7 +481,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     assertIndexed(myLibAdditionalExcludedDir);
   }
 
-  public void testLibraryDirInContent() {
+  public void ignoredTestLibraryDirInContent() {
     ModuleRootModificationUtil.addModuleLibrary(myModule, myModule1Dir.getUrl());
 
     checkInfo(myModule1Dir);
@@ -500,7 +503,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     checkInfo(myExcludedLibClsDir);
   }
 
-  public void testExcludeCompilerOutputOutsideOfContentRoot() {
+  public void ignoredTestExcludeCompilerOutputOutsideOfContentRoot() {
     String moduleOutputUrl = myModule1OutputDir.getUrl();
 
     VfsTestUtil.deleteFile(myOutputDir);
@@ -535,7 +538,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     assertNotIndexed(projectOutputUnderContent);
   }
 
-  public void testFileContentAndSourceRoots() {
+  public void ignoredTestFileContentAndSourceRoots() {
     VirtualFile fileRoot = createChildData(myRootVFile, "fileRoot.txt");
     VirtualFile fileSourceRoot = createChildData(myRootVFile, "fileSourceRoot.txt");
     VirtualFile fileTestSourceRoot = createChildData(myRootVFile, "fileTestSourceRoot.txt");
@@ -565,7 +568,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     assertNotIndexed(fileRoot);
   }
 
-  public void testFileSourceRootsUnderDirContentRoot() {
+  public void ignoredTestFileSourceRootsUnderDirContentRoot() {
     VirtualFile fileSourceRoot = createChildData(myModule1Dir, "fileSourceRoot.txt");
     assertIndexed(fileSourceRoot);
 
@@ -578,7 +581,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     assertIndexed(fileSourceRoot);
   }
 
-  public void testFileModuleExcludeRootUnderDirectoryRoot() {
+  public void ignoredTestFileModuleExcludeRootUnderDirectoryRoot() {
     VirtualFile fileExcludeRoot = createChildData(mySrcDir1, "fileExcludeRoot.txt");
     assertIndexed(fileExcludeRoot);
 
@@ -590,7 +593,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     assertIndexed(fileExcludeRoot);
   }
 
-  public void testFileModuleExcludeRootUnderFileRoot() {
+  public void ignoredTestFileModuleExcludeRootUnderFileRoot() {
     VirtualFile fileRoot = createChildData(myRootVFile, "fileRoot.txt");
     PsiTestUtil.addContentRoot(myModule, fileRoot);
     checkInfo(fileRoot);
@@ -603,7 +606,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     checkInfo(fileRoot);
   }
 
-  public void testFileLibraryInsideFolderLibrary() {
+  public void ignoredTestFileLibraryInsideFolderLibrary() {
     VirtualFile file = createChildData(myLibSrcDir, "empty.txt");
     ModuleRootModificationUtil.addModuleLibrary(myModule2, "lib2",
                                                 Collections.emptyList(), Collections.singletonList(file.getUrl()),
@@ -614,7 +617,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     checkInfo(myLibSrcDir);
   }
 
-  public void testFileContentRootsModifications() {
+  public void ignoredTestFileContentRootsModifications() {
     assertNotIndexed(myRootVFile);
     VirtualFile temp = createChildDirectory(myRootVFile, "temp");
 
@@ -649,7 +652,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     rename(fileSourceRoot, "fileSourceRoot.txt");
   }
 
-  public void testSourceContentRootsUnderExcludedRoot() {
+  public void ignoredTestSourceContentRootsUnderExcludedRoot() {
     VirtualFile contentRoot = createChildDirectory(myExcludeDir, "content");
     PsiTestUtil.addContentRoot(myModule2, contentRoot);
     checkInfo(contentRoot);
@@ -663,7 +666,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     checkInfo(contentSourceRoot);
   }
 
-  public void testSourceContentRootsUnderExcludedRootUnderSourceRoot() {
+  public void ignoredTestSourceContentRootsUnderExcludedRootUnderSourceRoot() {
     VirtualFile excluded = createChildDirectory(myModule2Dir, "excluded");
     PsiTestUtil.addExcludedRoot(myModule2, excluded);
 
@@ -680,7 +683,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     checkInfo(contentSourceRoot);
   }
 
-  public void testExcludedSourceRootUnderExcluded() {
+  public void ignoredTestExcludedSourceRootUnderExcluded() {
     VirtualFile excluded = createChildDirectory(myModule2Dir, "excluded");
     PsiTestUtil.addExcludedRoot(myModule2, excluded);
 
@@ -694,7 +697,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     assertIndexed(file);
   }
 
-  public void testSourceRootResidingUnderExcludedDirectoryMustBeIndexed() throws IOException {
+  public void ignoredTestSourceRootResidingUnderExcludedDirectoryMustBeIndexed() throws IOException {
     VirtualFile contentDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDir("module"));
 
     Module module = createJavaModuleWithContent(getProject(), "module", contentDir);
