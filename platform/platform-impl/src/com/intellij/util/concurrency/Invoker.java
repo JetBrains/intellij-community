@@ -41,10 +41,10 @@ public abstract class Invoker implements Disposable {
   private final String description;
   private volatile boolean disposed;
 
-  private Invoker(@NotNull String prefix, @NotNull Disposable parent, @NotNull ThreeState useReadAction) {
-    description = "Invoker." + UID.getAndIncrement()+"."+prefix + (useReadAction != ThreeState.UNSURE ? ".ReadAction="+useReadAction : "") + ": "+parent;
+  private Invoker(@NotNull String prefix, @NotNull String parentName, @NotNull ThreeState useReadAction) {
+    String readActionDescriptionPart = useReadAction != ThreeState.UNSURE ? ".ReadAction=" + useReadAction : "";
+    description = "Invoker." + UID.getAndIncrement() + "." + prefix + readActionDescriptionPart + ": " + parentName;
     this.useReadAction = useReadAction;
-    Disposer.register(parent, this);
   }
 
   @Override
@@ -380,7 +380,8 @@ public abstract class Invoker implements Disposable {
      */
     @Deprecated(forRemoval = true)
     public EDT(@NotNull Disposable parent) {
-      super("EDT", parent, ThreeState.UNSURE);
+      super("EDT", parent.toString(), ThreeState.UNSURE);
+      Disposer.register(parent, this);
     }
 
     @Override
@@ -411,8 +412,9 @@ public abstract class Invoker implements Disposable {
     private volatile Thread thread;
 
     public BackgroundThread(@NotNull Disposable parent) {
-      super("Background.Thread", parent, ThreeState.YES);
+      super("Background.Thread", parent.toString(), ThreeState.YES);
       executor = AppExecutorUtil.createBoundedScheduledExecutorService(toString(), 1);
+      Disposer.register(parent, this);
     }
 
     @Override
@@ -460,8 +462,9 @@ public abstract class Invoker implements Disposable {
     }
 
     private Background(@NotNull Disposable parent, @NotNull ThreeState useReadAction, int maxThreads) {
-      super(maxThreads != 1 ? "Pool(" + maxThreads + ")" : "Thread", parent, useReadAction);
+      super(maxThreads != 1 ? "Pool(" + maxThreads + ")" : "Thread", parent.toString(), useReadAction);
       executor = AppExecutorUtil.createBoundedScheduledExecutorService(toString(), maxThreads);
+      Disposer.register(parent, this);
     }
 
     @Override
