@@ -175,7 +175,11 @@ public class TestCaseLoader {
         testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass &&
         TestFrameworkUtil.canRunTest(testCaseClass)) {
 
-      if (SelfSeedingTestCase.class.isAssignableFrom(testCaseClass) || matchesCurrentBucket(testCaseClass.getName())) {
+      var isFairBucketingInitialization = IS_FAIR_BUCKETING && BUCKETS.isEmpty();
+
+      if (SelfSeedingTestCase.class.isAssignableFrom(testCaseClass)
+          || isFairBucketingInitialization
+          || matchesCurrentBucket(testCaseClass.getName())) {
         return true;
       }
     }
@@ -205,17 +209,19 @@ public class TestCaseLoader {
    */
   public static void initFairBuckets() {
     if (BUCKETS.isEmpty()) {
+      System.out.println("Fair buckets initialization started ...");
+
       var testCaseLoader = new TestCaseLoader("");
 
       for (Path classesRoot : TestAll.getClassRoots()) {
-
         ClassFinder classFinder = new ClassFinder(classesRoot.toFile(), "", INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
+
         testCaseLoader.loadTestCases(classesRoot.getFileName().toString(), classFinder.getClasses());
       }
 
       var testCaseClasses = testCaseLoader.getClasses();
 
-      System.out.printf("Fair buckets initialization. Loaded classes %s%n", testCaseClasses.size());
+      System.out.printf("Fair buckets initialization. Sieved classes %s%n", testCaseClasses.size());
       testCaseClasses.forEach(testCaseClass -> matchesCurrentBucketFair(testCaseClass.getName(), TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX));
     }
   }
@@ -278,6 +284,7 @@ public class TestCaseLoader {
     if (TestCase.class.isAssignableFrom(testCaseClass) || TestSuite.class.isAssignableFrom(testCaseClass)) {
       return true;
     }
+
     try {
       final Method suiteMethod = testCaseClass.getMethod("suite");
       if (Test.class.isAssignableFrom(suiteMethod.getReturnType()) && (suiteMethod.getModifiers() & Modifier.STATIC) != 0) {
@@ -287,12 +294,14 @@ public class TestCaseLoader {
     catch (NoSuchMethodException ignored) {
     }
 
-    return TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false);
+    return TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)
+           || TestFrameworkUtil.isJUnit5TestClass(testCaseClass, false);
   }
 
   private boolean shouldExcludeTestClass(String moduleName, Class<?> testCaseClass) {
     if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(testCaseClass.getSimpleName())) return true;
     String className = testCaseClass.getName();
+
     return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass) || isExcludeFromTestDiscovery(testCaseClass);
   }
 
@@ -310,7 +319,9 @@ public class TestCaseLoader {
     for (String className : classNamesIterator) {
       try {
         Class<?> candidateClass = Class.forName(className, false, getClassLoader());
-        if (isClassTestCase(candidateClass, moduleName)) myClassSet.add(candidateClass);
+        if (isClassTestCase(candidateClass, moduleName)) {
+          myClassSet.add(candidateClass);
+        }
       }
       catch (Throwable e) {
         String message = "Cannot load class " + className + ": " + e.getMessage();
