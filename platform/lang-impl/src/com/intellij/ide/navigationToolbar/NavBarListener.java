@@ -38,6 +38,7 @@ import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,26 +59,31 @@ public final class NavBarListener
              PsiTreeChangeListener, ModuleRootListener, NavBarModelListener, PropertyChangeListener, KeyListener, WindowFocusListener,
              LafManagerListener, DynamicPluginListener, VirtualFileAppearanceListener, AdditionalLibraryRootsListener {
   private static final String LISTENER = "NavBarListener";
-  private static final String BUS = "NavBarMessageBus";
   private final NavBarPanel myPanel;
   private boolean shouldFocusEditor;
 
-  static void subscribeTo(@NotNull NavBarPanel panel) {
-    if (panel.getClientProperty(LISTENER) != null) {
-      unsubscribeFrom(panel);
+  @NotNull
+  @Contract(pure=true) // to discourage abandoning the return value
+  static Disposable subscribeTo(@NotNull NavBarPanel panel) {
+    Disposable disposable = Disposer.newDisposable();
+    Disposable old = (Disposable)panel.getClientProperty(LISTENER);
+    if (old != null) {
+      Disposer.dispose(old);
+      panel.putClientProperty(LISTENER, null);
     }
 
     final NavBarListener listener = new NavBarListener(panel);
     final Project project = panel.getProject();
     if (project.isDisposed()) {
-      return;
+      return disposable;
     }
-    panel.putClientProperty(LISTENER, listener);
+    panel.putClientProperty(LISTENER, disposable);
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(listener);
-    FileStatusManager.getInstance(project).addFileStatusListener(listener);
-    PsiManager.getInstance(project).addPsiTreeChangeListener(listener);
+    Disposer.register(disposable, () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(listener));
+    FileStatusManager.getInstance(project).addFileStatusListener(listener, disposable);
+    PsiManager.getInstance(project).addPsiTreeChangeListener(listener, disposable);
 
-    MessageBusConnection connection = project.getMessageBus().connect();
+    MessageBusConnection connection = project.getMessageBus().connect(disposable);
     connection.subscribe(AnActionListener.TOPIC, listener);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC, listener);
@@ -86,36 +92,20 @@ public final class NavBarListener
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
     connection.subscribe(DynamicPluginListener.TOPIC, listener);
     connection.subscribe(VirtualFileAppearanceListener.TOPIC, listener);
-    panel.putClientProperty(BUS, connection);
     panel.addKeyListener(listener);
+    Disposer.register(disposable, ()->panel.removeKeyListener(listener));
 
     if (panel.isInFloatingMode()) {
       Window window = SwingUtilities.windowForComponent(panel);
       if (window != null) {
         window.addWindowFocusListener(listener);
+        Disposer.register(disposable, ()->window.removeWindowFocusListener(listener));
       }
     }
     else {
       ApplicationManager.getApplication().getMessageBus().connect(connection).subscribe(LafManagerListener.TOPIC, listener);
     }
-  }
-
-  static void unsubscribeFrom(@NotNull NavBarPanel panel) {
-    NavBarListener listener = (NavBarListener)panel.getClientProperty(LISTENER);
-    panel.putClientProperty(LISTENER, null);
-    if (listener == null) {
-      return;
-    }
-
-    Project project = panel.getProject();
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(listener);
-    FileStatusManager.getInstance(project).removeFileStatusListener(listener);
-    PsiManager.getInstance(project).removePsiTreeChangeListener(listener);
-    MessageBusConnection connection = (MessageBusConnection)panel.getClientProperty(BUS);
-    panel.putClientProperty(BUS, null);
-    if (connection != null) {
-      connection.disconnect();
-    }
+    return disposable;
   }
 
   private NavBarListener(@NotNull NavBarPanel panel) {
