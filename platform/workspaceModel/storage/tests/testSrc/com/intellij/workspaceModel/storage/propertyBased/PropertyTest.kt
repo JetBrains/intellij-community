@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.propertyBased
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.createBuilderFrom
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.entities.test.api.AnotherSource
 import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
@@ -27,7 +24,8 @@ class PropertyTest {
     PropertyChecker.checkScenarios {
       ImperativeCommand { env ->
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
-        env.executeCommands(getEntityManipulation(workspace))
+        val detachedEntities = ArrayList<WorkspaceEntity>()
+        env.executeCommands(getEntityManipulation(workspace, detachedEntities))
         workspace.assertConsistency()
       }
     }
