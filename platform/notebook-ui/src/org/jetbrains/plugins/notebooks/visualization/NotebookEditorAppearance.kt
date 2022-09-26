@@ -1,15 +1,20 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.impl.EditorImpl
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.EditorInlaysManager
+import com.intellij.openapi.util.Key
 import java.awt.Color
 
 
 /**
  * Constants and functions that affects only visual representation, like colors, sizes of elements, etc.
  */
-interface NotebookEditorAppearance: NotebookEditorAppearanceColors, NotebookEditorAppearanceSizes
+interface NotebookEditorAppearance: NotebookEditorAppearanceColors, NotebookEditorAppearanceSizes {
+  companion object {
+    val NOTEBOOK_APPEARANCE_KEY = Key.create<NotebookEditorAppearance>(NotebookEditorAppearance::class.java.name)
+  }
+}
 
 
 interface NotebookEditorAppearanceSizes {
@@ -85,10 +90,10 @@ object DefaultNotebookEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   override val CELL_TOOLBAR_TOTAL_HEIGHT = INNER_CELL_TOOLBAR_HEIGHT + SPACE_BELOW_CELL_TOOLBAR
   override val PROGRESS_STATUS_HEIGHT = 2
 
-  override val JUPYTER_CELL_SPACERS_INLAY_PRIORITY = EditorInlaysManager.INLAY_PRIORITY + 10
-  override val JUPYTER_BELOW_OUTPUT_CELL_SPACERS_INLAY_PRIORITY = EditorInlaysManager.INLAY_PRIORITY - 10
+  override val JUPYTER_CELL_SPACERS_INLAY_PRIORITY = 10
+  override val JUPYTER_BELOW_OUTPUT_CELL_SPACERS_INLAY_PRIORITY = -10
   override val JUPYTER_CELL_TOOLBAR_INLAY_PRIORITY = JUPYTER_CELL_SPACERS_INLAY_PRIORITY + 10
-  override val NOTEBOOK_OUTPUT_INLAY_PRIORITY: Int = EditorInlaysManager.INLAY_PRIORITY + 5
+  override val NOTEBOOK_OUTPUT_INLAY_PRIORITY: Int = 5
 
   override val EXTRA_PADDING_EXECUTION_COUNT = 25
   override val EXTRA_GUTTER_AREA_WIDTH_EXECUTION_COUNT = 40

@@ -126,26 +126,6 @@ class NotebookGutterLineMarkerManager {
   }
 }
 
-abstract class NotebookLineMarkerRenderer : LineMarkerRendererEx {
-  override fun getPosition(): LineMarkerRendererEx.Position = LineMarkerRendererEx.Position.CUSTOM
-
-  protected fun getInlayBounds(editor: EditorEx, linesRange: IntRange) : Rectangle? {
-    val startOffset = editor.document.getLineStartOffset(linesRange.first)
-    val endOffset = editor.document.getLineStartOffset(linesRange.last)
-    val inlays = editor.inlayModel.getBlockElementsInRange(startOffset, endOffset)
-
-    val inlay = inlays.firstOrNull()
-    return inlay?.bounds
-  }
-  protected fun getInlayBounds(editor: EditorEx, linesRange: IntRange, inlayId: Long) : Rectangle? {
-    val startOffset = editor.document.getLineStartOffset(linesRange.first)
-    val endOffset = editor.document.getLineEndOffset(linesRange.last)
-    val inlays = editor.inlayModel.getBlockElementsInRange(startOffset, endOffset)
-
-    val inlay = inlays.firstOrNull { it is RangeMarkerEx && it.id == inlayId }
-    return inlay?.bounds
-  }
-}
 class NotebookCellLineNumbersLineMarkerRenderer(private val lineRange: IntRange) : NotebookLineMarkerRenderer() {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
     val visualLineStart = editor.xyToVisualPosition(Point(0, g.clip.bounds.y)).line
@@ -208,7 +188,7 @@ class NotebookTextCellBackgroundLineMarkerRenderer(private val lineRange: IntRan
     paintCaretRow(editor, g, lineRange)
     val appearance = editor.notebookAppearance
     appearance.getCellStripeColor(editor, lineRange)?.let {
-      appearance.paintCellStripe(g, r, it, top, height)
+      paintCellStripe(appearance, g, r, it, top, height)
     }
   }
 }
