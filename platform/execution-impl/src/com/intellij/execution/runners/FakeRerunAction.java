@@ -37,7 +37,7 @@ public class FakeRerunAction extends AnAction {
                                                           StringUtil.escapeMnemonics(environment.getRunProfile().getName())));
       Icon rerunIcon = ExperimentalUI.isNewUI() ? environment.getExecutor().getRerunIcon() : environment.getExecutor().getIcon();
       boolean isRestart = ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) || ExecutionManagerImpl.isProcessRunning(getDescriptor(event));
-      presentation.setIcon(isRestart ? AllIcons.Actions.Restart : rerunIcon);
+      presentation.setIcon(isRestart && !ExperimentalUI.isNewUI() ? AllIcons.Actions.Restart : rerunIcon);
       presentation.setEnabled(isEnabled(event));
       return;
     }
