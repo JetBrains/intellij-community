@@ -3,6 +3,7 @@ package com.intellij.psi
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -33,9 +34,15 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
     if (memValue != null) {
       return if (memValue === NULL_MARKER) null else memValue
     }
-    val persisted = readValue(virtualFile)
-    userDataKey[virtualFile] = persisted ?: NULL_MARKER
-    return persisted
+
+    if (READ_PERSISTENT_VALUE) {
+      val persisted = readValue(virtualFile)
+      userDataKey[virtualFile] = persisted ?: NULL_MARKER
+      return persisted
+    }
+    else {
+      return null
+    }
   }
 
   override fun setPersistentValue(virtualFile: VirtualFile?, newValue: T?): Boolean {
@@ -100,7 +107,20 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
 
   companion object {
     @JvmStatic
-    private val NULL_MARKER = Object()
+    @get:VisibleForTesting
+    val READ_PERSISTENT_VALUE: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      Registry.`is`("retrieve.pushed.properties.from.vfs", false) or Registry.`is`("scanning.in.smart.mode", false)
+    }
+
+    @JvmStatic
+    private val NULL_MARKER by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      if (Registry.`is`("cache.nulls.for.pushed.properties", false) or Registry.`is`("scanning.in.smart.mode", false)) {
+        Object()
+      }
+      else {
+        null
+      }
+    }
 
     @JvmStatic
     private val LOG = Logger.getInstance(FilePropertyKeyImpl::class.java)

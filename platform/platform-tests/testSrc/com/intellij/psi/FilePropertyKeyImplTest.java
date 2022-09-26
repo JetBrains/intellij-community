@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightVirtualFile;
 import junit.framework.TestCase;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -55,6 +56,7 @@ public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
 
   @Test
   public void testReadFromFile() {
+    Assume.assumeTrue(FilePropertyKeyImpl.getREAD_PERSISTENT_VALUE());
     VirtualFile file = createFile("Foo.java", "").getVirtualFile();
     TestCase.assertTrue("Write sample1 to file", key.setPersistentValue(file, sample1));
     TestCase.assertEquals(sample1, key.getPersistentValue(file));
