@@ -28,6 +28,7 @@ import com.intellij.webSymbols.framework.DependencyProximityProvider.Dependencie
 import com.intellij.webSymbols.framework.WebFramework
 import com.intellij.webSymbols.framework.WebFrameworkContext
 import com.intellij.webSymbols.framework.WebFrameworkContext.Companion.WEB_FRAMEWORK_CONTEXT_EP
+import com.intellij.webSymbols.framework.WebFrameworkContext.Companion.WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED
 import com.intellij.webSymbols.framework.WebFrameworksConfiguration
 import com.intellij.webSymbols.impl.WebSymbolsRegistryManagerImpl
 import com.intellij.webSymbols.utils.findOriginalFile
@@ -213,23 +214,26 @@ private fun isForbiddenFromProviders(framework: String,
                                      file: VirtualFile,
                                      project: Project,
                                      disableWhen: List<WebFrameworksConfiguration.DisablementRules>?): Boolean =
-  WEB_FRAMEWORK_CONTEXT_EP.allFor(framework).any { it.isForbidden(file, project) }
+  WEB_FRAMEWORK_CONTEXT_EP.allFor(framework).plus(WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED.allFor(framework))
+    .any { it.isForbidden(file, project) }
   || disableWhen?.any { matchFileName(file.name, it.fileNamePatterns) || matchFileExt(file.name, it.fileExtensions) } == true
 
 private fun isAnyForbidden(context: VirtualFile, project: Project): Boolean =
-  WEB_FRAMEWORK_CONTEXT_EP.forAny().any { it.isForbidden(context, project) }
+  WEB_FRAMEWORK_CONTEXT_EP.forAny().plus(WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED.forAny()).any { it.isForbidden(context, project) }
 
 private fun findEnabledFromProviders(psiFile: PsiFile): WebFramework? =
-  WEB_FRAMEWORK_CONTEXT_EP.all.asSequence().filter { extension -> extension.value.any { it.isEnabled(psiFile) } }.firstOrNull()?.key
+  WEB_FRAMEWORK_CONTEXT_EP.all.asSequence().plus(WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED.all.asSequence())
+    .filter { extension -> extension.value.any { it.isEnabled(psiFile) } }.firstOrNull()?.key
 
 private fun findEnabledFromProviders(file: VirtualFile, project: Project): WebFramework? =
-  WEB_FRAMEWORK_CONTEXT_EP.all.asSequence().filter { extension -> extension.value.any { it.isEnabled(file, project) } }.firstOrNull()?.key
+  WEB_FRAMEWORK_CONTEXT_EP.all.asSequence().plus(WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED.all.asSequence())
+    .filter { extension -> extension.value.any { it.isEnabled(file, project) } }.firstOrNull()?.key
 
 private fun webContextProximityFromProviders(framework: String,
                                              psiDir: PsiDirectory): CachedValueProvider.Result<Int?> {
   val dependencies = mutableSetOf<Any>()
   var proximity: Int? = null
-  for (provider in WEB_FRAMEWORK_CONTEXT_EP.allFor(framework)) {
+  for (provider in WEB_FRAMEWORK_CONTEXT_EP.allFor(framework).plus(WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED.allFor(framework))) {
     val result = provider.isEnabled(psiDir)
     result.value?.let {
       if (proximity == null) {

@@ -65,5 +65,6 @@ interface WebFrameworkContext {
 
   companion object {
     internal val WEB_FRAMEWORK_CONTEXT_EP = WebFrameworkExtension<WebFrameworkContext>("com.intellij.webSymbols.context")
+    internal val WEB_FRAMEWORK_CONTEXT_EP_DEPRECATED = WebFrameworkExtension<WebFrameworkContext>("com.intellij.javascript.web.context")
   }
 }

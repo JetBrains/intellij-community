@@ -7,7 +7,7 @@ import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.TestOnly
 
-class WebFrameworkExtensionPoint<T : Any> : BaseKeyedLazyInstance<T>, KeyedLazyInstance<T> {
+open class WebFrameworkExtensionPoint<T : Any> : BaseKeyedLazyInstance<T>, KeyedLazyInstance<T> {
   // these must be public for scrambling compatibility
   @Attribute("framework")
   @RequiredElement
@@ -17,7 +17,7 @@ class WebFrameworkExtensionPoint<T : Any> : BaseKeyedLazyInstance<T>, KeyedLazyI
   @RequiredElement
   var implementation: String? = null
 
-  internal constructor() {}
+  constructor() : super()
 
   @TestOnly
   constructor(framework: String, instance: T) : super(instance) {
