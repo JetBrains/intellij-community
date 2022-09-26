@@ -118,7 +118,7 @@ public final class NavBarListener
     }
   }
 
-  NavBarListener(NavBarPanel panel) {
+  private NavBarListener(@NotNull NavBarPanel panel) {
     myPanel = panel;
     myPanel.addFocusListener(this);
     if (myPanel.allowNavItemsFocus()) {
@@ -142,7 +142,7 @@ public final class NavBarListener
     }
     myPanel.updateItems();
     final List<NavBarItem> items = myPanel.getItems();
-    if (!myPanel.isInFloatingMode() && items.size() > 0) {
+    if (!myPanel.isInFloatingMode() && !items.isEmpty()) {
       myPanel.setContextComponent(items.get(items.size() - 1));
     } else {
       myPanel.setContextComponent(null);
