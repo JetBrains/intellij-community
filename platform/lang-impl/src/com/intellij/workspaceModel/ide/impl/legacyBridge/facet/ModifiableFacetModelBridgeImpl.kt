@@ -112,12 +112,9 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   }
 
   override fun getNewName(facet: Facet<*>): String {
-    if (facet is FacetBridge<*>) {
-      return facet.getNewName(diff, moduleEntity)
-    } else {
-      val entity = diff.facetMapping().getEntities(facet).single() as FacetEntity
-      return entity.name
-    }
+    val entityTypeToFacetContributor = WorkspaceFacetContributor.EP_NAME.extensions.associateBy { it.rootEntityType }
+    val entity = diff.facetMapping().getEntities(facet).single()
+    return entityTypeToFacetContributor[entity.getEntityInterface()]!!.getFacetName(entity)
   }
 
   override fun commit() {
@@ -173,12 +170,11 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   }
 
   override fun isNewFacet(facet: Facet<*>): Boolean {
-    if (facet is FacetBridge<*>) {
-      return facet.isNew(diff, moduleEntity)
-    } else {
-      val entity = diff.facetMapping().getEntities(facet).singleOrNull() as FacetEntity?
-      return entity != null && entity.persistentId !in initialStorage
-    }
+    val entity = diff.facetMapping().getEntities(facet).singleOrNull()
+    if (entity == null) return false
+    return if (entity is FacetEntity) {
+      entity.persistentId !in initialStorage
+    } else true
   }
 
   override fun addListener(listener: ModifiableFacetModel.Listener, parentDisposable: Disposable) {

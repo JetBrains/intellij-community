@@ -39,7 +39,7 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
     val entityTypeToFacetContributor = WorkspaceFacetContributor.EP_NAME.extensions.associateBy { it.rootEntityType }
     val facetRelatedEntities = entityTypeToFacetContributor.flatMap { module.entityStorage.current.entities(it.key) }.filter { entity ->
       val facetContributor = entityTypeToFacetContributor[entity.getEntityInterface()]!!
-      isThisModule(facetContributor.getRelatedModuleEntity(entity))
+      isThisModule(facetContributor.getParentModuleEntity(entity))
     }.toList()
     model.checkConsistency(facetRelatedEntities, entityTypeToFacetContributor)
   }

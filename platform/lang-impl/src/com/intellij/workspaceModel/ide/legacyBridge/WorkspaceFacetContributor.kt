@@ -27,6 +27,7 @@ import org.jetbrains.annotations.ApiStatus
  * on changes in your entities and data calculated by this EP can fire all these events for us.
  */
 @ApiStatus.Internal
+@ApiStatus.OverrideOnly
 interface WorkspaceFacetContributor<T: WorkspaceEntity> {
   /**
    * Declare class for the main entity associated with [com.intellij.facet.Facet].
@@ -41,7 +42,7 @@ interface WorkspaceFacetContributor<T: WorkspaceEntity> {
   /**
    * Method return the module to which this entity belongs
    */
-  fun getRelatedModuleEntity(entity: T): ModuleEntity
+  fun getParentModuleEntity(entity: T): ModuleEntity
 
   /**
    * Method return the entity of type declared in [rootEntityType], associated with this module if any
