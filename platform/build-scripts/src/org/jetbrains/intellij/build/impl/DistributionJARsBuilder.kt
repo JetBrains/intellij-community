@@ -821,16 +821,26 @@ private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: List<Dis
                                                         licensesList = context.productProperties.allLibraryLicenses,
                                                         usedModulesNames = entries.includedModules.toHashSet())
     val distAllDir = context.paths.distAllDir
-    Files.createDirectories(distAllDir)
+    withContext(Dispatchers.IO) {
+      Files.createDirectories(distAllDir)
 
-    val htmlFilePath = distAllDir.resolve("license/third-party-libraries.html")
-    val jsonFilePath = distAllDir.resolve("license/third-party-libraries.json")
+      val htmlFilePath = distAllDir.resolve("license/third-party-libraries.html")
+      val jsonFilePath = distAllDir.resolve("license/third-party-libraries.json")
 
-    generator.generateHtml(htmlFilePath)
-    generator.generateJson(jsonFilePath)
+      generator.generateHtml(htmlFilePath)
+      generator.generateJson(jsonFilePath)
 
-    context.notifyArtifactBuilt(htmlFilePath)
-    context.notifyArtifactBuilt(jsonFilePath)
+      if (context.productProperties.generateLibraryLicensesTable) {
+        val artifactNamePrefix = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
+        val htmlArtifact = context.paths.artifactDir.resolve("$artifactNamePrefix-third-party-libraries.html")
+        val jsonArtifact = context.paths.artifactDir.resolve("$artifactNamePrefix-third-party-libraries.json")
+        Files.createDirectories(context.paths.artifactDir)
+        Files.copy(htmlFilePath, htmlArtifact)
+        Files.copy(jsonFilePath, jsonArtifact)
+        context.notifyArtifactBuilt(htmlArtifact)
+        context.notifyArtifactBuilt(jsonArtifact)
+      }
+    }
   }
 }
 
