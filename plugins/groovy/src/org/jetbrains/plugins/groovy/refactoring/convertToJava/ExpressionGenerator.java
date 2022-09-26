@@ -870,24 +870,24 @@ public class ExpressionGenerator extends Generator {
     }
 
     final String text = literal.getText();
+    final String value = GrStringUtil.unescapeString(GrStringUtil.removeQuotes(text));
     if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
-      String string = GrStringUtil.removeQuotes(text).replace("\n", "\\n").replace("\r", "\\r");
-      builder.append('"').append(string).append('"');
+      builder.append('"').append(StringUtil.escapeStringCharacters(value)).append('"');
     }
     else if (text.startsWith("'")) {
       if (isChar) {
         builder.append(text);
       }
       else {
-        builder.append('"').append(StringUtil.escapeQuotes(StringUtil.trimEnd(text.substring(1), "'"))).append('"');
+        builder.append('"').append(StringUtil.escapeStringCharacters(value)).append('"');
       }
     }
     else if (text.startsWith("\"")) {
       if (isChar) {
-        builder.append('\'').append(StringUtil.escapeQuotes(StringUtil.trimEnd(text.substring(1), "\""))).append('\'');
+        builder.append('\'').append(StringUtil.escapeCharCharacters(value)).append('\'');
       }
       else {
-        builder.append(text);
+        builder.append('"').append(StringUtil.escapeStringCharacters(value)).append('"');
       }
     }
     else {
