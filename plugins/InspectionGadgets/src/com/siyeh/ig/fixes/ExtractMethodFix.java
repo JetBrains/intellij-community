@@ -17,7 +17,7 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
-import com.intellij.refactoring.PreviewableRefactoringActionHandler;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +36,7 @@ public class ExtractMethodFix extends RefactoringInspectionGadgetsFix {
 
   @NotNull
   @Override
-  public PreviewableRefactoringActionHandler getHandler() {
+  public RefactoringActionHandler getHandler() {
     return JavaRefactoringActionHandlerFactory.getInstance().createExtractMethodHandler();
   }
 }

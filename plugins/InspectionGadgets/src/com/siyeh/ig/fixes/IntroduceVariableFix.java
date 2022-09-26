@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
-import com.intellij.refactoring.PreviewableRefactoringActionHandler;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,7 @@ public class IntroduceVariableFix extends RefactoringInspectionGadgetsFix {
 
   @NotNull
   @Override
-  public PreviewableRefactoringActionHandler getHandler() {
+  public RefactoringActionHandler getHandler() {
     return JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
   }
 

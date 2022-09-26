@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
-import com.intellij.refactoring.PreviewableRefactoringActionHandler;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +59,7 @@ public class EncapsulateVariableFix extends RefactoringInspectionGadgetsFix impl
 
   @NotNull
   @Override
-  public PreviewableRefactoringActionHandler getHandler() {
+  public RefactoringActionHandler getHandler() {
     return JavaRefactoringActionHandlerFactory.getInstance().createEncapsulateFieldsHandler();
   }
 }

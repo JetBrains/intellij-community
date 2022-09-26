@@ -74,8 +74,8 @@ public class RenameFix extends RefactoringInspectionGadgetsFix {
 
   @NotNull
   @Override
-  public PreviewableRefactoringActionHandler getHandler() {
-    return (PreviewableRefactoringActionHandler)RefactoringActionHandlerFactory.getInstance().createRenameHandler();
+  public RefactoringActionHandler getHandler() {
+    return RefactoringActionHandlerFactory.getInstance().createRenameHandler();
   }
 
   @NotNull

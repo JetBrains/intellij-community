@@ -75,7 +75,7 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * accepts either a {@code PsiMethod} that is a constructor, or a {@code PsiClass}
    * with implicit default constructor.
    */
-  public abstract PreviewableRefactoringActionHandler createReplaceConstructorWithFactoryHandler();
+  public abstract RefactoringActionHandler createReplaceConstructorWithFactoryHandler();
 
 
   /**
@@ -84,7 +84,7 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
    * accepts either a {@code PsiClass} or any number of {@code PsiField}s.
    */
-  public abstract PreviewableRefactoringActionHandler createEncapsulateFieldsHandler();
+  public abstract RefactoringActionHandler createEncapsulateFieldsHandler();
 
   /**
    * Creates handler for Replace Method Code Duplicates refactoring.<p>
@@ -132,9 +132,9 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
    * is not implemented.
    */
-  public abstract PreviewableRefactoringActionHandler createExtractMethodHandler();
+  public abstract RefactoringActionHandler createExtractMethodHandler();
 
-  public abstract PreviewableRefactoringActionHandler createInheritanceToDelegationHandler();
+  public abstract RefactoringActionHandler createInheritanceToDelegationHandler();
 
   /**
    * Creates handler for Extract Interface refactoring.<p>
@@ -159,7 +159,7 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
    * accepts one {@code PsiExpression}, that will be an initializer for introduced variable.
    */
-  public abstract PreviewableRefactoringActionHandler createIntroduceVariableHandler();
+  public abstract RefactoringActionHandler createIntroduceVariableHandler();
 
   /**
    * Creates handler for Introduce Constant refactoring.<p>
@@ -168,7 +168,7 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * accepts either one {@code PsiExpression}, that will be an initializer for introduced constant,
    * or one {@code PsiLocalVariable}, that will be replaced with introduced constant.
    */
-  public abstract PreviewableRefactoringActionHandler createIntroduceConstantHandler();
+  public abstract RefactoringActionHandler createIntroduceConstantHandler();
 
   /**
    * Creates handler for Invert Boolean refactoring.<p>
@@ -176,5 +176,5 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
    * accepts one {@code PsiMethod}, that will be inverted
    */
-  public abstract PreviewableRefactoringActionHandler createInvertBooleanHandler();
+  public abstract RefactoringActionHandler createInvertBooleanHandler();
 }
