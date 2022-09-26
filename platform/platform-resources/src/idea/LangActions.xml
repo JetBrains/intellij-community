@@ -1613,7 +1613,7 @@
     <group id="RunToolbarWidgetCustomizableActionGroup">
       <add-to-group group-id="MainToolbarRight" anchor="first"/>
       <action class="com.intellij.execution.ui.RunWithDropDownAction" id="RunWithDropDown"/>
-      <action class="com.intellij.execution.ui.RedesignedRunToolbarWrapper" id="RedesignedRunToolbarWrapper" text="Fictive"/>
+      <action class="com.intellij.execution.ui.RedesignedRunToolbarWrapper" id="RedesignedRunToolbarWrapper"/>
       <action class="com.intellij.execution.ui.StopWithDropDownAction" id="StopWithDropDown"/>
     </group>
 
