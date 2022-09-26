@@ -50,6 +50,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.lang.ZipFilePool
+import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
@@ -843,6 +844,11 @@ private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job,
     throw AssertionError("Already initialized")
   }
 
+  // SocketLock.allowActivation requires JNA
+  if (SystemInfoRt.isWindows) {
+    setupJnaLibProperties()
+  }
+
   return launch(Dispatchers.IO) {
     val (configPath, systemPath) = pathDeferred.await()
     configImportNeededDeferred.join()
@@ -907,8 +913,18 @@ private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob:
   }
 }
 
+private fun setupJnaLibProperties() {
+  if (java.lang.Boolean.getBoolean("idea.jna.unpacked")) {
+    System.setProperty("jna.boot.library.path", PathManager.getLibPath() + "/jna/" + if (CpuArch.isArm64()) "aarch64" else "amd64")
+  }
+}
+
 @Suppress("SpellCheckingInspection")
 private fun setupSystemLibraries() {
+  if (!SystemInfoRt.isWindows) {
+    setupJnaLibProperties()
+  }
+
   val ideTempPath = PathManager.getTempPath()
   if (System.getProperty("jna.tmpdir") == null) {
     // to avoid collisions and work around no-exec /tmp

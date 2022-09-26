@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.idea
 
 import com.intellij.diagnostic.ActivityCategory
@@ -8,8 +10,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.SpecialConfigFiles
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.User32Ex
 import com.sun.jna.platform.win32.WinDef
 import io.netty.buffer.ByteBuf
@@ -113,7 +114,7 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
     readPort(systemPath, portToPath)
     if (!portToPath.isEmpty()) {
       for ((key, value) in portToPath) {
-        val status = tryActivate(key, value, args)
+        val status = tryActivate(portNumber = key, paths = value, args = args, systemPath = systemPath)
         if (status.first != ActivationStatus.NO_INSTANCE) {
           log("exit: lock(): " + status.second)
           unlockPortFiles()
@@ -180,67 +181,71 @@ class SocketLock(@JvmField val configPath: Path, @JvmField val systemPath: Path)
   private fun unlockPortFiles() {
     check(!lockedFiles.isEmpty()) { "File unlocking must not be called twice" }
     for (i in lockedFiles.indices.reversed()) {
-      lockedFiles[i].close()
+      lockedFiles.get(i).close()
     }
     lockedFiles.clear()
   }
+}
 
-  private fun allowActivation(input: DataInputStream) {
-    if (SystemInfo.isWindows) {
-      try {
-        User32Ex.INSTANCE.AllowSetForegroundWindow(WinDef.DWORD(input.readLong()))
-      } catch (e: Exception) {
-        log(e)
-      }
-    }
-  }
-
-  private fun tryActivate(portNumber: Int, paths: List<String>, args: List<String>): Pair<ActivationStatus, CliResult?> {
-    log("trying: port=%s", portNumber)
+private fun allowActivation(input: DataInputStream) {
+  if (SystemInfoRt.isWindows) {
     try {
-      Socket(InetAddress.getByName("127.0.0.1"), portNumber).use { socket ->
-        socket.soTimeout = 5000
-        val input = DataInputStream(socket.getInputStream())
-        val stringList = readStringSequence(input)
-        // backward compatibility: requires at least one path to match
-        val result = paths.any(stringList::contains)
-        if (result) {
-          try {
-            allowActivation(input)
-            val token = readOneLine(systemPath.resolve(SpecialConfigFiles.TOKEN_FILE))
-            val out = DataOutputStream(socket.getOutputStream())
-            var currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
-            if (currentDirectory == null) {
-              currentDirectory = "."
-            }
-            out.writeUTF(
-              ACTIVATE_COMMAND + token + '\u0000' + Path.of(currentDirectory).toAbsolutePath() + '\u0000' + args.joinToString(separator = "\u0000"))
-            out.flush()
-            socket.soTimeout = 0
-            val response = readStringSequence(input)
-            log("read: response=%s", java.lang.String.join(";", response))
-            if (!response.isEmpty() && OK_RESPONSE == response[0]) {
-              return ActivationStatus.ACTIVATED to mapResponseToCliResult(response)
-            }
-          }
-          catch (e: IOException) {
-            log(e)
-          }
-          catch (e: IllegalArgumentException) {
-            log(e)
-          }
-          return ActivationStatus.CANNOT_ACTIVATE to null
-        }
-      }
+      User32Ex.INSTANCE.AllowSetForegroundWindow(WinDef.DWORD(input.readLong()))
     }
-    catch (e: ConnectException) {
-      log("%s (stale port file?)", e.message!!)
-    }
-    catch (e: IOException) {
+    catch (e: Exception) {
       log(e)
     }
-    return ActivationStatus.NO_INSTANCE to null
   }
+}
+
+private fun tryActivate(portNumber: Int,
+                        paths: List<String>,
+                        args: List<String>,
+                        systemPath: Path): Pair<SocketLock.ActivationStatus, CliResult?> {
+  log("trying: port=%s", portNumber)
+  try {
+    Socket(InetAddress.getByName("127.0.0.1"), portNumber).use { socket ->
+      socket.soTimeout = 5000
+      val input = DataInputStream(socket.getInputStream())
+      val stringList = readStringSequence(input)
+      // backward compatibility: requires at least one path to match
+      val result = paths.any(stringList::contains)
+      if (result) {
+        try {
+          allowActivation(input)
+          val token = readOneLine(systemPath.resolve(SpecialConfigFiles.TOKEN_FILE))
+          val out = DataOutputStream(socket.getOutputStream())
+          var currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
+          if (currentDirectory == null) {
+            currentDirectory = "."
+          }
+          out.writeUTF(
+            ACTIVATE_COMMAND + token + '\u0000' + Path.of(currentDirectory).toAbsolutePath() + '\u0000' + args.joinToString(separator = "\u0000"))
+          out.flush()
+          socket.soTimeout = 0
+          val response = readStringSequence(input)
+          log("read: response=%s", java.lang.String.join(";", response))
+          if (!response.isEmpty() && OK_RESPONSE == response[0]) {
+            return SocketLock.ActivationStatus.ACTIVATED to mapResponseToCliResult(response)
+          }
+        }
+        catch (e: IOException) {
+          log(e)
+        }
+        catch (e: IllegalArgumentException) {
+          log(e)
+        }
+        return SocketLock.ActivationStatus.CANNOT_ACTIVATE to null
+      }
+    }
+  }
+  catch (e: ConnectException) {
+    log("%s (stale port file?)", e.message!!)
+  }
+  catch (e: IOException) {
+    log(e)
+  }
+  return SocketLock.ActivationStatus.NO_INSTANCE to null
 }
 
 private fun readOneLine(file: Path) = Files.newBufferedReader(file).use { it.readLine().trim() }
@@ -305,7 +310,7 @@ private fun sendStringSequence(context: ChannelHandlerContext, strings: List<Str
         out.writeUTF(s)
       }
       out.writeUTF(PATHS_EOT_RESPONSE)
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         // see 'allowActivation' function
         out.writeLong(ProcessHandle.current().pid())
       }
@@ -352,7 +357,7 @@ private class MyChannelInboundHandler(lockedPaths: Array<Path>,
         }
         State.CONTENT -> {
           val command = readChars(input) ?: return
-          if (StringUtilRt.startsWith(command, ACTIVATE_COMMAND)) {
+          if (command.startsWith(ACTIVATE_COMMAND)) {
             val data = command.subSequence(ACTIVATE_COMMAND.length, command.length).toString()
             val tokenizer = StringTokenizer(data, if (data.contains("\u0000")) "\u0000" else "\uFFFD")
             val tokenOK = tokenizer.hasMoreTokens() && token == tokenizer.nextToken()
