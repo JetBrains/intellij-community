@@ -7,6 +7,7 @@ import java.nio.file.Path
  * Implement this interfaces and pass the implementation to {@link ProprietaryBuildTools} constructor to sign the product's files.
  */
 interface SignTool {
-  fun signFiles(files: List<Path>, context: BuildContext, options: Map<String, String>)
+  suspend fun signFiles(files: List<Path>, context: BuildContext, options: Map<String, String>)
+
   fun commandLineClient(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path?
 }

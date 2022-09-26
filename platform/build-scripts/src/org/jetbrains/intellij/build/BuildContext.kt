@@ -77,7 +77,7 @@ interface BuildContext : CompilationContext {
 
   fun findFileInModuleSources(moduleName: String, relativePath: String): Path?
 
-  fun signFiles(files: List<Path>, options: Map<String, String> = emptyMap())
+  suspend fun signFiles(files: List<Path>, options: Map<String, String> = emptyMap())
 
   /**
    * Execute a build step or skip it if {@code stepId} is included in {@link BuildOptions#buildStepsToSkip}

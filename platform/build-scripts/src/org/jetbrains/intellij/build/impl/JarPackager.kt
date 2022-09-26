@@ -501,7 +501,7 @@ class JarPackager private constructor(private val context: BuildContext) {
   }
 }
 
-private fun packJnaNativeLibraries(sourceFile: Path, paths: List<String>, context: BuildContext) {
+private suspend fun packJnaNativeLibraries(sourceFile: Path, paths: List<String>, context: BuildContext) {
   HashMapZipFile.load(sourceFile).use { zipFile ->
     val jnaOutDir = Files.createDirectories(context.paths.tempDir.resolve("jna"))
     Files.createDirectories(jnaOutDir)
@@ -509,16 +509,18 @@ private fun packJnaNativeLibraries(sourceFile: Path, paths: List<String>, contex
     for (pathWithPackage in paths) {
       val path = pathWithPackage.removePrefix("com/sun/jna/")
       val osAndArch = path.substring(0, path.indexOf('/'))
-      val arch = when {
-        osAndArch.endsWith("-aarch64") -> JvmArchitecture.aarch64
-        osAndArch.endsWith("-x86-64") -> JvmArchitecture.x64
-        else -> continue
-      }
 
       val os = when {
         osAndArch.startsWith("darwin-") -> OsFamily.MACOS
         osAndArch.startsWith("win32-") -> OsFamily.WINDOWS
-        else -> OsFamily.LINUX
+        osAndArch.startsWith("linux-x86-64") -> OsFamily.LINUX
+        else -> continue
+      }
+
+      val arch = when {
+        osAndArch.endsWith("-aarch64") -> JvmArchitecture.aarch64
+        osAndArch.endsWith("-x86-64") -> JvmArchitecture.x64
+        else -> continue
       }
 
       val byteBuffer = zipFile.getByteBuffer(pathWithPackage)!!

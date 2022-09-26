@@ -26,7 +26,10 @@ public final class JnaLoader {
         ourJnaLoaded = Boolean.TRUE;
       }
       catch (Throwable t) {
-        logger.warn("Unable to load JNA library (OS: " + SystemInfoRt.OS_NAME + " " + SystemInfoRt.OS_VERSION + ")", t);
+        logger.warn("Unable to load JNA library (" +
+                    "os=" + SystemInfoRt.OS_NAME + " " + SystemInfoRt.OS_VERSION +
+                    ", jna.boot.library.path=" + System.getProperty("jna.boot.library.path") +
+                    ")", t);
       }
     }
   }
