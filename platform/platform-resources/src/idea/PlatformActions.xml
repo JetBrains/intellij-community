@@ -632,11 +632,6 @@
           </group>
         </group>
 
-        <group id="MainToolbarPopupActions" searchable="false">
-          <reference id="ViewToolBar"/>
-          <action id="CustomizeUI" class="com.intellij.ide.actions.CustomizeUIAction"/>
-        </group>
-
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction" icon="AllIcons.Actions.EditSource"/>
         <action id="OpenInRightSplit" class="com.intellij.ide.actions.OpenInRightSplitAction" icon="AllIcons.Actions.SplitVertically" />
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
@@ -877,6 +872,11 @@
       </group>
 
       <group id="OtherMenu" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
+    </group>
+
+    <group id="MainToolbarPopupActions" searchable="false">
+      <reference id="ViewToolBar"/>
+      <action id="CustomizeUI" class="com.intellij.ide.actions.CustomizeUIAction"/>
     </group>
 
     <group id="EditorTabsEntryPoint" popup="true" icon="AllIcons.Actions.More">
