@@ -26,6 +26,7 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.Collections;
 
 public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
@@ -370,20 +371,22 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       .setDefaultWeightY(1.0);
 
     boolean isSelectable = step.isSelectable(value);
+    java.util.List<JComponent> extraButtons;
     if (!isSelected || !isSelectable) {
-      myButtonsSeparator.setVisible(false);
-      myButtonPane.add(myNextStepLabel, gb.next());
-      return;
+      extraButtons = Collections.emptyList();
+    } else {
+      extraButtons = myInlineActionsSupport.getExtraButtons(list, value, isSelected);
     }
 
-    java.util.List<JComponent> extraButtons = myInlineActionsSupport.getExtraButtons(list, value, isSelected);
     if (!extraButtons.isEmpty()) {
       myButtonsSeparator.setVisible(true);
       extraButtons.forEach(comp -> myButtonPane.add(comp, gb.next()));
+      myRendererComponent.setToolTipText(myInlineActionsSupport.getActiveExtraButtonToolTipText(list, value));
     }
     else {
       myButtonsSeparator.setVisible(false);
       myButtonPane.add(myNextStepLabel, gb.next());
+      myRendererComponent.setToolTipText(null);
     }
   }
 
