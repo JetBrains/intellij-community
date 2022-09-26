@@ -357,6 +357,8 @@
 
     <externalSystem.dependencyModifier implementation="org.jetbrains.idea.maven.dsl.MavenDependencyModificator"/>
     <iconMapper mappingFile="MavenIconMappings.json"/>
+
+    <referencesSearch implementation="org.jetbrains.idea.maven.search.MavenModuleReferenceSearcher"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
