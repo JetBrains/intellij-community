@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.awt.Dimension
 import java.awt.FlowLayout
-import java.awt.Graphics
 import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -28,7 +27,7 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
 
-internal class NavBarPanel(
+internal class NewNavBarPanel(
   private val itemClickEvents: MutableSharedFlow<ItemClickEvent>,
   private val myItems: StateFlow<List<UiNavBarItem>>,
   cs: CoroutineScope

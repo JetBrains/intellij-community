@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.navbar.ide.NavigationBar;
-import com.intellij.ide.navigationToolbar.NavBarPopup;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -37,7 +36,7 @@ public class FloatingModeHelper {
 
   public static LightweightHint showHint(DataContext dataContext, NavigationBar navigationBar, Project project) {
     final JPanel panel = new JPanel(new BorderLayout());
-    NavBarPanel component = navigationBar.getPanel();
+    NewNavBarPanel component = navigationBar.getPanel();
     panel.add(component);
     panel.setOpaque(true);
 
