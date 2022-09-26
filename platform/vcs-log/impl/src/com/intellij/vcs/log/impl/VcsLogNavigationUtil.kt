@@ -245,13 +245,13 @@ object VcsLogNavigationUtil {
     ApplicationManager.getApplication().executeOnPooledThread {
       val matchingRefs = refs.stream().filter { ref -> ref.name.startsWith(reference) }.toList()
       ApplicationManager.getApplication().invokeLater {
-        if (matchingRefs.isEmpty()) {
-          future.setFuture(jumpToHash(reference, silently, focus))
-        }
-        else {
+        if (matchingRefs.isNotEmpty()) {
           val ref = matchingRefs.minWith(VcsGoToRefComparator(dataPack.logProviders))
           future.setFuture(jumpToCommit(ref.commitHash, ref.root, silently, focus))
+          return@invokeLater
         }
+
+        future.setFuture(jumpToHash(reference, silently, focus))
       }
     }
     return future
@@ -272,7 +272,7 @@ object VcsLogNavigationUtil {
     if (!VcsLogUtil.HASH_REGEX.matcher(trimmedHash).matches()) {
       if (!silently) {
         VcsBalloonProblemNotifier.showOverChangesView(logData.project,
-                                                      VcsLogBundle.message("vcs.log.commit.or.reference.not.found", commitHash),
+                                                      VcsLogBundle.message("vcs.log.string.is.not.a.hash", commitHash),
                                                       MessageType.WARNING)
       }
       return Futures.immediateFuture(false)
