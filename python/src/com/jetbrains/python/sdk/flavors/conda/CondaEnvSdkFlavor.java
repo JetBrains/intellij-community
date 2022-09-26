@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.sdk.flavors;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.sdk.flavors.conda;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.target.readableFs.PathInfo;
@@ -15,6 +15,10 @@ import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.add.target.PathValidatorKt;
 import com.jetbrains.python.sdk.add.target.ValidationRequest;
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
+import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
+import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

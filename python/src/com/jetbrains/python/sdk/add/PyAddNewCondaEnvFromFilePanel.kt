@@ -12,7 +12,7 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.add.PyAddNewEnvCollector.Companion.InputData
-import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import org.jetbrains.annotations.SystemDependent
 import java.awt.BorderLayout
 import javax.swing.JPanel
@@ -65,7 +65,8 @@ class PyAddNewCondaEnvFromFilePanel(private val module: Module, environmentYml: 
     initialEnvironmentYmlPath = environmentYmlField.text
   }
 
-  fun validateAll(): List<ValidationInfo> = listOfNotNull(CondaEnvSdkFlavor.validateCondaPath(condaPathField.text))
+  fun validateAll(): List<ValidationInfo> = listOfNotNull(
+    CondaEnvSdkFlavor.validateCondaPath(condaPathField.text))
 
   /**
    * Must be called if the input is confirmed and the current instance will not be used anymore

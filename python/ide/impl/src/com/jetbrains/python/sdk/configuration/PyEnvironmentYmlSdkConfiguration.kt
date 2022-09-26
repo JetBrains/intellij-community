@@ -29,7 +29,7 @@ import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.CondaEnvResult
 import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.InputData
 import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.Source
-import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.listCondaEnvironments
 import com.jetbrains.python.sdk.flavors.runConda
