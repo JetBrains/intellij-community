@@ -215,6 +215,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
                                             new ActionLink(
                                               UsageViewBundle.message("0.similar.usages.back.to.search.results", UIUtil.leftArrow()),
                                               event -> {
+                                                Disposer.dispose(similarComponent);
                                                 removeAll();
                                                 setToolbar(myMostCommonUsagesToolbar);
                                                 setContent(myMostCommonUsageScrollPane);
