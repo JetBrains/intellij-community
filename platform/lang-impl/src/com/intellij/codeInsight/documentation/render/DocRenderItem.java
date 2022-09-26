@@ -2,43 +2,34 @@
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.documentation.DocFontSizePopup;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.platform.documentation.DocumentationTarget;
 import com.intellij.platform.documentation.InlineDocumentation;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
@@ -46,22 +37,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.util.List;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 
 import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.findInlineDocumentation;
 
-public final class DocRenderItem {
-  private static final Key<Collection<DocRenderItem>> OUR_ITEMS = Key.create("doc.render.items");
-  private static final Key<Disposable> LISTENERS_DISPOSABLE = Key.create("doc.render.listeners.disposable");
+public final class DocRenderItem implements DocRenderData {
+  private static final EventDispatcher<Listener> myDocUpdateDispatcher = EventDispatcher.create(Listener.class);
 
-  final Editor editor;
-  final RangeHighlighter highlighter;
-  @Nls String textToRender;
-  CustomFoldRegion foldRegion;
+  private final Editor editor;
+  private final RangeHighlighter highlighter;
+  private @Nls String textToRender;
+  private CustomFoldRegion foldRegion;
 
   static boolean isValidRange(@NotNull Editor editor, @NotNull TextRange range) {
     Document document = editor.getDocument();
@@ -77,16 +65,42 @@ public final class DocRenderItem {
     return startLine < endLine || document.getLineStartOffset(startLine) < document.getLineEndOffset(endLine);
   }
 
+  @Nls
+  @Nullable
+  @Override
+  public String getTextToRender() {
+    return textToRender;
+  }
+
+  @Override
+  public @Nullable CustomFoldRegion getFoldRegion() {
+    return foldRegion;
+  }
+
+  @Override
+  public @NotNull RangeHighlighter getHighlighter() {
+    return highlighter;
+  }
+
+  @Override
+  public @NotNull Editor getEditor() {
+    return editor;
+  }
+
+  @Override
+  public GutterIconRenderer calcGutterIconRenderer() {
+    MyGutterIconRenderer highlighterIconRenderer =
+      (MyGutterIconRenderer)highlighter.getGutterIconRenderer();
+    return highlighterIconRenderer == null
+           ? null
+           : new MyGutterIconRenderer(AllIcons.Gutter.JavadocEdit,
+                                      ((MyGutterIconRenderer)highlighter.getGutterIconRenderer()).isIconVisible());
+  }
+
   static void setItemsToEditor(@NotNull Editor editor, @NotNull DocRenderPassFactory.Items itemsToSet, boolean collapseNewItems) {
-    Collection<DocRenderItem> items;
-    Collection<DocRenderItem> existing = editor.getUserData(OUR_ITEMS);
-    if (existing == null) {
-      if (itemsToSet.isEmpty()) return;
-      editor.putUserData(OUR_ITEMS, items = new ArrayList<>());
-    }
-    else {
-      items = existing;
-    }
+    DocRenderDataProvider provider = DocRenderDataProvider.getInstance();
+    if (!(provider instanceof DocRenderDataProviderImpl)) return;
+    Collection<DocRenderItem> items = ((DocRenderDataProviderImpl)provider).getItems(editor);
     keepScrollingPositionWhile(editor, () -> {
       List<Runnable> foldingTasks = new ArrayList<>();
       List<DocRenderItem> itemsToUpdateRenderers = new ArrayList<>();
@@ -118,62 +132,38 @@ public final class DocRenderItem {
         }
       }
       editor.getFoldingModel().runBatchFoldingOperation(() -> foldingTasks.forEach(Runnable::run), true, false);
+      if (!newRenderItems.isEmpty() && collapseNewItems) {
+        for (DocRenderItem item : newRenderItems) {
+          CustomFoldRegion r = item.getFoldRegion();
+          if (r != null) {
+            r.update();
+          }
+        }
+      }
       for (int i = 0; i < itemsToUpdateRenderers.size(); i++) {
         itemsToUpdateRenderers.get(i).textToRender = itemsToUpdateText.get(i);
       }
-      updateRenderers(itemsToUpdateRenderers, true);
+      DocRenderUpdater.updateRenderers(itemsToUpdateRenderers, true);
+      myDocUpdateDispatcher.getMulticaster().onItemsUpdate(editor, itemsToUpdateRenderers, true);
       items.addAll(newRenderItems);
       return updated;
     });
-    setupListeners(editor, items.isEmpty());
+    DocRenderListenersSetup.setupListeners(editor, items.isEmpty(), (connection) -> {
+      EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
+        @Override
+        public void editorReleased(@NotNull EditorFactoryEvent event) {
+          if (event.getEditor() == editor) {
+            // this ensures renderers are not kept for the released editors
+            setItemsToEditor(editor, new DocRenderPassFactory.Items(), false);
+          }
+        }
+      }, connection);
+      editor.getCaretModel().addCaretListener(new MyCaretListener(), connection);
+    });
   }
 
-  private static void setupListeners(@NotNull Editor editor, boolean disable) {
-    if (disable) {
-      Disposable listenersDisposable = editor.getUserData(LISTENERS_DISPOSABLE);
-      if (listenersDisposable != null) {
-        Disposer.dispose(listenersDisposable);
-        editor.putUserData(LISTENERS_DISPOSABLE, null);
-      }
-    }
-    else {
-      if (editor.getUserData(LISTENERS_DISPOSABLE) == null) {
-        MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-        connection.setDefaultHandler(() -> updateRenderers(editor, true));
-        connection.subscribe(EditorColorsManager.TOPIC);
-        connection.subscribe(LafManagerListener.TOPIC);
-        EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
-          @Override
-          public void editorReleased(@NotNull EditorFactoryEvent event) {
-            if (event.getEditor() == editor) {
-              // this ensures renderers are not kept for the released editors
-              setItemsToEditor(editor, new DocRenderPassFactory.Items(), false);
-            }
-          }
-        }, connection);
-        editor.getCaretModel().addCaretListener(new MyCaretListener(), connection);
-
-        DocRenderSelectionManager selectionManager = new DocRenderSelectionManager(editor);
-        Disposer.register(connection, selectionManager);
-
-        DocRenderMouseEventBridge mouseEventBridge = new DocRenderMouseEventBridge(selectionManager);
-        editor.addEditorMouseListener(mouseEventBridge, connection);
-        editor.addEditorMouseMotionListener(mouseEventBridge, connection);
-
-        IconVisibilityController iconVisibilityController = new IconVisibilityController();
-        editor.addEditorMouseListener(iconVisibilityController, connection);
-        editor.addEditorMouseMotionListener(iconVisibilityController, connection);
-        editor.getScrollingModel().addVisibleAreaListener(iconVisibilityController, connection);
-        Disposer.register(connection, iconVisibilityController);
-
-        editor.getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener(editor), connection);
-        ((EditorEx)editor).getFoldingModel().addListener(new MyFoldingListener(), connection);
-
-        Disposer.register(connection, () -> DocRenderer.clearCachedLoadingPane(editor));
-
-        editor.putUserData(LISTENERS_DISPOSABLE, connection);
-      }
-    }
+  public static void addUpdateListener(Listener listener) {
+    myDocUpdateDispatcher.addListener(listener);
   }
 
   private static void keepScrollingPositionWhile(@NotNull Editor editor, @NotNull BooleanSupplier task) {
@@ -182,42 +172,10 @@ public final class DocRenderItem {
     if (task.getAsBoolean()) keeper.restorePosition(false);
   }
 
-  @Nullable
-  public static DocRenderItem getItemAroundOffset(@NotNull Editor editor, int offset) {
-    Collection<DocRenderItem> items = editor.getUserData(OUR_ITEMS);
-    if (items == null || items.isEmpty()) return null;
-    Document document = editor.getDocument();
-    if (offset < 0 || offset > document.getTextLength()) return null;
-    int line = document.getLineNumber(offset);
-    DocRenderItem itemOnAdjacentLine = items.stream().filter(i -> {
-      if (!i.isValid()) return false;
-      int startLine = document.getLineNumber(i.highlighter.getStartOffset());
-      int endLine = document.getLineNumber(i.highlighter.getEndOffset());
-      return line >= startLine - 1 && line <= endLine + 1;
-    }).min(Comparator.comparingInt(i -> i.highlighter.getStartOffset())).orElse(null);
-    if (itemOnAdjacentLine != null) return itemOnAdjacentLine;
-
-    Project project = editor.getProject();
-    if (project == null) return null;
-
-    DocRenderItem foundItem = null;
-    int foundStartOffset = 0;
-    for (DocRenderItem item : items) {
-      if (!item.isValid()) continue;
-      InlineDocumentation documentation = item.getInlineDocumentation();
-      if (documentation == null) continue;
-      TextRange ownerTextRange = documentation.getDocumentationOwnerRange();
-      if (ownerTextRange == null || !ownerTextRange.containsOffset(offset)) continue;
-      int startOffset = ownerTextRange.getStartOffset();
-      if (foundItem != null && foundStartOffset >= startOffset) continue;
-      foundItem = item;
-      foundStartOffset = startOffset;
-    }
-    return foundItem;
-  }
-
   static void resetToDefaultState(@NotNull Editor editor) {
-    Collection<DocRenderItem> items = editor.getUserData(OUR_ITEMS);
+    DocRenderDataProvider provider = DocRenderDataProvider.getInstance();
+    if (!(provider instanceof DocRenderDataProviderImpl)) return;
+    Collection<DocRenderItem> items = ((DocRenderDataProviderImpl)provider).getItems(editor);
     if (items == null) return;
     boolean editorSetting = DocRenderManager.isDocRenderingEnabled(editor);
     keepScrollingPositionWhile(editor, () -> {
@@ -247,7 +205,7 @@ public final class DocRenderItem {
     updateIcon(null);
   }
 
-  private boolean isValid() {
+  boolean isValid() {
     return highlighter.isValid() &&
            highlighter.getStartOffset() < highlighter.getEndOffset() &&
            new ItemLocation(highlighter).matches(foldRegion);
@@ -280,6 +238,7 @@ public final class DocRenderItem {
       };
       if (foldingTasks == null) {
         foldingModel.runBatchFoldingOperation(foldingTask, true, false);
+        foldRegion.update();
       }
       else {
         foldingTasks.add(foldingTask);
@@ -332,7 +291,7 @@ public final class DocRenderItem {
     return null;
   }
 
-  @Nullable DocumentationTarget getInlineDocumentationTarget() {
+  public @Nullable DocumentationTarget getInlineDocumentationTarget() {
     InlineDocumentation documentation = getInlineDocumentation();
     return documentation == null ? null : documentation.getOwnerTarget();
   }
@@ -369,7 +328,8 @@ public final class DocRenderItem {
     return new ToggleRenderingAction(this);
   }
 
-  private void setIconVisible(boolean visible) {
+  @Override
+  public void setIconVisible(boolean visible) {
     MyGutterIconRenderer iconRenderer = (MyGutterIconRenderer)highlighter.getGutterIconRenderer();
     if (iconRenderer != null) {
       iconRenderer.setIconVisible(visible);
@@ -388,11 +348,6 @@ public final class DocRenderItem {
   private void repaintGutter(int startY) {
     JComponent gutter = (JComponent)editor.getGutter();
     gutter.repaint(0, startY, gutter.getWidth(), startY + editor.getLineHeight());
-  }
-
-  @Nullable
-  public String getTextToRender() {
-    return textToRender;
   }
 
   private static final class ItemLocation {
@@ -432,52 +387,16 @@ public final class DocRenderItem {
       if (foldRegion instanceof CustomFoldRegion && caretOffset > foldRegion.getStartOffset()) {
         CustomFoldRegionRenderer renderer = ((CustomFoldRegion)foldRegion).getRenderer();
         if (renderer instanceof DocRenderer) {
-          ((DocRenderer)renderer).myItem.toggle();
+          DocRenderData data = ((DocRenderer)renderer).getData();
+          if (data instanceof DocRenderItem) {
+            ((DocRenderItem)data).toggle();
+          }
         }
       }
     }
   }
 
-  private static final class MyVisibleAreaListener implements VisibleAreaListener {
-    private int lastWidth;
-    private AffineTransform lastFrcTransform;
-
-    private MyVisibleAreaListener(@NotNull Editor editor) {
-      lastWidth = DocRenderer.calcWidth(editor);
-      lastFrcTransform = getTransform(editor);
-    }
-
-    private static AffineTransform getTransform(Editor editor) {
-      return FontInfo.getFontRenderContext(editor.getContentComponent()).getTransform();
-    }
-
-    @Override
-    public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
-      if (e.getNewRectangle().isEmpty()) return; // ignore switching between tabs
-      Editor editor = e.getEditor();
-      int newWidth = DocRenderer.calcWidth(editor);
-      AffineTransform transform = getTransform(editor);
-      if (newWidth != lastWidth || !Objects.equals(transform, lastFrcTransform)) {
-        lastWidth = newWidth;
-        lastFrcTransform = transform;
-        updateRenderers(editor, false);
-      }
-    }
-  }
-
-  private static class MyFoldingListener implements FoldingListener {
-    @Override
-    public void beforeFoldRegionDisposed(@NotNull FoldRegion region) {
-      if (region instanceof CustomFoldRegion) {
-        CustomFoldRegionRenderer renderer = ((CustomFoldRegion)region).getRenderer();
-        if (renderer instanceof DocRenderer) {
-          ((DocRenderer)renderer).dispose();
-        }
-      }
-    }
-  }
-
-  class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
+  private class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
     private final LayeredIcon icon;
 
     MyGutterIconRenderer(Icon icon, boolean iconVisible) {
@@ -564,118 +483,7 @@ public final class DocRenderItem {
     }
   }
 
-  static class ChangeFontSize extends DumbAwareAction {
-    ChangeFontSize() {
-      super(CodeInsightBundle.messagePointer("javadoc.adjust.font.size"));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Editor editor = e.getData(CommonDataKeys.EDITOR);
-      if (editor != null) {
-        DocFontSizePopup.show(editor.getContentComponent(), () -> updateRenderers(editor, true));
-      }
-    }
-  }
-
-  private static class IconVisibilityController implements EditorMouseListener, EditorMouseMotionListener, VisibleAreaListener, Disposable {
-    private DocRenderItem myCurrentItem;
-    private Editor myQueuedEditor;
-
-    @Override
-    public void mouseMoved(@NotNull EditorMouseEvent e) {
-      doUpdate(e.getEditor(), e);
-    }
-
-    @Override
-    public void mouseExited(@NotNull EditorMouseEvent e) {
-      doUpdate(e.getEditor(), e);
-    }
-
-    @Override
-    public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
-      Editor editor = e.getEditor();
-      if (((EditorImpl)editor).isCursorHidden()) return;
-      if (myQueuedEditor == null) {
-        myQueuedEditor = editor;
-        // delay update: multiple visible area updates within same EDT event will cause only one icon update,
-        // and we'll not observe the item in inconsistent state during toggling
-        SwingUtilities.invokeLater(() -> {
-          if (myQueuedEditor != null && !myQueuedEditor.isDisposed()) {
-            doUpdate(myQueuedEditor, null);
-          }
-          myQueuedEditor = null;
-        });
-      }
-    }
-
-    private void doUpdate(@NotNull Editor editor, @Nullable EditorMouseEvent event) {
-      int y = 0;
-      int offset = -1;
-      if (event == null) {
-        PointerInfo info = MouseInfo.getPointerInfo();
-        if (info != null) {
-          Point screenPoint = info.getLocation();
-          JComponent component = editor.getComponent();
-
-          Point componentPoint = new Point(screenPoint);
-          SwingUtilities.convertPointFromScreen(componentPoint, component);
-
-          if (new Rectangle(component.getSize()).contains(componentPoint)) {
-            Point editorPoint = new Point(screenPoint);
-            SwingUtilities.convertPointFromScreen(editorPoint, editor.getContentComponent());
-            y = editorPoint.y;
-            offset = editor.visualPositionToOffset(new VisualPosition(editor.yToVisualLine(y), 0));
-          }
-        }
-      }
-      else {
-        y = event.getMouseEvent().getY();
-        offset = event.getOffset();
-      }
-      DocRenderItem item = offset < 0 ? null : findItem(editor, y, offset);
-      if (item != myCurrentItem) {
-        if (myCurrentItem != null) myCurrentItem.setIconVisible(false);
-        myCurrentItem = item;
-        if (myCurrentItem != null) myCurrentItem.setIconVisible(true);
-      }
-    }
-
-    private static DocRenderItem findItem(Editor editor, int y, int neighborOffset) {
-      Document document = editor.getDocument();
-      int lineNumber = document.getLineNumber(neighborOffset);
-      int searchStartOffset = document.getLineStartOffset(Math.max(0, lineNumber - 1));
-      int searchEndOffset = document.getLineEndOffset(lineNumber);
-      Collection<DocRenderItem> items = editor.getUserData(OUR_ITEMS);
-      assert items != null;
-      for (DocRenderItem item : items) {
-        RangeHighlighter highlighter = item.highlighter;
-        if (highlighter.isValid() && highlighter.getStartOffset() <= searchEndOffset && highlighter.getEndOffset() >= searchStartOffset) {
-          int itemStartY = 0;
-          int itemEndY = 0;
-          if (item.foldRegion == null) {
-            itemStartY = editor.visualLineToY(editor.offsetToVisualLine(highlighter.getStartOffset(), false));
-            itemEndY = editor.visualLineToY(editor.offsetToVisualLine(highlighter.getEndOffset(), true)) + editor.getLineHeight();
-          }
-          else {
-            CustomFoldRegion cfr = item.foldRegion;
-            Point location = cfr.getLocation();
-            if (location != null) {
-              itemStartY = location.y;
-              itemEndY = itemStartY + cfr.getHeightInPixels();
-            }
-          }
-          if (y >= itemStartY && y < itemEndY) return item;
-          break;
-        }
-      }
-      return null;
-    }
-
-    @Override
-    public void dispose() {
-      myCurrentItem = null;
-      myQueuedEditor = null;
-    }
+  public interface Listener extends EventListener {
+    void onItemsUpdate(@NotNull Editor editor, @NotNull Collection<DocRenderItem> items, boolean recreateContent);
   }
 }

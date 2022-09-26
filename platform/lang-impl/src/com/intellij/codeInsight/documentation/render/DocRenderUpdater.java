@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
+import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -17,12 +18,24 @@ import java.util.List;
 import java.util.*;
 
 @Service
-public final class DocRenderItemUpdater implements Runnable {
+public final class DocRenderUpdater implements Runnable {
   private static final long MAX_UPDATE_DURATION_MS = 50;
   private final Map<CustomFoldRegion, Boolean> myQueue = new HashMap<>();
 
-  static DocRenderItemUpdater getInstance() {
-    return ApplicationManager.getApplication().getService(DocRenderItemUpdater.class);
+  static DocRenderUpdater getInstance() {
+    return ApplicationManager.getApplication().getService(DocRenderUpdater.class);
+  }
+
+  public static void updateRenderers(@NotNull Collection<? extends DocRenderData> items, boolean recreateContent) {
+    getInstance().updateFoldRegions(ContainerUtil.mapNotNull(items, i -> i.getFoldRegion()), recreateContent);
+  }
+
+  static void updateRenderers(@NotNull Editor editor, boolean recreateContent) {
+    if (recreateContent) {
+      DocRenderer.clearCachedLoadingPane(editor);
+    }
+    Collection<? extends DocRenderData> items = DocRenderDataProvider.getInstance().getItems(editor);
+    if (items != null) updateRenderers(items, recreateContent);
   }
 
   void updateFoldRegions(@NotNull Collection<? extends CustomFoldRegion> foldRegions, boolean recreateContent) {

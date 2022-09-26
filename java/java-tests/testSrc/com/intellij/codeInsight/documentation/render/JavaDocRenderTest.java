@@ -8,13 +8,11 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -270,17 +268,17 @@ public class JavaDocRenderTest extends AbstractEditorTest {
   }
 
   private void verifyItem(int startOffset, int endOffset, @Nullable String textInContent) {
-    DocRenderItem item = DocRenderItem.getItemAroundOffset(getEditor(), startOffset);
+    DocRenderData item = DocRenderDataProvider.getInstance().getDataAroundOffset(getEditor(), startOffset);
     assertNotNull("Item is not found at offset " + startOffset, item);
-    assertEquals("Unexpected item start offset", startOffset, item.highlighter.getStartOffset());
-    assertEquals("Unexpected item end offset", endOffset, item.highlighter.getEndOffset());
-    Object toCheck = item.foldRegion;
+    assertEquals("Unexpected item start offset", startOffset, item.getHighlighter().getStartOffset());
+    assertEquals("Unexpected item end offset", endOffset, item.getHighlighter().getEndOffset());
+    Object toCheck = item.getFoldRegion();
     if (textInContent == null) {
       assertNull("Item in rendered state", toCheck);
     }
     else {
       assertNotNull("Item not in rendered state", toCheck);
-      assertTrue("Unexpected rendered text: " + item.textToRender, item.textToRender != null && item.textToRender.contains(textInContent));
+      assertTrue("Unexpected rendered text: " + item.getTextToRender(), item.getTextToRender() != null && item.getTextToRender().contains(textInContent));
     }
   }
 
