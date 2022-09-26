@@ -78,8 +78,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val modelBefore = getModuleInfosFromIdeaModel(project)
         modelBefore.forEach(IdeaModuleInfo::checkValidity)
 
-        val cache = LibraryInfoCache.getInstance(project)
-        val stdlibCopyInfoBefore = cache[stdlibCopy].first()
+        val stdlibCopyInfoBefore = stdlibCopy.toLibraryInfo()
 
         assertContains(modelBefore, stdlibCopyInfoBefore)
 
@@ -91,7 +90,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val modelAfter = getModuleInfosFromIdeaModel(project)
         modelAfter.forEach(IdeaModuleInfo::checkValidity)
 
-        val stdlibCopyInfoAfter = cache[stdlibCopy].first()
+        val stdlibCopyInfoAfter = stdlibCopy.toLibraryInfo()
         assertNotEquals(stdlibCopyInfoBefore, stdlibCopyInfoAfter)
 
         assertDoesntContain(modelAfter, stdlibCopyInfoBefore)
@@ -127,9 +126,8 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val fakeLib = projectLibraryWithFakeRoot("fake")
         c.addDependency(fakeLib)
 
-        val libInfoCache = LibraryInfoCache.getInstance(project)
-        val daemonLibraryInfo = libInfoCache[daemonLibrary1].first()
-        val stdlibInfo = libInfoCache[stdlib].first()
+        val daemonLibraryInfo = daemonLibrary1.toLibraryInfo()
+        val stdlibInfo = stdlib.toLibraryInfo()
 
         val dependenciesCache = LibraryDependenciesCache.getInstance(project)
         val dependencies = dependenciesCache.getLibraryDependencies(daemonLibraryInfo)
@@ -140,15 +138,14 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val stdlib = stdlibJvm()
         val stdlibCopy = projectLibrary("kotlin-stdlib-copy", TestKotlinArtifacts.kotlinStdlib.jarRoot)
         val myLib = projectLibraryWithFakeRoot("myLib")
-        val cache = LibraryInfoCache.getInstance(project)
 
         assertNotEquals(stdlib, stdlibCopy)
         assertNotEquals(stdlib, myLib)
         assertNotEquals(stdlibCopy, myLib)
 
-        val stdlibInfo = cache[stdlib].first().also(LibraryInfo::checkValidity)
-        val stdlibCopyInfo = cache[stdlibCopy].first().also(LibraryInfo::checkValidity)
-        val myLibInfo = cache[myLib].first().also(LibraryInfo::checkValidity)
+        val stdlibInfo = stdlib.toLibraryInfo().also(LibraryInfo::checkValidity)
+        val stdlibCopyInfo = stdlibCopy.toLibraryInfo().also(LibraryInfo::checkValidity)
+        val myLibInfo = myLib.toLibraryInfo().also(LibraryInfo::checkValidity)
 
         assertEquals(stdlibInfo, stdlibCopyInfo)
         assertNotEquals(stdlibInfo, myLibInfo)
@@ -166,18 +163,18 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         assertFalse(myLib.isDisposed)
         assertFalse(myLibInfo.isDisposed)
 
-        val newStdlibCopyInfo = cache[stdlibCopy].first().also(LibraryInfo::checkValidity)
+        val newStdlibCopyInfo = stdlibCopy.toLibraryInfo().also(LibraryInfo::checkValidity)
         assertNotEquals(stdlibCopyInfo, newStdlibCopyInfo)
 
         val newStdlib = stdlibJvm()
-        val newStdlibInfo = cache[newStdlib].first().also(LibraryInfo::checkValidity)
+        val newStdlibInfo = newStdlib.toLibraryInfo().also(LibraryInfo::checkValidity)
         assertEquals(newStdlibInfo, newStdlibCopyInfo)
 
         runWriteAction { libraryTable.removeLibrary(newStdlib) }
         assertTrue(newStdlib.isDisposed)
         assertFalse(newStdlibInfo.isDisposed)
 
-        val updatedStdlibCopyInfo = cache[stdlibCopy].first().also(LibraryInfo::checkValidity)
+        val updatedStdlibCopyInfo = stdlibCopy.toLibraryInfo().also(LibraryInfo::checkValidity)
         assertEquals(newStdlibCopyInfo, updatedStdlibCopyInfo)
     }
 
@@ -239,7 +236,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val lib = projectLibrary()
         a.addDependency(lib)
 
-        a.production.assertDependenciesEqual(a.production, lib.classes)
+        a.production.assertDependenciesEqual(a.production, lib.toLibraryInfo())
     }
 
     fun testCircularExportedDependencyWithLib() {
@@ -256,9 +253,9 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         b.addDependency(lib)
         c.addDependency(lib)
 
-        a.production.assertDependenciesEqual(a.production, lib.classes, c.production, b.production)
-        b.production.assertDependenciesEqual(b.production, a.production, c.production, lib.classes)
-        c.production.assertDependenciesEqual(c.production, b.production, a.production, lib.classes)
+        a.production.assertDependenciesEqual(a.production, lib.toLibraryInfo(), c.production, b.production)
+        b.production.assertDependenciesEqual(b.production, a.production, c.production, lib.toLibraryInfo())
+        c.production.assertDependenciesEqual(c.production, b.production, a.production, lib.toLibraryInfo())
     }
 
     fun testSeveralModulesExportLibs() {
@@ -272,7 +269,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         c.addDependency(a)
         c.addDependency(b)
 
-        c.production.assertDependenciesEqual(c.production, a.production, lib1.classes, b.production, lib2.classes)
+        c.production.assertDependenciesEqual(c.production, a.production, lib1.toLibraryInfo(), b.production, lib2.toLibraryInfo())
     }
 
     fun testSeveralModulesExportSameLib() {
@@ -285,7 +282,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         c.addDependency(a)
         c.addDependency(b)
 
-        c.production.assertDependenciesEqual(c.production, a.production, lib.classes, b.production)
+        c.production.assertDependenciesEqual(c.production, a.production, lib.toLibraryInfo(), b.production)
     }
 
     fun testRuntimeDependency() {
@@ -304,7 +301,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         b.addDependency(a, dependencyScope = DependencyScope.PROVIDED)
         b.addDependency(lib, dependencyScope = DependencyScope.PROVIDED)
 
-        b.production.assertDependenciesEqual(b.production, a.production, lib.classes)
+        b.production.assertDependenciesEqual(b.production, a.production, lib.toLibraryInfo())
     }
 
     fun testSimpleTestDependency() {
@@ -323,7 +320,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         a.addDependency(lib, dependencyScope = DependencyScope.TEST)
 
         a.production.assertDependenciesEqual(a.production)
-        a.test.assertDependenciesEqual(a.test, a.production, lib.classes)
+        a.test.assertDependenciesEqual(a.test, a.production, lib.toLibraryInfo())
     }
 
     fun testExportedTestDependency() {
@@ -380,8 +377,8 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         module.addDependency(lib1)
         module.addDependency(lib2)
 
-        lib1.classes.assertAdditionalLibraryDependencies(lib2.classes)
-        lib2.classes.assertAdditionalLibraryDependencies(lib1.classes)
+        lib1.toLibraryInfo().assertAdditionalLibraryDependencies(lib2.toLibraryInfo())
+        lib2.toLibraryInfo().assertAdditionalLibraryDependencies(lib1.toLibraryInfo())
     }
 
     fun testLibraryDependency2() {
@@ -397,9 +394,9 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         c.addDependency(a)
         c.addDependency(b)
 
-        lib1.classes.assertAdditionalLibraryDependencies()
-        lib2.classes.assertAdditionalLibraryDependencies()
-        lib3.classes.assertAdditionalLibraryDependencies(lib1.classes, lib2.classes)
+        lib1.toLibraryInfo().assertAdditionalLibraryDependencies()
+        lib2.toLibraryInfo().assertAdditionalLibraryDependencies()
+        lib3.toLibraryInfo().assertAdditionalLibraryDependencies(lib1.toLibraryInfo(), lib2.toLibraryInfo())
     }
 
     fun testLibraryDependency3() {
@@ -414,9 +411,9 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         a.addDependency(lib3)
         b.addDependency(lib3)
 
-        lib1.classes.assertAdditionalLibraryDependencies(lib3.classes)
-        lib2.classes.assertAdditionalLibraryDependencies(lib3.classes)
-        lib3.classes.assertAdditionalLibraryDependencies(lib1.classes, lib2.classes)
+        lib1.toLibraryInfo().assertAdditionalLibraryDependencies(lib3.toLibraryInfo())
+        lib2.toLibraryInfo().assertAdditionalLibraryDependencies(lib3.toLibraryInfo())
+        lib3.toLibraryInfo().assertAdditionalLibraryDependencies(lib1.toLibraryInfo(), lib2.toLibraryInfo())
     }
 
     fun testRoots() {
@@ -460,9 +457,9 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         b.addDependency(stdlibCommon)
         b.addDependency(stdlibJs)
 
-        stdlibCommon.classes.assertAdditionalLibraryDependencies()
-        stdlibJvm.classes.assertAdditionalLibraryDependencies(stdlibCommon.classes)
-        stdlibJs.classes.assertAdditionalLibraryDependencies(stdlibCommon.classes)
+        stdlibCommon.toLibraryInfo().assertAdditionalLibraryDependencies()
+        stdlibJvm.toLibraryInfo().assertAdditionalLibraryDependencies(stdlibCommon.toLibraryInfo())
+        stdlibJs.toLibraryInfo().assertAdditionalLibraryDependencies(stdlibCommon.toLibraryInfo())
     }
 
     fun testScriptDependenciesForModule() {
@@ -565,15 +562,15 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             libraryName = "#1",
             classesRoot = classRoot,
         )
-        Assert.assertEquals("Library infos for the module libraries with equal roots are not equal", l1.classes, l2.classes)
+        Assert.assertEquals("Library infos for the module libraries with equal roots are not equal", l1.toLibraryInfo(), l2.toLibraryInfo())
 
-        a.production.assertDependenciesEqual(a.production, projectLibrary.classes, l1.classes)
-        b.production.assertDependenciesEqual(b.production, l2.classes)
-        projectLibrary.classes.assertAdditionalLibraryDependencies(l1.classes)
+        a.production.assertDependenciesEqual(a.production, projectLibrary.toLibraryInfo(), l1.toLibraryInfo())
+        b.production.assertDependenciesEqual(b.production, l2.toLibraryInfo())
+        projectLibrary.toLibraryInfo().assertAdditionalLibraryDependencies(l1.toLibraryInfo())
 
         Assert.assertTrue(
             "Missing transitive dependency on the project library",
-            projectLibrary.classes in b.production.dependencies().closure { it.dependencies() }
+            projectLibrary.toLibraryInfo() in b.production.dependencies().closure { it.dependencies() }
         )
     }
 
@@ -873,8 +870,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     private val Module.test: ModuleTestSourceInfo
         get() = testSourceInfo!!
 
-    private val LibraryEx.classes: LibraryInfo
-        get() = LibraryInfoCache.getInstance(project)[this].first()
+    private fun LibraryEx.toLibraryInfo(): LibraryInfo = LibraryInfoCache.getInstance(project)[this].first()
 
     private fun module(name: String, hasProductionRoot: Boolean = true, hasTestRoot: Boolean = true): Module {
         return createModuleFromTestData(createTempDirectory().absolutePath, name, StdModuleTypes.JAVA, false).apply {
