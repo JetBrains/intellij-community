@@ -325,6 +325,8 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
         }
 
         override fun rootsChanged(event: ModuleRootEvent) {
+            if (event.isCausedByWorkspaceModelChangesOnly) return
+
             applyIfPossible {
                 // SDK could be changed (esp in tests) out of message bus subscription
                 val sdks = runReadAction { ProjectJdkTable.getInstance().allJdks }

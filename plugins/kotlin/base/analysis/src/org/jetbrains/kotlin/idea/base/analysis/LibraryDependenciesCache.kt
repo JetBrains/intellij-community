@@ -196,6 +196,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun rootsChanged(event: ModuleRootEvent) {
+            if (event.isCausedByWorkspaceModelChangesOnly) return
+
             // SDK could be changed (esp in tests) out of message bus subscription
             val sdks = project.allSdks()
             invalidateEntries(
@@ -240,6 +242,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun rootsChanged(event: ModuleRootEvent) {
+            if (event.isCausedByWorkspaceModelChangesOnly) return
+
             // SDK could be changed (esp in tests) out of message bus subscription
             val sdks = project.allSdks()
 
