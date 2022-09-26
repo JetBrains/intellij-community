@@ -2,7 +2,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.diagnostic.LoadingStateUtilKt;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.WindowAction;
@@ -1375,7 +1375,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   }
 
   protected boolean beforeShow() {
-    if (ApplicationManager.getApplication() == null || !LoadingStateUtilKt.getAreComponentsInitialized()) return true;
+    if (ApplicationManager.getApplication() == null || !LoadingState.COMPONENTS_REGISTERED.isOccurred()) return true;
     StackingPopupDispatcher.getInstance().onPopupShown(this, myInStack);
     return true;
   }

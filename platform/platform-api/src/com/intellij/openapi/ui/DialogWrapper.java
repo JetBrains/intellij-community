@@ -3,7 +3,6 @@ package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.diagnostic.LoadingStateUtilKt;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.UISettings;
@@ -555,7 +554,7 @@ public abstract class DialogWrapper {
     }
 
     JComponent result = createSouthPanel(leftSideButtons, rightSideButtons, addHelpToLeftSide);
-    if (ApplicationManager.getApplication() != null && LoadingStateUtilKt.getAreComponentsInitialized()) {
+    if (ApplicationManager.getApplication() != null && LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       Touchbar.setButtonActions(result, leftSideButtons, rightSideButtons, null);
     }
     return result;
@@ -1426,7 +1425,7 @@ public abstract class DialogWrapper {
       // null if headless
       JRootPane rootPane = getRootPane();
       myValidationAlarm.addRequest(validateRequest, myValidationDelay,
-                                   (ApplicationManager.getApplication() == null || !LoadingStateUtilKt.getAreComponentsInitialized()) ? null :
+                                   (ApplicationManager.getApplication() == null || !LoadingState.COMPONENTS_REGISTERED.isOccurred()) ? null :
                                    rootPane != null ? ModalityState.stateForComponent(rootPane) :
                                    ModalityState.current());
     }
@@ -1875,7 +1874,7 @@ public abstract class DialogWrapper {
   }
 
   private void recordAction(String name, AWTEvent event) {
-    if (event instanceof KeyEvent && ApplicationManager.getApplication() != null && LoadingStateUtilKt.getAreComponentsInitialized()) {
+    if (event instanceof KeyEvent && ApplicationManager.getApplication() != null && LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       //noinspection deprecation
       ActionsCollector.getInstance().record(name, (KeyEvent)event, getClass());
     }
