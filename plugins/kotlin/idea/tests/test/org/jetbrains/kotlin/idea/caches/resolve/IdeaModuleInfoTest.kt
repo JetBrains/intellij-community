@@ -117,6 +117,31 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         assertEquals(dependenciesAfter.libraries, listOf(daemonCopyInfoAfter, myLib.toLibraryInfo()))
     }
 
+    fun testStdlibDependencies() {
+        val moduleA = module("a")
+        val stdlib = projectLibrary("kotlin-stdlib", TestKotlinArtifacts.kotlinStdlib.jarRoot)
+        val myLib = projectLibraryWithFakeRoot("myLib")
+        moduleA.addDependency(stdlib)
+        moduleA.addDependency(myLib)
+
+        val moduleB = module("b")
+        val stdlibCopy = projectLibrary("kotlin-stdlib-copy", TestKotlinArtifacts.kotlinStdlib.jarRoot)
+        moduleB.addDependency(stdlibCopy)
+
+        val stdlibInfo = stdlib.toLibraryInfo()
+        val stdlibCopyInfo = stdlibCopy.toLibraryInfo()
+        assertEquals(stdlib, stdlibInfo.library)
+        assertNotEquals(stdlibCopy, stdlibCopyInfo.library)
+        assertEquals(stdlibInfo, stdlibCopyInfo)
+
+        val myLibInfo = myLib.toLibraryInfo()
+        val dependenciesCache = LibraryDependenciesCache.getInstance(project)
+        val dependenciesBefore = dependenciesCache.getLibraryDependencies(stdlibInfo)
+        // to check org.jetbrains.kotlin.idea.base.analysis.LibraryDependenciesCacheImpl#filterForBuiltins
+        assertEquals(dependenciesBefore.libraries, listOf(stdlibInfo))
+        assertDoesntContain(dependenciesBefore.libraries, myLibInfo)
+    }
+
     fun testLibraryCacheRace() {
         val moduleA = module("a")
         val stdlib = projectLibrary("kotlin-stdlib", TestKotlinArtifacts.kotlinStdlib.jarRoot)
