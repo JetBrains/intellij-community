@@ -35,7 +35,7 @@ public final class TObjectLongHashMap<K> extends TObjectHash<K> {
   /**
    * the values of the map
    */
-  protected transient long[] _values;
+  transient long[] _values;
 
   /**
    * Creates a new <code>TObjectLongHashMap</code> instance with the default
