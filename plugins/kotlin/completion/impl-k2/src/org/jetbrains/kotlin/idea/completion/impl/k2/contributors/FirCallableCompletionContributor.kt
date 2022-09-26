@@ -290,6 +290,8 @@ internal open class FirCallableCompletionContributor(
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
     ): Sequence<KtCallableSymbol> {
+        if (receiverTypes.isEmpty()) return emptySequence()
+
         val implicitReceiverNames = findAllNamesOfTypes(receiverTypes)
         val topLevelExtensions = indexHelper.getTopLevelExtensions(scopeNameFilter, implicitReceiverNames)
 
