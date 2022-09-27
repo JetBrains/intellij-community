@@ -5,6 +5,7 @@ package com.intellij.openapi.vcs.configurable;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -58,13 +59,15 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
 
   private final MyDirectoryRenderer myDirectoryRenderer;
   private final ColumnInfo<MapInfo, MapInfo> DIRECTORY;
-  private ListTableModel<MapInfo> myModel;
+  private final ListTableModel<MapInfo> myModel;
   private final List<AbstractVcs> myAllVcss;
   private final boolean myIsDisabled;
   private final VcsConfiguration myVcsConfiguration;
   private final @NotNull Map<String, VcsRootChecker> myCheckers;
   private final VcsUpdateInfoScopeFilterConfigurable myScopeFilterConfig;
   private JBLoadingPanel myLoadingPanel;
+
+  private ProgressIndicator myRootDetectionIndicator = null;
 
   private static final class MapInfo {
     static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR); //NON-NLS
@@ -306,6 +309,10 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
         return myDirectoryRenderer;
       }
     };
+
+    myModel = new ListTableModel<>(new ColumnInfo[]{DIRECTORY, VCS_SETTING});
+    myDirectoryMappingTable.setModelAndUpdateColumns(myModel);
+
     initializeModel();
 
     myVcsComboBox = buildVcsesComboBox(myProject);
@@ -323,6 +330,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
 
   @Override
   public void dispose() {
+    if (myRootDetectionIndicator != null) myRootDetectionIndicator.cancel();
     myScopeFilterConfig.disposeUIResources();
   }
 
@@ -346,30 +354,32 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
       mappings.add(MapInfo.registered(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings()),
                                       isMappingValid(mapping)));
     }
-    myModel = new ListTableModel<>(new ColumnInfo[]{DIRECTORY, VCS_SETTING}, mappings, 0);
+    myModel.setItems(mappings);
 
-    BackgroundTaskUtil.executeAndTryWait(indicator -> {
-      Collection<VcsRootError> errors = findUnregisteredRoots();
-      return () -> {
-        if (!errors.isEmpty()) {
-          List<MapInfo> newMappings = new ArrayList<>(mappings);
-          newMappings.add(MapInfo.SEPARATOR);
-          for (VcsRootError error : errors) {
-            newMappings.add(MapInfo.unregistered(error.getMapping()));
-          }
-          myModel.setItems(newMappings);
-        }
-        myDirectoryMappingTable.setModelAndUpdateColumns(myModel);
-        myLoadingPanel.stopLoading();
-      };
-    }, () -> myLoadingPanel.startLoading(), POSTPONE_MAPPINGS_LOADING_PANEL, false);
+    scheduleUnregisteredRootsLoading();
   }
 
-  @NotNull
-  private Collection<VcsRootError> findUnregisteredRoots() {
-    if (myProject.isDefault() || !TrustedProjects.isTrusted(myProject)) return Collections.emptyList();
-    return ContainerUtil.filter(VcsRootErrorsFinder.getInstance(myProject).getOrFind(),
-                                error -> error.getType() == VcsRootError.Type.UNREGISTERED_ROOT);
+  private void scheduleUnregisteredRootsLoading() {
+    if (myProject.isDefault() || !TrustedProjects.isTrusted(myProject)) return;
+    if (myRootDetectionIndicator != null) myRootDetectionIndicator.cancel();
+
+    myRootDetectionIndicator = BackgroundTaskUtil.executeAndTryWait(indicator -> {
+      List<VcsDirectoryMapping> unregisteredRoots = VcsRootErrorsFinder.getInstance(myProject).getOrFind().stream()
+        .filter(error -> error.getType() == VcsRootError.Type.UNREGISTERED_ROOT)
+        .map(error -> error.getMapping())
+        .toList();
+      return () -> {
+        if (indicator.isCanceled()) return;
+        myLoadingPanel.stopLoading();
+
+        if (!unregisteredRoots.isEmpty()) {
+          myModel.addRow(MapInfo.SEPARATOR);
+          for (VcsDirectoryMapping mapping : unregisteredRoots) {
+            myModel.addRow(MapInfo.unregistered(mapping));
+          }
+        }
+      };
+    }, () -> myLoadingPanel.startLoading(), POSTPONE_MAPPINGS_LOADING_PANEL, false);
   }
 
   private boolean isMappingValid(@NotNull VcsDirectoryMapping mapping) {
