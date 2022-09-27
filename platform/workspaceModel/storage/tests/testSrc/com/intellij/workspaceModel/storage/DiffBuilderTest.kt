@@ -11,6 +11,11 @@ import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.RepeatedTest
+import org.junit.jupiter.api.RepetitionInfo
+import org.junit.jupiter.api.assertThrows
+import java.util.*
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -30,7 +35,8 @@ class DiffBuilderTest {
   @BeforeEach
   internal fun setUp(info: RepetitionInfo) {
     target = createEmptyBuilder()
-    shaker = info.currentRepetition.toLong()
+    // Random returns same result for nextInt(2) for the first 4095 seeds, so we generated random seed
+    shaker = Random(info.currentRepetition.toLong()).nextLong()
     target.upgradeAddDiffEngine = { it.shaker = shaker }
   }
 

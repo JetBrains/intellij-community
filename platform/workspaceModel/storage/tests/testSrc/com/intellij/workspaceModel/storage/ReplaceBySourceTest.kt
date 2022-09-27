@@ -9,6 +9,7 @@ import com.intellij.workspaceModel.storage.impl.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.RepetitionInfo
+import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -25,7 +26,8 @@ class ReplaceBySourceTest {
     replacement = createEmptyBuilder()
     builder.useNewRbs = true
     builder.keepLastRbsEngine = true
-    builder.upgradeEngine = { (it as ReplaceBySourceAsTree).shuffleEntities = info.currentRepetition.toLong() }
+    // Random returns same result for nextInt(2) for the first 4095 seeds, so we generated random seed
+    builder.upgradeEngine = { (it as ReplaceBySourceAsTree).shuffleEntities = Random(info.currentRepetition.toLong()).nextLong() }
   }
 
   @RepeatedTest(10)

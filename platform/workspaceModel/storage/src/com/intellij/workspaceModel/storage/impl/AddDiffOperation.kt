@@ -21,7 +21,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
 
   private fun ChangeLog.shake(): Collection<MutableMap.MutableEntry<EntityId, ChangeEntry>> {
     return if (shaker != -1L && this.entries.size > 1) {
-      this.entries.toMutableList().shuffleHard(Random(shaker))
+      this.entries.shuffled(Random(shaker))
     } else {
       this.entries
     }
@@ -397,20 +397,6 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     target.serializeTo(folder.resolve("Instant_Save_Target").outputStream())
     diff.serializeTo(folder.resolve("Instant_Save_Source").outputStream())
     diff.serializeDiff(folder.resolve("Instant_Save_Diff").outputStream())
-  }
-
-  // I DON'T KNOW WHY KOTLIN SHUFFLE DOESN'T WORK, I JUST DON'T UNDERSTAND WHY
-  private fun <T> MutableList<T>.shuffleHard(rng: Random): MutableList<T> {
-    for (index in 0 until this.size) {
-      val randomIndex = rng.nextInt(index + 1)
-
-      // Swap with the random position
-      val temp = this[index]
-      this[index] = this[randomIndex]
-      this[randomIndex] = temp
-    }
-
-    return this
   }
 
   companion object {

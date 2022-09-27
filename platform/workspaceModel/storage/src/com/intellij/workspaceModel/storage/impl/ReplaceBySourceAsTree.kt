@@ -77,7 +77,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     val targetEntitiesToReplace = targetStorage.entitiesBySource(entityFilter)
     val targetEntities = targetEntitiesToReplace.values.flatMap { it.values }.flatten().toMutableList()
     if (shuffleEntities != -1L && targetEntities.size > 1) {
-      targetEntities.shuffleHard(Random(shuffleEntities))
+      targetEntities.shuffle(Random(shuffleEntities))
     }
     for (targetEntityToReplace in targetEntities) {
       TargetProcessor().processEntity(targetEntityToReplace)
@@ -87,7 +87,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     val replaceWithEntitiesToReplace = replaceWithStorage.entitiesBySource(entityFilter)
     val replaceWithEntities = replaceWithEntitiesToReplace.values.flatMap { it.values }.flatten().toMutableList()
     if (shuffleEntities != -1L && replaceWithEntities.size > 1) {
-      replaceWithEntities.shuffleHard(Random(shuffleEntities))
+      replaceWithEntities.shuffle(Random(shuffleEntities))
     }
     for (replaceWithEntityToReplace in replaceWithEntities) {
       ReplaceWithProcessor().processEntity(replaceWithEntityToReplace)
@@ -851,21 +851,6 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           .firstOrNull()
       }
     }
-
-    // I DON'T KNOW WHY KOTLIN SHUFFLE DOESN'T WORK, I JUST DON'T UNDERSTAND WHY
-    private fun <T> MutableList<T>.shuffleHard(rng: Random): MutableList<T> {
-      for (index in 0 until this.size) {
-        val randomIndex = rng.nextInt(index + 1)
-
-        // Swap with the random position
-        val temp = this[index]
-        this[index] = this[randomIndex]
-        this[randomIndex] = temp
-      }
-
-      return this
-    }
-
   }
 }
 
