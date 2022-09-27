@@ -1,0 +1,7 @@
+<idea-plugin>
+  <depends>JavaScript</depends>
+  <extensions defaultExtensionNs="org.jetbrains.completion.full.line">
+    <fullLineLanguageSupport implementation="org.jetbrains.completion.full.line.language.supporters.JSSupporter"/>
+    <fullLineLanguageSupport implementation="org.jetbrains.completion.full.line.language.supporters.TSSupporter"/>
+  </extensions>
+</idea-plugin>

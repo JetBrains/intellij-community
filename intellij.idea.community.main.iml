@@ -195,5 +195,8 @@
     <orderEntry type="module" module-name="intellij.devkit.workspaceModel.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.remoteControl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.webSymbols" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.fullLine" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.fullLine.java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.fullLine.kotlin" scope="RUNTIME" />
   </component>
 </module>

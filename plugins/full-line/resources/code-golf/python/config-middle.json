@@ -1,0 +1,43 @@
+{
+  "language": "Python",
+  "projectPath": "EVALUATION_PROJECT",
+  "outputDir": "EVALUATION_OUTPUT",
+  "actions": {
+    "evaluationRoots": [
+      "models/video_prediction/prediction_model.py",
+      "models/object_detection/matchers/__init__.py",
+      "models/tutorials/image/cifar10/cifar10_multi_gpu_train.py",
+      "models/slim/preprocessing/__init__.py",
+      "models/lfads/synth_data/synthetic_data_utils.py",
+      "models/inception/inception/slim/inception_model.py",
+      "models/object_detection/core/target_assigner_test.py"
+    ],
+    "strategy": {
+      "completeAllTokens": true,
+      "codeGolf": true,
+      "context": "ALL",
+      "prefix": {
+        "name": "NoPrefix"
+      }
+    }
+  },
+  "interpret": {
+    "codeGolfSettings": {
+      "topN": 5,
+      "checkToken": "CHECK_TOKEN",
+      "checkLine": "CHECK_LINE",
+      "source": "SUGGESTION_SOURCE"
+    },
+    "completionType": "EVAL_TYPE",
+    "saveLogs": false,
+    "completeTokenProbability": 1.0,
+    "completeTokenSeed": null,
+    "trainTestSplit": 70
+  },
+  "reports": {
+    "evaluationTitle": "EVAL_TITLE: BS=@beam_size, NI=@num_iterations, DG=@diversity_groups, DS=@diversity_strength, M=@model, OFL=@only_full_lines, LP=@len_power, LB=@len_base",
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}
+
