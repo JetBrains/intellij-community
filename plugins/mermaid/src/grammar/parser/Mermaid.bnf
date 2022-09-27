@@ -1,25 +1,25 @@
 {
-  parserClass="com.github.firsttimeinforever.mermaid.lang.parser._MermaidParser"
+  parserClass="com.intellij.mermaid.lang.parser._MermaidParser"
   extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
   psiClassPrefix="Mermaid"
   psiImplClassSuffix="Impl"
-  psiPackage="com.github.firsttimeinforever.mermaid.lang.psi"
-  psiImplPackage="com.github.firsttimeinforever.mermaid.lang.psi.impl"
-  elementTypeHolderClass="com.github.firsttimeinforever.mermaid.lang.parser.MermaidElements"
-  elementTypeClass="com.github.firsttimeinforever.mermaid.lang.psi.MermaidElementType"
-  tokenTypeClass="com.github.firsttimeinforever.mermaid.lang.lexer.MermaidToken"
+  psiPackage="com.intellij.mermaid.lang.psi"
+  psiImplPackage="com.intellij.mermaid.lang.psi.impl"
+  elementTypeHolderClass="com.intellij.mermaid.lang.parser.MermaidElements"
+  elementTypeClass="com.intellij.mermaid.lang.psi.MermaidElementType"
+  tokenTypeClass="com.intellij.mermaid.lang.lexer.MermaidToken"
   parserImports=[
-    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.*'
-    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie.*'
-    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Journey.*'
-    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.*'
-    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Sequence.*'
-    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ClassDiagram.*'
-    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.StateDiagram.*'
-    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.EntityRelationship.*'
-    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Gantt.*'
-    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement.*'
-    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.GitGraph.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Journey.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Flowchart.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Sequence.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.ClassDiagram.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.StateDiagram.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.EntityRelationship.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Gantt.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.GitGraph.*'
   ]
   generateTokens=false
 }
@@ -405,11 +405,11 @@ directionStatement ::= DIRECTION DIR
 
 string ::= DOUBLE_QUOTE STRING_VALUE? DOUBLE_QUOTE
 complexIdentifier ::= (ID | AMPERSAND)+ {
-	mixin="com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidNamedPsiElement"
-	implements="com.github.firsttimeinforever.mermaid.lang.psi.MermaidNamedElement"
+	mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+	implements="com.intellij.mermaid.lang.psi.MermaidNamedElement"
 }
 identifier ::= ID {
-	mixin="com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidNamedPsiElement"
-	implements="com.github.firsttimeinforever.mermaid.lang.psi.MermaidNamedElement"
+	mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+	implements="com.intellij.mermaid.lang.psi.MermaidNamedElement"
 }
 

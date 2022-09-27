@@ -1,10 +1,10 @@
-package com.github.firsttimeinforever.mermaid.lang.lexer;
+package com.intellij.mermaid.lang.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lexer.FlexLexer;
 import java.util.Stack;
-import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.*;
-import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie;
+import static com.intellij.mermaid.lang.lexer.MermaidTokens.*;
+import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %%
 

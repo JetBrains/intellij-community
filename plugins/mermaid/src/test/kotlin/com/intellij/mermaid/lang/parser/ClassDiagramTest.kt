@@ -1,0 +1,31 @@
+package com.intellij.mermaid.lang.parser
+
+class ClassDiagramTest : MermaidParserTestCase("class") {
+  fun `test simple class definition`() = doTest(true)
+
+  fun `test class definition in brackets`() = doTest(true)
+
+  fun `test class with generics`() = doTest(true)
+
+  fun `test identifiers at end of member`() = doTest(true)
+
+  fun `test class relationships RL`() = doTest(true)
+
+  fun `test class relationships LR`() = doTest(true)
+
+  fun `test class two way relationship`() = doTest(true)
+
+  fun `test class relationship with label`() = doTest(true)
+
+  fun `test class relationship with cardinality`() = doTest(true)
+
+  fun `test class with annotation`() = doTest(true)
+
+  fun `test class with annotation in struct`() = doTest(true)
+
+  fun `test class with direction`() = doTest(true)
+
+  fun `test class with style`() = doTest(true)
+
+  fun `test click statements`() = doTest(true)
+}

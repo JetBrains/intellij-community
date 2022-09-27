@@ -1,49 +1,49 @@
 <idea-plugin>
-  <id>firsttimeinforever.mermaid</id>
+  <id>com.intellij.mermaid</id>
   <name>Mermaid</name>
-  <vendor>firsttimeinforever</vendor>
+  <vendor>JetBrains</vendor>
 
   <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="MyMermaid"
-              implementationClass="com.github.firsttimeinforever.mermaid.lang.MermaidFileType"
+              implementationClass="com.intellij.mermaid.lang.MermaidFileType"
               fieldName="INSTANCE"
               language="MyMermaid"
               extensions="mymermaid"/>
     <lang.parserDefinition language="MyMermaid"
-                           implementationClass="com.github.firsttimeinforever.mermaid.lang.MermaidParserDefinition"/>
+                           implementationClass="com.intellij.mermaid.lang.MermaidParserDefinition"/>
     <lang.syntaxHighlighter language="MyMermaid"
-                            implementationClass="com.github.firsttimeinforever.mermaid.lang.highlighting.MermaidHighlighter"/>
+                            implementationClass="com.intellij.mermaid.lang.highlighting.MermaidHighlighter"/>
     <completion.contributor language="MyMermaid"
-                            implementationClass="com.github.firsttimeinforever.mermaid.editor.MermaidCompletionContributor"/>
+                            implementationClass="com.intellij.mermaid.editor.MermaidCompletionContributor"/>
     <lang.commenter language="MyMermaid"
-                    implementationClass="com.github.firsttimeinforever.mermaid.lang.MermaidCommenter"/>
+                    implementationClass="com.intellij.mermaid.lang.MermaidCommenter"/>
     <lang.braceMatcher language="MyMermaid"
-                       implementationClass="com.github.firsttimeinforever.mermaid.lang.highlighting.MermaidPairMatcher"/>
+                       implementationClass="com.intellij.mermaid.lang.highlighting.MermaidPairMatcher"/>
     <quoteHandler fileType="MyMermaid"
-                  className="com.github.firsttimeinforever.mermaid.editor.MermaidQuoteHandler"/>
+                  className="com.intellij.mermaid.editor.MermaidQuoteHandler"/>
 
     <defaultLiveTemplates file="liveTemplates/MermaidHidden.xml" hidden="true"/>
-    <liveTemplateContext implementation="com.github.firsttimeinforever.mermaid.editor.MermaidContextType"/>
+    <liveTemplateContext implementation="com.intellij.mermaid.editor.MermaidContextType"/>
 
-    <lang.elementManipulator forClass="com.github.firsttimeinforever.mermaid.lang.psi.MermaidNamedElement"
-                             implementationClass="com.github.firsttimeinforever.mermaid.lang.psi.MermaidIdentifierManipulator"/>
+    <lang.elementManipulator forClass="com.intellij.mermaid.lang.psi.MermaidNamedElement"
+                             implementationClass="com.intellij.mermaid.lang.psi.MermaidIdentifierManipulator"/>
     <lang.findUsagesProvider language="MyMermaid"
-                             implementationClass="com.github.firsttimeinforever.mermaid.lang.MermaidFindUsagesProvider"/>
+                             implementationClass="com.intellij.mermaid.lang.MermaidFindUsagesProvider"/>
 
     <lang.refactoringSupport language="MyMermaid"
-                             implementationClass="com.github.firsttimeinforever.mermaid.lang.psi.MermaidRefactoringSupportProvider"/>
+                             implementationClass="com.intellij.mermaid.lang.psi.MermaidRefactoringSupportProvider"/>
 
-    <typedHandler implementation="com.github.firsttimeinforever.mermaid.editor.MermaidTypedHandlerDelegate"/>
+    <typedHandler implementation="com.intellij.mermaid.editor.MermaidTypedHandlerDelegate"/>
 
     <lang.formatter
       language="MyMermaid"
-      implementationClass="com.github.firsttimeinforever.mermaid.lang.formatter.MermaidFormattingModelBuilder"/>
+      implementationClass="com.intellij.mermaid.lang.formatter.MermaidFormattingModelBuilder"/>
     <langCodeStyleSettingsProvider
-      implementation="com.github.firsttimeinforever.mermaid.lang.formatter.settings.MermaidCodeStyleSettingsProvider"/>
+      implementation="com.intellij.mermaid.lang.formatter.settings.MermaidCodeStyleSettingsProvider"/>
     <enterHandlerDelegate id="MermaidEnterHandler"
-                          implementation="com.github.firsttimeinforever.mermaid.editor.MermaidEnterHandler"/>
+                          implementation="com.intellij.mermaid.editor.MermaidEnterHandler"/>
 
   </extensions>
 </idea-plugin>

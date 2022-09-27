@@ -82,7 +82,7 @@ tasks {
 
   generateLexer {
     source.set("src/grammar/lexer/MermaidLexer.flex")
-    targetDir.set("src/generated/com/github/firsttimeinforever/mermaid/lang/lexer/")
+    targetDir.set("src/generated/com/intellij/mermaid/lang/lexer/")
     targetClass.set("_MermaidLexer")
     // skeleton.set("/some/specific/skeleton")
     purgeOldFiles.set(true)
@@ -91,8 +91,8 @@ tasks {
   generateParser {
     source.set("src/grammar/parser/Mermaid.bnf")
     targetRoot.set("src/generated/")
-    pathToParser.set("com/github/firsttimeinforever/mermaid/lang/parser/_MermaidParser.java")
-    pathToPsiRoot.set("com/github/firsttimeinforever/mermaid/lang/psi/")
+    pathToParser.set("com/intellij/mermaid/lang/parser/_MermaidParser.java")
+    pathToPsiRoot.set("com/intellij/mermaid/lang/psi/")
     purgeOldFiles.set(true)
   }
 
