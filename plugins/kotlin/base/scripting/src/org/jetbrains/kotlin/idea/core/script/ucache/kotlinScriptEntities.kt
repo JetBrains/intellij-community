@@ -140,8 +140,8 @@ private fun addIdeSpecificDependencies(
 ) {
     ScriptAdditionalIdeaDependenciesProvider.getRelatedLibraries(scriptFile, project).forEach { lib ->
         val provider = lib.rootProvider
-        provider.getFiles(OrderRootType.CLASSES).forEach { it -> classDependencies.add(it) }
-        provider.getFiles(OrderRootType.SOURCES).forEach { it -> sourceDependencies.add(it) }
+        provider.getFiles(OrderRootType.CLASSES).forEach { classDependencies.add(it) }
+        provider.getFiles(OrderRootType.SOURCES).forEach { sourceDependencies.add(it) }
     }
 }
 

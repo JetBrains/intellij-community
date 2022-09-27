@@ -27,18 +27,19 @@ import javax.swing.Icon
 class KotlinScriptProjectModelInfoProvider : CustomEntityProjectModelInfoProvider<KotlinScriptEntity> {
     override fun getEntityClass(): Class<KotlinScriptEntity> = KotlinScriptEntity::class.java
 
-    override fun getLibraryRoots(entities: Sequence<KotlinScriptEntity>): Sequence<LibraryRoots<KotlinScriptEntity>> {
-        if (!scriptsAsEntities) return emptySequence() // see KotlinScriptDependenciesLibraryRootProvider
-
-        return entities.flatMap { scriptEntity ->
-            scriptEntity.dependencies.map<@Child LibraryEntity, LibraryRoots<KotlinScriptEntity>> { libEntity ->
-                val (classes, sources) = libEntity.roots.partition { it.type == LibraryRootTypeId.COMPILED }
-                val classFiles = classes.mapNotNull { it.url.virtualFile }
-                val sourceFiles = sources.mapNotNull { it.url.virtualFile }
-                LibraryRoots(scriptEntity, sourceFiles, classFiles, emptyList(), null)
+    override fun getLibraryRoots(entities: Sequence<KotlinScriptEntity>): Sequence<LibraryRoots<KotlinScriptEntity>> =
+        if (!scriptsAsEntities) { // see KotlinScriptDependenciesLibraryRootProvider
+            emptySequence()
+        } else {
+            entities.flatMap { scriptEntity ->
+                scriptEntity.dependencies.map<@Child LibraryEntity, LibraryRoots<KotlinScriptEntity>> { libEntity ->
+                    val (classes, sources) = libEntity.roots.partition { it.type == LibraryRootTypeId.COMPILED }
+                    val classFiles = classes.mapNotNull { it.url.virtualFile }
+                    val sourceFiles = sources.mapNotNull { it.url.virtualFile }
+                    LibraryRoots(scriptEntity, sourceFiles, classFiles, emptyList(), null)
+                }
             }
         }
-    }
 }
 
 
@@ -66,9 +67,10 @@ class KotlinScriptDependenciesLibraryRootProvider : AdditionalLibraryRootsProvid
 
     private fun Collection<VirtualFile>.filterValid() = this.filterTo(LinkedHashSet(), VirtualFile::isValid)
 
-    override fun getRootsToWatch(project: Project): Collection<VirtualFile> {
-        if (scriptsAsEntities) return emptyList()
-        return ScriptConfigurationManager.allExtraRoots(project).filterValid()
+    override fun getRootsToWatch(project: Project): Collection<VirtualFile> = if (scriptsAsEntities) {
+        emptyList()
+    } else {
+        ScriptConfigurationManager.allExtraRoots(project).filterValid()
     }
 
     private data class KotlinScriptDependenciesLibrary(val classes: Collection<VirtualFile>, val sources: Collection<VirtualFile>) :

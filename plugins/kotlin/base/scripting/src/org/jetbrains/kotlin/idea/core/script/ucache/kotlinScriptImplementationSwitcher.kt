@@ -33,12 +33,12 @@ fun getScriptDependenciesClassFilesScope(project: Project, ktFile: KtFile): Glob
             // WorkspaceModel doesn't know about the file yet. But once the latest sync is over it will.
             // We cannot synchronously call its syncScriptEntities() because it requires platform write-lock acquisition and this function
             // is called under platform read-lock.
-            return ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(ktFile.virtualFile)
+            ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(ktFile.virtualFile)
+        } else {
+            NonClasspathDirectoriesScope.compose(scriptEntity.listDependencies(LibraryRootTypeId.COMPILED))
         }
-
-        NonClasspathDirectoriesScope.compose(scriptEntity.listDependencies(LibraryRootTypeId.COMPILED))
     } else {
-        return ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(ktFile.virtualFile)
+        ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(ktFile.virtualFile)
     }
 }
 
@@ -46,7 +46,7 @@ fun getAllScriptsDependenciesClassFilesScope(project: Project): GlobalSearchScop
     return if (scriptsAsEntities) {
         listAllScriptDependenciesScope(project, LibraryRootTypeId.COMPILED)
     } else {
-        return ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFilesScope()
+        ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFilesScope()
     }
 }
 
@@ -54,7 +54,7 @@ fun getAllScriptDependenciesSourcesScope(project: Project): GlobalSearchScope {
     return if (scriptsAsEntities) {
         listAllScriptDependenciesScope(project, LibraryRootTypeId.SOURCES)
     } else {
-        return ScriptConfigurationManager.getInstance(project).getAllScriptDependenciesSourcesScope()
+        ScriptConfigurationManager.getInstance(project).getAllScriptDependenciesSourcesScope()
     }
 }
 
@@ -63,7 +63,7 @@ fun getAllScriptsDependenciesClassFiles(project: Project): Collection<VirtualFil
         val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
         entityStorage.listDependenciesOfAllScriptEntities(LibraryRootTypeId.COMPILED)
     } else {
-        return ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFiles()
+        ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFiles()
     }
 }
 
@@ -72,7 +72,7 @@ fun getAllScriptDependenciesSources(project: Project): Collection<VirtualFile> {
         val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
         entityStorage.listDependenciesOfAllScriptEntities(LibraryRootTypeId.SOURCES)
     } else {
-        return ScriptConfigurationManager.getInstance(project).getAllScriptDependenciesSources()
+        ScriptConfigurationManager.getInstance(project).getAllScriptDependenciesSources()
     }
 }
 
@@ -82,7 +82,7 @@ fun computeClassRoots(project: Project): List<VirtualFile> {
         entityStorage.listDependenciesOfAllScriptEntities(LibraryRootTypeId.COMPILED).toList()
     } else {
         val manager = ScriptConfigurationManager.getInstance(project)
-        return (manager.getAllScriptsDependenciesClassFiles() + manager.getAllScriptsSdkDependenciesClassFiles()).filter { it.isValid }
+        (manager.getAllScriptsDependenciesClassFiles() + manager.getAllScriptsSdkDependenciesClassFiles()).filter { it.isValid }
     }
 }
 
@@ -92,11 +92,10 @@ private fun listAllScriptDependenciesScope(project: Project, rootTypeId: Library
     return NonClasspathDirectoriesScope.compose(files)
 }
 
-private fun EntityStorage.listDependenciesOfAllScriptEntities(rootTypeId: LibraryRootTypeId): Collection<VirtualFile> {
-    return entities(KotlinScriptEntity::class.java)
+private fun EntityStorage.listDependenciesOfAllScriptEntities(rootTypeId: LibraryRootTypeId): Collection<VirtualFile> =
+    entities(KotlinScriptEntity::class.java)
         .flatMap { it.listDependencies(rootTypeId) }
         .toSet()
-}
 
 private fun KotlinScriptEntity.listDependencies(rootTypeId: LibraryRootTypeId): List<VirtualFile> = dependencies.asSequence()
     .flatMap { it.roots }
@@ -112,33 +111,32 @@ internal fun scriptEntitiesDebugInfo(project: Project, listRoots: Boolean = fals
         .mapIndexed { i, root -> "$indent${i + 1}: ${root.url.presentableUrl}" }
         .joinToString("\n", indent)
 
-    val debugInfo = StringBuilder()
+    return buildString {
+        val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
 
-    val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+        val allClasses = HashSet<LibraryRoot>()
+        val allSources = HashSet<LibraryRoot>()
 
-    val allClasses = HashSet<LibraryRoot>()
-    val allSources = HashSet<LibraryRoot>()
-
-    entityStorage.entities(KotlinScriptEntity::class.java).forEachIndexed { scriptIndex, scriptEntity ->
-        debugInfo.append("#${scriptIndex + 1}: [${scriptEntity.path}]\n")
-        scriptEntity.dependencies.forEachIndexed { libIndex, lib ->
-            val (classes, sources) = lib.roots.partition { it.type == LibraryRootTypeId.COMPILED }
-            allClasses.addAll(classes)
-            allSources.addAll(sources)
-            debugInfo.append("      Lib #${libIndex + 1}: \"${lib.name}\", classes: ${classes.size}, sources: ${sources.size} \n")
-            debugInfo.applyIf(listRoots) {
-                append("        Classes:\n ${classes.print()}\n")
-                append("        Sources:\n ${sources.print()}\n")
+        entityStorage.entities(KotlinScriptEntity::class.java).forEachIndexed { scriptIndex, scriptEntity ->
+            append("#${scriptIndex + 1}: [${scriptEntity.path}]\n")
+            scriptEntity.dependencies.forEachIndexed { libIndex, lib ->
+                val (classes, sources) = lib.roots.partition { it.type == LibraryRootTypeId.COMPILED }
+                allClasses.addAll(classes)
+                allSources.addAll(sources)
+                append("      Lib #${libIndex + 1}: \"${lib.name}\", classes: ${classes.size}, sources: ${sources.size} \n")
+                applyIf(listRoots) {
+                    append("        Classes:\n ${classes.print()}\n")
+                    append("        Sources:\n ${sources.print()}\n")
+                }
             }
         }
+
+        insert(0, "==> WorkspaceModel (unique classes: ${allClasses.size}, sources: ${allSources.size})\n")
     }
-    debugInfo.insert(0, "==> WorkspaceModel (unique classes: ${allClasses.size}, sources: ${allSources.size})\n")
-    return debugInfo.toString()
 }
 
 @Suppress("unused") // exists for debug purposes
-internal fun managerScriptsDebugInfo(project: Project, scriptFiles: Sequence<VirtualFile>? = null): String {
-    val debugInfo = StringBuilder()
+internal fun managerScriptsDebugInfo(project: Project, scriptFiles: Sequence<VirtualFile>? = null): String = buildString {
     val configurationManager = ScriptConfigurationManager.getInstance(project)
 
     val allSourcesSize = configurationManager.getAllScriptDependenciesSources().size
@@ -150,11 +148,10 @@ internal fun managerScriptsDebugInfo(project: Project, scriptFiles: Sequence<Vir
     scriptFiles?.forEach {
         val classDepSize = configurationManager.getScriptDependenciesClassFiles(it).size
         val sourceDepSize = configurationManager.getScriptDependenciesSourceFiles(it).size
-        debugInfo.append("[${it.path}]: classes: ${classDepSize}, sources: ${sourceDepSize}\n")
+        append("[${it.path}]: classes: ${classDepSize}, sources: ${sourceDepSize}\n")
     }
-    debugInfo.insert(
+    insert(
         0,
         "==> ScriptConfigurationManager (classes: $allClassesSize, sdkClasses: $allSdkClassesSize, sources: $allSourcesSize, sdkSources: $allSdkSourcesSize)\n"
     )
-    return debugInfo.toString()
 }

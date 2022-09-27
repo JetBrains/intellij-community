@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.openapi.project.Project
-import com.intellij.util.SmartList
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -20,36 +19,31 @@ class KotlinScriptDependencyIndexableEntityProvider : IndexableEntityProvider.Ex
     override fun getAddedEntityIteratorBuilders(
         entity: KotlinScriptEntity,
         project: Project
-    ): MutableCollection<out IndexableEntityProvider.IndexableIteratorBuilder> {
-        return buildList {
-            entity.dependencies.forEach {
-                addAll(createIteratorBuildersForDependency(it))
-            }
-        }.toMutableList()
+    ): Collection<IndexableEntityProvider.IndexableIteratorBuilder> = buildList {
+        entity.dependencies.forEach {
+            addAll(createIteratorBuildersForDependency(it))
+        }
     }
 
     override fun getReplacedEntityIteratorBuilders(
         oldEntity: KotlinScriptEntity,
         newEntity: KotlinScriptEntity
-    ): MutableCollection<out IndexableEntityProvider.IndexableIteratorBuilder> {
+    ): Collection<IndexableEntityProvider.IndexableIteratorBuilder> {
         val notYetIndexed = newEntity.dependencies.toSet() - oldEntity.dependencies.toSet()
         return buildList {
             notYetIndexed.forEach {
                 addAll(createIteratorBuildersForDependency(it))
             }
-        }.toMutableList()
+        }
     }
 
     override fun getIteratorBuildersForExistingModule(
         entity: ModuleEntity,
         entityStorage: EntityStorage,
         project: Project
-    ): MutableCollection<out IndexableEntityProvider.IndexableIteratorBuilder> {
-        return mutableListOf()
-    }
+    ): Collection<IndexableEntityProvider.IndexableIteratorBuilder> = emptyList()
 
 
-    private fun createIteratorBuildersForDependency(dependency: LibraryEntity): Collection<IndexableEntityProvider.IndexableIteratorBuilder>  {
-        return IndexableIteratorBuilders.forLibraryEntity(dependency.persistentId, true)
-    }
+    private fun createIteratorBuildersForDependency(dependency: LibraryEntity): Collection<IndexableEntityProvider.IndexableIteratorBuilder> =
+        IndexableIteratorBuilders.forLibraryEntity(dependency.persistentId, true)
 }
