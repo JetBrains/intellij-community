@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.FileIntPropertyPusher;
+import com.intellij.FilePropertyPusherBase;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public final class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLevel> {
+public final class JavaLanguageLevelPusher extends FilePropertyPusherBase<LanguageLevel> {
   public static void pushLanguageLevel(@NotNull final Project project) {
     JavaLanguageLevelPusher pusher = EP_NAME.findExtension(JavaLanguageLevelPusher.class);
     PushedFilePropertiesUpdater.getInstance(project).pushAll(pusher);

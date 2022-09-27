@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.templateLanguages;
 
-import com.intellij.FileStringPropertyPusher;
+import com.intellij.FilePropertyPusherBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin.Ulitin
  */
-public class TemplateDataLanguagePusher implements FileStringPropertyPusher<Language> {
+public class TemplateDataLanguagePusher extends FilePropertyPusherBase<Language> {
   private static final FileAttribute PERSISTENCE = new FileAttribute("template_language", 3, true);
   public static final FilePropertyKey<Language> KEY =
     FilePropertyKeyImpl.createPersistentStringKey("TEMPLATE_DATA_LANGUAGE", PERSISTENCE,
