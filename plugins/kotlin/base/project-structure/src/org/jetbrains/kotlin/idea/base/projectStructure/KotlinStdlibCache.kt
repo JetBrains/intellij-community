@@ -210,10 +210,6 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             override fun checkValueValidity(value: StdlibDependency) {
                 value.libraryInfo?.checkValidity()
             }
-
-            override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
-                invalidateEntries({ _, v -> v.libraryInfo in libraryInfos }, validityCondition = { _, v -> v.libraryInfo != null })
-            }
         }
 
         private inner class LibraryCache : AbstractCache<LibraryInfo>() {
@@ -280,6 +276,10 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
 
             override fun checkKeyValidity(key: IdeaModuleInfo) {
                 key.checkValidity()
+            }
+
+            override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
+                invalidateEntries({ _, v -> v.libraryInfo in libraryInfos }, validityCondition = { _, v -> v.libraryInfo != null })
             }
 
             override fun changed(event: VersionedStorageChange) {
