@@ -367,7 +367,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
 
   @NotNull
   private Collection<VcsRootError> findUnregisteredRoots() {
-    if (!TrustedProjects.isTrusted(myProject)) return Collections.emptyList();
+    if (myProject.isDefault() || !TrustedProjects.isTrusted(myProject)) return Collections.emptyList();
     return ContainerUtil.filter(VcsRootErrorsFinder.getInstance(myProject).getOrFind(),
                                 error -> error.getType() == VcsRootError.Type.UNREGISTERED_ROOT);
   }
