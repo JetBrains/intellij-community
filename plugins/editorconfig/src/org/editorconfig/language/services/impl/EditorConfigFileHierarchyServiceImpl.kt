@@ -65,7 +65,7 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
   override fun after(events: List<VFileEvent>) {
     val editorConfigs = events
       .asSequence()
-      .filter { PathUtil.getFileName(it.path) == EditorConfigFileConstants.FILE_NAME }
+      .filter { PathUtil.getFileName(it.path) == EditorConfigFileConstants.FILE_NAME && it.isFromSave }
       .toList()
     if (editorConfigs.isNotEmpty()) {
       synchronized(cacheLocker) {
