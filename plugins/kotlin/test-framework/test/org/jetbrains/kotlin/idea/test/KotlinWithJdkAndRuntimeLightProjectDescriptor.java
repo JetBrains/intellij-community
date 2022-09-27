@@ -28,7 +28,6 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
         super(libraryFiles, librarySourceFiles);
     }
 
-    public static @NotNull KotlinWithJdkAndRuntimeLightProjectDescriptor getInstance(@NotNull
     public static KotlinWithJdkAndRuntimeLightProjectDescriptor getInstance(@NotNull String version) {
         KotlinArtifactsDownloader instance = KotlinArtifactsDownloader.INSTANCE;
         return new KotlinWithJdkAndRuntimeLightProjectDescriptor(
@@ -36,16 +35,6 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
                 List.of(
                         instance.downloadArtifactForIdeFromSources("kotlin-stdlib", version, "-sources.jar"),
                         instance.downloadArtifactForIdeFromSources("kotlin-stdlib-common", version, "-sources.jar")
-                )
-        );
-    }
-
-    @NotNull String version) {
-        return new KotlinWithJdkAndRuntimeLightProjectDescriptor(
-                List.of(TestKotlinArtifactsKt.downloadOrReportUnavailability("kotlin-stdlib", version)),
-                List.of(
-                        TestKotlinArtifactsKt.downloadOrReportUnavailability("kotlin-stdlib", version, "-sources.jar"),
-                        TestKotlinArtifactsKt.downloadOrReportUnavailability("kotlin-stdlib-common", version, "-sources.jar")
                 )
         );
     }

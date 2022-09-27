@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
-import org.jetbrains.kotlin.analysis.api.annotations.containsAnnotation
+import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
@@ -63,7 +63,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
             }
 
             if (!isTopLevel && configuration.checkJvmStaticAnnotation) {
-                if (!functionSymbol.containsAnnotation(StandardClassIds.Annotations.JvmStatic)) {
+                if (!functionSymbol.hasAnnotation(StandardClassIds.Annotations.JvmStatic)) {
                     return false
                 }
             }
