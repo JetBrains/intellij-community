@@ -245,9 +245,14 @@ public final class ExternalDiffToolUtil {
                              @NotNull ExternalDiffSettings.ExternalTool externalTool,
                              @NotNull List<? extends DiffContent> contents,
                              @NotNull List<String> titles,
-                             @Nullable String windowTitle) throws IOException, ExecutionException {
-    GeneralCommandLine commandLine = createDiffCommandLine(project, externalTool, contents, titles, windowTitle);
-    commandLine.createProcess();
+                             @Nullable String windowTitle) throws IOException {
+    try {
+      GeneralCommandLine commandLine = createDiffCommandLine(project, externalTool, contents, titles, windowTitle);
+      commandLine.createProcess();
+    }
+    catch (ExecutionException e) {
+      throw new IOException(e);
+    }
   }
 
   @NotNull
@@ -281,7 +286,7 @@ public final class ExternalDiffToolUtil {
   public static void executeMerge(@Nullable Project project,
                                   @NotNull ExternalDiffSettings.ExternalTool externalTool,
                                   @NotNull ThreesideMergeRequest request,
-                                  @Nullable JComponent parentComponent) throws IOException, ExecutionException {
+                                  @Nullable JComponent parentComponent) throws IOException {
     request.onAssigned(true);
     try {
       boolean success = false;
@@ -300,11 +305,16 @@ public final class ExternalDiffToolUtil {
   public static boolean tryExecuteMerge(@Nullable Project project,
                                         @NotNull ExternalDiffSettings.ExternalTool externalTool,
                                         @NotNull ThreesideMergeRequest request,
-                                        @Nullable JComponent parentComponent) throws IOException, ExecutionException {
+                                        @Nullable JComponent parentComponent) throws IOException {
     return runWithTempMergeFiles(project, request, (outputFile, inputFiles) -> {
       GeneralCommandLine commandLine = createMergeCommandLine(externalTool, outputFile, inputFiles);
-      final Process process = commandLine.createProcess();
-      return waitMergeProcessWithModal(project, process, externalTool.isMergeTrustExitCode(), parentComponent);
+      try {
+        Process process = commandLine.createProcess();
+        return waitMergeProcessWithModal(project, process, externalTool.isMergeTrustExitCode(), parentComponent);
+      }
+      catch (ExecutionException e) {
+        throw new IOException(e);
+      }
     });
   }
 
@@ -362,7 +372,7 @@ public final class ExternalDiffToolUtil {
 
   private static boolean runWithTempMergeFiles(@Nullable Project project,
                                                @NotNull ThreesideMergeRequest request,
-                                               @NotNull MergeTask mergeTask) throws IOException, ExecutionException {
+                                               @NotNull MergeTask mergeTask) throws IOException {
     OutputFile outputFile = null;
     List<InputFile> inputFiles = null;
     try {
@@ -627,6 +637,6 @@ public final class ExternalDiffToolUtil {
   }
 
   private interface MergeTask {
-    boolean runMerge(@NotNull OutputFile outputFile, @NotNull List<InputFile> inputFiles) throws ExecutionException;
+    boolean runMerge(@NotNull OutputFile outputFile, @NotNull List<InputFile> inputFiles) throws IOException;
   }
 }
