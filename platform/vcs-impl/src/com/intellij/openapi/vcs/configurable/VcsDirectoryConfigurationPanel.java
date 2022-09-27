@@ -58,7 +58,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
   private final ComboBox<AbstractVcs> myVcsComboBox;
 
   private final MyDirectoryRenderer myDirectoryRenderer;
-  private final ColumnInfo<MapInfo, MapInfo> DIRECTORY;
   private final ListTableModel<MapInfo> myModel;
   private final List<AbstractVcs> myAllVcss;
   private final boolean myIsDisabled;
@@ -179,98 +178,50 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
     }
   }
 
-  private final ColumnInfo<MapInfo, String> VCS_SETTING =
-    new ColumnInfo<>(VcsBundle.message("column.name.configure.vcses.vcs")) {
-      @Override
-      public String valueOf(final MapInfo object) {
-        return object.mapping.getVcs();
-      }
+  private static class MyVcsRenderer extends ColoredTableCellRenderer {
+    private final MapInfo myInfo;
+    private final List<AbstractVcs> myAllVcses;
 
-      @Override
-      public boolean isCellEditable(MapInfo info) {
-        return info != MapInfo.SEPARATOR && info.type != MapInfo.Type.UNREGISTERED;
-      }
+    MyVcsRenderer(@NotNull MapInfo info, @NotNull List<AbstractVcs> allVcses) {
+      myInfo = info;
+      myAllVcses = allVcses;
+    }
 
-      @Override
-      public void setValue(final MapInfo o, final String aValue) {
-        o.mapping = new VcsDirectoryMapping(o.mapping.getDirectory(), aValue, o.mapping.getRootSettings());
-      }
-
-      @Override
-      public TableCellRenderer getRenderer(final MapInfo info) {
-        return new ColoredTableCellRenderer() {
-          @Override
-          protected void customizeCellRenderer(@NotNull JTable table,
-                                               Object value,
-                                               boolean selected,
-                                               boolean hasFocus,
-                                               int row,
-                                               int column) {
-            if (info == MapInfo.SEPARATOR) {
-              if (!selected) {
-                setBackground(UIUtil.getDecoratedRowColor());
-              }
-              return;
-            }
-
-            if (info.type == MapInfo.Type.UNREGISTERED && !selected) {
-              setBackground(UIUtil.getDecoratedRowColor());
-            }
-
-            final String vcsName = info.mapping.getVcs();
-            String text;
-            if (vcsName.isEmpty()) {
-              text = VcsBundle.message("none.vcs.presentation");
-            }
-            else {
-              AbstractVcs vcs = ContainerUtil.find(myAllVcss, it -> vcsName.equals(it.getName()));
-              if (vcs != null) {
-                text = vcs.getDisplayName();
-              }
-              else {
-                text = VcsBundle.message("unknown.vcs.presentation", vcsName);
-              }
-            }
-            append(text, getAttributes(info));
-          }
-        };
-      }
-
-      @Override
-      public TableCellEditor getEditor(final MapInfo o) {
-        return new AbstractTableCellEditor() {
-          @Override
-          public Object getCellEditorValue() {
-            AbstractVcs selectedVcs = myVcsComboBox.getItem();
-            return selectedVcs == null ? "" : selectedVcs.getName(); //NON-NLS handled by custom renderer
-          }
-
-          @Override
-          public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            myVcsComboBox.setSelectedItem(value);
-            return myVcsComboBox;
-          }
-        };
-      }
-
-      @Nullable
-      @Override
-      public String getMaxStringValue() {
-        String maxString = null;
-        for (AbstractVcs vcs : myAllVcss) {
-          String name = vcs.getDisplayName();
-          if (maxString == null || maxString.length() < name.length()) {
-            maxString = name;
-          }
+    @Override
+    protected void customizeCellRenderer(@NotNull JTable table,
+                                         Object value,
+                                         boolean selected,
+                                         boolean hasFocus,
+                                         int row,
+                                         int column) {
+      if (myInfo == MapInfo.SEPARATOR) {
+        if (!selected) {
+          setBackground(UIUtil.getDecoratedRowColor());
         }
-        return maxString;
+        return;
       }
 
-      @Override
-      public int getAdditionalWidth() {
-        return DEFAULT_HGAP;
+      if (myInfo.type == MapInfo.Type.UNREGISTERED && !selected) {
+        setBackground(UIUtil.getDecoratedRowColor());
       }
-    };
+
+      final String vcsName = myInfo.mapping.getVcs();
+      String text;
+      if (vcsName.isEmpty()) {
+        text = VcsBundle.message("none.vcs.presentation");
+      }
+      else {
+        AbstractVcs vcs = ContainerUtil.find(myAllVcses, it -> vcsName.equals(it.getName()));
+        if (vcs != null) {
+          text = vcs.getDisplayName();
+        }
+        else {
+          text = VcsBundle.message("unknown.vcs.presentation", vcsName);
+        }
+      }
+      append(text, getAttributes(myInfo));
+    }
+  }
 
   public VcsDirectoryConfigurationPanel(@NotNull Project project) {
     myProject = project;
@@ -298,19 +249,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
     add(createMainComponent());
 
     myDirectoryRenderer = new MyDirectoryRenderer(myProject);
-    DIRECTORY = new ColumnInfo<>(VcsBundle.message("column.info.configure.vcses.directory")) {
-      @Override
-      public MapInfo valueOf(final MapInfo mapping) {
-        return mapping;
-      }
 
-      @Override
-      public TableCellRenderer getRenderer(MapInfo vcsDirectoryMapping) {
-        return myDirectoryRenderer;
-      }
-    };
-
-    myModel = new ListTableModel<>(new ColumnInfo[]{DIRECTORY, VCS_SETTING});
+    myModel = new ListTableModel<>(new ColumnInfo[]{new MyDirectoryColumnInfo(), new MyVcsColumnInfo()});
     myDirectoryMappingTable.setModelAndUpdateColumns(myModel);
 
     initializeModel();
@@ -597,5 +537,82 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
   private List<VcsDirectoryMapping> getModelMappings() {
     return ContainerUtil.mapNotNull(myModel.getItems(),
                                     info -> info == MapInfo.SEPARATOR || info.type == MapInfo.Type.UNREGISTERED ? null : info.mapping);
+  }
+
+  private class MyDirectoryColumnInfo extends ColumnInfo<MapInfo, MapInfo> {
+    MyDirectoryColumnInfo() {
+      super(VcsBundle.message("column.info.configure.vcses.directory"));
+    }
+
+    @Override
+    public MapInfo valueOf(final MapInfo mapping) {
+      return mapping;
+    }
+
+    @Override
+    public TableCellRenderer getRenderer(MapInfo vcsDirectoryMapping) {
+      return myDirectoryRenderer;
+    }
+  }
+
+  private class MyVcsColumnInfo extends ColumnInfo<MapInfo, String> {
+    MyVcsColumnInfo() {
+      super(VcsBundle.message("column.name.configure.vcses.vcs"));
+    }
+
+    @Override
+    public String valueOf(final MapInfo object) {
+      return object.mapping.getVcs();
+    }
+
+    @Override
+    public boolean isCellEditable(MapInfo info) {
+      return info != MapInfo.SEPARATOR && info.type != MapInfo.Type.UNREGISTERED;
+    }
+
+    @Override
+    public void setValue(final MapInfo o, final String aValue) {
+      o.mapping = new VcsDirectoryMapping(o.mapping.getDirectory(), aValue, o.mapping.getRootSettings());
+    }
+
+    @Override
+    public TableCellRenderer getRenderer(final MapInfo info) {
+      return new MyVcsRenderer(info, myAllVcss);
+    }
+
+    @Override
+    public TableCellEditor getEditor(final MapInfo o) {
+      return new AbstractTableCellEditor() {
+        @Override
+        public Object getCellEditorValue() {
+          AbstractVcs selectedVcs = myVcsComboBox.getItem();
+          return selectedVcs == null ? "" : selectedVcs.getName(); //NON-NLS handled by custom renderer
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+          myVcsComboBox.setSelectedItem(value);
+          return myVcsComboBox;
+        }
+      };
+    }
+
+    @Nullable
+    @Override
+    public String getMaxStringValue() {
+      String maxString = null;
+      for (AbstractVcs vcs : myAllVcss) {
+        String name = vcs.getDisplayName();
+        if (maxString == null || maxString.length() < name.length()) {
+          maxString = name;
+        }
+      }
+      return maxString;
+    }
+
+    @Override
+    public int getAdditionalWidth() {
+      return DEFAULT_HGAP;
+    }
   }
 }
