@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.xml.XMLConstants;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -239,6 +240,17 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     switch (group.getGroupType()) {
       case LEAF -> {
         XmlElementDescriptor descriptor = group.getLeafDescriptor();
+        
+        PsiElement declaration = descriptor.getDeclaration();
+        // don't add abstract elements to required sub tags list
+        if (declaration instanceof XmlTag) {
+          XmlTag tag = (XmlTag)descriptor.getDeclaration();
+          String abstractValue = tag.getAttributeValue("abstract", XMLConstants.W3C_XML_SCHEMA_NS_URI);
+          if ("true".equals(abstractValue)) {
+            return Collections.emptyList();
+          }
+        }
+        
         return descriptor == null ? Collections.emptyList() : Collections.singletonList(descriptor);
       }
       case CHOICE -> {
