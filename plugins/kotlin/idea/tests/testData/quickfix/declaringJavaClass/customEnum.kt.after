@@ -8,5 +8,5 @@
 enum class CustomEnum { A; }
 
 fun foo() {
-    CustomEnum.A.<caret>declaringClass
+    CustomEnum.A.<caret>declaringJavaClass
 }
