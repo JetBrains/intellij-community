@@ -804,13 +804,14 @@ private fun packInternalUtilities(context: CompilationContext) {
 
 private fun CoroutineScope.createBuildBrokenPluginListJob(context: BuildContext): Job? {
   val buildString = context.fullBuildNumber
-  val targetFile = context.paths.tempDir.resolve("brokenPlugins.db")
+  val fileName = "brokenPlugins.db"
+  val targetFile = context.paths.tempDir.resolve(fileName)
   return createSkippableJob(spanBuilder("build broken plugin list")
                               .setAttribute("buildNumber", buildString)
                               .setAttribute("path", targetFile.toString()), BuildOptions.BROKEN_PLUGINS_LIST_STEP, context) {
     buildBrokenPlugins(targetFile, buildString, context.options.isInDevelopmentMode)
     if (Files.exists(targetFile)) {
-      context.addDistFile(DistFile(file = targetFile, relativeDir = "bin"))
+      context.addDistFile(DistFile(file = targetFile, relativePath = "bin/$fileName"))
     }
   }
 }

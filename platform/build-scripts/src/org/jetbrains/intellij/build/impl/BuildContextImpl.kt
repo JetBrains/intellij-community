@@ -221,18 +221,6 @@ class BuildContextImpl private constructor(
     return null
   }
 
-  override suspend fun signFiles(files: List<Path>, options: Map<String, String>) {
-    if (proprietaryBuildTools.signTool == null) {
-      Span.current().addEvent("files won't be signed", Attributes.of(
-        AttributeKey.stringArrayKey("files"), files.map(Path::toString),
-        AttributeKey.stringKey("reason"), "sign tool isn't defined")
-      )
-    }
-    else {
-      proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
-    }
-  }
-
   override fun executeStep(stepMessage: String, stepId: String, step: Runnable): Boolean {
     if (options.buildStepsToSkip.contains(stepId)) {
       Span.current().addEvent("skip step", Attributes.of(AttributeKey.stringKey("name"), stepMessage))

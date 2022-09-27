@@ -329,9 +329,6 @@ class BuildOptions {
   var randomSeedNumber: Long = 0
 
   @ApiStatus.Experimental
-  var signNativeFiles = true
-
-  @ApiStatus.Experimental
   @ApiStatus.Internal
   var compressZipFiles = true
 

@@ -77,7 +77,9 @@ interface BuildContext : CompilationContext {
 
   fun findFileInModuleSources(moduleName: String, relativePath: String): Path?
 
-  suspend fun signFiles(files: List<Path>, options: Map<String, String> = emptyMap())
+  suspend fun signFiles(files: List<Path>, options: Map<String, String> = emptyMap()) {
+    proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
+  }
 
   /**
    * Execute a build step or skip it if {@code stepId} is included in {@link BuildOptions#buildStepsToSkip}
@@ -108,6 +110,6 @@ data class BuiltinModulesFileData(
 )
 
 data class DistFile(@JvmField val file: Path,
-                    @JvmField val relativeDir: String,
+                    @JvmField val relativePath: String,
                     @JvmField val os: OsFamily? = null,
                     @JvmField val arch: JvmArchitecture? = null)

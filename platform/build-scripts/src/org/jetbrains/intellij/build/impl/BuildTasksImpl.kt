@@ -1173,9 +1173,8 @@ private fun crossPlatformZip(macX64DistDir: Path,
       for (distFile in distFiles) {
         // linux and windows: we don't add win and linux specific dist dirs for ARM, so, copy distFiles explicitly
         // macOS: we don't copy dist files for macOS distribution to avoid extra copy operation
-        val relativePath = "${distFile.relativeDir}/${distFile.file.fileName}"
-        if (zipFileUniqueGuard.putIfAbsent(relativePath, distFile.file) == null) {
-          out.entry(relativePath, distFile.file)
+        if (zipFileUniqueGuard.putIfAbsent(distFile.relativePath, distFile.file) == null) {
+          out.entry(distFile.relativePath, distFile.file)
         }
       }
     }

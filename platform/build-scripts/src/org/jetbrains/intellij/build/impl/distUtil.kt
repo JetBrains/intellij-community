@@ -53,9 +53,9 @@ internal fun generateBuildTxt(context: BuildContext, targetDirectory: Path) {
 
 internal fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmArchitecture) {
   for (item in context.getDistFiles(os, arch)) {
-    val dir = newDir.resolve(item.relativeDir)
-    Files.createDirectories(dir)
-    Files.copy(item.file, dir.resolve(item.file.fileName), StandardCopyOption.REPLACE_EXISTING)
+    val targetFile = newDir.resolve(item.relativePath)
+    Files.createDirectories(targetFile.parent)
+    Files.copy(item.file, targetFile, StandardCopyOption.REPLACE_EXISTING)
   }
 }
 

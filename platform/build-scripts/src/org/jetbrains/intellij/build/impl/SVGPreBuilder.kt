@@ -41,7 +41,7 @@ object SVGPreBuilder {
   }
 
   private fun runSvgTool(context: BuildContext, svgToolClasspath: List<String>, requestFile: Path) {
-    val dbDir = context.paths.tempDir.resolve("icons.db.dir")
+    val dbDir = context.paths.tempDir.resolve("icon-db")
     runJava(
       context = context,
       mainClass = "org.jetbrains.intellij.build.images.ImageSvgPreCompiler",
@@ -53,16 +53,16 @@ object SVGPreBuilder {
     Files.newDirectoryStream(dbDir).use { dirStream ->
       var found = false
       for (file in dirStream) {
-        if (!Files.isRegularFile(file)) {
-          context.messages.error("SVG tool: output must be a regular file: $file")
+        check(Files.isRegularFile(file)) {
+          "SVG tool: output must be a regular file: $file"
         }
 
         found = true
-        context.addDistFile(DistFile(file = file, relativeDir = "bin/icons"))
+        context.addDistFile(DistFile(file = file, relativePath = "bin/icons/${file.fileName}"))
       }
 
-      if (!found) {
-        context.messages.error("SVG tool: after running SVG prebuild it must be a least one file at $dbDir")
+      check(found) {
+        "SVG tool: after running SVG prebuild it must be a least one file at $dbDir"
       }
     }
   }
