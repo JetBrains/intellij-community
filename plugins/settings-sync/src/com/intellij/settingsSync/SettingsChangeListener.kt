@@ -23,7 +23,7 @@ internal sealed class SyncSettingsEvent {
     return javaClass.simpleName
   }
 
-  internal open class EventWithSnapshot(val snapshot: SettingsSnapshot) : SyncSettingsEvent() {
+  internal sealed class EventWithSnapshot(val snapshot: SettingsSnapshot) : SyncSettingsEvent() {
     override fun toString(): String {
       return "${javaClass.simpleName}[${snapshot.fileStates.joinToString(limit = 5) { it.file }}]"
     }

@@ -139,18 +139,21 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       while (pendingEvents.isNotEmpty()) {
         val event = pendingEvents.removeAt(0)
         LOG.debug("Processing event $event")
-        if (event is SyncSettingsEvent.IdeChange) {
-          settingsLog.applyIdeState(event.snapshot, "Local changes made in the IDE")
-        }
-        else if (event is SyncSettingsEvent.CloudChange) {
-          settingsLog.applyCloudState(event.snapshot, "Remote changes")
-          SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = event.serverVersionId
-        }
-        else if (event is SyncSettingsEvent.LogCurrentSettings) {
-          settingsLog.logExistingSettings()
-        }
-        else if (event is SyncSettingsEvent.MustPushRequest) {
-          pushRequestMode = MUST_PUSH
+        when (event) {
+          is SyncSettingsEvent.IdeChange -> {
+            settingsLog.applyIdeState(event.snapshot, "Local changes made in the IDE")
+          }
+          is SyncSettingsEvent.CloudChange -> {
+            settingsLog.applyCloudState(event.snapshot, "Remote changes")
+            SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = event.serverVersionId
+          }
+          is SyncSettingsEvent.LogCurrentSettings -> {
+            settingsLog.logExistingSettings()
+          }
+          is SyncSettingsEvent.MustPushRequest -> {
+            pushRequestMode = MUST_PUSH
+          }
+          SyncSettingsEvent.PingRequest -> {}
         }
       }
 
