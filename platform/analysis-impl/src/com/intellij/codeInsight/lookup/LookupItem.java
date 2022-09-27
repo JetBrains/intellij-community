@@ -22,7 +22,7 @@ import java.util.*;
 /**
  * This class represents an item of a lookup list.
  */
-public class LookupItem<T> extends MutableLookupElement implements Comparable {
+public class LookupItem<T> extends MutableLookupElement implements Comparable<LookupItem<?>> {
   public static final ClassConditionKey<LookupItem> CLASS_CONDITION_KEY = ClassConditionKey.create(LookupItem.class);
 
   public static final Object HIGHLIGHTED_ATTR = Key.create("highlighted");
@@ -211,14 +211,8 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
   }
 
   @Override
-  public int compareTo(@NotNull Object o){
-    if(o instanceof String){
-      return getLookupString().compareTo((String)o);
-    }
-    if(!(o instanceof LookupItem)){
-      throw new RuntimeException("Trying to compare LookupItem with " + o.getClass() + "!!!");
-    }
-    return getLookupString().compareTo(((LookupItem<?>)o).getLookupString());
+  public int compareTo(@NotNull LookupItem<?> o){
+    return getLookupString().compareTo(o.getLookupString());
   }
 
   public LookupItem<T> setInsertHandler(@NotNull final InsertHandler<? extends LookupElement> handler) {
