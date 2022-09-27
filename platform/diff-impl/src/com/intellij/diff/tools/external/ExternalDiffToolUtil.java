@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -287,11 +288,16 @@ public final class ExternalDiffToolUtil {
                                   @NotNull ExternalDiffSettings.ExternalTool externalTool,
                                   @NotNull ThreesideMergeRequest request,
                                   @Nullable JComponent parentComponent) throws IOException {
+    handleMergeRequest(request, () -> tryExecuteMerge(project, externalTool, request, parentComponent));
+  }
+
+  private static void handleMergeRequest(@NotNull MergeRequest request,
+                                         @NotNull ThrowableComputable<Boolean, IOException> mergeTask) throws IOException {
     request.onAssigned(true);
     try {
       boolean success = false;
       try {
-        success = tryExecuteMerge(project, externalTool, request, parentComponent);
+        success = mergeTask.compute();
       }
       finally {
         request.applyResult(success ? MergeResult.RESOLVED : MergeResult.CANCEL);
