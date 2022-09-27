@@ -29,9 +29,12 @@ class KotlinSourceSetProto(
         resourceDirs = resourceDirs,
         regularDependencies = if (doBuildDependencies) regularDependencies() else emptyArray(),
         intransitiveDependencies = if (doBuildDependencies) intransitiveDependencies() else emptyArray(),
-        declaredDependsOnSourceSets = dependsOnSourceSets,
-        allDependsOnSourceSets = allDependsOnSourceSets(allSourceSetsProtosByNames),
-        additionalVisibleSourceSets = additionalVisibleSourceSets,
+
+        // .toMutableSet, because Android IDE plugin depends on this
+        //  KotlinAndroidMPPGradleProjectResolver.kt: private fun KotlinMPPGradleModel.mergeSourceSets
+        declaredDependsOnSourceSets = dependsOnSourceSets.toMutableSet(),
+        allDependsOnSourceSets = allDependsOnSourceSets(allSourceSetsProtosByNames).toMutableSet(),
+        additionalVisibleSourceSets = additionalVisibleSourceSets.toMutableSet(),
         androidSourceSetInfo = androidSourceSetInfo
     )
 }
