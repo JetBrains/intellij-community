@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
@@ -33,30 +33,28 @@ public class UnsafeReturnStatementVisitorInspection extends DevKitInspectionBase
         if (InheritanceUtil.isInheritor(aClass, true, BASE_WALKING_VISITOR_NAME) ||
             InheritanceUtil.isInheritor(aClass, true, BASE_VISITOR_NAME)) {
           if (findVisitMethod(aClass, "visitReturnStatement", PsiReturnStatement.class.getName())) {
-            final boolean skipLambdaFound = findVisitMethod(aClass, "visitLambdaExpression", PsiLambdaExpression.class.getName());
-            final boolean skipClassFound = findVisitMethod(aClass, "visitClass", PsiClass.class.getName());
-            if (!(skipClassFound && skipLambdaFound)) {
-
-              final String[] methods;
-              final String name;
-              if (!skipLambdaFound ^ !skipClassFound) {
-                if (!skipLambdaFound) {
-                  name = DevKitBundle.message("inspections.unsafe.return.insert.visit.lambda.expression");
-                  methods = new String[]{EMPTY_LAMBDA};
-                }
-                else {
-                  name = DevKitBundle.message("inspections.unsafe.return.insert.visit.class.method");
-                  methods = new String[]{EMPTY_CLASS};
-                }
+            final boolean visitLambdaMissing = !findVisitMethod(aClass, "visitLambdaExpression", PsiLambdaExpression.class.getName());
+            final boolean visitClassMissing = !findVisitMethod(aClass, "visitClass", PsiClass.class.getName());
+            if (visitLambdaMissing || visitClassMissing) {
+              final String fixName;
+              final String[] methodsToInsert;
+              if (visitLambdaMissing && visitClassMissing) {
+                fixName = DevKitBundle.message("inspections.unsafe.return.insert.visit.lambda.expression.and.class.methods");
+                methodsToInsert = new String[]{EMPTY_LAMBDA, EMPTY_CLASS};
+              }
+              else if (visitLambdaMissing) {
+                fixName = DevKitBundle.message("inspections.unsafe.return.insert.visit.lambda.expression");
+                methodsToInsert = new String[]{EMPTY_LAMBDA};
               }
               else {
-                name = DevKitBundle.message("inspections.unsafe.return.insert.visit.lambda.expression.and.class.methods");
-                methods = new String[]{EMPTY_LAMBDA, EMPTY_CLASS};
+                fixName = DevKitBundle.message("inspections.unsafe.return.insert.visit.class.method");
+                methodsToInsert = new String[]{EMPTY_CLASS};
               }
               holder.registerProblem(aClass,
-                                     HighlightNamesUtil.getClassDeclarationTextRange(aClass).shiftRight(-aClass.getTextRange().getStartOffset()),
+                                     HighlightNamesUtil.getClassDeclarationTextRange(aClass)
+                                       .shiftRight(-aClass.getTextRange().getStartOffset()),
                                      DevKitBundle.message("inspections.unsafe.return.message"),
-                                     new MySkipVisitFix(name, methods));
+                                     new MySkipVisitFix(fixName, methodsToInsert));
             }
           }
         }
