@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
@@ -232,7 +233,8 @@ public class LineStatusMarkerPopupPanel extends JPanel {
   }
 
   public static Color getEditorBackgroundColor(@NotNull Editor editor) {
-    return EditorFragmentComponent.getBackgroundColor(editor, true);
+    Color color = editor.getColorsScheme().getColor(EditorColors.CHANGED_LINES_POPUP);
+    return color != null ? color : EditorFragmentComponent.getBackgroundColor(editor);
   }
 
   @NotNull
