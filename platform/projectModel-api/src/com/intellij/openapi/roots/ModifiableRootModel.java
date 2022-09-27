@@ -59,7 +59,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
    * @param root root of a content
    * @return new content entry
    */
-  ContentEntry addContentEntry(@NotNull VirtualFile root, ProjectModelExternalSource externalSource);
+  ContentEntry addContentEntry(@NotNull VirtualFile root, @NotNull ProjectModelExternalSource externalSource);
 
   /**
    * Adds the specified file or directory as a content root.
@@ -77,7 +77,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
    * @param url root of a content
    * @return new content entry
    */
-  ContentEntry addContentEntry(@NotNull String url, ProjectModelExternalSource externalSource);
+  ContentEntry addContentEntry(@NotNull String url, @NotNull ProjectModelExternalSource externalSource);
 
   /**
    * Remove the specified content root.

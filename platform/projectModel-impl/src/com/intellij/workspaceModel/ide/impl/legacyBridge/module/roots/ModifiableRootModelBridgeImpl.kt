@@ -184,7 +184,7 @@ class ModifiableRootModelBridgeImpl(
     return addContentEntry(root.url)
   }
 
-  override fun addContentEntry(root: VirtualFile, externalSource: ProjectModelExternalSource?): ContentEntry {
+  override fun addContentEntry(root: VirtualFile, externalSource: ProjectModelExternalSource): ContentEntry {
     return addContentEntry(root.url, externalSource)
   }
 
@@ -195,7 +195,7 @@ class ModifiableRootModelBridgeImpl(
     return addEntityAndContentEntry(url, finalSource)
   }
 
-  override fun addContentEntry(url: String, externalSource: ProjectModelExternalSource?): ContentEntry {
+  override fun addContentEntry(url: String, externalSource: ProjectModelExternalSource): ContentEntry {
     assertModelIsLive()
 
     return addEntityAndContentEntry(url, moduleEntity.entitySource)

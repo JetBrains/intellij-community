@@ -2,14 +2,12 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
@@ -22,7 +20,6 @@ import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 
 class JpsSplitModuleAndContentRoot {
   @Rule
@@ -133,58 +130,11 @@ class JpsSplitModuleAndContentRoot {
 
     val initialDir = PathManagerEx.findFileUnderCommunityHome(
       "platform/workspaceModel/jps/tests/testData/serialization/splitModuleAndContentRoot/$dirBefore")
-    checkSaveProjectAfterChange(initialDir, dirAfter, change)
-  }
-
-  private fun checkSaveProjectAfterChange(originalProjectFile: File, changedFilesDirectoryName: String?,
-                                          change: (MutableEntityStorage, JpsProjectConfigLocation) -> Unit) {
-    val projectData = copyAndLoadProject(originalProjectFile, virtualFileManager)
-    val builder = MutableEntityStorage.from(projectData.storage)
-    change(builder, projectData.configLocation)
-    val changesMap = builder.collectChanges(projectData.storage)
-    val changedSources = changesMap.values.flatMapTo(HashSet()) { changes ->
-      changes.flatMap { change ->
-        when (change) {
-          is EntityChange.Added -> listOf(change.entity)
-          is EntityChange.Removed -> listOf(change.entity)
-          is EntityChange.Replaced -> listOf(change.oldEntity, change.newEntity)
-        }
-      }.map { it.entitySource }
-    }
-    val writer = JpsFileContentWriterImpl(projectData.configLocation)
-    projectData.serializers.saveEntities(builder.toSnapshot(), changedSources, writer)
-    writer.writeFiles()
-    //projectData.serializers.checkConsistency(projectData.configLocation, builder.toSnapshot(), virtualFileManager)
-
-    val expectedDir = FileUtil.createTempDirectory("jpsProjectTest", "expected")
-    FileUtil.copyDir(projectData.originalProjectDir, expectedDir)
-    if (changedFilesDirectoryName != null) {
-      val changedDir = PathManagerEx.findFileUnderCommunityHome(
-        "platform/workspaceModel/jps/tests/testData/serialization/splitModuleAndContentRoot/$changedFilesDirectoryName")
-      FileUtil.copyDir(changedDir, expectedDir)
-    }
-    expectedDir.walk().filter { it.isFile && it.readText().trim() == "<delete/>" }.forEach {
-      FileUtil.delete(it)
-    }
-
-    assertDirectoryMatches(projectData.projectDir, expectedDir,
-                           emptySet(),
-                           emptyList())
-  }
-
-  internal fun copyAndLoadProject(originalProjectFile: File, virtualFileManager: VirtualFileUrlManager): LoadedProjectData {
-    val (projectDir, originalProjectDir) = copyProjectFiles(originalProjectFile)
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(projectModel.project)
     externalStorageConfigurationManager.isEnabled = true
-    val originalBuilder = MutableEntityStorage.create()
-    val projectFile = if (originalProjectFile.isFile) File(projectDir, originalProjectFile.name) else projectDir
-    val configLocation = toConfigLocation(projectFile.toPath(), virtualFileManager)
-    val serializers = loadProject(configLocation, originalBuilder, virtualFileManager, externalStorageConfigurationManager = externalStorageConfigurationManager) as JpsProjectSerializersImpl
-    val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), serializers, configLocation, originalProjectDir)
-    //serializers.checkConsistency(loadedProjectData.configLocation, loadedProjectData.storage, virtualFileManager)
-    return loadedProjectData
+    checkSaveProjectAfterChange(initialDir, dirAfter, change, virtualFileManager, "serialization/splitModuleAndContentRoot", false,
+                                externalStorageConfigurationManager)
   }
-
 
   companion object {
     @JvmField
