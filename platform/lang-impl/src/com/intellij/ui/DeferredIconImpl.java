@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.icons.CopyableIcon;
+import com.intellij.ui.icons.ReplaceableIcon;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.scale.ScaleType;
 import com.intellij.util.Function;
@@ -59,13 +60,9 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
   private final @Nullable BiConsumer<? super DeferredIcon, ? super Icon> myEvalListener;
 
   private DeferredIconImpl(@NotNull DeferredIconImpl<T> icon) {
-    this(icon, icon.myDelegateIcon);
-  }
-
-  private DeferredIconImpl(@NotNull DeferredIconImpl<T> icon, @NotNull Icon delegateIcon) {
     super(icon);
-    myDelegateIcon = delegateIcon;
-    myScaledDelegateIcon = delegateIcon;
+    myDelegateIcon = icon.myDelegateIcon;
+    myScaledDelegateIcon = icon.myDelegateIcon;
     myScaledIconCache = null;
     myEvaluator = icon.myEvaluator;
     myIsScheduled = icon.myIsScheduled;
@@ -101,11 +98,8 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
 
   @NotNull
   @Override
-  public DeferredIconImpl<T> replaceBy(@NotNull IconReplacer replacer) {
-    DeferredIconImpl<T> result = new DeferredIconImpl<>(this, replacer.replaceIcon(myDelegateIcon));
-    result.myEvaluator = (p) -> replacer.replaceIcon(result.myEvaluator.apply(p));
-    result.myScaledDelegateIcon = replacer.replaceIcon(myScaledDelegateIcon);
-    return result;
+  public Icon replaceBy(@NotNull IconReplacer replacer) {
+    return new DeferredIconAfterReplace<>(this, replacer);
   }
 
   @Override
@@ -166,10 +160,16 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
       scaledDelegateIcon.paintIcon(c, g, x, y);
     }
 
-    if (isDone() || myIsScheduled || PowerSaveMode.isEnabled()) {
-      return;
+    if (needScheduleEvaluation()) {
+      scheduleEvaluation(c, x, y);
     }
-    scheduleEvaluation(c, x, y);
+  }
+
+  private boolean needScheduleEvaluation() {
+    if (isDone() || myIsScheduled || PowerSaveMode.isEnabled()) {
+      return false;
+    }
+    return true;
   }
 
   @VisibleForTesting
@@ -349,5 +349,49 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
   @Override
   public String toString() {
     return "Deferred. Base=" + myScaledDelegateIcon;
+  }
+
+
+  /**
+   * Later it may be needed to implement more interfaces here. Ideally the same as in the DeferredIconImpl itself.
+   */
+  private static class DeferredIconAfterReplace<T> implements ReplaceableIcon {
+    private final @NotNull DeferredIconImpl<T> myOriginal;
+    private @NotNull Icon myOriginalEvaluatedIcon;
+    private final @NotNull IconReplacer myReplacer;
+    private @NotNull Icon myResultIcon;
+
+    DeferredIconAfterReplace(@NotNull DeferredIconImpl<T> original, @NotNull IconReplacer replacer) {
+      myOriginal = original;
+      myOriginalEvaluatedIcon = myOriginal.myScaledDelegateIcon;
+      myReplacer = replacer;
+      myResultIcon = myReplacer.replaceIcon(myOriginalEvaluatedIcon);
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      if (myOriginal.needScheduleEvaluation()) {
+        myOriginal.scheduleEvaluation(c, x, y);
+      } else if (myOriginalEvaluatedIcon != myOriginal.myScaledDelegateIcon) {
+        myOriginalEvaluatedIcon = myOriginal.myScaledDelegateIcon;
+        myResultIcon = myReplacer.replaceIcon(myOriginalEvaluatedIcon);
+      }
+      myResultIcon.paintIcon(c, g, x, y);
+    }
+
+    @Override
+    public int getIconWidth() {
+      return myResultIcon.getIconWidth();
+    }
+
+    @Override
+    public int getIconHeight() {
+      return myResultIcon.getIconHeight();
+    }
+
+    @Override
+    public @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
+      return replacer.replaceIcon(myOriginal);
+    }
   }
 }
