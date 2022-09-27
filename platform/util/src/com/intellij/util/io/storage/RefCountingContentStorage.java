@@ -158,8 +158,8 @@ public final class RefCountingContentStorage extends AbstractStorage {
   }
 
   @Override
-  protected AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext pool, @NotNull Path recordsFile) throws IOException {
-    return new RefCountingRecordsTable(recordsFile, pool);
+  protected RefCountingRecordsTable createRecordsTable(@NotNull StorageLockContext storageLockContext, @NotNull Path recordsFile) throws IOException {
+    return new RefCountingRecordsTable(recordsFile, storageLockContext);
   }
 
   public int acquireNewRecord() throws IOException {
