@@ -777,7 +777,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testAddingExistingGeneratedSourcesInPerSourceTypeModules() throws Exception {
-    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+    Assume.assumeTrue(isWorkspaceImport());
 
     createStdProjectFolders();
 
@@ -852,7 +852,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testContentRootOutsideOfModuleDirInPerSourceTypeImport() throws Exception {
-    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+    Assume.assumeTrue(isWorkspaceImport());
 
     createModulePom("m1",
                     "<groupId>test</groupId>" +

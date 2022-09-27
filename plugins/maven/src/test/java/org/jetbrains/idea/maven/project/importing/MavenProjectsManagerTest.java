@@ -1163,7 +1163,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void testDoNotIgnoreProjectWhenSeparateMainAndTestModulesDeletedDuringImport() {
-    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+    Assume.assumeTrue(isWorkspaceImport());
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

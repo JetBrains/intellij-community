@@ -62,7 +62,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testFallbackToSlowWorkspaceCommit() {
-    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+    Assume.assumeTrue(isWorkspaceImport());
 
     try {
       WorkspaceProjectImporterKt.setWORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE(true);

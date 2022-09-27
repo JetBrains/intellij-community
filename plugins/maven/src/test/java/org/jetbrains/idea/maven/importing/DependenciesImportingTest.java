@@ -538,7 +538,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
   @Test
   public void testDependenciesInPerSourceTypeModule() {
-    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+    Assume.assumeTrue(isWorkspaceImport());
 
     createModulePom("m1",
                     "<groupId>test</groupId>" +

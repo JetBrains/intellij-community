@@ -115,7 +115,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testImportWithAlreadyExistingModuleWithDifferentNameButSameContentRoot() throws IOException {
-    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+    Assume.assumeTrue(isWorkspaceImport());
 
     Module userModuleWithConflictingRoot = createModule("userModuleWithConflictingRoot");
     PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null);
@@ -784,7 +784,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testReleaseCompilerPropertyInPerSourceTypeModules() {
-    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+    Assume.assumeTrue(isWorkspaceImport());
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
