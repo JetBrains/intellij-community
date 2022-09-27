@@ -2,11 +2,11 @@ package org.intellij.plugins.markdown.reference
 
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.lang.references.paths.MarkdownFileLinkDestinationWithSpacesInspection
+import org.intellij.plugins.markdown.lang.references.paths.MarkdownLinkDestinationWithSpacesInspection
 import org.junit.Test
 
 class FileLinkWithSpacesInspectionTest: LightPlatformCodeInsightFixture4TestCase() {
-  private val warningMessage by lazy { MarkdownBundle.message("markdown.file.link.destination.with.spaces.inspection.description") }
+  private val warningMessage by lazy { MarkdownBundle.message("markdown.link.destination.with.spaces.inspection.description") }
 
   @Test
   fun `test file link with spaces`() {
@@ -28,7 +28,7 @@ class FileLinkWithSpacesInspectionTest: LightPlatformCodeInsightFixture4TestCase
 
   private fun doTest(expected: String) {
     myFixture.configureByText("some.md", expected)
-    myFixture.enableInspections(MarkdownFileLinkDestinationWithSpacesInspection())
+    myFixture.enableInspections(MarkdownLinkDestinationWithSpacesInspection())
     myFixture.checkHighlighting()
   }
 }

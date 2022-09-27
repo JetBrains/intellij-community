@@ -18,7 +18,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class MarkdownFileLinkDestinationWithSpacesInspection: LocalInspectionTool() {
+class MarkdownLinkDestinationWithSpacesInspection: LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return object: MarkdownElementVisitor() {
       override fun visitLinkDestination(linkDestination: MarkdownLinkDestination) {
@@ -38,7 +38,7 @@ class MarkdownFileLinkDestinationWithSpacesInspection: LocalInspectionTool() {
     val replacement = content.replace(" ", "%20")
     holder.registerProblem(
       element,
-      MarkdownBundle.message("markdown.file.link.destination.with.spaces.inspection.description"),
+      MarkdownBundle.message("markdown.link.destination.with.spaces.inspection.description"),
       ProblemHighlightType.WARNING,
       range,
       ReplaceSpacesInsideLinkFix(element, range, replacement)
@@ -56,7 +56,7 @@ class MarkdownFileLinkDestinationWithSpacesInspection: LocalInspectionTool() {
     }
 
     override fun getText(): String {
-      return MarkdownBundle.message("markdown.file.link.destination.with.spaces.quick.fix.name", replacement)
+      return MarkdownBundle.message("markdown.link.destination.with.spaces.quick.fix.name", replacement)
     }
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
