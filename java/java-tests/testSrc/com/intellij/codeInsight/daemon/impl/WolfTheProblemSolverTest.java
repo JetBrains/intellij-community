@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -54,8 +55,8 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     VirtualFile root = configureRoot();
     VirtualFile x = root.findFileByRelativePath("x/X.java");
     VirtualFile y = root.findFileByRelativePath("y/Y.java");
-    highlightFile(x);
-    highlightFile(y);
+    assertNotEmpty(highlightErrors(x));
+    assertNotEmpty(highlightErrors(y));
 
     assertTrue(myWolfTheProblemSolver.isProblemFile(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(y));
@@ -63,14 +64,14 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     deleteMethodWithProblem(x);
     assertTrue(myWolfTheProblemSolver.isProblemFile(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(y));
-    highlightFile(x);
+    assertEmpty(highlightErrors(x));
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(y));
 
     deleteMethodWithProblem(y);
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(y));
-    highlightFile(y);
+    assertEmpty(highlightErrors(y));
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
     assertFalse(myWolfTheProblemSolver.isProblemFile(y));
   }
@@ -86,14 +87,15 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
         LOG.error(e);
       }
     }), null, null);
+    myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
   }
 
   public void testRemoveFile() throws Exception {
     VirtualFile root = configureRoot();
     VirtualFile x = root.findFileByRelativePath("x/X.java");
     VirtualFile y = root.findFileByRelativePath("y/Y.java");
-    highlightFile(x);
-    highlightFile(y);
+    assertNotEmpty(highlightErrors(x));
+    assertNotEmpty(highlightErrors(y));
 
     assertTrue(myWolfTheProblemSolver.isProblemFile(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(y));
@@ -102,6 +104,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     assertNotNull(psiY);
 
     WriteCommandAction.runWriteCommandAction(null, psiX::delete);
+    myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(y));
   }
@@ -109,15 +112,16 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
   public void testExcludedFile() throws Exception {
     VirtualFile root = configureRoot();
     VirtualFile x = root.findFileByRelativePath("x/X.java");
-    highlightFile(x);
+    assertNotEmpty(highlightErrors(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(x));
 
     ExcludeEntryDescription description = new ExcludeEntryDescription(x, false, true, myProject);
     CompilerConfiguration.getInstance(myProject).getExcludedEntriesConfiguration().addExcludeEntryDescription(description);
     FileStatusManager.getInstance(myProject).fileStatusesChanged();
+    myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
 
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
-    highlightFile(x);
+    highlightErrors(x);
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
   }
 
@@ -144,11 +148,11 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
 
     VirtualFile x = root.findFileByRelativePath("x/X.java");
     VirtualFile y = root.findFileByRelativePath("y/Y.java");
-    highlightFile(x);
+    assertNotEmpty(highlightErrors(x));
     handler.verifyEvents(Collections.singleton(x), emptySet(), emptySet());
     assertTrue(myWolfTheProblemSolver.hasSyntaxErrors(x));
 
-    highlightFile(y);
+    assertNotEmpty(highlightErrors(y));
     handler.verifyEvents(Collections.singleton(y), emptySet(), emptySet());
     assertFalse(myWolfTheProblemSolver.hasSyntaxErrors(y));
 
@@ -157,7 +161,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
               psiX.getClasses()[0].replace(psiX.getClasses()[0]);
 
           });
-    highlightFile(x);
+    highlightErrors(x);
     handler.verifyEvents(emptySet(), Collections.singleton(x), emptySet());
     assertFalse(myWolfTheProblemSolver.hasSyntaxErrors(y));
 
@@ -173,7 +177,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
       }
 
     }), null, null);
-    highlightFile(x);
+    assertEmpty(highlightErrors(x));
     handler.verifyEvents(emptySet(), emptySet(), Collections.singleton(x));
     assertFalse(myWolfTheProblemSolver.hasSyntaxErrors(x));
   }
@@ -188,6 +192,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     Object source2 = new Object();
     myWolfTheProblemSolver.reportProblemsFromExternalSource(t, source1);
     handler.verifyEvents(Collections.singleton(t), emptySet(), emptySet());
+    myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
     assertTrue(myWolfTheProblemSolver.isProblemFile(t));
     assertTrue(myWolfTheProblemSolver.hasProblemFilesBeneath(myModule));
 
@@ -211,11 +216,11 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     myWolfTheProblemSolver.reportProblemsFromExternalSource(x, source1);
     handler.verifyEvents(Collections.singleton(x), emptySet(), emptySet());
 
-    highlightFile(x);
+    assertNotEmpty(highlightErrors(x));
     handler.verifyEvents(emptySet(), Collections.singleton(x), emptySet());
 
     deleteMethodWithProblem(x);
-    highlightFile(x);
+    assertEmpty(highlightErrors(x));
     handler.verifyEvents(emptySet(), Collections.singleton(x), emptySet());
   }
 
@@ -224,14 +229,17 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     ReadAction.run(testRunnable);
   }
 
-  private void highlightFile(@NotNull VirtualFile virtualFile) {
+  @NotNull
+  private List<HighlightInfo> highlightErrors(@NotNull VirtualFile virtualFile) {
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     documentManager.commitAllDocuments();
     FileEditor fileEditor = FileEditorManagerEx.getInstanceEx(getProject()).openFile(virtualFile, false)[0];
     Editor editor = ((TextEditor)fileEditor).getEditor();
     PsiFile file = documentManager.getPsiFile(editor.getDocument());
 
-    CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, new int[0], false);
+    List<HighlightInfo> infos = CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, new int[0], false);
+    myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
+    return filter(infos, HighlightSeverity.ERROR);
   }
 
   public void testChangeInsideBlock() {
@@ -245,11 +253,13 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     }, null, null);
     final VirtualFile virtualFile = myFile.getVirtualFile();
     List<HighlightInfo> errors = highlightErrors();
+    myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
     assertTrue(myWolfTheProblemSolver.isProblemFile(virtualFile));
     assertEquals(1, errors.size());
     type(';');
     errors = highlightErrors();
     assertEmpty(errors);
+    myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
     assertFalse(myWolfTheProblemSolver.isProblemFile(virtualFile));
   }
 
@@ -279,7 +289,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
       myEventRemoved.add(file);
     }
 
-    public void verifyEvents(Collection<VirtualFile> added, Collection<VirtualFile> changed, Collection<VirtualFile> removed) {
+    void verifyEvents(Collection<VirtualFile> added, Collection<VirtualFile> changed, Collection<VirtualFile> removed) {
       assertEquals(added, myEventAdded);
       assertEquals(changed, myEventChanged);
       assertEquals(removed, myEventRemoved);
