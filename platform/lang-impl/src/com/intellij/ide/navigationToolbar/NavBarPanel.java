@@ -939,8 +939,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   @Override
   public void addNotify() {
     super.addNotify();
-    Disposable disposable = NavBarListener.subscribeTo(this);
-    Disposer.register(this, disposable);
+    if (!isDisposed()) {
+      Disposable disposable = NavBarListener.subscribeTo(this);
+      Disposer.register(this, disposable);
+    }
   }
 
   @Override
