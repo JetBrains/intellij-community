@@ -185,11 +185,18 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
 
             protected fun LibraryInfo?.toStdlibDependency(): StdlibDependency {
                 if (this == null) {
-                    if (runReadAction { project.isDisposed }) {
-                        throw ProcessCanceledException()
+                    val flag = runReadAction {
+                        when {
+                            project.isDisposed -> null
+                            DumbService.isDumb(project) -> true
+                            else -> false
+                        }
                     }
-                    if (runReadAction { DumbService.isDumb(project) }) {
-                        throw IndexNotReadyException.create()
+
+                    when (flag) {
+                        null -> throw ProcessCanceledException()
+                        true -> throw IndexNotReadyException.create()
+                        else -> Unit
                     }
                 }
 
