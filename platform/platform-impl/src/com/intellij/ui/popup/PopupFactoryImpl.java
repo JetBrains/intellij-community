@@ -563,7 +563,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   public @NotNull BalloonBuilder createDialogBalloonBuilder(@NotNull JComponent content, @PopupTitle @Nullable String title) {
     final BalloonPopupBuilderImpl builder = new BalloonPopupBuilderImpl(myStorage, content);
     final Color bg = UIManager.getColor("Panel.background");
-    final Color borderOriginal = Color.darkGray;
+    final Color borderOriginal = JBColor.DARK_GRAY;
     final Color border = ColorUtil.toAlpha(borderOriginal, 75);
     builder
       .setDialogMode(true)
@@ -629,7 +629,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final AnAction myAction;
     private Icon myIcon;
     private Icon mySelectedIcon;
-    private String myText;
+    private @NlsActions.ActionText String myText;
     private final int myMaxIconWidth;
     private final int myMaxIconHeight;
 
@@ -729,7 +729,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
       // Make sure com.intellij.dvcs.ui.BranchActionGroupPopup.MoreAction.updateActionText is long dead before removing
       myAction.getTemplatePresentation().addPropertyChangeListener(evt -> {
-        if (evt.getPropertyName() == Presentation.PROP_TEXT) {
+        if (Presentation.PROP_TEXT.equals(evt.getPropertyName())) {
           myText = myAction.getTemplatePresentation().getText();
         }
       });
