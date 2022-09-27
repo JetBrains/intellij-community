@@ -69,7 +69,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     "intellij.platform.tracing.ide",
     "intellij.searchEverywhereMl",
     "intellij.statsCollector",
-    "intellij.vcs.git.featuresTrainer",
     "intellij.xpath",
     "intellij.xslt.debugger",
     KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
