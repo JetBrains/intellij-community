@@ -25,10 +25,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
@@ -157,7 +154,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
 
         fun get(key: IdeaModuleInfo): StdlibDependency = when (key) {
             is LibraryInfo -> libraryCache[key]
-            is SdkInfo -> StdlibDependency(null)
+            is SdkInfo, is NotUnderContentRootModuleInfo -> StdlibDependency(null)
             else -> moduleCache[key]
         }
 
