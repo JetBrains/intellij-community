@@ -85,7 +85,7 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
     return res
   }
 
-  private fun getActiveButtonIndex(list: JList<*>): Int? = (list as? ListWithInlineButtons)?.selectedButtonIndex
+  override fun getActiveButtonIndex(list: JList<*>): Int? = (list as? ListWithInlineButtons)?.selectedButtonIndex
 
   private fun createSubmenuButton(value: ActionItem, active: Boolean): JComponent {
     val icon = if (myStep.isFinal(value)) AllIcons.Actions.More else AllIcons.Icons.Ide.MenuArrow

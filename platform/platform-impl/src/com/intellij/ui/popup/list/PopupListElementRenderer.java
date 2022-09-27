@@ -381,12 +381,19 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (!extraButtons.isEmpty()) {
       myButtonsSeparator.setVisible(true);
       extraButtons.forEach(comp -> myButtonPane.add(comp, gb.next()));
-      myRendererComponent.setToolTipText(myInlineActionsSupport.getActiveExtraButtonToolTipText(list, value));
+      Integer activeButtonIndex = myInlineActionsSupport.getActiveButtonIndex(list);
+      // We ONLY need to update the tooltip if there's an active inline action button.
+      // Otherwise, it's set earlier from the main action.
+      // If there is an active button without a tooltip, we still need to set the tooltip
+      // to null, otherwise it'll look ugly, as if the inline action button has the same
+      // tooltip as the main action.
+      if (activeButtonIndex != null) {
+        myRendererComponent.setToolTipText(myInlineActionsSupport.getActiveExtraButtonToolTipText(list, value));
+      }
     }
     else {
       myButtonsSeparator.setVisible(false);
       myButtonPane.add(myNextStepLabel, gb.next());
-      myRendererComponent.setToolTipText(null);
     }
   }
 

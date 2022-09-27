@@ -487,13 +487,16 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       setPopup(true);
       getTemplatePresentation().setPerformGroup(true);
 
-      String name = Executor.shortenNameIfNeeded(configuration.getName());
+      String fullName = configuration.getName();
+      String name = Executor.shortenNameIfNeeded(fullName);
       if (name.isEmpty()) {
         name = " ";
       }
+      String toolTip = name.equals(fullName) ? null : fullName;
       final Presentation presentation = getTemplatePresentation();
       presentation.setText(name, false);
       presentation.setDescription(ExecutionBundle.message("select.0.1", configuration.getType().getConfigurationTypeDescription(), name));
+      presentation.putClientProperty(JComponent.TOOL_TIP_TEXT_KEY, toolTip);
       updateIcon(presentation);
 
       // Secondary menu for the existing run configurations is not directly related to the 'Run Current File' feature.
