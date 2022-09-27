@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.ift.lesson
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package training.git.lesson
 
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.KeyboardShortcut
@@ -21,12 +21,6 @@ import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.findBranch
 import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
-import git4idea.ift.GitLessonsBundle
-import git4idea.ift.GitLessonsUtil.highlightLatestCommitsFromBranch
-import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
-import git4idea.ift.GitLessonsUtil.resetGitLogWindow
-import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
-import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.rebase.interactive.dialog.GIT_INTERACTIVE_REBASE_DIALOG_DIMENSION_KEY
 import org.assertj.swing.core.MouseButton
 import org.assertj.swing.data.TableCell
@@ -34,6 +28,12 @@ import org.assertj.swing.fixture.JTableFixture
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
+import training.git.GitLessonsBundle
+import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch
+import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import training.git.GitLessonsUtil.resetGitLogWindow
+import training.git.GitLessonsUtil.showWarningIfGitWindowClosed
+import training.git.GitLessonsUtil.triggerOnNotification
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.LessonEndInfo

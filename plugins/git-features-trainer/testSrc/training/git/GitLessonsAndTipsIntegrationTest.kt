@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ift
+package training.git
 
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

@@ -225,10 +225,9 @@ object CommunityRepositoryModules {
       )
     },
     plugin("intellij.featuresTrainer") { spec ->
+      spec.withModule("intellij.vcs.git.featuresTrainer")
       spec.withProjectLibrary("assertJ")
       spec.withProjectLibrary("assertj-swing")
-    },
-    plugin("intellij.vcs.git.featuresTrainer") { spec ->
       spec.withProjectLibrary("git-learning-project")
     },
     plugin("intellij.searchEverywhereMl") { spec ->

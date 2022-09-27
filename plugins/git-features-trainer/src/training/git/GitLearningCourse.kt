@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ift
+package training.git
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -8,8 +8,8 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
-import git4idea.ift.lesson.*
 import org.jetbrains.annotations.NonNls
+import training.git.lesson.*
 import training.learn.course.IftModule
 import training.learn.course.KLesson
 import training.learn.course.LearningCourse

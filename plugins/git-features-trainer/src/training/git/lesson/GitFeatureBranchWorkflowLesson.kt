@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.ift.lesson
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package training.git.lesson
 
 import com.intellij.CommonBundle
 import com.intellij.dvcs.DvcsUtil
@@ -24,22 +24,22 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
-import git4idea.ift.GitLessonsBundle
-import git4idea.ift.GitLessonsUtil
-import git4idea.ift.GitLessonsUtil.highlightLatestCommitsFromBranch
-import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
-import git4idea.ift.GitLessonsUtil.openPushDialogText
-import git4idea.ift.GitLessonsUtil.openUpdateDialogText
-import git4idea.ift.GitLessonsUtil.resetGitLogWindow
-import git4idea.ift.GitLessonsUtil.restoreByUiAndBackgroundTask
-import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
-import git4idea.ift.GitLessonsUtil.triggerOnCheckout
-import git4idea.ift.GitLessonsUtil.triggerOnNotification
-import git4idea.ift.GitProjectUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchPopupActions
 import training.dsl.*
+import training.git.GitLessonsBundle
+import training.git.GitLessonsUtil
+import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch
+import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import training.git.GitLessonsUtil.openPushDialogText
+import training.git.GitLessonsUtil.openUpdateDialogText
+import training.git.GitLessonsUtil.resetGitLogWindow
+import training.git.GitLessonsUtil.restoreByUiAndBackgroundTask
+import training.git.GitLessonsUtil.showWarningIfGitWindowClosed
+import training.git.GitLessonsUtil.triggerOnCheckout
+import training.git.GitLessonsUtil.triggerOnNotification
+import training.git.GitProjectUtil
 import java.io.File
 import javax.swing.JButton
 import javax.swing.JDialog

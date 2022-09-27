@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.ift.lesson
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package training.git.lesson
 
 import com.intellij.openapi.project.Project
 import git4idea.config.GitExecutableManager
-import git4idea.ift.GitProjectUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import training.git.GitProjectUtil
 import training.learn.course.KLesson
 import training.learn.course.LessonProperties
 import training.learn.exceptons.LessonPreparationException

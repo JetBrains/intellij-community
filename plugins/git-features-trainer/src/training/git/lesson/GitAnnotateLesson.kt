@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.ift.lesson
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package training.git.lesson
 
 import com.intellij.diff.impl.DiffWindowBase
 import com.intellij.diff.tools.util.DiffSplitter
@@ -24,12 +24,12 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.util.ui.HtmlPanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel
-import git4idea.ift.GitLessonsBundle
 import org.assertj.swing.core.MouseButton
 import org.assertj.swing.timing.Timeout
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
+import training.git.GitLessonsBundle
 import training.ui.IftTestContainerFixture
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.LessonEndInfo
@@ -246,7 +246,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
 
     task("EditorEscape") {
       text(GitLessonsBundle.message("git.annotate.close.all.windows",
-        if (VcsEditorTabFilesManager.getInstance().shouldOpenInNewWindow) 0 else 1, action(it)))
+                                    if (VcsEditorTabFilesManager.getInstance().shouldOpenInNewWindow) 0 else 1, action(it)))
       stateCheck {
         firstDiffSplitter?.isShowing != true && secondDiffSplitter?.isShowing != true
       }

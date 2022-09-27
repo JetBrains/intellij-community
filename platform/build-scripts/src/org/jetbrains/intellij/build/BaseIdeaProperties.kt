@@ -3,11 +3,7 @@
 
 package org.jetbrains.intellij.build
 
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.plus
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentHashMapOf
-import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.*
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
@@ -110,7 +106,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = JB_BUNDLED_PLUGINS + persiste
   "intellij.webp",
   "intellij.grazie",
   "intellij.featuresTrainer",
-  "intellij.vcs.git.featuresTrainer",
   "intellij.lombok",
   "intellij.searchEverywhereMl",
   "intellij.platform.tracing.ide",

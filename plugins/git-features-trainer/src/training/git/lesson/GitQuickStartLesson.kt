@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.ift.lesson
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package training.git.lesson
 
 import com.intellij.CommonBundle
 import com.intellij.dvcs.DvcsUtil
@@ -27,21 +27,21 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogExtensionList
 import git4idea.i18n.GitBundle
-import git4idea.ift.GitLessonsBundle
-import git4idea.ift.GitLessonsUtil.openCommitWindowText
-import git4idea.ift.GitLessonsUtil.openPushDialogText
-import git4idea.ift.GitLessonsUtil.restoreByUiAndBackgroundTask
-import git4idea.ift.GitLessonsUtil.restoreCommitWindowStateInformer
-import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
-import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
-import git4idea.ift.GitLessonsUtil.showWarningIfStagingAreaEnabled
-import git4idea.ift.GitLessonsUtil.triggerOnCheckout
-import git4idea.ift.GitLessonsUtil.triggerOnNotification
-import git4idea.ift.GitProjectUtil
 import git4idea.repo.GitRepositoryManager
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.sampleRestoreNotification
+import training.git.GitLessonsBundle
+import training.git.GitLessonsUtil.openCommitWindowText
+import training.git.GitLessonsUtil.openPushDialogText
+import training.git.GitLessonsUtil.restoreByUiAndBackgroundTask
+import training.git.GitLessonsUtil.restoreCommitWindowStateInformer
+import training.git.GitLessonsUtil.showWarningIfCommitWindowClosed
+import training.git.GitLessonsUtil.showWarningIfModalCommitEnabled
+import training.git.GitLessonsUtil.showWarningIfStagingAreaEnabled
+import training.git.GitLessonsUtil.triggerOnCheckout
+import training.git.GitLessonsUtil.triggerOnNotification
+import training.git.GitProjectUtil
 import training.ui.LearningUiHighlightingManager
 import training.util.LessonEndInfo
 import training.util.toNullableString

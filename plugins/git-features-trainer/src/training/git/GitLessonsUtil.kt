@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ift
+package training.git
 
 import com.intellij.dvcs.push.VcsPushAction
 import com.intellij.dvcs.ui.DvcsBundle

@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.ift.lesson
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package training.git.lesson
 
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
@@ -32,21 +32,21 @@ import com.intellij.vcs.commit.restoreState
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import git4idea.i18n.GitBundle
-import git4idea.ift.GitLessonsBundle
-import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
-import git4idea.ift.GitLessonsUtil.openCommitWindowText
-import git4idea.ift.GitLessonsUtil.resetGitLogWindow
-import git4idea.ift.GitLessonsUtil.restoreCommitWindowStateInformer
-import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
-import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
-import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
-import git4idea.ift.GitLessonsUtil.showWarningIfStagingAreaEnabled
-import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import org.assertj.swing.core.MouseButton
 import org.assertj.swing.data.TableCell
 import org.assertj.swing.fixture.JCheckBoxFixture
 import org.assertj.swing.fixture.JTableFixture
 import training.dsl.*
+import training.git.GitLessonsBundle
+import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import training.git.GitLessonsUtil.openCommitWindowText
+import training.git.GitLessonsUtil.resetGitLogWindow
+import training.git.GitLessonsUtil.restoreCommitWindowStateInformer
+import training.git.GitLessonsUtil.showWarningIfCommitWindowClosed
+import training.git.GitLessonsUtil.showWarningIfGitWindowClosed
+import training.git.GitLessonsUtil.showWarningIfModalCommitEnabled
+import training.git.GitLessonsUtil.showWarningIfStagingAreaEnabled
+import training.git.GitLessonsUtil.triggerOnNotification
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
