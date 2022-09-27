@@ -58,6 +58,7 @@ interface KotlinStdlibCache {
 internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdlibCache, Disposable {
     companion object {
         private const val KOTLIN_JAVA_RUNTIME_NAME = "KotlinJavaRuntime"
+        private val noStdlibDependency = StdlibDependency(null)
     }
 
     @JvmInline
@@ -154,7 +155,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
 
         fun get(key: IdeaModuleInfo): StdlibDependency = when (key) {
             is LibraryInfo -> libraryCache[key]
-            is SdkInfo, is NotUnderContentRootModuleInfo -> StdlibDependency(null)
+            is SdkInfo, is NotUnderContentRootModuleInfo -> noStdlibDependency
             else -> moduleCache[key]
         }
 
@@ -185,23 +186,23 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             }
 
             protected fun LibraryInfo?.toStdlibDependency(): StdlibDependency {
-                if (this == null) {
-                    val flag = runReadAction {
-                        when {
-                            project.isDisposed -> null
-                            DumbService.isDumb(project) -> true
-                            else -> false
-                        }
-                    }
+                if (this != null) {
+                    return StdlibDependency(this)
+                }
 
-                    when (flag) {
-                        null -> throw ProcessCanceledException()
-                        true -> throw IndexNotReadyException.create()
-                        else -> Unit
+                val flag = runReadAction {
+                    when {
+                        project.isDisposed -> null
+                        DumbService.isDumb(project) -> true
+                        else -> false
                     }
                 }
 
-                return StdlibDependency(this)
+                return when (flag) {
+                    null -> throw ProcessCanceledException()
+                    true -> throw IndexNotReadyException.create()
+                    else -> noStdlibDependency
+                }
             }
 
             override fun checkValueValidity(value: StdlibDependency) {
