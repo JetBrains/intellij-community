@@ -582,6 +582,11 @@
       <action id="MoveLineDown" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveLineDownAction"/>
       <action id="MoveLineUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveLineUpAction"/>
       <separator/>
+
+      <action id="RotateSelectionsForward" class="com.intellij.codeInsight.editorActions.rotateSelection.RotateSelectionsForwardAction"/>
+      <action id="RotateSelectionsBackwards" class="com.intellij.codeInsight.editorActions.rotateSelection.RotateSelectionsBackwardsAction"/>
+
+      <separator/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
     </group>
 
