@@ -55,7 +55,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
       return;
     }
     switch (event.getEventType()) {
-      case BUILD_COMPLETED:
+      case BUILD_COMPLETED -> {
         myContext.getProgressIndicator().stop();
         if (event.hasCompletionStatus()) {
           final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status status = event.getCompletionStatus();
@@ -74,27 +74,25 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
           final CompilationStatusListener publisher = myProject.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
           publisher.automakeCompilationFinished(errors, warnings, myContext);
         });
-        return;
-
-      case FILES_GENERATED:
+      }
+      case FILES_GENERATED -> {
         final CompilationStatusListener publisher = myProject.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
         for (CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile generatedFile : event.getGeneratedFilesList()) {
           final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
           final String relativePath = FileUtil.toSystemIndependentName(generatedFile.getRelativePath());
           publisher.fileGenerated(root, relativePath);
         }
-        return;
-
-      case CUSTOM_BUILDER_MESSAGE:
-         if (event.hasCustomBuilderMessage()) {
-           final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message = event.getCustomBuilderMessage();
-           if (GlobalOptions.JPS_SYSTEM_BUILDER_ID.equals(message.getBuilderId()) && GlobalOptions.JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID.equals(message.getMessageType())) {
-             myUnprocessedFSChangesDetected = true;
-           }
-         }
-         return;
-
-      default:
+      }
+      case CUSTOM_BUILDER_MESSAGE -> {
+        if (event.hasCustomBuilderMessage()) {
+          final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message = event.getCustomBuilderMessage();
+          if (GlobalOptions.JPS_SYSTEM_BUILDER_ID.equals(message.getBuilderId()) &&
+              GlobalOptions.JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID.equals(message.getMessageType())) {
+            myUnprocessedFSChangesDetected = true;
+          }
+        }
+      }
+      default -> {}
     }
   }
 

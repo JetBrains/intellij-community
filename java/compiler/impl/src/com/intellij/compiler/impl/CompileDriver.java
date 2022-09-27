@@ -332,7 +332,7 @@ public final class CompileDriver {
         protected void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
           final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type eventType = event.getEventType();
           switch (eventType) {
-            case FILES_GENERATED:
+            case FILES_GENERATED -> {
               final List<CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile> generated =
                 event.getGeneratedFilesList();
               CompilationStatusListener publisher =
@@ -356,9 +356,8 @@ public final class CompileDriver {
               if (writtenArtifactOutputPaths != null && !writtenArtifactOutputPaths.isEmpty()) {
                 ArtifactsCompiler.addWrittenPaths(compileContext, writtenArtifactOutputPaths);
               }
-              break;
-
-            case BUILD_COMPLETED:
+            }
+            case BUILD_COMPLETED -> {
               ExitStatus status = ExitStatus.SUCCESS;
               if (event.hasCompletionStatus()) {
                 final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status completionStatus =
@@ -378,14 +377,13 @@ public final class CompileDriver {
                 }
               }
               compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, status);
-              break;
-
-            case CUSTOM_BUILDER_MESSAGE:
+            }
+            case CUSTOM_BUILDER_MESSAGE -> {
               if (event.hasCustomBuilderMessage()) {
                 final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message =
                   event.getCustomBuilderMessage();
                 if (GlobalOptions.JPS_SYSTEM_BUILDER_ID.equals(message.getBuilderId()) &&
-                  GlobalOptions.JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID.equals(message.getMessageType())) {
+                    GlobalOptions.JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID.equals(message.getMessageType())) {
                   //noinspection HardCodedStringLiteral
                   final String text = message.getMessageText();
                   if (!StringUtil.isEmpty(text)) {
@@ -393,7 +391,7 @@ public final class CompileDriver {
                   }
                 }
               }
-              break;
+            }
           }
         }
 
