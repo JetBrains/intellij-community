@@ -12,6 +12,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
@@ -62,13 +63,16 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
             newLineIdx = getNewLineIndex(text, newLineIdx + 1);
           }
         }
-        if (nNewLines > 1) {
+        boolean hasComments = ContainerUtil.exists(expression.getChildren(), child -> child instanceof PsiComment);
+        boolean reportWarning = nNewLines > 1 && !hasComments;
+        boolean reportInfo = isOnTheFly && (hasEscapedQuotes || hasComments);
+        if (reportWarning) {
           boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
           holder.registerProblem(expression, quickFixOnly ? null : firstNewLineTextRange,
                                  JavaBundle.message("inspection.text.block.migration.concatenation.message"),
                                  new ReplaceWithTextBlockFix());
         }
-        else if (isOnTheFly && hasEscapedQuotes) {
+        else if (reportInfo) {
           holder.registerProblem(expression,
                                  JavaBundle.message("inspection.text.block.migration.string.message"),
                                  ProblemHighlightType.INFORMATION, new ReplaceWithTextBlockFix());
