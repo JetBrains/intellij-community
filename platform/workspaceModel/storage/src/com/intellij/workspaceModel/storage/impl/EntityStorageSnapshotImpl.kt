@@ -30,6 +30,14 @@ internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: Ent
     @Suppress("UNCHECKED_CAST")
     return (storage as AbstractEntityStorage).entityDataById(id)?.createEntity(storage) as? E
   }
+
+  override fun equals(other: Any?): Boolean {
+    return id == (other as? EntityReferenceImpl<*>)?.id
+  }
+
+  override fun hashCode(): Int {
+    return id.hashCode()
+  }
 }
 
 internal class EntityStorageSnapshotImpl constructor(
