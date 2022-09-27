@@ -2,7 +2,10 @@
 package com.intellij.diff.tools.external;
 
 import com.intellij.CommonBundle;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.contents.*;
+import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.ThreesideMergeRequest;
 import com.intellij.diff.util.DiffUserDataKeysEx;
@@ -14,8 +17,11 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -28,10 +34,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.LineSeparator;
-import com.intellij.util.PathUtil;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NonNls;
@@ -42,10 +45,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -174,6 +174,71 @@ public final class ExternalDiffToolUtil {
     File tempFile = FileUtil.createTempFile(fileName.prefix + "_", "_" + fileName.name, true);
     FileUtil.writeToFile(tempFile, bytes);
     return tempFile;
+  }
+
+  public static void testDiffTool2(@Nullable Project project,
+                                   @NotNull ExternalDiffSettings.ExternalTool externalTool,
+                                   @Nullable JComponent parentComponent) {
+    DiffContentFactory factory = DiffContentFactory.getInstance();
+    List<? extends DiffContent> contents =
+      Arrays.asList(factory.create(DiffBundle.message("settings.external.diff.left.file.content"), FileTypes.PLAIN_TEXT),
+                    factory.create(DiffBundle.message("settings.external.diff.right.file.content"), FileTypes.PLAIN_TEXT));
+    List<String> titles = Arrays.asList("Left", "Right"); // NON-NLS
+    testDiffTool(project, externalTool, contents, titles, parentComponent);
+  }
+
+  public static void testDiffTool3(@Nullable Project project,
+                                   @NotNull ExternalDiffSettings.ExternalTool externalTool,
+                                   @Nullable JComponent parentComponent) {
+    DiffContentFactory factory = DiffContentFactory.getInstance();
+    List<? extends DiffContent> contents =
+      Arrays.asList(factory.create(DiffBundle.message("settings.external.diff.left.file.content"), FileTypes.PLAIN_TEXT),
+                    factory.create(DiffBundle.message("settings.external.diff.base.file.content"), FileTypes.PLAIN_TEXT),
+                    factory.create(DiffBundle.message("settings.external.diff.right.file.content"), FileTypes.PLAIN_TEXT));
+    List<String> titles = Arrays.asList("Left", "Base", "Right"); // NON-NLS
+    testDiffTool(project, externalTool, contents, titles, parentComponent);
+  }
+
+  private static void testDiffTool(@Nullable Project project,
+                                   @NotNull ExternalDiffSettings.ExternalTool externalTool,
+                                   @NotNull List<? extends DiffContent> contents,
+                                   @NotNull List<String> titles,
+                                   @Nullable JComponent parentComponent) {
+    try {
+      execute(project, externalTool, contents, titles, null);
+    }
+    catch (Exception e) {
+      Messages.showErrorDialog(parentComponent, e.getMessage(), DiffBundle.message("error.cannot.show.diff"));
+    }
+  }
+
+  public static void testMergeTool(@Nullable Project project,
+                                   @NotNull ExternalDiffSettings.ExternalTool externalTool,
+                                   @Nullable JComponent parentComponent) {
+    try {
+      Document document = new DocumentImpl(DiffBundle.message("settings.external.diff.original.output.file.content"));
+
+      Consumer<? super MergeResult> callback = (result) -> {
+        String message = result == MergeResult.CANCEL ? DiffBundle.message("settings.external.diff.merge.conflict.resolve.was.canceled")
+                                                      : DiffBundle.message("settings.external.diff.merge.conflict.resolve.successful",
+                                                                           StringUtil.shortenPathWithEllipsis(document.getText(), 60));
+        Messages.showInfoMessage(message, DiffBundle.message("settings.external.diff.test.complete"));
+      };
+
+      List<String> contents =
+        Arrays.asList(DiffBundle.message("settings.external.diff.left.file.content"),
+                      DiffBundle.message("settings.external.diff.base.file.content"),
+                      DiffBundle.message("settings.external.diff.right.file.content"));
+      List<String> titles = Arrays.asList("Left", "Base", "Right"); // NON-NLS
+
+      MergeRequest request = DiffRequestFactory.getInstance()
+        .createMergeRequest(null, PlainTextFileType.INSTANCE, document, contents, null, titles, callback);
+
+      executeMerge(project, externalTool, (ThreesideMergeRequest)request, parentComponent);
+    }
+    catch (Exception e) {
+      Messages.showErrorDialog(parentComponent, e.getMessage(), DiffBundle.message("error.cannot.show.merge"));
+    }
   }
 
   public static void execute(@Nullable Project project,

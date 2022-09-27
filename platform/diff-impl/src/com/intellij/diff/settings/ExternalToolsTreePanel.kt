@@ -1,20 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.settings
 
-import com.intellij.diff.DiffContentFactory
-import com.intellij.diff.DiffRequestFactory
-import com.intellij.diff.merge.MergeResult
-import com.intellij.diff.merge.ThreesideMergeRequest
 import com.intellij.diff.tools.external.ExternalDiffSettings
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalTool
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolGroup
 import com.intellij.diff.tools.external.ExternalDiffToolUtil
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.diff.DiffBundle
-import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.fileTypes.FileTypes
-import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
@@ -393,56 +386,15 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) {
     }
 
     private fun showTestDiff() {
-      try {
-        val factory = DiffContentFactory.getInstance()
-        val contents = listOf(factory.create(DiffBundle.message("settings.external.diff.left.file.content"), FileTypes.PLAIN_TEXT),
-                              factory.create(DiffBundle.message("settings.external.diff.right.file.content"), FileTypes.PLAIN_TEXT))
-        val titles = listOf("Left", "Right")
-        ExternalDiffToolUtil.execute(null, createExternalTool(), contents, titles, null)
-      }
-      catch (e: Exception) {
-        Messages.showErrorDialog(e.message, DiffBundle.message("error.cannot.show.diff"))
-      }
+      ExternalDiffToolUtil.testDiffTool2(null, createExternalTool(), this.contentPanel)
     }
 
     private fun showTestThreeDiff() {
-      try {
-        val factory = DiffContentFactory.getInstance()
-        val contents = listOf(factory.create(DiffBundle.message("settings.external.diff.left.file.content"), FileTypes.PLAIN_TEXT),
-                              factory.create(DiffBundle.message("settings.external.diff.base.file.content"), FileTypes.PLAIN_TEXT),
-                              factory.create(DiffBundle.message("settings.external.diff.right.file.content"), FileTypes.PLAIN_TEXT))
-        val titles = listOf("Left", "Base", "Right")
-        ExternalDiffToolUtil.execute(null, createExternalTool(), contents, titles, null)
-      }
-      catch (e: Exception) {
-        Messages.showErrorDialog(e.message, DiffBundle.message("error.cannot.show.diff"))
-      }
+      ExternalDiffToolUtil.testDiffTool3(null, createExternalTool(), this.contentPanel)
     }
 
     private fun showTestMerge() {
-      try {
-        val factory = DiffRequestFactory.getInstance()
-        val document = DocumentImpl(DiffBundle.message("settings.external.diff.original.output.file.content"))
-
-        val callback = { result: MergeResult ->
-          val message = when (result) {
-            MergeResult.CANCEL -> DiffBundle.message("settings.external.diff.merge.conflict.resolve.was.canceled")
-            else -> DiffBundle.message("settings.external.diff.merge.conflict.resolve.successful",
-                                       StringUtil.shortenPathWithEllipsis(document.text, 60))
-
-          }
-          Messages.showInfoMessage(message, DiffBundle.message("settings.external.diff.test.complete"))
-        }
-        val contents = listOf(DiffBundle.message("settings.external.diff.left.file.content"),
-                              DiffBundle.message("settings.external.diff.base.file.content"),
-                              DiffBundle.message("settings.external.diff.right.file.content"))
-        val titles = listOf("Left", "Base", "Right")
-        val request = factory.createMergeRequest(null, PlainTextFileType.INSTANCE, document, contents, null, titles, callback)
-        ExternalDiffToolUtil.executeMerge(null, createExternalTool(), request as ThreesideMergeRequest, this.contentPanel)
-      }
-      catch (e: Exception) {
-        Messages.showErrorDialog(e.message, DiffBundle.message("error.cannot.show.merge"))
-      }
+      ExternalDiffToolUtil.testMergeTool(null, createExternalTool(), this.contentPanel)
     }
   }
 
