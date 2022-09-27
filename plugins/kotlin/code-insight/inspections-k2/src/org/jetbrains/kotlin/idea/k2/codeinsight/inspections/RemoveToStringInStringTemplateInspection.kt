@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -12,7 +13,8 @@ import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 class RemoveToStringInStringTemplateInspection :
-    AbstractKotlinApplicatorBasedInspection<KtDotQualifiedExpression, KotlinApplicatorInput.Empty>(KtDotQualifiedExpression::class) {
+    AbstractKotlinApplicatorBasedInspection<KtDotQualifiedExpression, KotlinApplicatorInput.Empty>(KtDotQualifiedExpression::class),
+    CleanupLocalInspectionTool {
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtDotQualifiedExpression> =
         applicabilityRanges { dotQualifiedExpression: KtDotQualifiedExpression ->
             val selectorExpression = dotQualifiedExpression.selectorExpression ?: return@applicabilityRanges emptyList()
