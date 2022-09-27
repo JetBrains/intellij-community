@@ -96,6 +96,8 @@ internal class SdkInfoCacheImpl(project: Project) :
     }
 
     override fun rootsChanged(event: ModuleRootEvent) {
+        if (event.isCausedByWorkspaceModelChangesOnly) return
+
         // SDK could be changed (esp in tests) out of message bus subscription
         val sdks = project.allSdks()
         useCache { instance ->
