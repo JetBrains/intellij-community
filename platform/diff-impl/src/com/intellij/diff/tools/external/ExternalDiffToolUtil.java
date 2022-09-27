@@ -14,10 +14,7 @@ import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.KillableProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
@@ -44,6 +41,8 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.io.BaseDataReader;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -187,37 +186,38 @@ public final class ExternalDiffToolUtil {
 
   public static void testDiffTool2(@Nullable Project project,
                                    @NotNull ExternalDiffSettings.ExternalTool externalTool,
-                                   @Nullable JComponent parentComponent) {
+                                   @NotNull TestOutputConsole outputConsole) {
     DiffContentFactory factory = DiffContentFactory.getInstance();
     List<? extends DiffContent> contents =
       Arrays.asList(factory.create(DiffBundle.message("settings.external.diff.left.file.content"), FileTypes.PLAIN_TEXT),
                     factory.create(DiffBundle.message("settings.external.diff.right.file.content"), FileTypes.PLAIN_TEXT));
     List<String> titles = Arrays.asList("Left", "Right"); // NON-NLS
-    testDiffTool(project, externalTool, contents, titles, parentComponent);
+    testDiffTool(project, externalTool, contents, titles, outputConsole);
   }
 
   public static void testDiffTool3(@Nullable Project project,
                                    @NotNull ExternalDiffSettings.ExternalTool externalTool,
-                                   @Nullable JComponent parentComponent) {
+                                   @NotNull TestOutputConsole outputConsole) {
     DiffContentFactory factory = DiffContentFactory.getInstance();
     List<? extends DiffContent> contents =
       Arrays.asList(factory.create(DiffBundle.message("settings.external.diff.left.file.content"), FileTypes.PLAIN_TEXT),
                     factory.create(DiffBundle.message("settings.external.diff.base.file.content"), FileTypes.PLAIN_TEXT),
                     factory.create(DiffBundle.message("settings.external.diff.right.file.content"), FileTypes.PLAIN_TEXT));
     List<String> titles = Arrays.asList("Left", "Base", "Right"); // NON-NLS
-    testDiffTool(project, externalTool, contents, titles, parentComponent);
+    testDiffTool(project, externalTool, contents, titles, outputConsole);
   }
 
   private static void testDiffTool(@Nullable Project project,
                                    @NotNull ExternalDiffSettings.ExternalTool externalTool,
                                    @NotNull List<? extends DiffContent> contents,
                                    @NotNull List<String> titles,
-                                   @Nullable JComponent parentComponent) {
+                                   @NotNull TestOutputConsole outputConsole) {
+    JComponent parentComponent = outputConsole.getComponent();
     try {
       GeneralCommandLine commandLine = createDiffCommandLine(project, externalTool, contents, titles, null);
 
-      KillableProcessHandler processHandler = new KillableProcessHandler(commandLine);
-      addLoggingListener(externalTool.getName(), processHandler);
+      KillableProcessHandler processHandler = new TestKillableProcessHandler(commandLine);
+      addLoggingListener(outputConsole, commandLine, processHandler);
       processHandler.startNotify();
     }
     catch (Exception e) {
@@ -227,7 +227,8 @@ public final class ExternalDiffToolUtil {
 
   public static void testMergeTool(@Nullable Project project,
                                    @NotNull ExternalDiffSettings.ExternalTool externalTool,
-                                   @Nullable JComponent parentComponent) {
+                                   @NotNull TestOutputConsole outputConsole) {
+    JComponent parentComponent = outputConsole.getComponent();
     try {
       Document document = new DocumentImpl(DiffBundle.message("settings.external.diff.original.output.file.content"));
 
@@ -252,11 +253,12 @@ public final class ExternalDiffToolUtil {
           try {
             GeneralCommandLine commandLine = createMergeCommandLine(externalTool, outputFile, inputFiles);
 
-            KillableProcessHandler processHandler = new KillableProcessHandler(commandLine);
-            addLoggingListener(externalTool.getName(), processHandler);
+            KillableProcessHandler processHandler = new TestKillableProcessHandler(commandLine);
+            addLoggingListener(outputConsole, commandLine, processHandler);
             processHandler.startNotify();
 
-            return waitMergeProcessWithModal(project, processHandler.getProcess(), externalTool.isMergeTrustExitCode(), parentComponent);
+            return waitMergeProcessWithModal(project, processHandler.getProcess(), externalTool.isMergeTrustExitCode(),
+                                             parentComponent);
           }
           catch (ExecutionException e) {
             throw new IOException(e);
@@ -269,16 +271,23 @@ public final class ExternalDiffToolUtil {
     }
   }
 
-  private static void addLoggingListener(@NotNull String toolName, @NotNull ProcessHandler processHandler) {
+  private static void addLoggingListener(@NotNull TestOutputConsole outputConsole,
+                                         GeneralCommandLine commandLine,
+                                         @NotNull ProcessHandler processHandler) {
+    outputConsole.appendOutput(ProcessOutputTypes.SYSTEM, commandLine.getCommandLineString());
+
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        LOG.info("'" + toolName + "' " + outputType + ": " + event.getText());
+        if (outputType == ProcessOutputTypes.STDOUT ||
+            outputType == ProcessOutputTypes.STDERR) {
+          outputConsole.appendOutput(outputType, event.getText());
+        }
       }
 
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
-        LOG.info("'" + toolName + "' process terminated: exitCode - " + event.getExitCode());
+        outputConsole.processTerminated(event.getExitCode());
       }
     });
   }
@@ -685,5 +694,32 @@ public final class ExternalDiffToolUtil {
 
   private interface MergeTask {
     boolean runMerge(@NotNull OutputFile outputFile, @NotNull List<InputFile> inputFiles) throws IOException;
+  }
+
+  private static class TestKillableProcessHandler extends KillableProcessHandler {
+    private static final BaseOutputReader.Options FULL_LINES_READER_OPTIONS = new BaseOutputReader.Options() {
+      @Override
+      public BaseDataReader.SleepingPolicy policy() { return BaseDataReader.SleepingPolicy.NON_BLOCKING; }
+
+      @Override
+      public boolean sendIncompleteLines() { return false; }
+    };
+
+    TestKillableProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+      super(commandLine);
+    }
+
+    @Override
+    protected @NotNull BaseOutputReader.Options readerOptions() {
+      return FULL_LINES_READER_OPTIONS;
+    }
+  }
+
+  public interface TestOutputConsole {
+    @NotNull JComponent getComponent();
+
+    void appendOutput(@NotNull Key<?> outputType, @NotNull String line);
+
+    void processTerminated(int exitCode);
   }
 }

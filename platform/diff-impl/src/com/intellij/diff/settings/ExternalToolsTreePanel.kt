@@ -5,10 +5,17 @@ import com.intellij.diff.tools.external.ExternalDiffSettings
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalTool
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolGroup
 import com.intellij.diff.tools.external.ExternalDiffToolUtil
+import com.intellij.execution.impl.ConsoleViewUtil
 import com.intellij.ide.util.treeView.TreeState
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ColoredListCellRenderer
@@ -21,9 +28,12 @@ import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.PathUtilRt
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Component
@@ -269,6 +279,11 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) {
       addActionListener { showTestMerge() }
     }
 
+    private val toolOutputEditor = ConsoleViewUtil.setupConsoleEditor(null, false, false).also {
+      it.settings.additionalLinesCount = 3
+    }
+    private var toolOutputConsole: MyTestOutputConsole? = null
+
     constructor(externalTool: ExternalTool) : this(externalTool.name, true) {
       isAutocompleteToolName = false
 
@@ -284,11 +299,13 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) {
     init {
       title = DiffBundle.message("settings.external.tool.tree.add.dialog.title")
 
+      Disposer.register(disposable) { toolOutputConsole?.let { Disposer.dispose(it) } }
+
       init()
     }
 
     override fun createCenterPanel(): JComponent = panel {
-      lateinit var argumentPatternDescription: JEditorPane;
+      lateinit var argumentPatternDescription: JEditorPane
 
       row(DiffBundle.message("settings.external.tool.tree.add.dialog.field.group")) {
         cell(groupField).horizontalAlign(HorizontalAlign.FILL)
@@ -341,6 +358,12 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) {
         cell(testThreeSideDiffButton).visible(!isMergeGroup)
         cell(testMergeButton).visible(isMergeGroup)
       }.topGap(TopGap.MEDIUM)
+      row {
+        cell(toolOutputEditor.component)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .verticalAlign(VerticalAlign.FILL)
+          .applyToComponent { preferredSize = JBUI.size(400, 150) }
+      }.resizableRow()
     }
 
     fun createExternalTool(): ExternalTool = ExternalTool(toolNameField.text,
@@ -386,15 +409,22 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) {
     }
 
     private fun showTestDiff() {
-      ExternalDiffToolUtil.testDiffTool2(null, createExternalTool(), this.contentPanel)
+      ExternalDiffToolUtil.testDiffTool2(null, createExternalTool(), resetToolOutputConsole())
     }
 
     private fun showTestThreeDiff() {
-      ExternalDiffToolUtil.testDiffTool3(null, createExternalTool(), this.contentPanel)
+      ExternalDiffToolUtil.testDiffTool3(null, createExternalTool(), resetToolOutputConsole())
     }
 
     private fun showTestMerge() {
-      ExternalDiffToolUtil.testMergeTool(null, createExternalTool(), this.contentPanel)
+      ExternalDiffToolUtil.testMergeTool(null, createExternalTool(), resetToolOutputConsole())
+    }
+
+    @RequiresEdt
+    private fun resetToolOutputConsole(): ExternalDiffToolUtil.TestOutputConsole {
+      toolOutputConsole?.let { Disposer.dispose(it) }
+      toolOutputConsole = MyTestOutputConsole(toolOutputEditor)
+      return toolOutputConsole!!
     }
   }
 
@@ -456,5 +486,50 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) {
   companion object {
     private const val DIFF_TOOL_DEFAULT_ARGUMENT_PATTERN = "%1 %2 %3"
     private const val MERGE_TOOL_DEFAULT_ARGUMENT_PATTERN = "%1 %2 %3 %4"
+  }
+
+  private class MyTestOutputConsole(private val editor: Editor) : ExternalDiffToolUtil.TestOutputConsole, Disposable {
+    private val document = editor.document
+    private val modalityState = ModalityState.stateForComponent(editor.component)
+
+    private var isDisposed: Boolean = false
+    private var wasTerminated: Boolean = false // better handling for out-of-order events
+
+    init {
+      document.setText("")
+    }
+
+    override fun getComponent(): JComponent = editor.component
+
+    override fun appendOutput(outputType: Key<*>, line: String) {
+      appendText("$outputType: $line", false)
+    }
+
+    override fun processTerminated(exitCode: Int) {
+      appendText(DiffBundle.message("settings.external.tools.test.process.exit.text", exitCode), true)
+    }
+
+    private fun appendText(text: String, isTermination: Boolean) {
+      runInEdt(modalityState) {
+        if (isDisposed) return@runInEdt // the next test session has started
+        if (isTermination) wasTerminated = true
+
+        val offset = if (!isTermination && wasTerminated && document.lineCount > 1) {
+          // the last line is termination line, insert output next-to-last-line
+          document.getLineStartOffset(document.lineCount - 2) // -2, as process termination line also ends with \n
+        }
+        else {
+          // insert into the end
+          document.textLength
+        }
+
+        val line = if (text.endsWith('\n')) text else text + '\n'
+        document.insertString(offset, line)
+      }
+    }
+
+    override fun dispose() {
+      isDisposed = true
+    }
   }
 }
