@@ -37,7 +37,11 @@ public abstract class ExperimentalUI {
 
   public static boolean isNewUI() {
     // CWM-7348 thin client does not support new UI
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && !PlatformUtils.isJetBrainsClient();
+    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && isSupported();
+  }
+
+  public static boolean isSupported() {
+    return !PlatformUtils.isJetBrainsClient();
   }
 
   public static boolean isNewNavbar() {
