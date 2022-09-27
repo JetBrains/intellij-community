@@ -26,7 +26,7 @@ import kotlin.system.measureTimeMillis
 open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
   @Volatile
   var loadedFromCache = false
-    private set
+    protected set
 
   final override val entityStorage: VersionedEntityStorageImpl
 
