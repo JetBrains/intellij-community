@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.io.createDirectories
 import org.jetbrains.kotlin.cli.common.CLICompiler
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.js.K2JSCompiler
@@ -21,6 +22,8 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.div
 import kotlin.reflect.KClass
 
 class KotlinCompilerStandalone @JvmOverloads constructor(
@@ -279,7 +282,11 @@ object KotlinCliCompilerFacade {
             TestKotlinArtifacts.jetbrainsAnnotations,
         )
 
-        val urls = artifacts.map { it.toURI().toURL() }.toTypedArray()
+        // enable old backend support in compiler
+        val tempDirWithOldBackedMarker = createTempDirectory()
+        (tempDirWithOldBackedMarker / "META-INF" / "unsafe-allow-use-old-backend").createDirectories()
+
+        val urls = (artifacts + tempDirWithOldBackedMarker.toFile()).map { it.toURI().toURL() }.toTypedArray()
         return URLClassLoader(urls, ClassLoader.getPlatformClassLoader())
     }
 }

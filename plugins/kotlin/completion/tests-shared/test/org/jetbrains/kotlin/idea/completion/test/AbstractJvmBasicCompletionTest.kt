@@ -14,19 +14,28 @@ abstract class AbstractJvmBasicCompletionTest : KotlinFixtureCompletionBaseTestC
       libraryFiles = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance().libraryFiles,
       librarySourceFiles = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance().librarySourceFiles,
     ) {
-        override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk16()
+        override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk18()
     }
 
-    override fun getPlatform() = JvmPlatforms.jvm6
+    override fun getPlatform() = JvmPlatforms.jvm8
     override fun defaultCompletionType() = CompletionType.BASIC
 
     override fun configureFixture(testPath: String) {
-        // those classes are missing in mockJDK-1.7
+        // those classes are missing in mockJDK-1.8
         with(myFixture) {
             addCharacterCodingException()
             addAppendable()
             addHashSet()
             addLinkedHashSet()
+            addNoSuchAlgorithmException()
+            addUnknownHostException()
+            addSocket()
+            addSwingUtilities()
+            addSqlStatement()
+            addSqlArray()
+            addSqlBlob()
+            addSqlDate()
+            addUrlConnection()
         }
 
         super.configureFixture(testPath)

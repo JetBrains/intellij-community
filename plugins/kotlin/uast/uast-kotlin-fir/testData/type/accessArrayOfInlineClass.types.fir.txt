@@ -44,4 +44,6 @@ UFile (package = ) [public final class AccessArrayOfInlineClassKt {...]
                 UReturnExpression [return "OK"] : PsiType:Void
                     ULiteralExpression (value = "OK") ["OK"] : PsiType:String
     UClass (name = Z) [public final class Z {...}]
+        UField (name = data) [@org.jetbrains.annotations.NotNull private final var data: int]
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
         UMethod (name = getData) [public final fun getData() : int = UastEmptyExpression]

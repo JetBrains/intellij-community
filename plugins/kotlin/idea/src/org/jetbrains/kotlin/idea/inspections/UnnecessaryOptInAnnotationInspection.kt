@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -260,7 +261,7 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
 
             // Add the annotation class as a marker if it has `@RequireOptIn` annotation.
             if (annotationClass.annotations.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME)
-                || annotationClass.annotations.hasAnnotation(OptInNames.OLD_EXPERIMENTAL_FQ_NAME)) {
+                || annotationClass.annotations.hasAnnotation(FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME)) {
                 foundMarkers += annotationFqName
             }
 
@@ -341,6 +342,8 @@ private class RemoveAnnotationArgumentOrEntireEntry : LocalQuickFix {
         }
     }
 }
+
+
 
 /**
  * A quick fix that removes the entire annotation entry.

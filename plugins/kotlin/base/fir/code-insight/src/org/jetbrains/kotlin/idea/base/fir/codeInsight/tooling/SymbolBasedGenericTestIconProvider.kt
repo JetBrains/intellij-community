@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.containsAnnotation
+import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinTestAvailabilityChecker
@@ -20,14 +20,14 @@ object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProvider() {
     private fun KtAnalysisSession.isTestDeclaration(symbol: KtAnnotatedSymbol): Boolean {
         return when {
             isIgnored(symbol) -> false
-            symbol.containsAnnotation(KotlinTestAvailabilityChecker.TEST_FQ_NAME) -> true
+            symbol.hasAnnotation(KotlinTestAvailabilityChecker.TEST_FQ_NAME) -> true
             symbol is KtClassOrObjectSymbol -> symbol.getDeclaredMemberScope().getCallableSymbols().any { isTestDeclaration(it) }
             else -> false
         }
     }
 
     private tailrec fun KtAnalysisSession.isIgnored(symbol: KtAnnotatedSymbol): Boolean {
-        if (symbol.containsAnnotation(KotlinTestAvailabilityChecker.IGNORE_FQ_NAME)) {
+        if (symbol.hasAnnotation(KotlinTestAvailabilityChecker.IGNORE_FQ_NAME)) {
             return true
         }
 
