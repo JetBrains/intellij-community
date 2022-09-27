@@ -14,7 +14,12 @@ import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.KillableProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -25,6 +30,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -51,6 +57,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 public final class ExternalDiffToolUtil {
+  private static final Logger LOG = Logger.getInstance(ExternalDiffToolUtil.class);
+
   public static boolean canCreateFile(@NotNull DiffContent content) {
     if (content instanceof EmptyContent) return true;
     if (content instanceof DocumentContent) return true;
@@ -206,7 +214,11 @@ public final class ExternalDiffToolUtil {
                                    @NotNull List<String> titles,
                                    @Nullable JComponent parentComponent) {
     try {
-      executeDiff(project, externalTool, contents, titles, null);
+      GeneralCommandLine commandLine = createDiffCommandLine(project, externalTool, contents, titles, null);
+
+      KillableProcessHandler processHandler = new KillableProcessHandler(commandLine);
+      addLoggingListener(externalTool.getName(), processHandler);
+      processHandler.startNotify();
     }
     catch (Exception e) {
       Messages.showErrorDialog(parentComponent, e.getMessage(), DiffBundle.message("error.cannot.show.diff"));
@@ -235,11 +247,40 @@ public final class ExternalDiffToolUtil {
       MergeRequest request = DiffRequestFactory.getInstance()
         .createMergeRequest(null, PlainTextFileType.INSTANCE, document, contents, null, titles, callback);
 
-      executeMerge(project, externalTool, (ThreesideMergeRequest)request, parentComponent);
+      handleMergeRequest(request, () -> {
+        return runWithTempMergeFiles(project, (ThreesideMergeRequest)request, (outputFile, inputFiles) -> {
+          try {
+            GeneralCommandLine commandLine = createMergeCommandLine(externalTool, outputFile, inputFiles);
+
+            KillableProcessHandler processHandler = new KillableProcessHandler(commandLine);
+            addLoggingListener(externalTool.getName(), processHandler);
+            processHandler.startNotify();
+
+            return waitMergeProcessWithModal(project, processHandler.getProcess(), externalTool.isMergeTrustExitCode(), parentComponent);
+          }
+          catch (ExecutionException e) {
+            throw new IOException(e);
+          }
+        });
+      });
     }
     catch (Exception e) {
       Messages.showErrorDialog(parentComponent, e.getMessage(), DiffBundle.message("error.cannot.show.merge"));
     }
+  }
+
+  private static void addLoggingListener(@NotNull String toolName, @NotNull ProcessHandler processHandler) {
+    processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        LOG.info("'" + toolName + "' " + outputType + ": " + event.getText());
+      }
+
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        LOG.info("'" + toolName + "' process terminated: exitCode - " + event.getExitCode());
+      }
+    });
   }
 
   public static void executeDiff(@Nullable Project project,
