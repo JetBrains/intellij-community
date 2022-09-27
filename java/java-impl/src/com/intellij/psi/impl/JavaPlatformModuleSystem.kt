@@ -158,10 +158,13 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   }
 
   private fun inSameMultiReleaseModule(place: PsiElement, target: PsiElement): Boolean {
-    val uModule = ModuleUtilCore.findModuleForPsiElement(place) ?: return false
-    val aModule = ModuleUtilCore.findModuleForPsiElement(target) ?: return false
-    val base = aModule.name.substringBeforeLast(".main")
-    return Pattern.compile("$base\\.java\\d+").matcher(uModule.name).matches()
+    val placeModule = ModuleUtilCore.findModuleForPsiElement(place) ?: return false
+    val targetModule = ModuleUtilCore.findModuleForPsiElement(target) ?: return false
+    if (targetModule.name.endsWith(".main")) {
+      val baseModuleName = targetModule.name.substringBeforeLast("main")
+      return Pattern.compile("java\\d+").matcher(placeModule.name.substringAfter(baseModuleName)).matches()
+    }
+    return false
   }
 
   private fun detectAutomaticModule(target: PsiFileSystemItem): PsiJavaModule? {
