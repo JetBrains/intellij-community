@@ -37,7 +37,7 @@ public abstract class ApplicationCommandLineState<T extends
     final JavaParameters params = new JavaParameters();
     T configuration = getConfiguration();
 
-    params.setMainClass(myConfiguration.getRunClass());
+    params.setMainClass(ReadAction.compute(() -> myConfiguration.getRunClass()));
     setupJavaParameters(params);
 
     final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
