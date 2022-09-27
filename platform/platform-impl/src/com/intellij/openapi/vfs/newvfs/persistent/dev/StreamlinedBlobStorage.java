@@ -1,11 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.util.io.DirectBufferWrapper;
 import com.intellij.util.io.PagedFileStorage;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.metrics.BatchCallback;
+import io.opentelemetry.api.metrics.Meter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +17,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Path;
 
 /**
  * Store blobs, like {@link com.intellij.util.io.storage.AbstractStorage}, but tries to be faster:
@@ -166,11 +171,12 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
   // They are frequently accessed, read/write them each time into a file header is too expensive (and verbose),
   // hence use caching fields instead:
 
-  private int recordsAllocated;
-  private int recordsRelocated;
-  private int recordsDeleted;
-  private long totalLiveRecordsPayloadBytes;
-  private long totalLiveRecordsCapacityBytes;
+  private volatile int recordsAllocated;
+  private volatile int recordsRelocated;
+  private volatile int recordsDeleted;
+  private volatile long totalLiveRecordsPayloadBytes;
+  private volatile long totalLiveRecordsCapacityBytes;
+  private final BatchCallback openTelemetryCallback;
 
 
   public StreamlinedBlobStorage(final @NotNull PagedFileStorage pagedStorage,
@@ -222,6 +228,8 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
     finally {
       pagedStorage.unlockWrite();
     }
+
+    openTelemetryCallback = setupReportingToOpenTelemetry(pagedStorage.getFile().getFileName());
   }
 
   public int getStorageVersion() throws IOException {
@@ -702,6 +710,7 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
       // here we try to write file status and other header fields, and without .close flag we'll try to do that
       // even on already closed pagedStorage, which leads to exception.
       closed = true;
+      openTelemetryCallback.close();
     }
     finally {
       pagedStorage.unlockWrite();
@@ -1167,5 +1176,31 @@ public class StreamlinedBlobStorage implements Closeable, AutoCloseable, Forceab
 
   private static boolean isCorrectLengthFieldValue(final int lengthFieldValue) {
     return 0 <= lengthFieldValue && lengthFieldValue <= MAX_CAPACITY;
+  }
+
+
+  @NotNull
+  private BatchCallback setupReportingToOpenTelemetry(final Path fileName) {
+    final Meter meter = TraceManager.INSTANCE.getMeter("storage");
+
+    final var recordsAllocated = meter.counterBuilder("StreamlinedBlobStorage.recordsAllocated").buildObserver();
+    final var recordsRelocated = meter.counterBuilder("StreamlinedBlobStorage.recordsRelocated").buildObserver();
+    final var recordsDeleted = meter.counterBuilder("StreamlinedBlobStorage.recordsDeleted").buildObserver();
+    final var totalLiveRecordsPayloadBytes = meter.upDownCounterBuilder("StreamlinedBlobStorage.totalLiveRecordsPayloadBytes").buildObserver();
+    final var totalLiveRecordsCapacityBytes = meter.upDownCounterBuilder("StreamlinedBlobStorage.totalLiveRecordsCapacityBytes").buildObserver();
+    final Attributes attributes = Attributes.builder()
+      .put("file", fileName.toString())
+      .build();
+    return meter.batchCallback(
+      () -> {
+        recordsAllocated.record(this.recordsAllocated, attributes);
+        recordsRelocated.record(this.recordsRelocated, attributes);
+        recordsDeleted.record(this.recordsDeleted, attributes);
+        totalLiveRecordsPayloadBytes.record(this.totalLiveRecordsPayloadBytes, attributes);
+        totalLiveRecordsCapacityBytes.record(this.totalLiveRecordsCapacityBytes, attributes);
+      },
+      recordsAllocated, recordsRelocated, recordsDeleted,
+      totalLiveRecordsPayloadBytes, totalLiveRecordsCapacityBytes
+    );
   }
 }

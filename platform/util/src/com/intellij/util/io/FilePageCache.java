@@ -127,10 +127,15 @@ final class FilePageCache {
 
 
   //stats counters:
+  // file channel wasn't cached
   private volatile int myUncachedFileAccess;
+  //page found in local PagedFileStorage cache
   private int myFastCacheHits;
+  //page found in this cache
   private int myHits;
+  //page wasn't cached, and load by evicting other page (i.e. cache is full)
   private int myMisses;
+  //page wasn't cached, and load anew (i.e. cache is not full yet)
   private int myLoad;
 
   private long myMaxLoadedSize;

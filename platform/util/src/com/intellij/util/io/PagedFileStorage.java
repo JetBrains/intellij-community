@@ -118,7 +118,7 @@ public class PagedFileStorage implements Forceable {
     return myStorageLockContext;
   }
 
-  @NotNull Path getFile() {
+  public @NotNull Path getFile() {
     return myFile;
   }
 
