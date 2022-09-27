@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -15,8 +15,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspectionTest extends LightJavaCo
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    // SQL is necessary
-    return JAVA_1_7;
+    return JAVA_17;
   }
 
   private void doTest() {

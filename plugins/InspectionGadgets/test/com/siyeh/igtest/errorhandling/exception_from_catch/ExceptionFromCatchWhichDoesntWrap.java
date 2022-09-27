@@ -2,7 +2,6 @@ package com.siyeh.igtest.errorhandling.exception_from_catch;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.sql.SQLException;
 
 public class ExceptionFromCatchWhichDoesntWrap {
     public final Iterator<String> iterator() {
@@ -26,13 +25,16 @@ public class ExceptionFromCatchWhichDoesntWrap {
                 }
             };
         }
-    <error descr="Missing return statement">}</error>
+        return null;
+    }
 
     private void doStuff() throws SQLException {
     }
 
     private void handleEx(SQLException ex) {
     }
+
+    class SQLException extends Exception {}
 
     void bar() {
         try {
@@ -69,4 +71,13 @@ public class ExceptionFromCatchWhichDoesntWrap {
   }
 
   class MyException extends RuntimeException {}
+
+  void patternVariable() {
+    try {
+    } catch (Exception ex) {
+      if (ex instanceof RuntimeException rte) {
+        throw  rte;
+      }
+    }
+  }
 }
