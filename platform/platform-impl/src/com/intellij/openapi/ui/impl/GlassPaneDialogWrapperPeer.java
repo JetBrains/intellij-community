@@ -30,9 +30,7 @@ import com.intellij.ui.jcef.HwFacadeJPanel;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -535,14 +533,12 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     public void dispose() {
       remove(getContentPane());
       setVisible(false);
-      DialogWrapper.unregisterKeyboardActions(myWrapperPane);
       myRootPane = null;
     }
 
     public void setContentPane(JComponent content) {
       if (myContentPane != null) {
         remove(myContentPane);
-        myContentPane = null;
       }
 
       myContentPane = content;
@@ -585,8 +581,8 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
       super.setSize(rect.width, rect.height);
     }
 
-    @Nullable
-    private Point getLocationInCenter(Dimension size, @Nullable Point _default) {
+    @Contract("_,!null->!null")
+    private Point getLocationInCenter(@NotNull Dimension size, @Nullable Point _default) {
       if (myTransparentPane != null) {
         final Dimension d = myTransparentPane.getSize();
         return new Point((d.width - size.width) / 2, (d.height - size.height) / 2);

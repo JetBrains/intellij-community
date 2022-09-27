@@ -222,11 +222,11 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       frame.isVisible = false
       val rootPane = (frame as RootPaneContainer).rootPane
       frame.removeAll()
-      DialogWrapper.cleanupRootPane(rootPane)
       if (frame is IdeFrame) {
         MouseGestureManager.getInstance().remove(frame)
       }
       frame.dispose()
+      DialogWrapper.cleanupRootPane(rootPane)
       DialogWrapper.cleanupWindowListeners(frame)
     }
   }
