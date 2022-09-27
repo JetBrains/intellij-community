@@ -17,6 +17,11 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Collection;
 
+/**
+ * @deprecated deprecated in favour of {@link com.intellij.util.ui.cloneDialog.VcsCloneDialog}
+ */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated(forRemoval = true)
 public class GitCloneDialog extends CloneDvcsDialog {
   private final @NotNull Git myGit;
 

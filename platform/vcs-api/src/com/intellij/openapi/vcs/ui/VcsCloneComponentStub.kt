@@ -30,6 +30,7 @@ class VcsCloneComponentStub(
     return panel
   }
 
+  @Suppress("DEPRECATION")
   override fun doClone(listener: CheckoutProvider.Listener) = checkoutProvider.doCheckout(project, listener)
 
   override fun isOkEnabled() = true
