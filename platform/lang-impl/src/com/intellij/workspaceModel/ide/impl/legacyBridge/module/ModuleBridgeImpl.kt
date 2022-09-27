@@ -45,9 +45,7 @@ internal class ModuleBridgeImpl(
   init {
     // default project doesn't have modules
     if (!project.isDefault && !project.isDisposed) {
-      val busConnection = project.messageBus.connect(this)
-
-      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
+      project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
         override fun beforeChanged(event: VersionedStorageChange) {
           event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
             if (it.entity.persistentId != moduleEntityId) return@forEach

@@ -33,12 +33,11 @@ class EntityWithCollectionTest {
     val collectionEntity = CollectionFieldEntity(setOf(3, 4, 3), listOf(foo, bar), MySource)
 
     var events: List<EntityChange<CollectionFieldEntity>> = emptyList()
-    WorkspaceModelTopics.getInstance(projectModel.project)
-      .subscribeImmediately(projectModel.project.messageBus.connect(), object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChange) {
-          events = event.getChanges(CollectionFieldEntity::class.java)
-        }
-      })
+    projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      override fun beforeChanged(event: VersionedStorageChange) {
+        events = event.getChanges(CollectionFieldEntity::class.java)
+      }
+    })
 
     val model = WorkspaceModel.getInstance(projectModel.project)
 

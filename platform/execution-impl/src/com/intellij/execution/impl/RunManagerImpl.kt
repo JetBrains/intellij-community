@@ -214,7 +214,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   init {
     val messageBusConnection = project.messageBus.connect()
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(messageBusConnection, object : WorkspaceModelChangeListener {
+    messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() || event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
           clearSelectedConfigurationIcon()

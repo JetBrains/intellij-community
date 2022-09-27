@@ -60,7 +60,7 @@ internal class SdkInfoCacheImpl(project: Project) :
         connection.subscribe(LibraryInfoListener.TOPIC, this)
         connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
         connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
-        WorkspaceModelTopics.getInstance(project).subscribeImmediately(connection, this)
+        connection.subscribe(WorkspaceModelTopics.CHANGED, this)
     }
 
     override fun changed(event: VersionedStorageChange) {

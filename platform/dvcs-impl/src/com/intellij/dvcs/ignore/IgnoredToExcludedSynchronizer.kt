@@ -71,8 +71,7 @@ class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(proje
   private val queue = MergingUpdateQueue("IgnoredToExcludedSynchronizer", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
 
   init {
-    val connection = project.messageBus.connect(this)
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(connection, MyRootChangeListener())
+    project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, MyRootChangeListener())
   }
 
   /**

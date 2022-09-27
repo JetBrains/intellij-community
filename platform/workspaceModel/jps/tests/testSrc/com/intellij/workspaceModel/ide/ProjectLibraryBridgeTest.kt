@@ -55,8 +55,7 @@ class ProjectLibraryBridgeTest {
     project = createEmptyTestProject(temporaryDirectoryRule, disposableRule)
 
     events = mutableListOf()
-    val messageBusConnection = project.messageBus.connect(disposableRule.disposable)
-    WorkspaceModelTopics.getInstance(project).subscribeImmediately(messageBusConnection, object : WorkspaceModelChangeListener {
+    project.messageBus.connect(disposableRule.disposable).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         events.addAll(event.getChanges(LibraryEntity::class.java))
       }

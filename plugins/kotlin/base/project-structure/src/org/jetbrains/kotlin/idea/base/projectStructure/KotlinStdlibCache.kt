@@ -228,7 +228,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
 
         private inner class ModuleCache : AbstractCache<IdeaModuleInfo>(), WorkspaceModelChangeListener {
             override fun subscribe(connection: MessageBusConnection) {
-                WorkspaceModelTopics.getInstance(project).subscribeImmediately(connection, this)
+                connection.subscribe(WorkspaceModelTopics.CHANGED, this)
             }
 
             override fun calculate(key: IdeaModuleInfo): StdlibDependency {

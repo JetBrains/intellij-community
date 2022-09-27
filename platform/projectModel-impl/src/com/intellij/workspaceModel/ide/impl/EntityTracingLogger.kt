@@ -27,7 +27,7 @@ class EntityTracingLogger {
 
   fun subscribe(project: Project) {
     if (entityToTrace != null) {
-      WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), EntityTracingListener(entityToTrace))
+      project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, EntityTracingListener(entityToTrace))
     }
   }
 

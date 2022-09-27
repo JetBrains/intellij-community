@@ -41,9 +41,7 @@ class ProjectLibraryTableBridgeImpl(
   }
 
   init {
-    val messageBus = project.messageBus.connect(this)
-
-    WorkspaceModelTopics.getInstance(project).subscribeImmediately(messageBus, object  : WorkspaceModelChangeListener {
+    project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object  : WorkspaceModelChangeListener {
       override fun beforeChanged(event: VersionedStorageChange) {
         val libraryChanges = event.getChanges(LibraryEntity::class.java)
         val removeChanges = libraryChanges.filterProjectLibraryChanges().filterIsInstance<EntityChange.Removed<LibraryEntity>>()

@@ -13,8 +13,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 
 open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(project) {
   init {
-    val busConnection = project.messageBus.connect()
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, MyModulesListener())
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, MyModulesListener())
   }
 
   override fun getDefaultVcsRoots(): Collection<VirtualFile> {

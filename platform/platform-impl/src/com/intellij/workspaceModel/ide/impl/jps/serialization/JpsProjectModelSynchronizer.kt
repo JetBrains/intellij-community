@@ -175,7 +175,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         }
       }
     })
-    WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         LOG.debug("Marking changed entities for save")
         event.getAllChanges().forEach { change ->

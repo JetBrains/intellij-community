@@ -1895,7 +1895,7 @@ public final class BuildManager implements Disposable {
       }
       final MessageBusConnection connection = project.getMessageBus().connect();
       if (!project.isDefault()) {
-        WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(connection, new WorkspaceModelChangeListener() {
+        connection.subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
           @Override
           public void changed(@NotNull VersionedStorageChange event) {
             boolean needFSRescan = false;

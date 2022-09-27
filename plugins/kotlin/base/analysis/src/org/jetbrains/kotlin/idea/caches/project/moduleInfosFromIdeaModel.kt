@@ -114,7 +114,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
-            WorkspaceModelTopics.getInstance(project).subscribeImmediately(connection, this)
+            connection.subscribe(WorkspaceModelTopics.CHANGED, this)
             subscribe(connection)
         }
 

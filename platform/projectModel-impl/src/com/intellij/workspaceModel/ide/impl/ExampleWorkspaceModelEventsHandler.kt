@@ -20,8 +20,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
  */
 class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposable {
   init {
-    val messageBusConnection = project.messageBus.connect(this)
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(messageBusConnection, object : WorkspaceModelChangeListener {
+    project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         // Example of handling VirtualFileUrl change at entities  with  update cache based on the changed urls
         handleLibraryChanged(event)

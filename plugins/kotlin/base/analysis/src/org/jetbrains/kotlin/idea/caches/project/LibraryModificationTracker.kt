@@ -77,7 +77,7 @@ class LibraryModificationTracker(project: Project) : SimpleModificationTracker()
             }
         })
 
-        WorkspaceModelTopics.getInstance(project).subscribeImmediately(connection, object : WorkspaceModelChangeListener {
+        connection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
             override fun changed(event: VersionedStorageChange) {
                 event.getChanges(LibraryEntity::class.java).ifEmpty { return }
                 incModificationCount()

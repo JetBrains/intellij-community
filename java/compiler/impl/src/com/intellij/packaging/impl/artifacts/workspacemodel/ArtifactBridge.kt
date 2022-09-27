@@ -33,8 +33,7 @@ open class ArtifactBridge(
 ) : ModifiableArtifact, UserDataHolderBase() {
 
   init {
-    val busConnection = project.messageBus.connect()
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun beforeChanged(event: VersionedStorageChange) {
         event.getChanges(ArtifactEntity::class.java).filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
           if (it.entity.persistentId != artifactId) return@forEach

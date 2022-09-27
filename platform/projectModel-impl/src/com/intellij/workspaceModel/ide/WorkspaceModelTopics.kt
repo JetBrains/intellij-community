@@ -1,20 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.util.*
 
 interface WorkspaceModelChangeListener : EventListener {
@@ -36,15 +29,13 @@ interface WorkspaceModelChangeListener : EventListener {
 
 /**
  * Topics to subscribe to Workspace changes
- *
- * Please use [subscribeImmediately] and [subscribeAfterModuleLoading] to subscribe to changes
  */
 @Service(Service.Level.PROJECT)
 class WorkspaceModelTopics : Disposable {
   companion object {
-    /** Please use [subscribeImmediately] and [subscribeAfterModuleLoading] to subscribe to changes */
     @Topic.ProjectLevel
-    private val CHANGED = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
+    @JvmField
+    val CHANGED = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
 
     @JvmStatic
     fun getInstance(project: Project): WorkspaceModelTopics = project.service()
@@ -52,30 +43,17 @@ class WorkspaceModelTopics : Disposable {
 
   var modulesAreLoaded = false
 
-  /**
-   * Subscribe to topic and start to receive changes immediately.
-   *
-   * Topic is project-level only without broadcasting - connection expected to be to project message bus only.
-   */
+  @Deprecated("Use regular subscription to the topic WorkspaceModelTopics#CHANGED")
   fun subscribeImmediately(connection: MessageBusConnection, listener: WorkspaceModelChangeListener) {
     connection.subscribe(CHANGED, listener)
   }
 
-  /**
-   * Subscribe to the topic and start to receive changes only *after* all the modules get loaded.
-   * All the events that will be fired before the modules loading, will be collected to the queue. After the modules are loaded, all events
-   *   from the queue will be dispatched to listener under the write action and the further events will be dispatched to listener
-   *   without passing to event queue.
-   *
-   * Topic is project-level only without broadcasting - connection expected to be to project message bus only.
-   */
+  @Deprecated("Use regular subscription to the topic WorkspaceModelTopics#CHANGED")
   fun subscribeAfterModuleLoading(connection: MessageBusConnection, listener: WorkspaceModelChangeListener) {
     subscribeImmediately(connection, listener)
   }
 
-  fun syncPublisher(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(CHANGED)
-
-  suspend fun notifyModulesAreLoaded() {
+  fun notifyModulesAreLoaded() {
     modulesAreLoaded = true
   }
 

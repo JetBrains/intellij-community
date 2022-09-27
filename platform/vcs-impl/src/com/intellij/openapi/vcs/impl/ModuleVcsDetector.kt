@@ -25,9 +25,7 @@ internal class ModuleVcsDetector(private val project: Project) {
 
   private fun startDetection() {
     MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.startDetection")
-    val busConnection = project.messageBus.connect()
-
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, MyWorkspaceModelChangeListener())
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, MyWorkspaceModelChangeListener())
 
     if (vcsManager.needAutodetectMappings() &&
         vcsManager.haveDefaultMapping() == null) {

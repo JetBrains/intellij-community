@@ -161,8 +161,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
                           Function<T, Collection<IndexableFilesIterator>> expectedIteratorsProducer)
     throws Exception {
     MyWorkspaceModelChangeListener listener = new MyWorkspaceModelChangeListener();
-    WorkspaceModelTopics.getInstance(getProject())
-      .subscribeAfterModuleLoading(getProject().getMessageBus().connect(getTestRootDisposable()), listener);
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(WorkspaceModelTopics.CHANGED, listener);
     T createdEntities = WriteAction.compute(generator);
 
     List<IndexableFilesIterator> iterators;

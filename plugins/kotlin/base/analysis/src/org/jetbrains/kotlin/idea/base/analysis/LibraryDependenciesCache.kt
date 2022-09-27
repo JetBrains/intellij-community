@@ -216,7 +216,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
-            WorkspaceModelTopics.getInstance(project).subscribeImmediately(connection, ModelChangeListener())
+            connection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
             connection.subscribe(LibraryInfoListener.TOPIC, this)
             connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
             connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)

@@ -114,8 +114,8 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
 
     myBus = project.getMessageBus();
     MessageBusConnection connection = myBus.connect(this);
-    
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(connection, new ExternalAnnotationsRootListener());
+
+    connection.subscribe(WorkspaceModelTopics.CHANGED, new ExternalAnnotationsRootListener());
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {

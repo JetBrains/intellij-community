@@ -89,12 +89,11 @@ class WorkspaceModelTest {
     val secondModuleName = "AnotherModule"
 
 
-    WorkspaceModelTopics.getInstance(projectModel.project)
-      .subscribeImmediately(projectModel.project.messageBus.connect(), object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChange) {
-          throw IllegalAccessError()
-        }
-      })
+    projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      override fun beforeChanged(event: VersionedStorageChange) {
+        throw IllegalAccessError()
+      }
+    })
 
     val model = WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl
     model.userWarningLoggingLevel = true

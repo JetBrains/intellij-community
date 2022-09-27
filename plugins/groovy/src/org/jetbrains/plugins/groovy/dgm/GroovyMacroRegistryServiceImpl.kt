@@ -29,9 +29,7 @@ class GroovyMacroRegistryServiceImpl(val project: Project) : GroovyMacroRegistry
   private val availableModules: MutableMap<Module, CachedValue<Set<SmartPsiElementPointer<PsiMethod>>>> = ConcurrentHashMap()
 
   init {
-    val connection = project.messageBus.connect()
-    val listener = GroovyMacroModuleListener()
-    WorkspaceModelTopics.getInstance(project).subscribeImmediately(connection, listener)
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, GroovyMacroModuleListener())
   }
 
   override fun resolveAsMacro(call: GrMethodCall): PsiMethod? {

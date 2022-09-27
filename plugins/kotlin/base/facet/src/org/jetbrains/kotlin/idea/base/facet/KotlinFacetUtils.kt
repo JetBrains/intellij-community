@@ -88,9 +88,7 @@ class ModulesByLinkedKeyCache(private val project: Project) : Disposable, Worksp
 
     init {
         LowMemoryWatcher.register(this::invalidate, this)
-
-        val busConnection = project.messageBus.connect(this)
-        WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, this)
+        project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, this)
     }
 
     operator fun get(key: String): Module? = useCache { cache ->

@@ -17,8 +17,7 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 @Service(Service.Level.PROJECT)
 class JvmOnlyProjectChecker(project: Project) : SynchronizedFineGrainedEntityCache<Unit, Boolean>(project, cleanOnLowMemory = false) {
     override fun subscribe() {
-        val busConnection = project.messageBus.connect(this)
-        WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, ModelChangeListener(project))
+        project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener(project))
     }
 
     override fun checkKeyValidity(key: Unit) {}

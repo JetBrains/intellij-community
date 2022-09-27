@@ -170,7 +170,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     if (project.isDisposed) return
 
     logErrorOnEventHandling {
-      WorkspaceModelTopics.getInstance(project).syncPublisher(project.messageBus).beforeChanged(change)
+      project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).beforeChanged(change)
     }
   }
 
@@ -179,7 +179,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     if (project.isDisposed) return
 
     logErrorOnEventHandling {
-      WorkspaceModelTopics.getInstance(project).syncPublisher(project.messageBus).changed(change)
+      project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).changed(change)
     }
   }
 

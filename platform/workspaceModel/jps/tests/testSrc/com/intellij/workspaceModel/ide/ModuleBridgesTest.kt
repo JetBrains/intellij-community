@@ -294,8 +294,7 @@ class ModuleBridgesTest {
     val moduleDirUrl = virtualFileManager.fromPath(project.basePath!!)
     val projectModel = WorkspaceModel.getInstance(project)
 
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(
-      project.messageBus.connect(disposableRule.disposable),
+    project.messageBus.connect(disposableRule.disposable).subscribe(WorkspaceModelTopics.CHANGED,
       object : WorkspaceModelChangeListener {
         override fun beforeChanged(event: VersionedStorageChange) {
           val moduleBridge = event.storageAfter.resolve(ModuleId("name"))!!.findModule(event.storageAfter)

@@ -14,8 +14,7 @@ class ModuleModificationTracker(project: Project) :
     SimpleModificationTracker(), WorkspaceModelChangeListener, Disposable {
 
     init {
-        val connection = project.messageBus.connect(this)
-        WorkspaceModelTopics.getInstance(project).subscribeImmediately(connection, this)
+        project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, this)
     }
 
     override fun changed(event: VersionedStorageChange) {

@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicLong
 class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
     init {
         val busConnection = project.messageBus.connect(this)
-        WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, ModelChangeListener())
+        busConnection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
         busConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, JdkListener())
     }
 

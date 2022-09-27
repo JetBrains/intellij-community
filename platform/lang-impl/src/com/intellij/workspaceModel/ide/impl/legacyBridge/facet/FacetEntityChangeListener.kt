@@ -49,8 +49,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
 
   init {
     if (!project.isDefault) {
-      val busConnection = project.messageBus.connect(this)
-      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
+      project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
         override fun beforeChanged(event: VersionedStorageChange) {
           WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetBridgeContributor ->
             processBeforeChangeEvents(event, facetBridgeContributor)

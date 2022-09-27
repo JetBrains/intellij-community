@@ -45,8 +45,7 @@ class LibraryInfoCache(project: Project) : Disposable {
         private val deduplicationCache = hashMapOf<String, MutableList<LibraryEx>>()
 
         override fun subscribe() {
-            val busConnection = project.messageBus.connect(this)
-            WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, ModelChangeListener(project))
+            project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener(project))
         }
 
         override fun doInvalidate(cache: MutableMap<LibraryEx, List<LibraryInfo>>) {

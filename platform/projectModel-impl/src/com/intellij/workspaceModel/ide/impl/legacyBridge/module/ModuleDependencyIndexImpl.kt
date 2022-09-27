@@ -42,9 +42,8 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
   
   init {
     if (!project.isDefault) {
-      val bus = project.messageBus.connect(this)
-
-      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(bus, object : WorkspaceModelChangeListener {
+      val messageBusConnection = project.messageBus.connect(this)
+      messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
         override fun changed(event: VersionedStorageChange) {
           if (project.isDisposed) return
 
@@ -57,7 +56,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
         }
       })
 
-      bus.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, jdkChangeListener)
+      messageBusConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, jdkChangeListener)
     }
   }
 
