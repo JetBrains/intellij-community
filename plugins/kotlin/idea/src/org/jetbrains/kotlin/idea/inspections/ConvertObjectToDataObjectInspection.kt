@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.*
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -85,7 +86,7 @@ private fun KtObjectDeclaration.isSubclassOfSealed(): Boolean =
 private fun isSerializable(ktObject: KtObjectDeclaration): Boolean =
     ktObject.resolveToDescriptorIfAny()
         ?.getAllSuperClassifiers()
-        ?.any { it.fqNameUnsafe.asString() == "java.io.Serializable" } == true
+        ?.any { it.fqNameSafe == FqName("java.io.Serializable") } == true
 
 private fun isCompatibleReadResolve(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<FqName>, isSerializable: Boolean): Boolean =
     !isSerializable || when (val readResolve = ktObject.findReadResolve()) {
@@ -170,13 +171,13 @@ private fun KtObjectDeclaration.findMemberFunction(
     trivialSuperFqn: String?,
     predicate: (FunctionDescriptor) -> Boolean
 ): VirtualFunction =
-    if (trivialSuperFqn != (descriptor as? ClassDescriptor)?.unsubstitutedMemberScope
-            ?.getDescriptorsFiltered(DescriptorKindFilter.FUNCTIONS) { it.asString() == name }
+    if (trivialSuperFqn?.let { FqName(it) } != (descriptor as? ClassDescriptor)?.unsubstitutedMemberScope
+            ?.getDescriptorsFiltered(DescriptorKindFilter.FUNCTIONS) { it == Name.identifier(name) }
             ?.asSequence()
             ?.filterIsInstance<FunctionDescriptor>()
             ?.singleOrNull(predicate)
             ?.findClosestNotFakeSuper()
-            ?.fqNameUnsafe?.asString()) NonTrivialSuper
+            ?.fqNameSafe) NonTrivialSuper
     else body?.functions
         ?.singleOrNull { function ->
             function.name == name && function.descriptor?.asSafely<FunctionDescriptor>()?.let(predicate) == true
