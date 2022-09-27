@@ -546,6 +546,8 @@
                  description="Show branches tree in a popup instead of a list"/>
     <registryKey key="git.branches.panel.persist.tree.state" defaultValue="true"
                  description="Persist branches panel tree state between restarts"/>
+    <registryKey key="git.do.not.swap.merge.conflict.sides" defaultValue="false"
+                 description="Do not inverse 'ours' and 'theirs' conflict sides during rebase"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
