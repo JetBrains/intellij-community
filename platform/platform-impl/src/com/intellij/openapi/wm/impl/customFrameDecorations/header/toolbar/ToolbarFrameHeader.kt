@@ -3,8 +3,6 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
@@ -73,8 +71,6 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     add(buttonsView, gb.next().anchor(EAST))
 
     setCustomFrameTopBorder({ false }, {true})
-
-    Disposer.register(this, mainMenuButton.menuShortcutHandler)
   }
 
   private fun wrap(comp: JComponent) = object : NonOpaquePanel(comp) {
@@ -103,13 +99,12 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
 
   override fun installListeners() {
     super.installListeners()
-    mainMenuButton.menuShortcutHandler.registerShortcuts(frame.rootPane)
+    mainMenuButton.rootPane = frame.rootPane
     myMenuBar.addComponentListener(contentResizeListener)
   }
 
   override fun uninstallListeners() {
     super.uninstallListeners()
-    mainMenuButton.menuShortcutHandler.unregisterShortcuts()
     myMenuBar.removeComponentListener(contentResizeListener)
     toolbar?.removeComponentListener(contentResizeListener)
   }
