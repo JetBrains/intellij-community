@@ -6,13 +6,11 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.usages.PsiElementUsageTarget
 import com.intellij.usages.similarity.bag.Bag
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtStatementExpression
 
@@ -30,11 +28,6 @@ class KotlinUsageSimilarityFeaturesProvider : UsageSimilarityFeaturesProvider {
         }
 
         return properties
-    }
-
-    @RequiresReadLock
-    override fun isAvailable(usageTarget: PsiElementUsageTarget): Boolean {
-        return usageTarget.element is KtFunction
     }
 
     fun getContext(element: PsiElement): PsiElement? {

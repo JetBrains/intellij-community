@@ -3,9 +3,7 @@ package com.intellij.find.findUsages.similarity;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -28,12 +26,6 @@ public class JavaUsageSimilarityFeaturesProvider implements UsageSimilarityFeatu
       return usageFeatures;
     }
     return Bag.EMPTY_BAG;
-  }
-
-  @Override
-  @RequiresReadLock
-  public boolean isAvailable(@NotNull PsiElementUsageTarget usageTarget) {
-    return usageTarget.getElement() instanceof PsiMethodImpl;
   }
 
   public @Nullable PsiElement getContainingStatement(@NotNull PsiElement element) {

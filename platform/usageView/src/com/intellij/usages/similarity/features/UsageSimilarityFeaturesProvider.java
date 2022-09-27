@@ -3,7 +3,6 @@ package com.intellij.usages.similarity.features;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
-import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
@@ -18,7 +17,4 @@ public interface UsageSimilarityFeaturesProvider {
   @RequiresReadLock
   @RequiresBackgroundThread
   @NotNull Bag getFeatures(@NotNull PsiElement usage);
-
-  @RequiresReadLock
-  boolean isAvailable(@NotNull PsiElementUsageTarget usageTarget);
 }
