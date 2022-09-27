@@ -15,7 +15,7 @@ private const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
 
 @ApiStatus.Internal
 fun isSettingsSyncEnabledByKey(): Boolean =
-  SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, true)
+  SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, false)
 
 internal fun isSettingsSyncEnabledInSettings(): Boolean =
   SettingsSyncSettings.getInstance().syncEnabled

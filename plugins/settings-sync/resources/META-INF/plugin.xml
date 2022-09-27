@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin implementation-detail="true">
   <name>Settings Sync</name>
   <id>com.intellij.settingsSync</id>
   <category>IDE Settings</category>
