@@ -7,7 +7,11 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.execution.*
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.ExecutorRegistry
+import com.intellij.execution.ProgramRunnerUtil
+import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.TestStateStorage
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -20,7 +24,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.ClassUtil
 import com.intellij.testIntegration.TestFailedLineManager
 import com.intellij.util.containers.FactoryMap
@@ -71,16 +78,13 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
     override fun getTopStackTraceLine(): String = record.topStacktraceLine
   }
 
-  private fun createUrl(javaClass: PsiClass, method: UMethod, separator: String) =
-    "java:test://" + ClassUtil.getJVMClassName(javaClass) + separator + method.name
-
   private fun getTestInfo(method: UMethod): TestInfoCache? {
     val containingClass = method.getContainingUClass() ?: return null
-    val javaClass = containingClass.javaPsi
-    val framework = TestFrameworks.detectFramework(javaClass) ?: return null
+    val javaClazz = containingClass.javaPsi
+    val framework = TestFrameworks.detectFramework(javaClazz) ?: return null
     if (!framework.isTestMethod(method.javaPsi, false)) return null
-    val url = urlSeparators.map { createUrl(javaClass, method, it) }.firstOrNull { testStorage.getState(it) != null } ?: return null
-    val state = testStorage.getState(url)!!
+    val url = "java:test://" + ClassUtil.getJVMClassName(javaClazz) + "/" + method.name
+    val state = testStorage.getState(url) ?: return null
     val vFile = method.getContainingUFile()?.sourcePsi?.virtualFile ?: return null
     val infoInFile = cache[vFile] ?: return null
     var info = infoInFile[url]
@@ -139,9 +143,5 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
     override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
       return IntentionPreviewInfo.Html(ExecutionBundle.message("test.failed.line.debug.preview", configuration.name))
     }
-  }
-
-  companion object {
-    private val urlSeparators = listOf("/", ".")
   }
 }
