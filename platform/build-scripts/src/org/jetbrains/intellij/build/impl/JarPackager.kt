@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog",
                "BlockingMethodInNonBlockingContext")
-
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.use
@@ -15,10 +14,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.mutate
 import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.BaseLayout.Companion.APP_JAR
@@ -502,18 +498,21 @@ class JarPackager private constructor(private val context: BuildContext) {
 }
 
 private suspend fun packJnaNativeLibraries(sourceFile: Path, paths: List<String>, context: BuildContext) {
+  val libVersion = sourceFile.getName(sourceFile.nameCount - 2).toString()
+  val signTool = context.proprietaryBuildTools.signTool
+  val unsignedFiles = TreeMap<OsFamily, MutableList<Path>>()
   HashMapZipFile.load(sourceFile).use { zipFile ->
     val jnaOutDir = Files.createDirectories(context.paths.tempDir.resolve("jna"))
     Files.createDirectories(jnaOutDir)
-    val unsignedFiles = TreeMap<OsFamily, MutableList<Path>>()
     for (pathWithPackage in paths) {
       val path = pathWithPackage.removePrefix("com/sun/jna/")
       val osAndArch = path.substring(0, path.indexOf('/'))
+      val fileName = path.substring(path.lastIndexOf('/') + 1)
 
       val os = when {
         osAndArch.startsWith("darwin-") -> OsFamily.MACOS
         osAndArch.startsWith("win32-") -> OsFamily.WINDOWS
-        osAndArch.startsWith("linux-x86-64") -> OsFamily.LINUX
+        osAndArch.startsWith("linux-") -> OsFamily.LINUX
         else -> continue
       }
 
@@ -523,30 +522,47 @@ private suspend fun packJnaNativeLibraries(sourceFile: Path, paths: List<String>
         else -> continue
       }
 
-      val byteBuffer = zipFile.getByteBuffer(pathWithPackage)!!
-      try {
-        val file = jnaOutDir.resolve(path)
+      var file: Path? = if (os != OsFamily.LINUX && signTool.usePresignedNativeFiles) {
+        signTool.getPresignedLibraryFile(path = path, libName = "jna", libVersion = libVersion, context = context)
+      }
+      else {
+        null
+      }
+
+      if (file == null) {
+        @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
+        file = jnaOutDir.resolve(path)!!
         Files.createDirectories(file.parent)
         FileChannel.open(file, W_CREATE_NEW).use { channel ->
-          while (byteBuffer.hasRemaining()) {
-            channel.write(byteBuffer)
+          val byteBuffer = zipFile.getByteBuffer(pathWithPackage)!!
+          try {
+            while (byteBuffer.hasRemaining()) {
+              channel.write(byteBuffer)
+            }
+          }
+          finally {
+            zipFile.releaseBuffer(byteBuffer)
           }
         }
 
         if (os != OsFamily.LINUX) {
           unsignedFiles.computeIfAbsent(os) { mutableListOf() }.add(file)
         }
+      }
 
-        context.addDistFile(DistFile(file = file, relativeDir = "lib/jna/${arch.dirName}", os = os, arch = arch))
-      }
-      finally {
-        zipFile.releaseBuffer(byteBuffer)
-      }
+      context.addDistFile(DistFile(file = file, relativePath = "lib/jna/${arch.dirName}/$fileName", os = os, arch = arch))
     }
+  }
 
-    if (context.options.signNativeFiles) {
-      unsignedFiles.get(OsFamily.MACOS)?.let { context.signFiles(it, MAC_CODE_SIGN_OPTIONS) }
-      unsignedFiles.get(OsFamily.WINDOWS)?.let { context.signFiles(it, BuildOptions.WIN_SIGN_OPTIONS) }
+  if (!signTool.usePresignedNativeFiles) {
+    val versionOption = mapOf(SignTool.LIB_VERSION_OPTION_NAME to libVersion)
+    coroutineScope {
+      launch {
+        unsignedFiles.get(OsFamily.MACOS)?.let { context.signFiles(it, MAC_CODE_SIGN_OPTIONS + versionOption) }
+      }
+      launch {
+        unsignedFiles.get(OsFamily.WINDOWS)?.let { context.signFiles(it, BuildOptions.WIN_SIGN_OPTIONS + versionOption) }
+      }
     }
   }
 }

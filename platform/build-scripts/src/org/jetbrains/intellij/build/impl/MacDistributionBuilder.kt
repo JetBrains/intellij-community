@@ -507,7 +507,7 @@ private fun MacDistributionBuilder.buildMacZip(targetFile: Path,
           }
 
           for (item in extraFiles) {
-            zipOutStream.entry("$zipRoot/${item.relativeDir}${if (item.relativeDir.isEmpty()) "" else "/"}${item.file.fileName}", item.file)
+            zipOutStream.entry(name = "$zipRoot/${item.relativePath}", file = item.file)
           }
         }
       }

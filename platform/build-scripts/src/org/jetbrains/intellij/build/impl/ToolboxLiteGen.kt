@@ -14,13 +14,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 internal object ToolboxLiteGen {
-  private fun downloadToolboxLiteGen(communityRoot: BuildDependenciesCommunityRoot?, liteGenVersion: String): Path {
+  private fun downloadToolboxLiteGen(communityRoot: BuildDependenciesCommunityRoot, liteGenVersion: String): Path {
     val liteGenUri = URI("https://repo.labs.intellij.net/toolbox/lite-gen/lite-gen-$liteGenVersion.zip")
     val zip = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, liteGenUri)
     return BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot, zip, BuildDependenciesExtractOptions.STRIP_ROOT)
   }
 
-  fun runToolboxLiteGen(communityRoot: BuildDependenciesCommunityRoot?,
+  fun runToolboxLiteGen(communityRoot: BuildDependenciesCommunityRoot,
                         messages: BuildMessages,
                         liteGenVersion: String,
                         vararg args: String) {
