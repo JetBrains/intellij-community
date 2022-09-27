@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -151,6 +152,17 @@ public abstract class ExperimentalUI {
     if (UISettings.getInstance().getOverrideLafFonts()) {
       //todo[kb] add RunOnce
       UISettings.getInstance().setOverrideLafFonts(false);
+    }
+  }
+
+  public static class Icons {
+    public static class Gutter {
+      public static final Icon Fold = loadIcon("expui/gutter/fold.svg");
+      public static final Icon Unfold = loadIcon("expui/gutter/unfold.svg");
+    }
+
+    private static Icon loadIcon(String path) {
+      return IconLoader.getIcon(path, AllIcons .class.getClassLoader());
     }
   }
 }
