@@ -197,7 +197,10 @@ public interface Caret extends UserDataHolderEx, Disposable {
 
   /**
    * Returns current selection, or empty range at caret offset if no selection exists.
-   * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
+   * Must be called from inside read action (see {@link Application#runReadAction(Runnable)}).
+   * This method is preferable because the most implementations are thread-safe, so the returned range is always consistent, whereas
+   * the more conventional {@code TextRange.create(getSelectionStart(), getSelectionEnd())} could return inconsistent range when the selection
+   * changed between {@link #getSelectionStart()} and {@link #getSelectionEnd()} calls.
    * @see #getSelectionStart()
    * @see #getSelectionEnd()
    */
