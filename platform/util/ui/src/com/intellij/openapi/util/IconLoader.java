@@ -526,19 +526,41 @@ public final class IconLoader {
     };
   }
 
-  private static @Nullable ImageIcon checkIcon(@NotNull Image image, @NotNull CachedImageIcon cii) {
+  private static @Nullable ImageIcon createScaledIcon(@NotNull Image image, @NotNull CachedImageIcon cii, float scale) {
     // image wasn't loaded or broken
     if (image.getHeight(null) < 1) {
       return null;
     }
 
-    ImageIcon icon = new JBImageIcon(image);
+    ImageIcon icon = new ScaledResultIcon(image, cii, scale);
     if (!isGoodSize(icon)) {
       // # 22481
       LOG.error("Invalid icon: " + cii);
       return CachedImageIcon.EMPTY_ICON;
     }
     return icon;
+  }
+
+  private static class ScaledResultIcon extends JBImageIcon implements ReplaceableIcon {
+    private final CachedImageIcon myOriginal;
+    private final float myScale;
+
+    ScaledResultIcon(@NotNull Image image, CachedImageIcon original, float scale) {
+      super(image);
+      myOriginal = original;
+      myScale = scale;
+    }
+
+    @Override
+    public @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
+      Icon originalReplaced = replacer.replaceIcon(myOriginal);
+      if (originalReplaced instanceof ScalableIcon) {
+        return ((ScalableIcon)originalReplaced).scale(myScale);
+      } else {
+        LOG.error("The result after replacing cannot be scaled: " + originalReplaced);
+        return this;
+      }
+    }
   }
 
   public static boolean isGoodSize(final @NotNull Icon icon) {
@@ -1136,7 +1158,7 @@ public final class IconLoader {
         return null;
       }
 
-      icon = checkIcon(image, host);
+      icon = createScaledIcon(image, host, scale);
       if (icon != null && !ImageLoader.ImageCache.isIconTooLargeForCache(icon)) {
         cache.put(cacheKey, new SoftReference<>(icon));
       }
