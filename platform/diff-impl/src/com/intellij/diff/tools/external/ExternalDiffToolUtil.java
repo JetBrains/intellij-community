@@ -292,7 +292,6 @@ public final class ExternalDiffToolUtil {
                                         @NotNull ExternalDiffSettings.ExternalTool externalTool,
                                         @NotNull ThreesideMergeRequest request,
                                         @Nullable JComponent parentComponent) throws IOException, ExecutionException {
-    boolean success;
     OutputFile outputFile = null;
     List<InputFile> inputFiles = null;
     try {
@@ -315,54 +314,9 @@ public final class ExternalDiffToolUtil {
 
       final Process process = execute(externalTool.getProgramPath(), externalTool.getArgumentPattern(), patterns);
 
-      if (externalTool.isMergeTrustExitCode()) {
-        final Ref<Boolean> resultRef = new Ref<>();
-
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-          final Semaphore semaphore = new Semaphore(0);
-
-          final Thread waiter = new Thread("external process waiter") {
-            @Override
-            public void run() {
-              try {
-                resultRef.set(process.waitFor() == 0);
-              }
-              catch (InterruptedException ignore) {
-              }
-              finally {
-                semaphore.release();
-              }
-            }
-          };
-          waiter.start();
-
-          try {
-            while (true) {
-              ProgressManager.checkCanceled();
-              if (semaphore.tryAcquire(200, TimeUnit.MILLISECONDS)) break;
-            }
-          }
-          catch (InterruptedException ignore) {
-          }
-          finally {
-            waiter.interrupt();
-          }
-        }, DiffBundle.message("waiting.for.external.tool"), true, project, parentComponent);
-        success = resultRef.get() == Boolean.TRUE;
-      }
-      else {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-          TimeoutUtil.sleep(1000);
-        }, DiffBundle.message("launching.external.tool"), false, project, parentComponent);
-
-        success = Messages.showYesNoDialog(project,
-                                           DiffBundle.message("press.mark.as.resolve"),
-                                           DiffBundle.message("merge.in.external.tool"),
-                                           DiffBundle.message("mark.as.resolved"),
-                                           CommonBundle.message("button.revert"), null) == Messages.YES;
-      }
-
+      boolean success = waitMergeProcessWithModal(project, process, externalTool.isMergeTrustExitCode(), parentComponent);
       if (success) outputFile.apply();
+      return success;
     }
     finally {
       if (outputFile != null) outputFile.cleanup();
@@ -372,7 +326,58 @@ public final class ExternalDiffToolUtil {
         }
       }
     }
-    return success;
+  }
+
+  private static boolean waitMergeProcessWithModal(@Nullable Project project,
+                                                   @NotNull Process process,
+                                                   boolean trustExitCode,
+                                                   @Nullable JComponent parentComponent) {
+    if (trustExitCode) {
+      final Ref<Boolean> resultRef = new Ref<>();
+
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        final Semaphore semaphore = new Semaphore(0);
+
+        final Thread waiter = new Thread("external process waiter") {
+          @Override
+          public void run() {
+            try {
+              resultRef.set(process.waitFor() == 0);
+            }
+            catch (InterruptedException ignore) {
+            }
+            finally {
+              semaphore.release();
+            }
+          }
+        };
+        waiter.start();
+
+        try {
+          while (true) {
+            ProgressManager.checkCanceled();
+            if (semaphore.tryAcquire(200, TimeUnit.MILLISECONDS)) break;
+          }
+        }
+        catch (InterruptedException ignore) {
+        }
+        finally {
+          waiter.interrupt();
+        }
+      }, DiffBundle.message("waiting.for.external.tool"), true, project, parentComponent);
+      return resultRef.get() == Boolean.TRUE;
+    }
+    else {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        TimeoutUtil.sleep(1000);
+      }, DiffBundle.message("launching.external.tool"), false, project, parentComponent);
+
+      return Messages.showYesNoDialog(project,
+                                      DiffBundle.message("press.mark.as.resolve"),
+                                      DiffBundle.message("merge.in.external.tool"),
+                                      DiffBundle.message("mark.as.resolved"),
+                                      CommonBundle.message("button.revert"), null) == Messages.YES;
+    }
   }
 
   @NotNull
