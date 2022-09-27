@@ -13,6 +13,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
@@ -24,6 +25,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
+import java.util.regex.Pattern
 
 /**
  * Checks package accessibility according to JLS 7 "Packages and Modules".
@@ -147,12 +149,19 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
     }
     else if (useModule != null) {
       val autoModule = detectAutomaticModule(target)
-      if (autoModule == null || !JavaModuleGraphUtil.reads(useModule, autoModule)) {
+      if (autoModule == null || !JavaModuleGraphUtil.reads(useModule, autoModule) && !inSameMultiReleaseModule(place, target)) {
         return if (quick) ERR else ErrorWithFixes(JavaErrorBundle.message("module.access.to.unnamed", packageName, useModule.name))
       }
     }
 
     return null
+  }
+
+  private fun inSameMultiReleaseModule(place: PsiElement, target: PsiElement): Boolean {
+    val uModule = ModuleUtilCore.findModuleForPsiElement(place) ?: return false
+    val aModule = ModuleUtilCore.findModuleForPsiElement(target) ?: return false
+    val base = aModule.name.substringBeforeLast(".main")
+    return Pattern.compile("$base\\.java\\d+").matcher(uModule.name).matches()
   }
 
   private fun detectAutomaticModule(target: PsiFileSystemItem): PsiJavaModule? {
