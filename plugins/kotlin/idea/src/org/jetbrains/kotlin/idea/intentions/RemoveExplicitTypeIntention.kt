@@ -33,7 +33,7 @@ class RemoveExplicitTypeIntention : SelfTargetingRangeIntention<KtCallableDeclar
 
     companion object {
         fun removeExplicitType(element: KtCallableDeclaration) {
-            val initializer = (element as? KtProperty)?.initializer
+            val initializer = (element as? KtDeclarationWithInitializer)?.initializer
             val typeArgumentList = initializer?.let { getQualifiedTypeArgumentList(it) }
             element.typeReference = null
             if (typeArgumentList != null) addTypeArgumentsIfNeeded(initializer, typeArgumentList)

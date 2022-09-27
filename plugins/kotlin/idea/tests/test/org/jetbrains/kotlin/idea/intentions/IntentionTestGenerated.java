@@ -15278,6 +15278,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeExplicitType/needTypeArgument2.kt");
         }
 
+        @TestMetadata("needTypeArgumentInFunctionDefinition.kt")
+        public void testNeedTypeArgumentInFunctionDefinition() throws Exception {
+            runTest("testData/intentions/removeExplicitType/needTypeArgumentInFunctionDefinition.kt");
+        }
+
         @TestMetadata("notOnParameterOfFunctionType.kt")
         public void testNotOnParameterOfFunctionType() throws Exception {
             runTest("testData/intentions/removeExplicitType/notOnParameterOfFunctionType.kt");
@@ -15286,6 +15291,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("notOnSetterParameter.kt")
         public void testNotOnSetterParameter() throws Exception {
             runTest("testData/intentions/removeExplicitType/notOnSetterParameter.kt");
+        }
+
+        @TestMetadata("onLoopParameter.kt")
+        public void testOnLoopParameter() throws Exception {
+            runTest("testData/intentions/removeExplicitType/onLoopParameter.kt");
         }
 
         @TestMetadata("onOverride.kt")
