@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinProjectStructureUtils")
+
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.injected.editor.VirtualFileWindow
@@ -54,9 +55,9 @@ fun Module.getMainKtSourceModule(): KtSourceModule? {
 }
 
 val ModuleInfo.kotlinSourceRootType: KotlinSourceRootType?
-    get() = when {
-        this is ModuleProductionSourceInfo -> SourceKotlinRootType
-        this is ModuleTestSourceInfo -> TestSourceKotlinRootType
+    get() = when (this) {
+        is ModuleProductionSourceInfo -> SourceKotlinRootType
+        is ModuleTestSourceInfo -> TestSourceKotlinRootType
         else -> null
     }
 
@@ -83,7 +84,8 @@ private fun Module.hasRootsOfType(rootTypes: Set<JpsModuleSourceRootType<*>>): B
     return rootManager.contentEntries.any { it.getSourceFolders(rootTypes).isNotEmpty() }
 }
 
-var @Suppress("unused") PsiFile.forcedModuleInfo: ModuleInfo? by UserDataProperty(Key.create("FORCED_MODULE_INFO"))
+@Suppress("UnusedReceiverParameter")
+var PsiFile.forcedModuleInfo: ModuleInfo? by UserDataProperty(Key.create("FORCED_MODULE_INFO"))
     @ApiStatus.Internal get
     @ApiStatus.Internal set
 
