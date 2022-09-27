@@ -26,7 +26,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -189,7 +188,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
 
       @Override
       public void setValue(final MapInfo o, final String aValue) {
-        Collection<AbstractVcs> activeVcses = getActiveVcses();
         o.mapping = new VcsDirectoryMapping(o.mapping.getDirectory(), aValue, o.mapping.getRootSettings());
       }
 
@@ -414,7 +412,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
     myModel.setItems(items);
   }
 
-  @Contract(pure = false)
   private static void sortAndAddSeparatorIfNeeded(@NotNull List<MapInfo> items) {
     boolean hasUnregistered = false;
     boolean hasSeparator = false;
@@ -453,7 +450,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
   }
 
   private void removeMapping() {
-    Collection<AbstractVcs> activeVcses = getActiveVcses();
     ArrayList<MapInfo> mappings = new ArrayList<>(myModel.getItems());
     int index = myDirectoryMappingTable.getSelectionModel().getMinSelectionIndex();
     Collection<MapInfo> selection = myDirectoryMappingTable.getSelection();
@@ -478,7 +474,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
   protected JComponent createMainComponent() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBag gb = new GridBag()
-      .setDefaultInsets(new Insets(0, 0, DEFAULT_VGAP, DEFAULT_HGAP))
+      .setDefaultInsets(JBUI.insets(0, 0, DEFAULT_VGAP, DEFAULT_HGAP))
       .setDefaultWeightX(1)
       .setDefaultFill(GridBagConstraints.HORIZONTAL);
 
@@ -591,15 +587,5 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
   private List<VcsDirectoryMapping> getModelMappings() {
     return ContainerUtil.mapNotNull(myModel.getItems(),
                                     info -> info == MapInfo.SEPARATOR || info.type == MapInfo.Type.UNREGISTERED ? null : info.mapping);
-  }
-
-  public Collection<AbstractVcs> getActiveVcses() {
-    Set<AbstractVcs> vcses = new HashSet<>();
-    for (VcsDirectoryMapping mapping : getModelMappings()) {
-      if (mapping.getVcs().length() > 0) {
-        vcses.add(myVcsManager.findVcsByName(mapping.getVcs()));
-      }
-    }
-    return vcses;
   }
 }
