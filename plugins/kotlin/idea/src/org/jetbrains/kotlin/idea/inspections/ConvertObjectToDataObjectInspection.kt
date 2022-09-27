@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.asSafely
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -25,6 +27,7 @@ import org.jetbrains.kotlin.idea.inspections.VirtualFunction.*
 import org.jetbrains.kotlin.idea.inspections.VirtualFunction.Function
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.*
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -33,7 +36,6 @@ import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getAllSuperClassifiers
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
@@ -141,14 +143,23 @@ private fun isCompatibleHashCode(ktObject: KtObjectDeclaration): Boolean =
 private class ConvertToDataObjectQuickFix(private val isSerializable: Boolean) : LocalQuickFix {
     override fun getFamilyName(): String = KotlinBundle.message("convert.to.data.object")
 
+    override fun startInWriteAction(): Boolean = false
+
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val ktObject = descriptor.psiElement.parent.asSafely<KtObjectDeclaration>() ?: return
-        ktObject.findToString().function?.delete()
-        ktObject.findEquals().function?.delete()
-        ktObject.findHashCode().function?.delete()
-        if (isSerializable) ktObject.findReadResolve().function?.delete()
-        if (ktObject.body?.declarations?.isEmpty() == true) ktObject.body?.delete()
-        ktObject.addModifier(KtTokens.DATA_KEYWORD)
+        val functions = ActionUtil.underModalProgress(project, KotlinBundle.message("analyzing.members"), Computable {
+            listOfNotNull(
+                ktObject.findToString().function,
+                ktObject.findEquals().function,
+                ktObject.findHashCode().function,
+                if (isSerializable) ktObject.findReadResolve().function else null,
+            )
+        })
+        runWriteAction {
+            functions.forEach { it.delete() }
+            if (ktObject.body?.declarations?.isEmpty() == true) ktObject.body?.delete()
+            ktObject.addModifier(KtTokens.DATA_KEYWORD)
+        }
     }
 
     private val VirtualFunction.function: KtNamedFunction?
