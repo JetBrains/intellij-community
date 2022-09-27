@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,9 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
       new TextAttributes(null, Color.PINK, null, null, Font.PLAIN),
       new HighlightInfoType.HighlightInfoTypeImpl(severity, attributesKey)
     );
-    SeverityRegistrar.getSeverityRegistrar(project).registerSeverity(textAttributes, null);
+    final SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(project);
+    registrar.registerSeverity(textAttributes, null);
+    Disposer.register(getTestRootDisposable(), () -> registrar.unregisterSeverity(severity));
 
     final InspectionProfileImpl profile = InspectionProfileManager.getInstance(project).getCurrentProfile();
     profile.setErrorLevel(HighlightDisplayKey.find("Convert2Diamond"), HighlightDisplayLevel.find(severity), project);
@@ -64,20 +67,5 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
     final HighlightInfo info = highlighting.get(0);
     assertEquals(severity, info.getSeverity());
     assertEquals(HighlighterLayer.WARNING, info.getHighlighter().getLayer());
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      final SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(getProject());
-      final HighlightSeverity severity = registrar.getSeverity("X");
-      registrar.unregisterSeverity(severity);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
   }
 }
