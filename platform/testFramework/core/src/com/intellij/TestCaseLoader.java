@@ -208,22 +208,27 @@ public class TestCaseLoader {
    * Init fair buckets for all test classes
    */
   public static void initFairBuckets() {
-    if (BUCKETS.isEmpty()) {
-      System.out.println("Fair buckets initialization started ...");
+    if (!BUCKETS.isEmpty()) return;
 
-      var testCaseLoader = new TestCaseLoader("");
+    System.out.println("Fair bucketing initialization started ...");
 
-      for (Path classesRoot : TestAll.getClassRoots()) {
-        ClassFinder classFinder = new ClassFinder(classesRoot.toFile(), "", INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
+    var groupsTestCaseLoader = new TestCaseLoader("tests/testGroups.properties");
 
-        testCaseLoader.loadTestCases(classesRoot.getFileName().toString(), classFinder.getClasses());
-      }
+    for (Path classesRoot : TestAll.getClassRoots()) {
+      ClassFinder classFinder = new ClassFinder(classesRoot.toFile(), "", INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
 
-      var testCaseClasses = testCaseLoader.getClasses();
-
-      System.out.printf("Fair buckets initialization. Sieved classes %s%n", testCaseClasses.size());
-      testCaseClasses.forEach(testCaseClass -> matchesCurrentBucketFair(testCaseClass.getName(), TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX));
+      Collection<String> foundTestClasses = classFinder.getClasses();
+      groupsTestCaseLoader.loadTestCases(classesRoot.getFileName().toString(), foundTestClasses);
     }
+
+    var testCaseClasses = groupsTestCaseLoader.getClasses();
+
+    System.out.printf("Fair bucketing initialization. Found %s classes to sieve%n", testCaseClasses.size());
+    if (testCaseClasses.isEmpty()) {
+      throw new IllegalStateException("Fair bucketing is enabled, but 0 test classes were found to sieve");
+    }
+
+    testCaseClasses.forEach(testCaseClass -> matchesCurrentBucketFair(testCaseClass.getName(), TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX));
   }
 
   public static boolean matchesCurrentBucketFair(@NotNull String testIdentifier, int testRunnerCount, int testRunnerIndex) {
@@ -233,7 +238,7 @@ public class TestCaseLoader {
       var isMatchedBucket = value == testRunnerIndex;
 
       System.out.printf(
-        "Fair bucket match: test identifier `%s` already in bucket, runner count %s, runner index %s, is matching bucket %s%n",
+        "Fair bucket match: test identifier `%s` (already sieved to buckets), runner count %s, runner index %s, is matching bucket %s%n",
         testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
 
       return isMatchedBucket;
