@@ -1,14 +1,14 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.webSymbols.framework"
-                    beanClass="com.intellij.webSymbols.framework.impl.WebFrameworkRegistrationExtensionPoint"
+                    beanClass="com.intellij.webSymbols.framework.impl.WebSymbolsFrameworkRegistrationExtensionPoint"
                     dynamic="true">
-      <with attribute="implementation" implements="com.intellij.webSymbols.framework.WebFramework"/>
+      <with attribute="implementation" implements="com.intellij.webSymbols.framework.WebSymbolsFramework"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.context"
-                    beanClass="com.intellij.webSymbols.framework.impl.WebFrameworkExtensionPoint"
+    <extensionPoint qualifiedName="com.intellij.webSymbols.frameworkContext"
+                    beanClass="com.intellij.webSymbols.framework.impl.WebSymbolsFrameworkExtensionPoint"
                     dynamic="true">
-      <with attribute="implementation" implements="com.intellij.webSymbols.framework.WebFrameworkContext"/>
+      <with attribute="implementation" implements="com.intellij.webSymbols.framework.WebSymbolsFrameworkContext"/>
     </extensionPoint>
     <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes"

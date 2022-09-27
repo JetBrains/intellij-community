@@ -22,7 +22,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
-import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -67,11 +66,9 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     add(Box.createHorizontalStrut(GAP_BEFORE_ARROW));
     add(myFilterActionButton);
 
-    Runnable resetAction = createResetAction();
-
     myFilterActionButton.setActionListener(e -> {
       if (isValueSelected()) {
-        resetAction.run();
+        resetFilter();
       }
       else {
         showPopup();
@@ -162,7 +159,12 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     ClickListener clickListener = new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        showPopup();
+        if (UIUtil.isCloseClick(event, MouseEvent.MOUSE_RELEASED)) {
+          resetFilter();
+        }
+        else {
+          showPopup();
+        }
         return true;
       }
     };
@@ -199,11 +201,15 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     myValueLabel.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getTextFieldForeground());
   }
 
-  private void showPopup() {
-    if (myShowPopupAction == null) {
-      return;
+  private void resetFilter() {
+    Runnable resetAction = createResetAction();
+    if (resetAction != null) {
+      resetAction.run();
     }
-    else {
+  }
+
+  private void showPopup() {
+    if (myShowPopupAction != null) {
       myShowPopupAction.run();
     }
   }

@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.labels;
 
-import com.intellij.diagnostic.LoadingStateUtilKt;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -312,7 +312,7 @@ public class LinkLabel<T> extends JLabel {
   }
 
   private static void setStatusBarText(@NlsContexts.StatusBarText String statusBarText) {
-    if (ApplicationManager.getApplication() == null || !LoadingStateUtilKt.getAreComponentsInitialized()) return; // makes this component work in UIDesigner preview.
+    if (ApplicationManager.getApplication() == null || !LoadingState.COMPONENTS_REGISTERED.isOccurred()) return; // makes this component work in UIDesigner preview.
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       StatusBar.Info.set(statusBarText, project);

@@ -44,13 +44,13 @@ public class JavaReferenceImporter implements ReferenceImporter {
     };
   }
 
-  private static ImportClassFix computeImportFix(@NotNull PsiElement file, int startOffset, int endOffset) {
+  private static ImportClassFix computeImportFix(@NotNull PsiFile file, int startOffset, int endOffset) {
     List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffset);
     for (PsiElement element : elements) {
       if (element instanceof PsiJavaCodeReferenceElement) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;
         ImportClassFix fix = new ImportClassFix(ref);
-        if (!fix.getClassesToImport().isEmpty()) {
+        if (fix.isAvailable(file.getProject(), null, file)) {
           fix.surviveOnPSIModifications(); // make possible to apply several of these actions at once
           return fix;
         }

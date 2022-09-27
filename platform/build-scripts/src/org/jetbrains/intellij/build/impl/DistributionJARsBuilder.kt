@@ -79,7 +79,7 @@ class DistributionJARsBuilder {
         buildSearchableOptions(context)
       }
 
-      val pluginLayouts = getPluginLayoutsByJpsModuleNames(context.productProperties.productLayout.bundledPluginModules, context)
+      val pluginLayouts = getPluginLayoutsByJpsModuleNames(context.productProperties.productLayout.bundledPluginModules, context.productProperties.productLayout)
       val antDir = if (context.productProperties.isAntRequired) context.paths.distAllDir.resolve("lib/ant") else null
       val antTargetFile = antDir?.resolve("lib/ant.jar")
       val moduleOutputPatcher = ModuleOutputPatcher()
@@ -115,7 +115,7 @@ class DistributionJARsBuilder {
         async { buildOsSpecificBundledPlugins(pluginLayouts, isUpdateFromSources, buildPlatformJob, context) },
         async {
           buildNonBundledPlugins(pluginsToPublish = state.pluginsToPublish,
-                                 compressPluginArchive = !isUpdateFromSources && context.options.compressNonBundledPluginArchive,
+                                 compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles,
                                  buildPlatformLibJob = buildPlatformJob,
                                  context = context)
         },
@@ -438,7 +438,8 @@ internal suspend fun generateProjectStructureMapping(context: BuildContext,
     val libDirLayout = async {
       processLibDirectoryLayout(moduleOutputPatcher = moduleOutputPatcher, platform = state.platform, context = context, copyFiles = false)
     }
-    val allPlugins = getPluginLayoutsByJpsModuleNames(context.productProperties.productLayout.bundledPluginModules, context)
+    val allPlugins = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.bundledPluginModules,
+                                                      productLayout = context.productProperties.productLayout)
     val entries = ArrayList<DistributionFileEntry>()
     for (plugin in allPlugins) {
       if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, context = context)) {
@@ -553,12 +554,12 @@ private val PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE: Comparator<PluginLayout> = 
 
 internal class PluginRepositorySpec(@JvmField val pluginZip: Path, @JvmField val pluginXml: ByteArray /* content of plugin.xml */)
 
-fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, context: BuildContext): Set<PluginLayout> {
+fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout: ProductModulesLayout): Set<PluginLayout> {
   if (modules.isEmpty()) {
     return emptySet()
   }
 
-  val pluginLayouts = context.productProperties.productLayout.pluginLayouts
+  val pluginLayouts = productLayout.pluginLayouts
   val pluginLayoutsByMainModule = pluginLayouts.groupBy { it.mainModule }
   val result = createPluginLayoutSet(modules.size)
   for (moduleName in modules) {
@@ -821,16 +822,26 @@ private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: List<Dis
                                                         licensesList = context.productProperties.allLibraryLicenses,
                                                         usedModulesNames = entries.includedModules.toHashSet())
     val distAllDir = context.paths.distAllDir
-    Files.createDirectories(distAllDir)
+    withContext(Dispatchers.IO) {
+      Files.createDirectories(distAllDir)
 
-    val htmlFilePath = distAllDir.resolve("license/third-party-libraries.html")
-    val jsonFilePath = distAllDir.resolve("license/third-party-libraries.json")
+      val htmlFilePath = distAllDir.resolve("license/third-party-libraries.html")
+      val jsonFilePath = distAllDir.resolve("license/third-party-libraries.json")
 
-    generator.generateHtml(htmlFilePath)
-    generator.generateJson(jsonFilePath)
+      generator.generateHtml(htmlFilePath)
+      generator.generateJson(jsonFilePath)
 
-    context.notifyArtifactBuilt(htmlFilePath)
-    context.notifyArtifactBuilt(jsonFilePath)
+      if (context.productProperties.generateLibraryLicensesTable) {
+        val artifactNamePrefix = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
+        val htmlArtifact = context.paths.artifactDir.resolve("$artifactNamePrefix-third-party-libraries.html")
+        val jsonArtifact = context.paths.artifactDir.resolve("$artifactNamePrefix-third-party-libraries.json")
+        Files.createDirectories(context.paths.artifactDir)
+        Files.copy(htmlFilePath, htmlArtifact)
+        Files.copy(jsonFilePath, jsonArtifact)
+        context.notifyArtifactBuilt(htmlArtifact)
+        context.notifyArtifactBuilt(jsonArtifact)
+      }
+    }
   }
 }
 

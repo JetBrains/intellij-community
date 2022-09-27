@@ -2,11 +2,7 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.ModuleFileIndex
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.isModuleUnloaded
@@ -15,7 +11,6 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
@@ -32,6 +27,7 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
         handleLibraryChanged(event)
         handleContentRootChanged(event)
         handleSourceRootChanged(event)
+        handleExcludesChanged(event)
         // If cache invalidation depends on specific properties e.g. [org.jetbrains.jps.model.java.JavaResourceRootProperties.getRelativeOutputPath]
         // changes from [JavaResourceRootEntity] should be handled
         handleJavaSourceRootChanged(event)
@@ -51,7 +47,20 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
     event.getChanges(LibraryEntity::class.java).forEach { change ->
       val (entity, _) = getEntityAndStorage(event, change)
       if (!libraryIsDependency(entity, project)) return@forEach
-      val (addedUrls, removedUrls) = calculateChangedUrls(change, listOf(), listOf({ roots.map { it.url }}, { excludedRoots }))
+      // We also process exclude entities in [handleExcludesChanged]
+      val (addedUrls, removedUrls) = calculateChangedUrls(change, listOf(),
+                                                          listOf({ roots.map { it.url } }, { excludedRoots.map { it.url } }))
+      updateCache(addedUrls.urls, removedUrls.urls)
+    }
+  }
+
+  private fun handleExcludesChanged(event: VersionedStorageChange) {
+    event.getChanges(ExcludeUrlEntity::class.java).forEach { change ->
+      val (entity, snapshot) = getEntityAndStorage(event, change)
+      entity.contentRoot?.let { contentRoot -> if (contentRoot.module.isModuleUnloaded(snapshot)) return@forEach }
+      entity.library?.let { library -> if (!libraryIsDependency(library, project)) return@forEach }
+
+      val (addedUrls, removedUrls) = calculateChangedUrls(change, listOf({ url }))
       updateCache(addedUrls.urls, removedUrls.urls)
     }
   }
@@ -71,7 +80,8 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
   private fun handleContentRootChanged(event: VersionedStorageChange) {
     event.getChanges(ContentRootEntity::class.java).forEach { change ->
       if (isInUnloadedModule(event, change){ module }) return@forEach
-      val (addedUrls, removedUrls) = calculateChangedUrls(change, listOf({url}), listOf({ excludedUrls }))
+      // We also process exclude entities in [handleExcludesChanged]
+      val (addedUrls, removedUrls) = calculateChangedUrls(change, listOf({url}), listOf({ excludedUrls.map { it.url } }))
       updateCache(addedUrls.urls, removedUrls.urls)
     }
   }

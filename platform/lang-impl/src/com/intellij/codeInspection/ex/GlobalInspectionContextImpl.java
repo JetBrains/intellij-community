@@ -9,6 +9,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionUtil;
 import com.intellij.codeInspection.lang.GlobalInspectionContextExtension;
@@ -473,11 +474,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       try {
         Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
           InspectionEngine.inspectEx(localTools, file, restrictRange, restrictRange, false, inspectInjectedPsi, true,
-                                     progressIndicator,
-                                     (wrapper, descriptor) -> true);
+                                     progressIndicator, PairProcessor.alwaysTrue());
         for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
-          LocalInspectionToolWrapper toolWrapper = entry.getKey();
           List<ProblemDescriptor> descriptors = entry.getValue();
+          if (descriptors.isEmpty()) continue;
+          final ProblemDescriptor firstDescriptor = descriptors.get(0);
+          LocalInspectionToolWrapper toolWrapper =
+            firstDescriptor instanceof ProblemDescriptorWithReporterName descriptor
+            ? (LocalInspectionToolWrapper)getTools().get(descriptor.getReportingToolName()).getTool()
+            : entry.getKey();
           InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
           BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, this, toolWrapper.getTool());
         }

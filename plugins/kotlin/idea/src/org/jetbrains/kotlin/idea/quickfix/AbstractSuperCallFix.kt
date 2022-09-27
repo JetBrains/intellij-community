@@ -9,6 +9,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction
+import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction.Info
+import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateToStringAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
@@ -25,6 +27,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 private const val EQUALS = "equals"
 private const val HASH_CODE = "hashCode"
+private const val TO_STRING = "toString"
 
 class AbstractSuperCallFix(element: KtNameReferenceExpression) : KotlinPsiOnlyQuickFixAction<KtNameReferenceExpression>(element) {
 
@@ -37,12 +40,7 @@ class AbstractSuperCallFix(element: KtNameReferenceExpression) : KotlinPsiOnlyQu
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
         val expression = element ?: return false
-
-        fun isToStringOverride() =
-            expression.resolveToCall()?.resultingDescriptor?.safeAs<FunctionDescriptor>()
-                ?.isAnyToString() == true
-
-        return getSuperClassNameToReferTo(expression) != null && !isToStringOverride() // Just in case KTIJ-22784 is late
+        return getSuperClassNameToReferTo(expression) != null
     }
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
@@ -51,12 +49,10 @@ class AbstractSuperCallFix(element: KtNameReferenceExpression) : KotlinPsiOnlyQu
         val functionDescriptor = expression.resolveToCall()?.resultingDescriptor?.safeAs<FunctionDescriptor>() ?: return
 
         fun replaceWithGenerated(clazz: KtClass) {
-            val action = KotlinGenerateEqualsAndHashcodeAction()
-            val membersInfo = action.prepareMembersInfo(clazz, project, false) ?: return
-
             val generated = when {
-                functionDescriptor.isAnyHashCode() -> action.generateHashCode(project, membersInfo.adjust(needHashCodeActually = true), containingClass)
-                functionDescriptor.isAnyEquals() -> action.generateEquals(project, membersInfo.adjust(needEqualsActually = true), containingClass)
+                functionDescriptor.isAnyHashCode() -> generateHashCode(clazz, project)
+                functionDescriptor.isAnyEquals() -> generateEquals(clazz, project)
+                functionDescriptor.isAnyToString() -> generateToString(clazz, project)
                 else -> error("$functionDescriptor is not expected")
             } ?: return
 
@@ -72,6 +68,7 @@ class AbstractSuperCallFix(element: KtNameReferenceExpression) : KotlinPsiOnlyQu
         when {
             functionDescriptor.isAnyEquals() -> replaceIfNotInObject()
             functionDescriptor.isAnyHashCode() -> replaceIfNotInObject()
+            functionDescriptor.isAnyToString() -> replaceIfNotInObject()
             else -> {
                 getSuperClassNameToReferTo(expression)?.let { superClassName ->
                     expression.parentOfType<KtDotQualifiedExpression>()
@@ -95,6 +92,7 @@ class AbstractSuperCallFix(element: KtNameReferenceExpression) : KotlinPsiOnlyQu
         return when (expression.getReferencedName()) {
             HASH_CODE -> KotlinBundle.message("hash.code.text")
             EQUALS -> KotlinBundle.message("equals.text")
+            TO_STRING -> KotlinBundle.message("action.generate.tostring.name")
             else -> {
                 val nameToReferTo = getSuperClassNameToReferTo(expression) ?: error("isAvailable() was supposed to prevent null")
                 KotlinBundle.message("specify.super.type", nameToReferTo)
@@ -105,10 +103,39 @@ class AbstractSuperCallFix(element: KtNameReferenceExpression) : KotlinPsiOnlyQu
     override fun getFamilyName(): String = text
 }
 
-private fun KotlinGenerateEqualsAndHashcodeAction.Info.adjust(
+private fun prepareToEqualsHashCode(
+    clazz: KtClass,
+    project: Project,
+    block: (KotlinGenerateEqualsAndHashcodeAction, Info) -> KtNamedFunction?
+): KtNamedFunction? {
+    val action = KotlinGenerateEqualsAndHashcodeAction()
+    val membersInfo = action.prepareMembersInfo(clazz, project, false) ?: return null
+    return block(action, membersInfo)
+}
+
+
+private fun generateEquals(clazz: KtClass, project: Project): KtNamedFunction? {
+    return prepareToEqualsHashCode(clazz, project) { action, info ->
+        action.generateEquals(project, info.adjust(needEqualsActually = true), clazz)
+    }
+}
+
+private fun generateHashCode(clazz: KtClass, project: Project): KtNamedFunction? {
+    return prepareToEqualsHashCode(clazz, project) { action, info ->
+        action.generateHashCode(project, info.adjust(needHashCodeActually = true), clazz)
+    }
+}
+
+private fun generateToString(clazz: KtClass, project: Project): KtNamedFunction? {
+    val action = KotlinGenerateToStringAction()
+    val info = action.prepareMembersInfo(clazz, project, false) ?: return null
+    return action.generateToString(clazz, info)
+}
+
+private fun Info.adjust(
     needEqualsActually: Boolean = this.needEquals,
     needHashCodeActually: Boolean = this.needHashCode
-): KotlinGenerateEqualsAndHashcodeAction.Info = KotlinGenerateEqualsAndHashcodeAction.Info(
+): Info = Info(
     needEqualsActually, needHashCodeActually, this.classDescriptor, this.variablesForEquals, this.variablesForHashCode
 )
 

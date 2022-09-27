@@ -13,7 +13,7 @@ import com.intellij.ide.navbar.impl.ModuleNavBarItem
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.impl.PsiNavBarItem
 import com.intellij.ide.navbar.ui.FloatingModeHelper
-import com.intellij.ide.navbar.ui.NavBarPanel
+import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.ui.NavigationBarPopup
 import com.intellij.ide.navbar.ui.PopupEvent
 import com.intellij.ide.navbar.ui.PopupEvent.*
@@ -35,7 +35,6 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDirectoryContainer
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.HintHint
 import com.intellij.util.flow.throttle
 import com.intellij.util.ui.EDT
@@ -97,7 +96,7 @@ internal class NavigationBar(
   private val modelChangesAllowed = AtomicBoolean(true)
 
   private val myItemClickEvents = MutableSharedFlow<ItemClickEvent>(replay = 1, onBufferOverflow = DROP_OLDEST)
-  private lateinit var myComponent: NavBarPanel
+  private lateinit var myComponent: NewNavBarPanel
 
   private val myActivityEvents = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = DROP_OLDEST)
   private val myItems: MutableStateFlow<List<UiNavBarItem>>
@@ -187,9 +186,9 @@ internal class NavigationBar(
   }
 
 
-  fun getPanel(): NavBarPanel {
+  fun getPanel(): NewNavBarPanel {
     EDT.assertIsEdt()
-    myComponent = NavBarPanel(myItemClickEvents, myItems.asStateFlow(), cs)
+    myComponent = NewNavBarPanel(myItemClickEvents, myItems.asStateFlow(), cs)
     return myComponent
   }
 

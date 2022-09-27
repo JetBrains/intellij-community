@@ -502,19 +502,15 @@ public class ExpressionGenerator extends Generator {
       builder.append(context.getRefSetterName(expression)).append('(');
       ref.accept(this);
       builder.append(", ");
-      if (rValue != null) {
-        rValue.accept(this);
-      }
-      builder.append(')');
     }
     else {
       ref.accept(this);
       builder.append(".set(");
-      if (rValue != null) {
-        rValue.accept(this);
-      }
-      builder.append(')');
     }
+    if (rValue != null) {
+      rValue.accept(this);
+    }
+    builder.append(')');
   }
 
   /**
@@ -814,23 +810,20 @@ public class ExpressionGenerator extends Generator {
         curGenerator = this;
       }
 
-
-      boolean shouldInsertParentheses = !wrap && doNeedExpression;
-      if (shouldInsertParentheses) {
-        curBuilder.append('(');
-      }
-
-      operand.accept(curGenerator);
-      if (wrap) {
-        curBuilder.append(".set(");
-      }
-      else {
-        curBuilder.append(" = ");
-      }
       if (shouldNotReplaceOperatorWithMethod(operand.getType(), null, unary.getOperationTokenType())) {
-        writeSimpleUnary((GrExpression)operand.copy(), unary, curGenerator);
+        if (wrap) {
+          operand.accept(curGenerator);
+          curBuilder.append(".set(");
+          ((GrExpression)operand.copy()).accept(curGenerator);
+          curBuilder.append(" + 1");
+        }
+        else {
+          writeSimpleUnary((GrExpression)operand.copy(), unary, curGenerator);
+        }
       }
       else {
+        operand.accept(curGenerator);
+        curBuilder.append(wrap ? ".set(" : " = ");
         curGenerator.invokeMethodOn(
           method,
           (GrExpression)operand.copy(),
@@ -838,9 +831,6 @@ public class ExpressionGenerator extends Generator {
           resolveResult.getSubstitutor(),
           unary
         );
-      }
-      if (shouldInsertParentheses) {
-        curBuilder.append(')');
       }
       if (wrap) {
         curBuilder.append(')');
@@ -880,24 +870,24 @@ public class ExpressionGenerator extends Generator {
     }
 
     final String text = literal.getText();
+    final String value = GrStringUtil.unescapeString(GrStringUtil.removeQuotes(text));
     if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
-      String string = GrStringUtil.removeQuotes(text).replace("\n", "\\n").replace("\r", "\\r");
-      builder.append('"').append(string).append('"');
+      builder.append('"').append(StringUtil.escapeStringCharacters(value)).append('"');
     }
     else if (text.startsWith("'")) {
       if (isChar) {
         builder.append(text);
       }
       else {
-        builder.append('"').append(StringUtil.escapeQuotes(StringUtil.trimEnd(text.substring(1), "'"))).append('"');
+        builder.append('"').append(StringUtil.escapeStringCharacters(value)).append('"');
       }
     }
     else if (text.startsWith("\"")) {
       if (isChar) {
-        builder.append('\'').append(StringUtil.escapeQuotes(StringUtil.trimEnd(text.substring(1), "\""))).append('\'');
+        builder.append('\'').append(StringUtil.escapeCharCharacters(value)).append('\'');
       }
       else {
-        builder.append(text);
+        builder.append('"').append(StringUtil.escapeStringCharacters(value)).append('"');
       }
     }
     else {

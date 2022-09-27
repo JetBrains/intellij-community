@@ -450,25 +450,8 @@ fun CodeInsightTestFixture.testWebSymbolRename(fileAfter: String, newName: Strin
   checkResultByFile(fileAfter)
 }
 
-internal fun CodeInsightTestFixture.configureWebTypes(fileNameNoExt: String, vararg dependencies: String) {
-  fun addFile(name: String): Boolean {
-    val file = File("$testDataPath/../$name").takeIf { it.exists() }
-               ?: File("$testDataPath/../../common/$name").takeIf { it.exists() }
-    return file?.let { configureByText(name, FileUtil.loadFile(it)); true } ?: false
-  }
-  addFile("$fileNameNoExt.d.ts")
-  if (addFile("$fileNameNoExt.web-types.json"))
-    configureByText("package.json", """{
-      "dependencies": {
-        ${dependencies.joinToString(",\n") { "\"$it\": \"*\"" }}
-      },
-      "web-types": "./$fileNameNoExt.web-types.json"
-    }""")
-}
-
 fun doCompletionItemsTest(fixture: CodeInsightTestFixture, fileName: String) {
   val fileNameNoExt = FileUtil.getNameWithoutExtension(fileName)
-  fixture.configureWebTypes(fileNameNoExt)
   fixture.configureByFile(fileName)
   WriteAction.runAndWait<Throwable> { WebSymbolsRegistryManager.getInstance(fixture.project) }
 

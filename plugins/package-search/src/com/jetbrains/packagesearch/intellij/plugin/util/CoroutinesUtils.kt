@@ -55,12 +55,14 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.job
@@ -371,3 +373,16 @@ fun <A, B, C, Z> combineLatest(
     transform: suspend (CombineLatest3<A, B, C>) -> Z
 ) = combine(flowA, flowB, flowC) { a, b, c -> CombineLatest3(a, b, c) }
     .mapLatest(transform)
+
+fun <T> Flow<T>.pauseOn(flow: Flow<Boolean>): Flow<T> = channelFlow {
+    val buffer = Channel<T>()
+    onEach { buffer.send(it) }.launchIn(this)
+    flow.flatMapLatest { if (!it) EMPTY_UNCLOSED_FLOW else buffer.receiveAsFlow() }
+        .onEach { send(it) }
+        .launchIn(this)
+    awaitClose { buffer.close() }
+}
+
+private val EMPTY_UNCLOSED_FLOW = channelFlow<Nothing> {
+    awaitClose()
+}

@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-public class ExtractMethodHandler implements PreviewableRefactoringActionHandler, ContextAwareActionHandler {
+public class ExtractMethodHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance(ExtractMethodHandler.class);
 
   @Override

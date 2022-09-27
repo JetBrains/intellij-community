@@ -20,7 +20,6 @@ import org.jetbrains.idea.eclipse.conversion.IdeaSpecificSettings
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.util.JpsPathUtil
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 /**
  * Loads additional module configuration from *.eml file to [ModuleEntity]
@@ -224,7 +223,7 @@ internal class EmlFileLoader(
       .map { virtualFileManager.fromUrl(it) }
     if (excludedUrls.isNotEmpty()) {
       builder.modifyEntity(entity) {
-        this.excludedUrls.addAll(excludedUrls)
+        this.excludedUrls += excludedUrls.map { ExcludeUrlEntity(it, entitySource) }
       }
     }
   }

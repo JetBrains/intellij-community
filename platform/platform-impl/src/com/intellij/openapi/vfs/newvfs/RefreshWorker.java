@@ -212,16 +212,16 @@ final class RefreshWorker {
 
   private boolean fullDirRefresh(List<VFileEvent> events, NewVirtualFileSystem fs, VirtualDirectoryImpl dir) {
     var t = System.nanoTime();
-    Pair<List<String>, List<VirtualFile>> snapshot = ReadAction.compute(() -> {
+    Pair<VirtualFile[], List<String>> snapshot = ReadAction.compute(() -> {
       VirtualFile[] children = dir.getChildren();
-      return new Pair<>(getNames(children), Arrays.asList(children));
+      return new Pair<>(children, getNames(children));
     });
     myVfsTime.addAndGet(System.nanoTime() - t);
     if (snapshot == null) {
       return false;
     }
-    List<String> persistedNames = snapshot.getFirst();
-    List<VirtualFile> children = snapshot.getSecond();
+    VirtualFile[] children = snapshot.first;
+    List<String> persistedNames = snapshot.second;
 
     t = System.nanoTime();
     Map<String, FileAttributes> childrenWithAttributes = fs instanceof BatchingFileSystem ? ((BatchingFileSystem)fs).listWithAttributes(dir) : null;
@@ -230,7 +230,7 @@ final class RefreshWorker {
     String[] upToDateNames = VfsUtil.filterNames(listDir);
     Set<String> newNames = new HashSet<>(upToDateNames.length);
     ContainerUtil.addAll(newNames, upToDateNames);
-    if (dir.allChildrenLoaded() && children.size() < upToDateNames.length) {
+    if (dir.allChildrenLoaded() && children.length < upToDateNames.length) {
       for (VirtualFile child : children) {
         newNames.remove(child.getName());
       }
@@ -261,7 +261,7 @@ final class RefreshWorker {
       }
     }
 
-    List<Pair<VirtualFile, FileAttributes>> updatedMap = new ArrayList<>(children.size() - deletedNames.size());
+    List<Pair<VirtualFile, FileAttributes>> updatedMap = new ArrayList<>(children.length - deletedNames.size());
     List<VirtualFile> chs = ContainerUtil.filter(children, file -> !deletedNames.contains(file.getName()));
 
     if (fs instanceof BatchingFileSystem) {
@@ -286,7 +286,7 @@ final class RefreshWorker {
       myIoTime.addAndGet(System.nanoTime() - t);
     }
 
-    if (isFullScanDirectoryChanged(dir, persistedNames, children)) {
+    if (isDirectoryChanged(dir, children, persistedNames)) {
       return false;
     }
 
@@ -320,15 +320,15 @@ final class RefreshWorker {
       }
     }
 
-    return !isFullScanDirectoryChanged(dir, persistedNames, children);
+    return !isDirectoryChanged(dir, children, persistedNames);
   }
 
-  private boolean isFullScanDirectoryChanged(VirtualDirectoryImpl dir, List<String> names, List<VirtualFile> children) {
+  private boolean isDirectoryChanged(VirtualDirectoryImpl dir, VirtualFile[] children, List<String> names) {
+    checkCancelled(dir);
     var t = System.nanoTime();
     var changed = ReadAction.compute(() -> {
-      checkCancelled(dir);
       VirtualFile[] currentChildren = dir.getChildren();
-      return !children.equals(Arrays.asList(currentChildren)) || !names.equals(getNames(currentChildren));
+      return !Arrays.equals(children, currentChildren) || !names.equals(getNames(currentChildren));
     });
     myVfsTime.addAndGet(System.nanoTime() - t);
     return changed;
@@ -345,8 +345,8 @@ final class RefreshWorker {
       return new Pair<>(dir.getCachedChildren(), dir.getSuspiciousNames());
     });
     myVfsTime.addAndGet(System.nanoTime() - t);
-    List<VirtualFile> cached = snapshot.getFirst();
-    List<String> wanted = snapshot.getSecond();
+    List<VirtualFile> cached = snapshot.first;
+    List<String> wanted = snapshot.second;
 
     ObjectOpenCustomHashSet<String> actualNames;
     if (dir.isCaseSensitive() || cached.isEmpty()) {
@@ -405,11 +405,9 @@ final class RefreshWorker {
   }
 
   private boolean isDirectoryChanged(VirtualDirectoryImpl dir, List<VirtualFile> cached, List<String> wanted) {
+    checkCancelled(dir);
     var t = System.nanoTime();
-    var changed = ReadAction.compute(() -> {
-      checkCancelled(dir);
-      return !cached.equals(dir.getCachedChildren()) || !wanted.equals(dir.getSuspiciousNames());
-    });
+    var changed = ReadAction.compute(() -> !cached.equals(dir.getCachedChildren()) || !wanted.equals(dir.getSuspiciousNames()));
     myVfsTime.addAndGet(System.nanoTime() - t);
     return changed;
   }

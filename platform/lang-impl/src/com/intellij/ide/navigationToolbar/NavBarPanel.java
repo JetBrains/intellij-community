@@ -312,7 +312,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     cancelPopup();
     getNavBarUI().clearItems();
     myDisposed = true;
-    NavBarListener.unsubscribeFrom(this);
   }
 
   public boolean isDisposed() {
@@ -940,7 +939,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   @Override
   public void addNotify() {
     super.addNotify();
-    NavBarListener.subscribeTo(this);
+    Disposable disposable = NavBarListener.subscribeTo(this);
+    Disposer.register(this, disposable);
   }
 
   @Override

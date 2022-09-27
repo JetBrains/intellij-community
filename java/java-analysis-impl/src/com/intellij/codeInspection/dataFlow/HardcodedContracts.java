@@ -473,7 +473,7 @@ public final class HardcodedContracts {
       }
     }
 
-    if ("remove".equals(name)) {
+    if ("remove".equals(name) || "add".equals(name)) {
       return MutationSignature.pure().alsoMutatesThis();
     }
 

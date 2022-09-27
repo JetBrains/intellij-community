@@ -141,11 +141,18 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         targetParents += targetStorage.entityDataByIdOrDie(parent).createEntity(targetStorage)
       }
 
-      val entityData = replaceWithStorage.entityDataByIdOrDie(replaceWithDataSource).createDetachedEntity(targetParents)
-      targetStorage.addEntity(entityData)
-      targetStorage.indexes.updateExternalMappingForEntityId(replaceWithDataSource, (entityData as WorkspaceEntityBase).id,
-                                                             replaceWithStorage.indexes)
-      replaceToTarget[replaceWithDataSource] = entityData.id
+      val modifiableEntity = replaceWithStorage.entityDataByIdOrDie(replaceWithDataSource).createDetachedEntity(targetParents)
+      modifiableEntity as ModifiableWorkspaceEntityBase<out WorkspaceEntity>
+
+      // We actually bind parents in [createDetachedEntity], but we can't do it for external entities (that are defined in a separate module)
+      // Here we bind them again, so I guess we can remove "parents binding" from [createDetachedEntity], but let's do it twice for now.
+      // Actually, I hope to get rid of [createDetachedEntity] at some moment.
+      targetParents.groupBy { it::class }.forEach { (_, ents) ->
+        modifiableEntity.linkExternalEntity(ents.first().getEntityInterface().kotlin, false, ents)
+      }
+      targetStorage.addEntity(modifiableEntity)
+      targetStorage.indexes.updateExternalMappingForEntityId(replaceWithDataSource, modifiableEntity.id, replaceWithStorage.indexes)
+      replaceToTarget[replaceWithDataSource] = modifiableEntity.id
     }
 
     /**

@@ -10902,6 +10902,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testCaretInSelector() throws Exception {
             runTest("testData/inspectionsLocal/removeToStringInStringTemplate/caretInSelector.kt");
         }
+
+        @TestMetadata("extensionToString.kt")
+        public void testExtensionToString() throws Exception {
+            runTest("testData/inspectionsLocal/removeToStringInStringTemplate/extensionToString.kt");
+        }
+
+        @TestMetadata("extensionToStringWithParameter.kt")
+        public void testExtensionToStringWithParameter() throws Exception {
+            runTest("testData/inspectionsLocal/removeToStringInStringTemplate/extensionToStringWithParameter.kt");
+        }
+
+        @TestMetadata("nameReference.kt")
+        public void testNameReference() throws Exception {
+            runTest("testData/inspectionsLocal/removeToStringInStringTemplate/nameReference.kt");
+        }
+
+        @TestMetadata("super.kt")
+        public void testSuper() throws Exception {
+            runTest("testData/inspectionsLocal/removeToStringInStringTemplate/super.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

@@ -14,7 +14,10 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.Point
 import java.awt.event.InputEvent
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
 
 private const val INLINE_BUTTON_WIDTH = 16
 
@@ -92,6 +95,13 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
 
   private fun createActionButton(action: InlineActionItem, active: Boolean, isSelected: Boolean): JComponent =
     createExtraButton(action.getIcon(isSelected), active)
+
+  override fun getActiveExtraButtonToolTipText(list: JList<*>, value: Any): String? {
+    if (value !is ActionItem) return null
+    val inlineActions = myStep.getInlineActions(value)
+    val activeButton = getActiveButtonIndex(list) ?: return null
+    return inlineActions.getOrNull(activeButton)?.action?.templatePresentation?.description
+  }
 
   private fun createExtraButton(icon: Icon, active: Boolean): JComponent {
     val label = JLabel(icon)

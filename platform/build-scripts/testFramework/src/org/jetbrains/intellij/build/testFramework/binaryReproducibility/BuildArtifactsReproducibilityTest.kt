@@ -16,7 +16,10 @@ class BuildArtifactsReproducibilityTest {
   private val buildDateInSeconds = System.getenv("SOURCE_DATE_EPOCH")?.toLongOrNull()
   private val randomSeedNumber = Random().nextLong()
   private lateinit var diffDirectory: Path
-  val isEnabled = System.getProperty("intellij.build.test.artifacts.reproducibility") == "true"
+
+  companion object {
+    val isEnabled = System.getProperty("intellij.build.test.artifacts.reproducibility") == "true"
+  }
 
   fun configure(options: BuildOptions) {
     assert(isEnabled)

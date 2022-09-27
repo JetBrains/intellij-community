@@ -2,7 +2,7 @@
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.concurrency.ThreadContext;
-import com.intellij.diagnostic.LoadingStateUtilKt;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.ui.UISettings;
@@ -896,11 +896,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         setupSelectionOnPreferredComponent(toFocus);
 
         if (toFocus != null && toFocus.isEnabled()) {
-          if (isShowing() && (ApplicationManager.getApplication() == null ||
-                              !LoadingStateUtilKt.getAreComponentsInitialized() ||
+          if (isShowing() && (!LoadingState.COMPONENTS_REGISTERED.isOccurred() ||
+                              ApplicationManager.getApplication() == null ||
                               ApplicationManager.getApplication().isActive())) {
             toFocus.requestFocus();
-          } else {
+          }
+          else {
             toFocus.requestFocusInWindow();
           }
         }

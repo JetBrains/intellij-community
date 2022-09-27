@@ -11,7 +11,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.framework.WebFrameworksConfiguration
+import com.intellij.webSymbols.framework.WebSymbolsFrameworksConfiguration
 import com.intellij.webSymbols.impl.SearchMap
 import com.intellij.webSymbols.utils.HtmlMarkdownUtils
 import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionWrapper
@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 import javax.swing.Icon
 
-abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebFrameworksConfiguration {
+abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebSymbolsFrameworksConfiguration {
 
   private val namesProviderCache: MutableMap<WebSymbolNamesProvider, NameProvidersCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
   private var namesProviderCacheMisses = 0
@@ -51,9 +51,9 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebFrameworks
 
   abstract override fun createPointer(): Pointer<out WebTypesSymbolsContainerBase>
 
-  override val enableWhen: Map<String, List<WebFrameworksConfiguration.EnablementRules>>
+  override val enableWhen: Map<String, List<WebSymbolsFrameworksConfiguration.EnablementRules>>
     get() = enableWhenCache.value
-  override val disableWhen: Map<String, List<WebFrameworksConfiguration.DisablementRules>>
+  override val disableWhen: Map<String, List<WebSymbolsFrameworksConfiguration.DisablementRules>>
     get() = disableWhenCache.value
   override val canonicalNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>>
     get() = canonicalNamesProvidersCache.value

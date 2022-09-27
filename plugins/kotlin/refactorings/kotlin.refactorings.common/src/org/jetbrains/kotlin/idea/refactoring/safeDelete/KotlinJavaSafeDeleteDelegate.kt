@@ -1,12 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteCustomUsageInfo
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -14,6 +16,7 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 
 class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
@@ -84,7 +87,25 @@ class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
         }
     }
 
-    override fun removeOverriding(overriddenMethod: PsiElement) {
-        (overriddenMethod as? KtModifierListOwner)?.modifierList?.getModifier(KtTokens.OVERRIDE_KEYWORD)?.delete()
+    override fun createCleanupOverriding(
+        overriddenFunction: PsiElement,
+        elements2Delete: Array<PsiElement>,
+        result: MutableList<UsageInfo>
+    ) {
+        result.add(object : SafeDeleteReferenceSimpleDeleteUsageInfo(overriddenFunction, overriddenFunction, true), SafeDeleteCustomUsageInfo {
+            override fun performRefactoring() {
+                (element as? KtModifierListOwner)?.modifierList?.getModifier(KtTokens.OVERRIDE_KEYWORD)?.delete()
+            }
+        })
+    }
+
+    override fun createExtendsListUsageInfo(refElement: PsiElement, reference: PsiReference): UsageInfo? {
+        val element = reference.element
+        return element.getParentOfTypeAndBranch<KtSuperTypeEntry> { typeReference }?.let {
+            if (refElement is PsiClass && refElement.isInterface) {
+                return SafeDeleteSuperTypeUsageInfo(it, refElement)
+            }
+            return null
+        }
     }
 }

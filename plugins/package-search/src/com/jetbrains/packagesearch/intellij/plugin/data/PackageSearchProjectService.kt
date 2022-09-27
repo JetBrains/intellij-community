@@ -48,6 +48,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectCach
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelUpdatedKeys
+import com.jetbrains.packagesearch.intellij.plugin.util.pauseOn
 import com.jetbrains.packagesearch.intellij.plugin.util.powerSaveModeFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.replayOnSignals
 import com.jetbrains.packagesearch.intellij.plugin.util.send
@@ -103,6 +104,7 @@ internal class PackageSearchProjectService(private val project: Project) {
     private val installedPackagesDifferenceLoadingFlow = MutableStateFlow(false)
     private val packageUpgradesLoadingFlow = MutableStateFlow(false)
     private val availableUpgradesLoadingFlow = MutableStateFlow(false)
+    internal val editingFilesState = MutableStateFlow(false)
 
     private val computationInterruptedChannel = Channel<Unit>()
     private val computationStartedChannel = Channel<Unit>()
@@ -135,7 +137,8 @@ internal class PackageSearchProjectService(private val project: Project) {
         installedPackagesStep1LoadingFlow,
         installedPackagesStep2LoadingFlow,
         installedPackagesDifferenceLoadingFlow,
-        packageUpgradesLoadingFlow
+        packageUpgradesLoadingFlow,
+        editingFilesState
     ) { booleans -> emit(booleans.any { it }) }
         .stateIn(project.lifecycleScope, SharingStarted.Eagerly, false)
 
@@ -147,6 +150,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         ) { isProjectTrusted, powerSaveModeEnabled, computationEnabled ->
             isProjectTrusted && !powerSaveModeEnabled && computationEnabled
         }
+            .pauseOn(editingFilesState.map { !it })
             .flatMapLatest { isPkgsEnabled -> if (isPkgsEnabled) project.nativeModulesFlow else flowOf(emptyList()) }
             .replayOnSignals(
                 retryFromErrorChannel.receiveAsFlow().throttle(10.seconds),
@@ -170,6 +174,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         get() = projectModulesStateFlow.value.isNotEmpty()
 
     private val knownRepositoriesFlow = timer(1.hours)
+        .pauseOn(editingFilesState.map { !it })
         .mapLatestTimedWithLoading("knownRepositoriesFlow", knownRepositoriesLoadingFlow) { dataProvider.fetchKnownRepositories() }
         .catchAndLog(
             context = "${this::class.qualifiedName}#knownRepositoriesFlow",
@@ -181,12 +186,14 @@ internal class PackageSearchProjectService(private val project: Project) {
         projectModulesSharedFlow,
         project.filesChangedEventFlow.map { it.mapNotNull { it.file } }
     ) { modules, changedBuildFiles -> modules.filter { it.buildFile in changedBuildFiles } }
+        .pauseOn(editingFilesState.map { !it })
         .shareIn(project.lifecycleScope, SharingStarted.Eagerly)
 
     private val projectModulesChangesFlow = merge(
         buildFileChangesFlow.filter { it.isNotEmpty() },
         operationExecutedChannel.consumeAsFlow()
     )
+        .pauseOn(editingFilesState.map { !it })
         .batchAtIntervals(1.seconds)
         .map { it.flatMap { it }.distinct() }
         .catchAndLog(
@@ -196,6 +203,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         .shareIn(project.lifecycleScope, SharingStarted.Eagerly)
 
     val moduleModelsStateFlow = projectModulesSharedFlow
+        .pauseOn(editingFilesState.map { !it })
         .mapLatestTimedWithLoading(
             loggingContext = "moduleModelsStateFlow",
             loadingFlow = moduleModelsLoadingFlow
@@ -214,6 +222,7 @@ internal class PackageSearchProjectService(private val project: Project) {
 
     val allInstalledKnownRepositoriesStateFlow =
         combine(moduleModelsStateFlow, knownRepositoriesFlow) { moduleModels, repos -> moduleModels to repos }
+            .pauseOn(editingFilesState.map { !it })
             .mapLatestTimedWithLoading(
                 loggingContext = "allInstalledKnownRepositoriesFlow",
                 loadingFlow = allInstalledKnownRepositoriesLoadingFlow
@@ -227,6 +236,7 @@ internal class PackageSearchProjectService(private val project: Project) {
             .stateIn(project.lifecycleScope, SharingStarted.Eagerly, KnownRepositories.All.EMPTY)
 
     val dependenciesByModuleStateFlow = projectModulesSharedFlow
+        .pauseOn(editingFilesState.map { !it })
         .mapLatestTimedWithLoading("installedPackagesStep1LoadingFlow", installedPackagesStep1LoadingFlow) {
             fetchProjectDependencies(it, cacheDirectory, json)
         }
@@ -246,6 +256,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         .stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyMap())
 
     val installedPackagesStateFlow = dependenciesByModuleStateFlow
+        .pauseOn(editingFilesState.map { !it })
         .mapLatestTimedWithLoading("installedPackagesStep2LoadingFlow", installedPackagesStep2LoadingFlow) {
             installedPackages(
                 it,
@@ -291,6 +302,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         packageUpgradesStateFlow.throttle(5.seconds)
             .map { projectModulesStateFlow.value.mapNotNull { it.buildFile?.path }.toSet() }
             .filter { it.isNotEmpty() }
+            .pauseOn(editingFilesState.map { !it })
             .flatMapLatest { knownBuildFiles ->
                 FileEditorManager.getInstance(project).openFiles
                     .filter { it.path in knownBuildFiles }.asFlow()
@@ -341,4 +353,5 @@ internal class PackageSearchProjectService(private val project: Project) {
     fun resumeComputation() {
         computationStartedChannel.trySend()
     }
+
 }

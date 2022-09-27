@@ -5,6 +5,12 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 
+/**
+ * Specifies a language to be used to show code vision preview in settings for a specific model. Extension order is used to determine
+ * which language to use in case of several languages are registered for the same model.
+ *
+ * @see CodeVisionGroupSettingModel
+ */
 public class CodeVisionSettingsPreviewLanguage {
 
   public static final ExtensionPointName<CodeVisionSettingsPreviewLanguage> EP_NAME =

@@ -307,12 +307,23 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
     val someEntity = entity.filterNotNull().firstOrNull()
     return if (someEntity != null) {
       val firstClass = this.getEntityClass()
-      (someEntity as WorkspaceEntityBase).connectionIdList().single { it.parentClass == firstClass.toClassId() && it.childClass == entityClass.java.toClassId() || it.childClass == firstClass.toClassId() && it.parentClass == entityClass.java.toClassId() }
+      someEntity as WorkspaceEntityBase
+      (someEntity.connectionIdList().asSequence() + this.connectionIdList()).first {
+        isCorrectConnection(it, firstClass, entityClass.java) || isCorrectConnection(it, entityClass.java, firstClass)
+      }
     }
     else {
       val firstClass = this.getEntityClass()
-      entityLinks.keys.asSequence().map { it.connectionId }.singleOrNull { it.parentClass == firstClass.toClassId() && it.childClass == entityClass.java.toClassId() || it.childClass == firstClass.toClassId() && it.parentClass == entityClass.java.toClassId() }
+      entityLinks.keys.asSequence().map { it.connectionId }.singleOrNull {
+        isCorrectConnection(it, firstClass, entityClass.java) || isCorrectConnection(it, entityClass.java, firstClass)
+      }
     }
+  }
+
+  private fun isCorrectConnection(it: ConnectionId, parentClass: Class<out WorkspaceEntity>, childClass: Class<out WorkspaceEntity>): Boolean {
+    return it.parentClass == parentClass.toClassId() && it.childClass == childClass.toClassId() ||
+           it.parentClass.findEntityClass<WorkspaceEntity>().isAssignableFrom(parentClass) &&
+           it.childClass.findEntityClass<WorkspaceEntity>().isAssignableFrom(childClass)
   }
 
   override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>): Sequence<R> {

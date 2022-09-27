@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.framework.WebFrameworksConfiguration
+import com.intellij.webSymbols.framework.WebSymbolsFrameworksConfiguration
 
 @Suppress("DEPRECATION")
 interface WebSymbolsAdditionalContextProvider {
@@ -16,7 +16,7 @@ interface WebSymbolsAdditionalContextProvider {
     emptyList()
 
   @JvmDefault
-  fun getFrameworkConfigurations(dir: PsiDirectory): Pair<List<WebFrameworksConfiguration>, ModificationTracker> =
+  fun getFrameworkConfigurations(dir: PsiDirectory): Pair<List<WebSymbolsFrameworksConfiguration>, ModificationTracker> =
     Pair(emptyList(), ModificationTracker.NEVER_CHANGED)
 
   @JvmDefault

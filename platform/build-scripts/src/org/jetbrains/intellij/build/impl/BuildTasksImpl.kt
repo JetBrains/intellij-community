@@ -95,11 +95,11 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
     checkProductProperties(context)
     checkPluginModules(mainPluginModules, "mainPluginModules", context)
     copyDependenciesFile(context)
-    val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context)
+    val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context.productProperties.productLayout)
     val distributionJARsBuilder = DistributionJARsBuilder(compilePlatformAndPluginModules(pluginsToPublish, context))
     distributionJARsBuilder.buildSearchableOptions(context)
     distributionJARsBuilder.buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
-                                                   compressPluginArchive = true,
+                                                   compressPluginArchive = context.options.compressZipFiles,
                                                    buildPlatformLibJob = null,
                                                    context = context)
   }
@@ -168,23 +168,6 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
       copyDistFiles(context = context, newDir = targetDirectory, os = currentOs, arch = arch)
       unpackPty4jNative(context = context, distDir = targetDirectory, pty4jOsSubpackageName = null)
     }
-  }
-}
-
-suspend fun doRunTestBuild(context: BuildContext) {
-  checkProductProperties(context as BuildContextImpl)
-  val builderState = compileModulesForDistribution(context)
-
-  coroutineScope {
-    createMavenArtifactJob(context, builderState)
-
-    val entries = DistributionJARsBuilder(builderState).buildJARs(context)
-    layoutShared(context)
-    checkClassFiles(context.paths.distAllDir, context)
-    if (context.productProperties.buildSourcesArchive) {
-      buildSourcesArchive(entries, context)
-    }
-    buildOsSpecificDistributions(context)
   }
 }
 
@@ -606,7 +589,8 @@ private suspend fun compileModulesForDistribution(pluginsToPublish: Set<PluginLa
 
 private suspend fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
   return compileModulesForDistribution(
-    pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.pluginModulesToPublish, context = context),
+    pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.pluginModulesToPublish,
+                                                        productLayout = context.productProperties.productLayout),
     context = context
   )
 }
@@ -617,7 +601,8 @@ suspend fun buildDistributions(context: BuildContext) {
       checkProductProperties(context as BuildContextImpl)
       copyDependenciesFile(context)
       logFreeDiskSpace("before compilation", context)
-      val pluginsToPublish = getPluginLayoutsByJpsModuleNames(context.productProperties.productLayout.pluginModulesToPublish, context)
+      val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.pluginModulesToPublish,
+                                                              productLayout = context.productProperties.productLayout)
       val distributionState = compileModulesForDistribution(context)
       logFreeDiskSpace("after compilation", context)
 
@@ -637,7 +622,7 @@ suspend fun buildDistributions(context: BuildContext) {
                                     "\"intellij.build.target.os\" property is set to \"${BuildOptions.OS_NONE}\"")
             distributionJARsBuilder.buildSearchableOptions(context)
             distributionJARsBuilder.buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
-                                                           compressPluginArchive = true,
+                                                           compressPluginArchive = context.options.compressZipFiles,
                                                            buildPlatformLibJob = null,
                                                            context = context)
           }
@@ -1014,17 +999,21 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
 }
 
 private fun checkClassFiles(targetFile: Path, context: BuildContext) {
-  val versionCheckerConfig =
-    if (context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) emptyMap()
-    else context.productProperties.versionCheckerConfig
+  val versionCheckerConfig = if (context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) {
+    emptyMap()
+  }
+  else {
+    context.productProperties.versionCheckerConfig
+  }
 
-  val forbiddenSubPaths =
-    if (context.options.validateClassFileSubpaths) context.productProperties.forbiddenClassFileSubPaths
-    else emptyList()
+  val forbiddenSubPaths = if (context.options.validateClassFileSubpaths) {
+    context.productProperties.forbiddenClassFileSubPaths
+  }
+  else {
+    emptyList()
+  }
 
-  val classFileCheckRequired =
-    (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty())
-
+  val classFileCheckRequired = (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty())
   if (classFileCheckRequired) {
     checkClassFiles(versionCheckerConfig, forbiddenSubPaths, targetFile, context.messages)
   }

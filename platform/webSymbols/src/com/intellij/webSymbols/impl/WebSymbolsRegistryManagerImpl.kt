@@ -13,7 +13,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.framework.WebFrameworksConfiguration
+import com.intellij.webSymbols.framework.WebSymbolsFrameworksConfiguration
 import com.intellij.webSymbols.framework.impl.findWebSymbolsFrameworkInContext
 import com.intellij.webSymbols.utils.findOriginalFile
 
@@ -74,10 +74,10 @@ class WebSymbolsRegistryManagerImpl(private val project: Project) : WebSymbolsRe
   override fun dispose() {
   }
 
-  internal fun getFrameworkConfigurations(dir: PsiDirectory): Pair<List<WebFrameworksConfiguration>, ModificationTracker> {
-    val result = mutableListOf<WebFrameworksConfiguration>()
+  internal fun getFrameworkConfigurations(dir: PsiDirectory): Pair<List<WebSymbolsFrameworksConfiguration>, ModificationTracker> {
+    val result = mutableListOf<WebSymbolsFrameworksConfiguration>()
 
-    getCustomContainers(dir).filterIsInstance<WebFrameworksConfiguration>().forEach(result::add)
+    getCustomContainers(dir).filterIsInstance<WebSymbolsFrameworksConfiguration>().forEach(result::add)
 
     val trackers = mutableListOf<ModificationTracker>()
     for ((configs, tracker) in WebSymbolsAdditionalContextProvider.EP_NAME.extensionList.map { it.getFrameworkConfigurations(dir) }) {

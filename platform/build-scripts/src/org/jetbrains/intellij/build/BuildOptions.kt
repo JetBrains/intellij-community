@@ -317,9 +317,6 @@ class BuildOptions {
   var validateClassFileSubpaths = parseBooleanValue(System.getProperty(VALIDATE_CLASSFILE_SUBPATHS_PROPERTY, "false"))
 
   @Internal
-  var compressNonBundledPluginArchive = true
-
-  @Internal
   var skipCustomResourceGenerators = false
 
   var resolveDependenciesMaxAttempts = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "2").toInt()

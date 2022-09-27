@@ -613,7 +613,7 @@ public class CustomizableActionsPanel {
     @Override
     public boolean isDropInto(JComponent component, int oldIndex, int newIndex) {
       TreePath path = myActionsTree.getPathForRow(newIndex);
-      return path.getPath().length>1 && !myActionsTree.getModel().isLeaf(path.getLastPathComponent());
+      return path.getPath().length > 1 && isGroupPath(path);
     }
 
     @Override
@@ -628,8 +628,7 @@ public class CustomizableActionsPanel {
       if (sourcePath.getParentPath().equals(target) && position == INTO) return false;
 
       return sourcePath.getPath().length > 2 &&
-             (target.getPath().length > 1 ||
-              (target.getPath().length > 1 && target.getLastPathComponent() instanceof Group)) ;
+             (target.getPath().length > 2 || target.getPath().length > 1 && isGroupPath(target));
     }
 
     @Override
@@ -668,6 +667,11 @@ public class CustomizableActionsPanel {
       TreePath pathToSelect = new TreePath(arr);
       TreeUtil.selectPath(myActionsTree, pathToSelect);
       TreeUtil.scrollToVisible(myActionsTree, path, false);
+    }
+
+    private static boolean isGroupPath(TreePath path) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      return CustomizationUtil.getGroupForNode(node) != null;
     }
   }
 

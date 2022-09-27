@@ -7,7 +7,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
-import com.intellij.refactoring.PreviewableRefactoringActionHandler;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -59,7 +59,7 @@ public class PublicConstructorInspection extends BaseInspection {
 
     @NotNull
     @Override
-    public PreviewableRefactoringActionHandler getHandler() {
+    public RefactoringActionHandler getHandler() {
       return JavaRefactoringActionHandlerFactory.getInstance().createReplaceConstructorWithFactoryHandler();
     }
   }

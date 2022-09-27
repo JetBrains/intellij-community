@@ -254,6 +254,11 @@ public class JpsContentEntry implements ContentEntry, Disposable {
   }
 
   @Override
+  public ExcludeFolder addExcludeFolder(@NotNull String url, ProjectModelExternalSource source) {
+    return addExcludeFolder(url);
+  }
+
+  @Override
   public void removeExcludeFolder(@NotNull ExcludeFolder excludeFolder) {
     JpsExcludeFolder folder = (JpsExcludeFolder)excludeFolder;
     myExcludeFolders.remove(folder);

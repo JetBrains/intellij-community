@@ -1,16 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
-import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -118,10 +123,68 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
   }
 
   @Override
-  public void removeOverriding(@NotNull PsiElement overriddenMethod) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiModifierListOwner)overriddenMethod, true, Override.class.getName());
-    if (annotation != null) {
-      annotation.delete();
+  public void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement[] elements2Delete, @NotNull List<UsageInfo> result) {
+    if (overriddenFunction instanceof PsiMethod &&
+      JavaSafeDeleteProcessor.canBePrivate((PsiMethod)overriddenFunction, ReferencesSearch.search(overriddenFunction).findAll(), Collections.emptyList(), elements2Delete)) {
+      result.add(new SafeDeletePrivatizeMethod((PsiMethod)overriddenFunction, (PsiMethod)overriddenFunction));
+    } else {
+      result.add(new SafeDeleteOverrideAnnotation(overriddenFunction, overriddenFunction));
     }
+  }
+
+  @Override
+  public UsageInfo createExtendsListUsageInfo(PsiElement refElement,
+                                              PsiReference reference) {
+    PsiElement element = reference.getElement();
+    PsiElement parent = element.getParent();
+    if (parent instanceof PsiReferenceList && refElement instanceof PsiClass psiClass) {
+      final PsiElement pparent = parent.getParent();
+      if (pparent instanceof PsiClass inheritor && element instanceof PsiJavaCodeReferenceElement) {
+        PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement)element;
+        if (parent.equals(inheritor.getPermitsList())) {
+          return new SafeDeletePermitsClassUsageInfo(classRef, psiClass, inheritor, true);
+        }
+        //If psiClass contains only private members, then it is safe to remove it and change inheritor's extends/implements accordingly
+        if (CachedValuesManager.getCachedValue(psiClass, () -> new CachedValueProvider.Result<>(containsOnlyPrivates(psiClass),
+                                                                                                PsiModificationTracker.getInstance(psiClass.getProject())))) {
+          if (parent.equals(inheritor.getExtendsList()) || parent.equals(inheritor.getImplementsList())) {
+            return new SafeDeleteExtendsClassUsageInfo(classRef, psiClass, inheritor);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean containsOnlyPrivates(final PsiClass aClass) {
+    final PsiField[] fields = aClass.getFields();
+    for (PsiField field : fields) {
+      if (!field.hasModifierProperty(PsiModifier.PRIVATE)) return false;
+    }
+
+    final PsiMethod[] methods = aClass.getMethods();
+    for (PsiMethod method : methods) {
+      if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        if (method.isConstructor()) { //skip non-private constructors with call to super only
+          final PsiCodeBlock body = method.getBody();
+          if (body != null) {
+            final PsiStatement[] statements = body.getStatements();
+            if (statements.length == 0) continue;
+            if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
+              final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+              if (JavaPsiConstructorUtil.isSuperConstructorCall(expression)) continue;
+            }
+          }
+        }
+        return false;
+      }
+    }
+
+    final PsiClass[] inners = aClass.getInnerClasses();
+    for (PsiClass inner : inners) {
+      if (!inner.hasModifierProperty(PsiModifier.PRIVATE)) return false;
+    }
+
+    return true;
   }
 }

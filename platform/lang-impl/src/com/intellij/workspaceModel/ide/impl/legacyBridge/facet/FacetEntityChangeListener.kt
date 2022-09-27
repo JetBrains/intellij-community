@@ -39,7 +39,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
         val existingFacetBridge = builder.facetMapping().getDataByEntity(facetChange.newEntity)
         if (existingFacetBridge != null) return@perFacet
 
-        val moduleEntity = facetBridgeContributor.getRelatedModuleEntity(facetChange.newEntity)
+        val moduleEntity = facetBridgeContributor.getParentModuleEntity(facetChange.newEntity)
         val module = builder.moduleMap.getDataByEntity(moduleEntity) ?: error("Module bridge should be available")
         val newFacetBridge = facetBridgeContributor.createFacetFromEntity(facetChange.newEntity, module)
         builder.mutableFacetMapping().addMapping(facetChange.newEntity, newFacetBridge)
@@ -96,7 +96,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
         is EntityChange.Added -> {
           val existingFacetBridge = event.storageAfter.facetMapping().getDataByEntity(change.entity)
                                     ?: error("Facet bridge should be already initialized")
-          val moduleEntity = workspaceFacetContributor.getRelatedModuleEntity(change.newEntity)
+          val moduleEntity = workspaceFacetContributor.getParentModuleEntity(change.newEntity)
           getFacetManager(moduleEntity)?.model?.facetsChanged()
 
           FacetManagerBase.setFacetName(existingFacetBridge, workspaceFacetContributor.getFacetName(change.entity))
@@ -112,7 +112,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
           }
         }
         is EntityChange.Removed -> {
-          val moduleEntity = workspaceFacetContributor.getRelatedModuleEntity(change.oldEntity)
+          val moduleEntity = workspaceFacetContributor.getParentModuleEntity(change.oldEntity)
           val manager = getFacetManager(moduleEntity) ?: return@forEach
           // Mapping to facet isn't saved in manager.model after addDiff. But you can get an object from the older version of the store
           manager.model.facetsChanged()
@@ -122,7 +122,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
         }
         is EntityChange.Replaced -> {
           val facet = event.storageAfter.facetMapping().getDataByEntity(change.newEntity) ?: error("Facet should be available")
-          val moduleEntity = workspaceFacetContributor.getRelatedModuleEntity(change.newEntity)
+          val moduleEntity = workspaceFacetContributor.getParentModuleEntity(change.newEntity)
           getFacetManager(moduleEntity)?.model?.facetsChanged()
           val newFacetName = workspaceFacetContributor.getFacetName(change.newEntity)
           val oldFacetName = workspaceFacetContributor.getFacetName(change.oldEntity)
@@ -157,7 +157,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
               //val moduleEntity = facetBridgeContributor.getRelatedModuleEntity(rootEntity, event.storageAfter)
               val storageAfter = event.storageAfter
               val facet = storageAfter.facetMapping().getDataByEntity(rootEntity) ?: error("Facet should be available")
-              val actualModuleEntity = storageAfter.resolve(workspaceFacetContributor.getRelatedModuleEntity(rootEntity).persistentId)
+              val actualModuleEntity = storageAfter.resolve(workspaceFacetContributor.getParentModuleEntity(rootEntity).persistentId)
                                        ?: error("Module should be available in actual storage")
               val actualRootElement = workspaceFacetContributor.getRootEntityByModuleEntity(actualModuleEntity)!!
               changedFacets[facet] = actualRootElement

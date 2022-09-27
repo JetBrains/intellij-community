@@ -24,7 +24,6 @@ import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -59,12 +58,10 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -106,7 +103,7 @@ public final class CompileDriver {
     }
   }
 
-  public boolean isUpToDate(@NotNull CompileScope scope) {
+  public boolean isUpToDate(@NotNull CompileScope scope, final @Nullable ProgressIndicator progress) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("isUpToDate operation started");
     }
@@ -153,10 +150,9 @@ public final class CompileDriver {
       }
     };
 
-    ProgressIndicatorProvider indicatorProvider = ProgressIndicatorProvider.getInstance();
-    if (!EventQueue.isDispatchThread() && indicatorProvider.getProgressIndicator() != null) {
-      // if called from background process on pooled thread, run synchronously
-      task.run(compileWork, null, indicatorProvider.getProgressIndicator());
+    if (progress != null) {
+      // if progress explicitly specified, reuse the calling thread
+      task.run(compileWork, null, progress);
     }
     else {
       task.start(compileWork, null);

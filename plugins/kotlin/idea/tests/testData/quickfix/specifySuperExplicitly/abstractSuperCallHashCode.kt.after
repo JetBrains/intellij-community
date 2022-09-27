@@ -14,7 +14,7 @@ class B : A(), I {
     }
 
     override fun hashCode(): Int {
-        return javaClas<caret>s.hashCode()
+        return javaClass.hashCode()
     }
 }
 

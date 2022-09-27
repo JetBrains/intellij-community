@@ -25,6 +25,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/nullableBooleanElvis")
             model("${idea}/inspectionsLocal/redundantElvisReturnNull")
             model("${idea}/inspectionsLocal/replaceCollectionCountWithSize")
+            model("${idea}/inspectionsLocal/removeToStringInStringTemplate")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
         }
 
@@ -35,7 +36,9 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
         }
 
         testClass<AbstractK2QuickFixTest> {
-            model("${idea}/quickfix/redundantIf", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
+            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
+            model("${idea}/quickfix/redundantIf", pattern = pattern)
+            model("${idea}/quickfix/removeToStringInStringTemplate", pattern = pattern)
         }
     }
 

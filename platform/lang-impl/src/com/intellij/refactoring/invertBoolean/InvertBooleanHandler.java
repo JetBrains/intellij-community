@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.PreviewableRefactoringActionHandler;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public class InvertBooleanHandler implements PreviewableRefactoringActionHandler {
+public class InvertBooleanHandler implements RefactoringActionHandler {
   public static final String INVERT_BOOLEAN_HELP_ID = "refactoring.invertBoolean";
   private static final Logger LOG = Logger.getInstance(InvertBooleanHandler.class);
 

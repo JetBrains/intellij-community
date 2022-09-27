@@ -2,6 +2,7 @@
 package com.intellij.refactoring.anonymousToInner;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -26,6 +27,7 @@ import com.intellij.refactoring.RefactoringActionHandlerOnPsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
@@ -146,7 +148,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
       myProject,
       myAnonClass,
       myVariableInfos,
-      needsThis || anInterface);
+      !needsThis && !anInterface);
     if (!dialog.showAndGet()) {
       return false;
     }
@@ -588,5 +590,32 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
 
   static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("anonymousToInner.refactoring.name");
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull PsiElement element) {
+    if (element instanceof PsiAnonymousClass anonymousClass) {
+      myProject = project;
+      myManager = PsiManager.getInstance(myProject);
+      myAnonClass = anonymousClass;
+      myNewClassName = AnonymousToInnerDialog.suggestNewClassNames(anonymousClass)[0];
+      PsiElement targetContainer = findTargetContainer(myAnonClass);
+      if (targetContainer instanceof PsiClass) {
+        myTargetClass = (PsiClass)targetContainer;
+      }
+      else {
+        return IntentionPreviewInfo.EMPTY;
+      }
+      myMakeStatic = !needsThis() && !myTargetClass.isInterface();
+      Map<PsiVariable,VariableInfo> variableInfoMap = new LinkedHashMap<>();
+      collectUsedVariables(variableInfoMap, myAnonClass);
+      myVariableInfos = variableInfoMap.values().toArray(new VariableInfo[0]);
+      VariableData [] variableData = new VariableData[myVariableInfos.length];
+      AnonymousToInnerDialog.fillVariableData(myProject, myVariableInfos, variableData);
+      AnonymousToInnerDialog.getVariableInfos(myProject, variableData, variableInfoMap);
+      doRefactoring();
+      return IntentionPreviewInfo.DIFF;
+    }
+    return IntentionPreviewInfo.EMPTY;
   }
 }

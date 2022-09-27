@@ -121,7 +121,10 @@ public class JavaSafeDeleteDelegateForGroovy implements JavaSafeDeleteDelegate {
   }
 
   @Override
-  public void removeOverriding(@NotNull PsiElement overriddenMethod) {
-    
+  public void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement[] elements2Delete, @NotNull List<UsageInfo> result) { }
+
+  @Override
+  public UsageInfo createExtendsListUsageInfo(PsiElement refElement, PsiReference reference) {
+    return null;
   }
 }

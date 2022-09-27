@@ -6,6 +6,7 @@ import com.intellij.find.findUsages.similarity.SimilarUsagesToolbar
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.AnActionLink
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewBundle
@@ -67,8 +68,8 @@ class UsagePreviewToolbarWithSimilarUsagesLink(previewPanel: UsagePreviewPanel,
       previewPanel.releaseEditor()
       val firstSelectedInfo = ContainerUtil.getFirstItem(infos)!!
       logLinkToSimilarUsagesLinkFromUsagePreviewClicked(firstSelectedInfo.project, myUsageView)
-      val similarComponent = SimilarUsagesComponent(myUsageView, firstSelectedInfo, previewPanel)
-      previewPanel.add(SimilarUsagesToolbar(similarComponent,
+      val similarUsagesComponent = SimilarUsagesComponent(myUsageView, firstSelectedInfo, previewPanel)
+      previewPanel.add(SimilarUsagesToolbar(similarUsagesComponent,
                                             UsageViewBundle.message("0.similar.usages",
                                                                     onlyValidUsages.size - 1), null,
                                             AnActionLink(UsageViewBundle.message(
@@ -76,10 +77,11 @@ class UsagePreviewToolbarWithSimilarUsagesLink(previewPanel: UsagePreviewPanel,
                                               UIUtil.leftArrow()), object : AnAction() {
                                               override fun actionPerformed(e: AnActionEvent) {
                                                 previewPanel.removeAll()
+                                                Disposer.dispose(similarUsagesComponent)
                                                 previewPanel.updateLayout(infos, myUsageView)
                                               }
                                             })), BorderLayout.NORTH)
-      previewPanel.add(similarComponent.createLazyLoadingScrollPane(onlyValidUsages))
+      previewPanel.add(similarUsagesComponent.createLazyLoadingScrollPane(onlyValidUsages))
     }
   }
 

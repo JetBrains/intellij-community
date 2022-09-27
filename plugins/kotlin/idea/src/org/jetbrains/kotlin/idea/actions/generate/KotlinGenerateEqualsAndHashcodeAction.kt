@@ -82,7 +82,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
         return prepareMembersInfo(asClass, project, true)
     }
 
-    fun prepareMembersInfo(klass: KtClass, project: Project, askForRewrite: Boolean): Info? {
+    fun prepareMembersInfo(klass: KtClass, project: Project, askDetails: Boolean): Info? {
         val context = klass.analyzeWithContent()
         val classDescriptor = context.get(BindingContext.CLASS, klass) ?: return null
 
@@ -91,7 +91,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
 
         var needEquals = equalsDescriptor == null
         var needHashCode = hashCodeDescriptor == null
-        if (!needEquals && !needHashCode && askForRewrite) {
+        if (!needEquals && !needHashCode && askDetails) {
             if (!confirmMemberRewrite(klass, equalsDescriptor!!, hashCodeDescriptor!!)) return null
 
             runWriteAction {
@@ -108,7 +108,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
 
         val properties = getPropertiesToUseInGeneratedMember(klass)
 
-        if (properties.isEmpty() || isUnitTestMode()) {
+        if (properties.isEmpty() || isUnitTestMode() || !askDetails) {
             val descriptors = properties.map { context[BindingContext.DECLARATION_TO_DESCRIPTOR, it] as VariableDescriptor }
             return Info(needEquals, needHashCode, classDescriptor, descriptors, descriptors)
         }

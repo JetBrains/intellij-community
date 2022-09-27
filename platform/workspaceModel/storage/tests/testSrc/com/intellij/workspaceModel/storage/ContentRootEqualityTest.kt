@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ExcludeUrlEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
 import com.intellij.workspaceModel.storage.entities.test.api.AnotherSource
@@ -25,7 +26,7 @@ class ContentRootEqualityTest {
     val builder1 = createEmptyBuilder()
     builder1.addEntity(ModuleEntity("MyName", emptyList(), MySource) {
       contentRoots = listOf(
-        ContentRootEntity(virtualFileManager.fromUrl("/123"), emptyList(), emptyList(), MySource) {
+        ContentRootEntity(virtualFileManager.fromUrl("/123"), emptyList(), MySource) {
           sourceRoots = listOf(
             SourceRootEntity(virtualFileManager.fromUrl("/data"), "Type", AnotherSource),
           )
@@ -36,7 +37,8 @@ class ContentRootEqualityTest {
     val builder2 = createEmptyBuilder()
     builder2.addEntity(ModuleEntity("MyName", emptyList(), MySource) {
       contentRoots = listOf(
-        ContentRootEntity(virtualFileManager.fromUrl("/123"), listOf(virtualFileManager.fromUrl("/myRoot")), emptyList(), MySource) {
+        ContentRootEntity(virtualFileManager.fromUrl("/123"), emptyList(), MySource) {
+          this.excludedUrls = listOf(ExcludeUrlEntity(virtualFileManager.fromUrl("/myRoot"), this.entitySource))
         },
       )
     })

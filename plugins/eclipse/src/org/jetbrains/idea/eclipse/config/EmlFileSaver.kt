@@ -12,7 +12,10 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
@@ -138,9 +141,9 @@ internal class EmlFileSaver(private val module: ModuleEntity,
       }
       val rootFile = contentRoot.url.virtualFile
       contentRoot.excludedUrls.forEach { excluded ->
-        val excludedFile = excluded.virtualFile
+        val excludedFile = excluded.url.virtualFile
         if (rootFile == null || excludedFile == null || VfsUtilCore.isAncestor(rootFile, excludedFile, false)) {
-          contentRootTag.addContent(Element(EXCLUDE_FOLDER_TAG).setAttribute(URL_ATTR, excluded.url))
+          contentRootTag.addContent(Element(EXCLUDE_FOLDER_TAG).setAttribute(URL_ATTR, excluded.url.url))
         }
       }
       if (!JDOMUtil.isEmpty(contentRootTag)) {

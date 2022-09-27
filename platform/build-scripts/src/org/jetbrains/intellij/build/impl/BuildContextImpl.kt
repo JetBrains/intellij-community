@@ -138,7 +138,7 @@ class BuildContextImpl private constructor(
     }
 
   override fun addDistFile(file: DistFile) {
-    messages.debug("$file requested to be added to app resources")
+    Span.current().addEvent("add app resource", Attributes.of(AttributeKey.stringKey("file"), file.toString()))
     distFiles.add(file)
   }
 
@@ -221,7 +221,7 @@ class BuildContextImpl private constructor(
     return null
   }
 
-  override fun signFiles(files: List<Path>, options: Map<String, String>) {
+  override suspend fun signFiles(files: List<Path>, options: Map<String, String>) {
     if (proprietaryBuildTools.signTool == null) {
       Span.current().addEvent("files won't be signed", Attributes.of(
         AttributeKey.stringArrayKey("files"), files.map(Path::toString),

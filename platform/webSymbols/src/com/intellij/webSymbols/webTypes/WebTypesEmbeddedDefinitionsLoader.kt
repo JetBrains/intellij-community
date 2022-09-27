@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.ExtensionPointUtil
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
@@ -41,8 +40,10 @@ class WebTypesEmbeddedDefinitionsLoader(val project: Project) : Disposable {
 
   }
 
-  private val state = ExtensionPointUtil.dropLazyValueOnChange(
-    ClearableLazyValue.create { State(project) }, WebTypesDefinitionsEP.EP_NAME, this)
+  private val state = ClearableLazyValue.create { State(project) }.also {
+    WebTypesDefinitionsEP.EP_NAME.addChangeListener(Runnable { it.drop() }, this)
+    WebTypesDefinitionsEP.EP_NAME_DEPRECATED.addChangeListener(Runnable { it.drop() }, this)
+  }
 
   private val webTypesEnabledPackages: Set<String> = state.value.registry.packages
   private val packagesEnabledByDefault: Map<String, SemVer> = state.value.packagesEnabledByDefault
@@ -61,7 +62,7 @@ class WebTypesEmbeddedDefinitionsLoader(val project: Project) : Disposable {
 
     init {
       val packagesEnabledByDefault = mutableMapOf<String, SemVer>()
-      WebTypesDefinitionsEP.EP_NAME.extensions.forEach {
+      WebTypesDefinitionsEP.EP_NAME.extensions.plus(WebTypesDefinitionsEP.EP_NAME_DEPRECATED.extensions).forEach {
         try {
           val webTypes = it.instance
           val semVer = SemVer.parseFromText(webTypes.version)!!

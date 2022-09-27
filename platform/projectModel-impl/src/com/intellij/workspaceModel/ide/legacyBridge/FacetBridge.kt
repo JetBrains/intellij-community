@@ -10,16 +10,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
  */
 interface FacetBridge<T: WorkspaceEntity> {
   /**
-   * Check if it's a newly created facet bridge, and it's root entity doesn't exist in main storage
-   */
-  fun isNew(mutableStorage: MutableEntityStorage, moduleEntity: ModuleEntity): Boolean
-
-  /**
-   * Returns the new name associated with given facet bridge
-   */
-  fun getNewName(mutableStorage: MutableEntityStorage, moduleEntity: ModuleEntity): String
-
-  /**
    * Add root entity which [FacetBridge] uses under the hood, into the storage
    * @param mutableStorage for saving root entity and it's children in it
    * @param moduleEntity corresponds to this [FacetBridge]

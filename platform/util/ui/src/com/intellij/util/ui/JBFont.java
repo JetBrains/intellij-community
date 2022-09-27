@@ -88,8 +88,8 @@ public class JBFont extends Font {
   public static JBFont h3() { return label().biggerOn(3); }
   public static JBFont h4() { return label().biggerOn(1).asBold(); }
   public static JBFont regular() { return label(); }
-  public static JBFont medium() { return noSmallFonts() ? label() : label().lessOn(1); }
-  public static JBFont small() { return noSmallFonts() ? label() : label().lessOn(2); }
+  public static JBFont medium() { return mediumAndSmallFontsAsRegular() ? label() : label().lessOn(1); }
+  public static JBFont small() { return mediumAndSmallFontsAsRegular() ? label() : label().lessOn(2); }
 
   /**
    * In new UI {@link #small()} font should be used only in exceptional cases when the medium size won't fit at all.
@@ -99,7 +99,7 @@ public class JBFont extends Font {
   @ApiStatus.Internal
   public static JBFont smallOrNewUiMedium() { return Registry.is("ide.experimental.ui") ? medium() : small(); }
 
-  private static boolean noSmallFonts() {
+  private static boolean mediumAndSmallFontsAsRegular() {
     return SystemInfo.isWindows && !Registry.is("ide.experimental.ui");
   }
 }

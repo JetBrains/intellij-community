@@ -165,5 +165,5 @@ private fun Project.createLibrary(
         libraryRoots.add(LibraryRoot(fileUrl, LibraryRootTypeId.SOURCES))
     }
 
-    return LibraryEntity(name, LibraryTableId.ProjectLibraryTableId, libraryRoots, emptyList(), entitySource)
+    return LibraryEntity(name, LibraryTableId.ProjectLibraryTableId, libraryRoots, entitySource)
 }

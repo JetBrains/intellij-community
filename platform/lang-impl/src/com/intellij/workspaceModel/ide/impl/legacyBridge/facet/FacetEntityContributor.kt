@@ -19,7 +19,7 @@ class FacetEntityContributor: WorkspaceFacetContributor<FacetEntity> {
     return facetManagerBridge.model.createFacet(entity)
   }
 
-  override fun getRelatedModuleEntity(entity: FacetEntity): ModuleEntity = entity.module
+  override fun getParentModuleEntity(entity: FacetEntity): ModuleEntity = entity.module
 
   override fun getFacetName(entity: FacetEntity): String = entity.name
 }

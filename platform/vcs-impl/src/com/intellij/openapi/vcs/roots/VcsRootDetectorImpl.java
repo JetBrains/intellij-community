@@ -4,11 +4,11 @@ package com.intellij.openapi.vcs.roots;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.VcsRootChecker;
+import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -85,26 +85,21 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
       return Collections.emptyList();
     }
 
-    List<VirtualFile> contentRoots = ContainerUtil.filter(ProjectRootManager.getInstance(myProject).getContentRoots(),
-                                                          file -> file.isInLocalFileSystem());
+    List<VirtualFile> contentRoots = ContainerUtil.sorted(DefaultVcsRootPolicy.getInstance(myProject).getDefaultVcsRoots(),
+                                                          Comparator.comparing(root -> root.getPath().length()));
     MAPPING_DETECTION_LOG.debug("VcsRootDetectorImpl.scanForRootsInContentRoots - contentRoots", contentRoots);
-
-    VirtualFile baseDir = myProject.getBaseDir();
-    if (baseDir != null && !contentRoots.contains(baseDir)) {
-      contentRoots.add(baseDir);
-    }
 
     Set<VcsRoot> detectedRoots = new HashSet<>();
     Set<VirtualFile> skipDirs = new HashSet<>();
     Map<VirtualFile, Boolean> scannedDirs = new HashMap<>();
 
-    // process inner content roots first
-    contentRoots.sort(Comparator.comparing(root -> -root.getPath().length()));
-    for (VirtualFile dir : contentRoots) {
+    // process the inner content roots first
+    for (VirtualFile dir : ContainerUtil.reverse(contentRoots)) {
       detectedRoots.addAll(scanForRootsInsideDir(myProject, dir, skipDirs, scannedDirs));
       skipDirs.add(dir);
     }
 
+    // process the outer content roots first
     detectedRoots.addAll(scanForRootsAboveDirs(contentRoots, scannedDirs, detectedRoots));
 
     detectedRoots.addAll(scanDependentRoots(scannedDirs, detectedRoots));

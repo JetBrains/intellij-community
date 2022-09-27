@@ -518,7 +518,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                              contentEntry.getSourceRootsComparator())
 
       contentEntry.excludedUrls.forEach {
-        contentRootTag.addContent(Element(EXCLUDE_FOLDER_TAG).setAttribute(URL_ATTRIBUTE, it.url))
+        contentRootTag.addContent(Element(EXCLUDE_FOLDER_TAG).setAttribute(URL_ATTRIBUTE, it.url.url))
       }
       contentEntry.excludedPatterns.forEach {
         contentRootTag.addContent(Element(EXCLUDE_PATTERN_TAG).setAttribute(EXCLUDE_PATTERN_ATTRIBUTE, it))

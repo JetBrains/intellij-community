@@ -7,6 +7,7 @@ import com.intellij.codeInspection.RefactoringQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.PreviewableRefactoringActionHandler;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,12 +22,12 @@ public abstract class RefactoringInspectionGadgetsFix extends InspectionGadgetsF
   }
 
   @Override
-  public abstract @NotNull PreviewableRefactoringActionHandler getHandler();
-
-  @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    PsiElement element = getElementToRefactor(previewDescriptor.getPsiElement());
-    PreviewableRefactoringActionHandler handler = getHandler();
-    return handler.generatePreview(project, element);
+    RefactoringActionHandler handler = getHandler();
+    if (handler instanceof PreviewableRefactoringActionHandler previewableHandler) {
+      PsiElement element = getElementToRefactor(previewDescriptor.getPsiElement());
+      return previewableHandler.generatePreview(project, element);
+    }
+    return IntentionPreviewInfo.EMPTY;
   }
 }

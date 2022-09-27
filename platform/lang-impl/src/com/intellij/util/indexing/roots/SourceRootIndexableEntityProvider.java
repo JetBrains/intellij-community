@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ExcludeUrlEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
@@ -48,11 +49,12 @@ class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Paren
     if (module == null) {
       return Collections.emptyList();
     }
-    List<VirtualFileUrl> excludedUrls = entity.getContentRoot().getExcludedUrls();
+    List<ExcludeUrlEntity> excludedUrls = entity.getContentRoot().getExcludedUrls();
     VirtualFileUrl rootUrl = entity.getUrl();
     boolean isExcluded = false;
     List<VirtualFileUrl> excludedSourceUrlsFiles = new SmartList<>();
-    for (VirtualFileUrl excludedUrl : excludedUrls) {
+    for (ExcludeUrlEntity excludedUrlEntity : excludedUrls) {
+      VirtualFileUrl excludedUrl = excludedUrlEntity.getUrl();
       if (VirtualFileUrlManagerUtil.isEqualOrParentOf(excludedUrl, rootUrl)) {
         if (VirtualFileUrlManagerUtil.isEqualOrParentOf(rootUrl, excludedUrl)) {
           return Collections.emptyList();

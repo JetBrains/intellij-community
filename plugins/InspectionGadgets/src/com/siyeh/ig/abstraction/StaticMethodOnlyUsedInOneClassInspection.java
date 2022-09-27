@@ -18,7 +18,7 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.PreviewableRefactoringActionHandler;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
@@ -376,8 +376,8 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
 
       @NotNull
       @Override
-      public PreviewableRefactoringActionHandler getHandler() {
-        return (PreviewableRefactoringActionHandler)RefactoringActionHandlerFactory.getInstance().createMoveHandler();
+      public RefactoringActionHandler getHandler() {
+        return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
       }
 
       @NotNull

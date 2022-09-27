@@ -538,6 +538,44 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/removeToStringInStringTemplate")
+    public static class RemoveToStringInStringTemplate extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("caretInReceiver.kt")
+        public void testCaretInReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeToStringInStringTemplate/caretInReceiver.kt");
+        }
+
+        @TestMetadata("caretInSelector.kt")
+        public void testCaretInSelector() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeToStringInStringTemplate/caretInSelector.kt");
+        }
+
+        @TestMetadata("extensionToString.kt")
+        public void testExtensionToString() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeToStringInStringTemplate/extensionToString.kt");
+        }
+
+        @TestMetadata("extensionToStringWithParameter.kt")
+        public void testExtensionToStringWithParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeToStringInStringTemplate/extensionToStringWithParameter.kt");
+        }
+
+        @TestMetadata("nameReference.kt")
+        public void testNameReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeToStringInStringTemplate/nameReference.kt");
+        }
+
+        @TestMetadata("super.kt")
+        public void testSuper() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeToStringInStringTemplate/super.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)

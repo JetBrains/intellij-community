@@ -1552,6 +1552,32 @@ class ReplaceBySourceTest {
     builder.assertConsistency()
   }
 
+  @RepeatedTest(10)
+  fun `external entity`() {
+    replacement add MainEntityParentList("data", MySource) {
+      this.children = listOf(AttachedEntityParentList("info", MySource))
+    }
+
+    rbsMySources()
+
+    builder.assertConsistency()
+
+    assertTrue(builder.entities(MainEntityParentList::class.java).single().children.isNotEmpty())
+  }
+
+  @RepeatedTest(10)
+  fun `move external entity`() {
+    replacement add MainEntity("data", MySource) {
+      this.child = AttachedEntity("Data", MySource)
+    }
+
+    builder.changeLog.clear()
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+  }
+
   private inner class ThisStateChecker {
     infix fun WorkspaceEntity.assert(state: ReplaceState) {
       val thisState = engine.targetState[this.base.id]

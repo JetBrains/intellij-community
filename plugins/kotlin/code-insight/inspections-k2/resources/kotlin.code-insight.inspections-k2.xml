@@ -115,5 +115,15 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.replace.collection.count.with.size.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RemoveToStringInStringTemplateInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     cleanupTool="true"
+                     level="WEAK WARNING"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     key="inspection.remove.to.string.in.string.template.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>

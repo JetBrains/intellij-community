@@ -7,7 +7,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
-import com.intellij.refactoring.PreviewableRefactoringActionHandler;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ public class IntroduceConstantFix extends RefactoringInspectionGadgetsFix {
 
   @NotNull
   @Override
-  public PreviewableRefactoringActionHandler getHandler() {
+  public RefactoringActionHandler getHandler() {
     return JavaRefactoringActionHandlerFactory.getInstance().createIntroduceConstantHandler();
   }
 
