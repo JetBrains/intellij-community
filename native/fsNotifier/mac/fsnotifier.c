@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-#include <CoreServices/CoreServices.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <strings.h>
 #include <sys/mount.h>
+#include <CoreServices/CoreServices.h>
 
 #define PRIVATE_DIR "/private/"
 #define PRIVATE_LEN 9
@@ -45,7 +45,6 @@ static void callback(__unused ConstFSEventStreamRef streamRef,
     char **paths = eventPaths;
 
     for (size_t i = 0; i < numEvents; i++) {
-        // TODO[max] Lion has much more detailed flags we need accurately process. For now just reduce to SL events range.
         FSEventStreamEventFlags flags = eventFlags[i] & 0xFF;
         if ((flags & kFSEventStreamEventFlagMustScanSubDirs) != 0) {
             reportEvent("RECDIRTY", paths[i]);
