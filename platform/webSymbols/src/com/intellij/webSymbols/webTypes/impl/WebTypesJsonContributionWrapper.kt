@@ -11,7 +11,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
-import com.intellij.webSymbols.WebSymbol.NameSegment
+import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbol.Priority
 import com.intellij.webSymbols.impl.WebSymbolsRegistryImpl.Companion.asSymbolNamespace
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
@@ -133,8 +133,8 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
     override val namespace: SymbolNamespace
       get() = base.namespace
 
-    override val nameSegments: List<NameSegment>
-      get() = listOf(NameSegment(0, if (base is Pattern) 0 else matchedName.length, this))
+    override val nameSegments: List<WebSymbolNameSegment>
+      get() = listOf(WebSymbolNameSegment(0, if (base is Pattern) 0 else matchedName.length, this))
 
     override val name: String
       get() = base.contributionName
@@ -177,7 +177,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
                 .mapNotNull { it.source }
                 .firstOrNull()
 
-    override val attributeValue: WebSymbol.AttributeValue?
+    override val attributeValue: WebSymbolHtmlAttributeValue?
       get() = (base.contribution.attributeValue?.let { sequenceOf(HtmlAttributeValueImpl(it)) } ?: emptySequence())
         .plus(superContributions.asSequence().map { it.attributeValue })
         .merge()
@@ -253,11 +253,11 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
     override fun toString(): String =
       base.toString()
 
-    private inner class HtmlAttributeValueImpl(private val value: HtmlAttributeValue) : WebSymbol.AttributeValue {
-      override val kind: WebSymbol.AttributeValueKind?
+    private inner class HtmlAttributeValueImpl(private val value: HtmlAttributeValue) : WebSymbolHtmlAttributeValue {
+      override val kind: WebSymbolHtmlAttributeValue.Kind?
         get() = value.kind?.wrap()
 
-      override val type: WebSymbol.AttributeValueType?
+      override val type: WebSymbolHtmlAttributeValue.Type?
         get() = value.type?.wrap()
 
       override val required: Boolean?

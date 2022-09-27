@@ -4,6 +4,7 @@ package com.intellij.webSymbols.patterns.impl
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsContainer
 import com.intellij.webSymbols.impl.WebSymbolCodeCompletionItemImpl
 
@@ -16,7 +17,7 @@ internal val WebSymbolCodeCompletionItem.stopSequencePatternEvaluation
   get() = (this as WebSymbolCodeCompletionItemImpl).stopSequencePatternEvaluation
 
 internal fun MatchResult.addOwner(owner: WebSymbol): MatchResult {
-  val newSegments = mutableListOf<WebSymbol.NameSegment>()
+  val newSegments = mutableListOf<WebSymbolNameSegment>()
   var foundNonEmpty = false
   var applied = false
   for (segment in segments) {
@@ -37,11 +38,11 @@ internal fun MatchResult.addOwner(owner: WebSymbol): MatchResult {
     }
     else {
       applied = true
-      newSegments.add(segment.applyProperties(symbols = listOf(owner)))
+      newSegments.add(segment.copy(symbols = listOf(owner)))
     }
   }
   if (!applied) {
-    newSegments.add(0, WebSymbol.NameSegment(start, start, owner))
+    newSegments.add(0, WebSymbolNameSegment(start, start, owner))
   }
   return MatchResult(newSegments)
 }
@@ -77,7 +78,7 @@ internal fun getPatternCompletablePrefix(pattern: String?): String {
 }
 
 internal fun <T> withPrevMatchContext(contextStack: Stack<WebSymbolsContainer>,
-                                      prevResult: List<WebSymbol.NameSegment>?,
+                                      prevResult: List<WebSymbolNameSegment>?,
                                       action: () -> T): T =
   if (prevResult == null) {
     action()
@@ -102,7 +103,7 @@ internal fun MatchResult.applyToSegments(vararg contributions: WebSymbol,
   if (deprecated != null || priority != null || proximity != null || contributions.isNotEmpty())
     MatchResult(
       segments.map {
-        it.applyProperties(deprecated = deprecated, priority = priority, proximity = proximity, symbols = contributions.toList())
+        it.copy(deprecated = deprecated, priority = priority, proximity = proximity, symbols = contributions.toList())
       })
   else
     this

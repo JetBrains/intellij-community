@@ -5,6 +5,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsContainer
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
@@ -30,9 +31,9 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
                      end: Int): List<MatchResult> {
     val matcher = pattern.matcher(CharSequenceSubSequence(params.name, start, end))
     return if (matcher.find(0) && matcher.start() == 0)
-      listOf(MatchResult(WebSymbol.NameSegment(start, start + matcher.end(),
+      listOf(MatchResult(WebSymbolNameSegment(start, start + matcher.end(),
                                                owner?.let { listOf(it) } ?: emptyList(),
-                                               matchScore = getPatternCompletablePrefix(regex).length)))
+                                              matchScore = getPatternCompletablePrefix(regex).length)))
     else emptyList()
   }
 

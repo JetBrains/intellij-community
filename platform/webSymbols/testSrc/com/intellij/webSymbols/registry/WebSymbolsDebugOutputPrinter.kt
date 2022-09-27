@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.registry
 
-import com.intellij.webSymbols.DebugOutputPrinter
-import com.intellij.webSymbols.PsiSourcedWebSymbol
-import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.*
 import java.util.*
 
 open class WebSymbolsDebugOutputPrinter: DebugOutputPrinter() {
@@ -15,8 +12,8 @@ open class WebSymbolsDebugOutputPrinter: DebugOutputPrinter() {
     when (value) {
       is WebSymbolCodeCompletionItem -> builder.printCodeCompletionItem(level, value)
       is WebSymbol -> builder.printSymbol(level, value)
-      is WebSymbol.AttributeValue -> builder.printAttributeValue(level, value)
-      is WebSymbol.NameSegment -> builder.printSegment(level, value)
+      is WebSymbolHtmlAttributeValue -> builder.printAttributeValue(level, value)
+      is WebSymbolNameSegment -> builder.printSegment(level, value)
       else -> super.printValueImpl(builder, level, value)
     }
 
@@ -67,7 +64,7 @@ open class WebSymbolsDebugOutputPrinter: DebugOutputPrinter() {
 
 
   private fun StringBuilder.printSegment(topLevel: Int,
-                                         segment: WebSymbol.NameSegment): StringBuilder =
+                                         segment: WebSymbolNameSegment): StringBuilder =
     printObject(topLevel) { level ->
       printProperty(level, "name-part", parents.peek().matchedName.substring(segment.start, segment.end))
       printProperty(level, "display-name", segment.displayName)
@@ -84,7 +81,7 @@ open class WebSymbolsDebugOutputPrinter: DebugOutputPrinter() {
       }
     }
 
-  private fun StringBuilder.printAttributeValue(topLevel: Int, value: WebSymbol.AttributeValue): StringBuilder =
+  private fun StringBuilder.printAttributeValue(topLevel: Int, value: WebSymbolHtmlAttributeValue): StringBuilder =
     printObject(topLevel) { level ->
       printProperty(level, "kind", value.kind)
         .printProperty(level, "type", value.type)

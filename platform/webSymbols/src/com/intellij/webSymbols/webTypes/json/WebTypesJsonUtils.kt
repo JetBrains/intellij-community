@@ -135,7 +135,7 @@ internal val GenericContributionsHost.genericProperties: Map<String, Any>
       )
       .toMap()
 
-internal fun Reference.getSymbolType(context: WebSymbol?): WebSymbol.SymbolType? =
+internal fun Reference.getSymbolKind(context: WebSymbol?): WebSymbolQualifiedKind? =
   when (val reference = this.value) {
     is String -> reference
     is ReferenceWithProps -> reference.path
@@ -145,7 +145,7 @@ internal fun Reference.getSymbolType(context: WebSymbol?): WebSymbol.SymbolType?
     .lastOrNull()
     ?.let {
       if (it.namespace != null)
-        WebSymbol.SymbolType(it.namespace, it.kind)
+        WebSymbolQualifiedKind(it.namespace, it.kind)
       else null
     }
 
@@ -285,15 +285,15 @@ internal val WebTypes.descriptionMarkupWithLegacy: WebTypes.DescriptionMarkup?
         }
       }
 
-internal fun HtmlValueType.wrap(): WebSymbol.AttributeValueType? =
+internal fun HtmlValueType.wrap(): WebSymbolHtmlAttributeValue.Type? =
   when (this.value) {
-    "enum" -> WebSymbol.AttributeValueType.ENUM
-    "of-match" -> WebSymbol.AttributeValueType.OF_MATCH
-    "string" -> WebSymbol.AttributeValueType.STRING
-    "boolean" -> WebSymbol.AttributeValueType.BOOLEAN
-    "number" -> WebSymbol.AttributeValueType.NUMBER
+    "enum" -> WebSymbolHtmlAttributeValue.Type.ENUM
+    "of-match" -> WebSymbolHtmlAttributeValue.Type.OF_MATCH
+    "string" -> WebSymbolHtmlAttributeValue.Type.STRING
+    "boolean" -> WebSymbolHtmlAttributeValue.Type.BOOLEAN
+    "number" -> WebSymbolHtmlAttributeValue.Type.NUMBER
     null -> null
-    else -> WebSymbol.AttributeValueType.COMPLEX
+    else -> WebSymbolHtmlAttributeValue.Type.COMPLEX
   }
 
 internal fun HtmlValueType.toLangType(): List<Type>? =
@@ -305,11 +305,11 @@ internal fun HtmlValueType.toLangType(): List<Type>? =
     else -> null
   }
 
-internal fun HtmlAttributeValue.Kind.wrap(): WebSymbol.AttributeValueKind =
+internal fun HtmlAttributeValue.Kind.wrap(): WebSymbolHtmlAttributeValue.Kind =
   when (this) {
-    HtmlAttributeValue.Kind.NO_VALUE -> WebSymbol.AttributeValueKind.NO_VALUE
-    HtmlAttributeValue.Kind.PLAIN -> WebSymbol.AttributeValueKind.PLAIN
-    HtmlAttributeValue.Kind.EXPRESSION -> WebSymbol.AttributeValueKind.EXPRESSION
+    HtmlAttributeValue.Kind.NO_VALUE -> WebSymbolHtmlAttributeValue.Kind.NO_VALUE
+    HtmlAttributeValue.Kind.PLAIN -> WebSymbolHtmlAttributeValue.Kind.PLAIN
+    HtmlAttributeValue.Kind.EXPRESSION -> WebSymbolHtmlAttributeValue.Kind.EXPRESSION
   }
 
 internal fun GenericHtmlContribution.copyLegacyFrom(other: BaseContribution) {

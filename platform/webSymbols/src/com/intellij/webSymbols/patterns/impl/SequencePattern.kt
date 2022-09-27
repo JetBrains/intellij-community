@@ -4,10 +4,7 @@ package com.intellij.webSymbols.patterns.impl
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
-import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolCodeCompletionItem
-import com.intellij.webSymbols.WebSymbolMatch
-import com.intellij.webSymbols.WebSymbolsContainer
+import com.intellij.webSymbols.*
 import com.intellij.webSymbols.impl.CompoundInsertHandler
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
@@ -62,8 +59,8 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
     var stop = false
     process(
       listOf(SequenceCompletionResult(
-        MatchResult(WebSymbol.NameSegment(start, start)),
-        MatchResult(WebSymbol.NameSegment(start, start)),
+        MatchResult(WebSymbolNameSegment(start, start)),
+        MatchResult(WebSymbolNameSegment(start, start)),
         null))
     ) { matches, pattern, staticPrefixes ->
       val completeAfterChars = staticPrefixes.mapNotNull { it.getOrNull(0) }.toList()
@@ -132,11 +129,11 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
       }
       ?.let {
         if (pattern is CompletionAutoPopupPattern && !pattern.isSticky)
-          if (itemsProvider == null || matchResult.segments.any { it.problem == WebSymbol.MatchProblem.MISSING_REQUIRED_PART })
+          if (itemsProvider == null || matchResult.segments.any { it.problem == WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART })
             emptyList()
           else
-            listOf(SequenceCompletionResult(MatchResult(WebSymbol.NameSegment(matchResult.end, matchResult.end)),
-                                            MatchResult(WebSymbol.NameSegment(matchResult.end, matchResult.end)),
+            listOf(SequenceCompletionResult(MatchResult(WebSymbolNameSegment(matchResult.end, matchResult.end)),
+                                            MatchResult(WebSymbolNameSegment(matchResult.end, matchResult.end)),
                                             null))
         else
           listOf(SequenceCompletionResult(matchResult, matchResult, null))
@@ -243,12 +240,12 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
       }
       if (matchResult != null
           && matchResult.end >= completionPos
-          && matchResult.segments.all { it.problem != WebSymbol.MatchProblem.MISSING_REQUIRED_PART }) {
+          && matchResult.segments.all { it.problem != WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART }) {
         if (pattern.isSticky)
           results.add(SequenceCompletionResult(matchResult, matchResult, requiredPart))
         else
-          results.add(SequenceCompletionResult(MatchResult(WebSymbol.NameSegment(matchResult.end, matchResult.end)),
-                                               MatchResult(WebSymbol.NameSegment(matchResult.end, matchResult.end)), null)
+          results.add(SequenceCompletionResult(MatchResult(WebSymbolNameSegment(matchResult.end, matchResult.end)),
+                                               MatchResult(WebSymbolNameSegment(matchResult.end, matchResult.end)), null)
           )
       }
     }
@@ -280,7 +277,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
         // Ensure that if we have a proper regex match,
         // we have that in completion items to correctly complete following segments
         if (lastMatchedSegment != null
-            && lastMatchedSegment.problem.let { it == null || it == WebSymbol.MatchProblem.DUPLICATE }
+            && lastMatchedSegment.problem.let { it == null || it == WebSymbolNameSegment.MatchProblem.DUPLICATE }
             && lastMatchedSegment.start <= params.position
             && matchResult.segments.size - 1 == (prevResult?.segments?.size ?: 0)
             && lastMatchedSegment.start < lastMatchedSegment.end
@@ -363,13 +360,13 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
 
   private fun concatSymbols(name: String, firstNameLength: Int, first: WebSymbol?, second: WebSymbol?): WebSymbol? {
 
-    fun WebSymbol?.toNameSegments(nameStart: Int, nameEnd: Int): List<WebSymbol.NameSegment> =
+    fun WebSymbol?.toNameSegments(nameStart: Int, nameEnd: Int): List<WebSymbolNameSegment> =
       if (this == null)
-        listOf(WebSymbol.NameSegment(nameStart, nameEnd))
+        listOf(WebSymbolNameSegment(nameStart, nameEnd))
       else if (this is WebSymbolMatch && StringUtil.equals(matchedName, CharSequenceSubSequence(name, nameStart, nameEnd)))
         this.nameSegments.withOffset(nameStart)
       else
-        listOf(WebSymbol.NameSegment(nameStart, nameEnd, this))
+        listOf(WebSymbolNameSegment(nameStart, nameEnd, this))
 
     val mainSymbol = second ?: first ?: return null
 

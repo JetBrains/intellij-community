@@ -4,7 +4,7 @@ package com.intellij.webSymbols
 import com.intellij.codeInspection.ProblemDescriptor
 
 data class WebSymbolReferenceProblem(
-  val symbolTypes: Set<WebSymbol.SymbolType>,
+  val symbolKinds: Set<WebSymbolQualifiedKind>,
   val kind: ProblemKind,
   val descriptor: ProblemDescriptor,
 ) {

@@ -44,13 +44,13 @@ fun List<WebSymbol>.asSingleSymbol(): WebSymbol? =
     this[0]
   else {
     val first = this[0]
-    WebSymbolMatch.create(first.name, listOf(WebSymbol.NameSegment(0, first.name.length, sortSymbolsByPriority())),
+    WebSymbolMatch.create(first.name, listOf(WebSymbolNameSegment(0, first.name.length, sortSymbolsByPriority())),
                           first.namespace, first.kind, first.origin)
   }
 
 fun WebSymbol.withMatchedName(matchedName: String) =
   if (matchedName != name) {
-    WebSymbolMatch.create(matchedName, listOf(WebSymbol.NameSegment(0, matchedName.length, this)), namespace, kind, origin)
+    WebSymbolMatch.create(matchedName, listOf(WebSymbolNameSegment(0, matchedName.length, this)), namespace, kind, origin)
   }
   else this
 
@@ -125,15 +125,15 @@ fun WebSymbol.match(nameToMatch: String,
   }
 }
 
-fun WebSymbol.NameSegment.getProblemKind(): ProblemKind? =
+fun WebSymbolNameSegment.getProblemKind(): ProblemKind? =
   when (problem) {
-    WebSymbol.MatchProblem.MISSING_REQUIRED_PART -> ProblemKind.MissingRequiredPart
-    WebSymbol.MatchProblem.UNKNOWN_ITEM ->
+    WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART -> ProblemKind.MissingRequiredPart
+    WebSymbolNameSegment.MatchProblem.UNKNOWN_ITEM ->
       if (start == end)
         ProblemKind.MissingRequiredPart
       else
         ProblemKind.UnknownSymbol
-    WebSymbol.MatchProblem.DUPLICATE -> ProblemKind.DuplicatedPart
+    WebSymbolNameSegment.MatchProblem.DUPLICATE -> ProblemKind.DuplicatedPart
     null -> null
   }
 
@@ -141,13 +141,16 @@ val WebSymbol.hideFromCompletion
   get() =
     properties[WebSymbol.PROP_HIDE_FROM_COMPLETION] == true
 
-fun List<WebSymbol.NameSegment>.withOffset(offset: Int): List<WebSymbol.NameSegment> =
+val (WebSymbolNameSegment.MatchProblem?).isCritical
+  get() = this == WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART || this == WebSymbolNameSegment.MatchProblem.UNKNOWN_ITEM
+
+fun List<WebSymbolNameSegment>.withOffset(offset: Int): List<WebSymbolNameSegment> =
   if (offset != 0) map { it.withOffset(offset) }
   else this
 
-fun Sequence<WebSymbol.AttributeValue?>.merge(): WebSymbol.AttributeValue? {
-  var kind: WebSymbol.AttributeValueKind? = null
-  var type: WebSymbol.AttributeValueType? = null
+fun Sequence<WebSymbolHtmlAttributeValue?>.merge(): WebSymbolHtmlAttributeValue? {
+  var kind: WebSymbolHtmlAttributeValue.Kind? = null
+  var type: WebSymbolHtmlAttributeValue.Type? = null
   var required: Boolean? = null
   var default: String? = null
   var langType: Any? = null
@@ -178,7 +181,7 @@ fun Sequence<WebSymbol.AttributeValue?>.merge(): WebSymbol.AttributeValue? {
              || required != null
              || langType != null
              || default != null)
-    WebSymbolHtmlAttributeValueData(kind, type, required, default, langType)
+    WebSymbolHtmlAttributeValue.create(kind, type, required, default, langType)
   else null
 }
 

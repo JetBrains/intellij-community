@@ -123,7 +123,7 @@ internal class WebSymbolsInspectionsPass(private val file: PsiFile, document: Do
       }
 
   private fun WebSymbolReferenceProblem.getInspectionInfo(problemKind: ProblemKind): List<InspectionToolInfo> =
-    symbolTypes
+    symbolKinds
       .mapNotNull { symbolType ->
         WebSymbolsInspectionToolMappingEP.get(symbolType.namespace, symbolType.kind, problemKind)?.toolShortName
       }.map {

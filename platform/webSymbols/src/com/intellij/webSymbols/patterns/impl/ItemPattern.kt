@@ -4,6 +4,7 @@ package com.intellij.webSymbols.patterns.impl
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolMatch
+import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsContainer
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
@@ -22,11 +23,11 @@ internal class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
                      end: Int): List<MatchResult> {
     if (start == end) {
       // TODO should be "missing required part", but needs improvements in sequence pattern code completion
-      return listOf(MatchResult(listOf(WebSymbol.NameSegment(
+      return listOf(MatchResult(listOf(WebSymbolNameSegment(
         start, end, emptyList(),
-        problem = WebSymbol.MatchProblem.UNKNOWN_ITEM,
+        problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_ITEM,
         displayName = displayName,
-        symbolTypes = itemsProvider?.getSymbolTypes(owner ?: contextStack.lastOrNull() as? WebSymbol) ?: emptySet()
+        symbolKinds = itemsProvider?.getSymbolKinds(owner ?: contextStack.lastOrNull() as? WebSymbol) ?: emptySet()
       ))))
     }
 
@@ -40,16 +41,16 @@ internal class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
           hits[0].nameSegments.map { it.withOffset(start) }
 
         hits.isNotEmpty() ->
-          listOf(WebSymbol.NameSegment(
+          listOf(WebSymbolNameSegment(
             start, end, hits, displayName = displayName
           ))
 
-        else -> listOf(WebSymbol.NameSegment(
+        else -> listOf(WebSymbolNameSegment(
           start, end,
           emptyList(),
-          problem = WebSymbol.MatchProblem.UNKNOWN_ITEM,
+          problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_ITEM,
           displayName = displayName,
-          symbolTypes = itemsProvider?.getSymbolTypes(owner ?: contextStack.lastOrNull() as? WebSymbol) ?: emptySet(),
+          symbolKinds = itemsProvider?.getSymbolKinds(owner ?: contextStack.lastOrNull() as? WebSymbol) ?: emptySet(),
         ))
       }
     ))

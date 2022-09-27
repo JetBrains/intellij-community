@@ -26,7 +26,9 @@ import javax.swing.Icon
 interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, DocumentationSymbol, NavigatableSymbol {
 
   val origin: WebSymbolsContainer.Origin
+
   val namespace: SymbolNamespace
+
   val kind: SymbolKind
 
   @JvmDefault
@@ -48,8 +50,8 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
     get() = true
 
   @JvmDefault
-  val nameSegments: List<NameSegment>
-    get() = listOf(NameSegment(0, matchedName.length, this))
+  val nameSegments: List<WebSymbolNameSegment>
+    get() = listOf(WebSymbolNameSegment(0, matchedName.length, this))
 
   @JvmDefault
   val contextContainers: Sequence<WebSymbolsContainer>
@@ -123,7 +125,7 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
     get() = null
 
   @JvmDefault
-  val attributeValue: AttributeValue?
+  val attributeValue: WebSymbolHtmlAttributeValue?
     get() = null
 
   @JvmDefault
@@ -186,155 +188,6 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
   @JvmDefault
   fun validateName(name: String): String? = null
 
-  /**
-   * null values might be replaced ("shadowed") by sibling WebSymbols while merging. Otherwise, default values are applied as the last step.
-   */
-  interface AttributeValue {
-    /** Default: PLAIN */
-    @JvmDefault
-    val kind: AttributeValueKind?
-      get() = null
-
-    @JvmDefault
-    val type: AttributeValueType?
-      get() = null
-
-    /** Default: true */
-    @JvmDefault
-    @get:JvmName("isRequired")
-    val required: Boolean?
-      get() = null
-
-    @JvmDefault
-    val default: String?
-      get() = null
-
-    @JvmDefault
-    val langType: Any?
-      get() = null
-  }
-
-  enum class AttributeValueKind {
-    PLAIN,
-    EXPRESSION,
-    NO_VALUE
-  }
-
-  enum class AttributeValueType {
-    BOOLEAN,
-    NUMBER,
-    STRING,
-    ENUM,
-    COMPLEX,
-    OF_MATCH
-  }
-
-  data class SymbolType(
-    val namespace: SymbolNamespace,
-    val kind: SymbolKind,
-  )
-
-  class NameSegment(val start: Int,
-                    val end: Int,
-                    val symbols: List<WebSymbol> = emptyList(),
-                    val problem: MatchProblem? = null,
-                    @NlsSafe
-                    val displayName: String? = null,
-                    val matchScore: Int = end - start,
-                    symbolTypes: Set<SymbolType>? = null,
-                    private val explicitDeprecated: Boolean? = null,
-                    private val explicitPriority: Priority? = null,
-                    private val explicitProximity: Int? = null) {
-
-    constructor(start: Int, end: Int, symbol: WebSymbol) : this(start, end, listOf(symbol))
-    constructor(start: Int, end: Int, vararg symbols: WebSymbol) : this(start, end, symbols.toList())
-
-    init {
-      assert(start <= end)
-    }
-
-    @get:JvmName("isDeprecated")
-    val deprecated: Boolean
-      get() = explicitDeprecated ?: symbols.any { it.deprecated }
-    val priority: Priority?
-      get() = explicitPriority ?: symbols.asSequence().mapNotNull { it.priority }.maxOrNull()
-    val proximity: Int?
-      get() = explicitProximity ?: symbols.asSequence().mapNotNull { it.proximity }.maxOrNull()
-
-    private val forcedSymbolTypes = symbolTypes
-
-    val symbolTypes: Set<SymbolType>
-      get() =
-        forcedSymbolTypes
-        ?: symbols.asSequence().map { SymbolType(it.namespace, it.kind) }.toSet()
-
-    fun getName(symbol: WebSymbol): String =
-      symbol.matchedName.substring(start, end)
-
-    fun withOffset(offset: Int): NameSegment =
-      NameSegment(start + offset, end + offset, symbols, problem, displayName,
-                  matchScore, symbolTypes, explicitDeprecated, explicitPriority, explicitProximity)
-
-    fun applyProperties(deprecated: Boolean? = null,
-                        priority: Priority? = null,
-                        proximity: Int? = null,
-                        problem: MatchProblem? = null,
-                        symbols: List<WebSymbol> = emptyList()): NameSegment =
-      NameSegment(start, end, this.symbols + symbols, problem ?: this.problem,
-                  displayName, matchScore, symbolTypes,
-                  deprecated ?: this.explicitDeprecated, priority ?: this.explicitPriority,
-                  proximity ?: this.explicitProximity)
-
-    fun canUnwrapSymbols(): Boolean =
-      explicitDeprecated == null
-      && problem == null
-      && displayName == null
-      && matchScore == end - start
-      && explicitPriority == null
-      && explicitProximity == null
-      && symbols.isNotEmpty()
-
-    fun createPointer(): Pointer<NameSegment> =
-      NameSegmentPointer(this)
-
-    override fun toString(): String {
-      return "<$start:$end${if (problem != null) ":$problem" else ""}-${symbols.size}cs>"
-    }
-
-    private class NameSegmentPointer(nameSegment: NameSegment) : Pointer<NameSegment> {
-
-      private val start = nameSegment.start
-      private val end = nameSegment.end
-      private val symbols = nameSegment.symbols.map { it.createPointer() }
-      private val problem = nameSegment.problem
-
-      @NlsSafe
-      private val displayName = nameSegment.displayName
-      private val matchScore = nameSegment.matchScore
-      private val types = nameSegment.symbolTypes
-      private val explicitDeprecated = nameSegment.explicitDeprecated
-      private val explicitPriority = nameSegment.explicitPriority
-      private val explicitProximity = nameSegment.explicitProximity
-
-
-      override fun dereference(): NameSegment? =
-        symbols.map { it.dereference() }
-          .takeIf { it.all { symbol -> symbol != null } }
-          ?.let {
-            @Suppress("UNCHECKED_CAST")
-            (NameSegment(start, end, it as List<WebSymbol>, problem, displayName, matchScore,
-                         types, explicitDeprecated, explicitPriority, explicitProximity))
-          }
-
-    }
-  }
-
-  enum class MatchProblem {
-    MISSING_REQUIRED_PART,
-    UNKNOWN_ITEM,
-    DUPLICATE
-  }
-
   enum class Priority(val value: Double) {
     LOWEST(0.0),
     LOW(1.0),
@@ -372,20 +225,5 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
      * to specify whether they require arguments. Defaults to false.
      **/
     const val PROP_ARGUMENTS = "arguments"
-
-    private fun WebSymbol.findSymbolsAt(offset: Int): List<WebSymbol> =
-      nameSegments.takeIf { it.size >= 2 || this is WebSymbolMatch }
-        ?.asSequence()
-        ?.filter { it.symbols.isNotEmpty() }
-        ?.find { it.start <= offset && offset <= it.end }
-        ?.let { segment ->
-          segment.symbols.flatMap {
-            it.findSymbolsAt(offset - segment.start)
-          }
-        }
-      ?: listOf(this)
-
-    val (MatchProblem?).isCritical
-      get() = this == MatchProblem.MISSING_REQUIRED_PART || this == MatchProblem.UNKNOWN_ITEM
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.webSymbols.patterns.impl
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsContainer
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
@@ -18,7 +19,7 @@ internal class StaticPattern(val content: String) : WebSymbolsPattern() {
                      start: Int,
                      end: Int): List<MatchResult> =
     if (content.length <= end - start && params.name.startsWith(content, start))
-      listOf(MatchResult(WebSymbol.NameSegment(start, start + content.length)))
+      listOf(MatchResult(WebSymbolNameSegment(start, start + content.length)))
     else emptyList()
 
   override fun getCompletionResults(owner: WebSymbol?,

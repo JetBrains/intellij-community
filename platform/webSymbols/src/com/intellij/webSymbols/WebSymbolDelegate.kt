@@ -30,7 +30,7 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
 
   override val completeMatch: Boolean
     get() = delegate.completeMatch
-  override val nameSegments: List<WebSymbol.NameSegment>
+  override val nameSegments: List<WebSymbolNameSegment>
     get() = delegate.nameSegments
   override val contextContainers: Sequence<WebSymbolsContainer>
     get() = delegate.contextContainers
@@ -64,7 +64,7 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
     get() = delegate.proximity
   override val type: Any?
     get() = delegate.type
-  override val attributeValue: WebSymbol.AttributeValue?
+  override val attributeValue: WebSymbolHtmlAttributeValue?
     get() = delegate.attributeValue
   override val pattern: WebSymbolsPattern?
     get() = delegate.pattern

@@ -96,8 +96,8 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
         }
 
   private class PatternDelegateItemsProvider(override val delegate: WebSymbol) : com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider {
-    override fun getSymbolTypes(context: WebSymbol?): Set<WebSymbol.SymbolType> =
-      setOf(WebSymbol.SymbolType(delegate.namespace, delegate.kind))
+    override fun getSymbolKinds(context: WebSymbol?): Set<WebSymbolQualifiedKind> =
+      setOf(WebSymbolQualifiedKind(delegate.namespace, delegate.kind))
 
     override fun codeCompletion(name: String,
                                 position: Int,
@@ -136,8 +136,8 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
   }
 
   private class PatternItemsProvider(val items: ListReference) : com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider {
-    override fun getSymbolTypes(context: WebSymbol?): Set<WebSymbol.SymbolType> =
-      items.asSequence().mapNotNull { it.getSymbolType(context) }.toSet()
+    override fun getSymbolKinds(context: WebSymbol?): Set<WebSymbolQualifiedKind> =
+      items.asSequence().mapNotNull { it.getSymbolKind(context) }.toSet()
 
     override val delegate: WebSymbol?
       get() = null

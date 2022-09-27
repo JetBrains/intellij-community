@@ -4,7 +4,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.JBUI
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.WebSymbol.NameSegment
+import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.patterns.impl.applyIcons
 import javax.swing.Icon
 
@@ -13,7 +13,7 @@ internal fun Icon.scaleToHeight(height: Int): Icon {
   return IconUtil.scale(this, null, scale)
 }
 
-internal fun <T> List<T>.selectBest(segmentsProvider: (T) -> List<NameSegment>,
+internal fun <T> List<T>.selectBest(segmentsProvider: (T) -> List<WebSymbolNameSegment>,
                                     priorityProvider: (T) -> WebSymbol.Priority?,
                                     isExtension: (T) -> Boolean) =
   if (size > 1) {

@@ -16,7 +16,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbol.NameSegment
+import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolReference
 import com.intellij.webSymbols.WebSymbolReferenceProblem
 import com.intellij.webSymbols.WebSymbolReferenceProblem.ProblemKind
@@ -68,7 +68,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
     }
 
     val problemOnlyRanges = mutableMapOf<TextRange, Boolean>()
-    val result = MultiMap<TextRange, NameSegment>()
+    val result = MultiMap<TextRange, WebSymbolNameSegment>()
 
     val queue = LinkedList(symbol.nameSegments.map { Pair(it, 0) })
     while (queue.isNotEmpty()) {
@@ -92,7 +92,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
           .takeWhile { it.nameSegments.size == 1 }
 
         if (unwrappedSymbols.isNotEmpty()) {
-          result.putValue(range, NameSegment(0, nameSegment.end, unwrappedSymbols))
+          result.putValue(range, WebSymbolNameSegment(0, nameSegment.end, unwrappedSymbols))
           problemOnlyRanges[range] = false
         }
         else {
@@ -129,7 +129,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
 
   private open class NameSegmentReference(private val element: PsiElement,
                                           private val rangeInElement: TextRange,
-                                          protected val nameSegments: Collection<NameSegment>)
+                                          protected val nameSegments: Collection<WebSymbolNameSegment>)
     : WebSymbolReference {
 
     override fun getElement(): PsiElement = element
@@ -153,7 +153,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
 
   private class NameSegmentReferenceWithProblem(element: PsiElement,
                                                 rangeInElement: TextRange,
-                                                nameSegments: Collection<NameSegment>,
+                                                nameSegments: Collection<WebSymbolNameSegment>,
                                                 private val deprecation: Boolean,
                                                 private val problemOnly: Boolean)
     : NameSegmentReference(element, rangeInElement, nameSegments) {
@@ -167,11 +167,11 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
         .asSequence()
         .mapNotNull { segment ->
           val problemKind = segment.getProblemKind() ?: return@mapNotNull null
-          val toolMapping = segment.symbolTypes.map {
+          val toolMapping = segment.symbolKinds.map {
             WebSymbolsInspectionToolMappingEP.get(it.namespace, it.kind, problemKind)
           }.firstOrNull()
           WebSymbolReferenceProblem(
-            segment.symbolTypes,
+            segment.symbolKinds,
             problemKind,
             inspectionManager.createProblemDescriptor(
               element, TextRange(segment.start, segment.end),
@@ -182,7 +182,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
           )
         }.firstOrNull()
       val deprecationProblem = if (deprecation) {
-        val symbolTypes = nameSegments.flatMapTo(LinkedHashSet()) { it.symbolTypes }
+        val symbolTypes = nameSegments.flatMapTo(LinkedHashSet()) { it.symbolKinds }
         val toolMapping = symbolTypes.map {
           WebSymbolsInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.DeprecatedSymbol)
         }.firstOrNull()

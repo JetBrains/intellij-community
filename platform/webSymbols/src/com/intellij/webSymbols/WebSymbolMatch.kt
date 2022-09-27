@@ -6,13 +6,12 @@ import com.intellij.model.Pointer
 import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.WebSymbol.NameSegment
 import com.intellij.webSymbols.WebSymbol.Priority
 import com.intellij.webSymbols.utils.merge
 import javax.swing.Icon
 
 open class WebSymbolMatch private constructor(override val matchedName: String,
-                                              override val nameSegments: List<NameSegment>,
+                                              override val nameSegments: List<WebSymbolNameSegment>,
                                               override val namespace: SymbolNamespace,
                                               override val kind: SymbolKind,
                                               override val origin: WebSymbolsContainer.Origin,
@@ -74,7 +73,7 @@ open class WebSymbolMatch private constructor(override val matchedName: String,
     get() = reversedSegments().flatMap { it.symbols }
       .mapNotNull { it.type }.firstOrNull()
 
-  override val attributeValue: WebSymbol.AttributeValue?
+  override val attributeValue: WebSymbolHtmlAttributeValue?
     get() = reversedSegments().flatMap { it.symbols }.mapNotNull { it.attributeValue }.merge()
 
   override val required: Boolean?
@@ -146,7 +145,7 @@ open class WebSymbolMatch private constructor(override val matchedName: String,
     @JvmStatic
     @JvmOverloads
     fun create(matchedName: String,
-               nameSegments: List<NameSegment>,
+               nameSegments: List<WebSymbolNameSegment>,
                namespace: SymbolNamespace,
                kind: SymbolKind,
                origin: WebSymbolsContainer.Origin,
@@ -158,7 +157,7 @@ open class WebSymbolMatch private constructor(override val matchedName: String,
       else WebSymbolMatch(matchedName, nameSegments, namespace, kind, origin,
                           explicitPriority, explicitProximity)
 
-    private fun List<NameSegment>.equalsIgnoreOffset(other: List<NameSegment>): Boolean {
+    private fun List<WebSymbolNameSegment>.equalsIgnoreOffset(other: List<WebSymbolNameSegment>): Boolean {
       if (size != other.size) return false
       if (this.isEmpty()) return true
       val startOffset1 = this[0].start
@@ -184,7 +183,7 @@ open class WebSymbolMatch private constructor(override val matchedName: String,
   }
 
   class PsiSourcedWebSymbolMatch(matchedName: String,
-                                 nameSegments: List<NameSegment>,
+                                 nameSegments: List<WebSymbolNameSegment>,
                                  namespace: SymbolNamespace,
                                  kind: SymbolKind,
                                  origin: WebSymbolsContainer.Origin,
@@ -220,7 +219,7 @@ open class WebSymbolMatch private constructor(override val matchedName: String,
         .takeIf { it.all { segment -> segment != null } }
         ?.let {
           @Suppress("UNCHECKED_CAST")
-          (create(matchedName, it as List<NameSegment>, namespace, kind, origin,
+          (create(matchedName, it as List<WebSymbolNameSegment>, namespace, kind, origin,
                   explicitPriority, explicitProximity))
         }
 

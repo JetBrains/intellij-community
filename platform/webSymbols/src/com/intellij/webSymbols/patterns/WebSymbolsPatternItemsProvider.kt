@@ -2,14 +2,11 @@
 package com.intellij.webSymbols.patterns
 
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolCodeCompletionItem
-import com.intellij.webSymbols.WebSymbolsContainer
-import com.intellij.webSymbols.WebSymbolsRegistry
+import com.intellij.webSymbols.*
 
 interface WebSymbolsPatternItemsProvider {
   @JvmDefault
-  fun getSymbolTypes(context: WebSymbol?): Set<WebSymbol.SymbolType> =
+  fun getSymbolKinds(context: WebSymbol?): Set<WebSymbolQualifiedKind> =
     emptySet()
 
   val delegate: WebSymbol?

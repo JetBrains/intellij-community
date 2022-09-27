@@ -6,11 +6,12 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbol.Companion.isCritical
+import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsContainer
 import com.intellij.webSymbols.impl.selectBest
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
+import com.intellij.webSymbols.utils.isCritical
 import kotlin.math.max
 import kotlin.math.min
 
@@ -44,7 +45,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
           if (!isRequired)
             matchResults.filter { matchResult ->
               matchResult.segments
-                .all { it.problem != WebSymbol.MatchProblem.MISSING_REQUIRED_PART }
+                .all { it.problem != WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART }
             }
           else
             matchResults
@@ -76,9 +77,9 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
         }
         .let { matchResults ->
           if (!isRequired)
-            matchResults + MatchResult(WebSymbol.NameSegment(start, start))
+            matchResults + MatchResult(WebSymbolNameSegment(start, start))
           else if (matchResults.isEmpty())
-            listOf(MatchResult(WebSymbol.NameSegment(start, start, problem = WebSymbol.MatchProblem.MISSING_REQUIRED_PART)))
+            listOf(MatchResult(WebSymbolNameSegment(start, start, problem = WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART)))
           else
             matchResults
         }
@@ -241,8 +242,8 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                 if (StringUtil.equals(prev, cur)) {
                   matchResult = MatchResult(
                     matchResult.segments.map { segment ->
-                      if (segment.problem == null || segment.problem == WebSymbol.MatchProblem.UNKNOWN_ITEM)
-                        segment.applyProperties(problem = WebSymbol.MatchProblem.DUPLICATE)
+                      if (segment.problem == null || segment.problem == WebSymbolNameSegment.MatchProblem.UNKNOWN_ITEM)
+                        segment.copy(problem = WebSymbolNameSegment.MatchProblem.DUPLICATE)
                       else segment
                     }
                   )

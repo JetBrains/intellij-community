@@ -4,6 +4,7 @@ package com.intellij.webSymbols.patterns.impl
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsContainer
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
@@ -19,7 +20,7 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : WebSymbolsPat
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> =
-    listOf(MatchResult(WebSymbol.NameSegment(start, start)))
+    listOf(MatchResult(WebSymbolNameSegment(start, start)))
 
   override fun getCompletionResults(owner: WebSymbol?,
                                     contextStack: Stack<WebSymbolsContainer>,
