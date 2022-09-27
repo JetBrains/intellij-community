@@ -179,9 +179,17 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             protected open fun subscribe(connection: MessageBusConnection) {
             }
 
-            protected fun Key.findStdLib(): LibraryInfo? = dependencies().firstOrNull {
-                it is LibraryInfo && isStdlib(it)
-            } as LibraryInfo?
+            protected fun Key.findStdLib(): LibraryInfo? {
+                val dependencies = if (this is LibraryInfo) {
+                    if (isStdlib(this)) return this
+
+                    LibraryDependenciesCache.getInstance(project).getLibraryDependencies(this).libraries
+                } else {
+                    dependencies()
+                }
+
+                return dependencies.firstNotNullOfOrNull { it.safeAs<LibraryInfo>()?.takeIf(::isStdlib) }
+            }
 
             protected fun LibraryInfo?.toStdlibDependency(): StdlibDependency {
                 if (this == null) {
@@ -231,11 +239,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         }
 
         private inner class LibraryCache : AbstractCache<LibraryInfo>() {
-            override fun calculate(key: LibraryInfo): StdlibDependency {
-                val stdLib = key.takeIf(::isStdlib) ?: key.findStdLib()
-
-                return stdLib.toStdlibDependency()
-            }
+            override fun calculate(key: LibraryInfo): StdlibDependency = key.findStdLib().toStdlibDependency()
 
             fun putExtraValues(map: Map<LibraryInfo, StdlibDependency>) {
                 putAll(map)
