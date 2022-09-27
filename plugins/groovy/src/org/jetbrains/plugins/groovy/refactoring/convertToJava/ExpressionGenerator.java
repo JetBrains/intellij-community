@@ -22,10 +22,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
@@ -1544,5 +1541,19 @@ public class ExpressionGenerator extends Generator {
     }
 
     builder.append(')');
+  }
+
+  @Override
+  public void visitExpressionList(@NotNull GrExpressionList expressionList) {
+    boolean first = true;
+    for (GrExpression expression : expressionList.getExpressions()) {
+      if (!first) {
+        builder.append(", ");
+      }
+      else {
+        first = false;
+      }
+      expression.accept(this);
+    }
   }
 }

@@ -22,6 +22,8 @@ class FileGenerationTest extends LightGroovyTestCase {
     myFixture.checkResultByFile("${testName}.java")
   }
 
+  void testForLoops() { doTest() }
+
   void testLiterals() { doTest() }
 
   void testIncrementAndDecrement() { doTest() }
