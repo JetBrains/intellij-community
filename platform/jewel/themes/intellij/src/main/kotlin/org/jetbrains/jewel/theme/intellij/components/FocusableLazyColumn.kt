@@ -2,8 +2,8 @@ package org.jetbrains.jewel.theme.intellij.components
 
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
@@ -26,18 +26,15 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.platform.InspectorValueInfo
@@ -48,22 +45,21 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.theme.intellij.appendIf
 import org.jetbrains.jewel.theme.intellij.visibleItemsRange
 import kotlin.math.max
 import kotlin.math.min
 
 class FocusableLazyListState internal constructor(internal val listState: LazyListState) : ScrollableState by listState {
 
-    suspend fun focusItem(itemIndex: Int, animate: Boolean = false) {
+    suspend fun focusItem(itemIndex: Int, animateScroll: Boolean = false, scrollOffset: Int = 0) {
         val visibleRange = listState.visibleItemsRange.drop(2).dropLast(4)
 
         if (itemIndex !in visibleRange && visibleRange.isNotEmpty()) {
             when {
-                itemIndex < visibleRange.first() -> listState.scrollToItem(max(0, itemIndex - 2), animate)
+                itemIndex < visibleRange.first() -> listState.scrollToItem(max(0, itemIndex - 2), animateScroll, scrollOffset)
                 itemIndex > visibleRange.last() -> {
                     val indexOfFirstVisibleElement = itemIndex - visibleRange.size
-                    listState.scrollToItem(min(listState.layoutInfo.totalItemsCount - 1, indexOfFirstVisibleElement - 1), animate)
+                    listState.scrollToItem(min(listState.layoutInfo.totalItemsCount - 1, indexOfFirstVisibleElement - 1), animateScroll, scrollOffset)
                 }
             }
         }
@@ -75,6 +71,8 @@ class FocusableLazyListState internal constructor(internal val listState: LazyLi
             ?.focusRequester
             ?.requestFocus()
     }
+
+    internal val lastFocusedIndexState: MutableState<Int?> = mutableStateOf(null)
 
     val layoutInfo: FocusableLazyListLayoutInfo
         get() = listState.layoutInfo.asFocusable()
@@ -226,13 +224,15 @@ fun FocusableLazyColumn(
     onKeyPressed: (KeyEvent, Int) -> Boolean = { _, _ -> false },
     content: LazyListScope.() -> Unit
 ) {
-
-    var lastFocusedIndex: Int? by remember { mutableStateOf(null) }
-
     Box(
         modifier
-            .onKeyEvent { event -> lastFocusedIndex?.let { onKeyPressed(event, it) } ?: false }
-            .onFocusChanged { if (!it.isFocused) lastFocusedIndex = null }
+            .onPreviewKeyEvent { event ->
+                state.lastFocusedIndexState.value?.let { onKeyPressed(event, it) } ?: false
+            }
+            .onFocusChanged {
+                println(it)
+                if (!it.hasFocus) state.lastFocusedIndexState.value = null
+            }
             .focusable()
     ) {
         LazyColumn(
@@ -248,13 +248,11 @@ fun FocusableLazyColumn(
                 .forEach { entry ->
                     when (entry) {
                         is LazyListScopeContainer.Entry.Item ->
-                            item(entry, lastFocusedIndex ?: -1) { index: Int -> lastFocusedIndex = index }
-
+                            item(entry) { index: Int -> state.lastFocusedIndexState.value = index }
                         is LazyListScopeContainer.Entry.Items ->
-                            items(entry, lastFocusedIndex ?: -1) { index: Int -> lastFocusedIndex = index }
-
+                            items(entry) { index: Int -> state.lastFocusedIndexState.value = index }
                         is LazyListScopeContainer.Entry.StickyHeader ->
-                            stickyHeader(entry, lastFocusedIndex ?: -1) { index: Int -> lastFocusedIndex = index }
+                            stickyHeader(entry) { index: Int -> state.lastFocusedIndexState.value = index }
                     }
                 }
         }
@@ -263,7 +261,6 @@ fun FocusableLazyColumn(
 
 private fun LazyListScope.stickyHeader(
     entry: LazyListScopeContainer.Entry.StickyHeader,
-    focusIndex: Int,
     onItemFocused: (Int) -> Unit
 ) {
     val fr = FocusRequester()
@@ -273,10 +270,7 @@ private fun LazyListScope.stickyHeader(
                 .focusRequester(fr)
                 .onFocusChanged { if (it.hasFocus) onItemFocused(entry.innerIndex) }
                 .focusable()
-                .appendIf(focusIndex == entry.innerIndex) { background(Color.Red) }
-                .clickable(
-                    onClick = { fr.requestFocus() }
-                )
+                .clickable(onClick = { fr.requestFocus() })
         ) {
             entry.content(LazyItemScope())
         }
@@ -285,7 +279,6 @@ private fun LazyListScope.stickyHeader(
 
 private fun LazyListScope.items(
     entry: LazyListScopeContainer.Entry.Items,
-    focusIndex: Int,
     onItemFocused: (Int) -> Unit
 ) {
     val requesters = List(entry.count) { FocusRequester() }
@@ -295,10 +288,7 @@ private fun LazyListScope.items(
                 .focusRequester(requesters[entry.innerIndex + itemIndex])
                 .onFocusChanged { if (it.hasFocus) onItemFocused(entry.innerIndex + itemIndex) }
                 .focusable()
-                .appendIf(focusIndex == entry.innerIndex + itemIndex) { background(Color.Red) }
-                .clickable(
-                    onClick = { requesters[entry.innerIndex + itemIndex].requestFocus() }
-                )
+                .clickable(onClick = { requesters[entry.innerIndex + itemIndex].requestFocus() })
         ) {
             entry.itemContent(LazyItemScope(), itemIndex)
         }
@@ -307,7 +297,6 @@ private fun LazyListScope.items(
 
 private fun LazyListScope.item(
     entry: LazyListScopeContainer.Entry.Item,
-    focusIndex: Int,
     onItemFocused: (Int) -> Unit
 ) {
     val fr = FocusRequester()
@@ -317,10 +306,7 @@ private fun LazyListScope.item(
                 .focusRequester(fr)
                 .onFocusChanged { if (it.hasFocus) onItemFocused(entry.innerIndex) }
                 .focusable()
-                .appendIf(focusIndex == entry.innerIndex) { background(Color.Red) }
-                .clickable(
-                    onClick = { fr.requestFocus() }
-                )
+                .combinedClickable(onClick = { fr.requestFocus() })
         ) {
             entry.content(LazyItemScope())
         }
@@ -333,11 +319,12 @@ internal class LazyListScopeContainer : LazyListScope {
 
     internal sealed class Entry {
 
-        data class Item(val key: Any?, val innerIndex: Int, val content: @Composable LazyItemScope.() -> Unit) : Entry()
+        data class Item(val key: Any?, val innerIndex: Int, val contentType: Any?, val content: @Composable LazyItemScope.() -> Unit) : Entry()
 
         data class Items(
             val count: Int,
             val key: ((index: Int) -> Any)?,
+            val contentType: (index: Int) -> Any?,
             val innerIndex: Int,
             val itemContent: @Composable LazyItemScope.(index: Int) -> Unit
         ) : Entry()
@@ -352,14 +339,17 @@ internal class LazyListScopeContainer : LazyListScope {
 
     internal val entries = mutableListOf<Entry>()
 
-    @Deprecated("Use the non deprecated overload", level = DeprecationLevel.HIDDEN)
-    override fun item(key: Any?, content: @Composable LazyItemScope.() -> Unit) {
-        entries.add(Entry.Item(key, lastIndex++, content))
+    override fun item(key: Any?, contentType: Any?, content: @Composable LazyItemScope.() -> Unit) {
+        entries.add(Entry.Item(key, lastIndex++, contentType, content))
     }
 
-    @Deprecated("Use the non deprecated overload", level = DeprecationLevel.HIDDEN)
-    override fun items(count: Int, key: ((index: Int) -> Any)?, itemContent: @Composable LazyItemScope.(index: Int) -> Unit) {
-        entries.add(Entry.Items(count, key, lastIndex, itemContent))
+    override fun items(
+        count: Int,
+        key: ((index: Int) -> Any)?,
+        contentType: (index: Int) -> Any?,
+        itemContent: @Composable LazyItemScope.(index: Int) -> Unit
+    ) {
+        entries.add(Entry.Items(count, key, contentType, lastIndex, itemContent))
         lastIndex += count
     }
 

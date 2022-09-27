@@ -17,7 +17,10 @@ kotlin {
     }
     sourceSets {
         all {
-            languageSettings.optIn("kotlin.time.ExperimentalTime")
+            languageSettings {
+                optIn("kotlin.time.ExperimentalTime")
+                optIn("androidx.compose.foundation.ExperimentalFoundationApi")
+            }
         }
     }
 }
