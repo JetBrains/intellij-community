@@ -245,8 +245,17 @@ public final class ExternalDiffToolUtil {
                              @NotNull ExternalDiffSettings.ExternalTool externalTool,
                              @NotNull List<? extends DiffContent> contents,
                              @NotNull List<String> titles,
-                             @Nullable String windowTitle)
-    throws IOException, ExecutionException {
+                             @Nullable String windowTitle) throws IOException, ExecutionException {
+    GeneralCommandLine commandLine = createDiffCommandLine(project, externalTool, contents, titles, windowTitle);
+    commandLine.createProcess();
+  }
+
+  @NotNull
+  private static GeneralCommandLine createDiffCommandLine(@Nullable Project project,
+                                                          @NotNull ExternalDiffSettings.ExternalTool externalTool,
+                                                          @NotNull List<? extends DiffContent> contents,
+                                                          @NotNull List<String> titles,
+                                                          @Nullable String windowTitle) throws IOException {
     assert contents.size() == 2 || contents.size() == 3;
     assert titles.size() == contents.size();
 
@@ -265,7 +274,7 @@ public final class ExternalDiffToolUtil {
       patterns.put("%3", files.get(1).getPath());
     }
 
-    execute(externalTool.getProgramPath(), externalTool.getArgumentPattern(), patterns);
+    return createCommandLine(externalTool.getProgramPath(), externalTool.getArgumentPattern(), patterns);
   }
 
   @RequiresEdt
@@ -292,40 +301,11 @@ public final class ExternalDiffToolUtil {
                                         @NotNull ExternalDiffSettings.ExternalTool externalTool,
                                         @NotNull ThreesideMergeRequest request,
                                         @Nullable JComponent parentComponent) throws IOException, ExecutionException {
-    OutputFile outputFile = null;
-    List<InputFile> inputFiles = null;
-    try {
-      DiffContent outputContent = request.getOutputContent();
-      List<? extends DiffContent> contents = request.getContents();
-      List<String> titles = request.getContentTitles();
-      String windowTitle = request.getTitle();
-
-      assert contents.size() == 3;
-      assert titles.size() == contents.size();
-
-      inputFiles = createInputFiles(project, contents, titles, windowTitle);
-      outputFile = createOutputFile(project, outputContent, windowTitle);
-
-      Map<String, String> patterns = new HashMap<>();
-      patterns.put("%1", inputFiles.get(0).getPath());
-      patterns.put("%2", inputFiles.get(2).getPath());
-      patterns.put("%3", inputFiles.get(1).getPath());
-      patterns.put("%4", outputFile.getPath());
-
-      final Process process = execute(externalTool.getProgramPath(), externalTool.getArgumentPattern(), patterns);
-
-      boolean success = waitMergeProcessWithModal(project, process, externalTool.isMergeTrustExitCode(), parentComponent);
-      if (success) outputFile.apply();
-      return success;
-    }
-    finally {
-      if (outputFile != null) outputFile.cleanup();
-      if (inputFiles != null) {
-        for (InputFile file : inputFiles) {
-          file.cleanup();
-        }
-      }
-    }
+    return runWithTempMergeFiles(project, request, (outputFile, inputFiles) -> {
+      GeneralCommandLine commandLine = createMergeCommandLine(externalTool, outputFile, inputFiles);
+      final Process process = commandLine.createProcess();
+      return waitMergeProcessWithModal(project, process, externalTool.isMergeTrustExitCode(), parentComponent);
+    });
   }
 
   private static boolean waitMergeProcessWithModal(@Nullable Project project,
@@ -380,9 +360,50 @@ public final class ExternalDiffToolUtil {
     }
   }
 
+  private static boolean runWithTempMergeFiles(@Nullable Project project,
+                                               @NotNull ThreesideMergeRequest request,
+                                               @NotNull MergeTask mergeTask) throws IOException, ExecutionException {
+    OutputFile outputFile = null;
+    List<InputFile> inputFiles = null;
+    try {
+      outputFile = createOutputFile(project, request.getOutputContent(), request.getTitle());
+      inputFiles = createInputFiles(project, request.getContents(), request.getContentTitles(), request.getTitle());
+
+      boolean success = mergeTask.runMerge(outputFile, inputFiles);
+      if (success) {
+        outputFile.apply();
+      }
+      return success;
+    }
+    finally {
+      if (outputFile != null) outputFile.cleanup();
+      if (inputFiles != null) {
+        for (InputFile file : inputFiles) {
+          file.cleanup();
+        }
+      }
+    }
+  }
+
   @NotNull
-  private static Process execute(@NotNull String exePath, @NotNull String parametersTemplate, @NotNull Map<String, String> patterns)
-    throws ExecutionException {
+  private static GeneralCommandLine createMergeCommandLine(@NotNull ExternalDiffSettings.ExternalTool externalTool,
+                                                           @NotNull OutputFile outputFile,
+                                                           @NotNull List<InputFile> inputFiles) {
+    assert inputFiles.size() == 3;
+
+    Map<String, String> patterns = new HashMap<>();
+    patterns.put("%1", inputFiles.get(0).getPath());
+    patterns.put("%2", inputFiles.get(2).getPath());
+    patterns.put("%3", inputFiles.get(1).getPath());
+    patterns.put("%4", outputFile.getPath());
+
+    return createCommandLine(externalTool.getProgramPath(), externalTool.getArgumentPattern(), patterns);
+  }
+
+  @NotNull
+  private static GeneralCommandLine createCommandLine(@NotNull String exePath,
+                                                      @NotNull String parametersTemplate,
+                                                      @NotNull Map<String, String> patterns) {
     List<String> parameters = ParametersListUtil.parse(parametersTemplate, true);
 
     List<String> from = new ArrayList<>();
@@ -401,7 +422,7 @@ public final class ExternalDiffToolUtil {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(exePath);
     commandLine.addParameters(args);
-    return commandLine.createProcess();
+    return commandLine;
   }
 
   @NotNull
@@ -603,5 +624,9 @@ public final class ExternalDiffToolUtil {
 
       return PathUtil.suggestFileName(name + "." + ext, true, false);
     }
+  }
+
+  private interface MergeTask {
+    boolean runMerge(@NotNull OutputFile outputFile, @NotNull List<InputFile> inputFiles) throws ExecutionException;
   }
 }
