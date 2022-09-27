@@ -19,6 +19,7 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.util.JavaParametersUtil
 import com.intellij.execution.util.ProgramParametersUtil
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -49,7 +50,6 @@ import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle.message
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.PsiOnlyKotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.findMainOwner
-import org.jetbrains.kotlin.idea.base.codeInsight.hasMain
 import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
@@ -307,8 +307,12 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
             setupJavaParameters(params)
             params.setShortenCommandLine(myConfiguration.shortenCommandLine, module.project)
             params.mainClass = myConfiguration.runClass
-            setupModulePath(params, module)
-            return params
+            ReadAction.run<RuntimeException> { setupModulePath(params, module) }
+           return params
+        }
+
+        override fun isReadActionRequired(): Boolean {
+            return false
         }
 
         private fun getClasspathType(configurationModule: RunConfigurationModule?): Int {
