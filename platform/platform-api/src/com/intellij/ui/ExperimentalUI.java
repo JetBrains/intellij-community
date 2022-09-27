@@ -152,33 +152,5 @@ public abstract class ExperimentalUI {
       //todo[kb] add RunOnce
       UISettings.getInstance().setOverrideLafFonts(false);
     }
-    //List<String> keysToPatch = List.of("CheckBoxMenuItem.acceleratorFont",
-    //                                   "CheckBoxMenuItem.font",
-    //                                   "Menu.acceleratorFont",
-    //                                   "Menu.font",
-    //                                   //"MenuBar.font",
-    //                                   "MenuItem.acceleratorFont",
-    //                                   "MenuItem.font",
-    //                                   "PopupMenu.font",
-    //                                   "RadioButtonMenuItem.acceleratorFont",
-    //                                   "RadioButtonMenuItem.font");
-    //for (String key : keysToPatch) {
-    //  Font font = defaults.getFont(key);
-    //  defaults.put(key, new FontUIResource("Inter", font.getStyle(), font.getSize()));
-    //}
-
-    //if (JBColor.isBright()) {
-    //  Color menuBg = new ColorUIResource(0x242933);
-    //  Color menuFg = new ColorUIResource(0xFFFFFF);
-    //  setUIProperty("PopupMenu.background", menuBg, defaults);
-    //  setUIProperty("MenuItem.background", menuBg, defaults);
-    //  setUIProperty("MenuItem.foreground", menuFg, defaults);
-    //  setUIProperty("Menu.background", menuBg, defaults);
-    //  setUIProperty("Menu.foreground", menuFg, defaults);
-    //  setUIProperty("CheckBoxMenuItem.acceleratorForeground", menuFg, defaults);
-    //  setUIProperty("Menu.acceleratorForeground", menuFg, defaults);
-    //  setUIProperty("MenuItem.acceleratorForeground", menuFg, defaults);
-    //  setUIProperty("RadioButtonMenuItem.acceleratorForeground", menuFg, defaults);
-    //}
   }
 }
