@@ -8,9 +8,10 @@ import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.openapi.editor.impl.TypedActionImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 
-class MermaidTypedHandlerDelegate: TypedHandlerDelegate() {
+class MermaidTypedHandlerDelegate : TypedHandlerDelegate() {
   override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
     if (file !is MermaidFile) return Result.CONTINUE
 
@@ -20,10 +21,10 @@ class MermaidTypedHandlerDelegate: TypedHandlerDelegate() {
     val document = editor.document
     val typedAction = TypedAction.getInstance() as TypedActionImpl
 
-    if (c == '<') {
+    if (c == '<' && offset - 2 >= 0 && document.getText(TextRange(offset - 2, offset)) == "<<") {
       runWriteAction {
         typedAction.defaultRawTypedHandler.beginUndoablePostProcessing()
-        document.insertString(offset, ">")
+        document.insertString(offset, ">>")
         caretModel.moveToOffset(offset)
         editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
         editor.selectionModel.removeSelection()
