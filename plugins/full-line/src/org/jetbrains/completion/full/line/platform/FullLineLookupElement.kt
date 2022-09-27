@@ -1,6 +1,7 @@
 package org.jetbrains.completion.full.line.platform
 
 import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.util.registry.Registry
@@ -17,7 +18,7 @@ class FullLineLookupElement(
   val proposal: AnalyzedFullLineProposal,
   private val supporter: FullLineLanguageSupporter,
   val selectedByTab: Boolean = false
-) : LookupElement() {
+) : LookupElement(), MLRankingIgnorable {
   val suffix
     get() = proposal.suffix
 
