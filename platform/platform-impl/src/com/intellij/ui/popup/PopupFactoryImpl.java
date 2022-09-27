@@ -629,6 +629,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final AnAction myAction;
     private Icon myIcon;
     private Icon mySelectedIcon;
+    private String myText;
     private final int myMaxIconWidth;
     private final int myMaxIconHeight;
 
@@ -651,6 +652,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       if (icon == null) icon = selectedIcon != null ? selectedIcon : EmptyIcon.create(myMaxIconWidth, myMaxIconHeight);
       myIcon = icon;
       mySelectedIcon = selectedIcon;
+      myText = presentation.getText();
     }
 
     @Override
@@ -661,6 +663,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
     public Icon getIcon(boolean selected) {
       return selected && mySelectedIcon != null ? mySelectedIcon : myIcon;
     }
+
+    public @NlsActions.ActionText String getText() {
+      return myText;
+    }
+
   }
 
 

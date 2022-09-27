@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list
 
-import com.intellij.openapi.util.NlsActions.ActionDescription
+import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.ActionPopupStep
 import java.awt.Point
@@ -30,7 +30,7 @@ internal interface PopupInlineActionsSupport {
 
   fun getExtraButtons(list: JList<*>, value: Any, isSelected: Boolean): List<JComponent>
 
-  @ActionDescription
+  @ActionText
   fun getActiveExtraButtonToolTipText(list: JList<*>, value: Any): String?
 
   companion object {

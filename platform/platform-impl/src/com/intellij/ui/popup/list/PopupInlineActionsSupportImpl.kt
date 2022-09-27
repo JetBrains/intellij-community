@@ -100,7 +100,7 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
     if (value !is ActionItem) return null
     val inlineActions = myStep.getInlineActions(value)
     val activeButton = getActiveButtonIndex(list) ?: return null
-    return inlineActions.getOrNull(activeButton)?.action?.templatePresentation?.description
+    return inlineActions.getOrNull(activeButton)?.text
   }
 
   private fun createExtraButton(icon: Icon, active: Boolean): JComponent {
