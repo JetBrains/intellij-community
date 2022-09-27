@@ -15,17 +15,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
 
-public class PyConsoleDebugProcessHandler extends ProcessHandler implements PositionConverterProvider {
+public final class PyConsoleDebugProcessHandler extends ProcessHandler implements PositionConverterProvider {
   private final PyConsoleProcessHandler myConsoleProcessHandler;
 
   public PyConsoleDebugProcessHandler(final PyConsoleProcessHandler processHandler) {
     myConsoleProcessHandler = processHandler;
     processHandler.addProcessListener(new ProcessListener() {
-      @Override
-      public void startNotified(@NotNull ProcessEvent event) {
-
-      }
-
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         PyConsoleDebugProcessHandler.this.notifyProcessTerminated(event.getExitCode());
@@ -63,9 +58,8 @@ public class PyConsoleDebugProcessHandler extends ProcessHandler implements Posi
     return myConsoleProcessHandler;
   }
 
-  @Nullable
   @Override
-  public PyPositionConverter createPositionConverter(@NotNull PyDebugProcess debugProcess) {
+  public @Nullable PyPositionConverter createPositionConverter(@NotNull PyDebugProcess debugProcess) {
     if (myConsoleProcessHandler instanceof PositionConverterProvider) {
       return ((PositionConverterProvider)myConsoleProcessHandler).createPositionConverter(debugProcess);
     }
