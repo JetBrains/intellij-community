@@ -194,7 +194,7 @@ public abstract class CompilerManager {
    * Checks if compile scope given is up-to-date.
    * If called from a non-EDT thread which is currently running under some progress, the method reuses the calling thread and executes under thread's ProgressIndicator.
    * Otherwise, it spawns a new background thread with a new ProgressIndicator which performs the check. The calling thread will be still blocked waiting until the check is completed
-   * @param scope
+   * @param scope - a compilation scope to be checked
    * @return true if build with the specified scope wouldn't do anything or false if something is to be compiled or deleted
    */
   public abstract boolean isUpToDate(@NotNull CompileScope scope);
@@ -202,8 +202,8 @@ public abstract class CompilerManager {
   /**
    * Checks if compile scope given is up-to-date.
    * This method reuses the calling thread and executes under the specified progress indicator
-   * @param scope
-   * @param progress
+   * @param scope - a compilation scope to be checked
+   * @param progress progress indicator to be used for reporting
    * @return true if build with the specified scope wouldn't do anything or false if something is to be compiled or deleted
    */
   public abstract boolean isUpToDate(@NotNull CompileScope scope, @NotNull ProgressIndicator progress);
