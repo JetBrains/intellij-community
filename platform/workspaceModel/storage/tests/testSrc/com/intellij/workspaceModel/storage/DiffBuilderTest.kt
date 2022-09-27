@@ -9,11 +9,8 @@ import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.RepeatedTest
-import org.junit.jupiter.api.RepetitionInfo
-import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -524,5 +521,22 @@ class DiffBuilderTest {
     val result = target.applyDiff(source)
 
     assertEquals(1, result.entities(ParentMultipleEntity::class.java).single().children.size)
+  }
+
+  @RepeatedTest(10)
+  fun `replace entity by equal`() {
+    target.addSampleEntity("foo")
+    val snapshot = target.toSnapshot()
+    val entity = snapshot.singleSampleEntity()
+    val reference = entity.createReference<SampleEntity>()
+    val newBuilder = createBuilderFrom(snapshot)
+    newBuilder.removeEntity(entity)
+    newBuilder.addSampleEntity("foo")
+    val changes = newBuilder.collectChanges(snapshot)
+    //if there is an event about the change, the code which stores EntityReference is supposed to update it
+    if (changes.isEmpty()) {
+      val updated = newBuilder.toSnapshot()
+      assertEquals(updated.singleSampleEntity(), reference.resolve(updated))
+    }
   }
 }

@@ -13,6 +13,8 @@ class StorageReplacement internal constructor(
 
 class BuilderSnapshot(val version: Long, private val storage: EntityStorageSnapshot) {
   val builder: MutableEntityStorage = MutableEntityStorage.from(storage)
+  
+  fun areEntitiesChanged(): Boolean = !builder.hasSameEntities(storage)
 
   /**
    * It's suggested to call this method WITHOUT write locks or anything

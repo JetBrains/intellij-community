@@ -231,6 +231,13 @@ interface MutableEntityStorage : EntityStorage {
   fun addDiff(diff: MutableEntityStorage)
 
   /**
+   * Returns `true` if this instance contains entities with the same properties as [original] storage it was created from. 
+   * The difference from [isEmpty] is that this method will return `true` in cases when an entity was removed, and then a new entity
+   * with the same properties was added.
+   */
+  fun hasSameEntities(original: EntityStorage): Boolean
+
+  /**
    * Please see [EntityStorage.getExternalMapping] for naming conventions
    */
   fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T>

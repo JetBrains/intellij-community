@@ -427,6 +427,17 @@ internal class WorkspaceProjectImporter(
           prepareInBackground(builder)
           durationInBackground += System.nanoTime() - beforeBG
 
+          if (!snapshot.areEntitiesChanged()) {
+            updated = true
+            MavenUtil.invokeAndWaitWriteAction(project) {
+              val beforeWA = System.nanoTime()
+              //we need this e.g. to update Java compiler settings
+              afterApplyInWriteAction(workspaceModel.entityStorage.current)
+              durationInWriteAction += System.nanoTime() - beforeWA
+            }
+            break
+          }
+          
           MavenUtil.invokeAndWaitWriteAction(project) {
             val beforeWA = System.nanoTime()
             updated = workspaceModel.replaceProjectModel(snapshot.getStorageReplacement())

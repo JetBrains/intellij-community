@@ -32,6 +32,8 @@ import org.junit.Test;
 
 import java.io.File;
 
+import static org.junit.Assume.assumeTrue;
+
 public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase {
   @Test
   public void testUpdatingExternallyCreatedFolders() {
@@ -198,6 +200,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
 
   @Test 
   public void testDoNotCommitIfFoldersWasNotChanged() {
+    assumeTrue(isWorkspaceImport());
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -216,6 +219,8 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
 
   @Test 
   public void testCommitOnlyOnceForAllModules() {
+    assumeTrue(isWorkspaceImport());
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +

@@ -569,8 +569,7 @@ class WorkspaceBuilderChangeLogTest {
     val original = builder.toSnapshot()
     builder.removeEntity(entity)
     builder.addSourceEntity("one", oldSource)
-    builder.cleanupChanges(original as AbstractEntityStorage)
-    assertTrue(builder.changeLog.changeLog.values.isEmpty())
+    assertTrue(builder.hasSameEntities(original as AbstractEntityStorage))
   }
 
   @Test
@@ -587,8 +586,7 @@ class WorkspaceBuilderChangeLogTest {
     builder.addEntity(ContentRootTestEntity(MySource) {
       module = moduleTestEntity
     })
-    builder.cleanupChanges(original as AbstractEntityStorage)
-    assertTrue(builder.changeLog.changeLog.values.isEmpty())
+    assertTrue(builder.hasSameEntities(original as AbstractEntityStorage))
   }
 
   @Test
@@ -607,8 +605,7 @@ class WorkspaceBuilderChangeLogTest {
     builder.addEntity(ContentRootTestEntity(MySource) {
       module = moduleTestEntity
     })
-    builder.cleanupChanges(original as AbstractEntityStorage)
-    assertFalse(builder.changeLog.changeLog.values.isEmpty())
+    assertFalse(builder.hasSameEntities(original as AbstractEntityStorage))
   }
 
   @Test
@@ -628,8 +625,7 @@ class WorkspaceBuilderChangeLogTest {
     }
     builder.addEntity(newContentRoot)
     builder.getMutableExternalMapping<Any>("data").addMapping(newContentRoot, 1)
-    builder.cleanupChanges(original as AbstractEntityStorage)
-    assertFalse(builder.changeLog.changeLog.values.isEmpty())
+    assertFalse(builder.hasSameEntities(original as AbstractEntityStorage))
   }
 
   // ------------- Testing events collapsing end ----

@@ -369,8 +369,6 @@ internal class MutableEntityStorageImpl(
       lockWrite()
       val originalImpl = original as AbstractEntityStorage
 
-      cleanupChanges(originalImpl)
-
       val res = HashMap<Class<*>, MutableList<EntityChange<*>>>()
       for ((entityId, change) in this.changeLog.changeLog) {
         when (change) {
@@ -415,11 +413,10 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  /**
-   * Here we eliminate remove + add changes if the entities are the same and they don't have external mappings.
-   * We don't join events if the entities have external mappings just because it's safer.
-   */
-  internal fun cleanupChanges(originalImpl: AbstractEntityStorage) {
+  override fun hasSameEntities(original: EntityStorage): Boolean {
+    if (changeLog.changeLog.isEmpty()) return true
+    
+    original as AbstractEntityStorage
     val adds = ArrayList<WorkspaceEntityData<*>>()
     val removes = CollectionFactory.createSmallMemoryFootprintMap<WorkspaceEntityData<out WorkspaceEntity>, MutableList<WorkspaceEntityData<out WorkspaceEntity>>>()
     changeLog.changeLog.forEach { _, value ->
@@ -441,11 +438,11 @@ internal class MutableEntityStorageImpl(
       }
       if (hasMapping) return@forEach
       val found = possibleRemovedSameEntity?.firstOrNull { possibleRemovedSame ->
-        same(originalImpl, newEntityId, possibleRemovedSame.createEntityId())
+        same(original, newEntityId, possibleRemovedSame.createEntityId())
       }
       if (found != null) {
         val initialEntityId = found.createEntityId()
-        val hasRemovedMapping = originalImpl.indexes.externalMappings.any { (_, value) ->
+        val hasRemovedMapping = original.indexes.externalMappings.any { (_, value) ->
           value.getDataByEntityId(initialEntityId) != null
         }
         if (hasRemovedMapping) return@forEach
@@ -454,9 +451,10 @@ internal class MutableEntityStorageImpl(
         idsToRemove += newEntityId to initialEntityId
       }
     }
+    val collapsibleChanges = HashSet<EntityId>()
     idsToRemove.forEach { (new, initial) ->
-      changeLog.changeLog.remove(new)
-      changeLog.changeLog.remove(initial)
+      collapsibleChanges.add(new)
+      collapsibleChanges.add(initial)
 
 
       this.refs.getParentRefsOfChild(new.asChild()).forEach { (connection, parent) ->
@@ -466,11 +464,12 @@ internal class MutableEntityStorageImpl(
               && changedParent.modifiedParents.isEmpty()
               && changedParent.removedChildren.singleOrNull()?.takeIf { it.first == connection && it.second.id == initial } != null
               && changedParent.newChildren.singleOrNull()?.takeIf { it.first == connection && it.second.id == new } != null) {
-            changeLog.changeLog.remove(parent.id)
+            collapsibleChanges.add(parent.id)
           }
         }
       }
     }
+    return collapsibleChanges == changeLog.changeLog.keys
   }
 
   private fun same(originalImpl: AbstractEntityStorage,
