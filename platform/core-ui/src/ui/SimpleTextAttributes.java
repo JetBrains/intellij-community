@@ -324,4 +324,9 @@ public final class SimpleTextAttributes {
   public int hashCode() {
     return Objects.hash(myBgColor, myFgColor, myWaveColor, myStyle);
   }
+
+  @Override
+  public String toString() {
+    return "[" + myBgColor + ", " + myFgColor + ", " + myWaveColor + ", " + myStyle + "]";
+  }
 }
