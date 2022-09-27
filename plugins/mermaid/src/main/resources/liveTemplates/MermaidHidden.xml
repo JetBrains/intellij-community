@@ -87,7 +87,7 @@
   </template>
 
   <template id="mermaid_section" name="mermaid_section"
-            value="section $ID$ &#10;    $END$$SELECTION$&#10;"
+            value="section $ID$&#10;    $END$$SELECTION$"
             description="section statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>

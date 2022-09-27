@@ -100,6 +100,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 %xstate state_statement
 %xstate note_statement
 %xstate note_content
+%xstate simple_note_content
 
 %xstate entity_relationship
 %xstate entity_attributes
@@ -115,6 +116,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 
 %xstate requirement
 %xstate requirement_value
+%xstate requirement_constant_value
 %xstate req_element
 
 
@@ -166,7 +168,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   [^\S\r\n]+ { return WHITE_SPACE; }
   %%([^{][^\n\r]*)? { return LINE_COMMENT; }
 }
-<pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, class_name, struct, note_content, entity_relationship, entity_attributes, gantt, requirement_diagram, requirement, req_element, gitgraph> {
+<pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, class_name, struct, entity_relationship, entity_attributes, gantt, requirement_diagram, requirement, req_element, gitgraph> {
   [\n\r] { return EOL; }
   ";" { return SEMICOLON; }
 }
@@ -185,7 +187,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 	"title" { yypushstate(title); return TITLE; }
   "section" { yypushstate(section); return SECTION; }
   ":" { yybegin(journey_task); return COLON; }
-  [^\s#:;][^#:\n;]*/: { yybegin(journey_task); return TASK_NAME; }
+  [^\s#:;]+ { return TASK_NAME; }
 }
 <flowchart, direction_value, simple_direction_value> {
 	"LR" |
@@ -219,7 +221,13 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 }
 <pie_title_value> {
   [\n\r] { yybegin(pie); return EOL; }
-  [^\n\r]* { return TITLE_VALUE; }
+  [^\s]* { return TITLE_VALUE; }
+  [^\S\r\n]+ { return WHITE_SPACE; }
+  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
+}
+<value> {
+  [^\S\n\r]+ { return WHITE_SPACE; }
+  [\d]+(:?\.[\d]+)? { yybegin(pie); return Pie.VALUE; }
   [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 
@@ -231,7 +239,8 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 <title_value> {
 	\s?(#[^\n\r]*)/[\n\r]? { return IGNORED; }
   [\n\r] { yypopstate(); return EOL; }
-  [^\n\r#;]+ { return TITLE_VALUE; }
+  [^\s#;]+ { return TITLE_VALUE; }
+  [^\S\r\n]+ { return WHITE_SPACE; }
   [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <section> {
@@ -241,14 +250,16 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 <section_title> {
 	\s?(#[^\n\r]*)/[\n\r]? { return IGNORED; }
   [\n\r] { yypopstate(); return EOL; }
-  [^\n\r#:;]+ { return SECTION_TITLE; }
+  [^\s#:;]+ { return SECTION_TITLE; }
+  [^\S\r\n]+ { return WHITE_SPACE; }
   [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <journey_task> {
 	(#[^\n\r]*)/[\n\r]? { return IGNORED; }
   ":" { return COLON; }
+  "," { return COMMA; }
 	[^\S\n\r]+ { return WHITE_SPACE; }
-	[^\s#:;][^#:\n;]* { return TASK_DATA; }
+	[^\s#:;,]+ { return TASK_DATA; }
   [\n\r] { yybegin(journey); return EOL; }
   [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
@@ -266,12 +277,13 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 
   "class" { yybegin(flowchart_class); return CLASS; }
 
-	[^\s\n\r;:%\[({><\^\|\-\=\.]+/[xo<]?\-\-|[xo<]?\=\=|[xo<]?\-\. { return ID; }
-	[^\s\n\r;:%\[({><\^\|\-\=\.]+ { return ID; }
+	"&" { return Flowchart.AMPERSAND; }
+
+	[^\s\n\r;:%&\[({><\^\|\-\=\.]+/[xo<]?\-\-|[xo<]?\=\=|[xo<]?\-\. { return ID; }
+	[^\s\n\r;:%&\[({><\^\|\-\=\.]+ { return ID; }
 	[\-\=\.] { return ID; }
 	:|:: { return ID; }
 
-	" & " { return Flowchart.AMPERSAND; }
   ":::" { yybegin(flowchart_class_val); return STYLE_SEPARATOR; }
 
 	"[" { yybegin(node_text); return OPEN_SQUARE; }
@@ -301,6 +313,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 <node_text> {
 	[\"] { yybegin(node_quoted_text); return DOUBLE_QUOTE; }
 	[^\s\n\r;\])\"\}]+[^\s\n\r;\])\"\}/\\] { return ALIAS; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
   "]" { yybegin(flowchart_body); return CLOSE_SQUARE; }
   ")" { yybegin(flowchart_body); return CLOSE_ROUND; }
   "])" { yybegin(flowchart_body); return Flowchart.STADIUM_END; }
@@ -316,21 +329,25 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 }
 <node_quoted_text> {
 	[\"] { yybegin(node_text); return DOUBLE_QUOTE; }
-  [^\"]* { return ALIAS; }
+  [^\s\"]* { return ALIAS; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
   [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <link_text> {
-	[^\n\r;\[\]()\"|{}\-\=\.]+/\-\-+[-xo>]|\=\=+[=xo>]|\-?\.+\-[xo>] { yybegin(flowchart_body); return Flowchart.LINK_TEXT; }
-  [^\n\r;\[\]()\"|{}\-\=\.]+ { return Flowchart.LINK_TEXT; }
-  [^\n\r;\[\]()\"|{}\-\=\.]+/\| { return Flowchart.LINK_TEXT; }
+	[^\s;\[\]()\"|{}\-\=\.]+/\-\-+[-xo>]|\=\=+[=xo>]|\-?\.+\-[xo>] { yybegin(flowchart_body); return Flowchart.LINK_TEXT; }
+  [^\s;\[\]()\"|{}\-\=\.]+ { return Flowchart.LINK_TEXT; }
+  [^\s;\[\]()\"|{}\-\=\.]+/\| { return Flowchart.LINK_TEXT; }
   [\-\=\.] { return Flowchart.LINK_TEXT; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
+  [^\S\n\r]+/\-\-+[-xo>]|\=\=+[=xo>]|\-?\.+\-[xo>] { yybegin(flowchart_body); return WHITE_SPACE; }
 	[\"] { yybegin(link_quoted_text); return DOUBLE_QUOTE; }
   "|" { yybegin(flowchart_body); return Flowchart.SEP; }
   [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <link_quoted_text> {
 	[\"] { yybegin(link_text); return DOUBLE_QUOTE; }
-  [^\"]* { return Flowchart.LINK_TEXT; }
+  [^\s\"]* { return Flowchart.LINK_TEXT; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
   [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <style> {
@@ -428,7 +445,8 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 	[^\S\n\r]+ { return WHITE_SPACE; }
 }
 <sequence_message> {
-	[^#\n;]* { return Sequence.MESSAGE; }
+	[^\S\n\r]+ { return WHITE_SPACE; }
+	[^#\s;]* { return Sequence.MESSAGE; }
 }
 <sequence_links> {
 	[^\+\->:\s,;]+ { return ID; }
@@ -479,11 +497,13 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 }
 <generic> {
 	"~" { yypopstate(); return TILDA; }
-  [^~]* { return ClassDiagram.GENERIC_TYPE; }
+  [^\s~]* { return ClassDiagram.GENERIC_TYPE; }
+	[^\S\n\r]+ { return WHITE_SPACE; }
 }
 <annotation> {
 	\w+ { return ANNOTATION_VALUE; }
 	">>" { yypopstate(); return ANNOTATION_END; }
+	[^\S\n\r]+ { return WHITE_SPACE; }
 }
 <class_name> {
   "<|" { return ClassDiagram.EXTENSION_START; }
@@ -507,7 +527,10 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   [^\S\r\n]+ { return WHITE_SPACE; }
 }
 <description> {
-	[^\n\r]+ { yypopstate(); return LABEL; }
+	[^\s]+ { return LABEL; }
+  [^\s]+/[\n\r] { yypopstate(); return LABEL; }
+	[^\S\n\r]+ { return WHITE_SPACE; }
+  [^\S\n\r]+/[\n\r] { yypopstate(); return WHITE_SPACE; }
 }
 
 //---state------------------------------------------------------------------------
@@ -530,7 +553,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   "]" { return CLOSE_SQUARE; }
   [^\-\{\[\s\":,\.,<>][^\-\{\}\s\":\.,<>]* { return ID; }
 	"-->" { return ARROW; }
-	"-" { return MINUS; }
+	"--" { return StateDiagram.DIVIDER; }
 }
 <note_statement> {
   "right of" { return RIGHT_OF; }
@@ -538,10 +561,17 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   [^\-\{\[\s\":\.,<>][^\-\{\}\s\":\.,<>]* { yybegin(note_content); return ID; }
   [^\S\r\n]+ { return WHITE_SPACE; }
 }
+<note_content, simple_note_content> {
+  ([^\s:][^\s]?)* { return NOTE_CONTENT; }
+	[^\S\n\r]+ { return WHITE_SPACE; }
+}
 <note_content> {
   "end note" { yypopstate(); return END; }
-	":" { return COLON; }
-  ([^\s:][^\n\r]?)* { return NOTE_CONTENT; }
+	":" { yybegin(simple_note_content); return COLON; }
+  [\n\r] { return EOL; }
+}
+<simple_note_content> {
+  [\n\r] { yypopstate(); return EOL; }
 }
 
 //---entity-relationship----------------------------------------------------------
@@ -589,7 +619,8 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 }
 <gantt_task_data> {
   (#[^\n\r]*)/[\n\r]? { return IGNORED; }
-  [^#\n;,]+ { return TASK_DATA; }
+  [^#\s;,]+ { return TASK_DATA; }
+  [^\S\r\n]+ { return WHITE_SPACE; }
   "," { return COMMA; }
   [\n\r] { yybegin(gantt); return EOL; }
 }
@@ -622,8 +653,8 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 <requirement> {
 	"id" { return ID_KEYWORD; }
   "text" { return Requirement.TEXT; }
-	"risk" { return Requirement.RISK; }
-  "verifymethod" { return Requirement.VERIFY_METHOD; }
+	"risk" { yybegin(requirement_constant_value); return Requirement.RISK; }
+  "verifymethod" { yybegin(requirement_constant_value); return Requirement.VERIFY_METHOD; }
 }
 <req_element> {
 	"type" { return TYPE; }
@@ -634,16 +665,21 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   [\w][^\s\{\<\>\-\=:;]* { return ID; }
 }
 <requirement_value> {
-	"high" { return Requirement.HIGH; }
-	"medium" { return Requirement.MEDIUM; }
-	"low" { return Requirement.LOW; }
-  "analysis" { return Requirement.ANALYSIS; }
-  "inspection" { return Requirement.INSPECTION; }
-  "test" { return Requirement.TEST; }
-  "demonstration" { return Requirement.DEMONSTRATION; }
 	[\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
-	[\w][^\r\n\{\<\>\-\=]* { return LABEL; }
+	[\w][^\s\{\<\>\-\=]* { return LABEL; }
+  [^\S\r\n]+ { return WHITE_SPACE; }
   [\n\r] { yypopstate(); return EOL; }
+}
+<requirement_constant_value> {
+  ":" { return COLON; }
+  [^\S\r\n]+ { return WHITE_SPACE; }
+	"high" { yybegin(requirement); return Requirement.HIGH; }
+	"medium" { yybegin(requirement); return Requirement.MEDIUM; }
+	"low" { yybegin(requirement); return Requirement.LOW; }
+  "analysis" { yybegin(requirement); return Requirement.ANALYSIS; }
+  "inspection" { yybegin(requirement); return Requirement.INSPECTION; }
+  "test" { yybegin(requirement); return Requirement.TEST; }
+  "demonstration" { yybegin(requirement); return Requirement.DEMONSTRATION; }
 }
 
 //---gitgraph---------------------------------------------------------------------
@@ -673,12 +709,6 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 <double_quoted_string> {
   [\"] { yypopstate(); return DOUBLE_QUOTE; }
   [^\"]* { return STRING_VALUE; }
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
-}
-
-<value> {
-  [^\S\n\r]+ { return WHITE_SPACE; }
-  [\d]+(:?\.[\d]+)? { yybegin(pie); return Pie.VALUE; }
   [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <click> {

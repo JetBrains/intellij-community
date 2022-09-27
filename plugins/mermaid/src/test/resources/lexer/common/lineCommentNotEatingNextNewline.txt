@@ -1,0 +1,2 @@
+LINE_COMMENT ('%% This is comment')
+EOL ('\n')

@@ -1,0 +1,2 @@
+OPEN_DIRECTIVE ('%%{')
+CLOSE_DIRECTIVE ('}%%')

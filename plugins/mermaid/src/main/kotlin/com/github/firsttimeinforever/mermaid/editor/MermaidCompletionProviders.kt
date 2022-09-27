@@ -39,7 +39,7 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
 class TitleCompletionProvider : MermaidSimpleCompletionProvider(listOf("title"))
 
 class BranchCompletionProvider(private val branch: String) :
-  MermaidLiveTemplateCompletionProvider(deleteIndent = true) {
+  MermaidLiveTemplateCompletionProvider() {
   override fun addCompletions(
     parameters: CompletionParameters,
     context: ProcessingContext,
@@ -88,7 +88,7 @@ class DirectionCompletionProvider :
 class PieShowDataCompletionProvider : MermaidSimpleCompletionProvider(listOf("showData"))
 
 class SequenceCompletionProvider : MermaidLiveTemplateCompletionProvider() {
-  private val keywords = listOf("loop", "alt", "opt", "par", "rect")
+  private val keywords = listOf("loop", "alt", "opt", "par", "rect", "participant", "actor")
 
   override fun addCompletions(
     parameters: CompletionParameters,

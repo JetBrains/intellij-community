@@ -1,0 +1,11 @@
+FILE
+  PsiElement(GANTT)('gantt')
+  MermaidGanttDocumentImpl(GANTT_DOCUMENT)
+    PsiElement(EOL)('\n')
+    PsiWhiteSpace('  ')
+    MermaidGanttStatementImpl(GANTT_STATEMENT)
+      PsiElement(TODAY_MARKER)('todayMarker off')
+    PsiElement(EOL)('\n')
+    PsiWhiteSpace('  ')
+    MermaidGanttStatementImpl(GANTT_STATEMENT)
+      PsiElement(TODAY_MARKER)('todayMarker stroke-width:5px,stroke:#0f0,opacity:0.5')

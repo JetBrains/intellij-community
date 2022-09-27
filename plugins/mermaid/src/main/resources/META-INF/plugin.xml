@@ -27,13 +27,8 @@
     <defaultLiveTemplates file="liveTemplates/MermaidHidden.xml" hidden="true"/>
     <liveTemplateContext implementation="com.github.firsttimeinforever.mermaid.editor.MermaidContextType"/>
 
-
-    <lineIndentProvider
-      implementation="com.github.firsttimeinforever.mermaid.lang.formatter.MermaidLineIndentProvider"/>
-
-
     <lang.elementManipulator forClass="com.github.firsttimeinforever.mermaid.lang.psi.MermaidNamedElement"
-                             implementationClass="com.github.firsttimeinforever.mermaid.lang.psi.MermaidIdentifierManipulator" />
+                             implementationClass="com.github.firsttimeinforever.mermaid.lang.psi.MermaidIdentifierManipulator"/>
     <lang.findUsagesProvider language="MyMermaid"
                              implementationClass="com.github.firsttimeinforever.mermaid.lang.MermaidFindUsagesProvider"/>
 
@@ -41,5 +36,14 @@
                              implementationClass="com.github.firsttimeinforever.mermaid.lang.psi.MermaidRefactoringSupportProvider"/>
 
     <typedHandler implementation="com.github.firsttimeinforever.mermaid.editor.MermaidTypedHandlerDelegate"/>
+
+    <lang.formatter
+      language="MyMermaid"
+      implementationClass="com.github.firsttimeinforever.mermaid.lang.formatter.MermaidFormattingModelBuilder"/>
+    <langCodeStyleSettingsProvider
+      implementation="com.github.firsttimeinforever.mermaid.lang.formatter.settings.MermaidCodeStyleSettingsProvider"/>
+    <enterHandlerDelegate id="MermaidEnterHandler"
+                          implementation="com.github.firsttimeinforever.mermaid.editor.MermaidEnterHandler"/>
+
   </extensions>
 </idea-plugin>

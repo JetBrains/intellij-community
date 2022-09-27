@@ -1,0 +1,6 @@
+classDiagram
+  class Shape
+  <<interface>> Shape
+
+  <<abstract>> Shape2
+  class Shape2

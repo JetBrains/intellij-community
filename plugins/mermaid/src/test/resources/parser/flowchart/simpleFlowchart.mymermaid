@@ -1,0 +1,2 @@
+flowchart LR
+  no-de1[name1] -- text --> node2 -->|text| node3[123]

@@ -1,49 +1,37 @@
 package com.github.firsttimeinforever.mermaid.lang.lexer
 
+import com.intellij.lexer.Lexer
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.tree.IElementType
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.LexerTestCase
+import java.util.*
 
-abstract class MermaidLexerTestCase: LightPlatformCodeInsightTestCase() {
-  data class Token(
-    val type: IElementType,
-    val start: Int,
-    val end: Int,
-    val text: String
-  ) {
-    override fun toString(): String {
-      return when (type) {
-        MermaidTokens.EOL -> "Token($type, $start, $end, \"\\n\"),"
-        MermaidTokens.DOUBLE_QUOTE -> "Token($type, $start, $end, \"\\\"\"),"
-        else -> "Token($type, $start, $end, \"$text\"),"
-      }
-    }
+abstract class MermaidLexerTestCase : LexerTestCase() {
+  abstract val diagramName: String
+
+  override fun createLexer(): Lexer {
+    return MermaidLexer()
   }
 
-  protected fun doTest(content: String, expectedTokens: List<Token>) {
-    val tokens = runLexer(content)
-    assertEquals(tokensToString(expectedTokens), tokensToString(tokens))
+  override fun getDirPath(): String {
+    return "src/test/resources/lexer"
   }
 
-  companion object {
-    fun tokensToString(tokens: Iterable<Token>): String {
-      return buildString {
-        for (token in tokens) {
-          append("$token\n")
-        }
-      }
-    }
+  override fun getPathToTestDataFile(extension: String?): String {
+    return dirPath + "/" + diagramName + "/" + getTestName(true) + extension
+  }
 
-    fun runLexer(content: String): List<Token> {
-      val lexer = MermaidLexer()
-      lexer.start(content)
-      val tokens = mutableListOf<Token>()
-      while (lexer.tokenType != null) {
-        with(lexer) {
-          tokens.add(Token(tokenType!!, tokenStart, tokenEnd, tokenText))
-        }
-        lexer.advance()
+  override fun getTestName(lowercaseFirstLetter: Boolean): String {
+    return getTestName(getCamelCaseTestName(), lowercaseFirstLetter)
+  }
+
+  private fun getCamelCaseTestName(): String {
+    return StringUtil.trimStart(super.getName(), "test").split(" ").toMutableList().joinToString("") { word ->
+      word.replaceFirstChar {
+        if (it.isLowerCase()) it.titlecase(
+          Locale.getDefault()
+        ) else it.toString()
       }
-      return tokens
     }
   }
 }

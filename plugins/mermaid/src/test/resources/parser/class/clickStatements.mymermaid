@@ -1,0 +1,8 @@
+classDiagram
+  class Shape
+  click Shape href "https://www.github.com" "This is a tooltip for a link"
+  click Shape call callbackFunction() "This is a tooltip for a callback"
+  click Shape href "https://www.github.com"
+  click Shape call callbackFunction()
+  link Shape "https://www.github.com" "This is a tooltip for a link"
+  callback Shape "callbackFunction" "This is a tooltip for a callback"

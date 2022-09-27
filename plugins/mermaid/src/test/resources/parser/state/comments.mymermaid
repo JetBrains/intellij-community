@@ -1,0 +1,8 @@
+%% this is a comment
+stateDiagram
+  A --> B %% this is a comment
+  %% this is a comment
+  state B {
+    a --> b %% this is a comment
+  }
+  %% this is a comment

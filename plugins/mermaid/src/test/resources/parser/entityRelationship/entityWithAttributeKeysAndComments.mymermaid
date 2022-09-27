@@ -1,0 +1,9 @@
+erDiagram
+  CAR ||--o{ NAMED-DRIVER : allows
+  CAR {
+    string allowedDriver FK "The license of the allowed driver"
+    string registrationNumber PK
+    string make "comment"
+    string model
+  }
+  PERSON ||--o{ NAMED-DRIVER : is

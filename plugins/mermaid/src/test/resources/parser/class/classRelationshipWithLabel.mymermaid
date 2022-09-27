@@ -1,0 +1,2 @@
+classDiagram
+  classA <|-- classB : implements

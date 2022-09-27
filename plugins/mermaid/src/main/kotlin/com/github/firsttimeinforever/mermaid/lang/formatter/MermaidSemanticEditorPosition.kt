@@ -7,7 +7,7 @@ import com.intellij.psi.tree.IElementType
 class MermaidSemanticEditorPosition(
   editor: Editor,
   offset: Int,
-  private val iterator: HighlighterIterator = editor.highlighter.createIterator(offset)
+  val iterator: HighlighterIterator = editor.highlighter.createIterator(offset)
 ) {
 
   companion object {

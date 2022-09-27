@@ -1,0 +1,32 @@
+gitGraph
+      commit id:"Normal"
+             commit
+             commit id  :    "Reverse" type :REVERSE
+             commit
+             commit id: "Highlight"      type: HIGHLIGHT
+             commit
+             commit
+                    commit    id: "Normal"      tag:"v1.0.0"
+                    commit
+                    commit id: "Reverse" type: REVERSE tag   :   "RC_1"
+                    commit
+                    commit     type: HIGHLIGHT    tag:   "8.8.4"      id: "Highlight"
+                    commit
+                    branch     develop
+commit
+commit
+                           commit
+       checkout    main
+       commit
+       commit
+                           merge    develop
+                                  commit
+                                  commit
+                                  merge    nice_feature    tag: "customTag"
+                                  cherry-pick id:"A"
+                                  merge MetroLine2 tag:"MY JUNCTION"
+
+                                  commit
+                                        branch test1    order   :    3
+                                        branch test2 order:2
+                                        branch test3 order  :1

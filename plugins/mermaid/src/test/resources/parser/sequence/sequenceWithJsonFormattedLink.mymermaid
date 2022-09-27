@@ -1,0 +1,3 @@
+sequenceDiagram
+  participant Alice
+  links Alice: {"Dashboard": "https://dashboard.contoso.com/alice", "Wiki": "https://wiki.contoso.com/alice"}

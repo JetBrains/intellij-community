@@ -1,0 +1,3 @@
+OPEN_DIRECTIVE ('%%{')
+WHITE_SPACE ('    ')
+CLOSE_DIRECTIVE ('}%%')

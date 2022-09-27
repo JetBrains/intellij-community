@@ -1,0 +1,4 @@
+gitGraph
+  commit id: "Normal"
+  commit id: "Reverse" type: REVERSE
+  commit type: HIGHLIGHT

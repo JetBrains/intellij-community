@@ -1,0 +1,4 @@
+sequenceDiagram
+  participant A B as Alice B
+  actor J as John
+  A B --> J: Hello John, how are you? ; J -->> A B : Great! # And you? J -->> A B

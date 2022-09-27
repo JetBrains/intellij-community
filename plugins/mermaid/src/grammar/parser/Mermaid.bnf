@@ -38,33 +38,48 @@ private diagram ::= pieHeader pieDocument
 	| REQUIREMENT_DIAGRAM requirementDocument
 	| GIT_GRAPH gitGraphDocument
 
+titleStatement ::= TITLE complexTitleValue
+complexTitleValue ::= TITLE_VALUE+
+
 pieHeader ::= PIE [showDataRec]
 private showDataRec ::= EOL showDataRec | SHOW_DATA
 
 
 pieDocument ::= pieLines
 private pieLines ::= pieLine [pieLines]
-pieLine ::= pieStatement [EOL] | EOL
-private pieStatement ::= string COLON VALUE
-	| TITLE TITLE_VALUE
+private pieLine ::= pieStatement [EOL] | EOL
+pieStatement ::= string COLON VALUE
+	| titleStatement
 	| directive
 
 
 journeyDocument ::= journeyLines
 private journeyLines ::= (journeyLine | IGNORED) [journeyLines]
-journeyLine ::= journeyStatement [EOL] | EOL
-private journeyStatement ::= TASK_NAME COLON (IGNORED | TASK_DATA (COLON TASK_DATA)+)
-	| SECTION SECTION_TITLE
-	| TITLE TITLE_VALUE
+private journeyLine ::= journeyStatement [EOL] | EOL
+journeyStatement ::= journeyDataStatement
+	| journeySectionStatement
+	| titleStatement
 	| directive
 
+journeyDataStatement ::= complexTaskName COLON (IGNORED | recTaskData (COLON recTaskData)+)
+
+journeySectionStatement ::= SECTION complexSectionTitle journeySectionDocument
+journeySectionDocument ::= journeySectionLines
+private journeySectionLines ::= (journeySectionLine | IGNORED) [journeySectionLines]
+private journeySectionLine ::= journeySectionInnerStatement [EOL] | EOL
+journeySectionInnerStatement ::= journeyDataStatement
+
+complexSectionTitle ::= SECTION_TITLE+
+complexTaskName ::= TASK_NAME+
+complexTaskData ::= TASK_DATA+
+private recTaskData ::= complexTaskData [COMMA recTaskData]
 
 flowchartHeader ::= FLOWCHART [DIR]
 
 flowchartDocument ::= flowchartLines
 private flowchartLines ::= (flowchartLine | IGNORED) [flowchartLines]
-flowchartLine ::= flowchartStatement [separator] | separator
-private flowchartStatement ::= vertexStatement (separator vertexStatement)*
+private flowchartLine ::= flowchartStatement [separator] | separator
+flowchartStatement ::= vertexStatement (SEMICOLON vertexStatement)*
 	| subgraphStatement
 	| styleStatement
 	| linkStyleStatement
@@ -75,25 +90,34 @@ private flowchartStatement ::= vertexStatement (separator vertexStatement)*
 
 private separator ::= EOL | SEMICOLON
 vertexStatement ::= nodeStatement [flowchartLinkStatement vertexStatement]
-flowchartLinkStatement ::= START_ARROW LINK_TEXT ARROW | ARROW [SEP LINK_TEXT SEP]
+flowchartLinkStatement ::= START_ARROW complexLinkText ARROW | ARROW [SEP complexLinkText SEP]
 nodeStatement ::= vertex STYLE_SEPARATOR STYLE_TARGET | vertex [AMPERSAND nodeStatement]
 vertex ::= complexIdentifier [vertexText]
-vertexText ::= OPEN_SQUARE ALIAS CLOSE_SQUARE
-							| OPEN_ROUND ALIAS CLOSE_ROUND
-							| STADIUM_START ALIAS STADIUM_END
-							| SUBROUTINE_START ALIAS SUBROUTINE_END
-							| CYLINDER_START ALIAS CYLINDER_END
-							| CIRCLE_START ALIAS CIRCLE_END
-							| ASYMMETRIC_START ALIAS CLOSE_SQUARE
-							| DIAMOND_START ALIAS DIAMOND_END
-							| HEXAGON_START ALIAS HEXAGON_END
-							| TRAP_START ALIAS INV_TRAP_END
-              | INV_TRAP_START ALIAS TRAP_END
-							| TRAP_START ALIAS TRAP_END
-							| INV_TRAP_START ALIAS INV_TRAP_END
-							| DOUBLE_CIRCLE_START ALIAS DOUBLE_CIRCLE_END
+vertexText ::= OPEN_SQUARE nodeText CLOSE_SQUARE
+							| OPEN_ROUND nodeText CLOSE_ROUND
+							| STADIUM_START nodeText STADIUM_END
+							| SUBROUTINE_START nodeText SUBROUTINE_END
+							| CYLINDER_START nodeText CYLINDER_END
+							| CIRCLE_START nodeText CIRCLE_END
+							| ASYMMETRIC_START nodeText CLOSE_SQUARE
+							| DIAMOND_START nodeText DIAMOND_END
+							| HEXAGON_START nodeText HEXAGON_END
+							| TRAP_START nodeText INV_TRAP_END
+              | INV_TRAP_START nodeText TRAP_END
+							| TRAP_START nodeText TRAP_END
+							| INV_TRAP_START nodeText INV_TRAP_END
+							| DOUBLE_CIRCLE_START nodeText DOUBLE_CIRCLE_END
+nodeText ::= ALIAS+ | DOUBLE_QUOTE ALIAS+ DOUBLE_QUOTE
+complexLinkText ::= LINK_TEXT+
 
-subgraphStatement ::= SUBGRAPH complexIdentifier separator (DIRECTION DIR separator | flowchartDocument)* END
+subgraphStatement ::= subgraphHeader EOL subgraphDocument? END
+subgraphHeader ::= SUBGRAPH subgraphName
+subgraphName ::= complexIdentifier
+subgraphDocument ::= subgraphLines
+private subgraphLines ::= (subgraphLine | IGNORED) [subgraphLines]
+private subgraphLine ::= subgraphInnerStatement [separator] | separator
+private subgraphInnerStatement ::= flowchartStatement
+	| directionStatement
 
 styleStatement ::= STYLE STYLE_TARGET styleOptions
 
@@ -104,13 +128,13 @@ classDefStatement ::= CLASS_DEF (STYLE_TARGET | DEFAULT) styleOptions
 
 flowchartClassStatement ::= CLASS ID (COMMA ID)* STYLE_TARGET
 
-styleOptions ::= STYLE_OPT COLON STYLE_VAL (COMMA  STYLE_OPT COLON STYLE_VAL)*
+styleOptions ::= STYLE_OPT COLON STYLE_VAL (COMMA STYLE_OPT COLON STYLE_VAL)*
 
 
 sequenceDocument ::= sequenceLines
 private sequenceLines ::= (sequenceLine | IGNORED) [sequenceLines]
-sequenceLine ::= sequenceStatement [separator] | separator
-private sequenceStatement ::= actorStatement
+private sequenceLine ::= sequenceStatement [separator] | separator
+sequenceStatement ::= actorStatement
 	| signalStatement
 	| AUTONUMBER
 	| ACTIVATE complexIdentifier
@@ -118,18 +142,19 @@ private sequenceStatement ::= actorStatement
 	| noteStatement
 	| linksStatement
 	| linkStatement
-	| LOOP [MESSAGE] sequenceDocument END
-	| RECT [MESSAGE] sequenceDocument END
-	| OPT [MESSAGE] sequenceDocument END
-	| ALT [MESSAGE] elseSections END
-	| PAR [MESSAGE] parSections END
+	| LOOP [complexMessage] EOL sequenceDocument? END
+	| RECT [complexMessage] EOL sequenceDocument? END
+	| OPT [complexMessage] EOL sequenceDocument? END
+	| ALT [complexMessage] EOL elseSections END
+	| PAR [complexMessage] EOL parSections END
 	| directive
 
 idAlias ::= ALIAS+
 
 actorStatement ::= (PARTICIPANT | ACTOR) complexIdentifier [AS idAlias]
 
-signalStatement ::= complexIdentifier signalType [PLUS | MINUS] complexIdentifier COLON MESSAGE
+signalStatement ::= complexIdentifier signal complexIdentifier COLON complexMessage
+signal ::= signalType [PLUS | MINUS]
 signalType ::= SOLID_OPEN_ARROW
   | DOTTED_OPEN_ARROW
   | SOLID_ARROW
@@ -139,44 +164,48 @@ signalType ::= SOLID_OPEN_ARROW
   | SOLID_POINT
   | DOTTED_POINT
 
-noteStatement ::= NOTE (RIGHT_OF | LEFT_OF) complexIdentifier COLON MESSAGE
-	| NOTE OVER complexIdentifier [COMMA complexIdentifier] COLON MESSAGE
+noteStatement ::= NOTE (RIGHT_OF | LEFT_OF) complexIdentifier COLON complexMessage
+  | NOTE OVER complexIdentifier [COMMA complexIdentifier] COLON complexMessage
 
 linksStatement ::= LINKS complexIdentifier COLON linksValues
 linksValues ::= OPEN_CURLY linkContent CLOSE_CURLY
 private linkContent ::= string COLON string [COMMA linkContent]
 
-linkStatement ::= LINK complexIdentifier COLON MESSAGE
+linkStatement ::= LINK complexIdentifier COLON complexMessage
 
-elseSections ::= sequenceDocument [ELSE [MESSAGE] elseSections]
-parSections ::= sequenceDocument [AND [MESSAGE] parSections]
+elseSections ::= sequenceDocument? [ELSE [complexMessage] EOL elseSections]
+parSections ::= sequenceDocument? [AND [complexMessage] EOL parSections]
 
+complexMessage ::= MESSAGE+
 
 classDocument ::= classLines
 private classLines ::= classLine [classLines]
-classLine ::= classDiagramStatement [EOL] | EOL
-private classDiagramStatement ::= DIRECTION DIR
+private classLine ::= classDiagramStatement [EOL] | EOL
+classDiagramStatement ::= directionStatement
   | classStatement
   | relationStatement
   | memberStatement
   | annotationStatement
-	| directive
-	| classDiagramClickStatement
+  | directive
+  | classDiagramClickStatement
 
-classStatement ::= CLASS identifier [TILDA GENERIC_TYPE TILDA] [STYLE_SEPARATOR identifier] [OPEN_CURLY members CLOSE_CURLY]
+classStatement ::= CLASS identifier [TILDA GENERIC_TYPE TILDA] [STYLE_SEPARATOR identifier] [OPEN_CURLY EOL classMembersDocument? CLOSE_CURLY]
 
 memberStatement ::= identifier COLON attrOrMethod
 
-relationStatement ::= identifier relation identifier [COLON LABEL]
+relationStatement ::= identifier relation identifier [COLON complexLabel]
+complexLabel ::= LABEL+
 
 annotationStatement ::= annotation identifier
 annotation ::= ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
 
-private members ::= memberLine [members]
-memberLine ::= (attrOrMethod | annotation | directive) [EOL] | EOL
+classMembersDocument ::= memberLines
+private memberLines ::= memberLine [memberLines]
+private memberLine ::= classMemberStatement [EOL] | EOL
+classMemberStatement ::= attrOrMethod | annotation | directive
 attrOrMethod ::= [visibilityAtStart] (method | attribute)
-visibilityAtStart ::= PLUS | MINUS | POUND | TILDA
-visibilityAtEnd ::= STAR | DOLLAR
+private visibilityAtStart ::= PLUS | MINUS | POUND | TILDA
+private visibilityAtEnd ::= STAR | DOLLAR
 
 attribute ::= (attrTypeWithGeneric | attrType) attrName [visibilityAtEnd] | attrName [COLON (attrTypeWithGeneric | attrType)]
 method ::= attrName OPEN_ROUND [attribute] CLOSE_ROUND [visibilityAtEnd] [attrTypeWithGeneric | attrType]
@@ -203,87 +232,102 @@ lineType ::= LINE | DOTTED_LINE
 
 stateDocument ::= stateLines
 private stateLines ::= stateLine [stateLines]
-stateLine ::= stateDiagramStatement [EOL] | EOL
-private stateDiagramStatement ::= stateDeclaration
-	| stateId ARROW stateId [COLON LABEL]
-	| stateId
-  | NOTE (RIGHT_OF | LEFT_OF) stateId noteContent
-  | MINUS MINUS
-  | DIRECTION DIR
-	| directive
+private stateLine ::= stateDiagramStatement [EOL] | EOL
+stateDiagramStatement ::= stateDeclaration
+  | stateId ARROW stateId [COLON complexLabel]
+  | stateId
+  | noteHeader noteContent
+  | directionStatement
+  | directive
 
-stateDeclaration ::= stateId COLON LABEL
+stateDeclaration ::= stateId COLON complexLabel
   | STATE description AS stateId
   | STATE stateId OPEN_CURLY innerStateDocument CLOSE_CURLY
   | STATE stateId ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
 
 innerStateDocument ::= innerStateLines
 private innerStateLines ::= innerStateLine [innerStateLines]
-innerStateLine ::= innerStateDiagramStatement [EOL] | EOL
-private innerStateDiagramStatement ::= stateDiagramStatement | MINUS MINUS
+private innerStateLine ::= innerStateDiagramStatement [EOL] | EOL
+private innerStateDiagramStatement ::= stateDiagramStatement | dividerStatement
+
+dividerStatement ::= DIVIDER
 
 stateId ::= identifier | OPEN_SQUARE STAR CLOSE_SQUARE
 description ::= string
-private noteContent ::= (EOL NOTE_CONTENT)* [EOL] END
-  | COLON [NOTE_CONTENT]
+noteHeader ::= NOTE (RIGHT_OF | LEFT_OF) stateId
+private noteContent ::= EOL complexNoteContent? END
+  | COLON [simpleNoteContent]
+
+simpleNoteContent ::= NOTE_CONTENT+
+complexNoteContent ::= noteLines
+private noteLines ::= noteLine [noteLines]
+private noteLine ::= simpleNoteContent [EOL] | EOL
 
 
 erDocument ::= erLines
 private erLines ::= erLine [erLines]
-erLine ::= erStatement [EOL] | EOL
-private erStatement ::= identifier relationship identifier COLON (LABEL | string)
+private erLine ::= erStatement [EOL] | EOL
+erStatement ::= identifier relationship identifier COLON (complexLabel | string)
 	| entityDeclaration
 	| identifier
 	| directive
 
-entityDeclaration ::= identifier OPEN_CURLY erAttributesLines CLOSE_CURLY
+entityDeclaration ::= identifier OPEN_CURLY EOL erAttributesDocument? CLOSE_CURLY
 
 relationship ::= relationshipLeft (IDENTIFYING | NON_IDENTIFYING) relationshipRight
 private relationshipLeft ::= ZERO_OR_ONE_LEFT | ONE_OR_MORE_LEFT | ZERO_OR_MORE_LEFT | ONLY_ONE
 private relationshipRight ::= ZERO_OR_ONE_RIGHT | ONE_OR_MORE_RIGHT | ZERO_OR_MORE_RIGHT | ONLY_ONE
 
+erAttributesDocument ::= erAttributesLines
 private erAttributesLines ::= erAttributeLine [erAttributesLines]
-erAttributeLine ::= erAttribute [EOL] | EOL
+private erAttributeLine ::= erAttribute [EOL] | EOL
 erAttribute ::= attrType attrName [ATTR_KEY] [string]
 
 
 ganttDocument ::= ganttLines
 private ganttLines ::= ganttLine [ganttLines]
-ganttLine ::= ganttStatement [IGNORED] [EOL] | [IGNORED] EOL
-private ganttStatement ::= DATE_FORMAT
-  | TITLE TITLE_VALUE
+private ganttLine ::= ganttStatement [IGNORED] [EOL] | [IGNORED] EOL
+ganttStatement ::= DATE_FORMAT
+  | titleStatement
   | EXCLUDES
   | INCLUDES
   | AXIS_FORMAT
   | TODAY_MARKER
-  | SECTION SECTION_TITLE
-  | ganttTaskName COLON TASK_DATA (COMMA TASK_DATA)*
+  | ganttSectionStatement
+  | ganttDataStatement
 	| directive
 	| ganttClickStatement
 
-ganttTaskName ::= TASK_NAME+
+ganttDataStatement ::= complexTaskName COLON recTaskData
+
+ganttSectionStatement ::= SECTION complexSectionTitle ganttSectionDocument
+ganttSectionDocument ::= ganttSectionLines
+private ganttSectionLines ::= (ganttSectionLine | IGNORED) [ganttSectionLines]
+private ganttSectionLine ::= ganttSectionInnerStatement [EOL] | EOL
+ganttSectionInnerStatement ::= ganttDataStatement
+
 
 requirementDocument ::= requirementLines
 private requirementLines ::= requirementLine [requirementLines]
-requirementLine ::= requirementStatement [EOL] | EOL
-private requirementStatement ::= requirementDef
+private requirementLine ::= requirementStatement [EOL] | EOL
+requirementStatement ::= requirementDef
   | elementDef
   | relationshipDef
 	| directive
 
-requirementDef ::= requirementType identifier OPEN_CURLY requirementBody CLOSE_CURLY
+requirementDef ::= requirementType identifier OPEN_CURLY EOL requirementBody? CLOSE_CURLY
 requirementType ::= REQUIREMENT
   | FUNCTIONAL_REQUIREMENT
   | INTERFACE_REQUIREMENT
   | PERFORMANCE_REQUIREMENT
   | PHYSICAL_REQUIREMENT
   | DESIGN_CONSTRAINT
-private requirementValue ::= LABEL | string
+private requirementValue ::= complexLabel | string
 
 requirementBody ::= requirementBodyLines
 private requirementBodyLines ::= requirementBodyLine [requirementBodyLines]
-requirementBodyLine ::= requirementBodyStatement [EOL] | EOL
-private requirementBodyStatement ::= ID_KEYWORD COLON requirementValue
+private requirementBodyLine ::= requirementBodyStatement [EOL] | EOL
+requirementBodyStatement ::= ID_KEYWORD COLON requirementValue
   | TEXT COLON requirementValue
   | RISK COLON riskLevel
   | VERIFY_METHOD COLON verifyType
@@ -291,12 +335,12 @@ private requirementBodyStatement ::= ID_KEYWORD COLON requirementValue
 riskLevel ::= LOW | MEDIUM | HIGH
 verifyType ::= ANALYSIS | DEMONSTRATION | INSPECTION | TEST
 
-elementDef ::= ELEMENT identifier OPEN_CURLY elementBody CLOSE_CURLY
+elementDef ::= ELEMENT identifier OPEN_CURLY EOL elementBody? CLOSE_CURLY
 
 elementBody ::= elementBodyLines
 private elementBodyLines ::= elementBodyLine [elementBodyLines]
-elementBodyLine ::= elementBodyStatement [EOL] | EOL
-private elementBodyStatement ::= TYPE COLON requirementValue
+private elementBodyLine ::= elementBodyStatement [EOL] | EOL
+elementBodyStatement ::= TYPE COLON requirementValue
   | DOCREF COLON requirementValue
 
 relationshipDef ::= identifier ARROW_LEFT reqRelationship REQ_LINE identifier
@@ -307,8 +351,8 @@ reqRelationship ::= CONTAINS | COPIES | DERIVES | SATISFIES | VERIFIES | REFINES
 
 gitGraphDocument ::= gitGraphLines
 private gitGraphLines ::= gitGraphLine [gitGraphLines]
-gitGraphLine ::= gitGraphStatement [IGNORED] [EOL] | [IGNORED] EOL
-private gitGraphStatement ::= commitStatement
+private gitGraphLine ::= gitGraphStatement [IGNORED] [EOL] | [IGNORED] EOL
+gitGraphStatement ::= commitStatement
 	| mergeStatement
 	| cherryPickStatement
 	| branchStatement
@@ -357,8 +401,10 @@ classDiagramClickStatement ::= CLICK CLICK_DATA CALL CLICK_DATA callbackArgs [st
 callbackArgs ::= OPEN_ROUND [callbackArg] (COMMA callbackArg)* CLOSE_ROUND
 private callbackArg ::= CLICK_DATA | string
 
+directionStatement ::= DIRECTION DIR
+
 string ::= DOUBLE_QUOTE STRING_VALUE? DOUBLE_QUOTE
-complexIdentifier ::= ID+ {
+complexIdentifier ::= (ID | AMPERSAND)+ {
 	mixin="com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 	implements="com.github.firsttimeinforever.mermaid.lang.psi.MermaidNamedElement"
 }

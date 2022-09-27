@@ -1,0 +1,5 @@
+sequenceDiagram
+  participant John
+  Note right of John: Text in note
+  Alice->John: Hello John, how are you?
+  Note over Alice,John: A typical interaction

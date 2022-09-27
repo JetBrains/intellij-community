@@ -416,6 +416,9 @@ object MermaidTokens {
 
     @JvmField
     val STATE = MermaidToken("STATE")
+
+    @JvmField
+    val DIVIDER = MermaidToken("DIVIDER")
   }
 
   object EntityRelationship {
