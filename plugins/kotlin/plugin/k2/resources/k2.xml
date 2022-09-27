@@ -91,6 +91,7 @@
                                implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelFunctionTypeArgumentInfoHandler"/>
     <lang.psiDocumentation id="KotlinDocumentationTargetProvider"
                            implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinPsiDocumentationTargetProvider"/>
+    <lang.documentationLinkHandler implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationLinkHandler"/>
     <lang.documentation id="KotlinDocumentationTargetProvider"
                         implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationTargetProvider"/>
   </extensions>
