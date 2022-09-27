@@ -570,10 +570,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
     List<VcsDirectoryMapping> newMappings = getModelMappings();
     List<VcsDirectoryMapping> previousMappings = myVcsManager.getDirectoryMappings();
     myVcsConfiguration.addIgnoredUnregisteredRoots(previousMappings.stream()
-                                                     .filter(mapping -> !newMappings.contains(mapping))
-                                                     .map(mapping -> mapping.isDefaultMapping()
-                                                                     ? guessProjectDir(myProject).getPath()
-                                                                     : mapping.getDirectory())
+                                                     .filter(mapping -> !newMappings.contains(mapping) && !mapping.isDefaultMapping())
+                                                     .map(mapping -> mapping.getDirectory())
                                                      .collect(Collectors.toList()));
     myVcsConfiguration.removeFromIgnoredUnregisteredRoots(map(newMappings, VcsDirectoryMapping::getDirectory));
   }
