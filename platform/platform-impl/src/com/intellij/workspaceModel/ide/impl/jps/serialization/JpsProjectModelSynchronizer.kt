@@ -95,7 +95,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val (changedSources, builder) = loadAndReportErrors { serializers.reloadFromChangedFiles(changes, fileContentReader, it) }
     fileContentReader.clearCache()
     LOG.debugValues("Changed entity sources", changedSources)
-    if (changedSources.isEmpty() && builder.isEmpty()) return
+    if (changedSources.isEmpty() && !builder.hasChanges()) return
 
     withContext(Dispatchers.EDT) {
       ApplicationManager.getApplication().runWriteAction {

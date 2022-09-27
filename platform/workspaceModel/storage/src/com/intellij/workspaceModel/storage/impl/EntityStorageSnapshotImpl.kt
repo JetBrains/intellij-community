@@ -500,7 +500,9 @@ internal class MutableEntityStorageImpl(
     return EntityStorageSnapshotImpl(newEntities, newRefs, newIndexes)
   }
 
+  @Deprecated("The name may be misleading, use !hasChanges() instead", replaceWith = ReplaceWith("!hasChanges()"))
   override fun isEmpty(): Boolean = this.changeLog.changeLog.isEmpty()
+  override fun hasChanges(): Boolean = changeLog.changeLog.isNotEmpty()
 
   override fun addDiff(diff: MutableEntityStorage) {
     try {

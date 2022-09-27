@@ -211,7 +211,15 @@ interface EntityStorageSnapshot : EntityStorage {
  * reading its state after modifications.
  */
 interface MutableEntityStorage : EntityStorage {
+  @Deprecated("The name may be misleading, use !hasChanges() instead", ReplaceWith("!hasChanges()"))
   fun isEmpty(): Boolean
+
+  /**
+   * Returns `true` if there are changes recorded in this storage after its creation. Note, that this method may return `true` if these
+   * changes actually don't modify the resulting set of entities, you may use [hasSameEntities] to perform more sophisticated check.
+   */
+  fun hasChanges(): Boolean
+  
   infix fun <T : WorkspaceEntity> addEntity(entity: T): T
 
   fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
@@ -232,7 +240,7 @@ interface MutableEntityStorage : EntityStorage {
 
   /**
    * Returns `true` if this instance contains entities with the same properties as [original] storage it was created from. 
-   * The difference from [isEmpty] is that this method will return `true` in cases when an entity was removed, and then a new entity
+   * The difference from [hasChanges] is that this method will return `true` in cases when an entity was removed, and then a new entity
    * with the same properties was added.
    */
   fun hasSameEntities(original: EntityStorage): Boolean

@@ -166,7 +166,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   fun getEntity(facet: Facet<*>): FacetEntity? = diff.facetMapping().getEntities(facet).singleOrNull() as FacetEntity?
 
   override fun isModified(): Boolean {
-    return !diff.isEmpty()
+    return diff.hasChanges()
   }
 
   override fun isNewFacet(facet: Facet<*>): Boolean {

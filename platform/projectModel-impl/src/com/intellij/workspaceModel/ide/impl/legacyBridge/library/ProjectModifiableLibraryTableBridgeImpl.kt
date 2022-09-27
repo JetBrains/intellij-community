@@ -136,5 +136,5 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
     myAddedLibraries.clear()
   }
 
-  override fun isChanged(): Boolean = !diff.isEmpty()
+  override fun isChanged(): Boolean = diff.hasChanges()
 }

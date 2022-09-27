@@ -628,7 +628,7 @@ class ModifiableRootModelBridgeImpl(
 
   // TODO compare by actual values
   override fun isChanged(): Boolean {
-    if (!diff.isEmpty()) return true
+    if (diff.hasChanges()) return true
 
     if (extensionsDelegate.isInitialized() && extensions.any { it.isChanged }) return true
 
