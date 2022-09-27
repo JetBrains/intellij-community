@@ -223,7 +223,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     allActionsGroup.add(new SaveTemporaryAction());
     allActionsGroup.addSeparator();
 
-    addTargetGroup(project, allActionsGroup);
+
+    if (!ExperimentalUI.isNewUI()) {
+      // no need for targets list in `All configuration` in new UI, since there is a separate combobox for them
+      addTargetGroup(project, allActionsGroup);
+    }
 
     allActionsGroup.add(new RunCurrentFileAction(executor -> true));
     allActionsGroup.addSeparator(ExecutionBundle.message("run.configurations.popup.existing.configurations.separator.text"));
