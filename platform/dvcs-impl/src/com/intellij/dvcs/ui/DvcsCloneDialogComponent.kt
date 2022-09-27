@@ -31,7 +31,8 @@ import javax.swing.event.DocumentEvent
 abstract class DvcsCloneDialogComponent(var project: Project,
                                         private var vcsDirectoryName: String,
                                         protected val rememberedInputs: DvcsRememberedInputs,
-                                        private val dialogStateListener: VcsCloneDialogComponentStateListener) : VcsCloneComponent {
+                                        private val dialogStateListener: VcsCloneDialogComponentStateListener)
+  : VcsCloneComponent, VcsCloneComponent.WithSettableUrl {
   protected val mainPanel: JPanel
   private val urlEditor = TextFieldWithHistory()
   private val directoryField = TextFieldWithBrowseButton()
@@ -92,6 +93,10 @@ abstract class DvcsCloneDialogComponent(var project: Project,
   abstract override fun doClone(listener: CheckoutProvider.Listener)
 
   fun getDirectory(): String = directoryField.text.trim()
+
+  override fun setUrl(url: String) {
+    urlEditor.text = url
+  }
 
   fun getUrl(): String = sanitizeCloneUrl(urlEditor.text)
 

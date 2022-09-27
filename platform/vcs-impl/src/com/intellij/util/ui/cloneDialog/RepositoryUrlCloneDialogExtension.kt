@@ -106,6 +106,6 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
 
     override fun getPreferredFocusedComponent(): JComponent? = getCurrentVcsComponent()?.getPreferredFocusedComponent()
 
-    private fun getCurrentVcsComponent() = vcsComponents[comboBox.selectedItem as CheckoutProvider]
+    internal fun getCurrentVcsComponent(): VcsCloneComponent? = vcsComponents[comboBox.selectedItem as CheckoutProvider]
   }
 }

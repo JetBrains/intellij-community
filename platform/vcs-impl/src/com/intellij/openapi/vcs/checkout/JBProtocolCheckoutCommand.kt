@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.CheckoutProviderEx
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.ui.AppIcon
+import com.intellij.util.ui.cloneDialog.VcsCloneDialog
 
 /**
  * @author Konstantin Bulenkov
@@ -15,12 +16,16 @@ import com.intellij.ui.AppIcon
 internal class JBProtocolCheckoutCommand : JBProtocolCommand("checkout") {
   override suspend fun execute(target: String?, parameters: Map<String, String>, fragment: String?): String? {
     val repository = parameter(parameters, "checkout.repo")
-    val provider = CheckoutProvider.EXTENSION_POINT_NAME.findFirstSafe { it is CheckoutProviderEx && it.vcsId == target } as CheckoutProviderEx?
-                   ?: return VcsBundle.message("jb.protocol.no.provider", target)
+    val providerClass =
+      CheckoutProvider.EXTENSION_POINT_NAME.findFirstSafe { it is CheckoutProviderEx && it.vcsId == target }?.javaClass
+      ?: return VcsBundle.message("jb.protocol.no.provider", target)
     val project = ProjectManager.getInstance().defaultProject
     val listener = ProjectLevelVcsManager.getInstance(project).compositeCheckoutListener
     AppIcon.getInstance().requestAttention(null, true)
-    provider.doCheckout(project, listener, repository)
+    val dialog = VcsCloneDialog.Builder(project).forVcs(providerClass, repository)
+    if (dialog.showAndGet()) {
+      dialog.doClone(listener)
+    }
     return null
   }
 }

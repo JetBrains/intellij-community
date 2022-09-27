@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.Companion.CLONE
+import com.intellij.openapi.vcs.ui.VcsCloneComponent
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -113,10 +114,14 @@ class VcsCloneDialog private constructor(private val project: Project) : DialogW
       }
     }
 
-    fun forVcs(clazz: Class<out CheckoutProvider>): VcsCloneDialog {
+    @JvmOverloads
+    fun forVcs(clazz: Class<out CheckoutProvider>, url: String? = null): VcsCloneDialog {
       return VcsCloneDialog(project).apply {
         VcsCloneDialogExtension.EP_NAME.findExtension(RepositoryUrlCloneDialogExtension::class.java)?.let { selectExtension(it) }
-        (getSelectedComponent() as? RepositoryUrlMainExtensionComponent)?.openForVcs(clazz)
+        val repoComponent = (getSelectedComponent() as? RepositoryUrlMainExtensionComponent)?.openForVcs(clazz)
+        if(url != null) {
+          (repoComponent?.getCurrentVcsComponent() as? VcsCloneComponent.WithSettableUrl)?.setUrl(url)
+        }
       }
     }
   }
