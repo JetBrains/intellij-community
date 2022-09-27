@@ -40,7 +40,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
-import static com.intellij.openapi.project.ProjectUtil.guessProjectDir;
 import static com.intellij.openapi.vcs.VcsConfiguration.getInstance;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
@@ -153,6 +152,9 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
             append(relativePath, getAttributes(info));
             append(" (" + ioBase + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
+        }
+        else {
+          append(new File(directory).getPath(), getAttributes(info));
         }
       }
     }
