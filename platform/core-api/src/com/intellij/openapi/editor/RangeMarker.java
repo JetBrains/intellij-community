@@ -118,10 +118,9 @@ public interface RangeMarker extends UserDataHolder, Segment {
 
   /**
    * @return a {@link TextRange} with offsets of this range marker.
-   * Implementations will try to construct this {@link TextRange} atomically to the best of their efforts,
-   * to guarantee this range marker offsets won't change inside this method execution.
-   * Therefore, please use this method instead of two consecutive calls to {@link #getStartOffset()}, {@link #getEndOffset()} when accessing the range marker
-   * from the background thread, to avoid changing offsets between these calls and returning inconsistent text range as a result.
+   * This method is preferable because the most implementations are thread-safe, so the returned range is always consistent, whereas
+   * the more conventional {@code TextRange.create(getStartOffset(), getEndOffset())} could return inconsistent range when the selection
+   * changed between {@link #getStartOffset()} and {@link #getEndOffset()} calls.
    */
   @NotNull
   default TextRange getTextRange() {
