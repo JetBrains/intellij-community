@@ -206,7 +206,7 @@ public final class ExternalDiffToolUtil {
                                    @NotNull List<String> titles,
                                    @Nullable JComponent parentComponent) {
     try {
-      execute(project, externalTool, contents, titles, null);
+      executeDiff(project, externalTool, contents, titles, null);
     }
     catch (Exception e) {
       Messages.showErrorDialog(parentComponent, e.getMessage(), DiffBundle.message("error.cannot.show.diff"));
@@ -242,11 +242,11 @@ public final class ExternalDiffToolUtil {
     }
   }
 
-  public static void execute(@Nullable Project project,
-                             @NotNull ExternalDiffSettings.ExternalTool externalTool,
-                             @NotNull List<? extends DiffContent> contents,
-                             @NotNull List<String> titles,
-                             @Nullable String windowTitle) throws IOException {
+  public static void executeDiff(@Nullable Project project,
+                                 @NotNull ExternalDiffSettings.ExternalTool externalTool,
+                                 @NotNull List<? extends DiffContent> contents,
+                                 @NotNull List<String> titles,
+                                 @Nullable String windowTitle) throws IOException {
     try {
       GeneralCommandLine commandLine = createDiffCommandLine(project, externalTool, contents, titles, windowTitle);
       commandLine.createProcess();

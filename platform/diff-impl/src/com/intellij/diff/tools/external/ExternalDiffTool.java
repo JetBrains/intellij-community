@@ -237,7 +237,7 @@ public final class ExternalDiffTool {
     try {
       List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
       List<String> titles = ((ContentDiffRequest)request).getContentTitles();
-      ExternalDiffToolUtil.execute(project, externalDiffTool, contents, titles, request.getTitle());
+      ExternalDiffToolUtil.executeDiff(project, externalDiffTool, contents, titles, request.getTitle());
     }
     finally {
       request.onAssigned(false);
