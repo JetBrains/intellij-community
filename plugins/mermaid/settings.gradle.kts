@@ -1,1 +1,1 @@
-rootProject.name = "mermaid-language"
+rootProject.name = "mermaid"
