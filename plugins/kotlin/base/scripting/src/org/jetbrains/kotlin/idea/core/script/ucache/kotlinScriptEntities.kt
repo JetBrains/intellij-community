@@ -127,7 +127,7 @@ private fun MutableEntityStorage.addOrUpdateScriptDependencies(scriptFile: Virtu
     }
 }
 
-private fun VirtualFile.relativeName(project: Project): String {
+fun VirtualFile.relativeName(project: Project): String {
     return if (ScratchUtil.isScratch(this)) presentableName
     else toNioPath().relativeTo(Path.of(project.basePath!!)).pathString
 }
