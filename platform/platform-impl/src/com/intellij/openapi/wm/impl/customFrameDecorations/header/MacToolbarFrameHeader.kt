@@ -43,7 +43,6 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   private fun createToolBar(): MainToolbar {
     val toolbar = MainToolbar()
     toolbar.isOpaque = false
-    toolbar.border = JBUI.Borders.empty(0, LEFT_GAP, 0, RIGHT_GAP)
     toolbar.addComponentListener(object: ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
         updateCustomDecorationHitTestSpots()
@@ -120,6 +119,9 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   private fun updateBorders() {
     val isFullscreen = root.getClientProperty(MacMainFrameDecorator.FULL_SCREEN) != null
     border = if (isFullscreen) JBUI.Borders.empty() else JBUI.Borders.emptyLeft(GAP_FOR_BUTTONS)
+    toolbar?.let {
+      it.border = if (isFullscreen) JBUI.Borders.empty(0, LEFT_GAP, 0, RIGHT_GAP) else JBUI.Borders.emptyRight(RIGHT_GAP)
+    }
   }
 
   override fun updateActive() {
