@@ -5,13 +5,11 @@ import com.intellij.ProjectTopics;
 import com.intellij.maven.testFramework.MavenDomTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class MavenRenameModulesWatcherTest extends MavenDomTestCase {
@@ -22,12 +20,8 @@ public class MavenRenameModulesWatcherTest extends MavenDomTestCase {
     myProjectsManager.listenForExternalChanges();
   }
 
-  private Module findModule(@NotNull String moduleName) {
-    return Arrays.stream(ModuleManager.getInstance(myProject).getModules()).filter(m -> moduleName.equals(m.getName())).findFirst().get();
-  }
-
   private void renameModule(@NotNull String oldName, @NotNull String newName) {
-    var module = findModule(oldName);
+    var module = ModuleManager.getInstance(myProject).findModuleByName(oldName);
     var modifiableModel = ModuleManager.getInstance(myProject).getModifiableModel();
     try {
       modifiableModel.renameModule(module, newName);
