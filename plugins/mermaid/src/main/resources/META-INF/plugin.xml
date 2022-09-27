@@ -25,7 +25,6 @@
                   className="com.intellij.mermaid.editor.MermaidQuoteHandler"/>
 
     <defaultLiveTemplates file="liveTemplates/MermaidHidden.xml" hidden="true"/>
-    <liveTemplateContext implementation="com.intellij.mermaid.editor.MermaidContextType"/>
 
     <lang.elementManipulator forClass="com.intellij.mermaid.lang.psi.MermaidNamedElement"
                              implementationClass="com.intellij.mermaid.lang.psi.MermaidIdentifierManipulator"/>
