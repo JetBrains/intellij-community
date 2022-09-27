@@ -1523,17 +1523,6 @@ public class FileUtil extends FileUtilRt {
     return delete(success ? tempFileNameForDeletion:file);
   }
 
-  public static boolean isFileSystemCaseSensitive(@NotNull String path) throws FileNotFoundException {
-    FileAttributes attributes = FileSystemUtil.getAttributes(path);
-    if (attributes == null) {
-      throw new FileNotFoundException(path);
-    }
-
-    FileAttributes upper = FileSystemUtil.getAttributes(Strings.toUpperCase(path));
-    FileAttributes lower = FileSystemUtil.getAttributes(Strings.toLowerCase(path));
-    return !(attributes.equals(upper) && attributes.equals(lower));
-  }
-
   @NotNull
   public static String getUrl(@NotNull File file) {
     try {

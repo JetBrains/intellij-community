@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard.importSources.util;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -82,12 +82,11 @@ public abstract class CommonSourceRootDetectionUtil<F> {
 
     @Override
     protected boolean isCaseSensitive(@NotNull File file) {
-      try {
-        return FileUtil.isFileSystemCaseSensitive(file.getPath());
-      }
-      catch (FileNotFoundException e) {
-        return SystemInfo.isFileSystemCaseSensitive;
-      }
+      return switch (FileSystemUtil.readParentCaseSensitivity(file)) {
+        case SENSITIVE -> true;
+        case INSENSITIVE -> false;
+        case UNKNOWN -> SystemInfo.isFileSystemCaseSensitive;
+      };
     }
 
     @Override
@@ -123,7 +122,8 @@ public abstract class CommonSourceRootDetectionUtil<F> {
 
     @Override
     protected boolean isCaseSensitive(@NotNull VirtualFile file) {
-      return file.isCaseSensitive();
+      VirtualFile parent = file.getParent();
+      return parent != null ? parent.isCaseSensitive() : SystemInfo.isFileSystemCaseSensitive;
     }
 
     @Override

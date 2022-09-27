@@ -346,12 +346,6 @@ public class FileUtilHeavyTest {
   }
 
   @Test
-  public void testCaseSensitivityDetection() throws IOException {
-    File probe = tempDir.newFile("probe");
-    assertEquals(SystemInfo.isFileSystemCaseSensitive, FileUtil.isFileSystemCaseSensitive(probe.getPath()));
-  }
-
-  @Test
   public void testFileRelativePath() {
     String relativePath = FileUtil.toSystemDependentName("relative/path.file");
 
