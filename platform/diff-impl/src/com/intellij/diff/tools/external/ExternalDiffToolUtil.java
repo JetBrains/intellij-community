@@ -250,12 +250,8 @@ public final class ExternalDiffToolUtil {
     assert contents.size() == 2 || contents.size() == 3;
     assert titles.size() == contents.size();
 
-    List<InputFile> files = new ArrayList<>();
-    for (int i = 0; i < contents.size(); i++) {
-      DiffContent content = contents.get(i);
-      FileNameInfo fileName = FileNameInfo.create(contents, titles, windowTitle, i);
-      files.add(createFile(project, content, fileName));
-    }
+    // Do not clean up - we do not know when the tool is terminated
+    List<InputFile> files = createInputFiles(project, contents, titles, windowTitle);
 
     Map<String, String> patterns = new HashMap<>();
     if (files.size() == 2) {
@@ -298,7 +294,7 @@ public final class ExternalDiffToolUtil {
                                         @Nullable JComponent parentComponent) throws IOException, ExecutionException {
     boolean success;
     OutputFile outputFile = null;
-    List<InputFile> inputFiles = new ArrayList<>();
+    List<InputFile> inputFiles = null;
     try {
       DiffContent outputContent = request.getOutputContent();
       List<? extends DiffContent> contents = request.getContents();
@@ -308,13 +304,8 @@ public final class ExternalDiffToolUtil {
       assert contents.size() == 3;
       assert titles.size() == contents.size();
 
-      for (int i = 0; i < contents.size(); i++) {
-        DiffContent content = contents.get(i);
-        FileNameInfo fileName = FileNameInfo.create(contents, titles, windowTitle, i);
-        inputFiles.add(createFile(project, content, fileName));
-      }
-
-      outputFile = createOutputFile(project, outputContent, FileNameInfo.createMergeResult(outputContent, windowTitle));
+      inputFiles = createInputFiles(project, contents, titles, windowTitle);
+      outputFile = createOutputFile(project, outputContent, windowTitle);
 
       Map<String, String> patterns = new HashMap<>();
       patterns.put("%1", inputFiles.get(0).getPath());
@@ -374,10 +365,11 @@ public final class ExternalDiffToolUtil {
       if (success) outputFile.apply();
     }
     finally {
-
       if (outputFile != null) outputFile.cleanup();
-      for (InputFile file : inputFiles) {
-        file.cleanup();
+      if (inputFiles != null) {
+        for (InputFile file : inputFiles) {
+          file.cleanup();
+        }
       }
     }
     return success;
@@ -405,6 +397,27 @@ public final class ExternalDiffToolUtil {
     commandLine.setExePath(exePath);
     commandLine.addParameters(args);
     return commandLine.createProcess();
+  }
+
+  @NotNull
+  private static List<InputFile> createInputFiles(@Nullable Project project,
+                                                  @NotNull List<? extends DiffContent> contents,
+                                                  @NotNull List<String> titles,
+                                                  @Nullable String windowTitle) throws IOException {
+    List<InputFile> inputFiles = new ArrayList<>();
+    for (int i = 0; i < contents.size(); i++) {
+      DiffContent content = contents.get(i);
+      FileNameInfo fileName = FileNameInfo.create(contents, titles, windowTitle, i);
+      inputFiles.add(createFile(project, content, fileName));
+    }
+    return inputFiles;
+  }
+
+  @NotNull
+  private static OutputFile createOutputFile(@Nullable Project project,
+                                             @NotNull DiffContent outputContent,
+                                             @Nullable String windowTitle) throws IOException {
+    return createOutputFile(project, outputContent, FileNameInfo.createMergeResult(outputContent, windowTitle));
   }
 
   //
