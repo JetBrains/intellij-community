@@ -9,7 +9,8 @@ import java.util.*
 
 internal class MermaidCodeFenceDownloadLineMarkerProvider: CodeFenceDownloadLineMarkerProvider() {
   override fun shouldProcessElement(element: PsiElement): Boolean {
-    return (element as? MarkdownCodeFence)?.fenceLanguage == MermaidLanguage.INSTANCE.displayName.lowercase(Locale.getDefault())
+    val language = (element as? MarkdownCodeFence)?.fenceLanguage ?: return false
+    return MermaidCodeFenceLanguageProvider.isMermaidInfoString(language)
   }
 
   override fun getExtension(): MarkdownExtensionWithDownloadableFiles? {
