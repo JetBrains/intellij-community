@@ -218,6 +218,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testStreamCustomSumMethod() { doTest(); }
   public void testStreamReduceLogicalAnd() { doTest(); }
   public void testStreamSingleElementReduce() { doTest(); }
+  public void testStreamGroupingBy() { doTest(); }
   public void testRequireNonNullMethodRef() {
     doTestWith((dfa, __) -> dfa.SUGGEST_NULLABLE_ANNOTATIONS = true);
   }

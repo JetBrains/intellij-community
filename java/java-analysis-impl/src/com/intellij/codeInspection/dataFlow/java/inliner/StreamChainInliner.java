@@ -84,6 +84,8 @@ public class StreamChainInliner implements CallInliner {
           staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toCollection").parameterCount(1));
   private static final CallMatcher MAP_COLLECTOR =
     staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toMap", "toConcurrentMap", "toUnmodifiableMap");
+  private static final CallMatcher GROUPING_COLLECTOR =
+    staticCall(JAVA_UTIL_STREAM_COLLECTORS, "groupingBy", "partitioningBy", "groupingByConcurrent");
   private static final CallMatcher NOT_NULL_COLLECTORS =
     staticCall(JAVA_UTIL_STREAM_COLLECTORS, "joining", "maxBy", "minBy", "averagingInt", "averagingLong", "averagingDouble",
                "summingInt", "summingLong", "summingDouble", "summarizingInt", "summarizingLong", "summarizingDouble");
@@ -689,6 +691,9 @@ public class StreamChainInliner implements CallInliner {
         } else {
           dfType = dfType.meet(DfTypes.LOCAL_OBJECT);
         }
+        if (SpecialField.fromQualifierType(dfType) == SpecialField.COLLECTION_SIZE) {
+          dfType = dfType.meet(SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(0)));
+        }
         builder.push(dfType);
       }
     }
@@ -774,6 +779,35 @@ public class StreamChainInliner implements CallInliner {
                .invokeFunction(2, myMerger)
                .end();
       }
+      // Actual addition of Map element is unnecessary for current analysis
+      builder.flush(SpecialField.COLLECTION_SIZE.createValue(builder.getFactory(), myResult)).pop();
+    }
+  }
+
+  static class GroupingStep extends AbstractCollectionStep {
+    private final @NotNull PsiExpression myKeyExtractor;
+    private final @Nullable PsiExpression myDownstream;
+
+    GroupingStep(@NotNull PsiMethodCallExpression call,
+                 @NotNull PsiExpression keyExtractor,
+                 @Nullable PsiExpression downstream,
+                 @Nullable PsiExpression supplier) {
+      super(call, supplier, false);
+      myKeyExtractor = keyExtractor;
+      myDownstream = downstream;
+    }
+
+    @Override
+    void before(CFGBuilder builder) {
+      builder.evaluateFunction(myKeyExtractor)
+             .evaluateFunction(myDownstream);
+      super.before(builder);
+    }
+
+    @Override
+    void iteration(CFGBuilder builder) {
+      // Null keys are not tolerated
+      builder.invokeFunction(1, myKeyExtractor, Nullability.NOT_NULL);
       // Actual addition of Map element is unnecessary for current analysis
       builder.flush(SpecialField.COLLECTION_SIZE.createValue(builder.getFactory(), myResult)).pop();
     }
@@ -946,6 +980,15 @@ public class StreamChainInliner implements CallInliner {
         PsiExpression supplier = args.length >= 4 ? args[3] : null;
         return new ToMapStep(call, keyExtractor, valueExtractor, merger, supplier,
                              "toUnmodifiableMap".equals(collectorCall.getMethodExpression().getReferenceName()));
+      }
+    }
+    if (GROUPING_COLLECTOR.matches(collectorCall)) {
+      PsiExpression[] args = collectorCall.getArgumentList().getExpressions();
+      if (args.length >= 1 && args.length <= 3) {
+        PsiExpression keyExtractor = args[0];
+        PsiExpression downstream = args.length > 1 ? args[args.length - 1] : null;
+        PsiExpression supplier = args.length == 3 ? args[1] : null;
+        return new GroupingStep(call, keyExtractor, downstream, supplier);
       }
     }
 
