@@ -83,7 +83,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   protected @Nullable JBPopup getWidgetPopup(@NotNull Project project, @NotNull GitRepository repository) {
     GitBranchesUsageCollector.branchWidgetClicked();
     if (Registry.is("git.branches.popup.tree", false)) {
-      return GitBranchesTreePopup.create(project, repository);
+      return GitBranchesTreePopup.create(project);
     }
     else {
       return GitBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar.getComponent()))

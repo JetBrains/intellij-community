@@ -3,6 +3,7 @@ package git4idea.ui.branch
 
 import com.intellij.dvcs.branch.DvcsBranchManager
 import com.intellij.dvcs.branch.GroupingKey
+import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
@@ -39,6 +40,7 @@ import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
+import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchesTreeUtil.overrideBuiltInAction
 import git4idea.ui.branch.GitBranchesTreeUtil.selectFirstLeaf
 import git4idea.ui.branch.GitBranchesTreeUtil.selectLastLeaf
@@ -63,8 +65,8 @@ import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
-class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
-  : WizardPopup(project, null, step),
+class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, parent: JBPopup? = null)
+  : WizardPopup(project, parent, step),
     TreePopup, NextStepHandler {
 
   private lateinit var tree: BranchesTree
@@ -81,16 +83,25 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
 
   init {
     setMinimumSize(JBDimension(200, 200))
-    dimensionServiceKey = GitBranchPopup.DIMENSION_SERVICE_KEY
-    userResized = WindowStateService.getInstance(project).getSizeFor(project, dimensionServiceKey) != null
-    setSpeedSearchAlwaysShown()
+    dimensionServiceKey = if (isChild()) null else GitBranchPopup.DIMENSION_SERVICE_KEY
+    userResized = !isChild() && WindowStateService.getInstance(project).getSizeFor(project, dimensionServiceKey) != null
     installGeneralShortcutActions()
     installShortcutActions(step.treeModel)
-    installHeaderToolbar()
-    installRepoListener()
-    installResizeListener()
+    if (!isChild()) {
+      setSpeedSearchAlwaysShown()
+      installHeaderToolbar()
+      installRepoListener()
+      installResizeListener()
+      warnThatBranchesDivergedIfNeeded()
+    }
     installBranchSettingsListener()
     DataManager.registerDataProvider(component, DataProvider { dataId -> if (POPUP_KEY.`is`(dataId)) this else null })
+  }
+
+  private fun warnThatBranchesDivergedIfNeeded() {
+    if (treeStep.isBranchesDiverged()) {
+      setWarning(DvcsBundle.message("branch.popup.warning.branches.have.diverged"))
+    }
   }
 
   override fun createContent(): JComponent {
@@ -115,6 +126,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     }
     return tree
   }
+
+  private fun isChild() = parent != null
 
   private fun applySearchPattern(pattern: String? = speedSearch.enteredPrefix.nullize(true)) {
     treeStep.setSearchPattern(pattern)
@@ -193,12 +206,12 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
   }
 
   private fun toggleFavorite(branch: GitBranch) {
-    val repository = treeStep.repository
     val branchType = GitBranchType.of(branch)
     val branchManager = project.service<GitBranchManager>()
-    val isFavorite = branchManager.isFavorite(branchType, repository, branch.name)
-
-    branchManager.setFavorite(branchType, repository, branch.name, !isFavorite)
+    val anyNotFavorite = treeStep.repositories.any { repository -> !branchManager.isFavorite(branchType, repository, branch.name) }
+    treeStep.repositories.forEach { repository ->
+      branchManager.setFavorite(branchType, repository, branch.name, anyNotFavorite)
+    }
   }
 
   private fun installGeneralShortcutActions() {
@@ -240,7 +253,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     override fun actionPerformed(e: ActionEvent?) {
       cancel()
       ActionUtil.invokeAction(action,
-                              GitBranchesTreePopupStep.createDataContext(project, treeStep.repository),
+                              GitBranchesTreePopupStep.createDataContext(project, treeStep.repositories),
                               GitBranchesTreePopupStep.ACTION_PLACE, null, null)
     }
   }
@@ -276,9 +289,17 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
       else false
     }
 
+    overrideBuiltInAction(TreeActions.Left.ID) {
+      if (isChild()) {
+        cancel()
+        true
+      }
+      else false
+    }
+
     overrideBuiltInAction(TreeActions.Right.ID) {
       val path = selectionPath
-      if (path != null && model.getChildCount(path.lastPathComponent) == 0) {
+      if (path != null && (path.lastPathComponent is GitRepository || model.getChildCount(path.lastPathComponent) == 0)) {
         handleSelect(false, null)
         true
       }
@@ -453,7 +474,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     val point = Point(pathBounds.x, pathBounds.y)
     SwingUtilities.convertPointToScreen(point, tree)
 
-    myChild = createPopup(this, nextStep, parentValue)
+    myChild =
+      if (nextStep is GitBranchesTreePopupStep) GitBranchesTreePopup(project, nextStep, this)
+      else createPopup(this, nextStep, parentValue)
+
     myChild.show(content, content.locationOnScreen.x + content.width - STEP_X_PADDING, point.y, true)
   }
 
@@ -479,13 +503,14 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     internal val POPUP_KEY = DataKey.create<GitBranchesTreePopup>("GIT_BRANCHES_TREE_POPUP")
 
     @JvmStatic
-    fun show(project: Project, repository: GitRepository) {
-      create(project, repository).showCenteredInCurrentWindow(project)
+    fun show(project: Project) {
+      create(project).showCenteredInCurrentWindow(project)
     }
 
     @JvmStatic
-    fun create(project: Project, repository: GitRepository): JBPopup {
-      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, repository))
+    fun create(project: Project): JBPopup {
+      val repositories = GitRepositoryManager.getInstance(project).repositories
+      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, repositories))
     }
 
     private fun uiScope(parent: Disposable) =

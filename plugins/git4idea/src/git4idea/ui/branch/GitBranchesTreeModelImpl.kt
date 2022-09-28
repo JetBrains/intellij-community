@@ -2,6 +2,7 @@
 package git4idea.ui.branch
 
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
+import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
@@ -13,8 +14,10 @@ import com.intellij.util.ui.tree.AbstractTreeModel
 import com.intellij.vcsUtil.Delegates.equalVetoingObservable
 import git4idea.GitBranch
 import git4idea.branch.GitBranchType
+import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
+import git4idea.ui.branch.GitBranchesTreeModel.TreeRoot
 import javax.swing.tree.TreePath
 import kotlin.properties.Delegates.observable
 
@@ -23,13 +26,13 @@ private typealias MatchResult = Pair<Collection<GitBranch>, Pair<GitBranch, Int>
 
 class GitBranchesTreeModelImpl(
   private val project: Project,
-  private val repository: GitRepository,
-  private val topLevelItems: List<Any> = emptyList()
+  private val repositories: List<GitRepository>,
+  private val topLevelActions: List<PopupFactoryImpl.ActionItem> = emptyList()
 ) : AbstractTreeModel(), GitBranchesTreeModel {
 
   private val branchManager = project.service<GitBranchManager>()
   private val branchComparator = compareBy<GitBranch> {
-    !branchManager.isFavorite(GitBranchType.of(it), repository, it.name)
+    !repositories.all { repo -> branchManager.isFavorite(GitBranchType.of(it), repo, it.name) }
   } then compareBy { it.name }
 
   private lateinit var localBranchesTree: LazyBranchesSubtreeHolder
@@ -51,12 +54,14 @@ class GitBranchesTreeModelImpl(
 
   private fun rebuild(matcher: MinusculeMatcher?) {
     branchesTreeCache.keys.clear()
-    localBranchesTree = LazyBranchesSubtreeHolder(repository.branches.localBranches, branchComparator, matcher)
-    remoteBranchesTree = LazyBranchesSubtreeHolder(repository.branches.remoteBranches, branchComparator, matcher)
+    val localBranches = repositories.singleOrNull()?.branches?.localBranches ?: GitBranchUtil.getCommonLocalBranches(repositories)
+    val remoteBranches = repositories.singleOrNull()?.branches?.remoteBranches ?: GitBranchUtil.getCommonRemoteBranches(repositories)
+    localBranchesTree = LazyBranchesSubtreeHolder(localBranches, branchComparator, matcher)
+    remoteBranchesTree = LazyBranchesSubtreeHolder(remoteBranches, branchComparator, matcher)
     treeStructureChanged(TreePath(arrayOf(root)), null, null)
   }
 
-  override fun getRoot() = repository
+  override fun getRoot() = TreeRoot
 
   override fun getChild(parent: Any?, index: Int): Any = getChildren(parent)[index]
 
@@ -64,14 +69,14 @@ class GitBranchesTreeModelImpl(
 
   override fun getIndexOfChild(parent: Any?, child: Any?): Int = getChildren(parent).indexOf(child)
 
-  override fun isLeaf(node: Any?): Boolean = (node is GitBranch) || (node is PopupFactoryImpl.ActionItem)
+  override fun isLeaf(node: Any?): Boolean = (node is GitRepository) || (node is GitBranch) || (node is PopupFactoryImpl.ActionItem)
                                              || (node === GitBranchType.LOCAL && localBranchesTree.isEmpty())
                                              || (node === GitBranchType.REMOTE && remoteBranchesTree.isEmpty())
 
   private fun getChildren(parent: Any?): List<Any> {
     if (parent == null || !haveFilteredBranches()) return emptyList()
     return when (parent) {
-      is GitRepository -> getTopLevelNodes()
+      TreeRoot -> getTopLevelNodes()
       is GitBranchType -> branchesTreeCache.getOrPut(parent) { getBranchTreeNodes(parent, emptyList()) }
       is GitBranchesTreeModel.BranchesPrefixGroup -> branchesTreeCache.getOrPut(parent) { getBranchTreeNodes(parent.type, parent.prefix) }
       else -> emptyList()
@@ -79,8 +84,10 @@ class GitBranchesTreeModelImpl(
   }
 
   private fun getTopLevelNodes(): List<Any> {
-    return if (branchTypeFilter != null) topLevelItems + branchTypeFilter!!
-    else topLevelItems + GitBranchType.LOCAL + GitBranchType.REMOTE
+    val repositoriesOrEmpty = if (repositories.size > 1) repositories else emptyList()
+
+    return if (branchTypeFilter != null) topLevelActions + repositoriesOrEmpty + branchTypeFilter!!
+    else topLevelActions + repositoriesOrEmpty + GitBranchType.LOCAL + GitBranchType.REMOTE
   }
 
   private fun getBranchTreeNodes(branchType: GitBranchType, path: List<String>): List<Any> {
@@ -113,20 +120,30 @@ class GitBranchesTreeModelImpl(
   private fun getPreferredBranch(): GitBranch? {
     if (branchNameMatcher == null) {
       if (branchTypeFilter != GitBranchType.REMOTE) {
-        val recentBranches = GitVcsSettings.getInstance(project).recentBranchesByRepository
-        val recentBranch = recentBranches[repository.root.path]?.let { recentBranchName ->
-          localBranchesTree.branches.find { it.name == recentBranchName }
-        }
-        if (recentBranch != null) {
-          return recentBranch
-        }
+        if (repositories.size == 1) {
+          val repository = repositories.single()
+          val recentBranches = GitVcsSettings.getInstance(project).recentBranchesByRepository
+          val recentBranch = recentBranches[repository.root.path]?.let { recentBranchName ->
+            localBranchesTree.branches.find { it.name == recentBranchName }
+          }
+          if (recentBranch != null) {
+            return recentBranch
+          }
 
-        val currentBranch = repository.currentBranch
-        if (currentBranch != null) {
-          return currentBranch
-        }
+          val currentBranch = repository.currentBranch
+          if (currentBranch != null) {
+            return currentBranch
+          }
 
-        return null
+          return null
+        }
+        else {
+          val branch = (GitVcsSettings.getInstance(project).recentCommonBranch ?: repositories.getCommonCurrentBranch())
+            ?.let { recentBranchName ->
+              localBranchesTree.branches.find { it.name == recentBranchName }
+            }
+          return branch
+        }
       }
       else {
         return null

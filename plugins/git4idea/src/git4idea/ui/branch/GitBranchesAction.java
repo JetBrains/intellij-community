@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -37,12 +36,12 @@ public class GitBranchesAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    GitRepository repository = GitBranchUtil.guessRepositoryForOperation(project, e.getDataContext());
-    if (repository != null) {
-      if (Registry.is("git.branches.popup.tree", false)) {
-        GitBranchesTreePopup.show(project, repository);
-      }
-      else {
+    if (Registry.is("git.branches.popup.tree", false)) {
+      GitBranchesTreePopup.show(project);
+    }
+    else {
+      GitRepository repository = GitBranchUtil.guessRepositoryForOperation(project, e.getDataContext());
+      if (repository != null) {
         GitBranchPopup.getInstance(project, repository, e.getDataContext()).asListPopup().showCenteredInCurrentWindow(project);
       }
     }
