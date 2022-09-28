@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -162,6 +163,7 @@ public enum PythonHelper implements HelperPackage {
       final Map<String, String> env = cmd.getEnvironment();
       addToPythonPath(env);
       PythonEnvUtil.resetHomePathChanges(sdkPath, env);
+      PySdkUtil.configureCharset(cmd);
       return cmd;
     }
 

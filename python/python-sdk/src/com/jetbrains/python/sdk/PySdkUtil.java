@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import kotlin.text.Charsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,6 +58,14 @@ public final class PySdkUtil {
 
   private PySdkUtil() {
     // explicitly none
+  }
+
+  public static void configureCharset(@NotNull GeneralCommandLine commandLine) {
+    var charset = commandLine.getCharset();
+    if ( charset != Charsets.UTF_8) {
+      LOG.warn("Charset " + charset  + " is not UTF-8, which is likely lead to troubles");
+    }
+    PythonEnvUtil.setupEncodingEnvs(commandLine.getEnvironment(), charset);
   }
 
   /**
@@ -130,6 +140,7 @@ public final class PySdkUtil {
         cmdLinePatcher.patchCommandLine(cmd);
       }
 
+      PythonEnvUtil.setupEncodingEnvs(commandLine.getEnvironment(), commandLine.getCharset());
       final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
       if (stdin != null) {
         final OutputStream processInput = processHandler.getProcessInput();
