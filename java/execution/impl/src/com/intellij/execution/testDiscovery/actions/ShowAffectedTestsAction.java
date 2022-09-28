@@ -216,34 +216,43 @@ public class ShowAffectedTestsAction extends AnAction {
   public static PsiMethod @NotNull [] findMethods(@NotNull Project project, Change @NotNull ... changes) {
     UastMetaLanguage jvmLanguage = Language.findInstance(UastMetaLanguage.class);
 
-    return PsiDocumentManager.getInstance(project).commitAndRunReadAction(
-      () -> VcsFacadeImpl.getVcsInstance().getChangedElements(project, changes, file -> {
-        if (DumbService.isDumb(project) || project.isDisposed() || !file.isValid()) return null;
-        ProjectFileIndex index = ProjectFileIndex.getInstance(project);
-        if (!index.isInSource(file)) return null;
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-        if (psiFile == null || !jvmLanguage.matchesLanguage(psiFile.getLanguage())) return null;
-        Document document = FileDocumentManager.getInstance().getDocument(file);
-        if (document == null) return null;
-
-        List<PsiElement> physicalMethods = new SmartList<>();
-        psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitElement(@NotNull PsiElement element) {
-            UMethod method = UastContextKt.toUElement(element, UMethod.class);
-            if (method != null) {
-              ContainerUtil.addAllNotNull(physicalMethods, method.getSourcePsi());
-            }
-            super.visitElement(element);
-          }
-        });
-        return physicalMethods;
-      }).stream()
+    return PsiDocumentManager.getInstance(project).commitAndRunReadAction(() -> {
+      List<PsiElement> changedElements = VcsFacadeImpl.getVcsInstance().getChangedElements(project, changes, file -> {
+        return getMethodsFromFile(project, jvmLanguage, file);
+      });
+      return changedElements.stream()
         .map(m -> UastContextKt.toUElement(m))
         .filter(Objects::nonNull)
         .map(m -> ObjectUtils.tryCast(m.getJavaPsi(), PsiMethod.class))
         .filter(Objects::nonNull)
-        .toArray(PsiMethod.ARRAY_FACTORY::create));
+        .toArray(PsiMethod.ARRAY_FACTORY::create);
+    });
+  }
+
+  @Nullable
+  private static List<PsiElement> getMethodsFromFile(@NotNull Project project,
+                                                     @NotNull UastMetaLanguage jvmLanguage,
+                                                     @NotNull VirtualFile file) {
+    if (DumbService.isDumb(project) || project.isDisposed() || !file.isValid()) return null;
+    ProjectFileIndex index = ProjectFileIndex.getInstance(project);
+    if (!index.isInSource(file)) return null;
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    if (psiFile == null || !jvmLanguage.matchesLanguage(psiFile.getLanguage())) return null;
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) return null;
+
+    List<PsiElement> physicalMethods = new SmartList<>();
+    psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        UMethod method = UastContextKt.toUElement(element, UMethod.class);
+        if (method != null) {
+          ContainerUtil.addAllNotNull(physicalMethods, method.getSourcePsi());
+        }
+        super.visitElement(element);
+      }
+    });
+    return physicalMethods;
   }
 
   public static boolean isEnabled(@Nullable Project project) {
