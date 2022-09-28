@@ -31,7 +31,7 @@ class QuickListPanel {
   QuickList item;
 
   QuickListPanel(@NotNull final CollectionListModel<QuickList> model) {
-    myActionsModel = new CollectionListModel<>();
+    myActionsModel = new MyCollectionListModel();
     myActionsList = new JBList<>(myActionsModel);
     myActionsList.setCellRenderer(new MyListCellRenderer());
     myActionsList.getEmptyText().setText(KeyMapBundle.message("no.actions"));
@@ -133,6 +133,15 @@ class QuickListPanel {
 
   public JPanel getPanel() {
     return myPanel;
+  }
+
+  private static class MyCollectionListModel extends CollectionListModel<String> {
+    @Override
+    public void exchangeRows(int oldIndex, int newIndex) {
+      String element = getElementAt(oldIndex);
+      remove(oldIndex);
+      add(newIndex, element);
+    }
   }
 
   private static class MyListCellRenderer extends DefaultListCellRenderer {
