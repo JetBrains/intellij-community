@@ -481,7 +481,7 @@ public class WSLDistribution implements AbstractWslDistribution {
     return getUNCRoot() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
   }
 
-  private static boolean containsDriveLetter(@NotNull String linuxPath) {
+  public static boolean containsDriveLetter(@NotNull String linuxPath) {
     int slashInd = linuxPath.indexOf('/');
     while (slashInd >= 0) {
       int nextSlashInd = linuxPath.indexOf('/', slashInd + 1);
