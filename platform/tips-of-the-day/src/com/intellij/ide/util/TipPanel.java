@@ -266,7 +266,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     TextParagraph last = tipContent.get(tipContent.size() - 1);
     List<TextPart> parts = last.getTextParts();
     Border border = parts.size() == 1 && parts.get(0) instanceof IllustrationTextPart
-                    ? null : JBUI.Borders.emptyBottom((int)TextParagraph.LARGE_INDENT);
+                    ? null : JBUI.Borders.emptyBottom((int)TextParagraph.BIG_INDENT);
     myTextPane.setBorder(border);
   }
 

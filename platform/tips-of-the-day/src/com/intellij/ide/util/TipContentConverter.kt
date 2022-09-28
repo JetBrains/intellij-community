@@ -57,7 +57,7 @@ internal class TipContentConverter(private val tipContent: Element,
         if (icon != null) {
           val roundedIcon = IconWithRoundedBorder(icon)
           return TextParagraph(listOf(IllustrationTextPart(roundedIcon))).editAttributes {
-            StyleConstants.setSpaceAbove(this, TextParagraph.LARGE_INDENT)
+            StyleConstants.setSpaceAbove(this, TextParagraph.BIG_INDENT)
             StyleConstants.setLineSpacing(this, 0f)  // it is required to not add extra space below the image
           }
         }
