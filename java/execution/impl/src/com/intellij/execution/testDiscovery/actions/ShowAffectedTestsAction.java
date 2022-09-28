@@ -80,6 +80,7 @@ import javax.swing.tree.TreeModel;
 import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.*;
 import static com.intellij.openapi.util.Pair.pair;
@@ -217,15 +218,24 @@ public class ShowAffectedTestsAction extends AnAction {
     UastMetaLanguage jvmLanguage = Language.findInstance(UastMetaLanguage.class);
 
     return PsiDocumentManager.getInstance(project).commitAndRunReadAction(() -> {
-      List<PsiElement> changedElements = VcsFacadeImpl.getVcsInstance().getChangedElements(project, changes, file -> {
-        return getMethodsFromFile(project, jvmLanguage, file);
-      });
-      return changedElements.stream()
+      return findChangedMethods(project, jvmLanguage, changes)
         .map(m -> UastContextKt.toUElement(m))
         .filter(Objects::nonNull)
         .map(m -> ObjectUtils.tryCast(m.getJavaPsi(), PsiMethod.class))
         .filter(Objects::nonNull)
         .toArray(PsiMethod.ARRAY_FACTORY::create);
+    });
+  }
+
+  @NotNull
+  private static Stream<PsiElement> findChangedMethods(@NotNull Project project,
+                                                       @NotNull UastMetaLanguage jvmLanguage,
+                                                       Change @NotNull [] changes) {
+    return Arrays.stream(changes).flatMap(change -> {
+      return VcsFacadeImpl.getVcsInstance().getLocalChangedElements(project, change, file -> {
+          return getMethodsFromFile(project, jvmLanguage, file);
+        })
+        .stream();
     });
   }
 

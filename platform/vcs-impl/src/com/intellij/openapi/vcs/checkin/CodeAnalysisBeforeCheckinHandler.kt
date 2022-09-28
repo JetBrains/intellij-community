@@ -171,13 +171,13 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
    * Returns a set of PsiElements that are being committed
    */
   private fun getBeingCommittedPsiElements(change: Change, clazz: Class<out PsiElement>): Set<PsiElement> {
-    val elementsExtractor = { virtualFile: VirtualFile ->
+    val elementExtractor = { virtualFile: VirtualFile ->
       val psiFile = runReadAction {
         PsiManager.getInstance(project).findFile(virtualFile)
       }
       PsiTreeUtil.findChildrenOfType(psiFile, clazz).toList()
     }
-    return VcsFacadeImpl.getVcsInstance().getChangedElements(project, arrayOf(change), elementsExtractor).toSet()
+    return VcsFacadeImpl.getVcsInstance().getLocalChangedElements(project, change, elementExtractor).toSet()
   }
 
   private fun findCodeSmells(changedFiles: Map<VirtualFile, Change>): List<CodeSmellInfo> {

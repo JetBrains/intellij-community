@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.util.Function;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -27,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+
+import static java.util.Collections.emptyList;
 
 public final class VcsFacadeImpl extends VcsFacade {
 
@@ -129,37 +130,26 @@ public final class VcsFacadeImpl extends VcsFacade {
   }
 
   @NotNull
-  public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
-                                                           Change @NotNull [] changes,
-                                                           @NotNull Function<? super VirtualFile, ? extends List<T>> elementsConvertor) {
-    List<T> result = new SmartList<>();
-    for (Change change : changes) {
-      if (change.getType() == Change.Type.DELETED) continue;
-      if (!(change.getAfterRevision() instanceof CurrentContentRevision)) continue;
+  public <T extends PsiElement> List<T> getLocalChangedElements(@NotNull Project project,
+                                                                @NotNull Change change,
+                                                                @NotNull Function<? super VirtualFile, ? extends List<T>> elementExtractor) {
+    if (change.getType() == Change.Type.DELETED) return emptyList();
+    if (!(change.getAfterRevision() instanceof CurrentContentRevision)) return emptyList();
 
-      VirtualFile file = ((CurrentContentRevision)change.getAfterRevision()).getVirtualFile();
-      if (file == null) continue;
+    VirtualFile file = ((CurrentContentRevision)change.getAfterRevision()).getVirtualFile();
+    if (file == null) return emptyList();
 
-      Document document = FileDocumentManager.getInstance().getDocument(file);
-      if (document == null) continue;
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) return emptyList();
 
-      List<T> apply = elementsConvertor.fun(file);
-      List<T> elements = apply == null ? null : ContainerUtil.skipNulls(apply);
-      if (ContainerUtil.isEmpty(elements)) continue;
+    List<T> apply = elementExtractor.fun(file);
+    List<T> elements = apply == null ? null : ContainerUtil.skipNulls(apply);
+    if (ContainerUtil.isEmpty(elements)) return emptyList();
 
-      BitSet changedLines = getChangedLines(project, document, change);
-      if (changedLines != null) {
-        for (T element : elements) {
-          if (isElementChanged(element, document, changedLines)) {
-            result.add(element);
-          }
-        }
-      }
-      else {
-        result.addAll(elements);
-      }
-    }
-    return result;
+    BitSet changedLines = getChangedLines(project, document, change);
+    if (changedLines == null) return elements;
+
+    return ContainerUtil.filter(elements, element -> isElementChanged(element, document, changedLines));
   }
 
   @Nullable
