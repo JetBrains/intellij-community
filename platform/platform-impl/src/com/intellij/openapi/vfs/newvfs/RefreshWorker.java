@@ -172,7 +172,7 @@ final class RefreshWorker {
             continue;
           }
 
-          checkAndScheduleChildRefresh(events, fs, file.getParent(), file, attributes);
+          checkAndScheduleChildRefresh(events, fs, file.getParent(), file, attributes, false);
 
           if (!file.isDirty() || !file.isDirectory()) {
             continue;
@@ -311,7 +311,7 @@ final class RefreshWorker {
       checkCancelled(child);
       FileAttributes childAttributes = pair.second;
       if (childAttributes != null) {
-        checkAndScheduleChildRefresh(events, fs, dir, child, childAttributes);
+        checkAndScheduleChildRefresh(events, fs, dir, child, childAttributes, true);
         checkAndScheduleFileNameChange(events, actualNames, child);
       }
       else {
@@ -389,7 +389,7 @@ final class RefreshWorker {
       checkCancelled(child);
       FileAttributes childAttributes = pair.second;
       if (childAttributes != null) {
-        checkAndScheduleChildRefresh(events, fs, dir, child, childAttributes);
+        checkAndScheduleChildRefresh(events, fs, dir, child, childAttributes, true);
         checkAndScheduleFileNameChange(events, actualNames, child);
       }
       else {
@@ -593,7 +593,8 @@ final class RefreshWorker {
                                             NewVirtualFileSystem fs,
                                             @Nullable NewVirtualFile parent,
                                             NewVirtualFile child,
-                                            FileAttributes childAttributes) {
+                                            FileAttributes childAttributes,
+                                            boolean enqueue) {
     boolean fileDirty = child.isDirty();
     if (LOG.isTraceEnabled()) LOG.trace("file=" + child + " dirty=" + fileDirty);
     if (!fileDirty) {
@@ -630,7 +631,7 @@ final class RefreshWorker {
       }
       child.markClean();
     }
-    else if (myIsRecursive) {
+    else if (enqueue && myIsRecursive) {
       queueDirectory(child);
     }
   }
