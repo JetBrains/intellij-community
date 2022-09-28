@@ -62,32 +62,33 @@ private interface ModuleIndex {
     fun exportingUsages(module: Module): Collection<Module>
 }
 
-private class ModuleIndexImpl(private val plainUsages: MultiMap<Module, Module>, private val exportingUsages: MultiMap<Module, Module>): ModuleIndex {
+private class ModuleIndexImpl(
+    private val plainUsages: MultiMap<Module, Module>,
+    private val exportingUsages: MultiMap<Module, Module>,
+) : ModuleIndex {
     override fun plainUsages(module: Module): Collection<Module> = plainUsages[module]
 
     override fun exportingUsages(module: Module): Collection<Module> = exportingUsages[module]
 }
 
-private fun getModuleIndex(project: Project): ModuleIndex =
-    CachedValuesManager.getManager(project).getCachedValue(project) {
-        val plainUsages: MultiMap<Module, Module> = MultiMap.create()
-        val exportingUsages: MultiMap<Module, Module> = MultiMap.create()
+private fun getModuleIndex(project: Project): ModuleIndex = CachedValuesManager.getManager(project).getCachedValue(project) {
+    val plainUsages: MultiMap<Module, Module> = MultiMap.create()
+    val exportingUsages: MultiMap<Module, Module> = MultiMap.create()
 
-        for (module in runReadAction { ModuleManager.getInstance(project).modules }) {
+    runReadAction {
+        for (module in ModuleManager.getInstance(project).modules) {
             ProgressManager.checkCanceled()
-            runReadAction {
-                for (orderEntry in ModuleRootManager.getInstance(module).orderEntries) {
-                    if (orderEntry is ModuleOrderEntry) {
-                        orderEntry.module?.let { referenced ->
-                            val map = if (orderEntry.isExported) exportingUsages else plainUsages
-                            map.putValue(referenced, module)
-                        }
-                    }
-                }
+            for (orderEntry in ModuleRootManager.getInstance(module).orderEntries) {
+                if (orderEntry !is ModuleOrderEntry) continue
+                val referenced = orderEntry.module ?: continue
+                val map = if (orderEntry.isExported) exportingUsages else plainUsages
+                map.putValue(referenced, module)
             }
         }
-        CachedValueProvider.Result(
-            ModuleIndexImpl(plainUsages = plainUsages, exportingUsages = exportingUsages),
-            ModuleModificationTracker.getInstance(project)
-        )
-    }!!
+    }
+
+    CachedValueProvider.Result(
+        ModuleIndexImpl(plainUsages = plainUsages, exportingUsages = exportingUsages),
+        ModuleModificationTracker.getInstance(project)
+    )
+}

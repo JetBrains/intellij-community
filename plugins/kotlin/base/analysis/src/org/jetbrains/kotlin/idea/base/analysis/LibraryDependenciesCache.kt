@@ -141,7 +141,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     * the inability to get real dependencies from IDEA model. So moving stdlib with all dependencies
     * down is a questionable option.
     */
-    private fun filterForBuiltins(libraryInfo: LibraryInfo, dependencyLibraries: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
+    private fun filterForBuiltins(
+        libraryInfo: LibraryInfo,
+        dependencyLibraries: Set<LibraryDependencyCandidate>
+    ): Set<LibraryDependencyCandidate> {
         return if (!IdeBuiltInsLoadingState.isFromClassLoader && libraryInfo.isCoreKotlinLibrary(project)) {
             dependencyLibraries.filterTo(mutableSetOf()) { dep ->
                 dep.libraries.any { it.isCoreKotlinLibrary(project) }
@@ -161,10 +164,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }!!
 
     private inner class LibraryDependenciesInnerCache :
-      SynchronizedFineGrainedEntityCache<LibraryInfo, LibraryDependencies>(project, cleanOnLowMemory = true),
-      LibraryInfoListener,
-      ModuleRootListener,
-      ProjectJdkTable.Listener {
+        SynchronizedFineGrainedEntityCache<LibraryInfo, LibraryDependencies>(project, cleanOnLowMemory = true),
+        LibraryInfoListener,
+        ModuleRootListener,
+        ProjectJdkTable.Listener {
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
             connection.subscribe(LibraryInfoListener.TOPIC, this)
@@ -209,10 +212,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     }
 
     private inner class ModuleDependenciesCache :
-      SynchronizedFineGrainedEntityCache<Module, LibraryDependencyCandidatesAndSdkInfos>(project, cleanOnLowMemory = true),
-      ProjectJdkTable.Listener,
-      LibraryInfoListener,
-      ModuleRootListener {
+        SynchronizedFineGrainedEntityCache<Module, LibraryDependencyCandidatesAndSdkInfos>(project, cleanOnLowMemory = true),
+        ProjectJdkTable.Listener,
+        LibraryInfoListener,
+        ModuleRootListener {
 
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
@@ -279,25 +282,20 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     }
 
     private inner class LibraryUsageIndex {
-        private val modulesLibraryIsUsedIn: MultiMap<Library, Module>
-
-        init {
+        private val modulesLibraryIsUsedIn: MultiMap<Library, Module> = runReadAction {
             val map: MultiMap<Library, Module> = MultiMap.createSet()
             val libraryCache = LibraryInfoCache.getInstance(project)
-
-            for (module in runReadAction { ModuleManager.getInstance(project).modules }) {
+            for (module in ModuleManager.getInstance(project).modules) {
                 checkCanceled()
-                runReadAction {
-                    for (entry in ModuleRootManager.getInstance(module).orderEntries) {
-                        if (entry !is LibraryOrderEntry) continue
-                        val library = entry.library ?: continue
-                        val keyLibrary = libraryCache.deduplicatedLibrary(library)
-                        map.putValue(keyLibrary, module)
-                    }
+                for (entry in ModuleRootManager.getInstance(module).orderEntries) {
+                    if (entry !is LibraryOrderEntry) continue
+                    val library = entry.library ?: continue
+                    val keyLibrary = libraryCache.deduplicatedLibrary(library)
+                    map.putValue(keyLibrary, module)
                 }
             }
 
-            modulesLibraryIsUsedIn = map
+            map
         }
 
         fun getModulesLibraryIsUsedIn(libraryInfo: LibraryInfo) = sequence<Module> {
