@@ -335,15 +335,16 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   void updateMainMenuActions() {
-    if (menuBar != null) {
+    if (myCustomFrameTitlePane != null) {
+      // The menu bar is decorated, we update it indirectly.
+      myCustomFrameTitlePane.updateMenuActions(false);
+      myCustomFrameTitlePane.getComponent().repaint();
+    } else if (menuBar != null) {
+      // No decorated menu bar, but there is a regular one, update it directly.
       ((IdeMenuBar)menuBar).updateMenuActions(false);
       menuBar.repaint();
     }
 
-    if (myCustomFrameTitlePane != null) {
-      myCustomFrameTitlePane.updateMenuActions(false);
-      myCustomFrameTitlePane.getComponent().repaint();
-    }
   }
 
   private @NotNull JComponent createToolbar() {

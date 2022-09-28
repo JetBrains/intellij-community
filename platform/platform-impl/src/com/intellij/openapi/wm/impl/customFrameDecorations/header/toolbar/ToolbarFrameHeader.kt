@@ -109,7 +109,9 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     toolbar?.removeComponentListener(contentResizeListener)
   }
 
-  override fun updateMenuActions(forceRebuild: Boolean) {} //todo remove
+  override fun updateMenuActions(forceRebuild: Boolean) {
+    myMenuBar.updateMenuActions(forceRebuild)
+  }
 
   override fun getComponent(): JComponent = this
 
