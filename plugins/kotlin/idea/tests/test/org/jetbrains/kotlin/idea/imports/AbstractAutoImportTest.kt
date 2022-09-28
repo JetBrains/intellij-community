@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.imports
 
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
 import org.jetbrains.kotlin.idea.test.*
@@ -44,10 +44,6 @@ abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() 
         withCustomCompilerOptions(originalText, project, module) {
             val settings = KotlinCodeInsightSettings.getInstance()
             val oldValue = settings.addUnambiguousImportsOnTheFly
-            val registryValue = Registry.get("kotlin.enable.unresolved.reference.importer")
-            val oldRegistryValue = registryValue.asBoolean()
-            registryValue.setValue(true)
-
             ConfigLibraryUtil.configureLibrariesByDirective(module, originalText)
 
             val addKotlinRuntime = InTextDirectivesUtils.findStringWithPrefixes(originalText, "// WITH_STDLIB") != null
@@ -64,6 +60,8 @@ abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() 
                     editor, intArrayOf(),
                     /* canChange */ true
                 )
+
+                DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(myFixture.file, myFixture.editor)
             } finally {
                 ConfigLibraryUtil.unconfigureLibrariesByDirective(module, originalText)
 
@@ -71,7 +69,6 @@ abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() 
                     ConfigLibraryUtil.unConfigureKotlinRuntimeAndSdk(module, projectDescriptor.sdk!!)
                 }
                 settings.addUnambiguousImportsOnTheFly = oldValue
-                registryValue.setValue(oldRegistryValue)
             }
         }
 

@@ -349,12 +349,6 @@
                  restartRequired="true"/>
 
     <registryKey
-            key="kotlin.enable.unresolved.reference.importer"
-            description="Unresolved reference importer runs on EDT and could be slow"
-            defaultValue="false"
-            restartRequired="false"/>
-
-    <registryKey
             key="kotlin.enable.inlay.hint.for.lambda.return.type"
             description="Show inlay hint for lambda return type"
             defaultValue="false"
@@ -456,7 +450,7 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinJavaSafeDeleteDelegate"/>
     <safeDelete.importSearcher implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinImportSearcher"/>
-    
+
     <importFilteringRule implementation="org.jetbrains.kotlin.idea.findUsages.KotlinImportFilteringRule"/>
 
     <elementDescriptionProvider implementation="org.jetbrains.kotlin.idea.findUsages.KotlinNonCodeSearchElementDescriptionProvider"/>

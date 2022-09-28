@@ -61,6 +61,6 @@ class MakeConstructorParameterPropertyFix(
 
 fun KtNameReferenceExpression.getPrimaryConstructorParameterWithSameName(): KtParameter? {
     return nonStaticOuterClasses()
-        .mapNotNull { it.primaryConstructor?.valueParameters?.firstOrNull { it.name == getReferencedName() } }
+        .mapNotNull { ktClass -> ktClass.primaryConstructor?.valueParameters?.firstOrNull { it.name == getReferencedName() } }
         .firstOrNull()
 }

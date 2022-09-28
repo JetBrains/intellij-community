@@ -47,7 +47,6 @@ org.jetbrains.kotlin.idea.quickfix.ConvertToAnonymousObjectFix
 org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateLocalVariableActionFactory$CreateLocalFromUsageAction
 org.jetbrains.kotlin.idea.quickfix.DeprecatedJavaAnnotationFix
 org.jetbrains.kotlin.idea.quickfix.ImportFix
-org.jetbrains.kotlin.idea.quickfix.ImportFixWithHint
 org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$AddInitializerFix
 org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$InitializeWithConstructorParameter
 org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$MoveToConstructorParameters

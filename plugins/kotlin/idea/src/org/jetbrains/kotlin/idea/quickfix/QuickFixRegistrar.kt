@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementAsConstructorPa
 import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
 import org.jetbrains.kotlin.idea.inspections.AddModifierFixFactory
 import org.jetbrains.kotlin.idea.inspections.InfixCallFixActionFactory
-import org.jetbrains.kotlin.idea.inspections.PlatformUnresolvedProvider
 import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
 import org.jetbrains.kotlin.idea.intentions.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.*
@@ -40,7 +39,6 @@ import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.*
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative.INCOMPATIBLE_THROWS_OVERRIDE
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative.MISSING_EXCEPTION_IN_THROWS_ON_SUSPEND
@@ -154,7 +152,6 @@ class QuickFixRegistrar : QuickFixContributor {
         NO_EXPLICIT_RETURN_TYPE_IN_API_MODE.registerActions(SpecifyTypeExplicitlyFix())
         NO_EXPLICIT_RETURN_TYPE_IN_API_MODE_WARNING.registerActions(SpecifyTypeExplicitlyFix())
 
-
         INVISIBLE_REFERENCE.registerFactory(ImportFix)
         INVISIBLE_MEMBER.registerFactory(ImportFix)
         UNRESOLVED_REFERENCE.registerFactory(ImportFix)
@@ -163,7 +160,7 @@ class QuickFixRegistrar : QuickFixContributor {
         DEPRECATED_ACCESS_BY_SHORT_NAME.registerFactory(AddExplicitImportForDeprecatedVisibilityFix.Factory)
         TYPE_INFERENCE_CANDIDATE_WITH_SAM_AND_VARARG.registerFactory(AddSpreadOperatorForArrayAsVarargAfterSamFixFactory)
 
-        TOO_MANY_ARGUMENTS.registerFactory(ImportForMismatchingArgumentsFix)
+        TOO_MANY_ARGUMENTS.registerFactory(ImportForMismatchingArgumentsFixFactoryWithUnresolvedReferenceQuickFix)
         NO_VALUE_FOR_PARAMETER.registerFactory(ImportForMismatchingArgumentsFix)
         TYPE_MISMATCH.registerFactory(ImportForMismatchingArgumentsFix)
         TYPE_MISMATCH_WARNING.registerFactory(ImportForMismatchingArgumentsFix)
@@ -466,8 +463,6 @@ class QuickFixRegistrar : QuickFixContributor {
             CreateClassFromReferenceExpressionActionFactory,
             CreateClassFromCallWithConstructorCalleeActionFactory
         )
-
-        UNRESOLVED_REFERENCE.registerFactory(PlatformUnresolvedProvider)
 
         PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED.registerFactory(InsertDelegationCallQuickfix.InsertThisDelegationCallFactory)
 

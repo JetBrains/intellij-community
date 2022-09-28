@@ -87,7 +87,13 @@
     <lang.jvm.actions.jvmElementActionsFactory
             implementation="org.jetbrains.kotlin.idea.quickfix.crossLanguage.KotlinElementActionsFactory"/>
 
-    <referenceImporter implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter" id="KotlinReferenceImporter"/>
+    <referenceImporter
+            id="KotlinReferenceImporter"
+            implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter"/>
+
+    <codeInsight.unresolvedReferenceQuickFixProvider
+            id="kotlinUnresolvedReferenceQuickFixProvider"
+            implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinUnresolvedReferenceQuickFixProvider"/>
 
     <lang.documentationProvider language="JAVA" implementationClass="org.jetbrains.kotlin.idea.KotlinDocumentationProvider" order="first"/>
     <documentationProvider implementation="org.jetbrains.kotlin.idea.KotlinDocumentationProvider"/>

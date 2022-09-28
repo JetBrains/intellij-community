@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonListeners
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
@@ -30,7 +29,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.util.function.BooleanSupplier
 
 class KotlinReferenceImporter : AbstractKotlinReferenceImporter() {
-    override fun isEnabledFor(file: KtFile): Boolean = Registry.`is`("kotlin.enable.unresolved.reference.importer") && KotlinCodeInsightSettings.getInstance().addUnambiguousImportsOnTheFly
+    override fun isEnabledFor(file: KtFile): Boolean = KotlinCodeInsightSettings.getInstance().addUnambiguousImportsOnTheFly
 
     override val enableAutoImportFilter: Boolean = false
 }
@@ -65,11 +64,11 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
             it.severity == Severity.ERROR && startOffset <= it.psiElement.startOffset && it.psiElement.endOffset <= endOffset
         }.ifEmpty { return null }
 
+        val quickFixProvider = Fe10QuickFixProvider.getInstance(reference.project)
         val importFixBases = buildList {
             diagnostics.groupBy { it.psiElement }.forEach { (_, sameElementDiagnostics) ->
                 sameElementDiagnostics.groupBy { it.factory }.forEach { (_, sameTypeDiagnostic) ->
-                    val quickFixes = Fe10QuickFixProvider.getInstance(
-                        reference.project).createUnresolvedReferenceQuickFixes(sameTypeDiagnostic)
+                    val quickFixes = quickFixProvider.createUnresolvedReferenceQuickFixes(sameTypeDiagnostic)
                     for (action in quickFixes.values()) {
                         if (action is ImportFixBase<*>) {
                             this.add(action)

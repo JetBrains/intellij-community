@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionWithOptions
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.openapi.editor.colors.CodeInsightColors
@@ -68,6 +69,8 @@ class AnnotationPresentationInfo(
         val isWarning = diagnostic.severity == Severity.WARNING
         val isError = diagnostic.severity == Severity.ERROR
 
+        val element = diagnostic.psiElement
+
         val fixes = quickFixes[diagnostic].takeIf { it.isNotEmpty() }
             ?: if (isWarning) listOf(CompilerWarningIntentionAction(diagnostic.factory.name)) else emptyList()
 
@@ -83,6 +86,13 @@ class AnnotationPresentationInfo(
                 continue
             }
 
+            if (fix == RegisterQuickFixesLaterIntentionAction) {
+                element.reference?.let {
+                    UnresolvedReferenceQuickFixUpdater.getInstance(element.project).registerQuickFixesLater(it, info)
+                }
+                continue
+            }
+
             val options = mutableListOf<IntentionAction>()
 
             if (fix is IntentionActionWithOptions) {
@@ -91,7 +101,7 @@ class AnnotationPresentationInfo(
 
             val problemGroup = info.problemGroup
             if (problemGroup is SuppressableProblemGroup) {
-                options += problemGroup.getSuppressActions(diagnostic.psiElement).mapNotNull { it as IntentionAction }
+                options += problemGroup.getSuppressActions(element).mapNotNull { it as IntentionAction }
             }
 
             val message = KotlinBaseFe10HighlightingBundle.message(if (isError) "kotlin.compiler.error" else "kotlin.compiler.warning")
