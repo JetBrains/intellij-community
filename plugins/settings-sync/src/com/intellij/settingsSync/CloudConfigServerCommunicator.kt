@@ -9,6 +9,7 @@ import com.intellij.util.io.inputStream
 import com.jetbrains.cloudconfig.*
 import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
@@ -44,6 +45,17 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   }
 
   private fun sendSnapshotFile(inputStream: InputStream, knownServerVersion: String?, force: Boolean): SettingsSyncPushResult {
+    return sendSnapshotFile(inputStream, knownServerVersion, force, clientVersionContext, client)
+  }
+
+  @VisibleForTesting
+  internal fun sendSnapshotFile(
+    inputStream: InputStream,
+    knownServerVersion: String?,
+    force: Boolean,
+    versionContext: CloudConfigVersionContext,
+    cloudConfigClient: CloudConfigFileClientV2
+  ): SettingsSyncPushResult {
     val versionToPush: String?
     if (force) {
       // get the latest server version: pushing with it will overwrite the file in any case
@@ -67,10 +79,10 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
       }
     }
 
-    val serverVersionId = clientVersionContext.doWithVersion(versionToPush) {
-      client.write(SETTINGS_SYNC_SNAPSHOT_ZIP, inputStream)
+    val serverVersionId = versionContext.doWithVersion(versionToPush) {
+      cloudConfigClient.write(SETTINGS_SYNC_SNAPSHOT_ZIP, inputStream)
 
-      val actualVersion: String? = clientVersionContext.get(SETTINGS_SYNC_SNAPSHOT_ZIP)
+      val actualVersion: String? = versionContext.get(SETTINGS_SYNC_SNAPSHOT_ZIP)
       if (actualVersion == null) {
         LOG.warn("Version not stored in the context for $SETTINGS_SYNC_SNAPSHOT_ZIP")
       }

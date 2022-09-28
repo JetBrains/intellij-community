@@ -16,10 +16,7 @@ internal class TestCloudConfigRemoteCommunicator : TestRemoteCommunicator() {
 
   override fun prepareFileOnServer(snapshot: SettingsSnapshot) {
     val zip = SettingsSnapshotZipSerializer.serializeToZip(snapshot)
-
-    versionContext.doWithVersion(null) {
-      client.write(SETTINGS_SYNC_SNAPSHOT_ZIP, zip.inputStream())
-    }
+    cloudConfigServerCommunicator.sendSnapshotFile(zip.inputStream(), null, true, versionContext, client)
   }
 
   override fun checkServerState(): ServerState = cloudConfigServerCommunicator.checkServerState()
