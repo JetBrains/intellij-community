@@ -33,16 +33,6 @@
     </context>
   </template>
 
-  <template id="mermaid_else" name="mermaid_else"
-            value="else&#10;    $END$$SELECTION$&#10;"
-            description="else statement"
-            toReformat="false" toShortenFQNames="false">
-    <context>
-      <option name="MERMAID" value="true"/>
-      <option name="OTHER" value="false"/>
-    </context>
-  </template>
-
   <template id="mermaid_opt" name="mermaid_opt"
             value="opt $ID$ &#10;    $END$$SELECTION$&#10;end"
             description="opt statement"
@@ -65,19 +55,31 @@
     </context>
   </template>
 
-  <template id="mermaid_and" name="mermaid_and"
-            value="and&#10;    $END$$SELECTION$&#10;"
-            description="and statement"
+  <template id="mermaid_rect" name="mermaid_rect"
+            value="rect rgb($ID)$ &#10;    $END$$SELECTION$&#10;end"
+            description="rect statement"
             toReformat="false" toShortenFQNames="false">
+    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
     <context>
       <option name="MERMAID" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
 
-  <template id="mermaid_rect" name="mermaid_rect"
-            value="rect rgb($ID)$ &#10;    $END$$SELECTION$&#10;end"
-            description="rect statement"
+  <template id="mermaid_critical" name="mermaid_critical"
+            value="critical $ID$ &#10;    $END$$SELECTION$&#10;end"
+            description="critical statement"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_break" name="mermaid_break"
+            value="break $ID$ &#10;    $END$$SELECTION$&#10;end"
+            description="break statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
     <context>
@@ -227,6 +229,17 @@
             description="git graph type"
             toReformat="false" toShortenFQNames="false">
     <variable name="TYPE" expression="" defaultValue="&quot;&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_msg" name="mermaid_git_graph_msg"
+            value="msg: &quot;MSG&quot;$END$$SELECTION$"
+            description="git graph msg"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="MSG" expression="" defaultValue="&quot;&quot;" alwaysStopAt="true"/>
     <context>
       <option name="MERMAID" value="true"/>
       <option name="OTHER" value="false"/>

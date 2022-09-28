@@ -96,4 +96,42 @@ class SequenceTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test autonumber`() {
+    val content = """
+    sequenceDiagram
+      autonumber 
+      autonumber 5
+      autonumber 5 2
+      autonumber off
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test critical region`() {
+    val content = """
+    sequenceDiagram
+      critical Establish a connection to the DB
+        Service-->DB: connect
+      option Network timeout
+        Service-->Service: Log error
+      option Credentials rejected
+        Service-->Service: Log different error
+      end
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test break`() {
+    val content = """
+    sequenceDiagram
+      Consumer-->API: Book something
+      API-->BookingService: Start booking process
+      break when the booking process fails
+        API-->Consumer: show failure
+      end
+      API-->BillingService: Start billing process
+    """.trimIndent()
+    doTest(content)
+  }
 }

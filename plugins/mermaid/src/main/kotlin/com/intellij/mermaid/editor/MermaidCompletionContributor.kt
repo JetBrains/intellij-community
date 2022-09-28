@@ -62,13 +62,28 @@ class MermaidCompletionContributor : CompletionContributor() {
     )
     extend(
       CompletionType.BASIC,
+      psiElement().insideDiagram(psiElement(MermaidTokens.Sequence.SEQUENCE)),
+      SequenceSimpleCompletionProvider("autonumber")
+    )
+    extend(
+      CompletionType.BASIC,
       psiElement().insideBlock(psiElement(MermaidTokens.Sequence.ALT)),
-      BranchCompletionProvider("else")
+      SequenceSimpleCompletionProvider("else")
     )
     extend(
       CompletionType.BASIC,
       psiElement().insideBlock(psiElement(MermaidTokens.Sequence.PAR)),
-      BranchCompletionProvider("and")
+      SequenceSimpleCompletionProvider("and")
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().insideBlock(psiElement(MermaidTokens.Sequence.CRITICAL)),
+      SequenceSimpleCompletionProvider("option")
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().afterLeaf(psiElement(MermaidTokens.Sequence.AUTONUMBER)),
+      SequenceSimpleCompletionProvider("off")
     )
 
     extend(

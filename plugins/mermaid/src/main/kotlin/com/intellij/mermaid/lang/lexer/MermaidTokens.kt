@@ -10,6 +10,21 @@ object MermaidTokens {
   @JvmField
   val CLOSE_DIRECTIVE = MermaidToken("CLOSE_DIRECTIVE")
 
+  @JvmField
+  val ACC_TITLE = MermaidToken("ACC_TITLE")
+
+  @JvmField
+  val ACC_DESCR = MermaidToken("ACC_DESCR")
+
+  @JvmField
+  val ACC_TITLE_VALUE = MermaidToken("ACC_TITLE_VALUE")
+
+  @JvmField
+  val ACC_DESCR_VALUE = MermaidToken("ACC_DESCR_VALUE")
+
+  @JvmField
+  val ACC_DESCR_MULTILINE_VALUE = MermaidToken("ACC_DESCR_MULTILINE_VALUE")
+
 //  @JvmField
 //  val TYPE_DIRECTIVE = MermaidToken("TYPE_DIRECTIVE")
 //
@@ -372,7 +387,19 @@ object MermaidTokens {
     val RECT = MermaidToken("Sequence.RECT")
 
     @JvmField
+    val CRITICAL = MermaidToken("Sequence.CRITICAL")
+
+    @JvmField
+    val OPTION = MermaidToken("Sequence.OPTION")
+
+    @JvmField
+    val BREAK = MermaidToken("Sequence.BREAK")
+
+    @JvmField
     val AUTONUMBER = MermaidToken("Sequence.AUTONUMBER")
+
+    @JvmField
+    val OFF = MermaidToken("Sequence.OFF")
 
     @JvmField
     val LINKS = MermaidToken("Sequence.LINKS")
@@ -402,6 +429,9 @@ object MermaidTokens {
 
     @JvmField
     val AGGREGATION = MermaidToken("AGGREGATION")
+
+    @JvmField
+    val LOLLIPOP = MermaidToken("LOLLIPOP")
 
     @JvmField
     val LINE = MermaidToken("LINE")
@@ -584,6 +614,9 @@ object MermaidTokens {
 
     @JvmField
     val TAG = MermaidToken("TAG")
+
+    @JvmField
+    val MSG = MermaidToken("MSG")
 
     @JvmField
     val CHERRY_PICK = MermaidToken("CHERRY_PICK")

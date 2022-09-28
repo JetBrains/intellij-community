@@ -84,4 +84,19 @@ class GitGraphTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test merge`() {
+    val content = """
+    gitGraph
+      commit id: "7"
+      checkout main
+      merge nice_feature id: "customID" tag: "customTag" type: REVERSE
+      checkout very_nice_feature
+      commit id: "8"
+      checkout main
+      merge nice_feature type: REVERSE tag: "customTag" 
+      commit id: "9"
+    """.trimIndent()
+    doTest(content)
+  }
 }

@@ -61,7 +61,11 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       MermaidTokens.Sequence.PAR,
       MermaidTokens.Sequence.AND,
       MermaidTokens.Sequence.RECT,
+      MermaidTokens.Sequence.CRITICAL,
+      MermaidTokens.Sequence.OPTION,
+      MermaidTokens.Sequence.BREAK,
       MermaidTokens.Sequence.AUTONUMBER,
+      MermaidTokens.Sequence.OFF,
       MermaidTokens.Sequence.LINKS -> arrayOf(MermaidTextAttributes.keyword)
 
       MermaidTokens.Sequence.SOLID_ARROW,
@@ -89,6 +93,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       MermaidTokens.ClassDiagram.DEPENDENCY_END,
       MermaidTokens.ClassDiagram.COMPOSITION,
       MermaidTokens.ClassDiagram.AGGREGATION,
+      MermaidTokens.ClassDiagram.LOLLIPOP,
       MermaidTokens.ClassDiagram.LINE,
       MermaidTokens.ClassDiagram.DOTTED_LINE -> arrayOf(MermaidTextAttributes.operationSign)
 
@@ -180,6 +185,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       MermaidTokens.GitGraph.CHECKOUT,
       MermaidTokens.GitGraph.MERGE,
       MermaidTokens.GitGraph.TAG,
+      MermaidTokens.GitGraph.MSG,
       MermaidTokens.GitGraph.CHERRY_PICK,
       MermaidTokens.GitGraph.ORDER -> arrayOf(MermaidTextAttributes.keyword)
 
@@ -224,7 +230,9 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.SECTION,
         MermaidTokens.LINK,
         MermaidTokens.ID_KEYWORD,
-        MermaidTokens.TYPE -> arrayOf(MermaidTextAttributes.keyword)
+        MermaidTokens.TYPE,
+        MermaidTokens.ACC_TITLE,
+        MermaidTokens.ACC_DESCR -> arrayOf(MermaidTextAttributes.keyword)
 
         MermaidTokens.TITLE_VALUE,
         MermaidTokens.DOUBLE_QUOTE,
@@ -232,7 +240,9 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.ALIAS,
         MermaidTokens.LABEL,
         MermaidTokens.SECTION_TITLE,
-        MermaidTokens.TASK_NAME -> arrayOf(MermaidTextAttributes.string)
+        MermaidTokens.TASK_NAME,
+        MermaidTokens.ACC_TITLE_VALUE,
+        MermaidTokens.ACC_DESCR_MULTILINE_VALUE -> arrayOf(MermaidTextAttributes.string)
 
         MermaidTokens.LINE_COMMENT,
         MermaidTokens.IGNORED -> arrayOf(MermaidTextAttributes.comment)

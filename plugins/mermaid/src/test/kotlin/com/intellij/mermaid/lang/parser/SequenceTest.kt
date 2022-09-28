@@ -10,4 +10,10 @@ class SequenceTest : MermaidParserTestCase("sequence") {
   fun `test sequence with json formatted link`() = doTest(true)
 
   fun `test sequence with loop`() = doTest(true)
+
+  fun `test autonumber`() = doTest(true)
+
+  fun `test critical region`() = doTest(true)
+
+  fun `test break`() = doTest(true)
 }

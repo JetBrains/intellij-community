@@ -51,6 +51,7 @@ private pieLine ::= pieStatement [EOL] | EOL
 pieStatement ::= string COLON VALUE
 	| titleStatement
 	| directive
+	| accStatement
 
 
 journeyDocument ::= journeyLines
@@ -60,6 +61,7 @@ journeyStatement ::= journeyDataStatement
 	| journeySectionStatement
 	| titleStatement
 	| directive
+	| accStatement
 
 journeyDataStatement ::= complexTaskName COLON (IGNORED | recTaskData (COLON recTaskData)+)
 
@@ -87,6 +89,7 @@ flowchartStatement ::= vertexStatement (SEMICOLON vertexStatement)*
 	| flowchartClassStatement
 	| flowchartClickStatement
 //	| directive
+	| accStatement
 
 private separator ::= EOL | SEMICOLON
 vertexStatement ::= nodeStatement [flowchartLinkStatement vertexStatement]
@@ -136,7 +139,7 @@ private sequenceLines ::= (sequenceLine | IGNORED) [sequenceLines]
 private sequenceLine ::= sequenceStatement [separator] | separator
 sequenceStatement ::= actorStatement
 	| signalStatement
-	| AUTONUMBER
+	| AUTONUMBER (OFF | [NUM] [NUM])
 	| ACTIVATE complexIdentifier
 	| DEACTIVATE complexIdentifier
 	| noteStatement
@@ -145,9 +148,12 @@ sequenceStatement ::= actorStatement
 	| LOOP [complexMessage] EOL sequenceDocument? END
 	| RECT [complexMessage] EOL sequenceDocument? END
 	| OPT [complexMessage] EOL sequenceDocument? END
+	| BREAK [complexMessage] EOL sequenceDocument? END
 	| ALT [complexMessage] EOL elseSections END
 	| PAR [complexMessage] EOL parSections END
+	| CRITICAL [complexMessage] EOL optionSections END
 	| directive
+	| accStatement
 
 idAlias ::= ALIAS+
 
@@ -175,6 +181,7 @@ linkStatement ::= LINK complexIdentifier COLON complexMessage
 
 elseSections ::= sequenceDocument? [ELSE [complexMessage] EOL elseSections]
 parSections ::= sequenceDocument? [AND [complexMessage] EOL parSections]
+optionSections ::= sequenceDocument? [OPTION [complexMessage] EOL optionSections]
 
 complexMessage ::= MESSAGE+
 
@@ -188,6 +195,7 @@ classDiagramStatement ::= directionStatement
   | annotationStatement
   | directive
   | classDiagramClickStatement
+	| accStatement
 
 classStatement ::= CLASS identifier [TILDA GENERIC_TYPE TILDA] [STYLE_SEPARATOR identifier] [OPEN_CURLY EOL classMembersDocument? CLOSE_CURLY]
 
@@ -221,11 +229,13 @@ relationTypeLeft ::= AGGREGATION
     | EXTENSION_START
     | COMPOSITION
     | DEPENDENCY_START
+    | LOLLIPOP
 
 relationTypeRight ::= AGGREGATION
     | EXTENSION_END
     | COMPOSITION
     | DEPENDENCY_END
+    | LOLLIPOP
 
 lineType ::= LINE | DOTTED_LINE
 
@@ -239,6 +249,7 @@ stateDiagramStatement ::= stateDeclaration
   | noteHeader noteContent
   | directionStatement
   | directive
+	| accStatement
 
 stateDeclaration ::= stateId COLON complexLabel
   | STATE description AS stateId
@@ -271,6 +282,7 @@ erStatement ::= identifier relationship identifier COLON (complexLabel | string)
 	| entityDeclaration
 	| identifier
 	| directive
+	| accStatement
 
 entityDeclaration ::= identifier OPEN_CURLY EOL erAttributesDocument? CLOSE_CURLY
 
@@ -281,7 +293,7 @@ private relationshipRight ::= ZERO_OR_ONE_RIGHT | ONE_OR_MORE_RIGHT | ZERO_OR_MO
 erAttributesDocument ::= erAttributesLines
 private erAttributesLines ::= erAttributeLine [erAttributesLines]
 private erAttributeLine ::= erAttribute [EOL] | EOL
-erAttribute ::= attrType attrName [ATTR_KEY] [string]
+erAttribute ::= (attrTypeWithGeneric | attrType) attrName [ATTR_KEY] [string]
 
 
 ganttDocument ::= ganttLines
@@ -297,6 +309,7 @@ ganttStatement ::= DATE_FORMAT
   | ganttDataStatement
 	| directive
 	| ganttClickStatement
+	| accStatement
 
 ganttDataStatement ::= complexTaskName COLON recTaskData
 
@@ -314,6 +327,7 @@ requirementStatement ::= requirementDef
   | elementDef
   | relationshipDef
 	| directive
+	| accStatement
 
 requirementDef ::= requirementType identifier OPEN_CURLY EOL requirementBody? CLOSE_CURLY
 requirementType ::= REQUIREMENT
@@ -358,24 +372,114 @@ gitGraphStatement ::= commitStatement
 	| branchStatement
 	| checkoutStatement
 	| directive
+	| accStatement
 
 branchStatement ::= BRANCH identifier [branchOrder]
 cherryPickStatement ::= CHERRY_PICK commitIdAttribute
-mergeStatement ::= MERGE identifier [commitTagAttribute]
+mergeStatement ::= MERGE identifier [commitAttributes]
 checkoutStatement ::= CHECKOUT identifier
 commitStatement ::=
-    COMMIT commitIdAttribute commitTagAttribute [commitTypeAttribute]
-  | COMMIT commitIdAttribute [commitTypeAttribute] [commitTagAttribute]
-  | COMMIT commitTagAttribute commitTypeAttribute [commitIdAttribute]
-  | COMMIT commitTagAttribute [commitIdAttribute] [commitTypeAttribute]
-  | COMMIT commitTypeAttribute commitIdAttribute [commitTagAttribute]
-  | COMMIT commitTypeAttribute [commitTagAttribute] [commitIdAttribute]
+    COMMIT commitAttributesWithMsg
   | COMMIT [commit_arg]
+
+private commitAttributes ::=
+    commitIdAttribute commitTypeAttribute commitTagAttribute
+  | commitIdAttribute commitTagAttribute commitTypeAttribute
+  | commitTypeAttribute commitIdAttribute commitTagAttribute
+  | commitTypeAttribute commitTagAttribute commitIdAttribute
+  | commitTagAttribute commitTypeAttribute commitIdAttribute
+  | commitTagAttribute commitIdAttribute commitTypeAttribute
+  | commitTagAttribute commitTypeAttribute
+  | commitTypeAttribute commitTagAttribute
+  | commitIdAttribute commitTagAttribute
+  | commitTagAttribute commitIdAttribute
+  | commitIdAttribute commitTypeAttribute
+  | commitTypeAttribute commitIdAttribute
+  | commitTagAttribute
+  | commitTypeAttribute
+  | commitIdAttribute
+
+private commitAttributesWithMsg ::=
+    commitMsgAttribute commitIdAttribute commitTypeAttribute commitTagAttribute
+  | commitMsgAttribute commitIdAttribute commitTagAttribute commitTypeAttribute
+  | commitMsgAttribute commitTypeAttribute commitIdAttribute commitTagAttribute
+  | commitMsgAttribute commitTypeAttribute commitTagAttribute commitIdAttribute
+  | commitMsgAttribute commitTagAttribute commitIdAttribute commitTypeAttribute
+  | commitMsgAttribute commitTagAttribute commitTypeAttribute commitIdAttribute
+
+  | commitIdAttribute commitMsgAttribute commitTypeAttribute commitTagAttribute
+  | commitIdAttribute commitMsgAttribute commitTagAttribute commitTypeAttribute
+  | commitIdAttribute commitTypeAttribute commitMsgAttribute commitTagAttribute
+  | commitIdAttribute commitTypeAttribute commitTagAttribute commitMsgAttribute
+  | commitIdAttribute commitTagAttribute commitMsgAttribute commitTypeAttribute
+  | commitIdAttribute commitTagAttribute commitTypeAttribute commitMsgAttribute
+
+  | commitTagAttribute commitIdAttribute commitTypeAttribute commitMsgAttribute
+  | commitTagAttribute commitIdAttribute commitMsgAttribute commitTypeAttribute
+  | commitTagAttribute commitTypeAttribute commitIdAttribute commitMsgAttribute
+  | commitTagAttribute commitTypeAttribute commitMsgAttribute commitIdAttribute
+  | commitTagAttribute commitMsgAttribute commitIdAttribute commitTypeAttribute
+  | commitTagAttribute commitMsgAttribute commitTypeAttribute commitIdAttribute
+
+  | commitTypeAttribute commitIdAttribute commitMsgAttribute commitTagAttribute
+  | commitTypeAttribute commitIdAttribute commitTagAttribute commitMsgAttribute
+  | commitTypeAttribute commitTagAttribute commitMsgAttribute commitIdAttribute
+  | commitTypeAttribute commitTagAttribute commitIdAttribute commitMsgAttribute
+  | commitTypeAttribute commitMsgAttribute commitIdAttribute commitTagAttribute
+  | commitTypeAttribute commitMsgAttribute commitTagAttribute commitIdAttribute
+
+  | commitMsgAttribute commitTypeAttribute commitTagAttribute
+  | commitMsgAttribute commitTagAttribute commitTypeAttribute
+  | commitTypeAttribute commitMsgAttribute commitTagAttribute
+  | commitTypeAttribute commitTagAttribute commitMsgAttribute
+  | commitTagAttribute commitTypeAttribute commitMsgAttribute
+  | commitTagAttribute commitMsgAttribute commitTypeAttribute
+
+  | commitMsgAttribute commitTypeAttribute commitIdAttribute
+  | commitMsgAttribute commitIdAttribute commitTypeAttribute
+  | commitTypeAttribute commitMsgAttribute commitIdAttribute
+  | commitTypeAttribute commitIdAttribute commitMsgAttribute
+  | commitIdAttribute commitTypeAttribute commitMsgAttribute
+  | commitIdAttribute commitMsgAttribute commitTypeAttribute
+
+  | commitMsgAttribute commitTagAttribute commitIdAttribute
+  | commitMsgAttribute commitIdAttribute commitTagAttribute
+  | commitTagAttribute commitMsgAttribute commitIdAttribute
+  | commitTagAttribute commitIdAttribute commitMsgAttribute
+  | commitIdAttribute commitTagAttribute commitMsgAttribute
+  | commitIdAttribute commitMsgAttribute commitTagAttribute
+
+  | commitIdAttribute commitTypeAttribute commitTagAttribute
+  | commitIdAttribute commitTagAttribute commitTypeAttribute
+  | commitTypeAttribute commitIdAttribute commitTagAttribute
+  | commitTypeAttribute commitTagAttribute commitIdAttribute
+  | commitTagAttribute commitTypeAttribute commitIdAttribute
+  | commitTagAttribute commitIdAttribute commitTypeAttribute
+
+  | commitTagAttribute commitMsgAttribute
+  | commitMsgAttribute commitTagAttribute
+  | commitTypeAttribute commitMsgAttribute
+  | commitMsgAttribute commitTypeAttribute
+  | commitIdAttribute commitMsgAttribute
+  | commitMsgAttribute commitIdAttribute
+
+  | commitTagAttribute commitTypeAttribute
+  | commitTypeAttribute commitTagAttribute
+  | commitIdAttribute commitTagAttribute
+  | commitTagAttribute commitIdAttribute
+  | commitIdAttribute commitTypeAttribute
+  | commitTypeAttribute commitIdAttribute
+
+  | commitMsgAttribute
+  | commitTagAttribute
+  | commitTypeAttribute
+  | commitIdAttribute
 
 branchOrder ::= ORDER COLON NUM
 commitIdAttribute ::= ID_KEYWORD COLON string
 commitTypeAttribute ::= TYPE COLON commitType
 commitTagAttribute ::= TAG COLON string
+commitMsgAttribute ::= MSG COLON string
 commit_arg ::= string
 private commitType ::= NORMAL | REVERSE | HIGHLIGHT
 
@@ -402,6 +506,10 @@ callbackArgs ::= OPEN_ROUND [callbackArg] (COMMA callbackArg)* CLOSE_ROUND
 private callbackArg ::= CLICK_DATA | string
 
 directionStatement ::= DIRECTION DIR
+
+accStatement ::= ACC_TITLE COLON ACC_TITLE_VALUE
+  | ACC_DESCR COLON ACC_DESCR_VALUE
+  | ACC_DESCR OPEN_CURLY ACC_DESCR_MULTILINE_VALUE CLOSE_CURLY
 
 string ::= DOUBLE_QUOTE STRING_VALUE? DOUBLE_QUOTE
 complexIdentifier ::= (ID | AMPERSAND)+ {

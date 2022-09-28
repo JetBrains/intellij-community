@@ -12,4 +12,6 @@ class GitGraphTest : MermaidParserTestCase("gitGraph") {
   fun `test cherry pick`() = doTest(true)
 
   fun `test order`() = doTest(true)
+
+  fun `test merge`() = doTest(true)
 }
