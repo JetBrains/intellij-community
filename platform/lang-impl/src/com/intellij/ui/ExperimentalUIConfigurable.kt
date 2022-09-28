@@ -7,8 +7,10 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 
 /**
  * @author Konstantin Bulenkov
@@ -18,8 +20,10 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
   "reference.settings.ide.settings.new.ui") {
 
   override fun createPanel() = panel {
+    lateinit var newUiCheckBox: com.intellij.ui.dsl.builder.Cell<JBCheckBox>
+
     row {
-      checkBox(IdeBundle.message("checkbox.enable.new.ui"))
+      newUiCheckBox = checkBox(IdeBundle.message("checkbox.enable.new.ui"))
         .bindSelected(
           { ExperimentalUI.isNewUI() },
           { Registry.get("ide.experimental.ui").setValue(it) })
@@ -38,7 +42,7 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
               if (SystemInfo.isXWindow) {
                 comment(IdeBundle.message("ide.restart.required.comment"))
               }
-            }
+            }.enabledIf(newUiCheckBox.selected)
         }
       }
     }

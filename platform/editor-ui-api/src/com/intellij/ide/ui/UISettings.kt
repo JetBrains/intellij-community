@@ -118,7 +118,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = (SystemInfoRt.isWindows || SystemInfoRt.isXWindow) && state.separateMainMenu
     set(value) {
       state.separateMainMenu = value
-      state.showMainToolbar = value
     }
 
   var useSmallLabelsOnTabs: Boolean
@@ -212,7 +211,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var showMainToolbar: Boolean
-    get() = state.showMainToolbar
+    get() = if (Registry.`is`("ide.experimental.ui")) separateMainMenu else state.showMainToolbar
     set(value) {
       state.showMainToolbar = value
 
