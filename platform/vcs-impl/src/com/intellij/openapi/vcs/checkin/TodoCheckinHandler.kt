@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.todo.*
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ModalityState
@@ -95,7 +94,7 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
         setFilterText(todoSettings.todoFilterName)
 
         val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
-          val group = SetTodoFilterAction.createPopupActionGroup(project, todoSettings) { setFilter(it) }
+          val group = SetTodoFilterAction.createPopupActionGroup(project, todoSettings, true) { setFilter(it) }
           JBPopupMenu.showBelow(sourceLink, ActionPlaces.TODO_VIEW_TOOLBAR, group)
         }
         val configureFilterLink = LinkLabel(message("settings.filter.configure.link"), null, showFiltersPopup)
@@ -109,8 +108,13 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
       }
 
       private fun setFilterText(filterName: String?) {
-        val text = if (filterName != null) message("checkin.filter.filter.name", filterName) else IdeBundle.message("action.todo.show.all")
-        checkBox.text = message("before.checkin.new.todo.check", text)
+        if (filterName != null) {
+          val text = message("checkin.filter.filter.name", filterName)
+          checkBox.text = message("before.checkin.new.todo.check", text)
+        }
+        else {
+          checkBox.text = message("before.checkin.new.todo.check.no.filter")
+        }
       }
     }
 
