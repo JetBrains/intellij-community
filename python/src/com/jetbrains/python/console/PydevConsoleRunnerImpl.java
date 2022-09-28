@@ -1326,6 +1326,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public static class PythonConsoleRunParams implements PythonRunParams {
     private final PyConsoleOptions.PyConsoleSettings myConsoleSettings;
     private final String myWorkingDir;
+    @NotNull
     private final Sdk mySdk;
     private final Map<String, String> myEnvironmentVariables;
 
@@ -1379,8 +1380,19 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       return mySdk.getHomePath();
     }
 
+    @NotNull
+    @Override
+    public Sdk getSdk() {
+      return mySdk;
+    }
+
     @Override
     public void setSdkHome(String sdkHome) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setSdk(@Nullable Sdk sdk) {
       throw new UnsupportedOperationException();
     }
 
