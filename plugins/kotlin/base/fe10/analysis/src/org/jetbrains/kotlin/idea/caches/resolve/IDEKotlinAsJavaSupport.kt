@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.asJava.classes.KtDescriptorBasedFakeLightClass
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.idea.base.facet.JvmOnlyProjectChecker
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceI
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.util.caching.get
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
@@ -75,9 +77,9 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
         packageFqName: FqName,
         searchScope: GlobalSearchScope
     ): Collection<KtClassOrObject> = KotlinTopLevelClassByPackageIndex[
-            packageFqName.asString(),
-            project,
-            KotlinSourceFilterScope.projectSourcesAndLibraryClasses(searchScope, project),
+        packageFqName.asString(),
+        project,
+        KotlinSourceFilterScope.projectSourcesAndLibraryClasses(searchScope, project),
     ]
 
     override fun packageExists(fqName: FqName, scope: GlobalSearchScope): Boolean = KotlinPackageIndexUtils.packageExists(
@@ -190,12 +192,14 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
     override fun createInstanceOfDecompiledLightFacade(facadeFqName: FqName, files: List<KtFile>): KtLightClassForFacade? {
         return DecompiledLightClassesFactory.createLightFacadeForDecompiledKotlinFile(project, facadeFqName, files)
     }
-}
 
-// NOTE: this is a hacky solution to the following problem:
-// when building this light class resolver will be built by the first file in the list
-// (we could assume that files are in the same module before)
-// thus we need to ensure that resolver will be built by the file from platform part of the module
-// (resolver built by a file from the common part will have no knowledge of the platform part)
-// the actual of order of files that resolver receives is controlled by *findFilesForFacade* method
-private fun Collection<KtFile>.platformSourcesFirst() = sortedByDescending { it.platform.isJvm() }
+    // NOTE: this is a hacky solution to the following problem:
+    // when building this light class resolver will be built by the first file in the list
+    // (we could assume that files are in the same module before)
+    // thus we need to ensure that resolver will be built by the file from platform part of the module
+    // (resolver built by a file from the common part will have no knowledge of the platform part)
+    // the actual of order of files that resolver receives is controlled by *findFilesForFacade* method
+    private fun Collection<KtFile>.platformSourcesFirst(): Collection<KtFile> {
+        return if (JvmOnlyProjectChecker.getInstance(project).get()) this else sortedByDescending { it.platform.isJvm() }
+    }
+}
