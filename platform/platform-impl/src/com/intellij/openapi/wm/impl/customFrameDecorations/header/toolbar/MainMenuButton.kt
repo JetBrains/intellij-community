@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -177,7 +178,7 @@ private fun createMenuButton(action: AnAction): ActionButton {
 }
 
 private fun getMainMenuGroup() =
-  ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
+  CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
 
 const val MAIN_MENU_ACTION_ID = "MainMenuButton.ShowMenu"
 
