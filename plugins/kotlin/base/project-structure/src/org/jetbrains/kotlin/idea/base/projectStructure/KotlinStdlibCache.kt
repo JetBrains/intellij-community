@@ -113,7 +113,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
 
     override fun dispose() = Unit
 
-    private abstract class BaseStdLibCache(project: Project) :
+    private sealed class BaseStdLibCache(project: Project) :
         SynchronizedFineGrainedEntityCache<LibraryInfo, Boolean>(project, cleanOnLowMemory = true),
         LibraryInfoListener {
         override fun subscribe() {
@@ -126,9 +126,8 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         }
 
         override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
-            super.invalidateKeys(libraryInfos) { _, _ -> true }
+            invalidateKeys(libraryInfos)
         }
-
     }
 
     private inner class StdLibCache : BaseStdLibCache(project) {
