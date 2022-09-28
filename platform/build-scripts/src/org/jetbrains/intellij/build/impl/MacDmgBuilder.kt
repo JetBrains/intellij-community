@@ -49,17 +49,25 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
     javaExePath = "../jbr/Contents/Home/bin/java"
   }
 
-  val productJson = generateMacProductJson(builtinModule, context, javaExePath)
+  val productJson = generateMacProductJson(builtinModule = builtinModule, arch = arch, javaExecutablePath = javaExePath, context = context)
   val zipRoot = getMacZipRoot(customizer, context)
   val installationDirectories = ArrayList<Path>()
   val installationArchives = ArrayList<Pair<Path, String>>(2)
   installationArchives.add(Pair(macZip, zipRoot))
-  validateProductJson(productJson, "Resources/", installationDirectories, installationArchives, context)
+  validateProductJson(jsonText = productJson,
+                      relativePathToProductJson = "Resources/",
+                      installationDirectories = installationDirectories,
+                      installationArchives = installationArchives,
+                      context = context)
 
   val targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
   val sitFile = (if (context.publishSitArchive) context.paths.artifactDir else context.paths.tempDir).resolve("$targetName.sit")
 
-  prepareMacZip(macZip, sitFile, productJson, zipRoot, context.options.compressZipFiles)
+  prepareMacZip(macZip = macZip,
+                sitFile = sitFile,
+                productJson = productJson,
+                zipRoot = zipRoot,
+                compress = context.options.compressZipFiles)
 
   val sign = !context.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
   if (!sign) {

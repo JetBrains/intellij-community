@@ -3,7 +3,9 @@ package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
 import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -80,16 +82,15 @@ class BuildOptions {
 
     @JvmField
     @Internal
-    val WIN_SIGN_OPTIONS = System.getProperty("intellij.build.win.sign.options", "")
-      .split(';')
-      .dropLastWhile { it.isEmpty() }
-      .asSequence()
+    val WIN_SIGN_OPTIONS: PersistentMap<String, String> = System.getProperty("intellij.build.win.sign.options", "")
+      .splitToSequence(';')
       .filter { !it.isBlank() }
       .associate {
         val item = it.split('=', limit = 2)
         require(item.size == 2) { "Could not split by '=': $it" }
         item[0] to item[1]
       }
+      .toPersistentMap()
 
     /** Build Frankenstein artifacts.  */
     const val CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"

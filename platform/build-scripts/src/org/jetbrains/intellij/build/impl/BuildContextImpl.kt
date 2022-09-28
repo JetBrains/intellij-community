@@ -34,7 +34,7 @@ class BuildContextImpl private constructor(
   override val windowsDistributionCustomizer: WindowsDistributionCustomizer?,
   override val linuxDistributionCustomizer: LinuxDistributionCustomizer?,
   internal val macDistributionCustomizer: MacDistributionCustomizer?,
-  override val proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY
+  override val proprietaryBuildTools: ProprietaryBuildTools,
 ) : BuildContext {
   private val distFiles = ConcurrentLinkedQueue<DistFile>()
 
@@ -272,15 +272,23 @@ class BuildContextImpl private constructor(
   }
 
   @Suppress("SpellCheckingInspection")
-  override fun getAdditionalJvmArguments(os: OsFamily): List<String> {
+  override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isPortableDist: Boolean): List<String> {
     val jvmArgs = ArrayList<String>()
     productProperties.classLoader?.let {
       jvmArgs.add("-Djava.system.class.loader=$it")
     }
     jvmArgs.add("-Didea.vendor.name=${applicationInfo.shortCompanyName}")
     jvmArgs.add("-Didea.paths.selector=$systemSelector")
-    // we do not set jna.boot.library.path for security reasons - compute using PathManager.getLibPath in runtime
-    jvmArgs.add("-Didea.jna.unpacked=true")
+
+    val macroName = when (os) {
+      OsFamily.MACOS -> "\$APP_PACKAGE${if (isPortableDist) "" else "/Contents"}"
+      OsFamily.LINUX -> "\$IDE_HOME"
+      else -> "%IDE_HOME%"
+    }
+    jvmArgs.add("-Djna.boot.library.path=$macroName/lib/jna/${arch.dirName}")
+    jvmArgs.add("-Dpty4j.preferred.native.folder=$macroName/lib/pty4j")
+    // prefer bundled JNA dispatcher lib
+    jvmArgs.add("-Djna.nosys=true")
     jvmArgs.add("-Djna.nounpack=true")
 
     if (productProperties.platformPrefix != null) {

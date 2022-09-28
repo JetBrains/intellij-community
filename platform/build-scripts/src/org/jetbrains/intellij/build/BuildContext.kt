@@ -4,6 +4,8 @@ package org.jetbrains.intellij.build
 import com.intellij.diagnostic.telemetry.useWithScope2
 import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
@@ -69,7 +71,7 @@ interface BuildContext : CompilationContext {
    * Unlike VM options produced by {@link org.jetbrains.intellij.build.impl.VmOptionsGenerator},
    * these are hard-coded into launchers and aren't supposed to be changed by a user.
    */
-  fun getAdditionalJvmArguments(os: OsFamily): List<String>
+  fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isPortableDist: Boolean = false): List<String>
 
   fun notifyArtifactBuilt(artifactPath: Path)
 
@@ -77,7 +79,7 @@ interface BuildContext : CompilationContext {
 
   fun findFileInModuleSources(moduleName: String, relativePath: String): Path?
 
-  suspend fun signFiles(files: List<Path>, options: Map<String, String> = emptyMap()) {
+  suspend fun signFiles(files: List<Path>, options: PersistentMap<String, String> = persistentMapOf()) {
     proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }
 

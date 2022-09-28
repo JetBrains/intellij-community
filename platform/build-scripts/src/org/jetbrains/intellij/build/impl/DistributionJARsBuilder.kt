@@ -25,7 +25,6 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
-import org.jetbrains.intellij.build.impl.JarPackager.Companion.pack
 import org.jetbrains.intellij.build.impl.SVGPreBuilder.createPrebuildSvgIconsJob
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
@@ -749,9 +748,9 @@ private suspend fun scramble(context: BuildContext) {
     return
   }
 
-  pack(jarToModules = mapOf("internalUtilities.jar" to listOf("intellij.tools.internalUtilities")),
-       outputDir = context.paths.buildOutputDir.resolve("internal"),
-       context = context)
+  JarPackager.pack(jarToModules = mapOf("internalUtilities.jar" to listOf("intellij.tools.internalUtilities")),
+                   outputDir = context.paths.buildOutputDir.resolve("internal"),
+                   context = context)
   tool.scramble(context.productProperties.productLayout.mainJarName, context)
 
   // e.g. JetBrainsGateway doesn't have a main jar with license code
@@ -938,12 +937,12 @@ suspend fun layoutDistribution(layout: BaseLayout,
     val tasks = ArrayList<Deferred<Collection<DistributionFileEntry>>>(3)
     tasks.add(async {
       spanBuilder("pack").useWithScope2 {
-        pack(jarToModules = jarToModule,
-             outputDir = targetDirectory.resolve("lib"),
-             layout = layout,
-             moduleOutputPatcher = moduleOutputPatcher,
-             dryRun = !copyFiles,
-             context = context)
+        JarPackager.pack(jarToModules = jarToModule,
+                         outputDir = targetDirectory.resolve("lib"),
+                         layout = layout,
+                         moduleOutputPatcher = moduleOutputPatcher,
+                         dryRun = !copyFiles,
+                         context = context)
       }
     })
 

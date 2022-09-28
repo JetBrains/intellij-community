@@ -50,7 +50,6 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.lang.ZipFilePool
-import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
@@ -288,6 +287,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 }
 
+@Suppress("SpellCheckingInspection")
 private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: Deferred<Logger>,
                                                                  appInfoDeferred: Deferred<ApplicationInfoEx>,
                                                                  initUiDeferred: Job,
@@ -297,7 +297,9 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
     val log = logDeferred.await()
 
     runActivity("system libs setup") {
-      setupSystemLibraries()
+      if (SystemInfoRt.isWindows && System.getProperty("winp.folder.preferred") == null) {
+        System.setProperty("winp.folder.preferred", PathManager.getTempPath())
+      }
     }
 
     withContext(Dispatchers.IO) {
@@ -844,9 +846,13 @@ private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job,
     throw AssertionError("Already initialized")
   }
 
-  // SocketLock.allowActivation requires JNA
+  // AddPredefinedVMOptions in WinLauncher.cpp doesn't expand %IDE_HOME% macro
   if (SystemInfoRt.isWindows) {
-    setupJnaLibProperties()
+    for (name in arrayOf("jna.boot.library.path", "pty4j.preferred.native.folder")) {
+      System.getProperty(name)?.let {
+        System.setProperty(name, it.replace("%IDE_HOME%", PathManager.getHomePath()))
+      }
+    }
   }
 
   return launch(Dispatchers.IO) {
@@ -910,38 +916,6 @@ private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob:
       }
       log
     }
-  }
-}
-
-private fun setupJnaLibProperties() {
-  if (java.lang.Boolean.getBoolean("idea.jna.unpacked")) {
-    System.setProperty("jna.boot.library.path", PathManager.getLibPath() + "/jna/" + if (CpuArch.isArm64()) "aarch64" else "amd64")
-  }
-}
-
-@Suppress("SpellCheckingInspection")
-private fun setupSystemLibraries() {
-  if (!SystemInfoRt.isWindows) {
-    setupJnaLibProperties()
-  }
-
-  val ideTempPath = PathManager.getTempPath()
-  if (System.getProperty("jna.tmpdir") == null) {
-    // to avoid collisions and work around no-exec /tmp
-    System.setProperty("jna.tmpdir", ideTempPath)
-  }
-  if (System.getProperty("jna.nosys") == null) {
-    // prefer bundled JNA dispatcher lib
-    System.setProperty("jna.nosys", "true")
-  }
-  if (SystemInfoRt.isWindows && System.getProperty("winp.folder.preferred") == null) {
-    System.setProperty("winp.folder.preferred", ideTempPath)
-  }
-  if (System.getProperty("pty4j.tmpdir") == null) {
-    System.setProperty("pty4j.tmpdir", ideTempPath)
-  }
-  if (System.getProperty("pty4j.preferred.native.folder") == null) {
-    System.setProperty("pty4j.preferred.native.folder", Path.of(PathManager.getLibPath(), "pty4j-native").toAbsolutePath().toString())
   }
 }
 

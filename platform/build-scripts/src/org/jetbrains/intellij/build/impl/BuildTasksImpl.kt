@@ -166,7 +166,6 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
     }
     else {
       copyDistFiles(context = context, newDir = targetDirectory, os = currentOs, arch = arch)
-      unpackPty4jNative(context = context, distDir = targetDirectory, pty4jOsSubpackageName = null)
     }
   }
 }
@@ -949,29 +948,44 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
   val executableName = context.productProperties.baseFileName
 
   val productJson = generateMultiPlatformProductJson(
-    "bin",
-    context.builtinModule,
-    listOf(
-      ProductInfoLaunchData(os = OsFamily.WINDOWS.osName,
-                            launcherPath = "bin/${executableName}.bat",
-                            javaExecutablePath = null,
-                            vmOptionsFilePath = "bin/win/${executableName}64.exe.vmoptions",
-                            bootClassPathJarNames = context.bootClassPathJarNames,
-                            additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS)),
-      ProductInfoLaunchData(os = OsFamily.LINUX.osName,
-                            launcherPath = "bin/${executableName}.sh",
-                            javaExecutablePath = null,
-                            vmOptionsFilePath = "bin/linux/${executableName}64.vmoptions",
-                            startupWmClass = getLinuxFrameClass(context),
-                            bootClassPathJarNames = context.bootClassPathJarNames,
-                            additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX)),
-      ProductInfoLaunchData(os = OsFamily.MACOS.osName,
-                            launcherPath = "MacOS/$executableName",
-                            javaExecutablePath = null,
-                            vmOptionsFilePath = "bin/mac/${executableName}.vmoptions",
-                            bootClassPathJarNames = context.bootClassPathJarNames,
-                            additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS))
-    ), context)
+    relativePathToBin = "bin",
+    builtinModules = context.builtinModule,
+    launch = sequenceOf(JvmArchitecture.x64, JvmArchitecture.aarch64).flatMap { arch ->
+      listOf(
+        ProductInfoLaunchData(
+          os = OsFamily.WINDOWS.osName,
+          arch = arch.dirName,
+          launcherPath = "bin/${executableName}.bat",
+          javaExecutablePath = null,
+          // todo arm?
+          vmOptionsFilePath = "bin/win/${executableName}64.exe.vmoptions",
+          bootClassPathJarNames = context.bootClassPathJarNames,
+          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
+        ),
+        ProductInfoLaunchData(
+          os = OsFamily.LINUX.osName,
+          arch = arch.dirName,
+          launcherPath = "bin/${executableName}.sh",
+          javaExecutablePath = null,
+          // todo arm?
+          vmOptionsFilePath = "bin/linux/${executableName}64.vmoptions",
+          startupWmClass = getLinuxFrameClass(context),
+          bootClassPathJarNames = context.bootClassPathJarNames,
+          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch),
+        ),
+        ProductInfoLaunchData(
+          os = OsFamily.MACOS.osName,
+          arch = arch.dirName,
+          launcherPath = "MacOS/$executableName",
+          javaExecutablePath = null,
+          vmOptionsFilePath = "bin/mac/${executableName}.vmoptions",
+          bootClassPathJarNames = context.bootClassPathJarNames,
+          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch, isPortableDist = true),
+        ),
+      )
+    }.toList(),
+    context = context,
+  )
 
   val zipFileName = context.productProperties.getCrossPlatformZipFileName(context.applicationInfo, context.buildNumber)
   val targetFile = context.paths.artifactDir.resolve(zipFileName)

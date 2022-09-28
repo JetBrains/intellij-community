@@ -14,6 +14,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.mutate
 import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.plus
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -70,7 +71,9 @@ private val libsThatUsedInJps = java.util.Set.of(
   "commons-codec",
   "commons-logging",
   "commons-lang3",
-  "kotlin-stdlib-jdk8"
+  "kotlin-stdlib-jdk8",
+  // see ConsoleProcessListFetcher.getConsoleProcessCount
+  "pty4j",
 )
 
 private val extraMergeRules: PersistentMap<String, (String) -> Boolean> = persistentMapOf<String, (String) -> Boolean>().mutate { map ->
@@ -242,9 +245,10 @@ class JarPackager private constructor(private val context: BuildContext) {
         for (source in nativeFiles.keys.sortedBy { it.file.fileName.toString() }) {
           val paths = nativeFiles.get(source)!!
           val sourceFile = source.file
-          if (sourceFile.fileName.toString().startsWith("jna-")) {
+          val fileName = sourceFile.fileName.toString()
+          if (fileName.startsWith("jna-") || fileName.startsWith("pty4j-")) {
             async(Dispatchers.IO) {
-              packJnaNativeLibraries(sourceFile = sourceFile, paths = paths, context = packager.context)
+              unpackNativeLibraries(sourceFile = sourceFile, paths = paths, context = packager.context)
             }
             continue
           }
@@ -497,33 +501,37 @@ class JarPackager private constructor(private val context: BuildContext) {
   }
 }
 
-private suspend fun packJnaNativeLibraries(sourceFile: Path, paths: List<String>, context: BuildContext) {
+private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>, context: BuildContext) {
   val libVersion = sourceFile.getName(sourceFile.nameCount - 2).toString()
   val signTool = context.proprietaryBuildTools.signTool
   val unsignedFiles = TreeMap<OsFamily, MutableList<Path>>()
+  val packagePrefix = getCommonPath(paths)
+  val libName = sourceFile.fileName.toString().substringBefore('-')
   HashMapZipFile.load(sourceFile).use { zipFile ->
-    val jnaOutDir = Files.createDirectories(context.paths.tempDir.resolve("jna"))
+    val jnaOutDir = Files.createDirectories(context.paths.tempDir.resolve(libName))
     Files.createDirectories(jnaOutDir)
     for (pathWithPackage in paths) {
-      val path = pathWithPackage.removePrefix("com/sun/jna/")
-      val osAndArch = path.substring(0, path.indexOf('/'))
+      val path = pathWithPackage.substring(packagePrefix.length)
       val fileName = path.substring(path.lastIndexOf('/') + 1)
 
       val os = when {
-        osAndArch.startsWith("darwin-") -> OsFamily.MACOS
-        osAndArch.startsWith("win32-") -> OsFamily.WINDOWS
-        osAndArch.startsWith("linux-") -> OsFamily.LINUX
+        path.startsWith("darwin-") || path.startsWith("darwin/") -> OsFamily.MACOS
+        path.startsWith("win32-") || path.startsWith("win/") -> OsFamily.WINDOWS
+        path.startsWith("linux-") || path.startsWith("linux/") -> OsFamily.LINUX
         else -> continue
       }
 
-      val arch = when {
-        osAndArch.endsWith("-aarch64") -> JvmArchitecture.aarch64
-        osAndArch.endsWith("-x86-64") -> JvmArchitecture.x64
+      val osAndArch = path.substring(0, path.indexOf('/'))
+      val arch: JvmArchitecture? = when {
+        osAndArch.endsWith("-aarch64") || path.contains("/aarch64/") -> JvmArchitecture.aarch64
+        osAndArch.endsWith("-x86-64") || path.contains("/x86-64/") -> JvmArchitecture.x64
+        // universal library
+        os == OsFamily.MACOS && path.count { it == '/' } == 1 -> null
         else -> continue
       }
 
       var file: Path? = if (os != OsFamily.LINUX && signTool.usePresignedNativeFiles) {
-        signTool.getPresignedLibraryFile(path = path, libName = "jna", libVersion = libVersion, context = context)
+        signTool.getPresignedLibraryFile(path = path, libName = libName, libVersion = libVersion, context = context)
       }
       else {
         null
@@ -550,7 +558,13 @@ private suspend fun packJnaNativeLibraries(sourceFile: Path, paths: List<String>
         }
       }
 
-      context.addDistFile(DistFile(file = file, relativePath = "lib/jna/${arch.dirName}/$fileName", os = os, arch = arch))
+      val relativePath = "lib/$libName/" + if (libName == "jna") {
+        "${arch!!.dirName}/$fileName"
+      }
+      else {
+        path
+      }
+      context.addDistFile(DistFile(file = file, relativePath = relativePath, os = os, arch = arch))
     }
   }
 
@@ -561,7 +575,10 @@ private suspend fun packJnaNativeLibraries(sourceFile: Path, paths: List<String>
         unsignedFiles.get(OsFamily.MACOS)?.let { context.signFiles(it, MAC_CODE_SIGN_OPTIONS + versionOption) }
       }
       launch {
-        unsignedFiles.get(OsFamily.WINDOWS)?.let { context.signFiles(it, BuildOptions.WIN_SIGN_OPTIONS + versionOption) }
+        unsignedFiles.get(OsFamily.WINDOWS)?.let {
+          @Suppress("SpellCheckingInspection")
+          context.signFiles(it, BuildOptions.WIN_SIGN_OPTIONS + versionOption + persistentMapOf("jsign_replace" to "true"))
+        }
       }
     }
   }

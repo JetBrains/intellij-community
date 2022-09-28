@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+import kotlinx.collections.immutable.PersistentMap
 import java.nio.file.Path
 
 /**
@@ -13,7 +14,7 @@ interface SignTool {
 
   val usePresignedNativeFiles: Boolean
 
-  suspend fun signFiles(files: List<Path>, context: BuildContext, options: Map<String, String>)
+  suspend fun signFiles(files: List<Path>, context: BuildContext, options: PersistentMap<String, String>)
 
   /**
    * Returns `null` if failed to download and error is not fatal.

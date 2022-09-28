@@ -54,15 +54,26 @@ internal fun validateProductJson(jsonText: String,
                   relativePathToProductJson = relativePathToProductJson,
                   installationDirectories = installationDirectories,
                   installationArchives = installationArchives)
-  for ((os, launcherPath, javaExecutablePath, vmOptionsFilePath) in productJson.launch) {
-    if (OsFamily.ALL.none { it.osName == os }) {
-      messages.error("Incorrect os name \'$os\' in $relativePathToProductJson/product-info.json")
+  for (item in productJson.launch) {
+    val os = item.os
+    check(OsFamily.ALL.any { it.osName == os }) {
+      "Incorrect os name \'$os\' in $relativePathToProductJson/product-info.json"
     }
-    checkFileExists(launcherPath, "$os launcher", relativePathToProductJson, installationDirectories, installationArchives)
-    checkFileExists(javaExecutablePath, "$os java executable", relativePathToProductJson, installationDirectories,
-                    installationArchives)
-    checkFileExists(vmOptionsFilePath, "$os VM options file", relativePathToProductJson, installationDirectories,
-                    installationArchives)
+    checkFileExists(path = item.launcherPath,
+                    description = "$os launcher",
+                    relativePathToProductJson = relativePathToProductJson,
+                    installationDirectories = installationDirectories,
+                    installationArchives = installationArchives)
+    checkFileExists(path = item.javaExecutablePath,
+                    description = "$os java executable",
+                    relativePathToProductJson = relativePathToProductJson,
+                    installationDirectories = installationDirectories,
+                    installationArchives = installationArchives)
+    checkFileExists(path = item.vmOptionsFilePath,
+                    description = "$os VM options file",
+                    relativePathToProductJson = relativePathToProductJson,
+                    installationDirectories = installationDirectories,
+                    installationArchives = installationArchives)
   }
 }
 

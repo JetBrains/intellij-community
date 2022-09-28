@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.collections.immutable.PersistentMap
 import org.jetbrains.intellij.build.fus.FeatureUsageStatisticsProperties
 import java.nio.file.Path
 
@@ -50,7 +51,7 @@ class ProprietaryBuildTools(
         override val usePresignedNativeFiles: Boolean
           get() = false
 
-        override suspend fun signFiles(files: List<Path>, context: BuildContext, options: Map<String, String>) {
+        override suspend fun signFiles(files: List<Path>, context: BuildContext, options: PersistentMap<String, String>) {
           Span.current().addEvent("files won't be signed", Attributes.of(
             AttributeKey.stringArrayKey("files"), files.map(Path::toString),
             AttributeKey.stringKey("reason"), "sign tool isn't defined",

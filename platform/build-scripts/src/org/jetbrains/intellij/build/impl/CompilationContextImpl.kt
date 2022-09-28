@@ -116,7 +116,8 @@ class CompilationContextImpl private constructor(model: JpsModel,
       }
       else -> classesOutputDirectory = paths.buildOutputDir.resolve("classes")
     }
-    Span.current().addEvent("classes output directory is $classesOutputDirectory")
+    Span.current().addEvent("set class output directory",
+                            Attributes.of(AttributeKey.stringKey("classOutputDirectory"), classesOutputDirectory.toString()))
   }
 
   override var classesOutputDirectory: Path
