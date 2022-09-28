@@ -669,6 +669,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                 || ModuleGroupPathEntity::class.java in entities
                 || ContentRootEntity::class.java in entities
                 || SourceRootEntity::class.java in entities
+                || ExcludeUrlEntity::class.java in entities
                )) {
           val existingSerializers = fileSerializersByUrl.getValues(url)
           val moduleGroup = (entities[ModuleGroupPathEntity::class.java]?.first() as? ModuleGroupPathEntity)?.path?.joinToString("/")
@@ -760,7 +761,9 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     if (ModuleEntity::class.java in entities
         || FacetEntity::class.java in entities
         || ContentRootEntity::class.java in entities
-        || SourceRootEntity::class.java in entities) {
+        || SourceRootEntity::class.java in entities
+        || ExcludeUrlEntity::class.java in entities
+      ) {
       val moduleListSerializer = moduleListSerializersByUrl.values.find {
          it.entitySourceFilter(originalSource)
       }
@@ -790,6 +793,11 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val sourceRootEntity = entities[SourceRootEntity::class.java]?.singleOrNull() as? SourceRootEntity
     if (sourceRootEntity != null) {
       return moduleListSerializer.getFileName(sourceRootEntity.contentRoot.module)
+    }
+    val excludeUrlEntity = entities[ExcludeUrlEntity::class.java]?.firstOrNull() as? ExcludeUrlEntity
+    val module = excludeUrlEntity?.contentRoot?.module
+    if (module != null) {
+      return moduleListSerializer.getFileName(module)
     }
     val additionalEntity = entities[FacetEntity::class.java]?.firstOrNull() as? FacetEntity ?: return null
     return moduleListSerializer.getFileName(additionalEntity.module)
