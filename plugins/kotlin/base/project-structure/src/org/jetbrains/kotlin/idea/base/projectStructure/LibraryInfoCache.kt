@@ -39,7 +39,7 @@ class LibraryInfoCache(project: Project) : Disposable {
         Disposer.register(this, libraryInfoCache)
     }
 
-    internal class LibraryInfoInnerCache(project: Project) :
+    private class LibraryInfoInnerCache(project: Project) :
         SynchronizedFineGrainedEntityCache<LibraryEx, List<LibraryInfo>>(project, cleanOnLowMemory = false) {
 
         private val deduplicationCache = hashMapOf<String, MutableList<LibraryEx>>()
@@ -296,7 +296,7 @@ class LibraryInfoCache(project: Project) : Disposable {
                 JvmPlatforms.defaultJvmPlatform
             }
 
-        internal inner class ModelChangeListener(project: Project) : LibraryEntityChangeListener(project, afterChangeApplied = false) {
+        inner class ModelChangeListener(project: Project) : LibraryEntityChangeListener(project, afterChangeApplied = false) {
             override fun entitiesChanged(outdated: List<Library>) {
                 val droppedLibraryInfos = invalidateKeysAndGetOutdatedValues(outdated.map { it as LibraryEx }).flattenTo(hashSetOf())
 
