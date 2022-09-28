@@ -56,6 +56,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private JPanel myHideablePanel;
   private JBCheckBox myAddContentRootsCheckbox;
   private JBCheckBox myAddSourceRootsCheckbox;
+  private Sdk mySelectedSdk = null;
 
   private JComponent labelAnchor;
   private final Project myProject;
@@ -195,6 +196,16 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     mySelectedSdkHome = sdkHome;
   }
 
+  @Override
+  public @Nullable Sdk getSdk() {
+    return (Sdk)myInterpreterComboBox.getSelectedItem();
+  }
+
+  @Override
+  public void setSdk(@Nullable Sdk sdk) {
+    mySelectedSdk = sdk;
+  }
+
   @Nullable
   @Override
   public Module getModule() {
@@ -241,6 +252,10 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   @Override
   public void setUseModuleSdk(boolean useModuleSdk) {
+    if (mySelectedSdk != null) {
+      myInterpreterComboBox.setSelectedItem(useModuleSdk ? null : mySelectedSdk);
+      return;
+    }
     myInterpreterComboBox.setSelectedItem(useModuleSdk ? null : PythonSdkUtil.findSdkByPath(myPythonSdks, mySelectedSdkHome));
   }
 

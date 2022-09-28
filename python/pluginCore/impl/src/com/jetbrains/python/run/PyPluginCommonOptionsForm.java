@@ -177,6 +177,11 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   @Override
+  public @Nullable Sdk getSdk() {
+    return (Sdk)myInterpreterComboBox.getSelectedItem();
+  }
+
+  @Override
   public void setSdkHome(String sdkHome) {
     List<Sdk> sdkList = new ArrayList<>();
     sdkList.add(null);
@@ -190,6 +195,23 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     }
 
     myInterpreterComboBox.setModel(new CollectionComboBoxModel(sdkList, selection));
+  }
+
+  @Override
+  public void setSdk(@Nullable Sdk sdk) {
+    List<Sdk> allSdks = PythonSdkUtil.getAllSdks();
+    List<Sdk> sdkList = new ArrayList<>(allSdks);
+    Sdk selection = null;
+    for (Sdk curSdk: allSdks) {
+      if (curSdk == sdk) {
+        selection = curSdk;
+      }
+    }
+    if (selection == null) {
+      sdkList.add(sdk);
+      selection = sdk;
+    }
+    myModuleComboBox.setModel(new CollectionComboBoxModel(sdkList, selection));
   }
 
   @Override
