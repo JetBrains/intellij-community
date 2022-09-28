@@ -124,8 +124,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
           // the push will happen automatically after updating and merging (if there is anything to merge)
         }
         ServerState.FileNotExists -> {
-          LOG.info("No file on server, disable settings sync")
-          SettingsSyncSettings.getInstance().syncEnabled = false
+          LOG.info("No file on server")
         }
         ServerState.UpToDate -> {
           LOG.info("Updating settings is not needed, will check if push is needed")

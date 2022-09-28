@@ -18,6 +18,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
+import java.time.Instant
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import kotlin.io.path.div
@@ -95,13 +96,25 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       })
     }
 
-    assertNull("The version on the server was not deleted", remoteCommunicator.versionOnServer)
+    val versionOnServer = remoteCommunicator.versionOnServer!!
+    assertTrue("The server snapshot is incorrect: $versionOnServer", versionOnServer.isDeleted())
+    assertTrue("There should be no settings data after deletion: $versionOnServer", versionOnServer.isEmpty())
+    assertFalse("Settings sync was not disabled", SettingsSyncSettings.getInstance().syncEnabled)
   }
 
-  private fun await(function: (CountDownLatch) -> Unit) {
-    val cdl = CountDownLatch(1)
-    function(cdl)
-    cdl.await(10, TIMEOUT_UNIT)
+  @Test fun `disable settings sync if data on server was deleted`() {
+    val fileName = "options/laf.xml"
+    val initialContent = "LaF Initial"
+    configDir.resolve(fileName).write(initialContent)
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(),
+                                                                                      isDeleted = true), emptySet(), null))
+    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
+    bridge.waitForAllExecuted(10, TIMEOUT_UNIT)
+
+    assertFalse("Settings sync was not disabled", SettingsSyncSettings.getInstance().syncEnabled)
   }
 
   @Test fun `first push after IDE start should update from server if needed`() {
@@ -249,6 +262,27 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     assertEquals("Incorrect error message", errorMessage, SettingsSyncStatusTracker.getInstance().getErrorMessage())
   }
 
+  @Test fun `sync settings`() {
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+    val controls = SettingsSyncMain.init(application, disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
+    updateChecker = controls.updateChecker
+    bridge = controls.bridge
+    bridge.initialize(SettingsSyncBridge.InitMode.JustInit)
+
+    remoteCommunicator.prepareFileOnServer(settingsSnapshot {
+      fileState("options/editor.xml", "Editor from Server")
+    })
+
+    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
+    bridge.waitForAllExecuted(10, TIMEOUT_UNIT)
+
+    assertFileWithContent("Editor from Server", (settingsSyncStorage / "options" / "editor.xml"))
+    assertFileWithContent("LaF Initial", (settingsSyncStorage / "options" / "laf.xml"))
+    assertAppliedToIde("options/editor.xml", "Editor from Server")
+  }
+
   @Test fun `concurrent sync does not disable sync during initialization`() {
     writeToConfig {
       fileState("options/laf.xml", "LaF Initial")
@@ -257,8 +291,8 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     updateChecker = controls.updateChecker
     bridge = controls.bridge
 
+    SettingsSyncSettings.getInstance().syncEnabled = true
     val task1 = Callable {
-      SettingsSyncSettings.getInstance().syncEnabled = true
       bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)
     }
     val task2 = Callable {
@@ -273,6 +307,12 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     pushedSnapshot!!.assertSettingsSnapshot {
       fileState("options/laf.xml", "LaF Initial")
     }
+  }
+
+  private fun await(function: (CountDownLatch) -> Unit) {
+    val cdl = CountDownLatch(1)
+    function(cdl)
+    cdl.await(10, TIMEOUT_UNIT)
   }
 
   private fun writeToConfig(build: SettingsSnapshotBuilder.() -> Unit) {
@@ -304,6 +344,11 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
         fileState("options/laf.xml", "Migration Data")
       }
     }
+  }
+
+  private fun assertFileWithContent(expectedContent: String, file: Path) {
+    assertTrue("File $file does not exist", file.exists())
+    assertEquals("File $file has unexpected content", expectedContent, file.readText())
   }
 
   private fun assertAppliedToIde(fileSpec: String, expectedContent: String) {

@@ -80,6 +80,7 @@ internal object SettingsSnapshotZipSerializer {
       userName = snapshotMetaInfo.appInfo?.userName.toString()
       hostName = snapshotMetaInfo.appInfo?.hostName.toString()
       configFolder = snapshotMetaInfo.appInfo?.configFolder.toString()
+      isDeleted = snapshotMetaInfo.isDeleted
     }
     return ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsBytes(metaInfo)
   }
@@ -92,7 +93,7 @@ internal object SettingsSnapshotZipSerializer {
         val date = DateTimeFormatter.ISO_INSTANT.parse(metaInfo.date, Instant::from)
         val appInfo = SettingsSnapshot.AppInfo(UUID.fromString(metaInfo.applicationId),
                                                metaInfo.userName, metaInfo.hostName, metaInfo.configFolder)
-        return SettingsSnapshot.MetaInfo(date, appInfo)
+        return SettingsSnapshot.MetaInfo(date, appInfo, metaInfo.isDeleted)
       }
       else {
         LOG.warn("Timestamp file doesn't exist")
@@ -110,5 +111,6 @@ internal object SettingsSnapshotZipSerializer {
     var userName: String = ""
     var hostName: String = ""
     var configFolder: String = ""
+    var isDeleted: Boolean = false
   }
 }

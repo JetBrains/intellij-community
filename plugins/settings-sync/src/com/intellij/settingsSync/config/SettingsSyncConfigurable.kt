@@ -221,7 +221,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
           when (result) {
             is DeleteServerDataResult.Error -> {
               runInEdt {
-                showError(message("disable.remove.data.failure"), result.exception.localizedMessage)
+                showError(message("disable.remove.data.failure"), result.error)
               }
             }
             DeleteServerDataResult.Success -> {

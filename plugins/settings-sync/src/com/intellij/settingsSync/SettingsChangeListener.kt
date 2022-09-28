@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.intellij.openapi.util.NlsSafe
 import java.util.*
 
 internal fun interface SettingsChangeListener : EventListener {
@@ -27,6 +28,12 @@ internal sealed class SyncSettingsEvent {
    */
   class DeleteServerData(val afterDeleting: (DeleteServerDataResult) -> Unit): SyncSettingsEvent()
 
+  /**
+   * Indicates that the settings sync snapshot has been explicitly deleted on the server.
+   * It means that other clients must disable settings sync.
+   */
+  object DeletedOnCloud: SyncSettingsEvent()
+
   override fun toString(): String {
     return javaClass.simpleName
   }
@@ -40,5 +47,5 @@ internal sealed class SyncSettingsEvent {
 
 internal sealed class DeleteServerDataResult {
   object Success: DeleteServerDataResult()
-  class Error(val exception: Exception): DeleteServerDataResult()
+  class Error(@NlsSafe val error: String): DeleteServerDataResult()
 }

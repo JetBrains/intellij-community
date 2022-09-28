@@ -13,11 +13,15 @@ data class SettingsSnapshot(val metaInfo: MetaInfo,
                             val fileStates: Set<FileState>,
                             /* null means there is no information about plugins in this snapshot */ val plugins: SettingsSyncPluginsState?) {
 
-  data class MetaInfo(val dateCreated: Instant, val appInfo: AppInfo?)
+  data class MetaInfo(val dateCreated: Instant, val appInfo: AppInfo?, val isDeleted: Boolean = false)
 
   data class AppInfo(val applicationId: UUID, val userName: String, val hostName: String, val configFolder: String)
 
   fun isEmpty(): Boolean = fileStates.isEmpty() && plugins == null
+
+  fun isDeleted(): Boolean {
+    return metaInfo.isDeleted
+  }
 }
 
 @ApiStatus.Internal

@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 /**
@@ -159,6 +160,10 @@ class SettingsSyncBridge(parentDisposable: Disposable,
             stopSyncingAndRollback(previousState)
             deleteServerData(event.afterDeleting)
           }
+          SyncSettingsEvent.DeletedOnCloud -> {
+            mergeAndPushAfterProcessingEvents = false
+            stopSyncingAndRollback(previousState)
+          }
           SyncSettingsEvent.PingRequest -> {}
         }
       }
@@ -173,12 +178,20 @@ class SettingsSyncBridge(parentDisposable: Disposable,
   }
 
   private fun deleteServerData(afterDeleting: (DeleteServerDataResult) -> Unit) {
-    try {
-      remoteCommunicator.delete()
-      afterDeleting(DeleteServerDataResult.Success)
-    }
-    catch (e: Exception) {
-      afterDeleting(DeleteServerDataResult.Error(e))
+    val deletionSnapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true),
+                                            emptySet(), null)
+    val pushResult = pushToCloud(deletionSnapshot, force = true)
+    LOG.info("Deleting server data. Result: $pushResult")
+    when (pushResult) {
+      is SettingsSyncPushResult.Success -> {
+        afterDeleting(DeleteServerDataResult.Success)
+      }
+      is SettingsSyncPushResult.Error -> {
+        afterDeleting(DeleteServerDataResult.Error(pushResult.message))
+      }
+      SettingsSyncPushResult.Rejected -> {
+        afterDeleting(DeleteServerDataResult.Error("Deletion rejected by server"))
+      }
     }
   }
 
