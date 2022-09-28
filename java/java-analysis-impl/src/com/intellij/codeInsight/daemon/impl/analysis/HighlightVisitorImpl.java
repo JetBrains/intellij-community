@@ -1931,14 +1931,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     if (myHolder.hasErrorResults()) return;
     PsiExpression guardingExpr = pattern.getGuardingExpression();
-    if (guardingExpr == null) return;
-    // 14.30.1 Kinds of Patterns GuardedPattern: PrimaryPattern && ConditionalAndExpression
-    // 15.23. ConditionalAndExpression: Each operand of the conditional-and operator must be of type boolean or Boolean, or a compile-time error occurs.
-    if (!TypeConversionUtil.isBooleanType(guardingExpr.getType())) {
-      String message = JavaErrorBundle.message("incompatible.types", JavaHighlightUtil.formatType(PsiType.BOOLEAN),
-                                               JavaHighlightUtil.formatType(guardingExpr.getType()));
-      myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(guardingExpr).descriptionAndTooltip(message).create());
-    }
+    myHolder.add(checkGuardingExpressionHasBooleanType(guardingExpr));
   }
 
   @Override
@@ -1947,11 +1940,23 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myHolder.add(checkFeature(guard, HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
     if (myHolder.hasErrorResults()) return;
     PsiExpression guardingExpr = guard.getGuardingExpression();
+    myHolder.add(checkGuardingExpressionHasBooleanType(guardingExpr));
+    if (myHolder.hasErrorResults()) return;
     Object constVal = ExpressionUtils.computeConstantExpression(guardingExpr);
     if (Boolean.FALSE.equals(constVal)) {
       String message = JavaErrorBundle.message("when.expression.is.false");
       myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(guardingExpr).descriptionAndTooltip(message).create());
     }
+  }
+
+  @Nullable
+  private static HighlightInfo checkGuardingExpressionHasBooleanType(@Nullable PsiExpression guardingExpression) {
+    if (guardingExpression != null && !TypeConversionUtil.isBooleanType(guardingExpression.getType())) {
+      String message = JavaErrorBundle.message("incompatible.types", JavaHighlightUtil.formatType(PsiType.BOOLEAN),
+                                               JavaHighlightUtil.formatType(guardingExpression.getType()));
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(guardingExpression).descriptionAndTooltip(message).create();
+    }
+    return null;
   }
 
   @Override
