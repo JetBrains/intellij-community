@@ -669,7 +669,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
       if (isBeta(configurable)) {
         myTextLabel.setIconOnTheRight(true);
-        myTextLabel.setIconTextGap(JBUIScale.scale(4));
+        myTextLabel.setIconTextGap(JBUIScale.scale(8));
         myTextLabel.setIcon(AllIcons.General.Beta);
       }
 
