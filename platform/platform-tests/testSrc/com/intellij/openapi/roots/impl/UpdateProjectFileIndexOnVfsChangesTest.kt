@@ -25,6 +25,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.io.File
+import java.util.concurrent.CopyOnWriteArrayList
 
 @TestApplication
 class UpdateProjectFileIndexOnVfsChangesTest {
@@ -101,13 +102,12 @@ class UpdateProjectFileIndexOnVfsChangesTest {
     private var error: Throwable? = null
     @Volatile
     private var called = false
+    private val allEvents = CopyOnWriteArrayList<VFileEvent>()
 
     override fun after(events: List<VFileEvent>) {
       try {
-        val event = events.filterIsInstance<VFileCreateEvent>().singleOrNull { it.childName == expectedName }
-        if (event == null) {
-          return fail("VFileCreateEvent[$expectedName] not found in $events")
-        }
+        allEvents.addAll(events)
+        val event = events.filterIsInstance<VFileCreateEvent>().singleOrNull { it.childName == expectedName } ?: return
         handler(event.file!!)
         called = true
       }
@@ -120,7 +120,7 @@ class UpdateProjectFileIndexOnVfsChangesTest {
       if (error != null) {
         return fail(error)
       }
-      assertTrue(called)
+      assertTrue(called, "VFileCreateEvent[$expectedName] not found in $allEvents")
     }
   }
 }

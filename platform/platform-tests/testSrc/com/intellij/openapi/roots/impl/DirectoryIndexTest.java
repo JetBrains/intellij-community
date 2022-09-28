@@ -4,8 +4,6 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -277,47 +275,12 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     checkPackage("foo.bar", false, bar, fooBar);
     checkPackage("foo.bar.goo", false, goo2, goo1);
   }
-
-  public void testChangeIgnoreList() {
-    VirtualFile newDir = createChildDirectory(myModule1Dir, "newDir");
-
-    assertInProject(newDir);
-
-    final FileTypeManagerEx fileTypeManager = (FileTypeManagerEx)FileTypeManager.getInstance();
-    final String list = fileTypeManager.getIgnoredFilesList();
-    try {
-      final String list1 = list + ";" + "newDir";
-      ApplicationManager.getApplication().runWriteAction(() -> fileTypeManager.setIgnoredFilesList(list1));
-      assertNotInProject(newDir);
-    }
-    finally {
-      ApplicationManager.getApplication().runWriteAction(() -> fileTypeManager.setIgnoredFilesList(list));
-      assertInProject(newDir);
-    }
-  }
   
-  public void testExcludedDirsInLibraries() {
-    assertFalse(myFileIndex.isInLibraryClasses(myExcludedLibClsDir));
-    assertTrue(myFileIndex.isExcluded(myExcludedLibClsDir));
-    assertFalse(myFileIndex.isUnderIgnored(myExcludedLibClsDir));
-    assertFalse(myFileIndex.isInLibrarySource(myExcludedLibSrcDir));
-    assertFalse(myFileIndex.isInSource(myExcludedLibSrcDir));
-    assertTrue(myFileIndex.isExcluded(myExcludedLibSrcDir));
-    assertFalse(myFileIndex.isUnderIgnored(myExcludedLibSrcDir));
-  }
-
-  public void testExplicitExcludeOfInner() {
-    PsiTestUtil.addExcludedRoot(myModule, myModule2Dir);
-
-    checkInfo(myModule2Dir, myModule2, false, false, null, null, null);
-    checkInfo(mySrcDir2, myModule2, false, false, "", mySrcDir2Folder, JavaSourceRootType.SOURCE, myModule2, myModule3);
-  }
-
-
   private static OrderEntry[] toArray(Collection<OrderEntry> orderEntries) {
     return orderEntries.toArray(OrderEntry.EMPTY_ARRAY);
   }
 
+  //everything except order entry checks is covered by NestedModuleAndLibraryRootsInProjectFileIndex 
   public void testModuleSourceAsLibrarySource() {
     ModuleRootModificationUtil.addModuleLibrary(myModule, "someLib", Collections.emptyList(), Collections.singletonList(mySrcDir1.getUrl()));
 
@@ -335,12 +298,14 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     assertInstanceOf(entries[1], ModuleSourceOrderEntry.class);
   }
 
+  //everything except order entry checks is covered by NestedModuleAndLibraryRootsInProjectFileIndex 
   public void testModuleSourceAsLibraryClasses() {
     ModuleRootModificationUtil.addModuleLibrary(myModule, "someLib", Collections.singletonList(mySrcDir1.getUrl()), Collections.emptyList());
     checkInfo(mySrcDir1, myModule, true, false, "", mySrcDir1Folder, JavaSourceRootType.SOURCE, myModule);
     assertInstanceOf(assertOneElement(toArray(myFileIndex.getOrderEntriesForFile(mySrcDir1))), ModuleSourceOrderEntry.class);
   }
 
+  //everything except order entry checks is covered by NestedModuleRootsInProjectFileIndex 
   public void testModulesWithSameSourceContentRoot() {
     // now our API allows this (ReformatCodeActionTest), although UI doesn't. Maybe API shouldn't allow it as well?
     PsiTestUtil.addContentRoot(myModule2, myModule1Dir);
@@ -355,6 +320,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     assertEquals(myModule2Dir, myFileIndex.getContentRootForFile(mySrcDir2));
   }
 
+  //everything except order entry checks is covered by NestedModuleRootsInProjectFileIndex 
   public void testModuleWithSameSourceRoot() {
     SourceFolder sourceFolder = PsiTestUtil.addSourceRoot(myModule2, mySrcDir1);
     checkInfo(mySrcDir1, myModule2, false, false, "", sourceFolder, JavaSourceRootType.SOURCE, myModule2, myModule3);
@@ -420,22 +386,6 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
     checkPackage("exc", false);
     checkPackage("exc", true);
-  }
-  
-  public void testIterateModuleLevelFileIndexMustStopBeforeTheNestingModule() {
-    ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
-    assertIteratedContent(moduleFileIndex, myModule1Dir, Arrays.asList(myModule1Dir, mySrcDir1, myResDir, myTestResDir, myLibAdditionalDir, myLibDir), Collections.singletonList(myModule2Dir));
-  }
-
-  public void testFileLibraryInsideFolderLibrary() {
-    VirtualFile file = createChildData(myLibSrcDir, "empty.txt");
-    ModuleRootModificationUtil.addModuleLibrary(myModule2, "lib2",
-                                                Collections.emptyList(), Collections.singletonList(file.getUrl()),
-                                                Collections.emptyList(), DependencyScope.COMPILE, true);
-
-    // same for the dir and for the file
-    checkInfo(file, myModule, false, true, "", null, null, myModule2, myModule3);
-    checkInfo(myLibSrcDir, myModule, false, true, "", null, null, myModule2, myModule3);
   }
 
   public void testFileContentRootsModifications() {

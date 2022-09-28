@@ -219,12 +219,26 @@ abstract class LibraryInProjectFileIndexTestCase {
     }
   }
 
+  @Test
+  fun `nested library roots`() {
+    val innerFile = projectModel.baseProjectDir.newVirtualDirectory("outer/inner/inner.txt")
+    val outerFile = projectModel.baseProjectDir.newVirtualDirectory("outer/outer.txt")
+    val outerLibrary = createLibrary("outer") { it.addRoot(outerFile.parent, OrderRootType.CLASSES) }
+    val innerLibrary = createLibrary("inner") { it.addRoot(innerFile.parent, OrderRootType.SOURCES) }
+    ModuleRootModificationUtil.addDependency(module, innerLibrary)
+    ModuleRootModificationUtil.addDependency(module, outerLibrary)
+    assertTrue(fileIndex.isInLibrary(innerFile))
+    assertTrue(fileIndex.isInLibrary(outerFile))
+    assertTrue(fileIndex.isInLibraryClasses(outerFile))
+    assertTrue(fileIndex.isInLibrarySource(innerFile))
+  }
+
   private fun VirtualFile.findJarRootByRelativePath(path: String): VirtualFile {
     val jarFile = findFileByRelativePath(path) ?: error("cannot find $path in ${this.presentableUrl}")
     return JarFileSystem.getInstance().getJarRootForLocalFile(jarFile) ?: error("cannot find JAR root for ${jarFile.presentableUrl}")
   }
 
-  fun assertInLibrary(file: VirtualFile) {
+  private fun assertInLibrary(file: VirtualFile) {
     assertTrue(fileIndex.isInProject(file))
     assertFalse(fileIndex.isInContent(file))
     assertFalse(fileIndex.isExcluded(file))

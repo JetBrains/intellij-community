@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
@@ -317,7 +319,25 @@ class ModuleRootsInProjectFileIndexTest {
     assertInModule(file)
     assertFalse(fileIndex.isUnderIgnored(file))
   }
-  
+
+  @Test
+  fun `change ignored files list`() {
+    val file = projectModel.baseProjectDir.newVirtualFile("module/newDir/file.txt")
+    PsiTestUtil.addContentRoot(module, moduleDir)
+    assertInModule(file)
+
+    val fileTypeManager = FileTypeManager.getInstance() as FileTypeManagerEx
+    val oldValue = fileTypeManager.ignoredFilesList
+    try {
+      runWriteAction {  fileTypeManager.ignoredFilesList = "$oldValue;newDir" }
+      assertIgnored(file)
+    }
+    finally {
+      runWriteAction {  fileTypeManager.ignoredFilesList = oldValue }
+      assertInModule(file)
+    }
+  }
+
   private fun assertInModule(file: VirtualFile) {
     assertTrue(fileIndex.isInProject(file))
     assertTrue(fileIndex.isInContent(file))
