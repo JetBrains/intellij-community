@@ -21,11 +21,9 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<MavenServerIndexer> {
-  private final Project myProject;
 
-  public MavenIndexerWrapper(@Nullable RemoteObjectWrapper<?> parent, Project project) {
+  public MavenIndexerWrapper(@Nullable RemoteObjectWrapper<?> parent) {
     super(parent);
-    myProject = project;
   }
 
   public void releaseIndex(MavenIndexId mavenIndexId) throws MavenServerIndexerException {
@@ -63,7 +61,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     performCancelable(() -> {
       MavenServerProgressIndicator indicatorWrapper = wrapAndExport(indicator);
       try {
-        getOrCreateWrappee().updateIndex(mavenIndexId, MavenServerManager.convertSettings(myProject, settings), indicatorWrapper, ourToken);
+        getOrCreateWrappee().updateIndex(mavenIndexId, indicatorWrapper, ourToken);
       }
       finally {
         UnicastRemoteObject.unexportObject(indicatorWrapper, true);
@@ -115,7 +113,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
    */
   @Deprecated
   public Collection<MavenArchetype> getArchetypes() {
-    return perform(() -> getOrCreateWrappee().getArchetypes(ourToken));
+    return perform(() -> getOrCreateWrappee().getInternalArchetypes(ourToken));
   }
 
   @TestOnly

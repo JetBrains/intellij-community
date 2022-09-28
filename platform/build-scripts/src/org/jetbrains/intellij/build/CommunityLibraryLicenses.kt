@@ -603,11 +603,30 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "MathJax", attachedTo = "intellij.python", version = "2.6.1",
                    url = "git://github.com/mathjax/MathJax",
                    licenseUrl = "https://github.com/mathjax/MathJax/blob/master/LICENSE").apache(),
+
+
+
+    LibraryLicense(name = "Maven archetype common", libraryName="apache.maven.archetype.common:3.2.1",
+                   url = "https://maven.apache.org/archetype/archetype-common/index.html")
+      .apache("https://github.com/apache/maven-archetype"),
+
+    LibraryLicense(name = "Maven core", libraryName="apache.maven.core:3.8.3",
+                   url = "https://maven.apache.org/ref/3.8.6/maven-core/")
+      .apache("https://github.com/apache/maven/blob/master/LICENSE"),
+
+    LibraryLicense(name = "Maven indexer", libraryName="apache.maven.indexer.core:6.2.2",
+                   url = "https://maven.apache.org/maven-indexer/indexer-core/index.html")
+      .apache("https://github.com/apache/maven-indexer"),
+
     LibraryLicense(name = "Maven Resolver Provider",
                    url = "https://maven.apache.org/ref/3.6.1/maven-resolver-provider/", libraryName = "maven-resolver-provider",
                    additionalLibraryNames = listOf("org.apache.maven.resolver:maven-resolver-connector-basic",
                                                    "org.apache.maven.resolver:maven-resolver-transport-http",
                                                    "org.apache.maven.resolver:maven-resolver-transport-file")).apache(),
+    LibraryLicense(name = "Maven wagon provider api", libraryName="apache.maven.wagon.provider.api:3.5.2",
+                   url = "https://maven.apache.org/wagon/wagon-provider-api/index.html")
+      .apache("https://github.com/apache/maven-wagon"),
+
     LibraryLicense(name = "Maven Wrapper", libraryName = "io.takari.maven.wrapper",
                    url = "https://github.com/takari/maven-wrapper").apache(),
     LibraryLicense(name = "Maven3", attachedTo = "intellij.maven.server.m3.common",

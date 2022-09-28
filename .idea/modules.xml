@@ -753,6 +753,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/maven-model/intellij.maven.model.iml" filepath="$PROJECT_DIR$/plugins/maven-model/intellij.maven.model.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven-server-api/intellij.maven.server.iml" filepath="$PROJECT_DIR$/plugins/maven-server-api/intellij.maven.server.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven-event-listener/intellij.maven.server.eventListener.iml" filepath="$PROJECT_DIR$/plugins/maven/maven-event-listener/intellij.maven.server.eventListener.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven-server-indexer/intellij.maven.server.indexer.iml" filepath="$PROJECT_DIR$/plugins/maven/maven-server-indexer/intellij.maven.server.indexer.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven3-server-common/intellij.maven.server.m3.common.iml" filepath="$PROJECT_DIR$/plugins/maven/maven3-server-common/intellij.maven.server.m3.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven3-server-impl/intellij.maven.server.m3.impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven3-server-impl/intellij.maven.server.m3.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven30-server-impl/intellij.maven.server.m30.impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven30-server-impl/intellij.maven.server.m30.impl.iml" />

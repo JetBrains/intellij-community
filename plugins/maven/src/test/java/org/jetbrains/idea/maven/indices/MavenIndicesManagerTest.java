@@ -46,6 +46,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
 
   @Test
   public void testIndexedArchetypes() throws Exception {
+
     myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
     File archetypes = myIndicesFixture.getRepositoryHelper().getTestData("archetypes");
     MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(archetypes.getPath());

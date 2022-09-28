@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 
@@ -31,7 +32,7 @@ public abstract class MavenServerConnector implements Disposable {
 
   protected final String myVmOptions;
 
-  public MavenServerConnector(@NotNull Project project,
+  public MavenServerConnector(@Nullable Project project, // to be removed in future
                               @NotNull MavenServerManager manager,
                               @NotNull Sdk jdk,
                               @NotNull String vmOptions,
