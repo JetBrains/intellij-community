@@ -14,7 +14,8 @@ public final class PowerSaveMode {
   private static final String POWER_SAVE_MODE = "power.save.mode";
 
   public static boolean isEnabled() {
-    return LoadingState.COMPONENTS_REGISTERED.isOccurred() && PropertiesComponent.getInstance().getBoolean(POWER_SAVE_MODE);
+    PropertiesComponent propertiesComponent;
+    return LoadingState.COMPONENTS_REGISTERED.isOccurred() && (propertiesComponent = PropertiesComponent.getInstance()) != null && propertiesComponent.getBoolean(POWER_SAVE_MODE);
   }
 
   public static void setEnabled(boolean value) {
