@@ -3,9 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.*
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -132,16 +130,12 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
             }
         }
 
-        private fun checkIsBooleanExpressionFromModalWindow(expression: KtExpression): Boolean {
-            val modalTask = object : Task.WithResult<Boolean, Exception>(
+        private fun checkIsBooleanExpressionFromModalWindow(expression: KtExpression): Boolean =
+            ActionUtil.underModalProgress(
                 expression.project,
                 KotlinBundle.message("redundant.if.statement.analyzing.type"),
-                true
             ) {
-                override fun compute(indicator: ProgressIndicator): Boolean = runReadAction { isBooleanExpression(expression) }
+                isBooleanExpression(expression)
             }
-
-            return ProgressManager.getInstance().run(modalTask)
-        }
     }
 }
