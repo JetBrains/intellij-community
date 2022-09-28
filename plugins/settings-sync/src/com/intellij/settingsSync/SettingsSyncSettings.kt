@@ -5,7 +5,7 @@ import com.intellij.openapi.components.*
 import com.intellij.settingsSync.SettingsSyncSettings.Companion.FILE_SPEC
 import java.util.*
 
-internal interface SettingsSyncEnabledStateListener : EventListener {
+internal fun interface SettingsSyncEnabledStateListener : EventListener {
   fun enabledStateChanged(syncEnabled: Boolean)
 }
 

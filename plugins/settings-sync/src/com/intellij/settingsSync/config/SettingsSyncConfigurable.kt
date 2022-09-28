@@ -1,6 +1,7 @@
 package com.intellij.settingsSync.config
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
@@ -17,6 +18,8 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JLabel
@@ -210,20 +213,25 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
   }
 
   private fun disableAndRemoveData() {
-    val remoteCommunicator = SettingsSyncMain.getInstance().getRemoteCommunicator()
     object : Task.Modal(null, message("disable.remove.data.title"), false) {
-
       override fun run(indicator: ProgressIndicator) {
-        SettingsSyncSettings.getInstance().syncEnabled = false
-        remoteCommunicator.delete()
-      }
-
-      override fun onThrowable(error: Throwable) {
-        showError(message("disable.remove.data.failure"), error.localizedMessage)
-      }
-
-      override fun onSuccess() {
-        updateStatusInfo()
+        val cdl = CountDownLatch(1)
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData { result ->
+          cdl.countDown()
+          when (result) {
+            is DeleteServerDataResult.Error -> {
+              runInEdt {
+                showError(message("disable.remove.data.failure"), result.exception.localizedMessage)
+              }
+            }
+            DeleteServerDataResult.Success -> {
+              runInEdt {
+                updateStatusInfo()
+              }
+            }
+          }
+        })
+        cdl.await(1, TimeUnit.MINUTES)
       }
     }.queue()
   }

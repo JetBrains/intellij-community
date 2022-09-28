@@ -19,6 +19,7 @@ import org.junit.runners.JUnit4
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.util.concurrent.Callable
+import java.util.concurrent.CountDownLatch
 import kotlin.io.path.div
 import kotlin.io.path.writeText
 
@@ -73,6 +74,34 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     pushedSnapshot!!.assertSettingsSnapshot {
       fileState(fileName, contentBetweenSessions)
     }
+  }
+
+  @Test fun `delete server data`() {
+    val fileName = "options/laf.xml"
+    val initialContent = "LaF Initial"
+    configDir.resolve(fileName).write(initialContent)
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    val pushedSnapshot = remoteCommunicator.versionOnServer
+    assertNotNull("Nothing has been pushed", pushedSnapshot)
+    pushedSnapshot!!.assertSettingsSnapshot {
+      fileState(fileName, initialContent)
+    }
+
+    await { cdl ->
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData {
+        cdl.countDown()
+      })
+    }
+
+    assertNull("The version on the server was not deleted", remoteCommunicator.versionOnServer)
+  }
+
+  private fun await(function: (CountDownLatch) -> Unit) {
+    val cdl = CountDownLatch(1)
+    function(cdl)
+    cdl.await(10, TIMEOUT_UNIT)
   }
 
   @Test fun `first push after IDE start should update from server if needed`() {

@@ -136,6 +136,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
     try {
       var pushRequestMode: PushRequestMode = PUSH_IF_NEEDED
+      var mergeAndPushAfterProcessingEvents = true
       while (pendingEvents.isNotEmpty()) {
         val event = pendingEvents.removeAt(0)
         LOG.debug("Processing event $event")
@@ -153,14 +154,31 @@ class SettingsSyncBridge(parentDisposable: Disposable,
           is SyncSettingsEvent.MustPushRequest -> {
             pushRequestMode = MUST_PUSH
           }
+          is SyncSettingsEvent.DeleteServerData -> {
+            mergeAndPushAfterProcessingEvents = false
+            stopSyncingAndRollback(previousState)
+            deleteServerData(event.afterDeleting)
+          }
           SyncSettingsEvent.PingRequest -> {}
         }
       }
 
-      mergeAndPush(previousState.idePosition, previousState.cloudPosition, pushRequestMode)
+      if (mergeAndPushAfterProcessingEvents) {
+        mergeAndPush(previousState.idePosition, previousState.cloudPosition, pushRequestMode)
+      }
     }
     catch (exception: Throwable) {
       stopSyncingAndRollback(previousState, exception)
+    }
+  }
+
+  private fun deleteServerData(afterDeleting: (DeleteServerDataResult) -> Unit) {
+    try {
+      remoteCommunicator.delete()
+      afterDeleting(DeleteServerDataResult.Success)
+    }
+    catch (e: Exception) {
+      afterDeleting(DeleteServerDataResult.Error(e))
     }
   }
 
@@ -176,10 +194,17 @@ class SettingsSyncBridge(parentDisposable: Disposable,
                                                                  settingsLog.getCloudPosition(),
                                                                  SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId)
 
-  private fun stopSyncingAndRollback(previousState: CurrentState, exception: Throwable) {
-    LOG.error("Couldn't apply settings. Disabling sync and rolling back.", exception)
+  private fun stopSyncingAndRollback(previousState: CurrentState, exception: Throwable? = null) {
+    if (exception != null) {
+      LOG.error("Couldn't apply settings. Disabling sync and rolling back.", exception)
+    }
+    else {
+      LOG.info("Settings Sync is switched off. Rolling back.")
+    }
     SettingsSyncSettings.getInstance().syncEnabled = false
-    SettingsSyncStatusTracker.getInstance().updateOnError(exception.localizedMessage)
+    if (exception != null) {
+      SettingsSyncStatusTracker.getInstance().updateOnError(exception.localizedMessage)
+    }
 
     ideMediator.removeStreamProvider()
     SettingsSyncEvents.getInstance().removeSettingsChangedListener(settingsChangeListener)

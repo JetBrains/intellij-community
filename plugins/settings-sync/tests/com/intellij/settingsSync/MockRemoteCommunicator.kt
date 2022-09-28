@@ -35,5 +35,7 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
     return SettingsSyncPushResult.Success(null)
   }
 
-  override fun delete() {}
+  override fun delete() {
+    versionOnServer = null
+  }
 }

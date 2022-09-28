@@ -19,6 +19,14 @@ internal sealed class SyncSettingsEvent {
    */
   object PingRequest : SyncSettingsEvent()
 
+  /**
+   * Tells that the settings sync has to be stopped, and the server data has to be deleted.
+   * Other clients will disable sync as well, after they find that the data has been deleted.
+   *
+   * @param afterDeleting this callback function will be called after executing the deletion
+   */
+  class DeleteServerData(val afterDeleting: (DeleteServerDataResult) -> Unit): SyncSettingsEvent()
+
   override fun toString(): String {
     return javaClass.simpleName
   }
@@ -30,3 +38,7 @@ internal sealed class SyncSettingsEvent {
   }
 }
 
+internal sealed class DeleteServerDataResult {
+  object Success: DeleteServerDataResult()
+  class Error(val exception: Exception): DeleteServerDataResult()
+}
