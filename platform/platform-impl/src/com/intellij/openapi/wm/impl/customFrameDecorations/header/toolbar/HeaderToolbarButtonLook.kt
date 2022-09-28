@@ -19,7 +19,7 @@ import javax.swing.UIManager
 private val iconSize: Int
   get() = JBUI.scale(20)
 
-class HeaderToolbarButtonLook : IdeaActionButtonLook() {
+internal class HeaderToolbarButtonLook : IdeaActionButtonLook() {
 
   private val headerColor = JBColor.namedColor("MainToolbar.background")
 
@@ -49,9 +49,9 @@ class HeaderToolbarButtonLook : IdeaActionButtonLook() {
 
   private fun scaleIcon(icon: Icon, size: Int) : Icon {
     if (icon is ScalableIcon && icon.iconWidth != size) {
-      return IconLoader.loadCustomVersionOrScale(icon, size.toFloat());
+      return IconLoader.loadCustomVersionOrScale(icon, size.toFloat())
     }
 
-    return icon;
+    return icon
   }
 }
