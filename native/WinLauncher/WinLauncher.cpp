@@ -156,77 +156,6 @@ bool FindJVMInSettings() {
   return false;
 }
 
-bool FindJVMInRegistryKey(const char* key, bool wow64_32)
-{
-  HKEY hKey;
-  int flags = KEY_READ;
-  if (wow64_32) flags |= KEY_WOW64_32KEY;
-  if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ, &hKey) != ERROR_SUCCESS) return false;
-  char javaHome[_MAX_PATH];
-  DWORD javaHomeSize = _MAX_PATH - 1;
-  bool success = false;
-  if (RegQueryValueExA(hKey, "JavaHome", NULL, NULL, (LPBYTE)javaHome, &javaHomeSize) == ERROR_SUCCESS)
-  {
-    success = FindValidJVM(javaHome);
-  }
-  RegCloseKey(hKey);
-  return success;
-}
-
-bool FindJVMInRegistryWithVersion(const char* version, bool wow64_32)
-{
-  char* keyName = "Java Runtime Environment";
-  // starting from java 9 key name has been changed
-  char* jreKeyName = "JRE";
-  char* jdkKeyName = "JDK";
-
-  bool foundJava = false;
-  char buf[_MAX_PATH];
-  //search jre in registry if the product doesn't require tools.jar
-  if (LoadStdString(IDS_JDK_ONLY) != std::string("true")) {
-    sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
-    foundJava = FindJVMInRegistryKey(buf, wow64_32);
-    if (!foundJava) {
-      sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", jreKeyName, version);
-      foundJava = FindJVMInRegistryKey(buf, wow64_32);
-    }
-  }
-
-  //search jdk in registry if the product requires tools.jar or jre isn't installed.
-  if (!foundJava) {
-    keyName = "Java Development Kit";
-    sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
-    foundJava = FindJVMInRegistryKey(buf, wow64_32);
-    if (!foundJava) {
-      sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", jdkKeyName, version);
-      foundJava = FindJVMInRegistryKey(buf, wow64_32);
-    }
-  }
-  return foundJava;
-}
-
-bool FindJVMInRegistry()
-{
-#ifndef _M_X64
-  if (FindJVMInRegistryWithVersion("1.8", true))
-    return true;
-  if (FindJVMInRegistryWithVersion("9", true))
-    return true;
-  if (FindJVMInRegistryWithVersion("10", true))
-    return true;
-#endif
-
-  if (FindJVMInRegistryWithVersion("1.8", false))
-    return true;
-  if (FindJVMInRegistryWithVersion("9", false))
-    return true;
-  if (FindJVMInRegistryWithVersion("10", false))
-    return true;
-  if (FindJVMInRegistryWithVersion("11", false))
-    return true;
-  return false;
-}
-
 static bool LocateJVM(const std::string &homeDir) {
   bool result;
   if (FindJVMInEnvVar(LoadStdString(IDS_JDK_ENV_VAR).c_str(), result))
@@ -241,11 +170,6 @@ static bool LocateJVM(const std::string &homeDir) {
   if (FindJVMInEnvVar("JAVA_HOME", result))
   {
     return result;
-  }
-
-  if (FindJVMInRegistry())
-  {
-    return true;
   }
 
   std::string jvmError;
