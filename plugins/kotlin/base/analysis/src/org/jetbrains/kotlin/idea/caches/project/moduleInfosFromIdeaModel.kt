@@ -237,7 +237,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
         override fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>) {
             applyIfPossible {
-                invalidateEntries(condition = { _, values -> values.first() in libraryInfos })
+                invalidateEntries(condition = { _, values -> values.any { it in libraryInfos } })
 
                 /**
                  * we can avoid recalculation and tracker incrementation because [modelChanged] will be called after that
