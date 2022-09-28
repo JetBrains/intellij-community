@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiManager;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
@@ -201,30 +202,24 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       myVfsEventsExecutor.execute(() -> {
         try {
           processFilesInReadActionWithYieldingToWriteAction();
+
+          if (Registry.is("try.starting.dumb.mode.where.many.files.changed")) {
+            for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+              try {
+                FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(project);
+              }
+              catch (AlreadyDisposedException ignored) {
+              }
+              catch (Exception e) {
+                LOG.error(e);
+              }
+            }
+          }
         }
         finally {
           myScheduledVfsEventsWorkers.decrementAndGet();
         }
       });
-
-      if (Registry.is("try.starting.dumb.mode.where.many.files.changed")) {
-        Runnable startDumbMode = () -> {
-          for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-            FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(project);
-          }
-        };
-
-        Application app = ApplicationManager.getApplication();
-        if (!app.isHeadlessEnvironment()  /*avoid synchronous ensureUpToDate to prevent deadlock*/ &&
-            app.isDispatchThread() &&
-            !LaterInvocator.isInModalContext() &&
-            !NoAccessDuringPsiEvents.isInsideEventProcessing()) {
-          startDumbMode.run();
-        }
-        else {
-          app.invokeLater(startDumbMode, ModalityState.NON_MODAL);
-        }
-      }
     }
   }
 
