@@ -672,7 +672,7 @@ public class FileUtil extends FileUtilRt {
 
     @Override
     public boolean isSymlink(@NotNull CharSequence path) {
-      return FileSystemUtil.isSymLink(new File(path.toString()));
+      return Files.isSymbolicLink(Paths.get(path.toString()));
     }
   };
 
