@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.ui.popup.PopupState
@@ -59,7 +60,7 @@ internal class GitToolbarWidgetAction : AnAction(), CustomComponentAction {
 
   @NlsSafe
   private fun GitRepository.calcText(): String {
-    return GitBranchUtil.getDisplayableBranchText(this, ::cutText)
+    return StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(this, ::cutText))
   }
 
   private fun GitRepository?.calcIcon(): Icon {
