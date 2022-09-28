@@ -842,20 +842,6 @@
         <constraint name="runnable" nameOfExprType="java.lang.Runnable" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
-      <searchConfiguration name="Anonymous threads are discouraged; please supply name" text="new java.util.Timer()" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default">
-        <constraint name="__context__" target="true" within="" contains="" />
-      </searchConfiguration>
-      <searchConfiguration name="Anonymous threads are discouraged; please supply name" text="java.util.Timer()" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default">
-        <constraint name="__context__" target="true" within="" contains="" />
-      </searchConfiguration>
-      <searchConfiguration name="Anonymous threads are discouraged; please supply name" text="new java.util.Timer($b$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default">
-        <constraint name="__context__" target="true" within="" contains="" />
-        <constraint name="b" nameOfExprType="boolean" exprTypeWithinHierarchy="true" within="" contains="" />
-      </searchConfiguration>
-      <searchConfiguration name="Anonymous threads are discouraged; please supply name" text="java.util.Timer($b$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default">
-        <constraint name="__context__" target="true" within="" contains="" />
-        <constraint name="b" nameOfExprType="boolean" exprTypeWithinHierarchy="true" within="" contains="" />
-      </searchConfiguration>
       <replaceConfiguration name="Arrays.asList() is not immutable" text="public static final $Type$ $Field$ = java.util.Arrays.asList($elements$);" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="public static final $Type$ $Field$ = com.intellij.util.containers.ContainerUtil.immutableList($elements$);">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Field" within="" contains="" />
@@ -1788,6 +1774,14 @@
       </searchConfiguration>
       <searchConfiguration name="SwingWorker generates too many threads; use Application.execute*() instead" text="javax.swing.SwingWorker" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Timer creates/leaks threads" description="java.util.Timer eagerly creates a Thread on its start, which is too expensive. Please use ApplicationExecutionUtil.getScheduledExecutorService() instead  &#10;&#10;" text="new java.util.Timer($p$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="p" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Timer creates/leaks threads" text="Timer($p$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="p" minCount="0" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
       <replaceConfiguration name="TokenSet.create(TokenType.WHITE_SPACE) -&gt; TokenSet.WHITE_SPACE" text="com.intellij.psi.tree.TokenSet.create(com.intellij.psi.TokenType.WHITE_SPACE)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.psi.tree.TokenSet.WHITE_SPACE" />
       <replaceConfiguration name="TokenSet.create(TokenType.WHITE_SPACE) -&gt; TokenSet.WHITE_SPACE" text="com.intellij.psi.tree.TokenSet.create(com.intellij.psi.TokenType.WHITE_SPACE)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.psi.tree.TokenSet.WHITE_SPACE">
