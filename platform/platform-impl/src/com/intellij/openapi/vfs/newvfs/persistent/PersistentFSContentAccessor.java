@@ -102,7 +102,7 @@ public final class PersistentFSContentAccessor {
       PersistentFSConnection connection = myFSConnection;
       PersistentFSConnection.ensureIdIsValid(fileId);
 
-      boolean modified = false;
+      boolean modified;
       RefCountingContentStorage contentStorage = connection.getContents();
 
       int contentRecordId;
