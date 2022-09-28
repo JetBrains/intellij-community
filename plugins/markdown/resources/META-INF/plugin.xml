@@ -443,7 +443,8 @@ Includes the following features:</p>
     <fenceGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider"/>
 
     <!--suppress PluginXmlValidity -->
-    <fenceGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter"/>
+    <fenceGeneratingProvider order="last"
+                             implementation="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.BaseStylesExtension$Provider"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.InlineStylesExtension$Provider"/>
 
