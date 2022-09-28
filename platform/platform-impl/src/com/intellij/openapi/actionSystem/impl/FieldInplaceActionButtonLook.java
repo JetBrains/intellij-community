@@ -33,14 +33,21 @@ public class FieldInplaceActionButtonLook extends IdeaActionButtonLook {
 
   @Override
   public void paintBackground(Graphics g, JComponent component, int state) {
-    ActionButton actionButton = (ActionButton)component;
-    if (actionButton.isRollover()) {
+    boolean isSelected = false;
+    boolean isRollover = false;
+    if (component instanceof ActionButton) {
+      ActionButton actionButton = (ActionButton)component;
+      isSelected = actionButton.isSelected();
+      isRollover = actionButton.isRollover();
+    }
+
+    if (isRollover) {
       super.paintBackground(g, component, state);
     }
     else if (state == ActionButtonComponent.SELECTED && component.isEnabled()) {
       Rectangle rect = new Rectangle(component.getSize());
       JBInsets.removeFrom(rect, component.getInsets());
-      if (!ExperimentalUI.isNewUI() || actionButton.isSelected()) {
+      if (!ExperimentalUI.isNewUI() || isSelected) {
         paintLookBackground(g, rect, BUTTON_SELECTED_BACKGROUND);
       }
     }
@@ -49,9 +56,9 @@ public class FieldInplaceActionButtonLook extends IdeaActionButtonLook {
   @Override
   protected Color getStateBackground(JComponent component, int state) {
     if (ExperimentalUI.isNewUI()) {
-      ActionButton actionButton = (ActionButton)component;
       if (state == ActionButtonComponent.SELECTED) {
-        return actionButton.isMouseDown() ? BUTTON_SELECTED_PRESSED_BACKGROUND : BUTTON_SELECTED_HOVERED_BACKGROUND;
+        boolean isMouseDown = component instanceof ActionButton && ((ActionButton)component).isMouseDown();
+        return isMouseDown ? BUTTON_SELECTED_PRESSED_BACKGROUND : BUTTON_SELECTED_HOVERED_BACKGROUND;
       }
     }
 
