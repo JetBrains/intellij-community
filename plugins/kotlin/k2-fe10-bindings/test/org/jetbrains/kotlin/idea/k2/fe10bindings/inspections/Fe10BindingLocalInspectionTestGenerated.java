@@ -1579,60 +1579,133 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate")
-    public static class MemberVisibilityCanBePrivate extends AbstractFe10BindingLocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
+    public abstract static class MemberVisibilityCanBePrivate extends AbstractFe10BindingLocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/objectLiteralInitializer")
+        public static class ObjectLiteralInitializer extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("notUsedAsTypeArgument.kt")
+            public void testNotUsedAsTypeArgument() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/objectLiteralInitializer/notUsedAsTypeArgument.kt");
+            }
+
+            @TestMetadata("notUsedAsTypeArgument2.kt")
+            public void testNotUsedAsTypeArgument2() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/objectLiteralInitializer/notUsedAsTypeArgument2.kt");
+            }
+
+            @TestMetadata("usedAsTypeArgument.kt")
+            public void testUsedAsTypeArgument() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/objectLiteralInitializer/usedAsTypeArgument.kt");
+            }
+
+            @TestMetadata("usedAsTypeArgument2.kt")
+            public void testUsedAsTypeArgument2() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/objectLiteralInitializer/usedAsTypeArgument2.kt");
+            }
+
+            @TestMetadata("usedAsTypeArgument3.kt")
+            public void testUsedAsTypeArgument3() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/objectLiteralInitializer/usedAsTypeArgument3.kt");
+            }
+
+            @TestMetadata("usedAsTypeArgument4.kt")
+            public void testUsedAsTypeArgument4() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/objectLiteralInitializer/usedAsTypeArgument4.kt");
+            }
+
+            @TestMetadata("usedAsTypeArgument5.kt")
+            public void testUsedAsTypeArgument5() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/objectLiteralInitializer/usedAsTypeArgument5.kt");
+            }
+
+            @TestMetadata("usedAsTypeArgument6.kt")
+            public void testUsedAsTypeArgument6() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/objectLiteralInitializer/usedAsTypeArgument6.kt");
+            }
+
+            @TestMetadata("usedAsTypeArgumentWithPrivate.kt")
+            public void testUsedAsTypeArgumentWithPrivate() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/objectLiteralInitializer/usedAsTypeArgumentWithPrivate.kt");
+            }
+
+            @TestMetadata("usedAsTypeArgumentWithTypeReference.kt")
+            public void testUsedAsTypeArgumentWithTypeReference() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/objectLiteralInitializer/usedAsTypeArgumentWithTypeReference.kt");
+            }
+
+            @TestMetadata("usedAsTypeArgumentWithTypeReference2.kt")
+            public void testUsedAsTypeArgumentWithTypeReference2() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/objectLiteralInitializer/usedAsTypeArgumentWithTypeReference2.kt");
+            }
         }
 
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate")
+        public static class Uncategorized extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
 
-        @TestMetadata("annotation.kt")
-        public void testAnnotation() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/annotation.kt");
-        }
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("callableReferences.kt")
-        public void testCallableReferences() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/callableReferences.kt");
-        }
+            @TestMetadata("annotation.kt")
+            public void testAnnotation() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/annotation.kt");
+            }
 
-        @TestMetadata("JvmFieldOnParameter.kt")
-        public void testJvmFieldOnParameter() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/JvmFieldOnParameter.kt");
-        }
+            @TestMetadata("callableReferences.kt")
+            public void testCallableReferences() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/callableReferences.kt");
+            }
 
-        @TestMetadata("JvmFieldOnProperty.kt")
-        public void testJvmFieldOnProperty() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/JvmFieldOnProperty.kt");
-        }
+            @TestMetadata("JvmFieldOnParameter.kt")
+            public void testJvmFieldOnParameter() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/JvmFieldOnParameter.kt");
+            }
 
-        @TestMetadata("sameClassCallableReferences.kt")
-        public void testSameClassCallableReferences() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/sameClassCallableReferences.kt");
-        }
+            @TestMetadata("JvmFieldOnProperty.kt")
+            public void testJvmFieldOnProperty() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/JvmFieldOnProperty.kt");
+            }
 
-        @TestMetadata("sameClassFunctionCall.kt")
-        public void testSameClassFunctionCall() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/sameClassFunctionCall.kt");
-        }
+            @TestMetadata("sameClassCallableReferences.kt")
+            public void testSameClassCallableReferences() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/sameClassCallableReferences.kt");
+            }
 
-        @TestMetadata("subClassFunctionCall.kt")
-        public void testSubClassFunctionCall() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/subClassFunctionCall.kt");
-        }
+            @TestMetadata("sameClassFunctionCall.kt")
+            public void testSameClassFunctionCall() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/sameClassFunctionCall.kt");
+            }
 
-        @TestMetadata("subObjectFunctionCall.kt")
-        public void testSubObjectFunctionCall() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/subObjectFunctionCall.kt");
-        }
+            @TestMetadata("subClassFunctionCall.kt")
+            public void testSubClassFunctionCall() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/subClassFunctionCall.kt");
+            }
 
-        @TestMetadata("usedInAnnotationOnContainingObject.kt")
-        public void testUsedInAnnotationOnContainingObject() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/usedInAnnotationOnContainingObject.kt");
+            @TestMetadata("subObjectFunctionCall.kt")
+            public void testSubObjectFunctionCall() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/subObjectFunctionCall.kt");
+            }
+
+            @TestMetadata("usedInAnnotationOnContainingObject.kt")
+            public void testUsedInAnnotationOnContainingObject() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/usedInAnnotationOnContainingObject.kt");
+            }
         }
     }
 

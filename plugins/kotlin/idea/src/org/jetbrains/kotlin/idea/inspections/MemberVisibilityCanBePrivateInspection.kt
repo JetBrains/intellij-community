@@ -13,6 +13,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.parentOfTypes
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
@@ -20,8 +21,11 @@ import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.effectiveVisibility
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.canBePrivate
@@ -29,12 +33,17 @@ import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.isSpecial
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
 import org.jetbrains.kotlin.idea.search.usagesSearch.dataClassComponentFunction
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.resolve.calls.util.getType
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.utils.addIfNotNull
 
 class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
 
@@ -103,10 +112,12 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
             }
         } else useScope
 
+        val usageDeclarations = mutableListOf<KtDeclaration>()
         var otherUsageFound = false
         var inClassUsageFound = false
         ReferencesSearch.search(declaration, restrictedScope).forEach(Processor {
             val usage = it.element
+            usageDeclarations.addIfNotNull(usage.parentOfTypes(KtProperty::class, KtFunction::class))
             if (usage.isOutside(classOrObject)) {
                 otherUsageFound = true
                 return@Processor false
@@ -140,7 +151,9 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
             }
         })
 
-        return inClassUsageFound && !otherUsageFound
+        if (!inClassUsageFound || otherUsageFound) return false
+
+        return !declaration.typeWillBeExposed(usageDeclarations, classOrObject)
     }
 
     private fun PsiElement.isOutside(classOrObject: KtClassOrObject): Boolean {
@@ -150,6 +163,40 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
     }
 
     private fun KtModifierListOwner?.insideInline() = this?.let { it.hasModifier(KtTokens.INLINE_KEYWORD) && !it.isPrivate() } ?: false
+
+    private fun KtDeclaration.typeReference(): KtTypeReference? = (this as? KtCallableDeclaration)?.typeReference
+
+    private fun KtDeclaration.initializer(): KtExpression? =
+        (this as? KtProperty)?.getter?.initializer ?: (this as? KtDeclarationWithInitializer)?.initializer
+
+    private fun KtDeclaration.isLocal(): Boolean = (this as? KtProperty)?.isLocal == true || (this as? KtFunction)?.isLocal == true
+
+    private fun List<KtDeclaration>.indexOfOrNull(e: KtDeclaration): Int? = indexOf(e).takeIf { it != -1 }
+
+    private fun KotlinType.hasSpecial(): Boolean = arguments.any { it.type.isSpecial() || it.type.hasSpecial() }
+
+    private fun KtDeclaration.typeWillBeExposed(
+        usageDeclarations: List<KtDeclaration>,
+        containingDeclaration: KtClassOrObject
+    ): Boolean {
+        if (typeReference() != null || initializer() !is KtObjectLiteralExpression) return false
+
+        val members = containingDeclaration.declarations
+        val selfIndex = members.indexOfOrNull(this) ?: return false
+        val memberIndicesThatMayBeExposed = usageDeclarations.mapNotNull {
+            if (it.isLocal() || it.isPrivate() || it.typeReference() != null || it.initializer() == null) null else members.indexOfOrNull(it)
+        }.toSet().ifEmpty { return false }
+
+        val copied = containingDeclaration.copied()
+        val copiedMembers = copied.declarations
+        copiedMembers[selfIndex].addModifier(KtTokens.PRIVATE_KEYWORD)
+        val context = copied.analyzeAsReplacement(containingDeclaration, containingDeclaration.analyze(BodyResolveMode.PARTIAL))
+        for ((index, copiedMember) in copiedMembers.withIndex()) {
+            if (index in memberIndicesThatMayBeExposed && copiedMember.initializer()?.getType(context)?.hasSpecial() == true) return true
+        }
+
+        return false
+    }
 
     private fun registerProblem(holder: ProblemsHolder, declaration: KtDeclaration) {
         val modifierListOwner = declaration.getParentOfType<KtModifierListOwner>(false) ?: return

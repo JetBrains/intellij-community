@@ -1,0 +1,7 @@
+// WITH_STDLIB
+interface I
+
+class Test {
+    private val foo = object : I {}
+    private val bar = listOf(foo)
+}
