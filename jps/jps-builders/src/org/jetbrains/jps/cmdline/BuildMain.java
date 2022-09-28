@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.TimeoutUtil;
 import io.netty.bootstrap.Bootstrap;
@@ -114,8 +113,6 @@ public final class BuildMain {
           final PreloadedData data = new PreloadedData();
           ourPreloadedData = data;
           try {
-            FileSystemUtil.getAttributes(projectPathToPreload); // this will pre-load all FS optimizations
-
             final BuildRunner runner = new BuildRunner(new JpsModelLoaderImpl(projectPathToPreload, globalsPathToPreload, false, null));
             data.setRunner(runner);
 
