@@ -160,9 +160,9 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   private fun inSameMultiReleaseModule(place: PsiElement, target: PsiElement): Boolean {
     val placeModule = ModuleUtilCore.findModuleForPsiElement(place) ?: return false
     val targetModule = ModuleUtilCore.findModuleForPsiElement(target) ?: return false
-    if (targetModule.name.endsWith(".main")) {
-      val baseModuleName = targetModule.name.substringBeforeLast("main")
-      return Pattern.compile("java\\d+").matcher(placeModule.name.substringAfter(baseModuleName)).matches()
+    if (targetModule.name.endsWith(".$MAIN")) {
+      val baseModuleName = targetModule.name.substringBeforeLast(MAIN)
+      return javaVersionPattern.matcher(placeModule.name.substringAfter(baseModuleName)).matches()
     }
     return false
   }
@@ -283,5 +283,10 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         }
       }
     }
+  }
+
+  private companion object {
+    const val MAIN = "main"
+    val javaVersionPattern: Pattern by lazy { Pattern.compile("java\\d+") }
   }
 }
