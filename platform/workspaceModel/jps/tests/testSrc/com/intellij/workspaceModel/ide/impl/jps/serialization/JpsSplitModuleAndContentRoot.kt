@@ -113,6 +113,56 @@ class JpsSplitModuleAndContentRoot {
   }
 
   @Test
+  fun `add multiple local source root`() {
+    checkSaveProjectAfterChange("before/addCustomSourceRoot", "after/addMultipleCustomSourceRoot") { builder, configLocation ->
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      val contentRootEntity = moduleEntity.contentRoots.single()
+      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
+      val path2 = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot2")
+      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromPath(path), "mock",
+                                  (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
+      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromPath(path2), "mock",
+                                  (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
+    }
+  }
+
+  @Test
+  fun `add external source root`() {
+    checkSaveProjectAfterChange("before/addCustomSourceRoot", "after/addExternalCustomSourceRoot") { builder, configLocation ->
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      val contentRootEntity = moduleEntity.contentRoots.single()
+      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
+      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromPath(path), "mock", moduleEntity.entitySource)
+    }
+  }
+
+  @Test
+  fun `add mixed source root`() {
+    checkSaveProjectAfterChange("before/addCustomSourceRoot", "after/addMixedCustomSourceRoot") { builder, configLocation ->
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      val contentRootEntity = moduleEntity.contentRoots.single()
+      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
+      val path2 = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot2")
+      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromPath(path), "mock", moduleEntity.entitySource)
+      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromPath(path2), "mock",
+                                  (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
+    }
+  }
+
+  @Test
+  fun `add custom content and source root`() {
+    checkSaveProjectAfterChange("before/addContentRoot", "after/addContentAndSourceRoot") { builder, configLocation ->
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
+      val path2 = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot2")
+      val contentRootEntity = builder.addContentRootEntity(virtualFileManager.fromPath(path), emptyList(), emptyList(), moduleEntity,
+                                                           (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
+      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromPath(path2), "mock",
+                                  (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
+    }
+  }
+
+  @Test
   fun `add local exclude`() {
     checkSaveProjectAfterChange("before/addExcludeRoot", "after/addExcludeRoot") { builder, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
@@ -252,6 +302,45 @@ class JpsSplitModuleAndContentRoot {
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
       assertTrue(contentRootEntity.entitySource is JpsImportedEntitySource)
       assertTrue(sourceRoot.entitySource is JpsFileEntitySource.FileInDirectory)
+    }
+  }
+
+  @Test
+  fun `load multiple source root`() {
+    checkSaveProjectAfterChange("after/addMultipleCustomSourceRootLoading", "after/addMultipleCustomSourceRootLoading") { builder, configLocation ->
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      val contentRootEntity = moduleEntity.contentRoots.single()
+      val sourceRoots = contentRootEntity.sourceRoots
+      assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
+      assertTrue(contentRootEntity.entitySource is JpsImportedEntitySource)
+      assertEquals(2, sourceRoots.size)
+      assertTrue(sourceRoots.all { it.entitySource is JpsFileEntitySource.FileInDirectory })
+    }
+  }
+
+  @Test
+  fun `load external source root`() {
+    checkSaveProjectAfterChange("after/addExternalCustomSourceRootLoading", "after/addExternalCustomSourceRootLoading") { builder, configLocation ->
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      val contentRootEntity = moduleEntity.contentRoots.single()
+      val sourceRoot = contentRootEntity.sourceRoots.single()
+      assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
+      assertTrue(contentRootEntity.entitySource is JpsImportedEntitySource)
+      assertTrue(sourceRoot.entitySource is JpsImportedEntitySource)
+    }
+  }
+
+  @Test
+  fun `load mixed source root`() {
+    checkSaveProjectAfterChange("after/addMixedCustomSourceRootLoading", "after/addMixedCustomSourceRootLoading") { builder, configLocation ->
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      val contentRootEntity = moduleEntity.contentRoots.single()
+      val sourceRoots = contentRootEntity.sourceRoots
+      assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
+      assertTrue(contentRootEntity.entitySource is JpsImportedEntitySource)
+      assertEquals(2, sourceRoots.size)
+      assertTrue(sourceRoots.singleOrNull { it.entitySource is JpsFileEntitySource.FileInDirectory } != null)
+      assertTrue(sourceRoots.singleOrNull { it.entitySource is JpsImportedEntitySource } != null)
     }
   }
 
