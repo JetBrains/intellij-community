@@ -79,7 +79,7 @@ abstract class LibraryInfo internal constructor(
         }
     }
 
-    override fun toString() = "${this::class.simpleName}($library)"
+    override fun toString() = "${this::class.simpleName}@${Integer.toHexString(System.identityHashCode(this))}($library)"
 }
 
 private class ResolutionAnchorAwareLibraryModificationTracker(libraryInfo: LibraryInfo) : ModificationTracker {
