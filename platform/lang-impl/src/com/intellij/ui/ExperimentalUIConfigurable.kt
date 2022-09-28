@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.SendFeedbackAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBCheckBox
@@ -17,7 +18,7 @@ import com.intellij.ui.dsl.builder.selected
  */
 internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
   IdeBundle.message("configurable.new.ui.name"),
-  "reference.settings.ide.settings.new.ui") {
+  "reference.settings.ide.settings.new.ui"), Configurable.Beta {
 
   override fun createPanel() = panel {
     lateinit var newUiCheckBox: com.intellij.ui.dsl.builder.Cell<JBCheckBox>
