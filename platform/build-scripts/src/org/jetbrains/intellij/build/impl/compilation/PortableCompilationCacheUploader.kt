@@ -100,7 +100,7 @@ internal class PortableCompilationCacheUploader(
           return@adapt
         }
 
-        val zipFile = outputFolder.parent.resolve(compilationOutput.hash)
+        val zipFile = context.paths.tempDir.resolve("compilation-output-zips").resolve(sourcePath)
         zipWithCompression(zipFile, mapOf(outputFolder to ""))
         if (!uploader.isExist(sourcePath)) {
           uploader.upload(sourcePath, zipFile)

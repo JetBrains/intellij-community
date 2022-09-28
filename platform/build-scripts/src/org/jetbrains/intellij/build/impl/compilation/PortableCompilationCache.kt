@@ -273,8 +273,8 @@ private fun bool(systemProperty: String): Boolean {
 internal class CompilationOutput(
   name: String,
   type: String,
-  @JvmField val hash: String,
-  @JvmField val path: String,
+  @JvmField val hash: String, // Some hash of compilation output, could be non-unique across different CompilationOutput's
+  @JvmField val path: String, // Local path to compilation output
 ) {
   val remotePath = "$type/$name/$hash"
 }
