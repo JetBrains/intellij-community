@@ -366,6 +366,9 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       ProjectFrameHelper.appendTitlePart(builder, frameTitle)
       ProjectFrameHelper.appendTitlePart(builder, fileTitle)
       title = builder.toString()
+      if (title.isNullOrEmpty()) {
+        project?.let { title = FrameTitleBuilder.getInstance().getProjectTitle(it) }
+      }
     }
 
     override fun dispose() {

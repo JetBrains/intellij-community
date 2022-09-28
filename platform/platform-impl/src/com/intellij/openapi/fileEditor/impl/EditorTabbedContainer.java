@@ -493,6 +493,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       EditorComposite composite = myWindow.getComposite(myFile);
       FileEditor[] editors = composite != null ? composite.getAllEditors().toArray(FileEditor.EMPTY_ARRAY) : FileEditor.EMPTY_ARRAY;
       boolean isNorthPanelAvailable = DockManagerImpl.isNorthPanelAvailable(editors);
+      presentation.putClientProperty(DockManagerImpl.ALLOW_DOCK_TOOL_WINDOWS, !DockManagerImpl.isSingletonEditorInWindow(editors));
       mySession = getDockManager()
         .createDragSession(mouseEvent, createDockableEditor(myProject, img, myFile, presentation, myWindow, isNorthPanelAvailable));
     }

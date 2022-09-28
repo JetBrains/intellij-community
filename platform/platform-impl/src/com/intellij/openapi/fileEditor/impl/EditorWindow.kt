@@ -497,7 +497,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
   }
 
   fun updateTabsVisibility(settings: UISettings = UISettings.getInstance()) {
-    tabbedPane.tabs.presentation.isHideTabs = (owner.isFloating && shouldHideTabs(selectedComposite)) ||
+    tabbedPane.tabs.presentation.isHideTabs = (owner.isFloating && this.tabCount == 1 && shouldHideTabs(selectedComposite)) ||
                                               settings.editorTabPlacement == UISettings.TABS_NONE || settings.presentationMode
   }
 
