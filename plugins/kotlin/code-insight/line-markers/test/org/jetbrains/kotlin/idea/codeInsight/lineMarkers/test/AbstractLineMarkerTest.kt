@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
 
-abstract class AbstractSuspendLineMarkerTest : NewLightKotlinCodeInsightFixtureTestCase() {
+abstract class AbstractLineMarkerTest : NewLightKotlinCodeInsightFixtureTestCase() {
     override val pluginKind: KotlinPluginKind
         get() = KotlinPluginKind.FIR_PLUGIN
 

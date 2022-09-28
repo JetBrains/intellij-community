@@ -1,5 +1,5 @@
 suspend fun test(lhs: Foo, rhs: Foo) {
-    lhs <lineMarker text="Suspend operator call &apos;plus()&apos;">+</lineMarker> rhs
+    lhs <lineMarker text="Suspend operator call 'plus()'">+</lineMarker> rhs
 }
 
 class Foo {

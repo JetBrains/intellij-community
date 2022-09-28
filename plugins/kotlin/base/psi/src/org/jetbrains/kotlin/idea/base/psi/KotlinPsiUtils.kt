@@ -163,3 +163,25 @@ fun KtExpression.getCallChain(): List<KtExpression> =
         .map { (it as? KtDotQualifiedExpression)?.selectorExpression ?: it }
         .toList()
         .reversed()
+
+fun KtCallExpression.getContainingValueArgument(expression: KtExpression): KtValueArgument? {
+    fun KtElement.deparenthesizeStructurally(): KtElement? {
+        val deparenthesized = if (this is KtExpression) KtPsiUtil.deparenthesizeOnce(this) else this
+        return when {
+            deparenthesized != this -> deparenthesized
+            this is KtLambdaExpression -> this.functionLiteral
+            this is KtFunctionLiteral -> this.bodyExpression
+            else -> null
+        }
+    }
+
+    for (valueArgument in valueArguments) {
+        val argumentExpression = valueArgument.getArgumentExpression() ?: continue
+        val candidates = generateSequence<KtElement>(argumentExpression) { it.deparenthesizeStructurally() }
+        if (expression in candidates) {
+            return valueArgument
+        }
+    }
+
+    return null
+}

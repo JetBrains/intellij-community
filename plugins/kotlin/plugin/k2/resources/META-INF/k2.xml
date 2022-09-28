@@ -46,6 +46,9 @@
     <codeInsight.lineMarkerProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.KotlinSuspendCallLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.KotlinRecursiveCallLineMarkerProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
