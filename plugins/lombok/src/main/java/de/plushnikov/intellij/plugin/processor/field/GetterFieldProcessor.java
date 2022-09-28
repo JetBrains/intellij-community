@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokBundle;
@@ -98,7 +99,8 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
     LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiField.getManager(), methodName)
       .withMethodReturnType(psiField.getType())
       .withContainingClass(psiClass)
-      .withNavigationElement(psiField);
+      .withNavigationElement(psiField)
+      .withContract("pure = true");
     if (StringUtil.isNotEmpty(methodModifier)) {
       methodBuilder.withModifier(methodModifier);
     }

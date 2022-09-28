@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.psi;
 
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.TextRange;
@@ -10,6 +11,7 @@ import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.light.LightTypeParameterListBuilder;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import de.plushnikov.intellij.plugin.extension.LombokInferredAnnotationProvider;
 import icons.LombokIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -115,6 +117,14 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
   public LombokLightMethodBuilder withBodyText(@NotNull Function<LombokLightMethodBuilder, String> builderStringFunction) {
     myBuilderBodyFunction = builderStringFunction;
     myBodyCodeBlock = null;
+    return this;
+  }
+
+  public LombokLightMethodBuilder withContract(@NotNull String parameters) {
+    putUserData(LombokInferredAnnotationProvider.CONTRACT_ANNOTATION,
+                JavaPsiFacade.getElementFactory(getProject())
+                  .createAnnotationFromText('@' + JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT + "(" + parameters + ")",
+                                            null));
     return this;
   }
 

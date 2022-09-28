@@ -187,7 +187,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
         .map(PsiAnnotation::getQualifiedName)
         .filter(Pattern.compile(annotationToComparePattern()).asPredicate()).toList();
 
-      assertTrue("Annotations are different for " + afterModifierList.getParent(),
+      assertTrue("Annotations are different for " + afterModifierList.getParent() + ": " + beforeAnnotations + "/" + afterAnnotations,
                  beforeAnnotations.size() == afterAnnotations.size()
                  && beforeAnnotations.containsAll(afterAnnotations)
                  && afterAnnotations.containsAll(beforeAnnotations));

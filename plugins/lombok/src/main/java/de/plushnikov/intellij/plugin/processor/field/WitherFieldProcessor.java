@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokBundle;
@@ -178,7 +179,8 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
         .withMethodReturnType(returnType)
         .withContainingClass(psiFieldContainingClass)
         .withNavigationElement(psiField)
-        .withModifier(methodModifier);
+        .withModifier(methodModifier)
+        .withContract("pure = true");
 
       PsiAnnotation witherAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.WITHER, LombokClassNames.WITH);
       copyOnXAnnotations(witherAnnotation, methodBuilder.getModifierList(), "onMethod");

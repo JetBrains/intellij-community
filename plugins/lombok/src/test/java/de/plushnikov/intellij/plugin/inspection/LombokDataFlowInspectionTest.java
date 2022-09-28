@@ -19,4 +19,8 @@ public class LombokDataFlowInspectionTest extends LombokInspectionTest {
   public void testDefaultBuilderFinalValueInspectionIsAlwaysThat() {
     doTest();
   }
+
+  public void testAccessorContract() {
+    doTest();
+  }
 }

@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokBundle;
@@ -102,7 +103,8 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
       .withMethodReturnType(returnType)
       .withContainingClass(psiClass)
       .withParameter(fieldName, psiFieldType)
-      .withNavigationElement(psiField);
+      .withNavigationElement(psiField)
+      .withContract("mutates=\"this\"");
     if (StringUtil.isNotEmpty(methodModifier)) {
       methodBuilder.withModifier(methodModifier);
     }
