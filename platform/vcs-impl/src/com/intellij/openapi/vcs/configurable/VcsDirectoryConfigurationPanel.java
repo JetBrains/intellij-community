@@ -327,7 +327,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
     VcsRootChecker checker = myCheckers.get(mapping.getVcs());
     if (checker == null) return true;
     VirtualFile directory = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
-    return directory != null && checker.isRoot(directory);
+    return directory != null && checker.validateRoot(directory);
   }
 
   @NotNull
