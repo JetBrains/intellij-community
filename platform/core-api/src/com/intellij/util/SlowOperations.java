@@ -28,6 +28,11 @@ public final class SlowOperations {
   public static final String FAST_TRACK = "  fast track  ";
   public static final String RESET = "  reset  ";
 
+  /**
+   * VM property, set to {@code true} if running in plugin development sandbox.
+   */
+  public static final String IDEA_PLUGIN_SANDBOX_MODE = "idea.plugin.in.sandbox.mode";
+
   private static int ourAlwaysAllow = -1;
   private static @NotNull FList<@NotNull String> ourStack = FList.emptyList();
 
