@@ -146,60 +146,57 @@ public final class VcsFacadeImpl extends VcsFacade {
     List<T> elements = apply == null ? null : ContainerUtil.skipNulls(apply);
     if (ContainerUtil.isEmpty(elements)) return emptyList();
 
-    BitSet changedLines = getChangedLines(project, document, change);
-    if (changedLines == null) return elements;
+    if (change.getType() == Change.Type.NEW) return elements;
 
+    List<? extends Range> ranges = getChangedRangesFromLineStatusTracker(project, document, change);
+    if (ranges == null) ranges = getChangedRangesFromBeforeRevision(document, change);
+    if (ranges == null) return elements; // assume the whole file is changed
+
+    BitSet changedLines = createChangedLinesBitSet(ranges);
     return ContainerUtil.filter(elements, element -> isElementChanged(element, document, changedLines));
   }
 
   @Nullable
-  private static BitSet getChangedLines(@NotNull Project project, @NotNull Document document, @NotNull Change change) {
-    if (change.getType() == Change.Type.NEW) return null;
+  private static List<? extends Range> getChangedRangesFromLineStatusTracker(@NotNull Project project,
+                                                                             @NotNull Document document,
+                                                                             @NotNull Change change) {
+    LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
+    if (tracker == null) return null;
 
-    List<? extends Range> ranges = getChangedRanges(project, document, change);
-    if (ranges == null) return null;
+    if (change instanceof ChangeListChange &&
+        tracker instanceof PartialLocalLineStatusTracker) {
+      String changeListId = ((ChangeListChange)change).getChangeListId();
+      List<LocalRange> ranges = ((PartialLocalLineStatusTracker)tracker).getRanges();
+      if (ranges == null) return null;
 
-    BitSet changedLines = new BitSet();
-    for (Range range : ranges) {
-      if (!range.hasLines()) {
-        if (range.hasVcsLines()) {
-          changedLines.set(Math.max(0, range.getLine1() - 1), range.getLine1() + 1);
-        }
-      }
-      else {
-        changedLines.set(range.getLine1(), range.getLine2());
-      }
+      return ContainerUtil.filter(ranges, range -> range.getChangelistId().equals(changeListId));
     }
-    return changedLines;
+    else {
+      return tracker.getRanges();
+    }
   }
 
   @Nullable
-  private static List<? extends Range> getChangedRanges(@NotNull Project project, @NotNull Document document, @NotNull Change change) {
-    LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
-    if (tracker != null) {
-      if (change instanceof ChangeListChange && tracker instanceof PartialLocalLineStatusTracker) {
-        String changeListId = ((ChangeListChange)change).getChangeListId();
-        List<LocalRange> ranges = ((PartialLocalLineStatusTracker)tracker).getRanges();
-        if (ranges != null) {
-          return ContainerUtil.filter(ranges, range -> range.getChangelistId().equals(changeListId));
-        }
-        else {
-          return null;
-        }
+  private static List<Range> getChangedRangesFromBeforeRevision(@NotNull Document document, @NotNull Change change) {
+    String contentFromVcs = getRevisionedContentFrom(change);
+    if (contentFromVcs == null) return null;
+
+    return getRanges(document, contentFromVcs);
+  }
+
+  @NotNull
+  private static BitSet createChangedLinesBitSet(@NotNull List<? extends Range> ranges) {
+    BitSet changedLines = new BitSet();
+    for (Range range : ranges) {
+      if (range.hasLines()) {
+        changedLines.set(range.getLine1(), range.getLine2());
       }
       else {
-        return tracker.getRanges();
+        // mark unchanged lines around deleted lines as modified
+        changedLines.set(Math.max(0, range.getLine1() - 1), range.getLine1() + 1);
       }
     }
-    else {
-      String contentFromVcs = getRevisionedContentFrom(change);
-      if (contentFromVcs != null) {
-        return getRanges(document, contentFromVcs);
-      }
-      else {
-        return null;
-      }
-    }
+    return changedLines;
   }
 
   private static boolean isElementChanged(@NotNull PsiElement element, @NotNull Document document, @NotNull BitSet changedLines) {
