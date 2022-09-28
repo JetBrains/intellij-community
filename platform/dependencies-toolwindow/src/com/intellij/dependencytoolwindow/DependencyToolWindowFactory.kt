@@ -35,24 +35,25 @@ class DependencyToolWindowFactory : ProjectPostStartupActivity {
         ?.provideTab(project)
         ?.let { toolWindow.contentManager.setSelectedContent(it) }
     }
+
+    private suspend fun awaitAvailableExtensions(project: Project) {
+      DependenciesToolWindowTabProvider.availableTabsFlow(project)
+        .filter { it.isNotEmpty() }
+        .first()
+    }
   }
 
   override suspend fun execute(project: Project) {
+    awaitAvailableExtensions(project)
     withContext(Dispatchers.toolWindowManager(project)) {
-      DependenciesToolWindowTabProvider.availableTabsFlow(project)
-        .filter { it.isNotEmpty() }
-        .take(1)
-        .map {
-          RegisterToolWindowTask.closable(
-            id = toolWindowId,
-            stripeTitle = DependencyToolWindowBundle.messagePointer("toolwindow.stripe.Dependencies"),
-            icon = PlatformDependencyToolwindowIcons.ArtifactSmall
-          )
-        }
-        .map { toolWindowTask -> ToolWindowManager.getInstance(project).registerToolWindow(toolWindowTask) }
-        .onEach { project.contentIdMap /* init service only */ }
-        .collect { toolWindow -> initializeToolWindow(toolWindow, project) }
+      val toolWindowTask = RegisterToolWindowTask.closable(
+        id = toolWindowId,
+        stripeTitle = DependencyToolWindowBundle.messagePointer("toolwindow.stripe.Dependencies"),
+        icon = PlatformDependencyToolwindowIcons.ArtifactSmall
+      )
+      val toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(toolWindowTask)
+      project.contentIdMap /* init service only */
+      initializeToolWindow(toolWindow, project)
     }
   }
 }
-
