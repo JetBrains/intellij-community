@@ -11,6 +11,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.nls.NlsMessages.formatAndList
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.runReadAction
@@ -46,7 +47,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.components.labels.LinkLabel
@@ -132,22 +132,27 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
                    "before.checkin.options.check.smells.profile")
 
   /**
-   * Extracts PsiFile elements from the VirtualFile elements in commitPanel and puts a closure in their user data
-   * that extracts PsiElement elements that are being committed.
+   * Puts a closure in PsiFile user data that extracts PsiElement elements that are being committed.
    * The closure accepts a class instance and returns a set of PsiElement elements that are changed or added.
-   * The PsiFile elements are returned as a result.
    */
-  private fun processPsiFiles(changes: List<Change>, files: List<VirtualFile>): List<PsiFile> {
+  private fun withCommittedElementsContext(changes: List<Change>, files: List<VirtualFile>): AccessToken {
     val analyzeOnlyChangedProperties = Registry.`is`("vcs.code.analysis.before.checkin.check.unused.only.changed.properties", false)
-    val psiFiles =
-      if (!analyzeOnlyChangedProperties) emptyList()
-      else runReadAction { files.mapNotNull { PsiManager.getInstance(project).findFile(it) } }
+    if (!analyzeOnlyChangedProperties) return AccessToken.EMPTY_ACCESS_TOKEN
+
+    val psiFiles = runReadAction { files.mapNotNull { PsiManager.getInstance(project).findFile(it) } }
+    if (psiFiles.isEmpty()) return AccessToken.EMPTY_ACCESS_TOKEN
 
     for (file in psiFiles) {
       file.putUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED,
                        ConcurrentFactoryMap.createMap { getBeingCommittedPsiElements(changes, it) })
     }
-    return psiFiles
+    return object : AccessToken() {
+      override fun finish() {
+        for (it in psiFiles) {
+          it.putUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED, null)
+        }
+      }
+    }
   }
 
   /**
@@ -166,8 +171,7 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
   }
 
   private fun findCodeSmells(changes: List<Change>, files: List<VirtualFile>): List<CodeSmellInfo> {
-    val psiFiles = processPsiFiles(changes, files)
-    try {
+    withCommittedElementsContext(changes, files).use {
       val indicator = ProgressManager.getGlobalProgressIndicator()
       val newAnalysisThreshold = Registry.intValue("vcs.code.analysis.before.checkin.show.only.new.threshold", 0)
 
@@ -180,11 +184,6 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
       DumbService.getInstance(project).waitForSmartMode()
 
       return codeSmells
-    }
-    finally {
-      for (it in psiFiles) {
-        it.putUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED, null)
-      }
     }
   }
 
