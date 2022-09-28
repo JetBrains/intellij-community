@@ -3,7 +3,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
@@ -47,7 +46,6 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.indexing.roots.kind.SdkOrigin;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
 import kotlin.Pair;
@@ -502,17 +500,21 @@ public class UnindexedFilesScanner extends DumbModeTask {
   }
 
   private void scheduleInitialVfsRefresh() {
+    var projectId = myProject.getLocationHash();
+    LOG.info(projectId + ": marking roots for initial VFS refresh");
     ProjectRootManagerEx.getInstanceEx(myProject).markRootsForRefresh();
 
-    Application app = ApplicationManager.getApplication();
+    LOG.info(projectId + ": starting initial VFS refresh");
+    var app = ApplicationManager.getApplication();
     var t = System.nanoTime();
     if (!app.isCommandLine() || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
-      long sessionId = VirtualFileManager.getInstance().asyncRefresh(() -> timeInitialVfsRefresh(t));
-      MessageBusConnection connection = app.getMessageBus().connect();
+      var sessionId = VirtualFileManager.getInstance().asyncRefresh(() -> timeInitialVfsRefresh(t));
+      var connection = app.getMessageBus().connect();
       connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectClosed(@NotNull Project project) {
           if (project == myProject) {
+            LOG.info(projectId + ": cancelling initial VFS refresh");
             RefreshQueue.getInstance().cancelSession(sessionId);
             connection.disconnect();
           }
@@ -528,7 +530,9 @@ public class UnindexedFilesScanner extends DumbModeTask {
   }
 
   private void timeInitialVfsRefresh(long t) {
-    VfsUsageCollector.logInitialRefresh(myProject, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t));
+    var duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t);
+    LOG.info(myProject.getLocationHash() + ": initial VFS refresh finished " + duration + " ms");
+    VfsUsageCollector.logInitialRefresh(myProject, duration);
   }
 
   @Override
