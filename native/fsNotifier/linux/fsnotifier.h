@@ -61,7 +61,7 @@ bool init_inotify();
 void set_inotify_callback(void (*callback)(const char *, uint32_t));
 int get_inotify_fd();
 int watch(const char* root, array* mounts);
-void unwatch(int id);
+void unwatch(int id, char* path, unsigned int path_len);
 bool process_inotify_input();
 void close_inotify();
 

@@ -246,7 +246,7 @@ static void unregister_roots() {
   watch_root* root;
   while ((root = array_pop(roots)) != NULL) {
     userlog(LOG_INFO, "unregistering root: %s", root->path);
-    unwatch(root->id);
+    unwatch(root->id, root->path, strlen(root->path));
     free(root->path);
     free(root);
   }
@@ -422,7 +422,7 @@ static void check_root_removal(const char* path) {
   for (int i = 0; i < array_size(roots); i++) {
     watch_root* root = array_get(roots, i);
     if (root->id >= 0 && strcmp(path, UNFLATTEN(root->path)) == 0) {
-      unwatch(root->id);
+      unwatch(root->id, root->path, strlen(root->path));
       root->id = -1;
       userlog(LOG_INFO, "root deleted: %s\n", root->path);
       report_event("DELETE", path);
