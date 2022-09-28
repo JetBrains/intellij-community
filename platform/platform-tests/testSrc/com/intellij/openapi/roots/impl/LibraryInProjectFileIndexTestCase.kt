@@ -8,10 +8,14 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTable
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.util.io.directoryContent
+import com.intellij.util.io.generate
+import com.intellij.util.io.generateInVirtualTempDir
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -52,13 +56,6 @@ abstract class LibraryInProjectFileIndexTestCase {
       it.addExcludedRoot(excludedRoot.url)
     }
     ModuleRootModificationUtil.addDependency(module, library)
-
-    fun assertInLibrary(file: VirtualFile) {
-      assertTrue(fileIndex.isInProject(file))
-      assertFalse(fileIndex.isInContent(file))
-      assertFalse(fileIndex.isExcluded(file))
-      assertTrue(fileIndex.isInLibrary(file))
-    }
 
     assertInLibrary(root)
     assertTrue(fileIndex.isInLibraryClasses(root))
@@ -146,6 +143,92 @@ abstract class LibraryInProjectFileIndexTestCase {
     }
     assertFalse(fileIndex.isInProject(excludedRoot))
     assertFalse(fileIndex.isInProjectOrExcluded(excludedRoot))
+  }
+
+  @Test
+  fun `add and remove JAR directory root`() {
+    val library = createLibrary()
+    ModuleRootModificationUtil.addDependency(module, library)
+    val rootDir = directoryContent { 
+      zip("a.jar") { file("a.txt") }
+      dir("subDir") {
+        zip("b.jar") { file("b.txt") }
+      }
+    }.generateInVirtualTempDir()
+    val jarFile = rootDir.findJarRootByRelativePath("a.jar")
+    val jarInSubDir = rootDir.findJarRootByRelativePath("subDir/b.jar")
+    assertFalse(fileIndex.isInProject(jarFile))
+    assertFalse(fileIndex.isInProject(jarInSubDir))
+
+    projectModel.modifyLibrary(library) { 
+      it.addJarDirectory(rootDir, false, OrderRootType.CLASSES)
+    }
+    assertInLibrary(jarFile)
+    assertFalse(fileIndex.isInProject(jarInSubDir))
+    assertTrue(fileIndex.isInLibraryClasses(jarFile))
+    assertFalse(fileIndex.isInLibrarySource(jarFile))
+
+    projectModel.modifyLibrary(library) { 
+      it.removeRoot(rootDir.url, OrderRootType.CLASSES)
+      it.addJarDirectory(rootDir, true, OrderRootType.CLASSES)
+    }
+    assertInLibrary(jarFile)
+    assertInLibrary(jarInSubDir)
+    assertTrue(fileIndex.isInLibraryClasses(jarInSubDir))
+
+    projectModel.modifyLibrary(library) { 
+      it.removeRoot(rootDir.url, OrderRootType.CLASSES)
+    }
+    assertFalse(fileIndex.isInProject(jarFile))
+    assertFalse(fileIndex.isInProject(jarInSubDir))
+  }
+
+  @Test
+  fun `add and remove file under JAR directory root`() {
+    val recLibDir = projectModel.baseProjectDir.newVirtualDirectory("recursiveLib")
+
+    val library = createLibrary {
+      it.addJarDirectory(root, false, OrderRootType.CLASSES)
+      it.addJarDirectory(recLibDir, true, OrderRootType.CLASSES)
+    }
+    ModuleRootModificationUtil.addDependency(module, library)
+
+    directoryContent {
+      zip("a.jar") { file("a.txt") }
+      dir("subDir") {
+        zip("b.jar") { file("b.txt") }
+      }
+    }.generate(root)
+    directoryContent {
+      zip("c.jar") { file("c.txt") }
+      dir("subDir") {
+        zip("d.jar") { file("d.txt") }
+      }
+    }.generate(recLibDir)
+    val jarFile = root.findJarRootByRelativePath("a.jar")
+    val jarInSubDir = root.findJarRootByRelativePath("subDir/b.jar")
+    assertFalse(fileIndex.isInProject(jarInSubDir))
+    val jar1InRecSubDir = recLibDir.findJarRootByRelativePath("c.jar")
+    val jar2InRecSubDir = recLibDir.findJarRootByRelativePath("subDir/d.jar")
+
+    listOf(jarFile, jar1InRecSubDir, jar2InRecSubDir).forEach {
+      assertTrue(fileIndex.isInProject(it), it.presentableUrl)
+      assertTrue(fileIndex.isInLibrary(it), it.presentableUrl)
+      assertTrue(fileIndex.isInLibraryClasses(it), it.presentableUrl)
+      assertFalse(fileIndex.isInLibrarySource(it), it.presentableUrl)
+    }
+  }
+
+  private fun VirtualFile.findJarRootByRelativePath(path: String): VirtualFile {
+    val jarFile = findFileByRelativePath(path) ?: error("cannot find $path in ${this.presentableUrl}")
+    return JarFileSystem.getInstance().getJarRootForLocalFile(jarFile) ?: error("cannot find JAR root for ${jarFile.presentableUrl}")
+  }
+
+  fun assertInLibrary(file: VirtualFile) {
+    assertTrue(fileIndex.isInProject(file))
+    assertFalse(fileIndex.isInContent(file))
+    assertFalse(fileIndex.isExcluded(file))
+    assertTrue(fileIndex.isInLibrary(file))
   }
 }
 
