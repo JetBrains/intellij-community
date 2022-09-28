@@ -298,9 +298,9 @@ final class SearchForUsagesRunnable implements Runnable {
     }
 
     UsageViewEx usageView = myUsageViewManager.createUsageView(mySearchFor, Usage.EMPTY_ARRAY, myPresentation, mySearcherFactory);
-    UsageViewStatisticsCollector.logSearchStarted(myProject, usageView);
     if (myUsageViewRef.compareAndSet(null, usageView)) {
       // associate progress only if created successfully, otherwise Dispose will cancel the actual progress, see IDEA-195542
+      UsageViewStatisticsCollector.logSearchStarted(myProject, usageView);
       usageView.associateProgress(indicator);
       if (myProcessPresentation.isShowFindOptionsPrompt()) {
         openView(usageView);
