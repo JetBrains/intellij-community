@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -13,7 +14,10 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyLocalPositionConverter;
 import com.jetbrains.python.debugger.PyRemoteDebugProcess;
+import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -22,13 +26,31 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
   private final Project myProject;
   private final int myPid;
   private final String mySdkPath;
+  private final Sdk mySdk;
   private static final int CONNECTION_TIMEOUT = 20000;
 
 
-  public PyAttachToProcessDebugRunner(@NotNull Project project, int pid, String sdkPath) {
+  public PyAttachToProcessDebugRunner(@NotNull Project project, int pid, @Nullable Sdk sdk) {
+    myProject = project;
+    myPid = pid;
+    mySdk = sdk;
+    if (mySdk != null) {
+      mySdkPath = sdk.getHomePath();
+    }
+    else {
+      mySdkPath = null;
+    }
+  }
+
+  /**
+   * @deprecated Use {@link #PyAttachToProcessDebugRunner(Project, int, Sdk)}
+   */
+  @Deprecated
+  public PyAttachToProcessDebugRunner(@NotNull Project project, int pid, @Nullable String sdkPath) {
     myProject = project;
     myPid = pid;
     mySdkPath = sdkPath;
+    mySdk = PythonSdkUtil.findSdkByPath(mySdkPath);
   }
 
   public XDebugSession launch() throws ExecutionException {
@@ -48,7 +70,7 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
     }
 
 
-    PyAttachToProcessCommandLineState state = PyAttachToProcessCommandLineState.create(myProject, mySdkPath, serverSocket.getLocalPort(), myPid);
+    PyAttachToProcessCommandLineState state = PyAttachToProcessCommandLineState.create(myProject, mySdk, serverSocket.getLocalPort(), myPid);
 
     final ExecutionResult result = state.execute(state.getEnvironment().getExecutor(), this);
 

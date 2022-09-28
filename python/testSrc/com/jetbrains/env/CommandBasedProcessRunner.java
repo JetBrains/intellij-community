@@ -18,8 +18,10 @@ package com.jetbrains.env;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.commandInterface.command.SimpleCommand;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -55,6 +57,7 @@ public class CommandBasedProcessRunner extends ProcessWithConsoleRunner {
 
   @Override
   void runProcess(@NotNull final String sdkPath,
+                  @Nullable Sdk sdk,
                   @NotNull final Project project,
                   @NotNull final ProcessListener processListener,
                   @NotNull final String tempWorkingPath) {
